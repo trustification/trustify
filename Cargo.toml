@@ -1,8 +1,11 @@
-[package]
-name = "huevos"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+#name = "huevos"
+#version = "0.1.0"
+#edition = "2021"
+resolver = "2"
+members = [
+  "api",
+  "entity",
+  "migration",
+]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
