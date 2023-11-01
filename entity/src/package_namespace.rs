@@ -14,7 +14,6 @@ pub enum Relation {
     Packages,
     #[sea_orm(has_many = "super::package_type::Entity")]
     Types,
-
 }
 
 impl Related<super::package::Entity> for Entity {
@@ -28,6 +27,5 @@ impl Related<super::package_type::Entity> for Entity {
         Relation::Types.def()
     }
 }
-
 
 impl ActiveModelBehavior for ActiveModel {}

@@ -1,58 +1,61 @@
 mod system;
 
+use packageurl::PackageUrl;
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection, Statement};
 use sea_orm_migration::MigratorTrait;
+use std::fmt::{Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
+use std::str::FromStr;
 
-use migration::Migrator;
+#[derive(Clone, PartialEq)]
+pub struct Purl<'a> {
+    pub package_url: PackageUrl<'a>,
+}
 
-
-
-
-#[cfg(test)]
-mod tests {
-    use crate::system::System;
-    use super::*;
-
-    #[tokio::test]
-    async fn ingest_packages() -> Result<(), anyhow::Error> {
-        let system = System::start().await?;
-
-        let packages = [
-            "pkg:maven/io.quarkus/quarkus-hibernate-orm@2.13.5.Final?type=jar",
-            "pkg:maven/io.quarkus/quarkus-core@2.13.5.Final?type=jar",
-            "pkg:maven/jakarta.el/jakarta.el-api@3.0.3?type=jar",
-            "pkg:maven/org.postgresql/postgresql@42.5.0?type=jar",
-            "pkg:maven/io.quarkus/quarkus-narayana-jta@2.13.5.Final?type=jar",
-            "pkg:maven/jakarta.interceptor/jakarta.interceptor-api@1.2.5?type=jar",
-            "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1?type=jar",
-            "pkg:maven/io.quarkus/quarkus-jdbc-postgresql@2.13.5.Final?type=jar",
-            "pkg:maven/jakarta.enterprise/jakarta.enterprise.cdi-api@2.0.2?type=jar",
-            "pkg:maven/jakarta.enterprise/jakarta.enterprise.cdi-api@2.0.2?type=jar",
-            "pkg:maven/jakarta.enterprise/jakarta.enterprise.cdi-api@2.0.2?type=war",
-            "pkg:maven/jakarta.enterprise/jakarta.enterprise.cdi-api@2.0.2?type=jar&cheese=cheddar",
-            "pkg:maven/org.apache.logging.log4j/log4j-core@2.13.3",
-        ];
-
-        for pkg in packages {
-            system.ingest_package( pkg ).await?;
-        }
-
-        let package_types = system.package_types().await?;
-        println!("{:#?}", package_types);
-
-        let package_namespaces = system.package_namespaces().await?;
-        println!("{:#?}", package_namespaces);
-
-        let package_names = system.package_names().await?;
-        println!("{:#?}", package_names);
-
-        let packages = system.packages().await?;
-
-        for pkg in packages {
-            println!("{}", pkg.to_string());
-        }
-
-        Ok(())
+impl Hash for Purl<'_> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write(self.package_url.to_string().as_bytes())
     }
+}
 
+impl Eq for Purl<'_> {}
+
+impl Display for Purl<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.package_url.to_string())
+    }
+}
+
+impl Debug for Purl<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.package_url.to_string())
+    }
+}
+
+impl<'a> From<&'a str> for Purl<'a> {
+    fn from(value: &'a str) -> Self {
+        Purl {
+            package_url: PackageUrl::from_str(value).unwrap(),
+        }
+    }
+}
+
+impl<'a> From<&&'a str> for Purl<'a> {
+    fn from(value: &&'a str) -> Self {
+        Purl {
+            package_url: PackageUrl::from_str(value).unwrap(),
+        }
+    }
+}
+
+impl<'a> From<PackageUrl<'a>> for Purl<'a> {
+    fn from(value: PackageUrl<'a>) -> Self {
+        Self { package_url: value }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct PackageTree<'p> {
+    purl: Purl<'p>,
+    dependencies: Vec<PackageTree<'p>>,
 }

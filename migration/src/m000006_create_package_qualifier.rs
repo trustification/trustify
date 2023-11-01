@@ -1,5 +1,5 @@
+use crate::m000005_create_package::Package;
 use sea_orm_migration::prelude::*;
-use crate::m20220101_000005_create_package::Package;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -13,18 +13,17 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(PackageQualifier::Table)
                     .if_not_exists()
-
                     .col(
                         ColumnDef::new(PackageQualifier::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
-                            .primary_key()
+                            .primary_key(),
                     )
                     .col(
                         ColumnDef::new(PackageQualifier::PackageId)
                             .integer()
-                            .not_null()
+                            .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
@@ -32,16 +31,8 @@ impl MigrationTrait for Migration {
                             .from(PackageQualifier::Table, PackageQualifier::PackageId)
                             .to(Package::Table, Package::Id),
                     )
-                    .col(
-                        ColumnDef::new(PackageQualifier::Key)
-                            .string()
-                            .not_null()
-                    )
-                    .col(
-                        ColumnDef::new(PackageQualifier::Value)
-                            .string()
-                            .not_null()
-                    )
+                    .col(ColumnDef::new(PackageQualifier::Key).string().not_null())
+                    .col(ColumnDef::new(PackageQualifier::Value).string().not_null())
                     .to_owned(),
             )
             .await

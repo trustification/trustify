@@ -11,7 +11,6 @@ pub struct Model {
     pub version: String,
 }
 
-
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(has_one = "super::package_type::Entity")]
@@ -19,7 +18,7 @@ pub enum Relation {
     #[sea_orm(has_one = "super::package_namespace::Entity")]
     PackageNamespace,
     #[sea_orm(has_many = "super::package_qualifier::Entity")]
-    PackageQualifiers
+    PackageQualifiers,
 }
 
 impl Related<super::package_type::Entity> for Entity {
@@ -41,4 +40,3 @@ impl Related<super::package_qualifier::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
-

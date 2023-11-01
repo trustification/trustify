@@ -12,18 +12,17 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(PackageNamespace::Table)
                     .if_not_exists()
-
                     .col(
                         ColumnDef::new(PackageNamespace::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
-                            .primary_key()
+                            .primary_key(),
                     )
                     .col(
                         ColumnDef::new(PackageNamespace::Namespace)
                             .string()
-                            .not_null()
+                            .not_null(),
                     )
                     .to_owned(),
             )

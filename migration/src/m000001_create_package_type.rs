@@ -10,21 +10,16 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(PackageName::Table)
+                    .table(PackageType::Table)
                     .if_not_exists()
-
                     .col(
-                        ColumnDef::new(PackageName::Id)
+                        ColumnDef::new(PackageType::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
-                            .primary_key()
+                            .primary_key(),
                     )
-                    .col(
-                        ColumnDef::new(PackageName::Name)
-                            .string()
-                            .not_null()
-                    )
+                    .col(ColumnDef::new(PackageType::Type).string().not_null())
                     .to_owned(),
             )
             .await
@@ -32,14 +27,14 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(PackageName::Table).to_owned())
+            .drop_table(Table::drop().table(PackageType::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum PackageName {
+pub enum PackageType {
     Table,
     Id,
-    Name,
+    Type,
 }
