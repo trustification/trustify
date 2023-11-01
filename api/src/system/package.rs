@@ -4,12 +4,11 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use packageurl::PackageUrl;
-use sea_orm::{ActiveModelTrait, ColumnTrait, Condition, ConnectionTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter, Set, Statement, Value};
+use sea_orm::{ActiveModelTrait, ColumnTrait, Condition, ConnectionTrait, DatabaseConnection, EntityOrSelect, EntityTrait, ModelTrait, QueryFilter, QuerySelect, Set, Statement, Value};
 
 use huevos_entity::package_dependency::ToDependency;
-use huevos_entity::{
-    package, package_dependency, package_name, package_namespace, package_qualifier, package_type,
-};
+use huevos_entity::{package, package_dependency, package_qualifier};
+use huevos_entity::package::{PackageNamespace, PackageType};
 
 use crate::{PackageTree, Purl};
 
@@ -25,15 +24,11 @@ impl PackageSystem {
         //let purl = PackageUrl::from_str(pkg)?;
         let purl = pkg.into().package_url;
 
-        let r#type = self.ingest_package_type(purl.ty()).await?;
-        let namespace = self.ingest_package_namespace(purl.namespace()).await?;
-        let name = self.ingest_package_name(purl.name()).await?;
-
         let pkg = self
             .insert_or_fetch_package(
-                r#type,
-                namespace,
-                name,
+                purl.ty(),
+                purl.namespace(),
+                purl.name(),
                 purl.version().unwrap(),
                 purl.qualifiers(),
             )
@@ -53,9 +48,9 @@ impl PackageSystem {
 
     pub async fn insert_or_fetch_package<'a>(
         &self,
-        r#type: package_type::Model,
-        namespace: Option<package_namespace::Model>,
-        name: package_name::Model,
+        r#type: &str,
+        namespace: Option<&str>,
+        name: &str,
         version: &str,
         qualifiers: &HashMap<Cow<'a, str>, Cow<'a, str>>,
     ) -> Result<package::Model, anyhow::Error> {
@@ -68,14 +63,14 @@ impl PackageSystem {
             Ok(pkg)
         } else {
             let mut entity = package::ActiveModel {
-                package_type_id: Set(r#type.id),
-                package_name_id: Set(name.id),
+                package_type: Set(r#type.to_string()),
+                package_name: Set(name.to_string()),
                 version: Set(version.to_owned()),
                 ..Default::default()
             };
 
             if let Some(ns) = namespace {
-                entity.package_namespace_id = Set(Some(ns.id))
+                entity.package_namespace = Set(Some(ns.to_string()))
             }
 
             let inserted = entity.insert(&*self.db).await?;
@@ -96,19 +91,21 @@ impl PackageSystem {
 
     async fn get_package<'a>(
         &self,
-        r#type: &package_type::Model,
-        namespace: &Option<package_namespace::Model>,
-        name: &package_name::Model,
+        r#type: &str,
+        namespace: &Option<&str>,
+        name: &str,
         version: &str,
         qualifiers: &HashMap<Cow<'a, str>, Cow<'a, str>>,
     ) -> Result<Option<package::Model>, anyhow::Error> {
         let mut conditions = Condition::all()
-            .add(package::Column::PackageTypeId.eq(r#type.id))
-            .add(package::Column::PackageNameId.eq(name.id))
+            .add(package::Column::PackageType.eq(r#type.to_string()))
+            .add(package::Column::PackageName.eq(name.to_string()))
             .add(package::Column::Version.eq(version));
 
         if let Some(ns) = namespace {
-            conditions = conditions.add(package::Column::PackageNamespaceId.eq(ns.id));
+            conditions = conditions.add(package::Column::PackageNamespace.eq(ns.to_string()));
+        } else {
+            conditions = conditions.add(package::Column::PackageNamespace.is_null());
         }
 
         let found = package::Entity::find()
@@ -143,109 +140,35 @@ impl PackageSystem {
         Ok(None)
     }
 
-    async fn get_package_type(
-        &self,
-        r#type: &str,
-    ) -> Result<Option<package_type::Model>, anyhow::Error> {
-        Ok(package_type::Entity::find()
-            .filter(Condition::all().add(package_type::Column::Type.eq(r#type)))
+
+    pub async fn package_types(&self) -> Result<Vec<String>, anyhow::Error> {
+        Ok(package::Entity::find()
+            .select_only()
+            .column(package::Column::PackageType)
+            .group_by(package::Column::PackageType)
+            .into_model::<PackageType>()
             .all(&*self.db)
             .await?
-            .get(0)
-            .cloned())
+            .iter()
+            .map(|e| {
+                e.package_type.clone()
+            })
+            .collect())
     }
 
-    pub async fn ingest_package_type(
-        &self,
-        r#type: &str,
-    ) -> Result<package_type::Model, anyhow::Error> {
-        log::info!("insert or fetch pkg-type {}", r#type);
-        let fetch = self.get_package_type(r#type).await?;
-        if let Some(r#type) = fetch {
-            Ok(r#type)
-        } else {
-            let entity = package_type::ActiveModel {
-                r#type: Set(r#type.to_owned()),
-                ..Default::default()
-            };
-
-            Ok(entity.insert(&*self.db).await?)
-        }
-    }
-
-    pub async fn package_types(&self) -> Result<Vec<package_type::Model>, anyhow::Error> {
-        Ok(package_type::Entity::find().all(&*self.db).await?)
-    }
-
-    async fn fetch_package_namespace(
-        &self,
-        namespace: &str,
-    ) -> Result<Option<package_namespace::Model>, anyhow::Error> {
-        log::info!("insert or fetch pkg-ns {}", namespace);
-        Ok(package_namespace::Entity::find()
-            .filter(Condition::all().add(package_namespace::Column::Namespace.eq(namespace)))
+    pub async fn package_namespaces(&self) -> Result<Vec<String>, anyhow::Error> {
+        Ok(package::Entity::find()
+            .select_only()
+            .column(package::Column::PackageNamespace)
+            .group_by(package::Column::PackageNamespace)
+            .into_model::<PackageNamespace>()
             .all(&*self.db)
             .await?
-            .get(0)
-            .cloned())
-    }
-    pub async fn ingest_package_namespace(
-        &self,
-        namespace: Option<&str>,
-    ) -> Result<Option<package_namespace::Model>, anyhow::Error> {
-        if let Some(namespace) = namespace {
-            let fetch = self.fetch_package_namespace(namespace).await?;
-            if fetch.is_some() {
-                Ok(fetch)
-            } else {
-                let entity = package_namespace::ActiveModel {
-                    namespace: Set(namespace.to_owned()),
-                    ..Default::default()
-                };
-
-                Ok(Some(entity.insert(&*self.db).await?))
-            }
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub async fn package_namespaces(&self) -> Result<Vec<package_namespace::Model>, anyhow::Error> {
-        Ok(package_namespace::Entity::find().all(&*self.db).await?)
-    }
-
-    async fn get_package_name(
-        &self,
-        name: &str,
-    ) -> Result<Option<package_name::Model>, anyhow::Error> {
-        Ok(package_name::Entity::find()
-            .filter(Condition::all().add(package_name::Column::Name.eq(name)))
-            .all(&*self.db)
-            .await?
-            .get(0)
-            .cloned())
-    }
-
-    pub async fn ingest_package_name(
-        &self,
-        name: &str,
-    ) -> Result<package_name::Model, anyhow::Error> {
-        log::info!("insert or fetch pkg-name {}", name);
-        let fetch = self.get_package_name(name).await?;
-        if let Some(name) = fetch {
-            Ok(name)
-        } else {
-            let entity = package_name::ActiveModel {
-                name: Set(name.to_owned()),
-                ..Default::default()
-            };
-
-            Ok(entity.insert(&*self.db).await?)
-        }
-    }
-
-    pub async fn package_names(&self) -> Result<Vec<package_name::Model>, anyhow::Error> {
-        Ok(package_name::Entity::find().all(&*self.db).await?)
+            .iter()
+            .map(|e| {
+                e.package_namespace.clone()
+            })
+            .collect())
     }
 
     // ------------------------------------------------------------------------
@@ -275,26 +198,12 @@ impl PackageSystem {
         let mut purls = Vec::new();
 
         for (base, qualifiers) in packages {
-            let r#type = package_type::Entity::find_by_id(base.package_type_id)
-                .one(&*self.db)
-                .await?;
-
-            let name = package_name::Entity::find_by_id(base.package_name_id)
-                .one(&*self.db)
-                .await?;
-
-            if let (Some(r#type), Some(name)) = (r#type, name) {
-                let mut purl = PackageUrl::new(r#type.r#type, name.name)?;
+                let mut purl = PackageUrl::new(base.package_type, base.package_name)?;
 
                 purl.with_version(base.version);
 
-                if let Some(ns_id) = base.package_namespace_id {
-                    if let Some(ns) = package_namespace::Entity::find_by_id(ns_id)
-                        .one(&*self.db)
-                        .await?
-                    {
-                        purl.with_namespace(ns.namespace);
-                    }
+                if let Some(namespace) = base.package_namespace {
+                    purl.with_namespace(namespace);
                 }
 
                 for qualifier in qualifiers {
@@ -302,7 +211,6 @@ impl PackageSystem {
                 }
 
                 purls.push(purl.into());
-            }
         }
 
         Ok(purls)
@@ -421,8 +329,8 @@ mod tests {
     #[tokio::test]
     async fn ingest_packages() -> Result<(), anyhow::Error> {
         env_logger::builder()
-            //.filter_level(log::LevelFilter::Info)
-            //.is_test(true)
+            .filter_level(log::LevelFilter::Info)
+            .is_test(true)
             .init();
 
         let system = System::start().await?.package();
@@ -450,8 +358,6 @@ mod tests {
         let package_types = system.package_types().await?;
 
         let package_namespaces = system.package_namespaces().await?;
-
-        let package_names = system.package_names().await?;
 
         let fetched_packages = system.packages().await?;
 

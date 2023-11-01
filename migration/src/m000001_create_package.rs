@@ -1,9 +1,6 @@
-use crate::Now;
 use sea_orm_migration::prelude::*;
 
-use crate::m000001_create_package_type::PackageType;
-use crate::m000002_create_package_namespace::PackageNamespace;
-use crate::m000003_create_package_name::PackageName;
+use crate::Now;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -29,27 +26,9 @@ impl MigrationTrait for Migration {
                             .timestamp_with_time_zone()
                             .default(Func::cust(Now)),
                     )
-                    .col(ColumnDef::new(Package::PackageTypeId).integer().not_null())
-                    .foreign_key(
-                        ForeignKey::create()
-                            .name("package_type_id")
-                            .from(Package::Table, Package::PackageTypeId)
-                            .to(PackageType::Table, PackageType::Id),
-                    )
-                    .col(ColumnDef::new(Package::PackageNamespaceId).integer())
-                    .foreign_key(
-                        ForeignKey::create()
-                            .name("package_namespace_id")
-                            .from(Package::Table, Package::PackageNamespaceId)
-                            .to(PackageNamespace::Table, PackageNamespace::Id),
-                    )
-                    .col(ColumnDef::new(Package::PackageNameId).integer().not_null())
-                    .foreign_key(
-                        ForeignKey::create()
-                            .name("package_name_id")
-                            .from(Package::Table, Package::PackageNameId)
-                            .to(PackageName::Table, PackageName::Id),
-                    )
+                    .col(ColumnDef::new(Package::PackageType).string().not_null())
+                    .col(ColumnDef::new(Package::PackageNamespace).string())
+                    .col(ColumnDef::new(Package::PackageName).string().not_null())
                     .col(ColumnDef::new(Package::Version).string().not_null())
                     .col(ColumnDef::new(Package::Subpath).string())
                     .to_owned(),
@@ -69,9 +48,10 @@ pub enum Package {
     Table,
     Id,
     Timestamp,
-    PackageTypeId,
-    PackageNamespaceId,
-    PackageNameId,
+    // --
+    PackageType,
+    PackageNamespace,
+    PackageName,
     Version,
     Subpath,
 }

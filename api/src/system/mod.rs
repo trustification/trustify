@@ -27,7 +27,6 @@ pub struct System {
 impl System {
     pub(crate) async fn start() -> Result<Self, anyhow::Error> {
 
-
         let db: DatabaseConnection = Database::connect(DB_URL).await?;
 
         db.execute(Statement::from_string(
