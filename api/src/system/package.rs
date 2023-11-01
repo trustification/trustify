@@ -1,7 +1,5 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::str::FromStr;
-use std::sync::Arc;
 
 use packageurl::PackageUrl;
 use sea_orm::{
@@ -13,13 +11,10 @@ use huevos_entity::package::{PackageNamespace, PackageType};
 use huevos_entity::package_dependency::ToDependency;
 use huevos_entity::{package, package_dependency, package_qualifier};
 
+use crate::system::System;
 use crate::{PackageTree, Purl};
 
-pub struct PackageSystem {
-    pub(crate) db: Arc<DatabaseConnection>,
-}
-
-impl PackageSystem {
+impl System {
     pub async fn ingest_package<'p, P: Into<Purl<'p>>>(
         &self,
         pkg: P,
@@ -60,13 +55,14 @@ impl PackageSystem {
         log::info!("insert or fetch pkg");
 
         let fetch = self
-            .get_package(&r#type, &namespace, &name, version, qualifiers)
+            .get_package(r#type, &namespace, name, version, qualifiers)
             .await?;
         if let Some(pkg) = fetch {
             Ok(pkg)
         } else {
             let mut entity = package::ActiveModel {
                 package_type: Set(r#type.to_string()),
+                package_namespace: Default::default(),
                 package_name: Set(name.to_string()),
                 version: Set(version.to_owned()),
                 ..Default::default()
@@ -178,15 +174,27 @@ impl PackageSystem {
         dependency_package: P2,
     ) -> Result<package_dependency::Model, anyhow::Error> {
         let dependent = self.ingest_package(dependent_package).await?;
-
         let dependency = self.ingest_package(dependency_package).await?;
 
-        let entity = package_dependency::ActiveModel {
-            dependent_package_id: Set(dependent.id),
-            dependency_package_id: Set(dependency.id),
-        };
+        match package_dependency::Entity::find()
+            .filter(
+                Condition::all()
+                    .add(package_dependency::Column::DependentPackageId.eq(dependent.id))
+                    .add(package_dependency::Column::DependencyPackageId.eq(dependency.id)),
+            )
+            .one(&*self.db)
+            .await?
+        {
+            None => {
+                let entity = package_dependency::ActiveModel {
+                    dependent_package_id: Set(dependent.id),
+                    dependency_package_id: Set(dependency.id),
+                };
 
-        Ok(entity.insert(&*self.db).await?)
+                Ok(entity.insert(&*self.db).await?)
+            }
+            Some(found) => Ok(found),
+        }
     }
 
     async fn packages_to_purls(
@@ -250,7 +258,7 @@ impl PackageSystem {
             map: &HashMap<Purl<'p>, Vec<Purl<'p>>>,
         ) -> PackageTree<'p> {
             let dependencies = map
-                .get(&root)
+                .get(root)
                 .iter()
                 .flat_map(|deps| deps.iter().map(|dep| build_tree(dep, map)))
                 .collect();
@@ -325,12 +333,13 @@ mod tests {
 
     #[tokio::test]
     async fn ingest_packages() -> Result<(), anyhow::Error> {
-        env_logger::builder()
-            .filter_level(log::LevelFilter::Info)
-            .is_test(true)
-            .init();
+        //env_logger::builder()
+            //.filter_level(log::LevelFilter::Info)
+            //.is_test(true)
+            //.init();
 
-        let system = System::start().await?.package();
+        let system = System::start().await?;
+        system.bootstrap().await?;
 
         let mut packages = vec![
             "pkg:maven/io.quarkus/quarkus-hibernate-orm@2.13.5.Final?type=jar",
@@ -371,7 +380,8 @@ mod tests {
 
     #[tokio::test]
     async fn ingest_package_dependencies() -> Result<(), anyhow::Error> {
-        let system = System::start().await?.package();
+        let system = System::start().await?;
+        system.bootstrap().await?;
 
         let result = system
             .ingest_package_dependency(
@@ -399,7 +409,8 @@ mod tests {
 
     #[tokio::test]
     async fn transitive_dependencies() -> Result<(), anyhow::Error> {
-        let system = System::start().await?.package();
+        let system = System::start().await?;
+        system.bootstrap().await?;
 
         system
             .ingest_package_dependency(

@@ -3,6 +3,8 @@ pub use sea_orm_migration::prelude::*;
 pub mod m000001_create_package;
 pub mod m000002_create_package_qualifier;
 mod m000003_create_package_dependency;
+mod m000004_create_vulnerability;
+mod m000005_package_vulnerability;
 
 pub struct Migrator;
 
@@ -13,6 +15,8 @@ impl MigratorTrait for Migrator {
             Box::new(m000001_create_package::Migration),
             Box::new(m000002_create_package_qualifier::Migration),
             Box::new(m000003_create_package_dependency::Migration),
+            Box::new(m000004_create_vulnerability::Migration),
+            Box::new(m000005_package_vulnerability::Migration),
         ]
     }
 }

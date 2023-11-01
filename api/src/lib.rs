@@ -22,13 +22,13 @@ impl Eq for Purl<'_> {}
 
 impl Display for Purl<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.package_url.to_string())
+        write!(f, "{}", self.package_url)
     }
 }
 
 impl Debug for Purl<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.package_url.to_string())
+        write!(f, "{}", self.package_url)
     }
 }
 

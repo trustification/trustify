@@ -15,7 +15,6 @@ use sea_orm::{
 };
 use sea_orm_migration::MigratorTrait;
 
-use crate::system::package::PackageSystem;
 use crate::system::sbom::SbomSystem;
 use migration::Migrator;
 
@@ -25,6 +24,8 @@ mod sbom;
 mod vex;
 
 pub use vex::VexSystem;
+
+mod vulnerability;
 
 const DB_URL: &str = "postgres://postgres:eggs@localhost";
 const DB_NAME: &str = "huevos";
@@ -101,17 +102,6 @@ impl System {
         Ok(())
     }
 
-    pub fn package(&self) -> PackageSystem {
-        PackageSystem {
-            db: self.db.clone(),
-        }
-    }
-
-    pub fn sbom(&self) -> SbomSystem {
-        SbomSystem {
-            db: self.db.clone(),
-        }
-    }
 
     pub async fn transaction<F, T, E>(&self, f: F) -> Result<T, Error<E>>
     where

@@ -26,7 +26,6 @@ impl Related<super::package_qualifier::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-
 #[derive(FromQueryResult, Debug)]
 pub struct PackageType {
     pub package_type: String,

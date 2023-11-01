@@ -3,27 +3,22 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use crate::Purl;
-use sea_orm::{DatabaseConnection, TransactionTrait};
+use sea_orm::{DatabaseConnection, DatabaseTransaction, TransactionTrait};
 use spdx_rs::models::{RelationshipType, SPDX};
+use crate::system::System;
 
 use super::error::Error;
-use crate::system::package::PackageSystem;
 
 pub struct SbomSystem {
     pub(crate) db: Arc<DatabaseConnection>,
 }
 
-impl SbomSystem {
-    fn package(&self) -> PackageSystem {
-        PackageSystem {
-            db: self.db.clone(),
-        }
-    }
+impl System {
 
     pub async fn ingest_sbom(&self, sbom: SPDX) -> Result<(), anyhow::Error> {
-        let package_system = self.package();
 
         // FIXME: not sure this is correct. It may be that we need to use `DatabaseTransaction` instead of the `db` field
+        let system = self.clone();
         self.db
             .transaction(|tx| {
                 Box::pin(async move {
@@ -54,13 +49,13 @@ impl SbomSystem {
                                                 //println!("{:#?}", package.external_reference);
                                                 for reference in &package.external_reference {
                                                     if reference.reference_type == "purl" {
-                                                        package_system
+                                                        system
                                                             .ingest_package(
                                                                 &*reference.reference_locator,
                                                             )
                                                             .await?;
 
-                                                        package_system
+                                                        system
                                                             .ingest_package_dependency(
                                                                 described_purl.clone(),
                                                                 &*reference.reference_locator,
@@ -109,7 +104,7 @@ mod tests {
     use std::fs::File;
     use std::path::PathBuf;
     use std::str::FromStr;
-    use std::time::{Instant, SystemTime};
+    use std::time::Instant;
 
     use crate::system::System;
 
@@ -131,7 +126,7 @@ mod tests {
         let parse_time = start.elapsed();
 
         let start = Instant::now();
-        system.sbom().ingest_sbom(sbom).await?;
+        system.ingest_sbom(sbom).await?;
         let ingest_time = start.elapsed();
         let start = Instant::now();
 
@@ -139,14 +134,13 @@ mod tests {
         //println!("{}", pkg);
         //}
 
-        let package_system = system.package();
         /*
         let deps = package_system.transitive_dependencies(
             "pkg:oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012"
         ).await?;
          */
 
-        let deps = package_system.direct_dependencies(
+        let deps = system.direct_dependencies(
             "pkg:oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012"
         ).await?;
         let query_time = start.elapsed();
