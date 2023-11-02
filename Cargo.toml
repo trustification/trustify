@@ -7,5 +7,6 @@ members = [
   "api",
   "entity",
   "migration",
+  "importer",
 ]
 

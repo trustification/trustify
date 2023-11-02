@@ -1,4 +1,4 @@
-use crate::{package, package_dependency};
+use crate::package;
 use sea_orm::entity::prelude::*;
 use sea_orm::LinkDef;
 
