@@ -1,4 +1,4 @@
-mod system;
+pub mod system;
 
 use packageurl::PackageUrl;
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection, Statement};

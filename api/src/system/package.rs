@@ -4,11 +4,14 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use packageurl::PackageUrl;
-use sea_orm::{ActiveModelTrait, ColumnTrait, Condition, ConnectionTrait, DatabaseConnection, EntityOrSelect, EntityTrait, ModelTrait, QueryFilter, QuerySelect, Set, Statement, Value};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, Condition, ConnectionTrait, DatabaseConnection, EntityOrSelect,
+    EntityTrait, ModelTrait, QueryFilter, QuerySelect, Set, Statement, Value,
+};
 
+use huevos_entity::package::{PackageNamespace, PackageType};
 use huevos_entity::package_dependency::ToDependency;
 use huevos_entity::{package, package_dependency, package_qualifier};
-use huevos_entity::package::{PackageNamespace, PackageType};
 
 use crate::{PackageTree, Purl};
 
@@ -140,7 +143,6 @@ impl PackageSystem {
         Ok(None)
     }
 
-
     pub async fn package_types(&self) -> Result<Vec<String>, anyhow::Error> {
         Ok(package::Entity::find()
             .select_only()
@@ -150,9 +152,7 @@ impl PackageSystem {
             .all(&*self.db)
             .await?
             .iter()
-            .map(|e| {
-                e.package_type.clone()
-            })
+            .map(|e| e.package_type.clone())
             .collect())
     }
 
@@ -165,9 +165,7 @@ impl PackageSystem {
             .all(&*self.db)
             .await?
             .iter()
-            .map(|e| {
-                e.package_namespace.clone()
-            })
+            .map(|e| e.package_namespace.clone())
             .collect())
     }
 
@@ -198,19 +196,19 @@ impl PackageSystem {
         let mut purls = Vec::new();
 
         for (base, qualifiers) in packages {
-                let mut purl = PackageUrl::new(base.package_type, base.package_name)?;
+            let mut purl = PackageUrl::new(base.package_type, base.package_name)?;
 
-                purl.with_version(base.version);
+            purl.with_version(base.version);
 
-                if let Some(namespace) = base.package_namespace {
-                    purl.with_namespace(namespace);
-                }
+            if let Some(namespace) = base.package_namespace {
+                purl.with_namespace(namespace);
+            }
 
-                for qualifier in qualifiers {
-                    purl.add_qualifier(qualifier.key, qualifier.value)?;
-                }
+            for qualifier in qualifiers {
+                purl.add_qualifier(qualifier.key, qualifier.value)?;
+            }
 
-                purls.push(purl.into());
+            purls.push(purl.into());
         }
 
         Ok(purls)
@@ -274,7 +272,6 @@ impl PackageSystem {
              */
     }
 
-
     /*
     pub async fn transitive_dependencies<'p, P: Into<Purl<'p>>>(
         &'p self,
@@ -321,8 +318,8 @@ impl PackageSystem {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
     use crate::Purl;
+    use std::collections::HashSet;
 
     use crate::system::System;
 
@@ -429,8 +426,11 @@ mod tests {
             .transitive_dependencies("pkg:maven/com.test/package-a@1.0?type=jar")
             .await?;
 
-        assert_eq!( Purl::from("pkg:maven/com.test/package-a@1.0?type=jar"), result.purl );
-        assert_eq!( 2, result.dependencies.len());
+        assert_eq!(
+            Purl::from("pkg:maven/com.test/package-a@1.0?type=jar"),
+            result.purl
+        );
+        assert_eq!(2, result.dependencies.len());
 
         Ok(())
     }

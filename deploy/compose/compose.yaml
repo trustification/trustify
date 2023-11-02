@@ -1,0 +1,10 @@
+version: '3'
+services:
+  postgres:
+    image: docker.io/library/postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: "eggs"
+      POSTGRES_DB: "huevos"
+    restart: always
