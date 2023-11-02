@@ -1,8 +1,7 @@
+#![allow(unused)]
 pub mod system;
 
 use packageurl::PackageUrl;
-use sea_orm::{ConnectionTrait, Database, DatabaseConnection, Statement};
-use sea_orm_migration::MigratorTrait;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;

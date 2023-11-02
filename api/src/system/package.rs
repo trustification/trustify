@@ -3,8 +3,8 @@ use std::collections::HashMap;
 
 use packageurl::PackageUrl;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, Condition, ConnectionTrait, DatabaseConnection, EntityOrSelect,
-    EntityTrait, ModelTrait, QueryFilter, QuerySelect, Set, Statement, Value,
+    ActiveModelTrait, ColumnTrait, Condition, EntityTrait, ModelTrait, QueryFilter, QuerySelect,
+    Set,
 };
 
 use huevos_entity::package::{PackageNamespace, PackageType};
@@ -33,6 +33,21 @@ impl System {
             .await?;
 
         Ok(pkg)
+    }
+
+    pub async fn fetch_package<'p, P: Into<Purl<'p>>>(
+        &self,
+        pkg: P,
+    ) -> Result<Option<package::Model>, anyhow::Error> {
+        let purl = pkg.into();
+        self.get_package(
+            purl.package_url.ty(),
+            &purl.package_url.namespace(),
+            purl.package_url.name(),
+            purl.package_url.version().unwrap_or_default(),
+            purl.package_url.qualifiers(),
+        )
+        .await
     }
 
     pub async fn packages(&self) -> Result<Vec<Purl<'_>>, anyhow::Error> {
@@ -333,13 +348,7 @@ mod tests {
 
     #[tokio::test]
     async fn ingest_packages() -> Result<(), anyhow::Error> {
-        //env_logger::builder()
-            //.filter_level(log::LevelFilter::Info)
-            //.is_test(true)
-            //.init();
-
-        let system = System::start().await?;
-        system.bootstrap().await?;
+        let system = System::for_test("ingest_packages").await?;
 
         let mut packages = vec![
             "pkg:maven/io.quarkus/quarkus-hibernate-orm@2.13.5.Final?type=jar",
@@ -380,8 +389,7 @@ mod tests {
 
     #[tokio::test]
     async fn ingest_package_dependencies() -> Result<(), anyhow::Error> {
-        let system = System::start().await?;
-        system.bootstrap().await?;
+        let system = System::for_test("ingest_package_dependencies").await?;
 
         let result = system
             .ingest_package_dependency(
@@ -409,8 +417,7 @@ mod tests {
 
     #[tokio::test]
     async fn transitive_dependencies() -> Result<(), anyhow::Error> {
-        let system = System::start().await?;
-        system.bootstrap().await?;
+        let system = System::for_test("transitive_dependencies").await?;
 
         system
             .ingest_package_dependency(

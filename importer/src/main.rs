@@ -9,7 +9,7 @@ use huevos_api::system::{Context, System};
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
 
-    let system = System::start().await?;
+    let system = System::new("postgres", "eggs", "localhost", "huevos").await?;
 
     let source = FileSource::new("../csaf-walker/data/vex", FileOptions::default())?;
     // let source = HttpSource { .. };

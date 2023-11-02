@@ -1,26 +1,17 @@
-use std::io::Read;
-use std::pin::Pin;
-use std::sync::Arc;
-
-use crate::Purl;
-use sea_orm::{DatabaseConnection, DatabaseTransaction, TransactionTrait};
+use sea_orm::TransactionTrait;
 use spdx_rs::models::{RelationshipType, SPDX};
+
 use crate::system::System;
+use crate::Purl;
 
 use super::error::Error;
 
-pub struct SbomSystem {
-    pub(crate) db: Arc<DatabaseConnection>,
-}
-
 impl System {
-
     pub async fn ingest_sbom(&self, sbom: SPDX) -> Result<(), anyhow::Error> {
-
         // FIXME: not sure this is correct. It may be that we need to use `DatabaseTransaction` instead of the `db` field
         let system = self.clone();
         self.db
-            .transaction(|tx| {
+            .transaction(|_tx| {
                 Box::pin(async move {
                     for described in &sbom.document_creation_information.document_describes {
                         println!("described: {}", described);
@@ -35,7 +26,7 @@ impl System {
                                     let described_purl =
                                         Purl::from(&*described_reference.reference_locator);
                                     for relationship in
-                                        &sbom.relationships_for_related_spdx_id(&described)
+                                        &sbom.relationships_for_related_spdx_id(described)
                                     {
                                         if relationship.relationship_type
                                             == RelationshipType::ContainedBy
@@ -99,19 +90,18 @@ impl System {
 
 #[cfg(test)]
 mod tests {
-    use sea_orm::TransactionTrait;
-    use spdx_rs::models::SPDX;
     use std::fs::File;
     use std::path::PathBuf;
     use std::str::FromStr;
     use std::time::Instant;
 
+    use spdx_rs::models::SPDX;
+
     use crate::system::System;
 
     #[tokio::test]
     async fn parse_spdx() -> Result<(), anyhow::Error> {
-        let system = System::start().await?;
-        system.bootstrap().await?;
+        let system = System::for_test("parse_spdx").await?;
 
         let pwd = PathBuf::from_str(env!("PWD"))?;
         let test_data = pwd.join("test-data");
