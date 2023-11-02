@@ -14,8 +14,6 @@ impl System {
             .transaction(|_tx| {
                 Box::pin(async move {
                     for described in &sbom.document_creation_information.document_describes {
-                        println!("described: {}", described);
-
                         if let Some(described_package) = sbom
                             .package_information
                             .iter()

@@ -1,11 +1,11 @@
-use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use packageurl::PackageUrl;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, Condition, EntityTrait, ModelTrait, QueryFilter, QuerySelect,
-    Set,
+    ActiveModelTrait, ColumnTrait, Condition, ConnectionTrait, EntityTrait, FromQueryResult,
+    ModelTrait, QueryFilter, QuerySelect, Set, Statement,
 };
+use sea_query::Value;
 
 use huevos_entity::package::{PackageNamespace, PackageType};
 use huevos_entity::package_dependency::ToDependency;
@@ -15,48 +15,49 @@ use crate::system::System;
 use crate::{PackageTree, Purl};
 
 impl System {
-    pub async fn ingest_package<'p, P: Into<Purl<'p>>>(
+    pub async fn ingest_package<'p, P: Into<Purl>>(
         &self,
         pkg: P,
     ) -> Result<package::Model, anyhow::Error> {
-        //let purl = PackageUrl::from_str(pkg)?;
-        let purl = pkg.into().package_url;
+        let purl = pkg.into();
 
         let pkg = self
             .insert_or_fetch_package(
-                purl.ty(),
-                purl.namespace(),
-                purl.name(),
-                purl.version().unwrap(),
-                purl.qualifiers(),
+                &purl.ty,
+                purl.namespace.as_deref(),
+                &purl.name,
+                &purl.version,
+                &purl.qualifiers,
             )
             .await?;
 
         Ok(pkg)
     }
 
-    pub async fn fetch_package<'p, P: Into<Purl<'p>>>(
+    pub async fn fetch_package<'p, P: Into<Purl>>(
         &self,
         pkg: P,
     ) -> Result<Option<package::Model>, anyhow::Error> {
         let purl = pkg.into();
         self.get_package(
-            purl.package_url.ty(),
-            &purl.package_url.namespace(),
-            purl.package_url.name(),
-            purl.package_url.version().unwrap_or_default(),
-            purl.package_url.qualifiers(),
+            &purl.ty,
+            &purl.namespace.as_deref(),
+            &purl.name,
+            &purl.version,
+            &purl.qualifiers,
         )
         .await
     }
 
-    pub async fn packages(&self) -> Result<Vec<Purl<'_>>, anyhow::Error> {
+    pub async fn packages(&self) -> Result<Vec<Purl>, anyhow::Error> {
         let found = package::Entity::find()
             .find_with_related(package_qualifier::Entity)
             .all(&*self.db)
             .await?;
 
-        Ok(self.packages_to_purls(found).await?)
+        println!("{:#?}", found);
+
+        Ok(self.packages_to_purls(found)?)
     }
 
     pub async fn insert_or_fetch_package<'a>(
@@ -65,10 +66,8 @@ impl System {
         namespace: Option<&str>,
         name: &str,
         version: &str,
-        qualifiers: &HashMap<Cow<'a, str>, Cow<'a, str>>,
+        qualifiers: &HashMap<String, String>,
     ) -> Result<package::Model, anyhow::Error> {
-        log::info!("insert or fetch pkg");
-
         let fetch = self
             .get_package(r#type, &namespace, name, version, qualifiers)
             .await?;
@@ -109,7 +108,7 @@ impl System {
         namespace: &Option<&str>,
         name: &str,
         version: &str,
-        qualifiers: &HashMap<Cow<'a, str>, Cow<'a, str>>,
+        qualifiers: &HashMap<String, String>,
     ) -> Result<Option<package::Model>, anyhow::Error> {
         let mut conditions = Condition::all()
             .add(package::Column::PackageType.eq(r#type.to_string()))
@@ -183,7 +182,7 @@ impl System {
     // ------------------------------------------------------------------------
     // ------------------------------------------------------------------------
 
-    pub async fn ingest_package_dependency<'p1, 'p2, P1: Into<Purl<'p1>>, P2: Into<Purl<'p2>>>(
+    pub async fn ingest_package_dependency<P1: Into<Purl>, P2: Into<Purl>>(
         &self,
         dependent_package: P1,
         dependency_package: P2,
@@ -212,32 +211,40 @@ impl System {
         }
     }
 
-    async fn packages_to_purls(
+    fn packages_to_purls(
         &self,
         packages: Vec<(package::Model, Vec<package_qualifier::Model>)>,
-    ) -> Result<Vec<Purl<'_>>, anyhow::Error> {
+    ) -> Result<Vec<Purl>, anyhow::Error> {
         let mut purls = Vec::new();
 
-        for (base, qualifiers) in packages {
-            let mut purl = PackageUrl::new(base.package_type, base.package_name)?;
-
-            purl.with_version(base.version);
-
-            if let Some(namespace) = base.package_namespace {
-                purl.with_namespace(namespace);
-            }
-
-            for qualifier in qualifiers {
-                purl.add_qualifier(qualifier.key, qualifier.value)?;
-            }
-
-            purls.push(purl.into());
+        for (base, qualifiers) in &packages {
+            purls.push(self.package_to_purl(base.clone(), qualifiers.clone())?);
         }
 
         Ok(purls)
     }
 
-    pub async fn direct_dependencies<'p, P: Into<Purl<'p>>>(
+    fn package_to_purl(
+        &self,
+        base: package::Model,
+        qualifiers: Vec<package_qualifier::Model>,
+    ) -> Result<Purl, anyhow::Error> {
+        let mut purl = PackageUrl::new(base.package_type.clone(), base.package_name.clone())?;
+
+        purl.with_version(base.version.clone());
+
+        if let Some(namespace) = &base.package_namespace {
+            purl.with_namespace(namespace.clone());
+        }
+
+        for qualifier in qualifiers {
+            purl.add_qualifier(qualifier.key.clone(), qualifier.value.clone())?;
+        }
+
+        Ok(purl.into())
+    }
+
+    pub async fn direct_dependencies<'p, P: Into<Purl>>(
         &self,
         dependent_package: P,
     ) -> Result<Vec<Purl>, anyhow::Error> {
@@ -249,9 +256,10 @@ impl System {
             .all(&*self.db)
             .await?;
 
-        Ok(self.packages_to_purls(found).await?)
+        Ok(self.packages_to_purls(found)?)
     }
 
+    /*
     pub async fn transitive_dependencies<'p, P: Into<Purl<'p>>>(
         &'p self,
         root: P,
@@ -286,29 +294,20 @@ impl System {
 
         Ok(build_tree(&root_purl, &purls))
 
-        /*
-        Ok( PackageTree {
-            purl: root_purl.clone(),
-            dependencies: vec![],
-        })
-
-             */
     }
+     */
 
-    /*
-    pub async fn transitive_dependencies<'p, P: Into<Purl<'p>>>(
-        &'p self,
+    pub async fn transitive_dependencies<P: Into<Purl>>(
+        &self,
         root: P,
-    ) -> Result<PackageTree<'p>, anyhow::Error> {
-
-        let root_model = self.ingest_package( root).await?;
+    ) -> Result<PackageTree, anyhow::Error> {
+        let root_model = self.ingest_package(root).await?;
         let root_id = Value::Int(Some(root_model.id));
 
-        let result = package_dependency::Entity::find()
-            .from_raw_sql(
-                Statement::from_sql_and_values(
-                    self.db.get_database_backend(),
-                    r#"
+        let relationships = package_dependency::Entity::find()
+            .from_raw_sql(Statement::from_sql_and_values(
+                self.db.get_database_backend(),
+                r#"
                     WITH RECURSIVE transitive AS (
                         SELECT
                             timestamp, dependent_package_id, dependency_package_id
@@ -323,28 +322,72 @@ impl System {
                             package_dependency pd
                         INNER JOIN transitive transitive1
                             ON pd.dependent_package_id = transitive1.dependency_package_id
-                    ) SELECT * FROM transitive
+                    )
+                    SELECT * FROM transitive
                     "#,
-                        vec![root_id]
-                )
-            )
+                vec![root_id],
+            ))
             .all(&*self.db)
             .await?;
 
-        println!("{:#?}", result);
+        let mut dependencies = HashMap::new();
+        let mut all_packages = HashSet::new();
 
-        todo!()
+        for relationship in relationships {
+            all_packages.insert(relationship.dependent_package_id);
+            all_packages.insert(relationship.dependency_package_id);
+            dependencies
+                .entry(relationship.dependent_package_id)
+                .or_insert(Vec::new())
+                .push(relationship.dependency_package_id)
+        }
+
+        let mut purls = HashMap::new();
+
+        for pkg_id in all_packages {
+            let pkg = package::Entity::find_by_id(pkg_id)
+                .find_with_related(package_qualifier::Entity)
+                .all(&*self.db)
+                .await?;
+
+            if !pkg.is_empty() {
+                let (base, qualifiers) = &pkg[0];
+                let purl = self.package_to_purl(base.clone(), qualifiers.clone())?;
+                purls.insert(pkg_id, purl);
+            }
+        }
+
+        fn build_tree(
+            root: i32,
+            relationships: &HashMap<i32, Vec<i32>>,
+            purls: &HashMap<i32, Purl>,
+        ) -> PackageTree {
+            let dependencies = relationships
+                .get(&root)
+                .iter()
+                .flat_map(|deps| {
+                    deps.iter()
+                        .map(|dep| build_tree(*dep, relationships, purls))
+                })
+                .collect();
+
+            PackageTree {
+                id: root,
+                purl: purls[&root].clone(),
+                dependencies,
+            }
+        }
+
+        Ok(build_tree(root_model.id, &dependencies, &purls))
     }
-
-     */
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::Purl;
     use std::collections::HashSet;
 
     use crate::system::System;
+    use crate::Purl;
 
     #[tokio::test]
     async fn ingest_packages() -> Result<(), anyhow::Error> {
@@ -437,6 +480,13 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 "pkg:maven/com.test/package-acd@1.0?type=jar",
+            )
+            .await?;
+
+        system
+            .ingest_package_dependency(
+                "pkg:maven/com.test/package-ab@1.0?type=jar",
+                "pkg:maven/com.test/package-ac@1.0?type=jar",
             )
             .await?;
 
