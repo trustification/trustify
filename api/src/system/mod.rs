@@ -81,7 +81,7 @@ impl System {
         Ok(Self { db: Arc::new(db) })
     }
 
-    pub(crate) async fn bootstrap(&self) -> Result<(), anyhow::Error> {
+    pub async fn bootstrap(&self) -> Result<(), anyhow::Error> {
         self.db
             .execute(Statement::from_string(
                 self.db.get_database_backend(),

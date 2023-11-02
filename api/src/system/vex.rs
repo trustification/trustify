@@ -1,6 +1,5 @@
 use crate::system::error::Error;
 use sea_orm::DatabaseTransaction;
-use std::sync::Arc;
 
 pub struct VexSystem<'t> {
     pub(crate) tx: &'t DatabaseTransaction,
