@@ -5,6 +5,7 @@
 resolver = "2"
 members = [
   "api",
+  "cli",
   "client",
   "common",
   "entity",

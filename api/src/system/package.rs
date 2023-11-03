@@ -8,13 +8,13 @@ use sea_orm::{
 use sea_query::Value;
 
 use huevos_common::purl::{Purl, PurlErr};
-use huevos_entity::{package, package_dependency, package_qualifier};
 use huevos_entity::package::{PackageNamespace, PackageType};
 use huevos_entity::package_dependency::{ToDependency, ToDependent};
+use huevos_entity::{package, package_dependency, package_qualifier};
 
-use crate::PackageTree;
 use crate::system::error::Error;
 use crate::system::System;
+use huevos_common::package::PackageTree;
 
 impl System {
     pub async fn ingest_package<'p, P: Into<Purl>>(&self, pkg: P) -> Result<package::Model, Error> {
@@ -26,7 +26,7 @@ impl System {
                     &purl.ty,
                     purl.namespace.as_deref(),
                     &purl.name,
-                    &version,
+                    version,
                     &purl.qualifiers,
                 )
                 .await?;
@@ -42,7 +42,6 @@ impl System {
     ) -> Result<Option<package::Model>, Error> {
         let purl = pkg.into();
         if let Some(version) = &purl.version {
-
             self.get_package(
                 &purl.ty,
                 &purl.namespace.as_deref(),
@@ -56,13 +55,31 @@ impl System {
         }
     }
 
-    pub async fn packages(&self) -> Result<Vec<Purl>, anyhow::Error> {
+    pub async fn packages(&self) -> Result<Vec<Purl>, Error> {
         let found = package::Entity::find()
             .find_with_related(package_qualifier::Entity)
             .all(&*self.db)
             .await?;
 
-        println!("{:#?}", found);
+        Ok(self.packages_to_purls(found)?)
+    }
+
+    pub async fn package_variants<P: Into<Purl>>(&self, purl: P) -> Result<Vec<Purl>, Error> {
+        let purl = purl.into();
+
+        let mut conditions = Condition::all()
+            .add(package::Column::PackageType.eq(purl.ty.clone()))
+            .add(package::Column::PackageName.eq(purl.name.clone()));
+
+        if let Some(ns) = &purl.namespace {
+            conditions = conditions.add(package::Column::PackageNamespace.eq(ns.clone()));
+        }
+
+        let found = package::Entity::find()
+            .find_with_related(package_qualifier::Entity)
+            .filter(conditions)
+            .all(&*self.db)
+            .await?;
 
         Ok(self.packages_to_purls(found)?)
     }
@@ -254,7 +271,7 @@ impl System {
     pub async fn direct_dependencies<'p, P: Into<Purl>>(
         &self,
         dependent_package: P,
-    ) -> Result<Vec<Purl>, anyhow::Error> {
+    ) -> Result<Vec<Purl>, Error> {
         let dependent = self.ingest_package(dependent_package).await?;
 
         let found = dependent
@@ -269,7 +286,7 @@ impl System {
     pub async fn direct_dependents<'p, P: Into<Purl>>(
         &self,
         dependency_package: P,
-    ) -> Result<Vec<Purl>, anyhow::Error> {
+    ) -> Result<Vec<Purl>, Error> {
         let dependency = self.ingest_package(dependency_package).await?;
 
         let found = dependency
@@ -284,7 +301,7 @@ impl System {
     pub async fn transitive_dependencies<P: Into<Purl>>(
         &self,
         root: P,
-    ) -> Result<PackageTree, anyhow::Error> {
+    ) -> Result<PackageTree, Error> {
         let root_model = self.ingest_package(root).await?;
         let root_id = Value::Int(Some(root_model.id));
 

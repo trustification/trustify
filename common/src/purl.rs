@@ -4,13 +4,13 @@ use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 
 use packageurl::PackageUrl;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[derive(Debug, Copy, Clone, thiserror::Error)]
 pub enum PurlErr {
     #[error("missing version")]
-    MissingVersion
+    MissingVersion,
 }
 
 #[derive(Clone, PartialEq)]
@@ -23,10 +23,11 @@ pub struct Purl {
 }
 
 impl Serialize for Purl {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where S: Serializer {
-        serializer.serialize_str(
-            self.to_string().as_str()
-        )
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(self.to_string().as_str())
     }
 }
 
@@ -38,13 +39,13 @@ impl FromStr for Purl {
     }
 }
 impl<'de> Deserialize<'de> for Purl {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where D: Deserializer<'de> {
-        deserializer.deserialize_str(
-            PurlVisitor
-        )
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_str(PurlVisitor)
     }
 }
-
 
 struct PurlVisitor;
 
@@ -55,7 +56,10 @@ impl<'de> Visitor<'de> for PurlVisitor {
         formatter.write_str("a pURL")
     }
 
-    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E> where E: Error {
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: Error,
+    {
         Ok(v.into())
     }
 }
@@ -92,12 +96,14 @@ impl Display for Purl {
         let qualifiers = if self.qualifiers.is_empty() {
             "".to_string()
         } else {
-            format!( "?{}",
-                     self.qualifiers
-                .iter()
-                .map(|(k, v)| format!("{}={}", k, v))
-                .collect::<Vec<_>>()
-                .join("&") )
+            format!(
+                "?{}",
+                self.qualifiers
+                    .iter()
+                    .map(|(k, v)| format!("{}={}", k, v))
+                    .collect::<Vec<_>>()
+                    .join("&")
+            )
         };
 
         let version = if let Some(version) = &self.version {
@@ -150,7 +156,7 @@ impl From<PackageUrl<'_>> for Purl {
             ty: value.ty().to_string(),
             namespace: value.namespace().map(|inner| inner.to_string()),
             name: value.name().to_string(),
-            version: value.version().map(|inner|inner.to_string()),
+            version: value.version().map(|inner| inner.to_string()),
             qualifiers: value
                 .qualifiers()
                 .iter()
@@ -166,32 +172,20 @@ mod tests {
 
     #[test]
     fn purl_serde() {
-
         let purl: Purl = serde_json::from_str(
             r#"
             "pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar"
-            "#
-        ).unwrap();
+            "#,
+        )
+        .unwrap();
 
-        assert_eq!(
-            "maven",
-            purl.ty
-        );
+        assert_eq!("maven", purl.ty);
 
-        assert_eq!(
-            Some("io.quarkus".to_string()),
-            purl.namespace
-        );
+        assert_eq!(Some("io.quarkus".to_string()), purl.namespace);
 
-        assert_eq!(
-            Some("1.2.3".to_string()),
-            purl.version
-        );
+        assert_eq!(Some("1.2.3".to_string()), purl.version);
 
-        assert_eq!(
-            purl.qualifiers.get( "foo"),
-            Some(&"bar".to_string())
-        );
+        assert_eq!(purl.qualifiers.get("foo"), Some(&"bar".to_string()));
 
         let purl: Purl = "pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar".into();
         let json = serde_json::to_string(&purl).unwrap();
@@ -200,7 +194,5 @@ mod tests {
             json,
             r#""pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar""#
         );
-
     }
-
 }

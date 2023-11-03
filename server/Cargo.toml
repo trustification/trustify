@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 huevos-api = { path = "../api"}
+huevos-common = { path = "../common"}
 anyhow = "1.0.72"
 log = "0.4.19"
 env_logger = "0.10.0"
@@ -18,3 +19,4 @@ utoipa = { version = "4", features = ["actix_extras"] }
 utoipa-swagger-ui = { version = "4", features = ["actix-web"] }
 
 [dev-dependencies]
+url-escape = "0.1.1"

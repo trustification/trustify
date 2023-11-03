@@ -1,5 +1,5 @@
-use sea_orm::DbErr;
 use huevos_common::purl::PurlErr;
+use sea_orm::DbErr;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
