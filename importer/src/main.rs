@@ -7,7 +7,7 @@ use csaf_walker::source::{DispatchSource, FileOptions, FileSource};
 use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
 use csaf_walker::walker::Walker;
 use huevos_api::system::System;
-use huevos_api::Purl;
+use huevos_common::purl::Purl;
 use packageurl::PackageUrl;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};

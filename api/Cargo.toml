@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 huevos-entity = { path = "../entity"}
+huevos-common = { path = "../common" }
 sea-orm = { version = "0.12", features = [ "sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros" ] }
 sea-query = "0.30.0"
 sea-orm-migration = "0.12.2"

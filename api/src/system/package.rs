@@ -6,13 +6,14 @@ use sea_orm::{
     ModelTrait, QueryFilter, QuerySelect, Set, Statement,
 };
 use sea_query::Value;
+use huevos_common::purl::Purl;
 
 use huevos_entity::package::{PackageNamespace, PackageType};
 use huevos_entity::package_dependency::{ToDependency, ToDependent};
 use huevos_entity::{package, package_dependency, package_qualifier};
 
 use crate::system::System;
-use crate::{PackageTree, Purl};
+use crate::PackageTree;
 
 impl System {
     pub async fn ingest_package<'p, P: Into<Purl>>(
@@ -365,7 +366,7 @@ mod tests {
     use std::collections::HashSet;
 
     use crate::system::System;
-    use crate::Purl;
+    use huevos_common::purl::Purl;
 
     #[tokio::test]
     async fn ingest_packages() -> Result<(), anyhow::Error> {

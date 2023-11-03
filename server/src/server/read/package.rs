@@ -1,7 +1,9 @@
-use actix_web::{get, post, Responder, web};
+use actix_web::{get, HttpResponse, post, Responder, web};
+use serde::{Deserialize, Serialize};
 
 use crate::AppState;
 
+#[derive(Serialize, Deserialize)]
 pub struct PackageParams {
     pub transitive: bool
 }
@@ -16,12 +18,14 @@ pub async fn dependencies(state: web::Data<AppState>, purl: web::Path<String>, p
     if params.transitive {
         state.system.transitive_dependencies(
             &*purl
-        ).await?;
+        ).await;
     } else {
         state.system.direct_dependencies(
             &*purl
-        ).await?;
+        ).await;
     }
+
+    Ok(HttpResponse::Ok().finish())
 }
 
 #[utoipa::path(
@@ -31,7 +35,7 @@ pub async fn dependencies(state: web::Data<AppState>, purl: web::Path<String>, p
 )]
 #[get("package/{purl}/dependents")]
 pub async fn dependents(state: web::Data<AppState>, purl: web::Path<String>) -> actix_web::Result<impl Responder> {
-    todo!()
+    Ok(HttpResponse::Ok().finish())
 }
 
 
@@ -43,5 +47,5 @@ pub async fn dependents(state: web::Data<AppState>, purl: web::Path<String>) -> 
 )]
 #[get("package/{purl}/vulnerabilities")]
 pub async fn vulnerabilities(state: web::Data<AppState>, purl: web::Path<String>, params: web::Query<PackageParams>) -> actix_web::Result<impl Responder> {
-    todo!()
+    Ok(HttpResponse::Ok().finish())
 }

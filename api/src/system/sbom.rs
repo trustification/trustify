@@ -2,7 +2,7 @@ use sea_orm::TransactionTrait;
 use spdx_rs::models::{RelationshipType, SPDX};
 
 use crate::system::System;
-use crate::Purl;
+use huevos_common::purl::Purl;
 
 use super::error::Error;
 
