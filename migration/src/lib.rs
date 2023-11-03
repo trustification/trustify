@@ -1,7 +1,7 @@
 pub use sea_orm_migration::prelude::*;
 
-pub mod m000001_create_package;
-pub mod m000002_create_package_qualifier;
+mod m000001_create_package;
+mod m000002_create_package_qualifier;
 mod m000003_create_package_dependency;
 mod m000004_create_vulnerability;
 mod m000005_package_vulnerability;
