@@ -6,48 +6,54 @@ use sea_orm::{
     ModelTrait, QueryFilter, QuerySelect, Set, Statement,
 };
 use sea_query::Value;
-use huevos_common::purl::Purl;
 
+use huevos_common::purl::{Purl, PurlErr};
+use huevos_entity::{package, package_dependency, package_qualifier};
 use huevos_entity::package::{PackageNamespace, PackageType};
 use huevos_entity::package_dependency::{ToDependency, ToDependent};
-use huevos_entity::{package, package_dependency, package_qualifier};
 
-use crate::system::System;
 use crate::PackageTree;
+use crate::system::error::Error;
+use crate::system::System;
 
 impl System {
-    pub async fn ingest_package<'p, P: Into<Purl>>(
-        &self,
-        pkg: P,
-    ) -> Result<package::Model, anyhow::Error> {
+    pub async fn ingest_package<'p, P: Into<Purl>>(&self, pkg: P) -> Result<package::Model, Error> {
         let purl = pkg.into();
 
-        let pkg = self
-            .insert_or_fetch_package(
-                &purl.ty,
-                purl.namespace.as_deref(),
-                &purl.name,
-                &purl.version,
-                &purl.qualifiers,
-            )
-            .await?;
-
-        Ok(pkg)
+        if let Some(version) = &purl.version {
+            let pkg = self
+                .insert_or_fetch_package(
+                    &purl.ty,
+                    purl.namespace.as_deref(),
+                    &purl.name,
+                    &version,
+                    &purl.qualifiers,
+                )
+                .await?;
+            Ok(pkg)
+        } else {
+            Err(PurlErr::MissingVersion.into())
+        }
     }
 
     pub async fn fetch_package<'p, P: Into<Purl>>(
         &self,
         pkg: P,
-    ) -> Result<Option<package::Model>, anyhow::Error> {
+    ) -> Result<Option<package::Model>, Error> {
         let purl = pkg.into();
-        self.get_package(
-            &purl.ty,
-            &purl.namespace.as_deref(),
-            &purl.name,
-            &purl.version,
-            &purl.qualifiers,
-        )
-        .await
+        if let Some(version) = &purl.version {
+
+            self.get_package(
+                &purl.ty,
+                &purl.namespace.as_deref(),
+                &purl.name,
+                version,
+                &purl.qualifiers,
+            )
+            .await
+        } else {
+            Err(PurlErr::MissingVersion.into())
+        }
     }
 
     pub async fn packages(&self) -> Result<Vec<Purl>, anyhow::Error> {
@@ -110,7 +116,7 @@ impl System {
         name: &str,
         version: &str,
         qualifiers: &HashMap<String, String>,
-    ) -> Result<Option<package::Model>, anyhow::Error> {
+    ) -> Result<Option<package::Model>, Error> {
         let mut conditions = Condition::all()
             .add(package::Column::PackageType.eq(r#type.to_string()))
             .add(package::Column::PackageName.eq(name.to_string()))
@@ -275,7 +281,6 @@ impl System {
         Ok(self.packages_to_purls(found)?)
     }
 
-
     pub async fn transitive_dependencies<P: Into<Purl>>(
         &self,
         root: P,
@@ -365,8 +370,9 @@ impl System {
 mod tests {
     use std::collections::HashSet;
 
-    use crate::system::System;
     use huevos_common::purl::Purl;
+
+    use crate::system::System;
 
     #[tokio::test]
     async fn ingest_packages() -> Result<(), anyhow::Error> {

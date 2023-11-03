@@ -38,6 +38,15 @@ pub async fn dependents(state: web::Data<AppState>, purl: web::Path<String>) -> 
     Ok(HttpResponse::Ok().finish())
 }
 
+#[utoipa::path(
+    responses(
+        (status = 200, description = "Affected packages"),
+    ),
+)]
+#[get("package/{purl}/versions")]
+pub async fn versions(state: web::Data<AppState>, purl: web::Path<String>) -> actix_web::Result<impl Responder> {
+    Ok(HttpResponse::Ok().finish())
+}
 
 
 #[utoipa::path(
