@@ -8,7 +8,7 @@ use sea_orm::{
 use sea_query::Value;
 
 use huevos_entity::package::{PackageNamespace, PackageType};
-use huevos_entity::package_dependency::ToDependency;
+use huevos_entity::package_dependency::{ToDependency, ToDependent};
 use huevos_entity::{package, package_dependency, package_qualifier};
 
 use crate::system::System;
@@ -259,43 +259,21 @@ impl System {
         Ok(self.packages_to_purls(found)?)
     }
 
-    /*
-    pub async fn transitive_dependencies<'p, P: Into<Purl<'p>>>(
-        &'p self,
-        root: P,
-    ) -> Result<PackageTree<'p>, anyhow::Error> {
-        let root_purl = root.into();
+    pub async fn direct_dependents<'p, P: Into<Purl>>(
+        &self,
+        dependency_package: P,
+    ) -> Result<Vec<Purl>, anyhow::Error> {
+        let dependency = self.ingest_package(dependency_package).await?;
 
-        let mut purls = HashMap::new();
-        let mut queue = Vec::new();
-        queue.push(root_purl.clone());
+        let found = dependency
+            .find_linked(ToDependent)
+            .find_with_related(package_qualifier::Entity)
+            .all(&*self.db)
+            .await?;
 
-        while let Some(cur) = queue.pop() {
-            let dependencies = self.direct_dependencies(cur.clone()).await?;
-            queue.extend_from_slice(&dependencies);
-            purls.insert(cur, dependencies);
-        }
-
-        fn build_tree<'p>(
-            root: &Purl<'p>,
-            map: &HashMap<Purl<'p>, Vec<Purl<'p>>>,
-        ) -> PackageTree<'p> {
-            let dependencies = map
-                .get(root)
-                .iter()
-                .flat_map(|deps| deps.iter().map(|dep| build_tree(dep, map)))
-                .collect();
-
-            PackageTree {
-                purl: root.clone(),
-                dependencies,
-            }
-        }
-
-        Ok(build_tree(&root_purl, &purls))
-
+        Ok(self.packages_to_purls(found)?)
     }
-     */
+
 
     pub async fn transitive_dependencies<P: Into<Purl>>(
         &self,

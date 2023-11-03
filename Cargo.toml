@@ -5,8 +5,11 @@
 resolver = "2"
 members = [
   "api",
+  "client",
+  "common",
   "entity",
-  "migration",
   "importer",
+  "migration",
+  "server",
 ]
 

@@ -26,6 +26,16 @@ pub enum Relation {
 }
 
 pub struct ToDependent;
+
+impl Linked for ToDependent {
+    type FromEntity = package::Entity;
+    type ToEntity = package::Entity;
+
+    fn link(&self) -> Vec<LinkDef> {
+        vec![Relation::Dependency.def().rev(), Relation::Dependent.def()]
+    }
+}
+
 pub struct ToDependency;
 
 impl Linked for ToDependency {
