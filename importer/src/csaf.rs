@@ -1,5 +1,6 @@
 use csaf::definitions::{Branch, BranchesT};
 use csaf::product_tree::ProductTree;
+use csaf::Csaf;
 
 #[allow(clippy::needless_lifetimes)]
 pub fn walk_product_tree_branches<'a, F>(product_tree: &'a Option<ProductTree>, f: F)
@@ -35,4 +36,23 @@ fn walk_product_branches_ref<'a, F>(
             parents.pop();
         }
     }
+}
+
+pub fn trace_product<'a>(csaf: &'a Csaf, product_id: &str) -> Vec<&'a Branch> {
+    let mut result = vec![];
+
+    walk_product_tree_branches(&csaf.product_tree, |parents, branch| {
+        if let Some(full_name) = &branch.product {
+            if full_name.product_id.0 == product_id {
+                // trace back
+                result = parents
+                    .iter()
+                    .copied()
+                    .chain(Some(branch))
+                    .collect::<Vec<&'a Branch>>()
+            }
+        }
+    });
+
+    result
 }
