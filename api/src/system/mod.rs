@@ -11,13 +11,10 @@ use sea_orm_migration::MigratorTrait;
 
 use migration::Migrator;
 
-mod error;
-mod package;
-mod sbom;
-mod vex;
-mod vulnerability;
-
-pub use vex::CveSystem;
+pub mod error;
+pub mod package;
+pub mod sbom;
+pub mod vulnerability;
 
 const DB_URL: &str = "postgres://postgres:eggs@localhost";
 const DB_NAME: &str = "huevos";
@@ -25,16 +22,6 @@ const DB_NAME: &str = "huevos";
 #[derive(Clone)]
 pub struct System {
     db: Arc<DatabaseConnection>,
-}
-
-pub struct Context<'t> {
-    tx: &'t DatabaseTransaction,
-}
-
-impl<'t> Context<'t> {
-    pub fn cve(&self) -> CveSystem {
-        CveSystem { tx: &self.tx }
-    }
 }
 
 pub enum Error<E: Send> {
@@ -120,29 +107,6 @@ impl System {
         db.close().await?;
 
         Self::new(username, password, host, db_name).await
-    }
-
-    pub async fn transaction<F, T, E>(&self, f: F) -> Result<T, Error<E>>
-    where
-        F: for<'c> FnOnce(Context<'c>) -> Pin<Box<dyn Future<Output = Result<T, E>> + Send + 'c>>
-            + Send,
-        T: Send,
-        E: Send,
-    {
-        let db = self.db.clone();
-        let tx = db.begin().await?;
-
-        let ctx = Context { tx: &tx };
-        match f(ctx).await {
-            Err(err) => {
-                tx.rollback().await?;
-                Err(Error::Transaction(err))
-            }
-            Ok(r) => {
-                tx.commit().await?;
-                Ok(r)
-            }
-        }
     }
 
     pub async fn close(self) -> anyhow::Result<()> {

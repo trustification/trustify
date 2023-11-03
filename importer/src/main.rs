@@ -1,12 +1,17 @@
-use csaf::document::Category;
+use crate::csaf::walk_product_tree_branches;
+use ::csaf::definitions::ProductIdT;
+use ::csaf::document::Category;
+use ::csaf::Csaf;
 use csaf_walker::retrieve::RetrievingVisitor;
 use csaf_walker::source::{DispatchSource, FileOptions, FileSource};
 use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
 use csaf_walker::walker::Walker;
-use huevos_api::system::{Context, System};
+use huevos_api::system::System;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
 use walker_common::validate::ValidationOptions;
+
+mod csaf;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -64,15 +69,7 @@ async fn main() -> anyhow::Result<()> {
                 None => return Ok(()),
             }
 
-            if let Err(err) = system
-                .transaction(|ctx| {
-                    Box::pin(async move {
-                        process(ctx, doc).await?;
-                        Ok::<_, anyhow::Error>(())
-                    })
-                })
-                .await
-            {
+            if let Err(err) = process(&system, doc).await {
                 log::warn!("Failed to process {url}: {err}");
             }
 
@@ -88,8 +85,8 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn process(ctx: Context<'_>, doc: ValidatedAdvisory) -> anyhow::Result<()> {
-    let csaf = serde_json::from_slice::<csaf::Csaf>(&doc.data)?;
+async fn process(ctx: &System, doc: ValidatedAdvisory) -> anyhow::Result<()> {
+    let csaf = serde_json::from_slice::<Csaf>(&doc.data)?;
 
     if !matches!(csaf.document.category, Category::Vex) {
         // not a vex, we ignore it
@@ -98,7 +95,19 @@ async fn process(ctx: Context<'_>, doc: ValidatedAdvisory) -> anyhow::Result<()>
 
     log::info!("Ingesting: {}", doc.url);
 
-    ctx.cve().ingest_cve(csaf).await?;
+    // ctx..ingest_cve(csaf).await?;
+
+    for vuln in csaf.vulnerabilities.into_iter().flatten() {
+        let id = match &vuln.cve {
+            Some(cve) => cve,
+            None => continue,
+        };
+        ctx.ingest_vulnerability(&id).await?;
+
+        if let Some(ps) = &vuln.product_status {
+            if let Some(affected) = &ps.known_affected {}
+        }
+    }
 
     Ok(())
 }
