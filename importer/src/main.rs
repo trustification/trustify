@@ -4,12 +4,39 @@ use csaf_walker::source::{DispatchSource, FileOptions, FileSource};
 use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
 use csaf_walker::walker::Walker;
 use huevos_api::system::{Context, System};
+use std::time::SystemTime;
+use time::{Date, Month, UtcOffset};
+use walker_common::validate::ValidationOptions;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     let system = System::new("postgres", "eggs", "localhost", "huevos").await?;
+
+    let filter = |name: &str| {
+        // RHAT: we have advisories marked as "vex"
+        if !name.starts_with("cve-") {
+            return false;
+        }
+
+        // only work with 2023 data for now
+        if !name.starts_with("cve-2023-") {
+            return false;
+        }
+
+        true
+    };
+
+    //  because we still have GPG v3 signatures
+    let options = ValidationOptions {
+        validation_date: Some(SystemTime::from(
+            Date::from_calendar_date(2007, Month::January, 1)
+                .unwrap()
+                .midnight()
+                .assume_offset(UtcOffset::UTC),
+        )),
+    };
 
     let source = FileSource::new("../csaf-walker/data/vex", FileOptions::default())?;
     // let source = HttpSource { .. };
@@ -27,14 +54,12 @@ async fn main() -> anyhow::Result<()> {
             };
 
             let url = doc.url.clone();
+
             match url.path_segments().and_then(|path| path.last()) {
-                Some(name) if name.starts_with("cve-") => {
-                    // ok, go ahead
-                }
                 Some(name) => {
-                    // RHAT: we also have advisories with the "vex" type
-                    log::info!("Ignoring non-vex file: {name}");
-                    return Ok(());
+                    if !filter(name) {
+                        return Ok(());
+                    }
                 }
                 None => return Ok(()),
             }
@@ -53,7 +78,8 @@ async fn main() -> anyhow::Result<()> {
 
             Ok(())
         }
-    });
+    })
+    .with_options(options);
 
     Walker::new(source.clone())
         .walk(RetrievingVisitor::new(source, visitor))
@@ -70,7 +96,9 @@ async fn process(ctx: Context<'_>, doc: ValidatedAdvisory) -> anyhow::Result<()>
         return Ok(());
     }
 
-    ctx.vex().ingest_vex(csaf).await?;
+    log::info!("Ingesting: {}", doc.url);
+
+    ctx.cve().ingest_cve(csaf).await?;
 
     Ok(())
 }

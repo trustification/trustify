@@ -10,14 +10,17 @@ use sea_orm::{
 use sea_orm_migration::MigratorTrait;
 
 use migration::Migrator;
-pub use vex::VexSystem;
 
 mod error;
 mod package;
 mod sbom;
 mod vex;
-
 mod vulnerability;
+
+pub use vex::CveSystem;
+
+const DB_URL: &str = "postgres://postgres:eggs@localhost";
+const DB_NAME: &str = "huevos";
 
 #[derive(Clone)]
 pub struct System {
@@ -29,8 +32,8 @@ pub struct Context<'t> {
 }
 
 impl<'t> Context<'t> {
-    pub fn vex(&self) -> VexSystem {
-        VexSystem { tx: self.tx }
+    pub fn cve(&self) -> CveSystem {
+        CveSystem { tx: &self.tx }
     }
 }
 
@@ -140,5 +143,9 @@ impl System {
                 Ok(r)
             }
         }
+    }
+
+    pub async fn close(self) -> anyhow::Result<()> {
+        Ok(self.db.as_ref().clone().close().await?)
     }
 }

@@ -5,6 +5,7 @@ pub mod m000002_create_package_qualifier;
 mod m000003_create_package_dependency;
 mod m000004_create_vulnerability;
 mod m000005_package_vulnerability;
+mod m000006_create_vex;
 
 pub struct Migrator;
 
@@ -17,6 +18,7 @@ impl MigratorTrait for Migrator {
             Box::new(m000003_create_package_dependency::Migration),
             Box::new(m000004_create_vulnerability::Migration),
             Box::new(m000005_package_vulnerability::Migration),
+            Box::new(m000006_create_vex::Migration),
         ]
     }
 }
