@@ -27,7 +27,7 @@ pub async fn dependencies(
     if matches!(params.transitive, Some(true)) {
         let tree = state
             .system
-            .transitive_dependencies(purl.clone())
+            .transitive_package_dependencies(purl.clone())
             .await
             .map_err(Error::from)?;
         Ok(HttpResponse::Ok().json(tree))
@@ -106,11 +106,18 @@ mod tests {
             system: bootstrap_system("package-dependencies").await?,
         });
 
+        let sbom = state
+            .system
+            .ingest_sbom(
+                "http://test.com/package-dependencies"
+            ).await?;
+
         state
             .system
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
+                &sbom,
             )
             .await?;
 
@@ -119,6 +126,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
+                &sbom,
             )
             .await?;
 
@@ -127,6 +135,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 "pkg:maven/com.test/package-acd@1.0?type=jar",
+                &sbom,
             )
             .await?;
 
@@ -135,6 +144,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
+                &sbom,
             )
             .await?;
 
@@ -167,11 +177,18 @@ mod tests {
             system: bootstrap_system("package-transitive-dependencies").await?,
         });
 
+        let sbom = state
+            .system
+            .ingest_sbom(
+                "http://test.com/package-transitive-dependencies"
+            ).await?;
+
         state
             .system
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
+                &sbom
             )
             .await?;
 
@@ -180,6 +197,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
+                &sbom
             )
             .await?;
 
@@ -188,6 +206,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 "pkg:maven/com.test/package-acd@1.0?type=jar",
+                &sbom
             )
             .await?;
 
@@ -196,6 +215,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
+                &sbom
             )
             .await?;
 

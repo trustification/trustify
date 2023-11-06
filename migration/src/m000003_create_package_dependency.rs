@@ -1,6 +1,7 @@
-use crate::m000001_create_package::Package;
+use crate::m000002_create_package::Package;
 use crate::Now;
 use sea_orm_migration::prelude::*;
+use crate::m000001_sbom::Sbom;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -20,13 +21,27 @@ impl MigrationTrait for Migration {
                             .default(Func::cust(Now)),
                     )
                     .col(
+                        ColumnDef::new(PackageDependency::SbomId)
+                            .integer()
+                            .not_null(),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("sbom_id")
+                            .from(
+                                PackageDependency::Table,
+                                PackageDependency::SbomId,
+                            )
+                            .to(Sbom::Table, Sbom::Id),
+                    )
+                    .col(
                         ColumnDef::new(PackageDependency::DependentPackageId)
                             .integer()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .name("depdendent_package_id")
+                            .name("dependent_package_id")
                             .from(
                                 PackageDependency::Table,
                                 PackageDependency::DependentPackageId,
@@ -40,7 +55,7 @@ impl MigrationTrait for Migration {
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .name("dependency_package_Id")
+                            .name("dependency_package_id")
                             .from(
                                 PackageDependency::Table,
                                 PackageDependency::DependencyPackageId,
@@ -70,6 +85,7 @@ impl MigrationTrait for Migration {
 pub enum PackageDependency {
     Table,
     Timestamp,
+    SbomId,
     DependentPackageId,
     DependencyPackageId,
 }

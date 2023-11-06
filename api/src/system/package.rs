@@ -10,7 +10,7 @@ use sea_query::Value;
 use huevos_common::purl::{Purl, PurlErr};
 use huevos_entity::package::{PackageNamespace, PackageType};
 use huevos_entity::package_dependency::{ToDependency, ToDependent};
-use huevos_entity::{package, package_dependency, package_qualifier};
+use huevos_entity::{package, package_dependency, package_qualifier, sbom};
 
 use crate::system::error::Error;
 use crate::system::System;
@@ -210,6 +210,7 @@ impl System {
         &self,
         dependent_package: P1,
         dependency_package: P2,
+        sbom: &sbom::Model,
     ) -> Result<package_dependency::Model, anyhow::Error> {
         let dependent = self.ingest_package(dependent_package).await?;
         let dependency = self.ingest_package(dependency_package).await?;
@@ -218,7 +219,8 @@ impl System {
             .filter(
                 Condition::all()
                     .add(package_dependency::Column::DependentPackageId.eq(dependent.id))
-                    .add(package_dependency::Column::DependencyPackageId.eq(dependency.id)),
+                    .add(package_dependency::Column::DependencyPackageId.eq(dependency.id))
+                    .add(package_dependency::Column::SbomId.eq(sbom.id)),
             )
             .one(&*self.db)
             .await?
@@ -227,6 +229,7 @@ impl System {
                 let entity = package_dependency::ActiveModel {
                     dependent_package_id: Set(dependent.id),
                     dependency_package_id: Set(dependency.id),
+                    sbom_id: Set( sbom.id ),
                 };
 
                 Ok(entity.insert(&*self.db).await?)
@@ -235,7 +238,7 @@ impl System {
         }
     }
 
-    fn packages_to_purls(
+    pub(crate) fn packages_to_purls(
         &self,
         packages: Vec<(package::Model, Vec<package_qualifier::Model>)>,
     ) -> Result<Vec<Purl>, anyhow::Error> {
@@ -268,7 +271,7 @@ impl System {
         Ok(purl.into())
     }
 
-    pub async fn direct_dependencies<'p, P: Into<Purl>>(
+    pub async fn direct_dependencies<P: Into<Purl>>(
         &self,
         dependent_package: P,
     ) -> Result<Vec<Purl>, Error> {
@@ -283,7 +286,7 @@ impl System {
         Ok(self.packages_to_purls(found)?)
     }
 
-    pub async fn direct_dependents<'p, P: Into<Purl>>(
+    pub async fn direct_package_dependencies<'p, P: Into<Purl>>(
         &self,
         dependency_package: P,
     ) -> Result<Vec<Purl>, Error> {
@@ -298,7 +301,7 @@ impl System {
         Ok(self.packages_to_purls(found)?)
     }
 
-    pub async fn transitive_dependencies<P: Into<Purl>>(
+    pub async fn transitive_package_dependencies<P: Into<Purl>>(
         &self,
         root: P,
     ) -> Result<PackageTree, Error> {
@@ -311,14 +314,14 @@ impl System {
                 r#"
                     WITH RECURSIVE transitive AS (
                         SELECT
-                            timestamp, dependent_package_id, dependency_package_id
+                            timestamp, dependent_package_id, dependency_package_id, sbom_id
                         FROM
                             package_dependency
                         WHERE
                             dependent_package_id = $1
                         UNION
                         SELECT
-                            pd.timestamp, pd.dependent_package_id, pd.dependency_package_id
+                            pd.timestamp, pd.dependent_package_id, pd.dependency_package_id, pd.sbom_id
                         FROM
                             package_dependency pd
                         INNER JOIN transitive transitive1
@@ -436,10 +439,15 @@ mod tests {
     async fn ingest_package_dependencies() -> Result<(), anyhow::Error> {
         let system = System::for_test("ingest_package_dependencies").await?;
 
+        let sbom = system.ingest_sbom(
+            "http://test.sbom/ingest_package_dependencies.json",
+        ).await?;
+
         let result = system
             .ingest_package_dependency(
                 "pkg:maven/io.quarkus/quarkus-jdbc-postgresql@2.13.5.Final?type=jar",
                 "pkg:maven/io.quarkus/quarkus-jdbc-base@1.13.5.Final?type=jar",
+                &sbom,
             )
             .await?;
 
@@ -447,6 +455,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/io.quarkus/quarkus-jdbc-postgresql@2.13.5.Final?type=jar",
                 "pkg:maven/io.quarkus/quarkus-postgres@1.13.5.Final?type=jar",
+                &sbom,
             )
             .await?;
 
@@ -462,12 +471,27 @@ mod tests {
 
     #[tokio::test]
     async fn transitive_dependencies() -> Result<(), anyhow::Error> {
+        /*
+        env_logger::builder()
+        .filter_level(log::LevelFilter::Info)
+        .is_test(true)
+        .init();
+
+         */
+
         let system = System::for_test("transitive_dependencies").await?;
+
+        let sbom = system.ingest_sbom(
+            "http://test.sbom/transitive_dependencies.json",
+        ).await?;
+
+        println!("{:#?}", sbom);
 
         system
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
+                &sbom
             )
             .await?;
 
@@ -475,6 +499,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
+                &sbom
             )
             .await?;
 
@@ -482,6 +507,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 "pkg:maven/com.test/package-acd@1.0?type=jar",
+                &sbom
             )
             .await?;
 
@@ -489,11 +515,12 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
+                &sbom
             )
             .await?;
 
         let result = system
-            .transitive_dependencies("pkg:maven/com.test/package-a@1.0?type=jar")
+            .transitive_package_dependencies("pkg:maven/com.test/package-a@1.0?type=jar")
             .await?;
 
         assert_eq!(
