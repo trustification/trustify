@@ -3,14 +3,14 @@ name = "huevos-cli"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 huevos-server = { path = "../server"}
+huevos-importer = { path = "../importer"}
+
 anyhow = "1.0.72"
-log = "0.4.19"
+clap = { version = "4", features = [ "derive", "env" ] }
 env_logger = "0.10.0"
+log = "0.4.19"
 serde_json = "1.0.104"
 thiserror = "1"
-
-[dev-dependencies]
+tokio = { version = "1", features = ["full"] }

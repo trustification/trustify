@@ -9,83 +9,89 @@ use csaf_walker::walker::Walker;
 use huevos_api::system::System;
 use huevos_common::purl::Purl;
 use packageurl::PackageUrl;
+use std::process::ExitCode;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
 use walker_common::validate::ValidationOptions;
 
 mod csaf;
 
-/// Import the "fixed" PURLs of all CSAF VEX documents, marking them as "fixed".
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    env_logger::init();
+/// Run the importer
+#[derive(clap::Args, Debug)]
+pub struct Run {}
 
-    let system = System::new("postgres", "eggs", "localhost", "huevos").await?;
+impl Run {
+    pub async fn run(self) -> anyhow::Result<ExitCode> {
+        env_logger::init();
 
-    let filter = |name: &str| {
-        // RHAT: we have advisories marked as "vex"
-        if !name.starts_with("cve-") {
-            return false;
-        }
+        let system = System::new("postgres", "eggs", "localhost", "huevos").await?;
 
-        // only work with 2023 data for now
-        if !name.starts_with("cve-2023-") {
-            return false;
-        }
+        let filter = |name: &str| {
+            // RHAT: we have advisories marked as "vex"
+            if !name.starts_with("cve-") {
+                return false;
+            }
 
-        true
-    };
+            // only work with 2023 data for now
+            if !name.starts_with("cve-2023-") {
+                return false;
+            }
 
-    //  because we still have GPG v3 signatures
-    let options = ValidationOptions {
-        validation_date: Some(SystemTime::from(
-            Date::from_calendar_date(2007, Month::January, 1)
-                .unwrap()
-                .midnight()
-                .assume_offset(UtcOffset::UTC),
-        )),
-    };
+            true
+        };
 
-    let source = FileSource::new("../csaf-walker/data/vex", FileOptions::default())?;
-    // let source = HttpSource { .. };
-    let source: DispatchSource = source.into();
+        //  because we still have GPG v3 signatures
+        let options = ValidationOptions {
+            validation_date: Some(SystemTime::from(
+                Date::from_calendar_date(2007, Month::January, 1)
+                    .unwrap()
+                    .midnight()
+                    .assume_offset(UtcOffset::UTC),
+            )),
+        };
 
-    let visitor = ValidationVisitor::new(move |doc: Result<ValidatedAdvisory, ValidationError>| {
-        let system = system.clone();
-        async move {
-            let doc = match doc {
-                Ok(doc) => doc,
-                Err(err) => {
-                    log::warn!("Ignore error: {err}");
-                    return Ok::<(), anyhow::Error>(());
-                }
-            };
+        let source = FileSource::new("../csaf-walker/data/vex", FileOptions::default())?;
+        // let source = HttpSource { .. };
+        let source: DispatchSource = source.into();
 
-            let url = doc.url.clone();
+        let visitor =
+            ValidationVisitor::new(move |doc: Result<ValidatedAdvisory, ValidationError>| {
+                let system = system.clone();
+                async move {
+                    let doc = match doc {
+                        Ok(doc) => doc,
+                        Err(err) => {
+                            log::warn!("Ignore error: {err}");
+                            return Ok::<(), anyhow::Error>(());
+                        }
+                    };
 
-            match url.path_segments().and_then(|path| path.last()) {
-                Some(name) => {
-                    if !filter(name) {
-                        return Ok(());
+                    let url = doc.url.clone();
+
+                    match url.path_segments().and_then(|path| path.last()) {
+                        Some(name) => {
+                            if !filter(name) {
+                                return Ok(());
+                            }
+                        }
+                        None => return Ok(()),
                     }
+
+                    if let Err(err) = process(&system, doc).await {
+                        log::warn!("Failed to process {url}: {err}");
+                    }
+
+                    Ok(())
                 }
-                None => return Ok(()),
-            }
+            })
+            .with_options(options);
 
-            if let Err(err) = process(&system, doc).await {
-                log::warn!("Failed to process {url}: {err}");
-            }
+        Walker::new(source.clone())
+            .walk(RetrievingVisitor::new(source, visitor))
+            .await?;
 
-            Ok(())
-        }
-    })
-    .with_options(options);
-
-    Walker::new(source.clone())
-        .walk(RetrievingVisitor::new(source, visitor))
-        .await?;
-
-    Ok(())
+        Ok(ExitCode::SUCCESS)
+    }
 }
 
 async fn process(system: &System, doc: ValidatedAdvisory) -> anyhow::Result<()> {
@@ -104,7 +110,7 @@ async fn process(system: &System, doc: ValidatedAdvisory) -> anyhow::Result<()> 
             None => continue,
         };
 
-        let v = system.ingest_vulnerability(&id).await?;
+        let v = system.ingest_vulnerability(id).await?;
 
         if let Some(ps) = &vuln.product_status {
             for r in ps.fixed.iter().flatten() {

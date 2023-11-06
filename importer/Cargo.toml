@@ -9,20 +9,20 @@ huevos-entity = { path = "../entity"}
 huevos-migration = { path = "../migration" }
 huevos-common = { path = "../common"}
 
-sea-orm = { version = "0.12", features = [ "sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros" ] }
-sea-query = "0.30.0"
-sea-orm-migration = "0.12.2"
-tokio = { version = "1.30.0", features = ["full"] }
 anyhow = "1.0.72"
-log = "0.4.19"
+clap = { version = "4", features = ["derive"] }
+csaf = "0.5"
+csaf-walker = { version = "0.5" }
 env_logger = "0.10.0"
+log = "0.4.19"
 packageurl = "0.3.0"
+sea-orm = { version = "0.12", features = [ "sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros" ] }
+sea-orm-migration = "0.12.2"
+sea-query = "0.30.0"
 serde_json = "1.0.104"
 spdx-rs = "0.5.3"
 thiserror = "1"
-csaf = "0.5"
 time = "0.3"
+tokio = { version = "1.30.0", features = ["full"] }
 walker-common = "0.5"
-csaf-walker = { version = "0.5" }
 
-[dev-dependencies]

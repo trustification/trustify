@@ -3,18 +3,18 @@ name = "huevos-server"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 huevos-api = { path = "../api"}
 huevos-common = { path = "../common"}
-anyhow = "1.0.72"
-log = "0.4.19"
-env_logger = "0.10.0"
-thiserror = "1"
+
 actix-web = "4"
+anyhow = "1.0.72"
+clap = { version = "4", features = ["derive"] }
+env_logger = "0.10.0"
+log = "0.4.19"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0.68", features = [ "raw_value" ] }
+thiserror = "1"
 utoipa = { version = "4", features = ["actix_extras"] }
 utoipa-swagger-ui = { version = "4", features = ["actix-web"] }
 
