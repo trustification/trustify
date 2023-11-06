@@ -16,7 +16,6 @@ pub mod package;
 pub mod sbom;
 pub mod vulnerability;
 
-
 const DB_URL: &str = "postgres://postgres:eggs@localhost";
 const DB_NAME: &str = "huevos";
 

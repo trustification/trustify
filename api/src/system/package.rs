@@ -229,7 +229,7 @@ impl System {
                 let entity = package_dependency::ActiveModel {
                     dependent_package_id: Set(dependent.id),
                     dependency_package_id: Set(dependency.id),
-                    sbom_id: Set( sbom.id ),
+                    sbom_id: Set(sbom.id),
                 };
 
                 Ok(entity.insert(&*self.db).await?)
@@ -439,9 +439,9 @@ mod tests {
     async fn ingest_package_dependencies() -> Result<(), anyhow::Error> {
         let system = System::for_test("ingest_package_dependencies").await?;
 
-        let sbom = system.ingest_sbom(
-            "http://test.sbom/ingest_package_dependencies.json",
-        ).await?;
+        let sbom = system
+            .ingest_sbom("http://test.sbom/ingest_package_dependencies.json")
+            .await?;
 
         let result = system
             .ingest_package_dependency(
@@ -481,9 +481,9 @@ mod tests {
 
         let system = System::for_test("transitive_dependencies").await?;
 
-        let sbom = system.ingest_sbom(
-            "http://test.sbom/transitive_dependencies.json",
-        ).await?;
+        let sbom = system
+            .ingest_sbom("http://test.sbom/transitive_dependencies.json")
+            .await?;
 
         println!("{:#?}", sbom);
 
@@ -491,7 +491,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
-                &sbom
+                &sbom,
             )
             .await?;
 
@@ -499,7 +499,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
-                &sbom
+                &sbom,
             )
             .await?;
 
@@ -507,7 +507,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 "pkg:maven/com.test/package-acd@1.0?type=jar",
-                &sbom
+                &sbom,
             )
             .await?;
 
@@ -515,7 +515,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
-                &sbom
+                &sbom,
             )
             .await?;
 

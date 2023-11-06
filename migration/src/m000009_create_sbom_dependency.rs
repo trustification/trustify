@@ -1,7 +1,7 @@
+use crate::m000001_sbom::Sbom;
 use crate::m000002_create_package::Package;
 use crate::Now;
 use sea_orm_migration::prelude::*;
-use crate::m000001_sbom::Sbom;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -15,18 +15,11 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(SbomDependency::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(SbomDependency::SbomId)
-                            .integer()
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(SbomDependency::SbomId).integer().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("sbom_id")
-                            .from(
-                                SbomDependency::Table,
-                                SbomDependency::SbomId,
-                            )
+                            .from(SbomDependency::Table, SbomDependency::SbomId)
                             .to(Sbom::Table, Sbom::Id),
                     )
                     .col(
@@ -37,10 +30,7 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .name("dependency_package_id")
-                            .from(
-                                SbomDependency::Table,
-                                SbomDependency::PackageId,
-                            )
+                            .from(SbomDependency::Table, SbomDependency::PackageId)
                             .to(Package::Table, Package::Id),
                     )
                     .primary_key(

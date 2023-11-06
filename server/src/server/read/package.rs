@@ -108,9 +108,8 @@ mod tests {
 
         let sbom = state
             .system
-            .ingest_sbom(
-                "http://test.com/package-dependencies"
-            ).await?;
+            .ingest_sbom("http://test.com/package-dependencies")
+            .await?;
 
         state
             .system
@@ -179,16 +178,15 @@ mod tests {
 
         let sbom = state
             .system
-            .ingest_sbom(
-                "http://test.com/package-transitive-dependencies"
-            ).await?;
+            .ingest_sbom("http://test.com/package-transitive-dependencies")
+            .await?;
 
         state
             .system
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
-                &sbom
+                &sbom,
             )
             .await?;
 
@@ -197,7 +195,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
-                &sbom
+                &sbom,
             )
             .await?;
 
@@ -206,7 +204,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 "pkg:maven/com.test/package-acd@1.0?type=jar",
-                &sbom
+                &sbom,
             )
             .await?;
 
@@ -215,7 +213,7 @@ mod tests {
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
-                &sbom
+                &sbom,
             )
             .await?;
 

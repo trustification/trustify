@@ -1,6 +1,6 @@
+use crate::m000001_sbom::Sbom;
 use crate::m000002_create_package::Package;
 use crate::m000004_create_vulnerability::Vulnerability;
-use crate::m000001_sbom::Sbom;
 use crate::m000007_sbom_cpe::SbomCpe::SbomId;
 use sea_orm_migration::prelude::*;
 
@@ -38,12 +38,7 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(
-                Table::drop()
-                    .table(SbomCpe::Table)
-                    .if_exists()
-                    .to_owned(),
-            )
+            .drop_table(Table::drop().table(SbomCpe::Table).if_exists().to_owned())
             .await
     }
 }

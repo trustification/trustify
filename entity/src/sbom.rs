@@ -1,13 +1,12 @@
-
-use sea_orm::entity::prelude::*;
 use crate::{package, sbom_dependency};
+use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "sbom")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    pub location: String
+    pub location: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -15,7 +14,7 @@ pub enum Relation {
     //#[sea_orm(has_many = "super::package::Entity")]
     //Packages
     #[sea_orm(has_many = "super::package::Entity")]
-    PackageDependencies
+    PackageDependencies,
 }
 
 /*
@@ -34,12 +33,10 @@ impl Related<package::Entity> for Entity {
     }
 
     fn via() -> Option<RelationDef> {
-        Some(
-            sbom_dependency::Relation::Package.def().rev()
-        )
+        Some(sbom_dependency::Relation::Package.def().rev())
     }
     //fn via() -> Option<RelationDef> {
-        //Some(sbom_dependency::Relation::Package.def())
+    //Some(sbom_dependency::Relation::Package.def())
     //}
 }
 

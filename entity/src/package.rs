@@ -1,6 +1,6 @@
+use crate::sbom_dependency;
 use sea_orm::entity::prelude::*;
 use sea_orm::FromQueryResult;
-use crate::sbom_dependency;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "package")]
@@ -37,8 +37,6 @@ impl Related<super::sbom::Entity> for Entity {
         Some(sbom_dependency::Relation::Sbom.def().rev())
     }
 }
-
-
 
 impl ActiveModelBehavior for ActiveModel {}
 

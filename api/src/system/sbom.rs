@@ -1,4 +1,7 @@
-use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseTransaction, EntityTrait, ModelTrait, QueryFilter, QuerySelect, QueryTrait, RelationTrait, Set, TransactionTrait};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseTransaction, EntityTrait, ModelTrait,
+    QueryFilter, QuerySelect, QueryTrait, RelationTrait, Set, TransactionTrait,
+};
 use sea_query::{Condition, JoinType};
 use spdx_rs::models::{RelationshipType, SPDX};
 
@@ -246,9 +249,9 @@ impl System {
             let found = package::Entity::find()
                 .join(
                     JoinType::LeftJoin,
-                    sbom_dependency::Relation::Package.def().rev()
+                    sbom_dependency::Relation::Package.def().rev(),
                 )
-                .filter(sbom_dependency::Column::SbomId.eq( sbom.id))
+                .filter(sbom_dependency::Column::SbomId.eq(sbom.id))
                 .find_with_related(package_qualifier::Entity)
                 .all(&*self.db)
                 .await?;
@@ -275,10 +278,10 @@ mod tests {
 
     #[tokio::test]
     async fn debug() -> Result<(), anyhow::Error> {
-        env_logger::builder()
-        .filter_level(log::LevelFilter::Info)
-        .is_test(true)
-        .init();
+        //env_logger::builder()
+        //.filter_level(log::LevelFilter::Info)
+        //.is_test(true)
+        //.init();
         let system = System::for_test("debug").await?;
 
         let inner_system = system.clone();
@@ -296,9 +299,9 @@ mod tests {
         })
         .await?;
 
-        let result = system.direct_sbom_dependencies(
-            "test.com/sbom.json"
-        ).await?;
+        let result = system
+            .direct_sbom_dependencies("test.com/sbom.json")
+            .await?;
 
         println!("{:#?}", result);
 

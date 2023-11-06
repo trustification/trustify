@@ -1,6 +1,6 @@
+use crate::m000002_create_package::Package;
 use crate::m000004_create_vulnerability::Vulnerability;
 use sea_orm_migration::prelude::*;
-use crate::m000002_create_package::Package;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -21,11 +21,7 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(
-                        ColumnDef::new(Sbom::Location)
-                            .string()
-                            .not_null()
-                    )
+                    .col(ColumnDef::new(Sbom::Location).string().not_null())
                     .to_owned(),
             )
             .await
@@ -33,12 +29,7 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(
-                Table::drop()
-                    .table(Sbom::Table)
-                    .if_exists()
-                    .to_owned(),
-            )
+            .drop_table(Table::drop().table(Sbom::Table).if_exists().to_owned())
             .await
     }
 }
@@ -49,4 +40,3 @@ pub enum Sbom {
     Id,
     Location,
 }
-
