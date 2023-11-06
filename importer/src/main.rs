@@ -15,7 +15,7 @@ use walker_common::validate::ValidationOptions;
 
 mod csaf;
 
-/// Import the "fixed" PURLs all CSAF VEX documents, marking them as "fixed".
+/// Import the "fixed" PURLs of all CSAF VEX documents, marking them as "fixed".
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
