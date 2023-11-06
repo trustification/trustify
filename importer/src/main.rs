@@ -97,21 +97,21 @@ async fn process(system: &System, doc: ValidatedAdvisory) -> anyhow::Result<()> 
 
     log::info!("Ingesting: {}", doc.url);
 
-    // ctx..ingest_cve(csaf).await?;
-
     for vuln in csaf.vulnerabilities.iter().flatten() {
         let id = match &vuln.cve {
             Some(cve) => cve,
             None => continue,
         };
 
+        let v = system.ingest_vulnerability(&id).await?;
+
         if let Some(ps) = &vuln.product_status {
             for r in ps.fixed.iter().flatten() {
                 for purl in resolve_purls(&csaf, r) {
                     let package = Purl::from(purl.clone());
                     system
-                        .ingest_package_vulnerability(package, id, "vex")
-                        .await?;
+                        .ingest_vulnerability_fixed(package, &v, "vex")
+                        .await?
                 }
             }
         }
