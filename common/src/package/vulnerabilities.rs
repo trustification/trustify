@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(FromQueryResult, Debug, Clone, Serialize, Deserialize)]
 pub struct PackageVulnerability {
     pub identifier: String,
-    pub source: String,
+    pub scanner: String,
     pub timestamp: DateTimeWithTimeZone,
 }
 
@@ -13,6 +13,6 @@ pub struct PackageVulnerability {
 pub struct TaggedPackageVulnerability {
     pub package_id: i32,
     pub identifier: String,
-    pub source: String,
+    pub scanner: String,
     pub timestamp: DateTimeWithTimeZone,
 }

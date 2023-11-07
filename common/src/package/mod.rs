@@ -25,7 +25,7 @@ impl PackageTree {
                 .filter(|e| e.package_id == self.id)
                 .map(|e| PackageVulnerability {
                     identifier: e.identifier.clone(),
-                    source: e.source.clone(),
+                    scanner: e.scanner.clone(),
                     timestamp: e.timestamp,
                 })
                 .collect(),

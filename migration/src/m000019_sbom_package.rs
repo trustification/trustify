@@ -1,7 +1,7 @@
 use crate::m000001_sbom::Sbom;
-use crate::m000002_create_package::Package;
-use crate::m000004_create_vulnerability::Vulnerability;
-use crate::m000007_sbom_cpe::SbomCpe::SbomId;
+use crate::m000004_create_package::Package;
+use crate::m000006_create_vulnerability::Vulnerability;
+use crate::m000018_sbom_cpe::SbomCpe::SbomId;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]

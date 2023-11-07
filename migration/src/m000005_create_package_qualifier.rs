@@ -1,4 +1,4 @@
-use crate::m000002_create_package::Package;
+use crate::m000004_create_package::Package;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
