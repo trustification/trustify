@@ -9,6 +9,7 @@ use sea_orm::{
 };
 use sea_orm_migration::MigratorTrait;
 
+use crate::db::{ConnectionOrTransaction, Transactional};
 use migration::Migrator;
 
 pub mod error;
@@ -69,6 +70,16 @@ impl System {
         Migrator::refresh(&db).await?;
 
         Ok(Self { db: Arc::new(db) })
+    }
+
+    pub(crate) fn connection<'db>(
+        &'db self,
+        tx: Transactional<'db>,
+    ) -> ConnectionOrTransaction<'db> {
+        match tx {
+            Transactional::None => ConnectionOrTransaction::Connection(&*self.db),
+            Transactional::Some(tx) => ConnectionOrTransaction::Transaction(tx),
+        }
     }
 
     #[cfg(test)]

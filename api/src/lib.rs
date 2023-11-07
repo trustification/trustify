@@ -11,3 +11,5 @@ use packageurl::PackageUrl;
 use huevos_common::package::vulnerabilities::PackageVulnerability;
 
 pub mod system;
+
+pub mod db;

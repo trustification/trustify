@@ -1,4 +1,5 @@
 use actix_web::{get, web, HttpResponse, Responder};
+use huevos_api::db::Transactional;
 use serde::{Deserialize, Serialize};
 
 use huevos_common::purl::Purl;
@@ -27,14 +28,14 @@ pub async fn dependencies(
     if matches!(params.transitive, Some(true)) {
         let tree = state
             .system
-            .transitive_package_dependencies(purl.clone())
+            .transitive_package_dependencies(purl.clone(), Transactional::None)
             .await
             .map_err(Error::from)?;
         Ok(HttpResponse::Ok().json(tree))
     } else {
         let dependencies = state
             .system
-            .direct_dependencies(purl.clone())
+            .direct_dependencies(purl.clone(), Transactional::None)
             .await
             .map_err(Error::from)?;
         Ok(HttpResponse::Ok().json(dependencies))
@@ -95,6 +96,7 @@ mod tests {
     use actix_web::test::TestRequest;
     use actix_web::web::Data;
     use actix_web::{test, App};
+    use huevos_api::db::Transactional;
     use huevos_common::package::PackageTree;
     use huevos_common::purl::Purl;
     use std::sync::Arc;
@@ -108,7 +110,7 @@ mod tests {
 
         let sbom = state
             .system
-            .ingest_sbom("http://test.com/package-dependencies")
+            .ingest_sbom("http://test.com/package-dependencies", "7")
             .await?;
 
         state
@@ -117,6 +119,7 @@ mod tests {
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
@@ -126,6 +129,7 @@ mod tests {
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
@@ -135,6 +139,7 @@ mod tests {
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 "pkg:maven/com.test/package-acd@1.0?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
@@ -144,6 +149,7 @@ mod tests {
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
@@ -178,7 +184,7 @@ mod tests {
 
         let sbom = state
             .system
-            .ingest_sbom("http://test.com/package-transitive-dependencies")
+            .ingest_sbom("http://test.com/package-transitive-dependencies", "8")
             .await?;
 
         state
@@ -187,6 +193,7 @@ mod tests {
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
@@ -196,6 +203,7 @@ mod tests {
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
@@ -205,6 +213,7 @@ mod tests {
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 "pkg:maven/com.test/package-acd@1.0?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
@@ -214,6 +223,7 @@ mod tests {
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
@@ -251,27 +261,27 @@ mod tests {
 
         state
             .system
-            .ingest_package("pkg://maven/com.foo/test@1.2")
+            .ingest_package("pkg://maven/com.foo/test@1.2", Transactional::None)
             .await?;
         state
             .system
-            .ingest_package("pkg://maven/com.foo/test@1.3")
+            .ingest_package("pkg://maven/com.foo/test@1.3", Transactional::None)
             .await?;
         state
             .system
-            .ingest_package("pkg://maven/com.foo/test@1.4")
+            .ingest_package("pkg://maven/com.foo/test@1.4", Transactional::None)
             .await?;
         state
             .system
-            .ingest_package("pkg://maven/com.foo/test@1.5")
+            .ingest_package("pkg://maven/com.foo/test@1.5", Transactional::None)
             .await?;
         state
             .system
-            .ingest_package("pkg://maven/com.foo/test@1.6")
+            .ingest_package("pkg://maven/com.foo/test@1.6", Transactional::None)
             .await?;
         state
             .system
-            .ingest_package("pkg://maven/com.foo/test@1.6?foo=bar")
+            .ingest_package("pkg://maven/com.foo/test@1.6?foo=bar", Transactional::None)
             .await?;
 
         let app = test::init_service(

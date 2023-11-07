@@ -22,6 +22,7 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Sbom::Location).string().not_null())
+                    .col(ColumnDef::new(Sbom::Sha256).string().not_null())
                     .to_owned(),
             )
             .await
@@ -39,4 +40,5 @@ pub enum Sbom {
     Table,
     Id,
     Location,
+    Sha256,
 }

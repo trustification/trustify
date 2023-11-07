@@ -7,6 +7,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub location: String,
+    pub sha256: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

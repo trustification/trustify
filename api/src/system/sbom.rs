@@ -5,6 +5,7 @@ use sea_orm::{
 use sea_query::{Condition, JoinType};
 use spdx_rs::models::{RelationshipType, SPDX};
 
+use crate::db::{ConnectionOrTransaction, Transactional};
 use crate::system::System;
 use huevos_common::purl::Purl;
 use huevos_entity::sbom::Model;
@@ -13,9 +14,10 @@ use huevos_entity::{package, package_qualifier, sbom, sbom_cpe, sbom_dependency,
 use super::error::Error;
 
 impl System {
-    pub async fn ingest_sbom(&self, location: &str) -> Result<sbom::Model, Error> {
+    pub async fn ingest_sbom(&self, location: &str, sha256: &str) -> Result<sbom::Model, Error> {
         let fetch = sbom::Entity::find()
             .filter(Condition::all().add(sbom::Column::Location.eq(location.clone())))
+            .filter(Condition::all().add(sbom::Column::Sha256.eq(sha256.to_string())))
             .one(&*self.db)
             .await?;
 
@@ -23,6 +25,7 @@ impl System {
             None => {
                 let model = sbom::ActiveModel {
                     location: Set(location.to_string()),
+                    sha256: Set(sha256.to_string()),
                     ..Default::default()
                 };
 
@@ -43,11 +46,11 @@ impl System {
         &self,
         sbom: &sbom::Model,
         cpe: &str,
-        tx: &DatabaseTransaction,
+        tx: Transactional<'_>,
     ) -> Result<(), Error> {
         let fetch = sbom_cpe::Entity::find()
             .filter(Condition::all().add(sbom_cpe::Column::SbomId.eq(sbom.id)))
-            .one(&*self.db)
+            .one(&self.connection(tx))
             .await?;
 
         if fetch.is_none() {
@@ -56,7 +59,7 @@ impl System {
                 cpe: Set(cpe.to_string()),
             };
 
-            model.insert(tx).await?;
+            model.insert(&self.connection(tx)).await?;
         }
         Ok(())
     }
@@ -65,7 +68,7 @@ impl System {
         &self,
         sbom: &sbom::Model,
         package: P,
-        tx: &DatabaseTransaction,
+        tx: Transactional<'_>,
     ) -> Result<(), Error> {
         let fetch = sbom_package::Entity::find()
             .filter(Condition::all().add(sbom_package::Column::SbomId.eq(sbom.id)))
@@ -73,13 +76,13 @@ impl System {
             .await?;
 
         if fetch.is_none() {
-            let package = self.ingest_package(package.into()).await?;
+            let package = self.ingest_package(package.into(), tx.clone()).await?;
             let model = sbom_package::ActiveModel {
                 sbom_id: Set(sbom.id),
                 package_id: Set(package.id),
             };
 
-            model.insert(tx).await?;
+            model.insert(&self.connection(tx)).await?;
         }
         Ok(())
     }
@@ -88,9 +91,9 @@ impl System {
         &self,
         sbom: sbom::Model,
         dependency: P,
-        tx: &DatabaseTransaction,
+        tx: Transactional<'_>,
     ) -> Result<(), Error> {
-        let dependency = self.ingest_package(dependency).await?;
+        let dependency = self.ingest_package(dependency, tx.clone()).await?;
 
         if sbom_dependency::Entity::find()
             .filter(
@@ -107,7 +110,7 @@ impl System {
                 package_id: Set(dependency.id),
             };
 
-            entity.insert(&*self.db).await?;
+            entity.insert(&self.connection(tx)).await?;
         }
 
         Ok(())
@@ -123,6 +126,7 @@ impl System {
         self.db
             .transaction(|tx| {
                 Box::pin(async move {
+                    let tx: Transactional = tx.into();
                     // For each thing described in the SBOM data, link it up to an sbom_cpe or sbom_package.
                     for described in &sbom_data.document_creation_information.document_describes {
                         if let Some(described_package) = sbom_data
@@ -136,12 +140,16 @@ impl System {
                                         .ingest_sbom_package(
                                             &sbom,
                                             reference.reference_locator.clone(),
-                                            tx,
+                                            tx.clone(),
                                         )
                                         .await?;
                                 } else if reference.reference_type == "cpe22Type" {
                                     system
-                                        .ingest_sbom_cpe(&sbom, &reference.reference_locator, tx)
+                                        .ingest_sbom_cpe(
+                                            &sbom,
+                                            &reference.reference_locator,
+                                            tx.clone(),
+                                        )
                                         .await?;
                                 }
                             }
@@ -166,7 +174,7 @@ impl System {
                                                         .ingest_sbom_dependency(
                                                             sbom.clone(),
                                                             reference.reference_locator.clone(),
-                                                            tx,
+                                                            tx.clone(),
                                                         )
                                                         .await?;
                                                 }
@@ -206,6 +214,7 @@ impl System {
                                                                         .reference_locator
                                                                         .clone(),
                                                                     &sbom,
+                                                                    tx.clone(),
                                                                 )
                                                                 .await?;
                                                         }
@@ -271,6 +280,7 @@ mod tests {
     use std::str::FromStr;
     use std::time::Instant;
 
+    use crate::db::{ConnectionOrTransaction, Transactional};
     use crate::system::error::Error;
     use spdx_rs::models::SPDX;
 
@@ -289,10 +299,14 @@ mod tests {
 
         db.transaction(|tx| {
             Box::pin(async move {
-                let sbom = inner_system.ingest_sbom("test.com/sbom.json").await?;
+                let sbom = inner_system.ingest_sbom("test.com/sbom.json", "9").await?;
 
                 inner_system
-                    .ingest_sbom_dependency(sbom.clone(), "pkg://maven/foo@1?type=jar", tx)
+                    .ingest_sbom_dependency(
+                        sbom.clone(),
+                        "pkg://maven/foo@1?type=jar",
+                        Transactional::None,
+                    )
                     .await?;
                 Ok::<(), Error>(())
             })
@@ -325,7 +339,7 @@ mod tests {
         let parse_time = start.elapsed();
 
         let start = Instant::now();
-        let sbom = system.ingest_sbom("test.com/my-sbom.json").await?;
+        let sbom = system.ingest_sbom("test.com/my-sbom.json", "10").await?;
         system.ingest_spdx_sbom_data(sbom, sbom_data).await?;
         let ingest_time = start.elapsed();
         let start = Instant::now();

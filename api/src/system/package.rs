@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use packageurl::PackageUrl;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, Condition, ConnectionTrait, EntityTrait, FromQueryResult,
-    ModelTrait, QueryFilter, QuerySelect, Set, Statement,
+    ModelTrait, NotSet, QueryFilter, QuerySelect, Set, Statement,
 };
 use sea_query::Value;
 
@@ -12,24 +12,21 @@ use huevos_entity::package::{PackageNamespace, PackageType};
 use huevos_entity::package_dependency::{ToDependency, ToDependent};
 use huevos_entity::{package, package_dependency, package_qualifier, sbom};
 
+use crate::db::{ConnectionOrTransaction, Transactional};
 use crate::system::error::Error;
 use crate::system::System;
 use huevos_common::package::PackageTree;
 
 impl System {
-    pub async fn ingest_package<'p, P: Into<Purl>>(&self, pkg: P) -> Result<package::Model, Error> {
+    pub async fn ingest_package<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<package::Model, Error> {
         let purl = pkg.into();
 
         if let Some(version) = &purl.version {
-            let pkg = self
-                .insert_or_fetch_package(
-                    &purl.ty,
-                    purl.namespace.as_deref(),
-                    &purl.name,
-                    version,
-                    &purl.qualifiers,
-                )
-                .await?;
+            let pkg = self.insert_or_fetch_package(purl, tx).await?;
             Ok(pkg)
         } else {
             Err(PurlErr::MissingVersion.into())
@@ -39,17 +36,11 @@ impl System {
     pub async fn fetch_package<'p, P: Into<Purl>>(
         &self,
         pkg: P,
+        tx: Transactional<'_>,
     ) -> Result<Option<package::Model>, Error> {
         let purl = pkg.into();
         if let Some(version) = &purl.version {
-            self.get_package(
-                &purl.ty,
-                &purl.namespace.as_deref(),
-                &purl.name,
-                version,
-                &purl.qualifiers,
-            )
-            .await
+            self.get_package(purl, tx).await
         } else {
             Err(PurlErr::MissingVersion.into())
         }
@@ -84,35 +75,27 @@ impl System {
         Ok(self.packages_to_purls(found)?)
     }
 
-    pub async fn insert_or_fetch_package<'a>(
+    pub async fn insert_or_fetch_package<P: Into<Purl>>(
         &self,
-        r#type: &str,
-        namespace: Option<&str>,
-        name: &str,
-        version: &str,
-        qualifiers: &HashMap<String, String>,
+        purl: P,
+        tx: Transactional<'_>,
     ) -> Result<package::Model, anyhow::Error> {
-        let fetch = self
-            .get_package(r#type, &namespace, name, version, qualifiers)
-            .await?;
+        let purl = purl.into();
+        let fetch = self.get_package(purl.clone(), tx).await?;
         if let Some(pkg) = fetch {
             Ok(pkg)
         } else {
             let mut entity = package::ActiveModel {
-                package_type: Set(r#type.to_string()),
-                package_namespace: Default::default(),
-                package_name: Set(name.to_string()),
-                version: Set(version.to_owned()),
+                package_type: Set(purl.ty.to_string()),
+                package_namespace: Set(purl.namespace),
+                package_name: Set(purl.name.to_string()),
+                version: Set(purl.version.unwrap_or_default()),
                 ..Default::default()
             };
 
-            if let Some(ns) = namespace {
-                entity.package_namespace = Set(Some(ns.to_string()))
-            }
-
             let inserted = entity.insert(&*self.db).await?;
 
-            for (k, v) in qualifiers {
+            for (k, v) in &purl.qualifiers {
                 let entity = package_qualifier::ActiveModel {
                     package_id: Set(inserted.id),
                     key: Set(k.to_string()),
@@ -126,20 +109,22 @@ impl System {
         }
     }
 
-    async fn get_package<'a>(
-        &self,
-        r#type: &str,
-        namespace: &Option<&str>,
-        name: &str,
-        version: &str,
-        qualifiers: &HashMap<String, String>,
-    ) -> Result<Option<package::Model>, Error> {
-        let mut conditions = Condition::all()
-            .add(package::Column::PackageType.eq(r#type.to_string()))
-            .add(package::Column::PackageName.eq(name.to_string()))
-            .add(package::Column::Version.eq(version));
+    fn default_tx(&self) -> &dyn ConnectionTrait {
+        &*self.db
+    }
 
-        if let Some(ns) = namespace {
+    async fn get_package<P: Into<Purl>>(
+        &self,
+        purl: P,
+        tx: Transactional<'_>,
+    ) -> Result<Option<package::Model>, Error> {
+        let purl = purl.into();
+        let mut conditions = Condition::all()
+            .add(package::Column::PackageType.eq(purl.ty.to_string()))
+            .add(package::Column::PackageName.eq(purl.name.to_string()))
+            .add(package::Column::Version.eq(purl.version));
+
+        if let Some(ns) = purl.namespace {
             conditions = conditions.add(package::Column::PackageNamespace.eq(ns.to_string()));
         } else {
             conditions = conditions.add(package::Column::PackageNamespace.is_null());
@@ -148,22 +133,22 @@ impl System {
         let found = package::Entity::find()
             .find_with_related(package_qualifier::Entity)
             .filter(conditions)
-            .all(&*self.db)
+            .all(&self.connection(tx))
             .await?;
 
         if found.is_empty() {
             return Ok(None);
         } else {
             for (found_package, found_qualifiers) in found {
-                if qualifiers.is_empty() && found_qualifiers.is_empty() {
+                if purl.qualifiers.is_empty() && found_qualifiers.is_empty() {
                     return Ok(Some(found_package));
                 }
 
-                if qualifiers.len() != found_qualifiers.len() {
+                if purl.qualifiers.len() != found_qualifiers.len() {
                     return Ok(None);
                 }
 
-                for (expected_k, expected_v) in qualifiers {
+                for (expected_k, expected_v) in &purl.qualifiers {
                     if found_qualifiers
                         .iter()
                         .any(|found_q| found_q.key == *expected_k && found_q.value == *expected_v)
@@ -211,9 +196,10 @@ impl System {
         dependent_package: P1,
         dependency_package: P2,
         sbom: &sbom::Model,
+        tx: Transactional<'_>,
     ) -> Result<package_dependency::Model, anyhow::Error> {
-        let dependent = self.ingest_package(dependent_package).await?;
-        let dependency = self.ingest_package(dependency_package).await?;
+        let dependent = self.ingest_package(dependent_package, tx.clone()).await?;
+        let dependency = self.ingest_package(dependency_package, tx.clone()).await?;
 
         match package_dependency::Entity::find()
             .filter(
@@ -274,8 +260,9 @@ impl System {
     pub async fn direct_dependencies<P: Into<Purl>>(
         &self,
         dependent_package: P,
+        tx: Transactional<'_>,
     ) -> Result<Vec<Purl>, Error> {
-        let dependent = self.ingest_package(dependent_package).await?;
+        let dependent = self.ingest_package(dependent_package, tx).await?;
 
         let found = dependent
             .find_linked(ToDependency)
@@ -289,8 +276,9 @@ impl System {
     pub async fn direct_package_dependencies<'p, P: Into<Purl>>(
         &self,
         dependency_package: P,
+        tx: Transactional<'_>,
     ) -> Result<Vec<Purl>, Error> {
-        let dependency = self.ingest_package(dependency_package).await?;
+        let dependency = self.ingest_package(dependency_package, tx).await?;
 
         let found = dependency
             .find_linked(ToDependent)
@@ -304,8 +292,9 @@ impl System {
     pub async fn transitive_package_dependencies<P: Into<Purl>>(
         &self,
         root: P,
+        tx: Transactional<'_>,
     ) -> Result<PackageTree, Error> {
-        let root_model = self.ingest_package(root).await?;
+        let root_model = self.ingest_package(root, tx).await?;
         let root_id = Value::Int(Some(root_model.id));
 
         let relationships = package_dependency::Entity::find()
@@ -390,6 +379,7 @@ impl System {
 mod tests {
     use std::collections::HashSet;
 
+    use crate::db::Transactional;
     use huevos_common::purl::Purl;
 
     use crate::system::System;
@@ -415,7 +405,7 @@ mod tests {
         ];
 
         for pkg in &packages {
-            system.ingest_package(pkg).await?;
+            system.ingest_package(pkg, Transactional::None).await?;
         }
 
         let package_types = system.package_types().await?;
@@ -440,7 +430,7 @@ mod tests {
         let system = System::for_test("ingest_package_dependencies").await?;
 
         let sbom = system
-            .ingest_sbom("http://test.sbom/ingest_package_dependencies.json")
+            .ingest_sbom("http://test.sbom/ingest_package_dependencies.json", "7")
             .await?;
 
         let result = system
@@ -448,6 +438,7 @@ mod tests {
                 "pkg:maven/io.quarkus/quarkus-jdbc-postgresql@2.13.5.Final?type=jar",
                 "pkg:maven/io.quarkus/quarkus-jdbc-base@1.13.5.Final?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
@@ -456,12 +447,14 @@ mod tests {
                 "pkg:maven/io.quarkus/quarkus-jdbc-postgresql@2.13.5.Final?type=jar",
                 "pkg:maven/io.quarkus/quarkus-postgres@1.13.5.Final?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
         let result = system
             .direct_dependencies(
                 "pkg:maven/io.quarkus/quarkus-jdbc-postgresql@2.13.5.Final?type=jar",
+                Transactional::None,
             )
             .await?;
 
@@ -482,7 +475,7 @@ mod tests {
         let system = System::for_test("transitive_dependencies").await?;
 
         let sbom = system
-            .ingest_sbom("http://test.sbom/transitive_dependencies.json")
+            .ingest_sbom("http://test.sbom/transitive_dependencies.json", "8")
             .await?;
 
         println!("{:#?}", sbom);
@@ -492,6 +485,7 @@ mod tests {
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
@@ -500,6 +494,7 @@ mod tests {
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
@@ -508,6 +503,7 @@ mod tests {
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 "pkg:maven/com.test/package-acd@1.0?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
@@ -516,11 +512,15 @@ mod tests {
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 &sbom,
+                Transactional::None,
             )
             .await?;
 
         let result = system
-            .transitive_package_dependencies("pkg:maven/com.test/package-a@1.0?type=jar")
+            .transitive_package_dependencies(
+                "pkg:maven/com.test/package-a@1.0?type=jar",
+                Transactional::None,
+            )
             .await?;
 
         assert_eq!(
