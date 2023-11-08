@@ -18,6 +18,9 @@ env PGPASSWORD=eggs psql -U postgres -d huevos -h localhost -p 5432
 
 A package exists or it does not. Represented by a pURL. No source-tracking required.
 
+Rework to Package. VersionedPackage. QualifiedVersionedPackage. and VersionRangePackage for vulnerable references. 
+Plus appropriate junction tables. 
+
 ### CVE
 
 A CVE exists or it does not. Represented by an identifier. No source-tracking required.
@@ -35,11 +38,12 @@ There is probably always an advisory from NVD for every CVE.
 
 ### Advisory Source
 Something like GHSA, Red Hat VEX, etc. Maybe?
+Based on source URL? Regexp!
 
-
-### Scanners dibt exist
+### Scanners don't exist
 They should just point us towards first order advisories to ingest. 
 OSV just tells us to look elsewhere. 
+They are hlpers not nouns. 
 
 ### Vulnerable
 Not yet implemented, but represents a mixture of CVE+(package + range)+Advisory
