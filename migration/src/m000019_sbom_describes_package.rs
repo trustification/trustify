@@ -1,7 +1,7 @@
 use crate::m000001_sbom::Sbom;
 use crate::m000004_create_package::Package;
-use crate::m000006_create_vulnerability::Vulnerability;
-use crate::m000018_sbom_cpe::SbomCpe::SbomId;
+use crate::m000006_create_cve::Cve;
+use crate::m000018_sbom_describes_cpe::SbomDescribesCpe::SbomId;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -14,27 +14,27 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(SbomPackage::Table)
+                    .table(SbomDescribesPackage::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(SbomPackage::SbomId).integer().not_null())
+                    .col(ColumnDef::new(SbomDescribesPackage::SbomId).integer().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("sbom_id")
-                            .from(SbomPackage::Table, SbomPackage::SbomId)
+                            .from(SbomDescribesPackage::Table, SbomDescribesPackage::SbomId)
                             .to(Sbom::Table, Sbom::Id),
                     )
-                    .col(ColumnDef::new(SbomPackage::PackageId).integer().not_null())
+                    .col(ColumnDef::new(SbomDescribesPackage::PackageId).integer().not_null())
                     .primary_key(
                         Index::create()
                             .name("pk-sbom_package_id")
-                            .col(SbomPackage::SbomId)
-                            .col(SbomPackage::PackageId)
+                            .col(SbomDescribesPackage::SbomId)
+                            .col(SbomDescribesPackage::PackageId)
                             .primary(),
                     )
                     .foreign_key(
                         ForeignKey::create()
                             .name("package_id")
-                            .from(SbomPackage::Table, SbomPackage::PackageId)
+                            .from(SbomDescribesPackage::Table, SbomDescribesPackage::PackageId)
                             .to(Package::Table, Package::Id),
                     )
                     .to_owned(),
@@ -46,7 +46,7 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(
                 Table::drop()
-                    .table(SbomPackage::Table)
+                    .table(SbomDescribesPackage::Table)
                     .if_exists()
                     .to_owned(),
             )
@@ -55,7 +55,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-pub enum SbomPackage {
+pub enum SbomDescribesPackage {
     Table,
     SbomId,
     PackageId,

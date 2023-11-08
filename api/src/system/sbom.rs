@@ -1,24 +1,31 @@
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseTransaction, EntityTrait, ModelTrait,
-    QueryFilter, QuerySelect, QueryTrait, RelationTrait, Set, TransactionTrait,
-};
-use sea_query::{Condition, JoinType};
-use spdx_rs::models::{RelationshipType, SPDX};
-
-use crate::db::{ConnectionOrTransaction, Transactional};
-use crate::system::System;
+use crate::db::Transactional;
+use crate::system::package::{PackageContext, packages_to_purls};
+use crate::system::InnerSystem;
 use huevos_common::purl::Purl;
+use huevos_common::sbom::SbomLocator;
 use huevos_entity::sbom::Model;
-use huevos_entity::{package, package_qualifier, sbom, sbom_cpe, sbom_dependency, sbom_package};
+use huevos_entity::{
+    package, package_dependency, package_qualifier, sbom, sbom_describes_cpe, sbom_dependency, sbom_describes_package,
+};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait, QueryFilter,
+    QuerySelect, QueryTrait, RelationTrait, Select, Set, TransactionTrait,
+};
+use sea_query::{Condition, JoinType, Query, SelectStatement, UnionType};
+use spdx_rs::models::{RelationshipType, SPDX};
+use std::fmt::{Debug, Formatter};
+use std::ops::Deref;
 
 use super::error::Error;
 
-impl System {
-    pub async fn ingest_sbom(&self, location: &str, sha256: &str) -> Result<sbom::Model, Error> {
+type SelectEntity<E> = Select<E>;
+
+impl InnerSystem {
+    pub async fn ingest_sbom(&self, location: &str, sha256: &str) -> Result<SbomContext, Error> {
         let fetch = sbom::Entity::find()
             .filter(Condition::all().add(sbom::Column::Location.eq(location.clone())))
             .filter(Condition::all().add(sbom::Column::Sha256.eq(sha256.to_string())))
-            .one(&*self.db)
+            .one(&self.db)
             .await?;
 
         match fetch {
@@ -29,101 +36,450 @@ impl System {
                     ..Default::default()
                 };
 
-                Ok(model.insert(&*self.db).await?)
+                Ok((self, model.insert(&self.db).await?).into())
             }
-            Some(model) => Ok(model),
+            Some(model) => Ok((self, model).into()),
         }
     }
 
-    pub async fn fetch_sbom(&self, location: &str) -> Result<Option<sbom::Model>, Error> {
-        Ok(sbom::Entity::find()
-            .filter(sbom::Column::Location.eq(location.to_string()))
-            .one(&*self.db)
-            .await?)
+    /// Fetch a single SBOM located via internal `id`, external `location` (URL),
+    /// described pURL, described CPE, or sha256 hash.
+    ///
+    /// Fetching by pURL, CPE or location may result in a single result where multiple
+    /// may exist in the system in actuality.
+    ///
+    /// If the requested SBOM does not exist in the system, it will not exist
+    /// after this query either. This function is *non-mutating*.
+    pub async fn fetch_sbom(
+        &self,
+        sbom_locator: SbomLocator,
+        tx: Transactional<'_>,
+    ) -> Result<Option<SbomContext>, Error> {
+        match sbom_locator {
+            SbomLocator::Id(id) => self.fetch_sbom_by_id(id, tx).await,
+            SbomLocator::Location(location) => self.fetch_sbom_by_location(&location, tx).await,
+            SbomLocator::Sha256(sha256) => self.fetch_sbom_by_sha256(&sha256, tx).await,
+            SbomLocator::Purl(purl) => self.fetch_sbom_by_purl(purl, tx).await,
+            SbomLocator::Cpe(cpe) => self.fetch_sbom_by_cpe(&cpe, tx).await,
+        }
     }
 
-    async fn ingest_sbom_cpe(
+    pub async fn fetch_sboms(
         &self,
-        sbom: &sbom::Model,
+        sbom_locator: SbomLocator,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<SbomContext>, Error> {
+        match sbom_locator {
+            SbomLocator::Id(id) => {
+                if let Some(sbom) = self.fetch_sbom_by_id(id, tx).await? {
+                    Ok(vec![sbom])
+                } else {
+                    Ok(vec![])
+                }
+            }
+            SbomLocator::Location(location) => self.fetch_sboms_by_location(&location, tx).await,
+            SbomLocator::Sha256(sha256) => self.fetch_sboms_by_sha256(&sha256, tx).await,
+            SbomLocator::Purl(purl) => self.fetch_sboms_by_purl(purl, tx).await,
+            SbomLocator::Cpe(cpe) => self.fetch_sboms_by_cpe(&cpe, tx).await,
+        }
+    }
+
+    async fn fetch_one_sbom(
+        &self,
+        query: SelectEntity<sbom::Entity>,
+        tx: Transactional<'_>,
+    ) -> Result<Option<SbomContext>, Error> {
+        Ok(query
+            .one(&self.connection(tx))
+            .await?
+            .map(|sbom| (self, sbom).into()))
+    }
+
+    async fn fetch_many_sboms(
+        &self,
+        query: SelectEntity<sbom::Entity>,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<SbomContext>, Error> {
+        println!("QUERY {:?}", query.build(self.db.get_database_backend()));
+        Ok(query
+            .all(&self.connection(tx))
+            .await?
+            .drain(0..)
+            .map(|sbom| (self, sbom).into())
+            .collect())
+    }
+
+    async fn fetch_sbom_by_id(
+        &self,
+        id: i32,
+        tx: Transactional<'_>,
+    ) -> Result<Option<SbomContext>, Error> {
+        let query = sbom::Entity::find_by_id(id);
+        Ok(sbom::Entity::find_by_id(id)
+            .one(&self.connection(tx))
+            .await?
+            .map(|sbom| (self, sbom).into()))
+    }
+
+    async fn fetch_sbom_by_location(
+        &self,
+        location: &str,
+        tx: Transactional<'_>,
+    ) -> Result<Option<SbomContext>, Error> {
+        self.fetch_one_sbom(
+            sbom::Entity::find().filter(sbom::Column::Location.eq(location.to_string())),
+            tx,
+        )
+        .await
+    }
+
+    async fn fetch_sboms_by_location(
+        &self,
+        location: &str,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<SbomContext>, Error> {
+        self.fetch_many_sboms(
+            sbom::Entity::find().filter(sbom::Column::Location.eq(location.to_string())),
+            tx,
+        )
+        .await
+    }
+
+    async fn fetch_sbom_by_sha256(
+        &self,
+        sha256: &str,
+        tx: Transactional<'_>,
+    ) -> Result<Option<SbomContext>, Error> {
+        self.fetch_one_sbom(
+            sbom::Entity::find().filter(sbom::Column::Sha256.eq(sha256.to_string())),
+            tx,
+        )
+        .await
+    }
+
+    async fn fetch_sboms_by_sha256(
+        &self,
+        sha256: &str,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<SbomContext>, Error> {
+        self.fetch_many_sboms(
+            sbom::Entity::find().filter(sbom::Column::Sha256.eq(sha256.to_string())),
+            tx,
+        )
+        .await
+    }
+
+    async fn fetch_sbom_by_purl(
+        &self,
+        purl: Purl,
+        tx: Transactional<'_>,
+    ) -> Result<Option<SbomContext>, Error> {
+        let package = self.fetch_package(purl, tx).await?;
+
+        if let Some(package) = package {
+            self.fetch_one_sbom(
+                sbom::Entity::find()
+                    .join(JoinType::LeftJoin, sbom_describes_package::Relation::Sbom.def().rev())
+                    .filter(sbom_describes_package::Column::PackageId.eq(package.package.id)),
+                tx,
+            )
+            .await
+        } else {
+            Ok(None)
+        }
+    }
+
+    async fn fetch_sboms_by_purl(
+        &self,
+        purl: Purl,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<SbomContext>, Error> {
+        let package = self.fetch_package(purl, tx).await?;
+
+        if let Some(package) = package {
+            self.fetch_many_sboms(
+                sbom::Entity::find()
+                    .join(JoinType::LeftJoin, sbom_describes_package::Relation::Sbom.def().rev())
+                    .filter(sbom_describes_package::Column::PackageId.eq(package.package.id)),
+                tx,
+            )
+            .await
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    async fn fetch_sbom_by_cpe(
+        &self,
         cpe: &str,
         tx: Transactional<'_>,
-    ) -> Result<(), Error> {
-        let fetch = sbom_cpe::Entity::find()
-            .filter(Condition::all().add(sbom_cpe::Column::SbomId.eq(sbom.id)))
-            .one(&self.connection(tx))
+    ) -> Result<Option<SbomContext>, Error> {
+        self.fetch_one_sbom(
+            sbom::Entity::find()
+                .join(JoinType::LeftJoin, sbom_describes_cpe::Relation::Sbom.def().rev())
+                .filter(sbom_describes_cpe::Column::Cpe.eq(cpe.to_string())),
+            tx,
+        )
+        .await
+    }
+
+    async fn fetch_sboms_by_cpe(
+        &self,
+        cpe: &str,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<SbomContext>, Error> {
+        self.fetch_many_sboms(
+            sbom::Entity::find()
+                .join(JoinType::LeftJoin, sbom_describes_cpe::Relation::Sbom.def().rev())
+                .filter(sbom_describes_cpe::Column::Cpe.eq(cpe.to_string())),
+            tx,
+        )
+        .await
+    }
+}
+
+#[derive(Clone)]
+pub struct SbomContext {
+    pub(crate) system: InnerSystem,
+    pub(crate) sbom: sbom::Model,
+}
+
+impl PartialEq for SbomContext {
+    fn eq(&self, other: &Self) -> bool {
+        self.sbom.eq(&other.sbom)
+    }
+}
+
+impl Debug for SbomContext {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.sbom.fmt(f)
+    }
+}
+
+impl From<(&InnerSystem, sbom::Model)> for SbomContext {
+    fn from((system, sbom): (&InnerSystem, Model)) -> Self {
+        Self {
+            system: system.clone(),
+            sbom,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct SbomPackageContext {
+    pub(crate) sbom: SbomContext,
+    pub(crate) package: PackageContext,
+}
+
+impl Debug for SbomPackageContext {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.package.fmt(f)
+    }
+}
+
+impl From<(&SbomContext, package::Model)> for SbomPackageContext {
+    fn from((sbom, package): (&SbomContext, package::Model)) -> Self {
+        Self {
+            sbom: sbom.clone(),
+            package: (&sbom.system, package).into(),
+        }
+    }
+}
+
+impl SbomContext {
+    async fn ingest_describes_cpe(&self, cpe: &str, tx: Transactional<'_>) -> Result<(), Error> {
+        let fetch = sbom_describes_cpe::Entity::find()
+            .filter(sbom_describes_cpe::Column::SbomId.eq(self.sbom.id))
+            .filter(sbom_describes_cpe::Column::Cpe.eq(cpe.to_string()))
+            .one(&self.system.connection(tx))
             .await?;
 
         if fetch.is_none() {
-            let model = sbom_cpe::ActiveModel {
-                sbom_id: Set(sbom.id),
+            let model = sbom_describes_cpe::ActiveModel {
+                sbom_id: Set(self.sbom.id),
                 cpe: Set(cpe.to_string()),
             };
 
-            model.insert(&self.connection(tx)).await?;
+            model.insert(&self.system.connection(tx)).await?;
         }
         Ok(())
     }
 
-    async fn ingest_sbom_package<P: Into<Purl>>(
+    async fn ingest_describes_package<P: Into<Purl>>(
         &self,
-        sbom: &sbom::Model,
         package: P,
         tx: Transactional<'_>,
     ) -> Result<(), Error> {
-        let fetch = sbom_package::Entity::find()
-            .filter(Condition::all().add(sbom_package::Column::SbomId.eq(sbom.id)))
-            .one(&*self.db)
+        let fetch = sbom_describes_package::Entity::find()
+            .filter(Condition::all().add(sbom_describes_package::Column::SbomId.eq(self.sbom.id)))
+            .one(&self.system.connection(tx))
             .await?;
 
         if fetch.is_none() {
-            let package = self.ingest_package(package.into(), tx.clone()).await?;
-            let model = sbom_package::ActiveModel {
-                sbom_id: Set(sbom.id),
-                package_id: Set(package.id),
+            let package = self
+                .system
+                .ingest_package(package.into(), tx.clone())
+                .await?;
+            let model = sbom_describes_package::ActiveModel {
+                sbom_id: Set(self.sbom.id),
+                package_id: Set(package.package.id),
             };
 
-            model.insert(&self.connection(tx)).await?;
+            model.insert(&self.system.connection(tx)).await?;
         }
         Ok(())
     }
 
     async fn ingest_sbom_dependency<P: Into<Purl>>(
         &self,
-        sbom: sbom::Model,
         dependency: P,
         tx: Transactional<'_>,
     ) -> Result<(), Error> {
-        let dependency = self.ingest_package(dependency, tx.clone()).await?;
+        let dependency = self.system.ingest_package(dependency, tx.clone()).await?;
 
         if sbom_dependency::Entity::find()
             .filter(
                 Condition::all()
-                    .add(sbom_dependency::Column::PackageId.eq(dependency.id))
-                    .add(sbom_dependency::Column::SbomId.eq(sbom.id)),
+                    .add(sbom_dependency::Column::PackageId.eq(dependency.package.id))
+                    .add(sbom_dependency::Column::SbomId.eq(self.sbom.id)),
             )
-            .one(&*self.db)
+            .one(&self.system.connection(tx))
             .await?
             .is_none()
         {
             let entity = sbom_dependency::ActiveModel {
-                sbom_id: Set(sbom.id),
-                package_id: Set(dependency.id),
+                sbom_id: Set(self.sbom.id),
+                package_id: Set(dependency.package.id),
             };
 
-            entity.insert(&self.connection(tx)).await?;
+            let sbom_dep = entity.insert(&self.system.connection(tx)).await?;
+
+            println!("SBOM DEP {:?}", sbom_dep);
         }
 
         Ok(())
     }
 
-    async fn ingest_spdx_sbom_data(
+    pub async fn ingest_package_dependency<P1: Into<Purl>, P2: Into<Purl>>(
         &self,
-        sbom: sbom::Model,
-        sbom_data: SPDX,
+        dependent_package: P1,
+        dependency_package: P2,
+        tx: Transactional<'_>,
     ) -> Result<(), anyhow::Error> {
+        let dependent = self
+            .system
+            .ingest_package(dependent_package, tx.clone())
+            .await?;
+        let dependency = self
+            .system
+            .ingest_package(dependency_package, tx.clone())
+            .await?;
+
+        println!("--> {:?} {:?}", dependent, dependency);
+
+        match package_dependency::Entity::find()
+            .filter(
+                Condition::all()
+                    .add(package_dependency::Column::DependentPackageId.eq(dependent.package.id))
+                    .add(package_dependency::Column::DependencyPackageId.eq(dependency.package.id))
+                    .add(package_dependency::Column::SbomId.eq(self.sbom.id)),
+            )
+            .one(&self.system.connection(tx))
+            .await?
+        {
+            None => {
+                let entity = package_dependency::ActiveModel {
+                    dependent_package_id: Set(dependent.package.id),
+                    dependency_package_id: Set(dependency.package.id),
+                    sbom_id: Set(self.sbom.id),
+                };
+
+                let result = entity.insert(&self.system.connection(tx)).await?;
+                println!("{:#?}", result);
+
+                Ok(())
+            }
+            Some(found) => Ok(()),
+        }
+    }
+
+    pub async fn dependencies(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<SbomPackageContext>, Error> {
+        Ok(package::Entity::find()
+            .join(
+                JoinType::LeftJoin,
+                sbom_dependency::Relation::Package.def().rev(),
+            )
+            .filter(sbom_dependency::Column::SbomId.eq(self.sbom.id))
+            .all(&self.system.connection(tx))
+            .await?
+            .drain(0..)
+            .map(|package| {
+                //(self, package).into()
+                SbomPackageContext::from((self, package))
+            })
+            .collect())
+    }
+
+    async fn all_packages(&self, tx: Transactional<'_>) -> Result<Vec<SbomPackageContext>, Error> {
+        Ok(package::Entity::find()
+            .filter(
+                package::Column::Id.in_subquery(
+                    Query::select()
+                        .column(package_dependency::Column::DependentPackageId)
+                        .and_having(package_dependency::Column::SbomId.eq(self.sbom.id))
+                        .group_by_columns([
+                            package_dependency::Column::SbomId,
+                            package_dependency::Column::DependentPackageId,
+                        ])
+                        .from(package_dependency::Entity)
+                        .to_owned()
+                        .union(
+                            UnionType::Distinct,
+                            Query::select()
+                                .column(package_dependency::Column::DependencyPackageId)
+                                .and_having(package_dependency::Column::SbomId.eq(self.sbom.id))
+                                .group_by_columns([
+                                    package_dependency::Column::SbomId,
+                                    package_dependency::Column::DependencyPackageId,
+                                ])
+                                .from(package_dependency::Entity)
+                                .to_owned(),
+                        )
+
+                        .union(
+                            UnionType::Distinct,
+                            Query::select()
+                                .column(sbom_dependency::Column::PackageId)
+                                .and_having(sbom_dependency::Column::SbomId.eq(self.sbom.id))
+                                .group_by_columns([
+                                    sbom_dependency::Column::PackageId,
+                                    sbom_dependency::Column::SbomId,
+                                ])
+                                .from(sbom_dependency::Entity)
+                                .to_owned(),
+                        )
+                        .to_owned(),
+                ),
+            )
+            .all(&self.system.connection(tx))
+            .await?
+            .drain(0..)
+            .map(|package| {
+                //(self, package).into()
+                SbomPackageContext::from((self, package))
+            })
+            .collect())
+    }
+
+    async fn ingest_spdx(&self, sbom_data: SPDX) -> Result<(), anyhow::Error> {
         // FIXME: not sure this is correct. It may be that we need to use `DatabaseTransaction` instead of the `db` field
-        let system = self.clone();
-        self.db
+        let sbom = self.clone();
+        let system = self.system.clone();
+        self.system
+            .db
             .transaction(|tx| {
                 Box::pin(async move {
                     let tx: Transactional = tx.into();
@@ -136,21 +492,17 @@ impl System {
                         {
                             for reference in &described_package.external_reference {
                                 if reference.reference_type == "purl" {
-                                    system
-                                        .ingest_sbom_package(
-                                            &sbom,
-                                            reference.reference_locator.clone(),
-                                            tx.clone(),
-                                        )
-                                        .await?;
+                                    sbom.ingest_describes_package(
+                                        reference.reference_locator.clone(),
+                                        tx.clone(),
+                                    )
+                                    .await?;
                                 } else if reference.reference_type == "cpe22Type" {
-                                    system
-                                        .ingest_sbom_cpe(
-                                            &sbom,
-                                            &reference.reference_locator,
-                                            tx.clone(),
-                                        )
-                                        .await?;
+                                    sbom.ingest_describes_cpe(
+                                        &reference.reference_locator,
+                                        tx.clone(),
+                                    )
+                                    .await?;
                                 }
                             }
 
@@ -170,13 +522,11 @@ impl System {
                                         {
                                             for reference in &package.external_reference {
                                                 if reference.reference_type == "purl" {
-                                                    system
-                                                        .ingest_sbom_dependency(
-                                                            sbom.clone(),
-                                                            reference.reference_locator.clone(),
-                                                            tx.clone(),
-                                                        )
-                                                        .await?;
+                                                    sbom.ingest_sbom_dependency(
+                                                        reference.reference_locator.clone(),
+                                                        tx.clone(),
+                                                    )
+                                                    .await?;
                                                 }
                                             }
                                         }
@@ -189,6 +539,10 @@ impl System {
                                 let package_identifier = &package_info.package_spdx_identifier;
                                 for package_ref in &package_info.external_reference {
                                     if package_ref.reference_type == "purl" {
+                                        let package_context = system
+                                            .ingest_package(&package_ref.reference_locator, tx)
+                                            .await?;
+
                                         for relationship in sbom_data
                                             .relationships_for_related_spdx_id(&package_identifier)
                                         {
@@ -205,18 +559,14 @@ impl System {
                                                 {
                                                     for reference in &package.external_reference {
                                                         if reference.reference_type == "purl" {
-                                                            system
-                                                                .ingest_package_dependency(
-                                                                    package_ref
-                                                                        .reference_locator
-                                                                        .clone(),
-                                                                    reference
-                                                                        .reference_locator
-                                                                        .clone(),
-                                                                    &sbom,
-                                                                    tx.clone(),
-                                                                )
-                                                                .await?;
+                                                            sbom.ingest_package_dependency(
+                                                                package_ref
+                                                                    .reference_locator
+                                                                    .clone(),
+                                                                reference.reference_locator.clone(),
+                                                                tx.clone(),
+                                                            )
+                                                            .await?;
                                                         }
                                                     }
                                                 }
@@ -253,78 +603,215 @@ impl System {
         Ok(())
     }
 
-    pub async fn direct_sbom_dependencies(&self, location: &str) -> Result<Vec<Purl>, Error> {
-        if let Some(sbom) = self.fetch_sbom(location).await? {
-            let found = package::Entity::find()
-                .join(
-                    JoinType::LeftJoin,
-                    sbom_dependency::Relation::Package.def().rev(),
-                )
-                .filter(sbom_dependency::Column::SbomId.eq(sbom.id))
-                .find_with_related(package_qualifier::Entity)
-                .all(&*self.db)
-                .await?;
+    pub async fn direct_dependencies(&self, tx: Transactional<'_>) -> Result<Vec<Purl>, Error> {
+        let found = package::Entity::find()
+            .join(
+                JoinType::LeftJoin,
+                sbom_dependency::Relation::Package.def().rev(),
+            )
+            .filter(sbom_dependency::Column::SbomId.eq(self.sbom.id))
+            .find_with_related(package_qualifier::Entity)
+            .all(&self.system.connection(tx))
+            .await?;
 
-            Ok(self.packages_to_purls(found)?)
-        } else {
-            Ok(Vec::new())
-        }
+        Ok(packages_to_purls(found)?)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use sea_orm::TransactionTrait;
     use std::fs::File;
     use std::path::PathBuf;
     use std::str::FromStr;
     use std::time::Instant;
 
-    use crate::db::{ConnectionOrTransaction, Transactional};
-    use crate::system::error::Error;
+    use crate::db::Transactional;
+    use huevos_common::sbom::SbomLocator;
     use spdx_rs::models::SPDX;
 
-    use crate::system::System;
+    use crate::system::InnerSystem;
 
     #[tokio::test]
-    async fn debug() -> Result<(), anyhow::Error> {
-        //env_logger::builder()
-        //.filter_level(log::LevelFilter::Info)
-        //.is_test(true)
-        //.init();
-        let system = System::for_test("debug").await?;
+    async fn ingest_and_fetch_sboms() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("ingest_and_fetch_sboms").await?;
 
-        let inner_system = system.clone();
-        let db = inner_system.db.clone();
+        let sbom_v1 = system.ingest_sbom("http://sbom.com/test.json", "8").await?;
+        let sbom_v1_again = system.ingest_sbom("http://sbom.com/test.json", "8").await?;
+        let sbom_v2 = system.ingest_sbom("http://sbom.com/test.json", "9").await?;
 
-        db.transaction(|tx| {
-            Box::pin(async move {
-                let sbom = inner_system.ingest_sbom("test.com/sbom.json", "9").await?;
-
-                inner_system
-                    .ingest_sbom_dependency(
-                        sbom.clone(),
-                        "pkg://maven/foo@1?type=jar",
-                        Transactional::None,
-                    )
-                    .await?;
-                Ok::<(), Error>(())
-            })
-        })
-        .await?;
-
-        let result = system
-            .direct_sbom_dependencies("test.com/sbom.json")
+        let other_sbom = system
+            .ingest_sbom("http://sbom.com/other.json", "10")
             .await?;
 
-        println!("{:#?}", result);
+        assert_eq!(sbom_v1.sbom.id, sbom_v1_again.sbom.id);
+
+        assert_ne!(sbom_v1.sbom.id, sbom_v2.sbom.id,);
+
+        let found = system
+            .fetch_sbom(SbomLocator::Id(sbom_v1.sbom.id), Transactional::None)
+            .await?;
+
+        assert!(found.is_some());
+        let found = found.unwrap();
+        assert_eq!(sbom_v1, found);
+
+        let found = system
+            .fetch_sbom(SbomLocator::Sha256("9".to_string()), Transactional::None)
+            .await?;
+
+        assert!(found.is_some());
+        let found = found.unwrap();
+        assert_eq!(sbom_v2, found);
+
+        let found = system
+            .fetch_sboms(
+                SbomLocator::Location("http://sbom.com/test.json".to_string()),
+                Transactional::None,
+            )
+            .await?;
+
+        assert_eq!(2, found.len());
+        assert!(found.contains(&sbom_v1));
+        assert!(found.contains(&sbom_v2));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn ingest_and_fetch_sboms_describing_purls() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("ingest_and_fetch_sboms_describing_purls").await?;
+
+        let sbom_v1 = system.ingest_sbom("http://sbom.com/test.json", "8").await?;
+        let sbom_v2 = system.ingest_sbom("http://sbom.com/test.json", "9").await?;
+        let sbom_v3 = system
+            .ingest_sbom("http://sbom.com/test.json", "10")
+            .await?;
+
+        sbom_v1
+            .ingest_describes_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        sbom_v2
+            .ingest_describes_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        sbom_v3
+            .ingest_describes_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.9.3",
+                Transactional::None,
+            )
+            .await?;
+
+        let found = system
+            .fetch_sboms(
+                SbomLocator::Purl("pkg://maven/io.quarkus/quarkus-core@1.2.3".into()),
+                Transactional::None,
+            )
+            .await?;
+
+        assert_eq!(2, found.len());
+        assert!(found.contains(&sbom_v1));
+        assert!(found.contains(&sbom_v2));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn ingest_and_fetch_sboms_describing_cpes() -> Result<(), anyhow::Error> {
+        /*
+        env_logger::builder()
+        .filter_level(log::LevelFilter::Info)
+        .is_test(true)
+        .init();
+         */
+
+        let system = InnerSystem::for_test("ingest_and_fetch_sboms_describing_cpes").await?;
+
+        let sbom_v1 = system.ingest_sbom("http://sbom.com/test.json", "8").await?;
+        let sbom_v2 = system.ingest_sbom("http://sbom.com/test.json", "9").await?;
+        let sbom_v3 = system
+            .ingest_sbom("http://sbom.com/test.json", "10")
+            .await?;
+
+        sbom_v1
+            .ingest_describes_cpe("cpe:thingy", Transactional::None)
+            .await?;
+
+        sbom_v2
+            .ingest_describes_cpe("cpe:thingy", Transactional::None)
+            .await?;
+
+        sbom_v3
+            .ingest_describes_cpe("cpe:other_thingy", Transactional::None)
+            .await?;
+
+        let found = system
+            .fetch_sboms(SbomLocator::Cpe("cpe:thingy".into()), Transactional::None)
+            .await?;
+
+        assert_eq!(2, found.len());
+        assert!(found.contains(&sbom_v1));
+        assert!(found.contains(&sbom_v2));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn ingest_and_fetch_sbom_packages() -> Result<(), anyhow::Error> {
+        /*
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .is_test(true)
+            .init();
+
+         */
+        let system = InnerSystem::for_test("ingest_and_fetch_sbom_packages").await?;
+
+        let sbom_v1 = system.ingest_sbom("http://sbom.com/test.json", "8").await?;
+        let sbom_v2 = system.ingest_sbom("http://sbom.com/test.json", "9").await?;
+        let sbom_v3 = system
+            .ingest_sbom("http://sbom.com/test.json", "10")
+            .await?;
+
+        sbom_v1
+            .ingest_sbom_dependency("pkg://maven/io.quarkus/taco@1.2.3", Transactional::None)
+            .await?;
+
+        sbom_v1
+            .ingest_package_dependency(
+                "pkg://maven/io.quarkus/foo@1.2.3",
+                "pkg://maven/io.quarkus/baz@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        sbom_v2
+            .ingest_package_dependency(
+                "pkg://maven/io.quarkus/foo@1.2.3",
+                "pkg://maven/io.quarkus/bar@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        let sbom_packages = sbom_v1.all_packages(Transactional::None).await?;
+        assert_eq!(3, sbom_packages.len());
+
+        for sbom_package in sbom_packages {
+            let _sboms = sbom_package.package.sboms_containing(Transactional::None).await?;
+        }
 
         Ok(())
     }
 
     #[tokio::test]
     async fn parse_spdx() -> Result<(), anyhow::Error> {
-        let system = System::for_test("parse_spdx").await?;
+        let system = InnerSystem::for_test("parse_spdx").await?;
 
         let pwd = PathBuf::from_str(env!("PWD"))?;
         let test_data = pwd.join("test-data");
@@ -340,27 +827,12 @@ mod tests {
 
         let start = Instant::now();
         let sbom = system.ingest_sbom("test.com/my-sbom.json", "10").await?;
-        system.ingest_spdx_sbom_data(sbom, sbom_data).await?;
+
+        sbom.ingest_spdx(sbom_data).await?;
         let ingest_time = start.elapsed();
         let start = Instant::now();
 
-        //for pkg in system.package().packages().await? {
-        //println!("{}", pkg);
-        //}
-
-        /*
-        let deps = package_system.transitive_dependencies(
-            "pkg:oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012"
-        ).await?;
-         */
-
-        //let deps = system.direct_dependencies(
-        //"pkg:oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012"
-        //).await?;
-
-        let deps = system
-            .direct_sbom_dependencies("test.com/my-sbom.json")
-            .await?;
+        let deps = sbom.direct_dependencies(Transactional::None).await?;
 
         println!("{:#?}", deps);
 

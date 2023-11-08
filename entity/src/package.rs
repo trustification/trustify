@@ -17,8 +17,8 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::package_qualifier::Entity")]
     PackageQualifiers,
-    #[sea_orm(has_many = "super::sbom::Entity")]
-    SbomDependents,
+    //#[sea_orm(has_many = "super::sbom::Entity")]
+    //SbomDependents,
 }
 
 impl Related<super::package_qualifier::Entity> for Entity {
@@ -27,6 +27,7 @@ impl Related<super::package_qualifier::Entity> for Entity {
     }
 }
 
+/*
 impl Related<super::sbom::Entity> for Entity {
     fn to() -> RelationDef {
         //Relation::SbomDependents.def()
@@ -37,6 +38,8 @@ impl Related<super::sbom::Entity> for Entity {
         Some(sbom_dependency::Relation::Sbom.def().rev())
     }
 }
+
+ */
 
 impl ActiveModelBehavior for ActiveModel {}
 

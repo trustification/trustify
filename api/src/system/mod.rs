@@ -1,14 +1,11 @@
 use std::fmt::{Debug, Display, Formatter};
 use std::future::Future;
-use std::pin::Pin;
 use std::sync::Arc;
-
 use sea_orm::{
-    ConnectionTrait, Database, DatabaseConnection, DatabaseTransaction, DbErr, Statement,
+    ConnectionTrait, Database, DatabaseConnection, DbErr, Statement,
     TransactionTrait,
 };
 use sea_orm_migration::MigratorTrait;
-
 use crate::db::{ConnectionOrTransaction, Transactional};
 use migration::Migrator;
 
@@ -16,13 +13,21 @@ pub mod error;
 pub mod package;
 pub mod sbom;
 pub mod vulnerability;
+pub mod scanner;
+
+pub mod advisory;
+
+pub mod cve;
 
 const DB_URL: &str = "postgres://postgres:eggs@localhost";
 const DB_NAME: &str = "huevos";
 
+pub type System = Arc<InnerSystem>;
+
+
 #[derive(Clone)]
-pub struct System {
-    db: Arc<DatabaseConnection>,
+pub struct InnerSystem {
+    db: DatabaseConnection,
 }
 
 pub enum Error<E: Send> {
@@ -56,7 +61,7 @@ impl<E: Send + Display> std::fmt::Display for Error<E> {
 
 impl<E: Send + Display> std::error::Error for Error<E> {}
 
-impl System {
+impl InnerSystem {
     pub async fn new(
         username: &str,
         password: &str,
@@ -69,7 +74,7 @@ impl System {
 
         Migrator::refresh(&db).await?;
 
-        Ok(Self { db: Arc::new(db) })
+        Ok(Self { db })
     }
 
     pub(crate) fn connection<'db>(
@@ -77,13 +82,13 @@ impl System {
         tx: Transactional<'db>,
     ) -> ConnectionOrTransaction<'db> {
         match tx {
-            Transactional::None => ConnectionOrTransaction::Connection(&*self.db),
+            Transactional::None => ConnectionOrTransaction::Connection(&self.db),
             Transactional::Some(tx) => ConnectionOrTransaction::Transaction(tx),
         }
     }
 
     #[cfg(test)]
-    pub async fn for_test(name: &str) -> Result<Self, anyhow::Error> {
+    pub async fn for_test(name: &str) -> Result<Arc<Self>, anyhow::Error> {
         Self::bootstrap("postgres", "eggs", "localhost", name).await
     }
 
@@ -92,7 +97,7 @@ impl System {
         password: &str,
         host: &str,
         db_name: &str,
-    ) -> Result<Self, anyhow::Error> {
+    ) -> Result<Arc<Self>, anyhow::Error> {
         let url = format!("postgres://{}:{}@{}/postgres", username, password, host);
         println!("bootstrap to {}", url);
         let db = Database::connect(url).await?;
@@ -117,10 +122,10 @@ impl System {
 
         db.close().await?;
 
-        Self::new(username, password, host, db_name).await
+        Ok(Arc::new(Self::new(username, password, host, db_name).await?))
     }
 
     pub async fn close(self) -> anyhow::Result<()> {
-        Ok(self.db.as_ref().clone().close().await?)
+        Ok(self.db.close().await?)
     }
 }

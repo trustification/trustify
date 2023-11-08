@@ -1,7 +1,7 @@
 use crate::m000001_sbom::Sbom;
 use crate::m000004_create_package::Package;
-use crate::m000006_create_vulnerability::Vulnerability;
-use crate::m000018_sbom_cpe::SbomCpe::SbomId;
+use crate::m000006_create_cve::Cve;
+use crate::m000018_sbom_describes_cpe::SbomDescribesCpe::SbomId;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -14,21 +14,21 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(SbomCpe::Table)
+                    .table(SbomDescribesCpe::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(SbomCpe::SbomId).integer().not_null())
+                    .col(ColumnDef::new(SbomDescribesCpe::SbomId).integer().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .name("sbom_id")
-                            .from(SbomCpe::Table, SbomCpe::SbomId)
+                            .from(SbomDescribesCpe::Table, SbomDescribesCpe::SbomId)
                             .to(Sbom::Table, Sbom::Id),
                     )
-                    .col(ColumnDef::new(SbomCpe::Cpe).integer().not_null())
+                    .col(ColumnDef::new(SbomDescribesCpe::Cpe).string().not_null())
                     .primary_key(
                         Index::create()
                             .name("pk-sbom-cpe")
-                            .col(SbomCpe::SbomId)
-                            .col(SbomCpe::Cpe)
+                            .col(SbomDescribesCpe::SbomId)
+                            .col(SbomDescribesCpe::Cpe)
                             .primary(),
                     )
                     .to_owned(),
@@ -38,13 +38,13 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(SbomCpe::Table).if_exists().to_owned())
+            .drop_table(Table::drop().table(SbomDescribesCpe::Table).if_exists().to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum SbomCpe {
+pub enum SbomDescribesCpe {
     Table,
     SbomId,
     Cpe,

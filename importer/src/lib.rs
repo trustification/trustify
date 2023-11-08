@@ -6,7 +6,7 @@ use csaf_walker::retrieve::RetrievingVisitor;
 use csaf_walker::source::{DispatchSource, FileOptions, FileSource};
 use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
 use csaf_walker::walker::Walker;
-use huevos_api::system::System;
+use huevos_api::system::InnerSystem;
 use huevos_common::purl::Purl;
 use packageurl::PackageUrl;
 use std::process::ExitCode;
@@ -24,7 +24,7 @@ impl Run {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
         env_logger::init();
 
-        let system = System::new("postgres", "eggs", "localhost", "huevos").await?;
+        let system = InnerSystem::new("postgres", "eggs", "localhost", "huevos").await?;
 
         let filter = |name: &str| {
             // RHAT: we have advisories marked as "vex"
@@ -94,7 +94,7 @@ impl Run {
     }
 }
 
-async fn process(system: &System, doc: ValidatedAdvisory) -> anyhow::Result<()> {
+async fn process(system: &InnerSystem, doc: ValidatedAdvisory) -> anyhow::Result<()> {
     let csaf = serde_json::from_slice::<Csaf>(&doc.data)?;
 
     if !matches!(csaf.document.category, Category::Vex) {

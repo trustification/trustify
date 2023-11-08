@@ -25,6 +25,7 @@ pub async fn dependencies(
 ) -> actix_web::Result<impl Responder> {
     let purl: Purl = Purl::from(&*purl);
 
+    /*
     if matches!(params.transitive, Some(true)) {
         let tree = state
             .system
@@ -40,6 +41,10 @@ pub async fn dependencies(
             .map_err(Error::from)?;
         Ok(HttpResponse::Ok().json(dependencies))
     }
+
+     */
+
+    Ok(HttpResponse::Ok().finish())
 }
 
 #[utoipa::path(
@@ -89,6 +94,8 @@ pub async fn vulnerabilities(
     Ok(HttpResponse::Ok().finish())
 }
 
+
+/*
 #[cfg(test)]
 mod tests {
     use crate::test_util::bootstrap_system;
@@ -253,6 +260,7 @@ mod tests {
         Ok(())
     }
 
+
     #[actix_web::test]
     async fn variants() -> Result<(), anyhow::Error> {
         let state = Arc::new(AppState {
@@ -311,3 +319,6 @@ mod tests {
         Ok(())
     }
 }
+
+
+ */

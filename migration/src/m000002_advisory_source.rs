@@ -1,7 +1,5 @@
 use sea_orm_migration::prelude::*;
 
-use crate::Now;
-
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
@@ -12,25 +10,16 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Vulnerability::Table)
+                    .table(AdvisorySource::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Vulnerability::Id)
+                        ColumnDef::new(AdvisorySource::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(
-                        ColumnDef::new(Vulnerability::Timestamp)
-                            .timestamp_with_time_zone()
-                            .default(Func::cust(Now)),
-                    )
-                    .col(
-                        ColumnDef::new(Vulnerability::Identifier)
-                            .string()
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(AdvisorySource::Name).string())
                     .to_owned(),
             )
             .await
@@ -38,16 +27,14 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Vulnerability::Table).to_owned())
+            .drop_table(Table::drop().table(AdvisorySource::Table).if_exists().to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum Vulnerability {
+pub enum AdvisorySource {
     Table,
     Id,
-    Timestamp,
-    // --
-    Identifier,
+    Name,
 }

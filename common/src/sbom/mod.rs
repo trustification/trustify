@@ -1,6 +1,10 @@
 use crate::purl::Purl;
 
-pub enum SbomIdentifier {
+#[derive(Debug, Clone)]
+pub enum SbomLocator {
+    Id(i32),
+    Location(String),
+    Sha256(String),
     Purl(Purl),
     Cpe(String),
 }

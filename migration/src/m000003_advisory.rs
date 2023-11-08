@@ -1,5 +1,3 @@
-use crate::m000004_create_package::Package;
-use crate::m000006_create_cve::Cve;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -12,17 +10,18 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Sbom::Table)
+                    .table(Advisory::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Sbom::Id)
+                        ColumnDef::new(Advisory::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Sbom::Location).string().not_null())
-                    .col(ColumnDef::new(Sbom::Sha256).string().not_null())
+                    .col(ColumnDef::new(Advisory::Identifier).string().not_null())
+                    .col(ColumnDef::new(Advisory::Location).string().not_null())
+                    .col(ColumnDef::new(Advisory::Sha256).string().not_null())
                     .to_owned(),
             )
             .await
@@ -30,15 +29,16 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Sbom::Table).if_exists().to_owned())
+            .drop_table(Table::drop().table(Advisory::Table).if_exists().to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum Sbom {
+pub enum Advisory {
     Table,
     Id,
+    Identifier,
     Location,
     Sha256,
 }

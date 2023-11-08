@@ -1,5 +1,7 @@
 use sea_orm_migration::prelude::*;
 
+use crate::Now;
+
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
@@ -10,16 +12,25 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Scanner::Table)
+                    .table(Cwe::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Scanner::Id)
+                        ColumnDef::new(Cwe::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Scanner::Name).string())
+                    .col(
+                        ColumnDef::new(Cwe::Timestamp)
+                            .timestamp_with_time_zone()
+                            .default(Func::cust(Now)),
+                    )
+                    .col(
+                        ColumnDef::new(Cwe::Identifier)
+                            .string()
+                            .not_null(),
+                    )
                     .to_owned(),
             )
             .await
@@ -27,14 +38,16 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Scanner::Table).if_exists().to_owned())
+            .drop_table(Table::drop().table(Cwe::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum Scanner {
+pub enum Cwe {
     Table,
     Id,
-    Name,
+    Timestamp,
+    // --
+    Identifier,
 }

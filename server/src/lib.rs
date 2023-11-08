@@ -2,7 +2,7 @@
 
 use crate::server::read;
 use actix_web::web;
-use huevos_api::system::System;
+use huevos_api::system::InnerSystem;
 use std::process::ExitCode;
 
 pub mod server;
@@ -20,7 +20,7 @@ impl Run {
 }
 
 pub struct AppState {
-    pub system: System,
+    pub system: InnerSystem,
 }
 
 pub fn configure(config: &mut web::ServiceConfig) {
@@ -31,9 +31,10 @@ pub fn configure(config: &mut web::ServiceConfig) {
 
 #[cfg(test)]
 mod test_util {
-    use huevos_api::system::System;
+    use std::sync::Arc;
+    use huevos_api::system::InnerSystem;
 
-    pub async fn bootstrap_system(name: &str) -> Result<System, anyhow::Error> {
-        System::bootstrap("postgres", "eggs", "localhost", name).await
+    pub async fn bootstrap_system(name: &str) -> Result<Arc<InnerSystem>, anyhow::Error> {
+        InnerSystem::bootstrap("postgres", "eggs", "localhost", name).await
     }
 }
