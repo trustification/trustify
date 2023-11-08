@@ -31,8 +31,15 @@ A CWE exists or it does not. Represented by an identifier. No source-tracking re
 An Advisory exists or it does not. Represented by a location/hash/identifier. 
 Source tracked from an Advisory Source.
 
+There is probably always an advisory from NVD for every CVE. 
+
 ### Advisory Source
-Something like GHSA, Red Hat VEX, etc.
+Something like GHSA, Red Hat VEX, etc. Maybe?
+
+
+### Scanners dibt exist
+They should just point us towards first order advisories to ingest. 
+OSV just tells us to look elsewhere. 
 
 ### Vulnerability
 Not yet implemented, but represents a mixture of CVE+(package + range)+Advisory
