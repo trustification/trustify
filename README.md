@@ -41,10 +41,10 @@ Something like GHSA, Red Hat VEX, etc. Maybe?
 They should just point us towards first order advisories to ingest. 
 OSV just tells us to look elsewhere. 
 
-### Vulnerability
+### Vulnerable
 Not yet implemented, but represents a mixture of CVE+(package + range)+Advisory
 
-### NonVulnerability
+### NonVulnerable
 Not yet implemented, but represents a mixture of CVE+(package + range)+Advisory
 
-
+Both impl'd for pURL and CPE. 
