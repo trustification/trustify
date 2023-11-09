@@ -12,25 +12,21 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Package::Table)
+                    .table(Cve::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Package::Id)
+                        ColumnDef::new(Cve::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
                     .col(
-                        ColumnDef::new(Package::Timestamp)
+                        ColumnDef::new(Cve::Timestamp)
                             .timestamp_with_time_zone()
                             .default(Func::cust(Now)),
                     )
-                    .col(ColumnDef::new(Package::PackageType).string().not_null())
-                    .col(ColumnDef::new(Package::PackageNamespace).string())
-                    .col(ColumnDef::new(Package::PackageName).string().not_null())
-                    .col(ColumnDef::new(Package::Version).string().not_null())
-                    .col(ColumnDef::new(Package::Subpath).string())
+                    .col(ColumnDef::new(Cve::Identifier).string().not_null())
                     .to_owned(),
             )
             .await
@@ -38,20 +34,16 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Package::Table).to_owned())
+            .drop_table(Table::drop().table(Cve::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum Package {
+pub enum Cve {
     Table,
     Id,
     Timestamp,
     // --
-    PackageType,
-    PackageNamespace,
-    PackageName,
-    Version,
-    Subpath,
+    Identifier,
 }

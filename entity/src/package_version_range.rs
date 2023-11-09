@@ -3,26 +3,31 @@ use sea_orm::entity::prelude::*;
 use sea_orm::FromQueryResult;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
-#[sea_orm(table_name = "package")]
+#[sea_orm(table_name = "package_version_range")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    pub r#type: String,
-    pub namespace: Option<String>,
-    pub name: String,
+    pub package_id: i32,
+    pub start: String,
+    pub end: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::package_version::Entity")]
-    PackageVersions,
+    #[sea_orm(
+        belongs_to = "super::package::Entity",
+        from = "super::package_version_range::Column::PackageId"
+        to = "super::package::Column::Id")]
+    Package,
+    //#[sea_orm(has_many = "super::package_qualifier::Entity")]
+    //PackageQualifiers,
     //#[sea_orm(has_many = "super::sbom::Entity")]
     //SbomDependents,
 }
 
-impl Related<super::package_version::Entity> for Entity {
+impl Related<super::package::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::PackageVersions.def()
+        Relation::Package.def()
     }
 }
 

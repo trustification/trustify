@@ -1,5 +1,5 @@
-use crate::m000001_sbom::Sbom;
-use crate::m000004_create_package::Package;
+use crate::m0000010_create_sbom::Sbom;
+use crate::m0000040_create_package::Package;
 use crate::Now;
 use sea_orm_migration::prelude::*;
 

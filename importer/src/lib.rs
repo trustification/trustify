@@ -6,6 +6,7 @@ use csaf_walker::retrieve::RetrievingVisitor;
 use csaf_walker::source::{DispatchSource, FileOptions, FileSource};
 use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
 use csaf_walker::walker::Walker;
+use huevos_api::db::Transactional;
 use huevos_api::system::InnerSystem;
 use huevos_common::config::Database;
 use huevos_common::purl::Purl;
@@ -108,21 +109,34 @@ async fn process(system: &InnerSystem, doc: ValidatedAdvisory) -> anyhow::Result
 
     log::info!("Ingesting: {}", doc.url);
 
+    let advisory = system
+        .ingest_advisory(
+            &csaf.document.tracking.id,
+            &doc.url.to_string(),
+            &doc.sha256.as_ref().unwrap().expected,
+            Transactional::None,
+        )
+        .await?;
+
     for vuln in csaf.vulnerabilities.iter().flatten() {
         let id = match &vuln.cve {
             Some(cve) => cve,
             None => continue,
         };
 
-        let v = system.ingest_vulnerability(id).await?;
+        //let v = system.ingest_vulnerability(id).await?;
+        advisory.ingest_cve(id, Transactional::None).await?;
 
         if let Some(ps) = &vuln.product_status {
             for r in ps.fixed.iter().flatten() {
                 for purl in resolve_purls(&csaf, r) {
                     let package = Purl::from(purl.clone());
-                    system
-                        .ingest_vulnerability_fixed(package, &v, "vex")
-                        .await?
+                    //system
+                    //.ingest_vulnerability_fixed(package, &v, "vex")
+                    //.await?
+                    advisory
+                        .ingest_fixed_package_version(package, Transactional::None)
+                        .await?;
                 }
             }
         }

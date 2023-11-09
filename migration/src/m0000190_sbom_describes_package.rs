@@ -1,7 +1,8 @@
-use crate::m000001_sbom::Sbom;
-use crate::m000004_create_package::Package;
-use crate::m000006_create_cve::Cve;
-use crate::m000018_sbom_describes_cpe::SbomDescribesCpe::SbomId;
+use crate::m0000010_create_sbom::Sbom;
+use crate::m0000011_create_cve::Cve;
+use crate::m0000040_create_package::Package;
+use crate::m0000044_create_qualified_package::QualifiedPackage;
+use crate::m0000180_sbom_describes_cpe::SbomDescribesCpe::SbomId;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -16,26 +17,37 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(SbomDescribesPackage::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(SbomDescribesPackage::SbomId).integer().not_null())
+                    .col(
+                        ColumnDef::new(SbomDescribesPackage::SbomId)
+                            .integer()
+                            .not_null(),
+                    )
                     .foreign_key(
                         ForeignKey::create()
                             .name("sbom_id")
                             .from(SbomDescribesPackage::Table, SbomDescribesPackage::SbomId)
                             .to(Sbom::Table, Sbom::Id),
                     )
-                    .col(ColumnDef::new(SbomDescribesPackage::PackageId).integer().not_null())
+                    .col(
+                        ColumnDef::new(SbomDescribesPackage::QualifiedPackageId)
+                            .integer()
+                            .not_null(),
+                    )
                     .primary_key(
                         Index::create()
                             .name("pk-sbom_package_id")
                             .col(SbomDescribesPackage::SbomId)
-                            .col(SbomDescribesPackage::PackageId)
+                            .col(SbomDescribesPackage::QualifiedPackageId)
                             .primary(),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .name("package_id")
-                            .from(SbomDescribesPackage::Table, SbomDescribesPackage::PackageId)
-                            .to(Package::Table, Package::Id),
+                            .name("qualified_package_id")
+                            .from(
+                                SbomDescribesPackage::Table,
+                                SbomDescribesPackage::QualifiedPackageId,
+                            )
+                            .to(QualifiedPackage::Table, QualifiedPackage::Id),
                     )
                     .to_owned(),
             )
@@ -58,5 +70,5 @@ impl MigrationTrait for Migration {
 pub enum SbomDescribesPackage {
     Table,
     SbomId,
-    PackageId,
+    QualifiedPackageId,
 }

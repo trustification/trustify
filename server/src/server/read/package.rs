@@ -73,12 +73,16 @@ pub async fn variants(
 ) -> Result<impl Responder, Error> {
     let purl: Purl = Purl::from_str(&*purl)?;
 
+    /*
     let response = state
         .system
         .package_variants(purl)
         .await
         .map_err(Error::System)?;
     Ok(HttpResponse::Ok().json(response))
+
+     */
+    Ok(HttpResponse::Ok().finish())
 }
 
 #[utoipa::path(

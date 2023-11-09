@@ -1,4 +1,5 @@
-use crate::m000004_create_package::Package;
+use crate::m0000040_create_package::Package;
+use crate::m0000044_create_qualified_package::QualifiedPackage;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -21,15 +22,18 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(
-                        ColumnDef::new(PackageQualifier::PackageId)
+                        ColumnDef::new(PackageQualifier::QualifiedPackageId)
                             .integer()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
                             .name("package_id")
-                            .from(PackageQualifier::Table, PackageQualifier::PackageId)
-                            .to(Package::Table, Package::Id),
+                            .from(
+                                PackageQualifier::Table,
+                                PackageQualifier::QualifiedPackageId,
+                            )
+                            .to(QualifiedPackage::Table, QualifiedPackage::Id),
                     )
                     .col(ColumnDef::new(PackageQualifier::Key).string().not_null())
                     .col(ColumnDef::new(PackageQualifier::Value).string().not_null())
@@ -49,7 +53,7 @@ impl MigrationTrait for Migration {
 pub enum PackageQualifier {
     Table,
     Id,
-    PackageId,
+    QualifiedPackageId,
     Key,
     Value,
 }

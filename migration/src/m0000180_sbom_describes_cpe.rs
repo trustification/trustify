@@ -1,7 +1,7 @@
-use crate::m000001_sbom::Sbom;
-use crate::m000004_create_package::Package;
-use crate::m000006_create_cve::Cve;
-use crate::m000018_sbom_describes_cpe::SbomDescribesCpe::SbomId;
+use crate::m0000010_create_sbom::Sbom;
+use crate::m0000011_create_cve::Cve;
+use crate::m0000040_create_package::Package;
+use crate::m0000180_sbom_describes_cpe::SbomDescribesCpe::SbomId;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -16,7 +16,11 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(SbomDescribesCpe::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(SbomDescribesCpe::SbomId).integer().not_null())
+                    .col(
+                        ColumnDef::new(SbomDescribesCpe::SbomId)
+                            .integer()
+                            .not_null(),
+                    )
                     .foreign_key(
                         ForeignKey::create()
                             .name("sbom_id")
@@ -38,7 +42,12 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(SbomDescribesCpe::Table).if_exists().to_owned())
+            .drop_table(
+                Table::drop()
+                    .table(SbomDescribesCpe::Table)
+                    .if_exists()
+                    .to_owned(),
+            )
             .await
     }
 }

@@ -1,4 +1,4 @@
-use crate::{package, sbom};
+use crate::{package, qualified_package, sbom};
 use sea_orm::entity::prelude::*;
 use sea_orm::LinkDef;
 
@@ -8,7 +8,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub sbom_id: i32,
     #[sea_orm(primary_key)]
-    pub package_id: i32,
+    pub qualified_package_id: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -20,9 +20,9 @@ pub enum Relation {
     Sbom,
 
     #[sea_orm(
-    belongs_to = "super::package::Entity",
-    from = "super::sbom_describes_package::Column::PackageId"
-    to = "super::package::Column::Id")]
+        belongs_to = "super::qualified_package::Entity",
+        from = "super::sbom_describes_package::Column::QualifiedPackageId"
+        to = "super::qualified_package::Column::Id")]
     Package,
 }
 
@@ -32,7 +32,7 @@ impl Related<sbom::Entity> for Entity {
     }
 }
 
-impl Related<package::Entity> for Entity {
+impl Related<qualified_package::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Package.def()
     }

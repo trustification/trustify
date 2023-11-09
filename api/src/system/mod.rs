@@ -6,15 +6,16 @@ use std::fmt::{Debug, Display, Formatter};
 use std::future::Future;
 use std::sync::Arc;
 
+pub mod advisory;
+pub mod affected_package_version_range;
 pub mod error;
 pub mod package;
 pub mod sbom;
-pub mod scanner;
-pub mod vulnerability;
-
-pub mod advisory;
 
 pub mod cve;
+pub mod fixed_package_version;
+
+pub mod advisory_cve;
 
 const DB_URL: &str = "postgres://postgres:eggs@localhost";
 const DB_NAME: &str = "huevos";

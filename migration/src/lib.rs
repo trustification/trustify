@@ -1,18 +1,21 @@
 pub use sea_orm_migration::prelude::*;
 
-mod m000001_sbom;
-mod m000004_create_package;
-mod m000016_create_package_dependency;
-mod m000005_create_package_qualifier;
-mod m000006_create_cve;
-mod m000011_package_scan_vulnerability;
-mod m000010_vulnerability_fixed;
-mod m000018_sbom_describes_cpe;
-mod m000019_sbom_describes_package;
-mod m000012_create_sbom_dependency;
-mod m000003_advisory;
-mod m000002_advisory_source;
-mod m000007_create_cwe;
+mod m0000010_create_sbom;
+mod m0000011_create_cve;
+mod m0000030_create_advisory;
+pub mod m0000032_create_advisory_cve;
+mod m0000040_create_package;
+mod m0000042_create_package_version;
+mod m0000044_create_qualified_package;
+mod m0000046_create_package_version_range;
+mod m0000047_create_affected_package_version_range;
+mod m0000048_create_fixed_package_version;
+mod m0000050_create_package_qualifier;
+mod m0000070_create_cwe;
+mod m0000120_create_sbom_dependency;
+mod m0000160_create_package_dependency;
+mod m0000180_sbom_describes_cpe;
+mod m0000190_sbom_describes_package;
 
 pub struct Migrator;
 
@@ -20,18 +23,21 @@ pub struct Migrator;
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
-            Box::new(m000001_sbom::Migration),
-            Box::new(m000002_advisory_source::Migration),
-            Box::new(m000003_advisory::Migration),
-            Box::new(m000004_create_package::Migration),
-            Box::new(m000005_create_package_qualifier::Migration),
-            Box::new(m000006_create_cve::Migration),
-            Box::new(m000010_vulnerability_fixed::Migration),
-            Box::new(m000011_package_scan_vulnerability::Migration),
-            Box::new(m000012_create_sbom_dependency::Migration),
-            Box::new(m000016_create_package_dependency::Migration),
-            Box::new(m000018_sbom_describes_cpe::Migration),
-            Box::new(m000019_sbom_describes_package::Migration),
+            Box::new(m0000010_create_sbom::Migration),
+            Box::new(m0000011_create_cve::Migration),
+            Box::new(m0000030_create_advisory::Migration),
+            Box::new(m0000032_create_advisory_cve::Migration),
+            Box::new(m0000040_create_package::Migration),
+            Box::new(m0000042_create_package_version::Migration),
+            Box::new(m0000044_create_qualified_package::Migration),
+            Box::new(m0000046_create_package_version_range::Migration),
+            Box::new(m0000047_create_affected_package_version_range::Migration),
+            Box::new(m0000048_create_fixed_package_version::Migration),
+            Box::new(m0000050_create_package_qualifier::Migration),
+            Box::new(m0000120_create_sbom_dependency::Migration),
+            Box::new(m0000160_create_package_dependency::Migration),
+            Box::new(m0000180_sbom_describes_cpe::Migration),
+            Box::new(m0000190_sbom_describes_package::Migration),
         ]
     }
 }

@@ -5,22 +5,22 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    pub package_id: i32,
+    pub qualified_package_id: i32,
     pub key: String,
     pub value: String,
 }
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::package::Entity",
-        from = "super::package_qualifier::Column::PackageId"
-        to = "super::package::Column::Id")]
-    Package,
+        belongs_to = "super::qualified_package::Entity",
+        from = "super::package_qualifier::Column::QualifiedPackageId"
+        to = "super::qualified_package::Column::Id")]
+    QualifiedPackage,
 }
 
-impl Related<super::package::Entity> for Entity {
+impl Related<super::qualified_package::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Package.def()
+        Relation::QualifiedPackage.def()
     }
 }
 

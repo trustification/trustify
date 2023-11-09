@@ -1,14 +1,20 @@
 use huevos_common::purl::{Purl, PurlErr};
+use huevos_common::sbom::SbomLocator;
 use huevos_entity::package::{Model, PackageNamespace, PackageType};
-use huevos_entity::{package, package_dependency, package_qualifier, sbom, sbom_describes_package};
+use huevos_entity::sbom::Column;
+use huevos_entity::{
+    package, package_dependency, package_qualifier, package_version, package_version_range,
+    qualified_package, sbom, sbom_describes_package,
+};
 use packageurl::PackageUrl;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, Condition, ConnectionTrait, EntityTrait, FromQueryResult,
     ModelTrait, QueryFilter, QuerySelect, Select, Set,
 };
-use sea_query::Query;
+use sea_orm::{RelationTrait, TransactionTrait};
+use sea_query::{JoinType, Query};
+use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
-use huevos_common::sbom::SbomLocator;
 
 use crate::db::Transactional;
 use crate::system::error::Error;
@@ -16,6 +22,45 @@ use crate::system::sbom::SbomContext;
 use crate::system::InnerSystem;
 
 impl InnerSystem {
+    pub async fn ingest_qualified_package<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<QualifiedPackageContext, Error> {
+        let purl = pkg.into();
+        let package_version = self.ingest_package_version(purl.clone(), tx).await?;
+
+        package_version
+            .ingest_qualified_package(purl.clone(), tx)
+            .await
+    }
+
+    pub async fn ingest_package_version<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<PackageVersionContext, Error> {
+        let pkg = pkg.into();
+        let package = self.ingest_package(pkg.clone(), tx).await?;
+
+        package.ingest_package_version(pkg.clone(), tx).await
+    }
+
+    pub async fn ingest_package_version_range<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        start: &str,
+        end: &str,
+        tx: Transactional<'_>,
+    ) -> Result<PackageVersionRangeContext, Error> {
+        let pkg = pkg.into();
+        let package = self.ingest_package(pkg.clone(), tx).await?;
+
+        package
+            .ingest_package_version_range(pkg.clone(), start, end, tx)
+            .await
+    }
+
     pub async fn ingest_package<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -23,166 +68,75 @@ impl InnerSystem {
     ) -> Result<PackageContext, Error> {
         let purl = pkg.into();
 
-        if let Some(version) = &purl.version {
-            Ok(self.insert_or_fetch_package(purl, tx).await?)
+        if let Some(found) = self.get_package(purl.clone(), tx.clone()).await? {
+            Ok(found)
         } else {
-            Err(PurlErr::MissingVersion.into())
+            let model = package::ActiveModel {
+                id: Default::default(),
+                r#type: Set(purl.ty.clone()),
+                namespace: Set(purl.namespace.clone()),
+                name: Set(purl.name.clone()),
+            };
+
+            Ok((self, model.insert(&self.connection(tx)).await?).into())
         }
     }
 
-    pub async fn fetch_package<'p, P: Into<Purl>>(
+    pub async fn get_qualified_package<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<Option<QualifiedPackageContext>, Error> {
+        let purl = pkg.into();
+        if let Some(package_version) = self.get_package_version(purl.clone(), tx.clone()).await? {
+            package_version.get_qualified_package(purl, tx).await
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn get_package_version<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<Option<PackageVersionContext>, Error> {
+        let purl = pkg.into();
+        if let Some(pkg) = self.get_package(purl.clone(), tx).await? {
+            pkg.get_package_version(purl, tx).await
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn get_package_version_range<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        start: &str,
+        end: &str,
+        tx: Transactional<'_>,
+    ) -> Result<Option<PackageVersionRangeContext>, Error> {
+        let purl = pkg.into();
+        if let Some(pkg) = self.get_package(purl.clone(), tx).await? {
+            pkg.get_package_version_range(purl, start, end, tx).await
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub async fn get_package<P: Into<Purl>>(
         &self,
         pkg: P,
         tx: Transactional<'_>,
     ) -> Result<Option<PackageContext>, Error> {
         let purl = pkg.into();
-        if let Some(version) = &purl.version {
-            self.get_package(purl, tx).await
-        } else {
-            Err(PurlErr::MissingVersion.into())
-        }
-    }
-
-    pub async fn packages(&self) -> Result<Vec<Purl>, Error> {
-        let found = package::Entity::find()
-            .find_with_related(package_qualifier::Entity)
-            .all(&self.db)
-            .await?;
-
-        Ok(packages_to_purls(found)?)
-    }
-
-    pub async fn package_variants<P: Into<Purl>>(&self, purl: P) -> Result<Vec<Purl>, Error> {
-        let purl = purl.into();
-
-        let mut conditions = Condition::all()
-            .add(package::Column::PackageType.eq(purl.ty.clone()))
-            .add(package::Column::PackageName.eq(purl.name.clone()));
-
-        if let Some(ns) = &purl.namespace {
-            conditions = conditions.add(package::Column::PackageNamespace.eq(ns.clone()));
-        }
-
-        let found = package::Entity::find()
-            .find_with_related(package_qualifier::Entity)
-            .filter(conditions)
-            .all(&self.db)
-            .await?;
-
-        Ok(packages_to_purls(found)?)
-    }
-
-    pub async fn insert_or_fetch_package<P: Into<Purl>>(
-        &self,
-        purl: P,
-        tx: Transactional<'_>,
-    ) -> Result<PackageContext, anyhow::Error> {
-        let purl = purl.into();
-        let fetch = self.get_package(purl.clone(), tx).await?;
-        if let Some(pkg) = fetch {
-            Ok(pkg)
-        } else {
-            let mut entity = package::ActiveModel {
-                package_type: Set(purl.ty.to_string()),
-                package_namespace: Set(purl.namespace),
-                package_name: Set(purl.name.to_string()),
-                version: Set(purl.version.unwrap_or_default()),
-                ..Default::default()
-            };
-
-            let inserted = entity.insert(&self.db).await?;
-
-            for (k, v) in &purl.qualifiers {
-                let entity = package_qualifier::ActiveModel {
-                    package_id: Set(inserted.id),
-                    key: Set(k.to_string()),
-                    value: Set(v.to_string()),
-                    ..Default::default()
-                };
-                entity.insert(&self.db).await?;
-            }
-
-            Ok((self, inserted).into())
-        }
-    }
-
-    async fn get_package<P: Into<Purl>>(
-        &self,
-        purl: P,
-        tx: Transactional<'_>,
-    ) -> Result<Option<PackageContext>, Error> {
-        let purl = purl.into();
-        let mut conditions = Condition::all()
-            .add(package::Column::PackageType.eq(purl.ty.to_string()))
-            .add(package::Column::PackageName.eq(purl.name.to_string()))
-            .add(package::Column::Version.eq(purl.version));
-
-        if let Some(ns) = purl.namespace {
-            conditions = conditions.add(package::Column::PackageNamespace.eq(ns.to_string()));
-        } else {
-            conditions = conditions.add(package::Column::PackageNamespace.is_null());
-        }
-
-        let found = package::Entity::find()
-            .find_with_related(package_qualifier::Entity)
-            .filter(conditions)
-            .all(&self.connection(tx))
-            .await?;
-
-        if found.is_empty() {
-            return Ok(None);
-        } else {
-            for (found_package, found_qualifiers) in found {
-                if purl.qualifiers.is_empty() && found_qualifiers.is_empty() {
-                    return Ok(Some((self, found_package).into()));
-                }
-
-                if purl.qualifiers.len() != found_qualifiers.len() {
-                    return Ok(None);
-                }
-
-                for (expected_k, expected_v) in &purl.qualifiers {
-                    if found_qualifiers
-                        .iter()
-                        .any(|found_q| found_q.key == *expected_k && found_q.value == *expected_v)
-                    {
-                        return Ok(Some((self, found_package).into()));
-                    }
-                }
-            }
-        }
-
-        Ok(None)
-    }
-
-    pub async fn package_types(&self) -> Result<Vec<String>, anyhow::Error> {
         Ok(package::Entity::find()
-            .select_only()
-            .column(package::Column::PackageType)
-            .group_by(package::Column::PackageType)
-            .into_model::<PackageType>()
-            .all(&self.db)
+            .filter(package::Column::Type.eq(purl.ty.clone()))
+            .filter(package::Column::Namespace.eq(purl.namespace.clone()))
+            .filter(package::Column::Name.eq(purl.name.clone()))
+            .one(&self.connection(tx))
             .await?
-            .iter()
-            .map(|e| e.package_type.clone())
-            .collect())
+            .map(|package| (self, package).into()))
     }
-
-    pub async fn package_namespaces(&self) -> Result<Vec<String>, anyhow::Error> {
-        Ok(package::Entity::find()
-            .select_only()
-            .column(package::Column::PackageNamespace)
-            .group_by(package::Column::PackageNamespace)
-            .into_model::<PackageNamespace>()
-            .all(&self.db)
-            .await?
-            .iter()
-            .map(|e| e.package_namespace.clone())
-            .collect())
-    }
-
-    // ------------------------------------------------------------------------
-    // ------------------------------------------------------------------------
 }
 
 #[derive(Clone)]
@@ -207,8 +161,92 @@ impl From<(&InnerSystem, package::Model)> for PackageContext {
 }
 
 impl PackageContext {
+    pub async fn ingest_package_version_range<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        start: &str,
+        end: &str,
+        tx: Transactional<'_>,
+    ) -> Result<PackageVersionRangeContext, Error> {
+        let purl = pkg.into();
+        if let Some(found) = self.get_package_version_range(purl, start, end, tx).await? {
+            Ok(found)
+        } else {
+            let entity = package_version_range::ActiveModel {
+                id: Default::default(),
+                package_id: Set(self.package.id),
+                start: Set(start.to_string()),
+                end: Set(end.to_string()),
+            };
 
+            Ok((self, entity.insert(&self.system.connection(tx)).await?).into())
+        }
+    }
+
+    pub async fn get_package_version_range<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        start: &str,
+        end: &str,
+        tx: Transactional<'_>,
+    ) -> Result<Option<PackageVersionRangeContext>, Error> {
+        let purl = pkg.into();
+
+        Ok(package_version_range::Entity::find()
+            .filter(package_version_range::Column::PackageId.eq(self.package.id))
+            .filter(package_version_range::Column::Start.eq(start.to_string()))
+            .filter(package_version_range::Column::End.eq(end.to_string()))
+            .one(&self.system.connection(tx))
+            .await?
+            .map(|package_version_range| (self, package_version_range).into()))
+    }
+
+    pub async fn ingest_package_version<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<PackageVersionContext, Error> {
+        let purl = pkg.into();
+
+        if let Some(version) = &purl.version {
+            if let Some(found) = self.get_package_version(purl.clone(), tx.clone()).await? {
+                return Ok(found);
+            } else {
+                let model = package_version::ActiveModel {
+                    id: Default::default(),
+                    package_id: Set(self.package.id),
+                    version: Set(version.clone()),
+                };
+
+                Ok((self, model.insert(&self.system.connection(tx)).await?).into())
+            }
+        } else {
+            Err(Error::Purl(PurlErr::MissingVersion))
+        }
+    }
+
+    pub async fn get_package_version<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<Option<PackageVersionContext>, Error> {
+        let purl = pkg.into();
+        if let Some(package_version) = package_version::Entity::find()
+            .join(JoinType::Join, package_version::Relation::Package.def())
+            .filter(package::Column::Id.eq(self.package.id))
+            .filter(package_version::Column::Version.eq(purl.version.clone()))
+            .one(&self.system.connection(tx))
+            .await?
+        {
+            Ok(Some((self, package_version).into()))
+        } else {
+            Ok(None)
+        }
+    }
+
+    /*
     /// Locate all SBOMs that contain this package.
+    ///
     pub async fn sboms_containing(&self, tx: Transactional<'_>) -> Result<Vec<SbomContext>, Error> {
         Ok(sbom::Entity::find()
             .filter(
@@ -270,51 +308,362 @@ impl PackageContext {
             .map(|sbom| (&self.system, sbom).into())
             .collect())
     }
+
+     */
+}
+
+#[derive(Clone)]
+pub struct PackageVersionRangeContext {
+    pub(crate) package: PackageContext,
+    pub(crate) package_version_range: package_version_range::Model,
+}
+
+impl Debug for PackageVersionRangeContext {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.package_version_range.fmt(f)
+    }
+}
+
+impl From<(&PackageContext, package_version_range::Model)> for PackageVersionRangeContext {
+    fn from(
+        (package, package_version_range): (&PackageContext, package_version_range::Model),
+    ) -> Self {
+        Self {
+            package: package.clone(),
+            package_version_range,
+        }
+    }
+}
+
+impl PackageVersionRangeContext {}
+
+#[derive(Clone)]
+pub struct PackageVersionContext {
+    pub(crate) package: PackageContext,
+    pub(crate) package_version: package_version::Model,
+}
+
+impl Debug for PackageVersionContext {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.package_version.fmt(f)
+    }
+}
+
+impl From<(&PackageContext, package_version::Model)> for PackageVersionContext {
+    fn from((package, package_version): (&PackageContext, package_version::Model)) -> Self {
+        Self {
+            package: package.clone(),
+            package_version,
+        }
+    }
+}
+
+impl PackageVersionContext {
+    pub async fn ingest_qualified_package<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        mut tx: Transactional<'_>,
+    ) -> Result<QualifiedPackageContext, Error> {
+        let purl = pkg.into();
+
+        if let Some(found) = self.get_qualified_package(purl.clone(), tx.clone()).await? {
+            return Ok(found);
+        }
+
+        // No appropriate qualified package, create one.
+        let qualified_package = qualified_package::ActiveModel {
+            id: Default::default(),
+            package_version_id: Set(self.package_version.package_id),
+        };
+
+        let qualified_package = qualified_package
+            .insert(&self.package.system.connection(tx))
+            .await?;
+
+        for (k, v) in &purl.qualifiers {
+            let qualifier = package_qualifier::ActiveModel {
+                id: Default::default(),
+                qualified_package_id: Set(qualified_package.id),
+                key: Set(k.clone()),
+                value: Set(v.clone()),
+            };
+
+            qualifier
+                .insert(&self.package.system.connection(tx))
+                .await?;
+        }
+
+        Ok((self, qualified_package, purl.qualifiers.clone()).into())
+    }
+
+    pub async fn get_qualified_package<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<Option<QualifiedPackageContext>, Error> {
+        let purl = pkg.into();
+        let found = qualified_package::Entity::find()
+            .filter(qualified_package::Column::PackageVersionId.eq(self.package_version.id))
+            .find_with_related(package_qualifier::Entity)
+            .all(&self.package.system.connection(tx))
+            .await?;
+
+        for (qualified_package, qualifiers) in found {
+            let qualifiers_map = qualifiers
+                .iter()
+                .map(|qualifier| (qualifier.key.clone(), qualifier.value.clone()))
+                .collect::<HashMap<_, _>>();
+
+            if purl.qualifiers == qualifiers_map {
+                return Ok(Some((self, qualified_package, qualifiers_map).into()));
+            }
+        }
+
+        Ok(None)
+    }
+}
+
+#[derive(Clone)]
+pub struct QualifiedPackageContext {
+    pub(crate) package_version: PackageVersionContext,
+    pub(crate) qualified_package: qualified_package::Model,
+    // just a short-cut to avoid another query
+    pub(crate) qualifiers: HashMap<String, String>,
+}
+
+impl Debug for QualifiedPackageContext {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.qualified_package.fmt(f)
+    }
+}
+
+impl
+    From<(
+        &PackageVersionContext,
+        qualified_package::Model,
+        HashMap<String, String>,
+    )> for QualifiedPackageContext
+{
+    fn from(
+        (package_version, qualified_package, qualifiers): (
+            &PackageVersionContext,
+            qualified_package::Model,
+            HashMap<String, String>,
+        ),
+    ) -> Self {
+        Self {
+            package_version: package_version.clone(),
+            qualified_package,
+            qualifiers,
+        }
+    }
+}
+
+impl From<QualifiedPackageContext> for Purl {
+    fn from(value: QualifiedPackageContext) -> Self {
+        Self {
+            ty: value.package_version.package.package.r#type.clone(),
+            namespace: value.package_version.package.package.namespace.clone(),
+            name: value.package_version.package.package.name.clone(),
+            version: Some(value.package_version.package_version.version.clone()),
+            qualifiers: value.qualifiers.clone(),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    /*
+    use crate::db::Transactional;
+    use crate::system::InnerSystem;
+    use huevos_common::purl::Purl;
+
     #[tokio::test]
     async fn ingest_packages() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("ingest_packages").await?;
 
-        let mut packages = vec![
-            "pkg:maven/io.quarkus/quarkus-hibernate-orm@2.13.5.Final?type=jar",
-            "pkg:maven/io.quarkus/quarkus-core@2.13.5.Final?type=jar",
-            "pkg:maven/jakarta.el/jakarta.el-api@3.0.3?type=jar",
-            "pkg:maven/org.postgresql/postgresql@42.5.0?type=jar",
-            "pkg:maven/io.quarkus/quarkus-narayana-jta@2.13.5.Final?type=jar",
-            "pkg:maven/jakarta.interceptor/jakarta.interceptor-api@1.2.5?type=jar",
-            "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.13.1?type=jar",
-            "pkg:maven/io.quarkus/quarkus-jdbc-postgresql@2.13.5.Final?type=jar",
-            "pkg:maven/jakarta.enterprise/jakarta.enterprise.cdi-api@2.0.2?type=jar",
-            "pkg:maven/jakarta.enterprise/jakarta.enterprise.cdi-api@2.0.2?type=jar",
-            "pkg:maven/jakarta.enterprise/jakarta.enterprise.cdi-api@2.0.2?type=war",
-            "pkg:maven/jakarta.enterprise/jakarta.enterprise.cdi-api@2.0.2?type=jar&cheese=cheddar",
-            "pkg:maven/org.apache.logging.log4j/log4j-core@2.13.3",
-        ];
+        let pkg1 = system
+            .ingest_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .await?;
 
-        for pkg in &packages {
-            system.ingest_package(pkg, Transactional::None).await?;
-        }
+        let pkg2 = system
+            .ingest_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .await?;
 
-        let package_types = system.package_types().await?;
+        let pkg3 = system
+            .ingest_package("pkg://maven/io.quarkus/quarkus-addons", Transactional::None)
+            .await?;
 
-        let package_namespaces = system.package_namespaces().await?;
+        assert_eq!(pkg1.package.id, pkg2.package.id,);
 
-        let fetched_packages = system.packages().await?;
-
-        let packages: HashSet<_> = packages.drain(..).collect();
-
-        assert_eq!(fetched_packages.len(), packages.len());
-
-        //for pkg in fetched_packages {
-        //println!("{}", pkg.to_string());
-        //}
+        assert_ne!(pkg1.package.id, pkg3.package.id);
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn ingest_package_versions_missing_version() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("ingest_package_versions_missing_version").await?;
+
+        let result = system
+            .ingest_package_version("pkg://maven/io.quarkus/quarkus-addons", Transactional::None)
+            .await;
+
+        assert!(matches!(result, Err(_)));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn ingest_package_versions() -> Result<(), anyhow::Error> {
+        /*
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .is_test(true)
+            .init();
+
+         */
+
+        let system = InnerSystem::for_test("ingest_package_versions").await?;
+
+        let pkg1 = system
+            .ingest_package_version(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        let pkg2 = system
+            .ingest_package_version(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        let pkg3 = system
+            .ingest_package_version(
+                "pkg://maven/io.quarkus/quarkus-core@4.5.6",
+                Transactional::None,
+            )
+            .await?;
+
+        assert_eq!(pkg1.package.package.id, pkg2.package.package.id);
+        assert_eq!(pkg1.package_version.id, pkg2.package_version.id);
+
+        assert_eq!(pkg1.package.package.id, pkg3.package.package.id);
+        assert_ne!(pkg1.package_version.id, pkg3.package_version.id);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn ingest_qualified_packages() -> Result<(), anyhow::Error> {
+        /*
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .is_test(true)
+            .init();
+
+         */
+
+        let system = InnerSystem::for_test("ingest_qualified_packages").await?;
+
+        let pkg1 = system
+            .ingest_qualified_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        let pkg2 = system
+            .ingest_qualified_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        let pkg3 = system
+            .ingest_qualified_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar",
+                Transactional::None,
+            )
+            .await?;
+
+        let pkg4 = system
+            .ingest_qualified_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar",
+                Transactional::None,
+            )
+            .await?;
+
+        assert_eq!(pkg1.qualified_package.id, pkg2.qualified_package.id);
+        assert_eq!(pkg3.qualified_package.id, pkg4.qualified_package.id);
+
+        assert_ne!(pkg1.qualified_package.id, pkg3.qualified_package.id);
+
+        assert_eq!(
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+            Purl::from(pkg1).to_string().as_str()
+        );
+        assert_eq!(
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar",
+            Purl::from(pkg3).to_string().as_str()
+        );
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn ingest_package_version_ranges() -> Result<(), anyhow::Error> {
+        /*
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .is_test(true)
+            .init();
+
+         */
+
+        let system = InnerSystem::for_test("ingest_package_version_ranges").await?;
+
+        let range1 = system
+            .ingest_package_version_range(
+                "pkg://maven/io.quarkus/quarkus-core",
+                "1.0.0",
+                "1.2.0",
+                Transactional::None,
+            )
+            .await?;
+
+        let range2 = system
+            .ingest_package_version_range(
+                "pkg://maven/io.quarkus/quarkus-core",
+                "1.0.0",
+                "1.2.0",
+                Transactional::None,
+            )
+            .await?;
+
+        let range3 = system
+            .ingest_package_version_range(
+                "pkg://maven/io.quarkus/quarkus-addons",
+                "1.0.0",
+                "1.2.0",
+                Transactional::None,
+            )
+            .await?;
+
+        assert_eq!(
+            range1.package_version_range.id,
+            range2.package_version_range.id
+        );
+        assert_ne!(
+            range1.package_version_range.id,
+            range3.package_version_range.id
+        );
+
+        Ok(())
+    }
+
+    /*
 
     #[tokio::test]
     async fn ingest_package_dependencies() -> Result<(), anyhow::Error> {
@@ -425,6 +774,7 @@ mod tests {
          */
 }
 
+/*
 pub(crate) fn packages_to_purls(
     packages: Vec<(
         huevos_entity::package::Model,
@@ -440,13 +790,16 @@ pub(crate) fn packages_to_purls(
     Ok(purls)
 }
 
+ */
+
+/*
 pub(crate) fn package_to_purl(
     base: huevos_entity::package::Model,
     qualifiers: Vec<huevos_entity::package_qualifier::Model>,
 ) -> Result<Purl, anyhow::Error> {
     let mut purl = PackageUrl::new(base.package_type.clone(), base.package_name.clone())?;
 
-    purl.with_version(base.version.clone());
+    //purl.with_version(base.version.clone());
 
     if let Some(namespace) = &base.package_namespace {
         purl.with_namespace(namespace.clone());
@@ -458,3 +811,6 @@ pub(crate) fn package_to_purl(
 
     Ok(purl.into())
 }
+
+
+ */

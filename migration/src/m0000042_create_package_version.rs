@@ -1,3 +1,4 @@
+use crate::m0000040_create_package::Package;
 use sea_orm_migration::prelude::*;
 
 use crate::Now;
@@ -12,25 +13,32 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Cve::Table)
+                    .table(PackageVersion::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Cve::Id)
+                        ColumnDef::new(PackageVersion::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
                     .col(
-                        ColumnDef::new(Cve::Timestamp)
+                        ColumnDef::new(PackageVersion::Timestamp)
                             .timestamp_with_time_zone()
                             .default(Func::cust(Now)),
                     )
                     .col(
-                        ColumnDef::new(Cve::Identifier)
-                            .string()
+                        ColumnDef::new(PackageVersion::PackageId)
+                            .integer()
                             .not_null(),
                     )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from_col(PackageVersion::PackageId)
+                            .to(Package::Table, Package::Id)
+                            .on_delete(ForeignKeyAction::Cascade),
+                    )
+                    .col(ColumnDef::new(PackageVersion::Version).string().not_null())
                     .to_owned(),
             )
             .await
@@ -38,16 +46,17 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Cve::Table).to_owned())
+            .drop_table(Table::drop().table(PackageVersion::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum Cve {
+pub enum PackageVersion {
     Table,
     Id,
     Timestamp,
     // --
-    Identifier,
+    PackageId,
+    Version,
 }

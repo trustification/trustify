@@ -1,5 +1,5 @@
-use crate::m000004_create_package::Package;
-use crate::m000006_create_cve::Cve;
+use crate::m0000011_create_cve::Cve;
+use crate::m0000040_create_package::Package;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
