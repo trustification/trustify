@@ -16,6 +16,7 @@ pub mod cve;
 pub mod fixed_package_version;
 
 pub mod advisory_cve;
+mod contains_package;
 
 const DB_URL: &str = "postgres://postgres:eggs@localhost";
 const DB_NAME: &str = "huevos";

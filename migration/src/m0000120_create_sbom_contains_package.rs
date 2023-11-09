@@ -1,5 +1,6 @@
 use crate::m0000010_create_sbom::Sbom;
 use crate::m0000040_create_package::Package;
+use crate::m0000044_create_qualified_package::QualifiedPackage;
 use crate::Now;
 use sea_orm_migration::prelude::*;
 
@@ -13,31 +14,38 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(SbomDependency::Table)
+                    .table(SbomContainsPackage::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(SbomDependency::SbomId).integer().not_null())
+                    .col(
+                        ColumnDef::new(SbomContainsPackage::SbomId)
+                            .integer()
+                            .not_null(),
+                    )
                     .foreign_key(
                         ForeignKey::create()
                             .name("sbom_id")
-                            .from(SbomDependency::Table, SbomDependency::SbomId)
+                            .from(SbomContainsPackage::Table, SbomContainsPackage::SbomId)
                             .to(Sbom::Table, Sbom::Id),
                     )
                     .col(
-                        ColumnDef::new(SbomDependency::PackageId)
+                        ColumnDef::new(SbomContainsPackage::QualifiedPackageId)
                             .integer()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
                             .name("dependency_package_id")
-                            .from(SbomDependency::Table, SbomDependency::PackageId)
-                            .to(Package::Table, Package::Id),
+                            .from(
+                                SbomContainsPackage::Table,
+                                SbomContainsPackage::QualifiedPackageId,
+                            )
+                            .to(QualifiedPackage::Table, QualifiedPackage::Id),
                     )
                     .primary_key(
                         Index::create()
                             .name("pk-sbom-package")
-                            .col(SbomDependency::SbomId)
-                            .col(SbomDependency::PackageId)
+                            .col(SbomContainsPackage::SbomId)
+                            .col(SbomContainsPackage::QualifiedPackageId)
                             .primary(),
                     )
                     .to_owned(),
@@ -47,14 +55,14 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(SbomDependency::Table).to_owned())
+            .drop_table(Table::drop().table(SbomContainsPackage::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum SbomDependency {
+pub enum SbomContainsPackage {
     Table,
     SbomId,
-    PackageId,
+    QualifiedPackageId,
 }

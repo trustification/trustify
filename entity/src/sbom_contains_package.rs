@@ -3,26 +3,26 @@ use sea_orm::entity::prelude::*;
 use sea_orm::LinkDef;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
-#[sea_orm(table_name = "sbom_dependency")]
+#[sea_orm(table_name = "sbom_contains_package")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub sbom_id: i32,
     #[sea_orm(primary_key)]
-    pub package_id: i32,
+    pub qualified_package_id: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
         belongs_to = "super::sbom::Entity",
-        from = "super::sbom_dependency::Column::SbomId"
+        from = "super::sbom_contains_package::Column::SbomId"
         to = "super::sbom::Column::Id")]
     Sbom,
 
     #[sea_orm(
-        belongs_to = "super::package::Entity",
-        from = "super::sbom_dependency::Column::PackageId"
-        to = "super::package::Column::Id")]
+        belongs_to = "super::qualified_package::Entity",
+        from = "super::sbom_contains_package::Column::QualifiedPackageId"
+        to = "super::qualified_package::Column::Id")]
     Package,
 }
 

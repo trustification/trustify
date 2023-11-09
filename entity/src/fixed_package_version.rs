@@ -1,4 +1,4 @@
-use crate::{advisory, package_version_range, sbom_dependency};
+use crate::{advisory, package_version_range, sbom_contains_package};
 use sea_orm::entity::prelude::*;
 use sea_orm::FromQueryResult;
 

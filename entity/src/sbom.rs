@@ -1,4 +1,4 @@
-use crate::{package, sbom_dependency, sbom_describes_package};
+use crate::{package, sbom_contains_package, sbom_describes_package};
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]

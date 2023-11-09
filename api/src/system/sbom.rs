@@ -1,12 +1,13 @@
 use crate::db::Transactional;
-use crate::system::package::PackageContext;
+use crate::system::contains_package::SbomContainsPackageContext;
+use crate::system::package::{PackageContext, PackageVersionContext, QualifiedPackageContext};
 use crate::system::InnerSystem;
 use huevos_common::purl::Purl;
 use huevos_common::sbom::SbomLocator;
 use huevos_entity::sbom::Model;
 use huevos_entity::{
-    package, package_dependency, package_qualifier, sbom, sbom_dependency, sbom_describes_cpe,
-    sbom_describes_package,
+    package, package_dependency, package_qualifier, package_version, qualified_package, sbom,
+    sbom_contains_package, sbom_describes_cpe, sbom_describes_package,
 };
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait, QueryFilter,
@@ -14,6 +15,7 @@ use sea_orm::{
 };
 use sea_query::{Condition, JoinType, Query, SelectStatement, UnionType};
 use spdx_rs::models::{RelationshipType, SPDX};
+use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 
@@ -360,6 +362,106 @@ impl SbomContext {
         }
         Ok(())
     }
+
+    pub async fn get_contains_package<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<Option<SbomContainsPackageContext>, Error> {
+        let purl = pkg.into();
+
+        Ok(
+            if let Some(package) = self
+                .system
+                .get_qualified_package(purl.clone(), tx.clone())
+                .await?
+            {
+                sbom_contains_package::Entity::find()
+                    .filter(sbom_contains_package::Column::SbomId.eq(self.sbom.id))
+                    .filter(
+                        sbom_contains_package::Column::QualifiedPackageId
+                            .eq(package.qualified_package.id),
+                    )
+                    .one(&self.system.connection(tx))
+                    .await?
+                    .map(|contains| (self, contains).into())
+            } else {
+                None
+            },
+        )
+    }
+
+    pub async fn ingest_contains_package<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<SbomContainsPackageContext, Error> {
+        let purl = pkg.into();
+
+        if let Some(found) = self.get_contains_package(purl.clone(), tx.clone()).await? {
+            return Ok(found);
+        }
+
+        let package = self.system.ingest_qualified_package(purl, tx).await?;
+
+        let entity = sbom_contains_package::ActiveModel {
+            sbom_id: Set(self.sbom.id),
+            qualified_package_id: Set(package.qualified_package.id),
+        };
+
+        Ok((self, entity.insert(&self.system.connection(tx)).await?).into())
+    }
+
+    pub async fn contains_packages(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<QualifiedPackageContext>, Error> {
+        let contained = qualified_package::Entity::find()
+            .find_with_related(package_qualifier::Entity)
+            .join(
+                JoinType::Join,
+                sbom_contains_package::Relation::Package.def().rev(),
+            )
+            .filter(sbom_contains_package::Column::SbomId.eq(self.sbom.id))
+            .all(&self.system.connection(tx))
+            .await?;
+
+        let mut contains = Vec::new();
+
+        // todo: this is less than optimal
+        for (qualified_package, qualifiers) in contained {
+            if let Some(package_version) =
+                package_version::Entity::find_by_id(qualified_package.package_version_id)
+                    .one(&self.system.connection(tx))
+                    .await?
+            {
+                if let Some(package) = package::Entity::find_by_id(package_version.package_id)
+                    .one(&self.system.connection(tx))
+                    .await?
+                {
+                    let mut qualifiers_map = HashMap::new();
+                    for qualifier in qualifiers {
+                        qualifiers_map.insert(qualifier.key.clone(), qualifier.value.clone());
+                    }
+
+                    let package = PackageContext::from((&self.system, package));
+
+                    let package_version = PackageVersionContext::from((&package, package_version));
+
+                    let qualified_package = QualifiedPackageContext::from((
+                        &package_version,
+                        qualified_package,
+                        qualifiers_map,
+                    ));
+
+                    contains.push(qualified_package);
+                }
+            }
+        }
+
+        Ok(contains)
+    }
+
     /*
 
     async fn ingest_sbom_dependency<P: Into<Purl>>(
@@ -659,6 +761,7 @@ mod tests {
     use std::time::Instant;
 
     use crate::db::Transactional;
+    use huevos_common::purl::Purl;
     use huevos_common::sbom::SbomLocator;
     use spdx_rs::models::SPDX;
 
@@ -780,6 +883,64 @@ mod tests {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn ingest_contains_packages() -> Result<(), anyhow::Error> {
+        /*
+        env_logger::builder()
+        .filter_level(log::LevelFilter::Info)
+        .is_test(true)
+        .init();
+         */
+
+        let system = InnerSystem::for_test("ingest_contains_packages").await?;
+
+        let sbom = system
+            .ingest_sbom("http://sboms.mobi/something.json", "7", Transactional::None)
+            .await?;
+
+        let contains1 = sbom
+            .ingest_contains_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        let contains2 = sbom
+            .ingest_contains_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        let contains3 = sbom
+            .ingest_contains_package(
+                "pkg://maven/io.quarkus/quarkus-addons@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        assert_eq!(
+            contains1.sbom_contains_package.qualified_package_id,
+            contains2.sbom_contains_package.qualified_package_id
+        );
+        assert_ne!(
+            contains1.sbom_contains_package.qualified_package_id,
+            contains3.sbom_contains_package.qualified_package_id
+        );
+
+        let mut contains = sbom.contains_packages(Transactional::None).await?;
+
+        assert_eq!(2, contains.len());
+
+        let contains: Vec<_> = contains.drain(0..).map(|each| Purl::from(each)).collect();
+
+        assert!(contains.contains(&Purl::from("pkg://maven/io.quarkus/quarkus-core@1.2.3")));
+        assert!(contains.contains(&Purl::from("pkg://maven/io.quarkus/quarkus-addons@1.2.3")));
+
+        Ok(())
+    }
+
     /*
 
     #[tokio::test]
