@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 use crate::server::read;
+use crate::server::Error::System;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use huevos_api::system::InnerSystem;
@@ -18,13 +19,28 @@ pub struct Run {
 
     #[command(flatten)]
     pub database: Database,
+
+    #[arg(long, env)]
+    pub bootstrap: bool,
 }
 
 impl Run {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
-        let app_state = Arc::new(AppState {
-            system: InnerSystem::with_config(&self.database).await?,
-        });
+        let system = match self.bootstrap {
+            true => {
+                InnerSystem::bootstrap(
+                    &self.database.username,
+                    &self.database.password,
+                    &self.database.host,
+                    self.database.port,
+                    &self.database.name,
+                )
+                .await?
+            }
+            false => InnerSystem::with_config(&self.database).await?,
+        };
+
+        let app_state = Arc::new(AppState { system });
 
         HttpServer::new(move || {
             App::new()
@@ -56,6 +72,8 @@ mod test_util {
     use std::sync::Arc;
 
     pub async fn bootstrap_system(name: &str) -> Result<Arc<InnerSystem>, anyhow::Error> {
-        InnerSystem::bootstrap("postgres", "eggs", "localhost", None, name).await
+        InnerSystem::bootstrap("postgres", "eggs", "localhost", None, name)
+            .await
+            .map(Arc::new)
     }
 }

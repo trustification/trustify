@@ -100,7 +100,9 @@ impl InnerSystem {
 
     #[cfg(test)]
     pub async fn for_test(name: &str) -> Result<Arc<Self>, anyhow::Error> {
-        Self::bootstrap("postgres", "eggs", "localhost", None, name).await
+        Self::bootstrap("postgres", "eggs", "localhost", None, name)
+            .await
+            .map(Arc::new)
     }
 
     pub async fn bootstrap(
@@ -109,7 +111,7 @@ impl InnerSystem {
         host: &str,
         port: impl Into<Option<u16>>,
         db_name: &str,
-    ) -> Result<Arc<Self>, anyhow::Error> {
+    ) -> Result<Self, anyhow::Error> {
         let url = format!("postgres://{}:{}@{}/postgres", username, password, host);
         println!("bootstrap to {}", url);
         let db = Database::connect(url).await?;
@@ -134,9 +136,7 @@ impl InnerSystem {
 
         db.close().await?;
 
-        Ok(Arc::new(
-            Self::new(username, password, host, port, db_name).await?,
-        ))
+        Ok(Self::new(username, password, host, port, db_name).await?)
     }
 
     pub async fn close(self) -> anyhow::Result<()> {

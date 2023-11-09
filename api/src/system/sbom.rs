@@ -1,11 +1,12 @@
 use crate::db::Transactional;
-use crate::system::package::{PackageContext, packages_to_purls};
+use crate::system::package::{packages_to_purls, PackageContext};
 use crate::system::InnerSystem;
 use huevos_common::purl::Purl;
 use huevos_common::sbom::SbomLocator;
 use huevos_entity::sbom::Model;
 use huevos_entity::{
-    package, package_dependency, package_qualifier, sbom, sbom_describes_cpe, sbom_dependency, sbom_describes_package,
+    package, package_dependency, package_qualifier, sbom, sbom_dependency, sbom_describes_cpe,
+    sbom_describes_package,
 };
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait, QueryFilter,
@@ -179,7 +180,10 @@ impl InnerSystem {
         if let Some(package) = package {
             self.fetch_one_sbom(
                 sbom::Entity::find()
-                    .join(JoinType::LeftJoin, sbom_describes_package::Relation::Sbom.def().rev())
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_describes_package::Relation::Sbom.def().rev(),
+                    )
                     .filter(sbom_describes_package::Column::PackageId.eq(package.package.id)),
                 tx,
             )
@@ -199,7 +203,10 @@ impl InnerSystem {
         if let Some(package) = package {
             self.fetch_many_sboms(
                 sbom::Entity::find()
-                    .join(JoinType::LeftJoin, sbom_describes_package::Relation::Sbom.def().rev())
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_describes_package::Relation::Sbom.def().rev(),
+                    )
                     .filter(sbom_describes_package::Column::PackageId.eq(package.package.id)),
                 tx,
             )
@@ -216,7 +223,10 @@ impl InnerSystem {
     ) -> Result<Option<SbomContext>, Error> {
         self.fetch_one_sbom(
             sbom::Entity::find()
-                .join(JoinType::LeftJoin, sbom_describes_cpe::Relation::Sbom.def().rev())
+                .join(
+                    JoinType::LeftJoin,
+                    sbom_describes_cpe::Relation::Sbom.def().rev(),
+                )
                 .filter(sbom_describes_cpe::Column::Cpe.eq(cpe.to_string())),
             tx,
         )
@@ -230,7 +240,10 @@ impl InnerSystem {
     ) -> Result<Vec<SbomContext>, Error> {
         self.fetch_many_sboms(
             sbom::Entity::find()
-                .join(JoinType::LeftJoin, sbom_describes_cpe::Relation::Sbom.def().rev())
+                .join(
+                    JoinType::LeftJoin,
+                    sbom_describes_cpe::Relation::Sbom.def().rev(),
+                )
                 .filter(sbom_describes_cpe::Column::Cpe.eq(cpe.to_string())),
             tx,
         )
@@ -448,7 +461,6 @@ impl SbomContext {
                                 .from(package_dependency::Entity)
                                 .to_owned(),
                         )
-
                         .union(
                             UnionType::Distinct,
                             Query::select()
@@ -803,7 +815,10 @@ mod tests {
         assert_eq!(3, sbom_packages.len());
 
         for sbom_package in sbom_packages {
-            let _sboms = sbom_package.package.sboms_containing(Transactional::None).await?;
+            let _sboms = sbom_package
+                .package
+                .sboms_containing(Transactional::None)
+                .await?;
         }
 
         Ok(())
