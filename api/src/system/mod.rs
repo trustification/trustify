@@ -1,19 +1,16 @@
+use crate::db::{ConnectionOrTransaction, Transactional};
+use migration::Migrator;
+use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, Statement, TransactionTrait};
+use sea_orm_migration::MigratorTrait;
 use std::fmt::{Debug, Display, Formatter};
 use std::future::Future;
 use std::sync::Arc;
-use sea_orm::{
-    ConnectionTrait, Database, DatabaseConnection, DbErr, Statement,
-    TransactionTrait,
-};
-use sea_orm_migration::MigratorTrait;
-use crate::db::{ConnectionOrTransaction, Transactional};
-use migration::Migrator;
 
 pub mod error;
 pub mod package;
 pub mod sbom;
-pub mod vulnerability;
 pub mod scanner;
+pub mod vulnerability;
 
 pub mod advisory;
 
@@ -23,7 +20,6 @@ const DB_URL: &str = "postgres://postgres:eggs@localhost";
 const DB_NAME: &str = "huevos";
 
 pub type System = Arc<InnerSystem>;
-
 
 #[derive(Clone)]
 pub struct InnerSystem {
@@ -62,13 +58,28 @@ impl<E: Send + Display> std::fmt::Display for Error<E> {
 impl<E: Send + Display> std::error::Error for Error<E> {}
 
 impl InnerSystem {
+    pub async fn with_config(
+        database: &huevos_common::config::Database,
+    ) -> Result<Self, anyhow::Error> {
+        Self::new(
+            &database.username,
+            &database.password,
+            &database.host,
+            database.port,
+            &database.name,
+        )
+        .await
+    }
+
     pub async fn new(
         username: &str,
         password: &str,
         host: &str,
+        port: impl Into<Option<u16>>,
         db_name: &str,
     ) -> Result<Self, anyhow::Error> {
-        let url = format!("postgres://{}:{}@{}/{}", username, password, host, db_name);
+        let port = port.into().unwrap_or(5432);
+        let url = format!("postgres://{username}:{password}@{host}:{port}/{db_name}");
         println!("connect to {}", url);
         let db = Database::connect(url).await?;
 
@@ -89,13 +100,14 @@ impl InnerSystem {
 
     #[cfg(test)]
     pub async fn for_test(name: &str) -> Result<Arc<Self>, anyhow::Error> {
-        Self::bootstrap("postgres", "eggs", "localhost", name).await
+        Self::bootstrap("postgres", "eggs", "localhost", None, name).await
     }
 
     pub async fn bootstrap(
         username: &str,
         password: &str,
         host: &str,
+        port: impl Into<Option<u16>>,
         db_name: &str,
     ) -> Result<Arc<Self>, anyhow::Error> {
         let url = format!("postgres://{}:{}@{}/postgres", username, password, host);
@@ -122,7 +134,9 @@ impl InnerSystem {
 
         db.close().await?;
 
-        Ok(Arc::new(Self::new(username, password, host, db_name).await?))
+        Ok(Arc::new(
+            Self::new(username, password, host, port, db_name).await?,
+        ))
     }
 
     pub async fn close(self) -> anyhow::Result<()> {

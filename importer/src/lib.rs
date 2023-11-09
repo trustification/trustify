@@ -7,6 +7,7 @@ use csaf_walker::source::{DispatchSource, FileOptions, FileSource};
 use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
 use csaf_walker::walker::Walker;
 use huevos_api::system::InnerSystem;
+use huevos_common::config::Database;
 use huevos_common::purl::Purl;
 use packageurl::PackageUrl;
 use std::process::ExitCode;
@@ -18,13 +19,16 @@ mod csaf;
 
 /// Run the importer
 #[derive(clap::Args, Debug)]
-pub struct Run {}
+pub struct Run {
+    #[command(flatten)]
+    pub database: Database,
+}
 
 impl Run {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
         env_logger::init();
 
-        let system = InnerSystem::new("postgres", "eggs", "localhost", "huevos").await?;
+        let system = InnerSystem::with_config(&self.database).await?;
 
         let filter = |name: &str| {
             // RHAT: we have advisories marked as "vex"

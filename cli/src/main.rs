@@ -5,6 +5,7 @@ use std::process::{ExitCode, Termination};
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
     Importer(huevos_importer::Run),
+    Server(huevos_server::Run),
 }
 
 #[derive(clap::Parser, Debug)]
@@ -40,6 +41,7 @@ impl Cli {
     async fn run_command(self) -> anyhow::Result<ExitCode> {
         match self.command {
             Command::Importer(run) => run.run().await,
+            Command::Server(run) => run.run().await,
         }
     }
 }
