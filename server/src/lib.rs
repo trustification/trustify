@@ -26,6 +26,8 @@ pub struct Run {
 
 impl Run {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
+        env_logger::init();
+
         let system = match self.bootstrap {
             true => {
                 InnerSystem::bootstrap(
