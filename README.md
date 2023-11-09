@@ -21,6 +21,9 @@ A package exists or it does not. Represented by a pURL. No source-tracking requi
 Rework to Package. VersionedPackage. QualifiedVersionedPackage. and VersionRangePackage for vulnerable references. 
 Plus appropriate junction tables. 
 
+### CPE
+Probably need a fancy CPE table structure. sigh. 
+
 ### CVE
 
 A CVE exists or it does not. Represented by an identifier. No source-tracking required.
