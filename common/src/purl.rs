@@ -32,10 +32,10 @@ impl Serialize for Purl {
 }
 
 impl FromStr for Purl {
-    type Err = ();
+    type Err = packageurl::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(s.into())
+        PackageUrl::from_str(s).map(Purl::from)
     }
 }
 impl<'de> Deserialize<'de> for Purl {

@@ -1,6 +1,7 @@
 use actix_web::{get, web, HttpResponse, Responder};
 use huevos_api::db::Transactional;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 use huevos_common::purl::Purl;
 
@@ -69,8 +70,8 @@ pub async fn dependents(
 pub async fn variants(
     state: web::Data<AppState>,
     purl: web::Path<String>,
-) -> actix_web::Result<impl Responder> {
-    let purl: Purl = Purl::from(&*purl);
+) -> Result<impl Responder, Error> {
+    let purl: Purl = Purl::from_str(&*purl)?;
 
     let response = state
         .system
@@ -93,7 +94,6 @@ pub async fn vulnerabilities(
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().finish())
 }
-
 
 /*
 #[cfg(test)]
