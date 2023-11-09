@@ -56,6 +56,6 @@ mod test_util {
     use std::sync::Arc;
 
     pub async fn bootstrap_system(name: &str) -> Result<Arc<InnerSystem>, anyhow::Error> {
-        InnerSystem::bootstrap("postgres", "eggs", "localhost", name).await
+        InnerSystem::bootstrap("postgres", "eggs", "localhost", None, name).await
     }
 }
