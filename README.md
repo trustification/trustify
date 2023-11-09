@@ -52,3 +52,18 @@ Not yet implemented, but represents a mixture of CVE+(package + range)+Advisory
 Not yet implemented, but represents a mixture of CVE+(package + range)+Advisory
 
 Both impl'd for pURL and CPE. 
+
+### SBOM
+hashed document that claims things about stuff. 
+
+### Describes
+CPE and/or pURLs described by the SBOM
+
+### Dependency 
+Things it contains. 
+
+### PackageDependency
+Within the context of an SBOM the dependencies it claims exist between packages. 
+No package dependenxy exists without an SBOM claimant. 
+
+
