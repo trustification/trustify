@@ -4,17 +4,15 @@ use crate::system::affected_package_version_range::AffectedPackageVersionRangeCo
 use crate::system::cve::CveContext;
 use crate::system::error::Error;
 use crate::system::fixed_package_version::FixedPackageVersionContext;
-use crate::system::InnerSystem;
+use crate::system::{InnerSystem};
 use huevos_common::purl::Purl;
-use huevos_entity::{
-    advisory, advisory_cve, affected_package_version_range, cve, fixed_package_version,
-    package_version_range,
-};
+use huevos_entity::{advisory, advisory_cve, affected_package_version_range, cve, fixed_package_version, not_affected_package_version, package_version_range};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, EntityTrait, QueryFilter};
 use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
 use std::fmt::{Debug, Formatter};
+use crate::system::not_affected_package_version::NotAffectedPackageVersion;
 
 impl InnerSystem {
     pub async fn get_advisory(
@@ -138,6 +136,30 @@ impl AdvisoryContext {
             Ok(None)
         }
     }
+
+    pub async fn get_not_affected_package_version<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<Option<NotAffectedPackageVersion>, Error> {
+        let purl = pkg.into();
+
+        if let Some(package_version) = self.system.get_package_version(purl, tx).await? {
+            Ok(not_affected_package_version::Entity::find()
+                .filter(not_affected_package_version::Column::AdvisoryId.eq(self.advisory.id))
+                .filter(
+                    not_affected_package_version::Column::PackageVersionId
+                        .eq(package_version.package_version.id),
+                )
+                .one(&self.system.connection(tx))
+                .await?
+                .map(|not_affected_package_version| (self, not_affected_package_version).into()))
+        } else {
+            Ok(None)
+        }
+    }
+
+
     pub async fn get_affected_package_range<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -164,6 +186,27 @@ impl AdvisoryContext {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn ingest_not_affected_package_version<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<NotAffectedPackageVersion, Error> {
+        let purl = pkg.into();
+        if let Some(found) = self.get_not_affected_package_version(purl.clone(), tx).await? {
+            return Ok(found);
+        }
+
+        let package_version = self.system.ingest_package_version(purl, tx).await?;
+
+        let entity = not_affected_package_version::ActiveModel {
+            id: Default::default(),
+            advisory_id: Set(self.advisory.id),
+            package_version_id: Set(package_version.package_version.id),
+        };
+
+        Ok((self, entity.insert(&self.system.connection(tx)).await?).into())
     }
 
     pub async fn ingest_fixed_package_version<P: Into<Purl>>(

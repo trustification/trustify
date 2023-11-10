@@ -16,6 +16,7 @@ mod m0000120_create_sbom_contains_package;
 mod m0000160_create_package_dependency;
 mod m0000180_sbom_describes_cpe;
 mod m0000190_sbom_describes_package;
+mod m0000049_create_not_affected_package_version;
 
 pub struct Migrator;
 
@@ -33,6 +34,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000046_create_package_version_range::Migration),
             Box::new(m0000047_create_affected_package_version_range::Migration),
             Box::new(m0000048_create_fixed_package_version::Migration),
+            Box::new(m0000049_create_not_affected_package_version::Migration),
             Box::new(m0000050_create_package_qualifier::Migration),
             Box::new(m0000120_create_sbom_contains_package::Migration),
             Box::new(m0000160_create_package_dependency::Migration),

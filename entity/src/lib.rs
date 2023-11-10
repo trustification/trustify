@@ -17,3 +17,4 @@ pub mod affected_package_version_range;
 pub mod fixed_package_version;
 
 pub mod advisory_cve;
+pub mod not_affected_package_version;
