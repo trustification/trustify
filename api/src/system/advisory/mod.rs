@@ -1,3 +1,6 @@
+//! Support for advisories.
+
+
 use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::InnerSystem;

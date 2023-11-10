@@ -1,3 +1,5 @@
+//! Support for packages.
+
 use huevos_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
 use huevos_common::purl::{Purl, PurlErr};
 use huevos_entity as entity;
@@ -5,13 +7,15 @@ use package_version::PackageVersionContext;
 use qualified_package::QualifiedPackageContext;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, ModelTrait,
-    QueryFilter, QuerySelect, Set,
+    QueryFilter, QuerySelect, QueryTrait, Set,
 };
 use sea_orm::{RelationTrait, TransactionTrait};
-use sea_query::JoinType;
+use sea_query::{JoinType, UnionType};
 use std::fmt::{Debug, Formatter};
+use package_version_range::PackageVersionRangeContext;
 
 use crate::db::Transactional;
+use crate::system::advisory::AdvisoryContext;
 use crate::system::error::Error;
 use crate::system::InnerSystem;
 
@@ -20,6 +24,13 @@ pub mod package_version_range;
 pub mod qualified_package;
 
 impl InnerSystem {
+
+    /// Ensure the system knows about and contains a record for a *fully-qualified* package.
+    ///
+    /// This method will ensure the versioned package being referenced is also ingested.
+    ///
+    /// The `pkg` parameter does not necessarily require the presence of qualifiers, but
+    /// is assumed to be *complete*.
     pub async fn ingest_qualified_package<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -33,6 +44,9 @@ impl InnerSystem {
             .await
     }
 
+    /// Ensure the system knows about and contains a record for a *versioned* package.
+    ///
+    /// This method will ensure the package being referenced is also ingested.
     pub async fn ingest_package_version<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -44,6 +58,9 @@ impl InnerSystem {
         package.ingest_package_version(pkg.clone(), tx).await
     }
 
+    /// Ensure the system knows about and contains a record for a *versioned range* of a package.
+    ///
+    /// This method will ensure the package being referenced is also ingested.
     pub async fn ingest_package_version_range<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -59,6 +76,9 @@ impl InnerSystem {
             .await
     }
 
+    /// Ensure the system knows about and contains a record for a *versionless* package.
+    ///
+    /// This method will ensure the package being referenced is also ingested.
     pub async fn ingest_package<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -80,6 +100,9 @@ impl InnerSystem {
         }
     }
 
+    /// Retrieve a *fully-qualified* package entry, if it exists.
+    ///
+    /// Non-mutating to the system.
     pub async fn get_qualified_package<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -93,6 +116,9 @@ impl InnerSystem {
         }
     }
 
+    /// Retrieve a *versioned* package entry, if it exists.
+    ///
+    /// Non-mutating to the system.
     pub async fn get_package_version<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -106,6 +132,9 @@ impl InnerSystem {
         }
     }
 
+    /// Retrieve a *version range* of a package entry, if it exists.
+    ///
+    /// Non-mutating to the system.
     pub async fn get_package_version_range<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -121,6 +150,9 @@ impl InnerSystem {
         }
     }
 
+    /// Retrieve a *versionless* package entry, if it exists.
+    ///
+    /// Non-mutating to the system.
     pub async fn get_package<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -137,6 +169,7 @@ impl InnerSystem {
     }
 }
 
+/// Live context for base package.
 #[derive(Clone)]
 pub struct PackageContext {
     pub(crate) system: InnerSystem,
@@ -159,6 +192,8 @@ impl From<(&InnerSystem, entity::package::Model)> for PackageContext {
 }
 
 impl PackageContext {
+
+    /// Ensure the system knows about and contains a record for a *version range* of this package.
     pub async fn ingest_package_version_range<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -181,6 +216,9 @@ impl PackageContext {
         }
     }
 
+    /// Retrieve a *version range* package entry for this package, if it exists.
+    ///
+    /// Non-mutating to the system.
     pub async fn get_package_version_range<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -199,6 +237,7 @@ impl PackageContext {
             .map(|package_version_range| (self, package_version_range).into()))
     }
 
+    /// Ensure the system knows about and contains a record for a *version* of this package.
     pub async fn ingest_package_version<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -223,6 +262,9 @@ impl PackageContext {
         }
     }
 
+    /// Retrieve a *version* package entry for this package, if it exists.
+    ///
+    /// Non-mutating to the system.
     pub async fn get_package_version<P: Into<Purl>>(
         &self,
         pkg: P,
@@ -245,6 +287,10 @@ impl PackageContext {
         }
     }
 
+    /// Retrieve the aggregate vulnerability assertions for this base package.
+    ///
+    /// Assertions are a mixture of "affected" and "not affected", for any version
+    /// of this package, from any relevant advisory making statements.
     pub async fn vulnerability_assertions(
         &self,
         tx: Transactional<'_>,
@@ -264,6 +310,10 @@ impl PackageContext {
         Ok(merged)
     }
 
+    /// Retrieve the aggregate "affected" vulnerability assertions for this base package.
+    ///
+    /// Assertions are "affected" for any version of this package,
+    /// from any relevant advisory making statements.
     pub async fn affected_assertions(
         &self,
         tx: Transactional<'_>,
@@ -318,6 +368,10 @@ impl PackageContext {
         Ok(assertions)
     }
 
+    /// Retrieve the aggregate "not affected" vulnerability assertions for this base package.
+    ///
+    /// Assertions are "not affected" for any version of this package,
+    /// from any relevant advisory making statements.
     pub async fn not_affected_assertions(
         &self,
         tx: Transactional<'_>,
@@ -364,17 +418,47 @@ impl PackageContext {
 
         Ok(assertions)
     }
-}
 
-#[derive(Clone)]
-pub struct PackageVersionRangeContext {
-    pub(crate) package: PackageContext,
-    pub(crate) package_version_range: entity::package_version_range::Model,
-}
+    /// Retrieve all advisories mentioning this base package.
+    pub async fn advisories_mentioning(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<AdvisoryContext>, Error> {
+        let mut not_affected_subquery = entity::not_affected_package_version::Entity::find()
+            .select_only()
+            .column(entity::not_affected_package_version::Column::AdvisoryId)
+            .join(
+                JoinType::Join,
+                entity::not_affected_package_version::Relation::PackageVersion.def(),
+            )
+            .filter(entity::package_version::Column::PackageId.eq(self.package.id))
+            .into_query();
 
-impl Debug for PackageVersionRangeContext {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.package_version_range.fmt(f)
+        let mut affected_subquery = entity::affected_package_version_range::Entity::find()
+            .select_only()
+            .column(entity::affected_package_version_range::Column::AdvisoryId)
+            .join(
+                JoinType::Join,
+                entity::affected_package_version_range::Relation::PackageVersionRange.def(),
+            )
+            .filter(entity::package_version_range::Column::PackageId.eq(self.package.id))
+            .into_query();
+
+        let mut advisories = entity::advisory::Entity::find()
+            .filter(
+                entity::advisory::Column::Id.in_subquery(
+                    not_affected_subquery
+                        .union(UnionType::Distinct, affected_subquery)
+                        .to_owned(),
+                ),
+            )
+            .all(&self.system.connection(tx))
+            .await?;
+
+        Ok(advisories
+            .drain(0..)
+            .map(|advisory| (&self.system, advisory).into())
+            .collect())
     }
 }
 
@@ -754,6 +838,69 @@ async fn package_vulnerability_assertions() -> Result<(), anyhow::Error> {
     let assertions = pkg.vulnerability_assertions(Transactional::None).await?;
 
     assert_eq!(assertions.assertions.len(), 3);
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn advisories_mentioning_package() -> Result<(), anyhow::Error> {
+    let system = InnerSystem::for_test("advisories_mentioning_package").await?;
+
+    let redhat_advisory = system
+        .ingest_advisory(
+            "RHSA-1",
+            "http://redhat.com/rhsa-1",
+            "2",
+            Transactional::None,
+        )
+        .await?;
+
+    redhat_advisory
+        .ingest_affected_package_range(
+            "pkg://maven/io.quarkus/quarkus-core",
+            "1.1",
+            "1.3",
+            Transactional::None,
+        )
+        .await?;
+
+    let ghsa_advisory = system
+        .ingest_advisory("GHSA-1", "http://ghsa.gov/GHSA-1", "3", Transactional::None)
+        .await?;
+
+    ghsa_advisory
+        .ingest_not_affected_package_version(
+            "pkg://maven/io.quarkus/quarkus-core@1.2",
+            Transactional::None,
+        )
+        .await?;
+
+    let unrelated_advisory = system
+        .ingest_advisory(
+            "RHSA-299",
+            "http://redhat.com/rhsa-299",
+            "17",
+            Transactional::None,
+        )
+        .await?;
+
+    unrelated_advisory
+        .ingest_not_affected_package_version(
+            "pkg://maven/io.quarkus/some-other-package@1.2",
+            Transactional::None,
+        )
+        .await?;
+
+    let pkg = system
+        .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+        .await?
+        .unwrap();
+
+    let advisories = pkg.advisories_mentioning(Transactional::None).await?;
+
+    assert_eq!(2, advisories.len());
+    assert!(advisories.contains(&redhat_advisory));
+    assert!(advisories.contains(&ghsa_advisory));
 
     Ok(())
 }

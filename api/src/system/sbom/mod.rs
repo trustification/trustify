@@ -1,3 +1,5 @@
+//! Support for SBOMs.
+
 use crate::db::Transactional;
 use crate::system::package::package_version::PackageVersionContext;
 use crate::system::package::qualified_package::QualifiedPackageContext;

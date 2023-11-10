@@ -1,3 +1,5 @@
+//! Support for *versioned* package.
+
 use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::package::qualified_package::QualifiedPackageContext;
@@ -13,6 +15,7 @@ use sea_query::JoinType;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
+/// Live context for a package version.
 #[derive(Clone)]
 pub struct PackageVersionContext {
     pub(crate) package: PackageContext,

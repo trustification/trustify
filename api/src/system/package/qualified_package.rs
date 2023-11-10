@@ -1,6 +1,9 @@
+//! Support for a *fully-qualified* package.
+
 use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::package::package_version::PackageVersionContext;
+use crate::system::sbom::SbomContext;
 use huevos_common::package::{Assertion, PackageVulnerabilityAssertions};
 use huevos_common::purl::Purl;
 use huevos_entity as entity;
@@ -58,6 +61,23 @@ impl From<QualifiedPackageContext> for Purl {
 }
 
 impl QualifiedPackageContext {
+    pub async fn sboms_containing(&self, tx: Transactional<'_>) -> Result<Vec<SbomContext>, Error> {
+        Ok(entity::sbom::Entity::find()
+            .join(
+                JoinType::Join,
+                entity::sbom_contains_package::Relation::Sbom.def().rev(),
+            )
+            .filter(
+                entity::sbom_contains_package::Column::QualifiedPackageId
+                    .eq(self.qualified_package.id),
+            )
+            .all(&self.package_version.package.system.connection(tx))
+            .await?
+            .drain(0..)
+            .map(|sbom| (&self.package_version.package.system, sbom).into())
+            .collect())
+    }
+
     pub async fn vulnerability_assertions(
         &self,
         tx: Transactional<'_>,
@@ -147,6 +167,59 @@ mod tests {
             )
             .await?;
 
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn sboms_containing() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("sboms_containing").await?;
+
+        let sbom1 = system
+            .ingest_sbom("http://sbom.com/one.json", "1", Transactional::None)
+            .await?;
+
+        let sbom2 = system
+            .ingest_sbom("http://sbom.com/two.json", "2", Transactional::None)
+            .await?;
+
+        let sbom3 = system
+            .ingest_sbom("http://sbom.com/three.json", "3", Transactional::None)
+            .await?;
+
+        sbom1
+            .ingest_contains_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        sbom2
+            .ingest_contains_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        sbom3
+            .ingest_contains_package(
+                "pkg://maven/io.quarkus/NOT_QUARKUS@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        let pkg = system
+            .ingest_qualified_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        let sboms = pkg.sboms_containing(Transactional::None).await?;
+
+        assert_eq!(2, sboms.len());
+
+        assert!(sboms.contains(&sbom1));
+        assert!(sboms.contains(&sbom2));
         Ok(())
     }
 }
