@@ -16,7 +16,10 @@ impl Debug for NotAffectedPackageVersion {
 
 impl From<(&AdvisoryContext, not_affected_package_version::Model)> for NotAffectedPackageVersion {
     fn from(
-        (advisory, not_affected_package_version): (&AdvisoryContext, not_affected_package_version::Model),
+        (advisory, not_affected_package_version): (
+            &AdvisoryContext,
+            not_affected_package_version::Model,
+        ),
     ) -> Self {
         Self {
             advisory: advisory.clone(),

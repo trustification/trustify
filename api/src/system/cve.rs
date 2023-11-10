@@ -17,7 +17,7 @@ impl InnerSystem {
         identifier: &str,
         tx: Transactional<'_>,
     ) -> Result<CveContext, Error> {
-        if let Some(found) = self.get_cve(identifier, tx.clone()).await? {
+        if let Some(found) = self.get_cve(identifier, tx).await? {
             Ok(found)
         } else {
             let entity = cve::ActiveModel {
@@ -102,7 +102,7 @@ mod tests {
 
         let not_found = system.get_cve("CVE-NOT_FOUND", Transactional::None).await?;
 
-        assert!(matches!(not_found, None));
+        assert!(not_found.is_none());
 
         Ok(())
     }

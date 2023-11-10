@@ -1,12 +1,12 @@
-use std::fmt::{Debug, Formatter};
-use huevos_common::purl::Purl;
-use sea_orm::{ActiveModelTrait, EntityTrait, ColumnTrait,Set, QueryFilter};
-use huevos_entity as entity;
-use std::collections::HashMap;
 use crate::db::Transactional;
 use crate::system::error::Error;
-use crate::system::package::PackageContext;
 use crate::system::package::qualified_package::QualifiedPackageContext;
+use crate::system::package::PackageContext;
+use huevos_common::purl::Purl;
+use huevos_entity as entity;
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 
 #[derive(Clone)]
 pub struct PackageVersionContext {
@@ -37,7 +37,7 @@ impl PackageVersionContext {
     ) -> Result<QualifiedPackageContext, Error> {
         let purl = pkg.into();
 
-        if let Some(found) = self.get_qualified_package(purl.clone(), tx.clone()).await? {
+        if let Some(found) = self.get_qualified_package(purl.clone(), tx).await? {
             return Ok(found);
         }
 

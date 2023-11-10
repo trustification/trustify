@@ -1,6 +1,5 @@
-use crate::{advisory, package_version_range, sbom_contains_package};
+use crate::{advisory, package_version_range};
 use sea_orm::entity::prelude::*;
-use sea_orm::FromQueryResult;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "not_affected_package_version")]

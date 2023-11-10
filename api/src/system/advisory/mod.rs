@@ -1,21 +1,21 @@
 use crate::db::Transactional;
+use crate::system::error::Error;
+use crate::system::InnerSystem;
 use advisory_cve::AdvisoryCveContext;
 use affected_package_version_range::AffectedPackageVersionRangeContext;
-use crate::system::error::Error;
 use fixed_package_version::FixedPackageVersionContext;
-use crate::system::InnerSystem;
 use huevos_common::purl::Purl;
 use huevos_entity as entity;
+use not_affected_package_version::NotAffectedPackageVersion;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, EntityTrait, QueryFilter};
 use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
 use std::fmt::{Debug, Formatter};
-use not_affected_package_version::NotAffectedPackageVersion;
 
+pub mod advisory_cve;
 pub mod affected_package_version_range;
 pub mod fixed_package_version;
-pub mod advisory_cve;
 pub mod not_affected_package_version;
 
 impl InnerSystem {
@@ -90,7 +90,10 @@ impl AdvisoryContext {
         tx: Transactional<'_>,
     ) -> Result<Option<AdvisoryCveContext>, Error> {
         Ok(entity::cve::Entity::find()
-            .join(JoinType::Join, entity::advisory_cve::Relation::Cve.def().rev())
+            .join(
+                JoinType::Join,
+                entity::advisory_cve::Relation::Cve.def().rev(),
+            )
             .filter(entity::advisory_cve::Column::AdvisoryId.eq(self.advisory.id))
             .filter(entity::cve::Column::Identifier.eq(identifier))
             .one(&self.system.connection(tx))
@@ -103,7 +106,7 @@ impl AdvisoryContext {
         identifier: &str,
         tx: Transactional<'_>,
     ) -> Result<AdvisoryCveContext, Error> {
-        if let Some(found) = self.get_cve(identifier, tx.clone()).await? {
+        if let Some(found) = self.get_cve(identifier, tx).await? {
             return Ok(found);
         }
 
@@ -150,7 +153,9 @@ impl AdvisoryContext {
 
         if let Some(package_version) = self.system.get_package_version(purl, tx).await? {
             Ok(entity::not_affected_package_version::Entity::find()
-                .filter(entity::not_affected_package_version::Column::AdvisoryId.eq(self.advisory.id))
+                .filter(
+                    entity::not_affected_package_version::Column::AdvisoryId.eq(self.advisory.id),
+                )
                 .filter(
                     entity::not_affected_package_version::Column::PackageVersionId
                         .eq(package_version.package_version.id),
@@ -162,7 +167,6 @@ impl AdvisoryContext {
             Ok(None)
         }
     }
-
 
     pub async fn get_affected_package_range<P: Into<Purl>>(
         &self,
@@ -179,7 +183,9 @@ impl AdvisoryContext {
             .await?
         {
             Ok(entity::affected_package_version_range::Entity::find()
-                .filter(entity::affected_package_version_range::Column::AdvisoryId.eq(self.advisory.id))
+                .filter(
+                    entity::affected_package_version_range::Column::AdvisoryId.eq(self.advisory.id),
+                )
                 .filter(
                     entity::affected_package_version_range::Column::PackageVersionRangeId
                         .eq(package_version_range.package_version_range.id),
@@ -198,7 +204,10 @@ impl AdvisoryContext {
         tx: Transactional<'_>,
     ) -> Result<NotAffectedPackageVersion, Error> {
         let purl = pkg.into();
-        if let Some(found) = self.get_not_affected_package_version(purl.clone(), tx).await? {
+        if let Some(found) = self
+            .get_not_affected_package_version(purl.clone(), tx)
+            .await?
+        {
             return Ok(found);
         }
 

@@ -1,6 +1,5 @@
 use crate::advisory_cve;
 use sea_orm::entity::prelude::*;
-use sea_orm::FromQueryResult;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "cve")]

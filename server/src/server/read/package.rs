@@ -71,7 +71,7 @@ pub async fn variants(
     state: web::Data<AppState>,
     purl: web::Path<String>,
 ) -> Result<impl Responder, Error> {
-    let purl: Purl = Purl::from_str(&*purl)?;
+    let purl: Purl = Purl::from_str(&purl)?;
 
     /*
     let response = state

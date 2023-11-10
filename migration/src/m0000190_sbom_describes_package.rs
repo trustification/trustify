@@ -1,8 +1,5 @@
 use crate::m0000010_create_sbom::Sbom;
-use crate::m0000011_create_cve::Cve;
-use crate::m0000040_create_package::Package;
 use crate::m0000044_create_qualified_package::QualifiedPackage;
-use crate::m0000180_sbom_describes_cpe::SbomDescribesCpe::SbomId;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]

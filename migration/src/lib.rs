@@ -10,13 +10,13 @@ mod m0000044_create_qualified_package;
 mod m0000046_create_package_version_range;
 mod m0000047_create_affected_package_version_range;
 mod m0000048_create_fixed_package_version;
+mod m0000049_create_not_affected_package_version;
 mod m0000050_create_package_qualifier;
 mod m0000070_create_cwe;
 mod m0000120_create_sbom_contains_package;
 mod m0000160_create_package_dependency;
 mod m0000180_sbom_describes_cpe;
 mod m0000190_sbom_describes_package;
-mod m0000049_create_not_affected_package_version;
 
 pub struct Migrator;
 

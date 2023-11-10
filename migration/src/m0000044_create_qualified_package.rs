@@ -1,4 +1,3 @@
-use crate::m0000040_create_package::Package;
 use crate::m0000042_create_package_version::PackageVersion;
 use sea_orm_migration::prelude::*;
 

@@ -7,12 +7,11 @@ pub struct VulnerabilityAssertions {
     pub assertions: Vec<Assertion>,
 }
 
-
-
 impl VulnerabilityAssertions {
-    pub fn affected_claimants(&self) -> Vec<Claimant>{
-        self.assertions.iter()
-            .flat_map( |e| {
+    pub fn affected_claimants(&self) -> Vec<Claimant> {
+        self.assertions
+            .iter()
+            .flat_map(|e| {
                 if let Assertion::Affected(claimant) = e {
                     Some(claimant.clone())
                 } else {
@@ -22,7 +21,6 @@ impl VulnerabilityAssertions {
             .collect()
     }
 }
-
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Assertion {

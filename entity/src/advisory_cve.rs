@@ -1,4 +1,4 @@
-use crate::{advisory, cve, package, sbom_contains_package};
+use crate::{advisory, cve};
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]

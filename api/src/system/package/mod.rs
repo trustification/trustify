@@ -1,23 +1,23 @@
+use huevos_common::package::{Assertion, Claimant, VulnerabilityAssertions};
 use huevos_common::purl::{Purl, PurlErr};
 use huevos_entity as entity;
+use package_version::PackageVersionContext;
+use qualified_package::QualifiedPackageContext;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult,
-    ModelTrait, QueryFilter, QuerySelect, Set,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, ModelTrait,
+    QueryFilter, QuerySelect, Set,
 };
 use sea_orm::{RelationTrait, TransactionTrait};
 use sea_query::JoinType;
 use std::fmt::{Debug, Formatter};
-use huevos_common::package::{Claimant, Assertion, VulnerabilityAssertions};
-use package_version::PackageVersionContext;
-use qualified_package::QualifiedPackageContext;
 
 use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::InnerSystem;
 
 pub mod package_version;
-pub mod qualified_package;
 pub mod package_version_range;
+pub mod qualified_package;
 
 impl InnerSystem {
     pub async fn ingest_qualified_package<P: Into<Purl>>(
@@ -66,7 +66,7 @@ impl InnerSystem {
     ) -> Result<PackageContext, Error> {
         let purl = pkg.into();
 
-        if let Some(found) = self.get_package(purl.clone(), tx.clone()).await? {
+        if let Some(found) = self.get_package(purl.clone(), tx).await? {
             Ok(found)
         } else {
             let model = entity::package::ActiveModel {
@@ -86,7 +86,7 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<Option<QualifiedPackageContext>, Error> {
         let purl = pkg.into();
-        if let Some(package_version) = self.get_package_version(purl.clone(), tx.clone()).await? {
+        if let Some(package_version) = self.get_package_version(purl.clone(), tx).await? {
             package_version.get_qualified_package(purl, tx).await
         } else {
             Ok(None)
@@ -207,8 +207,8 @@ impl PackageContext {
         let purl = pkg.into();
 
         if let Some(version) = &purl.version {
-            if let Some(found) = self.get_package_version(purl.clone(), tx.clone()).await? {
-                return Ok(found);
+            if let Some(found) = self.get_package_version(purl.clone(), tx).await? {
+                Ok(found)
             } else {
                 let model = entity::package_version::ActiveModel {
                     id: Default::default(),
@@ -230,7 +230,10 @@ impl PackageContext {
     ) -> Result<Option<PackageVersionContext>, Error> {
         let purl = pkg.into();
         if let Some(package_version) = entity::package_version::Entity::find()
-            .join(JoinType::Join, entity::package_version::Relation::Package.def())
+            .join(
+                JoinType::Join,
+                entity::package_version::Relation::Package.def(),
+            )
             .filter(entity::package::Column::Id.eq(self.package.id))
             .filter(entity::package_version::Column::Version.eq(purl.version.clone()))
             .one(&self.system.connection(tx))
@@ -242,37 +245,34 @@ impl PackageContext {
         }
     }
 
-    pub async fn affected_assertions(&self, tx: Transactional<'_>) -> Result<VulnerabilityAssertions, Error> {
+    pub async fn affected_assertions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<VulnerabilityAssertions, Error> {
         let affected_version_ranges = entity::affected_package_version_range::Entity::find()
-            .join(JoinType::Join,
-                  entity::affected_package_version_range::Relation::PackageVersionRange.def())
             .join(
                 JoinType::Join,
-                entity::package_version_range::Relation::Package.def()
+                entity::affected_package_version_range::Relation::PackageVersionRange.def(),
             )
-            .filter(
-                entity::package::Column::Id.eq( self.package.id )
+            .join(
+                JoinType::Join,
+                entity::package_version_range::Relation::Package.def(),
             )
-            .find_also_related(
-                entity::advisory::Entity
-            )
-            .all(
-                &self.system.connection(tx)
-            )
+            .filter(entity::package::Column::Id.eq(self.package.id))
+            .find_also_related(entity::advisory::Entity)
+            .all(&self.system.connection(tx))
             .await?;
 
         let mut assertions = VulnerabilityAssertions::default();
 
         for (version_range, advisory) in affected_version_ranges {
             if let Some(advisory) = advisory {
-                let assertion = Assertion::Affected(
-                    Claimant {
-                        identifier: advisory.identifier,
-                        location: advisory.location,
-                        sha256: advisory.sha256
-                    }
-                );
-                assertions.assertions.push( assertion )
+                let assertion = Assertion::Affected(Claimant {
+                    identifier: advisory.identifier,
+                    location: advisory.location,
+                    sha256: advisory.sha256,
+                });
+                assertions.assertions.push(assertion)
             }
         }
 
@@ -359,10 +359,6 @@ impl Debug for PackageVersionRangeContext {
     }
 }
 
-
-
-
-
 #[cfg(test)]
 mod tests {
     use crate::db::Transactional;
@@ -400,7 +396,7 @@ mod tests {
             .ingest_package_version("pkg://maven/io.quarkus/quarkus-addons", Transactional::None)
             .await;
 
-        assert!(matches!(result, Err(_)));
+        assert!(result.is_err());
 
         Ok(())
     }
@@ -592,12 +588,7 @@ mod tests {
                 .await?;
 
             let ghsa_advisory = system
-                .ingest_advisory(
-                    "GHSA-1",
-                    "http://ghsa.com/ghsa-1",
-                    "2",
-                    Transactional::None,
-                )
+                .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
                 .await?;
 
             ghsa_advisory
@@ -609,31 +600,36 @@ mod tests {
                 )
                 .await?;
 
-            let pkg_core = system.get_package(
-                "pkg://maven/io.quarkus/quarkus-core",
-                Transactional::None,
-            ).await?.unwrap();
+            let pkg_core = system
+                .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+                .await?
+                .unwrap();
 
-            let assertions = pkg_core.affected_assertions(
-                Transactional::None
-            ).await?;
+            let assertions = pkg_core.affected_assertions(Transactional::None).await?;
 
             assert_eq!(assertions.assertions.len(), 2);
 
-            assert!( assertions.affected_claimants().iter().any(|e| e.identifier == "RHSA-1"));
-            assert!( assertions.affected_claimants().iter().any(|e| e.identifier == "GHSA-1"));
+            assert!(assertions
+                .affected_claimants()
+                .iter()
+                .any(|e| e.identifier == "RHSA-1"));
+            assert!(assertions
+                .affected_claimants()
+                .iter()
+                .any(|e| e.identifier == "GHSA-1"));
 
-            let pkg_addons = system.get_package(
-                "pkg://maven/io.quarkus/quarkus-addons",
-                Transactional::None,
-            ).await?.unwrap();
+            let pkg_addons = system
+                .get_package("pkg://maven/io.quarkus/quarkus-addons", Transactional::None)
+                .await?
+                .unwrap();
 
-            let assertions = pkg_addons.affected_assertions(
-                Transactional::None
-            ).await?;
+            let assertions = pkg_addons.affected_assertions(Transactional::None).await?;
 
             assert_eq!(assertions.assertions.len(), 1);
-            assert!( assertions.affected_claimants().iter().any(|e| e.identifier == "RHSA-1"));
+            assert!(assertions
+                .affected_claimants()
+                .iter()
+                .any(|e| e.identifier == "RHSA-1"));
 
             Ok(())
         }

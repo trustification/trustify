@@ -1,4 +1,3 @@
-use crate::sbom_contains_package;
 use sea_orm::entity::prelude::*;
 use sea_orm::FromQueryResult;
 

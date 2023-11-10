@@ -112,7 +112,7 @@ async fn process(system: &InnerSystem, doc: ValidatedAdvisory) -> anyhow::Result
     let advisory = system
         .ingest_advisory(
             &csaf.document.tracking.id,
-            &doc.url.to_string(),
+            doc.url.as_ref(),
             &doc.sha256.as_ref().unwrap().expected,
             Transactional::None,
         )

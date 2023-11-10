@@ -1,4 +1,3 @@
-use crate::m0000040_create_package::Package;
 use crate::m0000044_create_qualified_package::QualifiedPackage;
 use sea_orm_migration::prelude::*;
 

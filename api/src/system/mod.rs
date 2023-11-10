@@ -133,7 +133,7 @@ impl InnerSystem {
 
         db.close().await?;
 
-        Ok(Self::new(username, password, host, port, db_name).await?)
+        Self::new(username, password, host, port, db_name).await
     }
 
     pub async fn close(self) -> anyhow::Result<()> {

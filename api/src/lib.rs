@@ -1,4 +1,5 @@
 #![allow(unused)]
+#![allow(clippy::module_inception)]
 
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
@@ -7,7 +8,6 @@ use std::str::FromStr;
 
 use huevos_common::purl::Purl;
 use packageurl::PackageUrl;
-
 
 pub mod system;
 

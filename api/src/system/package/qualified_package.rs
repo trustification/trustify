@@ -1,13 +1,13 @@
-use std::fmt::{Debug, Formatter};
-use std::collections::HashMap;
-use sea_orm::{EntityTrait, QueryFilter, QuerySelect, RelationTrait, ColumnTrait};
-use sea_query::JoinType;
-use huevos_common::package::{Assertion, VulnerabilityAssertions};
-use huevos_common::purl::Purl;
-use huevos_entity as entity;
 use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::package::package_version::PackageVersionContext;
+use huevos_common::package::{Assertion, VulnerabilityAssertions};
+use huevos_common::purl::Purl;
+use huevos_entity as entity;
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait};
+use sea_query::JoinType;
+use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
 
 #[derive(Clone)]
 pub struct QualifiedPackageContext {
@@ -58,16 +58,15 @@ impl From<QualifiedPackageContext> for Purl {
 }
 
 impl QualifiedPackageContext {
-
-    pub async fn vulnerability_assertions(&self, tx: Transactional<'_>) -> Result<VulnerabilityAssertions, Error> {
-        let possible_affected_assertions = self.package_version.package.affected_assertions(
-            tx
-        ).await?;
+    pub async fn vulnerability_assertions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<VulnerabilityAssertions, Error> {
+        let possible_affected_assertions =
+            self.package_version.package.affected_assertions(tx).await?;
 
         todo!()
     }
-
-
 }
 
 #[cfg(test)]
@@ -107,23 +106,24 @@ mod tests {
             )
             .await?;
 
-        let pkg_core = system.ingest_qualified_package(
-            "pkg://maven/io.quarkus/quarkus-core@1.0.4",
-            Transactional::None,
-        ).await?;
+        let pkg_core = system
+            .ingest_qualified_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.0.4",
+                Transactional::None,
+            )
+            .await?;
 
-        pkg_core.vulnerability_assertions(
-            Transactional::None
-        ).await?;
+        pkg_core
+            .vulnerability_assertions(Transactional::None)
+            .await?;
 
-        let pkg_addons = system.ingest_qualified_package(
-            "pkg://maven/io.quarkus/quarkus-core@1.0.4",
-            Transactional::None,
-        ).await?;
-
+        let pkg_addons = system
+            .ingest_qualified_package(
+                "pkg://maven/io.quarkus/quarkus-core@1.0.4",
+                Transactional::None,
+            )
+            .await?;
 
         Ok(())
     }
-
-
 }

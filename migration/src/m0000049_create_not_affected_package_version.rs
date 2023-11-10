@@ -1,10 +1,6 @@
 use crate::m0000030_create_advisory::Advisory;
-use crate::m0000040_create_package::Package;
 use crate::m0000042_create_package_version::PackageVersion;
-use crate::m0000046_create_package_version_range::PackageVersionRange;
 use sea_orm_migration::prelude::*;
-
-use crate::Now;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -52,7 +48,11 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(NotAffectedPackageVersion::Table).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table(NotAffectedPackageVersion::Table)
+                    .to_owned(),
+            )
             .await
     }
 }
@@ -61,7 +61,7 @@ impl MigrationTrait for Migration {
 pub enum NotAffectedPackageVersion {
     Table,
     Id,
-    Timestamp,
+    //Timestamp,
     // --
     AdvisoryId,
     PackageVersionId,

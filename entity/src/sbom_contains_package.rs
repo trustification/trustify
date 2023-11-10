@@ -1,6 +1,5 @@
 use crate::{package, sbom};
 use sea_orm::entity::prelude::*;
-use sea_orm::LinkDef;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "sbom_contains_package")]

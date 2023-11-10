@@ -1,13 +1,15 @@
 use crate::db::Transactional;
-use contains_package::SbomContainsPackageContext;
+use crate::system::package::package_version::PackageVersionContext;
+use crate::system::package::qualified_package::QualifiedPackageContext;
 use crate::system::package::PackageContext;
 use crate::system::InnerSystem;
+use contains_package::SbomContainsPackageContext;
 use huevos_common::purl::Purl;
 use huevos_common::sbom::SbomLocator;
 use huevos_entity::sbom::Model;
 use huevos_entity::{
-    package, package_qualifier, package_version, qualified_package, sbom,
-    sbom_contains_package, sbom_describes_cpe, sbom_describes_package,
+    package, package_qualifier, package_version, qualified_package, sbom, sbom_contains_package,
+    sbom_describes_cpe, sbom_describes_package,
 };
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait, QueryFilter,
@@ -17,8 +19,6 @@ use sea_query::{Condition, JoinType};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
-use crate::system::package::package_version::PackageVersionContext;
-use crate::system::package::qualified_package::QualifiedPackageContext;
 
 use super::error::Error;
 
@@ -354,7 +354,7 @@ impl SbomContext {
         if fetch.is_none() {
             let package = self
                 .system
-                .ingest_qualified_package(package.into(), tx.clone())
+                .ingest_qualified_package(package.into(), tx)
                 .await?;
             let model = sbom_describes_package::ActiveModel {
                 sbom_id: Set(self.sbom.id),
@@ -374,11 +374,7 @@ impl SbomContext {
         let purl = pkg.into();
 
         Ok(
-            if let Some(package) = self
-                .system
-                .get_qualified_package(purl.clone(), tx.clone())
-                .await?
-            {
+            if let Some(package) = self.system.get_qualified_package(purl.clone(), tx).await? {
                 sbom_contains_package::Entity::find()
                     .filter(sbom_contains_package::Column::SbomId.eq(self.sbom.id))
                     .filter(
@@ -401,7 +397,7 @@ impl SbomContext {
     ) -> Result<SbomContainsPackageContext, Error> {
         let purl = pkg.into();
 
-        if let Some(found) = self.get_contains_package(purl.clone(), tx.clone()).await? {
+        if let Some(found) = self.get_contains_package(purl.clone(), tx).await? {
             return Ok(found);
         }
 
@@ -759,9 +755,9 @@ impl SbomContext {
 #[cfg(test)]
 mod tests {
     use crate::db::Transactional;
+    use crate::system::InnerSystem;
     use huevos_common::purl::Purl;
     use huevos_common::sbom::SbomLocator;
-    use crate::system::InnerSystem;
 
     #[tokio::test]
     async fn ingest_sboms() -> Result<(), anyhow::Error> {
@@ -929,7 +925,7 @@ mod tests {
 
         assert_eq!(2, contains.len());
 
-        let contains: Vec<_> = contains.drain(0..).map(|each| Purl::from(each)).collect();
+        let contains: Vec<_> = contains.drain(0..).map(Purl::from).collect();
 
         assert!(contains.contains(&Purl::from("pkg://maven/io.quarkus/quarkus-core@1.2.3")));
         assert!(contains.contains(&Purl::from("pkg://maven/io.quarkus/quarkus-addons@1.2.3")));

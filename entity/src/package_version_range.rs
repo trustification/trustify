@@ -1,6 +1,4 @@
-use crate::sbom_contains_package;
 use sea_orm::entity::prelude::*;
-use sea_orm::FromQueryResult;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "package_version_range")]
@@ -27,6 +25,4 @@ impl Related<super::package::Entity> for Entity {
     }
 }
 
-
 impl ActiveModelBehavior for ActiveModel {}
-

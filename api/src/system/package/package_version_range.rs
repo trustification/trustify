@@ -1,5 +1,5 @@
-use huevos_entity::package_version_range;
 use crate::system::package::{PackageContext, PackageVersionRangeContext};
+use huevos_entity::package_version_range;
 
 impl From<(&PackageContext, package_version_range::Model)> for PackageVersionRangeContext {
     fn from(
