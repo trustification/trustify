@@ -4,13 +4,15 @@ use crate::system::InnerSystem;
 use advisory_cve::AdvisoryCveContext;
 use affected_package_version_range::AffectedPackageVersionRangeContext;
 use fixed_package_version::FixedPackageVersionContext;
+use huevos_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
 use huevos_common::purl::Purl;
 use huevos_entity as entity;
 use not_affected_package_version::NotAffectedPackageVersion;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, EntityTrait, QueryFilter};
+use sea_orm::{ActiveModelTrait, EntityTrait, FromQueryResult, QueryFilter};
 use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
+use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
 pub mod advisory_cve;
@@ -271,12 +273,158 @@ impl AdvisoryContext {
 
         Ok((self, entity.insert(&self.system.connection(tx)).await?).into())
     }
+
+    pub async fn vulnerability_assertions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<AdvisoryVulnerabilityAssertions, Error> {
+        let affected = self.affected_assertions(tx).await?;
+        let not_affected = self.affected_assertions(tx).await?;
+
+        let mut merged = affected.assertions.clone();
+
+        for (package_key, assertions) in not_affected.assertions {
+            merged
+                .entry(package_key)
+                .or_insert(Vec::default())
+                .extend_from_slice(&assertions)
+        }
+
+        Ok(AdvisoryVulnerabilityAssertions { assertions: merged })
+    }
+
+    pub async fn affected_assertions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<AdvisoryVulnerabilityAssertions, Error> {
+        #[derive(FromQueryResult, Debug)]
+        struct AffectedVersion {
+            ty: String,
+            namespace: Option<String>,
+            name: String,
+            start: String,
+            end: String,
+            identifier: String,
+            location: String,
+            sha256: String,
+        }
+
+        let mut affected_version_ranges = entity::affected_package_version_range::Entity::find()
+            .column_as(entity::package::Column::Type, "ty")
+            .column_as(entity::package::Column::Namespace, "namespace")
+            .column_as(entity::package::Column::Name, "name")
+            .column_as(entity::package_version_range::Column::Start, "start")
+            .column_as(entity::package_version_range::Column::End, "end")
+            .column_as(entity::advisory::Column::Identifier, "identifier")
+            .column_as(entity::advisory::Column::Location, "location")
+            .column_as(entity::advisory::Column::Sha256, "sha256")
+            .join(
+                JoinType::Join,
+                entity::affected_package_version_range::Relation::PackageVersionRange.def(),
+            )
+            .join(
+                JoinType::Join,
+                entity::affected_package_version_range::Relation::Advisory.def(),
+            )
+            .join(
+                JoinType::Join,
+                entity::package_version_range::Relation::Package.def(),
+            )
+            .filter(entity::affected_package_version_range::Column::AdvisoryId.eq(self.advisory.id))
+            .into_model::<AffectedVersion>()
+            .all(&self.system.connection(tx))
+            .await?;
+
+        let mut assertions = HashMap::new();
+
+        for each in affected_version_ranges {
+            let package_key = Purl {
+                ty: each.ty,
+                namespace: each.namespace,
+                name: each.name,
+                version: None,
+                qualifiers: Default::default(),
+            }
+            .to_string();
+
+            let mut package_assertions = assertions.entry(package_key.clone()).or_insert(vec![]);
+            package_assertions.push(Assertion::Affected {
+                start_version: each.start,
+                end_version: each.end,
+            });
+        }
+
+        Ok(AdvisoryVulnerabilityAssertions { assertions })
+    }
+
+    pub async fn not_affected_assertions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<AdvisoryVulnerabilityAssertions, Error> {
+        #[derive(FromQueryResult, Debug)]
+        struct NotAffectedVersion {
+            ty: String,
+            namespace: Option<String>,
+            name: String,
+            version: String,
+            identifier: String,
+            location: String,
+            sha256: String,
+        }
+
+        let mut not_affected_versions = entity::not_affected_package_version::Entity::find()
+            .column_as(entity::package::Column::Type, "ty")
+            .column_as(entity::package::Column::Namespace, "namespace")
+            .column_as(entity::package::Column::Name, "name")
+            .column_as(entity::package_version::Column::Version, "version")
+            .column_as(entity::advisory::Column::Identifier, "identifier")
+            .column_as(entity::advisory::Column::Location, "location")
+            .column_as(entity::advisory::Column::Sha256, "sha256")
+            .join(
+                JoinType::Join,
+                entity::not_affected_package_version::Relation::PackageVersion.def(),
+            )
+            .join(
+                JoinType::Join,
+                entity::not_affected_package_version::Relation::Advisory.def(),
+            )
+            .join(
+                JoinType::Join,
+                entity::package_version::Relation::Package.def(),
+            )
+            .filter(entity::not_affected_package_version::Column::AdvisoryId.eq(self.advisory.id))
+            .into_model::<NotAffectedVersion>()
+            .all(&self.system.connection(tx))
+            .await?;
+
+        let mut assertions = HashMap::new();
+
+        for each in not_affected_versions {
+            let package_key = Purl {
+                ty: each.ty,
+                namespace: each.namespace,
+                name: each.name,
+                version: None,
+                qualifiers: Default::default(),
+            }
+            .to_string();
+
+            let mut package_assertions = assertions.entry(package_key.clone()).or_insert(vec![]);
+            package_assertions.push(Assertion::NotAffected {
+                version: each.version,
+            });
+        }
+
+        Ok(AdvisoryVulnerabilityAssertions { assertions })
+    }
 }
 
 #[cfg(test)]
 mod test {
     use crate::db::Transactional;
     use crate::system::InnerSystem;
+    use huevos_common::advisory::Assertion;
+    use std::collections::HashSet;
 
     #[tokio::test]
     async fn ingest_advisories() -> Result<(), anyhow::Error> {
@@ -441,6 +589,113 @@ mod test {
 
         assert_eq!(cve1.cve.id, cve2.cve.id);
         assert_ne!(cve1.cve.id, cve3.cve.id);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn advisory_affected_vulnerability_assertions() -> Result<(), anyhow::Error> {
+        /*
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .is_test(true)
+            .init();
+
+         */
+
+        let system = InnerSystem::for_test("advisory_affected_vulnerability_assertions").await?;
+
+        let advisory = system
+            .ingest_advisory(
+                "RHSA-GHSA-1",
+                "http://db.com/rhsa-ghsa-2",
+                "2",
+                Transactional::None,
+            )
+            .await?;
+
+        advisory
+            .ingest_affected_package_range(
+                "pkg://maven/io.quarkus/quarkus-core",
+                "1.0.2",
+                "1.2.0",
+                Transactional::None,
+            )
+            .await?;
+
+        advisory
+            .ingest_not_affected_package_version(
+                "pkg://maven/.io.quarkus/quarkus-core@1.1.9",
+                Transactional::None,
+            )
+            .await?;
+
+        let affected = advisory.affected_assertions(Transactional::None).await?;
+
+        assert_eq!(1, affected.assertions.len());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn advisory_not_affected_vulnerability_assertions() -> Result<(), anyhow::Error> {
+        /*
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .is_test(true)
+            .init();
+
+         */
+
+        let system =
+            InnerSystem::for_test("advisory_not_affected_vulnerability_assertions").await?;
+
+        let advisory = system
+            .ingest_advisory(
+                "RHSA-GHSA-1",
+                "http://db.com/rhsa-ghsa-2",
+                "2",
+                Transactional::None,
+            )
+            .await?;
+
+        advisory
+            .ingest_affected_package_range(
+                "pkg://maven/io.quarkus/quarkus-core",
+                "1.0.2",
+                "1.2.0",
+                Transactional::None,
+            )
+            .await?;
+
+        advisory
+            .ingest_not_affected_package_version(
+                "pkg://maven/io.quarkus/quarkus-core@1.1.9",
+                Transactional::None,
+            )
+            .await?;
+
+        let not_affected = advisory
+            .not_affected_assertions(Transactional::None)
+            .await?;
+
+        assert_eq!(1, not_affected.assertions.len());
+
+        let pkg_assertions = not_affected
+            .assertions
+            .get(&"pkg://maven/io.quarkus/quarkus-core".to_string());
+
+        assert!(pkg_assertions.is_some());
+
+        let pkg_assertions = pkg_assertions.unwrap();
+
+        assert_eq!(1, pkg_assertions.len());
+
+        let assertion = &pkg_assertions[0];
+
+        assert!(matches!( assertion, Assertion::NotAffected {version}
+            if version == "1.1.9"
+        ));
 
         Ok(())
     }

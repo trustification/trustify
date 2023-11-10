@@ -2,9 +2,14 @@ use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::package::qualified_package::QualifiedPackageContext;
 use crate::system::package::PackageContext;
+use huevos_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
 use huevos_common::purl::Purl;
 use huevos_entity as entity;
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
+    RelationTrait, Set,
+};
+use sea_query::JoinType;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
@@ -91,5 +96,136 @@ impl PackageVersionContext {
         }
 
         Ok(None)
+    }
+
+    pub async fn vulnerability_assertions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<PackageVulnerabilityAssertions, Error> {
+        let affected = self.affected_assertions(tx).await?;
+
+        let not_affected = self.not_affected_assertions(tx).await?;
+
+        let mut merged = PackageVulnerabilityAssertions::default();
+
+        merged.assertions.extend_from_slice(&affected.assertions);
+
+        merged
+            .assertions
+            .extend_from_slice(&not_affected.assertions);
+
+        Ok(merged)
+    }
+
+    pub async fn affected_assertions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<PackageVulnerabilityAssertions, Error> {
+        let possibly_affected = self.package.affected_assertions(tx).await?;
+
+        let filtered = possibly_affected.filter_by_version(&self.package_version.version)?;
+
+        Ok(filtered)
+    }
+
+    pub async fn not_affected_assertions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<PackageVulnerabilityAssertions, Error> {
+        #[derive(FromQueryResult, Debug)]
+        struct NotAffectedVersion {
+            version: String,
+            identifier: String,
+            location: String,
+            sha256: String,
+        }
+
+        let mut not_affected_versions = entity::not_affected_package_version::Entity::find()
+            .column_as(entity::package_version::Column::Version, "version")
+            .column_as(entity::advisory::Column::Identifier, "identifier")
+            .column_as(entity::advisory::Column::Location, "location")
+            .column_as(entity::advisory::Column::Sha256, "sha256")
+            .join(
+                JoinType::Join,
+                entity::not_affected_package_version::Relation::Advisory.def(),
+            )
+            .join(
+                JoinType::Join,
+                entity::not_affected_package_version::Relation::PackageVersion.def(),
+            )
+            .filter(entity::package_version::Column::Id.eq(self.package_version.id))
+            .into_model::<NotAffectedVersion>()
+            .all(&self.package.system.connection(tx))
+            .await?;
+
+        let assertions = PackageVulnerabilityAssertions {
+            assertions: not_affected_versions
+                .drain(0..)
+                .map(|each| Assertion::NotAffected {
+                    claimant: Claimant {
+                        identifier: each.identifier,
+                        location: each.location,
+                        sha256: each.sha256,
+                    },
+                    version: each.version,
+                })
+                .collect(),
+        };
+
+        Ok(assertions)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::db::Transactional;
+    use crate::system::InnerSystem;
+
+    #[tokio::test]
+    async fn package_version_not_affected_assertions() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("package_version_not_affected_assertions").await?;
+
+        let redhat_advisory = system
+            .ingest_advisory(
+                "RHSA-1",
+                "http://redhat.com/rhsa-1",
+                "2",
+                Transactional::None,
+            )
+            .await?;
+
+        redhat_advisory
+            .ingest_not_affected_package_version(
+                "pkg://maven/io.quarkus/quarkus-core@1.2",
+                Transactional::None,
+            )
+            .await?;
+
+        let ghsa_advisory = system
+            .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
+            .await?;
+
+        ghsa_advisory
+            .ingest_not_affected_package_version(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.2",
+                Transactional::None,
+            )
+            .await?;
+
+        let pkg_version = system
+            .get_package_version(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.2",
+                Transactional::None,
+            )
+            .await?
+            .unwrap();
+
+        let assertions = pkg_version
+            .not_affected_assertions(Transactional::None)
+            .await?;
+
+        assert_eq!(assertions.assertions.len(), 1);
+
+        Ok(())
     }
 }

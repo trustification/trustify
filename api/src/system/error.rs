@@ -13,5 +13,8 @@ pub enum Error {
     Database(#[from] DbErr),
 
     #[error(transparent)]
+    Semver(#[from] lenient_semver::parser::OwnedError),
+
+    #[error(transparent)]
     Any(#[from] anyhow::Error),
 }

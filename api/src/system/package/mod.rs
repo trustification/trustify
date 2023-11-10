@@ -1,4 +1,4 @@
-use huevos_common::package::{Assertion, Claimant, VulnerabilityAssertions};
+use huevos_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
 use huevos_common::purl::{Purl, PurlErr};
 use huevos_entity as entity;
 use package_version::PackageVersionContext;
@@ -248,12 +248,12 @@ impl PackageContext {
     pub async fn vulnerability_assertions(
         &self,
         tx: Transactional<'_>,
-    ) -> Result<VulnerabilityAssertions, Error> {
+    ) -> Result<PackageVulnerabilityAssertions, Error> {
         let affected = self.affected_assertions(tx).await?;
 
         let not_affected = self.not_affected_assertions(tx).await?;
 
-        let mut merged = VulnerabilityAssertions::default();
+        let mut merged = PackageVulnerabilityAssertions::default();
 
         merged.assertions.extend_from_slice(&affected.assertions);
 
@@ -267,7 +267,7 @@ impl PackageContext {
     pub async fn affected_assertions(
         &self,
         tx: Transactional<'_>,
-    ) -> Result<VulnerabilityAssertions, Error> {
+    ) -> Result<PackageVulnerabilityAssertions, Error> {
         #[derive(FromQueryResult, Debug)]
         struct AffectedVersion {
             start: String,
@@ -300,7 +300,7 @@ impl PackageContext {
             .all(&self.system.connection(tx))
             .await?;
 
-        let assertions = VulnerabilityAssertions {
+        let assertions = PackageVulnerabilityAssertions {
             assertions: affected_version_ranges
                 .drain(0..)
                 .map(|each| Assertion::Affected {
@@ -321,7 +321,7 @@ impl PackageContext {
     pub async fn not_affected_assertions(
         &self,
         tx: Transactional<'_>,
-    ) -> Result<VulnerabilityAssertions, Error> {
+    ) -> Result<PackageVulnerabilityAssertions, Error> {
         #[derive(FromQueryResult, Debug)]
         struct NotAffectedVersion {
             version: String,
@@ -348,7 +348,7 @@ impl PackageContext {
             .all(&self.system.connection(tx))
             .await?;
 
-        let assertions = VulnerabilityAssertions {
+        let assertions = PackageVulnerabilityAssertions {
             assertions: not_affected_versions
                 .drain(0..)
                 .map(|each| Assertion::NotAffected {
@@ -364,73 +364,6 @@ impl PackageContext {
 
         Ok(assertions)
     }
-
-    /*
-    /// Locate all SBOMs that contain this package.
-    ///
-    pub async fn sboms_containing(&self, tx: Transactional<'_>) -> Result<Vec<SbomContext>, Error> {
-        Ok(sbom::Entity::find()
-            .filter(
-                sbom::Column::Id.in_subquery(
-                    Query::select()
-                        .column(package_dependency::Column::SbomId)
-                        .cond_having(
-                            Condition::any()
-                                .add(
-                                    package_dependency::Column::DependentPackageId
-                                        .eq(self.package.id),
-                                )
-                                .add(
-                                    package_dependency::Column::DependencyPackageId
-                                        .eq(self.package.id),
-                                ),
-                        )
-                        .group_by_columns([
-                            package_dependency::Column::SbomId,
-                            package_dependency::Column::DependencyPackageId,
-                            package_dependency::Column::DependentPackageId,
-                        ])
-                        .from(package_dependency::Entity)
-                        .to_owned(),
-                ),
-            )
-            .all(&self.system.connection(tx))
-            .await?
-            .drain(0..)
-            .map(|sbom| (&self.system, sbom).into())
-            .collect())
-    }
-
-    /// Locate all SBOMs that describe this package.
-    pub async fn sboms_describing(&self, tx: Transactional<'_>) -> Result<Vec<SbomContext>, Error> {
-        Ok(sbom::Entity::find()
-            .filter(
-                sbom::Column::Id.in_subquery(
-                    Query::select()
-                        .column(package_dependency::Column::SbomId)
-                        .cond_having(
-                            Condition::any()
-                                .add(
-                                    sbom_describes_package::Column::PackageId
-                                        .eq(self.package.id),
-                                )
-                        )
-                        .group_by_columns([
-                            sbom_describes_package::Column::SbomId,
-                            sbom_describes_package::Column::PackageId,
-                        ])
-                        .from(package_dependency::Entity)
-                        .to_owned(),
-                ),
-            )
-            .all(&self.system.connection(tx))
-            .await?
-            .drain(0..)
-            .map(|sbom| (&self.system, sbom).into())
-            .collect())
-    }
-
-     */
 }
 
 #[derive(Clone)]

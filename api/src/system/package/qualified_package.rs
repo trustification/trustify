@@ -1,7 +1,7 @@
 use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::package::package_version::PackageVersionContext;
-use huevos_common::package::{Assertion, VulnerabilityAssertions};
+use huevos_common::package::{Assertion, PackageVulnerabilityAssertions};
 use huevos_common::purl::Purl;
 use huevos_entity as entity;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait};
@@ -61,11 +61,34 @@ impl QualifiedPackageContext {
     pub async fn vulnerability_assertions(
         &self,
         tx: Transactional<'_>,
-    ) -> Result<VulnerabilityAssertions, Error> {
-        let possible_affected_assertions =
-            self.package_version.package.affected_assertions(tx).await?;
+    ) -> Result<PackageVulnerabilityAssertions, Error> {
+        let affected = self.affected_assertions(tx).await?;
 
-        todo!()
+        let not_affected = self.not_affected_assertions(tx).await?;
+
+        let mut merged = PackageVulnerabilityAssertions::default();
+
+        merged.assertions.extend_from_slice(&affected.assertions);
+
+        merged
+            .assertions
+            .extend_from_slice(&not_affected.assertions);
+
+        Ok(merged)
+    }
+
+    pub async fn affected_assertions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<PackageVulnerabilityAssertions, Error> {
+        self.package_version.affected_assertions(tx).await
+    }
+
+    pub async fn not_affected_assertions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<PackageVulnerabilityAssertions, Error> {
+        self.package_version.not_affected_assertions(tx).await
     }
 }
 

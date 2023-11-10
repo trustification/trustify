@@ -2,6 +2,7 @@ use crate::db::Transactional;
 use crate::system::advisory::AdvisoryContext;
 use crate::system::error::Error;
 use crate::system::InnerSystem;
+use huevos_common::package::PackageVulnerabilityAssertions;
 use huevos_entity::cve::Model;
 use huevos_entity::{advisory, advisory_cve, cve};
 use sea_orm::ActiveValue::Set;
