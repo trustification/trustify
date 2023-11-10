@@ -1,25 +1,23 @@
 use huevos_common::purl::{Purl, PurlErr};
-use huevos_common::sbom::SbomLocator;
-use huevos_entity::package::{Model, PackageNamespace, PackageType};
-use huevos_entity::sbom::Column;
-use huevos_entity::{
-    package, package_dependency, package_qualifier, package_version, package_version_range,
-    qualified_package, sbom, sbom_describes_package,
-};
-use packageurl::PackageUrl;
+use huevos_entity as entity;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, Condition, ConnectionTrait, EntityTrait, FromQueryResult,
-    ModelTrait, QueryFilter, QuerySelect, Select, Set,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult,
+    ModelTrait, QueryFilter, QuerySelect, Set,
 };
 use sea_orm::{RelationTrait, TransactionTrait};
-use sea_query::{JoinType, Query};
-use std::collections::HashMap;
+use sea_query::JoinType;
 use std::fmt::{Debug, Formatter};
+use huevos_common::package::{Claimant, Assertion, VulnerabilityAssertions};
+use package_version::PackageVersionContext;
+use qualified_package::QualifiedPackageContext;
 
 use crate::db::Transactional;
 use crate::system::error::Error;
-use crate::system::sbom::SbomContext;
 use crate::system::InnerSystem;
+
+pub mod package_version;
+pub mod qualified_package;
+pub mod package_version_range;
 
 impl InnerSystem {
     pub async fn ingest_qualified_package<P: Into<Purl>>(
@@ -71,7 +69,7 @@ impl InnerSystem {
         if let Some(found) = self.get_package(purl.clone(), tx.clone()).await? {
             Ok(found)
         } else {
-            let model = package::ActiveModel {
+            let model = entity::package::ActiveModel {
                 id: Default::default(),
                 r#type: Set(purl.ty.clone()),
                 namespace: Set(purl.namespace.clone()),
@@ -129,10 +127,10 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<Option<PackageContext>, Error> {
         let purl = pkg.into();
-        Ok(package::Entity::find()
-            .filter(package::Column::Type.eq(purl.ty.clone()))
-            .filter(package::Column::Namespace.eq(purl.namespace.clone()))
-            .filter(package::Column::Name.eq(purl.name.clone()))
+        Ok(entity::package::Entity::find()
+            .filter(entity::package::Column::Type.eq(purl.ty.clone()))
+            .filter(entity::package::Column::Namespace.eq(purl.namespace.clone()))
+            .filter(entity::package::Column::Name.eq(purl.name.clone()))
             .one(&self.connection(tx))
             .await?
             .map(|package| (self, package).into()))
@@ -142,7 +140,7 @@ impl InnerSystem {
 #[derive(Clone)]
 pub struct PackageContext {
     pub(crate) system: InnerSystem,
-    pub(crate) package: package::Model,
+    pub(crate) package: entity::package::Model,
 }
 
 impl Debug for PackageContext {
@@ -151,8 +149,8 @@ impl Debug for PackageContext {
     }
 }
 
-impl From<(&InnerSystem, package::Model)> for PackageContext {
-    fn from((system, package): (&InnerSystem, Model)) -> Self {
+impl From<(&InnerSystem, entity::package::Model)> for PackageContext {
+    fn from((system, package): (&InnerSystem, entity::package::Model)) -> Self {
         Self {
             system: system.clone(),
             package,
@@ -172,7 +170,7 @@ impl PackageContext {
         if let Some(found) = self.get_package_version_range(purl, start, end, tx).await? {
             Ok(found)
         } else {
-            let entity = package_version_range::ActiveModel {
+            let entity = entity::package_version_range::ActiveModel {
                 id: Default::default(),
                 package_id: Set(self.package.id),
                 start: Set(start.to_string()),
@@ -192,10 +190,10 @@ impl PackageContext {
     ) -> Result<Option<PackageVersionRangeContext>, Error> {
         let purl = pkg.into();
 
-        Ok(package_version_range::Entity::find()
-            .filter(package_version_range::Column::PackageId.eq(self.package.id))
-            .filter(package_version_range::Column::Start.eq(start.to_string()))
-            .filter(package_version_range::Column::End.eq(end.to_string()))
+        Ok(entity::package_version_range::Entity::find()
+            .filter(entity::package_version_range::Column::PackageId.eq(self.package.id))
+            .filter(entity::package_version_range::Column::Start.eq(start.to_string()))
+            .filter(entity::package_version_range::Column::End.eq(end.to_string()))
             .one(&self.system.connection(tx))
             .await?
             .map(|package_version_range| (self, package_version_range).into()))
@@ -212,7 +210,7 @@ impl PackageContext {
             if let Some(found) = self.get_package_version(purl.clone(), tx.clone()).await? {
                 return Ok(found);
             } else {
-                let model = package_version::ActiveModel {
+                let model = entity::package_version::ActiveModel {
                     id: Default::default(),
                     package_id: Set(self.package.id),
                     version: Set(version.clone()),
@@ -231,10 +229,10 @@ impl PackageContext {
         tx: Transactional<'_>,
     ) -> Result<Option<PackageVersionContext>, Error> {
         let purl = pkg.into();
-        if let Some(package_version) = package_version::Entity::find()
-            .join(JoinType::Join, package_version::Relation::Package.def())
-            .filter(package::Column::Id.eq(self.package.id))
-            .filter(package_version::Column::Version.eq(purl.version.clone()))
+        if let Some(package_version) = entity::package_version::Entity::find()
+            .join(JoinType::Join, entity::package_version::Relation::Package.def())
+            .filter(entity::package::Column::Id.eq(self.package.id))
+            .filter(entity::package_version::Column::Version.eq(purl.version.clone()))
             .one(&self.system.connection(tx))
             .await?
         {
@@ -242,6 +240,43 @@ impl PackageContext {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn affected_assertions(&self, tx: Transactional<'_>) -> Result<VulnerabilityAssertions, Error> {
+        let affected_version_ranges = entity::affected_package_version_range::Entity::find()
+            .join(JoinType::Join,
+                  entity::affected_package_version_range::Relation::PackageVersionRange.def())
+            .join(
+                JoinType::Join,
+                entity::package_version_range::Relation::Package.def()
+            )
+            .filter(
+                entity::package::Column::Id.eq( self.package.id )
+            )
+            .find_also_related(
+                entity::advisory::Entity
+            )
+            .all(
+                &self.system.connection(tx)
+            )
+            .await?;
+
+        let mut assertions = VulnerabilityAssertions::default();
+
+        for (version_range, advisory) in affected_version_ranges {
+            if let Some(advisory) = advisory {
+                let assertion = Assertion::Affected(
+                    Claimant {
+                        identifier: advisory.identifier,
+                        location: advisory.location,
+                        sha256: advisory.sha256
+                    }
+                );
+                assertions.assertions.push( assertion )
+            }
+        }
+
+        Ok(assertions)
     }
 
     /*
@@ -315,7 +350,7 @@ impl PackageContext {
 #[derive(Clone)]
 pub struct PackageVersionRangeContext {
     pub(crate) package: PackageContext,
-    pub(crate) package_version_range: package_version_range::Model,
+    pub(crate) package_version_range: entity::package_version_range::Model,
 }
 
 impl Debug for PackageVersionRangeContext {
@@ -324,152 +359,9 @@ impl Debug for PackageVersionRangeContext {
     }
 }
 
-impl From<(&PackageContext, package_version_range::Model)> for PackageVersionRangeContext {
-    fn from(
-        (package, package_version_range): (&PackageContext, package_version_range::Model),
-    ) -> Self {
-        Self {
-            package: package.clone(),
-            package_version_range,
-        }
-    }
-}
 
-impl PackageVersionRangeContext {}
 
-#[derive(Clone)]
-pub struct PackageVersionContext {
-    pub(crate) package: PackageContext,
-    pub(crate) package_version: package_version::Model,
-}
 
-impl Debug for PackageVersionContext {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.package_version.fmt(f)
-    }
-}
-
-impl From<(&PackageContext, package_version::Model)> for PackageVersionContext {
-    fn from((package, package_version): (&PackageContext, package_version::Model)) -> Self {
-        Self {
-            package: package.clone(),
-            package_version,
-        }
-    }
-}
-
-impl PackageVersionContext {
-    pub async fn ingest_qualified_package<P: Into<Purl>>(
-        &self,
-        pkg: P,
-        mut tx: Transactional<'_>,
-    ) -> Result<QualifiedPackageContext, Error> {
-        let purl = pkg.into();
-
-        if let Some(found) = self.get_qualified_package(purl.clone(), tx.clone()).await? {
-            return Ok(found);
-        }
-
-        // No appropriate qualified package, create one.
-        let qualified_package = qualified_package::ActiveModel {
-            id: Default::default(),
-            package_version_id: Set(self.package_version.package_id),
-        };
-
-        let qualified_package = qualified_package
-            .insert(&self.package.system.connection(tx))
-            .await?;
-
-        for (k, v) in &purl.qualifiers {
-            let qualifier = package_qualifier::ActiveModel {
-                id: Default::default(),
-                qualified_package_id: Set(qualified_package.id),
-                key: Set(k.clone()),
-                value: Set(v.clone()),
-            };
-
-            qualifier
-                .insert(&self.package.system.connection(tx))
-                .await?;
-        }
-
-        Ok((self, qualified_package, purl.qualifiers.clone()).into())
-    }
-
-    pub async fn get_qualified_package<P: Into<Purl>>(
-        &self,
-        pkg: P,
-        tx: Transactional<'_>,
-    ) -> Result<Option<QualifiedPackageContext>, Error> {
-        let purl = pkg.into();
-        let found = qualified_package::Entity::find()
-            .filter(qualified_package::Column::PackageVersionId.eq(self.package_version.id))
-            .find_with_related(package_qualifier::Entity)
-            .all(&self.package.system.connection(tx))
-            .await?;
-
-        for (qualified_package, qualifiers) in found {
-            let qualifiers_map = qualifiers
-                .iter()
-                .map(|qualifier| (qualifier.key.clone(), qualifier.value.clone()))
-                .collect::<HashMap<_, _>>();
-
-            if purl.qualifiers == qualifiers_map {
-                return Ok(Some((self, qualified_package, qualifiers_map).into()));
-            }
-        }
-
-        Ok(None)
-    }
-}
-
-#[derive(Clone)]
-pub struct QualifiedPackageContext {
-    pub(crate) package_version: PackageVersionContext,
-    pub(crate) qualified_package: qualified_package::Model,
-    // just a short-cut to avoid another query
-    pub(crate) qualifiers: HashMap<String, String>,
-}
-
-impl Debug for QualifiedPackageContext {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.qualified_package.fmt(f)
-    }
-}
-
-impl
-    From<(
-        &PackageVersionContext,
-        qualified_package::Model,
-        HashMap<String, String>,
-    )> for QualifiedPackageContext
-{
-    fn from(
-        (package_version, qualified_package, qualifiers): (
-            &PackageVersionContext,
-            qualified_package::Model,
-            HashMap<String, String>,
-        ),
-    ) -> Self {
-        Self {
-            package_version: package_version.clone(),
-            qualified_package,
-            qualifiers,
-        }
-    }
-}
-
-impl From<QualifiedPackageContext> for Purl {
-    fn from(value: QualifiedPackageContext) -> Self {
-        Self {
-            ty: value.package_version.package.package.r#type.clone(),
-            namespace: value.package_version.package.package.namespace.clone(),
-            name: value.package_version.package.package.name.clone(),
-            version: Some(value.package_version.package_version.version.clone()),
-            qualifiers: value.qualifiers.clone(),
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -663,115 +555,89 @@ mod tests {
         Ok(())
     }
 
-    /*
+    #[cfg(test)]
+    mod tests {
+        use crate::db::Transactional;
+        use crate::system::InnerSystem;
 
-    #[tokio::test]
-    async fn ingest_package_dependencies() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("ingest_package_dependencies").await?;
+        #[tokio::test]
+        async fn package_affected_assertions() -> Result<(), anyhow::Error> {
+            let system = InnerSystem::for_test("package_affected_assertions").await?;
 
-        let sbom = system
-            .ingest_sbom("http://test.sbom/ingest_package_dependencies.json", "7")
-            .await?;
+            let redhat_advisory = system
+                .ingest_advisory(
+                    "RHSA-1",
+                    "http://redhat.com/rhsa-1",
+                    "2",
+                    Transactional::None,
+                )
+                .await?;
 
-        /*
-        let result = system
-            .ingest_package_dependency(
-                "pkg:maven/io.quarkus/quarkus-jdbc-postgresql@2.13.5.Final?type=jar",
-                "pkg:maven/io.quarkus/quarkus-jdbc-base@1.13.5.Final?type=jar",
-                &sbom,
+            redhat_advisory
+                .ingest_affected_package_range(
+                    "pkg://maven/io.quarkus/quarkus-core",
+                    "1.0.2",
+                    "1.2.0",
+                    Transactional::None,
+                )
+                .await?;
+
+            redhat_advisory
+                .ingest_affected_package_range(
+                    "pkg://maven/io.quarkus/quarkus-addons",
+                    "1.0.2",
+                    "1.2.0",
+                    Transactional::None,
+                )
+                .await?;
+
+            let ghsa_advisory = system
+                .ingest_advisory(
+                    "GHSA-1",
+                    "http://ghsa.com/ghsa-1",
+                    "2",
+                    Transactional::None,
+                )
+                .await?;
+
+            ghsa_advisory
+                .ingest_affected_package_range(
+                    "pkg://maven/io.quarkus/quarkus-core",
+                    "1.0.2",
+                    "1.2.0",
+                    Transactional::None,
+                )
+                .await?;
+
+            let pkg_core = system.get_package(
+                "pkg://maven/io.quarkus/quarkus-core",
                 Transactional::None,
-            )
-            .await?;
+            ).await?.unwrap();
 
-        let result = system
-            .ingest_package_dependency(
-                "pkg:maven/io.quarkus/quarkus-jdbc-postgresql@2.13.5.Final?type=jar",
-                "pkg:maven/io.quarkus/quarkus-postgres@1.13.5.Final?type=jar",
-                &sbom,
+            let assertions = pkg_core.affected_assertions(
+                Transactional::None
+            ).await?;
+
+            assert_eq!(assertions.assertions.len(), 2);
+
+            assert!( assertions.affected_claimants().iter().any(|e| e.identifier == "RHSA-1"));
+            assert!( assertions.affected_claimants().iter().any(|e| e.identifier == "GHSA-1"));
+
+            let pkg_addons = system.get_package(
+                "pkg://maven/io.quarkus/quarkus-addons",
                 Transactional::None,
-            )
-            .await?;
+            ).await?.unwrap();
 
-        let result = system
-            .direct_dependencies(
-                "pkg:maven/io.quarkus/quarkus-jdbc-postgresql@2.13.5.Final?type=jar",
-                Transactional::None,
-            )
-            .await?;
+            let assertions = pkg_addons.affected_assertions(
+                Transactional::None
+            ).await?;
 
-        println!("{:?}", result);
-         */
-        Ok(())
+            assert_eq!(assertions.assertions.len(), 1);
+            assert!( assertions.affected_claimants().iter().any(|e| e.identifier == "RHSA-1"));
+
+            Ok(())
+        }
     }
-
-    #[tokio::test]
-    async fn transitive_dependencies() -> Result<(), anyhow::Error> {
-        env_logger::builder()
-        .filter_level(log::LevelFilter::Info)
-        .is_test(true)
-        .init();
-
-
-        let system = InnerSystem::for_test("transitive_dependencies").await?;
-
-        let sbom = system
-            .ingest_sbom("http://test.sbom/transitive_dependencies.json", "8")
-            .await?;
-
-        println!("{:#?}", sbom);
-
-        system
-            .ingest_package_dependency(
-                "pkg:maven/com.test/package-a@1.0?type=jar",
-                "pkg:maven/com.test/package-ab@1.0?type=jar",
-                &sbom,
-                Transactional::None,
-            )
-            .await?;
-
-        system
-            .ingest_package_dependency(
-                "pkg:maven/com.test/package-a@1.0?type=jar",
-                "pkg:maven/com.test/package-ac@1.0?type=jar",
-                &sbom,
-                Transactional::None,
-            )
-            .await?;
-
-        system
-            .ingest_package_dependency(
-                "pkg:maven/com.test/package-ac@1.0?type=jar",
-                "pkg:maven/com.test/package-acd@1.0?type=jar",
-                &sbom,
-                Transactional::None,
-            )
-            .await?;
-
-        system
-            .ingest_package_dependency(
-                "pkg:maven/com.test/package-ab@1.0?type=jar",
-                "pkg:maven/com.test/package-ac@1.0?type=jar",
-                &sbom,
-                Transactional::None,
-            )
-            .await?;
-
-        let result = system
-            .transitive_package_dependencies(
-                "pkg:maven/com.test/package-a@1.0?type=jar",
-                Transactional::None,
-            )
-            .await?;
-
-        assert_eq!(
-            Purl::from("pkg:maven/com.test/package-a@1.0?type=jar"),
-            result.purl
-        );
-        assert_eq!(2, result.dependencies.len());
-
-        Ok(())
-    }
-         */
 }
 
 /*

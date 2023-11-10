@@ -1,18 +1,22 @@
 use crate::db::Transactional;
-use crate::system::advisory_cve::AdvisoryCveContext;
-use crate::system::affected_package_version_range::AffectedPackageVersionRangeContext;
-use crate::system::cve::CveContext;
+use advisory_cve::AdvisoryCveContext;
+use affected_package_version_range::AffectedPackageVersionRangeContext;
 use crate::system::error::Error;
-use crate::system::fixed_package_version::FixedPackageVersionContext;
-use crate::system::{InnerSystem};
+use fixed_package_version::FixedPackageVersionContext;
+use crate::system::InnerSystem;
 use huevos_common::purl::Purl;
-use huevos_entity::{advisory, advisory_cve, affected_package_version_range, cve, fixed_package_version, not_affected_package_version, package_version_range};
+use huevos_entity as entity;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, EntityTrait, QueryFilter};
 use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
 use std::fmt::{Debug, Formatter};
-use crate::system::not_affected_package_version::NotAffectedPackageVersion;
+use not_affected_package_version::NotAffectedPackageVersion;
+
+pub mod affected_package_version_range;
+pub mod fixed_package_version;
+pub mod advisory_cve;
+pub mod not_affected_package_version;
 
 impl InnerSystem {
     pub async fn get_advisory(
@@ -21,10 +25,10 @@ impl InnerSystem {
         location: &str,
         sha256: &str,
     ) -> Result<Option<AdvisoryContext>, Error> {
-        Ok(advisory::Entity::find()
-            .filter(Condition::all().add(advisory::Column::Identifier.eq(identifier)))
-            .filter(Condition::all().add(advisory::Column::Location.eq(location)))
-            .filter(Condition::all().add(advisory::Column::Sha256.eq(sha256.to_string())))
+        Ok(entity::advisory::Entity::find()
+            .filter(Condition::all().add(entity::advisory::Column::Identifier.eq(identifier)))
+            .filter(Condition::all().add(entity::advisory::Column::Location.eq(location)))
+            .filter(Condition::all().add(entity::advisory::Column::Sha256.eq(sha256.to_string())))
             .one(&self.db)
             .await?
             .map(|sbom| (self, sbom).into()))
@@ -41,7 +45,7 @@ impl InnerSystem {
             return Ok(found);
         }
 
-        let model = advisory::ActiveModel {
+        let model = entity::advisory::ActiveModel {
             identifier: Set(identifer.to_string()),
             location: Set(location.to_string()),
             sha256: Set(sha256.to_string()),
@@ -55,7 +59,7 @@ impl InnerSystem {
 #[derive(Clone)]
 pub struct AdvisoryContext {
     system: InnerSystem,
-    advisory: advisory::Model,
+    advisory: entity::advisory::Model,
 }
 
 impl PartialEq for AdvisoryContext {
@@ -70,8 +74,8 @@ impl Debug for AdvisoryContext {
     }
 }
 
-impl From<(&InnerSystem, advisory::Model)> for AdvisoryContext {
-    fn from((system, advisory): (&InnerSystem, advisory::Model)) -> Self {
+impl From<(&InnerSystem, entity::advisory::Model)> for AdvisoryContext {
+    fn from((system, advisory): (&InnerSystem, entity::advisory::Model)) -> Self {
         Self {
             system: system.clone(),
             advisory,
@@ -85,10 +89,10 @@ impl AdvisoryContext {
         identifier: &str,
         tx: Transactional<'_>,
     ) -> Result<Option<AdvisoryCveContext>, Error> {
-        Ok(cve::Entity::find()
-            .join(JoinType::Join, advisory_cve::Relation::Cve.def().rev())
-            .filter(advisory_cve::Column::AdvisoryId.eq(self.advisory.id))
-            .filter(cve::Column::Identifier.eq(identifier))
+        Ok(entity::cve::Entity::find()
+            .join(JoinType::Join, entity::advisory_cve::Relation::Cve.def().rev())
+            .filter(entity::advisory_cve::Column::AdvisoryId.eq(self.advisory.id))
+            .filter(entity::cve::Column::Identifier.eq(identifier))
             .one(&self.system.connection(tx))
             .await?
             .map(|cve| (self, cve).into()))
@@ -105,7 +109,7 @@ impl AdvisoryContext {
 
         let cve = self.system.ingest_cve(identifier, tx).await?;
 
-        let entity = advisory_cve::ActiveModel {
+        let entity = entity::advisory_cve::ActiveModel {
             advisory_id: Set(self.advisory.id),
             cve_id: Set(cve.cve.id),
         };
@@ -123,10 +127,10 @@ impl AdvisoryContext {
         let purl = pkg.into();
 
         if let Some(package_version) = self.system.get_package_version(purl, tx).await? {
-            Ok(fixed_package_version::Entity::find()
-                .filter(fixed_package_version::Column::AdvisoryId.eq(self.advisory.id))
+            Ok(entity::fixed_package_version::Entity::find()
+                .filter(entity::fixed_package_version::Column::AdvisoryId.eq(self.advisory.id))
                 .filter(
-                    fixed_package_version::Column::PackageVersionId
+                    entity::fixed_package_version::Column::PackageVersionId
                         .eq(package_version.package_version.id),
                 )
                 .one(&self.system.connection(tx))
@@ -145,10 +149,10 @@ impl AdvisoryContext {
         let purl = pkg.into();
 
         if let Some(package_version) = self.system.get_package_version(purl, tx).await? {
-            Ok(not_affected_package_version::Entity::find()
-                .filter(not_affected_package_version::Column::AdvisoryId.eq(self.advisory.id))
+            Ok(entity::not_affected_package_version::Entity::find()
+                .filter(entity::not_affected_package_version::Column::AdvisoryId.eq(self.advisory.id))
                 .filter(
-                    not_affected_package_version::Column::PackageVersionId
+                    entity::not_affected_package_version::Column::PackageVersionId
                         .eq(package_version.package_version.id),
                 )
                 .one(&self.system.connection(tx))
@@ -174,10 +178,10 @@ impl AdvisoryContext {
             .get_package_version_range(purl.clone(), start, end, tx)
             .await?
         {
-            Ok(affected_package_version_range::Entity::find()
-                .filter(affected_package_version_range::Column::AdvisoryId.eq(self.advisory.id))
+            Ok(entity::affected_package_version_range::Entity::find()
+                .filter(entity::affected_package_version_range::Column::AdvisoryId.eq(self.advisory.id))
                 .filter(
-                    affected_package_version_range::Column::PackageVersionRangeId
+                    entity::affected_package_version_range::Column::PackageVersionRangeId
                         .eq(package_version_range.package_version_range.id),
                 )
                 .one(&self.system.connection(tx))
@@ -200,7 +204,7 @@ impl AdvisoryContext {
 
         let package_version = self.system.ingest_package_version(purl, tx).await?;
 
-        let entity = not_affected_package_version::ActiveModel {
+        let entity = entity::not_affected_package_version::ActiveModel {
             id: Default::default(),
             advisory_id: Set(self.advisory.id),
             package_version_id: Set(package_version.package_version.id),
@@ -221,7 +225,7 @@ impl AdvisoryContext {
 
         let package_version = self.system.ingest_package_version(purl, tx).await?;
 
-        let entity = fixed_package_version::ActiveModel {
+        let entity = entity::fixed_package_version::ActiveModel {
             id: Default::default(),
             advisory_id: Set(self.advisory.id),
             package_version_id: Set(package_version.package_version.id),
@@ -250,7 +254,7 @@ impl AdvisoryContext {
             .ingest_package_version_range(purl, start, end, tx)
             .await?;
 
-        let entity = affected_package_version_range::ActiveModel {
+        let entity = entity::affected_package_version_range::ActiveModel {
             id: Default::default(),
             advisory_id: Set(self.advisory.id),
             package_version_range_id: Set(package_version_range.package_version_range.id),

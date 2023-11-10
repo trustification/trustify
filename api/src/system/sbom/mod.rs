@@ -1,25 +1,28 @@
 use crate::db::Transactional;
-use crate::system::contains_package::SbomContainsPackageContext;
-use crate::system::package::{PackageContext, PackageVersionContext, QualifiedPackageContext};
+use contains_package::SbomContainsPackageContext;
+use crate::system::package::PackageContext;
 use crate::system::InnerSystem;
 use huevos_common::purl::Purl;
 use huevos_common::sbom::SbomLocator;
 use huevos_entity::sbom::Model;
 use huevos_entity::{
-    package, package_dependency, package_qualifier, package_version, qualified_package, sbom,
+    package, package_qualifier, package_version, qualified_package, sbom,
     sbom_contains_package, sbom_describes_cpe, sbom_describes_package,
 };
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait, QueryFilter,
     QuerySelect, QueryTrait, RelationTrait, Select, Set, TransactionTrait,
 };
-use sea_query::{Condition, JoinType, Query, SelectStatement, UnionType};
-use spdx_rs::models::{RelationshipType, SPDX};
+use sea_query::{Condition, JoinType};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
+use crate::system::package::package_version::PackageVersionContext;
+use crate::system::package::qualified_package::QualifiedPackageContext;
 
 use super::error::Error;
+
+pub mod contains_package;
 
 type SelectEntity<E> = Select<E>;
 
@@ -755,16 +758,9 @@ impl SbomContext {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::File;
-    use std::path::PathBuf;
-    use std::str::FromStr;
-    use std::time::Instant;
-
     use crate::db::Transactional;
     use huevos_common::purl::Purl;
     use huevos_common::sbom::SbomLocator;
-    use spdx_rs::models::SPDX;
-
     use crate::system::InnerSystem;
 
     #[tokio::test]
