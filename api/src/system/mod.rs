@@ -120,16 +120,12 @@ impl InnerSystem {
             ))
             .await?;
 
-        println!("{:?}", drop_db_result);
-
         let create_db_result = db
             .execute(Statement::from_string(
                 db.get_database_backend(),
                 format!("CREATE DATABASE \"{}\";", db_name),
             ))
             .await?;
-
-        println!("{:?}", create_db_result);
 
         db.close().await?;
 

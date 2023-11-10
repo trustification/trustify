@@ -12,7 +12,7 @@ impl VulnerabilityAssertions {
         self.assertions
             .iter()
             .flat_map(|e| {
-                if let Assertion::Affected(claimant) = e {
+                if let Assertion::Affected { claimant, .. } = e {
                     Some(claimant.clone())
                 } else {
                     None
@@ -24,8 +24,15 @@ impl VulnerabilityAssertions {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Assertion {
-    Affected(Claimant),
-    NotAffected(Claimant),
+    Affected {
+        claimant: Claimant,
+        start_version: String,
+        end_version: String,
+    },
+    NotAffected {
+        claimant: Claimant,
+        version: String,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
