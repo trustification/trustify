@@ -8,8 +8,8 @@ use huevos_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions
 use huevos_common::purl::Purl;
 use huevos_entity as entity;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
-    RelationTrait, Set,
+    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, PaginatorTrait, QueryFilter,
+    QuerySelect, RelationTrait, Set,
 };
 use sea_query::JoinType;
 use std::collections::HashMap;
@@ -176,6 +176,31 @@ impl PackageVersionContext {
         };
 
         Ok(assertions)
+    }
+
+    /// Retrieve known variants of this package version.
+    ///
+    /// Non-mutating to the system.
+    pub async fn get_variants<P: Into<Purl>>(
+        &self,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<QualifiedPackageContext>, Error> {
+        Ok(entity::qualified_package::Entity::find()
+            .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
+            .find_with_related(entity::package_qualifier::Entity)
+            .all(&self.package.system.connection(tx))
+            .await?
+            .drain(0..)
+            .map(|(base, qualifiers)| {
+                let qualifiers_map = qualifiers
+                    .iter()
+                    .map(|qualifier| (qualifier.key.clone(), qualifier.value.clone()))
+                    .collect::<HashMap<_, _>>();
+
+                (self, base, qualifiers_map).into()
+            })
+            .collect())
     }
 }
 

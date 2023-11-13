@@ -4,17 +4,17 @@ use huevos_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions
 use huevos_common::purl::{Purl, PurlErr};
 use huevos_entity as entity;
 use package_version::PackageVersionContext;
+use package_version_range::PackageVersionRangeContext;
 use qualified_package::QualifiedPackageContext;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, ModelTrait,
-    QueryFilter, QuerySelect, QueryTrait, Set,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityOrSelect, EntityTrait, FromQueryResult,
+    ModelTrait, PaginatorTrait, QueryFilter, QuerySelect, QueryTrait, Set,
 };
 use sea_orm::{RelationTrait, TransactionTrait};
 use sea_query::{JoinType, UnionType};
 use std::fmt::{Debug, Formatter};
-use package_version_range::PackageVersionRangeContext;
 
-use crate::db::Transactional;
+use crate::db::{Paginated, PaginatedResults, Transactional};
 use crate::system::advisory::AdvisoryContext;
 use crate::system::error::Error;
 use crate::system::InnerSystem;
@@ -24,7 +24,6 @@ pub mod package_version_range;
 pub mod qualified_package;
 
 impl InnerSystem {
-
     /// Ensure the system knows about and contains a record for a *fully-qualified* package.
     ///
     /// This method will ensure the versioned package being referenced is also ingested.
@@ -192,7 +191,6 @@ impl From<(&InnerSystem, entity::package::Model)> for PackageContext {
 }
 
 impl PackageContext {
-
     /// Ensure the system knows about and contains a record for a *version range* of this package.
     pub async fn ingest_package_version_range<P: Into<Purl>>(
         &self,
@@ -285,6 +283,65 @@ impl PackageContext {
         } else {
             Ok(None)
         }
+    }
+
+    /// Retrieve known versions of this package.
+    ///
+    /// Non-mutating to the system.
+    pub async fn get_versions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<PackageVersionContext>, Error> {
+        Ok(entity::package_version::Entity::find()
+            .filter(entity::package_version::Column::PackageId.eq(self.package.id))
+            .all(&self.system.connection(tx))
+            .await?
+            .drain(0..)
+            .map(|each| (self, each).into())
+            .collect())
+    }
+
+    pub async fn get_versions_paginated(
+        &self,
+        paginated: Paginated,
+        tx: Transactional<'_>,
+    ) -> Result<PaginatedResults<PackageVersionContext>, Error> {
+        let connection = self.system.connection(tx);
+
+        let pagination = entity::package_version::Entity::find()
+            .filter(entity::package_version::Column::PackageId.eq(self.package.id))
+            .paginate(&connection, paginated.page_size);
+
+        let num_items = pagination.num_items().await?;
+        let num_pages = pagination.num_pages().await?;
+
+        Ok(PaginatedResults {
+            results: pagination
+                .fetch_page(paginated.page)
+                .await?
+                .drain(0..)
+                .map(|each| (self, each).into())
+                .collect(),
+            page: paginated.page_size,
+            num_items,
+            num_pages,
+            prev_page: if paginated.page > 0 {
+                Some(Paginated {
+                    page_size: paginated.page_size,
+                    page: paginated.page - 1,
+                })
+            } else {
+                None
+            },
+            next_page: if paginated.page + 1 < num_pages {
+                Some(Paginated {
+                    page_size: paginated.page_size,
+                    page: paginated.page + 1,
+                })
+            } else {
+                None
+            },
+        })
     }
 
     /// Retrieve the aggregate vulnerability assertions for this base package.
@@ -464,7 +521,7 @@ impl PackageContext {
 
 #[cfg(test)]
 mod tests {
-    use crate::db::Transactional;
+    use crate::db::{Paginated, Transactional};
     use crate::system::InnerSystem;
     use huevos_common::purl::Purl;
 
@@ -542,6 +599,65 @@ mod tests {
 
         assert_eq!(pkg1.package.package.id, pkg3.package.package.id);
         assert_ne!(pkg1.package_version.id, pkg3.package_version.id);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn get_versions_paginated() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("get_versions_paginated").await?;
+
+        for v in 0..200 {
+            let version = format!("pkg://maven/io.quarkus/quarkus-core@{v}");
+
+            let _ = system
+                .ingest_package_version(&version, Transactional::None)
+                .await?;
+        }
+
+        let pkg = system
+            .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .await?
+            .unwrap();
+
+        let all_versions = pkg.get_versions(Transactional::None).await?;
+
+        assert_eq!(200, all_versions.len());
+
+        let paginated = pkg
+            .get_versions_paginated(
+                Paginated {
+                    page_size: 50,
+                    page: 0,
+                },
+                Transactional::None,
+            )
+            .await?;
+
+        assert!(paginated.prev_page.is_none());
+        assert_eq!(
+            paginated.next_page,
+            Some(Paginated {
+                page_size: 50,
+                page: 1
+            })
+        );
+        assert_eq!(50, paginated.results.len());
+
+        let next_paginated = pkg
+            .get_versions_paginated(paginated.next_page.unwrap(), Transactional::None)
+            .await?;
+
+        assert_eq!(
+            next_paginated.prev_page,
+            Some(Paginated {
+                page_size: 50,
+                page: 0
+            })
+        );
+
+        assert!(next_paginated.next_page.is_some());
+        assert_eq!(50, paginated.results.len());
 
         Ok(())
     }

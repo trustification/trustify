@@ -4,7 +4,6 @@ use crate::system::package::PackageContext;
 use huevos_entity as entity;
 use std::fmt::{Debug, Formatter};
 
-
 impl From<(&PackageContext, entity::package_version_range::Model)> for PackageVersionRangeContext {
     fn from(
         (package, package_version_range): (&PackageContext, entity::package_version_range::Model),

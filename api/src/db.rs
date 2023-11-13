@@ -1,7 +1,11 @@
+use crate::system::error::Error;
+use async_trait::async_trait;
 use sea_orm::{
-    ConnectionTrait, DatabaseConnection, DatabaseTransaction, DbBackend, DbErr, ExecResult,
-    QueryResult, Statement,
+    ConnectionTrait, DatabaseConnection, DatabaseTransaction, DbBackend, DbErr, EntityTrait,
+    ExecResult, FromQueryResult, ModelTrait, PaginatorTrait, QueryResult, Select, Statement,
 };
+use std::marker::PhantomData;
+use std::process::Output;
 
 #[derive(Copy, Clone)]
 pub enum Transactional<'db> {
@@ -57,4 +61,20 @@ impl ConnectionTrait for ConnectionOrTransaction<'_> {
             ConnectionOrTransaction::Transaction(inner) => inner.query_all(stmt).await,
         }
     }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub struct Paginated {
+    pub page_size: u64,
+    pub page: u64,
+}
+
+#[derive(Debug, Clone)]
+pub struct PaginatedResults<R> {
+    pub results: Vec<R>,
+    pub page: u64,
+    pub num_items: u64,
+    pub num_pages: u64,
+    pub prev_page: Option<Paginated>,
+    pub next_page: Option<Paginated>,
 }

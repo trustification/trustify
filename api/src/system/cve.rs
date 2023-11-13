@@ -1,6 +1,5 @@
 //! Support for CVEs.
 
-
 use crate::db::Transactional;
 use crate::system::advisory::AdvisoryContext;
 use crate::system::error::Error;
