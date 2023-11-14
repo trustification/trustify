@@ -1,32 +1,38 @@
 //! Support for SBOMs.
 
+use std::collections::hash_set::Union;
 use crate::db::Transactional;
 use crate::system::package::package_version::PackageVersionContext;
 use crate::system::package::qualified_package::QualifiedPackageContext;
 use crate::system::package::PackageContext;
 use crate::system::InnerSystem;
-use contains_package::SbomContainsPackageContext;
 use huevos_common::purl::Purl;
-use huevos_common::sbom::SbomLocator;
-use huevos_entity::sbom::Model;
-use huevos_entity::{
-    package, package_qualifier, package_version, qualified_package, sbom, sbom_contains_package,
-    sbom_describes_cpe, sbom_describes_package,
-};
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait, QueryFilter,
-    QuerySelect, QueryTrait, RelationTrait, Select, Set, TransactionTrait,
-};
-use sea_query::{Condition, JoinType};
+use huevos_common::sbom::{SbomLocator};
+use huevos_entity as entity;
+use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, ModelTrait, QueryFilter, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Set, TransactionTrait};
+use sea_query::{Condition, JoinType, Query, UnionType};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
+use huevos_entity::relationship::Relationship;
 
 use super::error::Error;
 
-pub mod contains_package;
 
 type SelectEntity<E> = Select<E>;
+
+pub enum SbomDescribes {
+    Cpe(String),
+    Package(SbomPackageContext)
+}
+
+impl FromQueryResult for SbomDescribes {
+    fn from_query_result(res: &QueryResult, pre: &str) -> Result<Self, DbErr> {
+        todo!()
+    }
+}
+
+
 
 impl InnerSystem {
     pub async fn get_sbom(
@@ -34,9 +40,9 @@ impl InnerSystem {
         location: &str,
         sha256: &str,
     ) -> Result<Option<SbomContext>, Error> {
-        Ok(sbom::Entity::find()
-            .filter(Condition::all().add(sbom::Column::Location.eq(location.clone())))
-            .filter(Condition::all().add(sbom::Column::Sha256.eq(sha256.to_string())))
+        Ok(entity::sbom::Entity::find()
+            .filter(Condition::all().add(entity::sbom::Column::Location.eq(location.clone())))
+            .filter(Condition::all().add(entity::sbom::Column::Sha256.eq(sha256.to_string())))
             .one(&self.db)
             .await?
             .map(|sbom| (self, sbom).into()))
@@ -52,7 +58,7 @@ impl InnerSystem {
             return Ok(found);
         }
 
-        let model = sbom::ActiveModel {
+        let model = entity::sbom::ActiveModel {
             location: Set(location.to_string()),
             sha256: Set(sha256.to_string()),
             ..Default::default()
@@ -106,7 +112,7 @@ impl InnerSystem {
 
     async fn locate_one_sbom(
         &self,
-        query: SelectEntity<sbom::Entity>,
+        query: SelectEntity<entity::sbom::Entity>,
         tx: Transactional<'_>,
     ) -> Result<Option<SbomContext>, Error> {
         Ok(query
@@ -117,7 +123,7 @@ impl InnerSystem {
 
     async fn locate_many_sboms(
         &self,
-        query: SelectEntity<sbom::Entity>,
+        query: SelectEntity<entity::sbom::Entity>,
         tx: Transactional<'_>,
     ) -> Result<Vec<SbomContext>, Error> {
         println!("QUERY {:?}", query.build(self.db.get_database_backend()));
@@ -134,8 +140,8 @@ impl InnerSystem {
         id: i32,
         tx: Transactional<'_>,
     ) -> Result<Option<SbomContext>, Error> {
-        let query = sbom::Entity::find_by_id(id);
-        Ok(sbom::Entity::find_by_id(id)
+        let query = entity::sbom::Entity::find_by_id(id);
+        Ok(entity::sbom::Entity::find_by_id(id)
             .one(&self.connection(tx))
             .await?
             .map(|sbom| (self, sbom).into()))
@@ -147,7 +153,7 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<Option<SbomContext>, Error> {
         self.locate_one_sbom(
-            sbom::Entity::find().filter(sbom::Column::Location.eq(location.to_string())),
+            entity::sbom::Entity::find().filter(entity::sbom::Column::Location.eq(location.to_string())),
             tx,
         )
         .await
@@ -159,7 +165,7 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<Vec<SbomContext>, Error> {
         self.locate_many_sboms(
-            sbom::Entity::find().filter(sbom::Column::Location.eq(location.to_string())),
+            entity::sbom::Entity::find().filter(entity::sbom::Column::Location.eq(location.to_string())),
             tx,
         )
         .await
@@ -171,7 +177,7 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<Option<SbomContext>, Error> {
         self.locate_one_sbom(
-            sbom::Entity::find().filter(sbom::Column::Sha256.eq(sha256.to_string())),
+            entity::sbom::Entity::find().filter(entity::sbom::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
         .await
@@ -183,7 +189,7 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<Vec<SbomContext>, Error> {
         self.locate_many_sboms(
-            sbom::Entity::find().filter(sbom::Column::Sha256.eq(sha256.to_string())),
+            entity::sbom::Entity::find().filter(entity::sbom::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
         .await
@@ -198,13 +204,13 @@ impl InnerSystem {
 
         if let Some(package) = package {
             self.locate_one_sbom(
-                sbom::Entity::find()
+                entity::sbom::Entity::find()
                     .join(
                         JoinType::LeftJoin,
-                        sbom_describes_package::Relation::Sbom.def().rev(),
+                        entity::sbom_describes_package::Relation::Sbom.def().rev(),
                     )
                     .filter(
-                        sbom_describes_package::Column::QualifiedPackageId
+                        entity::sbom_describes_package::Column::QualifiedPackageId
                             .eq(package.qualified_package.id),
                     ),
                 tx,
@@ -224,13 +230,13 @@ impl InnerSystem {
 
         if let Some(package) = package {
             self.locate_many_sboms(
-                sbom::Entity::find()
+                entity::sbom::Entity::find()
                     .join(
                         JoinType::LeftJoin,
-                        sbom_describes_package::Relation::Sbom.def().rev(),
+                        entity::sbom_describes_package::Relation::Sbom.def().rev(),
                     )
                     .filter(
-                        sbom_describes_package::Column::QualifiedPackageId
+                        entity::sbom_describes_package::Column::QualifiedPackageId
                             .eq(package.qualified_package.id),
                     ),
                 tx,
@@ -247,12 +253,12 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<Option<SbomContext>, Error> {
         self.locate_one_sbom(
-            sbom::Entity::find()
+            entity::sbom::Entity::find()
                 .join(
                     JoinType::LeftJoin,
-                    sbom_describes_cpe::Relation::Sbom.def().rev(),
+                    entity::sbom_describes_cpe::Relation::Sbom.def().rev(),
                 )
-                .filter(sbom_describes_cpe::Column::Cpe.eq(cpe.to_string())),
+                .filter(entity::sbom_describes_cpe::Column::Cpe.eq(cpe.to_string())),
             tx,
         )
         .await
@@ -264,12 +270,12 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<Vec<SbomContext>, Error> {
         self.locate_many_sboms(
-            sbom::Entity::find()
+            entity::sbom::Entity::find()
                 .join(
                     JoinType::LeftJoin,
-                    sbom_describes_cpe::Relation::Sbom.def().rev(),
+                    entity::sbom_describes_cpe::Relation::Sbom.def().rev(),
                 )
-                .filter(sbom_describes_cpe::Column::Cpe.eq(cpe.to_string())),
+                .filter(entity::sbom_describes_cpe::Column::Cpe.eq(cpe.to_string())),
             tx,
         )
         .await
@@ -279,7 +285,7 @@ impl InnerSystem {
 #[derive(Clone)]
 pub struct SbomContext {
     pub(crate) system: InnerSystem,
-    pub(crate) sbom: sbom::Model,
+    pub(crate) sbom: entity::sbom::Model,
 }
 
 impl PartialEq for SbomContext {
@@ -294,8 +300,8 @@ impl Debug for SbomContext {
     }
 }
 
-impl From<(&InnerSystem, sbom::Model)> for SbomContext {
-    fn from((system, sbom): (&InnerSystem, Model)) -> Self {
+impl From<(&InnerSystem, entity::sbom::Model)> for SbomContext {
+    fn from((system, sbom): (&InnerSystem, entity::sbom::Model)) -> Self {
         Self {
             system: system.clone(),
             sbom,
@@ -315,8 +321,8 @@ impl Debug for SbomPackageContext {
     }
 }
 
-impl From<(&SbomContext, package::Model)> for SbomPackageContext {
-    fn from((sbom, package): (&SbomContext, package::Model)) -> Self {
+impl From<(&SbomContext, entity::package::Model)> for SbomPackageContext {
+    fn from((sbom, package): (&SbomContext, entity::package::Model)) -> Self {
         Self {
             sbom: sbom.clone(),
             package: (&sbom.system, package).into(),
@@ -325,15 +331,15 @@ impl From<(&SbomContext, package::Model)> for SbomPackageContext {
 }
 
 impl SbomContext {
-    async fn ingest_describes_cpe(&self, cpe: &str, tx: Transactional<'_>) -> Result<(), Error> {
-        let fetch = sbom_describes_cpe::Entity::find()
-            .filter(sbom_describes_cpe::Column::SbomId.eq(self.sbom.id))
-            .filter(sbom_describes_cpe::Column::Cpe.eq(cpe.to_string()))
+    pub async fn ingest_describes_cpe(&self, cpe: &str, tx: Transactional<'_>) -> Result<(), Error> {
+        let fetch = entity::sbom_describes_cpe::Entity::find()
+            .filter(entity::sbom_describes_cpe::Column::SbomId.eq(self.sbom.id))
+            .filter(entity::sbom_describes_cpe::Column::Cpe.eq(cpe.to_string()))
             .one(&self.system.connection(tx))
             .await?;
 
         if fetch.is_none() {
-            let model = sbom_describes_cpe::ActiveModel {
+            let model = entity::sbom_describes_cpe::ActiveModel {
                 sbom_id: Set(self.sbom.id),
                 cpe: Set(cpe.to_string()),
             };
@@ -343,13 +349,13 @@ impl SbomContext {
         Ok(())
     }
 
-    async fn ingest_describes_package<P: Into<Purl>>(
+    pub async fn ingest_describes_package<P: Into<Purl>>(
         &self,
         package: P,
         tx: Transactional<'_>,
     ) -> Result<(), Error> {
-        let fetch = sbom_describes_package::Entity::find()
-            .filter(Condition::all().add(sbom_describes_package::Column::SbomId.eq(self.sbom.id)))
+        let fetch = entity::sbom_describes_package::Entity::find()
+            .filter(Condition::all().add(entity::sbom_describes_package::Column::SbomId.eq(self.sbom.id)))
             .one(&self.system.connection(tx))
             .await?;
 
@@ -358,7 +364,7 @@ impl SbomContext {
                 .system
                 .ingest_qualified_package(package.into(), tx)
                 .await?;
-            let model = sbom_describes_package::ActiveModel {
+            let model = entity::sbom_describes_package::ActiveModel {
                 sbom_id: Set(self.sbom.id),
                 qualified_package_id: Set(package.qualified_package.id),
             };
@@ -368,245 +374,63 @@ impl SbomContext {
         Ok(())
     }
 
-    pub async fn get_contains_package<P: Into<Purl>>(
+    /// Within the context of *this* SBOM, ingest a relationship between
+    /// two packages.
+    async fn ingest_package_relates_to_package<P1: Into<Purl>, P2: Into<Purl>>(
         &self,
-        pkg: P,
-        tx: Transactional<'_>,
-    ) -> Result<Option<SbomContainsPackageContext>, Error> {
-        let purl = pkg.into();
-
-        Ok(
-            if let Some(package) = self.system.get_qualified_package(purl.clone(), tx).await? {
-                sbom_contains_package::Entity::find()
-                    .filter(sbom_contains_package::Column::SbomId.eq(self.sbom.id))
-                    .filter(
-                        sbom_contains_package::Column::QualifiedPackageId
-                            .eq(package.qualified_package.id),
-                    )
-                    .one(&self.system.connection(tx))
-                    .await?
-                    .map(|contains| (self, contains).into())
-            } else {
-                None
-            },
-        )
-    }
-
-    pub async fn ingest_contains_package<P: Into<Purl>>(
-        &self,
-        pkg: P,
-        tx: Transactional<'_>,
-    ) -> Result<SbomContainsPackageContext, Error> {
-        let purl = pkg.into();
-
-        if let Some(found) = self.get_contains_package(purl.clone(), tx).await? {
-            return Ok(found);
-        }
-
-        let package = self.system.ingest_qualified_package(purl, tx).await?;
-
-        let entity = sbom_contains_package::ActiveModel {
-            sbom_id: Set(self.sbom.id),
-            qualified_package_id: Set(package.qualified_package.id),
-        };
-
-        Ok((self, entity.insert(&self.system.connection(tx)).await?).into())
-    }
-
-    pub async fn contains_packages(
-        &self,
-        tx: Transactional<'_>,
-    ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        let contained = qualified_package::Entity::find()
-            .find_with_related(package_qualifier::Entity)
-            .join(
-                JoinType::Join,
-                sbom_contains_package::Relation::Package.def().rev(),
-            )
-            .filter(sbom_contains_package::Column::SbomId.eq(self.sbom.id))
-            .all(&self.system.connection(tx))
-            .await?;
-
-        let mut contains = Vec::new();
-
-        // todo: this is less than optimal
-        for (qualified_package, qualifiers) in contained {
-            if let Some(package_version) =
-                package_version::Entity::find_by_id(qualified_package.package_version_id)
-                    .one(&self.system.connection(tx))
-                    .await?
-            {
-                if let Some(package) = package::Entity::find_by_id(package_version.package_id)
-                    .one(&self.system.connection(tx))
-                    .await?
-                {
-                    let mut qualifiers_map = HashMap::new();
-                    for qualifier in qualifiers {
-                        qualifiers_map.insert(qualifier.key.clone(), qualifier.value.clone());
-                    }
-
-                    let package = PackageContext::from((&self.system, package));
-
-                    let package_version = PackageVersionContext::from((&package, package_version));
-
-                    let qualified_package = QualifiedPackageContext::from((
-                        &package_version,
-                        qualified_package,
-                        qualifiers_map,
-                    ));
-
-                    contains.push(qualified_package);
-                }
-            }
-        }
-
-        Ok(contains)
-    }
-
-    /*
-
-    async fn ingest_sbom_dependency<P: Into<Purl>>(
-        &self,
-        dependency: P,
-        tx: Transactional<'_>,
+        left_package: P1,
+        relationship: Relationship,
+        right_package: P2,
+        tx: Transactional<'_>
     ) -> Result<(), Error> {
-        let dependency = self.system.ingest_package(dependency, tx.clone()).await?;
+        let left_package = self.system.ingest_qualified_package(
+            left_package,
+            tx,
+        ).await?;
 
-        if sbom_dependency::Entity::find()
+        let right_package = self.system.ingest_qualified_package(
+            right_package,
+            tx
+        ).await?;
+
+        if entity::package_relates_to_package::Entity::find()
             .filter(
-                Condition::all()
-                    .add(sbom_dependency::Column::PackageId.eq(dependency.package.id))
-                    .add(sbom_dependency::Column::SbomId.eq(self.sbom.id)),
+                entity::package_relates_to_package::Column::SbomId.eq( self.sbom.id )
             )
-            .one(&self.system.connection(tx))
-            .await?
-            .is_none()
-        {
-            let entity = sbom_dependency::ActiveModel {
-                sbom_id: Set(self.sbom.id),
-                package_id: Set(dependency.package.id),
+            .filter(
+                entity::package_relates_to_package::Column::LeftPackageId.eq( left_package.qualified_package.id)
+            )
+            .filter(
+                entity::package_relates_to_package::Column::Relationship.eq( relationship )
+            )
+            .filter(
+                entity::package_relates_to_package::Column::RightPackageId.eq( right_package.qualified_package.id)
+            )
+            .one(
+                &self.system.connection(tx)
+            )
+            .await?.is_none() {
+
+            let entity = entity::package_relates_to_package::ActiveModel {
+                left_package_id: Set( left_package.qualified_package.id),
+                relationship: Set( relationship ),
+                right_package_id: Set( right_package.qualified_package.id),
+                sbom_id: Set( self.sbom.id )
             };
 
-            let sbom_dep = entity.insert(&self.system.connection(tx)).await?;
-
-            println!("SBOM DEP {:?}", sbom_dep);
+            entity.insert(
+                &self.system.connection(tx)
+            ).await?;
         }
 
         Ok(())
     }
 
-    pub async fn ingest_package_dependency<P1: Into<Purl>, P2: Into<Purl>>(
-        &self,
-        dependent_package: P1,
-        dependency_package: P2,
-        tx: Transactional<'_>,
-    ) -> Result<(), anyhow::Error> {
-        let dependent = self
-            .system
-            .ingest_package(dependent_package, tx.clone())
-            .await?;
-        let dependency = self
-            .system
-            .ingest_package(dependency_package, tx.clone())
-            .await?;
-
-        println!("--> {:?} {:?}", dependent, dependency);
-
-        match package_dependency::Entity::find()
-            .filter(
-                Condition::all()
-                    .add(package_dependency::Column::DependentPackageId.eq(dependent.package.id))
-                    .add(package_dependency::Column::DependencyPackageId.eq(dependency.package.id))
-                    .add(package_dependency::Column::SbomId.eq(self.sbom.id)),
-            )
-            .one(&self.system.connection(tx))
-            .await?
-        {
-            None => {
-                let entity = package_dependency::ActiveModel {
-                    dependent_package_id: Set(dependent.package.id),
-                    dependency_package_id: Set(dependency.package.id),
-                    sbom_id: Set(self.sbom.id),
-                };
-
-                let result = entity.insert(&self.system.connection(tx)).await?;
-                println!("{:#?}", result);
-
-                Ok(())
-            }
-            Some(found) => Ok(()),
-        }
-    }
-
-    pub async fn dependencies(
-        &self,
-        tx: Transactional<'_>,
-    ) -> Result<Vec<SbomPackageContext>, Error> {
-        Ok(package::Entity::find()
-            .join(
-                JoinType::LeftJoin,
-                sbom_dependency::Relation::Package.def().rev(),
-            )
-            .filter(sbom_dependency::Column::SbomId.eq(self.sbom.id))
-            .all(&self.system.connection(tx))
-            .await?
-            .drain(0..)
-            .map(|package| {
-                //(self, package).into()
-                SbomPackageContext::from((self, package))
-            })
-            .collect())
-    }
-
     async fn all_packages(&self, tx: Transactional<'_>) -> Result<Vec<SbomPackageContext>, Error> {
-        Ok(package::Entity::find()
-            .filter(
-                package::Column::Id.in_subquery(
-                    Query::select()
-                        .column(package_dependency::Column::DependentPackageId)
-                        .and_having(package_dependency::Column::SbomId.eq(self.sbom.id))
-                        .group_by_columns([
-                            package_dependency::Column::SbomId,
-                            package_dependency::Column::DependentPackageId,
-                        ])
-                        .from(package_dependency::Entity)
-                        .to_owned()
-                        .union(
-                            UnionType::Distinct,
-                            Query::select()
-                                .column(package_dependency::Column::DependencyPackageId)
-                                .and_having(package_dependency::Column::SbomId.eq(self.sbom.id))
-                                .group_by_columns([
-                                    package_dependency::Column::SbomId,
-                                    package_dependency::Column::DependencyPackageId,
-                                ])
-                                .from(package_dependency::Entity)
-                                .to_owned(),
-                        )
-                        .union(
-                            UnionType::Distinct,
-                            Query::select()
-                                .column(sbom_dependency::Column::PackageId)
-                                .and_having(sbom_dependency::Column::SbomId.eq(self.sbom.id))
-                                .group_by_columns([
-                                    sbom_dependency::Column::PackageId,
-                                    sbom_dependency::Column::SbomId,
-                                ])
-                                .from(sbom_dependency::Entity)
-                                .to_owned(),
-                        )
-                        .to_owned(),
-                ),
-            )
-            .all(&self.system.connection(tx))
-            .await?
-            .drain(0..)
-            .map(|package| {
-                //(self, package).into()
-                SbomPackageContext::from((self, package))
-            })
-            .collect())
+        todo!()
     }
+
+    /*
 
     async fn ingest_spdx(&self, sbom_data: SPDX) -> Result<(), anyhow::Error> {
         // FIXME: not sure this is correct. It may be that we need to use `DatabaseTransaction` instead of the `db` field
@@ -760,6 +584,7 @@ mod tests {
     use crate::system::InnerSystem;
     use huevos_common::purl::Purl;
     use huevos_common::sbom::SbomLocator;
+    use huevos_entity::relationship::Relationship;
 
     #[tokio::test]
     async fn ingest_sboms() -> Result<(), anyhow::Error> {
@@ -879,13 +704,34 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn ingest_contains_packages() -> Result<(), anyhow::Error> {
-        /*
-        env_logger::builder()
-        .filter_level(log::LevelFilter::Info)
-        .is_test(true)
-        .init();
-         */
+    async fn ingest_package_relates_to_package_dependency_of() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("ingest_contains_packages").await?;
+
+        let sbom = system.ingest_sbom(
+            "http://sbomsRus.gov/thing.json",
+            "8675309",
+            Transactional::None,
+        ).await?;
+
+        sbom.ingest_package_relates_to_package(
+            "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
+            Relationship::DependencyOf,
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None
+        ).await?;
+
+        Ok(())
+
+    }
+
+
+    /*
+#[tokio::test]
+async fn ingest_contains_packages() -> Result<(), anyhow::Error> {
+    env_logger::builder()
+    .filter_level(log::LevelFilter::Info)
+    .is_test(true)
+    .init();
 
         let system = InnerSystem::for_test("ingest_contains_packages").await?;
 
@@ -934,6 +780,7 @@ mod tests {
 
         Ok(())
     }
+     */
 
     /*
 

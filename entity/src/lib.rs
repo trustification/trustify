@@ -1,8 +1,6 @@
 pub mod package;
-pub mod package_dependency;
 pub mod package_qualifier;
 pub mod sbom;
-pub mod sbom_contains_package;
 pub mod sbom_describes_cpe;
 pub mod sbom_describes_package;
 
@@ -18,3 +16,6 @@ pub mod fixed_package_version;
 
 pub mod advisory_cve;
 pub mod not_affected_package_version;
+
+pub mod relationship;
+pub mod package_relates_to_package;
