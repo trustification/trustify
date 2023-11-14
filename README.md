@@ -23,6 +23,9 @@ Plus appropriate junction tables.
 
 ### CPE
 Probably need a fancy CPE table structure. sigh. 
+Or two+ tables (cpe22, cpe23) and a Product table.
+Platonic form of a product may have 0+ CPEs/pURLs.
+Platonic form of a product may have 0+ known hashable artifacts.
 
 ### CVE
 
@@ -42,31 +45,24 @@ There is probably always an advisory from NVD for every CVE.
 ### Advisory Source
 Something like GHSA, Red Hat VEX, etc. Maybe?
 Based on source URL? Regexp!
+Still unsure here.
 
 ### Scanners don't exist
 They should just point us towards first order advisories to ingest. 
 OSV just tells us to look elsewhere. 
-They are hlpers not nouns. 
+They are helpers not nouns. 
 
 ### Vulnerable
-Not yet implemented, but represents a mixture of CVE+(package + range)+Advisory
+Package Range + Advisory + CVE.
 
 ### NonVulnerable
-Not yet implemented, but represents a mixture of CVE+(package + range)+Advisory
+QualifiedPackage + Advisory + CVE.
 
 Both impl'd for pURL and CPE. 
 
 ### SBOM
 hashed document that claims things about stuff. 
+All package/product relationships exist only within the context of an SBOM making the claim.
 
 ### Describes
-CPE and/or pURLs described by the SBOM
-
-### Dependency 
-Things it contains. 
-
-### PackageDependency
-Within the context of an SBOM the dependencies it claims exist between packages. 
-No package dependenxy exists without an SBOM claimant. 
-
-
+CPE (Product?) and/or pURLs described by the SBOM
