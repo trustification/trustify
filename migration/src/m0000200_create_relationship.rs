@@ -1,7 +1,4 @@
-use crate::m0000010_create_sbom::Sbom;
-use crate::m0000044_create_qualified_package::QualifiedPackage;
 use sea_orm_migration::prelude::*;
-use sea_orm_migration::sea_orm::Schema;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -24,7 +21,7 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(Relationship::Description)
                             .string()
-                            .not_null()
+                            .not_null(),
                     )
                     .to_owned(),
             )
@@ -50,7 +47,7 @@ impl MigrationTrait for Migration {
             let insert = Query::insert()
                 .into_table(Relationship::Table)
                 .columns([Relationship::Id, Relationship::Description])
-                .values_panic( [ id.into(), description.into() ])
+                .values_panic([id.into(), description.into()])
                 .to_owned();
 
             manager.exec_stmt(insert).await?;

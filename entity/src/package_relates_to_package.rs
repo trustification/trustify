@@ -1,6 +1,5 @@
-use sea_orm::entity::prelude::*;
-use sea_orm::FromQueryResult;
 use crate::relationship::Relationship;
+use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "package_relates_to_package")]

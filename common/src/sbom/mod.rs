@@ -9,7 +9,6 @@ pub enum SbomLocator {
     Cpe(String),
 }
 
-
 pub enum Describes {
     Purl(Purl),
     Cpe(String),

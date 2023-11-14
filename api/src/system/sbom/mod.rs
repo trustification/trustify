@@ -1,29 +1,32 @@
 //! Support for SBOMs.
 
-use std::collections::hash_set::Union;
 use crate::db::Transactional;
 use crate::system::package::package_version::PackageVersionContext;
 use crate::system::package::qualified_package::QualifiedPackageContext;
 use crate::system::package::PackageContext;
 use crate::system::InnerSystem;
 use huevos_common::purl::Purl;
-use huevos_common::sbom::{SbomLocator};
+use huevos_common::sbom::SbomLocator;
 use huevos_entity as entity;
-use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, ModelTrait, QueryFilter, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Set, TransactionTrait};
+use huevos_entity::relationship::Relationship;
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult,
+    ModelTrait, QueryFilter, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Set,
+    TransactionTrait,
+};
 use sea_query::{Condition, JoinType, Query, UnionType};
+use std::collections::hash_set::Union;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
-use huevos_entity::relationship::Relationship;
 
 use super::error::Error;
-
 
 type SelectEntity<E> = Select<E>;
 
 pub enum SbomDescribes {
     Cpe(String),
-    Package(SbomPackageContext)
+    Package(SbomPackageContext),
 }
 
 impl FromQueryResult for SbomDescribes {
@@ -31,8 +34,6 @@ impl FromQueryResult for SbomDescribes {
         todo!()
     }
 }
-
-
 
 impl InnerSystem {
     pub async fn get_sbom(
@@ -153,7 +154,8 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<Option<SbomContext>, Error> {
         self.locate_one_sbom(
-            entity::sbom::Entity::find().filter(entity::sbom::Column::Location.eq(location.to_string())),
+            entity::sbom::Entity::find()
+                .filter(entity::sbom::Column::Location.eq(location.to_string())),
             tx,
         )
         .await
@@ -165,7 +167,8 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<Vec<SbomContext>, Error> {
         self.locate_many_sboms(
-            entity::sbom::Entity::find().filter(entity::sbom::Column::Location.eq(location.to_string())),
+            entity::sbom::Entity::find()
+                .filter(entity::sbom::Column::Location.eq(location.to_string())),
             tx,
         )
         .await
@@ -177,7 +180,8 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<Option<SbomContext>, Error> {
         self.locate_one_sbom(
-            entity::sbom::Entity::find().filter(entity::sbom::Column::Sha256.eq(sha256.to_string())),
+            entity::sbom::Entity::find()
+                .filter(entity::sbom::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
         .await
@@ -189,7 +193,8 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<Vec<SbomContext>, Error> {
         self.locate_many_sboms(
-            entity::sbom::Entity::find().filter(entity::sbom::Column::Sha256.eq(sha256.to_string())),
+            entity::sbom::Entity::find()
+                .filter(entity::sbom::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
         .await
@@ -331,7 +336,11 @@ impl From<(&SbomContext, entity::package::Model)> for SbomPackageContext {
 }
 
 impl SbomContext {
-    pub async fn ingest_describes_cpe(&self, cpe: &str, tx: Transactional<'_>) -> Result<(), Error> {
+    pub async fn ingest_describes_cpe(
+        &self,
+        cpe: &str,
+        tx: Transactional<'_>,
+    ) -> Result<(), Error> {
         let fetch = entity::sbom_describes_cpe::Entity::find()
             .filter(entity::sbom_describes_cpe::Column::SbomId.eq(self.sbom.id))
             .filter(entity::sbom_describes_cpe::Column::Cpe.eq(cpe.to_string()))
@@ -355,7 +364,10 @@ impl SbomContext {
         tx: Transactional<'_>,
     ) -> Result<(), Error> {
         let fetch = entity::sbom_describes_package::Entity::find()
-            .filter(Condition::all().add(entity::sbom_describes_package::Column::SbomId.eq(self.sbom.id)))
+            .filter(
+                Condition::all()
+                    .add(entity::sbom_describes_package::Column::SbomId.eq(self.sbom.id)),
+            )
             .one(&self.system.connection(tx))
             .await?;
 
@@ -381,49 +393,102 @@ impl SbomContext {
         left_package: P1,
         relationship: Relationship,
         right_package: P2,
-        tx: Transactional<'_>
+        tx: Transactional<'_>,
     ) -> Result<(), Error> {
-        let left_package = self.system.ingest_qualified_package(
-            left_package,
-            tx,
-        ).await?;
+        let left_package = self
+            .system
+            .ingest_qualified_package(left_package, tx)
+            .await?;
 
-        let right_package = self.system.ingest_qualified_package(
-            right_package,
-            tx
-        ).await?;
+        let right_package = self
+            .system
+            .ingest_qualified_package(right_package, tx)
+            .await?;
 
         if entity::package_relates_to_package::Entity::find()
+            .filter(entity::package_relates_to_package::Column::SbomId.eq(self.sbom.id))
             .filter(
-                entity::package_relates_to_package::Column::SbomId.eq( self.sbom.id )
+                entity::package_relates_to_package::Column::LeftPackageId
+                    .eq(left_package.qualified_package.id),
             )
+            .filter(entity::package_relates_to_package::Column::Relationship.eq(relationship))
             .filter(
-                entity::package_relates_to_package::Column::LeftPackageId.eq( left_package.qualified_package.id)
+                entity::package_relates_to_package::Column::RightPackageId
+                    .eq(right_package.qualified_package.id),
             )
-            .filter(
-                entity::package_relates_to_package::Column::Relationship.eq( relationship )
-            )
-            .filter(
-                entity::package_relates_to_package::Column::RightPackageId.eq( right_package.qualified_package.id)
-            )
-            .one(
-                &self.system.connection(tx)
-            )
-            .await?.is_none() {
-
+            .one(&self.system.connection(tx))
+            .await?
+            .is_none()
+        {
             let entity = entity::package_relates_to_package::ActiveModel {
-                left_package_id: Set( left_package.qualified_package.id),
-                relationship: Set( relationship ),
-                right_package_id: Set( right_package.qualified_package.id),
-                sbom_id: Set( self.sbom.id )
+                left_package_id: Set(left_package.qualified_package.id),
+                relationship: Set(relationship),
+                right_package_id: Set(right_package.qualified_package.id),
+                sbom_id: Set(self.sbom.id),
             };
 
-            entity.insert(
-                &self.system.connection(tx)
-            ).await?;
+            entity.insert(&self.system.connection(tx)).await?;
         }
 
         Ok(())
+    }
+
+    pub async fn related_packages<P: Into<Purl>>(
+        &self,
+        relationship: Relationship,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<QualifiedPackageContext>, Error> {
+        let pkg = self.system.get_qualified_package(pkg, tx).await?;
+
+        if let Some(pkg) = pkg {
+            let related_query = entity::package_relates_to_package::Entity::find()
+                .select_only()
+                .column(entity::package_relates_to_package::Column::LeftPackageId)
+                .filter(entity::package_relates_to_package::Column::SbomId.eq(self.sbom.id))
+                .filter(entity::package_relates_to_package::Column::Relationship.eq(relationship))
+                .filter(
+                    entity::package_relates_to_package::Column::RightPackageId
+                        .eq(pkg.qualified_package.id),
+                )
+                .into_query();
+
+            let mut found = entity::qualified_package::Entity::find()
+                .filter(entity::qualified_package::Column::Id.in_subquery(related_query))
+                .find_with_related(entity::package_qualifier::Entity)
+                .all(&self.system.connection(tx))
+                .await?;
+
+            let mut related = Vec::new();
+
+            for (base, qualifiers) in found.drain(0..) {
+                if let Some(package_version) =
+                    entity::package_version::Entity::find_by_id(base.package_version_id)
+                        .one(&self.system.connection(tx))
+                        .await?
+                {
+                    if let Some(package) =
+                        entity::package::Entity::find_by_id(package_version.package_id)
+                            .one(&self.system.connection(tx))
+                            .await?
+                    {
+                        let package = (&self.system, package).into();
+                        let package_version = (&package, package_version).into();
+
+                        let qualifiers_map = qualifiers
+                            .iter()
+                            .map(|qualifier| (qualifier.key.clone(), qualifier.value.clone()))
+                            .collect::<HashMap<_, _>>();
+
+                        related.push((&package_version, base, qualifiers_map).into());
+                    }
+                }
+            }
+
+            Ok(related)
+        } else {
+            Ok(vec![])
+        }
     }
 
     async fn all_packages(&self, tx: Transactional<'_>) -> Result<Vec<SbomPackageContext>, Error> {
@@ -707,80 +772,129 @@ mod tests {
     async fn ingest_package_relates_to_package_dependency_of() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("ingest_contains_packages").await?;
 
-        let sbom = system.ingest_sbom(
-            "http://sbomsRus.gov/thing.json",
-            "8675309",
-            Transactional::None,
-        ).await?;
-
-        sbom.ingest_package_relates_to_package(
-            "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
-            Relationship::DependencyOf,
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3",
-                Transactional::None
-        ).await?;
-
-        Ok(())
-
-    }
-
-
-    /*
-#[tokio::test]
-async fn ingest_contains_packages() -> Result<(), anyhow::Error> {
-    env_logger::builder()
-    .filter_level(log::LevelFilter::Info)
-    .is_test(true)
-    .init();
-
-        let system = InnerSystem::for_test("ingest_contains_packages").await?;
-
-        let sbom = system
-            .ingest_sbom("http://sboms.mobi/something.json", "7", Transactional::None)
+        let sbom1 = system
+            .ingest_sbom(
+                "http://sbomsRus.gov/thing1.json",
+                "8675309",
+                Transactional::None,
+            )
             .await?;
 
-        let contains1 = sbom
-            .ingest_contains_package(
+        sbom1
+            .ingest_package_relates_to_package(
+                "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
+                Relationship::DependencyOf,
                 "pkg://maven/io.quarkus/quarkus-core@1.2.3",
                 Transactional::None,
             )
             .await?;
 
-        let contains2 = sbom
-            .ingest_contains_package(
+        let sbom2 = system
+            .ingest_sbom(
+                "http://sbomsRus.gov/thing2.json",
+                "8675308",
+                Transactional::None,
+            )
+            .await?;
+
+        sbom2
+            .ingest_package_relates_to_package(
+                "pkg://maven/io.quarkus/quarkus-sqlite@1.2.3",
+                Relationship::DependencyOf,
                 "pkg://maven/io.quarkus/quarkus-core@1.2.3",
                 Transactional::None,
             )
             .await?;
 
-        let contains3 = sbom
-            .ingest_contains_package(
-                "pkg://maven/io.quarkus/quarkus-addons@1.2.3",
+        let dependencies = sbom1
+            .related_packages(
+                Relationship::DependencyOf,
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
                 Transactional::None,
             )
             .await?;
+
+        assert_eq!(1, dependencies.len());
 
         assert_eq!(
-            contains1.sbom_contains_package.qualified_package_id,
-            contains2.sbom_contains_package.qualified_package_id
-        );
-        assert_ne!(
-            contains1.sbom_contains_package.qualified_package_id,
-            contains3.sbom_contains_package.qualified_package_id
+            "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
+            Purl::from(dependencies[0].clone()).to_string()
         );
 
-        let mut contains = sbom.contains_packages(Transactional::None).await?;
+        let dependencies = sbom2
+            .related_packages(
+                Relationship::DependencyOf,
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                Transactional::None,
+            )
+            .await?;
 
-        assert_eq!(2, contains.len());
+        assert_eq!(1, dependencies.len());
 
-        let contains: Vec<_> = contains.drain(0..).map(Purl::from).collect();
-
-        assert!(contains.contains(&Purl::from("pkg://maven/io.quarkus/quarkus-core@1.2.3")));
-        assert!(contains.contains(&Purl::from("pkg://maven/io.quarkus/quarkus-addons@1.2.3")));
+        assert_eq!(
+            "pkg://maven/io.quarkus/quarkus-sqlite@1.2.3",
+            Purl::from(dependencies[0].clone()).to_string()
+        );
 
         Ok(())
     }
-     */
+
+    /*
+    #[tokio::test]
+    async fn ingest_contains_packages() -> Result<(), anyhow::Error> {
+        env_logger::builder()
+        .filter_level(log::LevelFilter::Info)
+        .is_test(true)
+        .init();
+
+            let system = InnerSystem::for_test("ingest_contains_packages").await?;
+
+            let sbom = system
+                .ingest_sbom("http://sboms.mobi/something.json", "7", Transactional::None)
+                .await?;
+
+            let contains1 = sbom
+                .ingest_contains_package(
+                    "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                    Transactional::None,
+                )
+                .await?;
+
+            let contains2 = sbom
+                .ingest_contains_package(
+                    "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                    Transactional::None,
+                )
+                .await?;
+
+            let contains3 = sbom
+                .ingest_contains_package(
+                    "pkg://maven/io.quarkus/quarkus-addons@1.2.3",
+                    Transactional::None,
+                )
+                .await?;
+
+            assert_eq!(
+                contains1.sbom_contains_package.qualified_package_id,
+                contains2.sbom_contains_package.qualified_package_id
+            );
+            assert_ne!(
+                contains1.sbom_contains_package.qualified_package_id,
+                contains3.sbom_contains_package.qualified_package_id
+            );
+
+            let mut contains = sbom.contains_packages(Transactional::None).await?;
+
+            assert_eq!(2, contains.len());
+
+            let contains: Vec<_> = contains.drain(0..).map(Purl::from).collect();
+
+            assert!(contains.contains(&Purl::from("pkg://maven/io.quarkus/quarkus-core@1.2.3")));
+            assert!(contains.contains(&Purl::from("pkg://maven/io.quarkus/quarkus-addons@1.2.3")));
+
+            Ok(())
+        }
+         */
 
     /*
 

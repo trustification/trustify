@@ -17,5 +17,5 @@ pub mod fixed_package_version;
 pub mod advisory_cve;
 pub mod not_affected_package_version;
 
-pub mod relationship;
 pub mod package_relates_to_package;
+pub mod relationship;

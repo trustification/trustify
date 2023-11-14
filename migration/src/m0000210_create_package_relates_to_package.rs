@@ -1,9 +1,7 @@
-use crate::m0000030_create_advisory::Advisory;
-use crate::m0000042_create_package_version::PackageVersion;
-use sea_orm_migration::prelude::*;
 use crate::m0000010_create_sbom::Sbom;
 use crate::m0000044_create_qualified_package::QualifiedPackage;
 use crate::m0000200_create_relationship::Relationship;
+use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -71,7 +69,11 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(PackageRelatesToPackage::Table).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table(PackageRelatesToPackage::Table)
+                    .to_owned(),
+            )
             .await
     }
 }
