@@ -19,8 +19,11 @@ use std::collections::hash_set::Union;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
+use spdx_rs::models::{RelationshipType, SPDX};
 
 use super::error::Error;
+
+pub mod spdx;
 
 type SelectEntity<E> = Select<E>;
 
@@ -495,136 +498,8 @@ impl SbomContext {
         todo!()
     }
 
+
     /*
-
-    async fn ingest_spdx(&self, sbom_data: SPDX) -> Result<(), anyhow::Error> {
-        // FIXME: not sure this is correct. It may be that we need to use `DatabaseTransaction` instead of the `db` field
-        let sbom = self.clone();
-        let system = self.system.clone();
-        self.system
-            .db
-            .transaction(|tx| {
-                Box::pin(async move {
-                    let tx: Transactional = tx.into();
-                    // For each thing described in the SBOM data, link it up to an sbom_cpe or sbom_package.
-                    for described in &sbom_data.document_creation_information.document_describes {
-                        if let Some(described_package) = sbom_data
-                            .package_information
-                            .iter()
-                            .find(|each| each.package_spdx_identifier.eq(described))
-                        {
-                            for reference in &described_package.external_reference {
-                                if reference.reference_type == "purl" {
-                                    sbom.ingest_describes_package(
-                                        reference.reference_locator.clone(),
-                                        tx.clone(),
-                                    )
-                                    .await?;
-                                } else if reference.reference_type == "cpe22Type" {
-                                    sbom.ingest_describes_cpe(
-                                        &reference.reference_locator,
-                                        tx.clone(),
-                                    )
-                                    .await?;
-                                }
-                            }
-
-                            // Add any first-order dependencies from SBOM->purl
-                            for described_reference in &described_package.external_reference {
-                                for relationship in
-                                    &sbom_data.relationships_for_related_spdx_id(described)
-                                {
-                                    if relationship.relationship_type
-                                        == RelationshipType::ContainedBy
-                                    {
-                                        if let Some(package) =
-                                            sbom_data.package_information.iter().find(|each| {
-                                                each.package_spdx_identifier
-                                                    == relationship.spdx_element_id
-                                            })
-                                        {
-                                            for reference in &package.external_reference {
-                                                if reference.reference_type == "purl" {
-                                                    sbom.ingest_sbom_dependency(
-                                                        reference.reference_locator.clone(),
-                                                        tx.clone(),
-                                                    )
-                                                    .await?;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // connect all other tree-ish package trees in the context of this sbom.
-                            for package_info in &sbom_data.package_information {
-                                let package_identifier = &package_info.package_spdx_identifier;
-                                for package_ref in &package_info.external_reference {
-                                    if package_ref.reference_type == "purl" {
-                                        let package_context = system
-                                            .ingest_package(&package_ref.reference_locator, tx)
-                                            .await?;
-
-                                        for relationship in sbom_data
-                                            .relationships_for_related_spdx_id(&package_identifier)
-                                        {
-                                            if relationship.relationship_type
-                                                == RelationshipType::ContainedBy
-                                            {
-                                                if let Some(package) = sbom_data
-                                                    .package_information
-                                                    .iter()
-                                                    .find(|each| {
-                                                        each.package_spdx_identifier
-                                                            == relationship.spdx_element_id
-                                                    })
-                                                {
-                                                    for reference in &package.external_reference {
-                                                        if reference.reference_type == "purl" {
-                                                            sbom.ingest_package_dependency(
-                                                                package_ref
-                                                                    .reference_locator
-                                                                    .clone(),
-                                                                reference.reference_locator.clone(),
-                                                                tx.clone(),
-                                                            )
-                                                            .await?;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Ok::<(), Error>(())
-                })
-            })
-            .await?;
-
-        /*
-        println!("DESCRIBES {:?}", describes);
-
-        println!("--------packages--");
-        for pkg in &sbom.package_information {
-            for reference in &pkg.external_reference {
-                if reference.reference_type == "purl" {
-                    println!("{:#?}", reference.reference_locator);
-                    package_system.ingest_package(
-                        &*reference.reference_locator
-                    ).await?;
-                }
-            }
-        }
-
-         */
-
-        Ok(())
-    }
 
     pub async fn direct_dependencies(&self, tx: Transactional<'_>) -> Result<Vec<Purl>, Error> {
         let found = package::Entity::find()
