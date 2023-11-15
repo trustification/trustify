@@ -20,6 +20,12 @@ pub struct QualifiedPackageContext {
     pub(crate) qualifiers: HashMap<String, String>,
 }
 
+impl PartialEq for QualifiedPackageContext {
+    fn eq(&self, other: &Self) -> bool {
+        self.qualified_package.eq(&other.qualified_package)
+    }
+}
+
 impl Debug for QualifiedPackageContext {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.qualified_package.fmt(f)

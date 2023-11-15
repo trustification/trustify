@@ -131,7 +131,6 @@ impl InnerSystem {
         query: SelectEntity<entity::sbom::Entity>,
         tx: Transactional<'_>,
     ) -> Result<Vec<SbomContext>, Error> {
-        println!("QUERY {:?}", query.build(self.db.get_database_backend()));
         Ok(query
             .all(&self.connection(tx))
             .await?
@@ -380,6 +379,7 @@ impl SbomContext {
                 .system
                 .ingest_qualified_package(package.into(), tx)
                 .await?;
+
             let model = entity::sbom_describes_package::ActiveModel {
                 sbom_id: Set(self.sbom.id),
                 qualified_package_id: Set(package.qualified_package.id),
@@ -388,6 +388,22 @@ impl SbomContext {
             model.insert(&self.system.connection(tx)).await?;
         }
         Ok(())
+    }
+
+    pub async fn describes_packages(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<QualifiedPackageContext>, Error> {
+        self.system
+            .get_qualified_packages_by_query(
+                entity::sbom_describes_package::Entity::find()
+                    .select_only()
+                    .column(entity::sbom_describes_package::Column::QualifiedPackageId)
+                    .filter(entity::sbom_describes_package::Column::SbomId.eq(self.sbom.id))
+                    .into_query(),
+                tx,
+            )
+            .await
     }
 
     /// Within the context of *this* SBOM, ingest a relationship between
@@ -530,6 +546,7 @@ impl SbomContext {
 
             Ok(related)
         } else {
+            println!("no package");
             Ok(vec![])
         }
     }
@@ -747,8 +764,6 @@ mod tests {
             )
             .await?;
 
-        println!("{:#?}", results);
-
         Ok(())
     }
 
@@ -928,42 +943,6 @@ mod tests {
                 .sboms_containing(Transactional::None)
                 .await?;
         }
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn parse_spdx() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("parse_spdx").await?;
-
-        let pwd = PathBuf::from_str(env!("PWD"))?;
-        let test_data = pwd.join("test-data");
-
-        //let sbom = test_data.join( "openshift-4.13.json");
-        let sbom = test_data.join("ubi9-9.2-755.1697625012.json");
-
-        let sbom = File::open(sbom)?;
-
-        let start = Instant::now();
-        let sbom_data: SPDX = serde_json::from_reader(sbom)?;
-        let parse_time = start.elapsed();
-
-        let start = Instant::now();
-        let sbom = system.ingest_sbom("test.com/my-sbom.json", "10").await?;
-
-        sbom.ingest_spdx(sbom_data).await?;
-        let ingest_time = start.elapsed();
-        let start = Instant::now();
-
-        let deps = sbom.direct_dependencies(Transactional::None).await?;
-
-        println!("{:#?}", deps);
-
-        let query_time = start.elapsed();
-
-        println!("parse {}ms", parse_time.as_millis());
-        println!("ingest {}ms", ingest_time.as_millis());
-        println!("query {}ms", query_time.as_millis());
 
         Ok(())
     }

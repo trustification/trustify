@@ -246,7 +246,11 @@ impl InnerSystem {
         let purl = pkg.into();
         Ok(entity::package::Entity::find()
             .filter(entity::package::Column::Type.eq(purl.ty.clone()))
-            .filter(entity::package::Column::Namespace.eq(purl.namespace.clone()))
+            .filter(if let Some(ns) = purl.namespace {
+                entity::package::Column::Namespace.eq(ns)
+            } else {
+                entity::package::Column::Namespace.is_null()
+            })
             .filter(entity::package::Column::Name.eq(purl.name.clone()))
             .one(&self.connection(tx))
             .await?
@@ -623,8 +627,10 @@ impl PackageContext {
 #[cfg(test)]
 mod tests {
     use crate::db::{Paginated, Transactional};
+    use crate::system::error::Error;
     use crate::system::InnerSystem;
     use huevos_common::purl::Purl;
+    use sea_orm::{TransactionError, TransactionTrait};
 
     #[tokio::test]
     async fn ingest_packages() -> Result<(), anyhow::Error> {
@@ -763,6 +769,44 @@ mod tests {
         Ok(())
     }
 
+    #[tokio::test]
+    async fn ingest_qualified_packages_transactionally() -> Result<(), anyhow::Error> {
+        /*
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .is_test(true)
+            .init();
+
+         */
+
+        let system = InnerSystem::for_test("ingest_qualified_packages_transactionally").await?;
+
+        let db = system.db.clone();
+
+        db.transaction(|tx| {
+            Box::pin( async move {
+                let pkg1 = system
+                    .ingest_qualified_package(
+                        "pkg://oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
+                        Transactional::None,
+                    )
+                    .await?;
+
+                let pkg2 = system
+                    .ingest_qualified_package(
+                        "pkg://oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
+                        Transactional::None,
+                    )
+                    .await?;
+
+                assert_eq!(pkg1, pkg2);
+
+                Ok::<(), Error>(())
+            })
+        }).await?;
+
+        Ok(())
+    }
     #[tokio::test]
     async fn ingest_qualified_packages() -> Result<(), anyhow::Error> {
         /*

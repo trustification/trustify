@@ -32,7 +32,7 @@ impl MigrationTrait for Migration {
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .from_col(PackageRelatesToPackage::RightPackageId)
+                            .from_col(PackageRelatesToPackage::Relationship)
                             .to(Relationship::Table, Relationship::Id),
                     )
                     .col(
