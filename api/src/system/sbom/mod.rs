@@ -1,6 +1,6 @@
 //! Support for SBOMs.
 
-use crate::db::Transactional;
+use crate::db::{LeftPackageId, QualifiedPackageTransitive, Transactional};
 use crate::system::package::package_version::PackageVersionContext;
 use crate::system::package::qualified_package::QualifiedPackageContext;
 use crate::system::package::PackageContext;
@@ -12,14 +12,15 @@ use huevos_entity::relationship::Relationship;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult,
     ModelTrait, QueryFilter, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Set,
-    TransactionTrait,
+    Statement, TransactionTrait,
 };
-use sea_query::{Condition, JoinType, Query, UnionType};
+use sea_query::SubQueryStatement::SelectStatement;
+use sea_query::{Alias, Condition, Func, FunctionCall, JoinType, Query, UnionType};
+use spdx_rs::models::{RelationshipType, SPDX};
 use std::collections::hash_set::Union;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
-use spdx_rs::models::{RelationshipType, SPDX};
 
 use super::error::Error;
 
@@ -436,6 +437,45 @@ impl SbomContext {
         Ok(())
     }
 
+    pub async fn related_packages_transitively<P: Into<Purl>>(
+        &self,
+        relationship: Relationship,
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<QualifiedPackageContext>, Error> {
+        let pkg = self.system.get_qualified_package(pkg, tx).await?;
+
+        if let Some(pkg) = pkg {
+            #[derive(Debug, FromQueryResult)]
+            struct Related {
+                left_package_id: i32,
+                right_package_id: i32,
+            }
+
+            let db_backend = self.system.connection(tx).get_database_backend();
+
+            Ok(self
+                .system
+                .get_qualified_packages_by_query(
+                    Query::select()
+                        .column(LeftPackageId)
+                        .from_function(
+                            Func::cust(QualifiedPackageTransitive).args([
+                                self.sbom.id.into(),
+                                pkg.qualified_package.id.into(),
+                                relationship.into(),
+                            ]),
+                            QualifiedPackageTransitive,
+                        )
+                        .to_owned(),
+                    tx,
+                )
+                .await?)
+        } else {
+            Ok(vec![])
+        }
+    }
+
     pub async fn related_packages<P: Into<Purl>>(
         &self,
         relationship: Relationship,
@@ -497,7 +537,6 @@ impl SbomContext {
     async fn all_packages(&self, tx: Transactional<'_>) -> Result<Vec<SbomPackageContext>, Error> {
         todo!()
     }
-
 
     /*
 
@@ -639,6 +678,76 @@ mod tests {
         assert_eq!(2, found.len());
         assert!(found.contains(&sbom_v1));
         assert!(found.contains(&sbom_v2));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("transitive_dependency_of").await?;
+
+        let sbom1 = system
+            .ingest_sbom(
+                "http://sbomsRus.gov/thing1.json",
+                "8675309",
+                Transactional::None,
+            )
+            .await?;
+
+        sbom1
+            .ingest_package_relates_to_package(
+                "pkg://maven/io.quarkus/transitive-b@1.2.3",
+                Relationship::DependencyOf,
+                "pkg://maven/io.quarkus/transitive-a@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        sbom1
+            .ingest_package_relates_to_package(
+                "pkg://maven/io.quarkus/transitive-c@1.2.3",
+                Relationship::DependencyOf,
+                "pkg://maven/io.quarkus/transitive-b@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        sbom1
+            .ingest_package_relates_to_package(
+                "pkg://maven/io.quarkus/transitive-d@1.2.3",
+                Relationship::DependencyOf,
+                "pkg://maven/io.quarkus/transitive-c@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        sbom1
+            .ingest_package_relates_to_package(
+                "pkg://maven/io.quarkus/transitive-e@1.2.3",
+                Relationship::DependencyOf,
+                "pkg://maven/io.quarkus/transitive-c@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        sbom1
+            .ingest_package_relates_to_package(
+                "pkg://maven/io.quarkus/transitive-d@1.2.3",
+                Relationship::DependencyOf,
+                "pkg://maven/io.quarkus/transitive-b@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        let results = sbom1
+            .related_packages_transitively(
+                Relationship::DependencyOf,
+                "pkg://maven/io.quarkus/transitive-a@1.2.3",
+                Transactional::None,
+            )
+            .await?;
+
+        println!("{:#?}", results);
 
         Ok(())
     }

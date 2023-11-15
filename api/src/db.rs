@@ -4,6 +4,8 @@ use sea_orm::{
     ConnectionTrait, DatabaseConnection, DatabaseTransaction, DbBackend, DbErr, EntityTrait,
     ExecResult, FromQueryResult, ModelTrait, PaginatorTrait, QueryResult, Select, Statement,
 };
+use sea_query::Iden;
+use std::fmt::Write;
 use std::marker::PhantomData;
 use std::process::Output;
 
@@ -77,4 +79,19 @@ pub struct PaginatedResults<R> {
     pub num_pages: u64,
     pub prev_page: Option<Paginated>,
     pub next_page: Option<Paginated>,
+}
+
+pub struct QualifiedPackageTransitive;
+
+impl Iden for QualifiedPackageTransitive {
+    fn unquoted(&self, s: &mut dyn Write) {
+        write!(s, "qualified_package_transitive").unwrap();
+    }
+}
+
+pub struct LeftPackageId;
+impl Iden for LeftPackageId {
+    fn unquoted(&self, s: &mut dyn Write) {
+        write!(s, "left_package_id").unwrap();
+    }
 }

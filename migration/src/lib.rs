@@ -18,6 +18,8 @@ mod m0000190_sbom_describes_package;
 mod m0000200_create_relationship;
 mod m0000210_create_package_relates_to_package;
 
+mod m0000220_create_qualified_package_transitive_function;
+
 pub struct Migrator;
 
 #[async_trait::async_trait]
@@ -40,6 +42,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000190_sbom_describes_package::Migration),
             Box::new(m0000200_create_relationship::Migration),
             Box::new(m0000210_create_package_relates_to_package::Migration),
+            Box::new(m0000220_create_qualified_package_transitive_function::Migration),
         ]
     }
 }

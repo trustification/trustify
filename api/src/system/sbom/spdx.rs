@@ -1,12 +1,11 @@
-use sea_orm::TransactionTrait;
-use spdx_rs::models::{RelationshipType, SPDX};
-use huevos_entity::relationship::Relationship;
 use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::sbom::SbomContext;
+use huevos_entity::relationship::Relationship;
+use sea_orm::TransactionTrait;
+use spdx_rs::models::{RelationshipType, SPDX};
 
 impl SbomContext {
-
     async fn ingest_spdx(&self, sbom_data: SPDX) -> Result<(), anyhow::Error> {
         // FIXME: not sure this is correct. It may be that we need to use `DatabaseTransaction` instead of the `db` field
         let sbom = self.clone();

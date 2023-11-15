@@ -11,7 +11,7 @@ use sea_orm::{
     ModelTrait, PaginatorTrait, QueryFilter, QuerySelect, QueryTrait, Set,
 };
 use sea_orm::{RelationTrait, TransactionTrait};
-use sea_query::{JoinType, UnionType};
+use sea_query::{JoinType, SelectStatement, UnionType};
 use std::fmt::{Debug, Formatter};
 
 use crate::db::{Paginated, PaginatedResults, Transactional};
@@ -115,6 +115,70 @@ impl InnerSystem {
         }
     }
 
+    pub(crate) async fn get_qualified_package_by_id(
+        &self,
+        id: i32,
+        tx: Transactional<'_>,
+    ) -> Result<Option<QualifiedPackageContext>, Error> {
+        let mut found = entity::qualified_package::Entity::find_by_id(id)
+            .find_with_related(entity::package_qualifier::Entity)
+            .all(&self.connection(tx))
+            .await?;
+
+        if !found.is_empty() {
+            let (qualified_package, ref mut qualifiers) = &mut found[0];
+
+            let qualifiers = qualifiers
+                .drain(0..)
+                .map(|qualifier| (qualifier.key, qualifier.value))
+                .collect();
+
+            if let Some(package_version) = self
+                .get_package_version_by_id(qualified_package.package_version_id, tx)
+                .await?
+            {
+                Ok(Some(
+                    (&package_version, qualified_package.clone(), qualifiers).into(),
+                ))
+            } else {
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub(crate) async fn get_qualified_packages_by_query(
+        &self,
+        query: SelectStatement,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<QualifiedPackageContext>, Error> {
+        let mut found = entity::qualified_package::Entity::find()
+            .filter(entity::qualified_package::Column::Id.in_subquery(query))
+            .find_with_related(entity::package_qualifier::Entity)
+            .all(&self.connection(tx))
+            .await?;
+
+        let mut package_versions = Vec::new();
+
+        for (base, qualifiers) in &found {
+            if let Some(package_version) = self
+                .get_package_version_by_id(base.package_version_id, tx)
+                .await?
+            {
+                let qualifiers = qualifiers
+                    .iter()
+                    .map(|qualifier| (qualifier.key.clone(), qualifier.value.clone()))
+                    .collect();
+
+                let qualified_package = (&package_version, base.clone(), qualifiers).into();
+                package_versions.push(qualified_package);
+            }
+        }
+
+        Ok(package_versions)
+    }
+
     /// Retrieve a *versioned* package entry, if it exists.
     ///
     /// Non-mutating to the system.
@@ -126,6 +190,28 @@ impl InnerSystem {
         let purl = pkg.into();
         if let Some(pkg) = self.get_package(purl.clone(), tx).await? {
             pkg.get_package_version(purl, tx).await
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub(crate) async fn get_package_version_by_id(
+        &self,
+        id: i32,
+        tx: Transactional<'_>,
+    ) -> Result<Option<PackageVersionContext>, Error> {
+        if let Some(package_version) = entity::package_version::Entity::find_by_id(id)
+            .one(&self.connection(tx))
+            .await?
+        {
+            if let Some(package) = self
+                .get_package_by_id(package_version.package_id, tx)
+                .await?
+            {
+                Ok(Some((&package, package_version).into()))
+            } else {
+                Ok(None)
+            }
         } else {
             Ok(None)
         }
@@ -165,6 +251,21 @@ impl InnerSystem {
             .one(&self.connection(tx))
             .await?
             .map(|package| (self, package).into()))
+    }
+
+    pub(crate) async fn get_package_by_id(
+        &self,
+        id: i32,
+        tx: Transactional<'_>,
+    ) -> Result<Option<PackageContext>, Error> {
+        if let Some(found) = entity::package::Entity::find_by_id(id)
+            .one(&self.connection(tx))
+            .await?
+        {
+            Ok(Some((self, found).into()))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -639,7 +740,7 @@ mod tests {
             paginated.next_page,
             Some(Paginated {
                 page_size: 50,
-                page: 1
+                page: 1,
             })
         );
         assert_eq!(50, paginated.results.len());
@@ -652,7 +753,7 @@ mod tests {
             next_paginated.prev_page,
             Some(Paginated {
                 page_size: 50,
-                page: 0
+                page: 0,
             })
         );
 
