@@ -1,5 +1,5 @@
 
-create or replace function qualified_package_transitive(sbom_id_param integer, start_package_id integer, relationship_param integer)
+create or replace function qualified_package_transitive(sbom_id_param integer, start_package_id integer, relationships_param integer[])
     returns table (
         left_package_id integer,
         right_package_id integer
@@ -18,7 +18,7 @@ as $$
                 package_relates_to_package
             where
                 package_relates_to_package.right_package_id = start_package_id
-                and package_relates_to_package.relationship = relationship_param
+                and package_relates_to_package.relationship = any(relationships_param)
                 and package_relates_to_package.sbom_id = sbom_id_param
             union
             select
@@ -31,7 +31,7 @@ as $$
             inner join transitive transitive1
                 on
                     prp.right_package_id = transitive1.left_package_id
-                    and prp.relationship = relationship_param
+                    and prp.relationship = any(relationships_param)
                     and prp.sbom_id = transitive1.sbom_id
         )
         select

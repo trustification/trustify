@@ -11,6 +11,7 @@ use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait}
 use sea_query::JoinType;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
+use std::hash::{Hash, Hasher};
 
 #[derive(Clone)]
 pub struct QualifiedPackageContext {
@@ -23,6 +24,14 @@ pub struct QualifiedPackageContext {
 impl PartialEq for QualifiedPackageContext {
     fn eq(&self, other: &Self) -> bool {
         self.qualified_package.eq(&other.qualified_package)
+    }
+}
+
+impl Eq for QualifiedPackageContext {}
+
+impl Hash for QualifiedPackageContext {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_i32(self.qualified_package.id)
     }
 }
 
@@ -93,7 +102,6 @@ impl QualifiedPackageContext {
         tx: Transactional<'_>,
     ) -> Result<PackageVulnerabilityAssertions, Error> {
         let affected = self.affected_assertions(tx).await?;
-
         let not_affected = self.not_affected_assertions(tx).await?;
 
         let mut merged = PackageVulnerabilityAssertions::default();

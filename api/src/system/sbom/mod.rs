@@ -5,6 +5,7 @@ use crate::system::package::package_version::PackageVersionContext;
 use crate::system::package::qualified_package::QualifiedPackageContext;
 use crate::system::package::PackageContext;
 use crate::system::InnerSystem;
+use huevos_common::package::PackageVulnerabilityAssertions;
 use huevos_common::purl::Purl;
 use huevos_common::sbom::SbomLocator;
 use huevos_entity as entity;
@@ -14,11 +15,12 @@ use sea_orm::{
     ModelTrait, QueryFilter, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Set,
     Statement, TransactionTrait,
 };
+use sea_query::IndexType::Hash;
 use sea_query::SubQueryStatement::SelectStatement;
-use sea_query::{Alias, Condition, Func, FunctionCall, JoinType, Query, UnionType};
+use sea_query::{Alias, Condition, Func, FunctionCall, JoinType, Query, SimpleExpr, UnionType};
 use spdx_rs::models::{RelationshipType, SPDX};
 use std::collections::hash_set::Union;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
 
@@ -27,17 +29,6 @@ use super::error::Error;
 pub mod spdx;
 
 type SelectEntity<E> = Select<E>;
-
-pub enum SbomDescribes {
-    Cpe(String),
-    Package(SbomPackageContext),
-}
-
-impl FromQueryResult for SbomDescribes {
-    fn from_query_result(res: &QueryResult, pre: &str) -> Result<Self, DbErr> {
-        todo!()
-    }
-}
 
 impl InnerSystem {
     pub async fn get_sbom(
@@ -317,27 +308,6 @@ impl From<(&InnerSystem, entity::sbom::Model)> for SbomContext {
     }
 }
 
-#[derive(Clone)]
-pub struct SbomPackageContext {
-    pub(crate) sbom: SbomContext,
-    pub(crate) package: PackageContext,
-}
-
-impl Debug for SbomPackageContext {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.package.fmt(f)
-    }
-}
-
-impl From<(&SbomContext, entity::package::Model)> for SbomPackageContext {
-    fn from((sbom, package): (&SbomContext, entity::package::Model)) -> Self {
-        Self {
-            sbom: sbom.clone(),
-            package: (&sbom.system, package).into(),
-        }
-    }
-}
-
 impl SbomContext {
     pub async fn ingest_describes_cpe(
         &self,
@@ -453,7 +423,7 @@ impl SbomContext {
         Ok(())
     }
 
-    pub async fn related_packages_transitively<P: Into<Purl>>(
+    pub async fn related_packages_transitively_x<P: Into<Purl>>(
         &self,
         relationship: Relationship,
         pkg: P,
@@ -468,8 +438,6 @@ impl SbomContext {
                 right_package_id: i32,
             }
 
-            let db_backend = self.system.connection(tx).get_database_backend();
-
             Ok(self
                 .system
                 .get_qualified_packages_by_query(
@@ -480,6 +448,55 @@ impl SbomContext {
                                 self.sbom.id.into(),
                                 pkg.qualified_package.id.into(),
                                 relationship.into(),
+                            ]),
+                            QualifiedPackageTransitive,
+                        )
+                        .to_owned(),
+                    tx,
+                )
+                .await?)
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    pub async fn related_packages_transitively<P: Into<Purl>>(
+        &self,
+        relationships: &[Relationship],
+        pkg: P,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<QualifiedPackageContext>, Error> {
+        let pkg = self.system.get_qualified_package(pkg, tx).await?;
+
+        if let Some(pkg) = pkg {
+            #[derive(Debug, FromQueryResult)]
+            struct Related {
+                left_package_id: i32,
+                right_package_id: i32,
+            }
+
+            let rels: SimpleExpr = SimpleExpr::Custom(format!(
+                "array[{}]",
+                relationships
+                    .iter()
+                    .map(|e| (*e as i32).to_string())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            ));
+
+            let sbom_id: SimpleExpr = self.sbom.id.into();
+            let qualified_package_id: SimpleExpr = pkg.qualified_package.id.into();
+
+            Ok(self
+                .system
+                .get_qualified_packages_by_query(
+                    Query::select()
+                        .column(LeftPackageId)
+                        .from_function(
+                            Func::cust(QualifiedPackageTransitive).args([
+                                sbom_id,
+                                qualified_package_id,
+                                rels,
                             ]),
                             QualifiedPackageTransitive,
                         )
@@ -551,8 +568,34 @@ impl SbomContext {
         }
     }
 
-    async fn all_packages(&self, tx: Transactional<'_>) -> Result<Vec<SbomPackageContext>, Error> {
-        todo!()
+    pub async fn vulnerability_assertions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<HashMap<QualifiedPackageContext, PackageVulnerabilityAssertions>, Error> {
+        let described_packages = self.describes_packages(tx).await?;
+        let mut applicable = HashSet::new();
+
+        for pkg in described_packages {
+            applicable.extend(
+                self.related_packages_transitively(
+                    &[Relationship::DependencyOf, Relationship::ContainedBy],
+                    pkg,
+                    Transactional::None,
+                )
+                .await?,
+            )
+        }
+
+        let mut assertions = HashMap::new();
+
+        for pkg in applicable {
+            let package_assertions = pkg.vulnerability_assertions(tx).await?;
+            if !package_assertions.assertions.is_empty() {
+                assertions.insert(pkg.clone(), pkg.vulnerability_assertions(tx).await?);
+            }
+        }
+
+        Ok(assertions)
     }
 
     /*
@@ -758,7 +801,7 @@ mod tests {
 
         let results = sbom1
             .related_packages_transitively(
-                Relationship::DependencyOf,
+                &[Relationship::DependencyOf],
                 "pkg://maven/io.quarkus/transitive-a@1.2.3",
                 Transactional::None,
             )
@@ -833,6 +876,80 @@ mod tests {
         assert_eq!(
             "pkg://maven/io.quarkus/quarkus-sqlite@1.2.3",
             Purl::from(dependencies[0].clone()).to_string()
+        );
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn sbom_vulnerabilities() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("sbom_vulnerabilities").await?;
+
+        let sbom = system
+            .ingest_sbom(
+                "http://sbomsRus.gov/thing1.json",
+                "8675309",
+                Transactional::None,
+            )
+            .await?;
+
+        sbom.ingest_describes_package("pkg://oci/my-app@1.2.3", Transactional::None)
+            .await?;
+
+        sbom.ingest_package_relates_to_package(
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+            Relationship::DependencyOf,
+            "pkg://oci/my-app@1.2.3",
+            Transactional::None,
+        )
+        .await?;
+
+        sbom.ingest_package_relates_to_package(
+            "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
+            Relationship::DependencyOf,
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+            Transactional::None,
+        )
+        .await?;
+
+        sbom.ingest_package_relates_to_package(
+            "pkg://maven/postgres/postgres-driver@1.2.3",
+            Relationship::DependencyOf,
+            "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
+            Transactional::None,
+        )
+        .await?;
+
+        let advisory = system
+            .ingest_advisory(
+                "RHSA-1",
+                "http://redhat.com/secdata/RHSA-1",
+                "7",
+                Transactional::None,
+            )
+            .await?;
+
+        advisory
+            .ingest_affected_package_range(
+                "pkg://maven/postgres/postgres-driver",
+                "1.1",
+                "1.9",
+                Transactional::None,
+            )
+            .await?;
+
+        let assertions = sbom.vulnerability_assertions(Transactional::None).await?;
+
+        assert_eq!(1, assertions.len());
+
+        let affected_purls = assertions
+            .keys()
+            .map(|e| Purl::from(e.clone()))
+            .collect::<Vec<_>>();
+
+        assert_eq!(
+            affected_purls[0].to_string(),
+            "pkg://maven/postgres/postgres-driver@1.2.3"
         );
 
         Ok(())

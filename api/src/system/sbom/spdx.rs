@@ -142,6 +142,57 @@ mod tests {
     use std::str::FromStr;
     use std::time::Instant;
 
+    #[ignore]
+    #[tokio::test]
+    async fn parse_spdx_quarkus() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("parse_spdx_quarkus").await?;
+
+        let pwd = PathBuf::from_str(env!("PWD"))?;
+        let test_data = pwd.join("test-data");
+
+        // nope, has bad license expressions
+        let sbom = test_data.join("quarkus-bom-2.13.8.Final-redhat-00004.json");
+
+        let sbom = File::open(sbom)?;
+
+        let start = Instant::now();
+        let sbom_data: SPDX = serde_json::from_reader(sbom)?;
+        let parse_time = start.elapsed();
+
+        let start = Instant::now();
+        let sbom = system
+            .ingest_sbom("test.com/my-sbom.json", "10", Transactional::None)
+            .await?;
+
+        sbom.ingest_spdx(sbom_data).await?;
+        let ingest_time = start.elapsed();
+        let start = Instant::now();
+
+        let described = sbom.describes_packages(Transactional::None).await?;
+
+        assert_eq!(1, described.len());
+
+        let contains = sbom
+            .related_packages(
+                Relationship::ContainedBy,
+                described[0].clone(),
+                Transactional::None,
+            )
+            .await?;
+
+        println!("{}", contains.len());
+
+        assert!(contains.len() > 500);
+
+        let query_time = start.elapsed();
+
+        println!("parse {}ms", parse_time.as_millis());
+        println!("ingest {}ms", ingest_time.as_millis());
+        println!("query {}ms", query_time.as_millis());
+
+        Ok(())
+    }
+
     #[tokio::test]
     async fn parse_spdx() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("parse_spdx").await?;

@@ -113,7 +113,7 @@ impl PackageVulnerabilityAssertions {
                     let affected_start_semver =
                         lenient_semver::parse(start_version).map_err(|e| e.owned())?;
                     let affected_end_semver =
-                        lenient_semver::parse(start_version).map_err(|e| e.owned())?;
+                        lenient_semver::parse(end_version).map_err(|e| e.owned())?;
 
                     if semver >= affected_start_semver && semver < affected_end_semver {
                         filtered_assertions.push(affected.clone());
