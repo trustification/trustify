@@ -60,68 +60,20 @@ impl SbomContext {
                                                 for reference in &package.external_reference {
                                                     if reference.reference_type == "purl" {
                                                         let package_b = reference.reference_locator.clone();
-                                                        //println!("pkg_b: {}", package_b);
 
-                                                        match relationship.relationship_type {
-                                                            RelationshipType::Describes => {}
-                                                            RelationshipType::DescribedBy => {}
-                                                            RelationshipType::Contains => {
+                                                        // Check for the degenerate case that seems to appear where an SBOM inceptions itself.
+                                                        if package_a != package_b {
+                                                            if let Ok((left, rel, right)) = SpdxRelationship(
+                                                                &package_a,
+                                                                &relationship.relationship_type,
+                                                                &package_b).try_into() {
                                                                 sbom.ingest_package_relates_to_package(
-                                                                    package_b.clone(),
-                                                                    Relationship::ContainedBy,
-                                                                    package_a.clone(),
-                                                                    tx
+                                                                    left,
+                                                                    rel,
+                                                                    right,
+                                                                    tx,
                                                                 ).await?
                                                             }
-                                                            RelationshipType::ContainedBy => {
-                                                                sbom.ingest_package_relates_to_package(
-                                                                    package_a.clone(),
-                                                                    Relationship::ContainedBy,
-                                                                    package_b,
-                                                                    tx
-                                                                ).await?
-                                                            }
-                                                            RelationshipType::DependsOn => {}
-                                                            RelationshipType::DependencyOf => {}
-                                                            RelationshipType::DependencyManifestOf => {}
-                                                            RelationshipType::BuildDependencyOf => {}
-                                                            RelationshipType::DevDependencyOf => {}
-                                                            RelationshipType::OptionalDependencyOf => {}
-                                                            RelationshipType::ProvidedDependencyOf => {}
-                                                            RelationshipType::TestDependencyOf => {}
-                                                            RelationshipType::RuntimeDependencyOf => {}
-                                                            RelationshipType::ExampleOf => {}
-                                                            RelationshipType::Generates => {}
-                                                            RelationshipType::GeneratedFrom => {}
-                                                            RelationshipType::AncestorOf => {}
-                                                            RelationshipType::DescendantOf => {}
-                                                            RelationshipType::VariantOf => {}
-                                                            RelationshipType::DistributionArtifact => {}
-                                                            RelationshipType::PatchFor => {}
-                                                            RelationshipType::PatchApplied => {}
-                                                            RelationshipType::CopyOf => {}
-                                                            RelationshipType::FileAdded => {}
-                                                            RelationshipType::FileDeleted => {}
-                                                            RelationshipType::FileModified => {}
-                                                            RelationshipType::ExpandedFromArchive => {}
-                                                            RelationshipType::DynamicLink => {}
-                                                            RelationshipType::StaticLink => {}
-                                                            RelationshipType::DataFileOf => {}
-                                                            RelationshipType::TestCaseOf => {}
-                                                            RelationshipType::BuildToolOf => {}
-                                                            RelationshipType::DevToolOf => {}
-                                                            RelationshipType::TestOf => {}
-                                                            RelationshipType::TestToolOf => {}
-                                                            RelationshipType::DocumentationOf => {}
-                                                            RelationshipType::OptionalComponentOf => {}
-                                                            RelationshipType::MetafileOf => {}
-                                                            RelationshipType::PackageOf => {}
-                                                            RelationshipType::Amends => {}
-                                                            RelationshipType::PrerequisiteFor => {}
-                                                            RelationshipType::HasPrerequisite => {}
-                                                            RelationshipType::RequirementDescriptionFor => {}
-                                                            RelationshipType::SpecificationFor => {}
-                                                            RelationshipType::Other => {}
                                                         }
                                                     }
                                                 }
@@ -138,24 +90,44 @@ impl SbomContext {
             })
             .await?;
 
-        /*
-        println!("DESCRIBES {:?}", describes);
-
-        println!("--------packages--");
-        for pkg in &sbom.package_information {
-            for reference in &pkg.external_reference {
-                if reference.reference_type == "purl" {
-                    println!("{:#?}", reference.reference_locator);
-                    package_system.ingest_package(
-                        &*reference.reference_locator
-                    ).await?;
-                }
-            }
-        }
-
-         */
-
         Ok(())
+    }
+}
+
+pub struct SpdxRelationship<'spdx>(&'spdx String, &'spdx RelationshipType, &'spdx String);
+
+impl<'spdx> TryFrom<SpdxRelationship<'spdx>> for (&'spdx String, Relationship, &'spdx String) {
+    type Error = ();
+
+    fn try_from(
+        SpdxRelationship(left, rel, right): SpdxRelationship<'spdx>,
+    ) -> Result<Self, Self::Error> {
+        match rel {
+            RelationshipType::Contains => Ok((right, Relationship::ContainedBy, left)),
+            RelationshipType::ContainedBy => Ok((left, Relationship::ContainedBy, right)),
+            RelationshipType::DependsOn => Ok((right, Relationship::DependencyOf, left)),
+            RelationshipType::DependencyOf => Ok((left, Relationship::DependencyOf, right)),
+            RelationshipType::DevDependencyOf => Ok((left, Relationship::DevDependencyOf, right)),
+            RelationshipType::OptionalDependencyOf => {
+                Ok((left, Relationship::OptionalDependencyOf, right))
+            }
+            RelationshipType::ProvidedDependencyOf => {
+                Ok((left, Relationship::ProvidedDependencyOf, right))
+            }
+            RelationshipType::TestDependencyOf => Ok((left, Relationship::TestDependencyOf, right)),
+            RelationshipType::RuntimeDependencyOf => {
+                Ok((left, Relationship::RuntimeDependencyOf, right))
+            }
+            RelationshipType::ExampleOf => Ok((left, Relationship::ExampleOf, right)),
+            RelationshipType::Generates => Ok((right, Relationship::GeneratedFrom, left)),
+            RelationshipType::GeneratedFrom => Ok((left, Relationship::GeneratedFrom, right)),
+            RelationshipType::AncestorOf => Ok((left, Relationship::AncestorOf, right)),
+            RelationshipType::DescendantOf => Ok((right, Relationship::AncestorOf, left)),
+            RelationshipType::VariantOf => Ok((left, Relationship::VariantOf, right)),
+            RelationshipType::BuildToolOf => Ok((left, Relationship::BuildToolOf, right)),
+            RelationshipType::DevToolOf => Ok((left, Relationship::DevToolOf, right)),
+            _ => Err(()),
+        }
     }
 }
 
@@ -207,7 +179,9 @@ mod tests {
             )
             .await?;
 
-        assert!(contains.len() > 600);
+        println!("{}", contains.len());
+
+        assert!(contains.len() > 500);
 
         let query_time = start.elapsed();
 
