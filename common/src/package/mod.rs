@@ -128,7 +128,13 @@ impl PackageVulnerabilityAssertions {
                         lenient_semver::parse(version).map_err(|e| e.owned())?;
 
                     if not_affected_semver == semver {
-                        filtered_assertions.push(not_affected.clone())
+                        filtered_assertions.push(not_affected.clone());
+                    }
+                }
+                fixed @ Assertion::Fixed { version, .. } => {
+                    let fixed_semver = lenient_semver::parse(version).map_err(|e| e.owned())?;
+                    if fixed_semver == semver {
+                        filtered_assertions.push(fixed.clone());
                     }
                 }
             }
@@ -143,13 +149,18 @@ impl PackageVulnerabilityAssertions {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Assertion {
     Affected {
-        vulnerabilities: Vec<String>,
+        vulnerability: String,
         claimant: Claimant,
         start_version: String,
         end_version: String,
     },
     NotAffected {
-        vulnerabilities: Vec<String>,
+        vulnerability: String,
+        claimant: Claimant,
+        version: String,
+    },
+    Fixed {
+        vulnerability: String,
         claimant: Claimant,
         version: String,
     },
@@ -171,7 +182,7 @@ mod tests {
         let assertions = PackageVulnerabilityAssertions {
             assertions: vec![
                 Assertion::Affected {
-                    vulnerabilities: vec!["CVE-123".to_string()],
+                    vulnerability: "CVE-123".to_string(),
                     claimant: Claimant {
                         identifier: "rhsa-1".to_string(),
                         location: "here".to_string(),
@@ -181,7 +192,7 @@ mod tests {
                     end_version: "2".to_string(),
                 },
                 Assertion::NotAffected {
-                    vulnerabilities: vec!["CVE-123".to_string()],
+                    vulnerability: "CVE-123".to_string(),
                     claimant: Claimant {
                         identifier: "rhsa-1".to_string(),
                         location: "here".to_string(),
@@ -190,7 +201,7 @@ mod tests {
                     version: "1.2.0".to_string(),
                 },
                 Assertion::NotAffected {
-                    vulnerabilities: vec!["CVE-123".to_string()],
+                    vulnerability: "CVE-123".to_string(),
                     claimant: Claimant {
                         identifier: "ghsa-1".to_string(),
                         location: "there".to_string(),
@@ -199,7 +210,7 @@ mod tests {
                     version: "1.2".to_string(),
                 },
                 Assertion::NotAffected {
-                    vulnerabilities: vec!["CVE-123".to_string()],
+                    vulnerability: "CVE-123".to_string(),
                     claimant: Claimant {
                         identifier: "ghsa-1".to_string(),
                         location: "there".to_string(),

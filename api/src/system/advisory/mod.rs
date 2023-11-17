@@ -163,11 +163,19 @@ impl AdvisoryContext {
         tx: Transactional<'_>,
     ) -> Result<AdvisoryVulnerabilityAssertions, Error> {
         let affected = self.affected_assertions(tx).await?;
-        let not_affected = self.affected_assertions(tx).await?;
+        let not_affected = self.not_affected_assertions(tx).await?;
+        let fixed = self.fixed_assertions(tx).await?;
 
         let mut merged = affected.assertions.clone();
 
         for (package_key, assertions) in not_affected.assertions {
+            merged
+                .entry(package_key)
+                .or_insert(Vec::default())
+                .extend_from_slice(&assertions)
+        }
+
+        for (package_key, assertions) in fixed.assertions {
             merged
                 .entry(package_key)
                 .or_insert(Vec::default())
@@ -188,6 +196,7 @@ impl AdvisoryContext {
             name: String,
             start: String,
             end: String,
+            vulnerability: String,
             identifier: String,
             location: String,
             sha256: String,
@@ -199,6 +208,7 @@ impl AdvisoryContext {
             .column_as(entity::package::Column::Name, "name")
             .column_as(entity::package_version_range::Column::Start, "start")
             .column_as(entity::package_version_range::Column::End, "end")
+            .column_as(entity::vulnerability::Column::Identifier, "vulnerability")
             .column_as(entity::advisory::Column::Identifier, "identifier")
             .column_as(entity::advisory::Column::Location, "location")
             .column_as(entity::advisory::Column::Sha256, "sha256")
@@ -213,6 +223,16 @@ impl AdvisoryContext {
             .join(
                 JoinType::Join,
                 entity::package_version_range::Relation::Package.def(),
+            )
+            .join(
+                JoinType::Join,
+                entity::advisory_vulnerability::Relation::Advisory
+                    .def()
+                    .rev(),
+            )
+            .join(
+                JoinType::Join,
+                entity::advisory_vulnerability::Relation::Vulnerability.def(),
             )
             .filter(entity::affected_package_version_range::Column::AdvisoryId.eq(self.advisory.id))
             .into_model::<AffectedVersion>()
@@ -232,9 +252,11 @@ impl AdvisoryContext {
             .to_string();
 
             let mut package_assertions = assertions.entry(package_key.clone()).or_insert(vec![]);
+
             package_assertions.push(Assertion::Affected {
                 start_version: each.start,
                 end_version: each.end,
+                vulnerability: each.vulnerability,
             });
         }
 
@@ -251,6 +273,7 @@ impl AdvisoryContext {
             namespace: Option<String>,
             name: String,
             version: String,
+            vulnerability: String,
             identifier: String,
             location: String,
             sha256: String,
@@ -261,6 +284,7 @@ impl AdvisoryContext {
             .column_as(entity::package::Column::Namespace, "namespace")
             .column_as(entity::package::Column::Name, "name")
             .column_as(entity::package_version::Column::Version, "version")
+            .column_as(entity::vulnerability::Column::Identifier, "vulnerability")
             .column_as(entity::advisory::Column::Identifier, "identifier")
             .column_as(entity::advisory::Column::Location, "location")
             .column_as(entity::advisory::Column::Sha256, "sha256")
@@ -275,6 +299,16 @@ impl AdvisoryContext {
             .join(
                 JoinType::Join,
                 entity::package_version::Relation::Package.def(),
+            )
+            .join(
+                JoinType::Join,
+                entity::advisory_vulnerability::Relation::Advisory
+                    .def()
+                    .rev(),
+            )
+            .join(
+                JoinType::Join,
+                entity::advisory_vulnerability::Relation::Vulnerability.def(),
             )
             .filter(entity::not_affected_package_version::Column::AdvisoryId.eq(self.advisory.id))
             .into_model::<NotAffectedVersion>()
@@ -294,7 +328,84 @@ impl AdvisoryContext {
             .to_string();
 
             let mut package_assertions = assertions.entry(package_key.clone()).or_insert(vec![]);
+
             package_assertions.push(Assertion::NotAffected {
+                vulnerability: each.vulnerability,
+                version: each.version,
+            });
+        }
+
+        Ok(AdvisoryVulnerabilityAssertions { assertions })
+    }
+
+    pub async fn fixed_assertions(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<AdvisoryVulnerabilityAssertions, Error> {
+        #[derive(FromQueryResult, Debug)]
+        struct FixedVersion {
+            ty: String,
+            namespace: Option<String>,
+            name: String,
+            version: String,
+            vulnerability: String,
+            identifier: String,
+            location: String,
+            sha256: String,
+        }
+
+        let mut fixed_versions = entity::fixed_package_version::Entity::find()
+            .column_as(entity::package::Column::Type, "ty")
+            .column_as(entity::package::Column::Namespace, "namespace")
+            .column_as(entity::package::Column::Name, "name")
+            .column_as(entity::package_version::Column::Version, "version")
+            .column_as(entity::vulnerability::Column::Identifier, "vulnerability")
+            .column_as(entity::advisory::Column::Identifier, "identifier")
+            .column_as(entity::advisory::Column::Location, "location")
+            .column_as(entity::advisory::Column::Sha256, "sha256")
+            .join(
+                JoinType::Join,
+                entity::fixed_package_version::Relation::PackageVersion.def(),
+            )
+            .join(
+                JoinType::Join,
+                entity::fixed_package_version::Relation::Advisory.def(),
+            )
+            .join(
+                JoinType::Join,
+                entity::package_version::Relation::Package.def(),
+            )
+            .join(
+                JoinType::Join,
+                entity::advisory_vulnerability::Relation::Advisory
+                    .def()
+                    .rev(),
+            )
+            .join(
+                JoinType::Join,
+                entity::advisory_vulnerability::Relation::Vulnerability.def(),
+            )
+            .filter(entity::fixed_package_version::Column::AdvisoryId.eq(self.advisory.id))
+            .into_model::<FixedVersion>()
+            .all(&self.system.connection(tx))
+            .await?;
+
+        let mut assertions = HashMap::new();
+
+        for each in fixed_versions {
+            let package_key = Purl {
+                ty: each.ty,
+                namespace: each.namespace,
+                name: each.name,
+                version: None,
+                qualifiers: Default::default(),
+            }
+            .to_string();
+
+            let mut package_assertions = assertions.entry(package_key.clone()).or_insert(vec![]);
+
+            package_assertions.push(Assertion::Fixed {
+                vulnerability: each.vulnerability,
                 version: each.version,
             });
         }
@@ -596,7 +707,7 @@ mod test {
 
         let assertion = &pkg_assertions[0];
 
-        assert!(matches!( assertion, Assertion::NotAffected {version}
+        assert!(matches!( assertion, Assertion::NotAffected {version, ..}
             if version == "1.1.9"
         ));
 

@@ -166,10 +166,10 @@ impl PackageVersionContext {
         let mut assertions = PackageVulnerabilityAssertions::default();
 
         for each in not_affected_versions {
-            let vulnerabilities = vec![];
+            let vulnerability = "not-implemented".to_string();
 
             assertions.assertions.push(Assertion::NotAffected {
-                vulnerabilities,
+                vulnerability,
                 claimant: Claimant {
                     identifier: each.identifier,
                     location: each.location,
