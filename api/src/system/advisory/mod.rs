@@ -21,6 +21,22 @@ pub mod fixed_package_version;
 pub mod not_affected_package_version;
 
 impl InnerSystem {
+    pub(crate) async fn get_advisory_by_id(
+        &self,
+        id: i32,
+        tx: Transactional<'_>
+    ) -> Result<Option<AdvisoryContext>, Error> {
+        Ok(
+            entity::advisory::Entity::find_by_id(id)
+                .one(&self.connection(tx))
+                .await?
+                .map(|advisory| {
+                    (self, advisory).into()
+                })
+        )
+
+    }
+
     pub async fn get_advisory(
         &self,
         identifier: &str,
@@ -122,6 +138,26 @@ impl AdvisoryContext {
         entity.insert(&self.system.connection(tx)).await?;
 
         Ok(())
+    }
+
+    pub async fn vulnerabilities(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<String>, Error> {
+        Ok(entity::vulnerability::Entity::find()
+            .join(JoinType::Join,
+            entity::advisory_vulnerability::Relation::Vulnerability.def().rev()
+            )
+            .filter(entity::advisory_vulnerability::Column::AdvisoryId.eq(self.advisory.id))
+            .all(
+                &self.system.connection(tx)
+            )
+            .await?
+            .drain(0..)
+            .map(|e| {
+                e.identifier
+            })
+            .collect())
     }
 
     pub async fn get_fixed_package_version<P: Into<Purl>>(

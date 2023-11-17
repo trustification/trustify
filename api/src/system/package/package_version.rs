@@ -138,6 +138,7 @@ impl PackageVersionContext {
         #[derive(FromQueryResult, Debug)]
         struct NotAffectedVersion {
             version: String,
+            advisory_id: i32,
             identifier: String,
             location: String,
             sha256: String,
@@ -145,6 +146,7 @@ impl PackageVersionContext {
 
         let mut not_affected_versions = entity::not_affected_package_version::Entity::find()
             .column_as(entity::package_version::Column::Version, "version")
+            .column_as(entity::advisory::Column::Id, "advisory_id")
             .column_as(entity::advisory::Column::Identifier, "identifier")
             .column_as(entity::advisory::Column::Location, "location")
             .column_as(entity::advisory::Column::Sha256, "sha256")
@@ -161,18 +163,26 @@ impl PackageVersionContext {
             .all(&self.package.system.connection(tx))
             .await?;
 
-        let assertions = PackageVulnerabilityAssertions {
-            assertions: not_affected_versions
-                .drain(0..)
-                .map(|each| Assertion::NotAffected {
+        let mut assertions = PackageVulnerabilityAssertions::default();
+
+        for each in not_affected_versions {
+            let vulnerabilities = if let Some(advisory) = self.package.system.get_advisory_by_id(each.advisory_id, tx).await? {
+                advisory.vulnerabilities(tx).await?
+            } else {
+                vec![]
+            };
+
+            assertions.assertions.push(
+                Assertion::NotAffected {
+                    vulnerabilities,
                     claimant: Claimant {
                         identifier: each.identifier,
                         location: each.location,
                         sha256: each.sha256,
                     },
                     version: each.version,
-                })
-                .collect(),
+                }
+            );
         };
 
         Ok(assertions)
