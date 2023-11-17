@@ -516,25 +516,19 @@ impl PackageContext {
 
         let mut assertions = PackageVulnerabilityAssertions::default();
         for each in affected_version_ranges {
-            let vulnerabilities = if let Some(advisory) = self.system.get_advisory_by_id(each.advisory_id, tx).await? {
-                advisory.vulnerabilities(tx).await?
-            } else {
-                vec![]
-            };
+            let vulnerabilities = vec![];
 
-            assertions.assertions.push(
-                Assertion::Affected {
-                    vulnerabilities,
-                    claimant: Claimant {
-                        identifier: each.identifier,
-                        location: each.location,
-                        sha256: each.sha256,
-                    },
-                    start_version: each.start,
-                    end_version: each.end,
-                }
-            );
-        };
+            assertions.assertions.push(Assertion::Affected {
+                vulnerabilities,
+                claimant: Claimant {
+                    identifier: each.identifier,
+                    location: each.location,
+                    sha256: each.sha256,
+                },
+                start_version: each.start,
+                end_version: each.end,
+            });
+        }
 
         Ok(assertions)
     }
@@ -577,24 +571,18 @@ impl PackageContext {
 
         let mut assertions = PackageVulnerabilityAssertions::default();
         for each in not_affected_versions {
-            let vulnerabilities = if let Some(advisory) = self.system.get_advisory_by_id(each.advisory_id, tx).await? {
-                advisory.vulnerabilities(tx).await?
-            } else {
-                vec![]
-            };
+            let vulnerabilities = vec![];
 
-            assertions.assertions.push(
-                Assertion::NotAffected {
-                    vulnerabilities,
-                    claimant: Claimant {
-                        identifier: each.identifier,
-                        location: each.location,
-                        sha256: each.sha256,
-                    },
-                    version: each.version,
-                }
-            )
-        };
+            assertions.assertions.push(Assertion::NotAffected {
+                vulnerabilities,
+                claimant: Claimant {
+                    identifier: each.identifier,
+                    location: each.location,
+                    sha256: each.sha256,
+                },
+                version: each.version,
+            })
+        }
 
         Ok(assertions)
     }
@@ -960,7 +948,11 @@ mod tests {
                 )
                 .await?;
 
-            redhat_advisory
+            let redhat_advisory_vulnerability = redhat_advisory
+                .ingest_vulnerability("CVE-77", Transactional::None)
+                .await?;
+
+            redhat_advisory_vulnerability
                 .ingest_affected_package_range(
                     "pkg://maven/io.quarkus/quarkus-core",
                     "1.0.2",
@@ -969,7 +961,7 @@ mod tests {
                 )
                 .await?;
 
-            redhat_advisory
+            redhat_advisory_vulnerability
                 .ingest_affected_package_range(
                     "pkg://maven/io.quarkus/quarkus-addons",
                     "1.0.2",
@@ -982,7 +974,11 @@ mod tests {
                 .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
                 .await?;
 
-            ghsa_advisory
+            let ghsa_advisory_vulnerability = ghsa_advisory
+                .ingest_vulnerability("CVE-77", Transactional::None)
+                .await?;
+
+            ghsa_advisory_vulnerability
                 .ingest_affected_package_range(
                     "pkg://maven/io.quarkus/quarkus-core",
                     "1.0.2",
@@ -1040,7 +1036,11 @@ async fn package_not_affected_assertions() -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    redhat_advisory
+    let redhat_advisory_vulnerability = redhat_advisory
+        .ingest_vulnerability("CVE-77", Transactional::None)
+        .await?;
+
+    redhat_advisory_vulnerability
         .ingest_not_affected_package_version(
             "pkg://maven/io.quarkus/quarkus-core@1.2",
             Transactional::None,
@@ -1051,7 +1051,11 @@ async fn package_not_affected_assertions() -> Result<(), anyhow::Error> {
         .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
         .await?;
 
-    ghsa_advisory
+    let ghsa_advisory_vulnerability = ghsa_advisory
+        .ingest_vulnerability("CVE-77", Transactional::None)
+        .await?;
+
+    ghsa_advisory_vulnerability
         .ingest_not_affected_package_version(
             "pkg://maven/io.quarkus/quarkus-core@1.2.2",
             Transactional::None,
@@ -1083,7 +1087,11 @@ async fn package_vulnerability_assertions() -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    redhat_advisory
+    let redhat_advisory_vulnerability = redhat_advisory
+        .ingest_vulnerability("CVE-87", Transactional::None)
+        .await?;
+
+    redhat_advisory_vulnerability
         .ingest_affected_package_range(
             "pkg://maven/io.quarkus/quarkus-core",
             "1.1",
@@ -1092,7 +1100,7 @@ async fn package_vulnerability_assertions() -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    redhat_advisory
+    redhat_advisory_vulnerability
         .ingest_not_affected_package_version(
             "pkg://maven/io.quarkus/quarkus-core@1.2",
             Transactional::None,
@@ -1103,7 +1111,11 @@ async fn package_vulnerability_assertions() -> Result<(), anyhow::Error> {
         .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
         .await?;
 
-    ghsa_advisory
+    let ghsa_advisory_vulnerability = ghsa_advisory
+        .ingest_vulnerability("CVE-87", Transactional::None)
+        .await?;
+
+    ghsa_advisory_vulnerability
         .ingest_not_affected_package_version(
             "pkg://maven/io.quarkus/quarkus-core@1.2.2",
             Transactional::None,
@@ -1135,7 +1147,11 @@ async fn advisories_mentioning_package() -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    redhat_advisory
+    let redhat_advisory_vulnerability = redhat_advisory
+        .ingest_vulnerability("CVE-99", Transactional::None)
+        .await?;
+
+    redhat_advisory_vulnerability
         .ingest_affected_package_range(
             "pkg://maven/io.quarkus/quarkus-core",
             "1.1",
@@ -1148,7 +1164,11 @@ async fn advisories_mentioning_package() -> Result<(), anyhow::Error> {
         .ingest_advisory("GHSA-1", "http://ghsa.gov/GHSA-1", "3", Transactional::None)
         .await?;
 
-    ghsa_advisory
+    let ghsa_advisory_vulnerability = ghsa_advisory
+        .ingest_vulnerability("CVE-99", Transactional::None)
+        .await?;
+
+    ghsa_advisory_vulnerability
         .ingest_not_affected_package_version(
             "pkg://maven/io.quarkus/quarkus-core@1.2",
             Transactional::None,
@@ -1164,7 +1184,11 @@ async fn advisories_mentioning_package() -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    unrelated_advisory
+    let unrelated_advisory_vulnerability = redhat_advisory
+        .ingest_vulnerability("CVE-99", Transactional::None)
+        .await?;
+
+    unrelated_advisory_vulnerability
         .ingest_not_affected_package_version(
             "pkg://maven/io.quarkus/some-other-package@1.2",
             Transactional::None,

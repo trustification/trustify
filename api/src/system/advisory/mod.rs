@@ -1,6 +1,7 @@
 //! Support for advisories.
 
 use crate::db::Transactional;
+use crate::system::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::system::error::Error;
 use crate::system::InnerSystem;
 use affected_package_version_range::AffectedPackageVersionRangeContext;
@@ -8,13 +9,16 @@ use fixed_package_version::FixedPackageVersionContext;
 use huevos_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
 use huevos_common::purl::Purl;
 use huevos_entity as entity;
-use not_affected_package_version::NotAffectedPackageVersion;
+use migration::m0000032_create_advisory_vulnerability::AdvisoryVulnerability;
+use not_affected_package_version::NotAffectedPackageVersionContext;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, EntityTrait, FromQueryResult, QueryFilter};
 use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
+
+pub mod advisory_vulnerability;
 
 pub mod affected_package_version_range;
 pub mod fixed_package_version;
@@ -26,17 +30,12 @@ impl InnerSystem {
     pub(crate) async fn get_advisory_by_id(
         &self,
         id: i32,
-        tx: Transactional<'_>
+        tx: Transactional<'_>,
     ) -> Result<Option<AdvisoryContext>, Error> {
-        Ok(
-            entity::advisory::Entity::find_by_id(id)
-                .one(&self.connection(tx))
-                .await?
-                .map(|advisory| {
-                    (self, advisory).into()
-                })
-        )
-
+        Ok(entity::advisory::Entity::find_by_id(id)
+            .one(&self.connection(tx))
+            .await?
+            .map(|advisory| (self, advisory).into()))
     }
 
     pub async fn get_advisory(
@@ -108,26 +107,26 @@ impl AdvisoryContext {
         &self,
         identifier: &str,
         tx: Transactional<'_>,
-    ) -> Result<Option<String>, Error> {
-        Ok(entity::vulnerability::Entity::find()
+    ) -> Result<Option<AdvisoryVulnerabilityContext>, Error> {
+        Ok(entity::advisory_vulnerability::Entity::find()
             .join(
                 JoinType::Join,
-                entity::advisory_vulnerability::Relation::Vulnerability.def().rev(),
+                entity::advisory_vulnerability::Relation::Vulnerability.def(),
             )
             .filter(entity::advisory_vulnerability::Column::AdvisoryId.eq(self.advisory.id))
             .filter(entity::vulnerability::Column::Identifier.eq(identifier))
             .one(&self.system.connection(tx))
             .await?
-            .map(|cve| cve.identifier))
+            .map(|vuln| (self, vuln).into()))
     }
 
     pub async fn ingest_vulnerability(
         &self,
         identifier: &str,
         tx: Transactional<'_>,
-    ) -> Result<(), Error> {
+    ) -> Result<AdvisoryVulnerabilityContext, Error> {
         if let Some(found) = self.get_vulnerability(identifier, tx).await? {
-            return Ok(());
+            return Ok(found);
         }
 
         let cve = self.system.ingest_vulnerability(identifier, tx).await?;
@@ -137,179 +136,26 @@ impl AdvisoryContext {
             vulnerability_id: Set(cve.cve.id),
         };
 
-        entity.insert(&self.system.connection(tx)).await?;
-
-        Ok(())
+        Ok((self, entity.insert(&self.system.connection(tx)).await?).into())
     }
 
     pub async fn vulnerabilities(
         &self,
         tx: Transactional<'_>,
-    ) -> Result<Vec<String>, Error> {
-        Ok(entity::vulnerability::Entity::find()
-            .join(JoinType::Join,
-            entity::advisory_vulnerability::Relation::Vulnerability.def().rev()
+    ) -> Result<Vec<AdvisoryVulnerabilityContext>, Error> {
+        Ok(entity::advisory_vulnerability::Entity::find()
+            .join(
+                JoinType::Join,
+                entity::advisory_vulnerability::Relation::Vulnerability
+                    .def()
+                    .rev(),
             )
             .filter(entity::advisory_vulnerability::Column::AdvisoryId.eq(self.advisory.id))
-            .all(
-                &self.system.connection(tx)
-            )
+            .all(&self.system.connection(tx))
             .await?
             .drain(0..)
-            .map(|e| {
-                e.identifier
-            })
+            .map(|e| (self, e).into())
             .collect())
-    }
-
-    pub async fn get_fixed_package_version<P: Into<Purl>>(
-        &self,
-        pkg: P,
-        tx: Transactional<'_>,
-    ) -> Result<Option<FixedPackageVersionContext>, Error> {
-        let purl = pkg.into();
-
-        if let Some(package_version) = self.system.get_package_version(purl, tx).await? {
-            Ok(entity::fixed_package_version::Entity::find()
-                .filter(entity::fixed_package_version::Column::AdvisoryId.eq(self.advisory.id))
-                .filter(
-                    entity::fixed_package_version::Column::PackageVersionId
-                        .eq(package_version.package_version.id),
-                )
-                .one(&self.system.connection(tx))
-                .await?
-                .map(|affected| (self, affected).into()))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub async fn get_not_affected_package_version<P: Into<Purl>>(
-        &self,
-        pkg: P,
-        tx: Transactional<'_>,
-    ) -> Result<Option<NotAffectedPackageVersion>, Error> {
-        let purl = pkg.into();
-
-        if let Some(package_version) = self.system.get_package_version(purl, tx).await? {
-            Ok(entity::not_affected_package_version::Entity::find()
-                .filter(
-                    entity::not_affected_package_version::Column::AdvisoryId.eq(self.advisory.id),
-                )
-                .filter(
-                    entity::not_affected_package_version::Column::PackageVersionId
-                        .eq(package_version.package_version.id),
-                )
-                .one(&self.system.connection(tx))
-                .await?
-                .map(|not_affected_package_version| (self, not_affected_package_version).into()))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub async fn get_affected_package_range<P: Into<Purl>>(
-        &self,
-        pkg: P,
-        start: &str,
-        end: &str,
-        tx: Transactional<'_>,
-    ) -> Result<Option<AffectedPackageVersionRangeContext>, Error> {
-        let purl = pkg.into();
-
-        if let Some(package_version_range) = self
-            .system
-            .get_package_version_range(purl.clone(), start, end, tx)
-            .await?
-        {
-            Ok(entity::affected_package_version_range::Entity::find()
-                .filter(
-                    entity::affected_package_version_range::Column::AdvisoryId.eq(self.advisory.id),
-                )
-                .filter(
-                    entity::affected_package_version_range::Column::PackageVersionRangeId
-                        .eq(package_version_range.package_version_range.id),
-                )
-                .one(&self.system.connection(tx))
-                .await?
-                .map(|affected| (self, affected).into()))
-        } else {
-            Ok(None)
-        }
-    }
-
-    pub async fn ingest_not_affected_package_version<P: Into<Purl>>(
-        &self,
-        pkg: P,
-        tx: Transactional<'_>,
-    ) -> Result<NotAffectedPackageVersion, Error> {
-        let purl = pkg.into();
-        if let Some(found) = self
-            .get_not_affected_package_version(purl.clone(), tx)
-            .await?
-        {
-            return Ok(found);
-        }
-
-        let package_version = self.system.ingest_package_version(purl, tx).await?;
-
-        let entity = entity::not_affected_package_version::ActiveModel {
-            id: Default::default(),
-            advisory_id: Set(self.advisory.id),
-            package_version_id: Set(package_version.package_version.id),
-        };
-
-        Ok((self, entity.insert(&self.system.connection(tx)).await?).into())
-    }
-
-    pub async fn ingest_fixed_package_version<P: Into<Purl>>(
-        &self,
-        pkg: P,
-        tx: Transactional<'_>,
-    ) -> Result<FixedPackageVersionContext, Error> {
-        let purl = pkg.into();
-        if let Some(found) = self.get_fixed_package_version(purl.clone(), tx).await? {
-            return Ok(found);
-        }
-
-        let package_version = self.system.ingest_package_version(purl, tx).await?;
-
-        let entity = entity::fixed_package_version::ActiveModel {
-            id: Default::default(),
-            advisory_id: Set(self.advisory.id),
-            package_version_id: Set(package_version.package_version.id),
-        };
-
-        Ok((self, entity.insert(&self.system.connection(tx)).await?).into())
-    }
-
-    pub async fn ingest_affected_package_range<P: Into<Purl>>(
-        &self,
-        pkg: P,
-        start: &str,
-        end: &str,
-        tx: Transactional<'_>,
-    ) -> Result<AffectedPackageVersionRangeContext, Error> {
-        let purl = pkg.into();
-        if let Some(found) = self
-            .get_affected_package_range(purl.clone(), start, end, tx)
-            .await?
-        {
-            return Ok(found);
-        }
-
-        let package_version_range = self
-            .system
-            .ingest_package_version_range(purl, start, end, tx)
-            .await?;
-
-        let entity = entity::affected_package_version_range::ActiveModel {
-            id: Default::default(),
-            advisory_id: Set(self.advisory.id),
-            package_version_range_id: Set(package_version_range.package_version_range.id),
-        };
-
-        Ok((self, entity.insert(&self.system.connection(tx)).await?).into())
     }
 
     pub async fn vulnerability_assertions(
@@ -514,7 +360,11 @@ mod test {
             )
             .await?;
 
-        let affected1 = advisory
+        let advisory_vulnerability = advisory
+            .ingest_vulnerability("CVE-8675309", Transactional::None)
+            .await?;
+
+        let affected1 = advisory_vulnerability
             .ingest_affected_package_range(
                 "pkg://maven/io.quarkus/quarkus-core",
                 "1.0.2",
@@ -523,7 +373,7 @@ mod test {
             )
             .await?;
 
-        let affected2 = advisory
+        let affected2 = advisory_vulnerability
             .ingest_affected_package_range(
                 "pkg://maven/io.quarkus/quarkus-core",
                 "1.0.2",
@@ -532,7 +382,7 @@ mod test {
             )
             .await?;
 
-        let affected3 = advisory
+        let affected3 = advisory_vulnerability
             .ingest_affected_package_range(
                 "pkg://maven/io.quarkus/quarkus-addons",
                 "1.0.2",
@@ -566,7 +416,11 @@ mod test {
             )
             .await?;
 
-        let affected = advisory
+        let advisory_vulnerability = advisory
+            .ingest_vulnerability("CVE-1234567", Transactional::None)
+            .await?;
+
+        let affected = advisory_vulnerability
             .ingest_affected_package_range(
                 "pkg://maven/io.quarkus/quarkus-core",
                 "1.0.2",
@@ -575,21 +429,21 @@ mod test {
             )
             .await?;
 
-        let fixed1 = advisory
+        let fixed1 = advisory_vulnerability
             .ingest_fixed_package_version(
                 "pkg://maven/io.quarkus/quarkus-core@1.2.0",
                 Transactional::None,
             )
             .await?;
 
-        let fixed2 = advisory
+        let fixed2 = advisory_vulnerability
             .ingest_fixed_package_version(
                 "pkg://maven/io.quarkus/quarkus-core@1.2.0",
                 Transactional::None,
             )
             .await?;
 
-        let fixed3 = advisory
+        let fixed3 = advisory_vulnerability
             .ingest_fixed_package_version(
                 "pkg://maven/io.quarkus/quarkus-addons@1.2.0",
                 Transactional::None,
@@ -621,10 +475,15 @@ mod test {
             )
             .await?;
 
-        advisory.ingest_vulnerability("CVE-123", Transactional::None).await?;
-        advisory.ingest_vulnerability("CVE-123", Transactional::None).await?;
-        advisory.ingest_vulnerability("CVE-456", Transactional::None).await?;
-
+        advisory
+            .ingest_vulnerability("CVE-123", Transactional::None)
+            .await?;
+        advisory
+            .ingest_vulnerability("CVE-123", Transactional::None)
+            .await?;
+        advisory
+            .ingest_vulnerability("CVE-456", Transactional::None)
+            .await?;
 
         Ok(())
     }
@@ -650,7 +509,11 @@ mod test {
             )
             .await?;
 
-        advisory
+        let advisory_vulnerability = advisory
+            .ingest_vulnerability("CVE-42", Transactional::None)
+            .await?;
+
+        advisory_vulnerability
             .ingest_affected_package_range(
                 "pkg://maven/io.quarkus/quarkus-core",
                 "1.0.2",
@@ -659,7 +522,7 @@ mod test {
             )
             .await?;
 
-        advisory
+        advisory_vulnerability
             .ingest_not_affected_package_version(
                 "pkg://maven/.io.quarkus/quarkus-core@1.1.9",
                 Transactional::None,
@@ -695,7 +558,11 @@ mod test {
             )
             .await?;
 
-        advisory
+        let advisory_vulnerability = advisory
+            .ingest_vulnerability("INTERAL-77", Transactional::None)
+            .await?;
+
+        advisory_vulnerability
             .ingest_affected_package_range(
                 "pkg://maven/io.quarkus/quarkus-core",
                 "1.0.2",
@@ -704,7 +571,7 @@ mod test {
             )
             .await?;
 
-        advisory
+        advisory_vulnerability
             .ingest_not_affected_package_version(
                 "pkg://maven/io.quarkus/quarkus-core@1.1.9",
                 Transactional::None,

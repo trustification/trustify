@@ -8,8 +8,8 @@ pub mod advisory;
 pub mod package_version;
 pub mod qualified_package;
 
-pub mod vulnerability;
 pub mod package_version_range;
+pub mod vulnerability;
 
 pub mod affected_package_version_range;
 pub mod fixed_package_version;

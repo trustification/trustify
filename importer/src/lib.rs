@@ -125,7 +125,9 @@ async fn process(system: &InnerSystem, doc: ValidatedAdvisory) -> anyhow::Result
         };
 
         //let v = system.ingest_vulnerability(id).await?;
-        advisory.ingest_vulnerability(id, Transactional::None).await?;
+        let advisory_vulnerability = advisory
+            .ingest_vulnerability(id, Transactional::None)
+            .await?;
 
         if let Some(ps) = &vuln.product_status {
             for r in ps.fixed.iter().flatten() {
@@ -134,7 +136,7 @@ async fn process(system: &InnerSystem, doc: ValidatedAdvisory) -> anyhow::Result
                     //system
                     //.ingest_vulnerability_fixed(package, &v, "vex")
                     //.await?
-                    advisory
+                    advisory_vulnerability
                         .ingest_fixed_package_version(package, Transactional::None)
                         .await?;
                 }

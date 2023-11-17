@@ -1,15 +1,19 @@
 mod util;
 
-use csaf::{Csaf, document::Category};
-use sea_orm::TransactionTrait;
-use huevos_common::purl::Purl;
 use crate::db::Transactional;
-use crate::system::advisory::AdvisoryContext;
 use crate::system::advisory::csaf::util::resolve_purls;
+use crate::system::advisory::AdvisoryContext;
 use crate::system::error::Error;
+use csaf::{document::Category, Csaf};
+use huevos_common::purl::Purl;
+use sea_orm::TransactionTrait;
 
 impl AdvisoryContext {
-    pub async fn ingest_csaf(&self, csaf: Csaf, tx: Transactional<'_>) -> Result<(), anyhow::Error> {
+    pub async fn ingest_csaf(
+        &self,
+        csaf: Csaf,
+        tx: Transactional<'_>,
+    ) -> Result<(), anyhow::Error> {
         let advisory = self.clone();
         //let system = self.system.clone();
         self.system
@@ -23,7 +27,9 @@ impl AdvisoryContext {
                         };
 
                         //let v = system.ingest_vulnerability(id).await?;
-                        advisory.ingest_vulnerability(id, Transactional::None).await?;
+                        let advisory_vulnerability = advisory
+                            .ingest_vulnerability(id, Transactional::None)
+                            .await?;
 
                         if let Some(ps) = &vuln.product_status {
                             for r in ps.fixed.iter().flatten() {
@@ -32,7 +38,7 @@ impl AdvisoryContext {
                                     //system
                                     //.ingest_vulnerability_fixed(package, &v, "vex")
                                     //.await?
-                                    advisory
+                                    advisory_vulnerability
                                         .ingest_fixed_package_version(package, Transactional::None)
                                         .await?;
                                 }
@@ -41,7 +47,8 @@ impl AdvisoryContext {
                     }
                     Ok::<(), Error>(())
                 })
-            }).await?;
+            })
+            .await?;
         Ok(())
     }
 }

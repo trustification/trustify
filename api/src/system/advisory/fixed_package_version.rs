@@ -1,10 +1,11 @@
+use crate::system::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::system::advisory::AdvisoryContext;
 use huevos_entity::fixed_package_version;
 use std::fmt::{Debug, Formatter};
 
 #[derive(Clone)]
 pub struct FixedPackageVersionContext {
-    pub(crate) advisory: AdvisoryContext,
+    pub(crate) advisory_vulnerability: AdvisoryVulnerabilityContext,
     pub(crate) fixed_package_version: fixed_package_version::Model,
 }
 
@@ -14,12 +15,17 @@ impl Debug for FixedPackageVersionContext {
     }
 }
 
-impl From<(&AdvisoryContext, fixed_package_version::Model)> for FixedPackageVersionContext {
+impl From<(&AdvisoryVulnerabilityContext, fixed_package_version::Model)>
+    for FixedPackageVersionContext
+{
     fn from(
-        (advisory, fixed_package_version): (&AdvisoryContext, fixed_package_version::Model),
+        (advisory_vulnerability, fixed_package_version): (
+            &AdvisoryVulnerabilityContext,
+            fixed_package_version::Model,
+        ),
     ) -> Self {
         Self {
-            advisory: advisory.clone(),
+            advisory_vulnerability: advisory_vulnerability.clone(),
             fixed_package_version,
         }
     }

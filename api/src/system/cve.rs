@@ -69,7 +69,10 @@ impl From<(&InnerSystem, vulnerability::Model)> for VulnerabilityContext {
 impl VulnerabilityContext {
     pub async fn advisories(&self, tx: Transactional<'_>) -> Result<Vec<AdvisoryContext>, Error> {
         Ok(advisory::Entity::find()
-            .join(JoinType::Join, advisory_vulnerability::Relation::Advisory.def().rev())
+            .join(
+                JoinType::Join,
+                advisory_vulnerability::Relation::Advisory.def().rev(),
+            )
             .filter(advisory_vulnerability::Column::VulnerabilityId.eq(self.cve.id))
             .all(&self.system.connection(tx))
             .await?
@@ -96,9 +99,15 @@ mod tests {
 
         let system = InnerSystem::for_test("ingest_cve").await?;
 
-        let cve1 = system.ingest_vulnerability("CVE-123", Transactional::None).await?;
-        let cve2 = system.ingest_vulnerability("CVE-123", Transactional::None).await?;
-        let cve3 = system.ingest_vulnerability("CVE-456", Transactional::None).await?;
+        let cve1 = system
+            .ingest_vulnerability("CVE-123", Transactional::None)
+            .await?;
+        let cve2 = system
+            .ingest_vulnerability("CVE-123", Transactional::None)
+            .await?;
+        let cve3 = system
+            .ingest_vulnerability("CVE-456", Transactional::None)
+            .await?;
 
         assert_eq!(cve1.cve.id, cve2.cve.id);
         assert_ne!(cve1.cve.id, cve3.cve.id);

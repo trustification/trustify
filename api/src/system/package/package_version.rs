@@ -166,24 +166,18 @@ impl PackageVersionContext {
         let mut assertions = PackageVulnerabilityAssertions::default();
 
         for each in not_affected_versions {
-            let vulnerabilities = if let Some(advisory) = self.package.system.get_advisory_by_id(each.advisory_id, tx).await? {
-                advisory.vulnerabilities(tx).await?
-            } else {
-                vec![]
-            };
+            let vulnerabilities = vec![];
 
-            assertions.assertions.push(
-                Assertion::NotAffected {
-                    vulnerabilities,
-                    claimant: Claimant {
-                        identifier: each.identifier,
-                        location: each.location,
-                        sha256: each.sha256,
-                    },
-                    version: each.version,
-                }
-            );
-        };
+            assertions.assertions.push(Assertion::NotAffected {
+                vulnerabilities,
+                claimant: Claimant {
+                    identifier: each.identifier,
+                    location: each.location,
+                    sha256: each.sha256,
+                },
+                version: each.version,
+            });
+        }
 
         Ok(assertions)
     }
@@ -232,7 +226,11 @@ mod tests {
             )
             .await?;
 
-        redhat_advisory
+        let redhat_advisory_vulnerability = redhat_advisory
+            .ingest_vulnerability("CVE-1", Transactional::None)
+            .await?;
+
+        redhat_advisory_vulnerability
             .ingest_not_affected_package_version(
                 "pkg://maven/io.quarkus/quarkus-core@1.2",
                 Transactional::None,
@@ -243,7 +241,11 @@ mod tests {
             .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
             .await?;
 
-        ghsa_advisory
+        let ghsa_advisory_vulnerability = ghsa_advisory
+            .ingest_vulnerability("CVE-1", Transactional::None)
+            .await?;
+
+        ghsa_advisory_vulnerability
             .ingest_not_affected_package_version(
                 "pkg://maven/io.quarkus/quarkus-core@1.2.2",
                 Transactional::None,

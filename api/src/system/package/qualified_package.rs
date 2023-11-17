@@ -149,7 +149,11 @@ mod tests {
             )
             .await?;
 
-        let affected_core = advisory
+        let advisory_vulnerability = advisory
+            .ingest_vulnerability("CVE-2", Transactional::None)
+            .await?;
+
+        let affected_core = advisory_vulnerability
             .ingest_affected_package_range(
                 "pkg://maven/io.quarkus/quarkus-core",
                 "1.0.2",
@@ -158,7 +162,7 @@ mod tests {
             )
             .await?;
 
-        let affected_addons = advisory
+        let affected_addons = advisory_vulnerability
             .ingest_affected_package_range(
                 "pkg://maven/io.quarkus/quarkus-addons",
                 "1.0.2",

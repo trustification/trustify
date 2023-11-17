@@ -929,7 +929,11 @@ mod tests {
             )
             .await?;
 
-        advisory
+        let advisory_vulnerability = advisory
+            .ingest_vulnerability("CVE-00000001", Transactional::None)
+            .await?;
+
+        advisory_vulnerability
             .ingest_affected_package_range(
                 "pkg://maven/postgres/postgres-driver",
                 "1.1",
