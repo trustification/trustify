@@ -5,8 +5,8 @@ use crate::system::advisory::AdvisoryContext;
 use crate::system::error::Error;
 use crate::system::InnerSystem;
 use huevos_common::package::PackageVulnerabilityAssertions;
-use huevos_entity::cve::Model;
-use huevos_entity::{advisory, advisory_cve, cve};
+use huevos_entity::vulnerability::Model;
+use huevos_entity::{advisory, advisory_vulnerability, vulnerability};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait,
@@ -15,15 +15,15 @@ use sea_query::JoinType;
 use std::fmt::{Debug, Formatter};
 
 impl InnerSystem {
-    pub async fn ingest_cve(
+    pub async fn ingest_vulnerability(
         &self,
         identifier: &str,
         tx: Transactional<'_>,
-    ) -> Result<CveContext, Error> {
+    ) -> Result<VulnerabilityContext, Error> {
         if let Some(found) = self.get_cve(identifier, tx).await? {
             Ok(found)
         } else {
-            let entity = cve::ActiveModel {
+            let entity = vulnerability::ActiveModel {
                 id: Default::default(),
                 identifier: Set(identifier.to_string()),
             };
@@ -36,9 +36,9 @@ impl InnerSystem {
         &self,
         identifier: &str,
         tx: Transactional<'_>,
-    ) -> Result<Option<CveContext>, Error> {
-        Ok(cve::Entity::find()
-            .filter(cve::Column::Identifier.eq(identifier))
+    ) -> Result<Option<VulnerabilityContext>, Error> {
+        Ok(vulnerability::Entity::find()
+            .filter(vulnerability::Column::Identifier.eq(identifier))
             .one(&self.connection(tx))
             .await?
             .map(|cve| (self, cve).into()))
@@ -46,18 +46,18 @@ impl InnerSystem {
 }
 
 #[derive(Clone)]
-pub struct CveContext {
+pub struct VulnerabilityContext {
     pub(crate) system: InnerSystem,
-    pub(crate) cve: cve::Model,
+    pub(crate) cve: vulnerability::Model,
 }
 
-impl Debug for CveContext {
+impl Debug for VulnerabilityContext {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.cve.fmt(f)
     }
 }
 
-impl From<(&InnerSystem, cve::Model)> for CveContext {
+impl From<(&InnerSystem, vulnerability::Model)> for VulnerabilityContext {
     fn from((system, cve): (&InnerSystem, Model)) -> Self {
         Self {
             system: system.clone(),
@@ -66,11 +66,11 @@ impl From<(&InnerSystem, cve::Model)> for CveContext {
     }
 }
 
-impl CveContext {
+impl VulnerabilityContext {
     pub async fn advisories(&self, tx: Transactional<'_>) -> Result<Vec<AdvisoryContext>, Error> {
         Ok(advisory::Entity::find()
-            .join(JoinType::Join, advisory_cve::Relation::Advisory.def().rev())
-            .filter(advisory_cve::Column::CveId.eq(self.cve.id))
+            .join(JoinType::Join, advisory_vulnerability::Relation::Advisory.def().rev())
+            .filter(advisory_vulnerability::Column::VulnerabilityId.eq(self.cve.id))
             .all(&self.system.connection(tx))
             .await?
             .drain(0..)
@@ -96,9 +96,9 @@ mod tests {
 
         let system = InnerSystem::for_test("ingest_cve").await?;
 
-        let cve1 = system.ingest_cve("CVE-123", Transactional::None).await?;
-        let cve2 = system.ingest_cve("CVE-123", Transactional::None).await?;
-        let cve3 = system.ingest_cve("CVE-456", Transactional::None).await?;
+        let cve1 = system.ingest_vulnerability("CVE-123", Transactional::None).await?;
+        let cve2 = system.ingest_vulnerability("CVE-123", Transactional::None).await?;
+        let cve3 = system.ingest_vulnerability("CVE-456", Transactional::None).await?;
 
         assert_eq!(cve1.cve.id, cve2.cve.id);
         assert_ne!(cve1.cve.id, cve3.cve.id);
@@ -127,11 +127,11 @@ mod tests {
             .await?;
 
         advisory1
-            .ingest_cve("CVE-8675309", Transactional::None)
+            .ingest_vulnerability("CVE-8675309", Transactional::None)
             .await?;
 
         advisory2
-            .ingest_cve("CVE-8675309", Transactional::None)
+            .ingest_vulnerability("CVE-8675309", Transactional::None)
             .await?;
 
         let cve = system.get_cve("CVE-8675309", Transactional::None).await?;

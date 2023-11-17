@@ -3,7 +3,6 @@
 use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::InnerSystem;
-use advisory_cve::AdvisoryCveContext;
 use affected_package_version_range::AffectedPackageVersionRangeContext;
 use fixed_package_version::FixedPackageVersionContext;
 use huevos_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
@@ -17,7 +16,6 @@ use sea_query::{Condition, JoinType};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 
-pub mod advisory_cve;
 pub mod affected_package_version_range;
 pub mod fixed_package_version;
 pub mod not_affected_package_version;
@@ -88,42 +86,42 @@ impl From<(&InnerSystem, entity::advisory::Model)> for AdvisoryContext {
 }
 
 impl AdvisoryContext {
-    pub async fn get_cve(
+    pub async fn get_vulnerability(
         &self,
         identifier: &str,
         tx: Transactional<'_>,
-    ) -> Result<Option<AdvisoryCveContext>, Error> {
-        Ok(entity::cve::Entity::find()
+    ) -> Result<Option<String>, Error> {
+        Ok(entity::vulnerability::Entity::find()
             .join(
                 JoinType::Join,
-                entity::advisory_cve::Relation::Cve.def().rev(),
+                entity::advisory_vulnerability::Relation::Vulnerability.def().rev(),
             )
-            .filter(entity::advisory_cve::Column::AdvisoryId.eq(self.advisory.id))
-            .filter(entity::cve::Column::Identifier.eq(identifier))
+            .filter(entity::advisory_vulnerability::Column::AdvisoryId.eq(self.advisory.id))
+            .filter(entity::vulnerability::Column::Identifier.eq(identifier))
             .one(&self.system.connection(tx))
             .await?
-            .map(|cve| (self, cve).into()))
+            .map(|cve| cve.identifier))
     }
 
-    pub async fn ingest_cve(
+    pub async fn ingest_vulnerability(
         &self,
         identifier: &str,
         tx: Transactional<'_>,
-    ) -> Result<AdvisoryCveContext, Error> {
-        if let Some(found) = self.get_cve(identifier, tx).await? {
-            return Ok(found);
+    ) -> Result<(), Error> {
+        if let Some(found) = self.get_vulnerability(identifier, tx).await? {
+            return Ok(());
         }
 
-        let cve = self.system.ingest_cve(identifier, tx).await?;
+        let cve = self.system.ingest_vulnerability(identifier, tx).await?;
 
-        let entity = entity::advisory_cve::ActiveModel {
+        let entity = entity::advisory_vulnerability::ActiveModel {
             advisory_id: Set(self.advisory.id),
-            cve_id: Set(cve.cve.id),
+            vulnerability_id: Set(cve.cve.id),
         };
 
         entity.insert(&self.system.connection(tx)).await?;
 
-        Ok((self, cve.cve).into())
+        Ok(())
     }
 
     pub async fn get_fixed_package_version<P: Into<Purl>>(
@@ -585,12 +583,10 @@ mod test {
             )
             .await?;
 
-        let cve1 = advisory.ingest_cve("CVE-123", Transactional::None).await?;
-        let cve2 = advisory.ingest_cve("CVE-123", Transactional::None).await?;
-        let cve3 = advisory.ingest_cve("CVE-456", Transactional::None).await?;
+        advisory.ingest_vulnerability("CVE-123", Transactional::None).await?;
+        advisory.ingest_vulnerability("CVE-123", Transactional::None).await?;
+        advisory.ingest_vulnerability("CVE-456", Transactional::None).await?;
 
-        assert_eq!(cve1.cve.id, cve2.cve.id);
-        assert_ne!(cve1.cve.id, cve3.cve.id);
 
         Ok(())
     }

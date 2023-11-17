@@ -1,9 +1,9 @@
 pub use sea_orm_migration::prelude::*;
 
 mod m0000010_create_sbom;
-mod m0000011_create_cve;
+mod m0000011_create_vulnerability;
 mod m0000030_create_advisory;
-pub mod m0000032_create_advisory_cve;
+pub mod m0000032_create_advisory_vulnerability;
 mod m0000040_create_package;
 mod m0000042_create_package_version;
 mod m0000044_create_qualified_package;
@@ -27,9 +27,9 @@ impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
             Box::new(m0000010_create_sbom::Migration),
-            Box::new(m0000011_create_cve::Migration),
+            Box::new(m0000011_create_vulnerability::Migration),
             Box::new(m0000030_create_advisory::Migration),
-            Box::new(m0000032_create_advisory_cve::Migration),
+            Box::new(m0000032_create_advisory_vulnerability::Migration),
             Box::new(m0000040_create_package::Migration),
             Box::new(m0000042_create_package_version::Migration),
             Box::new(m0000044_create_qualified_package::Migration),

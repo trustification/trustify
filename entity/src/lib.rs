@@ -8,13 +8,13 @@ pub mod advisory;
 pub mod package_version;
 pub mod qualified_package;
 
-pub mod cve;
+pub mod vulnerability;
 pub mod package_version_range;
 
 pub mod affected_package_version_range;
 pub mod fixed_package_version;
 
-pub mod advisory_cve;
+pub mod advisory_vulnerability;
 pub mod not_affected_package_version;
 
 pub mod package_relates_to_package;
