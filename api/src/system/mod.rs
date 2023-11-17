@@ -11,7 +11,8 @@ pub mod error;
 pub mod package;
 pub mod sbom;
 
-pub mod cve;
+mod cpe22;
+pub mod vulnerability;
 
 const DB_URL: &str = "postgres://postgres:eggs@localhost";
 const DB_NAME: &str = "huevos";
