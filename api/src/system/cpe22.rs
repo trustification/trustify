@@ -5,14 +5,15 @@ use huevos_common::cpe22::Component::Value;
 use huevos_common::cpe22::{Component, Cpe22, Cpe22Type};
 use huevos_entity as entity;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, NotSet, QueryFilter, Set};
+use sea_query::SelectStatement;
 use std::fmt::{Debug, Formatter};
 
 impl InnerSystem {
-    pub async fn ingest_cpe22<C: Into<Cpe22>>(
+    pub async fn get_cpe22<C: Into<Cpe22>>(
         &self,
         cpe: C,
         tx: Transactional<'_>,
-    ) -> Result<Cpe22Context, Error> {
+    ) -> Result<Option<Cpe22Context>, Error> {
         let cpe = cpe.into();
 
         let mut query = entity::cpe22::Entity::find();
@@ -55,7 +56,35 @@ impl InnerSystem {
         };
 
         if let Some(found) = query.one(&self.connection(tx)).await? {
-            return Ok((self, found).into());
+            Ok(Some((self, found).into()))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub(crate) async fn get_cpe22_by_query(
+        &self,
+        query: SelectStatement,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<Cpe22Context>, Error> {
+        Ok(entity::cpe22::Entity::find()
+            .filter(entity::cpe22::Column::Id.in_subquery(query))
+            .all(&self.connection(tx))
+            .await?
+            .drain(0..)
+            .map(|cpe22| (self, cpe22).into())
+            .collect())
+    }
+
+    pub async fn ingest_cpe22<C: Into<Cpe22>>(
+        &self,
+        cpe: C,
+        tx: Transactional<'_>,
+    ) -> Result<Cpe22Context, Error> {
+        let cpe = cpe.into();
+
+        if let Some(found) = self.get_cpe22(cpe.clone(), tx).await? {
+            return Ok(found);
         }
 
         let entity = entity::cpe22::ActiveModel {
@@ -100,8 +129,8 @@ impl InnerSystem {
 
 #[derive(Clone)]
 pub struct Cpe22Context {
-    system: InnerSystem,
-    cpe22: entity::cpe22::Model,
+    pub system: InnerSystem,
+    pub cpe22: entity::cpe22::Model,
 }
 
 impl From<(&InnerSystem, entity::cpe22::Model)> for Cpe22Context {

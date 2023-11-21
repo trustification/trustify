@@ -1,4 +1,5 @@
 use crate::m0000010_create_sbom::Sbom;
+use crate::m0000035_create_cpe22::Cpe22;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -11,25 +12,35 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(SbomDescribesCpe::Table)
+                    .table(SbomDescribesCpe22::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(SbomDescribesCpe::SbomId)
+                        ColumnDef::new(SbomDescribesCpe22::SbomId)
                             .integer()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
                             .name("sbom_id")
-                            .from(SbomDescribesCpe::Table, SbomDescribesCpe::SbomId)
+                            .from(SbomDescribesCpe22::Table, SbomDescribesCpe22::SbomId)
                             .to(Sbom::Table, Sbom::Id),
                     )
-                    .col(ColumnDef::new(SbomDescribesCpe::Cpe).string().not_null())
+                    .col(
+                        ColumnDef::new(SbomDescribesCpe22::Cpe22Id)
+                            .integer()
+                            .not_null(),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("cpe22_id")
+                            .from(SbomDescribesCpe22::Table, SbomDescribesCpe22::Cpe22Id)
+                            .to(Cpe22::Table, Cpe22::Id),
+                    )
                     .primary_key(
                         Index::create()
                             .name("pk-sbom-cpe")
-                            .col(SbomDescribesCpe::SbomId)
-                            .col(SbomDescribesCpe::Cpe)
+                            .col(SbomDescribesCpe22::SbomId)
+                            .col(SbomDescribesCpe22::Cpe22Id)
                             .primary(),
                     )
                     .to_owned(),
@@ -41,7 +52,7 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(
                 Table::drop()
-                    .table(SbomDescribesCpe::Table)
+                    .table(SbomDescribesCpe22::Table)
                     .if_exists()
                     .to_owned(),
             )
@@ -50,8 +61,8 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-pub enum SbomDescribesCpe {
+pub enum SbomDescribesCpe22 {
     Table,
     SbomId,
-    Cpe,
+    Cpe22Id,
 }

@@ -3,6 +3,7 @@ use cpe::cpe::{Cpe, CpeType};
 use cpe::uri::{OwnedUri, Uri};
 use std::fmt::{Debug, Display, Formatter};
 
+#[derive(Clone)]
 pub struct Cpe22 {
     uri: cpe::uri::OwnedUri,
 }

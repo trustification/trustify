@@ -1,7 +1,7 @@
 pub mod package;
 pub mod package_qualifier;
 pub mod sbom;
-pub mod sbom_describes_cpe;
+pub mod sbom_describes_cpe22;
 pub mod sbom_describes_package;
 
 pub mod advisory;

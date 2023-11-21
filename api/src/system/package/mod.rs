@@ -36,11 +36,13 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<QualifiedPackageContext, Error> {
         let purl = pkg.into();
+        if let Some(found) = self.get_qualified_package(purl.clone(), tx).await? {
+            return Ok(found);
+        }
+
         let package_version = self.ingest_package_version(purl.clone(), tx).await?;
 
-        package_version
-            .ingest_qualified_package(purl.clone(), tx)
-            .await
+        package_version.ingest_qualified_package(purl, tx).await
     }
 
     /// Ensure the system knows about and contains a record for a *versioned* package.
@@ -52,6 +54,9 @@ impl InnerSystem {
         tx: Transactional<'_>,
     ) -> Result<PackageVersionContext, Error> {
         let pkg = pkg.into();
+        if let Some(found) = self.get_package_version(pkg.clone(), tx).await? {
+            return Ok(found);
+        }
         let package = self.ingest_package(pkg.clone(), tx).await?;
 
         package.ingest_package_version(pkg.clone(), tx).await
@@ -361,7 +366,7 @@ impl PackageContext {
                 Ok((self, model.insert(&self.system.connection(tx)).await?).into())
             }
         } else {
-            Err(Error::Purl(PurlErr::MissingVersion))
+            Err(Error::Purl(PurlErr::MissingVersion(purl.to_string())))
         }
     }
 

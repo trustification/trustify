@@ -7,10 +7,10 @@ use packageurl::PackageUrl;
 use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-#[derive(Debug, Copy, Clone, thiserror::Error)]
+#[derive(Debug, Clone, thiserror::Error)]
 pub enum PurlErr {
-    #[error("missing version")]
-    MissingVersion,
+    #[error("missing version {0}")]
+    MissingVersion(String),
 }
 
 #[derive(Clone, PartialEq)]

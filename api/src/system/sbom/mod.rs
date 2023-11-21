@@ -1,10 +1,12 @@
 //! Support for SBOMs.
 
 use crate::db::{LeftPackageId, QualifiedPackageTransitive, Transactional};
+use crate::system::cpe22::Cpe22Context;
 use crate::system::package::package_version::PackageVersionContext;
 use crate::system::package::qualified_package::QualifiedPackageContext;
 use crate::system::package::PackageContext;
 use crate::system::InnerSystem;
+use huevos_common::cpe22::Cpe22;
 use huevos_common::package::PackageVulnerabilityAssertions;
 use huevos_common::purl::Purl;
 use huevos_common::sbom::SbomLocator;
@@ -81,7 +83,7 @@ impl InnerSystem {
             SbomLocator::Location(location) => self.locate_sbom_by_location(&location, tx).await,
             SbomLocator::Sha256(sha256) => self.locate_sbom_by_sha256(&sha256, tx).await,
             SbomLocator::Purl(purl) => self.locate_sbom_by_purl(purl, tx).await,
-            SbomLocator::Cpe(cpe) => self.locate_sbom_by_cpe(&cpe, tx).await,
+            SbomLocator::Cpe22(cpe) => self.locate_sbom_by_cpe22(&cpe, tx).await,
         }
     }
 
@@ -101,7 +103,7 @@ impl InnerSystem {
             SbomLocator::Location(location) => self.locate_sboms_by_location(&location, tx).await,
             SbomLocator::Sha256(sha256) => self.locate_sboms_by_sha256(&sha256, tx).await,
             SbomLocator::Purl(purl) => self.locate_sboms_by_purl(purl, tx).await,
-            SbomLocator::Cpe(cpe) => self.locate_sboms_by_cpe(&cpe, tx).await,
+            SbomLocator::Cpe22(cpe) => self.locate_sboms_by_cpe22(cpe, tx).await,
             _ => todo!(),
         }
     }
@@ -246,38 +248,46 @@ impl InnerSystem {
         }
     }
 
-    async fn locate_sbom_by_cpe(
+    async fn locate_sbom_by_cpe22(
         &self,
-        cpe: &str,
+        cpe: &Cpe22,
         tx: Transactional<'_>,
     ) -> Result<Option<SbomContext>, Error> {
-        self.locate_one_sbom(
-            entity::sbom::Entity::find()
-                .join(
-                    JoinType::LeftJoin,
-                    entity::sbom_describes_cpe::Relation::Sbom.def().rev(),
-                )
-                .filter(entity::sbom_describes_cpe::Column::Cpe.eq(cpe.to_string())),
-            tx,
-        )
-        .await
+        if let Some(cpe) = self.get_cpe22(cpe.clone(), tx).await? {
+            self.locate_one_sbom(
+                entity::sbom::Entity::find()
+                    .join(
+                        JoinType::LeftJoin,
+                        entity::sbom_describes_cpe22::Relation::Sbom.def().rev(),
+                    )
+                    .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(cpe.cpe22.id)),
+                tx,
+            )
+            .await
+        } else {
+            Ok(None)
+        }
     }
 
-    async fn locate_sboms_by_cpe(
+    async fn locate_sboms_by_cpe22<C: Into<Cpe22>>(
         &self,
-        cpe: &str,
+        cpe: C,
         tx: Transactional<'_>,
     ) -> Result<Vec<SbomContext>, Error> {
-        self.locate_many_sboms(
-            entity::sbom::Entity::find()
-                .join(
-                    JoinType::LeftJoin,
-                    entity::sbom_describes_cpe::Relation::Sbom.def().rev(),
-                )
-                .filter(entity::sbom_describes_cpe::Column::Cpe.eq(cpe.to_string())),
-            tx,
-        )
-        .await
+        if let Some(found) = self.get_cpe22(cpe, tx).await? {
+            self.locate_many_sboms(
+                entity::sbom::Entity::find()
+                    .join(
+                        JoinType::LeftJoin,
+                        entity::sbom_describes_cpe22::Relation::Sbom.def().rev(),
+                    )
+                    .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(found.cpe22.id)),
+                tx,
+            )
+            .await
+        } else {
+            Ok(vec![])
+        }
     }
 }
 
@@ -309,21 +319,23 @@ impl From<(&InnerSystem, entity::sbom::Model)> for SbomContext {
 }
 
 impl SbomContext {
-    pub async fn ingest_describes_cpe(
+    pub async fn ingest_describes_cpe22<C: Into<Cpe22>>(
         &self,
-        cpe: &str,
+        cpe: C,
         tx: Transactional<'_>,
     ) -> Result<(), Error> {
-        let fetch = entity::sbom_describes_cpe::Entity::find()
-            .filter(entity::sbom_describes_cpe::Column::SbomId.eq(self.sbom.id))
-            .filter(entity::sbom_describes_cpe::Column::Cpe.eq(cpe.to_string()))
+        let cpe = self.system.ingest_cpe22(cpe, tx).await?;
+
+        let fetch = entity::sbom_describes_cpe22::Entity::find()
+            .filter(entity::sbom_describes_cpe22::Column::SbomId.eq(self.sbom.id))
+            .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(cpe.cpe22.id))
             .one(&self.system.connection(tx))
             .await?;
 
         if fetch.is_none() {
-            let model = entity::sbom_describes_cpe::ActiveModel {
+            let model = entity::sbom_describes_cpe22::ActiveModel {
                 sbom_id: Set(self.sbom.id),
-                cpe: Set(cpe.to_string()),
+                cpe22_id: Set(cpe.cpe22.id),
             };
 
             model.insert(&self.system.connection(tx)).await?;
@@ -376,48 +388,91 @@ impl SbomContext {
             .await
     }
 
+    pub async fn describes_cpe22s(
+        &self,
+        tx: Transactional<'_>,
+    ) -> Result<Vec<Cpe22Context>, Error> {
+        self.system
+            .get_cpe22_by_query(
+                entity::sbom_describes_cpe22::Entity::find()
+                    .select_only()
+                    .column(entity::sbom_describes_cpe22::Column::Cpe22Id)
+                    .filter(entity::sbom_describes_cpe22::Column::SbomId.eq(self.sbom.id))
+                    .into_query(),
+                tx,
+            )
+            .await
+    }
+
     /// Within the context of *this* SBOM, ingest a relationship between
     /// two packages.
     async fn ingest_package_relates_to_package<P1: Into<Purl>, P2: Into<Purl>>(
         &self,
-        left_package: P1,
+        left_package_input: P1,
         relationship: Relationship,
-        right_package: P2,
+        right_package_input: P2,
         tx: Transactional<'_>,
     ) -> Result<(), Error> {
+        let left_package_input = left_package_input.into();
         let left_package = self
             .system
-            .ingest_qualified_package(left_package, tx)
-            .await?;
+            .ingest_qualified_package(left_package_input.clone(), tx)
+            .await;
 
+        let right_package_input = right_package_input.into();
         let right_package = self
             .system
-            .ingest_qualified_package(right_package, tx)
-            .await?;
+            .ingest_qualified_package(right_package_input.clone(), tx)
+            .await;
 
-        if entity::package_relates_to_package::Entity::find()
-            .filter(entity::package_relates_to_package::Column::SbomId.eq(self.sbom.id))
-            .filter(
-                entity::package_relates_to_package::Column::LeftPackageId
-                    .eq(left_package.qualified_package.id),
-            )
-            .filter(entity::package_relates_to_package::Column::Relationship.eq(relationship))
-            .filter(
-                entity::package_relates_to_package::Column::RightPackageId
-                    .eq(right_package.qualified_package.id),
-            )
-            .one(&self.system.connection(tx))
-            .await?
-            .is_none()
-        {
-            let entity = entity::package_relates_to_package::ActiveModel {
-                left_package_id: Set(left_package.qualified_package.id),
-                relationship: Set(relationship),
-                right_package_id: Set(right_package.qualified_package.id),
-                sbom_id: Set(self.sbom.id),
-            };
+        match (&left_package, &right_package) {
+            (Ok(left_package), Ok(right_package)) => {
+                if entity::package_relates_to_package::Entity::find()
+                    .filter(entity::package_relates_to_package::Column::SbomId.eq(self.sbom.id))
+                    .filter(
+                        entity::package_relates_to_package::Column::LeftPackageId
+                            .eq(left_package.qualified_package.id),
+                    )
+                    .filter(
+                        entity::package_relates_to_package::Column::Relationship.eq(relationship),
+                    )
+                    .filter(
+                        entity::package_relates_to_package::Column::RightPackageId
+                            .eq(right_package.qualified_package.id),
+                    )
+                    .one(&self.system.connection(tx))
+                    .await?
+                    .is_none()
+                {
+                    let entity = entity::package_relates_to_package::ActiveModel {
+                        left_package_id: Set(left_package.qualified_package.id),
+                        relationship: Set(relationship),
+                        right_package_id: Set(right_package.qualified_package.id),
+                        sbom_id: Set(self.sbom.id),
+                    };
 
-            entity.insert(&self.system.connection(tx)).await?;
+                    entity.insert(&self.system.connection(tx)).await?;
+                }
+            }
+            (Err(_), Err(_)) => {
+                log::warn!(
+                    "unable to ingest relationships between non-fully-qualified packages {}, {}",
+                    left_package_input.to_string(),
+                    right_package_input.to_string()
+                );
+            }
+            (Err(_), Ok(_)) => {
+                log::warn!(
+                    "unable to ingest relationships involving a non-fully-qualified package {}",
+                    left_package_input.to_string()
+                );
+            }
+            (Ok(_), Err(_)) => {
+                log::warn!(
+                    "unable to ingest relationships involving a non-fully-qualified package {}",
+                    right_package_input.to_string()
+                );
+            }
         }
 
         Ok(())
@@ -718,21 +773,37 @@ mod tests {
         let sbom_v3 = system
             .ingest_sbom("http://sbom.com/test.json", "10", Transactional::None)
             .await?;
+        println!("a");
 
         sbom_v1
-            .ingest_describes_cpe("cpe:thingy", Transactional::None)
+            .ingest_describes_cpe22(
+                cpe::uri::Uri::parse("cpe:/a:redhat:quarkus:2.13::el8")?,
+                Transactional::None,
+            )
             .await?;
+        println!("b");
 
         sbom_v2
-            .ingest_describes_cpe("cpe:thingy", Transactional::None)
+            .ingest_describes_cpe22(
+                cpe::uri::Uri::parse("cpe:/a:redhat:quarkus:2.13::el8")?,
+                Transactional::None,
+            )
             .await?;
+        println!("c");
 
         sbom_v3
-            .ingest_describes_cpe("cpe:other_thingy", Transactional::None)
+            .ingest_describes_cpe22(
+                cpe::uri::Uri::parse("cpe:/a:redhat:not-quarkus:2.13::el8")?,
+                Transactional::None,
+            )
             .await?;
+        println!("d");
 
         let found = system
-            .locate_sboms(SbomLocator::Cpe("cpe:thingy".into()), Transactional::None)
+            .locate_sboms(
+                SbomLocator::Cpe22(cpe::uri::Uri::parse("cpe:/a:redhat:quarkus:2.13::el8")?.into()),
+                Transactional::None,
+            )
             .await?;
 
         assert_eq!(2, found.len());

@@ -52,7 +52,7 @@ impl PackageVersionContext {
         // No appropriate qualified package, create one.
         let qualified_package = entity::qualified_package::ActiveModel {
             id: Default::default(),
-            package_version_id: Set(self.package_version.package_id),
+            package_version_id: Set(self.package_version.id),
         };
 
         let qualified_package = qualified_package
