@@ -25,4 +25,5 @@ thiserror = "1"
 time = "0.3"
 tokio = { version = "1.30.0", features = ["full"] }
 walker-common = "0.5"
+url = "2.4.0"
 
