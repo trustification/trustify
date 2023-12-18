@@ -11,11 +11,14 @@ use huevos_api::system::InnerSystem;
 use huevos_common::config::Database;
 use huevos_common::purl::Purl;
 use packageurl::PackageUrl;
+use sha2::digest::Output;
+use sha2::{Digest, Sha256};
 use std::process::ExitCode;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
 use url::Url;
 use walker_common::fetcher::Fetcher;
+use walker_common::utils::hex::Hex;
 use walker_common::validate::ValidationOptions;
 
 mod csaf;
@@ -126,7 +129,12 @@ async fn process(system: &InnerSystem, doc: ValidatedAdvisory) -> anyhow::Result
     log::info!("Ingesting: {}", doc.url);
     let sha256: String = match doc.sha256.clone() {
         Some(sha) => sha.expected.clone(),
-        None => "".to_string(),
+        None => {
+            let mut actual = Sha256::new();
+            actual.update(&doc.data);
+            let digest: Output<Sha256> = actual.finalize();
+            Hex(&digest).to_lower()
+        }
     };
 
     let advisory = system
