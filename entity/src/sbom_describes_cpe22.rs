@@ -1,4 +1,4 @@
-use crate::{sbom};
+use crate::sbom;
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]

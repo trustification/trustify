@@ -3,7 +3,7 @@ use ::csaf::definitions::{Branch, ProductIdT};
 use ::csaf::document::Category;
 use ::csaf::Csaf;
 use csaf_walker::retrieve::RetrievingVisitor;
-use csaf_walker::source::{DispatchSource, FileOptions, FileSource};
+use csaf_walker::source::{DispatchSource, FileSource, HttpSource};
 use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
 use csaf_walker::walker::Walker;
 use huevos_api::db::Transactional;
@@ -11,9 +11,14 @@ use huevos_api::system::InnerSystem;
 use huevos_common::config::Database;
 use huevos_common::purl::Purl;
 use packageurl::PackageUrl;
+use sha2::digest::Output;
+use sha2::{Digest, Sha256};
 use std::process::ExitCode;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
+use url::Url;
+use walker_common::fetcher::Fetcher;
+use walker_common::utils::hex::Hex;
 use walker_common::validate::ValidationOptions;
 
 mod csaf;
@@ -23,6 +28,10 @@ mod csaf;
 pub struct Run {
     #[command(flatten)]
     pub database: Database,
+
+    /// Source URL or path
+    #[arg(short, long)]
+    pub(crate) source: String,
 }
 
 impl Run {
@@ -55,9 +64,19 @@ impl Run {
             )),
         };
 
-        let source = FileSource::new("../csaf-walker/data/vex", FileOptions::default())?;
-        // let source = HttpSource { .. };
-        let source: DispatchSource = source.into();
+        let source: DispatchSource = match Url::parse(&self.source) {
+            Ok(url) => HttpSource {
+                url,
+                fetcher: Fetcher::new(Default::default()).await?,
+                options: Default::default(),
+                // options: HttpOptions {
+                //     keys: self.options.keys.clone(),
+                //     since: *since,
+                // },
+            }
+            .into(),
+            Err(_) => FileSource::new(&self.source, None)?.into(),
+        };
 
         let visitor =
             ValidationVisitor::new(move |doc: Result<ValidatedAdvisory, ValidationError>| {
@@ -108,12 +127,21 @@ async fn process(system: &InnerSystem, doc: ValidatedAdvisory) -> anyhow::Result
     }
 
     log::info!("Ingesting: {}", doc.url);
+    let sha256: String = match doc.sha256.clone() {
+        Some(sha) => sha.expected.clone(),
+        None => {
+            let mut actual = Sha256::new();
+            actual.update(&doc.data);
+            let digest: Output<Sha256> = actual.finalize();
+            Hex(&digest).to_lower()
+        }
+    };
 
     let advisory = system
         .ingest_advisory(
             &csaf.document.tracking.id,
             doc.url.as_ref(),
-            &doc.sha256.as_ref().unwrap().expected,
+            &sha256,
             Transactional::None,
         )
         .await?;
