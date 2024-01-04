@@ -13,6 +13,7 @@ anyhow = "1.0.72"
 clap = { version = "4", features = ["derive"] }
 csaf = "0.5"
 csaf-walker = { version = "0.5" }
+sbom-walker = { version = "0.5" }
 env_logger = "0.10.0"
 log = "0.4.19"
 packageurl = "0.3.0"
@@ -27,4 +28,5 @@ tokio = { version = "1.30.0", features = ["full"] }
 walker-common = "0.5"
 url = "2.4.0"
 sha2 = "0.10.6"
+async-trait = "0.1"
 

@@ -4,7 +4,8 @@ use std::process::{ExitCode, Termination};
 #[allow(clippy::large_enum_variant)]
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
-    Importer(huevos_importer::Run),
+    #[command(subcommand)]
+    Importer(huevos_importer::ImporterCommand),
     Server(huevos_server::Run),
 }
 
