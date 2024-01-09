@@ -31,7 +31,7 @@ impl ImportSbomCommand {
 
         println!("Ingesting SBOMs");
 
-        let _system = InnerSystem::with_config(&self.database).await?;
+        let system = InnerSystem::with_config(&self.database).await?;
 
         let source: DispatchSource = match Url::parse(&self.source) {
             Ok(url) => HttpSource {
@@ -47,7 +47,7 @@ impl ImportSbomCommand {
             Err(_) => FileSource::new(&self.source, None)?.into(),
         };
 
-        let process = ProcessVisitor;
+        let process = ProcessVisitor { system };
 
         let validation = ValidationVisitor::new(process).with_options(ValidationOptions {
             validation_date: None,

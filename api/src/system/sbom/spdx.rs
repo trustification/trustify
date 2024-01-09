@@ -8,9 +8,9 @@ use spdx_rs::models::{RelationshipType, SPDX};
 use std::io::{Read, Seek};
 
 impl SbomContext {
-    async fn ingest_spdx_data<R: Read>(&self, sbom_data: R) -> Result<(), anyhow::Error> {
+    pub async fn ingest_spdx_data<R: Read>(&self, sbom_data: R) -> Result<(), anyhow::Error> {
         let json = serde_json::from_reader::<_, Value>(sbom_data)?;
-        // preemptively fix license, avoid a clone
+
         let (json, _) = fix_license(json);
 
         let spdx_data: SPDX = serde_json::from_value(json)?;
@@ -20,7 +20,7 @@ impl SbomContext {
         Ok(())
     }
 
-    async fn ingest_spdx(&self, sbom_data: SPDX) -> Result<(), anyhow::Error> {
+    pub async fn ingest_spdx(&self, sbom_data: SPDX) -> Result<(), anyhow::Error> {
         // FIXME: not sure this is correct. It may be that we need to use `DatabaseTransaction` instead of the `db` field
         let sbom = self.clone();
         //let system = self.system.clone();
@@ -38,14 +38,14 @@ impl SbomContext {
                         {
                             for reference in &described_package.external_reference {
                                 if reference.reference_type == "purl" {
-                                    println!("describes pkg {}", reference.reference_locator);
+                                    //println!("describes pkg {}", reference.reference_locator);
                                     sbom.ingest_describes_package(
                                         reference.reference_locator.clone(),
                                         tx,
                                     )
                                         .await?;
                                 } else if reference.reference_type == "cpe22Type" {
-                                    println!("describes cpe22 {}", reference.reference_locator);
+                                    //println!("describes cpe22 {}", reference.reference_locator);
                                     if let Ok(cpe) = cpe::uri::Uri::parse(&reference.reference_locator) {
                                         sbom.ingest_describes_cpe22(
                                             cpe,
