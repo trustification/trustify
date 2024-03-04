@@ -1,7 +1,6 @@
 use ::csaf::definitions::{Branch, ProductIdT};
 use ::csaf::document::Category;
 use ::csaf::Csaf;
-use csaf::trace_product;
 use csaf_walker::retrieve::RetrievingVisitor;
 use csaf_walker::source::{DispatchSource, FileSource, HttpSource};
 use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
@@ -11,6 +10,7 @@ use huevos_api::system::InnerSystem;
 use huevos_common::config::Database;
 use huevos_common::purl::Purl;
 use packageurl::PackageUrl;
+use process::trace_product;
 use sha2::digest::Output;
 use sha2::{Digest, Sha256};
 use std::process::ExitCode;
@@ -21,7 +21,7 @@ use walker_common::fetcher::Fetcher;
 use walker_common::utils::hex::Hex;
 use walker_common::validate::ValidationOptions;
 
-mod csaf;
+mod process;
 
 /// Run the importer
 #[derive(clap::Args, Debug)]

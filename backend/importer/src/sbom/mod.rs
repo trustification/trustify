@@ -11,9 +11,7 @@ use sbom_walker::{
 use url::Url;
 use walker_common::{fetcher::Fetcher, validate::ValidationOptions};
 
-use crate::sbom::sbom::ProcessVisitor;
-
-mod sbom;
+mod process;
 
 #[derive(clap::Args, Debug)]
 pub struct ImportSbomCommand {
@@ -47,7 +45,7 @@ impl ImportSbomCommand {
             Err(_) => FileSource::new(&self.source, None)?.into(),
         };
 
-        let process = ProcessVisitor { system };
+        let process = process::ProcessVisitor { system };
 
         let validation = ValidationVisitor::new(process).with_options(ValidationOptions {
             validation_date: None,

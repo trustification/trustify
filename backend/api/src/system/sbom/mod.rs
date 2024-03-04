@@ -39,7 +39,7 @@ impl InnerSystem {
         sha256: &str,
     ) -> Result<Option<SbomContext>, Error> {
         Ok(entity::sbom::Entity::find()
-            .filter(Condition::all().add(entity::sbom::Column::Location.eq(location.clone())))
+            .filter(Condition::all().add(entity::sbom::Column::Location.eq(location)))
             .filter(Condition::all().add(entity::sbom::Column::Sha256.eq(sha256.to_string())))
             .one(&self.db)
             .await?

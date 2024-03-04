@@ -15,9 +15,9 @@ env PGPASSWORD=eggs psql -U postgres -d huevos -h localhost -p 5432
 Import data:
 
 ```shell
-cargo run --bin huevos-cli importer csaf --source ../trustification/data/ds1/csaf --db-user postgres --db-password eggs
+cargo run --bin huevos-cli importer csaf --source ../../trustification/data/ds1/csaf --db-user postgres --db-password eggs
 
-cargo run --bin huevos-cli importer sbom --source ../trustification/data/ds1/sbom --db-user postgres --db-password eggs
+cargo run --bin huevos-cli importer sbom --source ../../trustification/data/ds1/sbom --db-user postgres --db-password eggs
 ```
 
 ## Notes on models
