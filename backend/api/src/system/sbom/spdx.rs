@@ -183,8 +183,8 @@ mod tests {
     async fn parse_spdx_quarkus() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("parse_spdx_quarkus").await?;
 
-        let pwd = PathBuf::from_str(env!("PWD"))?;
-        let test_data = pwd.join("test-data");
+        let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
+        let test_data = pwd.join("../test-data");
 
         // nope, has bad license expressions
         let sbom = test_data.join("quarkus-bom-2.13.8.Final-redhat-00004.json");
@@ -236,8 +236,8 @@ mod tests {
     async fn parse_spdx_openshift() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("parse_spdx_openshift").await?;
 
-        let pwd = PathBuf::from_str(env!("PWD"))?;
-        let test_data = pwd.join("test-data");
+        let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
+        let test_data = pwd.join("../test-data");
 
         // nope, has bad license expressions
         let sbom = test_data.join("openshift-4.13.json");
@@ -287,8 +287,8 @@ mod tests {
     async fn parse_spdx() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("parse_spdx").await?;
 
-        let pwd = PathBuf::from_str(env!("PWD"))?;
-        let test_data = pwd.join("test-data");
+        let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
+        let test_data = pwd.join("../test-data");
 
         //let sbom = test_data.join( "openshift-4.13.json");
         let sbom = test_data.join("ubi9-9.2-755.1697625012.json");
