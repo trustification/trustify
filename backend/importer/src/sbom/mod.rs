@@ -1,13 +1,13 @@
 use std::process::ExitCode;
 
-use trustify_api::system::InnerSystem;
-use trustify_common::config::Database;
 use sbom_walker::{
     retrieve::RetrievingVisitor,
     source::{DispatchSource, FileSource, HttpSource},
     validation::ValidationVisitor,
     walker::Walker,
 };
+use trustify_api::system::InnerSystem;
+use trustify_common::config::Database;
 use url::Url;
 use walker_common::{fetcher::Fetcher, validate::ValidationOptions};
 

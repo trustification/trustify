@@ -1,11 +1,11 @@
 use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::sbom::SbomContext;
-use trustify_entity::relationship::Relationship;
 use sea_orm::TransactionTrait;
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
 use std::io::{Read, Seek};
+use trustify_entity::relationship::Relationship;
 
 impl SbomContext {
     pub async fn ingest_spdx_data<R: Read>(&self, sbom_data: R) -> Result<(), anyhow::Error> {
@@ -172,12 +172,12 @@ fn fix_license(mut json: Value) -> (Value, bool) {
 mod tests {
     use crate::db::Transactional;
     use crate::system::InnerSystem;
-    use trustify_entity::relationship::Relationship;
     use spdx_rs::models::SPDX;
     use std::fs::File;
     use std::path::PathBuf;
     use std::str::FromStr;
     use std::time::Instant;
+    use trustify_entity::relationship::Relationship;
 
     #[tokio::test]
     async fn parse_spdx_quarkus() -> Result<(), anyhow::Error> {

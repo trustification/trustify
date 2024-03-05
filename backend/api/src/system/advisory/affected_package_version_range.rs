@@ -1,8 +1,8 @@
 use crate::system::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::system::advisory::AdvisoryContext;
+use std::fmt::{Debug, Formatter};
 use trustify_entity::affected_package_version_range;
 use trustify_entity::affected_package_version_range::Model;
-use std::fmt::{Debug, Formatter};
 
 #[derive(Clone)]
 pub struct AffectedPackageVersionRangeContext {

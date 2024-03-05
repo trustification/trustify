@@ -1,8 +1,8 @@
 //! Support for a *version range* of a package.
 
 use crate::system::package::PackageContext;
-use trustify_entity as entity;
 use std::fmt::{Debug, Formatter};
+use trustify_entity as entity;
 
 impl From<(&PackageContext, entity::package_version_range::Model)> for PackageVersionRangeContext {
     fn from(

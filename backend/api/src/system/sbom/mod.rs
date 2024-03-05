@@ -6,12 +6,6 @@ use crate::system::package::package_version::PackageVersionContext;
 use crate::system::package::qualified_package::QualifiedPackageContext;
 use crate::system::package::PackageContext;
 use crate::system::InnerSystem;
-use trustify_common::cpe22::Cpe22;
-use trustify_common::package::PackageVulnerabilityAssertions;
-use trustify_common::purl::Purl;
-use trustify_common::sbom::SbomLocator;
-use trustify_entity as entity;
-use trustify_entity::relationship::Relationship;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult,
     ModelTrait, QueryFilter, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Set,
@@ -25,6 +19,12 @@ use std::collections::hash_set::Union;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 use std::ops::Deref;
+use trustify_common::cpe22::Cpe22;
+use trustify_common::package::PackageVulnerabilityAssertions;
+use trustify_common::purl::Purl;
+use trustify_common::sbom::SbomLocator;
+use trustify_entity as entity;
+use trustify_entity::relationship::Relationship;
 
 use super::error::Error;
 

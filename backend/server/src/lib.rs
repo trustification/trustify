@@ -4,10 +4,10 @@ use crate::server::read;
 use crate::server::Error::System;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
-use trustify_api::system::InnerSystem;
-use trustify_common::config::Database;
 use std::process::ExitCode;
 use std::sync::Arc;
+use trustify_api::system::InnerSystem;
+use trustify_common::config::Database;
 
 pub mod server;
 
@@ -70,8 +70,8 @@ pub fn configure(config: &mut web::ServiceConfig) {
 
 #[cfg(test)]
 mod test_util {
-    use trustify_api::system::InnerSystem;
     use std::sync::Arc;
+    use trustify_api::system::InnerSystem;
 
     pub async fn bootstrap_system(name: &str) -> Result<Arc<InnerSystem>, anyhow::Error> {
         InnerSystem::bootstrap("postgres", "eggs", "localhost", None, name)

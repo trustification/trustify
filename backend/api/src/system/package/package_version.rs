@@ -4,9 +4,6 @@ use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::package::qualified_package::QualifiedPackageContext;
 use crate::system::package::PackageContext;
-use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
-use trustify_common::purl::Purl;
-use trustify_entity as entity;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, PaginatorTrait, QueryFilter,
     QuerySelect, RelationTrait, Set,
@@ -14,6 +11,9 @@ use sea_orm::{
 use sea_query::JoinType;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
+use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
+use trustify_common::purl::Purl;
+use trustify_entity as entity;
 
 /// Live context for a package version.
 #[derive(Clone)]

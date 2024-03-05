@@ -6,8 +6,8 @@ use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 
-use trustify_common::purl::Purl;
 use packageurl::PackageUrl;
+use trustify_common::purl::Purl;
 
 pub mod system;
 
