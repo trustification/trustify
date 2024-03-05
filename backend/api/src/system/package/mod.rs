@@ -636,6 +636,7 @@ impl PackageContext {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use crate::db::{Paginated, Transactional};
     use crate::system::error::Error;
@@ -927,330 +928,283 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(test)]
-    mod tests {
-        use crate::db::Transactional;
-        use crate::system::InnerSystem;
+    #[tokio::test]
+    async fn package_affected_assertions() -> Result<(), anyhow::Error> {
+        /*
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .is_test(true)
+            .init();
 
-        #[tokio::test]
-        async fn package_affected_assertions() -> Result<(), anyhow::Error> {
-            /*
-            env_logger::builder()
-                .filter_level(log::LevelFilter::Info)
-                .is_test(true)
-                .init();
+         */
 
-             */
+        let system = InnerSystem::for_test("package_affected_assertions").await?;
 
-            let system = InnerSystem::for_test("package_affected_assertions").await?;
+        let redhat_advisory = system
+            .ingest_advisory(
+                "RHSA-1",
+                "http://redhat.com/rhsa-1",
+                "2",
+                Transactional::None,
+            )
+            .await?;
 
-            let redhat_advisory = system
-                .ingest_advisory(
-                    "RHSA-1",
-                    "http://redhat.com/rhsa-1",
-                    "2",
-                    Transactional::None,
-                )
-                .await?;
+        let redhat_advisory_vulnerability = redhat_advisory
+            .ingest_vulnerability("CVE-77", Transactional::None)
+            .await?;
 
-            let redhat_advisory_vulnerability = redhat_advisory
-                .ingest_vulnerability("CVE-77", Transactional::None)
-                .await?;
+        redhat_advisory_vulnerability
+            .ingest_affected_package_range(
+                "pkg://maven/io.quarkus/quarkus-core",
+                "1.0.2",
+                "1.2.0",
+                Transactional::None,
+            )
+            .await?;
 
-            redhat_advisory_vulnerability
-                .ingest_affected_package_range(
-                    "pkg://maven/io.quarkus/quarkus-core",
-                    "1.0.2",
-                    "1.2.0",
-                    Transactional::None,
-                )
-                .await?;
+        redhat_advisory_vulnerability
+            .ingest_affected_package_range(
+                "pkg://maven/io.quarkus/quarkus-addons",
+                "1.0.2",
+                "1.2.0",
+                Transactional::None,
+            )
+            .await?;
 
-            redhat_advisory_vulnerability
-                .ingest_affected_package_range(
-                    "pkg://maven/io.quarkus/quarkus-addons",
-                    "1.0.2",
-                    "1.2.0",
-                    Transactional::None,
-                )
-                .await?;
+        let ghsa_advisory = system
+            .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
+            .await?;
 
-            let ghsa_advisory = system
-                .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
-                .await?;
+        let ghsa_advisory_vulnerability = ghsa_advisory
+            .ingest_vulnerability("CVE-77", Transactional::None)
+            .await?;
 
-            let ghsa_advisory_vulnerability = ghsa_advisory
-                .ingest_vulnerability("CVE-77", Transactional::None)
-                .await?;
+        ghsa_advisory_vulnerability
+            .ingest_affected_package_range(
+                "pkg://maven/io.quarkus/quarkus-core",
+                "1.0.2",
+                "1.2.0",
+                Transactional::None,
+            )
+            .await?;
 
-            ghsa_advisory_vulnerability
-                .ingest_affected_package_range(
-                    "pkg://maven/io.quarkus/quarkus-core",
-                    "1.0.2",
-                    "1.2.0",
-                    Transactional::None,
-                )
-                .await?;
+        let pkg_core = system
+            .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .await?
+            .unwrap();
 
-            let pkg_core = system
-                .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
-                .await?
-                .unwrap();
+        let assertions = pkg_core.affected_assertions(Transactional::None).await?;
 
-            let assertions = pkg_core.affected_assertions(Transactional::None).await?;
+        assert_eq!(assertions.assertions.len(), 2);
 
-            assert_eq!(assertions.assertions.len(), 2);
+        assert!(assertions
+            .affected_claimants()
+            .iter()
+            .any(|e| e.identifier == "RHSA-1"));
+        assert!(assertions
+            .affected_claimants()
+            .iter()
+            .any(|e| e.identifier == "GHSA-1"));
 
-            assert!(assertions
-                .affected_claimants()
-                .iter()
-                .any(|e| e.identifier == "RHSA-1"));
-            assert!(assertions
-                .affected_claimants()
-                .iter()
-                .any(|e| e.identifier == "GHSA-1"));
+        let pkg_addons = system
+            .get_package("pkg://maven/io.quarkus/quarkus-addons", Transactional::None)
+            .await?
+            .unwrap();
 
-            let pkg_addons = system
-                .get_package("pkg://maven/io.quarkus/quarkus-addons", Transactional::None)
-                .await?
-                .unwrap();
+        let assertions = pkg_addons.affected_assertions(Transactional::None).await?;
 
-            let assertions = pkg_addons.affected_assertions(Transactional::None).await?;
+        assert_eq!(assertions.assertions.len(), 1);
+        assert!(assertions
+            .affected_claimants()
+            .iter()
+            .any(|e| e.identifier == "RHSA-1"));
 
-            assert_eq!(assertions.assertions.len(), 1);
-            assert!(assertions
-                .affected_claimants()
-                .iter()
-                .any(|e| e.identifier == "RHSA-1"));
-
-            Ok(())
-        }
-    }
-}
-
-#[tokio::test]
-async fn package_not_affected_assertions() -> Result<(), anyhow::Error> {
-    let system = InnerSystem::for_test("package_not_affected_assertions").await?;
-
-    let redhat_advisory = system
-        .ingest_advisory(
-            "RHSA-1",
-            "http://redhat.com/rhsa-1",
-            "2",
-            Transactional::None,
-        )
-        .await?;
-
-    let redhat_advisory_vulnerability = redhat_advisory
-        .ingest_vulnerability("CVE-77", Transactional::None)
-        .await?;
-
-    redhat_advisory_vulnerability
-        .ingest_not_affected_package_version(
-            "pkg://maven/io.quarkus/quarkus-core@1.2",
-            Transactional::None,
-        )
-        .await?;
-
-    let ghsa_advisory = system
-        .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
-        .await?;
-
-    let ghsa_advisory_vulnerability = ghsa_advisory
-        .ingest_vulnerability("CVE-77", Transactional::None)
-        .await?;
-
-    ghsa_advisory_vulnerability
-        .ingest_not_affected_package_version(
-            "pkg://maven/io.quarkus/quarkus-core@1.2.2",
-            Transactional::None,
-        )
-        .await?;
-
-    let pkg = system
-        .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
-        .await?
-        .unwrap();
-
-    let assertions = pkg.not_affected_assertions(Transactional::None).await?;
-
-    assert_eq!(assertions.assertions.len(), 2);
-
-    Ok(())
-}
-
-#[tokio::test]
-async fn package_vulnerability_assertions() -> Result<(), anyhow::Error> {
-    let system = InnerSystem::for_test("package_vulnerability_assertions").await?;
-
-    let redhat_advisory = system
-        .ingest_advisory(
-            "RHSA-1",
-            "http://redhat.com/rhsa-1",
-            "2",
-            Transactional::None,
-        )
-        .await?;
-
-    let redhat_advisory_vulnerability = redhat_advisory
-        .ingest_vulnerability("CVE-87", Transactional::None)
-        .await?;
-
-    redhat_advisory_vulnerability
-        .ingest_affected_package_range(
-            "pkg://maven/io.quarkus/quarkus-core",
-            "1.1",
-            "1.3",
-            Transactional::None,
-        )
-        .await?;
-
-    redhat_advisory_vulnerability
-        .ingest_not_affected_package_version(
-            "pkg://maven/io.quarkus/quarkus-core@1.2",
-            Transactional::None,
-        )
-        .await?;
-
-    let ghsa_advisory = system
-        .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
-        .await?;
-
-    let ghsa_advisory_vulnerability = ghsa_advisory
-        .ingest_vulnerability("CVE-87", Transactional::None)
-        .await?;
-
-    ghsa_advisory_vulnerability
-        .ingest_not_affected_package_version(
-            "pkg://maven/io.quarkus/quarkus-core@1.2.2",
-            Transactional::None,
-        )
-        .await?;
-
-    let pkg = system
-        .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
-        .await?
-        .unwrap();
-
-    let assertions = pkg.vulnerability_assertions(Transactional::None).await?;
-
-    assert_eq!(assertions.assertions.len(), 3);
-
-    Ok(())
-}
-
-#[tokio::test]
-async fn advisories_mentioning_package() -> Result<(), anyhow::Error> {
-    let system = InnerSystem::for_test("advisories_mentioning_package").await?;
-
-    let redhat_advisory = system
-        .ingest_advisory(
-            "RHSA-1",
-            "http://redhat.com/rhsa-1",
-            "2",
-            Transactional::None,
-        )
-        .await?;
-
-    let redhat_advisory_vulnerability = redhat_advisory
-        .ingest_vulnerability("CVE-99", Transactional::None)
-        .await?;
-
-    redhat_advisory_vulnerability
-        .ingest_affected_package_range(
-            "pkg://maven/io.quarkus/quarkus-core",
-            "1.1",
-            "1.3",
-            Transactional::None,
-        )
-        .await?;
-
-    let ghsa_advisory = system
-        .ingest_advisory("GHSA-1", "http://ghsa.gov/GHSA-1", "3", Transactional::None)
-        .await?;
-
-    let ghsa_advisory_vulnerability = ghsa_advisory
-        .ingest_vulnerability("CVE-99", Transactional::None)
-        .await?;
-
-    ghsa_advisory_vulnerability
-        .ingest_not_affected_package_version(
-            "pkg://maven/io.quarkus/quarkus-core@1.2",
-            Transactional::None,
-        )
-        .await?;
-
-    let unrelated_advisory = system
-        .ingest_advisory(
-            "RHSA-299",
-            "http://redhat.com/rhsa-299",
-            "17",
-            Transactional::None,
-        )
-        .await?;
-
-    let unrelated_advisory_vulnerability = redhat_advisory
-        .ingest_vulnerability("CVE-99", Transactional::None)
-        .await?;
-
-    unrelated_advisory_vulnerability
-        .ingest_not_affected_package_version(
-            "pkg://maven/io.quarkus/some-other-package@1.2",
-            Transactional::None,
-        )
-        .await?;
-
-    let pkg = system
-        .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
-        .await?
-        .unwrap();
-
-    let advisories = pkg.advisories_mentioning(Transactional::None).await?;
-
-    assert_eq!(2, advisories.len());
-    assert!(advisories.contains(&redhat_advisory));
-    assert!(advisories.contains(&ghsa_advisory));
-
-    Ok(())
-}
-
-/*
-pub(crate) fn packages_to_purls(
-    packages: Vec<(
-        huevos_entity::package::Model,
-        Vec<huevos_entity::package_qualifier::Model>,
-    )>,
-) -> Result<Vec<Purl>, anyhow::Error> {
-    let mut purls = Vec::new();
-
-    for (base, qualifiers) in &packages {
-        purls.push(package_to_purl(base.clone(), qualifiers.clone())?);
+        Ok(())
     }
 
-    Ok(purls)
-}
+    #[tokio::test]
+    async fn package_not_affected_assertions() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("package_not_affected_assertions").await?;
 
- */
+        let redhat_advisory = system
+            .ingest_advisory(
+                "RHSA-1",
+                "http://redhat.com/rhsa-1",
+                "2",
+                Transactional::None,
+            )
+            .await?;
 
-/*
-pub(crate) fn package_to_purl(
-    base: huevos_entity::package::Model,
-    qualifiers: Vec<huevos_entity::package_qualifier::Model>,
-) -> Result<Purl, anyhow::Error> {
-    let mut purl = PackageUrl::new(base.package_type.clone(), base.package_name.clone())?;
+        let redhat_advisory_vulnerability = redhat_advisory
+            .ingest_vulnerability("CVE-77", Transactional::None)
+            .await?;
 
-    //purl.with_version(base.version.clone());
+        redhat_advisory_vulnerability
+            .ingest_not_affected_package_version(
+                "pkg://maven/io.quarkus/quarkus-core@1.2",
+                Transactional::None,
+            )
+            .await?;
 
-    if let Some(namespace) = &base.package_namespace {
-        purl.with_namespace(namespace.clone());
+        let ghsa_advisory = system
+            .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
+            .await?;
+
+        let ghsa_advisory_vulnerability = ghsa_advisory
+            .ingest_vulnerability("CVE-77", Transactional::None)
+            .await?;
+
+        ghsa_advisory_vulnerability
+            .ingest_not_affected_package_version(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.2",
+                Transactional::None,
+            )
+            .await?;
+
+        let pkg = system
+            .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .await?
+            .unwrap();
+
+        let assertions = pkg.not_affected_assertions(Transactional::None).await?;
+
+        assert_eq!(assertions.assertions.len(), 2);
+
+        Ok(())
     }
 
-    for qualifier in qualifiers {
-        purl.add_qualifier(qualifier.key.clone(), qualifier.value.clone())?;
+    #[tokio::test]
+    async fn package_vulnerability_assertions() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("package_vulnerability_assertions").await?;
+
+        let redhat_advisory = system
+            .ingest_advisory(
+                "RHSA-1",
+                "http://redhat.com/rhsa-1",
+                "2",
+                Transactional::None,
+            )
+            .await?;
+
+        let redhat_advisory_vulnerability = redhat_advisory
+            .ingest_vulnerability("CVE-87", Transactional::None)
+            .await?;
+
+        redhat_advisory_vulnerability
+            .ingest_affected_package_range(
+                "pkg://maven/io.quarkus/quarkus-core",
+                "1.1",
+                "1.3",
+                Transactional::None,
+            )
+            .await?;
+
+        redhat_advisory_vulnerability
+            .ingest_not_affected_package_version(
+                "pkg://maven/io.quarkus/quarkus-core@1.2",
+                Transactional::None,
+            )
+            .await?;
+
+        let ghsa_advisory = system
+            .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
+            .await?;
+
+        let ghsa_advisory_vulnerability = ghsa_advisory
+            .ingest_vulnerability("CVE-87", Transactional::None)
+            .await?;
+
+        ghsa_advisory_vulnerability
+            .ingest_not_affected_package_version(
+                "pkg://maven/io.quarkus/quarkus-core@1.2.2",
+                Transactional::None,
+            )
+            .await?;
+
+        let pkg = system
+            .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .await?
+            .unwrap();
+
+        let assertions = pkg.vulnerability_assertions(Transactional::None).await?;
+
+        assert_eq!(assertions.assertions.len(), 3);
+
+        Ok(())
     }
 
-    Ok(purl.into())
+    #[tokio::test]
+    async fn advisories_mentioning_package() -> Result<(), anyhow::Error> {
+        let system = InnerSystem::for_test("advisories_mentioning_package").await?;
+
+        let redhat_advisory = system
+            .ingest_advisory(
+                "RHSA-1",
+                "http://redhat.com/rhsa-1",
+                "2",
+                Transactional::None,
+            )
+            .await?;
+
+        let redhat_advisory_vulnerability = redhat_advisory
+            .ingest_vulnerability("CVE-99", Transactional::None)
+            .await?;
+
+        redhat_advisory_vulnerability
+            .ingest_affected_package_range(
+                "pkg://maven/io.quarkus/quarkus-core",
+                "1.1",
+                "1.3",
+                Transactional::None,
+            )
+            .await?;
+
+        let ghsa_advisory = system
+            .ingest_advisory("GHSA-1", "http://ghsa.gov/GHSA-1", "3", Transactional::None)
+            .await?;
+
+        let ghsa_advisory_vulnerability = ghsa_advisory
+            .ingest_vulnerability("CVE-99", Transactional::None)
+            .await?;
+
+        ghsa_advisory_vulnerability
+            .ingest_not_affected_package_version(
+                "pkg://maven/io.quarkus/quarkus-core@1.2",
+                Transactional::None,
+            )
+            .await?;
+
+        let unrelated_advisory = system
+            .ingest_advisory(
+                "RHSA-299",
+                "http://redhat.com/rhsa-299",
+                "17",
+                Transactional::None,
+            )
+            .await?;
+
+        let unrelated_advisory_vulnerability = redhat_advisory
+            .ingest_vulnerability("CVE-99", Transactional::None)
+            .await?;
+
+        unrelated_advisory_vulnerability
+            .ingest_not_affected_package_version(
+                "pkg://maven/io.quarkus/some-other-package@1.2",
+                Transactional::None,
+            )
+            .await?;
+
+        let pkg = system
+            .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .await?
+            .unwrap();
+
+        let advisories = pkg.advisories_mentioning(Transactional::None).await?;
+
+        assert_eq!(2, advisories.len());
+        assert!(advisories.contains(&redhat_advisory));
+        assert!(advisories.contains(&ghsa_advisory));
+
+        Ok(())
+    }
 }
-
-
- */

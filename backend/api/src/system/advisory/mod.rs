@@ -415,6 +415,7 @@ impl AdvisoryContext {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod test {
     use crate::db::Transactional;
     use crate::system::InnerSystem;

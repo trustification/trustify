@@ -57,8 +57,7 @@ impl ImportCsafCommand {
         //  because we still have GPG v3 signatures
         let options = ValidationOptions {
             validation_date: Some(SystemTime::from(
-                Date::from_calendar_date(2007, Month::January, 1)
-                    .unwrap()
+                Date::from_calendar_date(2007, Month::January, 1)?
                     .midnight()
                     .assume_offset(UtcOffset::UTC),
             )),

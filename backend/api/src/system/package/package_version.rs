@@ -209,6 +209,7 @@ impl PackageVersionContext {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use crate::db::Transactional;
     use crate::system::InnerSystem;
