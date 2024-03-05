@@ -1,7 +1,7 @@
 use std::process::ExitCode;
 
 use clap::Subcommand;
-use huevos_common::config::Database;
+use trustify_common::config::Database;
 
 mod csaf;
 mod sbom;

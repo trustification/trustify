@@ -1,6 +1,6 @@
 use actix_web::body::BoxBody;
 use actix_web::{HttpResponse, ResponseError};
-use huevos_api::system;
+use trustify_api::system;
 use std::borrow::Cow;
 use std::fmt::{Debug, Display};
 

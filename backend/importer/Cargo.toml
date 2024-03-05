@@ -1,13 +1,13 @@
 [package]
-name = "huevos-importer"
+name = "trustify-importer"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-huevos-api = { path = "../api"}
-huevos-entity = { path = "../entity"}
-huevos-migration = { path = "../migration" }
-huevos-common = { path = "../common"}
+trustify-api = { path = "../api"}
+trustify-entity = { path = "../entity"}
+trustify-migration = { path = "../migration" }
+trustify-common = { path = "../common"}
 
 anyhow = "1.0.72"
 clap = { version = "4", features = ["derive"] }

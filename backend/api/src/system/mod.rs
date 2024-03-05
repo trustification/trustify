@@ -57,7 +57,7 @@ impl<E: Send + Display> std::error::Error for Error<E> {}
 
 impl InnerSystem {
     pub async fn with_config(
-        database: &huevos_common::config::Database,
+        database: &trustify_common::config::Database,
     ) -> Result<Self, anyhow::Error> {
         Self::new(
             &database.username,

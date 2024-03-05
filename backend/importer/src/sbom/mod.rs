@@ -1,7 +1,7 @@
 use std::process::ExitCode;
 
-use huevos_api::system::InnerSystem;
-use huevos_common::config::Database;
+use trustify_api::system::InnerSystem;
+use trustify_common::config::Database;
 use sbom_walker::{
     retrieve::RetrievingVisitor,
     source::{DispatchSource, FileSource, HttpSource},

@@ -4,8 +4,8 @@ use crate::server::read;
 use crate::server::Error::System;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
-use huevos_api::system::InnerSystem;
-use huevos_common::config::Database;
+use trustify_api::system::InnerSystem;
+use trustify_common::config::Database;
 use std::process::ExitCode;
 use std::sync::Arc;
 
@@ -70,7 +70,7 @@ pub fn configure(config: &mut web::ServiceConfig) {
 
 #[cfg(test)]
 mod test_util {
-    use huevos_api::system::InnerSystem;
+    use trustify_api::system::InnerSystem;
     use std::sync::Arc;
 
     pub async fn bootstrap_system(name: &str) -> Result<Arc<InnerSystem>, anyhow::Error> {

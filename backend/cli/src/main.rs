@@ -5,8 +5,8 @@ use std::process::{ExitCode, Termination};
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
     #[command(subcommand)]
-    Importer(huevos_importer::ImporterCommand),
-    Server(huevos_server::Run),
+    Importer(trustify_importer::ImporterCommand),
+    Server(trustify_server::Run),
 }
 
 #[derive(clap::Parser, Debug)]

@@ -6,9 +6,9 @@ use crate::system::error::Error;
 use crate::system::InnerSystem;
 use affected_package_version_range::AffectedPackageVersionRangeContext;
 use fixed_package_version::FixedPackageVersionContext;
-use huevos_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
-use huevos_common::purl::Purl;
-use huevos_entity as entity;
+use trustify_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
+use trustify_common::purl::Purl;
+use trustify_entity as entity;
 use migration::m0000032_create_advisory_vulnerability::AdvisoryVulnerability;
 use not_affected_package_version::NotAffectedPackageVersionContext;
 use sea_orm::ActiveValue::Set;
@@ -418,7 +418,7 @@ impl AdvisoryContext {
 mod test {
     use crate::db::Transactional;
     use crate::system::InnerSystem;
-    use huevos_common::advisory::Assertion;
+    use trustify_common::advisory::Assertion;
     use std::collections::HashSet;
 
     #[tokio::test]

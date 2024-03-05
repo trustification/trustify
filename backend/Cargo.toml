@@ -1,12 +1,8 @@
 [workspace]
-#name = "huevos"
-#version = "0.1.0"
-#edition = "2021"
 resolver = "2"
 members = [
   "api",
   "cli",
-  "client",
   "common",
   "entity",
   "importer",

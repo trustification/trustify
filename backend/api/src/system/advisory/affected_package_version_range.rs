@@ -1,7 +1,7 @@
 use crate::system::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::system::advisory::AdvisoryContext;
-use huevos_entity::affected_package_version_range;
-use huevos_entity::affected_package_version_range::Model;
+use trustify_entity::affected_package_version_range;
+use trustify_entity::affected_package_version_range::Model;
 use std::fmt::{Debug, Formatter};
 
 #[derive(Clone)]

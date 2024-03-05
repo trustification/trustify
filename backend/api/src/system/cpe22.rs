@@ -1,9 +1,9 @@
 use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::InnerSystem;
-use huevos_common::cpe22::Component::Value;
-use huevos_common::cpe22::{Component, Cpe22, Cpe22Type};
-use huevos_entity as entity;
+use trustify_common::cpe22::Component::Value;
+use trustify_common::cpe22::{Component, Cpe22, Cpe22Type};
+use trustify_entity as entity;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, NotSet, QueryFilter, Set};
 use sea_query::SelectStatement;
 use std::fmt::{Debug, Formatter};

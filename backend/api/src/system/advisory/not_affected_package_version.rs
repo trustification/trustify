@@ -1,6 +1,6 @@
 use crate::system::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::system::advisory::AdvisoryContext;
-use huevos_entity::not_affected_package_version;
+use trustify_entity::not_affected_package_version;
 use std::fmt::{Debug, Formatter};
 
 #[derive(Clone)]

@@ -1,11 +1,11 @@
 [package]
-name = "huevos-server"
+name = "trustify-server"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-huevos-api = { path = "../api"}
-huevos-common = { path = "../common"}
+trustify-api = { path = "../api"}
+trustify-common = { path = "../common"}
 
 actix-web = "4"
 anyhow = "1.0.72"

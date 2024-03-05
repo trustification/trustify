@@ -1,11 +1,11 @@
 [package]
-name = "huevos-cli"
+name = "trustify-cli"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-huevos-server = { path = "../server"}
-huevos-importer = { path = "../importer"}
+trustify-server = { path = "../server"}
+trustify-importer = { path = "../importer"}
 
 anyhow = "1.0.72"
 clap = { version = "4", features = [ "derive", "env" ] }

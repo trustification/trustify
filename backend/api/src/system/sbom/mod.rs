@@ -6,12 +6,12 @@ use crate::system::package::package_version::PackageVersionContext;
 use crate::system::package::qualified_package::QualifiedPackageContext;
 use crate::system::package::PackageContext;
 use crate::system::InnerSystem;
-use huevos_common::cpe22::Cpe22;
-use huevos_common::package::PackageVulnerabilityAssertions;
-use huevos_common::purl::Purl;
-use huevos_common::sbom::SbomLocator;
-use huevos_entity as entity;
-use huevos_entity::relationship::Relationship;
+use trustify_common::cpe22::Cpe22;
+use trustify_common::package::PackageVulnerabilityAssertions;
+use trustify_common::purl::Purl;
+use trustify_common::sbom::SbomLocator;
+use trustify_entity as entity;
+use trustify_entity::relationship::Relationship;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult,
     ModelTrait, QueryFilter, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Set,
@@ -676,9 +676,9 @@ impl SbomContext {
 mod tests {
     use crate::db::Transactional;
     use crate::system::InnerSystem;
-    use huevos_common::purl::Purl;
-    use huevos_common::sbom::SbomLocator;
-    use huevos_entity::relationship::Relationship;
+    use trustify_common::purl::Purl;
+    use trustify_common::sbom::SbomLocator;
+    use trustify_entity::relationship::Relationship;
 
     #[tokio::test]
     async fn ingest_sboms() -> Result<(), anyhow::Error> {

@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use huevos_api::{db::Transactional, system::InnerSystem};
+use trustify_api::{db::Transactional, system::InnerSystem};
 use sbom_walker::{
     retrieve::RetrievedSbom,
     validation::{ValidatedSbom, ValidatedVisitor, ValidationContext, ValidationError},

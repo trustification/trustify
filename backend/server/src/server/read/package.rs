@@ -1,9 +1,9 @@
 use actix_web::{get, web, HttpResponse, Responder};
-use huevos_api::db::Transactional;
+use trustify_api::db::Transactional;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-use huevos_common::purl::Purl;
+use trustify_common::purl::Purl;
 
 use crate::server::Error;
 use crate::AppState;

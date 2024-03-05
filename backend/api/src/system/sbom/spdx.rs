@@ -1,7 +1,7 @@
 use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::sbom::SbomContext;
-use huevos_entity::relationship::Relationship;
+use trustify_entity::relationship::Relationship;
 use sea_orm::TransactionTrait;
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
@@ -172,7 +172,7 @@ fn fix_license(mut json: Value) -> (Value, bool) {
 mod tests {
     use crate::db::Transactional;
     use crate::system::InnerSystem;
-    use huevos_entity::relationship::Relationship;
+    use trustify_entity::relationship::Relationship;
     use spdx_rs::models::SPDX;
     use std::fs::File;
     use std::path::PathBuf;

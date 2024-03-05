@@ -5,7 +5,7 @@ use crate::system::advisory::csaf::util::resolve_purls;
 use crate::system::advisory::AdvisoryContext;
 use crate::system::error::Error;
 use csaf::{document::Category, Csaf};
-use huevos_common::purl::Purl;
+use trustify_common::purl::Purl;
 use sea_orm::TransactionTrait;
 
 impl AdvisoryContext {

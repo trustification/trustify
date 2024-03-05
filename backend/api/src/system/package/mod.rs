@@ -1,8 +1,8 @@
 //! Support for packages.
 
-use huevos_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
-use huevos_common::purl::{Purl, PurlErr};
-use huevos_entity as entity;
+use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
+use trustify_common::purl::{Purl, PurlErr};
+use trustify_entity as entity;
 use package_version::PackageVersionContext;
 use package_version_range::PackageVersionRangeContext;
 use qualified_package::QualifiedPackageContext;
@@ -640,7 +640,7 @@ mod tests {
     use crate::db::{Paginated, Transactional};
     use crate::system::error::Error;
     use crate::system::InnerSystem;
-    use huevos_common::purl::Purl;
+    use trustify_common::purl::Purl;
     use sea_orm::{TransactionError, TransactionTrait};
 
     #[tokio::test]

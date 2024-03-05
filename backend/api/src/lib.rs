@@ -6,7 +6,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 
-use huevos_common::purl::Purl;
+use trustify_common::purl::Purl;
 use packageurl::PackageUrl;
 
 pub mod system;
