@@ -1,0 +1,37 @@
+name: frontend
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  CI: true
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+      - name: Verify package-lock.json
+        run: ./scripts/verify_lock.mjs
+      - name: Install
+        run: npm clean-install --ignore-scripts
+      - name: Lint sources
+        run: npm run lint
+      - name: Build
+        run: npm run build
+      - name: Test
+        run: npm run test -- --coverage --watchAll=false

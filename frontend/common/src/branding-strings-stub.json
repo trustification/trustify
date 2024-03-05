@@ -1,0 +1,21 @@
+{
+  "application": {
+    "title": "Stub to allow package build to work",
+    "name": "",
+    "description": ""
+  },
+  "about": {
+    "displayName": "",
+    "image": "",
+    "documentationUrl": ""
+  },
+  "masthead": {
+    "leftBrand": {
+      "src": "",
+      "alt": "",
+      "height": ""
+    },
+    "leftTitle": null,
+    "rightBrand": null
+  }
+}
