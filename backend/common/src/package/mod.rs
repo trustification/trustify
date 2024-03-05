@@ -174,6 +174,7 @@ pub struct Claimant {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use crate::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
 

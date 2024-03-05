@@ -13,7 +13,7 @@ pub enum PurlErr {
     MissingVersion(String),
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Default, PartialEq)]
 pub struct Purl {
     pub ty: String,
     pub namespace: Option<String>,
@@ -128,15 +128,18 @@ impl Debug for Purl {
 
 impl From<&str> for Purl {
     fn from(value: &str) -> Self {
-        PackageUrl::from_str(value).unwrap().into()
+        match PackageUrl::from_str(value) {
+            Ok(s) => s.into(),
+            Err(e) => Default::default(),
+        }
     }
 }
 
-impl From<&&str> for Purl {
-    fn from(value: &&str) -> Self {
-        PackageUrl::from_str(value).unwrap().into()
-    }
-}
+// impl From<&&str> for Purl {
+//     fn from(value: &&str) -> Self {
+//         PackageUrl::from_str(value).unwrap().into()
+//     }
+// }
 
 impl From<String> for Purl {
     fn from(value: String) -> Self {
@@ -167,6 +170,7 @@ impl From<PackageUrl<'_>> for Purl {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use crate::purl::Purl;
 
