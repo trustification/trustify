@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use trustify_api::{db::Transactional, system::InnerSystem};
 use sbom_walker::{
     retrieve::RetrievedSbom,
     validation::{ValidatedSbom, ValidatedVisitor, ValidationContext, ValidationError},
@@ -7,6 +6,7 @@ use sbom_walker::{
 };
 use sha2::digest::Output;
 use sha2::{Digest, Sha256};
+use trustify_api::{db::Transactional, system::InnerSystem};
 use walker_common::{compression::decompress_opt, utils::hex::Hex};
 
 pub struct ProcessVisitor {

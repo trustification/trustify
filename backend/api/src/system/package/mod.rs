@@ -1,8 +1,5 @@
 //! Support for packages.
 
-use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
-use trustify_common::purl::{Purl, PurlErr};
-use trustify_entity as entity;
 use package_version::PackageVersionContext;
 use package_version_range::PackageVersionRangeContext;
 use qualified_package::QualifiedPackageContext;
@@ -13,6 +10,9 @@ use sea_orm::{
 use sea_orm::{RelationTrait, TransactionTrait};
 use sea_query::{JoinType, SelectStatement, UnionType};
 use std::fmt::{Debug, Formatter};
+use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
+use trustify_common::purl::{Purl, PurlErr};
+use trustify_entity as entity;
 
 use crate::db::{Paginated, PaginatedResults, Transactional};
 use crate::system::advisory::AdvisoryContext;
@@ -640,8 +640,8 @@ mod tests {
     use crate::db::{Paginated, Transactional};
     use crate::system::error::Error;
     use crate::system::InnerSystem;
-    use trustify_common::purl::Purl;
     use sea_orm::{TransactionError, TransactionTrait};
+    use trustify_common::purl::Purl;
 
     #[tokio::test]
     async fn ingest_packages() -> Result<(), anyhow::Error> {

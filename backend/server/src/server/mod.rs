@@ -1,8 +1,8 @@
 use actix_web::body::BoxBody;
 use actix_web::{HttpResponse, ResponseError};
-use trustify_api::system;
 use std::borrow::Cow;
 use std::fmt::{Debug, Display};
+use trustify_api::system;
 
 pub mod read;
 pub mod write;

@@ -4,14 +4,14 @@ use crate::db::Transactional;
 use crate::system::error::Error;
 use crate::system::package::package_version::PackageVersionContext;
 use crate::system::sbom::SbomContext;
-use trustify_common::package::{Assertion, PackageVulnerabilityAssertions};
-use trustify_common::purl::Purl;
-use trustify_entity as entity;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait};
 use sea_query::JoinType;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
+use trustify_common::package::{Assertion, PackageVulnerabilityAssertions};
+use trustify_common::purl::Purl;
+use trustify_entity as entity;
 
 #[derive(Clone)]
 pub struct QualifiedPackageContext {

@@ -6,9 +6,6 @@ use crate::system::error::Error;
 use crate::system::InnerSystem;
 use affected_package_version_range::AffectedPackageVersionRangeContext;
 use fixed_package_version::FixedPackageVersionContext;
-use trustify_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
-use trustify_common::purl::Purl;
-use trustify_entity as entity;
 use migration::m0000032_create_advisory_vulnerability::AdvisoryVulnerability;
 use not_affected_package_version::NotAffectedPackageVersionContext;
 use sea_orm::ActiveValue::Set;
@@ -17,6 +14,9 @@ use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
+use trustify_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
+use trustify_common::purl::Purl;
+use trustify_entity as entity;
 
 pub mod advisory_vulnerability;
 
@@ -418,8 +418,8 @@ impl AdvisoryContext {
 mod test {
     use crate::db::Transactional;
     use crate::system::InnerSystem;
-    use trustify_common::advisory::Assertion;
     use std::collections::HashSet;
+    use trustify_common::advisory::Assertion;
 
     #[tokio::test]
     async fn ingest_advisories() -> Result<(), anyhow::Error> {

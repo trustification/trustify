@@ -1,7 +1,7 @@
 use crate::system::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::system::advisory::AdvisoryContext;
-use trustify_entity::fixed_package_version;
 use std::fmt::{Debug, Formatter};
+use trustify_entity::fixed_package_version;
 
 #[derive(Clone)]
 pub struct FixedPackageVersionContext {

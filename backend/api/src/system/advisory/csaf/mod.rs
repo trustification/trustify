@@ -5,8 +5,8 @@ use crate::system::advisory::csaf::util::resolve_purls;
 use crate::system::advisory::AdvisoryContext;
 use crate::system::error::Error;
 use csaf::{document::Category, Csaf};
-use trustify_common::purl::Purl;
 use sea_orm::TransactionTrait;
+use trustify_common::purl::Purl;
 
 impl AdvisoryContext {
     pub async fn ingest_csaf(&self, csaf: Csaf) -> Result<(), anyhow::Error> {

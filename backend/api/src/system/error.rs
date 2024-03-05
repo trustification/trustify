@@ -1,5 +1,5 @@
-use trustify_common::purl::PurlErr;
 use sea_orm::DbErr;
+use trustify_common::purl::PurlErr;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
