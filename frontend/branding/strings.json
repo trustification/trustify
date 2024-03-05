@@ -1,0 +1,21 @@
+{
+  "application": {
+    "title": "Trustification",
+    "name": "Trustification UI",
+    "description": "Trustification UI"
+  },
+  "about": {
+    "displayName": "Trustification",
+    "imageSrc": "<%= brandingRoot %>/images/masthead-logo.svg",
+    "documentationUrl": "https://trustification.io/"
+  },
+  "masthead": {
+    "leftBrand": {
+      "src": "<%= brandingRoot %>/images/masthead-logo.svg",
+      "alt": "brand",
+      "height": "40px"
+    },
+    "leftTitle": null,
+    "rightBrand": null
+  }
+}
