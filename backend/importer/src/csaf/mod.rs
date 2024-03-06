@@ -1,12 +1,9 @@
-use ::csaf::definitions::{Branch, ProductIdT};
 use ::csaf::document::Category;
 use ::csaf::Csaf;
 use csaf_walker::retrieve::RetrievingVisitor;
 use csaf_walker::source::{DispatchSource, FileSource, HttpSource};
 use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
 use csaf_walker::walker::Walker;
-use packageurl::PackageUrl;
-use process::trace_product;
 use sha2::digest::Output;
 use sha2::{Digest, Sha256};
 use std::process::ExitCode;
@@ -15,13 +12,10 @@ use time::{Date, Month, UtcOffset};
 use trustify_api::db::Transactional;
 use trustify_api::system::InnerSystem;
 use trustify_common::config::Database;
-use trustify_common::purl::Purl;
 use url::Url;
 use walker_common::fetcher::Fetcher;
 use walker_common::utils::hex::Hex;
 use walker_common::validate::ValidationOptions;
-
-mod process;
 
 /// Run the importer
 #[derive(clap::Args, Debug)]
@@ -139,67 +133,7 @@ async fn process(system: &InnerSystem, doc: ValidatedAdvisory) -> anyhow::Result
         )
         .await?;
 
-    for vuln in csaf.vulnerabilities.iter().flatten() {
-        let id = match &vuln.cve {
-            Some(cve) => cve,
-            None => continue,
-        };
-
-        //let v = system.ingest_vulnerability(id).await?;
-        let advisory_vulnerability = advisory
-            .ingest_vulnerability(id, Transactional::None)
-            .await?;
-
-        if let Some(ps) = &vuln.product_status {
-            for r in ps.fixed.iter().flatten() {
-                for purl in resolve_purls(&csaf, r) {
-                    let package = Purl::from(purl.clone());
-                    //system
-                    //.ingest_vulnerability_fixed(package, &v, "vex")
-                    //.await?
-                    advisory_vulnerability
-                        .ingest_fixed_package_version(package, Transactional::None)
-                        .await?;
-                }
-            }
-        }
-    }
+    advisory.ingest_csaf(csaf).await?;
 
     Ok(())
-}
-
-/// get the purl of a branch
-fn branch_purl(branch: &Branch) -> Option<&PackageUrl<'static>> {
-    branch.product.as_ref().and_then(|name| {
-        name.product_identification_helper
-            .iter()
-            .flat_map(|pih| pih.purl.as_ref())
-            .next()
-    })
-}
-
-/// resolve purls
-fn resolve_purls<'a>(csaf: &'a Csaf, id: &'a ProductIdT) -> Vec<&'a PackageUrl<'static>> {
-    let id = &id.0;
-    let mut result = vec![];
-
-    if let Some(tree) = &csaf.product_tree {
-        for rel in tree.relationships.iter().flatten() {
-            if &rel.full_product_name.product_id.0 != id {
-                continue;
-            }
-
-            /*
-            let id = match &rel.category {
-                RelationshipCategory::DefaultComponentOf => &rel.product_reference,
-                RelationshipCategory::OptionalComponentOf => &rel.product_reference,
-            };*/
-            let id = &rel.product_reference;
-
-            let purls = trace_product(csaf, &id.0).into_iter().flat_map(branch_purl);
-            result.extend(purls);
-        }
-    }
-
-    result
 }
