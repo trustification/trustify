@@ -15,12 +15,10 @@
     "start:dev:common": "npm run start:dev -w common",
     "start:dev:server": "npm run start:dev -w server",
     "start:dev:client": "npm run start:dev -w client",
-    "start:dev": "concurrently -n port-forward,common,client -c 'white.bold.inverse,green.bold.inverse,blue.bold.inverse' 'npm:port-forward' 'npm:start:dev:common' 'npm:start:dev:client'",
+    "start:dev": "concurrently -n common,client -c 'white.bold.inverse,green.bold.inverse,blue.bold.inverse' 'npm:start:dev:common' 'npm:start:dev:client'",
     "start": "npm run build -w common -w client && npm run start -w server",
     "test": "npm run test -ws --if-present --",
-    "lint": "npm run lint -ws --if-present --",
-    "port-forward:hub": "kubectl port-forward svc/trustification-hub -n trustification 9002:8080",
-    "port-forward": "concurrently -c auto 'npm:port-forward:*'"
+    "lint": "npm run lint -ws --if-present --"
   },
   "lint-staged": {
     "package-lock.json": "./scripts/verify_lock.mjs",
