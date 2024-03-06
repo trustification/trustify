@@ -55,24 +55,18 @@ impl ImportCsafCommand {
         };
 
         //  because we still have GPG v3 signatures
-        let options = ValidationOptions {
-            validation_date: Some(SystemTime::from(
-                Date::from_calendar_date(2007, Month::January, 1)?
-                    .midnight()
-                    .assume_offset(UtcOffset::UTC),
-            )),
-        };
+        let options = ValidationOptions::new().validation_date(SystemTime::from(
+            Date::from_calendar_date(2007, Month::January, 1)?
+                .midnight()
+                .assume_offset(UtcOffset::UTC),
+        ));
 
         let source: DispatchSource = match Url::parse(&self.source) {
-            Ok(url) => HttpSource {
+            Ok(url) => HttpSource::new(
                 url,
-                fetcher: Fetcher::new(Default::default()).await?,
-                options: Default::default(),
-                // options: HttpOptions {
-                //     keys: self.options.keys.clone(),
-                //     since: *since,
-                // },
-            }
+                Fetcher::new(Default::default()).await?,
+                Default::default(),
+            )
             .into(),
             Err(_) => FileSource::new(&self.source, None)?.into(),
         };
