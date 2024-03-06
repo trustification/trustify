@@ -1,18 +1,33 @@
+# frontend
+
 ## dev-env
 
-Install dependencies:
+### Install node and npm
+
+Use [nvm](https://github.com/nvm-sh/nvm?tab=readme-ov-file#install--update-script)
+that installs both node and npm.
+
+Then
+
+```shell
+nvm install node
+node --version
+npm --version
+```
+
+### Install dependencies:
 
 ```shell
 npm clean-install --ignore-scripts
 ```
 
-Init the dev server:
+### Init the dev server:
 
 ```shell
 npm run start:dev
 ```
 
-Open brower at http://localhost:3000
+Open browser at <http://localhost:3000>
 
 ## Environment variables
 
