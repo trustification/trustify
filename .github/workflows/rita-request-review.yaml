@@ -1,0 +1,70 @@
+on:
+  pull_request_target:
+    branches:
+      - main
+      - stable
+      - release/*
+    types:
+      - review_requested
+
+env:
+  USERNAME: "@trustification-bot:matrix.org"
+  PASSWORD: ${{ secrets.MATRIX_BOT_PASSWORD }}
+  ROOM: "#trustification:matrix.org"
+
+jobs:
+  notify_channel:
+    runs-on: ubuntu-22.04
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: npm ci
+        working-directory: .github/scripts/map-users
+
+      - uses: actions/github-script@v6
+        id: message
+        with:
+          script: |
+            const { channelMessage } = await import('${{ github.workspace }}/.github/scripts/map-users/main.mjs');
+            const msg = channelMessage(context.payload);
+            return msg || "";
+          result-encoding: string
+
+      - uses: actions/github-script@v6
+        id: directMessages
+        with:
+          script: |
+            const { directMessage } = await import('${{ github.workspace }}/.github/scripts/map-users/main.mjs');
+            const args = directMessage(context.payload);
+            return args || "";
+          result-encoding: string
+
+      - name: Prepare
+        run: |
+          mkdir -p "${GITHUB_WORKSPACE}/matrix"
+
+      - name: Login
+        run: |
+          podman run --rm -v ${GITHUB_WORKSPACE}/matrix:/data:z docker.io/matrixcommander/matrix-commander:latest --login password --homeserver https://matrix.org --device github --user-login "$USERNAME" --password "$PASSWORD" --room-default "$ROOM" --listen once --room-invites list+join
+
+      - name: Send channel message
+        # skip if there is no message (because there was no user)
+        if: ${{ steps.message.outputs.result != '' }}
+        env:
+          MESSAGE: "${{ steps.message.outputs.result }}"
+        run: |
+          podman run --rm  -v ${GITHUB_WORKSPACE}/matrix:/data:z docker.io/matrixcommander/matrix-commander:latest --message "$MESSAGE"
+
+      - name: Send direct messages
+        # skip if there is no direct user
+        if: ${{ steps.directMessages.outputs.result != '' }}
+        env:
+          MESSAGE: "You've been assigned as a reviewer for PR: ${{ github.event.pull_request.html_url }}"
+        run: |
+          podman run --rm  -v ${GITHUB_WORKSPACE}/matrix:/data:z docker.io/matrixcommander/matrix-commander:latest ${{ steps.directMessages.outputs.result }} --message "$MESSAGE" || true
+
+      - name: Logout
+        if: always()
+        run: |
+          podman run --rm -v ${GITHUB_WORKSPACE}/matrix:/data:z docker.io/matrixcommander/matrix-commander:latest --logout me

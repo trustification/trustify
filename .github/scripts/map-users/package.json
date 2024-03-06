@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "test": "node test.mjs"
+  },
+  "type": "module",
+  "main": "main.mjs",
+  "private": true,
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}
