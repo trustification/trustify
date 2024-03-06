@@ -1,11 +1,12 @@
-use std::process::ExitCode;
-
 use sbom_walker::{
     retrieve::RetrievingVisitor,
     source::{DispatchSource, FileSource, HttpSource},
     validation::ValidationVisitor,
     walker::Walker,
 };
+use std::process::ExitCode;
+use std::time::SystemTime;
+use time::{Date, Month, UtcOffset};
 use trustify_api::system::InnerSystem;
 use trustify_common::config::Database;
 use url::Url;
@@ -32,24 +33,25 @@ impl ImportSbomCommand {
         let system = InnerSystem::with_config(&self.database).await?;
 
         let source: DispatchSource = match Url::parse(&self.source) {
-            Ok(url) => HttpSource {
+            Ok(url) => HttpSource::new(
                 url,
-                fetcher: Fetcher::new(Default::default()).await?,
-                options: Default::default(),
-                // options: HttpOptions {
-                //     keys: self.options.keys.clone(),
-                //     since: *since,
-                // },
-            }
+                Fetcher::new(Default::default()).await?,
+                Default::default(),
+            )
             .into(),
             Err(_) => FileSource::new(&self.source, None)?.into(),
         };
 
         let process = process::ProcessVisitor { system };
 
-        let validation = ValidationVisitor::new(process).with_options(ValidationOptions {
-            validation_date: None,
-        });
+        //  because we still have GPG v3 signatures
+        let options = ValidationOptions::new().validation_date(SystemTime::from(
+            Date::from_calendar_date(2007, Month::January, 1)?
+                .midnight()
+                .assume_offset(UtcOffset::UTC),
+        ));
+
+        let validation = ValidationVisitor::new(process).with_options(options);
 
         Walker::new(source.clone())
             .walk(RetrievingVisitor::new(source, validation))
