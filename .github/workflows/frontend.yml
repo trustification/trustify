@@ -24,7 +24,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18.x
+          node-version: 20
       - name: Verify package-lock.json
         run: ./scripts/verify_lock.mjs
       - name: Install

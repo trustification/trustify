@@ -30,8 +30,8 @@
     "server"
   ],
   "engines": {
-    "node": ">=18.14.2",
-    "npm": ">=9.5.0"
+    "node": "^20",
+    "npm": ">=10.2.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",
@@ -43,7 +43,7 @@
     "@rollup/wasm-node": "^4.12.0",
     "@tanstack/eslint-plugin-query": "^4.34.1",
     "@types/jest": "^29.5.4",
-    "@types/node": "^18.14.2",
+    "@types/node": "^20.11.25",
     "@typescript-eslint/eslint-plugin": "^6.4.0",
     "@typescript-eslint/parser": "^6.4.0",
     "concurrently": "^8.2.0",
