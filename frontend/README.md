@@ -43,3 +43,19 @@ Open browser at <http://localhost:3000>
 | OIDC_Scope             | Set Oidc Scope                | openid                               |
 | ANALYTICS_ENABLED      | Enable/Disable analytics      | false                                |
 | ANALYTICS_WRITE_KEY    | Set Segment Write key         | null                                 |
+
+## Mock data
+
+Enable mocks:
+
+```shell
+export MOCK=stub
+```
+
+Start app:
+
+```shell
+npm run start:dev
+```
+
+Mock data is defined at `client/src/mocks`

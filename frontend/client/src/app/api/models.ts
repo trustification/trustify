@@ -32,3 +32,27 @@ export interface HubPaginatedResult<T> {
   total: number;
   params: HubRequestParams;
 }
+
+// Advisories
+
+export type Severity = "low" | "moderate" | "important" | "critical";
+
+export interface Advisory {
+  id: string;
+  severity: Severity;
+  revision_date: string;
+  vulnerabilities: { [key in Severity]: number };
+  metadata: {
+    title: string;
+  };
+}
+
+export interface AdvisoryVulnerability {
+  id: string;
+  title: string;
+  discovery_date: string;
+  release_date: string;
+  revision_date: string;
+  score: number;
+  cwe: number;
+}

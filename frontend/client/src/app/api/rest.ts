@@ -1,24 +1,39 @@
-import axios from "axios";
 import { serializeRequestParamsForHub } from "@app/hooks/table-controls";
-import { HubPaginatedResult, HubRequestParams } from "./models";
+import axios from "axios";
+import { Advisory, HubPaginatedResult, HubRequestParams } from "./models";
 
 const HUB = "/hub";
-
-interface ApiSearchResult<T> {
-  total: number;
-  result: T[];
-}
+export const ADVISORIES = HUB + "/advisories";
 
 export const getHubPaginatedResult = <T>(
   url: string,
   params: HubRequestParams = {}
 ): Promise<HubPaginatedResult<T>> =>
   axios
-    .get<ApiSearchResult<T>>(url, {
+    .get<T[]>(url, {
       params: serializeRequestParamsForHub(params),
     })
-    .then(({ data }) => ({
-      data: data.result,
-      total: data.total,
+    .then(({ data, headers }) => ({
+      data,
+      total: headers["x-total"]
+        ? parseInt(headers["x-total"], 10)
+        : data.length,
       params,
     }));
+
+export const getAdvisories = (params: HubRequestParams = {}) => {
+  return getHubPaginatedResult<Advisory>(ADVISORIES, params);
+};
+
+export const getAdvisoryById = (id: number | string) => {
+  return axios
+    .get<Advisory>(`${ADVISORIES}/${id}`)
+    .then((response) => response.data);
+};
+
+export const downloadAdvisoryById = (id: number | string) => {
+  return axios.get(`${ADVISORIES}/${id}/source`, {
+    responseType: "arraybuffer",
+    headers: { Accept: "text/plain", responseType: "blob" },
+  });
+};
