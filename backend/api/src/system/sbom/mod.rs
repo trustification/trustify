@@ -154,7 +154,7 @@ impl InnerSystem {
                 .filter(entity::sbom::Column::Location.eq(location.to_string())),
             tx,
         )
-        .await
+            .await
     }
 
     async fn locate_sboms_by_location(
@@ -167,7 +167,7 @@ impl InnerSystem {
                 .filter(entity::sbom::Column::Location.eq(location.to_string())),
             tx,
         )
-        .await
+            .await
     }
 
     async fn locate_sbom_by_sha256(
@@ -180,7 +180,7 @@ impl InnerSystem {
                 .filter(entity::sbom::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
-        .await
+            .await
     }
 
     async fn locate_sboms_by_sha256(
@@ -193,7 +193,7 @@ impl InnerSystem {
                 .filter(entity::sbom::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
-        .await
+            .await
     }
 
     async fn locate_sbom_by_purl(
@@ -216,7 +216,7 @@ impl InnerSystem {
                     ),
                 tx,
             )
-            .await
+                .await
         } else {
             Ok(None)
         }
@@ -242,7 +242,7 @@ impl InnerSystem {
                     ),
                 tx,
             )
-            .await
+                .await
         } else {
             Ok(vec![])
         }
@@ -263,7 +263,7 @@ impl InnerSystem {
                     .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(cpe.cpe22.id)),
                 tx,
             )
-            .await
+                .await
         } else {
             Ok(None)
         }
@@ -284,7 +284,7 @@ impl InnerSystem {
                     .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(found.cpe22.id)),
                 tx,
             )
-            .await
+                .await
         } else {
             Ok(vec![])
         }
@@ -637,7 +637,7 @@ impl SbomContext {
                     pkg,
                     Transactional::None,
                 )
-                .await?,
+                    .await?,
             )
         }
 
@@ -682,7 +682,7 @@ mod tests {
 
     #[tokio::test]
     async fn ingest_sboms() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("ingest_sboms").await?;
+        let (pgsql, system) = InnerSystem::for_test("ingest_sboms").await?;
 
         let sbom_v1 = system
             .ingest_sbom("http://sbom.com/test.json", "8", Transactional::None)
@@ -706,7 +706,8 @@ mod tests {
 
     #[tokio::test]
     async fn ingest_and_fetch_sboms_describing_purls() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("ingest_and_fetch_sboms_describing_purls").await?;
+        let (pgsql, system) =
+            InnerSystem::for_test("ingest_and_fetch_sboms_describing_purls").await?;
 
         let sbom_v1 = system
             .ingest_sbom("http://sbom.com/test.json", "8", Transactional::None)
@@ -762,7 +763,8 @@ mod tests {
         .init();
          */
 
-        let system = InnerSystem::for_test("ingest_and_locate_sboms_describing_cpes").await?;
+        let (pgsql, system) =
+            InnerSystem::for_test("ingest_and_locate_sboms_describing_cpes").await?;
 
         let sbom_v1 = system
             .ingest_sbom("http://sbom.com/test.json", "8", Transactional::None)
@@ -815,7 +817,12 @@ mod tests {
 
     #[tokio::test]
     async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("transitive_dependency_of").await?;
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Debug)
+            .is_test(true)
+            .init();
+
+        let (db, system) = InnerSystem::for_test("transitive_dependency_of").await?;
 
         let sbom1 = system
             .ingest_sbom(
@@ -883,7 +890,7 @@ mod tests {
 
     #[tokio::test]
     async fn ingest_package_relates_to_package_dependency_of() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("ingest_contains_packages").await?;
+        let (pgsql, system) = InnerSystem::for_test("ingest_contains_packages").await?;
 
         let sbom1 = system
             .ingest_sbom(
@@ -954,7 +961,7 @@ mod tests {
 
     #[tokio::test]
     async fn sbom_vulnerabilities() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("sbom_vulnerabilities").await?;
+        let (pgsql, system) = InnerSystem::for_test("sbom_vulnerabilities").await?;
 
         let sbom = system
             .ingest_sbom(
@@ -973,7 +980,7 @@ mod tests {
             "pkg://oci/my-app@1.2.3",
             Transactional::None,
         )
-        .await?;
+            .await?;
 
         sbom.ingest_package_relates_to_package(
             "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
@@ -981,7 +988,7 @@ mod tests {
             "pkg://maven/io.quarkus/quarkus-core@1.2.3",
             Transactional::None,
         )
-        .await?;
+            .await?;
 
         sbom.ingest_package_relates_to_package(
             "pkg://maven/postgres/postgres-driver@1.2.3",
@@ -989,7 +996,7 @@ mod tests {
             "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
             Transactional::None,
         )
-        .await?;
+            .await?;
 
         let advisory = system
             .ingest_advisory(

@@ -646,7 +646,7 @@ mod tests {
 
     #[tokio::test]
     async fn ingest_packages() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("ingest_packages").await?;
+        let (db, system) = InnerSystem::for_test("ingest_packages").await?;
 
         let pkg1 = system
             .ingest_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
@@ -669,7 +669,7 @@ mod tests {
 
     #[tokio::test]
     async fn ingest_package_versions_missing_version() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("ingest_package_versions_missing_version").await?;
+        let (db, system) = InnerSystem::for_test("ingest_package_versions_missing_version").await?;
 
         let result = system
             .ingest_package_version("pkg://maven/io.quarkus/quarkus-addons", Transactional::None)
@@ -690,7 +690,7 @@ mod tests {
 
          */
 
-        let system = InnerSystem::for_test("ingest_package_versions").await?;
+        let (db, system) = InnerSystem::for_test("ingest_package_versions").await?;
 
         let pkg1 = system
             .ingest_package_version(
@@ -724,7 +724,7 @@ mod tests {
 
     #[tokio::test]
     async fn get_versions_paginated() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("get_versions_paginated").await?;
+        let (db, system) = InnerSystem::for_test("get_versions_paginated").await?;
 
         for v in 0..200 {
             let version = format!("pkg://maven/io.quarkus/quarkus-core@{v}");
@@ -791,7 +791,8 @@ mod tests {
 
          */
 
-        let system = InnerSystem::for_test("ingest_qualified_packages_transactionally").await?;
+        let (pgsql, system) =
+            InnerSystem::for_test("ingest_qualified_packages_transactionally").await?;
 
         let db = system.db.clone();
 
@@ -830,7 +831,7 @@ mod tests {
 
          */
 
-        let system = InnerSystem::for_test("ingest_qualified_packages").await?;
+        let (pgsql, system) = InnerSystem::for_test("ingest_qualified_packages").await?;
 
         let pkg1 = system
             .ingest_qualified_package(
@@ -887,7 +888,7 @@ mod tests {
 
          */
 
-        let system = InnerSystem::for_test("ingest_package_version_ranges").await?;
+        let (pgsql, system) = InnerSystem::for_test("ingest_package_version_ranges").await?;
 
         let range1 = system
             .ingest_package_version_range(
@@ -938,7 +939,7 @@ mod tests {
 
          */
 
-        let system = InnerSystem::for_test("package_affected_assertions").await?;
+        let (pgsql, system) = InnerSystem::for_test("package_affected_assertions").await?;
 
         let redhat_advisory = system
             .ingest_advisory(
@@ -1024,7 +1025,7 @@ mod tests {
 
     #[tokio::test]
     async fn package_not_affected_assertions() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("package_not_affected_assertions").await?;
+        let (pgsql, system) = InnerSystem::for_test("package_not_affected_assertions").await?;
 
         let redhat_advisory = system
             .ingest_advisory(
@@ -1075,7 +1076,7 @@ mod tests {
 
     #[tokio::test]
     async fn package_vulnerability_assertions() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("package_vulnerability_assertions").await?;
+        let (pgsql, system) = InnerSystem::for_test("package_vulnerability_assertions").await?;
 
         let redhat_advisory = system
             .ingest_advisory(
@@ -1135,7 +1136,7 @@ mod tests {
 
     #[tokio::test]
     async fn advisories_mentioning_package() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("advisories_mentioning_package").await?;
+        let (pgsql, system) = InnerSystem::for_test("advisories_mentioning_package").await?;
 
         let redhat_advisory = system
             .ingest_advisory(

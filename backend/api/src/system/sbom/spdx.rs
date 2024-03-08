@@ -181,7 +181,7 @@ mod tests {
 
     #[tokio::test]
     async fn parse_spdx_quarkus() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("parse_spdx_quarkus").await?;
+        let (pgsql, system) = InnerSystem::for_test("parse_spdx_quarkus").await?;
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
         let test_data = pwd.join("../test-data");
@@ -234,7 +234,7 @@ mod tests {
     #[ignore]
     #[tokio::test]
     async fn parse_spdx_openshift() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("parse_spdx_openshift").await?;
+        let (pgsql, system) = InnerSystem::for_test("parse_spdx_openshift").await?;
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
         let test_data = pwd.join("../test-data");
@@ -285,7 +285,7 @@ mod tests {
 
     #[tokio::test]
     async fn parse_spdx() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("parse_spdx").await?;
+        let (pgsql, system) = InnerSystem::for_test("parse_spdx").await?;
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
         let test_data = pwd.join("../test-data");

@@ -138,7 +138,7 @@ mod tests {
     #[ignore]
     #[tokio::test]
     async fn vulnerability_assertions() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("vulnerability_assertions").await?;
+        let (db, system) = InnerSystem::for_test("vulnerability_assertions").await?;
 
         let advisory = system
             .ingest_advisory(

@@ -428,7 +428,7 @@ mod test {
 
     #[tokio::test]
     async fn ingest_advisories() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("ingest_advisories").await?;
+        let (db, system) = InnerSystem::for_test("ingest_advisories").await?;
 
         let advisory1 = system
             .ingest_advisory(
@@ -465,7 +465,7 @@ mod test {
 
     #[tokio::test]
     async fn ingest_affected_package_version_range() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("ingest_affected_package_version_range").await?;
+        let (db, system) = InnerSystem::for_test("ingest_affected_package_version_range").await?;
 
         let advisory = system
             .ingest_advisory(
@@ -521,7 +521,7 @@ mod test {
 
     #[tokio::test]
     async fn ingest_fixed_package_version() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("ingest_fixed_package_version").await?;
+        let (db, system) = InnerSystem::for_test("ingest_fixed_package_version").await?;
 
         let advisory = system
             .ingest_advisory(
@@ -580,7 +580,7 @@ mod test {
 
     #[tokio::test]
     async fn ingest_advisory_cve() -> Result<(), anyhow::Error> {
-        let system = InnerSystem::for_test("ingest_advisory_cve").await?;
+        let (db, system) = InnerSystem::for_test("ingest_advisory_cve").await?;
 
         let advisory = system
             .ingest_advisory(
@@ -614,7 +614,8 @@ mod test {
 
          */
 
-        let system = InnerSystem::for_test("advisory_affected_vulnerability_assertions").await?;
+        let (db, system) =
+            InnerSystem::for_test("advisory_affected_vulnerability_assertions").await?;
 
         let advisory = system
             .ingest_advisory(
@@ -662,7 +663,7 @@ mod test {
 
          */
 
-        let system =
+        let (db, system) =
             InnerSystem::for_test("advisory_not_affected_vulnerability_assertions").await?;
 
         let advisory = system

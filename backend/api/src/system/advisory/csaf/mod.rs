@@ -100,7 +100,7 @@ mod tests {
         let start = Instant::now();
         let advisory_data: Csaf = serde_json::from_reader(advisory)?;
 
-        let system = InnerSystem::for_test("advisory_csaf").await?;
+        let (db, system) = InnerSystem::for_test("advisory_csaf").await?;
 
         let advisory = system
             .ingest_advisory(
