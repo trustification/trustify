@@ -154,7 +154,7 @@ impl InnerSystem {
                 .filter(entity::sbom::Column::Location.eq(location.to_string())),
             tx,
         )
-            .await
+        .await
     }
 
     async fn locate_sboms_by_location(
@@ -167,7 +167,7 @@ impl InnerSystem {
                 .filter(entity::sbom::Column::Location.eq(location.to_string())),
             tx,
         )
-            .await
+        .await
     }
 
     async fn locate_sbom_by_sha256(
@@ -180,7 +180,7 @@ impl InnerSystem {
                 .filter(entity::sbom::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
-            .await
+        .await
     }
 
     async fn locate_sboms_by_sha256(
@@ -193,7 +193,7 @@ impl InnerSystem {
                 .filter(entity::sbom::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
-            .await
+        .await
     }
 
     async fn locate_sbom_by_purl(
@@ -216,7 +216,7 @@ impl InnerSystem {
                     ),
                 tx,
             )
-                .await
+            .await
         } else {
             Ok(None)
         }
@@ -242,7 +242,7 @@ impl InnerSystem {
                     ),
                 tx,
             )
-                .await
+            .await
         } else {
             Ok(vec![])
         }
@@ -263,7 +263,7 @@ impl InnerSystem {
                     .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(cpe.cpe22.id)),
                 tx,
             )
-                .await
+            .await
         } else {
             Ok(None)
         }
@@ -284,7 +284,7 @@ impl InnerSystem {
                     .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(found.cpe22.id)),
                 tx,
             )
-                .await
+            .await
         } else {
             Ok(vec![])
         }
@@ -637,7 +637,7 @@ impl SbomContext {
                     pkg,
                     Transactional::None,
                 )
-                    .await?,
+                .await?,
             )
         }
 
@@ -980,7 +980,7 @@ mod tests {
             "pkg://oci/my-app@1.2.3",
             Transactional::None,
         )
-            .await?;
+        .await?;
 
         sbom.ingest_package_relates_to_package(
             "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
@@ -988,7 +988,7 @@ mod tests {
             "pkg://maven/io.quarkus/quarkus-core@1.2.3",
             Transactional::None,
         )
-            .await?;
+        .await?;
 
         sbom.ingest_package_relates_to_package(
             "pkg://maven/postgres/postgres-driver@1.2.3",
@@ -996,7 +996,7 @@ mod tests {
             "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
             Transactional::None,
         )
-            .await?;
+        .await?;
 
         let advisory = system
             .ingest_advisory(
