@@ -44,7 +44,7 @@ pub struct ImportCsafCommand {
 
 impl ImportCsafCommand {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
-        let progress = init_log_and_progress();
+        let progress = init_log_and_progress()?;
 
         let system = InnerSystem::with_config(&self.database).await?;
 

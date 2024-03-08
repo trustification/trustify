@@ -27,7 +27,7 @@ pub struct ImportSbomCommand {
 
 impl ImportSbomCommand {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
-        let progress = init_log_and_progress();
+        let progress = init_log_and_progress()?;
 
         log::info!("Ingesting SBOMs");
 
