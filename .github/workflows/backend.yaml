@@ -23,21 +23,6 @@ jobs:
       run:
         working-directory: backend
 
-    services:
-      postgres:
-        image: docker.io/library/postgres:16
-        env:
-          POSTGRES_PASSWORD: eggs
-          POSTGRES_DB: huevos
-        # Set health checks to wait until postgres has started
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
     - uses: actions/checkout@v4
     - uses: Swatinem/rust-cache@v2
