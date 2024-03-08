@@ -1,6 +1,9 @@
 use crate::db::{ConnectionOrTransaction, Transactional};
 use migration::Migrator;
-use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbErr, Statement, TransactionTrait};
+use sea_orm::{
+    ConnectOptions, ConnectionTrait, Database, DatabaseConnection, DbErr, Statement,
+    TransactionTrait,
+};
 use sea_orm_migration::MigratorTrait;
 use std::fmt::{Debug, Display, Formatter};
 use std::future::Future;
@@ -78,8 +81,12 @@ impl InnerSystem {
     ) -> Result<Self, anyhow::Error> {
         let port = port.into().unwrap_or(5432);
         let url = format!("postgres://{username}:{password}@{host}:{port}/{db_name}");
-        println!("connect to {}", url);
-        let db = Database::connect(url).await?;
+        log::info!("connect to {}", url);
+
+        let mut opt = ConnectOptions::new(url);
+        opt.sqlx_logging_level(log::LevelFilter::Trace);
+
+        let db = Database::connect(opt).await?;
 
         Migrator::refresh(&db).await?;
 
