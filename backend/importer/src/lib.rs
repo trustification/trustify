@@ -4,6 +4,7 @@ use clap::Subcommand;
 use trustify_common::config::Database;
 
 mod csaf;
+mod progress;
 mod sbom;
 
 #[derive(Subcommand, Debug)]

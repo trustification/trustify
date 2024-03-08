@@ -1,3 +1,4 @@
+use crate::progress::init_log_and_progress;
 use sbom_walker::{
     retrieve::RetrievingVisitor,
     source::{DispatchSource, FileSource, HttpSource},
@@ -26,7 +27,7 @@ pub struct ImportSbomCommand {
 
 impl ImportSbomCommand {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
-        env_logger::init();
+        let progress = init_log_and_progress();
 
         log::info!("Ingesting SBOMs");
 
@@ -63,7 +64,10 @@ impl ImportSbomCommand {
 
         // walker
 
-        Walker::new(source).walk(visitor).await?;
+        Walker::new(source)
+            .with_progress(progress)
+            .walk(visitor)
+            .await?;
 
         Ok(ExitCode::SUCCESS)
     }

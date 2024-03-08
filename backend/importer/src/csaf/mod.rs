@@ -1,3 +1,4 @@
+use crate::progress::init_log_and_progress;
 use ::csaf::document::Category;
 use ::csaf::Csaf;
 use csaf_walker::retrieve::RetrievingVisitor;
@@ -47,7 +48,7 @@ pub struct ImportCsafCommand {
 
 impl ImportCsafCommand {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
-        let progress = progress();
+        let progress = init_log_and_progress();
 
         let system = InnerSystem::with_config(&self.database).await?;
 
@@ -124,26 +125,6 @@ impl ImportCsafCommand {
         walker.walk(visitor).await?;
 
         Ok(ExitCode::SUCCESS)
-    }
-}
-
-fn progress() -> Progress {
-    let mut builder = env_logger::builder();
-    let logger = builder.build();
-
-    match std::io::stdin().is_terminal() {
-        true => {
-            let max_level = logger.filter();
-            let multi = MultiProgress::new();
-
-            let log = LogWrapper::new(multi.clone(), logger);
-            // NOTE: LogWrapper::try_init is buggy and messes up the log levels
-            log::set_boxed_logger(Box::new(log)).unwrap();
-            log::set_max_level(max_level);
-
-            Progress::new(MultiIndicatif(multi))
-        }
-        false => Progress::new(NoProgress),
     }
 }
 
