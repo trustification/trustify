@@ -1,8 +1,7 @@
 use indicatif::MultiProgress;
 use indicatif_log_bridge::LogWrapper;
 use std::io::IsTerminal;
-use walker_common::progress::indicatif::MultiIndicatif;
-use walker_common::progress::{NoProgress, Progress};
+use walker_common::progress::Progress;
 
 /// Set up the env_logger and attach a progress interface if we are running on a terminal.
 pub(crate) fn init_log_and_progress() -> Progress {
@@ -19,8 +18,8 @@ pub(crate) fn init_log_and_progress() -> Progress {
             log::set_boxed_logger(Box::new(log)).unwrap();
             log::set_max_level(max_level);
 
-            Progress::new(MultiIndicatif(multi))
+            multi.into()
         }
-        false => Progress::new(NoProgress),
+        false => Progress::default(),
     }
 }
