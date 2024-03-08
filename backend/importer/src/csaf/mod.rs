@@ -5,7 +5,6 @@ use csaf_walker::source::{DispatchSource, FileSource, HttpSource};
 use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
 use csaf_walker::visitors::filter::{FilterConfig, FilteringVisitor};
 use csaf_walker::walker::Walker;
-use sha2::digest::Output;
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 use std::process::ExitCode;
@@ -133,12 +132,10 @@ async fn process(system: &InnerSystem, doc: ValidatedAdvisory) -> anyhow::Result
     }
 
     log::info!("Ingesting: {}", doc.url);
-    let sha256: String = match doc.sha256.clone() {
+    let sha256 = match doc.sha256.clone() {
         Some(sha) => sha.expected.clone(),
         None => {
-            let mut actual = Sha256::new();
-            actual.update(&doc.data);
-            let digest: Output<Sha256> = actual.finalize();
+            let digest = Sha256::digest(&doc.data);
             Hex(&digest).to_lower()
         }
     };
@@ -146,8 +143,8 @@ async fn process(system: &InnerSystem, doc: ValidatedAdvisory) -> anyhow::Result
     let advisory = system
         .ingest_advisory(
             &csaf.document.tracking.id,
-            doc.url.as_ref(),
-            &sha256,
+            doc.url.to_string(),
+            sha256,
             Transactional::None,
         )
         .await?;
