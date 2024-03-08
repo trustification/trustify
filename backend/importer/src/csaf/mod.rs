@@ -30,8 +30,6 @@ pub struct ImportCsafCommand {
 
 impl ImportCsafCommand {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
-        env_logger::init();
-
         let system = InnerSystem::with_config(&self.database).await?;
 
         let filter = |name: &str| {

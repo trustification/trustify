@@ -26,8 +26,6 @@ pub struct ImportSbomCommand {
 
 impl ImportSbomCommand {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
-        env_logger::init();
-
         println!("Ingesting SBOMs");
 
         let system = InnerSystem::with_config(&self.database).await?;

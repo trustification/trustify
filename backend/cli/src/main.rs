@@ -49,6 +49,7 @@ impl Cli {
 
 #[tokio::main]
 async fn main() -> impl Termination {
+    env_logger::init();
     Cli::parse().run().await
 }
 
