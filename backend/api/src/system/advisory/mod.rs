@@ -424,8 +424,8 @@ mod test {
     use crate::db::Transactional;
     use crate::system::InnerSystem;
     use std::collections::HashSet;
-    use trustify_common::advisory::Assertion;
     use test_log::test;
+    use trustify_common::advisory::Assertion;
 
     #[test(tokio::test)]
     async fn ingest_advisories() -> Result<(), anyhow::Error> {
