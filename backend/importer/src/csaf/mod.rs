@@ -5,8 +5,11 @@ use csaf_walker::source::{DispatchSource, FileSource, HttpSource};
 use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
 use csaf_walker::visitors::filter::{FilterConfig, FilteringVisitor};
 use csaf_walker::walker::Walker;
+use indicatif::MultiProgress;
+use indicatif_log_bridge::LogWrapper;
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
+use std::io::IsTerminal;
 use std::process::ExitCode;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
@@ -15,6 +18,8 @@ use trustify_api::system::InnerSystem;
 use trustify_common::config::Database;
 use url::Url;
 use walker_common::fetcher::Fetcher;
+use walker_common::progress::indicatif::MultiIndicatif;
+use walker_common::progress::{NoProgress, Progress};
 use walker_common::utils::hex::Hex;
 use walker_common::validate::ValidationOptions;
 
@@ -42,7 +47,7 @@ pub struct ImportCsafCommand {
 
 impl ImportCsafCommand {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
-        env_logger::init();
+        let progress = progress();
 
         let system = InnerSystem::with_config(&self.database).await?;
 
@@ -84,7 +89,7 @@ impl ImportCsafCommand {
                     };
 
                     let url = doc.url.clone();
-                    log::info!("processing: {url}");
+                    log::debug!("processing: {url}");
 
                     if let Err(err) = process(&system, doc).await {
                         log::warn!("Failed to process {url}: {err}");
@@ -106,7 +111,7 @@ impl ImportCsafCommand {
 
         // walker
 
-        let mut walker = Walker::new(source);
+        let mut walker = Walker::new(source).with_progress(progress);
 
         if !self.skip_url.is_empty() {
             // set up a distribution filter by URL
@@ -119,6 +124,26 @@ impl ImportCsafCommand {
         walker.walk(visitor).await?;
 
         Ok(ExitCode::SUCCESS)
+    }
+}
+
+fn progress() -> Progress {
+    let mut builder = env_logger::builder();
+    let logger = builder.build();
+
+    match std::io::stdin().is_terminal() {
+        true => {
+            let max_level = logger.filter();
+            let multi = MultiProgress::new();
+
+            let log = LogWrapper::new(multi.clone(), logger);
+            // NOTE: LogWrapper::try_init is buggy and messes up the log levels
+            log::set_boxed_logger(Box::new(log)).unwrap();
+            log::set_max_level(max_level);
+
+            Progress::new(MultiIndicatif(multi))
+        }
+        false => Progress::new(NoProgress),
     }
 }
 
