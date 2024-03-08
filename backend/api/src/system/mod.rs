@@ -122,8 +122,7 @@ impl InnerSystem {
             ..Default::default()
         };
 
-        let mut postgresql =
-            postgresql_embedded::PostgreSQL::new(PostgreSQL::default_version(), settings);
+        let mut postgresql = PostgreSQL::new(PostgreSQL::default_version(), settings);
         postgresql.setup().await?;
         postgresql.start().await?;
 

@@ -59,5 +59,6 @@ jobs:
     - name: Test
       run: cargo test
       env:
+        RUST_LOG: debug
         DB_USER: postgres
         DB_PASSWORD: eggs
