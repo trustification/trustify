@@ -1,5 +1,8 @@
 use crate::db::{ConnectionOrTransaction, Transactional};
+use log::debug;
 use migration::Migrator;
+use postgresql_embedded;
+use postgresql_embedded::{PostgreSQL, Settings};
 use sea_orm::{
     ConnectOptions, ConnectionTrait, Database, DatabaseConnection, DbErr, Statement,
     TransactionTrait,
@@ -25,6 +28,7 @@ pub type System = Arc<InnerSystem>;
 #[derive(Clone)]
 pub struct InnerSystem {
     db: DatabaseConnection,
+    db_name: String,
 }
 
 pub enum Error<E: Send> {
@@ -84,13 +88,19 @@ impl InnerSystem {
         log::info!("connect to {}", url);
 
         let mut opt = ConnectOptions::new(url);
+        opt.min_connections(16);
         opt.sqlx_logging_level(log::LevelFilter::Trace);
 
         let db = Database::connect(opt).await?;
 
+        debug!("applying migrations");
         Migrator::refresh(&db).await?;
+        debug!("applied migrations");
 
-        Ok(Self { db })
+        Ok(Self {
+            db,
+            db_name: db_name.to_string(),
+        })
     }
 
     pub(crate) fn connection<'db>(
@@ -104,21 +114,50 @@ impl InnerSystem {
     }
 
     #[cfg(test)]
-    pub async fn for_test(name: &str) -> Result<Arc<Self>, anyhow::Error> {
-        Self::bootstrap("postgres", "eggs", "localhost", None, name)
-            .await
-            .map(Arc::new)
+    pub async fn for_test(name: &str) -> Result<(PostgreSQL, Arc<Self>), anyhow::Error> {
+        let settings = Settings {
+            username: "postgres".to_string(),
+            password: "trustify".to_string(),
+            temporary: true,
+            ..Default::default()
+        };
+
+        let mut postgresql =
+            postgresql_embedded::PostgreSQL::new(PostgreSQL::default_version(), settings);
+        postgresql.setup().await?;
+        postgresql.start().await?;
+
+        let bootstrapped = Self::bootstrap(
+            "postgres",
+            "trustify",
+            "localhost",
+            Some(postgresql.settings().port),
+            name,
+        )
+        .await
+        .map(Arc::new);
+
+        debug!("bootstrap complete");
+
+        bootstrapped.map(|inner| (postgresql, inner))
     }
 
     pub async fn bootstrap(
         username: &str,
         password: &str,
         host: &str,
-        port: impl Into<Option<u16>>,
+        port: impl Into<Option<u16>> + Copy,
         db_name: &str,
     ) -> Result<Self, anyhow::Error> {
-        let url = format!("postgres://{}:{}@{}/postgres", username, password, host);
+        let url = format!(
+            "postgres://{}:{}@{}:{}/postgres",
+            username,
+            password,
+            host,
+            port.into().unwrap_or(5432)
+        );
         println!("bootstrap to {}", url);
+        debug!("bootstrap to {}", url);
         let db = Database::connect(url).await?;
 
         let drop_db_result = db
