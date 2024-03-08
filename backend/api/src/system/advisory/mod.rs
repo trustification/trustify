@@ -425,8 +425,9 @@ mod test {
     use crate::system::InnerSystem;
     use std::collections::HashSet;
     use trustify_common::advisory::Assertion;
+    use test_log::test;
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_advisories() -> Result<(), anyhow::Error> {
         let (db, system) = InnerSystem::for_test("ingest_advisories").await?;
 
@@ -463,7 +464,7 @@ mod test {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_affected_package_version_range() -> Result<(), anyhow::Error> {
         let (db, system) = InnerSystem::for_test("ingest_affected_package_version_range").await?;
 
@@ -519,7 +520,7 @@ mod test {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_fixed_package_version() -> Result<(), anyhow::Error> {
         let (db, system) = InnerSystem::for_test("ingest_fixed_package_version").await?;
 
@@ -578,7 +579,7 @@ mod test {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_advisory_cve() -> Result<(), anyhow::Error> {
         let (db, system) = InnerSystem::for_test("ingest_advisory_cve").await?;
 
@@ -604,16 +605,8 @@ mod test {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn advisory_affected_vulnerability_assertions() -> Result<(), anyhow::Error> {
-        /*
-        env_logger::builder()
-            .filter_level(log::LevelFilter::Info)
-            .is_test(true)
-            .init();
-
-         */
-
         let (db, system) =
             InnerSystem::for_test("advisory_affected_vulnerability_assertions").await?;
 
@@ -653,16 +646,8 @@ mod test {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn advisory_not_affected_vulnerability_assertions() -> Result<(), anyhow::Error> {
-        /*
-        env_logger::builder()
-            .filter_level(log::LevelFilter::Info)
-            .is_test(true)
-            .init();
-
-         */
-
         let (db, system) =
             InnerSystem::for_test("advisory_not_affected_vulnerability_assertions").await?;
 
