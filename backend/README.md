@@ -1,5 +1,9 @@
 ## dev-env
 
+**Note**
+Running an external PostgreSQL is no longer recommended for unit tests.
+You may wish to run one externally still for any other non-test-related activities.
+
 Starting:
 
 ```shell
