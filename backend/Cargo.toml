@@ -10,3 +10,11 @@ members = [
   "server",
 ]
 
+[patch.crates-io]
+csaf-walker = { git = "https://github.com/ctron/csaf-walker", rev = "c96c96f2f2dff240c394c065354740e7208f4ee1" }
+sbom-walker = { git = "https://github.com/ctron/csaf-walker", rev = "c96c96f2f2dff240c394c065354740e7208f4ee1" }
+walker-common = { git = "https://github.com/ctron/csaf-walker", rev = "c96c96f2f2dff240c394c065354740e7208f4ee1" }
+
+#csaf-walker = { path = "../../csaf-walker/csaf" }
+#sbom-walker = { path = "../../csaf-walker/sbom" }
+#walker-common = { path = "../../csaf-walker/common" }

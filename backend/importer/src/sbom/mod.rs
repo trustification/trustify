@@ -21,12 +21,12 @@ pub struct ImportSbomCommand {
 
     /// Source URL or path
     #[arg(short, long)]
-    pub(crate) source: String,
+    pub source: String,
 }
 
 impl ImportSbomCommand {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
-        println!("Ingesting SBOMs");
+        log::info!("Ingesting SBOMs");
 
         let system = InnerSystem::with_config(&self.database).await?;
 
@@ -40,7 +40,11 @@ impl ImportSbomCommand {
             Err(_) => FileSource::new(&self.source, None)?.into(),
         };
 
+        // process (called by validator)
+
         let process = process::ProcessVisitor { system };
+
+        // validate (called by retriever)
 
         //  because we still have GPG v3 signatures
         let options = ValidationOptions::new().validation_date(SystemTime::from(
@@ -51,9 +55,13 @@ impl ImportSbomCommand {
 
         let validation = ValidationVisitor::new(process).with_options(options);
 
-        Walker::new(source.clone())
-            .walk(RetrievingVisitor::new(source, validation))
-            .await?;
+        // retriever (called by filter)
+
+        let visitor = RetrievingVisitor::new(source.clone(), validation);
+
+        // walker
+
+        Walker::new(source).walk(visitor).await?;
 
         Ok(ExitCode::SUCCESS)
     }

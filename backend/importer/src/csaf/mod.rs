@@ -3,9 +3,11 @@ use ::csaf::Csaf;
 use csaf_walker::retrieve::RetrievingVisitor;
 use csaf_walker::source::{DispatchSource, FileSource, HttpSource};
 use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
+use csaf_walker::visitors::filter::{FilterConfig, FilteringVisitor};
 use csaf_walker::walker::Walker;
 use sha2::digest::Output;
 use sha2::{Digest, Sha256};
+use std::collections::HashSet;
 use std::process::ExitCode;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
@@ -24,27 +26,24 @@ pub struct ImportCsafCommand {
     pub database: Database,
 
     /// Source URL or path
-    #[arg(short, long)]
-    pub(crate) source: String,
+    pub source: String,
+
+    /// If the source is a full source URL
+    #[arg(long)]
+    pub full_source_url: bool,
+
+    /// Distribution URLs or ROLIE feed URLs to skip
+    #[arg(long)]
+    pub skip_url: Vec<String>,
+
+    /// Only consider files having any of those prefixes. An empty list will accept all files.
+    #[arg(long)]
+    pub only_prefix: Vec<String>,
 }
 
 impl ImportCsafCommand {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
         let system = InnerSystem::with_config(&self.database).await?;
-
-        let filter = |name: &str| {
-            // RHAT: we have advisories marked as "vex"
-            if !name.starts_with("cve-") {
-                return false;
-            }
-
-            // only work with 2023 data for now
-            if !name.starts_with("cve-2023-") {
-                return false;
-            }
-
-            true
-        };
 
         //  because we still have GPG v3 signatures
         let options = ValidationOptions::new().validation_date(SystemTime::from(
@@ -54,14 +53,22 @@ impl ImportCsafCommand {
         ));
 
         let source: DispatchSource = match Url::parse(&self.source) {
-            Ok(url) => HttpSource::new(
-                url,
-                Fetcher::new(Default::default()).await?,
-                Default::default(),
-            )
-            .into(),
+            Ok(mut url) => {
+                if !self.full_source_url {
+                    url = url.join("/.well-known/csaf/provider-metadata.json")?;
+                }
+                log::info!("Provider metadata: {url}");
+                HttpSource::new(
+                    url,
+                    Fetcher::new(Default::default()).await?,
+                    Default::default(),
+                )
+                .into()
+            }
             Err(_) => FileSource::new(&self.source, None)?.into(),
         };
+
+        // validate (called by retriever)
 
         let visitor =
             ValidationVisitor::new(move |doc: Result<ValidatedAdvisory, ValidationError>| {
@@ -76,15 +83,7 @@ impl ImportCsafCommand {
                     };
 
                     let url = doc.url.clone();
-
-                    match url.path_segments().and_then(|path| path.last()) {
-                        Some(name) => {
-                            if !filter(name) {
-                                return Ok(());
-                            }
-                        }
-                        None => return Ok(()),
-                    }
+                    log::info!("processing: {url}");
 
                     if let Err(err) = process(&system, doc).await {
                         log::warn!("Failed to process {url}: {err}");
@@ -95,14 +94,34 @@ impl ImportCsafCommand {
             })
             .with_options(options);
 
-        Walker::new(source.clone())
-            .walk(RetrievingVisitor::new(source, visitor))
-            .await?;
+        // retrieve (called by filter)
+
+        let visitor = RetrievingVisitor::new(source.clone(), visitor);
+
+        //  filter (called by walker)
+
+        let config = FilterConfig::new().extend_only_prefixes(self.only_prefix);
+        let visitor = FilteringVisitor { config, visitor };
+
+        // walker
+
+        let mut walker = Walker::new(source);
+
+        if !self.skip_url.is_empty() {
+            // set up a distribution filter by URL
+            let skip_urls = HashSet::<String>::from_iter(self.skip_url);
+            walker = walker.with_distribution_filter(move |distribution| {
+                skip_urls.contains(distribution.url().as_str())
+            });
+        }
+
+        walker.walk(visitor).await?;
 
         Ok(ExitCode::SUCCESS)
     }
 }
 
+/// Process a single, validated advisory
 async fn process(system: &InnerSystem, doc: ValidatedAdvisory) -> anyhow::Result<()> {
     let csaf = serde_json::from_slice::<Csaf>(&doc.data)?;
 

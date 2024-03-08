@@ -4,16 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-trustify-api = { path = "../api"}
-trustify-entity = { path = "../entity"}
+trustify-api = { path = "../api" }
+trustify-entity = { path = "../entity" }
 trustify-migration = { path = "../migration" }
-trustify-common = { path = "../common"}
+trustify-common = { path = "../common" }
 
 anyhow = "1.0.72"
 clap = { version = "4", features = ["derive"] }
 csaf = "0.5"
-csaf-walker = { version = "=0.6.0-alpha.8" }
-sbom-walker = { version = "=0.6.0-alpha.8" }
+csaf-walker = { version = "=0.6.0-alpha.8", default-features = false, features = ["crypto-openssl", "csaf"] }
+sbom-walker = { version = "=0.6.0-alpha.8", default-features = false, features = ["crypto-openssl", "cyclonedx-bom", "spdx-rs"] }
 env_logger = "0.11.0"
 log = "0.4.19"
 packageurl = "0.3.0"
