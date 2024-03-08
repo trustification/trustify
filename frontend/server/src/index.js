@@ -20,7 +20,6 @@ import {
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const pathToClientDist = path.join(__dirname, "../../client/dist");
 
-const brandType = TRUSTIFICATION_ENV.PROFILE;
 const port = parseInt(TRUSTIFICATION_ENV.PORT, 10) || 8080;
 
 const app = express();

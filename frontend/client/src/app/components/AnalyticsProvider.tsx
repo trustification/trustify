@@ -35,7 +35,8 @@ export const AnalyticsContextProvider: React.FC<IAnalyticsProviderProps> = ({
     if (auth) {
       const claims = auth.user?.profile;
       analytics.identify(claims?.sub, {
-        organization_id: (claims?.organization as any)?.id,
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        organization_id: ((claims as any)?.organization as any)?.id,
         domain: claims?.email?.split("@")[1],
       });
     }
@@ -45,7 +46,7 @@ export const AnalyticsContextProvider: React.FC<IAnalyticsProviderProps> = ({
   const location = useLocation();
   useEffect(() => {
     analytics.page();
-  }, [location]);
+  }, [analytics, location]);
 
   return (
     <AnalyticsContext.Provider value={analytics}>

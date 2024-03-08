@@ -32,3 +32,44 @@ export interface HubPaginatedResult<T> {
   total: number;
   params: HubRequestParams;
 }
+
+// Advisories
+
+export type Severity = "low" | "moderate" | "important" | "critical";
+
+export interface Advisory {
+  id: string;
+  aggregated_severity: Severity;
+  revision_date: string;
+  vulnerabilities_count: { [key in Severity]: number };
+  vulnerabilities: AdvisoryVulnerability[];
+  metadata: {
+    title: string;
+    category: string;
+    publisher: {
+      name: string;
+      namespace: string;
+      contact_details: string;
+      issuing_authority: string;
+    };
+    tracking: {
+      status: string;
+      initial_release_date: string;
+      current_release_date: string;
+    };
+    references: {
+      url: string;
+      label?: string;
+    }[];
+    notes: string[];
+  };
+}
+
+export interface AdvisoryVulnerability {
+  id: string;
+  title: string;
+  discovery_date: string;
+  release_date: string;
+  score: number;
+  cwe: string;
+}

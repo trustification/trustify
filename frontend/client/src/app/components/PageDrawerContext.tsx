@@ -112,7 +112,6 @@ export const PageDrawerContent: React.FC<IPageDrawerContentProps> = ({
   header = null,
   children,
   drawerPanelContentProps,
-  focusKey,
   pageKey: localPageKeyProp,
 }) => {
   const {

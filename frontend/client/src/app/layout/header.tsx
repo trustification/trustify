@@ -29,7 +29,6 @@ import QuestionCircleIcon from "@patternfly/react-icons/dist/esm/icons/question-
 import EllipsisVIcon from "@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon";
 import HelpIcon from "@patternfly/react-icons/dist/esm/icons/help-icon";
 
-import { useLocalStorage } from "@app/hooks/useStorage";
 import { isAuthRequired } from "@app/Constants";
 
 import { AboutApp } from "./about";
@@ -38,7 +37,7 @@ import useBranding from "@app/hooks/useBranding";
 
 export const HeaderApp: React.FC = () => {
   const {
-    masthead: { leftBrand, leftTitle, rightBrand },
+    masthead: { leftBrand },
   } = useBranding();
 
   const auth = (isAuthRequired && useAuth()) || undefined;
@@ -46,11 +45,8 @@ export const HeaderApp: React.FC = () => {
   const navigate = useNavigate();
 
   const [isAboutOpen, toggleIsAboutOpen] = useReducer((state) => !state, false);
-  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isKebabDropdownOpen, setIsKebabDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-
-  const [lang, setLang] = useLocalStorage({ key: "lang", defaultValue: "es" });
 
   const kebabDropdownItems = (
     <>
