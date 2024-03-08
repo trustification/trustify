@@ -1,28 +1,21 @@
 use crate::progress::init_log_and_progress;
-use ::csaf::document::Category;
-use ::csaf::Csaf;
-use csaf_walker::retrieve::RetrievingVisitor;
-use csaf_walker::source::{DispatchSource, FileSource, HttpSource};
-use csaf_walker::validation::{ValidatedAdvisory, ValidationError, ValidationVisitor};
-use csaf_walker::visitors::filter::{FilterConfig, FilteringVisitor};
-use csaf_walker::walker::Walker;
-use indicatif::MultiProgress;
-use indicatif_log_bridge::LogWrapper;
+use ::csaf::{document::Category, Csaf};
+use csaf_walker::{
+    retrieve::RetrievingVisitor,
+    source::{DispatchSource, FileSource, HttpSource},
+    validation::{ValidatedAdvisory, ValidationError, ValidationVisitor},
+    visitors::filter::{FilterConfig, FilteringVisitor},
+    walker::Walker,
+};
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
-use std::io::IsTerminal;
 use std::process::ExitCode;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
-use trustify_api::db::Transactional;
-use trustify_api::system::InnerSystem;
+use trustify_api::{db::Transactional, system::InnerSystem};
 use trustify_common::config::Database;
 use url::Url;
-use walker_common::fetcher::Fetcher;
-use walker_common::progress::indicatif::MultiIndicatif;
-use walker_common::progress::{NoProgress, Progress};
-use walker_common::utils::hex::Hex;
-use walker_common::validate::ValidationOptions;
+use walker_common::{fetcher::Fetcher, utils::hex::Hex, validate::ValidationOptions};
 
 /// Run the importer
 #[derive(clap::Args, Debug)]
@@ -34,16 +27,19 @@ pub struct ImportCsafCommand {
     pub source: String,
 
     /// If the source is a full source URL
-    #[arg(long)]
+    #[arg(long, env)]
     pub full_source_url: bool,
 
     /// Distribution URLs or ROLIE feed URLs to skip
-    #[arg(long)]
+    #[arg(long, env)]
     pub skip_url: Vec<String>,
 
     /// Only consider files having any of those prefixes. An empty list will accept all files.
-    #[arg(long)]
+    #[arg(long, env)]
     pub only_prefix: Vec<String>,
+
+    #[arg(long, env, default_value_t = 1)]
+    pub workers: usize,
 }
 
 impl ImportCsafCommand {
@@ -122,7 +118,7 @@ impl ImportCsafCommand {
             });
         }
 
-        walker.walk(visitor).await?;
+        walker.walk_parallel(self.workers, visitor).await?;
 
         Ok(ExitCode::SUCCESS)
     }
