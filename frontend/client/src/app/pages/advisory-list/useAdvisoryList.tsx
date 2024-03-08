@@ -25,12 +25,11 @@ import {
   TablePersistenceKeyPrefixes,
 } from "@app/Constants";
 import { useFetchAdvisories } from "@app/queries/advisories";
-import { SeverityRenderer } from "@app/components/SeverityRenderer";
+import { SeverityShieldAndText } from "@app/components/SeverityShieldAndText";
 import { VulnerabilitiesCount } from "./components/VulnerabilitiesCount";
 
 export const useAdvisoryList = () => {
   const tableState = useTableState({
-    persistTo: "state",
     persistenceKeyPrefix: TablePersistenceKeyPrefixes.advisories,
     columnNames: {
       id: "ID",
@@ -69,7 +68,7 @@ export const useAdvisoryList = () => {
     },
     pagination: { isEnabled: true },
     expansion: {
-      isEnabled: true,
+      isEnabled: false,
       variant: "single",
     },
   });
@@ -135,13 +134,18 @@ export const useAdvisoryList = () => {
                     {item.metadata.title}
                   </Td>
                   <Td width={10} columnKey="severity">
-                    <SeverityRenderer value={item.severity} showLabel />
+                    <SeverityShieldAndText
+                      value={item.aggregated_severity}
+                      showLabel
+                    />
                   </Td>
                   <Td width={10} modifier="truncate" columnKey="revisionDate">
                     {dayjs(item.revision_date).format(RENDER_DATE_FORMAT)}
                   </Td>
                   <Td width={15} columnKey="vulnerabilities">
-                    <VulnerabilitiesCount severities={item.vulnerabilities} />
+                    <VulnerabilitiesCount
+                      severities={item.vulnerabilities_count}
+                    />
                   </Td>
                   <Td width={10} columnKey="download">
                     <Button

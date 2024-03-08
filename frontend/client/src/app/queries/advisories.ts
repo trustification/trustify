@@ -2,7 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 
 import { HubRequestParams } from "@app/api/models";
-import { getAdvisories, getAdvisoryById } from "@app/api/rest";
+import {
+  getAdvisories,
+  getAdvisoryById,
+  getAdvisorySourceById,
+} from "@app/api/rest";
 
 export const AdvisoriesQueryKey = "advisories";
 
@@ -33,6 +37,21 @@ export const useFetchAdvisoryById = (id?: number | string) => {
 
   return {
     advisory: data,
+    isFetching: isLoading,
+    fetchError: error as AxiosError,
+  };
+};
+
+export const useFetchAdvisorySourceById = (id?: number | string) => {
+  const { data, isLoading, error } = useQuery({
+    queryKey: [AdvisoriesQueryKey, id, "source"],
+    queryFn: () =>
+      id === undefined ? Promise.resolve(undefined) : getAdvisorySourceById(id),
+    enabled: id !== undefined,
+  });
+
+  return {
+    source: data,
     isFetching: isLoading,
     fetchError: error as AxiosError,
   };

@@ -6,24 +6,42 @@ import {
 } from "@patternfly/react-tokens";
 
 import { Severity } from "./models";
+import { ProgressProps } from "@patternfly/react-core";
 
 type ListType = {
   [key in Severity]: {
-    color: { name: string; value: string; var: string };
+    shieldIconColor: { name: string; value: string; var: string };
+    progressProps: Pick<ProgressProps, "variant">;
   };
 };
 
 export const severityList: ListType = {
   low: {
-    color: lowColor,
+    shieldIconColor: lowColor,
+    progressProps: { variant: undefined },
   },
   moderate: {
-    color: moderateColor,
+    shieldIconColor: moderateColor,
+    progressProps: { variant: "warning" },
   },
   important: {
-    color: importantColor,
+    shieldIconColor: importantColor,
+    progressProps: { variant: "danger" },
   },
   critical: {
-    color: criticalColor,
+    shieldIconColor: criticalColor,
+    progressProps: { variant: "danger" },
   },
+};
+
+export const severityFromNumber = (score: number): Severity => {
+  if (score >= 9.0) {
+    return "critical";
+  } else if (score >= 7.0) {
+    return "important";
+  } else if (score >= 4.0) {
+    return "moderate";
+  } else {
+    return "low";
+  }
 };

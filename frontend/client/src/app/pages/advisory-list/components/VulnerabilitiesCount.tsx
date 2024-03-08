@@ -3,7 +3,7 @@ import React from "react";
 import { Divider, Flex, FlexItem } from "@patternfly/react-core";
 
 import { Severity } from "@app/api/models";
-import { SeverityRenderer } from "@app/components/SeverityRenderer";
+import { SeverityShieldAndText } from "@app/components/SeverityShieldAndText";
 
 interface VulnerabilitiesCountProps {
   severities: { [key in Severity]: number };
@@ -39,7 +39,7 @@ export const VulnerabilitiesCount: React.FC<VulnerabilitiesCountProps> = ({
                 style={{ whiteSpace: "nowrap" }}
               >
                 <FlexItem>
-                  <SeverityRenderer value={severity as Severity} />
+                  <SeverityShieldAndText value={severity as Severity} />
                 </FlexItem>
                 <FlexItem>{count}</FlexItem>
               </Flex>

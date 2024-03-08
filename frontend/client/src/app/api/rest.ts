@@ -31,8 +31,14 @@ export const getAdvisoryById = (id: number | string) => {
     .then((response) => response.data);
 };
 
+export const getAdvisorySourceById = (id: number | string) => {
+  return axios
+    .get<string>(`${ADVISORIES}/${id}/source`)
+    .then((response) => response.data);
+};
+
 export const downloadAdvisoryById = (id: number | string) => {
-  return axios.get(`${ADVISORIES}/${id}/source`, {
+  return axios.get<string>(`${ADVISORIES}/${id}/source`, {
     responseType: "arraybuffer",
     headers: { Accept: "text/plain", responseType: "blob" },
   });

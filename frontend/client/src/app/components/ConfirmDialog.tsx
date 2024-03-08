@@ -15,6 +15,7 @@ export interface ConfirmDialogProps {
     | "danger"
     | "warning"
     | "info"
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     | React.ComponentType<any>;
   message: string | React.ReactNode;
 

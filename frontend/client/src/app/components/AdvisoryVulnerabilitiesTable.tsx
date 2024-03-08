@@ -25,7 +25,7 @@ export const SeverityRenderer: React.FC<SeverityRendererProps> = ({
       style={{ whiteSpace: "nowrap" }}
     >
       <FlexItem>
-        <ShieldIcon color={severityProps.color.value} />
+        <ShieldIcon color={severityProps.shieldIconColor.value} />
       </FlexItem>
       {showLabel && (
         <FlexItem>{value.charAt(0).toUpperCase() + value.slice(1)}</FlexItem>

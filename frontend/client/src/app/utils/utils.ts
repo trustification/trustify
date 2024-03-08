@@ -1,9 +1,9 @@
 import { ToolbarChip } from "@patternfly/react-core";
 import { AxiosError } from "axios";
-import dayjs from "dayjs";
 
 // Axios error
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export const getAxiosErrorMessage = (axiosError: AxiosError<any>) => {
   if (
     axiosError.response &&
@@ -28,10 +28,6 @@ export const getToolbarChipKey = (value: string | ToolbarChip) => {
 };
 
 // Dates
-
-export const formatRustDate = (date: number[]) => {
-  return dayjs(date as any).format("MMM DD, YYYY");
-};
 
 export const formatDate = (value: Date, includeTime = true) => {
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
