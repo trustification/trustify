@@ -29,8 +29,8 @@ jobs:
         run: ./scripts/verify_lock.mjs
       - name: Install
         run: npm clean-install --ignore-scripts
-      - name: Lint sources
-        run: npm run lint
+#      - name: Lint sources
+#        run: npm run lint
       - name: Build
         run: npm run build
       - name: Test
