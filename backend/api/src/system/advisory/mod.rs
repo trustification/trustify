@@ -55,17 +55,17 @@ impl InnerSystem {
 
     pub async fn ingest_advisory(
         &self,
-        identifer: &str,
+        identifier: &str,
         location: &str,
         sha256: &str,
         tx: Transactional<'_>,
     ) -> Result<AdvisoryContext, Error> {
-        if let Some(found) = self.get_advisory(identifer, location, sha256).await? {
+        if let Some(found) = self.get_advisory(identifier, location, sha256).await? {
             return Ok(found);
         }
 
         let model = entity::advisory::ActiveModel {
-            identifier: Set(identifer.to_string()),
+            identifier: Set(identifier.to_string()),
             location: Set(location.to_string()),
             sha256: Set(sha256.to_string()),
             ..Default::default()
