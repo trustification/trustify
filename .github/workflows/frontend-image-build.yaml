@@ -1,0 +1,31 @@
+name: Frontend Multiple Architecture Image Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+      - "release-*"
+    paths:
+      - "frontend/**"
+      - ".github/workflows/**"
+    tags:
+      - "v*"
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image-build:
+    uses: ./.github/workflows/build-push-images.yaml
+    with:
+      registry: "ghcr.io"
+      image_name: "${{ github.repository_owner }}/trustify-ui"
+      containerfile: "./frontend/Containerfile"
+      architectures: '[ "amd64" ]'
+      extra-args: "--ulimit nofile=4096:4096"
+      context: "frontend"
+    secrets:
+      registry_username: ${{ github.actor }}
+      registry_password: ${{ secrets.GITHUB_TOKEN }}

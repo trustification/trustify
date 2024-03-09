@@ -27,8 +27,12 @@ npm clean-install --ignore-scripts
 npm run start:dev
 ```
 
-> Known issue: after installing the dependencies for the first time and then executing `npm run start:dev` you will see an error `config/webpack.dev.ts(18,8): error TS2307: Cannot find module '@trustification-ui/common' or its corresponding type declarations`
-> Stop the comand with Ctrl+C and run the command `npm run start:dev` again and the error should be gone. This only happens the very first time we install dependencies in a clean environment, subsequent commands `npm run start:dev` should not give that error. (bug under investigation)
+> Known issue: after installing the dependencies for the first time and then executing `npm run start:dev` you will see
+> an error
+> `config/webpack.dev.ts(18,8): error TS2307: Cannot find module '@trustification-ui/common' or its corresponding type declarations`
+> Stop the comand with Ctrl+C and run the command `npm run start:dev` again and the error should be gone. This only
+> happens the very first time we install dependencies in a clean environment, subsequent commands `npm run start:dev`
+> should not give that error. (bug under investigation)
 
 Open browser at <http://localhost:3000>
 
@@ -40,7 +44,7 @@ Open browser at <http://localhost:3000>
 | AUTH_REQUIRED          | Enable/Disable authentication | false                                |
 | OIDC_CLIENT_ID         | Set Oidc Client               | frontend                             |
 | OIDC_SERVER_URL        | Set Oidc Server URL           | http://localhost:8090/realms/chicken |
-| OIDC_Scope             | Set Oidc Scope                | openid                               |
+| OIDC_SCOPE             | Set Oidc Scope                | openid                               |
 | ANALYTICS_ENABLED      | Enable/Disable analytics      | false                                |
 | ANALYTICS_WRITE_KEY    | Set Segment Write key         | null                                 |
 
