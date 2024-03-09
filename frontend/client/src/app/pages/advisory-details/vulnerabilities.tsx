@@ -12,12 +12,12 @@ import dayjs from "dayjs";
 import { RENDER_DATE_FORMAT } from "@app/Constants";
 
 import { AdvisoryVulnerability } from "@app/api/models";
+import { SeverityShieldAndText } from "@app/components/SeverityShieldAndText";
 import {
   ConditionalTableBody,
   FilterType,
   useClientTableBatteries,
 } from "@carlosthe19916-latest/react-table-batteries";
-import { SeverityProgressBar } from "@app/components/SeverityProgressBar";
 
 interface VulnerabilitiesProps {
   vulnerabilities: AdvisoryVulnerability[];
@@ -35,7 +35,7 @@ export const Vulnerabilities: React.FC<VulnerabilitiesProps> = ({
       title: "Title",
       discovery: "Discovery",
       release: "Release",
-      score: "Score",
+      severity: "Severity",
       cwe: "CWE",
     },
     hasActionsColumn: true,
@@ -110,7 +110,7 @@ export const Vulnerabilities: React.FC<VulnerabilitiesProps> = ({
             <Th columnKey="title" />
             <Th columnKey="discovery" />
             <Th columnKey="release" />
-            <Th columnKey="score" />
+            <Th columnKey="severity" />
             <Th columnKey="cwe" />
           </Tr>
         </Thead>
@@ -136,8 +136,8 @@ export const Vulnerabilities: React.FC<VulnerabilitiesProps> = ({
                   <Td width={10} columnKey="release">
                     {dayjs(item.release_date).format(RENDER_DATE_FORMAT)}
                   </Td>
-                  <Td width={15} columnKey="score">
-                    <SeverityProgressBar value={item.score} />
+                  <Td width={15} columnKey="severity">
+                    <SeverityShieldAndText value={item.severity} />
                   </Td>
                   <Td width={10} columnKey="cwe">
                     {item.cwe}

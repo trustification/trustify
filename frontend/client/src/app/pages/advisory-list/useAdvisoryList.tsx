@@ -134,10 +134,7 @@ export const useAdvisoryList = () => {
                     {item.metadata.title}
                   </Td>
                   <Td width={10} columnKey="severity">
-                    <SeverityShieldAndText
-                      value={item.aggregated_severity}
-                      showLabel
-                    />
+                    <SeverityShieldAndText value={item.aggregated_severity} />
                   </Td>
                   <Td width={10} modifier="truncate" columnKey="revisionDate">
                     {dayjs(item.revision_date).format(RENDER_DATE_FORMAT)}

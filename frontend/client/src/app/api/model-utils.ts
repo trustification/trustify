@@ -5,8 +5,9 @@ import {
   global_warning_color_100 as moderateColor,
 } from "@patternfly/react-tokens";
 
-import { Severity } from "./models";
 import { ProgressProps } from "@patternfly/react-core";
+
+import { Severity } from "./models";
 
 type ListType = {
   [key in Severity]: {
@@ -32,16 +33,4 @@ export const severityList: ListType = {
     shieldIconColor: criticalColor,
     progressProps: { variant: "danger" },
   },
-};
-
-export const severityFromNumber = (score: number): Severity => {
-  if (score >= 9.0) {
-    return "critical";
-  } else if (score >= 7.0) {
-    return "important";
-  } else if (score >= 4.0) {
-    return "moderate";
-  } else {
-    return "low";
-  }
 };

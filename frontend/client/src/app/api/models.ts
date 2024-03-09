@@ -70,6 +70,6 @@ export interface AdvisoryVulnerability {
   title: string;
   discovery_date: string;
   release_date: string;
-  score: number;
+  severity: Severity;
   cwe: string;
 }
