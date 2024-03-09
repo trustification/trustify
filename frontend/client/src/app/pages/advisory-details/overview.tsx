@@ -57,7 +57,6 @@ export const Overview: React.FC<OverviewProps> = ({ advisory }) => {
                       <DescriptionListDescription>
                         <SeverityShieldAndText
                           value={advisory.aggregated_severity}
-                          showLabel
                         />
                       </DescriptionListDescription>
                     </DescriptionListGroup>
@@ -156,17 +155,10 @@ export const Overview: React.FC<OverviewProps> = ({ advisory }) => {
               </Card>
             </GridItem>
             <GridItem md={8}>
-              {/* <Card isFullHeight>
+              <Card isFullHeight>
                 <CardTitle>Product info</CardTitle>
-                <CardBody>
-                  <TreeView
-                    data={productTreeData}
-                    hasGuides={true}
-                    variant="default"
-                    useMemo
-                  />
-                </CardBody>
-              </Card> */}
+                <CardBody>Remaining to be defined</CardBody>
+              </Card>
             </GridItem>
           </Grid>
         </StackItem>

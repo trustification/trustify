@@ -37,7 +37,7 @@ export const mockProjectArray: Advisory[] = [
         title: "title1",
         discovery_date: new Date().toString(),
         release_date: new Date().toString(),
-        score: 7.5,
+        severity: "critical",
         cwe: "cwe1",
       },
     ],
@@ -58,7 +58,11 @@ export const handlers = [
     }
   }),
   rest.get(`${AppRest.ADVISORIES}/:id/source`, (req, res, ctx) => {
-    return res(ctx.json("{}"));
+    return res(
+      ctx.json(
+        "This is Mock data, but the real API should return the advisory JSON file"
+      )
+    );
   }),
 ];
 

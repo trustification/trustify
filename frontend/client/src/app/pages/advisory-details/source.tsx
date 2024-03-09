@@ -20,7 +20,6 @@ export const Source: React.FC<SourceProps> = ({ advisoryId }) => {
           isLineNumbersVisible
           isReadOnly
           isMinimapVisible
-          // isLanguageLabelVisible
           code={source ?? ""}
           language={Language.json}
           height="685px"

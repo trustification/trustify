@@ -39,7 +39,10 @@ export const VulnerabilitiesCount: React.FC<VulnerabilitiesCountProps> = ({
                 style={{ whiteSpace: "nowrap" }}
               >
                 <FlexItem>
-                  <SeverityShieldAndText value={severity as Severity} />
+                  <SeverityShieldAndText
+                    value={severity as Severity}
+                    hideLabel
+                  />
                 </FlexItem>
                 <FlexItem>{count}</FlexItem>
               </Flex>
