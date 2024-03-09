@@ -1,0 +1,145 @@
+name: Reusable Build and Push Image
+
+on:
+  workflow_call:
+    inputs:
+      registry:
+        description: Registry hostname + namespace of image
+        required: true
+        type: string
+      image_name:
+        description: The name of the image
+        required: true
+        type: string
+      containerfile:
+        description: Path to Dockerfile or Containerfile for build
+        required: true
+        type: string
+      pre_build_cmd:
+        description: "Command to run before building images"
+        required: false
+        type: string
+      architectures:
+        description: Valid JSON string representing architectures to build
+        default: '["amd64", "arm64"]'
+        type: string
+        required: false
+      extra-args:
+        description: "Extra args to be passed to buildah bud. Separate arguments by newline. Do not use quotes."
+        default: ""
+        required: false
+        type: string
+      context:
+        description: "Path to directory to use as the build context."
+        default: ""
+        required: false
+        type: string
+    secrets:
+      registry_username:
+        description: "Registry username"
+        required: true
+      registry_password:
+        description: "Registry password"
+        required: true
+
+env:
+  tag: ${{ github.ref == 'refs/heads/main' && 'latest' || github.ref_name }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architecture: ${{ fromJSON(inputs.architectures) }}
+    steps:
+      - name: Maximize disk space
+        shell: bash
+        run: |
+          echo "Space before clearing:"
+          df . -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          echo "Space after clearing:"
+          df . -h
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure QEMU
+        uses: docker/setup-qemu-action@master
+        with:
+          platforms: all
+
+      - name: Image meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ inputs.registry }}/${{ inputs.image_name }}
+          tags: |
+            type=schedule
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
+
+      - name: Run pre build command
+        shell: bash
+        run: "${{ inputs.pre_build_cmd }}"
+        if: "${{ inputs.pre_build_cmd != '' }}"
+
+      - name: Build Image
+        id: build
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: ${{ inputs.image_name }}
+          tags: ${{ env.tag }}-${{ matrix.architecture }}
+          extra-args: "--no-cache --rm ${{ inputs.extra-args }}"
+          archs: ${{ matrix.architecture }}
+          labels: ${{ steps.meta.outputs.labels }}
+          containerfiles: ${{ inputs.containerfile }}
+          context: ${{ inputs.context }}
+
+      - name: Push To Registry
+        uses: redhat-actions/push-to-registry@v2
+        id: push
+        with:
+          image: ${{ steps.build.outputs.image }}
+          tags: ${{ env.tag }}-${{ matrix.architecture }}
+          username: ${{ secrets.registry_username }}
+          password: ${{ secrets.registry_password }}
+          registry: ${{ inputs.registry }}
+
+  manifest:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          username: ${{ secrets.registry_username }}
+          password: ${{ secrets.registry_password }}
+          registry: ${{ inputs.registry }}
+
+      - name: Create manifest
+        shell: bash
+        run: |
+          podman manifest create "${{ inputs.registry }}/${{ inputs.image_name }}:${{ env.tag }}"
+          for arch in $(echo '${{ inputs.architectures }}' | jq -r '.[]'); do
+            podman manifest add \
+              "${{ inputs.registry }}/${{ inputs.image_name }}:${{ env.tag }}" \
+              "${{ inputs.registry }}/${{ inputs.image_name }}:${{ env.tag }}-${arch}"
+          done
+
+      - name: Push To Registry
+        uses: redhat-actions/push-to-registry@v2
+        id: push
+        with:
+          image: ${{ inputs.image_name }}
+          tags: ${{ env.tag }}
+          username: ${{ secrets.registry_username }}
+          password: ${{ secrets.registry_password }}
+          registry: ${{ inputs.registry }}
