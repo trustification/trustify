@@ -7,13 +7,16 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - "frontend/**"
+      - ".github/workflows/**"
 
 env:
   CI: true
 
 jobs:
-  test:
-    name: test
+  ci:
+    name: ci
     runs-on: ubuntu-latest
     defaults:
       run:
