@@ -51,7 +51,7 @@ impl AdvisoryContext {
                                 /*
                                 for purl in resolve_purls(&csaf, r) {
                                     let package = Purl::from(purl.clone());
-                                    println!("{}", package.to_string());
+                                    log::debug!("{}", package.to_string());
                                     //advisory_vulnerability
                                         //.ingest_affected_package_range(package, Transactional::None)
                                         //.await?;
@@ -117,7 +117,7 @@ mod tests {
             .vulnerability_assertions(Transactional::None)
             .await?;
 
-        println!("{:#?}", assertions);
+        log::info!("{:#?}", assertions);
 
         Ok(())
     }

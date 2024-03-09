@@ -118,7 +118,7 @@ impl InnerSystem {
         db_name: &str,
     ) -> Result<Self, anyhow::Error> {
         let url = format!("postgres://{}:{}@{}/postgres", username, password, host);
-        println!("bootstrap to {}", url);
+        log::info!("bootstrap to {}", url);
         let db = Database::connect(url).await?;
 
         let drop_db_result = db

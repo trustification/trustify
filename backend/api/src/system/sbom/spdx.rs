@@ -38,14 +38,14 @@ impl SbomContext {
                         {
                             for reference in &described_package.external_reference {
                                 if reference.reference_type == "purl" {
-                                    //println!("describes pkg {}", reference.reference_locator);
+                                    //log::debug!("describes pkg {}", reference.reference_locator);
                                     sbom.ingest_describes_package(
                                         reference.reference_locator.clone(),
                                         tx,
                                     )
                                         .await?;
                                 } else if reference.reference_type == "cpe22Type" {
-                                    //println!("describes cpe22 {}", reference.reference_locator);
+                                    //log::debug!("describes cpe22 {}", reference.reference_locator);
                                     if let Ok(cpe) = cpe::uri::Uri::parse(&reference.reference_locator) {
                                         sbom.ingest_describes_cpe22(
                                             cpe,
@@ -64,7 +64,7 @@ impl SbomContext {
                                 for package_ref in &package_info.external_reference {
                                     if package_ref.reference_type == "purl" {
                                         let package_a = package_ref.reference_locator.clone();
-                                        //println!("pkg_a: {}", package_a);
+                                        //log::debug!("pkg_a: {}", package_a);
 
                                         for relationship in sbom_data
                                             .relationships_for_spdx_id(package_identifier)
@@ -207,7 +207,7 @@ mod tests {
         assert_eq!(1, described_cpe222.len());
 
         let described_packages = sbom.describes_packages(Transactional::None).await?;
-        println!("{:#?}", described_packages);
+        log::info!("{:#?}", described_packages);
 
         let contains = sbom
             .related_packages(
@@ -217,15 +217,15 @@ mod tests {
             )
             .await?;
 
-        println!("{}", contains.len());
+        log::info!("{}", contains.len());
 
         assert!(contains.len() > 500);
 
         let query_time = start.elapsed();
 
-        println!("parse {}ms", parse_time.as_millis());
-        println!("ingest {}ms", ingest_time.as_millis());
-        println!("query {}ms", query_time.as_millis());
+        log::info!("parse {}ms", parse_time.as_millis());
+        log::info!("ingest {}ms", ingest_time.as_millis());
+        log::info!("query {}ms", query_time.as_millis());
 
         Ok(())
     }
@@ -260,7 +260,7 @@ mod tests {
         assert_eq!(1, described_cpe222.len());
 
         let described_packages = sbom.describes_packages(Transactional::None).await?;
-        println!("{:#?}", described_packages);
+        log::info!("{:#?}", described_packages);
 
         let contains = sbom
             .related_packages(
@@ -276,9 +276,9 @@ mod tests {
 
         let query_time = start.elapsed();
 
-        println!("parse {}ms", parse_time.as_millis());
-        println!("ingest {}ms", ingest_time.as_millis());
-        println!("query {}ms", query_time.as_millis());
+        log::info!("parse {}ms", parse_time.as_millis());
+        log::info!("ingest {}ms", ingest_time.as_millis());
+        log::info!("query {}ms", query_time.as_millis());
 
         Ok(())
     }
@@ -320,15 +320,15 @@ mod tests {
             )
             .await?;
 
-        println!("{}", contains.len());
+        log::info!("{}", contains.len());
 
         assert!(contains.len() > 500);
 
         let query_time = start.elapsed();
 
-        println!("parse {}ms", parse_time.as_millis());
-        println!("ingest {}ms", ingest_time.as_millis());
-        println!("query {}ms", query_time.as_millis());
+        log::info!("parse {}ms", parse_time.as_millis());
+        log::info!("ingest {}ms", ingest_time.as_millis());
+        log::info!("query {}ms", query_time.as_millis());
 
         Ok(())
     }
