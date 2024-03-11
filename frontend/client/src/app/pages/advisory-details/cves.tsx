@@ -11,7 +11,7 @@ import dayjs from "dayjs";
 
 import { RENDER_DATE_FORMAT } from "@app/Constants";
 
-import { AdvisoryVulnerability } from "@app/api/models";
+import { CVEBase } from "@app/api/models";
 import { SeverityShieldAndText } from "@app/components/SeverityShieldAndText";
 import {
   ConditionalTableBody,
@@ -19,16 +19,14 @@ import {
   useClientTableBatteries,
 } from "@carlosthe19916-latest/react-table-batteries";
 
-interface VulnerabilitiesProps {
-  vulnerabilities: AdvisoryVulnerability[];
+interface CVEsProps {
+  cves: CVEBase[];
 }
 
-export const Vulnerabilities: React.FC<VulnerabilitiesProps> = ({
-  vulnerabilities,
-}) => {
+export const CVEs: React.FC<CVEsProps> = ({ cves }) => {
   const tableControls = useClientTableBatteries({
     idProperty: "id",
-    items: vulnerabilities,
+    items: cves,
     isLoading: false,
     columnNames: {
       cve: "CVE ID",
@@ -56,8 +54,8 @@ export const Vulnerabilities: React.FC<VulnerabilitiesProps> = ({
       sortableColumns: ["cve", "discovery", "release"],
       getSortValues: (vuln) => ({
         cve: vuln?.id || "",
-        discovery: vuln ? dayjs(vuln.discovery_date).millisecond() : 0,
-        release: vuln ? dayjs(vuln.release_date).millisecond() : 0,
+        discovery: vuln ? dayjs(vuln.date_discovered).millisecond() : 0,
+        release: vuln ? dayjs(vuln.date_released).millisecond() : 0,
       }),
     },
     pagination: { isEnabled: true },
@@ -89,21 +87,18 @@ export const Vulnerabilities: React.FC<VulnerabilitiesProps> = ({
     <>
       <Toolbar>
         <ToolbarContent>
-          <FilterToolbar id="vulnerabilities-toolbar" />
+          <FilterToolbar id="cves-toolbar" />
           <PaginationToolbarItem>
             <Pagination
               variant="top"
               isCompact
-              widgetId="vulnerabilities-pagination-top"
+              widgetId="cves-pagination-top"
             />
           </PaginationToolbarItem>
         </ToolbarContent>
       </Toolbar>
 
-      <Table
-        aria-label="Vulnerabilities table"
-        className="vertical-aligned-table"
-      >
+      <Table aria-label="CVEs table" className="vertical-aligned-table">
         <Thead>
           <Tr isHeaderRow>
             <Th columnKey="cve" />
@@ -117,7 +112,7 @@ export const Vulnerabilities: React.FC<VulnerabilitiesProps> = ({
         <ConditionalTableBody
           isLoading={false}
           isError={undefined}
-          isNoData={vulnerabilities.length === 0}
+          isNoData={cves.length === 0}
           numRenderedColumns={numRenderedColumns}
         >
           {currentPageItems?.map((item, rowIndex) => {
@@ -131,10 +126,10 @@ export const Vulnerabilities: React.FC<VulnerabilitiesProps> = ({
                     {item.title}
                   </Td>
                   <Td width={10} columnKey="discovery">
-                    {dayjs(item.discovery_date).format(RENDER_DATE_FORMAT)}
+                    {dayjs(item.date_discovered).format(RENDER_DATE_FORMAT)}
                   </Td>
                   <Td width={10} columnKey="release">
-                    {dayjs(item.release_date).format(RENDER_DATE_FORMAT)}
+                    {dayjs(item.date_released).format(RENDER_DATE_FORMAT)}
                   </Td>
                   <Td width={15} columnKey="severity">
                     <SeverityShieldAndText value={item.severity} />
@@ -160,7 +155,7 @@ export const Vulnerabilities: React.FC<VulnerabilitiesProps> = ({
       <Pagination
         variant="bottom"
         isCompact
-        widgetId="vulnerabilities-pagination-bottom"
+        widgetId="cves-pagination-bottom"
       />
     </>
   );

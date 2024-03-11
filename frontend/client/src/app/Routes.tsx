@@ -6,6 +6,12 @@ import { Bullseye, Spinner } from "@patternfly/react-core";
 const Home = lazy(() => import("./pages/home"));
 const AdvisoryList = lazy(() => import("./pages/advisory-list"));
 const AdvisoryDetails = lazy(() => import("./pages/advisory-details"));
+const CVEList = lazy(() => import("./pages/cve-list"));
+const CVEDetails = lazy(() => import("./pages/cve-details"));
+const PackageList = lazy(() => import("./pages/package-list"));
+const PackageDetails = lazy(() => import("./pages/package-details"));
+const SBOMList = lazy(() => import("./pages/sbom-list"));
+const SBOMDetails = lazy(() => import("./pages/sbom-details"));
 
 export enum PathParam {
   ADVISORY_ID = "advisoryId",
@@ -21,6 +27,21 @@ export const AppRoutes = () => {
     {
       path: `/advisories/:${PathParam.ADVISORY_ID}`,
       element: <AdvisoryDetails />,
+    },
+    { path: "/cves", element: <CVEList /> },
+    {
+      path: `/cves/:${PathParam.CVE_ID}`,
+      element: <CVEDetails />,
+    },
+    { path: "/packages", element: <PackageList /> },
+    {
+      path: `/packages/:${PathParam.PACKAGE_ID}`,
+      element: <PackageDetails />,
+    },
+    { path: "/sboms", element: <SBOMList /> },
+    {
+      path: `/sboms/:${PathParam.SBOM_ID}`,
+      element: <SBOMDetails />,
     },
   ]);
 
