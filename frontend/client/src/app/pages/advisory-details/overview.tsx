@@ -41,7 +41,7 @@ export const Overview: React.FC<OverviewProps> = ({ advisory }) => {
                     <DescriptionListGroup>
                       <DescriptionListTerm>Title</DescriptionListTerm>
                       <DescriptionListDescription>
-                        {advisory.vulnerabilities.map((e) => e.title)}
+                        {advisory.cves.map((e) => e.title)}
                       </DescriptionListDescription>
                     </DescriptionListGroup>
                     <DescriptionListGroup>

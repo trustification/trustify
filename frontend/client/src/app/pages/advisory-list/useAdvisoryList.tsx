@@ -26,7 +26,7 @@ import {
 } from "@app/Constants";
 import { useFetchAdvisories } from "@app/queries/advisories";
 import { SeverityShieldAndText } from "@app/components/SeverityShieldAndText";
-import { VulnerabilitiesCount } from "./components/VulnerabilitiesCount";
+import { CVEGalleryCount } from "./components/CVEsGaleryCount";
 
 export const useAdvisoryList = () => {
   const tableState = useTableState({
@@ -36,7 +36,7 @@ export const useAdvisoryList = () => {
       title: "Title",
       severity: "Aggregated severity",
       revisionDate: "Revision",
-      vulnerabilities: "Vulnerabilities",
+      cves: "CVEs",
       download: "Download",
     },
     filter: {
@@ -113,7 +113,7 @@ export const useAdvisoryList = () => {
             <Th columnKey="title" />
             <Th columnKey="severity" />
             <Th columnKey="revisionDate" />
-            <Th columnKey="vulnerabilities" />
+            <Th columnKey="cves" />
             <Th columnKey="download" />
           </Tr>
         </Thead>
@@ -139,10 +139,8 @@ export const useAdvisoryList = () => {
                   <Td width={10} modifier="truncate" columnKey="revisionDate">
                     {dayjs(item.revision_date).format(RENDER_DATE_FORMAT)}
                   </Td>
-                  <Td width={15} columnKey="vulnerabilities">
-                    <VulnerabilitiesCount
-                      severities={item.vulnerabilities_count}
-                    />
+                  <Td width={15} columnKey="cves">
+                    <CVEGalleryCount cves={item.cves} />
                   </Td>
                   <Td width={10} columnKey="download">
                     <Button

@@ -33,16 +33,43 @@ export interface HubPaginatedResult<T> {
   params: HubRequestParams;
 }
 
-// Advisories
+// Base
 
-export type Severity = "low" | "moderate" | "important" | "critical";
+export interface CVEBase {
+  id: string;
+  title: string;
+  description: string;
+  severity: Severity;
+  cwe: string;
+  date_discovered: string;
+  date_released: string;
+  date_reserved: string;
+  date_updated: string;
+}
 
-export interface Advisory {
+export interface PackageBase {
+  id: string;
+  namespace: string;
+  name: string;
+  version: string;
+  type: string;
+  path?: string;
+  qualifiers: { [key: string]: string };
+}
+
+export interface SBOMBase {
+  id: string;
+  type: "CycloneDX" | "SPDX";
+  name: string;
+  version: string;
+  supplier: string;
+  created_on: string;
+}
+
+export interface AdvisoryBase {
   id: string;
   aggregated_severity: Severity;
   revision_date: string;
-  vulnerabilities_count: { [key in Severity]: number };
-  vulnerabilities: AdvisoryVulnerability[];
   metadata: {
     title: string;
     category: string;
@@ -65,11 +92,33 @@ export interface Advisory {
   };
 }
 
-export interface AdvisoryVulnerability {
-  id: string;
-  title: string;
-  discovery_date: string;
-  release_date: string;
-  severity: Severity;
-  cwe: string;
+// Advisories
+
+export type Severity = "low" | "moderate" | "important" | "critical";
+
+export interface Advisory extends AdvisoryBase {
+  cves: CVEBase[];
+}
+
+// CVE
+
+export interface CVE extends CVEBase {
+  related_sboms: SBOMBase[];
+  related_advisories: AdvisoryBase[];
+}
+
+// Package
+
+export interface Package extends PackageBase {
+  related_cves: CVEBase[];
+  related_sboms: SBOMBase[];
+}
+
+// SBOM
+
+export interface SBOM extends SBOMBase {
+  related_packages: {
+    count: number;
+  };
+  related_cves: { [key in Severity]: number };
 }

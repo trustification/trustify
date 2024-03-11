@@ -1,6 +1,9 @@
 import { type RestHandler } from "msw";
 import { config } from "../config";
 import advisories from "./advisories";
+import cves from "./cves";
+import packages from "./packages";
+import sboms from "./sboms";
 
 const enableMe = (me: string) =>
   config.stub === "*" ||
@@ -11,6 +14,9 @@ const enableMe = (me: string) =>
  */
 const enabledStubs: RestHandler[] = [
   ...(enableMe("advisories") ? advisories : []),
+  ...(enableMe("cves") ? cves : []),
+  ...(enableMe("packages") ? packages : []),
+  ...(enableMe("sboms") ? sboms : []),
 ].filter(Boolean);
 
 export default enabledStubs;

@@ -3,17 +3,11 @@ import { rest } from "msw";
 import * as AppRest from "@app/api/rest";
 import { Advisory } from "@app/api/models";
 
-export const mockProjectArray: Advisory[] = [
+export const mockAdvisoryArray: Advisory[] = [
   {
-    id: "Advisory-1",
+    id: "advisory-1",
     aggregated_severity: "critical",
     revision_date: new Date().toString(),
-    vulnerabilities_count: {
-      critical: 2,
-      important: 1,
-      low: 3,
-      moderate: 5,
-    },
     metadata: {
       title: "Title 1",
       category: "advisory.document.category",
@@ -31,14 +25,28 @@ export const mockProjectArray: Advisory[] = [
       references: [{ url: "http://somedomain.com" }],
       notes: [`# Title \n - List \n ## Subtitle \n _Italian_ \n > Note`],
     },
-    vulnerabilities: [
+    cves: [
       {
         id: "cve1",
         title: "title1",
-        discovery_date: new Date().toString(),
-        release_date: new Date().toString(),
+        description: "description1",
         severity: "critical",
         cwe: "cwe1",
+        date_discovered: new Date().toString(),
+        date_released: new Date().toString(),
+        date_reserved: new Date().toString(),
+        date_updated: new Date().toString(),
+      },
+      {
+        id: "cve2",
+        title: "title2",
+        description: "description2",
+        severity: "low",
+        cwe: "cwe1",
+        date_discovered: new Date().toString(),
+        date_released: new Date().toString(),
+        date_reserved: new Date().toString(),
+        date_updated: new Date().toString(),
       },
     ],
   },
@@ -46,13 +54,13 @@ export const mockProjectArray: Advisory[] = [
 
 export const handlers = [
   rest.get(AppRest.ADVISORIES, (req, res, ctx) => {
-    return res(ctx.json(mockProjectArray));
+    return res(ctx.json(mockAdvisoryArray));
   }),
   rest.get(`${AppRest.ADVISORIES}/:id`, (req, res, ctx) => {
     const { id } = req.params;
-    const mockProject = mockProjectArray.find((app) => app.id === id);
-    if (mockProject) {
-      return res(ctx.json(mockProject));
+    const item = mockAdvisoryArray.find((app) => app.id === id);
+    if (item) {
+      return res(ctx.json(item));
     } else {
       return res(ctx.status(404), ctx.json({ message: "Advisory not found" }));
     }

@@ -26,7 +26,7 @@ import { useFetchAdvisoryById } from "@app/queries/advisories";
 
 import { Overview } from "./overview";
 import { Source } from "./source";
-import { Vulnerabilities } from "./vulnerabilities";
+import { CVEs } from "./cves";
 
 export const AdvisoryDetails: React.FC = () => {
   const advisoryId = useRouteParams(PathParam.ADVISORY_ID);
@@ -116,17 +116,15 @@ export const AdvisoryDetails: React.FC = () => {
               ),
             },
             {
-              eventKey: "vulnerabilities",
-              title: "Vulnerabilities",
+              eventKey: "cves",
+              title: "CVEs",
               children: (
                 <div className="pf-v5-u-m-md">
                   <LoadingWrapper
                     isFetching={isFetching}
                     fetchError={fetchError}
                   >
-                    <Vulnerabilities
-                      vulnerabilities={advisory?.vulnerabilities || []}
-                    />
+                    <CVEs cves={advisory?.cves || []} />
                   </LoadingWrapper>
                 </div>
               ),
