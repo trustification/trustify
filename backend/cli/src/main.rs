@@ -26,12 +26,12 @@ impl Cli {
         match self.run_command().await {
             Ok(code) => code,
             Err(err) => {
-                eprintln!("Error: {err}");
+                log::info!("Error: {err}");
                 for (n, err) in err.chain().skip(1).enumerate() {
                     if n == 0 {
-                        eprintln!("Caused by:");
+                        log::info!("Caused by:");
                     }
-                    eprintln!("\t{err}");
+                    log::info!("\t{err}");
                 }
 
                 ExitCode::FAILURE

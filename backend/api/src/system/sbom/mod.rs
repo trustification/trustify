@@ -618,7 +618,7 @@ impl SbomContext {
 
             Ok(related)
         } else {
-            println!("no package");
+            log::info!("no package");
             Ok(vec![])
         }
     }
@@ -774,7 +774,6 @@ mod tests {
         let sbom_v3 = system
             .ingest_sbom("http://sbom.com/test.json", "10", Transactional::None)
             .await?;
-        println!("a");
 
         sbom_v1
             .ingest_describes_cpe22(
@@ -782,7 +781,6 @@ mod tests {
                 Transactional::None,
             )
             .await?;
-        println!("b");
 
         sbom_v2
             .ingest_describes_cpe22(
@@ -790,7 +788,6 @@ mod tests {
                 Transactional::None,
             )
             .await?;
-        println!("c");
 
         sbom_v3
             .ingest_describes_cpe22(
@@ -798,7 +795,6 @@ mod tests {
                 Transactional::None,
             )
             .await?;
-        println!("d");
 
         let found = system
             .locate_sboms(

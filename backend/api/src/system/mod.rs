@@ -162,8 +162,8 @@ impl InnerSystem {
             host,
             port.into().unwrap_or(5432)
         );
-        println!("bootstrap to {}", url);
-        debug!("bootstrap to {}", url);
+        log::info!("bootstrap to {}", url);
+        log::debug!("bootstrap to {}", url);
         let db = Database::connect(url).await?;
 
         let drop_db_result = db
