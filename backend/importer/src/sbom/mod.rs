@@ -1,7 +1,7 @@
 use crate::progress::init_log_and_progress;
 use sbom_walker::{
     retrieve::RetrievingVisitor,
-    source::{DispatchSource, FileSource, HttpSource},
+    source::{DispatchSource, FileSource, HttpOptions, HttpSource},
     validation::ValidationVisitor,
     walker::Walker,
 };
@@ -20,8 +20,11 @@ pub struct ImportSbomCommand {
     #[command(flatten)]
     pub database: Database,
 
+    /// GPG key used to sign SBOMs, use the fragment of the URL as fingerprint.
+    #[arg(long, env)]
+    pub key: Vec<Url>,
+
     /// Source URL or path
-    #[arg(short, long)]
     pub source: String,
 }
 
@@ -34,12 +37,19 @@ impl ImportSbomCommand {
         let system = InnerSystem::with_external_config(&self.database).await?;
 
         let source: DispatchSource = match Url::parse(&self.source) {
-            Ok(url) => HttpSource::new(
-                url,
-                Fetcher::new(Default::default()).await?,
-                Default::default(),
-            )
-            .into(),
+            Ok(url) => {
+                let keys = self
+                    .key
+                    .into_iter()
+                    .map(|key| key.into())
+                    .collect::<Vec<_>>();
+                HttpSource::new(
+                    url,
+                    Fetcher::new(Default::default()).await?,
+                    HttpOptions::new().keys(keys),
+                )
+                .into()
+            }
             Err(_) => FileSource::new(&self.source, None)?.into(),
         };
 
