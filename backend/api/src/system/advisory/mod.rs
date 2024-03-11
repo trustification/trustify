@@ -14,6 +14,7 @@ use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
+use std::sync::Arc;
 use trustify_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
@@ -429,7 +430,7 @@ mod test {
 
     #[test(tokio::test)]
     async fn ingest_advisories() -> Result<(), anyhow::Error> {
-        let (db, system) = InnerSystem::for_test("ingest_advisories").await?;
+        let system = InnerSystem::for_test("ingest_advisories").await?;
 
         let advisory1 = system
             .ingest_advisory(
@@ -466,7 +467,7 @@ mod test {
 
     #[test(tokio::test)]
     async fn ingest_affected_package_version_range() -> Result<(), anyhow::Error> {
-        let (db, system) = InnerSystem::for_test("ingest_affected_package_version_range").await?;
+        let system = InnerSystem::for_test("ingest_affected_package_version_range").await?;
 
         let advisory = system
             .ingest_advisory(
@@ -522,7 +523,7 @@ mod test {
 
     #[test(tokio::test)]
     async fn ingest_fixed_package_version() -> Result<(), anyhow::Error> {
-        let (db, system) = InnerSystem::for_test("ingest_fixed_package_version").await?;
+        let system = InnerSystem::for_test("ingest_fixed_package_version").await?;
 
         let advisory = system
             .ingest_advisory(
@@ -581,7 +582,7 @@ mod test {
 
     #[test(tokio::test)]
     async fn ingest_advisory_cve() -> Result<(), anyhow::Error> {
-        let (db, system) = InnerSystem::for_test("ingest_advisory_cve").await?;
+        let system = InnerSystem::for_test("ingest_advisory_cve").await?;
 
         let advisory = system
             .ingest_advisory(
@@ -607,8 +608,7 @@ mod test {
 
     #[test(tokio::test)]
     async fn advisory_affected_vulnerability_assertions() -> Result<(), anyhow::Error> {
-        let (db, system) =
-            InnerSystem::for_test("advisory_affected_vulnerability_assertions").await?;
+        let system = InnerSystem::for_test("advisory_affected_vulnerability_assertions").await?;
 
         let advisory = system
             .ingest_advisory(
@@ -648,7 +648,7 @@ mod test {
 
     #[test(tokio::test)]
     async fn advisory_not_affected_vulnerability_assertions() -> Result<(), anyhow::Error> {
-        let (db, system) =
+        let system =
             InnerSystem::for_test("advisory_not_affected_vulnerability_assertions").await?;
 
         let advisory = system

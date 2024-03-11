@@ -6,7 +6,7 @@ use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use std::process::ExitCode;
 use std::sync::Arc;
-use trustify_api::system::InnerSystem;
+use trustify_api::system::{DbStrategy, InnerSystem};
 use trustify_common::config::Database;
 
 pub mod server;
@@ -36,10 +36,11 @@ impl Run {
                     &self.database.host,
                     self.database.port,
                     &self.database.name,
+                    DbStrategy::External,
                 )
                 .await?
             }
-            false => InnerSystem::with_config(&self.database).await?,
+            false => InnerSystem::with_external_config(&self.database).await?,
         };
 
         let app_state = Arc::new(AppState { system });
@@ -71,11 +72,18 @@ pub fn configure(config: &mut web::ServiceConfig) {
 #[cfg(test)]
 mod test_util {
     use std::sync::Arc;
-    use trustify_api::system::InnerSystem;
+    use trustify_api::system::{DbStrategy, InnerSystem};
 
     pub async fn bootstrap_system(name: &str) -> Result<Arc<InnerSystem>, anyhow::Error> {
-        InnerSystem::bootstrap("postgres", "eggs", "localhost", None, name)
-            .await
-            .map(Arc::new)
+        InnerSystem::bootstrap(
+            "postgres",
+            "eggs",
+            "localhost",
+            None,
+            name,
+            DbStrategy::External,
+        )
+        .await
+        .map(Arc::new)
     }
 }

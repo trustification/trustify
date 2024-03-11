@@ -216,7 +216,7 @@ mod tests {
 
     #[tokio::test]
     async fn package_version_not_affected_assertions() -> Result<(), anyhow::Error> {
-        let (db, system) = InnerSystem::for_test("package_version_not_affected_assertions").await?;
+        let system = InnerSystem::for_test("package_version_not_affected_assertions").await?;
 
         let redhat_advisory = system
             .ingest_advisory(
