@@ -52,7 +52,8 @@ impl ProcessVisitor {
         if Sbom::try_parse_any(&data).is_ok() {
             log::info!(
                 "Storing: {} (modified: {:?})",
-                doc.url, doc.metadata.last_modification
+                doc.url,
+                doc.metadata.last_modification
             );
 
             let sbom = self
