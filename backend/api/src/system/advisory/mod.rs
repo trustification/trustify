@@ -1,6 +1,6 @@
 //! Support for advisories.
 
-use crate::db::Transactional;
+use crate::db::{Paginated, PaginatedResults, Transactional};
 use crate::system::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::system::error::Error;
 use crate::system::InnerSystem;
@@ -9,7 +9,7 @@ use fixed_package_version::FixedPackageVersionContext;
 use migration::m0000032_create_advisory_vulnerability::AdvisoryVulnerability;
 use not_affected_package_version::NotAffectedPackageVersionContext;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, EntityTrait, FromQueryResult, QueryFilter};
+use sea_orm::{ActiveModelTrait, EntityTrait, FromQueryResult, PaginatorTrait, QueryFilter};
 use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
 use std::collections::HashMap;
@@ -28,6 +28,26 @@ pub mod not_affected_package_version;
 pub mod csaf;
 
 impl InnerSystem {
+    pub async fn list_advisories(
+        &self,
+        paginated: Paginated,
+        tx: Transactional<'_>,
+    ) -> Result<PaginatedResults<AdvisoryContext>, Error> {
+        let connection = self.connection(tx);
+        let pagination =
+            entity::advisory::Entity::find().paginate(&connection, paginated.page_size);
+
+        Ok(PaginatedResults {
+            results: pagination
+                .fetch_page(paginated.page)
+                .await?
+                .drain(0..)
+                .map(|advisory| (self, advisory).into())
+                .collect::<Vec<AdvisoryContext>>(),
+            num_items: pagination.num_items().await?,
+        })
+    }
+
     pub(crate) async fn get_advisory_by_id(
         &self,
         id: i32,
@@ -83,7 +103,7 @@ impl InnerSystem {
 #[derive(Clone)]
 pub struct AdvisoryContext {
     system: InnerSystem,
-    advisory: entity::advisory::Model,
+    pub advisory: entity::advisory::Model,
 }
 
 impl PartialEq for AdvisoryContext {

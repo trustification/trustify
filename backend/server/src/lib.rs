@@ -9,6 +9,7 @@ use std::sync::Arc;
 use trustify_api::system::{DbStrategy, InnerSystem};
 use trustify_common::config::Database;
 
+pub mod dto;
 pub mod server;
 
 /// Run the API server

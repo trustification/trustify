@@ -5,6 +5,7 @@ use sea_orm::{
     ExecResult, FromQueryResult, ModelTrait, PaginatorTrait, QueryResult, Select, Statement,
 };
 use sea_query::Iden;
+use serde::Deserialize;
 use std::fmt::Write;
 use std::marker::PhantomData;
 use std::process::Output;
@@ -65,20 +66,25 @@ impl ConnectionTrait for ConnectionOrTransaction<'_> {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Deserialize)]
 pub struct Paginated {
     pub page_size: u64,
     pub page: u64,
 }
 
+impl Default for Paginated {
+    fn default() -> Self {
+        Paginated {
+            page: 1,
+            page_size: 10,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct PaginatedResults<R> {
     pub results: Vec<R>,
-    pub page: u64,
     pub num_items: u64,
-    pub num_pages: u64,
-    pub prev_page: Option<Paginated>,
-    pub next_page: Option<Paginated>,
 }
 
 pub struct QualifiedPackageTransitive;

@@ -432,25 +432,7 @@ impl PackageContext {
                 .drain(0..)
                 .map(|each| (self, each).into())
                 .collect(),
-            page: paginated.page_size,
             num_items,
-            num_pages,
-            prev_page: if paginated.page > 0 {
-                Some(Paginated {
-                    page_size: paginated.page_size,
-                    page: paginated.page - 1,
-                })
-            } else {
-                None
-            },
-            next_page: if paginated.page + 1 < num_pages {
-                Some(Paginated {
-                    page_size: paginated.page_size,
-                    page: paginated.page + 1,
-                })
-            } else {
-                None
-            },
         })
     }
 
@@ -753,29 +735,6 @@ mod tests {
             )
             .await?;
 
-        assert!(paginated.prev_page.is_none());
-        assert_eq!(
-            paginated.next_page,
-            Some(Paginated {
-                page_size: 50,
-                page: 1,
-            })
-        );
-        assert_eq!(50, paginated.results.len());
-
-        let next_paginated = pkg
-            .get_versions_paginated(paginated.next_page.unwrap(), Transactional::None)
-            .await?;
-
-        assert_eq!(
-            next_paginated.prev_page,
-            Some(Paginated {
-                page_size: 50,
-                page: 0,
-            })
-        );
-
-        assert!(next_paginated.next_page.is_some());
         assert_eq!(50, paginated.results.len());
 
         Ok(())

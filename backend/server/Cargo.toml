@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 trustify-api = { path = "../api"}
 trustify-common = { path = "../common"}
+trustify-entity = { path = "../entity"}
 
 actix-web = "4"
 anyhow = "1.0.72"
