@@ -8,7 +8,7 @@ on:
     branches:
       - main
     paths:
-      - "backend/**"
+      - "**"
       - ".github/workflows/**"
 
 env:
@@ -21,13 +21,13 @@ jobs:
 
     defaults:
       run:
-        working-directory: backend
+        working-directory: .
 
     steps:
     - uses: actions/checkout@v4
     - uses: Swatinem/rust-cache@v2
       with:
-        workspaces: backend
+        workspaces: .
 
     - name: Install nettle
       run: |
