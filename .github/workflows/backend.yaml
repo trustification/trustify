@@ -44,7 +44,7 @@ jobs:
       run: rm -Rf $HOME/.theseus/
 
     - name: Test
-      run: cargo test -- --test-threads=1 --nocapture
+      run: cargo test -- --nocapture
       env:
         RUST_LOG: debug
         DB_USER: postgres
