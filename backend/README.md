@@ -1,5 +1,9 @@
 ## dev-env
 
+**Note**
+Running an external PostgreSQL is no longer recommended for unit tests.
+You may wish to run one externally still for any other non-test-related activities.
+
 Starting:
 
 ```shell
@@ -12,12 +16,11 @@ Connect to PSQL:
 env PGPASSWORD=eggs psql -U postgres -d huevos -h localhost -p 5432
 ```
 
-Import data:
+Import data (also see: [importer/README.md](importer/README.md) for more options):
 
 ```shell
-cargo run --bin huevos-cli importer csaf --source ../../trustification/data/ds1/csaf --db-user postgres --db-password eggs
-
-cargo run --bin huevos-cli importer sbom --source ../../trustification/data/ds1/sbom --db-user postgres --db-password eggs
+env DB_USER=postgres DB_PASSWORD=eggs cargo run -p trustify-cli -- importer csaf https://www.redhat.com
+env DB_USER=postgres DB_PASSWORD=eggs cargo run -p trustify-cli -- importer sbom https://access.redhat.com/security/data/sbom/beta/
 ```
 
 ## Notes on models

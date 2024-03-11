@@ -1,5 +1,8 @@
 use crate::db::{ConnectionOrTransaction, Transactional};
+use log::debug;
 use migration::Migrator;
+use postgresql_embedded;
+use postgresql_embedded::{PostgreSQL, Settings};
 use sea_orm::{
     ConnectOptions, ConnectionTrait, Database, DatabaseConnection, DbErr, Statement,
     TransactionTrait,
@@ -22,9 +25,17 @@ const DB_NAME: &str = "huevos";
 
 pub type System = Arc<InnerSystem>;
 
-#[derive(Clone)]
+#[derive(Debug)]
+pub enum DbStrategy {
+    External,
+    Managed(Arc<PostgreSQL>),
+}
+
+#[derive(Debug, Clone)]
 pub struct InnerSystem {
     db: DatabaseConnection,
+    db_strategy: Arc<DbStrategy>,
+    //db_name: String,
 }
 
 pub enum Error<E: Send> {
@@ -59,7 +70,7 @@ impl<E: Send + Display> std::fmt::Display for Error<E> {
 impl<E: Send + Display> std::error::Error for Error<E> {}
 
 impl InnerSystem {
-    pub async fn with_config(
+    pub async fn with_external_config(
         database: &trustify_common::config::Database,
     ) -> Result<Self, anyhow::Error> {
         Self::new(
@@ -68,6 +79,7 @@ impl InnerSystem {
             &database.host,
             database.port,
             &database.name,
+            DbStrategy::External,
         )
         .await
     }
@@ -78,19 +90,26 @@ impl InnerSystem {
         host: &str,
         port: impl Into<Option<u16>>,
         db_name: &str,
+        db_strategy: DbStrategy,
     ) -> Result<Self, anyhow::Error> {
         let port = port.into().unwrap_or(5432);
         let url = format!("postgres://{username}:{password}@{host}:{port}/{db_name}");
         log::info!("connect to {}", url);
 
         let mut opt = ConnectOptions::new(url);
+        opt.min_connections(16);
         opt.sqlx_logging_level(log::LevelFilter::Trace);
 
         let db = Database::connect(opt).await?;
 
+        debug!("applying migrations");
         Migrator::refresh(&db).await?;
+        debug!("applied migrations");
 
-        Ok(Self { db })
+        Ok(Self {
+            db,
+            db_strategy: Arc::new(db_strategy),
+        })
     }
 
     pub(crate) fn connection<'db>(
@@ -105,20 +124,46 @@ impl InnerSystem {
 
     #[cfg(test)]
     pub async fn for_test(name: &str) -> Result<Arc<Self>, anyhow::Error> {
-        Self::bootstrap("postgres", "eggs", "localhost", None, name)
-            .await
-            .map(Arc::new)
+        let settings = Settings {
+            username: "postgres".to_string(),
+            password: "trustify".to_string(),
+            temporary: true,
+            ..Default::default()
+        };
+
+        let mut postgresql = PostgreSQL::new(PostgreSQL::default_version(), settings);
+        postgresql.setup().await?;
+        postgresql.start().await?;
+
+        Self::bootstrap(
+            "postgres",
+            "trustify",
+            "localhost",
+            Some(postgresql.settings().port),
+            name,
+            DbStrategy::Managed(Arc::new(postgresql)),
+        )
+        .await
+        .map(Arc::new)
     }
 
     pub async fn bootstrap(
         username: &str,
         password: &str,
         host: &str,
-        port: impl Into<Option<u16>>,
+        port: impl Into<Option<u16>> + Copy,
         db_name: &str,
+        db_strategy: DbStrategy,
     ) -> Result<Self, anyhow::Error> {
-        let url = format!("postgres://{}:{}@{}/postgres", username, password, host);
+        let url = format!(
+            "postgres://{}:{}@{}:{}/postgres",
+            username,
+            password,
+            host,
+            port.into().unwrap_or(5432)
+        );
         log::info!("bootstrap to {}", url);
+        log::debug!("bootstrap to {}", url);
         let db = Database::connect(url).await?;
 
         let drop_db_result = db
@@ -137,7 +182,7 @@ impl InnerSystem {
 
         db.close().await?;
 
-        Self::new(username, password, host, port, db_name).await
+        Self::new(username, password, host, port, db_name, db_strategy).await
     }
 
     pub async fn close(self) -> anyhow::Result<()> {

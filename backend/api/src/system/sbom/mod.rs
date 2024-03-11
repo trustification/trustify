@@ -676,11 +676,12 @@ impl SbomContext {
 mod tests {
     use crate::db::Transactional;
     use crate::system::InnerSystem;
+    use test_log::test;
     use trustify_common::purl::Purl;
     use trustify_common::sbom::SbomLocator;
     use trustify_entity::relationship::Relationship;
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_sboms() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("ingest_sboms").await?;
 
@@ -704,7 +705,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_and_fetch_sboms_describing_purls() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("ingest_and_fetch_sboms_describing_purls").await?;
 
@@ -753,7 +754,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_and_locate_sboms_describing_cpes() -> Result<(), anyhow::Error> {
         /*
         env_logger::builder()
@@ -809,7 +810,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("transitive_dependency_of").await?;
 
@@ -877,7 +878,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_package_relates_to_package_dependency_of() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("ingest_contains_packages").await?;
 
@@ -948,9 +949,11 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn sbom_vulnerabilities() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("sbom_vulnerabilities").await?;
+
+        println!("{:?}", system);
 
         let sbom = system
             .ingest_sbom(
@@ -960,8 +963,11 @@ mod tests {
             )
             .await?;
 
+        println!("-------------------- A");
+
         sbom.ingest_describes_package("pkg://oci/my-app@1.2.3", Transactional::None)
             .await?;
+        println!("-------------------- B");
 
         sbom.ingest_package_relates_to_package(
             "pkg://maven/io.quarkus/quarkus-core@1.2.3",
@@ -970,6 +976,7 @@ mod tests {
             Transactional::None,
         )
         .await?;
+        println!("-------------------- C");
 
         sbom.ingest_package_relates_to_package(
             "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
@@ -978,6 +985,7 @@ mod tests {
             Transactional::None,
         )
         .await?;
+        println!("-------------------- D");
 
         sbom.ingest_package_relates_to_package(
             "pkg://maven/postgres/postgres-driver@1.2.3",

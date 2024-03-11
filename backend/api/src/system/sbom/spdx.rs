@@ -177,9 +177,10 @@ mod tests {
     use std::path::PathBuf;
     use std::str::FromStr;
     use std::time::Instant;
+    use test_log::test;
     use trustify_entity::relationship::Relationship;
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn parse_spdx_quarkus() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("parse_spdx_quarkus").await?;
 
@@ -232,7 +233,7 @@ mod tests {
 
     // ignore because it's a slow slow slow test.
     #[ignore]
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn parse_spdx_openshift() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("parse_spdx_openshift").await?;
 
@@ -283,7 +284,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn parse_spdx() -> Result<(), anyhow::Error> {
         let system = InnerSystem::for_test("parse_spdx").await?;
 
