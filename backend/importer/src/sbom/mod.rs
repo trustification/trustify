@@ -31,7 +31,7 @@ impl ImportSbomCommand {
 
         log::info!("Ingesting SBOMs");
 
-        let system = InnerSystem::with_config(&self.database).await?;
+        let system = InnerSystem::with_external_config(&self.database).await?;
 
         let source: DispatchSource = match Url::parse(&self.source) {
             Ok(url) => HttpSource::new(

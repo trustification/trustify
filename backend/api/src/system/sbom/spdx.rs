@@ -177,11 +177,12 @@ mod tests {
     use std::path::PathBuf;
     use std::str::FromStr;
     use std::time::Instant;
+    use test_log::test;
     use trustify_entity::relationship::Relationship;
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn parse_spdx_quarkus() -> Result<(), anyhow::Error> {
-        let (pgsql, system) = InnerSystem::for_test("parse_spdx_quarkus").await?;
+        let system = InnerSystem::for_test("parse_spdx_quarkus").await?;
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
         let test_data = pwd.join("../test-data");
@@ -232,9 +233,9 @@ mod tests {
 
     // ignore because it's a slow slow slow test.
     #[ignore]
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn parse_spdx_openshift() -> Result<(), anyhow::Error> {
-        let (pgsql, system) = InnerSystem::for_test("parse_spdx_openshift").await?;
+        let system = InnerSystem::for_test("parse_spdx_openshift").await?;
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
         let test_data = pwd.join("../test-data");
@@ -283,9 +284,9 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn parse_spdx() -> Result<(), anyhow::Error> {
-        let (pgsql, system) = InnerSystem::for_test("parse_spdx").await?;
+        let system = InnerSystem::for_test("parse_spdx").await?;
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
         let test_data = pwd.join("../test-data");
