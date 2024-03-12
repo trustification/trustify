@@ -8,6 +8,7 @@ members = [
   "common/infrastructure",
   "entity",
   "importer",
+  "ingestors",
   "migration",
   "server",
 ]

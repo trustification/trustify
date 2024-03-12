@@ -16,6 +16,9 @@ The primary graph engine and API.
 #### `importer`
 Importers capable of adding documents into the graph.
 
+#### `ingestors`
+Ingestors/readers for various formats (SPDX, CSAF, CVE, OSV, etc, etc)
+
 #### `migration`
 SeaORM migrations for the DDL.
 
