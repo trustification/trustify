@@ -3,7 +3,7 @@
 use crate::db::Transactional;
 use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::graph::error::Error;
-use crate::graph::InnerGraph;
+use crate::graph::Graph;
 use affected_package_version_range::AffectedPackageVersionRangeContext;
 use fixed_package_version::FixedPackageVersionContext;
 use migration::m0000032_create_advisory_vulnerability::AdvisoryVulnerability;
@@ -27,7 +27,7 @@ pub mod not_affected_package_version;
 
 pub mod csaf;
 
-impl InnerGraph {
+impl Graph {
     pub(crate) async fn get_advisory_by_id(
         &self,
         id: i32,
@@ -81,38 +81,35 @@ impl InnerGraph {
 }
 
 #[derive(Clone)]
-pub struct AdvisoryContext {
-    system: InnerGraph,
+pub struct AdvisoryContext<'g> {
+    graph: &'g Graph,
     advisory: entity::advisory::Model,
 }
 
-impl PartialEq for AdvisoryContext {
+impl PartialEq for AdvisoryContext<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.advisory.eq(&other.advisory)
     }
 }
 
-impl Debug for AdvisoryContext {
+impl Debug for AdvisoryContext<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.advisory.fmt(f)
     }
 }
 
-impl From<(&InnerGraph, entity::advisory::Model)> for AdvisoryContext {
-    fn from((system, advisory): (&InnerGraph, entity::advisory::Model)) -> Self {
-        Self {
-            system: system.clone(),
-            advisory,
-        }
+impl<'g> From<(&'g Graph, entity::advisory::Model)> for AdvisoryContext<'g> {
+    fn from((graph, advisory): (&'g Graph, entity::advisory::Model)) -> Self {
+        Self { graph, advisory }
     }
 }
 
-impl AdvisoryContext {
+impl<'g> AdvisoryContext<'g> {
     pub async fn get_vulnerability(
         &self,
         identifier: &str,
         tx: Transactional<'_>,
-    ) -> Result<Option<AdvisoryVulnerabilityContext>, Error> {
+    ) -> Result<Option<AdvisoryVulnerabilityContext<'g>>, Error> {
         Ok(entity::advisory_vulnerability::Entity::find()
             .join(
                 JoinType::Join,
@@ -120,7 +117,7 @@ impl AdvisoryContext {
             )
             .filter(entity::advisory_vulnerability::Column::AdvisoryId.eq(self.advisory.id))
             .filter(entity::vulnerability::Column::Identifier.eq(identifier))
-            .one(&self.system.connection(tx))
+            .one(&self.graph.connection(tx))
             .await?
             .map(|vuln| (self, vuln).into()))
     }
@@ -134,14 +131,14 @@ impl AdvisoryContext {
             return Ok(found);
         }
 
-        let cve = self.system.ingest_vulnerability(identifier, tx).await?;
+        let cve = self.graph.ingest_vulnerability(identifier, tx).await?;
 
         let entity = entity::advisory_vulnerability::ActiveModel {
             advisory_id: Set(self.advisory.id),
             vulnerability_id: Set(cve.cve.id),
         };
 
-        Ok((self, entity.insert(&self.system.connection(tx)).await?).into())
+        Ok((self, entity.insert(&self.graph.connection(tx)).await?).into())
     }
 
     pub async fn vulnerabilities(
@@ -156,7 +153,7 @@ impl AdvisoryContext {
                     .rev(),
             )
             .filter(entity::advisory_vulnerability::Column::AdvisoryId.eq(self.advisory.id))
-            .all(&self.system.connection(tx))
+            .all(&self.graph.connection(tx))
             .await?
             .drain(0..)
             .map(|e| (self, e).into())
@@ -241,7 +238,7 @@ impl AdvisoryContext {
             )
             .filter(entity::affected_package_version_range::Column::AdvisoryId.eq(self.advisory.id))
             .into_model::<AffectedVersion>()
-            .all(&self.system.connection(tx))
+            .all(&self.graph.connection(tx))
             .await?;
 
         let mut assertions = HashMap::new();
@@ -317,7 +314,7 @@ impl AdvisoryContext {
             )
             .filter(entity::not_affected_package_version::Column::AdvisoryId.eq(self.advisory.id))
             .into_model::<NotAffectedVersion>()
-            .all(&self.system.connection(tx))
+            .all(&self.graph.connection(tx))
             .await?;
 
         let mut assertions = HashMap::new();
@@ -392,7 +389,7 @@ impl AdvisoryContext {
             )
             .filter(entity::fixed_package_version::Column::AdvisoryId.eq(self.advisory.id))
             .into_model::<FixedVersion>()
-            .all(&self.system.connection(tx))
+            .all(&self.graph.connection(tx))
             .await?;
 
         let mut assertions = HashMap::new();
@@ -423,7 +420,7 @@ impl AdvisoryContext {
 #[allow(clippy::unwrap_used)]
 mod test {
     use crate::db::Transactional;
-    use crate::graph::{Graph, InnerGraph};
+    use crate::graph::Graph;
     use std::collections::HashSet;
     use test_log::test;
     use trustify_common::advisory::Assertion;

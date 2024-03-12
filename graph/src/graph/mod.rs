@@ -12,6 +12,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::future::Future;
 use std::ops::Deref;
 use std::sync::Arc;
+use tempfile::TempDir;
 
 pub mod advisory;
 pub mod error;
@@ -21,114 +22,14 @@ pub mod sbom;
 mod cpe22;
 pub mod vulnerability;
 
-const DB_URL: &str = "postgres://postgres:eggs@localhost";
-const DB_NAME: &str = "huevos";
-
-#[derive(Clone, Debug)]
-pub struct Graph(Arc<InnerGraph>);
-
-impl Deref for Graph {
-    type Target = InnerGraph;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl Graph {
-    pub async fn with_external_config(
-        database: &trustify_common::config::Database,
-    ) -> Result<Self, anyhow::Error> {
-        Ok(Self(Arc::new(
-            InnerGraph::new(
-                &database.username,
-                &database.password,
-                &database.host,
-                database.port,
-                &database.name,
-                DbStrategy::External,
-            )
-            .await?,
-        )))
-    }
-
-    pub async fn new(
-        username: &str,
-        password: &str,
-        host: &str,
-        port: impl Into<Option<u16>>,
-        db_name: &str,
-        db_strategy: DbStrategy,
-    ) -> Result<Self, anyhow::Error> {
-        let port = port.into().unwrap_or(5432);
-        let url = format!("postgres://{username}:{password}@{host}:{port}/{db_name}");
-        log::info!("connect to {}", url);
-
-        let mut opt = ConnectOptions::new(url);
-        opt.min_connections(16);
-        opt.sqlx_logging_level(log::LevelFilter::Trace);
-
-        let db = Database::connect(opt).await?;
-
-        debug!("applying migrations");
-        Migrator::refresh(&db).await?;
-        debug!("applied migrations");
-
-        Ok(Self(Arc::new(InnerGraph {
-            db,
-            db_strategy: Arc::new(db_strategy),
-        })))
-    }
-
-    pub async fn bootstrap(
-        username: &str,
-        password: &str,
-        host: &str,
-        port: impl Into<Option<u16>> + Copy,
-        db_name: &str,
-        db_strategy: DbStrategy,
-    ) -> Result<Self, anyhow::Error> {
-        Ok(Self(Arc::new(
-            InnerGraph::bootstrap(username, password, host, port, db_name, db_strategy).await?,
-        )))
-    }
-
-    #[cfg(test)]
-    pub async fn for_test(name: &str) -> Result<Self, anyhow::Error> {
-        let settings = Settings {
-            username: "postgres".to_string(),
-            password: "trustify".to_string(),
-            temporary: true,
-            installation_dir: tempfile::tempdir()?.into_path(),
-            ..Default::default()
-        };
-
-        let mut postgresql = PostgreSQL::new(PostgreSQL::default_version(), settings);
-        postgresql.setup().await?;
-        postgresql.start().await?;
-
-        Ok(Self(Arc::new(
-            InnerGraph::bootstrap(
-                "postgres",
-                "trustify",
-                "localhost",
-                Some(postgresql.settings().port),
-                name,
-                DbStrategy::Managed(Arc::new(postgresql)),
-            )
-            .await?,
-        )))
-    }
-}
-
 #[derive(Debug)]
 pub enum DbStrategy {
     External,
-    Managed(Arc<PostgreSQL>),
+    Managed(Arc<(PostgreSQL, TempDir)>),
 }
 
 #[derive(Debug, Clone)]
-pub struct InnerGraph {
+pub struct Graph {
     db: DatabaseConnection,
     db_strategy: Arc<DbStrategy>,
 }
@@ -164,7 +65,7 @@ impl<E: Send + Display> std::fmt::Display for Error<E> {
 
 impl<E: Send + Display> std::error::Error for Error<E> {}
 
-impl InnerGraph {
+impl Graph {
     pub async fn new(
         username: &str,
         password: &str,
@@ -193,6 +94,47 @@ impl InnerGraph {
         })
     }
 
+    pub async fn with_external_config(
+        database: &trustify_common::config::Database,
+    ) -> Result<Self, anyhow::Error> {
+        Self::new(
+            &database.username,
+            &database.password,
+            &database.host,
+            database.port,
+            &database.name,
+            DbStrategy::External,
+        )
+        .await
+    }
+
+    #[cfg(test)]
+    pub async fn for_test(name: &str) -> Result<Self, anyhow::Error> {
+        let tempdir = tempfile::tempdir()?;
+        let installation_dir = tempdir.path().to_path_buf();
+        let settings = Settings {
+            username: "postgres".to_string(),
+            password: "trustify".to_string(),
+            temporary: true,
+            installation_dir,
+            ..Default::default()
+        };
+
+        let mut postgresql = PostgreSQL::new(PostgreSQL::default_version(), settings);
+        postgresql.setup().await?;
+        postgresql.start().await?;
+
+        Ok(Self::bootstrap(
+            "postgres",
+            "trustify",
+            "localhost",
+            Some(postgresql.settings().port),
+            name,
+            DbStrategy::Managed(Arc::new((postgresql, tempdir))),
+        )
+        .await?)
+    }
+
     pub(crate) fn connection<'db>(
         &'db self,
         tx: Transactional<'db>,
@@ -210,7 +152,7 @@ impl InnerGraph {
         port: impl Into<Option<u16>> + Copy,
         db_name: &str,
         db_strategy: DbStrategy,
-    ) -> Result<InnerGraph, anyhow::Error> {
+    ) -> Result<Graph, anyhow::Error> {
         let url = format!(
             "postgres://{}:{}@{}:{}/postgres",
             username,

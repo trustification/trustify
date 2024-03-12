@@ -1,6 +1,6 @@
 use crate::db::Transactional;
 use crate::graph::error::Error;
-use crate::graph::InnerGraph;
+use crate::graph::Graph;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, NotSet, QueryFilter, Set};
 use sea_query::SelectStatement;
 use std::fmt::{Debug, Formatter};
@@ -8,7 +8,7 @@ use trustify_common::cpe22::Component::Value;
 use trustify_common::cpe22::{Component, Cpe22, Cpe22Type};
 use trustify_entity as entity;
 
-impl InnerGraph {
+impl Graph {
     pub async fn get_cpe22<C: Into<Cpe22>>(
         &self,
         cpe: C,
@@ -129,12 +129,12 @@ impl InnerGraph {
 
 #[derive(Clone)]
 pub struct Cpe22Context {
-    pub system: InnerGraph,
+    pub system: Graph,
     pub cpe22: entity::cpe22::Model,
 }
 
-impl From<(&InnerGraph, entity::cpe22::Model)> for Cpe22Context {
-    fn from((system, cpe22): (&InnerGraph, entity::cpe22::Model)) -> Self {
+impl From<(&Graph, entity::cpe22::Model)> for Cpe22Context {
+    fn from((system, cpe22): (&Graph, entity::cpe22::Model)) -> Self {
         Self {
             system: system.clone(),
             cpe22,

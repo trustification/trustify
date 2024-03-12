@@ -6,73 +6,67 @@ use crate::graph::advisory::AdvisoryContext;
 use crate::graph::error::Error;
 use csaf::{document::Category, Csaf};
 use sea_orm::TransactionTrait;
+use std::future::Future;
+use std::pin::Pin;
 use trustify_common::purl::Purl;
 
-impl AdvisoryContext {
-    pub async fn ingest_csaf(&self, csaf: Csaf) -> Result<(), anyhow::Error> {
+impl<'g> AdvisoryContext<'g> {
+    pub async fn ingest_csaf(&self, csaf: Csaf) -> Result<(), Error> {
         let advisory = self.clone();
-        //let graph = self.graph.clone();
-        self.system
-            .db
-            .transaction(|tx| {
-                Box::pin(async move {
-                    for vuln in csaf.vulnerabilities.iter().flatten() {
-                        let id = match &vuln.cve {
-                            Some(cve) => cve,
-                            None => continue,
-                        };
 
-                        //let v = graph.ingest_vulnerability(id).await?;
-                        let advisory_vulnerability = advisory
-                            .ingest_vulnerability(id, Transactional::None)
+        let txn = self.graph.db.begin().await?;
+
+        for vuln in csaf.vulnerabilities.iter().flatten() {
+            let id = match &vuln.cve {
+                Some(cve) => cve,
+                None => continue,
+            };
+
+            //let v = graph.ingest_vulnerability(id).await?;
+            let advisory_vulnerability = advisory
+                .ingest_vulnerability(id, Transactional::None)
+                .await?;
+
+            if let Some(ps) = &vuln.product_status {
+                for r in ps.fixed.iter().flatten() {
+                    for purl in resolve_purls(&csaf, r) {
+                        let package = Purl::from(purl.clone());
+                        let x = advisory_vulnerability
+                            .ingest_fixed_package_version(package, Transactional::None)
                             .await?;
-
-                        if let Some(ps) = &vuln.product_status {
-                            for r in ps.fixed.iter().flatten() {
-                                for purl in resolve_purls(&csaf, r) {
-                                    let package = Purl::from(purl.clone());
-                                    let x = advisory_vulnerability
-                                        .ingest_fixed_package_version(package, Transactional::None)
-                                        .await?;
-                                }
-                            }
-                            for r in ps.known_not_affected.iter().flatten() {
-                                for purl in resolve_purls(&csaf, r) {
-                                    let package = Purl::from(purl.clone());
-                                    let x = advisory_vulnerability
-                                        .ingest_not_affected_package_version(
-                                            package,
-                                            Transactional::None,
-                                        )
-                                        .await?;
-                                }
-                            }
-                            for r in ps.known_affected.iter().flatten() {
-                                /*
-                                for purl in resolve_purls(&csaf, r) {
-                                    let package = Purl::from(purl.clone());
-                                    log::debug!("{}", package.to_string());
-                                    //advisory_vulnerability
-                                        //.ingest_affected_package_range(package, Transactional::None)
-                                        //.await?;
-                                }
-
-                                 */
-                            }
-                        }
                     }
-                    Ok::<(), Error>(())
-                })
-            })
-            .await?;
-        Ok(())
+                }
+                for r in ps.known_not_affected.iter().flatten() {
+                    for purl in resolve_purls(&csaf, r) {
+                        let package = Purl::from(purl.clone());
+                        let x = advisory_vulnerability
+                            .ingest_not_affected_package_version(package, Transactional::None)
+                            .await?;
+                    }
+                }
+                for r in ps.known_affected.iter().flatten() {
+                    /*
+                    for purl in resolve_purls(&csaf, r) {
+                        let package = Purl::from(purl.clone());
+                        log::debug!("{}", package.to_string());
+                        //advisory_vulnerability
+                            //.ingest_affected_package_range(package, Transactional::None)
+                            //.await?;
+                    }
+
+                     */
+                }
+            }
+        }
+        txn.commit();
+        Ok::<(), Error>(())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::db::Transactional;
-    use crate::graph::{Graph, InnerGraph};
+    use crate::graph::Graph;
     use csaf::Csaf;
     use std::fs::File;
     use std::path::PathBuf;
