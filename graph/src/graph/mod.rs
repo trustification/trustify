@@ -124,7 +124,7 @@ impl Graph {
         postgresql.setup().await?;
         postgresql.start().await?;
 
-        Ok(Self::bootstrap(
+        Self::bootstrap(
             "postgres",
             "trustify",
             "localhost",
@@ -132,7 +132,7 @@ impl Graph {
             name,
             DbStrategy::Managed(Arc::new((postgresql, tempdir))),
         )
-        .await?)
+        .await
     }
 
     pub(crate) fn connection<'db>(
