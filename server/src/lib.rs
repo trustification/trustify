@@ -9,6 +9,7 @@ use std::sync::Arc;
 use trustify_api::graph::{DbStrategy, Graph, InnerGraph};
 use trustify_common::config::Database;
 
+pub mod oidc;
 pub mod server;
 
 /// Run the API server
@@ -49,6 +50,7 @@ impl Run {
             App::new()
                 .app_data(web::Data::from(app_state.clone()))
                 .wrap(Logger::default())
+                .configure(oidc::configure)
                 .configure(configure)
         })
         .bind(self.bind_addr)?
