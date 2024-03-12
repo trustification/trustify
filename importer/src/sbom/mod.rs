@@ -15,6 +15,7 @@ use walker_common::{fetcher::Fetcher, validate::ValidationOptions};
 
 mod process;
 
+/// Import SBOMs
 #[derive(clap::Args, Debug)]
 pub struct ImportSbomCommand {
     #[command(flatten)]

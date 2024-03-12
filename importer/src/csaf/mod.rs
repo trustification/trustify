@@ -18,7 +18,7 @@ use trustify_common::config::Database;
 use url::Url;
 use walker_common::{fetcher::Fetcher, utils::hex::Hex, validate::ValidationOptions};
 
-/// Run the importer
+/// Import from a CSAF source
 #[derive(clap::Args, Debug)]
 pub struct ImportCsafCommand {
     #[command(flatten)]
