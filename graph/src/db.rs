@@ -1,13 +1,9 @@
-use crate::graph::error::Error;
-use async_trait::async_trait;
 use sea_orm::{
-    ConnectionTrait, DatabaseConnection, DatabaseTransaction, DbBackend, DbErr, EntityTrait,
-    ExecResult, FromQueryResult, ModelTrait, PaginatorTrait, QueryResult, Select, Statement,
+    ConnectionTrait, DatabaseConnection, DatabaseTransaction, DbBackend, DbErr, ExecResult,
+    QueryResult, Statement,
 };
 use sea_query::Iden;
 use std::fmt::Write;
-use std::marker::PhantomData;
-use std::process::Output;
 
 #[derive(Copy, Clone)]
 pub enum Transactional<'db> {

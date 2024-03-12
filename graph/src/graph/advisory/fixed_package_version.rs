@@ -1,5 +1,4 @@
 use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
-use crate::graph::advisory::AdvisoryContext;
 use std::fmt::{Debug, Formatter};
 use trustify_entity::fixed_package_version;
 

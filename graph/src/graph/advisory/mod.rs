@@ -4,17 +4,12 @@ use crate::db::Transactional;
 use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::graph::error::Error;
 use crate::graph::Graph;
-use affected_package_version_range::AffectedPackageVersionRangeContext;
-use fixed_package_version::FixedPackageVersionContext;
-use migration::m0000032_create_advisory_vulnerability::AdvisoryVulnerability;
-use not_affected_package_version::NotAffectedPackageVersionContext;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, EntityTrait, FromQueryResult, QueryFilter};
 use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
-use std::sync::Arc;
 use trustify_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
@@ -421,7 +416,6 @@ impl<'g> AdvisoryContext<'g> {
 mod test {
     use crate::db::Transactional;
     use crate::graph::Graph;
-    use std::collections::HashSet;
     use test_log::test;
     use trustify_common::advisory::Assertion;
 

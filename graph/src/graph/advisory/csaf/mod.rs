@@ -4,10 +4,8 @@ use crate::db::Transactional;
 use crate::graph::advisory::csaf::util::resolve_purls;
 use crate::graph::advisory::AdvisoryContext;
 use crate::graph::error::Error;
-use csaf::{document::Category, Csaf};
+use csaf::Csaf;
 use sea_orm::TransactionTrait;
-use std::future::Future;
-use std::pin::Pin;
 use trustify_common::purl::Purl;
 
 impl<'g> AdvisoryContext<'g> {

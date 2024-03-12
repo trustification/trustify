@@ -1,17 +1,12 @@
 use crate::db::{ConnectionOrTransaction, Transactional};
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use log::debug;
 use migration::Migrator;
 use postgresql_embedded;
-use postgresql_embedded::{PostgreSQL, Settings};
-use sea_orm::{
-    ConnectOptions, ConnectionTrait, Database, DatabaseConnection, DbErr, Statement,
-    TransactionTrait,
-};
+use postgresql_embedded::PostgreSQL;
+use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, DbErr, Statement};
 use sea_orm_migration::MigratorTrait;
 use std::fmt::{Debug, Display, Formatter};
-use std::future::Future;
-use std::ops::Deref;
 use std::sync::Arc;
 use tempfile::TempDir;
 
@@ -111,6 +106,8 @@ impl Graph {
 
     #[cfg(test)]
     pub async fn for_test(name: &str) -> Result<Self, anyhow::Error> {
+        use postgresql_embedded::Settings;
+
         let tempdir = tempfile::tempdir()?;
         let installation_dir = tempdir.path().to_path_buf();
         let settings = Settings {

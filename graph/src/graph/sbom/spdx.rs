@@ -4,7 +4,7 @@ use crate::graph::sbom::SbomContext;
 use sea_orm::TransactionTrait;
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
-use std::io::{Read, Seek};
+use std::io::Read;
 use trustify_entity::relationship::Relationship;
 
 impl SbomContext {
