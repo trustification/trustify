@@ -6,7 +6,7 @@ use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use std::process::ExitCode;
 use std::sync::Arc;
-use trustify_api::graph::{DbStrategy, Graph, InnerGraph};
+use trustify_api::graph::{DbStrategy, Graph};
 use trustify_common::config::Database;
 
 pub mod server;
@@ -73,10 +73,10 @@ pub fn configure(config: &mut web::ServiceConfig) {
 #[cfg(test)]
 mod test_util {
     use std::sync::Arc;
-    use trustify_api::graph::{DbStrategy, InnerGraph};
+    use trustify_api::graph::{DbStrategy, Graph};
 
-    pub async fn bootstrap_system(name: &str) -> Result<Arc<InnerGraph>, anyhow::Error> {
-        InnerGraph::bootstrap(
+    pub async fn bootstrap_system(name: &str) -> Result<Arc<Graph>, anyhow::Error> {
+        Graph::bootstrap(
             "postgres",
             "eggs",
             "localhost",

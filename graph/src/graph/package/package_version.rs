@@ -17,19 +17,21 @@ use trustify_entity as entity;
 
 /// Live context for a package version.
 #[derive(Clone)]
-pub struct PackageVersionContext {
-    pub(crate) package: PackageContext,
+pub struct PackageVersionContext<'g> {
+    pub(crate) package: PackageContext<'g>,
     pub(crate) package_version: entity::package_version::Model,
 }
 
-impl Debug for PackageVersionContext {
+impl Debug for PackageVersionContext<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.package_version.fmt(f)
     }
 }
 
-impl From<(&PackageContext, entity::package_version::Model)> for PackageVersionContext {
-    fn from((package, package_version): (&PackageContext, entity::package_version::Model)) -> Self {
+impl<'g> From<(&PackageContext<'g>, entity::package_version::Model)> for PackageVersionContext<'g> {
+    fn from(
+        (package, package_version): (&PackageContext<'g>, entity::package_version::Model),
+    ) -> Self {
         Self {
             package: package.clone(),
             package_version,
@@ -37,12 +39,12 @@ impl From<(&PackageContext, entity::package_version::Model)> for PackageVersionC
     }
 }
 
-impl PackageVersionContext {
+impl<'g> PackageVersionContext<'g> {
     pub async fn ingest_qualified_package<P: Into<Purl>>(
         &self,
         pkg: P,
         mut tx: Transactional<'_>,
-    ) -> Result<QualifiedPackageContext, Error> {
+    ) -> Result<QualifiedPackageContext<'g>, Error> {
         let purl = pkg.into();
 
         if let Some(found) = self.get_qualified_package(purl.clone(), tx).await? {
@@ -56,7 +58,7 @@ impl PackageVersionContext {
         };
 
         let qualified_package = qualified_package
-            .insert(&self.package.system.connection(tx))
+            .insert(&self.package.graph.connection(tx))
             .await?;
 
         for (k, v) in &purl.qualifiers {
@@ -67,24 +69,22 @@ impl PackageVersionContext {
                 value: Set(v.clone()),
             };
 
-            qualifier
-                .insert(&self.package.system.connection(tx))
-                .await?;
+            qualifier.insert(&self.package.graph.connection(tx)).await?;
         }
 
         Ok((self, qualified_package, purl.qualifiers.clone()).into())
     }
 
-    pub async fn get_qualified_package<P: Into<Purl>>(
-        &self,
+    pub async fn get_qualified_package<'p, P: Into<Purl>>(
+        &'p self,
         pkg: P,
         tx: Transactional<'_>,
-    ) -> Result<Option<QualifiedPackageContext>, Error> {
+    ) -> Result<Option<QualifiedPackageContext<'g>>, Error> {
         let purl = pkg.into();
         let found = entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
             .find_with_related(entity::package_qualifier::Entity)
-            .all(&self.package.system.connection(tx))
+            .all(&self.package.graph.connection(tx))
             .await?;
 
         for (qualified_package, qualifiers) in found {
@@ -160,7 +160,7 @@ impl PackageVersionContext {
             )
             .filter(entity::package_version::Column::Id.eq(self.package_version.id))
             .into_model::<NotAffectedVersion>()
-            .all(&self.package.system.connection(tx))
+            .all(&self.package.graph.connection(tx))
             .await?;
 
         let mut assertions = PackageVulnerabilityAssertions::default();
@@ -193,7 +193,7 @@ impl PackageVersionContext {
         Ok(entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
             .find_with_related(entity::package_qualifier::Entity)
-            .all(&self.package.system.connection(tx))
+            .all(&self.package.graph.connection(tx))
             .await?
             .drain(0..)
             .map(|(base, qualifiers)| {
@@ -212,7 +212,7 @@ impl PackageVersionContext {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use crate::db::Transactional;
-    use crate::graph::{Graph, InnerGraph};
+    use crate::graph::Graph;
 
     #[tokio::test]
     async fn package_version_not_affected_assertions() -> Result<(), anyhow::Error> {

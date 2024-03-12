@@ -5,7 +5,7 @@ use crate::graph::cpe22::Cpe22Context;
 use crate::graph::package::package_version::PackageVersionContext;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
 use crate::graph::package::PackageContext;
-use crate::graph::InnerGraph;
+use crate::graph::Graph;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult,
     ModelTrait, QueryFilter, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Set,
@@ -32,7 +32,7 @@ pub mod spdx;
 
 type SelectEntity<E> = Select<E>;
 
-impl InnerGraph {
+impl Graph {
     pub async fn get_sbom(
         &self,
         location: &str,
@@ -293,7 +293,7 @@ impl InnerGraph {
 
 #[derive(Clone)]
 pub struct SbomContext {
-    pub(crate) system: InnerGraph,
+    pub(crate) system: Graph,
     pub(crate) sbom: entity::sbom::Model,
 }
 
@@ -309,8 +309,8 @@ impl Debug for SbomContext {
     }
 }
 
-impl From<(&InnerGraph, entity::sbom::Model)> for SbomContext {
-    fn from((system, sbom): (&InnerGraph, entity::sbom::Model)) -> Self {
+impl From<(&Graph, entity::sbom::Model)> for SbomContext {
+    fn from((system, sbom): (&Graph, entity::sbom::Model)) -> Self {
         Self {
             system: system.clone(),
             sbom,
@@ -675,7 +675,7 @@ impl SbomContext {
 #[cfg(test)]
 mod tests {
     use crate::db::Transactional;
-    use crate::graph::{Graph, InnerGraph};
+    use crate::graph::Graph;
     use test_log::test;
     use trustify_common::purl::Purl;
     use trustify_common::sbom::SbomLocator;

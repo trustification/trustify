@@ -171,7 +171,7 @@ fn fix_license(mut json: Value) -> (Value, bool) {
 #[cfg(test)]
 mod tests {
     use crate::db::Transactional;
-    use crate::graph::{Graph, InnerGraph};
+    use crate::graph::Graph;
     use spdx_rs::models::SPDX;
     use std::fs::File;
     use std::path::PathBuf;

@@ -14,43 +14,43 @@ use trustify_common::purl::Purl;
 use trustify_entity as entity;
 
 #[derive(Clone)]
-pub struct QualifiedPackageContext {
-    pub(crate) package_version: PackageVersionContext,
+pub struct QualifiedPackageContext<'g> {
+    pub(crate) package_version: PackageVersionContext<'g>,
     pub(crate) qualified_package: entity::qualified_package::Model,
     // just a short-cut to avoid another query
     pub(crate) qualifiers: HashMap<String, String>,
 }
 
-impl PartialEq for QualifiedPackageContext {
+impl PartialEq for QualifiedPackageContext<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.qualified_package.eq(&other.qualified_package)
     }
 }
 
-impl Eq for QualifiedPackageContext {}
+impl Eq for QualifiedPackageContext<'_> {}
 
-impl Hash for QualifiedPackageContext {
+impl Hash for QualifiedPackageContext<'_> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         state.write_i32(self.qualified_package.id)
     }
 }
 
-impl Debug for QualifiedPackageContext {
+impl Debug for QualifiedPackageContext<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.qualified_package.fmt(f)
     }
 }
 
-impl
+impl<'g>
     From<(
-        &PackageVersionContext,
+        &PackageVersionContext<'g>,
         entity::qualified_package::Model,
         HashMap<String, String>,
-    )> for QualifiedPackageContext
+    )> for QualifiedPackageContext<'g>
 {
     fn from(
         (package_version, qualified_package, qualifiers): (
-            &PackageVersionContext,
+            &PackageVersionContext<'g>,
             entity::qualified_package::Model,
             HashMap<String, String>,
         ),
@@ -63,8 +63,8 @@ impl
     }
 }
 
-impl From<QualifiedPackageContext> for Purl {
-    fn from(value: QualifiedPackageContext) -> Self {
+impl<'g> From<QualifiedPackageContext<'g>> for Purl {
+    fn from(value: QualifiedPackageContext<'g>) -> Self {
         Self {
             ty: value.package_version.package.package.r#type.clone(),
             namespace: value.package_version.package.package.namespace.clone(),
@@ -75,7 +75,7 @@ impl From<QualifiedPackageContext> for Purl {
     }
 }
 
-impl QualifiedPackageContext {
+impl<'g> QualifiedPackageContext<'g> {
     pub async fn sboms_containing(&self, tx: Transactional<'_>) -> Result<Vec<SbomContext>, Error> {
         /*
         Ok(entity::sbom::Entity::find()
@@ -133,7 +133,7 @@ impl QualifiedPackageContext {
 #[cfg(test)]
 mod tests {
     use crate::db::Transactional;
-    use crate::graph::{Graph, InnerGraph};
+    use crate::graph::Graph;
 
     #[ignore]
     #[tokio::test]

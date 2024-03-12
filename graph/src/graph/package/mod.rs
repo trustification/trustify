@@ -17,13 +17,13 @@ use trustify_entity as entity;
 use crate::db::{Paginated, PaginatedResults, Transactional};
 use crate::graph::advisory::AdvisoryContext;
 use crate::graph::error::Error;
-use crate::graph::InnerGraph;
+use crate::graph::Graph;
 
 pub mod package_version;
 pub mod package_version_range;
 pub mod qualified_package;
 
-impl InnerGraph {
+impl Graph {
     /// Ensure the graph knows about and contains a record for a *fully-qualified* package.
     ///
     /// This method will ensure the versioned package being referenced is also ingested.
@@ -191,7 +191,7 @@ impl InnerGraph {
         &self,
         pkg: P,
         tx: Transactional<'_>,
-    ) -> Result<Option<PackageVersionContext>, Error> {
+    ) -> Result<Option<PackageVersionContext<'_>>, Error> {
         let purl = pkg.into();
         if let Some(pkg) = self.get_package(purl.clone(), tx).await? {
             pkg.get_package_version(purl, tx).await
@@ -280,27 +280,24 @@ impl InnerGraph {
 
 /// Live context for base package.
 #[derive(Clone)]
-pub struct PackageContext {
-    pub(crate) system: InnerGraph,
+pub struct PackageContext<'g> {
+    pub(crate) graph: &'g Graph,
     pub(crate) package: entity::package::Model,
 }
 
-impl Debug for PackageContext {
+impl Debug for PackageContext<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.package.fmt(f)
     }
 }
 
-impl From<(&InnerGraph, entity::package::Model)> for PackageContext {
-    fn from((system, package): (&InnerGraph, entity::package::Model)) -> Self {
-        Self {
-            system: system.clone(),
-            package,
-        }
+impl<'g> From<(&'g Graph, entity::package::Model)> for PackageContext<'g> {
+    fn from((graph, package): (&'g Graph, entity::package::Model)) -> Self {
+        Self { graph, package }
     }
 }
 
-impl PackageContext {
+impl<'g> PackageContext<'g> {
     /// Ensure the graph knows about and contains a record for a *version range* of this package.
     pub async fn ingest_package_version_range<P: Into<Purl>>(
         &self,
@@ -308,7 +305,7 @@ impl PackageContext {
         start: &str,
         end: &str,
         tx: Transactional<'_>,
-    ) -> Result<PackageVersionRangeContext, Error> {
+    ) -> Result<PackageVersionRangeContext<'g>, Error> {
         let purl = pkg.into();
         if let Some(found) = self.get_package_version_range(purl, start, end, tx).await? {
             Ok(found)
@@ -320,7 +317,7 @@ impl PackageContext {
                 end: Set(end.to_string()),
             };
 
-            Ok((self, entity.insert(&self.system.connection(tx)).await?).into())
+            Ok((self, entity.insert(&self.graph.connection(tx)).await?).into())
         }
     }
 
@@ -333,14 +330,14 @@ impl PackageContext {
         start: &str,
         end: &str,
         tx: Transactional<'_>,
-    ) -> Result<Option<PackageVersionRangeContext>, Error> {
+    ) -> Result<Option<PackageVersionRangeContext<'g>>, Error> {
         let purl = pkg.into();
 
         Ok(entity::package_version_range::Entity::find()
             .filter(entity::package_version_range::Column::PackageId.eq(self.package.id))
             .filter(entity::package_version_range::Column::Start.eq(start.to_string()))
             .filter(entity::package_version_range::Column::End.eq(end.to_string()))
-            .one(&self.system.connection(tx))
+            .one(&self.graph.connection(tx))
             .await?
             .map(|package_version_range| (self, package_version_range).into()))
     }
@@ -350,7 +347,7 @@ impl PackageContext {
         &self,
         pkg: P,
         tx: Transactional<'_>,
-    ) -> Result<PackageVersionContext, Error> {
+    ) -> Result<PackageVersionContext<'g>, Error> {
         let purl = pkg.into();
 
         if let Some(version) = &purl.version {
@@ -363,7 +360,7 @@ impl PackageContext {
                     version: Set(version.clone()),
                 };
 
-                Ok((self, model.insert(&self.system.connection(tx)).await?).into())
+                Ok((self, model.insert(&self.graph.connection(tx)).await?).into())
             }
         } else {
             Err(Error::Purl(PurlErr::MissingVersion(purl.to_string())))
@@ -377,7 +374,7 @@ impl PackageContext {
         &self,
         pkg: P,
         tx: Transactional<'_>,
-    ) -> Result<Option<PackageVersionContext>, Error> {
+    ) -> Result<Option<PackageVersionContext<'g>>, Error> {
         let purl = pkg.into();
         if let Some(package_version) = entity::package_version::Entity::find()
             .join(
@@ -386,7 +383,7 @@ impl PackageContext {
             )
             .filter(entity::package::Column::Id.eq(self.package.id))
             .filter(entity::package_version::Column::Version.eq(purl.version.clone()))
-            .one(&self.system.connection(tx))
+            .one(&self.graph.connection(tx))
             .await?
         {
             Ok(Some((self, package_version).into()))
@@ -404,7 +401,7 @@ impl PackageContext {
     ) -> Result<Vec<PackageVersionContext>, Error> {
         Ok(entity::package_version::Entity::find()
             .filter(entity::package_version::Column::PackageId.eq(self.package.id))
-            .all(&self.system.connection(tx))
+            .all(&self.graph.connection(tx))
             .await?
             .drain(0..)
             .map(|each| (self, each).into())
@@ -416,7 +413,7 @@ impl PackageContext {
         paginated: Paginated,
         tx: Transactional<'_>,
     ) -> Result<PaginatedResults<PackageVersionContext>, Error> {
-        let connection = self.system.connection(tx);
+        let connection = self.graph.connection(tx);
 
         let pagination = entity::package_version::Entity::find()
             .filter(entity::package_version::Column::PackageId.eq(self.package.id))
@@ -516,7 +513,7 @@ impl PackageContext {
             )
             .filter(entity::package::Column::Id.eq(self.package.id))
             .into_model::<AffectedVersion>()
-            .all(&self.system.connection(tx))
+            .all(&self.graph.connection(tx))
             .await?;
 
         let mut assertions = PackageVulnerabilityAssertions::default();
@@ -571,7 +568,7 @@ impl PackageContext {
             )
             .filter(entity::package_version::Column::PackageId.eq(self.package.id))
             .into_model::<NotAffectedVersion>()
-            .all(&self.system.connection(tx))
+            .all(&self.graph.connection(tx))
             .await?;
 
         let mut assertions = PackageVulnerabilityAssertions::default();
@@ -596,7 +593,7 @@ impl PackageContext {
     pub async fn advisories_mentioning(
         &self,
         tx: Transactional<'_>,
-    ) -> Result<Vec<AdvisoryContext>, Error> {
+    ) -> Result<Vec<AdvisoryContext<'g>>, Error> {
         let mut not_affected_subquery = entity::not_affected_package_version::Entity::find()
             .select_only()
             .column(entity::not_affected_package_version::Column::AdvisoryId)
@@ -625,12 +622,12 @@ impl PackageContext {
                         .to_owned(),
                 ),
             )
-            .all(&self.system.connection(tx))
+            .all(&self.graph.connection(tx))
             .await?;
 
         Ok(advisories
             .drain(0..)
-            .map(|advisory| (&self.system, advisory).into())
+            .map(|advisory| (self.graph, advisory).into())
             .collect())
     }
 }
@@ -640,7 +637,7 @@ impl PackageContext {
 mod tests {
     use crate::db::{Paginated, Transactional};
     use crate::graph::error::Error;
-    use crate::graph::{Graph, InnerGraph};
+    use crate::graph::Graph;
     use sea_orm::{TransactionError, TransactionTrait};
     use trustify_common::purl::Purl;
 

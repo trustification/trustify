@@ -5,26 +5,26 @@ use trustify_entity::affected_package_version_range;
 use trustify_entity::affected_package_version_range::Model;
 
 #[derive(Clone)]
-pub struct AffectedPackageVersionRangeContext {
-    pub(crate) advisory_vulnerability: AdvisoryVulnerabilityContext,
+pub struct AffectedPackageVersionRangeContext<'g> {
+    pub(crate) advisory_vulnerability: AdvisoryVulnerabilityContext<'g>,
     pub(crate) affected_package_version_range: affected_package_version_range::Model,
 }
 
-impl Debug for AffectedPackageVersionRangeContext {
+impl Debug for AffectedPackageVersionRangeContext<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.affected_package_version_range.fmt(f)
     }
 }
 
-impl
+impl<'g>
     From<(
-        &AdvisoryVulnerabilityContext,
+        &AdvisoryVulnerabilityContext<'g>,
         affected_package_version_range::Model,
-    )> for AffectedPackageVersionRangeContext
+    )> for AffectedPackageVersionRangeContext<'g>
 {
     fn from(
         (advisory_vulnerability, affected_package_version_range): (
-            &AdvisoryVulnerabilityContext,
+            &AdvisoryVulnerabilityContext<'g>,
             Model,
         ),
     ) -> Self {
