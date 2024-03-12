@@ -1,4 +1,5 @@
 use crate::db::{ConnectionOrTransaction, Transactional};
+use anyhow::{anyhow, Context};
 use log::debug;
 use migration::Migrator;
 use postgresql_embedded;
@@ -185,5 +186,16 @@ impl Graph {
 
     pub async fn close(self) -> anyhow::Result<()> {
         Ok(self.db.close().await?)
+    }
+
+    /// Ping the database.
+    ///
+    /// Intended to be used for health checks.
+    pub async fn ping(&self) -> anyhow::Result<()> {
+        self.db
+            .ping()
+            .await
+            .context("failed to ping the database")?;
+        Ok(())
     }
 }

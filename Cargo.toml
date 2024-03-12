@@ -4,6 +4,8 @@ members = [
   "graph",
   "trustd",
   "common",
+  "common/auth",
+  "common/infrastructure",
   "entity",
   "importer",
   "migration",
