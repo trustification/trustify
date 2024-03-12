@@ -41,6 +41,6 @@ jobs:
     - name: Clippy
       run: cargo clippy --all-targets --all-features -- -D warnings -D clippy::unwrap_used
     - name: Test
-      run: cargo test -- --test-threads=1 --nocapture
+      run: cargo test -- --nocapture
       env:
         RUST_LOG: debug
