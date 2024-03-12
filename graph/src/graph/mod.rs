@@ -99,6 +99,7 @@ impl Graph {
             username: "postgres".to_string(),
             password: "trustify".to_string(),
             temporary: true,
+            installation_dir: tempfile::tempdir()?.into_path(),
             ..Default::default()
         };
 
