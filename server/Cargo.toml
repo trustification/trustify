@@ -5,12 +5,13 @@ edition = "2021"
 
 [dependencies]
 trustify-api = { path = "../graph" }
+trustify-auth = { path = "../common/auth" }
 trustify-common = { path = "../common"}
+trustify-infrastructure = { path = "../common/infrastructure" }
 
 actix-web = "4"
 anyhow = "1.0.72"
 clap = { version = "4", features = ["derive"] }
-env_logger = "0.10.0"
 log = "0.4.19"
 packageurl = "0.3"
 serde = { version = "1.0", features = ["derive"] }

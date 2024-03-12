@@ -6,8 +6,16 @@ use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use std::process::ExitCode;
 use std::sync::Arc;
+use std::time::Duration;
 use trustify_api::graph::{DbStrategy, Graph};
+use trustify_auth::auth::AuthConfigArguments;
+use trustify_auth::authenticator::Authenticator;
+use trustify_auth::authorizer::Authorizer;
 use trustify_common::config::Database;
+use trustify_infrastructure::app::http::{HttpServerBuilder, HttpServerConfig};
+use trustify_infrastructure::endpoint::Huevos;
+use trustify_infrastructure::health::checks::{Local, Probe};
+use trustify_infrastructure::{Infrastructure, InfrastructureConfig};
 
 pub mod server;
 
@@ -22,11 +30,31 @@ pub struct Run {
 
     #[arg(long, env)]
     pub bootstrap: bool,
+
+    #[command(flatten)]
+    pub infra: InfrastructureConfig,
+
+    #[command(flatten)]
+    pub auth: AuthConfigArguments,
+
+    #[command(flatten)]
+    pub http: HttpServerConfig<Huevos>,
 }
+
+const SERVICE_ID: &str = "huevos";
 
 impl Run {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
-        env_logger::init();
+        let tracing = self.infra.tracing;
+
+        let (authn, authz) = self.auth.split(self.bootstrap)?.unzip();
+        let authenticator: Option<Arc<Authenticator>> =
+            Authenticator::from_config(authn).await?.map(Arc::new);
+        let authorizer = Authorizer::new(authz);
+
+        if authenticator.is_none() {
+            log::warn!("Authentication is disabled");
+        }
 
         let system = match self.bootstrap {
             true => {
@@ -45,15 +73,41 @@ impl Run {
 
         let app_state = Arc::new(AppState { system });
 
-        HttpServer::new(move || {
-            App::new()
-                .app_data(web::Data::from(app_state.clone()))
-                .wrap(Logger::default())
-                .configure(configure)
-        })
-        .bind(self.bind_addr)?
-        .run()
-        .await?;
+        Infrastructure::from(self.infra)
+            .run(
+                SERVICE_ID,
+                {
+                    let state = app_state.clone();
+                    |context| async move {
+                        let state = state.clone();
+                        let check = Local::spawn_periodic(
+                            "no database connection",
+                            Duration::from_secs(1),
+                            move || {
+                                let state = state.clone();
+                                async move { state.system.ping().await.is_ok() }
+                            },
+                        )?;
+
+                        context.health.readiness.register("database", check).await;
+
+                        Ok(())
+                    }
+                },
+                |context| async move {
+                    let http = HttpServerBuilder::try_from(self.http)?
+                        .tracing(tracing)
+                        .metrics(context.metrics.registry().clone(), SERVICE_ID)
+                        .authorizer(authorizer.clone())
+                        .configure(move |svc| {
+                            svc.app_data(web::Data::from(app_state.clone()))
+                                .configure(configure);
+                        });
+
+                    http.run().await
+                },
+            )
+            .await;
 
         Ok(ExitCode::SUCCESS)
     }
