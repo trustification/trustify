@@ -29,11 +29,6 @@ jobs:
       with:
         workspaces: .
 
-    - name: Install nettle
-      run: |
-        sudo apt-get update
-        sudo apt install clang llvm pkg-config nettle-dev
-
     - name: Format
       run: cargo fmt --check
     - name: Check
