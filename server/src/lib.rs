@@ -1,9 +1,6 @@
 #![allow(unused)]
-
 use crate::server::read;
-use crate::server::Error::System;
-use actix_web::middleware::Logger;
-use actix_web::{web, App, HttpServer};
+use actix_web::web;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
