@@ -18,9 +18,9 @@ impl actix_web::ResponseError for AuthenticationError {
     fn error_response(&self) -> actix_web::HttpResponse<actix_http::body::BoxBody> {
         match self {
             Self::Failed => actix_web::HttpResponse::Unauthorized().json(ErrorInformation {
-                error: "Unauthorized".to_string(),
+                error: "Unauthorized".into(),
                 message: self.to_string(),
-                details: String::default(),
+                details: None,
             }),
         }
     }
@@ -31,9 +31,9 @@ impl actix_web::ResponseError for AuthorizationError {
     fn error_response(&self) -> actix_web::HttpResponse<actix_http::body::BoxBody> {
         match self {
             Self::Failed => actix_web::HttpResponse::Forbidden().json(ErrorInformation {
-                error: "Forbidden".to_string(),
+                error: "Forbidden".into(),
                 message: self.to_string(),
-                details: String::default(),
+                details: None,
             }),
         }
     }

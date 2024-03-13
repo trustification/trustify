@@ -3,6 +3,7 @@ use actix_web::{HttpResponse, ResponseError};
 use std::borrow::Cow;
 use std::fmt::{Debug, Display};
 use trustify_api::graph;
+use trustify_common::error::ErrorInformation;
 
 pub mod read;
 pub mod write;
@@ -18,21 +19,6 @@ pub enum Error {
 impl From<graph::error::Error> for Error {
     fn from(inner: graph::error::Error) -> Self {
         Self::System(inner)
-    }
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct ErrorInformation {
-    pub r#type: Cow<'static, str>,
-    pub message: String,
-}
-
-impl ErrorInformation {
-    pub fn new(r#type: impl Into<Cow<'static, str>>, message: impl Display) -> Self {
-        Self {
-            r#type: r#type.into(),
-            message: message.to_string(),
-        }
     }
 }
 
