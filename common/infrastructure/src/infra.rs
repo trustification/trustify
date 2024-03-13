@@ -218,13 +218,14 @@ impl Infrastructure {
         M: FnOnce(MainContext<D>) -> MFut,
         MFut: Future<Output = anyhow::Result<()>>,
     {
+        init_tracing(id, self.config.tracing);
+
         let init_data = init(InitContext {
             metrics: self.metrics.clone(),
             health: self.health.clone(),
         })
         .await?;
 
-        init_tracing(id, self.config.tracing);
         let main = Box::pin(main(MainContext {
             init_data,
             metrics: self.metrics.clone(),

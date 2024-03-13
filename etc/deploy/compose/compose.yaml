@@ -8,3 +8,45 @@ services:
       POSTGRES_PASSWORD: "eggs"
       POSTGRES_DB: "huevos"
     restart: always
+
+  keycloak:
+    image: docker.io/bitnami/keycloak:23.0.7
+    #command: start-dev
+    environment:
+      - KEYCLOAK_DATABASE_VENDOR=dev-file
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin123456
+      - KEYCLOAK_ENABLE_HEALTH_ENDPOINTS=true
+      - KEYCLOAK_CACHE_TYPE=local
+    ports:
+      - "8090:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  init-keycloak:
+    image: docker.io/bitnami/keycloak:23.0.7
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      # FIXME: broken in podman: https://github.com/containers/podman-compose/issues/575
+    environment:
+      - KEYCLOAK_URL=http://keycloak:8080
+      - KCADM_PATH=/opt/bitnami/keycloak/bin/kcadm.sh
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin123456
+      - REALM=chicken
+      - INIT_DATA=/init-sso/data
+      - CHICKEN_ADMIN=admin
+      - CHICKEN_ADMIN_PASSWORD=admin123456
+      - REDIRECT_URIS=["http://localhost:*"]
+      - WALKER_SECRET=ZVzq9AMOVUdMY1lSohpx1jI3aW56QDPS
+      # The internal name (between containers) is "keycloak". However, from the host it reachable as "localhost:8090".
+      # So the "frontend" needs to be set to that
+      - SSO_FRONTEND_URL=http://localhost:8090
+    volumes:
+      - ./config/init-sso:/init-sso${SELINUX_VOLUME_OPTIONS}
+    entrypoint: /usr/bin/bash
+    command: /init-sso/init.sh
