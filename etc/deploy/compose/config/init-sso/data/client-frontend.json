@@ -1,0 +1,33 @@
+{
+  "clientId": "frontend",
+  "clientAuthenticatorType": "client-secret",
+  "enabled": true,
+  "publicClient": true,
+  "implicitFlowEnabled": true,
+  "standardFlowEnabled": true,
+  "directAccessGrantsEnabled": false,
+  "serviceAccountsEnabled": false,
+  "fullScopeAllowed": true,
+  "webOrigins": [
+    "*"
+  ],
+  "defaultClientScopes": [
+    "email",
+    "profile",
+    "roles",
+    "web-origins",
+    "read:document",
+    "create:document",
+    "delete:document"
+  ],
+  "optionalClientScopes": [
+    "address",
+    "microprofile-jwt",
+    "offline_access",
+    "phone"
+  ],
+  "attributes": {
+    "access.token.lifespan": "300",
+    "post.logout.redirect.uris": "+"
+  }
+}
