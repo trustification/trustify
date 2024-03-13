@@ -1,9 +1,6 @@
 #![allow(unused)]
-
 use crate::server::read;
-use crate::server::Error::System;
-use actix_web::middleware::Logger;
-use actix_web::{web, App, HttpServer};
+use actix_web::web;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
@@ -14,7 +11,7 @@ use trustify_auth::authorizer::Authorizer;
 use trustify_common::config::Database;
 use trustify_infrastructure::app::http::{HttpServerBuilder, HttpServerConfig};
 use trustify_infrastructure::endpoint::Huevos;
-use trustify_infrastructure::health::checks::{Local, Probe};
+use trustify_infrastructure::health::checks::Local;
 use trustify_infrastructure::{Infrastructure, InfrastructureConfig};
 
 pub mod server;

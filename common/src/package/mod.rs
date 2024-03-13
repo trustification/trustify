@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::purl::Purl;
-
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct PackageVulnerabilityAssertions {
     pub assertions: Vec<Assertion>,
