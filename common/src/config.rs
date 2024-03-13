@@ -1,4 +1,5 @@
 #[derive(clap::Args, Debug, Clone)]
+#[command(next_help_heading = "Database")]
 pub struct Database {
     #[arg(id = "db-user", long, env = "DB_USER")]
     pub username: String,
