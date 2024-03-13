@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-trustify-api = { path = "../graph" }
+trustify-graph = { path = "../graph" }
 trustify-entity = { path = "../entity" }
 trustify-migration = { path = "../migration" }
 trustify-common = { path = "../common" }

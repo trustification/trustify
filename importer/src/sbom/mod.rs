@@ -8,7 +8,7 @@ use sbom_walker::{
 use std::process::ExitCode;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
-use trustify_api::graph::Graph;
+use trustify_graph::graph::Graph;
 use trustify_common::config::Database;
 use url::Url;
 use walker_common::{fetcher::Fetcher, validate::ValidationOptions};
