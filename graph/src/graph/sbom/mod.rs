@@ -2,23 +2,16 @@
 
 use crate::db::{LeftPackageId, QualifiedPackageTransitive, Transactional};
 use crate::graph::cpe22::Cpe22Context;
-use crate::graph::package::package_version::PackageVersionContext;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
-use crate::graph::package::PackageContext;
 use crate::graph::Graph;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult,
-    ModelTrait, QueryFilter, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Set,
-    Statement, TransactionTrait,
+    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
+    QueryTrait, RelationTrait, Select, Set,
 };
-use sea_query::IndexType::Hash;
-use sea_query::SubQueryStatement::SelectStatement;
-use sea_query::{Alias, Condition, Func, FunctionCall, JoinType, Query, SimpleExpr, UnionType};
-use spdx_rs::models::{RelationshipType, SPDX};
-use std::collections::hash_set::Union;
+
+use sea_query::{Condition, Func, JoinType, Query, SimpleExpr};
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
-use std::ops::Deref;
 use trustify_common::cpe22::Cpe22;
 use trustify_common::package::PackageVulnerabilityAssertions;
 use trustify_common::purl::Purl;

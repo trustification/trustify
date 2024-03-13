@@ -3,11 +3,11 @@
 use package_version::PackageVersionContext;
 use package_version_range::PackageVersionRangeContext;
 use qualified_package::QualifiedPackageContext;
+use sea_orm::RelationTrait;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityOrSelect, EntityTrait, FromQueryResult,
-    ModelTrait, PaginatorTrait, QueryFilter, QuerySelect, QueryTrait, Set,
+    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, PaginatorTrait, QueryFilter,
+    QuerySelect, QueryTrait, Set,
 };
-use sea_orm::{RelationTrait, TransactionTrait};
 use sea_query::{JoinType, SelectStatement, UnionType};
 use std::fmt::{Debug, Formatter};
 use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
@@ -638,7 +638,7 @@ mod tests {
     use crate::db::{Paginated, Transactional};
     use crate::graph::error::Error;
     use crate::graph::Graph;
-    use sea_orm::{TransactionError, TransactionTrait};
+    use sea_orm::TransactionTrait;
     use trustify_common::purl::Purl;
 
     #[tokio::test]
