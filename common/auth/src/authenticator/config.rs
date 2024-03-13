@@ -68,7 +68,7 @@ impl From<AuthenticatorConfigArguments> for Option<AuthenticatorConfig> {
 #[derive(Clone, Debug, Default, PartialEq, Eq, clap::Args)]
 #[command(next_help_heading = "Authentication settings")]
 pub struct SingleAuthenticatorClientConfig {
-    /// The clients IDs to allow
+    /// The client IDs to allow
     #[arg(env = "AUTHENTICATOR_OIDC_CLIENT_IDS", long = "authentication-client-id", action = ArgAction::Append)]
     pub client_ids: Vec<String>,
 

@@ -15,21 +15,22 @@ use trustify_common::config::Database;
 use trustify_infrastructure::app::http::{HttpServerBuilder, HttpServerConfig};
 use trustify_infrastructure::endpoint::Huevos;
 use trustify_infrastructure::health::checks::{Local, Probe};
-use trustify_infrastructure::{Infrastructure, InfrastructureConfig};
+use trustify_infrastructure::tracing::Tracing;
+use trustify_infrastructure::{Infrastructure, InfrastructureConfig, InitContext, Metrics};
 
 pub mod server;
 
 /// Run the API server
 #[derive(clap::Args, Debug)]
 pub struct Run {
-    #[arg(short, long, env, default_value = "[::1]:8080")]
-    pub bind_addr: String,
-
     #[command(flatten)]
     pub database: Database,
 
     #[arg(long, env)]
     pub bootstrap: bool,
+
+    #[arg(long, env)]
+    pub devmode: bool,
 
     #[command(flatten)]
     pub infra: InfrastructureConfig,
@@ -43,11 +44,32 @@ pub struct Run {
 
 const SERVICE_ID: &str = "huevos";
 
+struct InitData {
+    authenticator: Option<Arc<Authenticator>>,
+    authorizer: Authorizer,
+    state: Arc<AppState>,
+    http: HttpServerConfig<Huevos>,
+    tracing: Tracing,
+}
+
 impl Run {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
-        let tracing = self.infra.tracing;
+        // logging is only active once the infrastructure run method has been called
+        Infrastructure::from(self.infra.clone())
+            .run(
+                SERVICE_ID,
+                { |context| async move { InitData::new(context, self).await } },
+                |context| async move { context.init_data.run(&context.metrics).await },
+            )
+            .await?;
 
-        let (authn, authz) = self.auth.split(self.bootstrap)?.unzip();
+        Ok(ExitCode::SUCCESS)
+    }
+}
+
+impl InitData {
+    async fn new(context: InitContext, run: Run) -> anyhow::Result<Self> {
+        let (authn, authz) = run.auth.split(run.devmode)?.unzip();
         let authenticator: Option<Arc<Authenticator>> =
             Authenticator::from_config(authn).await?.map(Arc::new);
         let authorizer = Authorizer::new(authz);
@@ -56,60 +78,54 @@ impl Run {
             log::warn!("Authentication is disabled");
         }
 
-        let system = match self.bootstrap {
+        let system = match run.bootstrap {
             true => {
                 Graph::bootstrap(
-                    &self.database.username,
-                    &self.database.password,
-                    &self.database.host,
-                    self.database.port,
-                    &self.database.name,
+                    &run.database.username,
+                    &run.database.password,
+                    &run.database.host,
+                    run.database.port,
+                    &run.database.name,
                     DbStrategy::External,
                 )
                 .await?
             }
-            false => Graph::with_external_config(&self.database).await?,
+            false => Graph::with_external_config(&run.database).await?,
         };
 
-        let app_state = Arc::new(AppState { system });
+        let state = Arc::new(AppState { system });
 
-        Infrastructure::from(self.infra)
-            .run(
-                SERVICE_ID,
-                {
-                    let state = app_state.clone();
-                    |context| async move {
-                        let state = state.clone();
-                        let check = Local::spawn_periodic(
-                            "no database connection",
-                            Duration::from_secs(1),
-                            move || {
-                                let state = state.clone();
-                                async move { state.system.ping().await.is_ok() }
-                            },
-                        )?;
+        let check = Local::spawn_periodic("no database connection", Duration::from_secs(1), {
+            let state = state.clone();
+            move || {
+                let state = state.clone();
+                async move { state.system.ping().await.is_ok() }
+            }
+        })?;
 
-                        context.health.readiness.register("database", check).await;
+        context.health.readiness.register("database", check).await;
 
-                        Ok(())
-                    }
-                },
-                |context| async move {
-                    let http = HttpServerBuilder::try_from(self.http)?
-                        .tracing(tracing)
-                        .metrics(context.metrics.registry().clone(), SERVICE_ID)
-                        .authorizer(authorizer.clone())
-                        .configure(move |svc| {
-                            svc.app_data(web::Data::from(app_state.clone()))
-                                .configure(configure);
-                        });
+        Ok(InitData {
+            authenticator,
+            authorizer,
+            state,
+            http: run.http,
+            tracing: run.infra.tracing,
+        })
+    }
 
-                    http.run().await
-                },
-            )
-            .await;
+    async fn run(self, metrics: &Metrics) -> anyhow::Result<()> {
+        let http = HttpServerBuilder::try_from(self.http)?
+            .tracing(self.tracing)
+            .metrics(metrics.registry().clone(), SERVICE_ID)
+            .default_authenticator(self.authenticator)
+            .authorizer(self.authorizer.clone())
+            .configure(move |svc| {
+                svc.app_data(web::Data::from(self.state.clone()))
+                    .configure(configure);
+            });
 
-        Ok(ExitCode::SUCCESS)
+        http.run().await
     }
 }
 

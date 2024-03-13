@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 trustify-api = { path = "../graph" }
-trustify-auth = { path = "../common/auth" }
+trustify-auth = { path = "../common/auth", features = ["actix"] }
 trustify-common = { path = "../common"}
 trustify-infrastructure = { path = "../common/infrastructure" }
 

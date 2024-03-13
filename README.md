@@ -56,6 +56,33 @@ env DB_USER=postgres DB_PASSWORD=eggs cargo run -p trustify-trustd -- importer c
 env DB_USER=postgres DB_PASSWORD=eggs cargo run -p trustify-trustd -- importer sbom https://access.redhat.com/security/data/sbom/beta/
 ```
 
+### Authentication
+
+By default, authentication is enabled. It can be disabled using the flag `--auth-disabled` when running the server.
+Also by default, there is no working authentication/authorization configuration. For development purposes, one can
+use `--devmode` to use the Keycloak instance deployed with the compose deployment.
+
+HTTP requests must provide the bearer token using the `Authorization` header. For that, a valid access token is
+required. There are tutorials using `curl` on getting such a token. It is also possible the use the `oidc` client tool:
+
+Installation:
+
+```bash
+cargo install oidc-cli
+```
+
+Then, set up an initial client (needs to be done every time the client/keycloak instance if re-created):
+
+```bash
+oidc create confidential --name trusty --issuer http://localhost:8090/realms/chicken --client-id walker --client-secret ZVzq9AMOVUdMY1lSohpx1jI3aW56QDPS
+```
+
+Then one can perform `http` request using HTTPie like this:
+
+```bash
+http localhost:8080/package/asdf/dependencies Authorization:$(oidc token trusty -b)
+```
+
 ## Notes on models
 
 ### Package
