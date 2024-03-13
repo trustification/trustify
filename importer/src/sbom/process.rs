@@ -6,8 +6,8 @@ use sbom_walker::{
 };
 use sha2::digest::Output;
 use sha2::{Digest, Sha256};
-use trustify_api::db::Transactional;
-use trustify_api::graph::Graph;
+use trustify_graph::db::Transactional;
+use trustify_graph::graph::Graph;
 use walker_common::{compression::decompress_opt, utils::hex::Hex};
 
 pub struct ProcessVisitor {

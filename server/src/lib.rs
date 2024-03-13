@@ -4,7 +4,7 @@ use actix_web::web;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
-use trustify_api::graph::{DbStrategy, Graph};
+use trustify_graph::graph::{DbStrategy, Graph};
 use trustify_auth::auth::AuthConfigArguments;
 use trustify_auth::authenticator::Authenticator;
 use trustify_auth::authorizer::Authorizer;
