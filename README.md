@@ -1,3 +1,5 @@
+[![backend](https://github.com/trustification/trustify/actions/workflows/backend.yaml/badge.svg)](https://github.com/trustification/trustify/actions/workflows/backend.yaml)
+
 ## Repository Organization.
 
 ### Sources
