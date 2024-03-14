@@ -104,7 +104,6 @@ impl Graph {
         .await
     }
 
-    #[cfg(test)]
     pub async fn for_test(name: &str) -> Result<Self, anyhow::Error> {
         use postgresql_embedded::Settings;
 

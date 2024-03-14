@@ -1,5 +1,5 @@
 #![allow(unused)]
-use crate::server::read;
+use crate::server::{importer, read};
 use actix_web::web;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -112,6 +112,8 @@ impl InitData {
     }
 
     async fn run(self, metrics: &Metrics) -> anyhow::Result<()> {
+        let graph = self.state.system.clone();
+
         let http = HttpServerBuilder::try_from(self.http)?
             .tracing(self.tracing)
             .metrics(metrics.registry().clone(), SERVICE_ID)
@@ -119,7 +121,8 @@ impl InitData {
             .authorizer(self.authorizer.clone())
             .configure(move |svc| {
                 svc.app_data(web::Data::from(self.state.clone()))
-                    .configure(configure);
+                    .configure(configure)
+                    .configure(|svc| importer::configure(svc, graph.clone()));
             });
 
         http.run().await
