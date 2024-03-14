@@ -4,11 +4,11 @@ use actix_web::web;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
-use trustify_graph::graph::{DbStrategy, Graph};
 use trustify_auth::auth::AuthConfigArguments;
 use trustify_auth::authenticator::Authenticator;
 use trustify_auth::authorizer::Authorizer;
 use trustify_common::config::Database;
+use trustify_graph::graph::{DbStrategy, Graph};
 use trustify_infrastructure::app::http::{HttpServerBuilder, HttpServerConfig};
 use trustify_infrastructure::endpoint::Huevos;
 use trustify_infrastructure::health::checks::{Local, Probe};
@@ -143,7 +143,7 @@ pub fn configure(config: &mut web::ServiceConfig) {
 #[cfg(test)]
 mod test_util {
     use std::sync::Arc;
-    use trustify_api::graph::{DbStrategy, Graph};
+    use trustify_graph::graph::{DbStrategy, Graph};
 
     pub async fn bootstrap_system(name: &str) -> Result<Arc<Graph>, anyhow::Error> {
         Graph::bootstrap(

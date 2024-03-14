@@ -6,7 +6,7 @@ mod test;
 use crate::server::importer::service::ImporterService;
 use actix_web::{delete, get, post, put, web, Responder};
 use endpoints::*;
-use trustify_api::graph::Graph;
+use trustify_graph::graph::Graph;
 
 /// mount the "importer" module
 pub fn configure(svc: &mut web::ServiceConfig, graph: Graph) {

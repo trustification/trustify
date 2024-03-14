@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct CveRecord {
     pub data_type: String,
     pub data_version: String,
@@ -11,14 +11,23 @@ pub struct CveRecord {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "state", rename_all="UPPERCASE")]
+#[serde(tag = "state", rename_all = "UPPERCASE")]
 pub enum CveMetadata {
     Published(MetadataPublished),
     Rejected(MetadataRejected),
 }
 
+impl CveMetadata {
+    pub fn cve_id(&self) -> &str {
+        match self {
+            CveMetadata::Published(inner) => &inner.cve_id,
+            CveMetadata::Rejected(inner) => &inner.cve_id,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct MetadataPublished {
     pub cve_id: String,
     pub assigner_org_id: String,
@@ -31,7 +40,7 @@ pub struct MetadataPublished {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct MetadataRejected {
     pub cve_id: String,
     pub assigner_org_id: String,
@@ -45,40 +54,40 @@ pub struct MetadataRejected {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct Containers {
     pub cna: CnaContainer,
     pub adp: Option<AdpContainer>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct CnaContainer {
     pub descriptions: Vec<Description>,
     pub problem_types: Vec<ProblemType>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct AdpContainer {
     pub descriptions: Vec<Description>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct Description {
     pub lang: String,
     pub value: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct ProblemType {
     pub descriptions: Vec<ProblemTypeDescription>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct ProblemTypeDescription {
     pub lang: String,
     pub description: String,
@@ -88,11 +97,11 @@ pub struct ProblemTypeDescription {
 
 #[cfg(test)]
 mod test {
+    use crate::cve::cve_record::v5::CveRecord;
     use std::fs::File;
     use std::path::PathBuf;
     use std::str::FromStr;
     use test_log::test;
-    use crate::cve::cve_record::v5::CveRecord;
 
     #[test(tokio::test)]
     async fn serde() -> Result<(), anyhow::Error> {
@@ -103,16 +112,10 @@ mod test {
 
         let cve_file = File::open(cve_json)?;
 
-        let cve: CveRecord = serde_json::from_reader(
-            cve_file
-        )?;
+        let cve: CveRecord = serde_json::from_reader(cve_file)?;
 
         println!("{:#?}", cve);
 
         Ok(())
-
-
     }
-
-
 }
