@@ -12,9 +12,9 @@ use std::collections::HashSet;
 use std::process::ExitCode;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
+use trustify_common::config::Database;
 use trustify_graph::db::Transactional;
 use trustify_graph::graph::Graph;
-use trustify_common::config::Database;
 use url::Url;
 use walker_common::{fetcher::Fetcher, utils::hex::Hex, validate::ValidationOptions};
 

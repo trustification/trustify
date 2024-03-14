@@ -2,8 +2,8 @@ use actix_web::body::BoxBody;
 use actix_web::{HttpResponse, ResponseError};
 use std::borrow::Cow;
 use std::fmt::{Debug, Display};
-use trustify_graph::graph;
 use trustify_common::error::ErrorInformation;
+use trustify_graph::graph;
 
 pub mod importer;
 pub mod read;
