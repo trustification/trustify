@@ -412,7 +412,6 @@ impl<'g> AdvisoryContext<'g> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 mod test {
     use crate::db::Transactional;
     use crate::graph::Graph;
