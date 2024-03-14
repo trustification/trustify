@@ -6,7 +6,7 @@ use parking_lot::RwLock;
 use serde_json::Value;
 use std::collections::btree_map::Entry;
 use std::collections::BTreeMap;
-use trustify_api::graph::Graph;
+use trustify_graph::graph::Graph;
 use trustify_common::error::ErrorInformation;
 
 #[derive(Debug, thiserror::Error)]
