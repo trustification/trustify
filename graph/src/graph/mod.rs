@@ -3,7 +3,10 @@ use log::debug;
 use migration::Migrator;
 use postgresql_embedded;
 use postgresql_embedded::PostgreSQL;
-use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, DbErr, Statement};
+use sea_orm::{
+    ConnectOptions, ConnectionTrait, Database, DatabaseConnection, DatabaseTransaction, DbErr,
+    Statement, TransactionTrait,
+};
 use sea_orm_migration::MigratorTrait;
 use std::fmt::{Debug, Display, Formatter};
 use std::sync::Arc;
@@ -57,6 +60,10 @@ impl<E: Send + Display> std::error::Error for Error<E> {}
 impl Graph {
     pub fn new(db: trustify_common::db::Database) -> Self {
         Self { db }
+    }
+
+    pub async fn transaction(&self) -> Result<DatabaseTransaction, error::Error> {
+        Ok(self.db.begin().await?)
     }
 
     pub(crate) fn connection<'db>(

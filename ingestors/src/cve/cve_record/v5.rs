@@ -63,6 +63,7 @@ pub struct Containers {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CnaContainer {
+    pub title: Option<String>,
     pub descriptions: Vec<Description>,
     pub problem_types: Vec<ProblemType>,
 }
