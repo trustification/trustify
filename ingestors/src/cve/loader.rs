@@ -30,12 +30,30 @@ impl<'g> CveLoader<'g> {
         let mut reader = HashingRead::new(record);
         let cve: CveRecord = serde_json::from_reader(&mut reader)?;
 
-        self.graph
+        let tx = self.graph.transaction().await?;
+
+        let vulnerability = self
+            .graph
             .ingest_vulnerability(cve.cve_metadata.cve_id(), Transactional::None)
             .await?;
 
-        let hashes = reader.hashes();
+        vulnerability
+            .set_title(cve.containers.cna.title.clone(), Transactional::Some(&tx))
+            .await?;
 
+        vulnerability
+            .set_description_en(
+                cve.containers
+                    .cna
+                    .descriptions
+                    .iter()
+                    .find(|e| e.lang == "en")
+                    .map(|en| en.value.clone()),
+                Transactional::Some(&tx),
+            )
+            .await?;
+
+        let hashes = reader.hashes();
         let sha256 = hex::encode(hashes.sha256.as_ref());
 
         self.graph
@@ -43,9 +61,11 @@ impl<'g> CveLoader<'g> {
                 cve.cve_metadata.cve_id(),
                 location,
                 sha256,
-                Transactional::None,
+                Transactional::Some(&tx),
             )
             .await?;
+
+        tx.commit().await?;
 
         Ok(())
     }

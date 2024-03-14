@@ -130,7 +130,7 @@ impl<'g> AdvisoryContext<'g> {
 
         let entity = entity::advisory_vulnerability::ActiveModel {
             advisory_id: Set(self.advisory.id),
-            vulnerability_id: Set(cve.cve.id),
+            vulnerability_id: Set(cve.vulnerability.id),
         };
 
         Ok((self, entity.insert(&self.graph.connection(tx)).await?).into())
