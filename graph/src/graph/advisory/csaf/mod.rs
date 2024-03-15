@@ -18,7 +18,7 @@ impl<'g> AdvisoryContext<'g> {
         let mut entity: entity::advisory::ActiveModel = self.advisory.clone().into();
         entity.title = Set(Some(csaf.document.title.clone().to_string()));
         entity
-            .update(&self.graph.connection(Transactional::None))
+            .update(&self.graph.connection(&Transactional::None))
             .await?;
 
         // Ingest vulnerabilities

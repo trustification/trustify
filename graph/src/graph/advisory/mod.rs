@@ -23,13 +23,13 @@ pub mod not_affected_package_version;
 pub mod csaf;
 
 impl Graph {
-    pub(crate) async fn get_advisory_by_id(
+    pub(crate) async fn get_advisory_by_id<TX: AsRef<Transactional>>(
         &self,
         id: i32,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<Option<AdvisoryContext>, Error> {
         Ok(entity::advisory::Entity::find_by_id(id)
-            .one(&self.connection(tx))
+            .one(&self.connection(tx.as_ref()))
             .await?
             .map(|advisory| (self, advisory).into()))
     }
@@ -49,12 +49,12 @@ impl Graph {
             .map(|sbom| (self, sbom).into()))
     }
 
-    pub async fn ingest_advisory(
+    pub async fn ingest_advisory<TX: AsRef<Transactional>>(
         &self,
         identifier: impl Into<String>,
         location: impl Into<String>,
         sha256: impl Into<String>,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<AdvisoryContext, Error> {
         let identifier = identifier.into();
         let location = location.into();
@@ -100,10 +100,10 @@ impl<'g> From<(&'g Graph, entity::advisory::Model)> for AdvisoryContext<'g> {
 }
 
 impl<'g> AdvisoryContext<'g> {
-    pub async fn get_vulnerability(
+    pub async fn get_vulnerability<TX: AsRef<Transactional>>(
         &self,
         identifier: &str,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<Option<AdvisoryVulnerabilityContext<'g>>, Error> {
         Ok(entity::advisory_vulnerability::Entity::find()
             .join(
@@ -112,33 +112,40 @@ impl<'g> AdvisoryContext<'g> {
             )
             .filter(entity::advisory_vulnerability::Column::AdvisoryId.eq(self.advisory.id))
             .filter(entity::vulnerability::Column::Identifier.eq(identifier))
-            .one(&self.graph.connection(tx))
+            .one(&self.graph.connection(tx.as_ref()))
             .await?
             .map(|vuln| (self, vuln).into()))
     }
 
-    pub async fn ingest_vulnerability(
+    pub async fn ingest_vulnerability<TX: AsRef<Transactional>>(
         &self,
         identifier: &str,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<AdvisoryVulnerabilityContext, Error> {
-        if let Some(found) = self.get_vulnerability(identifier, tx).await? {
+        if let Some(found) = self.get_vulnerability(identifier, tx.as_ref()).await? {
             return Ok(found);
         }
 
-        let cve = self.graph.ingest_vulnerability(identifier, tx).await?;
+        let cve = self
+            .graph
+            .ingest_vulnerability(identifier, tx.as_ref())
+            .await?;
 
         let entity = entity::advisory_vulnerability::ActiveModel {
             advisory_id: Set(self.advisory.id),
             vulnerability_id: Set(cve.vulnerability.id),
         };
 
-        Ok((self, entity.insert(&self.graph.connection(tx)).await?).into())
+        Ok((
+            self,
+            entity.insert(&self.graph.connection(tx.as_ref())).await?,
+        )
+            .into())
     }
 
-    pub async fn vulnerabilities(
+    pub async fn vulnerabilities<TX: AsRef<Transactional>>(
         &self,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<Vec<AdvisoryVulnerabilityContext>, Error> {
         Ok(entity::advisory_vulnerability::Entity::find()
             .join(
@@ -148,20 +155,20 @@ impl<'g> AdvisoryContext<'g> {
                     .rev(),
             )
             .filter(entity::advisory_vulnerability::Column::AdvisoryId.eq(self.advisory.id))
-            .all(&self.graph.connection(tx))
+            .all(&self.graph.connection(tx.as_ref()))
             .await?
             .drain(0..)
             .map(|e| (self, e).into())
             .collect())
     }
 
-    pub async fn vulnerability_assertions(
+    pub async fn vulnerability_assertions<TX: AsRef<Transactional>>(
         &self,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<AdvisoryVulnerabilityAssertions, Error> {
-        let affected = self.affected_assertions(tx).await?;
-        let not_affected = self.not_affected_assertions(tx).await?;
-        let fixed = self.fixed_assertions(tx).await?;
+        let affected = self.affected_assertions(tx.as_ref()).await?;
+        let not_affected = self.not_affected_assertions(tx.as_ref()).await?;
+        let fixed = self.fixed_assertions(tx.as_ref()).await?;
 
         let mut merged = affected.assertions.clone();
 
@@ -182,9 +189,9 @@ impl<'g> AdvisoryContext<'g> {
         Ok(AdvisoryVulnerabilityAssertions { assertions: merged })
     }
 
-    pub async fn affected_assertions(
+    pub async fn affected_assertions<TX: AsRef<Transactional>>(
         &self,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<AdvisoryVulnerabilityAssertions, Error> {
         #[derive(FromQueryResult, Debug)]
         struct AffectedVersion {
@@ -233,7 +240,7 @@ impl<'g> AdvisoryContext<'g> {
             )
             .filter(entity::affected_package_version_range::Column::AdvisoryId.eq(self.advisory.id))
             .into_model::<AffectedVersion>()
-            .all(&self.graph.connection(tx))
+            .all(&self.graph.connection(tx.as_ref()))
             .await?;
 
         let mut assertions = HashMap::new();
@@ -260,9 +267,9 @@ impl<'g> AdvisoryContext<'g> {
         Ok(AdvisoryVulnerabilityAssertions { assertions })
     }
 
-    pub async fn not_affected_assertions(
+    pub async fn not_affected_assertions<TX: AsRef<Transactional>>(
         &self,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<AdvisoryVulnerabilityAssertions, Error> {
         #[derive(FromQueryResult, Debug)]
         struct NotAffectedVersion {
@@ -309,7 +316,7 @@ impl<'g> AdvisoryContext<'g> {
             )
             .filter(entity::not_affected_package_version::Column::AdvisoryId.eq(self.advisory.id))
             .into_model::<NotAffectedVersion>()
-            .all(&self.graph.connection(tx))
+            .all(&self.graph.connection(tx.as_ref()))
             .await?;
 
         let mut assertions = HashMap::new();
@@ -335,9 +342,9 @@ impl<'g> AdvisoryContext<'g> {
         Ok(AdvisoryVulnerabilityAssertions { assertions })
     }
 
-    pub async fn fixed_assertions(
+    pub async fn fixed_assertions<TX: AsRef<Transactional>>(
         &self,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<AdvisoryVulnerabilityAssertions, Error> {
         #[derive(FromQueryResult, Debug)]
         struct FixedVersion {
@@ -384,7 +391,7 @@ impl<'g> AdvisoryContext<'g> {
             )
             .filter(entity::fixed_package_version::Column::AdvisoryId.eq(self.advisory.id))
             .into_model::<FixedVersion>()
-            .all(&self.graph.connection(tx))
+            .all(&self.graph.connection(tx.as_ref()))
             .await?;
 
         let mut assertions = HashMap::new();

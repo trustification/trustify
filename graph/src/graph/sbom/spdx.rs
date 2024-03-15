@@ -23,79 +23,69 @@ impl SbomContext {
     pub async fn ingest_spdx(&self, sbom_data: SPDX) -> Result<(), anyhow::Error> {
         // FIXME: not sure this is correct. It may be that we need to use `DatabaseTransaction` instead of the `db` field
         let sbom = self.clone();
-        //let graph = self.graph.clone();
-        self.system
-            .db
-            .transaction(|tx| {
-                Box::pin(async move {
-                    let tx: Transactional = tx.into();
-                    // For each thing described in the SBOM data, link it up to an sbom_cpe or sbom_package.
-                    for described in &sbom_data.document_creation_information.document_describes {
-                        for described_package in sbom_data
-                            .package_information
-                            .iter()
-                            .filter(|each| each.package_spdx_identifier.eq(described))
-                        {
-                            for reference in &described_package.external_reference {
-                                if reference.reference_type == "purl" {
-                                    //log::debug!("describes pkg {}", reference.reference_locator);
-                                    sbom.ingest_describes_package(
-                                        reference.reference_locator.as_str().try_into()?,
-                                        tx,
-                                    )
-                                        .await?;
-                                } else if reference.reference_type == "cpe22Type" {
-                                    //log::debug!("describes cpe22 {}", reference.reference_locator);
-                                    if let Ok(cpe) = cpe::uri::Uri::parse(&reference.reference_locator) {
-                                        sbom.ingest_describes_cpe22(
-                                            cpe,
-                                            tx,
-                                        )
-                                            .await?;
 
-                                    }
+        let tx = self.graph.transaction().await?;
 
-                                }
-                            }
+        // For each thing described in the SBOM data, link it up to an sbom_cpe or sbom_package.
+        for described in &sbom_data.document_creation_information.document_describes {
+            for described_package in sbom_data
+                .package_information
+                .iter()
+                .filter(|each| each.package_spdx_identifier.eq(described))
+            {
+                for reference in &described_package.external_reference {
+                    if reference.reference_type == "purl" {
+                        //log::debug!("describes pkg {}", reference.reference_locator);
+                        sbom.ingest_describes_package(
+                            reference.reference_locator.as_str().try_into()?,
+                            &tx,
+                        )
+                        .await?;
+                    } else if reference.reference_type == "cpe22Type" {
+                        //log::debug!("describes cpe22 {}", reference.reference_locator);
+                        if let Ok(cpe) = cpe::uri::Uri::parse(&reference.reference_locator) {
+                            sbom.ingest_describes_cpe22(cpe, &tx).await?;
+                        }
+                    }
+                }
 
-                            // connect all other tree-ish package trees in the context of this sbom.
-                            for package_info in &sbom_data.package_information {
-                                let package_identifier = &package_info.package_spdx_identifier;
-                                for package_ref in &package_info.external_reference {
-                                    if package_ref.reference_type == "purl" {
-                                        let package_a = package_ref.reference_locator.clone();
-                                        //log::debug!("pkg_a: {}", package_a);
+                // connect all other tree-ish package trees in the context of this sbom.
+                for package_info in &sbom_data.package_information {
+                    let package_identifier = &package_info.package_spdx_identifier;
+                    for package_ref in &package_info.external_reference {
+                        if package_ref.reference_type == "purl" {
+                            let package_a = package_ref.reference_locator.clone();
+                            //log::debug!("pkg_a: {}", package_a);
 
-                                        for relationship in sbom_data
-                                            .relationships_for_spdx_id(package_identifier)
-                                        {
-                                            if let Some(package) = sbom_data
-                                                .package_information
-                                                .iter()
-                                                .find(|each| {
-                                                    each.package_spdx_identifier
-                                                        == relationship.related_spdx_element
-                                                })
-                                            {
-                                                for reference in &package.external_reference {
-                                                    if reference.reference_type == "purl" {
-                                                        let package_b = reference.reference_locator.clone();
+                            for relationship in
+                                sbom_data.relationships_for_spdx_id(package_identifier)
+                            {
+                                if let Some(package) =
+                                    sbom_data.package_information.iter().find(|each| {
+                                        each.package_spdx_identifier
+                                            == relationship.related_spdx_element
+                                    })
+                                {
+                                    for reference in &package.external_reference {
+                                        if reference.reference_type == "purl" {
+                                            let package_b = reference.reference_locator.clone();
 
-                                                        // Check for the degenerate case that seems to appear where an SBOM inceptions itself.
-                                                        if package_a != package_b {
-                                                            if let Ok((left, rel, right)) = SpdxRelationship(
-                                                                &package_a,
-                                                                &relationship.relationship_type,
-                                                                &package_b).try_into() {
-                                                                sbom.ingest_package_relates_to_package(
-                                                                    left.try_into()?,
-                                                                    rel,
-                                                                    right.try_into()?,
-                                                                    tx,
-                                                                ).await?
-                                                            }
-                                                        }
-                                                    }
+                                            // Check for the degenerate case that seems to appear where an SBOM inceptions itself.
+                                            if package_a != package_b {
+                                                if let Ok((left, rel, right)) = SpdxRelationship(
+                                                    &package_a,
+                                                    &relationship.relationship_type,
+                                                    &package_b,
+                                                )
+                                                .try_into()
+                                                {
+                                                    sbom.ingest_package_relates_to_package(
+                                                        left.try_into()?,
+                                                        rel,
+                                                        right.try_into()?,
+                                                        &tx,
+                                                    )
+                                                    .await?
                                                 }
                                             }
                                         }
@@ -104,11 +94,10 @@ impl SbomContext {
                             }
                         }
                     }
-
-                    Ok::<(), Error>(())
-                })
-            })
-            .await?;
+                }
+            }
+        }
+        tx.commit().await?;
 
         Ok(())
     }
