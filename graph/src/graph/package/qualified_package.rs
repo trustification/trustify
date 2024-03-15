@@ -153,7 +153,7 @@ mod tests {
 
         let affected_core = advisory_vulnerability
             .ingest_affected_package_range(
-                "pkg://maven/io.quarkus/quarkus-core",
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
                 "1.0.2",
                 "1.2.0",
                 Transactional::None,
@@ -162,7 +162,7 @@ mod tests {
 
         let affected_addons = advisory_vulnerability
             .ingest_affected_package_range(
-                "pkg://maven/io.quarkus/quarkus-addons",
+                "pkg://maven/io.quarkus/quarkus-addons".try_into()?,
                 "1.0.2",
                 "1.2.0",
                 Transactional::None,
@@ -171,7 +171,7 @@ mod tests {
 
         let pkg_core = system
             .ingest_qualified_package(
-                "pkg://maven/io.quarkus/quarkus-core@1.0.4",
+                "pkg://maven/io.quarkus/quarkus-core@1.0.4".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -182,7 +182,7 @@ mod tests {
 
         let pkg_addons = system
             .ingest_qualified_package(
-                "pkg://maven/io.quarkus/quarkus-core@1.0.4",
+                "pkg://maven/io.quarkus/quarkus-core@1.0.4".try_into()?,
                 Transactional::None,
             )
             .await?;

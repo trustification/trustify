@@ -31,7 +31,7 @@ pub async fn dependencies(
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadSbom)?;
 
-    let purl: Purl = Purl::from(&*purl);
+    let purl: Purl = Purl::from_str(&purl).map_err(Error::Purl)?;
 
     /*
     if matches!(params.transitive, Some(true)) {

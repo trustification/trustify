@@ -7,13 +7,15 @@ use packageurl::PackageUrl;
 use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-#[derive(Debug, Clone, thiserror::Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum PurlErr {
     #[error("missing version {0}")]
     MissingVersion(String),
+    #[error("packageurl problem {0}")]
+    Package(#[from] packageurl::Error),
 }
 
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Purl {
     pub ty: String,
     pub namespace: Option<String>,
@@ -32,10 +34,12 @@ impl Serialize for Purl {
 }
 
 impl FromStr for Purl {
-    type Err = packageurl::Error;
+    type Err = PurlErr;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        PackageUrl::from_str(s).map(Purl::from)
+        PackageUrl::from_str(s)
+            .map(Purl::from)
+            .map_err(PurlErr::Package)
     }
 }
 impl<'de> Deserialize<'de> for Purl {
@@ -60,7 +64,7 @@ impl<'de> Visitor<'de> for PurlVisitor {
     where
         E: Error,
     {
-        Ok(v.into())
+        v.try_into().map_err(Error::custom)
     }
 }
 
@@ -126,30 +130,20 @@ impl Debug for Purl {
     }
 }
 
-impl From<&str> for Purl {
-    fn from(value: &str) -> Self {
+impl TryFrom<&str> for Purl {
+    type Error = PurlErr;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
         match PackageUrl::from_str(value) {
-            Ok(s) => s.into(),
-            Err(e) => Default::default(),
+            Ok(s) => Ok(s.into()),
+            Err(e) => Err(PurlErr::Package(e)),
         }
     }
 }
 
-// impl From<&&str> for Purl {
-//     fn from(value: &&str) -> Self {
-//         PackageUrl::from_str(value).unwrap().into()
-//     }
-// }
-
-impl From<String> for Purl {
-    fn from(value: String) -> Self {
-        value.as_str().into()
-    }
-}
-
-impl From<&String> for Purl {
-    fn from(value: &String) -> Self {
-        value.as_str().into()
+impl TryFrom<String> for Purl {
+    type Error = PurlErr;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        value.as_str().try_into()
     }
 }
 
@@ -191,7 +185,9 @@ mod tests {
 
         assert_eq!(purl.qualifiers.get("foo"), Some(&"bar".to_string()));
 
-        let purl: Purl = "pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar".into();
+        let purl: Purl = "pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar"
+            .try_into()
+            .unwrap();
         let json = serde_json::to_string(&purl).unwrap();
 
         assert_eq!(

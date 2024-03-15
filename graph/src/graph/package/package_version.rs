@@ -233,7 +233,7 @@ mod tests {
 
         redhat_advisory_vulnerability
             .ingest_not_affected_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2",
+                "pkg://maven/io.quarkus/quarkus-core@1.2".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -248,14 +248,14 @@ mod tests {
 
         ghsa_advisory_vulnerability
             .ingest_not_affected_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.2",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.2".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg_version = system
             .get_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.2",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.2".try_into()?,
                 Transactional::None,
             )
             .await?

@@ -336,9 +336,9 @@ impl SbomContext {
         Ok(())
     }
 
-    pub async fn ingest_describes_package<P: Into<Purl>>(
+    pub async fn ingest_describes_package(
         &self,
-        package: P,
+        purl: Purl,
         tx: Transactional<'_>,
     ) -> Result<(), Error> {
         let fetch = entity::sbom_describes_package::Entity::find()
@@ -350,10 +350,7 @@ impl SbomContext {
             .await?;
 
         if fetch.is_none() {
-            let package = self
-                .system
-                .ingest_qualified_package(package.into(), tx)
-                .await?;
+            let package = self.system.ingest_qualified_package(purl, tx).await?;
 
             let model = entity::sbom_describes_package::ActiveModel {
                 sbom_id: Set(self.sbom.id),
@@ -399,20 +396,18 @@ impl SbomContext {
 
     /// Within the context of *this* SBOM, ingest a relationship between
     /// two packages.
-    async fn ingest_package_relates_to_package<P1: Into<Purl>, P2: Into<Purl>>(
+    async fn ingest_package_relates_to_package(
         &self,
-        left_package_input: P1,
+        left_package_input: Purl,
         relationship: Relationship,
-        right_package_input: P2,
+        right_package_input: Purl,
         tx: Transactional<'_>,
     ) -> Result<(), Error> {
-        let left_package_input = left_package_input.into();
         let left_package = self
             .system
             .ingest_qualified_package(left_package_input.clone(), tx)
             .await;
 
-        let right_package_input = right_package_input.into();
         let right_package = self
             .system
             .ingest_qualified_package(right_package_input.clone(), tx)
@@ -471,10 +466,10 @@ impl SbomContext {
         Ok(())
     }
 
-    pub async fn related_packages_transitively_x<P: Into<Purl>>(
+    pub async fn related_packages_transitively_x(
         &self,
         relationship: Relationship,
-        pkg: P,
+        pkg: Purl,
         tx: Transactional<'_>,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         let pkg = self.system.get_qualified_package(pkg, tx).await?;
@@ -508,10 +503,10 @@ impl SbomContext {
         }
     }
 
-    pub async fn related_packages_transitively<P: Into<Purl>>(
+    pub async fn related_packages_transitively(
         &self,
         relationships: &[Relationship],
-        pkg: P,
+        pkg: Purl,
         tx: Transactional<'_>,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         let pkg = self.system.get_qualified_package(pkg, tx).await?;
@@ -557,10 +552,10 @@ impl SbomContext {
         }
     }
 
-    pub async fn related_packages<P: Into<Purl>>(
+    pub async fn related_packages(
         &self,
         relationship: Relationship,
-        pkg: P,
+        pkg: Purl,
         tx: Transactional<'_>,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         let pkg = self.system.get_qualified_package(pkg, tx).await?;
@@ -627,7 +622,7 @@ impl SbomContext {
             applicable.extend(
                 self.related_packages_transitively(
                     &[Relationship::DependencyOf, Relationship::ContainedBy],
-                    pkg,
+                    pkg.into(),
                     Transactional::None,
                 )
                 .await?,
@@ -714,28 +709,28 @@ mod tests {
 
         sbom_v1
             .ingest_describes_package(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         sbom_v2
             .ingest_describes_package(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         sbom_v3
             .ingest_describes_package(
-                "pkg://maven/io.quarkus/quarkus-core@1.9.3",
+                "pkg://maven/io.quarkus/quarkus-core@1.9.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let found = system
             .locate_sboms(
-                SbomLocator::Purl("pkg://maven/io.quarkus/quarkus-core@1.2.3".into()),
+                SbomLocator::Purl("pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?),
                 Transactional::None,
             )
             .await?;
@@ -810,45 +805,45 @@ mod tests {
 
         sbom1
             .ingest_package_relates_to_package(
-                "pkg://maven/io.quarkus/transitive-b@1.2.3",
+                "pkg://maven/io.quarkus/transitive-b@1.2.3".try_into()?,
                 Relationship::DependencyOf,
-                "pkg://maven/io.quarkus/transitive-a@1.2.3",
+                "pkg://maven/io.quarkus/transitive-a@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         sbom1
             .ingest_package_relates_to_package(
-                "pkg://maven/io.quarkus/transitive-c@1.2.3",
+                "pkg://maven/io.quarkus/transitive-c@1.2.3".try_into()?,
                 Relationship::DependencyOf,
-                "pkg://maven/io.quarkus/transitive-b@1.2.3",
+                "pkg://maven/io.quarkus/transitive-b@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         sbom1
             .ingest_package_relates_to_package(
-                "pkg://maven/io.quarkus/transitive-d@1.2.3",
+                "pkg://maven/io.quarkus/transitive-d@1.2.3".try_into()?,
                 Relationship::DependencyOf,
-                "pkg://maven/io.quarkus/transitive-c@1.2.3",
+                "pkg://maven/io.quarkus/transitive-c@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         sbom1
             .ingest_package_relates_to_package(
-                "pkg://maven/io.quarkus/transitive-e@1.2.3",
+                "pkg://maven/io.quarkus/transitive-e@1.2.3".try_into()?,
                 Relationship::DependencyOf,
-                "pkg://maven/io.quarkus/transitive-c@1.2.3",
+                "pkg://maven/io.quarkus/transitive-c@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         sbom1
             .ingest_package_relates_to_package(
-                "pkg://maven/io.quarkus/transitive-d@1.2.3",
+                "pkg://maven/io.quarkus/transitive-d@1.2.3".try_into()?,
                 Relationship::DependencyOf,
-                "pkg://maven/io.quarkus/transitive-b@1.2.3",
+                "pkg://maven/io.quarkus/transitive-b@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -856,7 +851,7 @@ mod tests {
         let results = sbom1
             .related_packages_transitively(
                 &[Relationship::DependencyOf],
-                "pkg://maven/io.quarkus/transitive-a@1.2.3",
+                "pkg://maven/io.quarkus/transitive-a@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -878,9 +873,9 @@ mod tests {
 
         sbom1
             .ingest_package_relates_to_package(
-                "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
+                "pkg://maven/io.quarkus/quarkus-postgres@1.2.3".try_into()?,
                 Relationship::DependencyOf,
-                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -895,9 +890,9 @@ mod tests {
 
         sbom2
             .ingest_package_relates_to_package(
-                "pkg://maven/io.quarkus/quarkus-sqlite@1.2.3",
+                "pkg://maven/io.quarkus/quarkus-sqlite@1.2.3".try_into()?,
                 Relationship::DependencyOf,
-                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -905,7 +900,7 @@ mod tests {
         let dependencies = sbom1
             .related_packages(
                 Relationship::DependencyOf,
-                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -920,7 +915,7 @@ mod tests {
         let dependencies = sbom2
             .related_packages(
                 Relationship::DependencyOf,
-                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -951,32 +946,32 @@ mod tests {
 
         println!("-------------------- A");
 
-        sbom.ingest_describes_package("pkg://oci/my-app@1.2.3", Transactional::None)
+        sbom.ingest_describes_package("pkg://oci/my-app@1.2.3".try_into()?, Transactional::None)
             .await?;
         println!("-------------------- B");
 
         sbom.ingest_package_relates_to_package(
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
             Relationship::DependencyOf,
-            "pkg://oci/my-app@1.2.3",
+            "pkg://oci/my-app@1.2.3".try_into()?,
             Transactional::None,
         )
         .await?;
         println!("-------------------- C");
 
         sbom.ingest_package_relates_to_package(
-            "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
+            "pkg://maven/io.quarkus/quarkus-postgres@1.2.3".try_into()?,
             Relationship::DependencyOf,
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
             Transactional::None,
         )
         .await?;
         println!("-------------------- D");
 
         sbom.ingest_package_relates_to_package(
-            "pkg://maven/postgres/postgres-driver@1.2.3",
+            "pkg://maven/postgres/postgres-driver@1.2.3".try_into()?,
             Relationship::DependencyOf,
-            "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
+            "pkg://maven/io.quarkus/quarkus-postgres@1.2.3".try_into()?,
             Transactional::None,
         )
         .await?;
@@ -996,7 +991,7 @@ mod tests {
 
         advisory_vulnerability
             .ingest_affected_package_range(
-                "pkg://maven/postgres/postgres-driver",
+                "pkg://maven/postgres/postgres-driver".try_into()?,
                 "1.1",
                 "1.9",
                 Transactional::None,
