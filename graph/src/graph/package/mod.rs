@@ -30,12 +30,11 @@ impl Graph {
     ///
     /// The `pkg` parameter does not necessarily require the presence of qualifiers, but
     /// is assumed to be *complete*.
-    pub async fn ingest_qualified_package<P: Into<Purl>>(
+    pub async fn ingest_qualified_package(
         &self,
-        pkg: P,
+        purl: Purl,
         tx: Transactional<'_>,
     ) -> Result<QualifiedPackageContext, Error> {
-        let purl = pkg.into();
         if let Some(found) = self.get_qualified_package(purl.clone(), tx).await? {
             return Ok(found);
         }
@@ -48,12 +47,11 @@ impl Graph {
     /// Ensure the graph knows about and contains a record for a *versioned* package.
     ///
     /// This method will ensure the package being referenced is also ingested.
-    pub async fn ingest_package_version<P: Into<Purl>>(
+    pub async fn ingest_package_version(
         &self,
-        pkg: P,
+        pkg: Purl,
         tx: Transactional<'_>,
     ) -> Result<PackageVersionContext, Error> {
-        let pkg = pkg.into();
         if let Some(found) = self.get_package_version(pkg.clone(), tx).await? {
             return Ok(found);
         }
@@ -65,14 +63,13 @@ impl Graph {
     /// Ensure the graph knows about and contains a record for a *versioned range* of a package.
     ///
     /// This method will ensure the package being referenced is also ingested.
-    pub async fn ingest_package_version_range<P: Into<Purl>>(
+    pub async fn ingest_package_version_range(
         &self,
-        pkg: P,
+        pkg: Purl,
         start: &str,
         end: &str,
         tx: Transactional<'_>,
     ) -> Result<PackageVersionRangeContext, Error> {
-        let pkg = pkg.into();
         let package = self.ingest_package(pkg.clone(), tx).await?;
 
         package
@@ -83,13 +80,11 @@ impl Graph {
     /// Ensure the graph knows about and contains a record for a *versionless* package.
     ///
     /// This method will ensure the package being referenced is also ingested.
-    pub async fn ingest_package<P: Into<Purl>>(
+    pub async fn ingest_package(
         &self,
-        pkg: P,
+        purl: Purl,
         tx: Transactional<'_>,
     ) -> Result<PackageContext, Error> {
-        let purl = pkg.into();
-
         if let Some(found) = self.get_package(purl.clone(), tx).await? {
             Ok(found)
         } else {
@@ -107,12 +102,11 @@ impl Graph {
     /// Retrieve a *fully-qualified* package entry, if it exists.
     ///
     /// Non-mutating to the graph.
-    pub async fn get_qualified_package<P: Into<Purl>>(
+    pub async fn get_qualified_package(
         &self,
-        pkg: P,
+        purl: Purl,
         tx: Transactional<'_>,
     ) -> Result<Option<QualifiedPackageContext>, Error> {
-        let purl = pkg.into();
         if let Some(package_version) = self.get_package_version(purl.clone(), tx).await? {
             package_version.get_qualified_package(purl, tx).await
         } else {
@@ -187,12 +181,11 @@ impl Graph {
     /// Retrieve a *versioned* package entry, if it exists.
     ///
     /// Non-mutating to the graph.
-    pub async fn get_package_version<P: Into<Purl>>(
+    pub async fn get_package_version(
         &self,
-        pkg: P,
+        purl: Purl,
         tx: Transactional<'_>,
     ) -> Result<Option<PackageVersionContext<'_>>, Error> {
-        let purl = pkg.into();
         if let Some(pkg) = self.get_package(purl.clone(), tx).await? {
             pkg.get_package_version(purl, tx).await
         } else {
@@ -243,12 +236,11 @@ impl Graph {
     /// Retrieve a *versionless* package entry, if it exists.
     ///
     /// Non-mutating to the graph.
-    pub async fn get_package<P: Into<Purl>>(
+    pub async fn get_package(
         &self,
-        pkg: P,
+        purl: Purl,
         tx: Transactional<'_>,
     ) -> Result<Option<PackageContext>, Error> {
-        let purl = pkg.into();
         Ok(entity::package::Entity::find()
             .filter(entity::package::Column::Type.eq(purl.ty.clone()))
             .filter(if let Some(ns) = purl.namespace {
@@ -299,14 +291,13 @@ impl<'g> From<(&'g Graph, entity::package::Model)> for PackageContext<'g> {
 
 impl<'g> PackageContext<'g> {
     /// Ensure the graph knows about and contains a record for a *version range* of this package.
-    pub async fn ingest_package_version_range<P: Into<Purl>>(
+    pub async fn ingest_package_version_range(
         &self,
-        pkg: P,
+        purl: Purl,
         start: &str,
         end: &str,
         tx: Transactional<'_>,
     ) -> Result<PackageVersionRangeContext<'g>, Error> {
-        let purl = pkg.into();
         if let Some(found) = self.get_package_version_range(purl, start, end, tx).await? {
             Ok(found)
         } else {
@@ -324,15 +315,13 @@ impl<'g> PackageContext<'g> {
     /// Retrieve a *version range* package entry for this package, if it exists.
     ///
     /// Non-mutating to the graph.
-    pub async fn get_package_version_range<P: Into<Purl>>(
+    pub async fn get_package_version_range(
         &self,
-        pkg: P,
+        purl: Purl,
         start: &str,
         end: &str,
         tx: Transactional<'_>,
     ) -> Result<Option<PackageVersionRangeContext<'g>>, Error> {
-        let purl = pkg.into();
-
         Ok(entity::package_version_range::Entity::find()
             .filter(entity::package_version_range::Column::PackageId.eq(self.package.id))
             .filter(entity::package_version_range::Column::Start.eq(start.to_string()))
@@ -343,13 +332,11 @@ impl<'g> PackageContext<'g> {
     }
 
     /// Ensure the graph knows about and contains a record for a *version* of this package.
-    pub async fn ingest_package_version<P: Into<Purl>>(
+    pub async fn ingest_package_version(
         &self,
-        pkg: P,
+        purl: Purl,
         tx: Transactional<'_>,
     ) -> Result<PackageVersionContext<'g>, Error> {
-        let purl = pkg.into();
-
         if let Some(version) = &purl.version {
             if let Some(found) = self.get_package_version(purl.clone(), tx).await? {
                 Ok(found)
@@ -370,12 +357,11 @@ impl<'g> PackageContext<'g> {
     /// Retrieve a *version* package entry for this package, if it exists.
     ///
     /// Non-mutating to the graph.
-    pub async fn get_package_version<P: Into<Purl>>(
+    pub async fn get_package_version(
         &self,
-        pkg: P,
+        purl: Purl,
         tx: Transactional<'_>,
     ) -> Result<Option<PackageVersionContext<'g>>, Error> {
-        let purl = pkg.into();
         if let Some(package_version) = entity::package_version::Entity::find()
             .join(
                 JoinType::Join,
@@ -646,15 +632,24 @@ mod tests {
         let system = Graph::for_test("ingest_packages").await?;
 
         let pkg1 = system
-            .ingest_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .ingest_package(
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                Transactional::None,
+            )
             .await?;
 
         let pkg2 = system
-            .ingest_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .ingest_package(
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                Transactional::None,
+            )
             .await?;
 
         let pkg3 = system
-            .ingest_package("pkg://maven/io.quarkus/quarkus-addons", Transactional::None)
+            .ingest_package(
+                "pkg://maven/io.quarkus/quarkus-addons".try_into()?,
+                Transactional::None,
+            )
             .await?;
 
         assert_eq!(pkg1.package.id, pkg2.package.id,);
@@ -669,7 +664,10 @@ mod tests {
         let system = Graph::for_test("ingest_package_versions_missing_version").await?;
 
         let result = system
-            .ingest_package_version("pkg://maven/io.quarkus/quarkus-addons", Transactional::None)
+            .ingest_package_version(
+                "pkg://maven/io.quarkus/quarkus-addons".try_into()?,
+                Transactional::None,
+            )
             .await;
 
         assert!(result.is_err());
@@ -691,21 +689,21 @@ mod tests {
 
         let pkg1 = system
             .ingest_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg2 = system
             .ingest_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg3 = system
             .ingest_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@4.5.6",
+                "pkg://maven/io.quarkus/quarkus-core@4.5.6".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -724,15 +722,18 @@ mod tests {
         let system = Graph::for_test("get_versions_paginated").await?;
 
         for v in 0..200 {
-            let version = format!("pkg://maven/io.quarkus/quarkus-core@{v}");
+            let version = format!("pkg://maven/io.quarkus/quarkus-core@{v}").try_into()?;
 
             let _ = system
-                .ingest_package_version(&version, Transactional::None)
+                .ingest_package_version(version, Transactional::None)
                 .await?;
         }
 
         let pkg = system
-            .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .get_package(
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                Transactional::None,
+            )
             .await?
             .unwrap();
 
@@ -790,14 +791,14 @@ mod tests {
             Box::pin(async move {
                 let pkg1 = tx_system
                     .ingest_qualified_package(
-                        "pkg://oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
+                        "pkg://oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012".try_into()?,
                         Transactional::None,
                     )
                     .await?;
 
                 let pkg2 = tx_system
                     .ingest_qualified_package(
-                        "pkg://oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
+                        "pkg://oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012".try_into()?,
                         Transactional::None,
                     )
                     .await?;
@@ -825,28 +826,28 @@ mod tests {
 
         let pkg1 = system
             .ingest_qualified_package(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg2 = system
             .ingest_qualified_package(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg3 = system
             .ingest_qualified_package(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg4 = system
             .ingest_qualified_package(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -882,7 +883,7 @@ mod tests {
 
         let range1 = system
             .ingest_package_version_range(
-                "pkg://maven/io.quarkus/quarkus-core",
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
                 "1.0.0",
                 "1.2.0",
                 Transactional::None,
@@ -891,7 +892,7 @@ mod tests {
 
         let range2 = system
             .ingest_package_version_range(
-                "pkg://maven/io.quarkus/quarkus-core",
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
                 "1.0.0",
                 "1.2.0",
                 Transactional::None,
@@ -900,7 +901,7 @@ mod tests {
 
         let range3 = system
             .ingest_package_version_range(
-                "pkg://maven/io.quarkus/quarkus-addons",
+                "pkg://maven/io.quarkus/quarkus-addons".try_into()?,
                 "1.0.0",
                 "1.2.0",
                 Transactional::None,
@@ -946,7 +947,7 @@ mod tests {
 
         redhat_advisory_vulnerability
             .ingest_affected_package_range(
-                "pkg://maven/io.quarkus/quarkus-core",
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
                 "1.0.2",
                 "1.2.0",
                 Transactional::None,
@@ -955,7 +956,7 @@ mod tests {
 
         redhat_advisory_vulnerability
             .ingest_affected_package_range(
-                "pkg://maven/io.quarkus/quarkus-addons",
+                "pkg://maven/io.quarkus/quarkus-addons".try_into()?,
                 "1.0.2",
                 "1.2.0",
                 Transactional::None,
@@ -972,7 +973,7 @@ mod tests {
 
         ghsa_advisory_vulnerability
             .ingest_affected_package_range(
-                "pkg://maven/io.quarkus/quarkus-core",
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
                 "1.0.2",
                 "1.2.0",
                 Transactional::None,
@@ -980,7 +981,10 @@ mod tests {
             .await?;
 
         let pkg_core = system
-            .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .get_package(
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                Transactional::None,
+            )
             .await?
             .unwrap();
 
@@ -998,7 +1002,10 @@ mod tests {
             .any(|e| e.identifier == "GHSA-1"));
 
         let pkg_addons = system
-            .get_package("pkg://maven/io.quarkus/quarkus-addons", Transactional::None)
+            .get_package(
+                "pkg://maven/io.quarkus/quarkus-addons".try_into()?,
+                Transactional::None,
+            )
             .await?
             .unwrap();
 
@@ -1032,7 +1039,7 @@ mod tests {
 
         redhat_advisory_vulnerability
             .ingest_not_affected_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2",
+                "pkg://maven/io.quarkus/quarkus-core@1.2".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -1047,13 +1054,16 @@ mod tests {
 
         ghsa_advisory_vulnerability
             .ingest_not_affected_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.2",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.2".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg = system
-            .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .get_package(
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                Transactional::None,
+            )
             .await?
             .unwrap();
 
@@ -1083,7 +1093,7 @@ mod tests {
 
         redhat_advisory_vulnerability
             .ingest_affected_package_range(
-                "pkg://maven/io.quarkus/quarkus-core",
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
                 "1.1",
                 "1.3",
                 Transactional::None,
@@ -1092,7 +1102,7 @@ mod tests {
 
         redhat_advisory_vulnerability
             .ingest_not_affected_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2",
+                "pkg://maven/io.quarkus/quarkus-core@1.2".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -1107,13 +1117,16 @@ mod tests {
 
         ghsa_advisory_vulnerability
             .ingest_not_affected_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.2",
+                "pkg://maven/io.quarkus/quarkus-core@1.2.2".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg = system
-            .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .get_package(
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                Transactional::None,
+            )
             .await?
             .unwrap();
 
@@ -1143,7 +1156,7 @@ mod tests {
 
         redhat_advisory_vulnerability
             .ingest_affected_package_range(
-                "pkg://maven/io.quarkus/quarkus-core",
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
                 "1.1",
                 "1.3",
                 Transactional::None,
@@ -1160,7 +1173,7 @@ mod tests {
 
         ghsa_advisory_vulnerability
             .ingest_not_affected_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2",
+                "pkg://maven/io.quarkus/quarkus-core@1.2".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -1180,13 +1193,16 @@ mod tests {
 
         unrelated_advisory_vulnerability
             .ingest_not_affected_package_version(
-                "pkg://maven/io.quarkus/some-other-package@1.2",
+                "pkg://maven/io.quarkus/some-other-package@1.2".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg = system
-            .get_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
+            .get_package(
+                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                Transactional::None,
+            )
             .await?
             .unwrap();
 

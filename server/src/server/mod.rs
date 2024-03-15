@@ -4,6 +4,7 @@ use actix_web::{HttpResponse, ResponseError};
 use std::borrow::Cow;
 use std::fmt::{Debug, Display};
 use trustify_common::error::ErrorInformation;
+use trustify_common::purl::PurlErr;
 use trustify_graph::graph;
 
 pub mod importer;
@@ -15,7 +16,7 @@ pub enum Error {
     #[error(transparent)]
     System(graph::error::Error),
     #[error(transparent)]
-    Purl(#[from] packageurl::Error),
+    Purl(#[from] PurlErr),
     #[error(transparent)]
     Actix(#[from] actix_web::Error),
     #[error("Invalid request {msg}")]

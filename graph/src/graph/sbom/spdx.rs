@@ -40,7 +40,7 @@ impl SbomContext {
                                 if reference.reference_type == "purl" {
                                     //log::debug!("describes pkg {}", reference.reference_locator);
                                     sbom.ingest_describes_package(
-                                        reference.reference_locator.clone(),
+                                        reference.reference_locator.as_str().try_into()?,
                                         tx,
                                     )
                                         .await?;
@@ -88,9 +88,9 @@ impl SbomContext {
                                                                 &relationship.relationship_type,
                                                                 &package_b).try_into() {
                                                                 sbom.ingest_package_relates_to_package(
-                                                                    left,
+                                                                    left.try_into()?,
                                                                     rel,
-                                                                    right,
+                                                                    right.try_into()?,
                                                                     tx,
                                                                 ).await?
                                                             }
@@ -114,9 +114,9 @@ impl SbomContext {
     }
 }
 
-pub struct SpdxRelationship<'spdx>(&'spdx String, &'spdx RelationshipType, &'spdx String);
+pub struct SpdxRelationship<'spdx>(&'spdx str, &'spdx RelationshipType, &'spdx str);
 
-impl<'spdx> TryFrom<SpdxRelationship<'spdx>> for (&'spdx String, Relationship, &'spdx String) {
+impl<'spdx> TryFrom<SpdxRelationship<'spdx>> for (&'spdx str, Relationship, &'spdx str) {
     type Error = ();
 
     fn try_from(
@@ -213,7 +213,7 @@ mod tests {
         let contains = sbom
             .related_packages(
                 Relationship::ContainedBy,
-                described_packages[0].clone(),
+                described_packages[0].clone().into(),
                 Transactional::None,
             )
             .await?;
@@ -266,7 +266,7 @@ mod tests {
         let contains = sbom
             .related_packages(
                 Relationship::ContainedBy,
-                described_packages[0].clone(),
+                described_packages[0].clone().into(),
                 Transactional::None,
             )
             .await?;
@@ -316,7 +316,7 @@ mod tests {
         let contains = sbom
             .related_packages(
                 Relationship::ContainedBy,
-                described[0].clone(),
+                described[0].clone().into(),
                 Transactional::None,
             )
             .await?;
