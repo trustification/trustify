@@ -40,14 +40,15 @@ impl<'g> From<(&PackageContext<'g>, entity::package_version::Model)> for Package
 }
 
 impl<'g> PackageVersionContext<'g> {
-    pub async fn ingest_qualified_package<P: Into<Purl>>(
+    pub async fn ingest_qualified_package<TX: AsRef<Transactional>>(
         &self,
-        pkg: P,
-        mut tx: Transactional<'_>,
+        purl: Purl,
+        tx: TX,
     ) -> Result<QualifiedPackageContext<'g>, Error> {
-        let purl = pkg.into();
-
-        if let Some(found) = self.get_qualified_package(purl.clone(), tx).await? {
+        if let Some(found) = self
+            .get_qualified_package(purl.clone(), tx.as_ref())
+            .await?
+        {
             return Ok(found);
         }
 
@@ -58,7 +59,7 @@ impl<'g> PackageVersionContext<'g> {
         };
 
         let qualified_package = qualified_package
-            .insert(&self.package.graph.connection(tx))
+            .insert(&self.package.graph.connection(tx.as_ref()))
             .await?;
 
         for (k, v) in &purl.qualifiers {
@@ -69,22 +70,23 @@ impl<'g> PackageVersionContext<'g> {
                 value: Set(v.clone()),
             };
 
-            qualifier.insert(&self.package.graph.connection(tx)).await?;
+            qualifier
+                .insert(&self.package.graph.connection(tx.as_ref()))
+                .await?;
         }
 
         Ok((self, qualified_package, purl.qualifiers.clone()).into())
     }
 
-    pub async fn get_qualified_package<'p, P: Into<Purl>>(
-        &'p self,
-        pkg: P,
-        tx: Transactional<'_>,
+    pub async fn get_qualified_package<TX: AsRef<Transactional>>(
+        &self,
+        purl: Purl,
+        tx: TX,
     ) -> Result<Option<QualifiedPackageContext<'g>>, Error> {
-        let purl = pkg.into();
         let found = entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
             .find_with_related(entity::package_qualifier::Entity)
-            .all(&self.package.graph.connection(tx))
+            .all(&self.package.graph.connection(tx.as_ref()))
             .await?;
 
         for (qualified_package, qualifiers) in found {
@@ -101,13 +103,13 @@ impl<'g> PackageVersionContext<'g> {
         Ok(None)
     }
 
-    pub async fn vulnerability_assertions(
+    pub async fn vulnerability_assertions<TX: AsRef<Transactional>>(
         &self,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<PackageVulnerabilityAssertions, Error> {
-        let affected = self.affected_assertions(tx).await?;
+        let affected = self.affected_assertions(tx.as_ref()).await?;
 
-        let not_affected = self.not_affected_assertions(tx).await?;
+        let not_affected = self.not_affected_assertions(tx.as_ref()).await?;
 
         let mut merged = PackageVulnerabilityAssertions::default();
 
@@ -120,9 +122,9 @@ impl<'g> PackageVersionContext<'g> {
         Ok(merged)
     }
 
-    pub async fn affected_assertions(
+    pub async fn affected_assertions<TX: AsRef<Transactional>>(
         &self,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<PackageVulnerabilityAssertions, Error> {
         let possibly_affected = self.package.affected_assertions(tx).await?;
 
@@ -131,9 +133,9 @@ impl<'g> PackageVersionContext<'g> {
         Ok(filtered)
     }
 
-    pub async fn not_affected_assertions(
+    pub async fn not_affected_assertions<TX: AsRef<Transactional>>(
         &self,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<PackageVulnerabilityAssertions, Error> {
         #[derive(FromQueryResult, Debug)]
         struct NotAffectedVersion {
@@ -160,7 +162,7 @@ impl<'g> PackageVersionContext<'g> {
             )
             .filter(entity::package_version::Column::Id.eq(self.package_version.id))
             .into_model::<NotAffectedVersion>()
-            .all(&self.package.graph.connection(tx))
+            .all(&self.package.graph.connection(tx.as_ref()))
             .await?;
 
         let mut assertions = PackageVulnerabilityAssertions::default();
@@ -185,15 +187,15 @@ impl<'g> PackageVersionContext<'g> {
     /// Retrieve known variants of this package version.
     ///
     /// Non-mutating to the graph.
-    pub async fn get_variants<P: Into<Purl>>(
+    pub async fn get_variants<TX: AsRef<Transactional>>(
         &self,
-        pkg: P,
-        tx: Transactional<'_>,
+        pkg: Purl,
+        tx: TX,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         Ok(entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
             .find_with_related(entity::package_qualifier::Entity)
-            .all(&self.package.graph.connection(tx))
+            .all(&self.package.graph.connection(tx.as_ref()))
             .await?
             .drain(0..)
             .map(|(base, qualifiers)| {

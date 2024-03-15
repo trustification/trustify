@@ -1,6 +1,5 @@
 use std::io::Read;
 
-use trustify_common::db::Transactional;
 use trustify_graph::graph::Graph;
 
 use crate::advisory::osv::schema::Vulnerability;
@@ -35,16 +34,11 @@ impl<'g> OsvLoader<'g> {
         }) {
             for cve_id in cve_ids {
                 println!("INGEST VULN {}", cve_id);
-                let vuln = self
-                    .graph
-                    .ingest_vulnerability(cve_id, Transactional::Some(&tx))
-                    .await?;
+                let vuln = self.graph.ingest_vulnerability(cve_id, &tx).await?;
 
-                vuln.set_title(osv.summary.clone(), Transactional::Some(&tx))
-                    .await?;
+                vuln.set_title(osv.summary.clone(), &tx).await?;
                 if let Some(details) = &osv.details {
-                    vuln.add_description("en", details, Transactional::Some(&tx))
-                        .await?
+                    vuln.add_description("en", details, &tx).await?
                 }
             }
 
@@ -52,7 +46,7 @@ impl<'g> OsvLoader<'g> {
             let sha256 = hex::encode(hashes.sha256.as_ref());
 
             self.graph
-                .ingest_advisory(osv.id, location, sha256, Transactional::Some(&tx))
+                .ingest_advisory(osv.id, location, sha256, &tx)
                 .await?;
         }
 

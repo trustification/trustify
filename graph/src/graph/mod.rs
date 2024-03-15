@@ -62,14 +62,14 @@ impl Graph {
         Self { db }
     }
 
-    pub async fn transaction(&self) -> Result<DatabaseTransaction, error::Error> {
-        Ok(self.db.begin().await?)
+    //pub async fn transaction(&self) -> Result<DatabaseTransaction, error::Error> {
+    //Ok(self.db.begin().await?)
+    //}
+    pub async fn transaction(&self) -> Result<Transactional, error::Error> {
+        Ok(Transactional::Some(self.db.begin().await?))
     }
 
-    pub(crate) fn connection<'db>(
-        &'db self,
-        tx: Transactional<'db>,
-    ) -> ConnectionOrTransaction<'db> {
+    pub(crate) fn connection<'db>(&'db self, tx: &'db Transactional) -> ConnectionOrTransaction {
         match tx {
             Transactional::None => ConnectionOrTransaction::Connection(&self.db),
             Transactional::Some(tx) => ConnectionOrTransaction::Transaction(tx),

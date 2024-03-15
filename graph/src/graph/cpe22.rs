@@ -9,10 +9,10 @@ use trustify_common::db::Transactional;
 use trustify_entity as entity;
 
 impl Graph {
-    pub async fn get_cpe22<C: Into<Cpe22>>(
+    pub async fn get_cpe22<C: Into<Cpe22>, TX: AsRef<Transactional>>(
         &self,
         cpe: C,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<Option<Cpe22Context>, Error> {
         let cpe = cpe.into();
 
@@ -55,35 +55,35 @@ impl Graph {
             Value(inner) => query.filter(entity::cpe22::Column::Edition.eq(inner)),
         };
 
-        if let Some(found) = query.one(&self.connection(tx)).await? {
+        if let Some(found) = query.one(&self.connection(tx.as_ref())).await? {
             Ok(Some((self, found).into()))
         } else {
             Ok(None)
         }
     }
 
-    pub(crate) async fn get_cpe22_by_query(
+    pub(crate) async fn get_cpe22_by_query<TX: AsRef<Transactional>>(
         &self,
         query: SelectStatement,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<Vec<Cpe22Context>, Error> {
         Ok(entity::cpe22::Entity::find()
             .filter(entity::cpe22::Column::Id.in_subquery(query))
-            .all(&self.connection(tx))
+            .all(&self.connection(tx.as_ref()))
             .await?
             .drain(0..)
             .map(|cpe22| (self, cpe22).into())
             .collect())
     }
 
-    pub async fn ingest_cpe22<C: Into<Cpe22>>(
+    pub async fn ingest_cpe22<C: Into<Cpe22>, TX: AsRef<Transactional>>(
         &self,
         cpe: C,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<Cpe22Context, Error> {
         let cpe = cpe.into();
 
-        if let Some(found) = self.get_cpe22(cpe.clone(), tx).await? {
+        if let Some(found) = self.get_cpe22(cpe.clone(), tx.as_ref()).await? {
             return Ok(found);
         }
 
@@ -123,7 +123,7 @@ impl Graph {
             language: Default::default(),
         };
 
-        Ok((self, entity.insert(&self.connection(tx)).await?).into())
+        Ok((self, entity.insert(&self.connection(tx.as_ref())).await?).into())
     }
 }
 

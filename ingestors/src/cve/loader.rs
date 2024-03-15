@@ -1,9 +1,10 @@
+use std::io::Read;
+
+use trustify_graph::graph::Graph;
+
 use crate::cve::cve_record::v5::CveRecord;
 use crate::hashing::HashingRead;
 use crate::Error;
-use std::io::Read;
-use trustify_common::db::Transactional;
-use trustify_graph::graph::Graph;
 
 /// Loader capable of parsing a CVE Record JSON file
 /// and manipulating the Graph to integrate it into
@@ -34,20 +35,16 @@ impl<'g> CveLoader<'g> {
 
         let vulnerability = self
             .graph
-            .ingest_vulnerability(cve.cve_metadata.cve_id(), Transactional::None)
+            .ingest_vulnerability(cve.cve_metadata.cve_id(), &tx)
             .await?;
 
         vulnerability
-            .set_title(cve.containers.cna.title.clone(), Transactional::Some(&tx))
+            .set_title(cve.containers.cna.title.clone(), &tx)
             .await?;
 
         for description in cve.containers.cna.descriptions {
             vulnerability
-                .add_description(
-                    &description.lang,
-                    &description.value,
-                    Transactional::Some(&tx),
-                )
+                .add_description(&description.lang, &description.value, &tx)
                 .await?;
         }
 
@@ -55,12 +52,7 @@ impl<'g> CveLoader<'g> {
         let sha256 = hex::encode(hashes.sha256.as_ref());
 
         self.graph
-            .ingest_advisory(
-                cve.cve_metadata.cve_id(),
-                location,
-                sha256,
-                Transactional::Some(&tx),
-            )
+            .ingest_advisory(cve.cve_metadata.cve_id(), location, sha256, &tx)
             .await?;
 
         tx.commit().await?;
@@ -71,13 +63,16 @@ impl<'g> CveLoader<'g> {
 
 #[cfg(test)]
 mod test {
-    use crate::cve::loader::CveLoader;
     use std::fs::File;
     use std::path::PathBuf;
     use std::str::FromStr;
+
     use test_log::test;
-    use trustify_common::db::{Database, Transactional};
+
+    use trustify_common::db::Database;
     use trustify_graph::graph::Graph;
+
+    use crate::cve::loader::CveLoader;
 
     #[test(tokio::test)]
     async fn cve_loader() -> Result<(), anyhow::Error> {
@@ -90,9 +85,7 @@ mod test {
         let cve_json = test_data.join("CVE-2024-28111.json");
         let cve_file = File::open(cve_json)?;
 
-        let loaded_vulnerability = graph
-            .get_vulnerability("CVE-2024-28111", Transactional::None)
-            .await?;
+        let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
 
         assert!(loaded_vulnerability.is_none());
 
@@ -110,9 +103,7 @@ mod test {
 
         loader.load("CVE-2024-28111.json", cve_file).await?;
 
-        let loaded_vulnerability = graph
-            .get_vulnerability("CVE-2024-28111", Transactional::None)
-            .await?;
+        let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
 
         assert!(loaded_vulnerability.is_some());
 
@@ -128,9 +119,7 @@ mod test {
 
         let loaded_vulnerability = loaded_vulnerability.unwrap();
 
-        let descriptions = loaded_vulnerability
-            .descriptions("en", Transactional::None)
-            .await?;
+        let descriptions = loaded_vulnerability.descriptions("en", ()).await?;
 
         assert_eq!(1, descriptions.len());
 

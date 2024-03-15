@@ -74,7 +74,10 @@ impl<'g> From<QualifiedPackageContext<'g>> for Purl {
 }
 
 impl<'g> QualifiedPackageContext<'g> {
-    pub async fn sboms_containing(&self, tx: Transactional<'_>) -> Result<Vec<SbomContext>, Error> {
+    pub async fn sboms_containing<TX: AsRef<Transactional>>(
+        &self,
+        tx: TX,
+    ) -> Result<Vec<SbomContext>, Error> {
         /*
         Ok(entity::sbom::Entity::find()
             .join(
@@ -95,12 +98,12 @@ impl<'g> QualifiedPackageContext<'g> {
         todo!()
     }
 
-    pub async fn vulnerability_assertions(
+    pub async fn vulnerability_assertions<TX: AsRef<Transactional>>(
         &self,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<PackageVulnerabilityAssertions, Error> {
-        let affected = self.affected_assertions(tx).await?;
-        let not_affected = self.not_affected_assertions(tx).await?;
+        let affected = self.affected_assertions(tx.as_ref()).await?;
+        let not_affected = self.not_affected_assertions(tx.as_ref()).await?;
 
         let mut merged = PackageVulnerabilityAssertions::default();
 
@@ -113,16 +116,16 @@ impl<'g> QualifiedPackageContext<'g> {
         Ok(merged)
     }
 
-    pub async fn affected_assertions(
+    pub async fn affected_assertions<TX: AsRef<Transactional>>(
         &self,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<PackageVulnerabilityAssertions, Error> {
         self.package_version.affected_assertions(tx).await
     }
 
-    pub async fn not_affected_assertions(
+    pub async fn not_affected_assertions<TX: AsRef<Transactional>>(
         &self,
-        tx: Transactional<'_>,
+        tx: TX,
     ) -> Result<PackageVulnerabilityAssertions, Error> {
         self.package_version.not_affected_assertions(tx).await
     }

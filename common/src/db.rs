@@ -9,17 +9,44 @@ use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use tempfile::TempDir;
 
-#[derive(Copy, Clone)]
-pub enum Transactional<'db> {
+pub enum Transactional {
     None,
-    Some(&'db DatabaseTransaction),
+    Some(DatabaseTransaction),
 }
 
+impl Transactional {
+    pub async fn commit(self) -> Result<(), DbErr> {
+        match self {
+            Transactional::None => {}
+            Transactional::Some(inner) => {
+                inner.commit().await?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl AsRef<Transactional> for Transactional {
+    fn as_ref(&self) -> &Transactional {
+        self
+    }
+}
+
+impl AsRef<Transactional> for () {
+    fn as_ref(&self) -> &Transactional {
+        &Transactional::None
+    }
+}
+
+/*
 impl<'db> From<&'db DatabaseTransaction> for Transactional<'db> {
     fn from(inner: &'db DatabaseTransaction) -> Self {
         Self::Some(inner)
     }
 }
+
+ */
 
 #[derive(Clone)]
 pub enum ConnectionOrTransaction<'db> {
