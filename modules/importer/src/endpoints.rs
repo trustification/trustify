@@ -1,6 +1,7 @@
 use super::service::{Error, ImporterService};
 use crate::model::Revisioned;
 use actix_web::http::header;
+use actix_web::http::header::{ETag, EntityTag, IfMatch};
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
 use serde_json::Value;
 use trustify_common::db::Database;
@@ -43,7 +44,7 @@ async fn read(
         .await?
         .map(|Revisioned { value, revision }| {
             HttpResponse::Ok()
-                .append_header((header::ETAG, revision))
+                .append_header((header::ETAG, ETag(EntityTag::new_strong(revision))))
                 .json(value)
         }))
 }
@@ -52,16 +53,18 @@ async fn read(
 async fn update(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
-    if_match: Option<web::Header<header::ETag>>,
+    web::Header(if_match): web::Header<IfMatch>,
     web::Json(configuration): web::Json<Value>,
 ) -> Result<impl Responder, Error> {
+    let revision = match &if_match {
+        IfMatch::Any => None,
+        IfMatch::Items(items) => items.first().map(|etag| etag.tag()),
+    };
+
     service
-        .update(
-            name.into_inner(),
-            configuration,
-            if_match.map(|v| v.to_string()).as_deref(),
-        )
+        .update(name.into_inner(), configuration, revision)
         .await?;
+
     Ok(HttpResponse::NoContent().finish())
 }
 
@@ -69,15 +72,15 @@ async fn update(
 async fn delete(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
-    if_match: Option<web::Header<header::ETag>>,
+    web::Header(if_match): web::Header<IfMatch>,
 ) -> Result<impl Responder, Error> {
-    Ok(
-        match service
-            .delete(&name, if_match.map(|v| v.to_string()).as_deref())
-            .await?
-        {
-            true => HttpResponse::NoContent().finish(),
-            false => HttpResponse::NoContent().finish(),
-        },
-    )
+    let revision = match &if_match {
+        IfMatch::Any => None,
+        IfMatch::Items(items) => items.first().map(|etag| etag.tag()),
+    };
+
+    Ok(match service.delete(&name, revision).await? {
+        true => HttpResponse::NoContent().finish(),
+        false => HttpResponse::NoContent().finish(),
+    })
 }
