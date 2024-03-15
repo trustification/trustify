@@ -1,5 +1,9 @@
 //! Support for packages.
 
+use crate::db::{Paginated, PaginatedResults};
+use crate::graph::advisory::AdvisoryContext;
+use crate::graph::error::Error;
+use crate::graph::Graph;
 use package_version::PackageVersionContext;
 use package_version_range::PackageVersionRangeContext;
 use qualified_package::QualifiedPackageContext;
@@ -10,14 +14,10 @@ use sea_orm::{
 };
 use sea_query::{JoinType, SelectStatement, UnionType};
 use std::fmt::{Debug, Formatter};
+use trustify_common::db::Transactional;
 use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
 use trustify_common::purl::{Purl, PurlErr};
 use trustify_entity as entity;
-
-use crate::db::{Paginated, PaginatedResults, Transactional};
-use crate::graph::advisory::AdvisoryContext;
-use crate::graph::error::Error;
-use crate::graph::Graph;
 
 pub mod package_version;
 pub mod package_version_range;
@@ -635,15 +635,17 @@ impl<'g> PackageContext<'g> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use crate::db::{Paginated, Transactional};
+    use crate::db::Paginated;
     use crate::graph::error::Error;
     use crate::graph::Graph;
     use sea_orm::TransactionTrait;
+    use trustify_common::db::{Database, Transactional};
     use trustify_common::purl::Purl;
 
     #[tokio::test]
     async fn ingest_packages() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("ingest_packages").await?;
+        let db = Database::for_test("ingest_packages").await?;
+        let system = Graph::new(db);
 
         let pkg1 = system
             .ingest_package("pkg://maven/io.quarkus/quarkus-core", Transactional::None)
@@ -666,7 +668,8 @@ mod tests {
 
     #[tokio::test]
     async fn ingest_package_versions_missing_version() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("ingest_package_versions_missing_version").await?;
+        let db = Database::for_test("ingest_package_versions_missing_version").await?;
+        let system = Graph::new(db);
 
         let result = system
             .ingest_package_version("pkg://maven/io.quarkus/quarkus-addons", Transactional::None)
@@ -687,7 +690,8 @@ mod tests {
 
          */
 
-        let system = Graph::for_test("ingest_package_versions").await?;
+        let db = Database::for_test("ingest_package_versions").await?;
+        let system = Graph::new(db);
 
         let pkg1 = system
             .ingest_package_version(
@@ -721,7 +725,8 @@ mod tests {
 
     #[tokio::test]
     async fn get_versions_paginated() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("get_versions_paginated").await?;
+        let db = Database::for_test("get_versions_paginated").await?;
+        let system = Graph::new(db);
 
         for v in 0..200 {
             let version = format!("pkg://maven/io.quarkus/quarkus-core@{v}");
@@ -780,9 +785,8 @@ mod tests {
 
     #[tokio::test]
     async fn ingest_qualified_packages_transactionally() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("ingest_qualified_packages_transactionally").await?;
-
-        let db = system.db.clone();
+        let db = Database::for_test("ingest_qualified_packages_transactionally").await?;
+        let system = Graph::new(db.clone());
 
         let tx_system = system.clone();
 
@@ -821,7 +825,8 @@ mod tests {
 
          */
 
-        let system = Graph::for_test("ingest_qualified_packages").await?;
+        let db = Database::for_test("ingest_qualified_packages").await?;
+        let system = Graph::new(db);
 
         let pkg1 = system
             .ingest_qualified_package(
@@ -878,7 +883,8 @@ mod tests {
 
          */
 
-        let system = Graph::for_test("ingest_package_version_ranges").await?;
+        let db = Database::for_test("ingest_package_version_ranges").await?;
+        let system = Graph::new(db);
 
         let range1 = system
             .ingest_package_version_range(
@@ -929,7 +935,8 @@ mod tests {
 
          */
 
-        let system = Graph::for_test("package_affected_assertions").await?;
+        let db = Database::for_test("package_affected_assertions").await?;
+        let system = Graph::new(db);
 
         let redhat_advisory = system
             .ingest_advisory(
@@ -1015,7 +1022,8 @@ mod tests {
 
     #[tokio::test]
     async fn package_not_affected_assertions() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("package_not_affected_assertions").await?;
+        let db = Database::for_test("package_not_affected_assertions").await?;
+        let system = Graph::new(db);
 
         let redhat_advisory = system
             .ingest_advisory(
@@ -1066,7 +1074,8 @@ mod tests {
 
     #[tokio::test]
     async fn package_vulnerability_assertions() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("package_vulnerability_assertions").await?;
+        let db = Database::for_test("package_vulnerability_assertions").await?;
+        let system = Graph::new(db);
 
         let redhat_advisory = system
             .ingest_advisory(
@@ -1126,7 +1135,8 @@ mod tests {
 
     #[tokio::test]
     async fn advisories_mentioning_package() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("advisories_mentioning_package").await?;
+        let db = Database::for_test("advisories_mentioning_package").await?;
+        let system = Graph::new(db);
 
         let redhat_advisory = system
             .ingest_advisory(

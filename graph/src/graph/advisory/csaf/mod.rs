@@ -1,12 +1,12 @@
 mod util;
 
-use crate::db::Transactional;
 use crate::graph::advisory::csaf::util::resolve_purls;
 use crate::graph::advisory::AdvisoryContext;
 use crate::graph::error::Error;
 use csaf::{document::Category, Csaf};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, TransactionTrait};
+use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
 
@@ -73,7 +73,6 @@ impl<'g> AdvisoryContext<'g> {
 
 #[cfg(test)]
 mod tests {
-    use crate::db::Transactional;
     use crate::graph::Graph;
     use csaf::Csaf;
     use std::fs::File;
@@ -81,6 +80,7 @@ mod tests {
     use std::str::FromStr;
     use std::time::Instant;
     use test_log::test;
+    use trustify_common::db::{Database, Transactional};
 
     #[test(tokio::test)]
     async fn advisory_csaf() -> Result<(), anyhow::Error> {
@@ -95,7 +95,8 @@ mod tests {
         let start = Instant::now();
         let advisory_data: Csaf = serde_json::from_reader(advisory)?;
 
-        let system = Graph::for_test("advisory_csaf").await?;
+        let db = Database::for_test("advisory_csaf").await?;
+        let system = Graph::new(db);
 
         let advisory = system
             .ingest_advisory(

@@ -6,7 +6,6 @@ use std::fmt::{Debug, Display};
 use trustify_common::error::ErrorInformation;
 use trustify_graph::graph;
 
-pub mod importer;
 pub mod read;
 pub mod write;
 

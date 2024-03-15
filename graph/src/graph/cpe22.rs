@@ -1,4 +1,3 @@
-use crate::db::Transactional;
 use crate::graph::error::Error;
 use crate::graph::Graph;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, NotSet, QueryFilter, Set};
@@ -6,6 +5,7 @@ use sea_query::SelectStatement;
 use std::fmt::{Debug, Formatter};
 use trustify_common::cpe22::Component::Value;
 use trustify_common::cpe22::{Component, Cpe22, Cpe22Type};
+use trustify_common::db::Transactional;
 use trustify_entity as entity;
 
 impl Graph {

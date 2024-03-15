@@ -1,10 +1,10 @@
-use crate::db::Transactional;
 use crate::graph::error::Error;
 use crate::graph::sbom::SbomContext;
 use sea_orm::TransactionTrait;
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
 use std::io::Read;
+use trustify_common::db::Transactional;
 use trustify_entity::relationship::Relationship;
 
 impl SbomContext {
@@ -170,7 +170,6 @@ fn fix_license(mut json: Value) -> (Value, bool) {
 
 #[cfg(test)]
 mod tests {
-    use crate::db::Transactional;
     use crate::graph::Graph;
     use spdx_rs::models::SPDX;
     use std::fs::File;
@@ -178,11 +177,13 @@ mod tests {
     use std::str::FromStr;
     use std::time::Instant;
     use test_log::test;
+    use trustify_common::db::{Database, Transactional};
     use trustify_entity::relationship::Relationship;
 
     #[test(tokio::test)]
     async fn parse_spdx_quarkus() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("parse_spdx_quarkus").await?;
+        let db = Database::for_test("parse_spdx_quarkus").await?;
+        let system = Graph::new(db);
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
         let test_data = pwd.join("../etc/test-data");
@@ -235,7 +236,8 @@ mod tests {
     #[ignore]
     #[test(tokio::test)]
     async fn parse_spdx_openshift() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("parse_spdx_openshift").await?;
+        let db = Database::for_test("parse_spdx_openshift").await?;
+        let system = Graph::new(db);
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
         let test_data = pwd.join("../etc/test-data");
@@ -286,7 +288,8 @@ mod tests {
 
     #[test(tokio::test)]
     async fn parse_spdx() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("parse_spdx").await?;
+        let db = Database::for_test("parse_spdx").await?;
+        let system = Graph::new(db);
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
         let test_data = pwd.join("../etc/test-data");

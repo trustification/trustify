@@ -2,7 +2,7 @@ use crate::cve::cve_record::v5::CveRecord;
 use crate::hashing::HashingRead;
 use crate::Error;
 use std::io::Read;
-use trustify_graph::db::Transactional;
+use trustify_common::db::Transactional;
 use trustify_graph::graph::Graph;
 
 /// Loader capable of parsing a CVE Record JSON file
@@ -58,12 +58,13 @@ mod test {
     use std::path::PathBuf;
     use std::str::FromStr;
     use test_log::test;
-    use trustify_graph::db::Transactional;
+    use trustify_common::db::{Database, Transactional};
     use trustify_graph::graph::Graph;
 
     #[test(tokio::test)]
     async fn cve_loader() -> Result<(), anyhow::Error> {
-        let graph = Graph::for_test("ingestors_cve_loader").await?;
+        let db = Database::for_test("ingestors_cve_loader").await?;
+        let graph = Graph::new(db);
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
         let test_data = pwd.join("../etc/test-data/mitre");

@@ -1,0 +1,22 @@
+[package]
+name = "trustify-module-importer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+trustify-common = { path = "../../common" }
+trustify-entity = { path = "../../entity" }
+
+actix-web = "4"
+anyhow = "1.0.72"
+log = "0.4.19"
+sea-orm = { version = "0.12", features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros", "debug-print"] }
+sea-query = "0.30.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1.0.104"
+thiserror = "1"
+tokio = { version = "1.30.0", features = ["full"] }
+utoipa = { version = "4", features = ["actix_extras"] }
+
+[dev-dependencies]
+env_logger = "0.11"

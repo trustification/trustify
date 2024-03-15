@@ -1,16 +1,18 @@
 #![cfg(test)]
 
-use super::*;
-use crate::server::importer::model::ImportConfiguration;
-use crate::Graph;
+use super::model::ImportConfiguration;
 use actix_web::http::StatusCode;
-use actix_web::{http::header::ContentType, test, App};
+use actix_web::{test, App};
 use serde_json::json;
+use trustify_common::db::Database;
 
 #[actix_web::test]
 async fn test_default() {
-    let grap = Graph::for_test("test_default").await.unwrap();
-    let app = test::init_service(App::new().configure(|svc| super::configure(svc, grap))).await;
+    env_logger::init();
+
+    let db = Database::for_test("test_default").await.unwrap();
+    let app =
+        test::init_service(App::new().configure(|svc| super::endpoints::configure(svc, db))).await;
 
     // create one
 

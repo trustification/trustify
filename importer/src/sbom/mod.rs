@@ -8,7 +8,7 @@ use sbom_walker::{
 use std::process::ExitCode;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
-use trustify_common::config::Database;
+use trustify_common::{config::Database, db};
 use trustify_graph::graph::Graph;
 use url::Url;
 use walker_common::{fetcher::Fetcher, validate::ValidationOptions};
@@ -35,7 +35,8 @@ impl ImportSbomCommand {
 
         log::info!("Ingesting SBOMs");
 
-        let system = Graph::with_external_config(&self.database).await?;
+        let db = db::Database::with_external_config(&self.database, false).await?;
+        let system = Graph::new(db);
 
         let source: DispatchSource = match Url::parse(&self.source) {
             Ok(url) => {
