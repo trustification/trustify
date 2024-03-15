@@ -1,12 +1,16 @@
-use crate::model::ImportConfiguration;
+use crate::model::{ImportConfiguration, Revisioned};
 use actix_web::body::BoxBody;
 use actix_web::{HttpResponse, ResponseError};
-use sea_orm::ActiveValue::{Set, Unchanged};
-use sea_orm::{ActiveModelTrait, DbErr, EntityTrait, TransactionTrait};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter,
+    TransactionTrait,
+};
+use sea_query::Expr;
 use serde_json::Value;
 use trustify_common::db::Database;
 use trustify_common::error::ErrorInformation;
 use trustify_entity::importer;
+use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -14,6 +18,8 @@ pub enum Error {
     AlreadyExists(String),
     #[error("importer '{0}' not found")]
     NotFound(String),
+    #[error("mid air collision")]
+    MidAirCollision,
     #[error("database error: {0}")]
     Database(#[from] sea_orm::DbErr),
 }
@@ -28,6 +34,11 @@ impl ResponseError for Error {
             }),
             Error::NotFound(_) => HttpResponse::Conflict().json(ErrorInformation {
                 error: "NotFound".into(),
+                message: self.to_string(),
+                details: None,
+            }),
+            Error::MidAirCollision => HttpResponse::PreconditionFailed().json(ErrorInformation {
+                error: "MidAirCollision".into(),
                 message: self.to_string(),
                 details: None,
             }),
@@ -65,6 +76,7 @@ impl ImporterService {
 
         let entity = importer::ActiveModel {
             name: Set(name),
+            revision: Set(Uuid::new_v4()),
             configuration: Set(configuration),
         };
 
@@ -75,28 +87,48 @@ impl ImporterService {
         Ok(())
     }
 
-    pub async fn read(&self, name: &str) -> Result<Option<ImportConfiguration>, Error> {
+    pub async fn read(&self, name: &str) -> Result<Option<Revisioned<ImportConfiguration>>, Error> {
         let result = importer::Entity::find_by_id(name).one(&self.db).await?;
 
         Ok(result.map(Into::into))
     }
 
-    pub async fn update(&self, name: String, configuration: Value) -> Result<(), Error> {
-        let entity = importer::ActiveModel {
-            name: Unchanged(name.clone()),
-            configuration: Set(configuration),
-        };
+    pub async fn update(
+        &self,
+        name: String,
+        configuration: Value,
+        expected_revision: Option<&str>,
+    ) -> Result<(), Error> {
+        let mut update = importer::Entity::update_many()
+            .col_expr(importer::Column::Configuration, Expr::value(configuration))
+            .filter(importer::Column::Name.eq(&name));
 
-        entity.update(&self.db).await.map_err(|err| match err {
-            DbErr::RecordNotUpdated => Error::NotFound(name),
-            err => err.into(),
-        })?;
+        if let Some(revision) = expected_revision {
+            update = update.filter(importer::Column::Revision.eq(revision));
+        }
 
-        Ok(())
+        let result = update.exec(&self.db).await?;
+
+        if result.rows_affected == 0 {
+            // now we need to figure out if the item wasn't there or if it was modified
+            if importer::Entity::find_by_id(&name).count(&self.db).await? == 0 {
+                Err(Error::NotFound(name))
+            } else {
+                Err(Error::MidAirCollision)
+            }
+        } else {
+            Ok(())
+        }
     }
 
-    pub async fn delete(&self, name: &str) -> Result<bool, Error> {
-        let result = importer::Entity::delete_by_id(name).exec(&self.db).await?;
+    pub async fn delete(&self, name: &str, expected_revision: Option<&str>) -> Result<bool, Error> {
+        let mut delete = importer::Entity::delete_many().filter(importer::Column::Name.eq(name));
+
+        if let Some(revision) = expected_revision {
+            delete = delete.filter(importer::Column::Revision.eq(revision));
+        }
+
+        let result = delete.exec(&self.db).await?;
 
         Ok(result.rows_affected > 0)
     }
