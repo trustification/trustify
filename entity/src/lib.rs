@@ -16,3 +16,4 @@ pub mod sbom;
 pub mod sbom_describes_cpe22;
 pub mod sbom_describes_package;
 pub mod vulnerability;
+pub mod vulnerability_description;

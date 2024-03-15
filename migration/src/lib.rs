@@ -18,6 +18,7 @@ mod m0000190_sbom_describes_package;
 mod m0000200_create_relationship;
 mod m0000210_create_package_relates_to_package;
 
+mod m0000012_create_vulnerability_description;
 mod m0000035_create_cpe22;
 mod m0000220_create_qualified_package_transitive_function;
 mod m0000230_create_importer;
@@ -30,6 +31,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m0000010_create_sbom::Migration),
             Box::new(m0000011_create_vulnerability::Migration),
+            Box::new(m0000012_create_vulnerability_description::Migration),
             Box::new(m0000030_create_advisory::Migration),
             Box::new(m0000032_create_advisory_vulnerability::Migration),
             Box::new(m0000040_create_package::Migration),
