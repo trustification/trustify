@@ -13,6 +13,7 @@ impl From<Model> for ImportConfiguration {
         Model {
             name,
             configuration,
+            revision: _,
         }: Model,
     ) -> Self {
         Self {
@@ -20,4 +21,28 @@ impl From<Model> for ImportConfiguration {
             configuration,
         }
     }
+}
+
+impl From<Model> for Revisioned<ImportConfiguration> {
+    fn from(
+        Model {
+            name,
+            configuration,
+            revision,
+        }: Model,
+    ) -> Self {
+        Self {
+            value: ImportConfiguration {
+                name,
+                configuration,
+            },
+            revision: revision.to_string(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
+pub struct Revisioned<T> {
+    pub value: T,
+    pub revision: String,
 }

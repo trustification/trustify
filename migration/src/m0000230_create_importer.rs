@@ -17,6 +17,7 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .primary_key(),
                     )
+                    .col(ColumnDef::new(Importer::Revision).uuid().not_null())
                     .col(ColumnDef::new(Importer::Configuration).json_binary())
                     .to_owned(),
             )
@@ -34,5 +35,6 @@ impl MigrationTrait for Migration {
 pub enum Importer {
     Table,
     Name,
+    Revision,
     Configuration,
 }

@@ -17,6 +17,7 @@ serde_json = "1.0.104"
 thiserror = "1"
 tokio = { version = "1.30.0", features = ["full"] }
 utoipa = { version = "4", features = ["actix_extras"] }
+uuid = { version = "1.7.0", features = ["v4"] }
 
 [dev-dependencies]
 env_logger = "0.11"
