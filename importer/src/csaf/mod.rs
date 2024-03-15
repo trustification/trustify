@@ -1,8 +1,5 @@
+use crate::progress::init_log_and_progress;
 use csaf::Csaf;
-use std::collections::HashSet;
-use std::process::ExitCode;
-use std::time::SystemTime;
-
 use csaf_walker::{
     retrieve::RetrievingVisitor,
     source::{DispatchSource, FileSource, HttpSource},
@@ -11,16 +8,17 @@ use csaf_walker::{
     walker::Walker,
 };
 use sha2::{Digest, Sha256};
+use std::collections::HashSet;
+use std::process::ExitCode;
+use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
+use trustify_common::config::Database;
+use trustify_common::db;
+use trustify_graph::graph::Graph;
+use trustify_ingestors as ingestors;
 use url::Url;
 use walker_common::utils::hex::Hex;
 use walker_common::{fetcher::Fetcher, validate::ValidationOptions};
-
-use trustify_common::config::Database;
-use trustify_graph::graph::Graph;
-use trustify_ingestors as ingestors;
-
-use crate::progress::init_log_and_progress;
 
 /// Import from a CSAF source
 #[derive(clap::Args, Debug)]
@@ -51,7 +49,8 @@ impl ImportCsafCommand {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
         let progress = init_log_and_progress()?;
 
-        let system = Graph::with_external_config(&self.database).await?;
+        let db = db::Database::with_external_config(&self.database, false).await?;
+        let system = Graph::new(db);
 
         //  because we still have GPG v3 signatures
         let options = ValidationOptions::new().validation_date(SystemTime::from(

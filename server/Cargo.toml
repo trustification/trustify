@@ -10,6 +10,7 @@ trustify-common = { path = "../common"}
 trustify-infrastructure = { path = "../common/infrastructure" }
 trustify-entity = { path = "../entity"}
 trustify-ingestors = { path = "../ingestors"}
+trustify-module-importer = { path = "../modules/importer" }
 
 actix-web = "4"
 anyhow = "1.0.72"

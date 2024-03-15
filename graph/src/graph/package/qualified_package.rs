@@ -1,12 +1,12 @@
 //! Support for a *fully-qualified* package.
 
-use crate::db::Transactional;
 use crate::graph::error::Error;
 use crate::graph::package::package_version::PackageVersionContext;
 use crate::graph::sbom::SbomContext;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
+use trustify_common::db::Transactional;
 use trustify_common::package::PackageVulnerabilityAssertions;
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
@@ -130,13 +130,14 @@ impl<'g> QualifiedPackageContext<'g> {
 
 #[cfg(test)]
 mod tests {
-    use crate::db::Transactional;
     use crate::graph::Graph;
+    use trustify_common::db::{Database, Transactional};
 
     #[ignore]
     #[tokio::test]
     async fn vulnerability_assertions() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("vulnerability_assertions").await?;
+        let db = Database::for_test("vulnerability_assertions").await?;
+        let system = Graph::new(db);
 
         let advisory = system
             .ingest_advisory(

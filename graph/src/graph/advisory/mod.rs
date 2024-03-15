@@ -1,6 +1,5 @@
 //! Support for advisories.
 
-use crate::db::Transactional;
 use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::graph::error::Error;
 use crate::graph::Graph;
@@ -11,6 +10,7 @@ use sea_query::{Condition, JoinType};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use trustify_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
+use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
 
@@ -413,14 +413,15 @@ impl<'g> AdvisoryContext<'g> {
 
 #[cfg(test)]
 mod test {
-    use crate::db::Transactional;
     use crate::graph::Graph;
     use test_log::test;
     use trustify_common::advisory::Assertion;
+    use trustify_common::db::{Database, Transactional};
 
     #[test(tokio::test)]
     async fn ingest_advisories() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("ingest_advisories").await?;
+        let db = Database::for_test("ingest_advisories").await?;
+        let system = Graph::new(db);
 
         let advisory1 = system
             .ingest_advisory(
@@ -457,7 +458,8 @@ mod test {
 
     #[test(tokio::test)]
     async fn ingest_affected_package_version_range() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("ingest_affected_package_version_range").await?;
+        let db = Database::for_test("ingest_affected_package_version_range").await?;
+        let system = Graph::new(db);
 
         let advisory = system
             .ingest_advisory(
@@ -513,7 +515,8 @@ mod test {
 
     #[test(tokio::test)]
     async fn ingest_fixed_package_version() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("ingest_fixed_package_version").await?;
+        let db = Database::for_test("ingest_fixed_package_version").await?;
+        let system = Graph::new(db);
 
         let advisory = system
             .ingest_advisory(
@@ -572,7 +575,8 @@ mod test {
 
     #[test(tokio::test)]
     async fn ingest_advisory_cve() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("ingest_advisory_cve").await?;
+        let db = Database::for_test("ingest_advisory_cve").await?;
+        let system = Graph::new(db);
 
         let advisory = system
             .ingest_advisory(
@@ -598,7 +602,8 @@ mod test {
 
     #[test(tokio::test)]
     async fn advisory_affected_vulnerability_assertions() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("advisory_affected_vulnerability_assertions").await?;
+        let db = Database::for_test("advisory_affected_vulnerability_assertions").await?;
+        let system = Graph::new(db);
 
         let advisory = system
             .ingest_advisory(
@@ -638,7 +643,8 @@ mod test {
 
     #[test(tokio::test)]
     async fn advisory_not_affected_vulnerability_assertions() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("advisory_not_affected_vulnerability_assertions").await?;
+        let db = Database::for_test("advisory_not_affected_vulnerability_assertions").await?;
+        let system = Graph::new(db);
 
         let advisory = system
             .ingest_advisory(

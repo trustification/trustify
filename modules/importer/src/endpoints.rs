@@ -1,6 +1,20 @@
-use crate::server::importer::{service::Error, ImporterService};
+use super::service::{Error, ImporterService};
 use actix_web::{delete, get, post, put, web, web::Json, HttpResponse, Responder};
 use serde_json::Value;
+use trustify_common::db::Database;
+
+/// mount the "importer" module
+pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
+    svc.app_data(web::Data::new(ImporterService::new(db)));
+    svc.service(
+        web::scope("/api/v1/importer")
+            .service(list)
+            .service(create)
+            .service(read)
+            .service(update)
+            .service(delete),
+    );
+}
 
 #[get("")]
 async fn list(service: web::Data<ImporterService>) -> Result<impl Responder, Error> {

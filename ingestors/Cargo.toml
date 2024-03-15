@@ -5,6 +5,7 @@ edition = "2021"
 publish = false
 
 [dependencies]
+trustify-common = { path = "../common"}
 trustify-graph = { path = "../graph"}
 trustify-entity = { path = "../entity" }
 

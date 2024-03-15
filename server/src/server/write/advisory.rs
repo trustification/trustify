@@ -45,13 +45,14 @@ mod tests {
     use std::path::PathBuf;
     use std::str::FromStr;
     use std::sync::Arc;
+    use trustify_common::db::Database;
     use trustify_graph::graph::Graph;
     use url_escape::encode_component;
 
     #[actix_web::test]
     async fn upload_advisory() -> Result<(), anyhow::Error> {
         let state = Arc::new(AppState {
-            system: Graph::for_test("upload_advisory").await?,
+            system: Graph::new(Database::for_test("upload_advisory").await?),
         });
 
         let app = test::init_service(

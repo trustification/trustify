@@ -1,6 +1,6 @@
 use csaf::Csaf;
 
-use trustify_graph::db::Transactional;
+use trustify_common::db::Transactional;
 use trustify_graph::graph::Graph;
 
 pub async fn ingest(

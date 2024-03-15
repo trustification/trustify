@@ -20,6 +20,7 @@ mod m0000210_create_package_relates_to_package;
 
 mod m0000035_create_cpe22;
 mod m0000220_create_qualified_package_transitive_function;
+mod m0000230_create_importer;
 
 pub struct Migrator;
 
@@ -45,6 +46,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000200_create_relationship::Migration),
             Box::new(m0000210_create_package_relates_to_package::Migration),
             Box::new(m0000220_create_qualified_package_transitive_function::Migration),
+            Box::new(m0000230_create_importer::Migration),
         ]
     }
 }

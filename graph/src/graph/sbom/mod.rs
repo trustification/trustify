@@ -1,6 +1,6 @@
 //! Support for SBOMs.
 
-use crate::db::{LeftPackageId, QualifiedPackageTransitive, Transactional};
+use crate::db::{LeftPackageId, QualifiedPackageTransitive};
 use crate::graph::cpe22::Cpe22Context;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
 use crate::graph::Graph;
@@ -8,6 +8,7 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
     QueryTrait, RelationTrait, Select, Set,
 };
+use trustify_common::db::Transactional;
 
 use sea_query::{Condition, Func, JoinType, Query, SimpleExpr};
 use std::collections::{HashMap, HashSet};
@@ -662,16 +663,17 @@ impl SbomContext {
 
 #[cfg(test)]
 mod tests {
-    use crate::db::Transactional;
     use crate::graph::Graph;
     use test_log::test;
+    use trustify_common::db::{Database, Transactional};
     use trustify_common::purl::Purl;
     use trustify_common::sbom::SbomLocator;
     use trustify_entity::relationship::Relationship;
 
     #[test(tokio::test)]
     async fn ingest_sboms() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("ingest_sboms").await?;
+        let db = Database::for_test("ingest_sboms").await?;
+        let system = Graph::new(db);
 
         let sbom_v1 = system
             .ingest_sbom("http://sbom.com/test.json", "8", Transactional::None)
@@ -695,7 +697,8 @@ mod tests {
 
     #[test(tokio::test)]
     async fn ingest_and_fetch_sboms_describing_purls() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("ingest_and_fetch_sboms_describing_purls").await?;
+        let db = Database::for_test("ingest_and_fetch_sboms_describing_purls").await?;
+        let system = Graph::new(db);
 
         let sbom_v1 = system
             .ingest_sbom("http://sbom.com/test.json", "8", Transactional::None)
@@ -744,7 +747,8 @@ mod tests {
 
     #[test(tokio::test)]
     async fn ingest_and_locate_sboms_describing_cpes() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("ingest_and_locate_sboms_describing_cpes").await?;
+        let db = Database::for_test("ingest_and_locate_sboms_describing_cpes").await?;
+        let system = Graph::new(db);
 
         let sbom_v1 = system
             .ingest_sbom("http://sbom.com/test.json", "8", Transactional::None)
@@ -793,7 +797,8 @@ mod tests {
 
     #[test(tokio::test)]
     async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("transitive_dependency_of").await?;
+        let db = Database::for_test("transitive_dependency_of").await?;
+        let system = Graph::new(db);
 
         let sbom1 = system
             .ingest_sbom(
@@ -861,7 +866,8 @@ mod tests {
 
     #[test(tokio::test)]
     async fn ingest_package_relates_to_package_dependency_of() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("ingest_contains_packages").await?;
+        let db = Database::for_test("ingest_contains_packages").await?;
+        let system = Graph::new(db);
 
         let sbom1 = system
             .ingest_sbom(
@@ -932,7 +938,8 @@ mod tests {
 
     #[test(tokio::test)]
     async fn sbom_vulnerabilities() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("sbom_vulnerabilities").await?;
+        let db = Database::for_test("sbom_vulnerabilities").await?;
+        let system = Graph::new(db);
 
         println!("{:?}", system);
 

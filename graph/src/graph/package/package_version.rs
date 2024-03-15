@@ -1,6 +1,5 @@
 //! Support for *versioned* package.
 
-use crate::db::Transactional;
 use crate::graph::error::Error;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
 use crate::graph::package::PackageContext;
@@ -11,6 +10,7 @@ use sea_orm::{
 use sea_query::JoinType;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
+use trustify_common::db::Transactional;
 use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
@@ -211,12 +211,13 @@ impl<'g> PackageVersionContext<'g> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use crate::db::Transactional;
     use crate::graph::Graph;
+    use trustify_common::db::{Database, Transactional};
 
     #[tokio::test]
     async fn package_version_not_affected_assertions() -> Result<(), anyhow::Error> {
-        let system = Graph::for_test("package_version_not_affected_assertions").await?;
+        let db = Database::for_test("package_version_not_affected_assertions").await?;
+        let system = Graph::new(db);
 
         let redhat_advisory = system
             .ingest_advisory(
