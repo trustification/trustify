@@ -172,12 +172,12 @@ pub struct Claimant {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 mod tests {
     use crate::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
+    use test_log::test;
 
-    #[test]
-    fn not_affected() {
+    #[test(tokio::test)]
+    async fn not_affected() -> Result<(), anyhow::Error> {
         let assertions = PackageVulnerabilityAssertions {
             assertions: vec![
                 Assertion::Affected {
@@ -220,16 +220,14 @@ mod tests {
             ],
         };
 
-        let claimants = assertions
-            .not_affected_claimants_for_version("1.2")
-            .unwrap();
+        let claimants = assertions.not_affected_claimants_for_version("1.2")?;
 
         assert_eq!(2, claimants.len());
 
-        let claimants = assertions.affected_claimants_for_version("1.2").unwrap();
+        let claimants = assertions.affected_claimants_for_version("1.2")?;
         assert_eq!(0, claimants.len());
 
-        let claimants = assertions.affected_claimants_for_version("1.3").unwrap();
-        assert_eq!(1, claimants.len());
+        let claimants = assertions.affected_claimants_for_version("1.3")?;
+        Ok(assert_eq!(1, claimants.len()))
     }
 }

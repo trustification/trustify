@@ -22,3 +22,5 @@ thiserror = "1"
 
 [dev-dependencies]
 serde_json = "1.0.104"
+test-log = { version = "0.2.15", features = ["env_logger", "trace"] }
+tokio = { version = "1.30.0", features = ["full"] }
