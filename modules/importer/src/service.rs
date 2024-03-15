@@ -5,7 +5,7 @@ use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter,
     TransactionTrait,
 };
-use sea_query::Expr;
+use sea_query::{Alias, Expr};
 use serde_json::Value;
 use trustify_common::db::Database;
 use trustify_common::error::ErrorInformation;
@@ -32,7 +32,7 @@ impl ResponseError for Error {
                 message: self.to_string(),
                 details: None,
             }),
-            Error::NotFound(_) => HttpResponse::Conflict().json(ErrorInformation {
+            Error::NotFound(_) => HttpResponse::NotFound().json(ErrorInformation {
                 error: "NotFound".into(),
                 message: self.to_string(),
                 details: None,
@@ -101,10 +101,16 @@ impl ImporterService {
     ) -> Result<(), Error> {
         let mut update = importer::Entity::update_many()
             .col_expr(importer::Column::Configuration, Expr::value(configuration))
+            .col_expr(importer::Column::Revision, Expr::value(Uuid::new_v4()))
             .filter(importer::Column::Name.eq(&name));
 
         if let Some(revision) = expected_revision {
-            update = update.filter(importer::Column::Revision.eq(revision));
+            update = update.filter(
+                importer::Column::Revision
+                    .into_expr()
+                    .cast_as(Alias::new("text"))
+                    .eq(revision),
+            );
         }
 
         let result = update.exec(&self.db).await?;
@@ -125,7 +131,12 @@ impl ImporterService {
         let mut delete = importer::Entity::delete_many().filter(importer::Column::Name.eq(name));
 
         if let Some(revision) = expected_revision {
-            delete = delete.filter(importer::Column::Revision.eq(revision));
+            delete = delete.filter(
+                importer::Column::Revision
+                    .into_expr()
+                    .cast_as(Alias::new("text"))
+                    .eq(revision),
+            );
         }
 
         let result = delete.exec(&self.db).await?;

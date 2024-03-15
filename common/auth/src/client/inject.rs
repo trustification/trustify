@@ -1,15 +1,16 @@
 use super::{error::Error, Credentials, TokenProvider};
-use async_trait::async_trait;
+use std::future::Future;
 use tracing::instrument;
 
 /// Allows injecting tokens.
-#[async_trait]
 pub trait TokenInjector: Sized + Send + Sync {
-    async fn inject_token(self, token_provider: &dyn TokenProvider) -> Result<Self, Error>;
+    fn inject_token(
+        self,
+        token_provider: &dyn TokenProvider,
+    ) -> impl Future<Output = Result<Self, Error>> + Send;
 }
 
 /// Injects tokens into a request by setting the authorization header to a "bearer" token.
-#[async_trait]
 impl TokenInjector for reqwest::RequestBuilder {
     #[instrument(level = "debug", skip(token_provider), err)]
     async fn inject_token(self, token_provider: &dyn TokenProvider) -> Result<Self, Error> {
