@@ -4,14 +4,24 @@ use crate::db::Transactional;
 use crate::graph::advisory::csaf::util::resolve_purls;
 use crate::graph::advisory::AdvisoryContext;
 use crate::graph::error::Error;
-use csaf::Csaf;
-use sea_orm::TransactionTrait;
+use csaf::{document::Category, Csaf};
+use sea_orm::ActiveValue::Set;
+use sea_orm::{ActiveModelTrait, TransactionTrait};
 use trustify_common::purl::Purl;
+use trustify_entity as entity;
 
 impl<'g> AdvisoryContext<'g> {
     pub async fn ingest_csaf(&self, csaf: Csaf) -> Result<(), Error> {
         let advisory = self.clone();
 
+        // Ingest metadata
+        let mut entity: entity::advisory::ActiveModel = self.advisory.clone().into();
+        entity.title = Set(Some(csaf.document.title.clone().to_string()));
+        entity
+            .update(&self.graph.connection(Transactional::None))
+            .await?;
+
+        // Ingest vulnerabilities
         let txn = self.graph.db.begin().await?;
 
         for vuln in csaf.vulnerabilities.iter().flatten() {

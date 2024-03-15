@@ -1,5 +1,5 @@
+pub mod advisory;
 pub mod cve;
-
 pub mod hashing;
 
 #[derive(Debug, thiserror::Error)]

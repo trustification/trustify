@@ -11,6 +11,7 @@ members = [
   "ingestors",
   "migration",
   "server",
+  "ingestors",
 ]
 
 [patch.crates-io]

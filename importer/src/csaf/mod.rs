@@ -1,5 +1,8 @@
-use crate::progress::init_log_and_progress;
-use ::csaf::{document::Category, Csaf};
+use csaf::Csaf;
+use std::collections::HashSet;
+use std::process::ExitCode;
+use std::time::SystemTime;
+
 use csaf_walker::{
     retrieve::RetrievingVisitor,
     source::{DispatchSource, FileSource, HttpSource},
@@ -8,15 +11,16 @@ use csaf_walker::{
     walker::Walker,
 };
 use sha2::{Digest, Sha256};
-use std::collections::HashSet;
-use std::process::ExitCode;
-use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
-use trustify_common::config::Database;
-use trustify_graph::db::Transactional;
-use trustify_graph::graph::Graph;
 use url::Url;
-use walker_common::{fetcher::Fetcher, utils::hex::Hex, validate::ValidationOptions};
+use walker_common::utils::hex::Hex;
+use walker_common::{fetcher::Fetcher, validate::ValidationOptions};
+
+use trustify_common::config::Database;
+use trustify_graph::graph::Graph;
+use trustify_ingestors as ingestors;
+
+use crate::progress::init_log_and_progress;
 
 /// Import from a CSAF source
 #[derive(clap::Args, Debug)]
@@ -129,12 +133,6 @@ impl ImportCsafCommand {
 async fn process(system: &Graph, doc: ValidatedAdvisory) -> anyhow::Result<()> {
     let csaf = serde_json::from_slice::<Csaf>(&doc.data)?;
 
-    if !matches!(csaf.document.category, Category::Vex) {
-        // not a vex, we ignore it
-        return Ok(());
-    }
-
-    log::info!("Ingesting: {}", doc.url);
     let sha256 = match doc.sha256.clone() {
         Some(sha) => sha.expected.clone(),
         None => {
@@ -143,16 +141,6 @@ async fn process(system: &Graph, doc: ValidatedAdvisory) -> anyhow::Result<()> {
         }
     };
 
-    let advisory = system
-        .ingest_advisory(
-            &csaf.document.tracking.id,
-            doc.url.to_string(),
-            sha256,
-            Transactional::None,
-        )
-        .await?;
-
-    advisory.ingest_csaf(csaf).await?;
-
+    ingestors::advisory::csaf::ingest(system, csaf, &sha256, doc.url.as_str()).await?;
     Ok(())
 }
