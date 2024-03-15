@@ -8,6 +8,8 @@ trustify-auth = { path = "../common/auth", features = ["actix"] }
 trustify-graph = { path = "../graph" }
 trustify-common = { path = "../common"}
 trustify-infrastructure = { path = "../common/infrastructure" }
+trustify-entity = { path = "../entity"}
+trustify-ingestors = { path = "../ingestors"}
 
 actix-web = "4"
 anyhow = "1.0.72"
@@ -21,6 +23,9 @@ serde_json = { version = "1.0.68", features = [ "raw_value" ] }
 thiserror = "1"
 utoipa = { version = "4", features = ["actix_extras"] }
 utoipa-swagger-ui = { version = "4", features = ["actix-web"] }
+csaf = "0.5"
+sha2 = "0.10.6"
+walker-common = "=0.6.0-alpha.8"
 
 [dev-dependencies]
 url-escape = "0.1.1"

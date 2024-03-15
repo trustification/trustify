@@ -78,7 +78,7 @@ impl Graph {
 #[derive(Clone)]
 pub struct AdvisoryContext<'g> {
     graph: &'g Graph,
-    advisory: entity::advisory::Model,
+    pub advisory: entity::advisory::Model,
 }
 
 impl PartialEq for AdvisoryContext<'_> {

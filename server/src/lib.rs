@@ -1,5 +1,5 @@
 #![allow(unused)]
-use crate::server::{importer, read};
+use crate::server::{importer, read, write};
 use actix_web::web;
 use std::process::ExitCode;
 use std::sync::Arc;
@@ -137,7 +137,8 @@ pub struct AppState {
 pub fn configure(config: &mut web::ServiceConfig) {
     config
         .service(read::package::dependencies)
-        .service(read::package::variants);
+        .service(read::package::variants)
+        .service(write::advisory::upload_advisory);
 }
 
 #[cfg(test)]

@@ -22,6 +22,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Advisory::Identifier).string().not_null())
                     .col(ColumnDef::new(Advisory::Location).string().not_null())
                     .col(ColumnDef::new(Advisory::Sha256).string().not_null())
+                    .col(ColumnDef::new(Advisory::Title).string())
                     .to_owned(),
             )
             .await
@@ -41,4 +42,5 @@ pub enum Advisory {
     Identifier,
     Location,
     Sha256,
+    Title,
 }

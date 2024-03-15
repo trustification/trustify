@@ -8,6 +8,7 @@ pub struct Model {
     pub identifier: String,
     pub location: String,
     pub sha256: String,
+    pub title: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

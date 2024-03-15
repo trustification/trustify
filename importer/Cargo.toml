@@ -8,6 +8,7 @@ trustify-graph = { path = "../graph" }
 trustify-entity = { path = "../entity" }
 trustify-migration = { path = "../migration" }
 trustify-common = { path = "../common" }
+trustify-ingestors = { path = "../ingestors" }
 
 anyhow = "1.0.72"
 clap = { version = "4", features = ["derive"] }
