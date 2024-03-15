@@ -164,12 +164,12 @@ impl From<PackageUrl<'_>> for Purl {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
 mod tests {
     use crate::purl::Purl;
+    use test_log::test;
 
-    #[test]
-    fn purl_serde() {
+    #[test(tokio::test)]
+    async fn purl_serde() -> Result<(), anyhow::Error> {
         let purl: Purl = serde_json::from_str(
             r#"
             "pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar"
@@ -185,14 +185,12 @@ mod tests {
 
         assert_eq!(purl.qualifiers.get("foo"), Some(&"bar".to_string()));
 
-        let purl: Purl = "pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar"
-            .try_into()
-            .unwrap();
+        let purl: Purl = "pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar".try_into()?;
         let json = serde_json::to_string(&purl).unwrap();
 
-        assert_eq!(
+        Ok(assert_eq!(
             json,
             r#""pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar""#
-        );
+        ))
     }
 }
