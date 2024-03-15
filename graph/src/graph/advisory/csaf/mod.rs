@@ -14,9 +14,19 @@ impl<'g> AdvisoryContext<'g> {
     pub async fn ingest_csaf(&self, csaf: Csaf) -> Result<(), Error> {
         let advisory = self.clone();
 
+        let csaf_title = csaf.document.title.clone();
+        let csaf_aggregate_severity = csaf
+            .document
+            .aggregate_severity
+            .as_ref()
+            .map(|e| e.text.clone());
+        let current_release_date = csaf.document.tracking.current_release_date;
+
         // Ingest metadata
         let mut entity: entity::advisory::ActiveModel = self.advisory.clone().into();
-        entity.title = Set(Some(csaf.document.title.clone().to_string()));
+        entity.title = Set(Some(csaf_title));
+        entity.aggregate_severity = Set(csaf_aggregate_severity);
+        entity.current_release_date = Set(Some(current_release_date));
         entity
             .update(&self.graph.connection(&Transactional::None))
             .await?;
