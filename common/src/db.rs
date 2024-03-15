@@ -3,8 +3,9 @@ use migration::{async_trait::async_trait, Migrator, MigratorTrait};
 use postgresql_embedded::PostgreSQL;
 use sea_orm::{
     prelude::async_trait, ConnectOptions, ConnectionTrait, DatabaseConnection, DatabaseTransaction,
-    DbBackend, DbErr, ExecResult, QueryResult, Statement,
+    DbBackend, DbErr, ExecResult, QueryResult, RuntimeErr, Statement,
 };
+use sqlx::error::ErrorKind;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use tempfile::TempDir;
@@ -138,6 +139,7 @@ impl Database {
         bootstrap: bool,
     ) -> Result<Self, anyhow::Error> {
         if bootstrap {
+            log::warn!("Bootstrapping database");
             Self::bootstrap(
                 &database.username,
                 &database.password,
@@ -284,5 +286,22 @@ impl ConnectionTrait for Database {
     #[cfg(feature = "mock")]
     fn is_mock_connection(&self) -> bool {
         self.db.is_mock_connection()
+    }
+}
+
+/// A trait to help working with database errors
+pub trait DatabaseErrors {
+    /// return `true` if the error is a duplicate key error
+    fn is_duplicate(&self) -> bool;
+}
+
+impl DatabaseErrors for DbErr {
+    fn is_duplicate(&self) -> bool {
+        match self {
+            DbErr::Query(RuntimeErr::SqlxError(sqlx::error::Error::Database(err))) => {
+                err.kind() == ErrorKind::UniqueViolation
+            }
+            _ => false,
+        }
     }
 }

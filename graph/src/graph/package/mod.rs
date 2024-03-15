@@ -1,21 +1,21 @@
 //! Support for packages.
 
-use crate::db::{Paginated, PaginatedResults};
 use crate::graph::advisory::AdvisoryContext;
 use crate::graph::error::Error;
 use crate::graph::Graph;
 use package_version::PackageVersionContext;
 use package_version_range::PackageVersionRangeContext;
 use qualified_package::QualifiedPackageContext;
-use sea_orm::RelationTrait;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, PaginatorTrait, QueryFilter,
     QuerySelect, QueryTrait, Set,
 };
+use sea_orm::{ItemsAndPagesNumber, RelationTrait};
 use sea_query::{JoinType, SelectStatement, UnionType};
 use std::borrow::Borrow;
 use std::fmt::{Debug, Formatter};
 use trustify_common::db::Transactional;
+use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
 use trustify_common::purl::{Purl, PurlErr};
 use trustify_entity as entity;
@@ -406,38 +406,19 @@ impl<'g> PackageContext<'g> {
 
         let pagination = entity::package_version::Entity::find()
             .filter(entity::package_version::Column::PackageId.eq(self.package.id))
-            .paginate(&connection, paginated.page_size);
+            .paginate(&connection, paginated.page_size.get());
 
-        let num_items = pagination.num_items().await?;
-        let num_pages = pagination.num_pages().await?;
-
-        Ok(PaginatedResults {
-            results: pagination
+        Ok(PaginatedResults::new(
+            paginated,
+            pagination
                 .fetch_page(paginated.page)
                 .await?
                 .drain(0..)
                 .map(|each| (self, each).into())
                 .collect(),
-            page: paginated.page_size,
-            num_items,
-            num_pages,
-            prev_page: if paginated.page > 0 {
-                Some(Paginated {
-                    page_size: paginated.page_size,
-                    page: paginated.page - 1,
-                })
-            } else {
-                None
-            },
-            next_page: if paginated.page + 1 < num_pages {
-                Some(Paginated {
-                    page_size: paginated.page_size,
-                    page: paginated.page + 1,
-                })
-            } else {
-                None
-            },
-        })
+            &pagination,
+        )
+        .await?)
     }
 
     /// Retrieve the aggregate vulnerability assertions for this base package.
@@ -624,11 +605,12 @@ impl<'g> PackageContext<'g> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use crate::db::Paginated;
     use crate::graph::error::Error;
     use crate::graph::Graph;
     use sea_orm::TransactionTrait;
+    use std::num::NonZeroU64;
     use trustify_common::db::{Database, Transactional};
+    use trustify_common::model::Paginated;
     use trustify_common::purl::Purl;
 
     #[tokio::test]
@@ -729,6 +711,8 @@ mod tests {
         let db = Database::for_test("get_versions_paginated").await?;
         let system = Graph::new(db);
 
+        let page_size = NonZeroU64::new(50).unwrap();
+
         for v in 0..200 {
             let version = format!("pkg://maven/io.quarkus/quarkus-core@{v}").try_into()?;
 
@@ -750,23 +734,11 @@ mod tests {
         assert_eq!(200, all_versions.len());
 
         let paginated = pkg
-            .get_versions_paginated(
-                Paginated {
-                    page_size: 50,
-                    page: 0,
-                },
-                Transactional::None,
-            )
+            .get_versions_paginated(Paginated { page_size, page: 0 }, Transactional::None)
             .await?;
 
-        assert!(paginated.prev_page.is_none());
-        assert_eq!(
-            paginated.next_page,
-            Some(Paginated {
-                page_size: 50,
-                page: 1,
-            })
-        );
+        assert!(paginated.previous_page.is_none());
+        assert_eq!(paginated.next_page, Some(Paginated { page_size, page: 1 }));
         assert_eq!(50, paginated.results.len());
 
         let next_paginated = pkg
@@ -774,11 +746,8 @@ mod tests {
             .await?;
 
         assert_eq!(
-            next_paginated.prev_page,
-            Some(Paginated {
-                page_size: 50,
-                page: 0,
-            })
+            next_paginated.previous_page,
+            Some(Paginated { page_size, page: 0 })
         );
 
         assert!(next_paginated.next_page.is_some());

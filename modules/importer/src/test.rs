@@ -1,13 +1,29 @@
 #![cfg(test)]
 
-use super::model::ImportConfiguration;
+use super::model::{
+    CommonImporter, Importer, ImporterConfiguration, ImporterData, SbomImporter, State,
+};
 use actix_web::{
     http::{header, StatusCode},
     test as actix, App,
 };
-use serde_json::json;
+use std::time::Duration;
 use test_log::test;
 use trustify_common::db::Database;
+
+fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
+    ImporterConfiguration::Sbom(SbomImporter {
+        common: CommonImporter {
+            disabled: false,
+            period: Duration::from_secs(30),
+        },
+        source: source.into(),
+        keys: vec![],
+
+        only_patterns: vec![],
+        v3_signatures: false,
+    })
+}
 
 #[test(actix_web::test)]
 async fn test_default() {
@@ -19,7 +35,7 @@ async fn test_default() {
 
     let req = actix::TestRequest::post()
         .uri("/api/v1/importer/foo")
-        .set_json(json!({"foo":"bar"}))
+        .set_json(mock_configuration("bar"))
         .to_request();
 
     let resp = actix::call_service(&app, req).await;
@@ -34,12 +50,19 @@ async fn test_default() {
     let resp = actix::call_service(&app, req).await;
     assert_eq!(resp.status(), StatusCode::OK);
 
-    let result: Vec<ImportConfiguration> = actix::read_body_json(resp).await;
+    let result: Vec<Importer> = actix::read_body_json(resp).await;
     assert_eq!(
         result,
-        vec![ImportConfiguration {
+        vec![Importer {
             name: "foo".into(),
-            configuration: json!({"foo":"bar"})
+            data: ImporterData {
+                configuration: mock_configuration("bar"),
+                state: State::Waiting,
+                last_change: result[0].data.last_change, // we can't predict timestamps
+                last_success: None,
+                last_run: None,
+                last_error: None,
+            }
         }]
     );
 
@@ -47,7 +70,7 @@ async fn test_default() {
 
     let req = actix::TestRequest::put()
         .uri("/api/v1/importer/foo")
-        .set_json(json!({"foo":"baz"}))
+        .set_json(mock_configuration("baz"))
         .to_request();
 
     let resp = actix::call_service(&app, req).await;
@@ -62,12 +85,19 @@ async fn test_default() {
     let resp = actix::call_service(&app, req).await;
     assert_eq!(resp.status(), StatusCode::OK);
 
-    let result: ImportConfiguration = actix::read_body_json(resp).await;
+    let result: Importer = actix::read_body_json(resp).await;
     assert_eq!(
         result,
-        ImportConfiguration {
+        Importer {
             name: "foo".into(),
-            configuration: json!({"foo":"baz"})
+            data: ImporterData {
+                configuration: mock_configuration("baz"),
+                state: State::Waiting,
+                last_change: result.data.last_change, // we can't predict timestamps
+                last_success: None,
+                last_error: None,
+                last_run: None,
+            }
         }
     );
 
@@ -100,7 +130,7 @@ async fn test_oplock() {
 
     let req = actix::TestRequest::post()
         .uri("/api/v1/importer/foo")
-        .set_json(json!({"foo":"bar"}))
+        .set_json(mock_configuration("bar"))
         .to_request();
 
     let resp = actix::call_service(&app, req).await;
@@ -110,7 +140,7 @@ async fn test_oplock() {
 
     let req = actix::TestRequest::put()
         .uri("/api/v1/importer/foo")
-        .set_json(json!({"foo":"baz"}))
+        .set_json(mock_configuration("baz"))
         .to_request();
 
     let resp = actix::call_service(&app, req).await;
@@ -129,12 +159,19 @@ async fn test_oplock() {
     assert!(etag.is_some());
     let etag = etag.cloned().unwrap();
 
-    let result: ImportConfiguration = actix::read_body_json(resp).await;
+    let result: Importer = actix::read_body_json(resp).await;
     assert_eq!(
         result,
-        ImportConfiguration {
+        Importer {
             name: "foo".into(),
-            configuration: json!({"foo":"baz"})
+            data: ImporterData {
+                configuration: mock_configuration("baz"),
+                state: State::Waiting,
+                last_change: result.data.last_change, // we can't predict timestamps
+                last_success: None,
+                last_error: None,
+                last_run: None,
+            }
         }
     );
 
@@ -142,7 +179,7 @@ async fn test_oplock() {
 
     let req = actix::TestRequest::put()
         .uri("/api/v1/importer/foo")
-        .set_json(json!({"foo":"buz"}))
+        .set_json(mock_configuration("buz"))
         .append_header((header::IF_MATCH, etag.clone()))
         .to_request();
 
@@ -158,12 +195,19 @@ async fn test_oplock() {
     let resp = actix::call_service(&app, req).await;
     assert_eq!(resp.status(), StatusCode::OK);
 
-    let result: ImportConfiguration = actix::read_body_json(resp).await;
+    let result: Importer = actix::read_body_json(resp).await;
     assert_eq!(
         result,
-        ImportConfiguration {
+        Importer {
             name: "foo".into(),
-            configuration: json!({"foo":"buz"})
+            data: ImporterData {
+                configuration: mock_configuration("buz"),
+                state: State::Waiting,
+                last_change: result.data.last_change, // we can't predict timestamps
+                last_success: None,
+                last_error: None,
+                last_run: None,
+            }
         }
     );
 
@@ -171,7 +215,7 @@ async fn test_oplock() {
 
     let req = actix::TestRequest::put()
         .uri("/api/v1/importer/foo")
-        .set_json(json!({"foo":"boz"}))
+        .set_json(mock_configuration("boz"))
         .append_header((header::IF_MATCH, etag.clone()))
         .to_request();
 
@@ -182,7 +226,7 @@ async fn test_oplock() {
 
     let req = actix::TestRequest::put()
         .uri("/api/v1/importer/foo2")
-        .set_json(json!({"foo":"boz"}))
+        .set_json(mock_configuration("boz"))
         .append_header((header::IF_MATCH, etag.clone()))
         .to_request();
 
@@ -204,12 +248,19 @@ async fn test_oplock() {
     let etag = etag.cloned().unwrap();
     assert_ne!(old_etag, etag);
 
-    let result: ImportConfiguration = actix::read_body_json(resp).await;
+    let result: Importer = actix::read_body_json(resp).await;
     assert_eq!(
         result,
-        ImportConfiguration {
+        Importer {
             name: "foo".into(),
-            configuration: json!({"foo":"buz"})
+            data: ImporterData {
+                configuration: mock_configuration("buz"),
+                state: State::Waiting,
+                last_change: result.data.last_change, // we can't predict timestamps
+                last_success: None,
+                last_error: None,
+                last_run: None,
+            }
         }
     );
 
@@ -232,12 +283,19 @@ async fn test_oplock() {
     let resp = actix::call_service(&app, req).await;
     assert_eq!(resp.status(), StatusCode::OK);
 
-    let result: ImportConfiguration = actix::read_body_json(resp).await;
+    let result: Importer = actix::read_body_json(resp).await;
     assert_eq!(
         result,
-        ImportConfiguration {
+        Importer {
             name: "foo".into(),
-            configuration: json!({"foo":"buz"})
+            data: ImporterData {
+                configuration: mock_configuration("buz"),
+                state: State::Waiting,
+                last_change: result.data.last_change, // we can't predict timestamps
+                last_success: None,
+                last_error: None,
+                last_run: None,
+            }
         }
     );
 

@@ -19,6 +19,7 @@ members = [
 csaf-walker = { git = "https://github.com/ctron/csaf-walker", rev = "95d1d1e25a0def07e563f6a92722204cee861ea4" }
 sbom-walker = { git = "https://github.com/ctron/csaf-walker", rev = "95d1d1e25a0def07e563f6a92722204cee861ea4" }
 walker-common = { git = "https://github.com/ctron/csaf-walker", rev = "95d1d1e25a0def07e563f6a92722204cee861ea4" }
+walker-extras = { git = "https://github.com/ctron/csaf-walker", rev = "95d1d1e25a0def07e563f6a92722204cee861ea4" }
 
 #csaf-walker = { path = "../../csaf-walker/csaf" }
 #sbom-walker = { path = "../../csaf-walker/sbom" }
