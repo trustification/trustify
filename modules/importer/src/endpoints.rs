@@ -1,10 +1,12 @@
 use super::service::{Error, ImporterService};
-use crate::model::Revisioned;
-use actix_web::http::header;
-use actix_web::http::header::{ETag, EntityTag, IfMatch};
-use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
-use serde_json::Value;
+use crate::model::ImporterConfiguration;
+use actix_web::{
+    delete, get,
+    http::header::{self, ETag, EntityTag, IfMatch},
+    post, put, web, HttpResponse, Responder,
+};
 use trustify_common::db::Database;
+use trustify_common::model::{Paginated, Revisioned};
 
 /// mount the "importer" module
 pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
@@ -15,7 +17,8 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
             .service(create)
             .service(read)
             .service(update)
-            .service(delete),
+            .service(delete)
+            .service(get_reports),
     );
 }
 
@@ -28,7 +31,7 @@ async fn list(service: web::Data<ImporterService>) -> Result<impl Responder, Err
 async fn create(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
-    web::Json(configuration): web::Json<Value>,
+    web::Json(configuration): web::Json<ImporterConfiguration>,
 ) -> Result<impl Responder, Error> {
     service.create(name.into_inner(), configuration).await?;
     Ok(HttpResponse::Created().finish())
@@ -54,7 +57,7 @@ async fn update(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
     web::Header(if_match): web::Header<IfMatch>,
-    web::Json(configuration): web::Json<Value>,
+    web::Json(configuration): web::Json<ImporterConfiguration>,
 ) -> Result<impl Responder, Error> {
     let revision = match &if_match {
         IfMatch::Any => None,
@@ -62,7 +65,7 @@ async fn update(
     };
 
     service
-        .update(name.into_inner(), configuration, revision)
+        .update_configuration(&name, revision, configuration)
         .await?;
 
     Ok(HttpResponse::NoContent().finish())
@@ -83,4 +86,13 @@ async fn delete(
         true => HttpResponse::NoContent().finish(),
         false => HttpResponse::NoContent().finish(),
     })
+}
+
+#[get("/{name}/report")]
+async fn get_reports(
+    service: web::Data<ImporterService>,
+    name: web::Path<String>,
+    web::Query(paginated): web::Query<Paginated>,
+) -> Result<impl Responder, Error> {
+    Ok(web::Json(service.get_reports(&name, paginated).await?))
 }

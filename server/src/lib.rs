@@ -1,6 +1,8 @@
 #![allow(unused)]
 use crate::server::{read, write};
+use actix_web::body::MessageBody;
 use actix_web::web;
+use futures::FutureExt;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
@@ -15,6 +17,7 @@ use trustify_infrastructure::endpoint::Huevos;
 use trustify_infrastructure::health::checks::{Local, Probe};
 use trustify_infrastructure::tracing::Tracing;
 use trustify_infrastructure::{Infrastructure, InfrastructureConfig, InitContext, Metrics};
+use trustify_module_importer::server::importer;
 
 pub mod server;
 
@@ -119,7 +122,14 @@ impl InitData {
                     });
             });
 
-        http.run().await
+        let http = async { http.run().await }.boxed_local();
+        let importer = async { importer(self.db).await }.boxed_local();
+
+        let (result, _, _) = futures::future::select_all([http, importer]).await;
+
+        log::info!("one of the server tasks returned, exiting");
+
+        result
     }
 }
 

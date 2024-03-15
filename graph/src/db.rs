@@ -1,25 +1,9 @@
 use sea_orm::{
     ConnectionTrait, DatabaseConnection, DatabaseTransaction, DbBackend, DbErr, ExecResult,
-    QueryResult, Statement,
+    ItemsAndPagesNumber, QueryResult, SelectorTrait, Statement,
 };
 use sea_query::Iden;
 use std::fmt::Write;
-
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct Paginated {
-    pub page_size: u64,
-    pub page: u64,
-}
-
-#[derive(Debug, Clone)]
-pub struct PaginatedResults<R> {
-    pub results: Vec<R>,
-    pub page: u64,
-    pub num_items: u64,
-    pub num_pages: u64,
-    pub prev_page: Option<Paginated>,
-    pub next_page: Option<Paginated>,
-}
 
 pub struct QualifiedPackageTransitive;
 

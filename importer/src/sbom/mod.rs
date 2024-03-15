@@ -1,4 +1,5 @@
 use crate::progress::init_log_and_progress;
+use parking_lot::Mutex;
 use sbom_walker::{
     retrieve::RetrievingVisitor,
     source::{DispatchSource, FileSource, HttpOptions, HttpSource},
@@ -6,14 +7,17 @@ use sbom_walker::{
     walker::Walker,
 };
 use std::process::ExitCode;
+use std::sync::Arc;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
 use trustify_common::{config::Database, db};
 use trustify_graph::graph::Graph;
+use trustify_module_importer::server::{
+    report::{Report, ReportBuilder, ScannerError, SplitScannerError},
+    sbom::storage,
+};
 use url::Url;
-use walker_common::{fetcher::Fetcher, validate::ValidationOptions};
-
-mod process;
+use walker_common::{fetcher::Fetcher, progress::Progress, validate::ValidationOptions};
 
 /// Import SBOMs
 #[derive(clap::Args, Debug)]
@@ -34,6 +38,16 @@ impl ImportSbomCommand {
         let progress = init_log_and_progress()?;
 
         log::info!("Ingesting SBOMs");
+
+        let (report, result) = self.run_once(progress).await.split()?;
+
+        log::info!("Import report: {report:#?}");
+
+        result.map(|()| ExitCode::SUCCESS)
+    }
+
+    async fn run_once(self, progress: Progress) -> Result<Report, ScannerError> {
+        let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
         let db = db::Database::with_external_config(&self.database, false).await?;
         let system = Graph::new(db);
@@ -57,13 +71,17 @@ impl ImportSbomCommand {
 
         // process (called by validator)
 
-        let process = process::ProcessVisitor { system };
+        let process = storage::StorageVisitor {
+            system,
+            report: report.clone(),
+        };
 
         // validate (called by retriever)
 
         //  because we still have GPG v3 signatures
         let options = ValidationOptions::new().validation_date(SystemTime::from(
-            Date::from_calendar_date(2007, Month::January, 1)?
+            Date::from_calendar_date(2007, Month::January, 1)
+                .map_err(|err| ScannerError::Critical(err.into()))?
                 .midnight()
                 .assume_offset(UtcOffset::UTC),
         ));
@@ -79,8 +97,18 @@ impl ImportSbomCommand {
         Walker::new(source)
             .with_progress(progress)
             .walk(visitor)
-            .await?;
+            .await
+            // if the walker fails, we record the outcome as part of the report, but skip any
+            // further processing, like storing the marker
+            .map_err(|err| ScannerError::Normal {
+                err: err.into(),
+                report: report.lock().clone().build(),
+            })?;
 
-        Ok(ExitCode::SUCCESS)
+        Ok(match Arc::try_unwrap(report) {
+            Ok(report) => report.into_inner(),
+            Err(report) => report.lock().clone(),
+        }
+        .build())
     }
 }

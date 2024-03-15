@@ -4,6 +4,7 @@ pub mod affected_package_version_range;
 pub mod cpe22;
 pub mod fixed_package_version;
 pub mod importer;
+pub mod importer_report;
 pub mod not_affected_package_version;
 pub mod package;
 pub mod package_qualifier;
