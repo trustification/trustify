@@ -68,7 +68,6 @@ mod test {
     use std::str::FromStr;
 
     use test_log::test;
-
     use trustify_common::db::Database;
     use trustify_graph::graph::Graph;
 
