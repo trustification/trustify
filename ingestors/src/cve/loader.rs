@@ -44,8 +44,8 @@ impl<'g> CveLoader<'g> {
         for description in cve.containers.cna.descriptions {
             vulnerability
                 .add_description(
-                    description.lang,
-                    description.value,
+                    &description.lang,
+                    &description.value,
                     Transactional::Some(&tx),
                 )
                 .await?;
