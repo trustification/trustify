@@ -62,9 +62,10 @@ impl Graph {
         Self { db }
     }
 
-    //pub async fn transaction(&self) -> Result<DatabaseTransaction, error::Error> {
-    //Ok(self.db.begin().await?)
-    //}
+    /// Create a `Transactional::Some(_)` with a new transaction.
+    ///
+    /// The transaction will be rolled-back unless explicitly `commit()`'d before
+    /// it drops.
     pub async fn transaction(&self) -> Result<Transactional, error::Error> {
         Ok(Transactional::Some(self.db.begin().await?))
     }
