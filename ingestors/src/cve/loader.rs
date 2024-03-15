@@ -41,17 +41,15 @@ impl<'g> CveLoader<'g> {
             .set_title(cve.containers.cna.title.clone(), Transactional::Some(&tx))
             .await?;
 
-        vulnerability
-            .set_description_en(
-                cve.containers
-                    .cna
-                    .descriptions
-                    .iter()
-                    .find(|e| e.lang == "en")
-                    .map(|en| en.value.clone()),
-                Transactional::Some(&tx),
-            )
-            .await?;
+        for description in cve.containers.cna.descriptions {
+            vulnerability
+                .add_description(
+                    description.lang,
+                    description.value,
+                    Transactional::Some(&tx),
+                )
+                .await?;
+        }
 
         let hashes = reader.hashes();
         let sha256 = hex::encode(hashes.sha256.as_ref());
@@ -127,6 +125,17 @@ mod test {
             .await?;
 
         assert!(loaded_advisory.is_some());
+
+        let loaded_vulnerability = loaded_vulnerability.unwrap();
+
+        let descriptions = loaded_vulnerability
+            .descriptions("en", Transactional::None)
+            .await?;
+
+        assert_eq!(1, descriptions.len());
+
+        assert!(descriptions[0]
+            .starts_with("Canarytokens helps track activity and actions on a network"));
 
         Ok(())
     }
