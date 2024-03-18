@@ -126,11 +126,11 @@ impl<'g> AdvisoryContext<'g> {
             return Ok(found);
         }
 
-        let cve = self.graph.ingest_vulnerability(identifier, &tx).await?;
+        let vulnerability = self.graph.ingest_vulnerability(identifier, &tx).await?;
 
         let entity = entity::advisory_vulnerability::ActiveModel {
             advisory_id: Set(self.advisory.id),
-            vulnerability_id: Set(cve.vulnerability.id),
+            vulnerability_id: Set(vulnerability.vulnerability.id),
         };
 
         Ok((self, entity.insert(&self.graph.connection(&tx)).await?).into())
