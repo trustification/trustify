@@ -117,7 +117,7 @@ impl<'g> AdvisoryContext<'g> {
             .map(|vuln| (self, vuln).into()))
     }
 
-    pub async fn ingest_vulnerability<TX: AsRef<Transactional>>(
+    pub async fn link_to_vulnerability<TX: AsRef<Transactional>>(
         &self,
         identifier: &str,
         tx: TX,
@@ -471,7 +471,7 @@ mod test {
             .await?;
 
         let advisory_vulnerability = advisory
-            .ingest_vulnerability("CVE-8675309", Transactional::None)
+            .link_to_vulnerability("CVE-8675309", Transactional::None)
             .await?;
 
         let affected1 = advisory_vulnerability
@@ -528,7 +528,7 @@ mod test {
             .await?;
 
         let advisory_vulnerability = advisory
-            .ingest_vulnerability("CVE-1234567", Transactional::None)
+            .link_to_vulnerability("CVE-1234567", Transactional::None)
             .await?;
 
         let affected = advisory_vulnerability
@@ -588,13 +588,13 @@ mod test {
             .await?;
 
         advisory
-            .ingest_vulnerability("CVE-123", Transactional::None)
+            .link_to_vulnerability("CVE-123", Transactional::None)
             .await?;
         advisory
-            .ingest_vulnerability("CVE-123", Transactional::None)
+            .link_to_vulnerability("CVE-123", Transactional::None)
             .await?;
         advisory
-            .ingest_vulnerability("CVE-456", Transactional::None)
+            .link_to_vulnerability("CVE-456", Transactional::None)
             .await?;
 
         Ok(())
@@ -615,7 +615,7 @@ mod test {
             .await?;
 
         let advisory_vulnerability = advisory
-            .ingest_vulnerability("CVE-42", Transactional::None)
+            .link_to_vulnerability("CVE-42", Transactional::None)
             .await?;
 
         advisory_vulnerability
@@ -656,7 +656,7 @@ mod test {
             .await?;
 
         let advisory_vulnerability = advisory
-            .ingest_vulnerability("INTERAL-77", Transactional::None)
+            .link_to_vulnerability("INTERAL-77", Transactional::None)
             .await?;
 
         advisory_vulnerability

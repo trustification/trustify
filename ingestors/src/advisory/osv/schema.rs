@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Package {
-    Named { name: String, ecosystem: Ecosystem },
     Purl { purl: String },
+    Named { name: String, ecosystem: Ecosystem },
 }
 
 /// A commit is a full SHA1 Git hash in hex format.

@@ -228,7 +228,7 @@ mod tests {
             .await?;
 
         let redhat_advisory_vulnerability = redhat_advisory
-            .ingest_vulnerability("CVE-1", Transactional::None)
+            .link_to_vulnerability("CVE-1", Transactional::None)
             .await?;
 
         redhat_advisory_vulnerability
@@ -243,7 +243,7 @@ mod tests {
             .await?;
 
         let ghsa_advisory_vulnerability = ghsa_advisory
-            .ingest_vulnerability("CVE-1", Transactional::None)
+            .link_to_vulnerability("CVE-1", Transactional::None)
             .await?;
 
         ghsa_advisory_vulnerability
