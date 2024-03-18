@@ -663,6 +663,7 @@ impl SbomContext {
 
 #[cfg(test)]
 mod tests {
+    use crate::graph::advisory::AdvisoryMetadata;
     use crate::graph::Graph;
     use test_log::test;
     use trustify_common::db::{Database, Transactional};
@@ -988,6 +989,7 @@ mod tests {
                 "RHSA-1",
                 "http://redhat.com/secdata/RHSA-1",
                 "7",
+                AdvisoryMetadata::default(),
                 Transactional::None,
             )
             .await?;

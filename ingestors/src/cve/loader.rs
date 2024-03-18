@@ -1,4 +1,5 @@
 use std::io::Read;
+use trustify_graph::graph::advisory::AdvisoryMetadata;
 
 use trustify_graph::graph::Graph;
 
@@ -53,7 +54,13 @@ impl<'g> CveLoader<'g> {
 
         let advisory = self
             .graph
-            .ingest_advisory(cve.cve_metadata.cve_id(), location, sha256, &tx)
+            .ingest_advisory(
+                cve.cve_metadata.cve_id(),
+                location,
+                sha256,
+                AdvisoryMetadata::default(),
+                &tx,
+            )
             .await?;
 
         // Link the advisory to the backing vulnerability

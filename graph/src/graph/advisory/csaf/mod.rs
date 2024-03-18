@@ -6,6 +6,7 @@ use crate::graph::error::Error;
 use csaf::{document::Category, Csaf};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, TransactionTrait};
+use std::rc::Rc;
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
@@ -13,23 +14,6 @@ use trustify_entity as entity;
 impl<'g> AdvisoryContext<'g> {
     pub async fn ingest_csaf(&self, csaf: Csaf) -> Result<(), Error> {
         let advisory = self.clone();
-
-        let csaf_title = csaf.document.title.clone();
-        let csaf_aggregate_severity = csaf
-            .document
-            .aggregate_severity
-            .as_ref()
-            .map(|e| e.text.clone());
-        let current_release_date = csaf.document.tracking.current_release_date;
-
-        // Ingest metadata
-        let mut entity: entity::advisory::ActiveModel = self.advisory.clone().into();
-        entity.title = Set(Some(csaf_title));
-        entity.aggregate_severity = Set(csaf_aggregate_severity);
-        entity.current_release_date = Set(Some(current_release_date));
-        entity
-            .update(&self.graph.connection(&Transactional::None))
-            .await?;
 
         // Ingest vulnerabilities
         let txn = self.graph.db.begin().await?;
@@ -83,6 +67,7 @@ impl<'g> AdvisoryContext<'g> {
 
 #[cfg(test)]
 mod tests {
+    use crate::graph::advisory::AdvisoryMetadata;
     use crate::graph::Graph;
     use csaf::Csaf;
     use std::fs::File;
@@ -113,6 +98,7 @@ mod tests {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                AdvisoryMetadata::default(),
                 Transactional::None,
             )
             .await?;

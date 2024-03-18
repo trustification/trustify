@@ -1,18 +1,22 @@
 //! Support for advisories.
 
-use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
-use crate::graph::error::Error;
-use crate::graph::Graph;
+use std::collections::HashMap;
+use std::fmt::{Debug, Formatter};
+
+use chrono::{DateTime, Utc};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, EntityTrait, FromQueryResult, QueryFilter};
 use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
-use std::collections::HashMap;
-use std::fmt::{Debug, Formatter};
+
 use trustify_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
+
+use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
+use crate::graph::error::Error;
+use crate::graph::Graph;
 
 pub mod advisory_vulnerability;
 
@@ -21,6 +25,13 @@ pub mod fixed_package_version;
 pub mod not_affected_package_version;
 
 pub mod csaf;
+
+#[derive(Default)]
+pub struct AdvisoryMetadata {
+    pub title: Option<String>,
+    pub severity: Option<String>,
+    pub release_date: Option<DateTime<Utc>>,
+}
 
 impl Graph {
     pub(crate) async fn get_advisory_by_id<TX: AsRef<Transactional>>(
@@ -54,6 +65,7 @@ impl Graph {
         identifier: impl Into<String>,
         location: impl Into<String>,
         sha256: impl Into<String>,
+        metadata: AdvisoryMetadata,
         tx: TX,
     ) -> Result<AdvisoryContext, Error> {
         let identifier = identifier.into();
@@ -68,6 +80,9 @@ impl Graph {
             identifier: Set(identifier),
             location: Set(location),
             sha256: Set(sha256),
+            title: Set(metadata.title),
+            severity: Set(metadata.severity),
+            release_date: Set(metadata.release_date),
             ..Default::default()
         };
 
@@ -413,10 +428,13 @@ impl<'g> AdvisoryContext<'g> {
 
 #[cfg(test)]
 mod test {
-    use crate::graph::Graph;
     use test_log::test;
+
     use trustify_common::advisory::Assertion;
     use trustify_common::db::{Database, Transactional};
+
+    use crate::graph::advisory::AdvisoryMetadata;
+    use crate::graph::Graph;
 
     #[test(tokio::test)]
     async fn ingest_advisories() -> Result<(), anyhow::Error> {
@@ -428,6 +446,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                AdvisoryMetadata::default(),
                 Transactional::None,
             )
             .await?;
@@ -437,6 +456,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                AdvisoryMetadata::default(),
                 Transactional::None,
             )
             .await?;
@@ -446,6 +466,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "89",
+                AdvisoryMetadata::default(),
                 Transactional::None,
             )
             .await?;
@@ -466,6 +487,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                AdvisoryMetadata::default(),
                 Transactional::None,
             )
             .await?;
@@ -523,6 +545,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                AdvisoryMetadata::default(),
                 Transactional::None,
             )
             .await?;
@@ -583,6 +606,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                AdvisoryMetadata::default(),
                 Transactional::None,
             )
             .await?;
@@ -610,6 +634,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                AdvisoryMetadata::default(),
                 Transactional::None,
             )
             .await?;
@@ -651,6 +676,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                AdvisoryMetadata::default(),
                 Transactional::None,
             )
             .await?;

@@ -1,6 +1,7 @@
 use csaf::Csaf;
 
 use trustify_common::db::Transactional;
+use trustify_graph::graph::advisory::AdvisoryMetadata;
 use trustify_graph::graph::Graph;
 
 pub async fn ingest(
@@ -9,12 +10,22 @@ pub async fn ingest(
     sha256: &str,
     location: &str,
 ) -> anyhow::Result<i32> {
-    let identifier = &csaf.document.tracking.id;
+    let identifier = csaf.document.tracking.id.clone();
 
     log::info!("Ingesting: {} from {}", identifier, location);
 
+    let metadata = AdvisoryMetadata {
+        title: Some(csaf.document.title.clone()),
+        severity: csaf
+            .document
+            .aggregate_severity
+            .as_ref()
+            .map(|e| e.text.clone()),
+        release_date: Some(csaf.document.tracking.current_release_date),
+    };
+
     let advisory = system
-        .ingest_advisory(identifier, location, sha256, Transactional::None)
+        .ingest_advisory(identifier, location, sha256, metadata, Transactional::None)
         .await?;
 
     advisory.ingest_csaf(csaf).await?;

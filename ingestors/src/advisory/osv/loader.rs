@@ -1,6 +1,7 @@
 use std::io::Read;
 use std::str::FromStr;
 use trustify_common::purl::Purl;
+use trustify_graph::graph::advisory::AdvisoryMetadata;
 
 use trustify_graph::graph::Graph;
 
@@ -39,7 +40,7 @@ impl<'g> OsvLoader<'g> {
 
             let advisory = self
                 .graph
-                .ingest_advisory(osv.id, location, sha256, &tx)
+                .ingest_advisory(osv.id, location, sha256, AdvisoryMetadata::default(), &tx)
                 .await?;
 
             for cve_id in cve_ids {

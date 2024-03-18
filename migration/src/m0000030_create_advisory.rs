@@ -23,8 +23,8 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Advisory::Location).string().not_null())
                     .col(ColumnDef::new(Advisory::Sha256).string().not_null())
                     .col(ColumnDef::new(Advisory::Title).string())
-                    .col(ColumnDef::new(Advisory::AggregateSeverity).string())
-                    .col(ColumnDef::new(Advisory::CurrentReleaseDate).timestamp_with_time_zone())
+                    .col(ColumnDef::new(Advisory::Severity).string())
+                    .col(ColumnDef::new(Advisory::ReleaseDate).timestamp_with_time_zone())
                     .to_owned(),
             )
             .await
@@ -45,6 +45,6 @@ pub enum Advisory {
     Location,
     Sha256,
     Title,
-    AggregateSeverity,
-    CurrentReleaseDate,
+    Severity,
+    ReleaseDate,
 }

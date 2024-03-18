@@ -133,6 +133,7 @@ impl<'g> QualifiedPackageContext<'g> {
 
 #[cfg(test)]
 mod tests {
+    use crate::graph::advisory::AdvisoryMetadata;
     use crate::graph::Graph;
     use trustify_common::db::{Database, Transactional};
 
@@ -147,6 +148,7 @@ mod tests {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                AdvisoryMetadata::default(),
                 Transactional::None,
             )
             .await?;

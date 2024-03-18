@@ -10,10 +10,10 @@ pub struct Model {
     pub location: String,
     pub sha256: String,
     pub title: Option<String>,
-    pub aggregate_severity: Option<String>,
+    pub severity: Option<String>,
 
     /// Holds the date when the current revision of this document was released.
-    pub current_release_date: Option<DateTime<Utc>>,
+    pub release_date: Option<DateTime<Utc>>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
