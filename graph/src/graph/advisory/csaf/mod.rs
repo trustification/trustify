@@ -6,7 +6,6 @@ use crate::graph::error::Error;
 use csaf::{document::Category, Csaf};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, TransactionTrait};
-use std::rc::Rc;
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
 use trustify_entity as entity;

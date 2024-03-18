@@ -4,7 +4,6 @@ use actix_web::{http, post, web, HttpRequest, HttpResponse, Responder};
 use anyhow::anyhow;
 use csaf::Csaf;
 use std::fs;
-use std::rc::Rc;
 
 use crate::server::Error;
 use crate::AppState;

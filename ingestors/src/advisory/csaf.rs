@@ -10,7 +10,7 @@ pub async fn ingest(
     sha256: &str,
     location: &str,
 ) -> anyhow::Result<i32> {
-    let identifier = csaf.document.tracking.id.clone();
+    let identifier = &csaf.document.tracking.id;
 
     log::info!("Ingesting: {} from {}", identifier, location);
 
