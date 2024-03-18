@@ -102,8 +102,8 @@ impl<'g> QualifiedPackageContext<'g> {
         &self,
         tx: TX,
     ) -> Result<PackageVulnerabilityAssertions, Error> {
-        let affected = self.affected_assertions(tx.as_ref()).await?;
-        let not_affected = self.not_affected_assertions(tx.as_ref()).await?;
+        let affected = self.affected_assertions(&tx).await?;
+        let not_affected = self.not_affected_assertions(&tx).await?;
 
         let mut merged = PackageVulnerabilityAssertions::default();
 

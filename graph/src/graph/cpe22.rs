@@ -55,7 +55,7 @@ impl Graph {
             Value(inner) => query.filter(entity::cpe22::Column::Edition.eq(inner)),
         };
 
-        if let Some(found) = query.one(&self.connection(tx.as_ref())).await? {
+        if let Some(found) = query.one(&self.connection(&tx)).await? {
             Ok(Some((self, found).into()))
         } else {
             Ok(None)
@@ -69,7 +69,7 @@ impl Graph {
     ) -> Result<Vec<Cpe22Context>, Error> {
         Ok(entity::cpe22::Entity::find()
             .filter(entity::cpe22::Column::Id.in_subquery(query))
-            .all(&self.connection(tx.as_ref()))
+            .all(&self.connection(&tx))
             .await?
             .drain(0..)
             .map(|cpe22| (self, cpe22).into())
@@ -83,7 +83,7 @@ impl Graph {
     ) -> Result<Cpe22Context, Error> {
         let cpe = cpe.into();
 
-        if let Some(found) = self.get_cpe22(cpe.clone(), tx.as_ref()).await? {
+        if let Some(found) = self.get_cpe22(cpe.clone(), &tx).await? {
             return Ok(found);
         }
 
@@ -123,7 +123,7 @@ impl Graph {
             language: Default::default(),
         };
 
-        Ok((self, entity.insert(&self.connection(tx.as_ref())).await?).into())
+        Ok((self, entity.insert(&self.connection(&tx)).await?).into())
     }
 }
 

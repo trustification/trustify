@@ -45,10 +45,7 @@ impl<'g> PackageVersionContext<'g> {
         purl: Purl,
         tx: TX,
     ) -> Result<QualifiedPackageContext<'g>, Error> {
-        if let Some(found) = self
-            .get_qualified_package(purl.clone(), tx.as_ref())
-            .await?
-        {
+        if let Some(found) = self.get_qualified_package(purl.clone(), &tx).await? {
             return Ok(found);
         }
 
@@ -59,7 +56,7 @@ impl<'g> PackageVersionContext<'g> {
         };
 
         let qualified_package = qualified_package
-            .insert(&self.package.graph.connection(tx.as_ref()))
+            .insert(&self.package.graph.connection(&tx))
             .await?;
 
         for (k, v) in &purl.qualifiers {
@@ -71,7 +68,7 @@ impl<'g> PackageVersionContext<'g> {
             };
 
             qualifier
-                .insert(&self.package.graph.connection(tx.as_ref()))
+                .insert(&self.package.graph.connection(&tx))
                 .await?;
         }
 
@@ -86,7 +83,7 @@ impl<'g> PackageVersionContext<'g> {
         let found = entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
             .find_with_related(entity::package_qualifier::Entity)
-            .all(&self.package.graph.connection(tx.as_ref()))
+            .all(&self.package.graph.connection(&tx))
             .await?;
 
         for (qualified_package, qualifiers) in found {
@@ -107,9 +104,9 @@ impl<'g> PackageVersionContext<'g> {
         &self,
         tx: TX,
     ) -> Result<PackageVulnerabilityAssertions, Error> {
-        let affected = self.affected_assertions(tx.as_ref()).await?;
+        let affected = self.affected_assertions(&tx).await?;
 
-        let not_affected = self.not_affected_assertions(tx.as_ref()).await?;
+        let not_affected = self.not_affected_assertions(&tx).await?;
 
         let mut merged = PackageVulnerabilityAssertions::default();
 
@@ -162,7 +159,7 @@ impl<'g> PackageVersionContext<'g> {
             )
             .filter(entity::package_version::Column::Id.eq(self.package_version.id))
             .into_model::<NotAffectedVersion>()
-            .all(&self.package.graph.connection(tx.as_ref()))
+            .all(&self.package.graph.connection(&tx))
             .await?;
 
         let mut assertions = PackageVulnerabilityAssertions::default();
@@ -195,7 +192,7 @@ impl<'g> PackageVersionContext<'g> {
         Ok(entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
             .find_with_related(entity::package_qualifier::Entity)
-            .all(&self.package.graph.connection(tx.as_ref()))
+            .all(&self.package.graph.connection(&tx))
             .await?
             .drain(0..)
             .map(|(base, qualifiers)| {

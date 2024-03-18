@@ -108,7 +108,7 @@ impl Graph {
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         Ok(query
-            .one(&self.connection(tx.as_ref()))
+            .one(&self.connection(&tx))
             .await?
             .map(|sbom| (self, sbom).into()))
     }
@@ -119,7 +119,7 @@ impl Graph {
         tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
         Ok(query
-            .all(&self.connection(tx.as_ref()))
+            .all(&self.connection(&tx))
             .await?
             .drain(0..)
             .map(|sbom| (self, sbom).into())
@@ -133,7 +133,7 @@ impl Graph {
     ) -> Result<Option<SbomContext>, Error> {
         let query = entity::sbom::Entity::find_by_id(id);
         Ok(entity::sbom::Entity::find_by_id(id)
-            .one(&self.connection(tx.as_ref()))
+            .one(&self.connection(&tx))
             .await?
             .map(|sbom| (self, sbom).into()))
     }
@@ -195,7 +195,7 @@ impl Graph {
         purl: Purl,
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
-        let package = self.get_qualified_package(purl, tx.as_ref()).await?;
+        let package = self.get_qualified_package(purl, &tx).await?;
 
         if let Some(package) = package {
             self.locate_one_sbom(
@@ -208,7 +208,7 @@ impl Graph {
                         entity::sbom_describes_package::Column::QualifiedPackageId
                             .eq(package.qualified_package.id),
                     ),
-                tx.as_ref(),
+                &tx,
             )
             .await
         } else {
@@ -221,7 +221,7 @@ impl Graph {
         purl: Purl,
         tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
-        let package = self.get_qualified_package(purl, tx.as_ref()).await?;
+        let package = self.get_qualified_package(purl, &tx).await?;
 
         if let Some(package) = package {
             self.locate_many_sboms(
@@ -234,7 +234,7 @@ impl Graph {
                         entity::sbom_describes_package::Column::QualifiedPackageId
                             .eq(package.qualified_package.id),
                     ),
-                tx.as_ref(),
+                &tx,
             )
             .await
         } else {
@@ -247,7 +247,7 @@ impl Graph {
         cpe: &Cpe22,
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
-        if let Some(cpe) = self.get_cpe22(cpe.clone(), tx.as_ref()).await? {
+        if let Some(cpe) = self.get_cpe22(cpe.clone(), &tx).await? {
             self.locate_one_sbom(
                 entity::sbom::Entity::find()
                     .join(
@@ -255,7 +255,7 @@ impl Graph {
                         entity::sbom_describes_cpe22::Relation::Sbom.def().rev(),
                     )
                     .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(cpe.cpe22.id)),
-                tx.as_ref(),
+                &tx,
             )
             .await
         } else {
@@ -268,7 +268,7 @@ impl Graph {
         cpe: C,
         tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
-        if let Some(found) = self.get_cpe22(cpe, tx.as_ref()).await? {
+        if let Some(found) = self.get_cpe22(cpe, &tx).await? {
             self.locate_many_sboms(
                 entity::sbom::Entity::find()
                     .join(
@@ -276,7 +276,7 @@ impl Graph {
                         entity::sbom_describes_cpe22::Relation::Sbom.def().rev(),
                     )
                     .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(found.cpe22.id)),
-                tx.as_ref(),
+                &tx,
             )
             .await
         } else {
@@ -318,12 +318,12 @@ impl SbomContext {
         cpe: C,
         tx: TX,
     ) -> Result<(), Error> {
-        let cpe = self.graph.ingest_cpe22(cpe, tx.as_ref()).await?;
+        let cpe = self.graph.ingest_cpe22(cpe, &tx).await?;
 
         let fetch = entity::sbom_describes_cpe22::Entity::find()
             .filter(entity::sbom_describes_cpe22::Column::SbomId.eq(self.sbom.id))
             .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(cpe.cpe22.id))
-            .one(&self.graph.connection(tx.as_ref()))
+            .one(&self.graph.connection(&tx))
             .await?;
 
         if fetch.is_none() {
@@ -332,7 +332,7 @@ impl SbomContext {
                 cpe22_id: Set(cpe.cpe22.id),
             };
 
-            model.insert(&self.graph.connection(tx.as_ref())).await?;
+            model.insert(&self.graph.connection(&tx)).await?;
         }
         Ok(())
     }
@@ -347,21 +347,18 @@ impl SbomContext {
                 Condition::all()
                     .add(entity::sbom_describes_package::Column::SbomId.eq(self.sbom.id)),
             )
-            .one(&self.graph.connection(tx.as_ref()))
+            .one(&self.graph.connection(&tx))
             .await?;
 
         if fetch.is_none() {
-            let package = self
-                .graph
-                .ingest_qualified_package(purl, tx.as_ref())
-                .await?;
+            let package = self.graph.ingest_qualified_package(purl, &tx).await?;
 
             let model = entity::sbom_describes_package::ActiveModel {
                 sbom_id: Set(self.sbom.id),
                 qualified_package_id: Set(package.qualified_package.id),
             };
 
-            model.insert(&self.graph.connection(tx.as_ref())).await?;
+            model.insert(&self.graph.connection(&tx)).await?;
         }
         Ok(())
     }
@@ -409,12 +406,12 @@ impl SbomContext {
     ) -> Result<(), Error> {
         let left_package = self
             .graph
-            .ingest_qualified_package(left_package_input.clone(), tx.as_ref())
+            .ingest_qualified_package(left_package_input.clone(), &tx)
             .await;
 
         let right_package = self
             .graph
-            .ingest_qualified_package(right_package_input.clone(), tx.as_ref())
+            .ingest_qualified_package(right_package_input.clone(), &tx)
             .await;
 
         match (&left_package, &right_package) {
@@ -432,7 +429,7 @@ impl SbomContext {
                         entity::package_relates_to_package::Column::RightPackageId
                             .eq(right_package.qualified_package.id),
                     )
-                    .one(&self.graph.connection(tx.as_ref()))
+                    .one(&self.graph.connection(&tx))
                     .await?
                     .is_none()
                 {
@@ -443,7 +440,7 @@ impl SbomContext {
                         sbom_id: Set(self.sbom.id),
                     };
 
-                    entity.insert(&self.graph.connection(tx.as_ref())).await?;
+                    entity.insert(&self.graph.connection(&tx)).await?;
                 }
             }
             (Err(_), Err(_)) => {
@@ -476,7 +473,7 @@ impl SbomContext {
         pkg: Purl,
         tx: TX,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        let pkg = self.graph.get_qualified_package(pkg, tx.as_ref()).await?;
+        let pkg = self.graph.get_qualified_package(pkg, &tx).await?;
 
         if let Some(pkg) = pkg {
             #[derive(Debug, FromQueryResult)]
@@ -499,7 +496,7 @@ impl SbomContext {
                             QualifiedPackageTransitive,
                         )
                         .to_owned(),
-                    tx.as_ref(),
+                    &tx,
                 )
                 .await?)
         } else {
@@ -513,7 +510,7 @@ impl SbomContext {
         pkg: Purl,
         tx: TX,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        let pkg = self.graph.get_qualified_package(pkg, tx.as_ref()).await?;
+        let pkg = self.graph.get_qualified_package(pkg, &tx).await?;
 
         if let Some(pkg) = pkg {
             #[derive(Debug, FromQueryResult)]
@@ -548,7 +545,7 @@ impl SbomContext {
                             QualifiedPackageTransitive,
                         )
                         .to_owned(),
-                    tx.as_ref(),
+                    &tx,
                 )
                 .await?)
         } else {
@@ -562,7 +559,7 @@ impl SbomContext {
         pkg: Purl,
         tx: TX,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        let pkg = self.graph.get_qualified_package(pkg, tx.as_ref()).await?;
+        let pkg = self.graph.get_qualified_package(pkg, &tx).await?;
 
         if let Some(pkg) = pkg {
             let related_query = entity::package_relates_to_package::Entity::find()
@@ -579,7 +576,7 @@ impl SbomContext {
             let mut found = entity::qualified_package::Entity::find()
                 .filter(entity::qualified_package::Column::Id.in_subquery(related_query))
                 .find_with_related(entity::package_qualifier::Entity)
-                .all(&self.graph.connection(tx.as_ref()))
+                .all(&self.graph.connection(&tx))
                 .await?;
 
             let mut related = Vec::new();
@@ -587,12 +584,12 @@ impl SbomContext {
             for (base, qualifiers) in found.drain(0..) {
                 if let Some(package_version) =
                     entity::package_version::Entity::find_by_id(base.package_version_id)
-                        .one(&self.graph.connection(tx.as_ref()))
+                        .one(&self.graph.connection(&tx))
                         .await?
                 {
                     if let Some(package) =
                         entity::package::Entity::find_by_id(package_version.package_id)
-                            .one(&self.graph.connection(tx.as_ref()))
+                            .one(&self.graph.connection(&tx))
                             .await?
                     {
                         let package = (&self.graph, package).into();
@@ -619,7 +616,7 @@ impl SbomContext {
         &self,
         tx: TX,
     ) -> Result<HashMap<QualifiedPackageContext, PackageVulnerabilityAssertions>, Error> {
-        let described_packages = self.describes_packages(tx.as_ref()).await?;
+        let described_packages = self.describes_packages(&tx).await?;
         let mut applicable = HashSet::new();
 
         for pkg in described_packages {
@@ -636,12 +633,9 @@ impl SbomContext {
         let mut assertions = HashMap::new();
 
         for pkg in applicable {
-            let package_assertions = pkg.vulnerability_assertions(tx.as_ref()).await?;
+            let package_assertions = pkg.vulnerability_assertions(&tx).await?;
             if !package_assertions.assertions.is_empty() {
-                assertions.insert(
-                    pkg.clone(),
-                    pkg.vulnerability_assertions(tx.as_ref()).await?,
-                );
+                assertions.insert(pkg.clone(), pkg.vulnerability_assertions(&tx).await?);
             }
         }
 
