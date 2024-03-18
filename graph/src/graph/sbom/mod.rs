@@ -993,7 +993,7 @@ mod tests {
             .await?;
 
         let advisory_vulnerability = advisory
-            .ingest_vulnerability("CVE-00000001", Transactional::None)
+            .link_to_vulnerability("CVE-00000001", Transactional::None)
             .await?;
 
         advisory_vulnerability

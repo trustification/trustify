@@ -58,7 +58,7 @@ impl<'g> CveLoader<'g> {
 
         // Link the advisory to the backing vulnerability
         advisory
-            .ingest_vulnerability(cve.cve_metadata.cve_id(), &tx)
+            .link_to_vulnerability(cve.cve_metadata.cve_id(), &tx)
             .await?;
 
         tx.commit().await?;

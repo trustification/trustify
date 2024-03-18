@@ -1,8 +1,10 @@
 use std::io::Read;
+use std::str::FromStr;
+use trustify_common::purl::Purl;
 
 use trustify_graph::graph::Graph;
 
-use crate::advisory::osv::schema::Vulnerability;
+use crate::advisory::osv::schema::{Event, Package, Vulnerability};
 use crate::hashing::HashingRead;
 use crate::Error;
 
@@ -41,7 +43,43 @@ impl<'g> OsvLoader<'g> {
                 .await?;
 
             for cve_id in cve_ids {
-                advisory.ingest_vulnerability(cve_id, &tx).await?;
+                let advisory_vuln = advisory.link_to_vulnerability(cve_id, &tx).await?;
+
+                for affected in &osv.affected {
+                    if let Some(package) = &affected.package {
+                        match package {
+                            Package::Named { .. } => {
+                                todo!()
+                            }
+                            Package::Purl { purl } => {
+                                if let Ok(purl) = Purl::from_str(&purl) {
+                                    for range in affected.ranges.iter().flatten() {
+                                        let parsed_range = events_to_range(&range.events);
+                                        if let (Some(start), Some(end)) = &parsed_range {
+                                            advisory_vuln
+                                                .ingest_affected_package_range(
+                                                    purl.clone(),
+                                                    &start,
+                                                    &end,
+                                                    &tx,
+                                                )
+                                                .await?;
+                                        }
+
+                                        if let (_, Some(fixed)) = &parsed_range {
+                                            let mut fixed_purl = purl.clone();
+                                            fixed_purl.version = Some(fixed.clone());
+
+                                            advisory_vuln
+                                                .ingest_fixed_package_version(fixed_purl, &tx)
+                                                .await?;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -51,6 +89,26 @@ impl<'g> OsvLoader<'g> {
     }
 }
 
+fn events_to_range(events: &Vec<Event>) -> (Option<String>, Option<String>) {
+    let start = events.iter().find_map(|e| {
+        if let Event::Introduced(version) = e {
+            Some(version.clone())
+        } else {
+            None
+        }
+    });
+
+    let end = events.iter().find_map(|e| {
+        if let Event::Fixed(version) = e {
+            Some(version.clone())
+        } else {
+            None
+        }
+    });
+
+    (start, end)
+}
+
 #[cfg(test)]
 mod test {
     use std::fs::File;
@@ -58,6 +116,7 @@ mod test {
     use std::str::FromStr;
 
     use test_log::test;
+    use trustify_common::advisory::Assertion;
 
     use trustify_common::db::{Database, Transactional};
     use trustify_graph::graph::Graph;
@@ -111,6 +170,43 @@ mod test {
 
         assert!(loaded_advisory.is_some());
 
+        let loaded_advisory = loaded_advisory.unwrap();
+
+        let affected_assertions = loaded_advisory.affected_assertions(()).await?;
+
+        assert_eq!(1, affected_assertions.assertions.len());
+
+        let affected_assertion = affected_assertions.assertions.get("pkg://cargo/hyper");
+        assert!(affected_assertion.is_some());
+
+        let affected_assertion = &affected_assertion.unwrap()[0];
+
+        assert!(
+            matches!( affected_assertion, Assertion::Affected {vulnerability,start_version,end_version}
+                if start_version == "0.0.0-0"
+                && end_version == "0.14.10"
+                && vulnerability == "CVE-2021-32714"
+            )
+        );
+
+        let fixed_assertions = loaded_advisory.fixed_assertions(()).await?;
+
+        assert_eq!(1, fixed_assertions.assertions.len());
+
+        let fixed_assertion = fixed_assertions.assertions.get("pkg://cargo/hyper");
+        assert!(fixed_assertion.is_some());
+
+        let fixed_assertion = fixed_assertion.unwrap();
+        assert_eq!(1, fixed_assertion.len());
+
+        let fixed_assertion = &fixed_assertion[0];
+
+        assert!(
+            matches!( fixed_assertion, Assertion::Fixed{vulnerability ,version }
+                if version == "0.14.10"
+                && vulnerability == "CVE-2021-32714"
+            )
+        );
         Ok(())
     }
 }

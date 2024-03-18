@@ -32,7 +32,7 @@ impl<'g> AdvisoryContext<'g> {
 
             //let v = graph.ingest_vulnerability(id).await?;
             let advisory_vulnerability = advisory
-                .ingest_vulnerability(id, Transactional::None)
+                .link_to_vulnerability(id, Transactional::None)
                 .await?;
 
             if let Some(ps) = &vuln.product_status {
