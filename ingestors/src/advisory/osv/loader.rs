@@ -52,15 +52,15 @@ impl<'g> OsvLoader<'g> {
                                 todo!()
                             }
                             Package::Purl { purl } => {
-                                if let Ok(purl) = Purl::from_str(&purl) {
+                                if let Ok(purl) = Purl::from_str(purl) {
                                     for range in affected.ranges.iter().flatten() {
                                         let parsed_range = events_to_range(&range.events);
                                         if let (Some(start), Some(end)) = &parsed_range {
                                             advisory_vuln
                                                 .ingest_affected_package_range(
                                                     purl.clone(),
-                                                    &start,
-                                                    &end,
+                                                    start,
+                                                    end,
                                                     &tx,
                                                 )
                                                 .await?;
@@ -89,7 +89,7 @@ impl<'g> OsvLoader<'g> {
     }
 }
 
-fn events_to_range(events: &Vec<Event>) -> (Option<String>, Option<String>) {
+fn events_to_range(events: &[Event]) -> (Option<String>, Option<String>) {
     let start = events.iter().find_map(|e| {
         if let Event::Introduced(version) = e {
             Some(version.clone())
