@@ -70,8 +70,11 @@ impl Graph {
         Ok(Transactional::Some(self.db.begin().await?))
     }
 
-    pub(crate) fn connection<'db>(&'db self, tx: &'db Transactional) -> ConnectionOrTransaction {
-        match tx {
+    pub(crate) fn connection<'db, TX: AsRef<Transactional>>(
+        &'db self,
+        tx: &'db TX,
+    ) -> ConnectionOrTransaction {
+        match tx.as_ref() {
             Transactional::None => ConnectionOrTransaction::Connection(&self.db),
             Transactional::Some(tx) => ConnectionOrTransaction::Transaction(tx),
         }

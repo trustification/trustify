@@ -36,18 +36,13 @@ impl Graph {
         purl: Purl,
         tx: TX,
     ) -> Result<QualifiedPackageContext, Error> {
-        if let Some(found) = self
-            .get_qualified_package(purl.clone(), tx.as_ref())
-            .await?
-        {
+        if let Some(found) = self.get_qualified_package(purl.clone(), &tx).await? {
             return Ok(found);
         }
 
-        let package_version = self
-            .ingest_package_version(purl.clone(), tx.as_ref())
-            .await?;
+        let package_version = self.ingest_package_version(purl.clone(), &tx).await?;
 
-        package_version.ingest_qualified_package(purl, tx).await
+        package_version.ingest_qualified_package(purl, &tx).await
     }
 
     /// Ensure the graph knows about and contains a record for a *versioned* package.
@@ -58,14 +53,12 @@ impl Graph {
         pkg: Purl,
         tx: TX,
     ) -> Result<PackageVersionContext, Error> {
-        if let Some(found) = self.get_package_version(pkg.clone(), tx.as_ref()).await? {
+        if let Some(found) = self.get_package_version(pkg.clone(), &tx).await? {
             return Ok(found);
         }
-        let package = self.ingest_package(pkg.clone(), tx.as_ref()).await?;
+        let package = self.ingest_package(pkg.clone(), &tx).await?;
 
-        package
-            .ingest_package_version(pkg.clone(), tx.as_ref())
-            .await
+        package.ingest_package_version(pkg.clone(), &tx).await
     }
 
     /// Ensure the graph knows about and contains a record for a *versioned range* of a package.
@@ -78,10 +71,10 @@ impl Graph {
         end: &str,
         tx: TX,
     ) -> Result<PackageVersionRangeContext, Error> {
-        let package = self.ingest_package(pkg.clone(), tx.as_ref()).await?;
+        let package = self.ingest_package(pkg.clone(), &tx).await?;
 
         package
-            .ingest_package_version_range(pkg.clone(), start, end, tx.as_ref())
+            .ingest_package_version_range(pkg.clone(), start, end, &tx)
             .await
     }
 
@@ -93,7 +86,7 @@ impl Graph {
         purl: Purl,
         tx: TX,
     ) -> Result<PackageContext, Error> {
-        if let Some(found) = self.get_package(purl.clone(), tx.as_ref()).await? {
+        if let Some(found) = self.get_package(purl.clone(), &tx).await? {
             Ok(found)
         } else {
             let model = entity::package::ActiveModel {
@@ -103,7 +96,7 @@ impl Graph {
                 name: Set(purl.name.clone()),
             };
 
-            Ok((self, model.insert(&self.connection(tx.as_ref())).await?).into())
+            Ok((self, model.insert(&self.connection(&tx)).await?).into())
         }
     }
 
@@ -115,10 +108,8 @@ impl Graph {
         purl: Purl,
         tx: TX,
     ) -> Result<Option<QualifiedPackageContext>, Error> {
-        if let Some(package_version) = self.get_package_version(purl.clone(), tx.as_ref()).await? {
-            package_version
-                .get_qualified_package(purl, tx.as_ref())
-                .await
+        if let Some(package_version) = self.get_package_version(purl.clone(), &tx).await? {
+            package_version.get_qualified_package(purl, &tx).await
         } else {
             Ok(None)
         }
@@ -131,7 +122,7 @@ impl Graph {
     ) -> Result<Option<QualifiedPackageContext>, Error> {
         let mut found = entity::qualified_package::Entity::find_by_id(id)
             .find_with_related(entity::package_qualifier::Entity)
-            .all(&self.connection(tx.as_ref()))
+            .all(&self.connection(&tx))
             .await?;
 
         if !found.is_empty() {
@@ -165,14 +156,14 @@ impl Graph {
         let mut found = entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::Id.in_subquery(query))
             .find_with_related(entity::package_qualifier::Entity)
-            .all(&self.connection(tx.as_ref()))
+            .all(&self.connection(&tx))
             .await?;
 
         let mut package_versions = Vec::new();
 
         for (base, qualifiers) in &found {
             if let Some(package_version) = self
-                .get_package_version_by_id(base.package_version_id, tx.as_ref())
+                .get_package_version_by_id(base.package_version_id, &tx)
                 .await?
             {
                 let qualifiers = qualifiers
@@ -196,8 +187,8 @@ impl Graph {
         purl: Purl,
         tx: TX,
     ) -> Result<Option<PackageVersionContext<'_>>, Error> {
-        if let Some(pkg) = self.get_package(purl.clone(), tx.as_ref()).await? {
-            pkg.get_package_version(purl, tx.as_ref()).await
+        if let Some(pkg) = self.get_package(purl.clone(), &tx).await? {
+            pkg.get_package_version(purl, &tx).await
         } else {
             Ok(None)
         }
@@ -209,11 +200,11 @@ impl Graph {
         tx: TX,
     ) -> Result<Option<PackageVersionContext>, Error> {
         if let Some(package_version) = entity::package_version::Entity::find_by_id(id)
-            .one(&self.connection(tx.as_ref()))
+            .one(&self.connection(&tx))
             .await?
         {
             if let Some(package) = self
-                .get_package_by_id(package_version.package_id, tx.as_ref())
+                .get_package_by_id(package_version.package_id, &tx)
                 .await?
             {
                 Ok(Some((&package, package_version).into()))
@@ -235,9 +226,8 @@ impl Graph {
         end: &str,
         tx: TX,
     ) -> Result<Option<PackageVersionRangeContext>, Error> {
-        if let Some(pkg) = self.get_package(purl.clone(), tx.as_ref()).await? {
-            pkg.get_package_version_range(purl, start, end, tx.as_ref())
-                .await
+        if let Some(pkg) = self.get_package(purl.clone(), &tx).await? {
+            pkg.get_package_version_range(purl, start, end, &tx).await
         } else {
             Ok(None)
         }
@@ -259,7 +249,7 @@ impl Graph {
                 entity::package::Column::Namespace.is_null()
             })
             .filter(entity::package::Column::Name.eq(purl.name.clone()))
-            .one(&self.connection(tx.as_ref()))
+            .one(&self.connection(&tx))
             .await?
             .map(|package| (self, package).into()))
     }
@@ -270,7 +260,7 @@ impl Graph {
         tx: TX,
     ) -> Result<Option<PackageContext>, Error> {
         if let Some(found) = entity::package::Entity::find_by_id(id)
-            .one(&self.connection(tx.as_ref()))
+            .one(&self.connection(&tx))
             .await?
         {
             Ok(Some((self, found).into()))
@@ -309,7 +299,7 @@ impl<'g> PackageContext<'g> {
         tx: TX,
     ) -> Result<PackageVersionRangeContext<'g>, Error> {
         if let Some(found) = self
-            .get_package_version_range(purl, start, end, tx.as_ref())
+            .get_package_version_range(purl, start, end, &tx)
             .await?
         {
             Ok(found)
@@ -321,11 +311,7 @@ impl<'g> PackageContext<'g> {
                 end: Set(end.to_string()),
             };
 
-            Ok((
-                self,
-                entity.insert(&self.graph.connection(tx.as_ref())).await?,
-            )
-                .into())
+            Ok((self, entity.insert(&self.graph.connection(&tx)).await?).into())
         }
     }
 
@@ -343,7 +329,7 @@ impl<'g> PackageContext<'g> {
             .filter(entity::package_version_range::Column::PackageId.eq(self.package.id))
             .filter(entity::package_version_range::Column::Start.eq(start.to_string()))
             .filter(entity::package_version_range::Column::End.eq(end.to_string()))
-            .one(&self.graph.connection(tx.as_ref()))
+            .one(&self.graph.connection(&tx))
             .await?
             .map(|package_version_range| (self, package_version_range).into()))
     }
@@ -355,7 +341,7 @@ impl<'g> PackageContext<'g> {
         tx: TX,
     ) -> Result<PackageVersionContext<'g>, Error> {
         if let Some(version) = &purl.version {
-            if let Some(found) = self.get_package_version(purl.clone(), tx.as_ref()).await? {
+            if let Some(found) = self.get_package_version(purl.clone(), &tx).await? {
                 Ok(found)
             } else {
                 let model = entity::package_version::ActiveModel {
@@ -364,11 +350,7 @@ impl<'g> PackageContext<'g> {
                     version: Set(version.clone()),
                 };
 
-                Ok((
-                    self,
-                    model.insert(&self.graph.connection(tx.as_ref())).await?,
-                )
-                    .into())
+                Ok((self, model.insert(&self.graph.connection(&tx)).await?).into())
             }
         } else {
             Err(Error::Purl(PurlErr::MissingVersion(purl.to_string())))
@@ -390,7 +372,7 @@ impl<'g> PackageContext<'g> {
             )
             .filter(entity::package::Column::Id.eq(self.package.id))
             .filter(entity::package_version::Column::Version.eq(purl.version.clone()))
-            .one(&self.graph.connection(tx.as_ref()))
+            .one(&self.graph.connection(&tx))
             .await?
         {
             Ok(Some((self, package_version).into()))
@@ -408,7 +390,7 @@ impl<'g> PackageContext<'g> {
     ) -> Result<Vec<PackageVersionContext>, Error> {
         Ok(entity::package_version::Entity::find()
             .filter(entity::package_version::Column::PackageId.eq(self.package.id))
-            .all(&self.graph.connection(tx.as_ref()))
+            .all(&self.graph.connection(&tx))
             .await?
             .drain(0..)
             .map(|each| (self, each).into())
@@ -420,7 +402,7 @@ impl<'g> PackageContext<'g> {
         paginated: Paginated,
         tx: TX,
     ) -> Result<PaginatedResults<PackageVersionContext>, Error> {
-        let connection = self.graph.connection(tx.as_ref());
+        let connection = self.graph.connection(&tx);
 
         let pagination = entity::package_version::Entity::find()
             .filter(entity::package_version::Column::PackageId.eq(self.package.id))
@@ -466,9 +448,9 @@ impl<'g> PackageContext<'g> {
         &self,
         tx: TX,
     ) -> Result<PackageVulnerabilityAssertions, Error> {
-        let affected = self.affected_assertions(tx.as_ref()).await?;
+        let affected = self.affected_assertions(&tx).await?;
 
-        let not_affected = self.not_affected_assertions(tx.as_ref()).await?;
+        let not_affected = self.not_affected_assertions(&tx).await?;
 
         let mut merged = PackageVulnerabilityAssertions::default();
 
@@ -520,7 +502,7 @@ impl<'g> PackageContext<'g> {
             )
             .filter(entity::package::Column::Id.eq(self.package.id))
             .into_model::<AffectedVersion>()
-            .all(&self.graph.connection(tx.as_ref()))
+            .all(&self.graph.connection(&tx))
             .await?;
 
         let mut assertions = PackageVulnerabilityAssertions::default();
@@ -575,7 +557,7 @@ impl<'g> PackageContext<'g> {
             )
             .filter(entity::package_version::Column::PackageId.eq(self.package.id))
             .into_model::<NotAffectedVersion>()
-            .all(&self.graph.connection(tx.as_ref()))
+            .all(&self.graph.connection(&tx))
             .await?;
 
         let mut assertions = PackageVulnerabilityAssertions::default();
@@ -629,7 +611,7 @@ impl<'g> PackageContext<'g> {
                         .to_owned(),
                 ),
             )
-            .all(&self.graph.connection(tx.as_ref()))
+            .all(&self.graph.connection(&tx))
             .await?;
 
         Ok(advisories
