@@ -51,8 +51,14 @@ impl<'g> CveLoader<'g> {
         let hashes = reader.hashes();
         let sha256 = hex::encode(hashes.sha256.as_ref());
 
-        self.graph
+        let advisory = self
+            .graph
             .ingest_advisory(cve.cve_metadata.cve_id(), location, sha256, &tx)
+            .await?;
+
+        // Link the advisory to the backing vulnerability
+        advisory
+            .ingest_vulnerability(cve.cve_metadata.cve_id(), &tx)
             .await?;
 
         tx.commit().await?;

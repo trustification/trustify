@@ -32,22 +32,17 @@ impl<'g> OsvLoader<'g> {
                 .cloned()
                 .collect::<Vec<_>>()
         }) {
-            for cve_id in cve_ids {
-                println!("INGEST VULN {}", cve_id);
-                let vuln = self.graph.ingest_vulnerability(cve_id, &tx).await?;
-
-                vuln.set_title(osv.summary.clone(), &tx).await?;
-                if let Some(details) = &osv.details {
-                    vuln.add_description("en", details, &tx).await?
-                }
-            }
-
             let hashes = reader.hashes();
             let sha256 = hex::encode(hashes.sha256.as_ref());
 
-            self.graph
+            let advisory = self
+                .graph
                 .ingest_advisory(osv.id, location, sha256, &tx)
                 .await?;
+
+            for cve_id in cve_ids {
+                advisory.ingest_vulnerability(cve_id, &tx).await?;
+            }
         }
 
         tx.commit().await?;
