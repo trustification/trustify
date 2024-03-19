@@ -6,10 +6,10 @@ use sea_orm::{
 };
 use sea_query::{Alias, Expr, SimpleExpr};
 use time::OffsetDateTime;
-use trustify_common::model::{Paginated, PaginatedResults, Revisioned};
 use trustify_common::{
-    db::{Database, DatabaseErrors},
+    db::{limiter::LimiterTrait, Database, DatabaseErrors},
     error::ErrorInformation,
+    model::{Paginated, PaginatedResults, Revisioned},
 };
 use trustify_entity::{importer, importer_report};
 use uuid::Uuid;
@@ -263,18 +263,19 @@ impl ImporterService {
         name: &str,
         paginated: Paginated,
     ) -> Result<PaginatedResults<ImporterReport>, Error> {
-        let pagination = importer_report::Entity::find()
+        let limiting = importer_report::Entity::find()
             .filter(importer_report::Column::Importer.eq(name))
             .order_by_desc(importer_report::Column::Creation)
-            .paginate(&self.db, paginated.page_size.get());
+            .limiting(&self.db, paginated.offset, paginated.limit);
 
-        let result = pagination
-            .fetch_page(paginated.page)
-            .await?
-            .into_iter()
-            .map(ImporterReport::from)
-            .collect();
-
-        Ok(PaginatedResults::new(paginated, result, &pagination).await?)
+        Ok(PaginatedResults {
+            total: limiting.total().await?,
+            items: limiting
+                .fetch()
+                .await?
+                .into_iter()
+                .map(ImporterReport::from)
+                .collect(),
+        })
     }
 }

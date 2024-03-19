@@ -14,10 +14,12 @@ use sea_orm::{ItemsAndPagesNumber, RelationTrait};
 use sea_query::{JoinType, SelectStatement, UnionType};
 use std::borrow::Borrow;
 use std::fmt::{Debug, Formatter};
-use trustify_common::db::Transactional;
-use trustify_common::model::{Paginated, PaginatedResults};
-use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
-use trustify_common::purl::{Purl, PurlErr};
+use trustify_common::{
+    db::{limiter::LimiterTrait, Transactional},
+    model::{Paginated, PaginatedResults},
+    package::{Assertion, Claimant, PackageVulnerabilityAssertions},
+    purl::{Purl, PurlErr},
+};
 use trustify_entity as entity;
 
 pub mod package_version;
@@ -404,21 +406,19 @@ impl<'g> PackageContext<'g> {
     ) -> Result<PaginatedResults<PackageVersionContext>, Error> {
         let connection = self.graph.connection(&tx);
 
-        let pagination = entity::package_version::Entity::find()
+        let limiter = entity::package_version::Entity::find()
             .filter(entity::package_version::Column::PackageId.eq(self.package.id))
-            .paginate(&connection, paginated.page_size.get());
+            .limiting(&connection, paginated.limit, paginated.offset);
 
-        Ok(PaginatedResults::new(
-            paginated,
-            pagination
-                .fetch_page(paginated.page)
+        Ok(PaginatedResults {
+            total: limiter.total().await?,
+            items: limiter
+                .fetch()
                 .await?
                 .drain(0..)
                 .map(|each| (self, each).into())
                 .collect(),
-            &pagination,
-        )
-        .await?)
+        })
     }
 
     /// Retrieve the aggregate vulnerability assertions for this base package.
@@ -711,9 +711,10 @@ mod tests {
         let db = Database::for_test("get_versions_paginated").await?;
         let system = Graph::new(db);
 
+        const TOTAL_ITEMS: u64 = 200;
         let page_size = NonZeroU64::new(50).unwrap();
 
-        for v in 0..200 {
+        for v in 0..TOTAL_ITEMS {
             let version = format!("pkg://maven/io.quarkus/quarkus-core@{v}").try_into()?;
 
             let _ = system
@@ -731,27 +732,33 @@ mod tests {
 
         let all_versions = pkg.get_versions(Transactional::None).await?;
 
-        assert_eq!(200, all_versions.len());
+        assert_eq!(TOTAL_ITEMS, all_versions.len() as u64);
 
         let paginated = pkg
-            .get_versions_paginated(Paginated { page_size, page: 0 }, Transactional::None)
+            .get_versions_paginated(
+                Paginated {
+                    offset: 50,
+                    limit: 50,
+                },
+                Transactional::None,
+            )
             .await?;
 
-        assert!(paginated.previous_page.is_none());
-        assert_eq!(paginated.next_page, Some(Paginated { page_size, page: 1 }));
-        assert_eq!(50, paginated.results.len());
+        assert_eq!(TOTAL_ITEMS, paginated.total);
+        assert_eq!(50, paginated.items.len());
 
         let next_paginated = pkg
-            .get_versions_paginated(paginated.next_page.unwrap(), Transactional::None)
+            .get_versions_paginated(
+                Paginated {
+                    offset: 100,
+                    limit: 50,
+                },
+                Transactional::None,
+            )
             .await?;
 
-        assert_eq!(
-            next_paginated.previous_page,
-            Some(Paginated { page_size, page: 0 })
-        );
-
-        assert!(next_paginated.next_page.is_some());
-        assert_eq!(50, paginated.results.len());
+        assert_eq!(TOTAL_ITEMS, paginated.total);
+        assert_eq!(50, paginated.items.len());
 
         Ok(())
     }
