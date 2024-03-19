@@ -1,3 +1,5 @@
+pub mod common;
+pub mod csaf;
 pub mod report;
 pub mod sbom;
 
@@ -36,7 +38,7 @@ impl Server {
                     continue;
                 }
 
-                log::info!("  {}: {:?}", importer.name, importer.data.configuration);
+                log::debug!("  {}: {:?}", importer.name, importer.data.configuration);
 
                 service.update_start(&importer.name, None).await?;
 
@@ -78,6 +80,7 @@ impl Server {
 
         match configuration {
             ImporterConfiguration::Sbom(sbom) => self.run_once_sbom(sbom, last_run).await,
+            ImporterConfiguration::Csaf(csaf) => self.run_once_csaf(csaf, last_run).await,
         }
     }
 }

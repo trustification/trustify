@@ -1,18 +1,18 @@
 use crate::server::{
+    csaf::storage::{StorageError, StorageVisitor},
     report::{Phase, ReportVisitor, Severity},
-    sbom::storage::{StorageError, StorageVisitor},
 };
 use async_trait::async_trait;
-use sbom_walker::{
+use csaf_walker::{
     retrieve::RetrievalError,
-    validation::{ValidatedSbom, ValidatedVisitor, ValidationContext, ValidationError},
+    validation::{ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError},
 };
 use walker_common::utils::url::Urlify;
 
-pub struct SbomReportVisitor(pub ReportVisitor<StorageVisitor>);
+pub struct CsafReportVisitor(pub ReportVisitor<StorageVisitor>);
 
 #[async_trait(?Send)]
-impl ValidatedVisitor for SbomReportVisitor {
+impl ValidatedVisitor for CsafReportVisitor {
     type Error = <StorageVisitor as ValidatedVisitor>::Error;
     type Context = <StorageVisitor as ValidatedVisitor>::Context;
 
@@ -23,16 +23,16 @@ impl ValidatedVisitor for SbomReportVisitor {
         self.0.next.visit_context(context).await
     }
 
-    async fn visit_sbom(
+    async fn visit_advisory(
         &self,
         context: &Self::Context,
-        result: Result<ValidatedSbom, ValidationError>,
+        result: Result<ValidatedAdvisory, ValidationError>,
     ) -> Result<(), Self::Error> {
         let file = result.url().to_string();
 
         self.0.report.lock().tick();
 
-        let result = self.0.next.visit_sbom(context, result).await;
+        let result = self.0.next.visit_advisory(context, result).await;
 
         if let Err(err) = &result {
             match err {

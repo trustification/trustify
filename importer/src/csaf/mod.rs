@@ -1,24 +1,24 @@
 use crate::progress::init_log_and_progress;
-use csaf::Csaf;
 use csaf_walker::{
     retrieve::RetrievingVisitor,
     source::{DispatchSource, FileSource, HttpSource},
-    validation::{ValidatedAdvisory, ValidationError, ValidationVisitor},
+    validation::ValidationVisitor,
     visitors::filter::{FilterConfig, FilteringVisitor},
     walker::Walker,
 };
-use sha2::{Digest, Sha256};
+use parking_lot::Mutex;
 use std::collections::HashSet;
 use std::process::ExitCode;
-use std::time::SystemTime;
-use time::{Date, Month, UtcOffset};
-use trustify_common::config::Database;
-use trustify_common::db;
+use std::sync::Arc;
+use trustify_common::{config::Database, db};
 use trustify_graph::graph::Graph;
-use trustify_ingestors as ingestors;
+use trustify_module_importer::server::{
+    common::validation,
+    csaf::storage,
+    report::{Report, ReportBuilder, ScannerError, SplitScannerError},
+};
 use url::Url;
-use walker_common::utils::hex::Hex;
-use walker_common::{fetcher::Fetcher, validate::ValidationOptions};
+use walker_common::{fetcher::Fetcher, progress::Progress};
 
 /// Import from a CSAF source
 #[derive(clap::Args, Debug)]
@@ -49,20 +49,27 @@ impl ImportCsafCommand {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
         let progress = init_log_and_progress()?;
 
+        log::info!("Ingesting CSAF");
+
+        let (report, result) = self.run_once(progress).await.split()?;
+
+        log::info!("Import report: {report:#?}");
+
+        result.map(|()| ExitCode::SUCCESS)
+    }
+
+    pub async fn run_once(self, progress: Progress) -> Result<Report, ScannerError> {
+        let report = Arc::new(Mutex::new(ReportBuilder::new()));
+
         let db = db::Database::with_external_config(&self.database, false).await?;
         let system = Graph::new(db);
-
-        //  because we still have GPG v3 signatures
-        let options = ValidationOptions::new().validation_date(SystemTime::from(
-            Date::from_calendar_date(2007, Month::January, 1)?
-                .midnight()
-                .assume_offset(UtcOffset::UTC),
-        ));
 
         let source: DispatchSource = match Url::parse(&self.source) {
             Ok(mut url) => {
                 if !self.full_source_url {
-                    url = url.join("/.well-known/csaf/provider-metadata.json")?;
+                    url = url
+                        .join("/.well-known/csaf/provider-metadata.json")
+                        .map_err(|err| ScannerError::Critical(err.into()))?;
                 }
                 log::info!("Provider metadata: {url}");
                 HttpSource::new(
@@ -75,31 +82,18 @@ impl ImportCsafCommand {
             Err(_) => FileSource::new(&self.source, None)?.into(),
         };
 
+        // storage (called by validator)
+
+        let visitor = storage::StorageVisitor {
+            system,
+            report: report.clone(),
+        };
+
         // validate (called by retriever)
 
-        let visitor =
-            ValidationVisitor::new(move |doc: Result<ValidatedAdvisory, ValidationError>| {
-                let system = system.clone();
-                async move {
-                    let doc = match doc {
-                        Ok(doc) => doc,
-                        Err(err) => {
-                            log::warn!("Ignore error: {err}");
-                            return Ok::<(), anyhow::Error>(());
-                        }
-                    };
-
-                    let url = doc.url.clone();
-                    log::debug!("processing: {url}");
-
-                    if let Err(err) = process(&system, doc).await {
-                        log::warn!("Failed to process {url}: {err}");
-                    }
-
-                    Ok(())
-                }
-            })
-            .with_options(options);
+        //  because we still have GPG v3 signatures
+        let options = validation::options(true)?;
+        let visitor = ValidationVisitor::new(visitor).with_options(options);
 
         // retrieve (called by filter)
 
@@ -122,24 +116,19 @@ impl ImportCsafCommand {
             });
         }
 
-        walker.walk_parallel(self.workers, visitor).await?;
+        walker
+            .walk_parallel(self.workers, visitor)
+            .await // if the walker fails, we record the outcome as part of the report, but skip any
+            // further processing, like storing the marker
+            .map_err(|err| ScannerError::Normal {
+                err: err.into(),
+                report: report.lock().clone().build(),
+            })?;
 
-        Ok(ExitCode::SUCCESS)
-    }
-}
-
-/// Process a single, validated advisory
-async fn process(system: &Graph, doc: ValidatedAdvisory) -> anyhow::Result<()> {
-    let csaf = serde_json::from_slice::<Csaf>(&doc.data)?;
-
-    let sha256 = match doc.sha256.clone() {
-        Some(sha) => sha.expected.clone(),
-        None => {
-            let digest = Sha256::digest(&doc.data);
-            Hex(&digest).to_lower()
+        Ok(match Arc::try_unwrap(report) {
+            Ok(report) => report.into_inner(),
+            Err(report) => report.lock().clone(),
         }
-    };
-
-    ingestors::advisory::csaf::ingest(system, csaf, &sha256, doc.url.as_str()).await?;
-    Ok(())
+        .build())
+    }
 }
