@@ -14,15 +14,12 @@ impl<'g> AdvisoryContext<'g> {
     pub async fn ingest_csaf(&self, csaf: Csaf) -> Result<(), Error> {
         let advisory = self.clone();
 
+        let tx = Transactional::Some(self.graph.db.begin().await?);
+
         // Ingest metadata
         let mut entity: entity::advisory::ActiveModel = self.advisory.clone().into();
         entity.title = Set(Some(csaf.document.title.clone().to_string()));
-        entity
-            .update(&self.graph.connection(&Transactional::None))
-            .await?;
-
-        // Ingest vulnerabilities
-        let txn = self.graph.db.begin().await?;
+        entity.update(&self.graph.connection(&tx)).await?;
 
         for vuln in csaf.vulnerabilities.iter().flatten() {
             let id = match &vuln.cve {
@@ -31,16 +28,14 @@ impl<'g> AdvisoryContext<'g> {
             };
 
             //let v = graph.ingest_vulnerability(id).await?;
-            let advisory_vulnerability = advisory
-                .link_to_vulnerability(id, Transactional::None)
-                .await?;
+            let advisory_vulnerability = advisory.link_to_vulnerability(id, &tx).await?;
 
             if let Some(ps) = &vuln.product_status {
                 for r in ps.fixed.iter().flatten() {
                     for purl in resolve_purls(&csaf, r) {
                         let package = Purl::from(purl.clone());
                         let x = advisory_vulnerability
-                            .ingest_fixed_package_version(package, Transactional::None)
+                            .ingest_fixed_package_version(package, &tx)
                             .await?;
                     }
                 }
@@ -48,7 +43,7 @@ impl<'g> AdvisoryContext<'g> {
                     for purl in resolve_purls(&csaf, r) {
                         let package = Purl::from(purl.clone());
                         let x = advisory_vulnerability
-                            .ingest_not_affected_package_version(package, Transactional::None)
+                            .ingest_not_affected_package_version(package, &tx)
                             .await?;
                     }
                 }
@@ -66,7 +61,7 @@ impl<'g> AdvisoryContext<'g> {
                 }
             }
         }
-        txn.commit();
+        tx.commit();
         Ok::<(), Error>(())
     }
 }
