@@ -6,6 +6,7 @@ members = [
   "common",
   "common/auth",
   "common/infrastructure",
+  "cvss",
   "modules/importer",
   "entity",
   "importer",
