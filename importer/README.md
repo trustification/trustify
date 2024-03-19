@@ -34,7 +34,7 @@ cargo run -p trustify-trustd -- importer csaf data/csaf
 ## Importing SBOMs
 
 ```bash
-cargo run -p trustify-trustd -- importer sbom https://access.redhat.com/security/data/sbom/beta/
+cargo run -p trustify-trustd -- importer sbom https://access.redhat.com/security/data/sbom/beta/  --key https://access.redhat.com/security/data/97f5eac4.txt#77E79ABE93673533ED09EBE2DCE3823597F5EAC4
 ```
 
 Or, using a locally cached version:
