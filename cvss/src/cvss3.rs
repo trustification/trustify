@@ -43,13 +43,13 @@ impl FromStr for Cvss3Base {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts = s.split('/').collect::<Vec<_>>();
-        if parts.len() == 9 && parts[0] == "CVSS:3.1" {
+        if parts.len() == 9 && parts[0].starts_with("CVSS:") {
             let minor_version = if parts[0] == "CVSS:3.1" {
                 1
             } else if parts[0].starts_with("CVSS:3") {
                 0
             } else {
-                return Err(Cvss3Error::MinorVersion);
+                return Err(Self::Err::MinorVersion);
             };
 
             let av = parts[1];
@@ -73,7 +73,7 @@ impl FromStr for Cvss3Base {
                 a: Availability::from_str(a)?,
             })
         } else {
-            Err(Cvss3Error::Invalid)
+            Err(Self::Err::Invalid)
         }
     }
 }
@@ -92,10 +92,10 @@ impl Display for AttackVector {
             f,
             "{}",
             match self {
-                AttackVector::Network => 'N',
-                AttackVector::Adjacent => 'A',
-                AttackVector::Local => 'L',
-                AttackVector::Physical => 'P',
+                Self::Network => 'N',
+                Self::Adjacent => 'A',
+                Self::Local => 'L',
+                Self::Physical => 'P',
             }
         )
     }
@@ -105,12 +105,15 @@ impl FromStr for AttackVector {
     type Err = Cvss3Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if ! s.starts_with("AV:") {
+            return Err(Self::Err::AttackVector)
+        }
         match s.chars().nth(3) {
             Some('N') => Ok(Self::Network),
             Some('A') => Ok(Self::Adjacent),
             Some('L') => Ok(Self::Local),
             Some('P') => Ok(Self::Physical),
-            _ => Err(Cvss3Error::AttackVector),
+            _ => Err(Self::Err::AttackVector),
         }
     }
 }
@@ -127,8 +130,8 @@ impl Display for AttackComplexity {
             f,
             "{}",
             match self {
-                AttackComplexity::Low => 'L',
-                AttackComplexity::High => 'H',
+                Self::Low => 'L',
+                Self::High => 'H',
             }
         )
     }
@@ -138,10 +141,13 @@ impl FromStr for AttackComplexity {
     type Err = Cvss3Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if ! s.starts_with("AC:") {
+            return Err(Self::Err::AttackComplexity)
+        }
         match s.chars().nth(3) {
             Some('L') => Ok(Self::Low),
             Some('H') => Ok(Self::High),
-            _ => Err(Cvss3Error::AttackComplexity),
+            _ => Err(Self::Err::AttackComplexity),
         }
     }
 }
@@ -159,9 +165,9 @@ impl Display for PrivilegesRequired {
             f,
             "{}",
             match self {
-                PrivilegesRequired::None => 'N',
-                PrivilegesRequired::Low => 'L',
-                PrivilegesRequired::High => 'H',
+                Self::None => 'N',
+                Self::Low => 'L',
+                Self::High => 'H',
             }
         )
     }
@@ -171,11 +177,14 @@ impl FromStr for PrivilegesRequired {
     type Err = Cvss3Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if ! s.starts_with("PR:") {
+            return Err(Self::Err::PrivilegesRequired)
+        }
         match s.chars().nth(3) {
             Some('N') => Ok(Self::None),
             Some('L') => Ok(Self::Low),
             Some('H') => Ok(Self::High),
-            _ => Err(Cvss3Error::PrivilegesRequired),
+            _ => Err(Self::Err::PrivilegesRequired),
         }
     }
 }
@@ -192,8 +201,8 @@ impl Display for UserInteraction {
             f,
             "{}",
             match self {
-                UserInteraction::None => 'N',
-                UserInteraction::Required => 'R',
+                Self::None => 'N',
+                Self::Required => 'R',
             }
         )
     }
@@ -203,10 +212,13 @@ impl FromStr for UserInteraction {
     type Err = Cvss3Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if ! s.starts_with("UI:") {
+            return Err(Self::Err::UserInteraction)
+        }
         match s.chars().nth(3) {
             Some('N') => Ok(Self::None),
             Some('R') => Ok(Self::Required),
-            _ => Err(Cvss3Error::UserInteraction),
+            _ => Err(Self::Err::UserInteraction),
         }
     }
 }
@@ -223,8 +235,8 @@ impl Display for Scope {
             f,
             "{}",
             match self {
-                Scope::Unchanged => 'U',
-                Scope::Changed => 'C',
+                Self::Unchanged => 'U',
+                Self::Changed => 'C',
             }
         )
     }
@@ -235,12 +247,12 @@ impl FromStr for Scope {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if !s.starts_with("S:") {
-            return Err(Cvss3Error::Scope);
+            return Err(Self::Err::Scope);
         }
         match s.chars().nth(2) {
             Some('U') => Ok(Self::Unchanged),
             Some('C') => Ok(Self::Changed),
-            _ => Err(Cvss3Error::Scope),
+            _ => Err(Self::Err::Scope),
         }
     }
 }
@@ -258,9 +270,9 @@ impl Display for Confidentiality {
             f,
             "{}",
             match self {
-                Confidentiality::None => 'N',
-                Confidentiality::Low => 'L',
-                Confidentiality::High => 'H',
+                Self::None => 'N',
+                Self::Low => 'L',
+                Self::High => 'H',
             }
         )
     }
@@ -271,13 +283,13 @@ impl FromStr for Confidentiality {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if !s.starts_with("C:") {
-            return Err(Cvss3Error::Confidentiality);
+            return Err(Self::Err::Confidentiality);
         }
         match s.chars().nth(2) {
             Some('N') => Ok(Self::None),
             Some('L') => Ok(Self::Low),
             Some('H') => Ok(Self::High),
-            _ => Err(Cvss3Error::Confidentiality),
+            _ => Err(Self::Err::Confidentiality),
         }
     }
 }
@@ -295,9 +307,9 @@ impl Display for Integrity {
             f,
             "{}",
             match self {
-                Integrity::None => 'N',
-                Integrity::Low => 'L',
-                Integrity::High => 'H',
+                Self::None => 'N',
+                Self::Low => 'L',
+                Self::High => 'H',
             }
         )
     }
@@ -308,13 +320,13 @@ impl FromStr for Integrity {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if !s.starts_with("I:") {
-            return Err(Cvss3Error::Integrity);
+            return Err(Self::Err::Integrity);
         }
         match s.chars().nth(2) {
             Some('N') => Ok(Self::Low),
             Some('L') => Ok(Self::Low),
             Some('H') => Ok(Self::High),
-            _ => Err(Cvss3Error::Integrity),
+            _ => Err(Self::Err::Integrity),
         }
     }
 }
@@ -332,9 +344,9 @@ impl Display for Availability {
             f,
             "{}",
             match self {
-                Availability::None => 'N',
-                Availability::Low => 'L',
-                Availability::High => 'H',
+                Self::None => 'N',
+                Self::Low => 'L',
+                Self::High => 'H',
             }
         )
     }
@@ -345,14 +357,14 @@ impl FromStr for Availability {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if !s.starts_with("A:") {
-            return Err(Cvss3Error::Availability);
+            return Err(Self::Err::Availability);
         }
 
         match s.chars().nth(2) {
             Some('N') => Ok(Self::Low),
             Some('L') => Ok(Self::Low),
             Some('H') => Ok(Self::High),
-            _ => Err(Cvss3Error::Availability),
+            _ => Err(Self::Err::Availability),
         }
     }
 }
