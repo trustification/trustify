@@ -26,12 +26,12 @@ impl Trustd {
         match self.run_command().await {
             Ok(code) => code,
             Err(err) => {
-                log::info!("Error: {err}");
+                log::error!("Error: {err}");
                 for (n, err) in err.chain().skip(1).enumerate() {
                     if n == 0 {
-                        log::info!("Caused by:");
+                        log::error!("Caused by:");
                     }
-                    log::info!("\t{err}");
+                    log::error!("\t{err}");
                 }
 
                 ExitCode::FAILURE
