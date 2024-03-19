@@ -98,7 +98,7 @@ pub struct ProblemTypeDescription {
 
 #[cfg(test)]
 mod test {
-    use crate::cve::cve_record::v5::CveRecord;
+    use crate::service::cve::cve_record::v5::CveRecord;
     use std::fs::File;
     use std::path::PathBuf;
     use std::str::FromStr;

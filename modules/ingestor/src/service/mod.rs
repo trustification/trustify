@@ -1,6 +1,5 @@
 pub mod advisory;
 pub mod cve;
-
 pub mod hashing;
 
 use sea_orm::error::DbErr;

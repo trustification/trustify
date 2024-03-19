@@ -9,6 +9,7 @@ use parking_lot::Mutex;
 use sha2::{Digest, Sha256};
 use std::sync::Arc;
 use trustify_graph::graph::Graph;
+use trustify_module_ingestor::service::advisory;
 use walker_common::utils::hex::Hex;
 
 #[derive(Debug, thiserror::Error)]
@@ -57,7 +58,7 @@ impl StorageVisitor {
             }
         };
 
-        trustify_ingestors::advisory::csaf::ingest(&self.system, csaf, &sha256, doc.url.as_str())
+        advisory::csaf::ingest(&self.system, csaf, &sha256, doc.url.as_str())
             .await
             .map_err(StorageError::Storage)?;
         Ok(())

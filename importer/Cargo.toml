@@ -8,7 +8,7 @@ trustify-graph = { path = "../graph" }
 trustify-entity = { path = "../entity" }
 trustify-migration = { path = "../migration" }
 trustify-common = { path = "../common" }
-trustify-ingestors = { path = "../ingestors" }
+trustify-module-ingestor = { path = "../modules/ingestor" }
 trustify-module-importer = { path = "../modules/importer" }
 
 anyhow = "1.0.72"

@@ -8,12 +8,11 @@ members = [
   "common/infrastructure",
   "cvss",
   "modules/importer",
+  "modules/ingestor",
   "entity",
   "importer",
-  "ingestors",
   "migration",
   "server",
-  "ingestors",
 ]
 
 [patch.crates-io]

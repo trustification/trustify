@@ -9,7 +9,7 @@ trustify-graph = { path = "../graph" }
 trustify-common = { path = "../common"}
 trustify-infrastructure = { path = "../common/infrastructure" }
 trustify-entity = { path = "../entity"}
-trustify-ingestors = { path = "../ingestors"}
+trustify-module-ingestor = { path = "../modules/ingestor" }
 trustify-module-importer = { path = "../modules/importer" }
 
 actix-web = "4"

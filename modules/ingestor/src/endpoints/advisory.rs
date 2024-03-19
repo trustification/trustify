@@ -1,21 +1,16 @@
-use actix_web::http::header::{ContentType, ORIGIN, REFERER};
+use crate::service::advisory;
 use actix_web::http::StatusCode;
-use actix_web::{http, post, web, HttpRequest, HttpResponse, Responder};
-use anyhow::anyhow;
+use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use csaf::Csaf;
-use std::fs;
-
-use crate::server::Error;
-use crate::AppState;
-
 use sha2::{Digest, Sha256};
-use trustify_ingestors as ingestors;
+use trustify_graph::endpoints::Error;
+use trustify_graph::graph::Graph;
 use walker_common::utils::hex::Hex;
 
 #[utoipa::path(responses((status = 200, description = "Upload a file")))]
 #[post("/advisories")]
 pub async fn upload_advisory(
-    state: web::Data<AppState>,
+    graph: web::Data<Graph>,
     req: HttpRequest,
     payload: web::Payload,
 ) -> Result<impl Responder, Error> {
@@ -28,16 +23,15 @@ pub async fn upload_advisory(
         status: StatusCode::BAD_REQUEST,
     })?;
 
-    let advisory_id =
-        ingestors::advisory::csaf::ingest(&state.system, csaf, &sha256, req.path()).await?;
+    let advisory_id = advisory::csaf::ingest(&graph, csaf, &sha256, req.path()).await?;
 
     Ok(HttpResponse::Created().json(advisory_id))
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::test_util::bootstrap_system;
-    use crate::{configure, AppState};
+    use super::super::configure;
+
     use actix_web::test::TestRequest;
     use actix_web::web::Data;
     use actix_web::{test, App};
@@ -47,13 +41,10 @@ mod tests {
     use std::sync::Arc;
     use trustify_common::db::Database;
     use trustify_graph::graph::Graph;
-    use url_escape::encode_component;
 
     #[actix_web::test]
     async fn upload_advisory() -> Result<(), anyhow::Error> {
-        let state = Arc::new(AppState {
-            system: Graph::new(Database::for_test("upload_advisory").await?),
-        });
+        let state = Arc::new(Graph::new(Database::for_test("upload_advisory").await?));
 
         let app = test::init_service(
             App::new()
