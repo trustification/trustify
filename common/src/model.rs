@@ -1,3 +1,4 @@
+use crate::db::limiter::Limiter;
 use sea_orm::{ConnectionTrait, DbErr, ItemsAndPagesNumber, SelectorTrait};
 use serde::{Serialize, Serializer};
 use std::num::NonZeroU64;
@@ -17,13 +18,19 @@ pub struct Revisioned<T> {
     pub revision: String,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Paginated {
-    #[serde(default = "default::page_size")]
-    pub page_size: NonZeroU64,
+    /// The first item to return, skipping all that come before it.
+    ///
+    /// NOTE: The order of items is defined by the API being called.
     #[serde(default)]
-    pub page: u64,
+    pub offset: u64,
+    /// The maximum number of entries to return.
+    ///
+    /// Zero means: no limit
+    #[serde(default)]
+    pub limit: u64,
 }
 
 mod default {
@@ -38,55 +45,23 @@ mod default {
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PaginatedResults<R> {
-    pub results: Vec<R>,
-    pub page: u64,
-    pub page_size: NonZeroU64,
-    pub number_of_items: u64,
-    pub number_of_pages: u64,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub previous_page: Option<Paginated>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub next_page: Option<Paginated>,
+    pub items: Vec<R>,
+    pub total: u64,
 }
 
 impl<R> PaginatedResults<R> {
     /// Create a new paginated result
-    pub async fn new<'c, C, S>(
-        paginated: Paginated,
-        results: Vec<R>,
-        paginator: &sea_orm::Paginator<'c, C, S>,
-    ) -> Result<Self, DbErr>
+    pub async fn new<C, S>(limiter: Limiter<'_, C, S>) -> Result<PaginatedResults<S::Item>, DbErr>
     where
         C: ConnectionTrait,
         S: SelectorTrait,
     {
-        let ItemsAndPagesNumber {
-            number_of_items,
-            number_of_pages,
-        } = paginator.num_items_and_pages().await?;
+        let total = limiter.total().await?;
+        let results = limiter.fetch().await?;
 
         Ok(PaginatedResults {
-            results,
-            page: paginator.cur_page(),
-            page_size: paginated.page_size,
-            number_of_items,
-            number_of_pages,
-            previous_page: if paginated.page > 0 {
-                Some(Paginated {
-                    page_size: paginated.page_size,
-                    page: paginated.page - 1,
-                })
-            } else {
-                None
-            },
-            next_page: if paginated.page + 1 < number_of_pages {
-                Some(Paginated {
-                    page_size: paginated.page_size,
-                    page: paginated.page + 1,
-                })
-            } else {
-                None
-            },
+            items: results,
+            total,
         })
     }
 }
