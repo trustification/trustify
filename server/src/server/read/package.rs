@@ -1,5 +1,3 @@
-use crate::server::Error;
-use crate::AppState;
 use actix_web::{get, web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -8,6 +6,7 @@ use trustify_auth::authorizer::Authorizer;
 use trustify_auth::Permission;
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
+use trustify_graph::{endpoints::Error, graph::Graph};
 
 #[derive(Serialize, Deserialize)]
 pub struct PackageParams {
@@ -21,7 +20,7 @@ pub struct PackageParams {
 )]
 #[get("package/{purl}/dependencies")]
 pub async fn dependencies(
-    state: web::Data<AppState>,
+    state: web::Data<Graph>,
     purl: web::Path<String>,
     params: web::Query<PackageParams>,
     authorizer: web::Data<Authorizer>,
@@ -60,7 +59,7 @@ pub async fn dependencies(
 )]
 #[get("package/{purl}/dependents")]
 pub async fn dependents(
-    state: web::Data<AppState>,
+    state: web::Data<Graph>,
     purl: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().finish())
@@ -73,7 +72,7 @@ pub async fn dependents(
 )]
 #[get("package/{purl}/variants")]
 pub async fn variants(
-    state: web::Data<AppState>,
+    state: web::Data<Graph>,
     purl: web::Path<String>,
 ) -> Result<impl Responder, Error> {
     let purl: Purl = Purl::from_str(&purl)?;
@@ -97,7 +96,7 @@ pub async fn variants(
 )]
 #[get("package/{purl}/vulnerabilities")]
 pub async fn vulnerabilities(
-    state: web::Data<AppState>,
+    state: web::Data<Graph>,
     purl: web::Path<String>,
     params: web::Query<PackageParams>,
 ) -> actix_web::Result<impl Responder> {

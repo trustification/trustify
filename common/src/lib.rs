@@ -1,5 +1,6 @@
 #![allow(unused)]
-pub mod package;
+
+use crate::config::Database;
 
 pub mod advisory;
 pub mod config;
@@ -7,7 +8,9 @@ pub mod cpe22;
 pub mod db;
 pub mod error;
 pub mod model;
+pub mod package;
 pub mod purl;
 pub mod reqwest;
 pub mod sbom;
+pub mod test_util;
 pub mod tls;

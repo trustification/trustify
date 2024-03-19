@@ -1,14 +1,13 @@
+use crate::service::{
+    advisory::osv::schema::{Event, Package, SeverityType, Vulnerability},
+    hashing::HashingRead,
+    Error,
+};
 use std::io::Read;
 use std::str::FromStr;
 use trustify_common::purl::Purl;
-
-use trustify_graph::graph::Graph;
-
-use crate::advisory::osv::schema::SeverityType;
-use crate::advisory::osv::schema::{Event, Package, Vulnerability};
-use crate::hashing::HashingRead;
-use crate::Error;
 use trustify_cvss::cvss3::Cvss3Base;
+use trustify_graph::graph::Graph;
 
 pub struct OsvLoader<'g> {
     graph: &'g Graph,
@@ -136,7 +135,7 @@ mod test {
     use trustify_common::db::{Database, Transactional};
     use trustify_graph::graph::Graph;
 
-    use crate::advisory::osv::loader::OsvLoader;
+    use crate::service::advisory::osv::loader::OsvLoader;
 
     #[test(tokio::test)]
     async fn loader() -> Result<(), anyhow::Error> {

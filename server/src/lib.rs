@@ -1,5 +1,5 @@
 #![allow(unused)]
-use crate::server::{read, write};
+use crate::server::read;
 use actix_web::body::MessageBody;
 use actix_web::web;
 use futures::FutureExt;
@@ -48,7 +48,7 @@ const SERVICE_ID: &str = "huevos";
 struct InitData {
     authenticator: Option<Arc<Authenticator>>,
     authorizer: Authorizer,
-    state: Arc<AppState>,
+    graph: Arc<Graph>,
     db: db::Database,
     http: HttpServerConfig<Huevos>,
     tracing: Tracing,
@@ -81,9 +81,7 @@ impl InitData {
         }
 
         let db = db::Database::with_external_config(&run.database, run.bootstrap).await?;
-        let system = Graph::new(db.clone());
-
-        let state = Arc::new(AppState { system });
+        let graph = Graph::new(db.clone());
 
         let check = Local::spawn_periodic("no database connection", Duration::from_secs(1), {
             let db = db.clone();
@@ -98,7 +96,7 @@ impl InitData {
         Ok(InitData {
             authenticator,
             authorizer,
-            state,
+            graph: Arc::new(graph),
             db,
             http: run.http,
             tracing: run.infra.tracing,
@@ -106,7 +104,7 @@ impl InitData {
     }
 
     async fn run(self, metrics: &Metrics) -> anyhow::Result<()> {
-        let graph = self.state.system.clone();
+        let graph = self.graph.clone();
         let db = self.db.clone();
 
         let http = HttpServerBuilder::try_from(self.http)?
@@ -115,10 +113,11 @@ impl InitData {
             .default_authenticator(self.authenticator)
             .authorizer(self.authorizer.clone())
             .configure(move |svc| {
-                svc.app_data(web::Data::from(self.state.clone()))
+                svc.app_data(web::Data::from(self.graph.clone()))
                     .configure(configure)
                     .configure(|svc| {
-                        trustify_module_importer::endpoints::configure(svc, db.clone())
+                        trustify_module_importer::endpoints::configure(svc, db.clone());
+                        trustify_module_ingestor::endpoints::configure(svc)
                     });
             });
 
@@ -133,37 +132,8 @@ impl InitData {
     }
 }
 
-#[derive(Clone)]
-pub struct AppState {
-    pub system: Graph,
-}
-
 pub fn configure(config: &mut web::ServiceConfig) {
     config
         .service(read::package::dependencies)
-        .service(read::package::variants)
-        .service(write::advisory::upload_advisory);
-}
-
-#[cfg(test)]
-mod test_util {
-    use std::sync::Arc;
-    use trustify_common::config::Database;
-    use trustify_common::db;
-    use trustify_graph::graph::Graph;
-
-    pub async fn bootstrap_system(name: &str) -> Result<Arc<Graph>, anyhow::Error> {
-        db::Database::with_external_config(
-            &Database {
-                username: "postgres".to_string(),
-                password: "eggs".to_string(),
-                host: "localhost".to_string(),
-                port: 5432,
-                name: name.to_string(),
-            },
-            true,
-        )
-        .await
-        .map(|db| Arc::new(Graph::new(db)))
-    }
+        .service(read::package::variants);
 }
