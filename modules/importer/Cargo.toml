@@ -7,6 +7,7 @@ edition = "2021"
 trustify-common = { path = "../../common" }
 trustify-entity = { path = "../../entity" }
 trustify-graph = { path = "../../graph" }
+trustify-ingestors = { path = "../../ingestors" }
 
 actix-web = "4"
 anyhow = "1.0.72"

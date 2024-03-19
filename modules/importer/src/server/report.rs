@@ -1,4 +1,3 @@
-use crate::server::sbom::storage;
 use parking_lot::Mutex;
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -93,13 +92,13 @@ impl Default for ReportBuilder {
     }
 }
 
-pub struct ReportVisitor {
+pub struct ReportVisitor<V> {
     pub report: Arc<Mutex<ReportBuilder>>,
-    pub next: storage::StorageVisitor,
+    pub next: V,
 }
 
-impl ReportVisitor {
-    pub fn new(report: Arc<Mutex<ReportBuilder>>, next: storage::StorageVisitor) -> Self {
+impl<V> ReportVisitor<V> {
+    pub fn new(report: Arc<Mutex<ReportBuilder>>, next: V) -> Self {
         Self { report, next }
     }
 }
@@ -132,11 +131,4 @@ impl SplitScannerError for Result<Report, ScannerError> {
             Err(ScannerError::Critical(err)) => Err(err),
         }
     }
-}
-
-/// Handle the report
-pub async fn handle_report(report: Report) -> anyhow::Result<()> {
-    // FIXME: this is a very simplistic version of handling the error
-    log::info!("Import report: {report:#?}");
-    Ok(())
 }

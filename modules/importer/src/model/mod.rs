@@ -1,9 +1,17 @@
+mod csaf;
+mod sbom;
+
+pub use csaf::*;
+pub use sbom::*;
+
 use std::ops::{Deref, DerefMut};
 use std::time::Duration;
 use time::OffsetDateTime;
 use trustify_common::model::Revisioned;
-use trustify_entity::importer::Model;
-use trustify_entity::{importer, importer_report};
+use trustify_entity::{
+    importer::{self, Model},
+    importer_report,
+};
 use url::Url;
 use utoipa::ToSchema;
 
@@ -70,6 +78,7 @@ pub struct ImporterData {
 #[serde(rename_all = "camelCase")]
 pub enum ImporterConfiguration {
     Sbom(SbomImporter),
+    Csaf(CsafImporter),
 }
 
 impl Deref for ImporterConfiguration {
@@ -78,6 +87,7 @@ impl Deref for ImporterConfiguration {
     fn deref(&self) -> &Self::Target {
         match self {
             Self::Sbom(importer) => &importer.common,
+            Self::Csaf(importer) => &importer.common,
         }
     }
 }
@@ -90,37 +100,6 @@ pub struct CommonImporter {
 
     #[serde(with = "humantime_serde")]
     pub period: Duration,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct SbomImporter {
-    #[serde(flatten)]
-    pub common: CommonImporter,
-
-    pub source: String,
-
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub keys: Vec<Url>,
-
-    #[serde(default)]
-    pub v3_signatures: bool,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub only_patterns: Vec<String>,
-}
-
-impl Deref for SbomImporter {
-    type Target = CommonImporter;
-
-    fn deref(&self) -> &Self::Target {
-        &self.common
-    }
-}
-
-impl DerefMut for SbomImporter {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.common
-    }
 }
 
 impl TryFrom<Model> for Importer {

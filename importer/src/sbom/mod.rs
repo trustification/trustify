@@ -8,16 +8,15 @@ use sbom_walker::{
 };
 use std::process::ExitCode;
 use std::sync::Arc;
-use std::time::SystemTime;
-use time::{Date, Month, UtcOffset};
 use trustify_common::{config::Database, db};
 use trustify_graph::graph::Graph;
 use trustify_module_importer::server::{
+    common::validation,
     report::{Report, ReportBuilder, ScannerError, SplitScannerError},
     sbom::storage,
 };
 use url::Url;
-use walker_common::{fetcher::Fetcher, progress::Progress, validate::ValidationOptions};
+use walker_common::{fetcher::Fetcher, progress::Progress};
 
 /// Import SBOMs
 #[derive(clap::Args, Debug)]
@@ -69,9 +68,9 @@ impl ImportSbomCommand {
             Err(_) => FileSource::new(&self.source, None)?.into(),
         };
 
-        // process (called by validator)
+        // storage (called by validator)
 
-        let process = storage::StorageVisitor {
+        let storage = storage::StorageVisitor {
             system,
             report: report.clone(),
         };
@@ -79,14 +78,8 @@ impl ImportSbomCommand {
         // validate (called by retriever)
 
         //  because we still have GPG v3 signatures
-        let options = ValidationOptions::new().validation_date(SystemTime::from(
-            Date::from_calendar_date(2007, Month::January, 1)
-                .map_err(|err| ScannerError::Critical(err.into()))?
-                .midnight()
-                .assume_offset(UtcOffset::UTC),
-        ));
-
-        let validation = ValidationVisitor::new(process).with_options(options);
+        let options = validation::options(true)?;
+        let validation = ValidationVisitor::new(storage).with_options(options);
 
         // retriever (called by filter)
 

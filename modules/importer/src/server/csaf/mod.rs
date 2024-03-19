@@ -1,18 +1,18 @@
 use crate::{
-    model::SbomImporter,
-    server::report::{Report, ReportBuilder, ReportVisitor, ScannerError},
-    server::sbom::report::SbomReportVisitor,
+    model::CsafImporter,
+    server::{
+        common::{filter::Filter, validation},
+        csaf::report::CsafReportVisitor,
+        report::{Report, ReportBuilder, ReportVisitor, ScannerError},
+    },
 };
-
-use crate::server::common::filter::Filter;
-use crate::server::common::validation;
-use parking_lot::Mutex;
-use sbom_walker::{
+use csaf_walker::{
     retrieve::RetrievingVisitor,
     source::{DispatchSource, FileSource, HttpOptions, HttpSource},
     validation::ValidationVisitor,
     walker::Walker,
 };
+use parking_lot::Mutex;
 use std::sync::Arc;
 use std::time::SystemTime;
 use trustify_graph::graph::Graph;
@@ -23,27 +23,20 @@ mod report;
 pub mod storage;
 
 impl super::Server {
-    pub async fn run_once_sbom(
+    pub async fn run_once_csaf(
         &self,
-        importer: SbomImporter,
+        importer: CsafImporter,
         last_run: Option<SystemTime>,
     ) -> Result<Report, ScannerError> {
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
         let source: DispatchSource = match Url::parse(&importer.source) {
-            Ok(url) => {
-                let keys = importer
-                    .keys
-                    .into_iter()
-                    .map(|key| key.into())
-                    .collect::<Vec<_>>();
-                HttpSource::new(
-                    url,
-                    Fetcher::new(Default::default()).await?,
-                    HttpOptions::new().since(last_run).keys(keys),
-                )
-                .into()
-            }
+            Ok(url) => HttpSource::new(
+                url,
+                Fetcher::new(Default::default()).await?,
+                HttpOptions::new().since(last_run),
+            )
+            .into(),
             Err(_) => FileSource::new(&importer.source, None)?.into(),
         };
 
@@ -56,11 +49,10 @@ impl super::Server {
 
         // wrap storage with report
 
-        let storage = SbomReportVisitor(ReportVisitor::new(report.clone(), storage));
+        let storage = CsafReportVisitor(ReportVisitor::new(report.clone(), storage));
 
         // validate (called by retriever)
 
-        //  because we might still have GPG v3 signatures
         let options = validation::options(importer.v3_signatures)?;
         let validation = ValidationVisitor::new(storage).with_options(options);
 
