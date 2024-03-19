@@ -8,7 +8,7 @@ use crate::advisory::osv::schema::SeverityType;
 use crate::advisory::osv::schema::{Event, Package, Vulnerability};
 use crate::hashing::HashingRead;
 use crate::Error;
-use trustify_common::cvss3::Cvss3Base;
+use trustify_cvss::cvss3::Cvss3Base;
 
 pub struct OsvLoader<'g> {
     graph: &'g Graph,

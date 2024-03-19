@@ -10,5 +10,3 @@ pub mod purl;
 pub mod reqwest;
 pub mod sbom;
 pub mod tls;
-
-pub mod cvss3;

@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 trustify-migration = { path = "../migration" }
+trustify-cvss = { path = "../cvss" }
 
 anyhow = "1.0.72"
 clap = { version = "4", features = ["derive", "env"] }
@@ -14,7 +15,7 @@ log = "0.4.19"
 native-tls = "0.2"
 packageurl = "0.3.0"
 pem = "3"
-postgresql_embedded = { version = "0.6.2", features = ["blocking", "bundled", "tokio" ] }
+postgresql_embedded = { version = "0.6.2", features = ["blocking", "bundled", "tokio"] }
 reqwest = { version = "0.11", features = ["native-tls"] }
 sea-orm = { version = "0.12", features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 serde = { version = "1.0.183", features = ["derive"] }

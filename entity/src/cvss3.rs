@@ -1,6 +1,6 @@
 use crate::advisory;
 use sea_orm::entity::prelude::*;
-use trustify_common::cvss3::Cvss3Base;
+use trustify_cvss::cvss3::Cvss3Base;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "cvss3")]
@@ -67,7 +67,7 @@ pub enum AttackVector {
     Physical,
 }
 
-impl From<AttackVector> for trustify_common::cvss3::AttackVector {
+impl From<AttackVector> for trustify_cvss::cvss3::AttackVector {
     fn from(value: AttackVector) -> Self {
         match value {
             AttackVector::Network => Self::Network,
@@ -78,13 +78,13 @@ impl From<AttackVector> for trustify_common::cvss3::AttackVector {
     }
 }
 
-impl From<trustify_common::cvss3::AttackVector> for AttackVector {
-    fn from(value: trustify_common::cvss3::AttackVector) -> Self {
+impl From<trustify_cvss::cvss3::AttackVector> for AttackVector {
+    fn from(value: trustify_cvss::cvss3::AttackVector) -> Self {
         match value {
-            trustify_common::cvss3::AttackVector::Network => Self::Network,
-            trustify_common::cvss3::AttackVector::Adjacent => Self::Adjacent,
-            trustify_common::cvss3::AttackVector::Local => Self::Local,
-            trustify_common::cvss3::AttackVector::Physical => Self::Physical,
+            trustify_cvss::cvss3::AttackVector::Network => Self::Network,
+            trustify_cvss::cvss3::AttackVector::Adjacent => Self::Adjacent,
+            trustify_cvss::cvss3::AttackVector::Local => Self::Local,
+            trustify_cvss::cvss3::AttackVector::Physical => Self::Physical,
         }
     }
 }
@@ -98,7 +98,7 @@ pub enum AttackComplexity {
     High,
 }
 
-impl From<AttackComplexity> for trustify_common::cvss3::AttackComplexity {
+impl From<AttackComplexity> for trustify_cvss::cvss3::AttackComplexity {
     fn from(value: AttackComplexity) -> Self {
         match value {
             AttackComplexity::Low => Self::Low,
@@ -107,11 +107,11 @@ impl From<AttackComplexity> for trustify_common::cvss3::AttackComplexity {
     }
 }
 
-impl From<trustify_common::cvss3::AttackComplexity> for AttackComplexity {
-    fn from(value: trustify_common::cvss3::AttackComplexity) -> Self {
+impl From<trustify_cvss::cvss3::AttackComplexity> for AttackComplexity {
+    fn from(value: trustify_cvss::cvss3::AttackComplexity) -> Self {
         match value {
-            trustify_common::cvss3::AttackComplexity::Low => Self::Low,
-            trustify_common::cvss3::AttackComplexity::High => Self::High,
+            trustify_cvss::cvss3::AttackComplexity::Low => Self::Low,
+            trustify_cvss::cvss3::AttackComplexity::High => Self::High,
         }
     }
 }
@@ -127,7 +127,7 @@ pub enum PrivilegesRequired {
     High,
 }
 
-impl From<PrivilegesRequired> for trustify_common::cvss3::PrivilegesRequired {
+impl From<PrivilegesRequired> for trustify_cvss::cvss3::PrivilegesRequired {
     fn from(value: PrivilegesRequired) -> Self {
         match value {
             PrivilegesRequired::None => Self::None,
@@ -137,12 +137,12 @@ impl From<PrivilegesRequired> for trustify_common::cvss3::PrivilegesRequired {
     }
 }
 
-impl From<trustify_common::cvss3::PrivilegesRequired> for PrivilegesRequired {
-    fn from(value: trustify_common::cvss3::PrivilegesRequired) -> Self {
+impl From<trustify_cvss::cvss3::PrivilegesRequired> for PrivilegesRequired {
+    fn from(value: trustify_cvss::cvss3::PrivilegesRequired) -> Self {
         match value {
-            trustify_common::cvss3::PrivilegesRequired::None => Self::None,
-            trustify_common::cvss3::PrivilegesRequired::Low => Self::Low,
-            trustify_common::cvss3::PrivilegesRequired::High => Self::High,
+            trustify_cvss::cvss3::PrivilegesRequired::None => Self::None,
+            trustify_cvss::cvss3::PrivilegesRequired::Low => Self::Low,
+            trustify_cvss::cvss3::PrivilegesRequired::High => Self::High,
         }
     }
 }
@@ -156,7 +156,7 @@ pub enum UserInteraction {
     Required,
 }
 
-impl From<UserInteraction> for trustify_common::cvss3::UserInteraction {
+impl From<UserInteraction> for trustify_cvss::cvss3::UserInteraction {
     fn from(value: UserInteraction) -> Self {
         match value {
             UserInteraction::None => Self::None,
@@ -165,11 +165,11 @@ impl From<UserInteraction> for trustify_common::cvss3::UserInteraction {
     }
 }
 
-impl From<trustify_common::cvss3::UserInteraction> for UserInteraction {
-    fn from(value: trustify_common::cvss3::UserInteraction) -> Self {
+impl From<trustify_cvss::cvss3::UserInteraction> for UserInteraction {
+    fn from(value: trustify_cvss::cvss3::UserInteraction) -> Self {
         match value {
-            trustify_common::cvss3::UserInteraction::None => Self::None,
-            trustify_common::cvss3::UserInteraction::Required => Self::Required,
+            trustify_cvss::cvss3::UserInteraction::None => Self::None,
+            trustify_cvss::cvss3::UserInteraction::Required => Self::Required,
         }
     }
 }
@@ -183,7 +183,7 @@ pub enum Scope {
     Changed,
 }
 
-impl From<Scope> for trustify_common::cvss3::Scope {
+impl From<Scope> for trustify_cvss::cvss3::Scope {
     fn from(value: Scope) -> Self {
         match value {
             Scope::Unchanged => Self::Unchanged,
@@ -192,11 +192,11 @@ impl From<Scope> for trustify_common::cvss3::Scope {
     }
 }
 
-impl From<trustify_common::cvss3::Scope> for Scope {
-    fn from(value: trustify_common::cvss3::Scope) -> Self {
+impl From<trustify_cvss::cvss3::Scope> for Scope {
+    fn from(value: trustify_cvss::cvss3::Scope) -> Self {
         match value {
-            trustify_common::cvss3::Scope::Unchanged => Self::Unchanged,
-            trustify_common::cvss3::Scope::Changed => Self::Changed,
+            trustify_cvss::cvss3::Scope::Unchanged => Self::Unchanged,
+            trustify_cvss::cvss3::Scope::Changed => Self::Changed,
         }
     }
 }
@@ -212,7 +212,7 @@ pub enum Confidentiality {
     High,
 }
 
-impl From<Confidentiality> for trustify_common::cvss3::Confidentiality {
+impl From<Confidentiality> for trustify_cvss::cvss3::Confidentiality {
     fn from(value: Confidentiality) -> Self {
         match value {
             Confidentiality::None => Self::None,
@@ -222,12 +222,12 @@ impl From<Confidentiality> for trustify_common::cvss3::Confidentiality {
     }
 }
 
-impl From<trustify_common::cvss3::Confidentiality> for Confidentiality {
-    fn from(value: trustify_common::cvss3::Confidentiality) -> Self {
+impl From<trustify_cvss::cvss3::Confidentiality> for Confidentiality {
+    fn from(value: trustify_cvss::cvss3::Confidentiality) -> Self {
         match value {
-            trustify_common::cvss3::Confidentiality::None => Self::None,
-            trustify_common::cvss3::Confidentiality::Low => Self::Low,
-            trustify_common::cvss3::Confidentiality::High => Self::High,
+            trustify_cvss::cvss3::Confidentiality::None => Self::None,
+            trustify_cvss::cvss3::Confidentiality::Low => Self::Low,
+            trustify_cvss::cvss3::Confidentiality::High => Self::High,
         }
     }
 }
@@ -243,7 +243,7 @@ pub enum Integrity {
     High,
 }
 
-impl From<Integrity> for trustify_common::cvss3::Integrity {
+impl From<Integrity> for trustify_cvss::cvss3::Integrity {
     fn from(value: Integrity) -> Self {
         match value {
             Integrity::None => Self::None,
@@ -253,12 +253,12 @@ impl From<Integrity> for trustify_common::cvss3::Integrity {
     }
 }
 
-impl From<trustify_common::cvss3::Integrity> for Integrity {
-    fn from(value: trustify_common::cvss3::Integrity) -> Self {
+impl From<trustify_cvss::cvss3::Integrity> for Integrity {
+    fn from(value: trustify_cvss::cvss3::Integrity) -> Self {
         match value {
-            trustify_common::cvss3::Integrity::None => Self::None,
-            trustify_common::cvss3::Integrity::Low => Self::Low,
-            trustify_common::cvss3::Integrity::High => Self::High,
+            trustify_cvss::cvss3::Integrity::None => Self::None,
+            trustify_cvss::cvss3::Integrity::Low => Self::Low,
+            trustify_cvss::cvss3::Integrity::High => Self::High,
         }
     }
 }
@@ -274,7 +274,7 @@ pub enum Availability {
     High,
 }
 
-impl From<Availability> for trustify_common::cvss3::Availability {
+impl From<Availability> for trustify_cvss::cvss3::Availability {
     fn from(value: Availability) -> Self {
         match value {
             Availability::None => Self::None,
@@ -284,12 +284,12 @@ impl From<Availability> for trustify_common::cvss3::Availability {
     }
 }
 
-impl From<trustify_common::cvss3::Availability> for Availability {
-    fn from(value: trustify_common::cvss3::Availability) -> Self {
+impl From<trustify_cvss::cvss3::Availability> for Availability {
+    fn from(value: trustify_cvss::cvss3::Availability) -> Self {
         match value {
-            trustify_common::cvss3::Availability::None => Self::None,
-            trustify_common::cvss3::Availability::Low => Self::Low,
-            trustify_common::cvss3::Availability::High => Self::High,
+            trustify_cvss::cvss3::Availability::None => Self::None,
+            trustify_cvss::cvss3::Availability::Low => Self::Low,
+            trustify_cvss::cvss3::Availability::High => Self::High,
         }
     }
 }

@@ -11,9 +11,9 @@ use std::cmp::min;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use trustify_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
-use trustify_common::cvss3::Cvss3Base;
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
+use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity as entity;
 
 pub mod advisory_vulnerability;

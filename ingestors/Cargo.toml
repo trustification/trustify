@@ -8,6 +8,7 @@ publish = false
 trustify-common = { path = "../common"}
 trustify-graph = { path = "../graph"}
 trustify-entity = { path = "../entity" }
+trustify-cvss = { path = "../cvss" }
 
 serde = { version = "1.0.183", features = ["derive"] }
 serde_json = "1.0.114"

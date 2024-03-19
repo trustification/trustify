@@ -1,0 +1,12 @@
+[package]
+name = "trustify-cvss"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "1.0.183", features = ["derive"] }
+thiserror = "1"
+
+[dev-dependencies]
+test-log = { version = "0.2.15", features = ["env_logger", "trace"] }
+tokio = { version = "1.30.0", features = ["full"] }
