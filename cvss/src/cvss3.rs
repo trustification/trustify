@@ -105,8 +105,8 @@ impl FromStr for AttackVector {
     type Err = Cvss3Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if ! s.starts_with("AV:") {
-            return Err(Self::Err::AttackVector)
+        if !s.starts_with("AV:") {
+            return Err(Self::Err::AttackVector);
         }
         match s.chars().nth(3) {
             Some('N') => Ok(Self::Network),
@@ -141,8 +141,8 @@ impl FromStr for AttackComplexity {
     type Err = Cvss3Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if ! s.starts_with("AC:") {
-            return Err(Self::Err::AttackComplexity)
+        if !s.starts_with("AC:") {
+            return Err(Self::Err::AttackComplexity);
         }
         match s.chars().nth(3) {
             Some('L') => Ok(Self::Low),
@@ -177,8 +177,8 @@ impl FromStr for PrivilegesRequired {
     type Err = Cvss3Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if ! s.starts_with("PR:") {
-            return Err(Self::Err::PrivilegesRequired)
+        if !s.starts_with("PR:") {
+            return Err(Self::Err::PrivilegesRequired);
         }
         match s.chars().nth(3) {
             Some('N') => Ok(Self::None),
@@ -212,8 +212,8 @@ impl FromStr for UserInteraction {
     type Err = Cvss3Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if ! s.starts_with("UI:") {
-            return Err(Self::Err::UserInteraction)
+        if !s.starts_with("UI:") {
+            return Err(Self::Err::UserInteraction);
         }
         match s.chars().nth(3) {
             Some('N') => Ok(Self::None),

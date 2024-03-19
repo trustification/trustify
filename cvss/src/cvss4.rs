@@ -54,22 +54,20 @@ impl FromStr for Cvss4Base {
             let si = parts[10];
             let sa = parts[11];
 
-            Ok(
-                Cvss4Base {
-                    minor_version,
-                    av: AttackVector::from_str(av)?,
-                    ac: AttackComplexity::from_str(ac)?,
-                    at: AttackRequirements::from_str(at)?,
-                    pr: PrivilegesRequired::from_str(pr)?,
-                    ui: UserInteraction::from_str(ui)?,
-                    vc: VulnerableConfidentiality::from_str(vc)?,
-                    vi: VulnerableIntegrity::from_str(vi)?,
-                    va: VulnerableAvailability::from_str(va)?,
-                    sc: SubsequentConfidentiality::from_str(sc)?,
-                    si: SubsequentIntegrity::from_str(si)?,
-                    sa: SubsequentAvailability::from_str(sa)?,
-                }
-            )
+            Ok(Cvss4Base {
+                minor_version,
+                av: AttackVector::from_str(av)?,
+                ac: AttackComplexity::from_str(ac)?,
+                at: AttackRequirements::from_str(at)?,
+                pr: PrivilegesRequired::from_str(pr)?,
+                ui: UserInteraction::from_str(ui)?,
+                vc: VulnerableConfidentiality::from_str(vc)?,
+                vi: VulnerableIntegrity::from_str(vi)?,
+                va: VulnerableAvailability::from_str(va)?,
+                sc: SubsequentConfidentiality::from_str(sc)?,
+                si: SubsequentIntegrity::from_str(si)?,
+                sa: SubsequentAvailability::from_str(sa)?,
+            })
         } else {
             Err(Cvss4Error::Invalid)
         }
@@ -124,8 +122,8 @@ impl FromStr for AttackVector {
     type Err = Cvss4Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if ! s.starts_with("AV:") {
-            return Err(Self::Err::AttackVector)
+        if !s.starts_with("AV:") {
+            return Err(Self::Err::AttackVector);
         }
 
         match s.chars().nth(3) {
@@ -202,7 +200,7 @@ impl FromStr for AttackRequirements {
         match s.chars().nth(3) {
             Some('N') => Ok(Self::None),
             Some('P') => Ok(Self::Present),
-            _ => Err(Self::Err::AttackRequirements)
+            _ => Err(Self::Err::AttackRequirements),
         }
     }
 }
@@ -327,8 +325,6 @@ pub enum SubsequentConfidentiality {
     Low,
     Negligible,
 }
-
-
 
 impl Display for SubsequentConfidentiality {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
