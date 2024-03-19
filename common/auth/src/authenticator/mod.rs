@@ -70,7 +70,7 @@ impl Authenticator {
         token: &Compact<AccessTokenClaims, Empty>,
     ) -> Result<Option<&AuthenticatorClient>, AuthenticationError> {
         let unverified_payload = token.unverified_payload().map_err(|err| {
-            log::info!("Failed to decode token payload: {}", err);
+            log::error!("Failed to decode token payload: {}", err);
             AuthenticationError::Failed
         })?;
 
