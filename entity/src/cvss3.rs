@@ -1,0 +1,295 @@
+use crate::advisory;
+use sea_orm::entity::prelude::*;
+use trustify_common::cvss3::Cvss3Base;
+
+#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
+#[sea_orm(table_name = "cvss3")]
+pub struct Model {
+    #[sea_orm(primary_key)]
+    pub advisory_id: i32,
+
+    #[sea_orm(primary_key)]
+    pub minor_version: i32,
+
+    pub av: AttackVector,
+    pub ac: AttackComplexity,
+    pub pr: PrivilegesRequired,
+    pub ui: UserInteraction,
+    pub s: Scope,
+    pub c: Confidentiality,
+    pub i: Integrity,
+    pub a: Availability,
+}
+
+impl From<Model> for Cvss3Base {
+    fn from(value: Model) -> Self {
+        Self {
+            minor_version: value.minor_version as u8,
+            av: value.av.into(),
+            ac: value.ac.into(),
+            pr: value.pr.into(),
+            ui: value.ui.into(),
+            s: value.s.into(),
+            c: value.c.into(),
+            i: value.i.into(),
+            a: value.a.into(),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {
+    #[sea_orm(
+    belongs_to = "super::advisory::Entity",
+    from = "super::cvss3::Column::AdvisoryId"
+    to = "super::advisory::Column::Id")]
+    Advisory,
+}
+
+impl Related<advisory::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Advisory.def()
+    }
+}
+
+impl ActiveModelBehavior for ActiveModel {}
+
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_av")]
+pub enum AttackVector {
+    #[sea_orm(string_value = "n")]
+    Network,
+    #[sea_orm(string_value = "a")]
+    Adjacent,
+    #[sea_orm(string_value = "l")]
+    Local,
+    #[sea_orm(string_value = "p")]
+    Physical,
+}
+
+impl From<AttackVector> for trustify_common::cvss3::AttackVector {
+    fn from(value: AttackVector) -> Self {
+        match value {
+            AttackVector::Network => Self::Network,
+            AttackVector::Adjacent => Self::Adjacent,
+            AttackVector::Local => Self::Local,
+            AttackVector::Physical => Self::Physical,
+        }
+    }
+}
+
+impl From<trustify_common::cvss3::AttackVector> for AttackVector {
+    fn from(value: trustify_common::cvss3::AttackVector) -> Self {
+        match value {
+            trustify_common::cvss3::AttackVector::Network => Self::Network,
+            trustify_common::cvss3::AttackVector::Adjacent => Self::Adjacent,
+            trustify_common::cvss3::AttackVector::Local => Self::Local,
+            trustify_common::cvss3::AttackVector::Physical => Self::Physical,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_ac")]
+pub enum AttackComplexity {
+    #[sea_orm(string_value = "l")]
+    Low,
+    #[sea_orm(string_value = "h")]
+    High,
+}
+
+impl From<AttackComplexity> for trustify_common::cvss3::AttackComplexity {
+    fn from(value: AttackComplexity) -> Self {
+        match value {
+            AttackComplexity::Low => Self::Low,
+            AttackComplexity::High => Self::High,
+        }
+    }
+}
+
+impl From<trustify_common::cvss3::AttackComplexity> for AttackComplexity {
+    fn from(value: trustify_common::cvss3::AttackComplexity) -> Self {
+        match value {
+            trustify_common::cvss3::AttackComplexity::Low => Self::Low,
+            trustify_common::cvss3::AttackComplexity::High => Self::High,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_pr")]
+pub enum PrivilegesRequired {
+    #[sea_orm(string_value = "n")]
+    None,
+    #[sea_orm(string_value = "l")]
+    Low,
+    #[sea_orm(string_value = "h")]
+    High,
+}
+
+impl From<PrivilegesRequired> for trustify_common::cvss3::PrivilegesRequired {
+    fn from(value: PrivilegesRequired) -> Self {
+        match value {
+            PrivilegesRequired::None => Self::None,
+            PrivilegesRequired::Low => Self::Low,
+            PrivilegesRequired::High => Self::High,
+        }
+    }
+}
+
+impl From<trustify_common::cvss3::PrivilegesRequired> for PrivilegesRequired {
+    fn from(value: trustify_common::cvss3::PrivilegesRequired) -> Self {
+        match value {
+            trustify_common::cvss3::PrivilegesRequired::None => Self::None,
+            trustify_common::cvss3::PrivilegesRequired::Low => Self::Low,
+            trustify_common::cvss3::PrivilegesRequired::High => Self::High,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_ui")]
+pub enum UserInteraction {
+    #[sea_orm(string_value = "n")]
+    None,
+    #[sea_orm(string_value = "r")]
+    Required,
+}
+
+impl From<UserInteraction> for trustify_common::cvss3::UserInteraction {
+    fn from(value: UserInteraction) -> Self {
+        match value {
+            UserInteraction::None => Self::None,
+            UserInteraction::Required => Self::Required,
+        }
+    }
+}
+
+impl From<trustify_common::cvss3::UserInteraction> for UserInteraction {
+    fn from(value: trustify_common::cvss3::UserInteraction) -> Self {
+        match value {
+            trustify_common::cvss3::UserInteraction::None => Self::None,
+            trustify_common::cvss3::UserInteraction::Required => Self::Required,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_s")]
+pub enum Scope {
+    #[sea_orm(string_value = "u")]
+    Unchanged,
+    #[sea_orm(string_value = "c")]
+    Changed,
+}
+
+impl From<Scope> for trustify_common::cvss3::Scope {
+    fn from(value: Scope) -> Self {
+        match value {
+            Scope::Unchanged => Self::Unchanged,
+            Scope::Changed => Self::Changed,
+        }
+    }
+}
+
+impl From<trustify_common::cvss3::Scope> for Scope {
+    fn from(value: trustify_common::cvss3::Scope) -> Self {
+        match value {
+            trustify_common::cvss3::Scope::Unchanged => Self::Unchanged,
+            trustify_common::cvss3::Scope::Changed => Self::Changed,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_c")]
+pub enum Confidentiality {
+    #[sea_orm(string_value = "n")]
+    None,
+    #[sea_orm(string_value = "l")]
+    Low,
+    #[sea_orm(string_value = "h")]
+    High,
+}
+
+impl From<Confidentiality> for trustify_common::cvss3::Confidentiality {
+    fn from(value: Confidentiality) -> Self {
+        match value {
+            Confidentiality::None => Self::None,
+            Confidentiality::Low => Self::Low,
+            Confidentiality::High => Self::High,
+        }
+    }
+}
+
+impl From<trustify_common::cvss3::Confidentiality> for Confidentiality {
+    fn from(value: trustify_common::cvss3::Confidentiality) -> Self {
+        match value {
+            trustify_common::cvss3::Confidentiality::None => Self::None,
+            trustify_common::cvss3::Confidentiality::Low => Self::Low,
+            trustify_common::cvss3::Confidentiality::High => Self::High,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_i")]
+pub enum Integrity {
+    #[sea_orm(string_value = "n")]
+    None,
+    #[sea_orm(string_value = "l")]
+    Low,
+    #[sea_orm(string_value = "h")]
+    High,
+}
+
+impl From<Integrity> for trustify_common::cvss3::Integrity {
+    fn from(value: Integrity) -> Self {
+        match value {
+            Integrity::None => Self::None,
+            Integrity::Low => Self::Low,
+            Integrity::High => Self::High,
+        }
+    }
+}
+
+impl From<trustify_common::cvss3::Integrity> for Integrity {
+    fn from(value: trustify_common::cvss3::Integrity) -> Self {
+        match value {
+            trustify_common::cvss3::Integrity::None => Self::None,
+            trustify_common::cvss3::Integrity::Low => Self::Low,
+            trustify_common::cvss3::Integrity::High => Self::High,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_a")]
+pub enum Availability {
+    #[sea_orm(string_value = "n")]
+    None,
+    #[sea_orm(string_value = "l")]
+    Low,
+    #[sea_orm(string_value = "h")]
+    High,
+}
+
+impl From<Availability> for trustify_common::cvss3::Availability {
+    fn from(value: Availability) -> Self {
+        match value {
+            Availability::None => Self::None,
+            Availability::Low => Self::Low,
+            Availability::High => Self::High,
+        }
+    }
+}
+
+impl From<trustify_common::cvss3::Availability> for Availability {
+    fn from(value: trustify_common::cvss3::Availability) -> Self {
+        match value {
+            trustify_common::cvss3::Availability::None => Self::None,
+            trustify_common::cvss3::Availability::Low => Self::Low,
+            trustify_common::cvss3::Availability::High => Self::High,
+        }
+    }
+}

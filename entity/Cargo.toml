@@ -7,6 +7,7 @@ edition = "2021"
 sea-orm = { version = "0.12", features = [ "sqlx-postgres", "runtime-tokio-rustls", "macros", "with-json" ] }
 serde_json = "1"
 tokio = { version = "1.30.0", features = ["full"] }
+trustify-common = { path = "../common"}
 
 [dev-dependencies]
 anyhow = "1.0.72"

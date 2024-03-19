@@ -4,9 +4,11 @@ use trustify_common::purl::Purl;
 
 use trustify_graph::graph::Graph;
 
+use crate::advisory::osv::schema::SeverityType;
 use crate::advisory::osv::schema::{Event, Package, Vulnerability};
 use crate::hashing::HashingRead;
 use crate::Error;
+use trustify_common::cvss3::Cvss3Base;
 
 pub struct OsvLoader<'g> {
     graph: &'g Graph,
@@ -41,6 +43,19 @@ impl<'g> OsvLoader<'g> {
                 .graph
                 .ingest_advisory(osv.id, location, sha256, &tx)
                 .await?;
+
+            for severity in osv.severity.iter().flatten() {
+                if matches!(severity.severity_type, SeverityType::CVSSv3) {
+                    match Cvss3Base::from_str(&severity.score) {
+                        Ok(cvss3) => {
+                            advisory.ingest_cvss3_score(cvss3, &tx).await?;
+                        }
+                        Err(err) => {
+                            log::warn!("Unable to parse CVSS3: {:#?}", err);
+                        }
+                    }
+                }
+            }
 
             for cve_id in cve_ids {
                 let advisory_vuln = advisory.link_to_vulnerability(cve_id, &tx).await?;
@@ -207,6 +222,17 @@ mod test {
                 && vulnerability == "CVE-2021-32714"
             )
         );
+        let scores = loaded_advisory.cvss3_scores(()).await?;
+
+        assert_eq!(1, scores.len());
+
+        let score = scores[0];
+
+        assert_eq!(
+            score.to_string(),
+            "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H"
+        );
+
         Ok(())
     }
 }
