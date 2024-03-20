@@ -1,4 +1,4 @@
-use crate::cpe22::Cpe22;
+use crate::cpe::Cpe;
 use crate::purl::Purl;
 
 #[allow(clippy::large_enum_variant)]
@@ -8,10 +8,10 @@ pub enum SbomLocator {
     Location(String),
     Sha256(String),
     Purl(Purl),
-    Cpe22(Cpe22),
+    Cpe(Cpe),
 }
 
 pub enum Describes {
     Purl(Purl),
-    Cpe22(String),
+    Cpe(String),
 }

@@ -1,7 +1,7 @@
 //! Support for SBOMs.
 
 use crate::db::{LeftPackageId, QualifiedPackageTransitive};
-use crate::graph::cpe22::Cpe22Context;
+use crate::graph::cpe::CpeContext;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
 use crate::graph::Graph;
 use sea_orm::{
@@ -13,7 +13,7 @@ use trustify_common::db::Transactional;
 use sea_query::{Condition, Func, JoinType, Query, SimpleExpr};
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
-use trustify_common::cpe22::Cpe22;
+use trustify_common::cpe::Cpe;
 use trustify_common::package::PackageVulnerabilityAssertions;
 use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
@@ -77,7 +77,7 @@ impl Graph {
             SbomLocator::Location(location) => self.locate_sbom_by_location(&location, tx).await,
             SbomLocator::Sha256(sha256) => self.locate_sbom_by_sha256(&sha256, tx).await,
             SbomLocator::Purl(purl) => self.locate_sbom_by_purl(purl, tx).await,
-            SbomLocator::Cpe22(cpe) => self.locate_sbom_by_cpe22(&cpe, tx).await,
+            SbomLocator::Cpe(cpe) => self.locate_sbom_by_cpe22(&cpe, tx).await,
         }
     }
 
@@ -97,7 +97,7 @@ impl Graph {
             SbomLocator::Location(location) => self.locate_sboms_by_location(&location, tx).await,
             SbomLocator::Sha256(sha256) => self.locate_sboms_by_sha256(&sha256, tx).await,
             SbomLocator::Purl(purl) => self.locate_sboms_by_purl(purl, tx).await,
-            SbomLocator::Cpe22(cpe) => self.locate_sboms_by_cpe22(cpe, tx).await,
+            SbomLocator::Cpe(cpe) => self.locate_sboms_by_cpe22(cpe, tx).await,
             _ => todo!(),
         }
     }
@@ -244,17 +244,17 @@ impl Graph {
 
     async fn locate_sbom_by_cpe22<TX: AsRef<Transactional>>(
         &self,
-        cpe: &Cpe22,
+        cpe: &Cpe,
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
-        if let Some(cpe) = self.get_cpe22(cpe.clone(), &tx).await? {
+        if let Some(cpe) = self.get_cpe(cpe.clone(), &tx).await? {
             self.locate_one_sbom(
                 entity::sbom::Entity::find()
                     .join(
                         JoinType::LeftJoin,
-                        entity::sbom_describes_cpe22::Relation::Sbom.def().rev(),
+                        entity::sbom_describes_cpe::Relation::Sbom.def().rev(),
                     )
-                    .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(cpe.cpe22.id)),
+                    .filter(entity::sbom_describes_cpe::Column::CpeId.eq(cpe.cpe.id)),
                 &tx,
             )
             .await
@@ -263,19 +263,19 @@ impl Graph {
         }
     }
 
-    async fn locate_sboms_by_cpe22<C: Into<Cpe22>, TX: AsRef<Transactional>>(
+    async fn locate_sboms_by_cpe22<C: Into<Cpe>, TX: AsRef<Transactional>>(
         &self,
         cpe: C,
         tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
-        if let Some(found) = self.get_cpe22(cpe, &tx).await? {
+        if let Some(found) = self.get_cpe(cpe, &tx).await? {
             self.locate_many_sboms(
                 entity::sbom::Entity::find()
                     .join(
                         JoinType::LeftJoin,
-                        entity::sbom_describes_cpe22::Relation::Sbom.def().rev(),
+                        entity::sbom_describes_cpe::Relation::Sbom.def().rev(),
                     )
-                    .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(found.cpe22.id)),
+                    .filter(entity::sbom_describes_cpe::Column::CpeId.eq(found.cpe.id)),
                 &tx,
             )
             .await
@@ -313,23 +313,23 @@ impl From<(&Graph, entity::sbom::Model)> for SbomContext {
 }
 
 impl SbomContext {
-    pub async fn ingest_describes_cpe22<C: Into<Cpe22>, TX: AsRef<Transactional>>(
+    pub async fn ingest_describes_cpe22<C: Into<Cpe>, TX: AsRef<Transactional>>(
         &self,
         cpe: C,
         tx: TX,
     ) -> Result<(), Error> {
         let cpe = self.graph.ingest_cpe22(cpe, &tx).await?;
 
-        let fetch = entity::sbom_describes_cpe22::Entity::find()
-            .filter(entity::sbom_describes_cpe22::Column::SbomId.eq(self.sbom.id))
-            .filter(entity::sbom_describes_cpe22::Column::Cpe22Id.eq(cpe.cpe22.id))
+        let fetch = entity::sbom_describes_cpe::Entity::find()
+            .filter(entity::sbom_describes_cpe::Column::SbomId.eq(self.sbom.id))
+            .filter(entity::sbom_describes_cpe::Column::CpeId.eq(cpe.cpe.id))
             .one(&self.graph.connection(&tx))
             .await?;
 
         if fetch.is_none() {
-            let model = entity::sbom_describes_cpe22::ActiveModel {
+            let model = entity::sbom_describes_cpe::ActiveModel {
                 sbom_id: Set(self.sbom.id),
-                cpe22_id: Set(cpe.cpe22.id),
+                cpe_id: Set(cpe.cpe.id),
             };
 
             model.insert(&self.graph.connection(&tx)).await?;
@@ -382,13 +382,13 @@ impl SbomContext {
     pub async fn describes_cpe22s<TX: AsRef<Transactional>>(
         &self,
         tx: TX,
-    ) -> Result<Vec<Cpe22Context>, Error> {
+    ) -> Result<Vec<CpeContext>, Error> {
         self.graph
-            .get_cpe22_by_query(
-                entity::sbom_describes_cpe22::Entity::find()
+            .get_cpe_by_query(
+                entity::sbom_describes_cpe::Entity::find()
                     .select_only()
-                    .column(entity::sbom_describes_cpe22::Column::Cpe22Id)
-                    .filter(entity::sbom_describes_cpe22::Column::SbomId.eq(self.sbom.id))
+                    .column(entity::sbom_describes_cpe::Column::CpeId)
+                    .filter(entity::sbom_describes_cpe::Column::SbomId.eq(self.sbom.id))
                     .into_query(),
                 tx,
             )
@@ -783,7 +783,7 @@ mod tests {
 
         let found = system
             .locate_sboms(
-                SbomLocator::Cpe22(cpe::uri::Uri::parse("cpe:/a:redhat:quarkus:2.13::el8")?.into()),
+                SbomLocator::Cpe(cpe::uri::Uri::parse("cpe:/a:redhat:quarkus:2.13::el8")?.into()),
                 Transactional::None,
             )
             .await?;

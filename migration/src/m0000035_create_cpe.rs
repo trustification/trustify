@@ -10,22 +10,26 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(Cpe22::Table)
+                    .table(Cpe::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(Cpe22::Id)
+                        ColumnDef::new(Cpe::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Cpe22::Part).string())
-                    .col(ColumnDef::new(Cpe22::Vendor).string())
-                    .col(ColumnDef::new(Cpe22::Product).string())
-                    .col(ColumnDef::new(Cpe22::Version).string())
-                    .col(ColumnDef::new(Cpe22::Update).string())
-                    .col(ColumnDef::new(Cpe22::Edition).string())
-                    .col(ColumnDef::new(Cpe22::Language).string())
+                    .col(ColumnDef::new(Cpe::Part).string())
+                    .col(ColumnDef::new(Cpe::Vendor).string())
+                    .col(ColumnDef::new(Cpe::Product).string())
+                    .col(ColumnDef::new(Cpe::Version).string())
+                    .col(ColumnDef::new(Cpe::Update).string())
+                    .col(ColumnDef::new(Cpe::Edition).string())
+                    .col(ColumnDef::new(Cpe::Language).string())
+                    .col(ColumnDef::new(Cpe::SwEdition).string())
+                    .col(ColumnDef::new(Cpe::TargetSw).string())
+                    .col(ColumnDef::new(Cpe::TargetHw).string())
+                    .col(ColumnDef::new(Cpe::Other).string())
                     .to_owned(),
             )
             .await
@@ -33,13 +37,13 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(Cpe22::Table).to_owned())
+            .drop_table(Table::drop().table(Cpe::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum Cpe22 {
+pub enum Cpe {
     Table,
     Id,
     // --
@@ -50,4 +54,8 @@ pub enum Cpe22 {
     Update,
     Edition,
     Language,
+    SwEdition,
+    TargetSw,
+    TargetHw,
+    Other,
 }

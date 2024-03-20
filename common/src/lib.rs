@@ -4,7 +4,7 @@ use crate::config::Database;
 
 pub mod advisory;
 pub mod config;
-pub mod cpe22;
+pub mod cpe;
 pub mod db;
 pub mod error;
 pub mod model;
