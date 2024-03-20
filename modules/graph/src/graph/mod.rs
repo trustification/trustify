@@ -13,7 +13,7 @@ use std::sync::Arc;
 use tempfile::TempDir;
 use trustify_common::db::{ConnectionOrTransaction, Transactional};
 
-mod cpe22;
+mod cpe;
 
 pub mod advisory;
 pub mod error;

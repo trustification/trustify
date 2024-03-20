@@ -111,8 +111,6 @@ Plus appropriate junction tables.
 
 ### CPE
 
-Probably need a fancy CPE table structure. sigh.
-Or two+ tables (cpe22, cpe23) and a Product table.
 Platonic form of a product may have 0+ CPEs/pURLs.
 Platonic form of a product may have 0+ known hashable artifacts.
 

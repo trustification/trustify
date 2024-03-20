@@ -13,7 +13,7 @@ mod m0000048_create_fixed_package_version;
 mod m0000049_create_not_affected_package_version;
 mod m0000050_create_package_qualifier;
 mod m0000070_create_cwe;
-mod m0000180_sbom_describes_cpe22;
+mod m0000180_sbom_describes_cpe;
 mod m0000190_sbom_describes_package;
 mod m0000200_create_relationship;
 mod m0000210_create_package_relates_to_package;
@@ -23,7 +23,7 @@ mod m0000002_create_cvss4_enums;
 mod m0000012_create_vulnerability_description;
 mod m0000033_create_cvss3;
 mod m0000034_create_cvss4;
-mod m0000035_create_cpe22;
+mod m0000035_create_cpe;
 mod m0000220_create_qualified_package_transitive_function;
 mod m0000230_create_importer;
 
@@ -43,7 +43,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000034_create_cvss4::Migration),
             Box::new(m0000032_create_advisory_vulnerability::Migration),
             Box::new(m0000040_create_package::Migration),
-            Box::new(m0000035_create_cpe22::Migration),
+            Box::new(m0000035_create_cpe::Migration),
             Box::new(m0000042_create_package_version::Migration),
             Box::new(m0000044_create_qualified_package::Migration),
             Box::new(m0000046_create_package_version_range::Migration),
@@ -51,7 +51,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000048_create_fixed_package_version::Migration),
             Box::new(m0000049_create_not_affected_package_version::Migration),
             Box::new(m0000050_create_package_qualifier::Migration),
-            Box::new(m0000180_sbom_describes_cpe22::Migration),
+            Box::new(m0000180_sbom_describes_cpe::Migration),
             Box::new(m0000190_sbom_describes_package::Migration),
             Box::new(m0000200_create_relationship::Migration),
             Box::new(m0000210_create_package_relates_to_package::Migration),

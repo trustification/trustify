@@ -1,9 +1,9 @@
-use cpe::cpe::{Cpe, CpeType};
+use cpe::cpe::Cpe as _;
 use cpe::uri::{OwnedUri, Uri};
 use std::fmt::{Debug, Formatter};
 
 #[derive(Clone)]
-pub struct Cpe22 {
+pub struct Cpe {
     uri: cpe::uri::OwnedUri,
 }
 
@@ -14,20 +14,20 @@ pub enum Component {
     Value(String),
 }
 
-pub enum Cpe22Type {
+pub enum CpeType {
     Any,
     Hardware,
     OperatingSystem,
     Application,
 }
 
-impl From<CpeType> for Cpe22Type {
-    fn from(value: CpeType) -> Self {
+impl From<cpe::cpe::CpeType> for CpeType {
+    fn from(value: cpe::cpe::CpeType) -> Self {
         match value {
-            CpeType::Any => Self::Any,
-            CpeType::Hardware => Self::Hardware,
-            CpeType::OperatingSystem => Self::OperatingSystem,
-            CpeType::Application => Self::Application,
+            cpe::cpe::CpeType::Any => Self::Any,
+            cpe::cpe::CpeType::Hardware => Self::Hardware,
+            cpe::cpe::CpeType::OperatingSystem => Self::OperatingSystem,
+            cpe::cpe::CpeType::Application => Self::Application,
         }
     }
 }
@@ -42,8 +42,8 @@ impl From<cpe::component::Component<'_>> for Component {
     }
 }
 
-impl Cpe22 {
-    pub fn part(&self) -> Cpe22Type {
+impl Cpe {
+    pub fn part(&self) -> CpeType {
         self.uri.part().into()
     }
 
@@ -68,13 +68,13 @@ impl Cpe22 {
     }
 }
 
-impl Debug for Cpe22 {
+impl Debug for Cpe {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         Debug::fmt(&self.uri, f)
     }
 }
 
-impl From<cpe::uri::Uri<'_>> for Cpe22 {
+impl From<Uri<'_>> for Cpe {
     fn from(uri: Uri) -> Self {
         Self {
             uri: uri.to_owned(),
@@ -82,7 +82,7 @@ impl From<cpe::uri::Uri<'_>> for Cpe22 {
     }
 }
 
-impl From<cpe::uri::OwnedUri> for Cpe22 {
+impl From<OwnedUri> for Cpe {
     fn from(uri: OwnedUri) -> Self {
         Self { uri }
     }
