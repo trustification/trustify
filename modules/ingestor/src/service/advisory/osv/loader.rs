@@ -7,7 +7,7 @@ use std::io::Read;
 use std::str::FromStr;
 use trustify_common::purl::Purl;
 use trustify_cvss::cvss3::Cvss3Base;
-use trustify_graph::graph::Graph;
+use trustify_module_graph::graph::Graph;
 
 pub struct OsvLoader<'g> {
     graph: &'g Graph,
@@ -133,7 +133,7 @@ mod test {
     use trustify_common::advisory::Assertion;
 
     use trustify_common::db::{Database, Transactional};
-    use trustify_graph::graph::Graph;
+    use trustify_module_graph::graph::Graph;
 
     use crate::service::advisory::osv::loader::OsvLoader;
 

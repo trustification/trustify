@@ -1,6 +1,6 @@
 use crate::service::{cve::cve_record::v5::CveRecord, hashing::HashingRead, Error};
 use std::io::Read;
-use trustify_graph::graph::Graph;
+use trustify_module_graph::graph::Graph;
 
 /// Loader capable of parsing a CVE Record JSON file
 /// and manipulating the Graph to integrate it into
@@ -71,7 +71,7 @@ mod test {
 
     use test_log::test;
     use trustify_common::db::Database;
-    use trustify_graph::graph::Graph;
+    use trustify_module_graph::graph::Graph;
 
     use crate::service::cve::loader::CveLoader;
 

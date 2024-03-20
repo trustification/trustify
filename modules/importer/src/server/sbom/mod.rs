@@ -15,7 +15,7 @@ use sbom_walker::{
 };
 use std::sync::Arc;
 use std::time::SystemTime;
-use trustify_graph::graph::Graph;
+use trustify_module_graph::graph::Graph;
 use url::Url;
 use walker_common::fetcher::Fetcher;
 

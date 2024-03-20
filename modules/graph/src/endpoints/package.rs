@@ -1,3 +1,4 @@
+use crate::{endpoints::Error, graph::Graph};
 use actix_web::{get, web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -6,7 +7,6 @@ use trustify_auth::authorizer::Authorizer;
 use trustify_auth::Permission;
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
-use trustify_graph::{endpoints::Error, graph::Graph};
 
 #[derive(Serialize, Deserialize)]
 pub struct PackageParams {

@@ -8,7 +8,7 @@ publish = false
 trustify-common = { path = "../../common"}
 trustify-cvss = { path = "../../cvss" }
 trustify-entity = { path = "../../entity" }
-trustify-graph = { path = "../../graph"}
+trustify-module-graph = { path = "../graph"}
 
 actix-web = "4"
 anyhow = "1.0.72"

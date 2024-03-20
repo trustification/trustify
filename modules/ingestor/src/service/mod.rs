@@ -9,7 +9,7 @@ pub enum Error {
     #[error(transparent)]
     Json(serde_json::Error),
     #[error(transparent)]
-    Graph(trustify_graph::graph::error::Error),
+    Graph(trustify_module_graph::graph::error::Error),
     #[error(transparent)]
     Db(DbErr),
 }
@@ -20,8 +20,8 @@ impl From<serde_json::Error> for Error {
     }
 }
 
-impl From<trustify_graph::graph::error::Error> for Error {
-    fn from(value: trustify_graph::graph::error::Error) -> Self {
+impl From<trustify_module_graph::graph::error::Error> for Error {
+    fn from(value: trustify_module_graph::graph::error::Error) -> Self {
         Self::Graph(value)
     }
 }

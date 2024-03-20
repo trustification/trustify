@@ -5,10 +5,10 @@ edition = "2021"
 
 [dependencies]
 trustify-auth = { path = "../common/auth", features = ["actix"] }
-trustify-graph = { path = "../graph" }
 trustify-common = { path = "../common"}
 trustify-infrastructure = { path = "../common/infrastructure" }
 trustify-entity = { path = "../entity"}
+trustify-module-graph = { path = "../modules/graph" }
 trustify-module-ingestor = { path = "../modules/ingestor" }
 trustify-module-importer = { path = "../modules/importer" }
 

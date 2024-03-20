@@ -9,7 +9,7 @@ use sbom_walker::{
 use sha2::{Digest, Sha256};
 use std::sync::Arc;
 use trustify_common::db::Transactional;
-use trustify_graph::graph::Graph;
+use trustify_module_graph::graph::Graph;
 use walker_common::{compression::decompress_opt, utils::hex::Hex};
 
 #[derive(Debug, thiserror::Error)]

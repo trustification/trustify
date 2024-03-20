@@ -8,7 +8,7 @@ use csaf_walker::{
 use parking_lot::Mutex;
 use sha2::{Digest, Sha256};
 use std::sync::Arc;
-use trustify_graph::graph::Graph;
+use trustify_module_graph::graph::Graph;
 use trustify_module_ingestor::service::advisory;
 use walker_common::utils::hex::Hex;
 
