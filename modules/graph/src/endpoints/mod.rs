@@ -1,9 +1,20 @@
+pub mod package;
+pub mod vulnerability;
+
 use crate::graph;
 use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
-use actix_web::{HttpResponse, ResponseError};
+use actix_web::{web, HttpResponse, ResponseError};
 use trustify_common::error::ErrorInformation;
 use trustify_common::purl::PurlErr;
+
+pub fn configure(config: &mut web::ServiceConfig) {
+    config
+        .service(package::dependencies)
+        .service(package::variants)
+        .service(vulnerability::affected_packages)
+        .service(vulnerability::affected_products);
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

@@ -2,7 +2,7 @@ use csaf::Csaf;
 use std::time::Instant;
 
 use trustify_common::db::Transactional;
-use trustify_graph::graph::Graph;
+use trustify_module_graph::graph::Graph;
 
 pub async fn ingest(
     system: &Graph,

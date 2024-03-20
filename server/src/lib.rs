@@ -1,5 +1,4 @@
 #![allow(unused)]
-use crate::server::read;
 use actix_web::body::MessageBody;
 use actix_web::web;
 use futures::FutureExt;
@@ -11,15 +10,13 @@ use trustify_auth::authenticator::Authenticator;
 use trustify_auth::authorizer::Authorizer;
 use trustify_common::config::Database;
 use trustify_common::db;
-use trustify_graph::graph::Graph;
 use trustify_infrastructure::app::http::{HttpServerBuilder, HttpServerConfig};
 use trustify_infrastructure::endpoint::Huevos;
 use trustify_infrastructure::health::checks::{Local, Probe};
 use trustify_infrastructure::tracing::Tracing;
 use trustify_infrastructure::{Infrastructure, InfrastructureConfig, InitContext, Metrics};
+use trustify_module_graph::graph::Graph;
 use trustify_module_importer::server::importer;
-
-pub mod server;
 
 /// Run the API server
 #[derive(clap::Args, Debug)]
@@ -114,10 +111,10 @@ impl InitData {
             .authorizer(self.authorizer.clone())
             .configure(move |svc| {
                 svc.app_data(web::Data::from(self.graph.clone()))
-                    .configure(configure)
                     .configure(|svc| {
+                        trustify_module_graph::endpoints::configure(svc);
                         trustify_module_importer::endpoints::configure(svc, db.clone());
-                        trustify_module_ingestor::endpoints::configure(svc)
+                        trustify_module_ingestor::endpoints::configure(svc);
                     });
             });
 
@@ -130,10 +127,4 @@ impl InitData {
 
         result
     }
-}
-
-pub fn configure(config: &mut web::ServiceConfig) {
-    config
-        .service(read::package::dependencies)
-        .service(read::package::variants);
 }

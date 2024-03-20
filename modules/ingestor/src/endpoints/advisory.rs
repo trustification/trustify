@@ -3,8 +3,8 @@ use actix_web::http::StatusCode;
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
 use csaf::Csaf;
 use sha2::{Digest, Sha256};
-use trustify_graph::endpoints::Error;
-use trustify_graph::graph::Graph;
+use trustify_module_graph::endpoints::Error;
+use trustify_module_graph::graph::Graph;
 use walker_common::utils::hex::Hex;
 
 #[utoipa::path(responses((status = 200, description = "Upload a file")))]
@@ -40,7 +40,7 @@ mod tests {
     use std::str::FromStr;
     use std::sync::Arc;
     use trustify_common::db::Database;
-    use trustify_graph::graph::Graph;
+    use trustify_module_graph::graph::Graph;
 
     #[actix_web::test]
     async fn upload_advisory() -> Result<(), anyhow::Error> {

@@ -80,7 +80,7 @@ mod tests {
     #[test(tokio::test)]
     async fn advisory_csaf() -> Result<(), anyhow::Error> {
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-        let test_data = pwd.join("../etc/test-data");
+        let test_data = pwd.join("../../etc/test-data");
 
         //let sbom = test_data.join( "openshift-4.13.json");
         let advisory = test_data.join("cve-2023-33201.json");

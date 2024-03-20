@@ -11,7 +11,7 @@ use std::collections::HashSet;
 use std::process::ExitCode;
 use std::sync::Arc;
 use trustify_common::{config::Database, db};
-use trustify_graph::graph::Graph;
+use trustify_module_graph::graph::Graph;
 use trustify_module_importer::server::{
     common::validation,
     csaf::storage,

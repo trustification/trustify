@@ -1,12 +1,12 @@
 [workspace]
 resolver = "2"
 members = [
-  "graph",
   "trustd",
   "common",
   "common/auth",
   "common/infrastructure",
   "cvss",
+  "modules/graph",
   "modules/importer",
   "modules/ingestor",
   "entity",

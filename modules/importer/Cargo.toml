@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 trustify-common = { path = "../../common" }
 trustify-entity = { path = "../../entity" }
-trustify-graph = { path = "../../graph" }
+trustify-module-graph = { path = "../graph" }
 trustify-module-ingestor = { path = "../ingestor" }
 
 actix-web = "4"

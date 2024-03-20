@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-trustify-graph = { path = "../graph" }
 trustify-entity = { path = "../entity" }
 trustify-migration = { path = "../migration" }
 trustify-common = { path = "../common" }
+trustify-module-graph = { path = "../modules/graph" }
 trustify-module-ingestor = { path = "../modules/ingestor" }
 trustify-module-importer = { path = "../modules/importer" }
 
