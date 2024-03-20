@@ -1,22 +1,29 @@
 #![allow(unused)]
-use actix_web::body::MessageBody;
-use actix_web::web;
+
+mod openapi;
+
+use actix_web::{body::MessageBody, web};
 use futures::FutureExt;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
-use trustify_auth::auth::AuthConfigArguments;
-use trustify_auth::authenticator::Authenticator;
-use trustify_auth::authorizer::Authorizer;
-use trustify_common::config::Database;
-use trustify_common::db;
-use trustify_infrastructure::app::http::{HttpServerBuilder, HttpServerConfig};
-use trustify_infrastructure::endpoint::Huevos;
-use trustify_infrastructure::health::checks::{Local, Probe};
-use trustify_infrastructure::tracing::Tracing;
-use trustify_infrastructure::{Infrastructure, InfrastructureConfig, InitContext, Metrics};
+use trustify_auth::swagger_ui::{swagger_ui_with_auth, SwaggerUiOidc};
+use trustify_auth::{
+    auth::AuthConfigArguments, authenticator::Authenticator, authorizer::Authorizer,
+    swagger_ui::SwaggerUiOidcConfig,
+};
+use trustify_common::{config::Database, db};
+use trustify_infrastructure::{
+    app::http::{HttpServerBuilder, HttpServerConfig},
+    endpoint::Huevos,
+    health::checks::{Local, Probe},
+    tracing::Tracing,
+    Infrastructure, InfrastructureConfig, InitContext, Metrics,
+};
 use trustify_module_graph::graph::Graph;
 use trustify_module_importer::server::importer;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 /// Run the API server
 #[derive(clap::Args, Debug)]
@@ -38,6 +45,9 @@ pub struct Run {
 
     #[command(flatten)]
     pub http: HttpServerConfig<Huevos>,
+
+    #[command(flatten)]
+    pub swagger_ui_oidc: SwaggerUiOidcConfig,
 }
 
 const SERVICE_ID: &str = "huevos";
@@ -49,6 +59,7 @@ struct InitData {
     db: db::Database,
     http: HttpServerConfig<Huevos>,
     tracing: Tracing,
+    swagger_oidc: Option<Arc<SwaggerUiOidc>>,
 }
 
 impl Run {
@@ -77,6 +88,11 @@ impl InitData {
             log::warn!("Authentication is disabled");
         }
 
+        let swagger_oidc: Option<Arc<SwaggerUiOidc>> =
+            SwaggerUiOidc::from_devmode_or_config(run.devmode, run.swagger_ui_oidc)
+                .await?
+                .map(Arc::new);
+
         let db = db::Database::with_external_config(&run.database, run.bootstrap).await?;
         let graph = Graph::new(db.clone());
 
@@ -97,26 +113,34 @@ impl InitData {
             db,
             http: run.http,
             tracing: run.infra.tracing,
+            swagger_oidc,
         })
     }
 
     async fn run(self, metrics: &Metrics) -> anyhow::Result<()> {
-        let graph = self.graph.clone();
-        let db = self.db.clone();
+        let swagger_oidc = self.swagger_oidc;
 
-        let http = HttpServerBuilder::try_from(self.http)?
-            .tracing(self.tracing)
-            .metrics(metrics.registry().clone(), SERVICE_ID)
-            .default_authenticator(self.authenticator)
-            .authorizer(self.authorizer.clone())
-            .configure(move |svc| {
-                svc.app_data(web::Data::from(self.graph.clone()))
-                    .configure(|svc| {
-                        trustify_module_graph::endpoints::configure(svc);
-                        trustify_module_importer::endpoints::configure(svc, db.clone());
-                        trustify_module_ingestor::endpoints::configure(svc);
-                    });
-            });
+        let http = {
+            let graph = self.graph.clone();
+            let db = self.db.clone();
+            HttpServerBuilder::try_from(self.http)?
+                .tracing(self.tracing)
+                .metrics(metrics.registry().clone(), SERVICE_ID)
+                .default_authenticator(self.authenticator)
+                .authorizer(self.authorizer.clone())
+                .configure(move |svc| {
+                    svc.service(swagger_ui_with_auth(
+                        openapi::openapi(),
+                        swagger_oidc.clone(),
+                    ));
+                    svc.app_data(web::Data::from(self.graph.clone()))
+                        .configure(|svc| {
+                            trustify_module_graph::endpoints::configure(svc);
+                            trustify_module_importer::endpoints::configure(svc, db.clone());
+                            trustify_module_ingestor::endpoints::configure(svc);
+                        });
+                })
+        };
 
         let http = async { http.run().await }.boxed_local();
         let importer = async { importer(self.db).await }.boxed_local();

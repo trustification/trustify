@@ -29,7 +29,7 @@ thiserror = "1"
 time = { version = "0.3", features = ["serde-well-known"] }
 tokio = { version = "1.30.0", features = ["full"] }
 url = { version = "2.5.0", features = ["serde"] }
-utoipa = { version = "4", features = ["actix_extras"] }
+utoipa = { version = "4", features = ["actix_extras", "time", "url"] }
 uuid = { version = "1.7.0", features = ["v4"] }
 walker-common = "=0.6.0-alpha.8"
 walker-extras = "=0.6.0-alpha.8"

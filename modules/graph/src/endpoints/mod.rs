@@ -7,6 +7,7 @@ use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, ResponseError};
 use trustify_common::error::ErrorInformation;
 use trustify_common::purl::PurlErr;
+use utoipa::OpenApi;
 
 pub fn configure(config: &mut web::ServiceConfig) {
     config
@@ -15,6 +16,19 @@ pub fn configure(config: &mut web::ServiceConfig) {
         .service(vulnerability::affected_packages)
         .service(vulnerability::affected_products);
 }
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        package::dependencies,
+        package::variants,
+        vulnerability::affected_packages,
+        vulnerability::affected_products
+    ),
+    components(),
+    tags()
+)]
+pub struct ApiDoc;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

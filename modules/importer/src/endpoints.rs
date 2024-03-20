@@ -5,8 +5,11 @@ use actix_web::{
     http::header::{self, ETag, EntityTag, IfMatch},
     post, put, web, HttpResponse, Responder,
 };
-use trustify_common::db::Database;
-use trustify_common::model::{Paginated, Revisioned};
+use trustify_common::{
+    db::Database,
+    model::{Paginated, Revisioned},
+};
+use utoipa::OpenApi;
 
 /// mount the "importer" module
 pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
@@ -22,12 +25,49 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
     );
 }
 
+#[derive(OpenApi)]
+#[openapi(
+    paths(list, create, read, update, delete, get_reports),
+    components(schemas(
+        crate::model::CommonImporter,
+        crate::model::CsafImporter,
+        crate::model::SbomImporter,
+        crate::model::Importer,
+        crate::model::ImporterConfiguration,
+        crate::model::ImporterData,
+        crate::model::State,
+    )),
+    tags()
+)]
+pub struct ApiDoc;
+
+#[utoipa::path(
+    context_path = "/api/v1/importer",
+    tag = "importer",
+    responses(
+        (status = 200, description = "List importer configurations", body = [crate::model::Importer])
+    )
+)]
 #[get("")]
+/// List importer configurations
 async fn list(service: web::Data<ImporterService>) -> Result<impl Responder, Error> {
     Ok(web::Json(service.list().await?))
 }
 
+#[utoipa::path(
+    context_path = "/api/v1/importer",
+    tag = "importer",
+    request_body = crate::model::ImporterConfiguration,
+    params(
+        ("name", Path, description = "The name of the importer"),
+    ),
+    responses(
+        (status = 201, description = "Created a new importer configuration"),
+        (status = 409, description = "An importer with that name already exists")
+    )
+)]
 #[post("/{name}")]
+/// Create a new importer configuration
 async fn create(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
@@ -37,7 +77,24 @@ async fn create(
     Ok(HttpResponse::Created().finish())
 }
 
+#[utoipa::path(
+    context_path = "/api/v1/importer",
+    tag = "importer",
+    params(
+        ("name", Path, description = "The name of the importer"),
+    ),
+    responses(
+        (status = 200, description = "Retrieved importer configuration",
+            body = crate::model::Importer,
+            headers(
+                ("etag" = String, description = "Revision ID")
+            )
+        ),
+        (status = 404, description = "An importer with that name could not be found")
+    )
+)]
 #[get("/{name}")]
+/// Get an importer configuration
 async fn read(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
@@ -52,7 +109,22 @@ async fn read(
         }))
 }
 
+#[utoipa::path(
+    context_path = "/api/v1/importer",
+    tag = "importer",
+    request_body = crate::model::ImporterConfiguration,
+    params(
+        ("name", Path, description = "The name of the importer"),
+        ("if-match", Header, description = "The revision to update"),
+    ),
+    responses(
+        (status = 201, description = "Created a new importer configuration"),
+        (status = 409, description = "An importer with that name does not exist"),
+        (status = 412, description = "The provided if-match header did not match the stored revision"),
+    )
+)]
 #[put("/{name}")]
+/// Update an existing importer configuration
 async fn update(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
@@ -71,7 +143,19 @@ async fn update(
     Ok(HttpResponse::NoContent().finish())
 }
 
+#[utoipa::path(
+    context_path = "/api/v1/importer",
+    tag = "importer",
+    params(
+        ("name", Path, description = "The name of the importer"),
+        ("if-match", Header, description = "The revision to delete"),
+    ),
+    responses(
+        (status = 201, description = "Delete the importer configuration"),
+    )
+)]
 #[delete("/{name}")]
+/// Delete an importer configuration
 async fn delete(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
@@ -88,7 +172,15 @@ async fn delete(
     })
 }
 
+#[utoipa::path(
+    context_path = "/api/v1/importer",
+    tag = "importer",
+    responses(
+        (status = 200, description = "Retrieved importer reports"),
+    )
+)]
 #[get("/{name}/report")]
+/// Get reports for an importer
 async fn get_reports(
     service: web::Data<ImporterService>,
     name: web::Path<String>,

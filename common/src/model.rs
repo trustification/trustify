@@ -42,7 +42,7 @@ mod default {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PaginatedResults<R> {
     pub items: Vec<R>,

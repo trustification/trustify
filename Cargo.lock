@@ -1488,15 +1488,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dirs"
-version = "5.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225"
-dependencies = [
- "dirs-sys",
-]
-
-[[package]]
 name = "dirs-next"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1504,18 +1495,6 @@ checksum = "b98cf8ebf19c3d1b223e151f99a4f9f0690dca41414773390fc824184ac833e1"
 dependencies = [
  "cfg-if",
  "dirs-sys-next",
-]
-
-[[package]]
-name = "dirs-sys"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "520f05a5cbd335fae5a99ff7a6ab8627577660ee5cfd6a94a6a929b52ff0321c"
-dependencies = [
- "libc",
- "option-ext",
- "redox_users",
- "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -3006,12 +2985,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "option-ext"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
-
-[[package]]
 name = "ordered-float"
 version = "3.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3855,7 +3828,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rust-embed-utils",
- "shellexpand",
  "syn 2.0.52",
  "walkdir",
 ]
@@ -4470,15 +4442,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6"
 dependencies = [
  "lazy_static",
-]
-
-[[package]]
-name = "shellexpand"
-version = "3.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da03fa3b94cc19e3ebfc88c4229c49d8f08cdbd1228870a45f0ffdf84988e14b"
-dependencies = [
- "dirs",
 ]
 
 [[package]]
@@ -5503,7 +5466,7 @@ dependencies = [
  "trustify-common",
  "url",
  "utoipa",
- "utoipa-swagger-ui 6.0.0",
+ "utoipa-swagger-ui",
 ]
 
 [[package]]
@@ -5730,7 +5693,6 @@ dependencies = [
  "trustify-module-graph",
  "url-escape",
  "utoipa",
- "walker-common",
 ]
 
 [[package]]
@@ -5758,7 +5720,7 @@ dependencies = [
  "trustify-module-ingestor",
  "url-escape",
  "utoipa",
- "utoipa-swagger-ui 4.0.0",
+ "utoipa-swagger-ui",
  "walker-common",
 ]
 
@@ -5928,22 +5890,7 @@ dependencies = [
  "quote",
  "regex",
  "syn 2.0.52",
-]
-
-[[package]]
-name = "utoipa-swagger-ui"
-version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "154517adf0d0b6e22e8e1f385628f14fcaa3db43531dc74303d3edef89d6dfe5"
-dependencies = [
- "actix-web",
- "mime_guess",
- "regex",
- "rust-embed",
- "serde",
- "serde_json",
- "utoipa",
- "zip",
+ "url",
 ]
 
 [[package]]
