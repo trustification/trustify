@@ -411,57 +411,6 @@ impl<'g> AdvisoryContext<'g> {
 
         Ok(AdvisoryVulnerabilityAssertions { assertions })
     }
-
-    pub async fn cvss3_scores<TX: AsRef<Transactional>>(
-        &self,
-        tx: TX,
-    ) -> Result<Vec<Cvss3Base>, Error> {
-        Ok(entity::cvss3::Entity::find()
-            .filter(entity::cvss3::Column::AdvisoryId.eq(self.advisory.id))
-            .all(&self.graph.connection(&tx))
-            .await?
-            .drain(..)
-            .map(|e| e.into())
-            .collect())
-    }
-
-    pub async fn get_cvss3_score<TX: AsRef<Transactional>>(
-        &self,
-        minor_version: u8,
-        tx: TX,
-    ) -> Result<Option<Cvss3Base>, Error> {
-        Ok(entity::cvss3::Entity::find()
-            .filter(entity::cvss3::Column::AdvisoryId.eq(self.advisory.id))
-            .filter(entity::cvss3::Column::MinorVersion.eq(minor_version as i32))
-            .one(&self.graph.connection(&tx))
-            .await?
-            .map(|cvss| cvss.into()))
-    }
-
-    pub async fn ingest_cvss3_score<TX: AsRef<Transactional>>(
-        &self,
-        cvss3: Cvss3Base,
-        tx: TX,
-    ) -> Result<Cvss3Base, Error> {
-        if let Some(found) = self.get_cvss3_score(cvss3.minor_version, &tx).await? {
-            return Ok(found);
-        }
-
-        let model = entity::cvss3::ActiveModel {
-            advisory_id: Set(self.advisory.id),
-            minor_version: Set(cvss3.minor_version as i32),
-            av: Set(cvss3.av.into()),
-            ac: Set(cvss3.ac.into()),
-            pr: Set(cvss3.pr.into()),
-            ui: Set(cvss3.ui.into()),
-            s: Set(cvss3.s.into()),
-            c: Set(cvss3.c.into()),
-            i: Set(cvss3.i.into()),
-            a: Set(cvss3.a.into()),
-        };
-
-        Ok(model.insert(&self.graph.db).await?.into())
-    }
 }
 
 #[cfg(test)]
