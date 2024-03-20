@@ -107,7 +107,7 @@ mod test {
     #[test(tokio::test)]
     async fn serde() -> Result<(), anyhow::Error> {
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-        let test_data = pwd.join("../etc/test-data/mitre");
+        let test_data = pwd.join("../../etc/test-data/mitre");
 
         let cve_json = test_data.join("CVE-2024-28111.json");
 
