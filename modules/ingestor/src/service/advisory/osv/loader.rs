@@ -43,21 +43,21 @@ impl<'g> OsvLoader<'g> {
                 .ingest_advisory(osv.id, location, sha256, &tx)
                 .await?;
 
-            for severity in osv.severity.iter().flatten() {
-                if matches!(severity.severity_type, SeverityType::CVSSv3) {
-                    match Cvss3Base::from_str(&severity.score) {
-                        Ok(cvss3) => {
-                            advisory.ingest_cvss3_score(cvss3, &tx).await?;
-                        }
-                        Err(err) => {
-                            log::warn!("Unable to parse CVSS3: {:#?}", err);
+            for cve_id in cve_ids {
+                let advisory_vuln = advisory.link_to_vulnerability(cve_id, &tx).await?;
+
+                for severity in osv.severity.iter().flatten() {
+                    if matches!(severity.severity_type, SeverityType::CVSSv3) {
+                        match Cvss3Base::from_str(&severity.score) {
+                            Ok(cvss3) => {
+                                advisory_vuln.ingest_cvss3_score(cvss3, &tx).await?;
+                            }
+                            Err(err) => {
+                                log::warn!("Unable to parse CVSS3: {:#?}", err);
+                            }
                         }
                     }
                 }
-            }
-
-            for cve_id in cve_ids {
-                let advisory_vuln = advisory.link_to_vulnerability(cve_id, &tx).await?;
 
                 for affected in &osv.affected {
                     if let Some(package) = &affected.package {
@@ -221,7 +221,16 @@ mod test {
                 && vulnerability == "CVE-2021-32714"
             )
         );
-        let scores = loaded_advisory.cvss3_scores(()).await?;
+
+        let advisory_vuln = loaded_advisory
+            .get_vulnerability("CVE-2021-32714", ())
+            .await?;
+
+        assert!(advisory_vuln.is_some());
+
+        let advisory_vuln = advisory_vuln.unwrap();
+
+        let scores = advisory_vuln.cvss3_scores(()).await?;
 
         assert_eq!(1, scores.len());
 
@@ -231,6 +240,11 @@ mod test {
             score.to_string(),
             "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H"
         );
+
+        assert!(loaded_advisory
+            .get_vulnerability("CVE-8675309", ())
+            .await?
+            .is_none());
 
         Ok(())
     }

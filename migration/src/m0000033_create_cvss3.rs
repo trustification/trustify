@@ -17,17 +17,23 @@ impl MigrationTrait for Migration {
                     .table(Cvss3::Table)
                     .if_not_exists()
                     .col(ColumnDef::new(Cvss3::AdvisoryId).integer().not_null())
+                    .col(ColumnDef::new(Cvss3::VulnerabilityId).integer().not_null())
                     .col(ColumnDef::new(Cvss3::MinorVersion).integer().not_null())
                     .primary_key(
                         Index::create()
+                            .col(Cvss3::VulnerabilityId)
                             .col(Cvss3::AdvisoryId)
                             .col(Cvss3::MinorVersion),
                     )
                     .foreign_key(
                         ForeignKey::create()
                             .from_col(Cvss3::AdvisoryId)
-                            .to(Advisory::Table, Advisory::Id)
-                            .on_delete(ForeignKeyAction::Cascade),
+                            .to(Advisory::Table, Advisory::Id),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from_col(Cvss3::VulnerabilityId)
+                            .to(Advisory::Table, Advisory::Id),
                     )
                     .col(
                         ColumnDef::new(Cvss3::AV)
@@ -88,6 +94,7 @@ impl MigrationTrait for Migration {
 pub enum Cvss3 {
     Table,
     AdvisoryId,
+    VulnerabilityId,
     MinorVersion,
     AV,
     AC,

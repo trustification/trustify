@@ -5730,7 +5730,6 @@ dependencies = [
  "trustify-module-graph",
  "url-escape",
  "utoipa",
- "walker-common",
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-use crate::advisory;
+use crate::{advisory, vulnerability};
 use sea_orm::entity::prelude::*;
 use trustify_cvss::cvss3::Cvss3Base;
 
@@ -7,6 +7,9 @@ use trustify_cvss::cvss3::Cvss3Base;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub advisory_id: i32,
+
+    #[sea_orm(primary_key)]
+    pub vulnerability_id: i32,
 
     #[sea_orm(primary_key)]
     pub minor_version: i32,
@@ -44,11 +47,23 @@ pub enum Relation {
     from = "super::cvss3::Column::AdvisoryId"
     to = "super::advisory::Column::Id")]
     Advisory,
+
+    #[sea_orm(
+    belongs_to = "super::advisory::Entity",
+    from = "super::cvss3::Column::VulnerabilityId"
+    to = "super::advisory::Column::Id")]
+    Vulnerability,
 }
 
 impl Related<advisory::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Advisory.def()
+    }
+}
+
+impl Related<vulnerability::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Vulnerability.def()
     }
 }
 
