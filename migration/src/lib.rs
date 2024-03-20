@@ -24,6 +24,7 @@ mod m0000033_create_cvss3;
 mod m0000035_create_cpe22;
 mod m0000220_create_qualified_package_transitive_function;
 mod m0000230_create_importer;
+mod m0000002_create_cvss4_enums;
 
 pub struct Migrator;
 
@@ -32,6 +33,7 @@ impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
             Box::new(m0000001_create_cvss3_enums::Migration),
+            Box::new(m0000002_create_cvss4_enums::Migration),
             Box::new(m0000010_create_sbom::Migration),
             Box::new(m0000011_create_vulnerability::Migration),
             Box::new(m0000012_create_vulnerability_description::Migration),
