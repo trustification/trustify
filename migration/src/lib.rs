@@ -19,12 +19,13 @@ mod m0000200_create_relationship;
 mod m0000210_create_package_relates_to_package;
 
 mod m0000001_create_cvss3_enums;
+mod m0000002_create_cvss4_enums;
 mod m0000012_create_vulnerability_description;
 mod m0000033_create_cvss3;
+mod m0000034_create_cvss4;
 mod m0000035_create_cpe22;
 mod m0000220_create_qualified_package_transitive_function;
 mod m0000230_create_importer;
-mod m0000002_create_cvss4_enums;
 
 pub struct Migrator;
 
@@ -39,6 +40,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000012_create_vulnerability_description::Migration),
             Box::new(m0000030_create_advisory::Migration),
             Box::new(m0000033_create_cvss3::Migration),
+            Box::new(m0000034_create_cvss4::Migration),
             Box::new(m0000032_create_advisory_vulnerability::Migration),
             Box::new(m0000040_create_package::Migration),
             Box::new(m0000035_create_cpe22::Migration),

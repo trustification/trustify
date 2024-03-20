@@ -46,7 +46,6 @@ impl From<Model> for cvss4::Cvss4Base {
     }
 }
 
-
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
@@ -75,7 +74,6 @@ impl Related<vulnerability::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
-
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss4_av")]
@@ -152,7 +150,7 @@ impl From<AttackRequirements> for cvss4::AttackRequirements {
     fn from(value: AttackRequirements) -> Self {
         match value {
             AttackRequirements::None => Self::None,
-            AttackRequirements::Present => Self::Present
+            AttackRequirements::Present => Self::Present,
         }
     }
 }
@@ -165,7 +163,6 @@ impl From<cvss4::AttackRequirements> for AttackRequirements {
         }
     }
 }
-
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss4_pr")]
@@ -183,7 +180,7 @@ impl From<PrivilegesRequired> for cvss4::PrivilegesRequired {
         match value {
             PrivilegesRequired::None => Self::None,
             PrivilegesRequired::Low => Self::Low,
-            PrivilegesRequired::High => Self::High
+            PrivilegesRequired::High => Self::High,
         }
     }
 }
@@ -197,7 +194,6 @@ impl From<cvss4::PrivilegesRequired> for PrivilegesRequired {
         }
     }
 }
-
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss4_ui")]
@@ -258,13 +254,12 @@ impl From<cvss4::VulnerableConfidentiality> for VulnerableConfidentiality {
         match value {
             cvss4::VulnerableConfidentiality::High => Self::High,
             cvss4::VulnerableConfidentiality::Low => Self::Low,
-            cvss4::VulnerableConfidentiality::None => Self::None
+            cvss4::VulnerableConfidentiality::None => Self::None,
         }
     }
 }
 
 // ---
-
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss4_vi")]
@@ -292,7 +287,7 @@ impl From<cvss4::VulnerableIntegrity> for VulnerableIntegrity {
         match value {
             cvss4::VulnerableIntegrity::High => Self::High,
             cvss4::VulnerableIntegrity::Low => Self::Low,
-            cvss4::VulnerableIntegrity::None => Self::None
+            cvss4::VulnerableIntegrity::None => Self::None,
         }
     }
 }
@@ -325,7 +320,7 @@ impl From<cvss4::VulnerableAvailability> for VulnerableAvailability {
         match value {
             cvss4::VulnerableAvailability::High => Self::High,
             cvss4::VulnerableAvailability::Low => Self::Low,
-            cvss4::VulnerableAvailability::None => Self::None
+            cvss4::VulnerableAvailability::None => Self::None,
         }
     }
 }
@@ -334,10 +329,6 @@ impl From<cvss4::VulnerableAvailability> for VulnerableAvailability {
 // ---
 // ---
 // ---
-
-
-
-
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss4_sc")]
@@ -365,13 +356,12 @@ impl From<cvss4::SubsequentConfidentiality> for SubsequentConfidentiality {
         match value {
             cvss4::SubsequentConfidentiality::High => Self::High,
             cvss4::SubsequentConfidentiality::Low => Self::Low,
-            cvss4::SubsequentConfidentiality::Negligible => Self::Negligible
+            cvss4::SubsequentConfidentiality::Negligible => Self::Negligible,
         }
     }
 }
 
 // ---
-
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss4_si")]
@@ -399,7 +389,7 @@ impl From<cvss4::SubsequentIntegrity> for SubsequentIntegrity {
         match value {
             cvss4::SubsequentIntegrity::High => Self::High,
             cvss4::SubsequentIntegrity::Low => Self::Low,
-            cvss4::SubsequentIntegrity::None => Self::None
+            cvss4::SubsequentIntegrity::None => Self::None,
         }
     }
 }
@@ -432,8 +422,7 @@ impl From<cvss4::SubsequentAvailability> for SubsequentAvailability {
         match value {
             cvss4::SubsequentAvailability::High => Self::High,
             cvss4::SubsequentAvailability::Low => Self::Low,
-            cvss4::SubsequentAvailability::None => Self::None
+            cvss4::SubsequentAvailability::None => Self::None,
         }
     }
 }
-
