@@ -5,7 +5,6 @@ use csaf::Csaf;
 use sha2::{Digest, Sha256};
 use trustify_module_graph::endpoints::Error;
 use trustify_module_graph::graph::Graph;
-use walker_common::utils::hex::Hex;
 
 #[utoipa::path(responses((status = 200, description = "Upload a file")))]
 #[post("/advisories")]
@@ -16,7 +15,7 @@ pub async fn upload_advisory(
 ) -> Result<impl Responder, Error> {
     // TODO: investigate how to parse files from a stream
     let payload_bytes = payload.to_bytes().await?;
-    let sha256 = Hex(&Sha256::digest(&payload_bytes)).to_lower();
+    let sha256 = hex::encode(Sha256::digest(&payload_bytes));
 
     let csaf = serde_json::from_slice::<Csaf>(&payload_bytes).map_err(|_e| Error::BadRequest {
         msg: "File could not be parsed".to_string(),
@@ -54,7 +53,7 @@ mod tests {
         .await;
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-        let test_data = pwd.join("../etc/test-data");
+        let test_data = pwd.join("../../etc/test-data");
 
         let advisory = test_data.join("cve-2023-33201.json");
 

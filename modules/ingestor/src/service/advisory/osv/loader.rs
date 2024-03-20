@@ -143,7 +143,7 @@ mod test {
         let graph = Graph::new(db);
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-        let test_data = pwd.join("../etc/test-data/osv");
+        let test_data = pwd.join("../../etc/test-data/osv");
 
         let osv_json = test_data.join("RUSTSEC-2021-0079.json");
         let osv_file = File::open(osv_json)?;
