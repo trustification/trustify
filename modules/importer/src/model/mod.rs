@@ -7,7 +7,7 @@ pub use sbom::*;
 use std::ops::{Deref, DerefMut};
 use std::time::Duration;
 use time::OffsetDateTime;
-use trustify_common::model::Revisioned;
+use trustify_common::model::{PaginatedResults, Revisioned};
 use trustify_entity::{
     importer::{self, Model},
     importer_report,
@@ -57,17 +57,17 @@ pub struct ImporterData {
 
     /// The last state change
     #[serde(with = "time::serde::rfc3339")]
-    pub last_change: time::OffsetDateTime,
+    pub last_change: OffsetDateTime,
 
     /// The last successful run
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
-    pub last_success: Option<time::OffsetDateTime>,
+    pub last_success: Option<OffsetDateTime>,
 
     /// The last run (successful or not)
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
-    pub last_run: Option<time::OffsetDateTime>,
+    pub last_run: Option<OffsetDateTime>,
 
     /// The error of the last run (empty if successful)
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -178,6 +178,8 @@ pub struct ImporterReport {
     pub error: Option<String>,
     pub report: serde_json::Value,
 }
+
+pub struct PaginatedImporterReport(pub PaginatedResults<ImporterReport>);
 
 impl From<importer_report::Model> for ImporterReport {
     fn from(value: importer_report::Model) -> Self {

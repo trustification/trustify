@@ -14,11 +14,14 @@ pub struct PackageParams {
 }
 
 #[utoipa::path(
+    params(
+        ("purl", Path, description = "Package URL to get dependencies for")
+    ),
     responses(
         (status = 200, description = "Dependencies"),
     ),
 )]
-#[get("package/{purl}/dependencies")]
+#[get("/package/{purl}/dependencies")]
 pub async fn dependencies(
     state: web::Data<Graph>,
     purl: web::Path<String>,
@@ -53,11 +56,14 @@ pub async fn dependencies(
 }
 
 #[utoipa::path(
+    params(
+        ("purl", Path, description = "Package URL to get dependencies for")
+    ),
     responses(
         (status = 200, description = "Affected packages"),
     ),
 )]
-#[get("package/{purl}/dependents")]
+#[get("/package/{purl}/dependents")]
 pub async fn dependents(
     state: web::Data<Graph>,
     purl: web::Path<String>,
@@ -66,11 +72,14 @@ pub async fn dependents(
 }
 
 #[utoipa::path(
+    params(
+        ("purl", Path, description = "Package URL to get dependencies for")
+    ),
     responses(
         (status = 200, description = "Affected packages"),
     ),
 )]
-#[get("package/{purl}/variants")]
+#[get("/package/{purl}/variants")]
 pub async fn variants(
     state: web::Data<Graph>,
     purl: web::Path<String>,
@@ -90,11 +99,14 @@ pub async fn variants(
 }
 
 #[utoipa::path(
+    params(
+        ("purl", Path, description = "Package URL to get dependencies for")
+    ),
     responses(
         (status = 200, description = "Affected packages"),
     ),
 )]
-#[get("package/{purl}/vulnerabilities")]
+#[get("/package/{purl}/vulnerabilities")]
 pub async fn vulnerabilities(
     state: web::Data<Graph>,
     purl: web::Path<String>,

@@ -6,8 +6,16 @@ use sha2::{Digest, Sha256};
 use trustify_module_graph::endpoints::Error;
 use trustify_module_graph::graph::Graph;
 
-#[utoipa::path(responses((status = 200, description = "Upload a file")))]
+#[utoipa::path(
+    tag = "ingestor",
+    request_body = Vec<u8>,
+    responses(
+        (status = 200, description = "Upload a file"),
+        (status = 400, description = "The file could not be parsed as a CSAF document"),
+    )
+)]
 #[post("/advisories")]
+/// Upload a new advisory
 pub async fn upload_advisory(
     graph: web::Data<Graph>,
     req: HttpRequest,
