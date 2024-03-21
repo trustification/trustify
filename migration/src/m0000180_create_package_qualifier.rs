@@ -1,4 +1,4 @@
-use crate::m0000044_create_qualified_package::QualifiedPackage;
+use crate::m0000130_create_qualified_package::QualifiedPackage;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]

@@ -1,5 +1,5 @@
-use crate::m0000030_create_advisory::Advisory;
-use crate::m0000046_create_package_version_range::PackageVersionRange;
+use crate::m0000060_create_advisory::Advisory;
+use crate::m0000120_create_package_version::PackageVersion;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -12,34 +12,34 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(AffectedPackageVersionRange::Table)
+                    .table(FixedPackageVersion::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(AffectedPackageVersionRange::Id)
+                        ColumnDef::new(FixedPackageVersion::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
                     .col(
-                        ColumnDef::new(AffectedPackageVersionRange::AdvisoryId)
+                        ColumnDef::new(FixedPackageVersion::AdvisoryId)
                             .integer()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .from_col(AffectedPackageVersionRange::AdvisoryId)
+                            .from_col(FixedPackageVersion::AdvisoryId)
                             .to(Advisory::Table, Advisory::Id),
                     )
                     .col(
-                        ColumnDef::new(AffectedPackageVersionRange::PackageVersionRangeId)
+                        ColumnDef::new(FixedPackageVersion::PackageVersionId)
                             .integer()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .from_col(AffectedPackageVersionRange::PackageVersionRangeId)
-                            .to(PackageVersionRange::Table, PackageVersionRange::Id),
+                            .from_col(FixedPackageVersion::PackageVersionId)
+                            .to(PackageVersion::Table, PackageVersion::Id),
                     )
                     .to_owned(),
             )
@@ -48,21 +48,17 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(
-                Table::drop()
-                    .table(AffectedPackageVersionRange::Table)
-                    .to_owned(),
-            )
+            .drop_table(Table::drop().table(FixedPackageVersion::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum AffectedPackageVersionRange {
+pub enum FixedPackageVersion {
     Table,
     Id,
     //Timestamp,
     // --
     AdvisoryId,
-    PackageVersionRangeId,
+    PackageVersionId,
 }
