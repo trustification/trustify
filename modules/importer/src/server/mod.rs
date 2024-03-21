@@ -10,14 +10,16 @@ use std::time::Duration;
 use time::OffsetDateTime;
 use tokio::time::MissedTickBehavior;
 use trustify_common::db::Database;
+use trustify_module_storage::service::dispatch::DispatchBackend;
 
 /// run the importer loop
-pub async fn importer(db: Database) -> anyhow::Result<()> {
-    Server { db }.run().await
+pub async fn importer(db: Database, storage: DispatchBackend) -> anyhow::Result<()> {
+    Server { db, storage }.run().await
 }
 
 struct Server {
     db: Database,
+    storage: DispatchBackend,
 }
 
 impl Server {

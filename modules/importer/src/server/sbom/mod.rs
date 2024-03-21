@@ -16,6 +16,7 @@ use sbom_walker::{
 use std::sync::Arc;
 use std::time::SystemTime;
 use trustify_module_graph::graph::Graph;
+use trustify_module_ingestor::service::IngestorService;
 use url::Url;
 use walker_common::fetcher::Fetcher;
 
@@ -49,8 +50,9 @@ impl super::Server {
 
         // storage (called by validator)
 
+        let ingestor = IngestorService::new(Graph::new(self.db.clone()), self.storage.clone());
         let storage = storage::StorageVisitor {
-            system: Graph::new(self.db.clone()),
+            ingestor,
             report: report.clone(),
         };
 

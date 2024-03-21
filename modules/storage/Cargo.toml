@@ -1,36 +1,34 @@
 [package]
-name = "trustify-module-ingestor"
+name = "trustify-module-storage"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [dependencies]
-trustify-common = { workspace = true }
-trustify-cvss = { workspace = true }
-trustify-entity = { workspace = true }
-trustify-module-graph = { workspace = true }
-trustify-module-storage = { workspace = true }
+trustify-common = { path = "../../common" }
+trustify-entity = { path = "../../entity" }
+trustify-module-graph = { path = "../graph" }
+
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 bytes = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 csaf = { workspace = true }
-env_logger = { workspace = true }
 futures = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }
 log = { workspace = true }
 reqwest = { workspace = true }
 ring = { workspace = true }
-sbom-walker = { workspace = true, features = ["crypto-openssl", "cyclonedx-bom", "spdx-rs"] }
 sea-orm = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 sha2 = { workspace = true }
+tempfile = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
+tokio-util = { workspace = true, features = ["full"] }
 utoipa = { workspace = true, features = ["actix_extras"] }
-packageurl = { workspace = true }
 
 [dev-dependencies]
 test-log = { workspace = true, features = ["env_logger", "trace"] }
