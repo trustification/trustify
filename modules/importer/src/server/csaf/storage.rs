@@ -1,14 +1,12 @@
 use crate::server::report::ReportBuilder;
 use async_trait::async_trait;
-use csaf_walker::{
-    retrieve::RetrievedAdvisory,
-    validation::{ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError},
+use csaf_walker::validation::{
+    ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError,
 };
 use parking_lot::Mutex;
-use std::io::BufReader;
 use std::sync::Arc;
-use trustify_module_graph::graph::Graph;
-use trustify_module_ingestor::service::advisory::csaf::loader::CsafLoader;
+use tokio_util::io::ReaderStream;
+use trustify_module_ingestor::service::IngestorService;
 
 #[derive(Debug, thiserror::Error)]
 pub enum StorageError {
@@ -19,7 +17,7 @@ pub enum StorageError {
 }
 
 pub struct StorageVisitor {
-    pub system: Graph,
+    pub ingestor: IngestorService,
     /// the report to report our messages to
     pub report: Arc<Mutex<ReportBuilder>>,
 }
@@ -38,19 +36,13 @@ impl ValidatedVisitor for StorageVisitor {
         _context: &Self::Context,
         result: Result<ValidatedAdvisory, ValidationError>,
     ) -> Result<(), Self::Error> {
-        self.store(&result?.retrieved).await?;
-        Ok(())
-    }
-}
+        let doc = result?;
+        let location = doc.context.url().to_string();
 
-impl StorageVisitor {
-    async fn store(&self, doc: &RetrievedAdvisory) -> Result<(), StorageError> {
-        let loader = CsafLoader::new(&self.system);
-
-        loader
-            .load(doc.url.as_str(), BufReader::new(doc.data.as_ref()))
+        self.ingestor
+            .ingest(&location, ReaderStream::new(doc.data.as_ref()))
             .await
-            .map_err(|e| StorageError::Storage(e.into()))?;
+            .map_err(|err| StorageError::Storage(err.into()))?;
 
         Ok(())
     }

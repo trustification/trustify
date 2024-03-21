@@ -6,6 +6,7 @@ use sbom_walker::{
     validation::ValidationVisitor,
     walker::Walker,
 };
+use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
 use trustify_common::{config::Database, db};
@@ -15,6 +16,8 @@ use trustify_module_importer::server::{
     report::{Report, ReportBuilder, ScannerError, SplitScannerError},
     sbom::storage,
 };
+use trustify_module_ingestor::service::IngestorService;
+use trustify_module_storage::service::fs::FileSystemBackend;
 use url::Url;
 use walker_common::{fetcher::Fetcher, progress::Progress};
 
@@ -30,6 +33,10 @@ pub struct ImportSbomCommand {
 
     /// Source URL or path
     pub source: String,
+
+    /// Location of the file storage
+    #[arg(long, env)]
+    pub storage: PathBuf,
 }
 
 impl ImportSbomCommand {
@@ -70,8 +77,10 @@ impl ImportSbomCommand {
 
         // storage (called by validator)
 
+        let storage = FileSystemBackend::new(&self.storage).await?;
+        let ingestor = IngestorService::new(system, storage);
         let storage = storage::StorageVisitor {
-            system,
+            ingestor,
             report: report.clone(),
         };
 

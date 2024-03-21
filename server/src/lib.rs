@@ -3,7 +3,10 @@
 mod openapi;
 
 use actix_web::{body::MessageBody, web};
+use anyhow::Context;
 use futures::FutureExt;
+use std::fs::create_dir_all;
+use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
@@ -22,6 +25,8 @@ use trustify_infrastructure::{
 };
 use trustify_module_graph::graph::Graph;
 use trustify_module_importer::server::importer;
+use trustify_module_storage::service::dispatch::DispatchBackend;
+use trustify_module_storage::service::fs::FileSystemBackend;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -30,6 +35,10 @@ use utoipa_swagger_ui::SwaggerUi;
 pub struct Run {
     #[command(flatten)]
     pub database: Database,
+
+    /// Location of the file storage
+    #[arg(long, env)]
+    pub storage: Option<PathBuf>,
 
     #[arg(long, env)]
     pub bootstrap: bool,
@@ -57,6 +66,7 @@ struct InitData {
     authorizer: Authorizer,
     graph: Arc<Graph>,
     db: db::Database,
+    storage: DispatchBackend,
     http: HttpServerConfig<Huevos>,
     tracing: Tracing,
     swagger_oidc: Option<Arc<SwaggerUiOidc>>,
@@ -106,6 +116,14 @@ impl InitData {
 
         context.health.readiness.register("database", check).await;
 
+        let storage = run
+            .storage
+            .unwrap_or_else(|| PathBuf::from("./data/storage"));
+        if run.devmode {
+            create_dir_all(&storage).context("Failed to create storage directory")?;
+        }
+        let storage = DispatchBackend::Filesystem(FileSystemBackend::new(storage).await?);
+
         Ok(InitData {
             authenticator,
             authorizer,
@@ -114,6 +132,7 @@ impl InitData {
             http: run.http,
             tracing: run.infra.tracing,
             swagger_oidc,
+            storage,
         })
     }
 
@@ -143,7 +162,7 @@ impl InitData {
         };
 
         let http = async { http.run().await }.boxed_local();
-        let importer = async { importer(self.db).await }.boxed_local();
+        let importer = async { importer(self.db, self.storage).await }.boxed_local();
 
         let (result, _, _) = futures::future::select_all([http, importer]).await;
 
