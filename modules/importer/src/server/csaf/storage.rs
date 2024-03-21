@@ -1,16 +1,12 @@
 use crate::server::report::ReportBuilder;
 use async_trait::async_trait;
-use csaf::Csaf;
-use csaf_walker::{
-    retrieve::RetrievedAdvisory,
-    validation::{ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError},
+use csaf_walker::validation::{
+    ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError,
 };
 use parking_lot::Mutex;
-use sha2::{Digest, Sha256};
 use std::sync::Arc;
-use trustify_module_graph::graph::Graph;
-use trustify_module_ingestor::service::advisory;
-use walker_common::utils::hex::Hex;
+use tokio_util::io::ReaderStream;
+use trustify_module_ingestor::service::IngestorService;
 
 #[derive(Debug, thiserror::Error)]
 pub enum StorageError {
@@ -21,7 +17,7 @@ pub enum StorageError {
 }
 
 pub struct StorageVisitor {
-    pub system: Graph,
+    pub ingestor: IngestorService,
     /// the report to report our messages to
     pub report: Arc<Mutex<ReportBuilder>>,
 }
@@ -40,27 +36,14 @@ impl ValidatedVisitor for StorageVisitor {
         _context: &Self::Context,
         result: Result<ValidatedAdvisory, ValidationError>,
     ) -> Result<(), Self::Error> {
-        self.store(&result?.retrieved).await?;
-        Ok(())
-    }
-}
+        let doc = result?;
+        let location = doc.context.url().to_string();
 
-impl StorageVisitor {
-    async fn store(&self, doc: &RetrievedAdvisory) -> Result<(), StorageError> {
-        let csaf = serde_json::from_slice::<Csaf>(&doc.data)
+        self.ingestor
+            .ingest(&location, ReaderStream::new(doc.data.as_ref()))
+            .await
             .map_err(|err| StorageError::Storage(err.into()))?;
 
-        let sha256 = match doc.sha256.clone() {
-            Some(sha) => sha.expected,
-            None => {
-                let digest = Sha256::digest(&doc.data);
-                Hex(&digest).to_lower()
-            }
-        };
-
-        advisory::csaf::ingest(&self.system, csaf, &sha256, doc.url.as_str())
-            .await
-            .map_err(StorageError::Storage)?;
         Ok(())
     }
 }

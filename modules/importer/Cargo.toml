@@ -8,6 +8,8 @@ trustify-common = { path = "../../common" }
 trustify-entity = { path = "../../entity" }
 trustify-module-graph = { path = "../graph" }
 trustify-module-ingestor = { path = "../ingestor" }
+trustify-module-storage = { path = "../storage" }
+
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
@@ -27,6 +29,7 @@ sqlx = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true, features = ["serde-well-known"] }
 tokio = { workspace = true, features = ["full"] }
+tokio-util = { workspace = true, features = ["full"] }
 url = { workspace = true, features = ["serde"] }
 utoipa = { workspace = true, features = ["actix_extras", "time", "url"] }
 uuid = { workspace = true, features = ["v4"] }

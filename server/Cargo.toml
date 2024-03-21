@@ -11,6 +11,8 @@ trustify-entity = { path = "../entity"}
 trustify-module-graph = { path = "../modules/graph" }
 trustify-module-ingestor = { path = "../modules/ingestor" }
 trustify-module-importer = { path = "../modules/importer" }
+trustify-module-storage = { path = "../modules/storage" }
+
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }

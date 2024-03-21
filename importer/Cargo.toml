@@ -10,6 +10,8 @@ trustify-common = { path = "../common" }
 trustify-module-graph = { path = "../modules/graph" }
 trustify-module-ingestor = { path = "../modules/ingestor" }
 trustify-module-importer = { path = "../modules/importer" }
+trustify-module-storage = { path = "../modules/storage" }
+
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 clap = { workspace = true, features = ["derive"] }

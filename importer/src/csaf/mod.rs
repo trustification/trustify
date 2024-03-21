@@ -8,6 +8,7 @@ use csaf_walker::{
 };
 use parking_lot::Mutex;
 use std::collections::HashSet;
+use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
 use trustify_common::{config::Database, db};
@@ -17,6 +18,8 @@ use trustify_module_importer::server::{
     csaf::storage,
     report::{Report, ReportBuilder, ScannerError, SplitScannerError},
 };
+use trustify_module_ingestor::service::IngestorService;
+use trustify_module_storage::service::fs::FileSystemBackend;
 use url::Url;
 use walker_common::{fetcher::Fetcher, progress::Progress};
 
@@ -41,8 +44,13 @@ pub struct ImportCsafCommand {
     #[arg(long, env)]
     pub only_prefix: Vec<String>,
 
+    /// number of concurrent workers
     #[arg(long, env, default_value_t = 1)]
     pub workers: usize,
+
+    /// Location of the file storage
+    #[arg(long, env)]
+    pub storage: PathBuf,
 }
 
 impl ImportCsafCommand {
@@ -84,8 +92,10 @@ impl ImportCsafCommand {
 
         // storage (called by validator)
 
+        let storage = FileSystemBackend::new(&self.storage).await?;
+        let ingestor = IngestorService::new(system, storage);
         let visitor = storage::StorageVisitor {
-            system,
+            ingestor,
             report: report.clone(),
         };
 

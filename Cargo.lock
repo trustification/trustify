@@ -1249,7 +1249,7 @@ dependencies = [
 [[package]]
 name = "csaf-walker"
 version = "0.6.0-alpha.8"
-source = "git+https://github.com/ctron/csaf-walker?rev=95d1d1e25a0def07e563f6a92722204cee861ea4#95d1d1e25a0def07e563f6a92722204cee861ea4"
+source = "git+https://github.com/ctron/csaf-walker?rev=7b6e64dd56e4be79e184b053ef754a42e1496fe0#7b6e64dd56e4be79e184b053ef754a42e1496fe0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3995,7 +3995,7 @@ dependencies = [
 [[package]]
 name = "sbom-walker"
 version = "0.6.0-alpha.8"
-source = "git+https://github.com/ctron/csaf-walker?rev=95d1d1e25a0def07e563f6a92722204cee861ea4#95d1d1e25a0def07e563f6a92722204cee861ea4"
+source = "git+https://github.com/ctron/csaf-walker?rev=7b6e64dd56e4be79e184b053ef754a42e1496fe0#7b6e64dd56e4be79e184b053ef754a42e1496fe0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5210,8 +5210,12 @@ checksum = "5419f34732d9eb6ee4c3578b7989078579b7f039cbbb9ca2c4da015749371e15"
 dependencies = [
  "bytes",
  "futures-core",
+ "futures-io",
  "futures-sink",
+ "futures-util",
+ "hashbrown 0.14.3",
  "pin-project-lite",
+ "slab",
  "tokio",
  "tracing",
 ]
@@ -5550,6 +5554,7 @@ dependencies = [
  "trustify-module-graph",
  "trustify-module-importer",
  "trustify-module-ingestor",
+ "trustify-module-storage",
  "url",
  "walker-common",
 ]
@@ -5655,10 +5660,12 @@ dependencies = [
  "thiserror",
  "time",
  "tokio",
+ "tokio-util",
  "trustify-common",
  "trustify-entity",
  "trustify-module-graph",
  "trustify-module-ingestor",
+ "trustify-module-storage",
  "url",
  "utoipa",
  "uuid",
@@ -5672,14 +5679,17 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "anyhow",
+ "bytes",
  "chrono",
  "csaf",
  "env_logger",
+ "futures",
  "hex",
  "humantime",
  "log",
  "reqwest",
  "ring 0.17.8",
+ "sbom-walker",
  "sea-orm",
  "serde",
  "serde_json",
@@ -5689,6 +5699,38 @@ dependencies = [
  "tokio",
  "trustify-common",
  "trustify-cvss",
+ "trustify-entity",
+ "trustify-module-graph",
+ "trustify-module-storage",
+ "url-escape",
+ "utoipa",
+]
+
+[[package]]
+name = "trustify-module-storage"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anyhow",
+ "bytes",
+ "chrono",
+ "csaf",
+ "futures",
+ "hex",
+ "humantime",
+ "log",
+ "reqwest",
+ "ring 0.17.8",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "test-log",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "trustify-common",
  "trustify-entity",
  "trustify-module-graph",
  "url-escape",
@@ -5718,6 +5760,7 @@ dependencies = [
  "trustify-module-graph",
  "trustify-module-importer",
  "trustify-module-ingestor",
+ "trustify-module-storage",
  "url-escape",
  "utoipa",
  "utoipa-swagger-ui",
@@ -6004,7 +6047,7 @@ dependencies = [
 [[package]]
 name = "walker-common"
 version = "0.6.0-alpha.8"
-source = "git+https://github.com/ctron/csaf-walker?rev=95d1d1e25a0def07e563f6a92722204cee861ea4#95d1d1e25a0def07e563f6a92722204cee861ea4"
+source = "git+https://github.com/ctron/csaf-walker?rev=7b6e64dd56e4be79e184b053ef754a42e1496fe0#7b6e64dd56e4be79e184b053ef754a42e1496fe0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6038,7 +6081,7 @@ dependencies = [
 [[package]]
 name = "walker-extras"
 version = "0.6.0-alpha.8"
-source = "git+https://github.com/ctron/csaf-walker?rev=95d1d1e25a0def07e563f6a92722204cee861ea4#95d1d1e25a0def07e563f6a92722204cee861ea4"
+source = "git+https://github.com/ctron/csaf-walker?rev=7b6e64dd56e4be79e184b053ef754a42e1496fe0#7b6e64dd56e4be79e184b053ef754a42e1496fe0"
 dependencies = [
  "anyhow",
  "async-trait",
