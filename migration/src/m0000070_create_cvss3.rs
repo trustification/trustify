@@ -1,7 +1,7 @@
-use crate::m0000001_create_cvss3_enums::{
+use crate::m0000010_create_cvss3_enums::{
     Cvss3A, Cvss3Ac, Cvss3Av, Cvss3C, Cvss3I, Cvss3Pr, Cvss3S, Cvss3Ui,
 };
-use crate::m0000030_create_advisory::Advisory;
+use crate::m0000060_create_advisory::Advisory;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]

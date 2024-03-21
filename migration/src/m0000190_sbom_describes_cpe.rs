@@ -1,5 +1,5 @@
-use crate::m0000011_create_vulnerability::Vulnerability;
-use crate::m0000030_create_advisory::Advisory;
+use crate::m0000030_create_sbom::Sbom;
+use crate::m0000110_create_cpe::Cpe;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -12,34 +12,32 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(AdvisoryVulnerability::Table)
+                    .table(SbomDescribesCpe::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(AdvisoryVulnerability::AdvisoryId)
+                        ColumnDef::new(SbomDescribesCpe::SbomId)
                             .integer()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .from_col(AdvisoryVulnerability::AdvisoryId)
-                            .to(Advisory::Table, Advisory::Id)
-                            .on_delete(ForeignKeyAction::Cascade),
+                            .name("sbom_id")
+                            .from(SbomDescribesCpe::Table, SbomDescribesCpe::SbomId)
+                            .to(Sbom::Table, Sbom::Id),
                     )
-                    .col(
-                        ColumnDef::new(AdvisoryVulnerability::VulnerabilityId)
-                            .integer()
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(SbomDescribesCpe::CpeId).integer().not_null())
                     .foreign_key(
                         ForeignKey::create()
-                            .from_col(AdvisoryVulnerability::VulnerabilityId)
-                            .to(Vulnerability::Table, Vulnerability::Id)
-                            .on_delete(ForeignKeyAction::Cascade),
+                            .name("cpe22_id")
+                            .from(SbomDescribesCpe::Table, SbomDescribesCpe::CpeId)
+                            .to(Cpe::Table, Cpe::Id),
                     )
                     .primary_key(
                         Index::create()
-                            .col(AdvisoryVulnerability::AdvisoryId)
-                            .col(AdvisoryVulnerability::VulnerabilityId),
+                            .name("pk-sbom-cpe")
+                            .col(SbomDescribesCpe::SbomId)
+                            .col(SbomDescribesCpe::CpeId)
+                            .primary(),
                     )
                     .to_owned(),
             )
@@ -50,7 +48,7 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(
                 Table::drop()
-                    .table(AdvisoryVulnerability::Table)
+                    .table(SbomDescribesCpe::Table)
                     .if_exists()
                     .to_owned(),
             )
@@ -59,8 +57,8 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-pub enum AdvisoryVulnerability {
+pub enum SbomDescribesCpe {
     Table,
-    AdvisoryId,
-    VulnerabilityId,
+    SbomId,
+    CpeId,
 }

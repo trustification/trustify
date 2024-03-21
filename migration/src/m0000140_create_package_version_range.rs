@@ -1,4 +1,4 @@
-use crate::m0000040_create_package::Package;
+use crate::m0000100_create_package::Package;
 use sea_orm_migration::prelude::*;
 
 use crate::Now;
@@ -13,32 +13,37 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(PackageVersion::Table)
+                    .table(PackageVersionRange::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(PackageVersion::Id)
+                        ColumnDef::new(PackageVersionRange::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
                     .col(
-                        ColumnDef::new(PackageVersion::Timestamp)
+                        ColumnDef::new(PackageVersionRange::Timestamp)
                             .timestamp_with_time_zone()
                             .default(Func::cust(Now)),
                     )
                     .col(
-                        ColumnDef::new(PackageVersion::PackageId)
+                        ColumnDef::new(PackageVersionRange::PackageId)
                             .integer()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .from_col(PackageVersion::PackageId)
+                            .from_col(PackageVersionRange::PackageId)
                             .to(Package::Table, Package::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
-                    .col(ColumnDef::new(PackageVersion::Version).string().not_null())
+                    .col(
+                        ColumnDef::new(PackageVersionRange::Start)
+                            .string()
+                            .not_null(),
+                    )
+                    .col(ColumnDef::new(PackageVersionRange::End).string().not_null())
                     .to_owned(),
             )
             .await
@@ -46,17 +51,18 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(PackageVersion::Table).to_owned())
+            .drop_table(Table::drop().table(PackageVersionRange::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum PackageVersion {
+pub enum PackageVersionRange {
     Table,
     Id,
     Timestamp,
     // --
     PackageId,
-    Version,
+    Start,
+    End,
 }

@@ -1,6 +1,6 @@
-use crate::m0000010_create_sbom::Sbom;
-use crate::m0000044_create_qualified_package::QualifiedPackage;
-use crate::m0000200_create_relationship::Relationship;
+use crate::m0000030_create_sbom::Sbom;
+use crate::m0000130_create_qualified_package::QualifiedPackage;
+use crate::m0000210_create_relationship::Relationship;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]

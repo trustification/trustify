@@ -1,7 +1,6 @@
-use crate::m0000040_create_package::Package;
+use crate::m0000060_create_advisory::Advisory;
+use crate::m0000140_create_package_version_range::PackageVersionRange;
 use sea_orm_migration::prelude::*;
-
-use crate::Now;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -13,37 +12,35 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(PackageVersionRange::Table)
+                    .table(AffectedPackageVersionRange::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(PackageVersionRange::Id)
+                        ColumnDef::new(AffectedPackageVersionRange::Id)
                             .integer()
                             .not_null()
                             .auto_increment()
                             .primary_key(),
                     )
                     .col(
-                        ColumnDef::new(PackageVersionRange::Timestamp)
-                            .timestamp_with_time_zone()
-                            .default(Func::cust(Now)),
-                    )
-                    .col(
-                        ColumnDef::new(PackageVersionRange::PackageId)
+                        ColumnDef::new(AffectedPackageVersionRange::AdvisoryId)
                             .integer()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .from_col(PackageVersionRange::PackageId)
-                            .to(Package::Table, Package::Id)
-                            .on_delete(ForeignKeyAction::Cascade),
+                            .from_col(AffectedPackageVersionRange::AdvisoryId)
+                            .to(Advisory::Table, Advisory::Id),
                     )
                     .col(
-                        ColumnDef::new(PackageVersionRange::Start)
-                            .string()
+                        ColumnDef::new(AffectedPackageVersionRange::PackageVersionRangeId)
+                            .integer()
                             .not_null(),
                     )
-                    .col(ColumnDef::new(PackageVersionRange::End).string().not_null())
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from_col(AffectedPackageVersionRange::PackageVersionRangeId)
+                            .to(PackageVersionRange::Table, PackageVersionRange::Id),
+                    )
                     .to_owned(),
             )
             .await
@@ -51,18 +48,21 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(Table::drop().table(PackageVersionRange::Table).to_owned())
+            .drop_table(
+                Table::drop()
+                    .table(AffectedPackageVersionRange::Table)
+                    .to_owned(),
+            )
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum PackageVersionRange {
+pub enum AffectedPackageVersionRange {
     Table,
     Id,
-    Timestamp,
+    //Timestamp,
     // --
-    PackageId,
-    Start,
-    End,
+    AdvisoryId,
+    PackageVersionRangeId,
 }

@@ -1,8 +1,8 @@
-use crate::m0000002_create_cvss4_enums::{
+use crate::m0000020_create_cvss4_enums::{
     Cvss4Ac, Cvss4At, Cvss4Av, Cvss4Pr, Cvss4Sa, Cvss4Sc, Cvss4Si, Cvss4Ui, Cvss4Va, Cvss4Vc,
     Cvss4Vi,
 };
-use crate::m0000030_create_advisory::Advisory;
+use crate::m0000060_create_advisory::Advisory;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
