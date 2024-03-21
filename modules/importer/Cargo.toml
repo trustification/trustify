@@ -8,31 +8,30 @@ trustify-common = { path = "../../common" }
 trustify-entity = { path = "../../entity" }
 trustify-module-graph = { path = "../graph" }
 trustify-module-ingestor = { path = "../ingestor" }
-
-actix-web = "4"
-anyhow = "1.0.72"
-async-trait = "0.1"
-csaf = "0.5"
-csaf-walker = { version = "=0.6.0-alpha.8", default-features = false, features = ["crypto-openssl", "csaf"] }
-humantime-serde = "1"
-log = "0.4.19"
-parking_lot = "0.12"
-regex = "1.10.3"
-sbom-walker = { version = "=0.6.0-alpha.8", default-features = false, features = ["crypto-openssl", "cyclonedx-bom", "spdx-rs"] }
-sea-orm = { version = "0.12", features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros", "debug-print"] }
-sea-query = "0.30.0"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1.0.104"
-sha2 = "0.10.6"
-sqlx = "0.7"
-thiserror = "1"
-time = { version = "0.3", features = ["serde-well-known"] }
-tokio = { version = "1.30.0", features = ["full"] }
-url = { version = "2.5.0", features = ["serde"] }
-utoipa = { version = "4", features = ["actix_extras", "time", "url"] }
-uuid = { version = "1.7.0", features = ["v4"] }
-walker-common = "=0.6.0-alpha.8"
-walker-extras = "=0.6.0-alpha.8"
+actix-web = { workspace = true }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+csaf = { workspace = true }
+csaf-walker = { workspace = true, features = ["crypto-openssl", "csaf"] }
+humantime-serde = { workspace = true }
+log = { workspace = true }
+parking_lot = { workspace = true }
+regex = { workspace = true }
+sbom-walker = { workspace = true, features = ["crypto-openssl", "cyclonedx-bom", "spdx-rs"] }
+sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros", "debug-print"] }
+sea-query = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+sqlx = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true, features = ["serde-well-known"] }
+tokio = { workspace = true, features = ["full"] }
+url = { workspace = true, features = ["serde"] }
+utoipa = { workspace = true, features = ["actix_extras", "time", "url"] }
+uuid = { workspace = true, features = ["v4"] }
+walker-common = { workspace = true }
+walker-extras = { workspace = true }
 
 [dev-dependencies]
-test-log = { version = "0.2.15", features = ["env_logger", "trace"] }
+test-log = { workspace = true, features = ["env_logger", "trace"] }

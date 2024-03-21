@@ -10,27 +10,26 @@ trustify-common = { path = "../common" }
 trustify-module-graph = { path = "../modules/graph" }
 trustify-module-ingestor = { path = "../modules/ingestor" }
 trustify-module-importer = { path = "../modules/importer" }
-
-anyhow = "1.0.72"
-async-trait = "0.1"
-clap = { version = "4", features = ["derive"] }
-csaf = "0.5"
-csaf-walker = { version = "=0.6.0-alpha.8", default-features = false, features = ["crypto-openssl", "csaf"] }
-env_logger = "0.11.0"
-indicatif = { version = "0.17.8", features = [] }
-indicatif-log-bridge = "0.2"
-log = "0.4.19"
-packageurl = "0.3.0"
-parking_lot = "0.12"
-sbom-walker = { version = "=0.6.0-alpha.8", default-features = false, features = ["crypto-openssl", "cyclonedx-bom", "spdx-rs"] }
-sea-orm = { version = "0.12", features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros"] }
-sea-orm-migration = "0.12.2"
-sea-query = "0.30.0"
-serde_json = "1.0.104"
-sha2 = "0.10.6"
-spdx-rs = "0.5.3"
-thiserror = "1"
-time = "0.3"
-tokio = { version = "1.30.0", features = ["full"] }
-url = "2.4.0"
-walker-common = "=0.6.0-alpha.8"
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+csaf = { workspace = true }
+csaf-walker = { workspace = true, features = ["crypto-openssl", "csaf"] }
+env_logger = { workspace = true }
+indicatif = { workspace = true, features = [] }
+indicatif-log-bridge = { workspace = true }
+log = { workspace = true }
+packageurl = { workspace = true }
+parking_lot = { workspace = true }
+sbom-walker = { workspace = true, features = ["crypto-openssl", "cyclonedx-bom", "spdx-rs"] }
+sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros"] }
+sea-orm-migration = { workspace = true }
+sea-query = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+spdx-rs = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+url = { workspace = true }
+walker-common = { workspace = true }
