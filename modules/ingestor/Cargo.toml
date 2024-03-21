@@ -9,25 +9,24 @@ trustify-common = { path = "../../common" }
 trustify-cvss = { path = "../../cvss" }
 trustify-entity = { path = "../../entity" }
 trustify-module-graph = { path = "../graph" }
-
-actix-web = "4"
-anyhow = "1.0.72"
-chrono = { version = "0.4.35", features = ["serde"] }
-csaf = "0.5.0"
-env_logger = "0.11.0"
-hex = "0.4.3"
-humantime = "2"
-log = "0.4.19"
-reqwest = "0.11"
-ring = "0.17.8"
-sea-orm = "*"
-serde = { version = "1.0.183", features = ["derive"] }
-serde_json = "1.0.114"
-sha2 = "0.10.8"
-thiserror = "1.0.58"
-tokio = { version = "1.30.0", features = ["full"] }
-utoipa = { version = "4", features = ["actix_extras"] }
+actix-web = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true, features = ["serde"] }
+csaf = { workspace = true }
+env_logger = { workspace = true }
+hex = { workspace = true }
+humantime = { workspace = true }
+log = { workspace = true }
+reqwest = { workspace = true }
+ring = { workspace = true }
+sea-orm = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+utoipa = { workspace = true, features = ["actix_extras"] }
 
 [dev-dependencies]
-test-log = { version = "0.2.15", features = ["env_logger", "trace"] }
-url-escape = "0.1.1"
+test-log = { workspace = true, features = ["env_logger", "trace"] }
+url-escape = { workspace = true }
