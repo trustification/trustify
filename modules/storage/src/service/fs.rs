@@ -3,9 +3,10 @@ use anyhow::Context;
 use bytes::Bytes;
 use futures::{Stream, StreamExt};
 use sha2::{digest::Output, Digest, Sha256};
-use std::fmt::Debug;
 use std::{
+    fmt::Debug,
     io::SeekFrom,
+    io::{ErrorKind, Read},
     path::{Path, PathBuf},
     pin::pin,
 };
@@ -50,12 +51,21 @@ impl FileSystemBackend {
         let base = base.into();
         let content = base.join("content");
 
-        create_dir(&content).await.with_context(|| {
-            format!(
-                "unable to create 'content' directory in the file system base: {}",
-                base.display()
-            )
-        })?;
+        create_dir(&content)
+            .await
+            .or_else(|err| {
+                if err.kind() == ErrorKind::AlreadyExists {
+                    Ok(())
+                } else {
+                    Err(err)
+                }
+            })
+            .with_context(|| {
+                format!(
+                    "unable to create 'content' directory in the file system base: {}",
+                    base.display()
+                )
+            })?;
 
         Ok(Self { content })
     }
@@ -138,14 +148,40 @@ impl StorageBackend for FileSystemBackend {
     }
 
     async fn retrieve(
-        &self,
-        hash: &str,
-    ) -> Result<impl Stream<Item = Result<Bytes, Self::Error>>, Self::Error> {
-        let target = level_dir(&self.content, hash, NUM_LEVELS);
+        self,
+        hash: String,
+    ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error> {
+        let target = level_dir(&self.content, &hash, NUM_LEVELS);
         create_dir_all(&target).await?;
         let target = target.join(hash);
 
-        Ok(ReaderStream::new(File::open(&target).await?))
+        let file = match File::open(&target).await {
+            Ok(file) => Some(file),
+            Err(err) if err.kind() == ErrorKind::NotFound => None,
+            Err(err) => return Err(err),
+        };
+
+        Ok(file.map(ReaderStream::new))
+    }
+
+    async fn retrieve_sync(self, hash: String) -> Result<Option<impl Read>, Self::Error>
+    where
+        Self: Sized,
+    {
+        let target = level_dir(&self.content, &hash, NUM_LEVELS);
+        create_dir_all(&target).await?;
+        let target = target.join(hash);
+
+        let file = match File::open(&target).await {
+            Ok(file) => Some(file),
+            Err(err) if err.kind() == ErrorKind::NotFound => None,
+            Err(err) => return Err(err),
+        };
+
+        Ok(match file {
+            Some(file) => Some(file.into_std().await),
+            None => None,
+        })
     }
 }
 

@@ -2,7 +2,7 @@ use super::super::Error;
 use anyhow::anyhow;
 use bytes::Bytes;
 use csaf::Csaf;
-use futures::Stream;
+use futures::{Stream, TryStreamExt};
 use std::time::Instant;
 use trustify_common::db::Transactional;
 use trustify_module_storage::service::StorageBackend;
@@ -24,9 +24,11 @@ impl super::super::IngestorService {
 
         let csaf: Csaf = serde_json::from_reader(
             self.storage
-                .retrieve_sync(&sha256)
+                .clone()
+                .retrieve_sync(sha256.clone())
                 .await
-                .map_err(Error::Storage)?,
+                .map_err(Error::Storage)?
+                .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?,
         )?;
 
         let identifier = csaf.document.tracking.id.clone();
@@ -47,5 +49,29 @@ impl super::super::IngestorService {
         );
 
         Ok(advisory.advisory.id)
+    }
+
+    pub async fn retrieve(
+        &self,
+        id: i32,
+    ) -> Result<Option<impl Stream<Item = Result<Bytes, Error>>>, Error> {
+        let Some(advisory) = self
+            .graph
+            .get_advisory_by_id(id, Transactional::None)
+            .await?
+        else {
+            return Ok(None);
+        };
+
+        let hash = advisory.advisory.sha256;
+
+        let stream = self
+            .storage
+            .clone()
+            .retrieve(hash)
+            .await
+            .map_err(Error::Storage)?;
+
+        Ok(stream.map(|stream| stream.map_err(Error::Storage)))
     }
 }

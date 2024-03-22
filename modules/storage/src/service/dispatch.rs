@@ -44,14 +44,41 @@ impl StorageBackend for DispatchBackend {
     }
 
     async fn retrieve(
-        &self,
-        hash: &str,
-    ) -> Result<impl Stream<Item = Result<Bytes, Self::Error>>, Self::Error> {
+        self,
+        hash: String,
+    ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error>
+    where
+        Self: Sized,
+    {
         match self {
             Self::Filesystem(backend) => backend
                 .retrieve(hash)
                 .await
-                .map(|stream| stream.map_err(anyhow::Error::from))
+                .map(|stream| stream.map(|stream| stream.map_err(anyhow::Error::from)))
+                .map_err(anyhow::Error::from),
+        }
+    }
+
+    async fn retrieve_sync(self, hash: String) -> Result<Option<impl Read>, Self::Error>
+    where
+        Self: Sized,
+    {
+        match self {
+            Self::Filesystem(backend) => backend
+                .retrieve_sync(hash)
+                .await
+                .map_err(anyhow::Error::from),
+        }
+    }
+
+    async fn retrieve_buf(self, hash: String) -> Result<Option<Bytes>, Self::Error>
+    where
+        Self: Sized,
+    {
+        match self {
+            Self::Filesystem(backend) => backend
+                .retrieve_buf(hash)
+                .await
                 .map_err(anyhow::Error::from),
         }
     }

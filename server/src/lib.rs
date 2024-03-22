@@ -142,6 +142,8 @@ impl InitData {
         let http = {
             let graph = self.graph.clone();
             let db = self.db.clone();
+            let storage = self.storage.clone();
+
             HttpServerBuilder::try_from(self.http)?
                 .tracing(self.tracing)
                 .metrics(metrics.registry().clone(), SERVICE_ID)
@@ -156,7 +158,11 @@ impl InitData {
                         .configure(|svc| {
                             trustify_module_graph::endpoints::configure(svc);
                             trustify_module_importer::endpoints::configure(svc, db.clone());
-                            trustify_module_ingestor::endpoints::configure(svc);
+                            trustify_module_ingestor::endpoints::configure(
+                                svc,
+                                db.clone(),
+                                storage.clone(),
+                            );
                         });
                 })
         };
