@@ -124,6 +124,7 @@ fn init_otlp(name: &str) {
     println!("Using Jaeger tracing.");
     println!("{:#?}", pipeline);
 
+    #[allow(clippy::expect_used)]
     let tracer = pipeline
         .install_batch(opentelemetry_sdk::runtime::Tokio)
         .expect("unable to setup tracing pipeline");
