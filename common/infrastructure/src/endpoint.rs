@@ -10,6 +10,7 @@ pub trait Endpoint: Debug {
     }
 
     fn url() -> Url {
+        #[allow(clippy::expect_used)]
         Url::parse(&format!("http://localhost:{}{}", Self::PORT, Self::PATH))
             .expect("default value must parse")
     }
