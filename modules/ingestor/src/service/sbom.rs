@@ -23,9 +23,11 @@ impl super::IngestorService {
 
         let data = self
             .storage
-            .retrieve_buf(&sha256)
+            .clone()
+            .retrieve_buf(sha256.clone())
             .await
-            .map_err(Error::Storage)?;
+            .map_err(Error::Storage)?
+            .ok_or_else(|| Error::Storage(anyhow!("File went missing during upload")))?;
 
         log::info!("Storing: {source}");
 

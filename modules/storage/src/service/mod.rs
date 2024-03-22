@@ -44,22 +44,37 @@ pub trait StorageBackend {
 
     /// Retrieve the content as an async reader
     fn retrieve(
-        &self,
-        hash: &str,
-    ) -> impl Future<Output = Result<impl Stream<Item = Result<Bytes, Self::Error>>, Self::Error>>;
+        self,
+        hash: String,
+    ) -> impl Future<Output = Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error>>;
 
     /// Retrieve the content as a sync reader, the operation itself is async
     ///
     /// NOTE: The default implementation falls back to an in-memory buffer.
-    fn retrieve_sync(&self, hash: &str) -> impl Future<Output = Result<impl Read, Self::Error>> {
-        async { self.retrieve_buf(hash).await.map(Cursor::new) }
+    fn retrieve_sync(
+        self,
+        hash: String,
+    ) -> impl Future<Output = Result<Option<impl Read>, Self::Error>>
+    where
+        Self: Sized,
+    {
+        async {
+            self.retrieve_buf(hash)
+                .await
+                .map(|result| result.map(Cursor::new))
+        }
     }
 
     /// Retrieve the content as a byte buffer
-    fn retrieve_buf(&self, hash: &str) -> impl Future<Output = Result<Bytes, Self::Error>> {
+    fn retrieve_buf(self, hash: String) -> impl Future<Output = Result<Option<Bytes>, Self::Error>>
+    where
+        Self: Sized,
+    {
         async {
-            let buf = self.retrieve(hash).await?.try_collect::<BytesMut>().await?;
-            Ok(buf.freeze())
+            Ok(match self.retrieve(hash).await? {
+                Some(stream) => Some(stream.try_collect::<BytesMut>().await?.freeze()),
+                None => None,
+            })
         }
     }
 }

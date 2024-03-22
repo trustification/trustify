@@ -1,5 +1,5 @@
 use crate::service::{Error, IngestorService};
-use actix_web::{post, web, HttpResponse, Responder};
+use actix_web::{get, post, web, HttpResponse, Responder};
 
 #[derive(Clone, Debug, serde::Deserialize)]
 pub struct UploadAdvisoryQuery {
@@ -16,8 +16,8 @@ pub struct UploadAdvisoryQuery {
         ("advisory_format" = String, Path, description = "Format of the submitted advisory document (`casf`, `osv`, ...)"),
     ),
     responses(
-        (status = 200, description = "Upload a file"),
-        (status = 400, description = "The file could not be parsed as an advisory document"),
+        (status = 201, description = "Upload a file"),
+        (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
 #[post("/advisories/{advisory_format}")]
@@ -42,33 +42,44 @@ pub async fn upload_advisory(
     }
 }
 
+#[utoipa::path(
+    tag = "ingestor",
+    responses(
+        (status = 200, description = "Download a an advisory", body = Vec<u8>,),
+        (status = 404, description = "The document could not be found"),
+    )
+)]
+#[get("/advisories/{id}")]
+/// Download an advisory
+pub async fn download_advisory(
+    service: web::Data<IngestorService>,
+    path: web::Path<i32>,
+) -> Result<impl Responder, Error> {
+    let id = path.into_inner();
+
+    Ok(match service.retrieve(id).await? {
+        Some(stream) => HttpResponse::Ok().streaming(stream),
+        None => HttpResponse::NotFound().finish(),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::super::configure;
 
-    use crate::service::IngestorService;
-    use actix_web::test::TestRequest;
-    use actix_web::web::Data;
-    use actix_web::{test, App};
+    use actix_web::{test, test::TestRequest, App};
     use std::fs;
     use std::path::PathBuf;
     use std::str::FromStr;
     use trustify_common::db::Database;
-    use trustify_module_graph::graph::Graph;
     use trustify_module_storage::service::fs::FileSystemBackend;
 
     #[test_log::test(actix_web::test)]
     async fn upload_advisory() -> Result<(), anyhow::Error> {
-        let graph = Graph::new(Database::for_test("upload_advisory").await?);
+        let db = Database::for_test("upload_advisory").await?;
         let (storage, _temp) = FileSystemBackend::for_test().await?;
-        let ingestor = IngestorService::new(graph, storage);
 
-        let app = test::init_service(
-            App::new()
-                .app_data(Data::new(ingestor))
-                .configure(configure),
-        )
-        .await;
+        let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
         let test_data = pwd.join("../../etc/test-data");

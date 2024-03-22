@@ -24,7 +24,7 @@ pub mod fixed_package_version;
 pub mod not_affected_package_version;
 
 impl Graph {
-    pub(crate) async fn get_advisory_by_id<TX: AsRef<Transactional>>(
+    pub async fn get_advisory_by_id<TX: AsRef<Transactional>>(
         &self,
         id: i32,
         tx: TX,
