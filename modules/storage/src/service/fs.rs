@@ -5,8 +5,8 @@ use futures::{Stream, StreamExt};
 use sha2::{digest::Output, Digest, Sha256};
 use std::{
     fmt::Debug,
+    io::ErrorKind,
     io::SeekFrom,
-    io::{ErrorKind, Read},
     path::{Path, PathBuf},
     pin::pin,
 };
@@ -163,26 +163,6 @@ impl StorageBackend for FileSystemBackend {
 
         Ok(file.map(ReaderStream::new))
     }
-
-    async fn retrieve_sync(self, hash: String) -> Result<Option<impl Read>, Self::Error>
-    where
-        Self: Sized,
-    {
-        let target = level_dir(&self.content, &hash, NUM_LEVELS);
-        create_dir_all(&target).await?;
-        let target = target.join(hash);
-
-        let file = match File::open(&target).await {
-            Ok(file) => Some(file),
-            Err(err) if err.kind() == ErrorKind::NotFound => None,
-            Err(err) => return Err(err),
-        };
-
-        Ok(match file {
-            Some(file) => Some(file.into_std().await),
-            None => None,
-        })
-    }
 }
 
 fn level_dir(base: impl AsRef<Path>, hash: &str, levels: usize) -> PathBuf {
@@ -222,7 +202,7 @@ mod test {
         let backend = FileSystemBackend::new(dir.path()).await.unwrap();
 
         let digest = backend
-            .store_reader(&b"Hello World"[..])
+            .store(ReaderStream::new(&b"Hello World"[..]))
             .await
             .expect("store must succeed");
 
