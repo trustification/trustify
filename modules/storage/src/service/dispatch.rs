@@ -31,18 +31,6 @@ impl StorageBackend for DispatchBackend {
         }
     }
 
-    async fn store_reader<R>(
-        &self,
-        reader: R,
-    ) -> Result<Output<Sha256>, StoreError<std::io::Error, Self::Error>>
-    where
-        R: AsyncRead,
-    {
-        match self {
-            Self::Filesystem(backend) => backend.store_reader(reader).await.map_err(Self::map_err),
-        }
-    }
-
     async fn retrieve(
         self,
         hash: String,
@@ -55,30 +43,6 @@ impl StorageBackend for DispatchBackend {
                 .retrieve(hash)
                 .await
                 .map(|stream| stream.map(|stream| stream.map_err(anyhow::Error::from)))
-                .map_err(anyhow::Error::from),
-        }
-    }
-
-    async fn retrieve_sync(self, hash: String) -> Result<Option<impl Read>, Self::Error>
-    where
-        Self: Sized,
-    {
-        match self {
-            Self::Filesystem(backend) => backend
-                .retrieve_sync(hash)
-                .await
-                .map_err(anyhow::Error::from),
-        }
-    }
-
-    async fn retrieve_buf(self, hash: String) -> Result<Option<Bytes>, Self::Error>
-    where
-        Self: Sized,
-    {
-        match self {
-            Self::Filesystem(backend) => backend
-                .retrieve_buf(hash)
-                .await
                 .map_err(anyhow::Error::from),
         }
     }

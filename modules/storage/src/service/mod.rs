@@ -8,8 +8,6 @@ use sha2::{digest::Output, Sha256};
 use std::fmt::Debug;
 use std::future::Future;
 use std::io::{Cursor, Read};
-use tokio::io::AsyncRead;
-use tokio_util::io::ReaderStream;
 
 #[derive(Debug, thiserror::Error)]
 pub enum StoreError<S: Debug, B: Debug> {
@@ -30,17 +28,6 @@ pub trait StorageBackend {
     where
         E: Debug,
         S: Stream<Item = Result<Bytes, E>>;
-
-    /// Store the content from a reader
-    fn store_reader<R>(
-        &self,
-        reader: R,
-    ) -> impl Future<Output = Result<Output<Sha256>, StoreError<std::io::Error, Self::Error>>>
-    where
-        R: AsyncRead,
-    {
-        async { self.store(ReaderStream::new(reader)).await }
-    }
 
     /// Retrieve the content as an async reader
     fn retrieve(
