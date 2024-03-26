@@ -10,6 +10,7 @@ time = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 trustify-common = { path = "../common" }
 trustify-cvss = { path = "../cvss" }
+chrono = { workspace = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }

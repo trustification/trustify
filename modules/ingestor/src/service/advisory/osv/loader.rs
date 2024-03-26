@@ -43,6 +43,12 @@ impl<'g> OsvLoader<'g> {
                 .ingest_advisory(osv.id, location, sha256, &tx)
                 .await?;
 
+            advisory.set_published_at(osv.published, &tx).await?;
+            advisory.set_modified_at(osv.modified, &tx).await?;
+            if let Some(withdrawn) = osv.withdrawn {
+                advisory.set_withdrawn_at(withdrawn, &tx).await?;
+            }
+
             for cve_id in cve_ids {
                 let advisory_vuln = advisory.link_to_vulnerability(cve_id, &tx).await?;
 

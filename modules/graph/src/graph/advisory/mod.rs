@@ -3,8 +3,9 @@
 use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::graph::error::Error;
 use crate::graph::Graph;
+use sea_orm::prelude::DateTimeUtc;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, EntityTrait, FromQueryResult, QueryFilter};
+use sea_orm::{ActiveModelTrait, EntityTrait, FromQueryResult, IntoActiveModel, QueryFilter};
 use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
 use std::cmp::min;
@@ -102,6 +103,51 @@ impl<'g> From<(&'g Graph, entity::advisory::Model)> for AdvisoryContext<'g> {
 }
 
 impl<'g> AdvisoryContext<'g> {
+    pub async fn set_published_at<TX: AsRef<Transactional>>(
+        &self,
+        published_at: DateTimeUtc,
+        tx: TX,
+    ) -> Result<(), Error> {
+        let mut entity = self.advisory.clone().into_active_model();
+        entity.published = Set(Some(published_at));
+        entity.save(&self.graph.connection(&tx)).await?;
+        Ok(())
+    }
+
+    pub fn published_at(&self) -> Option<DateTimeUtc> {
+        self.advisory.published
+    }
+
+    pub async fn set_modified_at<TX: AsRef<Transactional>>(
+        &self,
+        modified_at: DateTimeUtc,
+        tx: TX,
+    ) -> Result<(), Error> {
+        let mut entity = self.advisory.clone().into_active_model();
+        entity.modified = Set(Some(modified_at));
+        entity.save(&self.graph.connection(&tx)).await?;
+        Ok(())
+    }
+
+    pub fn modified_at(&self) -> Option<DateTimeUtc> {
+        self.advisory.modified
+    }
+
+    pub async fn set_withdrawn_at<TX: AsRef<Transactional>>(
+        &self,
+        withdrawn_at: DateTimeUtc,
+        tx: TX,
+    ) -> Result<(), Error> {
+        let mut entity = self.advisory.clone().into_active_model();
+        entity.withdrawn = Set(Some(withdrawn_at));
+        entity.save(&self.graph.connection(&tx)).await?;
+        Ok(())
+    }
+
+    pub fn withdrawn_at(&self) -> Option<DateTimeUtc> {
+        self.advisory.withdrawn
+    }
+
     pub async fn get_vulnerability<TX: AsRef<Transactional>>(
         &self,
         identifier: &str,
