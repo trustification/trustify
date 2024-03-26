@@ -23,8 +23,6 @@ pub mod affected_package_version_range;
 pub mod fixed_package_version;
 pub mod not_affected_package_version;
 
-pub mod csaf;
-
 impl Graph {
     pub(crate) async fn get_advisory_by_id<TX: AsRef<Transactional>>(
         &self,

@@ -22,9 +22,11 @@ impl<'g> OsvLoader<'g> {
         &self,
         location: L,
         record: R,
-    ) -> Result<(), Error> {
+    ) -> Result<String, Error> {
         let mut reader = HashingRead::new(record);
         let osv: Vulnerability = serde_json::from_reader(&mut reader)?;
+
+        let advisory_id = osv.id.clone();
 
         let tx = self.graph.transaction().await?;
 
@@ -101,11 +103,11 @@ impl<'g> OsvLoader<'g> {
                     }
                 }
             }
+            tx.commit().await?;
+            Ok(advisory_id)
+        } else {
+            Err(Error::NoAdvisoryContained)
         }
-
-        tx.commit().await?;
-
-        Ok(())
     }
 }
 

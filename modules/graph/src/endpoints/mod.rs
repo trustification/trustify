@@ -7,6 +7,7 @@ use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, ResponseError};
 use trustify_common::error::ErrorInformation;
 use trustify_common::purl::PurlErr;
+use trustify_entity::importer;
 use utoipa::OpenApi;
 
 pub fn configure(config: &mut web::ServiceConfig) {

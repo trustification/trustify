@@ -1,38 +1,54 @@
-use crate::service::advisory;
+use crate::service::advisory::csaf::loader::CsafLoader;
+use crate::service::advisory::osv::loader::OsvLoader;
 use actix_web::http::StatusCode;
 use actix_web::{post, web, HttpRequest, HttpResponse, Responder};
-use csaf::Csaf;
-use sha2::{Digest, Sha256};
+use std::io::BufReader;
 use trustify_module_graph::endpoints::Error;
 use trustify_module_graph::graph::Graph;
 
 #[utoipa::path(
-    tag = "ingestor",
-    request_body = Vec<u8>,
-    responses(
-        (status = 200, description = "Upload a file"),
-        (status = 400, description = "The file could not be parsed as a CSAF document"),
-    )
+tag = "ingestor",
+request_body = Vec < u8 >,
+responses(
+(status = 200, description = "Upload a file"),
+(status = 400, description = "The file could not be parsed as an advisory document"),
+)
 )]
-#[post("/advisories")]
+#[post("/advisories/{advisory_format}")]
 /// Upload a new advisory
 pub async fn upload_advisory(
     graph: web::Data<Graph>,
     req: HttpRequest,
+    path: web::Path<String>,
     payload: web::Payload,
 ) -> Result<impl Responder, Error> {
-    // TODO: investigate how to parse files from a stream
+    let advisory_format = path.into_inner().to_lowercase();
+
     let payload_bytes = payload.to_bytes().await?;
-    let sha256 = hex::encode(Sha256::digest(&payload_bytes));
+    let payload = BufReader::new(payload_bytes.as_ref());
 
-    let csaf = serde_json::from_slice::<Csaf>(&payload_bytes).map_err(|_e| Error::BadRequest {
-        msg: "File could not be parsed".to_string(),
-        status: StatusCode::BAD_REQUEST,
-    })?;
+    if advisory_format == "csaf" {
+        let loader = CsafLoader::new(&graph);
 
-    let advisory_id = advisory::csaf::ingest(&graph, csaf, &sha256, req.path()).await?;
+        let advisory_id = loader
+            .load(req.path(), payload)
+            .await
+            .map_err(anyhow::Error::new)?;
+        Ok(HttpResponse::Created().json(advisory_id))
+    } else if advisory_format == "osv" {
+        let loader = OsvLoader::new(&graph);
 
-    Ok(HttpResponse::Created().json(advisory_id))
+        let advisory_id = loader
+            .load(req.path(), payload)
+            .await
+            .map_err(anyhow::Error::new)?;
+        Ok(HttpResponse::Created().json(advisory_id))
+    } else {
+        Err(Error::BadRequest {
+            msg: "Unsupported advisory format".to_string(),
+            status: StatusCode::EXPECTATION_FAILED,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -66,7 +82,7 @@ mod tests {
         let advisory = test_data.join("cve-2023-33201.json");
 
         let payload = fs::read_to_string(advisory).expect("File not found");
-        let uri = "/advisories";
+        let uri = "/advisories/csaf";
         let request = TestRequest::post()
             .uri(uri)
             .set_payload(payload)
