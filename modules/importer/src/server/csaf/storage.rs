@@ -1,16 +1,14 @@
 use crate::server::report::ReportBuilder;
 use async_trait::async_trait;
-use csaf::Csaf;
 use csaf_walker::{
     retrieve::RetrievedAdvisory,
     validation::{ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError},
 };
 use parking_lot::Mutex;
-use sha2::{Digest, Sha256};
+use std::io::BufReader;
 use std::sync::Arc;
 use trustify_module_graph::graph::Graph;
-use trustify_module_ingestor::service::advisory;
-use walker_common::utils::hex::Hex;
+use trustify_module_ingestor::service::advisory::csaf::loader::CsafLoader;
 
 #[derive(Debug, thiserror::Error)]
 pub enum StorageError {
@@ -47,20 +45,13 @@ impl ValidatedVisitor for StorageVisitor {
 
 impl StorageVisitor {
     async fn store(&self, doc: &RetrievedAdvisory) -> Result<(), StorageError> {
-        let csaf = serde_json::from_slice::<Csaf>(&doc.data)
-            .map_err(|err| StorageError::Storage(err.into()))?;
+        let loader = CsafLoader::new(&self.system);
 
-        let sha256 = match doc.sha256.clone() {
-            Some(sha) => sha.expected,
-            None => {
-                let digest = Sha256::digest(&doc.data);
-                Hex(&digest).to_lower()
-            }
-        };
-
-        advisory::csaf::ingest(&self.system, csaf, &sha256, doc.url.as_str())
+        loader
+            .load(doc.url.as_str(), BufReader::new(doc.data.as_ref()))
             .await
-            .map_err(StorageError::Storage)?;
+            .map_err(|e| StorageError::Storage(e.into()))?;
+
         Ok(())
     }
 }

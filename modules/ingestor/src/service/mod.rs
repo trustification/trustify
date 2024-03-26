@@ -12,6 +12,8 @@ pub enum Error {
     Graph(trustify_module_graph::graph::error::Error),
     #[error(transparent)]
     Db(DbErr),
+    #[error("No advisory contained")]
+    NoAdvisoryContained,
 }
 
 impl From<serde_json::Error> for Error {
