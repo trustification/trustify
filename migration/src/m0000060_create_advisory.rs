@@ -19,6 +19,9 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
+                    .col(ColumnDef::new(Advisory::Published).timestamp_with_time_zone())
+                    .col(ColumnDef::new(Advisory::Modified).timestamp_with_time_zone())
+                    .col(ColumnDef::new(Advisory::Withdrawn).timestamp_with_time_zone())
                     .col(ColumnDef::new(Advisory::Identifier).string().not_null())
                     .col(ColumnDef::new(Advisory::Location).string().not_null())
                     .col(ColumnDef::new(Advisory::Sha256).string().not_null())
@@ -39,6 +42,9 @@ impl MigrationTrait for Migration {
 pub enum Advisory {
     Table,
     Id,
+    Published,
+    Modified,
+    Withdrawn,
     Identifier,
     Location,
     Sha256,

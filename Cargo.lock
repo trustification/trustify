@@ -5511,6 +5511,7 @@ name = "trustify-entity"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "sea-orm",
  "serde_json",
  "time",
