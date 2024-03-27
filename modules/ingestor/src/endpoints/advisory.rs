@@ -20,7 +20,7 @@ pub struct UploadAdvisoryQuery {
         (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
-#[post("/advisories/{advisory_format}")]
+#[post("/advisories")]
 /// Upload a new advisory
 pub async fn upload_advisory(
     service: web::Data<IngestorService>,
@@ -28,18 +28,7 @@ pub async fn upload_advisory(
     web::Query(UploadAdvisoryQuery { location }): web::Query<UploadAdvisoryQuery>,
 ) -> Result<impl Responder, Error> {
     let advisory_id = service.ingest(&location, payload).await?;
-
-        let advisory_id = loader
-            .load(req.path(), payload)
-            .await
-            .map_err(anyhow::Error::new)?;
-        Ok(HttpResponse::Created().json(advisory_id))
-    } else {
-        Err(Error::BadRequest {
-            msg: "Unsupported advisory format".to_string(),
-            status: StatusCode::EXPECTATION_FAILED,
-        })
-    }
+    Ok(HttpResponse::Created().json(advisory_id))
 }
 
 #[utoipa::path(
