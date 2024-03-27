@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-trustify-common = { path = "../../common" }
-trustify-entity = { path = "../../entity" }
-trustify-module-graph = { path = "../graph" }
-trustify-module-ingestor = { path = "../ingestor" }
+trustify-common = { workspace = true }
+trustify-entity = { workspace = true }
+trustify-module-graph = { workspace = true }
+trustify-module-ingestor = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }

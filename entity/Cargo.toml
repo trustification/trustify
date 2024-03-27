@@ -8,8 +8,8 @@ sea-orm = { workspace = true, features = ["sqlx-postgres", "runtime-tokio-rustls
 serde_json = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-trustify-common = { path = "../common" }
-trustify-cvss = { path = "../cvss" }
+trustify-common = { workspace = true }
+trustify-cvss = { workspace = true }
 chrono = { workspace = true }
 
 [dev-dependencies]

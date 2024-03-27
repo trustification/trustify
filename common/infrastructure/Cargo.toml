@@ -34,7 +34,7 @@ tracing-opentelemetry = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter", "tracing-log"] }
 url = { workspace = true }
 
-trustify-auth = { path = "../auth", features = ["actix"] }
+trustify-auth = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["full"] }

@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-trustify-migration = { path = "../migration" }
-trustify-cvss = { path = "../cvss" }
+trustify-migration = { workspace = true }
+trustify-cvss = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 cpe = { workspace = true }

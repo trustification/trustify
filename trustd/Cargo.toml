@@ -8,8 +8,8 @@ name = "trustd"
 path = "src/main.rs"
 
 [dependencies]
-trustify-server = { path = "../server"}
-trustify-importer = { path = "../importer"}
+trustify-server = { workspace = true }
+trustify-importer = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 log = { workspace = true }

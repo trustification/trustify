@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-trustify-auth = { path = "../../common/auth", features = ["actix"] }
-trustify-entity = { path = "../../entity" }
-trustify-common = { path = "../../common" }
-trustify-migration = { path = "../../migration" }
-trustify-cvss = { path = "../../cvss" }
+trustify-auth = { workspace = true }
+trustify-entity = { workspace = true }
+trustify-common = { workspace = true }
+trustify-migration = { workspace = true }
+trustify-cvss = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }

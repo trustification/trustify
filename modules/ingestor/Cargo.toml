@@ -5,10 +5,10 @@ edition = "2021"
 publish = false
 
 [dependencies]
-trustify-common = { path = "../../common" }
-trustify-cvss = { path = "../../cvss" }
-trustify-entity = { path = "../../entity" }
-trustify-module-graph = { path = "../graph" }
+trustify-common = { workspace = true }
+trustify-cvss = { workspace = true }
+trustify-entity = { workspace = true }
+trustify-module-graph = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
