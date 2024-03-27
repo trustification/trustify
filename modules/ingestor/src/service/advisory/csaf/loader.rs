@@ -36,43 +36,46 @@ impl<'g> CsafLoader<'g> {
             .ingest_advisory(&advisory_id, location, sha256, &tx)
             .await?;
 
-        for vuln in csaf.vulnerabilities.iter().flatten() {
-            let id = match &vuln.cve {
-                Some(cve) => cve,
-                None => continue,
-            };
+        for vuln in csaf
+            .vulnerabilities
+            .iter()
+            .flatten()
+            .filter(|e| e.cve.is_some())
+        {
+            // we filtered above, so should always be Some(_) but let's
+            // still avoid a blind unwrap.
+            if let Some(id) = &vuln.cve {
+                let advisory_vulnerability = advisory.link_to_vulnerability(id, &tx).await?;
 
-            //let v = graph.ingest_vulnerability(id).await?;
-            let advisory_vulnerability = advisory.link_to_vulnerability(id, &tx).await?;
+                if let Some(ps) = &vuln.product_status {
+                    for r in ps.fixed.iter().flatten() {
+                        for purl in resolve_purls(&csaf, r) {
+                            let package = Purl::from(purl.clone());
+                            advisory_vulnerability
+                                .ingest_fixed_package_version(package, &tx)
+                                .await?;
+                        }
+                    }
+                    for r in ps.known_not_affected.iter().flatten() {
+                        for purl in resolve_purls(&csaf, r) {
+                            let package = Purl::from(purl.clone());
+                            advisory_vulnerability
+                                .ingest_not_affected_package_version(package, &tx)
+                                .await?;
+                        }
+                    }
+                    for _r in ps.known_affected.iter().flatten() {
+                        /*
+                        for purl in resolve_purls(&csaf, r) {
+                            let package = Purl::from(purl.clone());
+                            log::debug!("{}", package.to_string());
+                            //advisory_vulnerability
+                                //.ingest_affected_package_range(package, Transactional::None)
+                                //.await?;
+                        }
 
-            if let Some(ps) = &vuln.product_status {
-                for r in ps.fixed.iter().flatten() {
-                    for purl in resolve_purls(&csaf, r) {
-                        let package = Purl::from(purl.clone());
-                        advisory_vulnerability
-                            .ingest_fixed_package_version(package, &tx)
-                            .await?;
+                         */
                     }
-                }
-                for r in ps.known_not_affected.iter().flatten() {
-                    for purl in resolve_purls(&csaf, r) {
-                        let package = Purl::from(purl.clone());
-                        advisory_vulnerability
-                            .ingest_not_affected_package_version(package, &tx)
-                            .await?;
-                    }
-                }
-                for _r in ps.known_affected.iter().flatten() {
-                    /*
-                    for purl in resolve_purls(&csaf, r) {
-                        let package = Purl::from(purl.clone());
-                        log::debug!("{}", package.to_string());
-                        //advisory_vulnerability
-                            //.ingest_affected_package_range(package, Transactional::None)
-                            //.await?;
-                    }
-
-                     */
                 }
             }
         }
