@@ -34,34 +34,28 @@ pub trait StorageBackend {
         self,
         hash: String,
     ) -> impl Future<Output = Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error>>;
+}
 
+pub struct SyncAdapter<T: StorageBackend> {
+    delegate: T,
+}
+
+impl<T: StorageBackend> SyncAdapter<T> {
+    pub fn new(delegate: T) -> Self {
+        SyncAdapter { delegate }
+    }
     /// Retrieve the content as a sync reader, the operation itself is async
     ///
     /// NOTE: The default implementation falls back to an in-memory buffer.
-    fn retrieve_sync(
-        self,
-        hash: String,
-    ) -> impl Future<Output = Result<Option<impl Read>, Self::Error>>
+    pub async fn retrieve(self, hash: String) -> Result<Option<impl Read>, T::Error>
     where
         Self: Sized,
     {
-        async {
-            self.retrieve_buf(hash)
-                .await
-                .map(|result| result.map(Cursor::new))
-        }
-    }
-
-    /// Retrieve the content as a byte buffer
-    fn retrieve_buf(self, hash: String) -> impl Future<Output = Result<Option<Bytes>, Self::Error>>
-    where
-        Self: Sized,
-    {
-        async {
-            Ok(match self.retrieve(hash).await? {
-                Some(stream) => Some(stream.try_collect::<BytesMut>().await?.freeze()),
-                None => None,
-            })
-        }
+        Ok(match self.delegate.retrieve(hash).await? {
+            Some(stream) => Some(Cursor::new(
+                stream.try_collect::<BytesMut>().await?.freeze(),
+            )),
+            None => None,
+        })
     }
 }

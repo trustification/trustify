@@ -4,7 +4,7 @@ use bytes::Bytes;
 use futures::Stream;
 use std::time::Instant;
 use trustify_common::db::Transactional;
-use trustify_module_storage::service::StorageBackend;
+use trustify_module_storage::service::{StorageBackend, SyncAdapter};
 
 impl super::IngestorService {
     pub async fn ingest_sbom<S, E>(&self, source: &str, stream: S) -> Result<(), Error>
@@ -20,11 +20,9 @@ impl super::IngestorService {
             .await
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
         let sha256 = hex::encode(digest);
-
-        let data = self
-            .storage
-            .clone()
-            .retrieve_buf(sha256.clone())
+        let storage = SyncAdapter::new(self.storage.clone());
+        let data = storage
+            .retrieve(sha256.clone())
             .await
             .map_err(Error::Storage)?
             .ok_or_else(|| Error::Storage(anyhow!("File went missing during upload")))?;
@@ -37,9 +35,7 @@ impl super::IngestorService {
             .await?;
 
         // FIXME: consider adding a report entry in case of "fixing" things
-        sbom.ingest_spdx_data(data.as_ref())
-            .await
-            .map_err(Error::Generic)?;
+        sbom.ingest_spdx_data(data).await.map_err(Error::Generic)?;
 
         let duration = Instant::now() - start;
         log::info!("Ingested - took {}", humantime::Duration::from(duration));
