@@ -7,12 +7,15 @@ use trustify_module_graph::endpoints::Error;
 use trustify_module_graph::graph::Graph;
 
 #[utoipa::path(
-tag = "ingestor",
-request_body = Vec < u8 >,
-responses(
-(status = 200, description = "Upload a file"),
-(status = 400, description = "The file could not be parsed as an advisory document"),
-)
+    tag = "ingestor",
+    request_body = Vec <u8>,
+    params(
+        ("advisory_format" = String, Path, description = "Format of the submitted advisory document (`casf`, `osv`, ...)"),
+    ),
+    responses(
+        (status = 200, description = "Upload a file"),
+        (status = 400, description = "The file could not be parsed as an advisory document"),
+    )
 )]
 #[post("/advisories/{advisory_format}")]
 /// Upload a new advisory

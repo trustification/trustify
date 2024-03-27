@@ -103,11 +103,9 @@ impl<'g> OsvLoader<'g> {
                     }
                 }
             }
-            tx.commit().await?;
-            Ok(advisory_id)
-        } else {
-            Err(Error::NoAdvisoryContained)
         }
+        tx.commit().await?;
+        Ok(advisory_id)
     }
 }
 
