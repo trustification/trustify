@@ -22,6 +22,8 @@ pub enum Error {
     Storage(#[source] anyhow::Error),
     #[error(transparent)]
     Generic(anyhow::Error),
+    #[error("Invalid advisory format: {0}")]
+    UnsupportedFormat(String),
 }
 
 impl ResponseError for Error {
@@ -50,6 +52,11 @@ impl ResponseError for Error {
             Self::Generic(err) => HttpResponse::InternalServerError().json(ErrorInformation {
                 error: "Generic".into(),
                 message: err.to_string(),
+                details: None,
+            }),
+            Self::UnsupportedFormat(fmt) => HttpResponse::BadRequest().json(ErrorInformation {
+                error: "UnsupportedFormat".into(),
+                message: format!("Unsupported advisory format: {fmt}"),
                 details: None,
             }),
         }

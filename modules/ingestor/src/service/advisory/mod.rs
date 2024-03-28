@@ -16,9 +16,7 @@ impl FromStr for Format {
         match s.to_lowercase().as_str() {
             "osv" => Ok(Self::OSV),
             "csaf" => Ok(Self::CSAF),
-            _ => Err(Error::Generic(anyhow::Error::msg(
-                "Unsupported advisory format",
-            ))),
+            _ => Err(Error::UnsupportedFormat(s.into())),
         }
     }
 }
