@@ -1,7 +1,35 @@
+use std::fmt::{Display, Formatter};
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
+pub enum DbStrategy {
+    External,
+    Managed,
+}
+
+impl Display for DbStrategy {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DbStrategy::External => {
+                write!(f, "external")
+            }
+            DbStrategy::Managed => {
+                write!(f, "managed")
+            }
+        }
+    }
+}
+
 #[derive(clap::Args, Debug, Clone)]
 #[command(next_help_heading = "Database")]
 #[group(id = "database")]
 pub struct Database {
+    #[arg(
+        id = "db-strategy",
+        long,
+        env,
+        default_value_t = DbStrategy::Managed,
+    )]
+    pub db_strategy: DbStrategy,
     #[arg(
         id = "db-user",
         long,
