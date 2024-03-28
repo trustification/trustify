@@ -143,6 +143,9 @@ impl MigrationTrait for Migration {
             .await?;
 
         manager
+            .drop_type(Type::drop().name(Cvss4At::Cvss4At).to_owned())
+            .await?;
+        manager
             .drop_type(Type::drop().name(Cvss4Ac::Cvss4Ac).to_owned())
             .await?;
 
