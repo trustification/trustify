@@ -6,7 +6,7 @@ use csaf_walker::validation::{
 use parking_lot::Mutex;
 use std::sync::Arc;
 use tokio_util::io::ReaderStream;
-use trustify_module_ingestor::service::IngestorService;
+use trustify_module_ingestor::service::{advisory::Format, IngestorService};
 
 #[derive(Debug, thiserror::Error)]
 pub enum StorageError {
@@ -40,7 +40,11 @@ impl ValidatedVisitor for StorageVisitor {
         let location = doc.context.url().to_string();
 
         self.ingestor
-            .ingest(&location, ReaderStream::new(doc.data.as_ref()))
+            .ingest(
+                &location,
+                Format::CSAF,
+                ReaderStream::new(doc.data.as_ref()),
+            )
             .await
             .map_err(|err| StorageError::Storage(err.into()))?;
 

@@ -115,7 +115,7 @@ mod test {
 
         let cve: CveRecord = serde_json::from_reader(cve_file)?;
 
-        println!("{:#?}", cve);
+        log::debug!("{:#?}", cve);
 
         Ok(())
     }

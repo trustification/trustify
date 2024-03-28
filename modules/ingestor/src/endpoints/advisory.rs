@@ -1,4 +1,6 @@
-use crate::service::{Error, IngestorService};
+use std::str::FromStr;
+
+use crate::service::{advisory::Format, Error, IngestorService};
 use actix_web::{get, post, web, HttpResponse, Responder};
 
 #[derive(Clone, Debug, serde::Deserialize)]
@@ -7,6 +9,7 @@ pub struct UploadAdvisoryQuery {
     ///
     /// Only the base source, not the full document URL.
     pub location: String,
+    pub format: Option<String>,
 }
 
 #[utoipa::path(
@@ -25,9 +28,12 @@ pub struct UploadAdvisoryQuery {
 pub async fn upload_advisory(
     service: web::Data<IngestorService>,
     payload: web::Payload,
-    web::Query(UploadAdvisoryQuery { location }): web::Query<UploadAdvisoryQuery>,
+    web::Query(UploadAdvisoryQuery { location, format }): web::Query<UploadAdvisoryQuery>,
 ) -> Result<impl Responder, Error> {
-    let advisory_id = service.ingest(&location, payload).await?;
+    let fmt = format
+        .map(|f| Format::from_str(&f))
+        .unwrap_or(Ok(Format::CSAF))?;
+    let advisory_id = service.ingest(&location, fmt, payload).await?;
     Ok(HttpResponse::Created().json(advisory_id))
 }
 
@@ -64,8 +70,8 @@ mod tests {
     use trustify_module_storage::service::fs::FileSystemBackend;
 
     #[test_log::test(actix_web::test)]
-    async fn upload_advisory() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("upload_advisory").await?;
+    async fn upload_csaf() -> Result<(), anyhow::Error> {
+        let db = Database::for_test("upload_advisory_csaf").await?;
         let (storage, _temp) = FileSystemBackend::for_test().await?;
 
         let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
@@ -76,7 +82,34 @@ mod tests {
         let advisory = test_data.join("cve-2023-33201.json");
 
         let payload = fs::read_to_string(advisory).expect("File not found");
-        let uri = "/advisories?location=test";
+        let uri = "/advisories?location=test-csaf";
+        let request = TestRequest::post()
+            .uri(uri)
+            .set_payload(payload)
+            .to_request();
+
+        let response = test::call_service(&app, request).await;
+        log::info!("response: {response:?}");
+
+        assert!(response.status().is_success());
+
+        Ok(())
+    }
+
+    #[test_log::test(actix_web::test)]
+    async fn upload_osv() -> Result<(), anyhow::Error> {
+        let db = Database::for_test("upload_advisory_osv").await?;
+        let (storage, _temp) = FileSystemBackend::for_test().await?;
+
+        let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
+
+        let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
+        let test_data = pwd.join("../../etc/test-data/osv");
+
+        let advisory = test_data.join("RUSTSEC-2021-0079.json");
+
+        let payload = fs::read_to_string(advisory).expect("File not found");
+        let uri = "/advisories?location=test-osv&format=osv";
         let request = TestRequest::post()
             .uri(uri)
             .set_payload(payload)

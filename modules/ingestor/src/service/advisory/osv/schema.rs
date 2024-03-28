@@ -462,7 +462,7 @@ mod tests {
         };
 
         let json = serde_json::to_string(&package).unwrap();
-        println!("{:?}", json);
+        log::debug!("{json}");
         assert_eq!(
             serde_json::to_string(&json! {
                 {
@@ -479,7 +479,7 @@ mod tests {
         };
         let json = serde_json::to_string(&package).unwrap();
 
-        println!("{}", json);
+        log::debug!("{json}");
         assert!(json.contains(r#""ecosystem":"Maven""#));
         assert!(json.contains(r#""name":"log4j""#));
 
