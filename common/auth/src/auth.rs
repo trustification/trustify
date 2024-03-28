@@ -11,6 +11,7 @@ use std::path::PathBuf;
     rename_all_env = "SCREAMING_SNAKE_CASE",
     next_help_heading = "Authentication & authorization"
 )]
+#[group(id = "auth")]
 pub struct AuthConfigArguments {
     /// Flag to disable authentication and authorization, default is on.
     #[arg(

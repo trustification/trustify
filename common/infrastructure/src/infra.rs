@@ -25,6 +25,7 @@ const DEFAULT_BIND_ADDR: &str = "localhost:9010";
     rename_all_env = "SCREAMING_SNAKE_CASE",
     next_help_heading = "Infrastructure"
 )]
+#[group(id = "infrastructure")]
 pub struct InfrastructureConfig {
     /// Enable the infrastructure endpoint
     #[arg(env, long)]
