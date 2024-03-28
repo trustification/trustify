@@ -24,7 +24,7 @@ use url::Url;
 use walker_common::{fetcher::Fetcher, progress::Progress};
 
 /// Import from a CSAF source
-#[derive(clap::Args, Debug)]
+#[derive(clap::Args, Debug, Clone)]
 pub struct ImportCsafCommand {
     #[command(flatten)]
     pub database: Database,

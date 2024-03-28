@@ -140,6 +140,7 @@ impl<E: Endpoint> FromArgMatches for BindPort<E> {
     rename_all_env = "SCREAMING_SNAKE_CASE",
     next_help_heading = "HTTP endpoint"
 )]
+#[group(id = "http")]
 pub struct HttpServerConfig<E>
 where
     E: Endpoint + Send + Sync,

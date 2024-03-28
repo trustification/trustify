@@ -108,7 +108,7 @@ impl<E: Endpoint> Parser for EndpointServerConfig<E> {}
 
 macro_rules! endpoint {
     ($name: ident) => {
-        #[derive(Debug)]
+        #[derive(Clone, Debug)]
         pub struct $name;
         impl Endpoint for $name {
             const PORT: u16 = 0;
@@ -117,7 +117,7 @@ macro_rules! endpoint {
     };
 
     ($name: ident, $port: literal) => {
-        #[derive(Debug)]
+        #[derive(Clone, Debug)]
         pub struct $name;
         impl Endpoint for $name {
             const PORT: u16 = $port;
@@ -126,7 +126,7 @@ macro_rules! endpoint {
     };
 
     ($name: ident, $port: literal, $path: literal) => {
-        #[derive(Debug)]
+        #[derive(Clone, Debug)]
         pub struct $name;
         impl Endpoint for $name {
             const PORT: u16 = $port;
@@ -135,4 +135,4 @@ macro_rules! endpoint {
     };
 }
 
-endpoint!(Huevos, 8080);
+endpoint!(Trustify, 8080);

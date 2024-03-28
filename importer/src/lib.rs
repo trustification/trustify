@@ -8,7 +8,7 @@ mod progress;
 mod sbom;
 
 /// Importer
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)]
 pub enum ImporterCommand {
     Csaf(csaf::ImportCsafCommand),
     Sbom(sbom::ImportSbomCommand),
