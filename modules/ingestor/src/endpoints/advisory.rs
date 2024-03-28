@@ -62,7 +62,7 @@ pub async fn download_advisory(
 mod tests {
     use super::super::configure;
 
-    use actix_web::{test, test::TestRequest, App};
+    use actix_web::{http::StatusCode, test, test::TestRequest, App};
     use std::fs;
     use std::path::PathBuf;
     use std::str::FromStr;
@@ -70,7 +70,7 @@ mod tests {
     use trustify_module_storage::service::fs::FileSystemBackend;
 
     #[test_log::test(actix_web::test)]
-    async fn upload_csaf() -> Result<(), anyhow::Error> {
+    async fn upload_default_csaf_format() -> Result<(), anyhow::Error> {
         let db = Database::for_test("upload_advisory_csaf").await?;
         let (storage, _temp) = FileSystemBackend::for_test().await?;
 
@@ -89,7 +89,7 @@ mod tests {
             .to_request();
 
         let response = test::call_service(&app, request).await;
-        log::info!("response: {response:?}");
+        log::debug!("response: {response:?}");
 
         assert!(response.status().is_success());
 
@@ -97,7 +97,7 @@ mod tests {
     }
 
     #[test_log::test(actix_web::test)]
-    async fn upload_osv() -> Result<(), anyhow::Error> {
+    async fn upload_osv_format() -> Result<(), anyhow::Error> {
         let db = Database::for_test("upload_advisory_osv").await?;
         let (storage, _temp) = FileSystemBackend::for_test().await?;
 
@@ -116,9 +116,30 @@ mod tests {
             .to_request();
 
         let response = test::call_service(&app, request).await;
-        log::info!("response: {response:?}");
+        log::debug!("response: {response:?}");
 
         assert!(response.status().is_success());
+
+        Ok(())
+    }
+
+    #[test_log::test(actix_web::test)]
+    async fn upload_unknown_format() -> Result<(), anyhow::Error> {
+        let db = Database::for_test("upload_unknown_format").await?;
+        let (storage, _temp) = FileSystemBackend::for_test().await?;
+        let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
+
+        let uri = "/advisories?location=testless&format=XYZ42";
+        let request = TestRequest::post().uri(uri).to_request();
+
+        let response = test::call_service(&app, request).await;
+        log::debug!("response: {response:?}");
+
+        assert_eq!(
+            response.status(),
+            StatusCode::BAD_REQUEST,
+            "Wrong HTTP response status"
+        );
 
         Ok(())
     }
