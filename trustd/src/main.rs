@@ -1,12 +1,11 @@
 use clap::Parser;
 use postgresql_embedded::PostgreSQL;
 use std::env;
-use std::fmt::{Display, Formatter};
 use std::process::{ExitCode, Termination};
 use tokio::task::JoinSet;
 use trustify_auth::auth::AuthConfigArguments;
 use trustify_auth::swagger_ui::SwaggerUiOidcConfig;
-use trustify_common::config::Database;
+use trustify_common::config::{Database, DbStrategy};
 use trustify_infrastructure::app::http::HttpServerConfig;
 use trustify_infrastructure::endpoint::Trustify;
 use trustify_infrastructure::InfrastructureConfig;
@@ -38,15 +37,6 @@ pub struct Trustd {
     #[arg(long, env)]
     pub devmode: bool,
 
-    #[arg(
-        id = "db-strategy",
-        long,
-        env,
-        group = "managed-db",
-        default_value_t = DbStrategy::Managed,
-    )]
-    pub db_strategy: DbStrategy,
-
     #[command(flatten)]
     pub database: Database,
 
@@ -61,25 +51,6 @@ pub struct Trustd {
 
     #[command(flatten)]
     pub swagger_ui_oidc: SwaggerUiOidcConfig,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
-pub enum DbStrategy {
-    External,
-    Managed,
-}
-
-impl Display for DbStrategy {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DbStrategy::External => {
-                write!(f, "external")
-            }
-            DbStrategy::Managed => {
-                write!(f, "managed")
-            }
-        }
-    }
 }
 
 impl Trustd {
@@ -104,7 +75,7 @@ impl Trustd {
         // to keep in scope while running.
         let mut managed_db = None;
 
-        if matches!(self.db_strategy, DbStrategy::Managed) {
+        if matches!(self.database.db_strategy, DbStrategy::Managed) {
             println!("setting up managed DB");
             use postgresql_embedded::Settings;
 
