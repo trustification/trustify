@@ -22,7 +22,7 @@ use url::Url;
 use walker_common::{fetcher::Fetcher, progress::Progress};
 
 /// Import SBOMs
-#[derive(clap::Args, Debug)]
+#[derive(clap::Args, Debug, Clone)]
 pub struct ImportSbomCommand {
     #[command(flatten)]
     pub database: Database,

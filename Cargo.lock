@@ -5773,13 +5773,18 @@ dependencies = [
 name = "trustify-trustd"
 version = "0.1.0"
 dependencies = [
+ "actix-web",
  "anyhow",
  "clap",
  "log",
+ "postgresql_embedded",
  "serde_json",
  "thiserror",
  "tokio",
+ "trustify-auth",
+ "trustify-common",
  "trustify-importer",
+ "trustify-infrastructure",
  "trustify-server",
 ]
 
