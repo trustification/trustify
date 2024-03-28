@@ -15,7 +15,7 @@ use trustify_auth::{
 use trustify_common::{config::Database, db};
 use trustify_infrastructure::{
     app::http::{HttpServerBuilder, HttpServerConfig},
-    endpoint::Huevos,
+    endpoint::Trustify,
     health::checks::{Local, Probe},
     tracing::Tracing,
     Infrastructure, InfrastructureConfig, InitContext, Metrics,
@@ -44,7 +44,7 @@ pub struct Run {
     pub auth: AuthConfigArguments,
 
     #[command(flatten)]
-    pub http: HttpServerConfig<Huevos>,
+    pub http: HttpServerConfig<Trustify>,
 
     #[command(flatten)]
     pub swagger_ui_oidc: SwaggerUiOidcConfig,
@@ -57,7 +57,7 @@ struct InitData {
     authorizer: Authorizer,
     graph: Arc<Graph>,
     db: db::Database,
-    http: HttpServerConfig<Huevos>,
+    http: HttpServerConfig<Trustify>,
     tracing: Tracing,
     swagger_oidc: Option<Arc<SwaggerUiOidc>>,
 }

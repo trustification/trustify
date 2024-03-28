@@ -14,6 +14,7 @@ use utoipa_swagger_ui::{oauth, SwaggerUi};
     rename_all_env = "SCREAMING_SNAKE_CASE",
     next_help_heading = "Swagger UI OIDC"
 )]
+#[group(id = "swagger")]
 pub struct SwaggerUiOidcConfig {
     /// The issuer URL used by the Swagger UI, disabled if none.
     #[arg(long, env)]

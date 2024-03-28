@@ -10,9 +10,14 @@ path = "src/main.rs"
 [dependencies]
 trustify-server = { workspace = true }
 trustify-importer = { workspace = true }
+trustify-common = { workspace = true }
+trustify-infrastructure = { workspace = true }
+trustify-auth = { workspace = true }
+actix-web = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 log = { workspace = true }
+postgresql_embedded = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
