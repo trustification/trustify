@@ -12,7 +12,7 @@ use std::{
 };
 use tempfile::{tempdir, tempfile, TempDir};
 use tokio::{
-    fs::{create_dir, create_dir_all, File},
+    fs::{create_dir_all, File},
     io::{AsyncSeekExt, AsyncWriteExt},
 };
 use tokio_util::io::ReaderStream;
@@ -51,7 +51,7 @@ impl FileSystemBackend {
         let base = base.into();
         let content = base.join("content");
 
-        create_dir(&content)
+        create_dir_all(&content)
             .await
             .or_else(|err| {
                 if err.kind() == ErrorKind::AlreadyExists {

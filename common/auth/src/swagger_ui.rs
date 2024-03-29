@@ -33,6 +33,7 @@ impl SwaggerUiOidcConfig {
     }
 }
 
+#[derive(Debug)]
 pub struct SwaggerUiOidc {
     pub client_id: String,
     pub auth_url: String,

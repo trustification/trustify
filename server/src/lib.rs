@@ -15,6 +15,7 @@ use trustify_auth::{
     auth::AuthConfigArguments, authenticator::Authenticator, authorizer::Authorizer,
     swagger_ui::SwaggerUiOidcConfig,
 };
+use trustify_common::config::StorageConfig;
 use trustify_common::{config::Database, db};
 use trustify_infrastructure::{
     app::http::{HttpServerBuilder, HttpServerConfig},
@@ -36,15 +37,15 @@ pub struct Run {
     #[command(flatten)]
     pub database: Database,
 
-    /// Location of the file storage
-    #[arg(long, env)]
-    pub storage: Option<PathBuf>,
-
     #[arg(long, env)]
     pub bootstrap: bool,
 
     #[arg(long, env)]
     pub devmode: bool,
+
+    /// Location of the storage
+    #[command(flatten)]
+    pub storage: StorageConfig,
 
     #[command(flatten)]
     pub infra: InfrastructureConfig,
@@ -118,9 +119,15 @@ impl InitData {
 
         let storage = run
             .storage
-            .unwrap_or_else(|| PathBuf::from("./data/storage"));
+            .fs_path
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| PathBuf::from("./.trustify/storage"));
         if run.devmode {
-            create_dir_all(&storage).context("Failed to create storage directory")?;
+            create_dir_all(&storage).context(format!(
+                "Failed to create filesystem storage directory: {:?}",
+                run.storage.fs_path
+            ))?;
         }
         let storage = DispatchBackend::Filesystem(FileSystemBackend::new(storage).await?);
 

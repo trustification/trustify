@@ -5,7 +5,7 @@ use std::process::{ExitCode, Termination};
 use tokio::task::JoinSet;
 use trustify_auth::auth::AuthConfigArguments;
 use trustify_auth::swagger_ui::SwaggerUiOidcConfig;
-use trustify_common::config::{Database, DbStrategy};
+use trustify_common::config::{Database, DbStrategy, StorageConfig};
 use trustify_infrastructure::app::http::HttpServerConfig;
 use trustify_infrastructure::endpoint::Trustify;
 use trustify_infrastructure::InfrastructureConfig;
@@ -20,7 +20,7 @@ pub enum Command {
 #[derive(clap::Parser, Debug)]
 #[command(
     author,
-    version = env!("CARGO_PKG_VERSION"),
+    version = env ! ("CARGO_PKG_VERSION"),
     about = "trustd",
     long_about = None
 )]
@@ -36,6 +36,9 @@ pub struct Trustd {
 
     #[arg(long, env)]
     pub devmode: bool,
+
+    #[command(flatten)]
+    pub storage: StorageConfig,
 
     #[command(flatten)]
     pub database: Database,
@@ -109,7 +112,7 @@ impl Trustd {
         if self.with_http {
             let http = trustify_server::Run {
                 database: self.database.clone(),
-                storage: None,
+                storage: self.storage.clone(),
                 bootstrap: self.bootstrap,
                 devmode: self.devmode,
                 infra: self.infra.clone(),
