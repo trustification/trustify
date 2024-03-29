@@ -20,7 +20,7 @@ pub enum Command {
 #[derive(clap::Parser, Debug)]
 #[command(
     author,
-    version = env ! ("CARGO_PKG_VERSION"),
+    version = env!("CARGO_PKG_VERSION"),
     about = "trustd",
     long_about = None
 )]
