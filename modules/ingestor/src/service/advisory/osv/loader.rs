@@ -22,6 +22,7 @@ impl<'g> OsvLoader<'g> {
         &self,
         location: L,
         record: R,
+        checksum: &str,
     ) -> Result<String, Error> {
         let mut reader = HashingRead::new(record);
         let osv: Vulnerability = serde_json::from_reader(&mut reader)?;
@@ -39,6 +40,11 @@ impl<'g> OsvLoader<'g> {
         }) {
             let hashes = reader.hashes();
             let sha256 = hex::encode(hashes.sha256.as_ref());
+            if checksum != sha256 {
+                return Err(Error::Storage(anyhow::Error::msg(
+                    "document integrity check failed",
+                )));
+            }
 
             let advisory = self
                 .graph
@@ -153,6 +159,7 @@ mod test {
 
         let osv_json = test_data.join("RUSTSEC-2021-0079.json");
         let osv_file = File::open(osv_json)?;
+        let checksum = "d113c2bd1ad6c3ac00a3a8d3f89d3f38de935f8ede0d174a55afe9911960cf51";
 
         let loaded_vulnerability = graph
             .get_vulnerability("CVE-2021-32714", Transactional::None)
@@ -161,18 +168,16 @@ mod test {
         assert!(loaded_vulnerability.is_none());
 
         let loaded_advisory = graph
-            .get_advisory(
-                "RUSTSEC-2021-0079",
-                "RUSTSEC-2021-0079.json",
-                "d113c2bd1ad6c3ac00a3a8d3f89d3f38de935f8ede0d174a55afe9911960cf51",
-            )
+            .get_advisory("RUSTSEC-2021-0079", "RUSTSEC-2021-0079.json", checksum)
             .await?;
 
         assert!(loaded_advisory.is_none());
 
         let loader = OsvLoader::new(&graph);
 
-        loader.load("RUSTSEC-2021-0079.json", osv_file).await?;
+        loader
+            .load("RUSTSEC-2021-0079.json", osv_file, checksum)
+            .await?;
 
         let loaded_vulnerability = graph
             .get_vulnerability("CVE-2021-32714", Transactional::None)
@@ -181,11 +186,7 @@ mod test {
         assert!(loaded_vulnerability.is_some());
 
         let loaded_advisory = graph
-            .get_advisory(
-                "RUSTSEC-2021-0079",
-                "RUSTSEC-2021-0079.json",
-                "d113c2bd1ad6c3ac00a3a8d3f89d3f38de935f8ede0d174a55afe9911960cf51",
-            )
+            .get_advisory("RUSTSEC-2021-0079", "RUSTSEC-2021-0079.json", checksum)
             .await?;
 
         assert!(loaded_advisory.is_some());

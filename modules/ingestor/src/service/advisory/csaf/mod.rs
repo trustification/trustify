@@ -35,11 +35,11 @@ impl super::super::IngestorService {
         let result = match fmt {
             Format::CSAF => {
                 let loader = CsafLoader::new(&self.graph);
-                loader.load(source, reader).await?
+                loader.load(source, reader, &sha256).await?
             }
             Format::OSV => {
                 let loader = OsvLoader::new(&self.graph);
-                loader.load(source, reader).await?
+                loader.load(source, reader, &sha256).await?
             }
         };
 

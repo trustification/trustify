@@ -23,6 +23,7 @@ impl<'g> CsafLoader<'g> {
         &self,
         location: L,
         document: R,
+        checksum: &str,
     ) -> Result<String, Error> {
         let mut reader = HashingRead::new(document);
 
@@ -32,6 +33,11 @@ impl<'g> CsafLoader<'g> {
 
         let hashes = reader.hashes();
         let sha256 = hex::encode(hashes.sha256.as_ref());
+        if checksum != sha256 {
+            return Err(Error::Storage(anyhow::Error::msg(
+                "document integrity check failed",
+            )));
+        }
 
         let advisory_id = csaf.document.tracking.id.clone();
 
