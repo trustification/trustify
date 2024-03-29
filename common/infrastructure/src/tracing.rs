@@ -1,4 +1,5 @@
 use core::fmt;
+use log::LevelFilter;
 use opentelemetry::{propagation::Injector, Context, KeyValue};
 use opentelemetry_sdk::Resource;
 use reqwest::RequestBuilder;
@@ -142,7 +143,15 @@ fn init_otlp(name: &str) {
 }
 
 fn init_no_tracing() {
-    if let Err(e) = env_logger::builder().format_timestamp_millis().try_init() {
+    let mut builder = env_logger::builder();
+    builder.format_timestamp_millis();
+
+    if std::env::var("RUST_LOG").ok().is_none() {
+        eprintln!("Default to INFO logging; use RUST_LOG environment variable to change");
+        builder.filter_level(LevelFilter::Info);
+    }
+
+    if let Err(e) = builder.try_init() {
         eprintln!("Error initializing logging: {:?}", e);
     }
 }
