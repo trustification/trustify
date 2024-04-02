@@ -1,5 +1,4 @@
 use super::{super::Error, Format};
-use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader};
 use anyhow::anyhow;
 use bytes::Bytes;
 use futures::{Stream, TryStreamExt};
@@ -32,16 +31,7 @@ impl super::super::IngestorService {
             .map_err(Error::Storage)?
             .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?;
 
-        let result = match fmt {
-            Format::CSAF => {
-                let loader = CsafLoader::new(&self.graph);
-                loader.load(source, reader, &sha256).await?
-            }
-            Format::OSV => {
-                let loader = OsvLoader::new(&self.graph);
-                loader.load(source, reader, &sha256).await?
-            }
-        };
+        let result = fmt.load(&self.graph, source, reader, &sha256).await?;
 
         let duration = Instant::now() - start;
         log::info!(
