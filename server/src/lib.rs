@@ -60,7 +60,7 @@ pub struct Run {
     pub swagger_ui_oidc: SwaggerUiOidcConfig,
 }
 
-const SERVICE_ID: &str = "huevos";
+const SERVICE_ID: &str = "trustify";
 
 struct InitData {
     authenticator: Option<Arc<Authenticator>>,

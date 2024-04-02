@@ -2,6 +2,17 @@
 
 [![ci](https://github.com/trustification/trustify/actions/workflows/ci.yaml/badge.svg)](https://github.com/trustification/trustify/actions/workflows/ci.yaml)
 
+## Quick start
+
+Let's call this "PM mode":
+
+```shell
+cargo run --bin trustd -- --auth-disabled
+```
+That will create its own database on your local filesystem. Point your browser at http://localhost:8080/swagger-ui/ to view the API.
+
+You can then fire up the [trustify-ui](https://github.com/trustification/trustify-ui).
+
 ## Repository Organization
 
 ### Sources
@@ -63,7 +74,7 @@ podman-compose -f etc/deploy/compose/compose.yaml up
 Connect to PSQL:
 
 ```shell
-env PGPASSWORD=eggs psql -U postgres -d huevos -h localhost -p 5432
+env PGPASSWORD=eggs psql -U postgres -d trustify -h localhost -p 5432
 ```
 
 Import data (also see: [importer/README.md](importer/README.md) for more options):
