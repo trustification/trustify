@@ -2,9 +2,13 @@
 
 mod openapi;
 
-use actix_web::{body::MessageBody, web};
+use actix_web::dev::{ConnectionInfo, Url};
+use actix_web::error::UrlGenerationError;
+use actix_web::web::Json;
+use actix_web::{body::MessageBody, get, web, HttpRequest, HttpResponse, Responder};
 use anyhow::Context;
 use futures::FutureExt;
+use std::fmt::Display;
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -157,6 +161,7 @@ impl InitData {
                 .default_authenticator(self.authenticator)
                 .authorizer(self.authorizer.clone())
                 .configure(move |svc| {
+                    svc.service(index);
                     svc.service(swagger_ui_with_auth(
                         openapi::openapi(),
                         swagger_oidc.clone(),
@@ -183,4 +188,24 @@ impl InitData {
 
         result
     }
+}
+
+fn build_url(ci: &ConnectionInfo, path: impl Display) -> Option<url::Url> {
+    url::Url::parse(&format!(
+        "{scheme}://{host}{path}",
+        scheme = ci.scheme(),
+        host = ci.host()
+    ))
+    .ok()
+}
+
+#[get("/")]
+async fn index(ci: ConnectionInfo) -> Result<Json<Vec<url::Url>>, UrlGenerationError> {
+    let mut result = vec![];
+
+    result.extend(build_url(&ci, "/"));
+    result.extend(build_url(&ci, "/openapi.json"));
+    result.extend(build_url(&ci, "/swagger-ui/"));
+
+    Ok(Json(result))
 }
