@@ -1,4 +1,5 @@
 mod advisory;
+mod sbom;
 
 use crate::service::IngestorService;
 use actix_web::web;
@@ -17,9 +18,20 @@ pub fn configure(
     config
         .app_data(web::Data::new(service))
         .service(advisory::upload_advisory)
-        .service(advisory::download_advisory);
+        .service(advisory::download_advisory)
+        .service(sbom::upload_sbom)
+        .service(sbom::download_sbom);
 }
 
 #[derive(OpenApi)]
-#[openapi(paths(advisory::upload_advisory), components(), tags())]
+#[openapi(
+    paths(
+        advisory::download_advisory,
+        advisory::upload_advisory,
+        sbom::download_sbom,
+        sbom::upload_sbom,
+    ),
+    components(),
+    tags()
+)]
 pub struct ApiDoc;

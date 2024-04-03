@@ -1,6 +1,8 @@
 //! Support for SBOMs.
 
+use super::error::Error;
 use crate::db::{LeftPackageId, QualifiedPackageTransitive};
+use crate::graph::advisory::AdvisoryContext;
 use crate::graph::cpe::CpeContext;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
 use crate::graph::Graph;
@@ -8,25 +10,33 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
     QueryTrait, RelationTrait, Select, Set,
 };
-use trustify_common::db::Transactional;
-
 use sea_query::{Condition, Func, JoinType, Query, SimpleExpr};
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 use trustify_common::cpe::Cpe;
+use trustify_common::db::Transactional;
 use trustify_common::package::PackageVulnerabilityAssertions;
 use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
 use trustify_entity as entity;
 use trustify_entity::relationship::Relationship;
 
-use super::error::Error;
-
 pub mod spdx;
 
 type SelectEntity<E> = Select<E>;
 
 impl Graph {
+    pub async fn get_sbom_by_id<TX: AsRef<Transactional>>(
+        &self,
+        id: i32,
+        tx: TX,
+    ) -> Result<Option<SbomContext>, Error> {
+        Ok(entity::sbom::Entity::find_by_id(id)
+            .one(&self.connection(&tx))
+            .await?
+            .map(|sbom| (self, sbom).into()))
+    }
+
     pub async fn get_sbom(
         &self,
         location: &str,
@@ -288,7 +298,7 @@ impl Graph {
 #[derive(Clone)]
 pub struct SbomContext {
     pub(crate) graph: Graph,
-    pub(crate) sbom: entity::sbom::Model,
+    pub sbom: entity::sbom::Model,
 }
 
 impl PartialEq for SbomContext {

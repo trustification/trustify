@@ -44,7 +44,7 @@ impl super::super::IngestorService {
         Ok(result)
     }
 
-    pub async fn retrieve(
+    pub async fn retrieve_advisory(
         &self,
         id: i32,
     ) -> Result<Option<impl Stream<Item = Result<Bytes, Error>>>, Error> {
@@ -57,6 +57,26 @@ impl super::super::IngestorService {
         };
 
         let hash = advisory.advisory.sha256;
+
+        let stream = self
+            .storage
+            .clone()
+            .retrieve(hash)
+            .await
+            .map_err(Error::Storage)?;
+
+        Ok(stream.map(|stream| stream.map_err(Error::Storage)))
+    }
+
+    pub async fn retrieve_sbom(
+        &self,
+        id: i32,
+    ) -> Result<Option<impl Stream<Item = Result<Bytes, Error>>>, Error> {
+        let Some(sbom) = self.graph.get_sbom_by_id(id, Transactional::None).await? else {
+            return Ok(None);
+        };
+
+        let hash = sbom.sbom.sha256;
 
         let stream = self
             .storage

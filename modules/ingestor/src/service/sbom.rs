@@ -7,7 +7,7 @@ use trustify_common::db::Transactional;
 use trustify_module_storage::service::{StorageBackend, SyncAdapter};
 
 impl super::IngestorService {
-    pub async fn ingest_sbom<S, E>(&self, source: &str, stream: S) -> Result<(), Error>
+    pub async fn ingest_sbom<S, E>(&self, source: &str, stream: S) -> Result<i32, Error>
     where
         E: std::error::Error,
         S: Stream<Item = Result<Bytes, E>>,
@@ -40,6 +40,6 @@ impl super::IngestorService {
         let duration = Instant::now() - start;
         log::info!("Ingested - took {}", humantime::Duration::from(duration));
 
-        Ok(())
+        Ok(sbom.sbom.id)
     }
 }

@@ -1,7 +1,6 @@
-use std::str::FromStr;
-
 use crate::service::{advisory::Format, Error, IngestorService};
 use actix_web::{get, post, web, HttpResponse, Responder};
+use std::str::FromStr;
 
 #[derive(Clone, Debug, serde::Deserialize)]
 pub struct UploadAdvisoryQuery {
@@ -16,7 +15,8 @@ pub struct UploadAdvisoryQuery {
     tag = "ingestor",
     request_body = Vec <u8>,
     params(
-        ("advisory_format" = String, Path, description = "Format of the submitted advisory document (`csaf`, `osv`, ...)"),
+        ("format" = String, Query, description = "Format of the submitted advisory document (`csaf`, `osv`, ...)"),
+        ("location" = String, Query, description = "Source the document came from"),
     ),
     responses(
         (status = 201, description = "Upload a file"),
@@ -40,7 +40,7 @@ pub async fn upload_advisory(
 #[utoipa::path(
     tag = "ingestor",
     responses(
-        (status = 200, description = "Download a an advisory", body = Vec<u8>,),
+        (status = 200, description = "Download a an advisory", body = Vec<u8>),
         (status = 404, description = "The document could not be found"),
     )
 )]
@@ -52,7 +52,7 @@ pub async fn download_advisory(
 ) -> Result<impl Responder, Error> {
     let id = path.into_inner();
 
-    Ok(match service.retrieve(id).await? {
+    Ok(match service.retrieve_advisory(id).await? {
         Some(stream) => HttpResponse::Ok().streaming(stream),
         None => HttpResponse::NotFound().finish(),
     })
