@@ -16,7 +16,7 @@ pub struct UploadAdvisoryQuery {
     tag = "ingestor",
     request_body = Vec <u8>,
     params(
-        ("advisory_format" = String, Path, description = "Format of the submitted advisory document (`casf`, `osv`, ...)"),
+        ("advisory_format" = String, Path, description = "Format of the submitted advisory document (`csaf`, `osv`, ...)"),
     ),
     responses(
         (status = 201, description = "Upload a file"),
