@@ -6,6 +6,7 @@ use tokio::task::JoinSet;
 use trustify_auth::auth::AuthConfigArguments;
 use trustify_auth::swagger_ui::SwaggerUiOidcConfig;
 use trustify_common::config::{Database, DbStrategy, StorageConfig};
+use trustify_common::db::CreationMode;
 use trustify_infrastructure::app::http::HttpServerConfig;
 use trustify_infrastructure::endpoint::Trustify;
 use trustify_infrastructure::InfrastructureConfig;
@@ -28,8 +29,9 @@ pub struct Trustd {
     #[command(subcommand)]
     pub(crate) command: Option<Command>,
 
-    #[arg(long, env)]
-    pub bootstrap: bool,
+    /// The database creation mode
+    #[arg(long, env, value_enum, default_value_t = CreationMode::Default)]
+    pub creation: CreationMode,
 
     #[arg(long, env, default_value_t = true, requires = "auth")]
     pub with_http: bool,
@@ -99,7 +101,7 @@ impl Trustd {
 
             let port = postgresql.settings().port;
             self.database.port = port;
-            self.bootstrap = true;
+            self.creation = CreationMode::Bootstrap;
 
             managed_db.replace(postgresql);
 
@@ -113,7 +115,7 @@ impl Trustd {
             let http = trustify_server::Run {
                 database: self.database.clone(),
                 storage: self.storage.clone(),
-                bootstrap: self.bootstrap,
+                creation: self.creation,
                 devmode: self.devmode,
                 infra: self.infra.clone(),
                 auth: self.auth.clone(),

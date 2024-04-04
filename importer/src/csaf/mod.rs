@@ -69,7 +69,8 @@ impl ImportCsafCommand {
     pub async fn run_once(self, progress: Progress) -> Result<Report, ScannerError> {
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
-        let db = db::Database::with_external_config(&self.database, false).await?;
+        let db =
+            db::Database::with_external_config(&self.database, db::CreationMode::Default).await?;
         let system = Graph::new(db);
 
         let source: DispatchSource = match Url::parse(&self.source) {

@@ -1,5 +1,7 @@
-use crate::config::{Database, DbStrategy};
-use crate::db;
+use crate::{
+    config::{Database, DbStrategy},
+    db,
+};
 use std::sync::Arc;
 
 pub async fn bootstrap_system(name: &str) -> Result<db::Database, anyhow::Error> {
@@ -12,7 +14,7 @@ pub async fn bootstrap_system(name: &str) -> Result<db::Database, anyhow::Error>
             port: 5432,
             name: name.to_string(),
         },
-        true,
+        db::CreationMode::Bootstrap,
     )
     .await
 }

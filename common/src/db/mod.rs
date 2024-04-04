@@ -101,6 +101,15 @@ enum DbStrategy {
     Managed(Arc<(PostgreSQL, TempDir)>),
 }
 
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, clap::ValueEnum)]
+pub enum CreationMode {
+    #[default]
+    Default,
+    #[value(name("refresh"))]
+    RefreshSchema,
+    Bootstrap,
+}
+
 #[derive(Clone, Debug)]
 pub struct Database {
     pub db: DatabaseConnection,
@@ -115,6 +124,7 @@ impl Database {
         port: impl Into<Option<u16>>,
         db_name: &str,
         db_strategy: DbStrategy,
+        refresh_schema: bool,
     ) -> Result<Self, anyhow::Error> {
         let port = port.into().unwrap_or(5432);
         let url = format!("postgres://{username}:{password}@{host}:{port}/{db_name}");
@@ -126,9 +136,15 @@ impl Database {
 
         let db = sea_orm::Database::connect(opt).await?;
 
-        log::debug!("applying migrations");
-        Migrator::refresh(&db).await?;
-        log::debug!("applied migrations");
+        if refresh_schema {
+            log::warn!("refreshing database schema...");
+            Migrator::refresh(&db).await?;
+            log::warn!("refreshing database schema... done!");
+        } else {
+            log::debug!("applying migrations");
+            Migrator::up(&db, None).await?;
+            log::debug!("applied migrations");
+        }
 
         Ok(Self {
             db,
@@ -138,29 +154,45 @@ impl Database {
 
     pub async fn with_external_config(
         database: &crate::config::Database,
-        bootstrap: bool,
+        creation: CreationMode,
     ) -> Result<Self, anyhow::Error> {
-        if bootstrap {
-            log::warn!("Bootstrapping database");
-            Self::bootstrap(
-                &database.username,
-                &database.password,
-                &database.host,
-                database.port,
-                &database.name,
-                DbStrategy::External,
-            )
-            .await
-        } else {
-            Self::new(
-                &database.username,
-                &database.password,
-                &database.host,
-                database.port,
-                &database.name,
-                DbStrategy::External,
-            )
-            .await
+        match creation {
+            CreationMode::Default => {
+                Self::new(
+                    &database.username,
+                    &database.password,
+                    &database.host,
+                    database.port,
+                    &database.name,
+                    DbStrategy::External,
+                    false,
+                )
+                .await
+            }
+            CreationMode::RefreshSchema => {
+                Self::new(
+                    &database.username,
+                    &database.password,
+                    &database.host,
+                    database.port,
+                    &database.name,
+                    DbStrategy::External,
+                    true,
+                )
+                .await
+            }
+            CreationMode::Bootstrap => {
+                log::warn!("Bootstrapping database");
+                Self::bootstrap(
+                    &database.username,
+                    &database.password,
+                    &database.host,
+                    database.port,
+                    &database.name,
+                    DbStrategy::External,
+                )
+                .await
+            }
         }
     }
 
@@ -226,7 +258,8 @@ impl Database {
 
         db.close().await?;
 
-        Self::new(username, password, host, port, db_name, db_strategy).await
+        // we don't need to refresh the schema as we just re-created the database
+        Self::new(username, password, host, port, db_name, db_strategy, false).await
     }
 
     pub async fn close(self) -> anyhow::Result<()> {
