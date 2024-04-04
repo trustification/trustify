@@ -29,3 +29,10 @@ Get reports:
 http GET localhost:8080/api/v1/importer/redhat-csaf/report
 http GET localhost:8080/api/v1/importer/redhat-sbom/report
 ```
+
+Delete an importer:
+
+```bash
+http DELETE localhost:8080/api/v1/importer/redhat-csaf
+http DELETE localhost:8080/api/v1/importer/redhat-sbom
+```

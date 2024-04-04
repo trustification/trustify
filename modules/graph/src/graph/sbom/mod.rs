@@ -998,6 +998,7 @@ mod tests {
                 "RHSA-1",
                 "http://redhat.com/secdata/RHSA-1",
                 "7",
+                (),
                 Transactional::None,
             )
             .await?;

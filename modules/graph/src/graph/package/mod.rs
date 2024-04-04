@@ -923,6 +923,7 @@ mod tests {
                 "RHSA-1",
                 "http://redhat.com/rhsa-1",
                 "2",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -950,7 +951,13 @@ mod tests {
             .await?;
 
         let ghsa_advisory = system
-            .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
+            .ingest_advisory(
+                "GHSA-1",
+                "http://ghsa.com/ghsa-1",
+                "2",
+                (),
+                Transactional::None,
+            )
             .await?;
 
         let ghsa_advisory_vulnerability = ghsa_advisory
@@ -1016,6 +1023,7 @@ mod tests {
                 "RHSA-1",
                 "http://redhat.com/rhsa-1",
                 "2",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -1032,7 +1040,13 @@ mod tests {
             .await?;
 
         let ghsa_advisory = system
-            .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
+            .ingest_advisory(
+                "GHSA-1",
+                "http://ghsa.com/ghsa-1",
+                "2",
+                (),
+                Transactional::None,
+            )
             .await?;
 
         let ghsa_advisory_vulnerability = ghsa_advisory
@@ -1071,6 +1085,7 @@ mod tests {
                 "RHSA-1",
                 "http://redhat.com/rhsa-1",
                 "2",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -1096,7 +1111,13 @@ mod tests {
             .await?;
 
         let ghsa_advisory = system
-            .ingest_advisory("GHSA-1", "http://ghsa.com/ghsa-1", "2", Transactional::None)
+            .ingest_advisory(
+                "GHSA-1",
+                "http://ghsa.com/ghsa-1",
+                "2",
+                (),
+                Transactional::None,
+            )
             .await?;
 
         let ghsa_advisory_vulnerability = ghsa_advisory
@@ -1135,6 +1156,7 @@ mod tests {
                 "RHSA-1",
                 "http://redhat.com/rhsa-1",
                 "2",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -1153,7 +1175,13 @@ mod tests {
             .await?;
 
         let ghsa_advisory = system
-            .ingest_advisory("GHSA-1", "http://ghsa.gov/GHSA-1", "3", Transactional::None)
+            .ingest_advisory(
+                "GHSA-1",
+                "http://ghsa.gov/GHSA-1",
+                "3",
+                (),
+                Transactional::None,
+            )
             .await?;
 
         let ghsa_advisory_vulnerability = ghsa_advisory
@@ -1172,6 +1200,7 @@ mod tests {
                 "RHSA-299",
                 "http://redhat.com/rhsa-299",
                 "17",
+                (),
                 Transactional::None,
             )
             .await?;

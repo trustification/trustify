@@ -28,6 +28,7 @@ spdx-expression = { workspace = true }
 spdx-rs = { workspace = true }
 tempfile = { workspace = true }
 thiserror = { workspace = true }
+time = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 utoipa = { workspace = true, features = ["actix_extras"] }
 

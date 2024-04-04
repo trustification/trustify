@@ -995,6 +995,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "chumsky"
+version = "1.0.0-alpha.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9c28d4e5dd9a9262a38b231153591da6ce1471b818233f4727985d3dd0ed93c"
+dependencies = [
+ "hashbrown 0.14.3",
+ "regex-automata 0.3.9",
+ "serde",
+ "stacker",
+ "unicode-ident",
+]
+
+[[package]]
 name = "clap"
 version = "4.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1073,6 +1086,15 @@ name = "convert_case"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
+
+[[package]]
+name = "convert_case"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec182b0ca2f35d8fc196cf3404988fd8b8c739a4d270ff118a398feb0cbec1ca"
+dependencies = [
+ "unicode-segmentation",
+]
 
 [[package]]
 name = "cookie"
@@ -1468,7 +1490,7 @@ version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
 dependencies = [
- "convert_case",
+ "convert_case 0.4.0",
  "proc-macro2",
  "quote",
  "rustc_version",
@@ -3453,6 +3475,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "106dd99e98437432fed6519dedecfade6a06a73bb7b2a1e019fdd2bee5778d94"
 
 [[package]]
+name = "psm"
+version = "0.1.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5787f7cda34e3033a72192c018bc5883100330f362ef279a8cbccfce8bb4e874"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "ptr_meta"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3589,6 +3620,17 @@ dependencies = [
 
 [[package]]
 name = "regex-automata"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "59b23e92ee4318893fa3fe3e6fb365258efbfe6ac6ab30f090cdcbb7aa37efa9"
+dependencies = [
+ "aho-corasick",
+ "memchr",
+ "regex-syntax 0.7.5",
+]
+
+[[package]]
+name = "regex-automata"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "86b83b8b9847f9bf95ef68afb0b8e6cdb80f498442f5179a29fad448fcc1eaea"
@@ -3603,6 +3645,12 @@ name = "regex-syntax"
 version = "0.6.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f162c6dd7b008981e4d40210aca20b4bd0f9b60ca9271061b07f78537722f2e1"
+
+[[package]]
+name = "regex-syntax"
+version = "0.7.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dbb5fb1acd8a1a18b3dd5be62d25485eb770e05afb408a9627d14d451bae12da"
 
 [[package]]
 name = "regex-syntax"
@@ -4464,6 +4512,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "sikula"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "953a740b3abee4fe9f4d6f755ab8a79eb49be7df0221d57122f08b53e3702adb"
+dependencies = [
+ "chumsky",
+ "sea-orm",
+ "sikula-macros",
+ "thiserror",
+ "time",
+]
+
+[[package]]
+name = "sikula-macros"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "211dfb262c3b509999eba79fc970a577a81bdc4090eda15b7953d098307f4c52"
+dependencies = [
+ "convert_case 0.6.0",
+ "darling 0.20.8",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.52",
+]
+
+[[package]]
 name = "simdutf8"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4807,6 +4881,19 @@ dependencies = [
  "url",
  "urlencoding",
  "uuid",
+]
+
+[[package]]
+name = "stacker"
+version = "0.1.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c886bd4480155fd3ef527d45e9ac8dd7118a898a46530b7b94c3e21866259fce"
+dependencies = [
+ "cc",
+ "cfg-if",
+ "libc",
+ "psm",
+ "winapi",
 ]
 
 [[package]]
@@ -5628,6 +5715,7 @@ dependencies = [
  "tempfile",
  "test-log",
  "thiserror",
+ "time",
  "tokio",
  "trustify-auth",
  "trustify-common",
@@ -5698,12 +5786,36 @@ dependencies = [
  "sha2",
  "test-log",
  "thiserror",
+ "time",
  "tokio",
  "trustify-common",
  "trustify-cvss",
  "trustify-entity",
  "trustify-module-graph",
  "trustify-module-storage",
+ "url-escape",
+ "utoipa",
+]
+
+[[package]]
+name = "trustify-module-search"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anyhow",
+ "csaf",
+ "log",
+ "reqwest",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "sikula",
+ "test-log",
+ "thiserror",
+ "time",
+ "tokio",
+ "trustify-common",
+ "trustify-entity",
  "url-escape",
  "utoipa",
 ]
@@ -5762,6 +5874,7 @@ dependencies = [
  "trustify-module-graph",
  "trustify-module-importer",
  "trustify-module-ingestor",
+ "trustify-module-search",
  "trustify-module-storage",
  "url",
  "url-escape",

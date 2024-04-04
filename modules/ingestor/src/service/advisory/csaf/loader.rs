@@ -4,11 +4,31 @@ use crate::service::Error;
 use csaf::vulnerability::{ProductStatus, Vulnerability};
 use csaf::Csaf;
 use std::io::Read;
+use time::OffsetDateTime;
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
 use trustify_module_graph::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
-use trustify_module_graph::graph::advisory::AdvisoryContext;
+use trustify_module_graph::graph::advisory::{AdvisoryContext, AdvisoryInformation};
 use trustify_module_graph::graph::Graph;
+
+struct Information<'a>(&'a Csaf);
+
+impl<'a> From<Information<'a>> for AdvisoryInformation {
+    fn from(value: Information<'a>) -> Self {
+        let value = value.0;
+        Self {
+            title: Some(value.document.title.clone()),
+            published: OffsetDateTime::from_unix_timestamp(
+                value.document.tracking.initial_release_date.timestamp(),
+            )
+            .ok(),
+            modified: OffsetDateTime::from_unix_timestamp(
+                value.document.tracking.current_release_date.timestamp(),
+            )
+            .ok(),
+        }
+    }
+}
 
 pub struct CsafLoader<'g> {
     graph: &'g Graph,
@@ -43,7 +63,7 @@ impl<'g> CsafLoader<'g> {
 
         let advisory = self
             .graph
-            .ingest_advisory(&advisory_id, location, sha256, &tx)
+            .ingest_advisory(&advisory_id, location, sha256, Information(&csaf), &tx)
             .await?;
 
         for vuln in csaf.vulnerabilities.iter().flatten() {

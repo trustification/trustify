@@ -1,7 +1,5 @@
-use std::fmt::{Display, Formatter};
-
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 
 /// Package identifies the code library or command that
 /// is potentially affected by a particular vulnerability.
@@ -362,7 +360,8 @@ pub struct BatchVulnerability {
 
     /// The modified field gives the time the entry was last modified, as an RFC3339-formatted
     /// timestamptime stamp in UTC (ending in “Z”).
-    pub modified: DateTime<Utc>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub modified: time::OffsetDateTime,
 }
 
 /// A vulnerability is the standard exchange format that is
@@ -383,18 +382,21 @@ pub struct Vulnerability {
 
     /// The published field gives the time the entry should be considered to have been published,
     /// as an RFC3339-formatted time stamp in UTC (ending in “Z”).
-    pub published: DateTime<Utc>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub published: time::OffsetDateTime,
 
     /// The modified field gives the time the entry was last modified, as an RFC3339-formatted
     /// timestamptime stamp in UTC (ending in “Z”).
-    pub modified: DateTime<Utc>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub modified: time::OffsetDateTime,
 
     /// The withdrawn field gives the time the entry should be considered to have been withdrawn,
     /// as an RFC3339-formatted timestamp in UTC (ending in “Z”). If the field is missing, then the
     /// entry has not been withdrawn. Any rationale for why the vulnerability has been withdrawn
     /// should go into the summary text.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub withdrawn: Option<DateTime<Utc>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(with = "time::serde::rfc3339::option")]
+    pub withdrawn: Option<time::OffsetDateTime>,
 
     /// The aliases field gives a list of IDs of the same vulnerability in other databases, in the
     /// form of the id field. This allows one database to claim that its own entry describes the
@@ -452,6 +454,7 @@ pub struct Vulnerability {
 mod tests {
     use serde_json::json;
     use test_log::test;
+    use time::OffsetDateTime;
 
     use super::*;
 
@@ -491,8 +494,8 @@ mod tests {
         let vuln = Vulnerability {
             schema_version: Some("1.3.0".to_string()),
             id: "OSV-2020-484".to_string(),
-            published: chrono::Utc::now(),
-            modified: chrono::Utc::now(),
+            published: OffsetDateTime::now_utc(),
+            modified: OffsetDateTime::now_utc(),
             withdrawn: None,
             aliases: None,
             related: None,

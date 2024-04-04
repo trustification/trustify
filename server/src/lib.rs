@@ -2,10 +2,14 @@
 
 mod openapi;
 
-use actix_web::dev::{ConnectionInfo, Url};
-use actix_web::error::UrlGenerationError;
-use actix_web::web::Json;
-use actix_web::{body::MessageBody, get, web, HttpRequest, HttpResponse, Responder};
+use actix_web::{
+    body::MessageBody,
+    dev::{ConnectionInfo, Url},
+    error::UrlGenerationError,
+    get, web,
+    web::Json,
+    HttpRequest, HttpResponse, Responder,
+};
 use anyhow::Context;
 use futures::FutureExt;
 use std::fmt::Display;
@@ -14,13 +18,16 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
-use trustify_auth::swagger_ui::{swagger_ui_with_auth, SwaggerUiOidc};
 use trustify_auth::{
-    auth::AuthConfigArguments, authenticator::Authenticator, authorizer::Authorizer,
-    swagger_ui::SwaggerUiOidcConfig,
+    auth::AuthConfigArguments,
+    authenticator::Authenticator,
+    authorizer::Authorizer,
+    swagger_ui::{swagger_ui_with_auth, SwaggerUiOidc, SwaggerUiOidcConfig},
 };
-use trustify_common::config::StorageConfig;
-use trustify_common::{config::Database, db};
+use trustify_common::{
+    config::{Database, StorageConfig},
+    db,
+};
 use trustify_infrastructure::{
     app::http::{HttpServerBuilder, HttpServerConfig},
     endpoint::Trustify,
@@ -176,6 +183,7 @@ impl InitData {
                                 db.clone(),
                                 storage.clone(),
                             );
+                            trustify_module_search::endpoints::configure(svc, db.clone());
                         });
                 })
         };
