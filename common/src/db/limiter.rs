@@ -51,7 +51,7 @@ where
         let selector = self
             .clone()
             .limit(NonZeroU64::new(limit).map(|limit| limit.get()))
-            .offset(NonZeroU64::new(limit).map(|limit| limit.get()))
+            .offset(NonZeroU64::new(offset).map(|offset| offset.get()))
             .into_model();
 
         Limiter {
