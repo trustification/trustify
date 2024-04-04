@@ -49,7 +49,7 @@ impl<'g> CveLoader<'g> {
 
         let advisory = self
             .graph
-            .ingest_advisory(cve.cve_metadata.cve_id(), location, sha256, &tx)
+            .ingest_advisory(cve.cve_metadata.cve_id(), location, sha256, (), &tx)
             .await?;
 
         // Link the advisory to the backing vulnerability
@@ -70,7 +70,7 @@ mod test {
     use std::str::FromStr;
 
     use test_log::test;
-    use trustify_common::db::Database;
+    use trustify_common::db::{Database, Transactional};
     use trustify_module_graph::graph::Graph;
 
     use crate::service::cve::loader::CveLoader;
@@ -95,6 +95,7 @@ mod test {
                 "CVE-2024-28111",
                 "CVE-2024-28111.json",
                 "06908108e8097f2a56e628e7814a7bd54a5fc95f645b7c9fab02c1eb8dd9cc0c",
+                Transactional::None,
             )
             .await?;
 
@@ -113,6 +114,7 @@ mod test {
                 "CVE-2024-28111",
                 "CVE-2024-28111.json",
                 "06908108e8097f2a56e628e7814a7bd54a5fc95f645b7c9fab02c1eb8dd9cc0c",
+                Transactional::None,
             )
             .await?;
 

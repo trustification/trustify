@@ -7,6 +7,7 @@ use std::io::Read;
 use std::str::FromStr;
 use trustify_common::purl::Purl;
 use trustify_cvss::cvss3::Cvss3Base;
+use trustify_module_graph::graph::advisory::AdvisoryInformation;
 use trustify_module_graph::graph::Graph;
 
 pub struct OsvLoader<'g> {
@@ -46,13 +47,16 @@ impl<'g> OsvLoader<'g> {
                 )));
             }
 
+            let information = AdvisoryInformation {
+                title: osv.summary.clone(),
+                published: Some(osv.published),
+                modified: Some(osv.modified),
+            };
             let advisory = self
                 .graph
-                .ingest_advisory(osv.id, location, sha256, &tx)
+                .ingest_advisory(&osv.id, location, sha256, information, &tx)
                 .await?;
 
-            advisory.set_published_at(osv.published, &tx).await?;
-            advisory.set_modified_at(osv.modified, &tx).await?;
             if let Some(withdrawn) = osv.withdrawn {
                 advisory.set_withdrawn_at(withdrawn, &tx).await?;
             }
@@ -168,7 +172,12 @@ mod test {
         assert!(loaded_vulnerability.is_none());
 
         let loaded_advisory = graph
-            .get_advisory("RUSTSEC-2021-0079", "RUSTSEC-2021-0079.json", checksum)
+            .get_advisory(
+                "RUSTSEC-2021-0079",
+                "RUSTSEC-2021-0079.json",
+                checksum,
+                Transactional::None,
+            )
             .await?;
 
         assert!(loaded_advisory.is_none());
@@ -186,7 +195,12 @@ mod test {
         assert!(loaded_vulnerability.is_some());
 
         let loaded_advisory = graph
-            .get_advisory("RUSTSEC-2021-0079", "RUSTSEC-2021-0079.json", checksum)
+            .get_advisory(
+                "RUSTSEC-2021-0079",
+                "RUSTSEC-2021-0079.json",
+                checksum,
+                Transactional::None,
+            )
             .await?;
 
         assert!(loaded_advisory.is_some());

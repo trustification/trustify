@@ -9,6 +9,7 @@ members = [
   "modules/graph",
   "modules/importer",
   "modules/ingestor",
+  "modules/search",
   "modules/storage",
   "entity",
   "importer",
@@ -73,6 +74,7 @@ serde = "1.0.183"
 serde_json = "1.0.114"
 serde_yaml = "0.9"
 sha2 = "0.10.8"
+sikula = "0.4.4"
 spdx-expression = "0.5.2"
 spdx-rs = "0.5.3"
 sqlx = "0.7"
@@ -105,6 +107,7 @@ trustify-entity = { path = "entity" }
 trustify-module-graph = { path = "modules/graph" }
 trustify-module-ingestor = { path = "modules/ingestor" }
 trustify-module-importer = { path = "modules/importer" }
+trustify-module-search = { path = "modules/search" }
 trustify-module-storage = { path = "modules/storage" }
 trustify-infrastructure = { path = "common/infrastructure" }
 

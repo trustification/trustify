@@ -3,6 +3,7 @@
 use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::graph::error::Error;
 use crate::graph::Graph;
+use csaf::Csaf;
 use sea_orm::prelude::DateTimeUtc;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, EntityTrait, FromQueryResult, IntoActiveModel, QueryFilter};
@@ -11,6 +12,7 @@ use sea_query::{Condition, JoinType};
 use std::cmp::min;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
+use time::OffsetDateTime;
 use trustify_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
@@ -22,6 +24,19 @@ pub mod advisory_vulnerability;
 pub mod affected_package_version_range;
 pub mod fixed_package_version;
 pub mod not_affected_package_version;
+
+#[derive(Clone, Default)]
+pub struct AdvisoryInformation {
+    pub title: Option<String>,
+    pub published: Option<OffsetDateTime>,
+    pub modified: Option<OffsetDateTime>,
+}
+
+impl From<()> for AdvisoryInformation {
+    fn from(value: ()) -> Self {
+        Self::default()
+    }
+}
 
 impl Graph {
     pub async fn get_advisory_by_id<TX: AsRef<Transactional>>(
@@ -35,17 +50,18 @@ impl Graph {
             .map(|advisory| (self, advisory).into()))
     }
 
-    pub async fn get_advisory(
+    pub async fn get_advisory<TX: AsRef<Transactional>>(
         &self,
         identifier: &str,
         location: &str,
         sha256: &str,
+        tx: TX,
     ) -> Result<Option<AdvisoryContext>, Error> {
         Ok(entity::advisory::Entity::find()
             .filter(Condition::all().add(entity::advisory::Column::Identifier.eq(identifier)))
             .filter(Condition::all().add(entity::advisory::Column::Location.eq(location)))
             .filter(Condition::all().add(entity::advisory::Column::Sha256.eq(sha256.to_string())))
-            .one(&self.db)
+            .one(&self.connection(&tx))
             .await?
             .map(|sbom| (self, sbom).into()))
     }
@@ -55,20 +71,33 @@ impl Graph {
         identifier: impl Into<String>,
         location: impl Into<String>,
         sha256: impl Into<String>,
+        information: impl Into<AdvisoryInformation>,
         tx: TX,
     ) -> Result<AdvisoryContext, Error> {
         let identifier = identifier.into();
         let location = location.into();
         let sha256 = sha256.into();
 
-        if let Some(found) = self.get_advisory(&identifier, &location, &sha256).await? {
+        if let Some(found) = self
+            .get_advisory(&identifier, &location, &sha256, tx)
+            .await?
+        {
             return Ok(found);
         }
+
+        let AdvisoryInformation {
+            title,
+            published,
+            modified,
+        } = information.into();
 
         let model = entity::advisory::ActiveModel {
             identifier: Set(identifier),
             location: Set(location),
             sha256: Set(sha256),
+            title: Set(title),
+            published: Set(published),
+            modified: Set(modified),
             ..Default::default()
         };
 
@@ -103,7 +132,7 @@ impl<'g> From<(&'g Graph, entity::advisory::Model)> for AdvisoryContext<'g> {
 impl<'g> AdvisoryContext<'g> {
     pub async fn set_published_at<TX: AsRef<Transactional>>(
         &self,
-        published_at: DateTimeUtc,
+        published_at: time::OffsetDateTime,
         tx: TX,
     ) -> Result<(), Error> {
         let mut entity = self.advisory.clone().into_active_model();
@@ -112,13 +141,13 @@ impl<'g> AdvisoryContext<'g> {
         Ok(())
     }
 
-    pub fn published_at(&self) -> Option<DateTimeUtc> {
+    pub fn published_at(&self) -> Option<time::OffsetDateTime> {
         self.advisory.published
     }
 
     pub async fn set_modified_at<TX: AsRef<Transactional>>(
         &self,
-        modified_at: DateTimeUtc,
+        modified_at: time::OffsetDateTime,
         tx: TX,
     ) -> Result<(), Error> {
         let mut entity = self.advisory.clone().into_active_model();
@@ -127,13 +156,13 @@ impl<'g> AdvisoryContext<'g> {
         Ok(())
     }
 
-    pub fn modified_at(&self) -> Option<DateTimeUtc> {
+    pub fn modified_at(&self) -> Option<time::OffsetDateTime> {
         self.advisory.modified
     }
 
     pub async fn set_withdrawn_at<TX: AsRef<Transactional>>(
         &self,
-        withdrawn_at: DateTimeUtc,
+        withdrawn_at: time::OffsetDateTime,
         tx: TX,
     ) -> Result<(), Error> {
         let mut entity = self.advisory.clone().into_active_model();
@@ -142,7 +171,7 @@ impl<'g> AdvisoryContext<'g> {
         Ok(())
     }
 
-    pub fn withdrawn_at(&self) -> Option<DateTimeUtc> {
+    pub fn withdrawn_at(&self) -> Option<time::OffsetDateTime> {
         self.advisory.withdrawn
     }
 
@@ -474,6 +503,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -483,6 +513,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -492,6 +523,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "89",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -512,6 +544,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -569,6 +602,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -629,6 +663,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -656,6 +691,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -697,6 +733,7 @@ mod test {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                (),
                 Transactional::None,
             )
             .await?;

@@ -147,6 +147,7 @@ mod tests {
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
                 "2",
+                (),
                 Transactional::None,
             )
             .await?;

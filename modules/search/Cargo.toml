@@ -1,0 +1,27 @@
+[package]
+name = "trustify-module-search"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+trustify-common = { path = "../../common" }
+trustify-entity = { path = "../../entity" }
+
+actix-web = { workspace = true }
+anyhow = { workspace = true }
+csaf = { workspace = true }
+log = { workspace = true }
+reqwest = { workspace = true }
+sea-orm = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+sikula = { workspace = true, features = ["sea-orm"] }
+thiserror = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+utoipa = { workspace = true, features = ["actix_extras"] }
+
+[dev-dependencies]
+test-log = { workspace = true, features = ["env_logger", "trace"] }
+url-escape = { workspace = true }
