@@ -1,10 +1,11 @@
-use crate::model::{AdvisorySearch, AdvisorySearchSortable, FoundAdvisory};
+use std::str::FromStr;
+
+use crate::{
+    model::FoundAdvisory,
+    query::{Filter, Sort},
+};
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
-use sea_orm::sea_query::extension::postgres::PgExpr;
-use sea_orm::sea_query::IntoCondition;
-use sea_orm::{ColumnTrait, Condition, EntityTrait, QueryFilter, QueryOrder};
-use sikula::prelude::*;
-use sikula::sea_orm::{translate_term, TranslateOrdered};
+use sea_orm::{Condition, EntityTrait, QueryFilter, QueryOrder};
 use trustify_common::{
     db::{limiter::LimiterTrait, Database},
     error::ErrorInformation,
@@ -18,12 +19,6 @@ pub enum Error {
     SearchSyntax(String),
     #[error("database error: {0}")]
     Database(#[from] sea_orm::DbErr),
-}
-
-impl From<sikula::prelude::Error<'_>> for Error {
-    fn from(value: sikula::prelude::Error) -> Self {
-        Self::SearchSyntax(value.to_string())
-    }
 }
 
 impl ResponseError for Error {
@@ -54,23 +49,30 @@ impl SearchService {
 
     pub async fn search_advisories<'a>(
         &self,
-        Query { term, sorting }: Query<'a, AdvisorySearch<'a>>,
+        filters: String,
+        sort: String,
         paginated: Paginated,
     ) -> Result<PaginatedResults<FoundAdvisory>, Error> {
         let mut select = advisory::Entity::find();
-
-        select = select.filter(translate_term(term, &translate));
-
-        for sort in sorting {
-            let col = match sort.qualifier {
-                AdvisorySearchSortable::Modified => advisory::Column::Modified,
-                AdvisorySearchSortable::Published => advisory::Column::Published,
-            };
-            select = select.order_by(col, sort.direction.into());
+        // logical AND of filters delimited by '&'
+        select = select.filter(
+            filters
+                .split('&')
+                .map(Filter::<advisory::Entity>::from_str)
+                .collect::<Result<Vec<_>, _>>()?
+                .iter()
+                .fold(Condition::all(), |and, t| and.add(t.into_condition())),
+        );
+        // comma-delimited sort param, e.g. 'field1:asc,field2:desc'
+        for s in sort
+            .split(',')
+            .map(Sort::<advisory::Entity>::from_str)
+            .collect::<Result<Vec<_>, _>>()?
+            .iter()
+        {
+            select = select.order_by(s.field, s.order.clone());
         }
-
         // we always sort by ID last, so that we have a stable order for pagination
-
         select = select.order_by_desc(advisory::Column::Id);
 
         let limiting = select.limiting(&self.db, paginated.offset, paginated.limit);
@@ -84,22 +86,5 @@ impl SearchService {
                 .map(FoundAdvisory::from)
                 .collect(),
         })
-    }
-}
-
-fn translate(term: AdvisorySearch) -> Condition {
-    match term {
-        AdvisorySearch::Title(Primary::Equal(value)) => {
-            advisory::Column::Title.eq(value).into_condition()
-        }
-        AdvisorySearch::Title(Primary::Partial(value)) => advisory::Column::Title
-            .into_expr()
-            .ilike(format!(
-                "%{}%",
-                value.replace('%', "\\%").replace('_', "\\_")
-            ))
-            .into_condition(),
-        AdvisorySearch::Published(value) => value.translate(advisory::Column::Published),
-        AdvisorySearch::Modified(value) => value.translate(advisory::Column::Modified),
     }
 }

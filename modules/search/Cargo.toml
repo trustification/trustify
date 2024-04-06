@@ -12,11 +12,11 @@ actix-web = { workspace = true }
 anyhow = { workspace = true }
 csaf = { workspace = true }
 log = { workspace = true }
+regex = { workspace = true }
 reqwest = { workspace = true }
 sea-orm = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-sikula = { workspace = true, features = ["sea-orm"] }
 thiserror = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
