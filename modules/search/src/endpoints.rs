@@ -1,7 +1,6 @@
-use crate::model::{AdvisorySearch, SearchOptions};
+use crate::model::SearchOptions;
 use crate::service::{Error, SearchService};
 use actix_web::{get, web, Responder};
-use sikula::prelude::Search;
 use trustify_common::db::Database;
 use trustify_common::model::Paginated;
 use utoipa::OpenApi;
@@ -29,12 +28,11 @@ pub struct ApiDoc;
 #[get("/advisory")]
 /// Search for advisories
 async fn search_advisories(
-    web::Query(SearchOptions { q }): web::Query<SearchOptions>,
+    web::Query(SearchOptions { q, sort }): web::Query<SearchOptions>,
     web::Query(paginated): web::Query<Paginated>,
     service: web::Data<SearchService>,
 ) -> Result<impl Responder, Error> {
-    let search = AdvisorySearch::parse(&q)?;
     Ok(web::Json(
-        service.search_advisories(search, paginated).await?,
+        service.search_advisories(q, sort, paginated).await?,
     ))
 }

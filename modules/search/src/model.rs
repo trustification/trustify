@@ -1,4 +1,3 @@
-use sikula::prelude::*;
 use time::OffsetDateTime;
 use trustify_common::model::PaginatedResults;
 use trustify_entity::advisory;
@@ -8,17 +7,8 @@ use trustify_entity::advisory;
 pub struct SearchOptions {
     #[serde(default)]
     pub q: String,
-}
-
-#[derive(Debug, sikula::Search)]
-pub enum AdvisorySearch<'a> {
-    #[search(scope, default)]
-    Title(Primary<'a>),
-
-    #[search(sort)]
-    Modified(Ordered<OffsetDateTime>),
-    #[search(sort)]
-    Published(Ordered<OffsetDateTime>),
+    #[serde(default)]
+    pub sort: String,
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
