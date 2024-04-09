@@ -16,7 +16,7 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
 pub struct ApiDoc;
 
 #[utoipa::path(
-    context_path = "/api/v1/search/advisory",
+    context_path = "/api/v1/search",
     tag = "search",
     params(
         ("q", Query, description = "The query expression"),
