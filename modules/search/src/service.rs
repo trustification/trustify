@@ -59,13 +59,15 @@ impl SearchService {
             .filter(Filter::<advisory::Entity>::from_str(&filters)?.into_condition());
 
         // comma-delimited sort param, e.g. 'field1:asc,field2:desc'
-        for s in sort
-            .split(',')
-            .map(Sort::<advisory::Entity>::from_str)
-            .collect::<Result<Vec<_>, _>>()?
-            .iter()
-        {
-            select = select.order_by(s.field, s.order.clone());
+        if !sort.is_empty() {
+            for s in sort
+                .split(',')
+                .map(Sort::<advisory::Entity>::from_str)
+                .collect::<Result<Vec<_>, _>>()?
+                .iter()
+            {
+                select = select.order_by(s.field, s.order.clone());
+            }
         }
         // we always sort by ID last, so that we have a stable order for pagination
         select = select.order_by_desc(advisory::Column::Id);

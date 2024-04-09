@@ -78,7 +78,7 @@ impl<T: EntityTrait> FromStr for Filter<T> {
             Ok(Filter {
                 operands: Operand::Simple(
                     T::Column::from_str(&field).map_err(|_| {
-                        Error::SearchSyntax(format!("Invalid field name: '{field}'"))
+                        Error::SearchSyntax(format!("Invalid field name for filter: '{field}'"))
                     })?,
                     caps["value"].into(),
                 ),
@@ -124,8 +124,9 @@ impl<T: EntityTrait> FromStr for Sort<T> {
             }
         };
         Ok(Self {
-            field: T::Column::from_str(field)
-                .map_err(|_| Error::SearchSyntax(format!("Invalid field name: '{field}'")))?,
+            field: T::Column::from_str(field).map_err(|_| {
+                Error::SearchSyntax(format!("Invalid field name for sort: '{field}'"))
+            })?,
             order,
         })
     }
@@ -170,6 +171,7 @@ mod tests {
         assert!(Filter::<advisory::Entity>::from_str("location>=foo").is_ok());
         assert!(Filter::<advisory::Entity>::from_str("location<foo").is_ok());
         assert!(Filter::<advisory::Entity>::from_str("location<=foo").is_ok());
+        assert!(Filter::<advisory::Entity>::from_str("something").is_ok());
         // Bad filters
         assert!(Filter::<advisory::Entity>::from_str("foo=bar").is_err());
 
