@@ -204,101 +204,61 @@ mod tests {
         Ok(())
     }
 
+    fn where_clause(query: &str) -> Result<String, anyhow::Error> {
+        Ok(advisory::Entity::find()
+            .select_only()
+            .column(advisory::Column::Id)
+            .filter(Filter::<advisory::Entity>::from_str(query)?.into_condition())
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string()[45..]
+            .to_string())
+    }
+
     #[test(tokio::test)]
     async fn conditions() -> Result<(), anyhow::Error> {
-        let select = advisory::Entity::find()
-            .select_only()
-            .column(advisory::Column::Id);
         assert_eq!(
-            select
-                .clone()
-                .filter(Filter::<advisory::Entity>::from_str("location=foo")?.into_condition())
-                .build(sea_orm::DatabaseBackend::Postgres)
-                .to_string(),
-            r#"SELECT "advisory"."id" FROM "advisory" WHERE "advisory"."location" = 'foo'"#
+            where_clause("location=foo")?,
+            r#""advisory"."location" = 'foo'"#
         );
         assert_eq!(
-            select
-                .clone()
-                .filter(Filter::<advisory::Entity>::from_str("location!=foo")?.into_condition())
-                .build(sea_orm::DatabaseBackend::Postgres)
-                .to_string(),
-            r#"SELECT "advisory"."id" FROM "advisory" WHERE "advisory"."location" <> 'foo'"#
+            where_clause("location!=foo")?,
+            r#""advisory"."location" <> 'foo'"#
         );
         assert_eq!(
-            select
-                .clone()
-                .filter(Filter::<advisory::Entity>::from_str("location~foo")?.into_condition())
-                .build(sea_orm::DatabaseBackend::Postgres)
-                .to_string(),
-            r#"SELECT "advisory"."id" FROM "advisory" WHERE "advisory"."location" LIKE '%foo%'"#
+            where_clause("location~foo")?,
+            r#""advisory"."location" LIKE '%foo%'"#
         );
         assert_eq!(
-            select
-                .clone()
-                .filter(Filter::<advisory::Entity>::from_str("location~f_o%o")?.into_condition())
-                .build(sea_orm::DatabaseBackend::Postgres)
-                .to_string(),
-            r#"SELECT "advisory"."id" FROM "advisory" WHERE "advisory"."location" LIKE E'%f\\_o\\%o%'"#
+            where_clause("location~f_o%o")?,
+            r#""advisory"."location" LIKE E'%f\\_o\\%o%'"#
         );
         assert_eq!(
-            select
-                .clone()
-                .filter(Filter::<advisory::Entity>::from_str("location>foo")?.into_condition())
-                .build(sea_orm::DatabaseBackend::Postgres)
-                .to_string(),
-            r#"SELECT "advisory"."id" FROM "advisory" WHERE "advisory"."location" > 'foo'"#
+            where_clause("location>foo")?,
+            r#""advisory"."location" > 'foo'"#
         );
         assert_eq!(
-            select
-                .clone()
-                .filter(Filter::<advisory::Entity>::from_str("location>=foo")?.into_condition())
-                .build(sea_orm::DatabaseBackend::Postgres)
-                .to_string(),
-            r#"SELECT "advisory"."id" FROM "advisory" WHERE "advisory"."location" >= 'foo'"#
+            where_clause("location>=foo")?,
+            r#""advisory"."location" >= 'foo'"#
         );
         assert_eq!(
-            select
-                .clone()
-                .filter(Filter::<advisory::Entity>::from_str("location<foo")?.into_condition())
-                .build(sea_orm::DatabaseBackend::Postgres)
-                .to_string(),
-            r#"SELECT "advisory"."id" FROM "advisory" WHERE "advisory"."location" < 'foo'"#
+            where_clause("location<foo")?,
+            r#""advisory"."location" < 'foo'"#
         );
         assert_eq!(
-            select
-                .clone()
-                .filter(Filter::<advisory::Entity>::from_str("location<=foo")?.into_condition())
-                .build(sea_orm::DatabaseBackend::Postgres)
-                .to_string(),
-            r#"SELECT "advisory"."id" FROM "advisory" WHERE "advisory"."location" <= 'foo'"#
+            where_clause("location<=foo")?,
+            r#""advisory"."location" <= 'foo'"#
         );
         assert_eq!(
-            select
-                .clone()
-                .filter(Filter::<advisory::Entity>::from_str("foo")?.into_condition())
-                .build(sea_orm::DatabaseBackend::Postgres)
-                .to_string(),
-            r#"SELECT "advisory"."id" FROM "advisory" WHERE "advisory"."identifier" LIKE '%foo%' OR "advisory"."location" LIKE '%foo%' OR "advisory"."sha256" LIKE '%foo%' OR "advisory"."title" LIKE '%foo%'"#
+            where_clause("foo")?,
+            r#""advisory"."identifier" LIKE '%foo%' OR "advisory"."location" LIKE '%foo%' OR "advisory"."sha256" LIKE '%foo%' OR "advisory"."title" LIKE '%foo%'"#
         );
         assert_eq!(
-            select
-                .clone()
-                .filter(Filter::<advisory::Entity>::from_str("foo&location=bar")?.into_condition())
-                .build(sea_orm::DatabaseBackend::Postgres)
-                .to_string(),
-            r#"SELECT "advisory"."id" FROM "advisory" WHERE ("advisory"."identifier" LIKE '%foo%' OR "advisory"."location" LIKE '%foo%' OR "advisory"."sha256" LIKE '%foo%' OR "advisory"."title" LIKE '%foo%') AND "advisory"."location" = 'bar'"#
+            where_clause("foo&location=bar")?,
+            r#"("advisory"."identifier" LIKE '%foo%' OR "advisory"."location" LIKE '%foo%' OR "advisory"."sha256" LIKE '%foo%' OR "advisory"."title" LIKE '%foo%') AND "advisory"."location" = 'bar'"#
         );
         assert_eq!(
-            select
-                .clone()
-                .filter(
-                    Filter::<advisory::Entity>::from_str(r"m\&m's&location=f\&oo&id=ba\&r")?
-                        .into_condition()
-                )
-                .build(sea_orm::DatabaseBackend::Postgres)
-                .to_string(),
-            r#"SELECT "advisory"."id" FROM "advisory" WHERE ("advisory"."identifier" LIKE E'%m&m\'s%' OR "advisory"."location" LIKE E'%m&m\'s%' OR "advisory"."sha256" LIKE E'%m&m\'s%' OR "advisory"."title" LIKE E'%m&m\'s%') AND "advisory"."location" = 'f&oo' AND "advisory"."id" = 'ba&r'"#
+            where_clause(r"m\&m's&location=f\&oo&id=ba\&r")?,
+            r#"("advisory"."identifier" LIKE E'%m&m\'s%' OR "advisory"."location" LIKE E'%m&m\'s%' OR "advisory"."sha256" LIKE E'%m&m\'s%' OR "advisory"."title" LIKE E'%m&m\'s%') AND "advisory"."location" = 'f&oo' AND "advisory"."id" = 'ba&r'"#
         );
 
         Ok(())
