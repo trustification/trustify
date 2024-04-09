@@ -1,19 +1,23 @@
-use std::str::FromStr;
-
-use sea_orm::sea_query::IntoCondition;
-use sea_orm::{ColumnTrait, Condition, EntityTrait, Order};
-
 use crate::service::Error;
+use regex::Regex;
+use sea_orm::sea_query::IntoCondition;
+use sea_orm::{ColumnTrait, ColumnType, Condition, EntityTrait, Iterable, Order};
+use std::str::FromStr;
+use std::sync::OnceLock;
 
 pub struct Filter<T: EntityTrait> {
-    field: T::Column,
+    operands: Operand<T>,
     operator: Operator,
-    value: String,
 }
 
 pub struct Sort<T: EntityTrait> {
     pub field: T::Column,
     pub order: Order,
+}
+
+enum Operand<T: EntityTrait> {
+    Simple(T::Column, String),
+    Composite(Vec<Filter<T>>),
 }
 
 pub enum Operator {
@@ -24,22 +28,35 @@ pub enum Operator {
     GreaterThanOrEqual,
     LessThan,
     LessThanOrEqual,
+    And,
+    Or,
 }
 
 impl<T: EntityTrait> Filter<T> {
     pub fn into_condition(&self) -> Condition {
-        let col = self.field;
-        let v = self.value.clone();
-        let expr = match self.operator {
-            Operator::Equal => col.eq(v),
-            Operator::NotEqual => col.ne(v),
-            Operator::Like => col.contains(v),
-            Operator::GreaterThan => col.gt(v),
-            Operator::GreaterThanOrEqual => col.gte(v),
-            Operator::LessThan => col.lt(v),
-            Operator::LessThanOrEqual => col.lte(v),
-        };
-        expr.into_condition()
+        match &self.operands {
+            Operand::Simple(col, v) => match self.operator {
+                Operator::Equal => col.eq(v).into_condition(),
+                Operator::NotEqual => col.ne(v).into_condition(),
+                Operator::Like => col
+                    .contains(v.replace('%', r"\%").replace('_', r"\_"))
+                    .into_condition(),
+                Operator::GreaterThan => col.gt(v).into_condition(),
+                Operator::GreaterThanOrEqual => col.gte(v).into_condition(),
+                Operator::LessThan => col.lt(v).into_condition(),
+                Operator::LessThanOrEqual => col.lte(v).into_condition(),
+                _ => unreachable!(),
+            },
+            Operand::Composite(v) => match self.operator {
+                Operator::And => v
+                    .iter()
+                    .fold(Condition::all(), |and, t| and.add(t.into_condition())),
+                Operator::Or => v
+                    .iter()
+                    .fold(Condition::any(), |or, t| or.add(t.into_condition())),
+                _ => unreachable!(),
+            },
+        }
     }
 }
 
@@ -47,22 +64,51 @@ impl<T: EntityTrait> Filter<T> {
 // FromStr impls
 /////////////////////////////////////////////////////////////////////////
 
+// Form expected: "full text search({field}{op}{value})*"
 impl<T: EntityTrait> FromStr for Filter<T> {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let re = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|>=|>|<=|<)(?<value>.*)$";
+        const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|>=|>|<=|<)(?<value>.*)$";
+        static LOCK: OnceLock<Regex> = OnceLock::new();
         #[allow(clippy::unwrap_used)]
-        let caps = regex::Regex::new(re)
-            .unwrap()
-            .captures(s)
-            .ok_or(Error::SearchSyntax(format!("Invalid filter: '{s}'")))?;
-        let field = caps["field"].to_string();
-        Ok(Filter {
-            field: T::Column::from_str(&field)
-                .map_err(|_| Error::SearchSyntax(format!("Invalid field name: '{field}'")))?,
-            operator: Operator::from_str(&caps["op"])?,
-            value: caps["value"].into(),
-        })
+        let filter = LOCK.get_or_init(|| (Regex::new(RE).unwrap()));
+
+        if let Some(caps) = filter.captures(s) {
+            let field = caps["field"].to_string();
+            Ok(Filter {
+                operands: Operand::Simple(
+                    T::Column::from_str(&field).map_err(|_| {
+                        Error::SearchSyntax(format!("Invalid field name: '{field}'"))
+                    })?,
+                    caps["value"].into(),
+                ),
+                operator: Operator::from_str(&caps["op"])?,
+            })
+        } else if s.contains('&') {
+            Ok(Filter {
+                operator: Operator::And,
+                operands: Operand::Composite(
+                    s.split('&')
+                        .map(Self::from_str)
+                        .collect::<Result<Vec<_>, _>>()?,
+                ),
+            })
+        } else {
+            Ok(Filter {
+                operator: Operator::Or,
+                operands: Operand::Composite(
+                    T::Column::iter()
+                        .filter_map(|col| match col.def().get_column_type() {
+                            ColumnType::String(_) | ColumnType::Text => Some(Filter {
+                                operands: Operand::Simple(col, s.into()),
+                                operator: Operator::Like,
+                            }),
+                            _ => None,
+                        })
+                        .collect(),
+                ),
+            })
+        }
     }
 }
 
@@ -96,6 +142,8 @@ impl FromStr for Operator {
             ">=" => Ok(Operator::GreaterThanOrEqual),
             "<" => Ok(Operator::LessThan),
             "<=" => Ok(Operator::LessThanOrEqual),
+            "|" => Ok(Operator::Or),
+            "&" => Ok(Operator::And),
             _ => Err(Error::SearchSyntax(format!("Invalid operator: '{s}'"))),
         }
     }
@@ -124,10 +172,11 @@ mod tests {
         assert!(Filter::<advisory::Entity>::from_str("location<=foo").is_ok());
         // Bad filters
         assert!(Filter::<advisory::Entity>::from_str("foo=bar").is_err());
-        assert!(Filter::<advisory::Entity>::from_str("location@foo").is_err());
-        assert!(Filter::<advisory::Entity>::from_str("location = foo").is_err());
-        assert!(Filter::<advisory::Entity>::from_str("=").is_err());
-        assert!(Filter::<advisory::Entity>::from_str("").is_err());
+
+        // There aren't many "bad filters" since random text is
+        // considered a "full-text search" in which an OR clause is
+        // constructed from a LIKE clause for all string fields in the
+        // entity.
 
         Ok(())
     }
@@ -183,6 +232,14 @@ mod tests {
         assert_eq!(
             select
                 .clone()
+                .filter(Filter::<advisory::Entity>::from_str("location~f_o%o")?.into_condition())
+                .build(sea_orm::DatabaseBackend::Postgres)
+                .to_string(),
+            r#"SELECT "advisory"."id" FROM "advisory" WHERE "advisory"."location" LIKE E'%f\\_o\\%o%'"#
+        );
+        assert_eq!(
+            select
+                .clone()
                 .filter(Filter::<advisory::Entity>::from_str("location>foo")?.into_condition())
                 .build(sea_orm::DatabaseBackend::Postgres)
                 .to_string(),
@@ -211,6 +268,22 @@ mod tests {
                 .build(sea_orm::DatabaseBackend::Postgres)
                 .to_string(),
             r#"SELECT "advisory"."id" FROM "advisory" WHERE "advisory"."location" <= 'foo'"#
+        );
+        assert_eq!(
+            select
+                .clone()
+                .filter(Filter::<advisory::Entity>::from_str("foo")?.into_condition())
+                .build(sea_orm::DatabaseBackend::Postgres)
+                .to_string(),
+            r#"SELECT "advisory"."id" FROM "advisory" WHERE "advisory"."identifier" LIKE '%foo%' OR "advisory"."location" LIKE '%foo%' OR "advisory"."sha256" LIKE '%foo%' OR "advisory"."title" LIKE '%foo%'"#
+        );
+        assert_eq!(
+            select
+                .clone()
+                .filter(Filter::<advisory::Entity>::from_str("foo&location=bar")?.into_condition())
+                .build(sea_orm::DatabaseBackend::Postgres)
+                .to_string(),
+            r#"SELECT "advisory"."id" FROM "advisory" WHERE ("advisory"."identifier" LIKE '%foo%' OR "advisory"."location" LIKE '%foo%' OR "advisory"."sha256" LIKE '%foo%' OR "advisory"."title" LIKE '%foo%') AND "advisory"."location" = 'bar'"#
         );
 
         Ok(())
