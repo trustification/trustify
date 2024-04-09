@@ -73,25 +73,27 @@ impl<T: EntityTrait> FromStr for Filter<T> {
         #[allow(clippy::unwrap_used)]
         let filter = LOCK.get_or_init(|| (Regex::new(RE).unwrap()));
 
-        if let Some(caps) = filter.captures(s) {
+        let escaped = s.replace(r"\&", "\x07");
+        if escaped.contains('&') {
+            Ok(Filter {
+                operator: Operator::And,
+                operands: Operand::Composite(
+                    escaped
+                        .split('&')
+                        .map(Self::from_str)
+                        .collect::<Result<Vec<_>, _>>()?,
+                ),
+            })
+        } else if let Some(caps) = filter.captures(s) {
             let field = caps["field"].to_string();
             Ok(Filter {
                 operands: Operand::Simple(
                     T::Column::from_str(&field).map_err(|_| {
                         Error::SearchSyntax(format!("Invalid field name for filter: '{field}'"))
                     })?,
-                    caps["value"].into(),
+                    caps["value"].replace('\x07', "&"),
                 ),
                 operator: Operator::from_str(&caps["op"])?,
-            })
-        } else if s.contains('&') {
-            Ok(Filter {
-                operator: Operator::And,
-                operands: Operand::Composite(
-                    s.split('&')
-                        .map(Self::from_str)
-                        .collect::<Result<Vec<_>, _>>()?,
-                ),
             })
         } else {
             Ok(Filter {
@@ -100,7 +102,7 @@ impl<T: EntityTrait> FromStr for Filter<T> {
                     T::Column::iter()
                         .filter_map(|col| match col.def().get_column_type() {
                             ColumnType::String(_) | ColumnType::Text => Some(Filter {
-                                operands: Operand::Simple(col, s.into()),
+                                operands: Operand::Simple(col, s.replace('\x07', "&")),
                                 operator: Operator::Like,
                             }),
                             _ => None,
@@ -286,6 +288,17 @@ mod tests {
                 .build(sea_orm::DatabaseBackend::Postgres)
                 .to_string(),
             r#"SELECT "advisory"."id" FROM "advisory" WHERE ("advisory"."identifier" LIKE '%foo%' OR "advisory"."location" LIKE '%foo%' OR "advisory"."sha256" LIKE '%foo%' OR "advisory"."title" LIKE '%foo%') AND "advisory"."location" = 'bar'"#
+        );
+        assert_eq!(
+            select
+                .clone()
+                .filter(
+                    Filter::<advisory::Entity>::from_str(r"m\&m's&location=f\&oo&id=ba\&r")?
+                        .into_condition()
+                )
+                .build(sea_orm::DatabaseBackend::Postgres)
+                .to_string(),
+            r#"SELECT "advisory"."id" FROM "advisory" WHERE ("advisory"."identifier" LIKE E'%m&m\'s%' OR "advisory"."location" LIKE E'%m&m\'s%' OR "advisory"."sha256" LIKE E'%m&m\'s%' OR "advisory"."title" LIKE E'%m&m\'s%') AND "advisory"."location" = 'f&oo' AND "advisory"."id" = 'ba&r'"#
         );
 
         Ok(())
