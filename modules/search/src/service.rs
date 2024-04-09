@@ -5,7 +5,7 @@ use crate::{
     query::{Filter, Sort},
 };
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
-use sea_orm::{Condition, EntityTrait, QueryFilter, QueryOrder};
+use sea_orm::{EntityTrait, QueryFilter, QueryOrder};
 use trustify_common::{
     db::{limiter::LimiterTrait, Database},
     error::ErrorInformation,
@@ -47,22 +47,17 @@ impl SearchService {
         Self { db }
     }
 
+    // `filters` should be of the form, "full text search({field}{op}{value})*", e.g.
+    // "some text&published>=2020/11/11&location=localhost&severity=low|high&modified=true"
     pub async fn search_advisories<'a>(
         &self,
         filters: String,
         sort: String,
         paginated: Paginated,
     ) -> Result<PaginatedResults<FoundAdvisory>, Error> {
-        let mut select = advisory::Entity::find();
-        // logical AND of filters delimited by '&'
-        select = select.filter(
-            filters
-                .split('&')
-                .map(Filter::<advisory::Entity>::from_str)
-                .collect::<Result<Vec<_>, _>>()?
-                .iter()
-                .fold(Condition::all(), |and, t| and.add(t.into_condition())),
-        );
+        let mut select = advisory::Entity::find()
+            .filter(Filter::<advisory::Entity>::from_str(&filters)?.into_condition());
+
         // comma-delimited sort param, e.g. 'field1:asc,field2:desc'
         for s in sort
             .split(',')
