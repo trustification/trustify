@@ -20,6 +20,7 @@ enum Operand<T: EntityTrait> {
     Composite(Vec<Filter<T>>),
 }
 
+#[derive(Copy, Clone)]
 pub enum Operator {
     Equal,
     NotEqual,
@@ -73,39 +74,49 @@ impl<T: EntityTrait> FromStr for Filter<T> {
         #[allow(clippy::unwrap_used)]
         let filter = LOCK.get_or_init(|| (Regex::new(RE).unwrap()));
 
-        let escaped = s.replace(r"\&", "\x07");
-        if escaped.contains('&') {
+        let encoded = encode(s);
+        if encoded.contains('&') {
             Ok(Filter {
                 operator: Operator::And,
                 operands: Operand::Composite(
-                    escaped
+                    encoded
                         .split('&')
                         .map(Self::from_str)
                         .collect::<Result<Vec<_>, _>>()?,
                 ),
             })
-        } else if let Some(caps) = filter.captures(s) {
-            let field = caps["field"].to_string();
+        } else if let Some(caps) = filter.captures(&encoded) {
+            let field = &caps["field"];
+            let col = T::Column::from_str(field).map_err(|_| {
+                Error::SearchSyntax(format!("Invalid field name for filter: '{field}'"))
+            })?;
+            let operator = Operator::from_str(&caps["op"])?;
             Ok(Filter {
-                operands: Operand::Simple(
-                    T::Column::from_str(&field).map_err(|_| {
-                        Error::SearchSyntax(format!("Invalid field name for filter: '{field}'"))
-                    })?,
-                    caps["value"].replace('\x07', "&"),
+                operator: Operator::Or,
+                operands: Operand::Composite(
+                    caps["value"]
+                        .split('|')
+                        .map(|s| Filter {
+                            operands: Operand::Simple(col, decode(s)),
+                            operator,
+                        })
+                        .collect(),
                 ),
-                operator: Operator::from_str(&caps["op"])?,
             })
         } else {
             Ok(Filter {
                 operator: Operator::Or,
                 operands: Operand::Composite(
-                    T::Column::iter()
-                        .filter_map(|col| match col.def().get_column_type() {
-                            ColumnType::String(_) | ColumnType::Text => Some(Filter {
-                                operands: Operand::Simple(col, s.replace('\x07', "&")),
-                                operator: Operator::Like,
-                            }),
-                            _ => None,
+                    encoded
+                        .split('|')
+                        .flat_map(|s| {
+                            T::Column::iter().filter_map(|col| match col.def().get_column_type() {
+                                ColumnType::String(_) | ColumnType::Text => Some(Filter {
+                                    operands: Operand::<T>::Simple(col, decode(s)),
+                                    operator: Operator::Like,
+                                }),
+                                _ => None,
+                            })
                         })
                         .collect(),
                 ),
@@ -150,6 +161,18 @@ impl FromStr for Operator {
             _ => Err(Error::SearchSyntax(format!("Invalid operator: '{s}'"))),
         }
     }
+}
+
+/////////////////////////////////////////////////////////////////////////
+// Helpers
+/////////////////////////////////////////////////////////////////////////
+
+fn encode(s: &str) -> String {
+    s.replace(r"\&", "\x07").replace(r"\|", "\x08")
+}
+
+fn decode(s: &str) -> String {
+    s.replace('\x07', "&").replace('\x08', "|")
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -259,6 +282,22 @@ mod tests {
         assert_eq!(
             where_clause(r"m\&m's&location=f\&oo&id=ba\&r")?,
             r#"("advisory"."identifier" LIKE E'%m&m\'s%' OR "advisory"."location" LIKE E'%m&m\'s%' OR "advisory"."sha256" LIKE E'%m&m\'s%' OR "advisory"."title" LIKE E'%m&m\'s%') AND "advisory"."location" = 'f&oo' AND "advisory"."id" = 'ba&r'"#
+        );
+        assert_eq!(
+            where_clause("location=a|b|c")?,
+            r#""advisory"."location" = 'a' OR "advisory"."location" = 'b' OR "advisory"."location" = 'c'"#
+        );
+        assert_eq!(
+            where_clause(r"location=foo|\&\|")?,
+            r#""advisory"."location" = 'foo' OR "advisory"."location" = '&|'"#
+        );
+        assert_eq!(
+            where_clause("a|b|c")?,
+            r#""advisory"."identifier" LIKE '%a%' OR "advisory"."location" LIKE '%a%' OR "advisory"."sha256" LIKE '%a%' OR "advisory"."title" LIKE '%a%' OR "advisory"."identifier" LIKE '%b%' OR "advisory"."location" LIKE '%b%' OR "advisory"."sha256" LIKE '%b%' OR "advisory"."title" LIKE '%b%' OR "advisory"."identifier" LIKE '%c%' OR "advisory"."location" LIKE '%c%' OR "advisory"."sha256" LIKE '%c%' OR "advisory"."title" LIKE '%c%'"#
+        );
+        assert_eq!(
+            where_clause("a|b&id=1")?,
+            r#"("advisory"."identifier" LIKE '%a%' OR "advisory"."location" LIKE '%a%' OR "advisory"."sha256" LIKE '%a%' OR "advisory"."title" LIKE '%a%' OR "advisory"."identifier" LIKE '%b%' OR "advisory"."location" LIKE '%b%' OR "advisory"."sha256" LIKE '%b%' OR "advisory"."title" LIKE '%b%') AND "advisory"."id" = '1'"#
         );
 
         Ok(())
