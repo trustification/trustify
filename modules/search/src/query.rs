@@ -5,6 +5,10 @@ use sea_orm::{ColumnTrait, ColumnType, Condition, EntityTrait, Iterable, Order};
 use std::str::FromStr;
 use std::sync::OnceLock;
 
+/////////////////////////////////////////////////////////////////////////
+// Public interface
+/////////////////////////////////////////////////////////////////////////
+
 pub struct Filter<T: EntityTrait> {
     operands: Operand<T>,
     operator: Operator,
@@ -13,24 +17,6 @@ pub struct Filter<T: EntityTrait> {
 pub struct Sort<T: EntityTrait> {
     pub field: T::Column,
     pub order: Order,
-}
-
-enum Operand<T: EntityTrait> {
-    Simple(T::Column, String),
-    Composite(Vec<Filter<T>>),
-}
-
-#[derive(Copy, Clone)]
-pub enum Operator {
-    Equal,
-    NotEqual,
-    Like,
-    GreaterThan,
-    GreaterThanOrEqual,
-    LessThan,
-    LessThanOrEqual,
-    And,
-    Or,
 }
 
 impl<T: EntityTrait> Filter<T> {
@@ -65,9 +51,30 @@ impl<T: EntityTrait> Filter<T> {
 // FromStr impls
 /////////////////////////////////////////////////////////////////////////
 
-// Form expected: "full text search({field}{op}{value})*"
 impl<T: EntityTrait> FromStr for Filter<T> {
     type Err = Error;
+
+    /// Create a Filter for a given Entity from a string
+    ///
+    /// Form expected: `{search}*({field}{op}{value})*`
+    ///
+    /// Multiple queries and/or filters should be `&`-delimited
+    ///
+    /// The `{search}` text will result in an OR clause of LIKE
+    /// clauses for each [String] field in the associated
+    /// [Entity](sea_orm::EntityTrait). Optional filters of the form
+    /// `{field}{op}{value}` may further constrain the results. Each
+    /// `{field}` must name an actual
+    /// [Column](sea_orm::EntityTrait::Column) variant.
+    ///
+    /// Both `{search}` and `{value}` may contain `|`-delimited
+    /// alternate values that will result in an OR clause. Any `|` or
+    /// `&` in the query should be escaped with a backslash, e.g. `\|`
+    /// or `\&`.
+    ///
+    /// `{op}` should be one of `=`, `!=`, `~`, `>=`, `>`, `<=`, or
+    /// `<`.
+    ///
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|>=|>|<=|<)(?<value>.*)$";
         static LOCK: OnceLock<Regex> = OnceLock::new();
@@ -76,6 +83,7 @@ impl<T: EntityTrait> FromStr for Filter<T> {
 
         let encoded = encode(s);
         if encoded.contains('&') {
+            // We have collection of filters and/or queries
             Ok(Filter {
                 operator: Operator::And,
                 operands: Operand::Composite(
@@ -86,6 +94,7 @@ impl<T: EntityTrait> FromStr for Filter<T> {
                 ),
             })
         } else if let Some(caps) = filter.captures(&encoded) {
+            // We have a filter: {field}{op}{value}
             let field = &caps["field"];
             let col = T::Column::from_str(field).map_err(|_| {
                 Error::SearchSyntax(format!("Invalid field name for filter: '{field}'"))
@@ -104,6 +113,7 @@ impl<T: EntityTrait> FromStr for Filter<T> {
                 ),
             })
         } else {
+            // We have a full-text search query
             Ok(Filter {
                 operator: Operator::Or,
                 operands: Operand::Composite(
@@ -164,8 +174,26 @@ impl FromStr for Operator {
 }
 
 /////////////////////////////////////////////////////////////////////////
-// Helpers
+// Non-public helpers
 /////////////////////////////////////////////////////////////////////////
+
+enum Operand<T: EntityTrait> {
+    Simple(T::Column, String),
+    Composite(Vec<Filter<T>>),
+}
+
+#[derive(Copy, Clone)]
+enum Operator {
+    Equal,
+    NotEqual,
+    Like,
+    GreaterThan,
+    GreaterThanOrEqual,
+    LessThan,
+    LessThanOrEqual,
+    And,
+    Or,
+}
 
 fn encode(s: &str) -> String {
     s.replace(r"\&", "\x07").replace(r"\|", "\x08")
@@ -298,6 +326,10 @@ mod tests {
         assert_eq!(
             where_clause("a|b&id=1")?,
             r#"("advisory"."identifier" LIKE '%a%' OR "advisory"."location" LIKE '%a%' OR "advisory"."sha256" LIKE '%a%' OR "advisory"."title" LIKE '%a%' OR "advisory"."identifier" LIKE '%b%' OR "advisory"."location" LIKE '%b%' OR "advisory"."sha256" LIKE '%b%' OR "advisory"."title" LIKE '%b%') AND "advisory"."id" = '1'"#
+        );
+        assert_eq!(
+            where_clause("a&b")?,
+            r#"("advisory"."identifier" LIKE '%a%' OR "advisory"."location" LIKE '%a%' OR "advisory"."sha256" LIKE '%a%' OR "advisory"."title" LIKE '%a%') AND ("advisory"."identifier" LIKE '%b%' OR "advisory"."location" LIKE '%b%' OR "advisory"."sha256" LIKE '%b%' OR "advisory"."title" LIKE '%b%')"#
         );
 
         Ok(())
