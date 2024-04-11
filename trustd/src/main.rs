@@ -13,10 +13,7 @@ use trustify_infrastructure::InfrastructureConfig;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(clap::Subcommand, Debug)]
-pub enum Command {
-    #[command(subcommand)]
-    Importer(trustify_importer::ImporterCommand),
-}
+pub enum Command {}
 
 #[derive(clap::Parser, Debug)]
 #[command(
@@ -124,14 +121,6 @@ impl Trustd {
             };
 
             handles.spawn_local(http.run());
-        }
-
-        if let Some(command) = self.command {
-            match command {
-                Command::Importer(inner) => {
-                    handles.spawn_local(inner.run());
-                }
-            }
         }
 
         while let Some(result) = handles.join_next().await {

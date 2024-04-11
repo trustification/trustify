@@ -9,7 +9,6 @@ path = "src/main.rs"
 
 [dependencies]
 trustify-server = { workspace = true }
-trustify-importer = { workspace = true }
 trustify-common = { workspace = true }
 trustify-infrastructure = { workspace = true }
 trustify-auth = { workspace = true }

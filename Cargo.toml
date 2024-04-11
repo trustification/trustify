@@ -12,7 +12,6 @@ members = [
   "modules/search",
   "modules/storage",
   "entity",
-  "importer",
   "migration",
   "server",
 ]
