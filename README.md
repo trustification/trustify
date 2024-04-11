@@ -25,21 +25,21 @@ Model-like bits shared between multiple contexts.
 
 Database entity models, implemented via SeaORM.
 
-#### `graph`
-
-The primary graph engine and API.
-
-#### `importer`
-
-Importers capable of adding documents into the graph.
-
-#### `ingestors`
-
-Ingestors/readers for various formats (SPDX, CSAF, CVE, OSV, etc, etc)
-
 #### `migration`
 
 SeaORM migrations for the DDL.
+
+#### `modules/graph`
+
+The primary graph engine and API.
+
+#### `modules/importer`
+
+Importers capable of adding documents into the graph.
+
+#### `modules/ingestor`
+
+Ingestors/readers for various formats (SPDX, CSAF, CVE, OSV, etc, etc)
 
 #### `server`
 
@@ -61,11 +61,14 @@ Arbitrary test-data.
 
 ## Development Environment
 
-> [!NOTE]
-> Running an external PostgreSQL is no longer recommended for unit tests.
-> You may wish to run one externally still for any other non-test-related activities.
+### Postgres
 
-Starting:
+Unit tests and "PM mode" use an embedded instance of Postgres that is
+installed as required on the local filesystem. This is convenient for
+local development but you can also configure the app to use an
+external database.
+
+Starting a containerized Postgres instance:
 
 ```shell
 podman-compose -f etc/deploy/compose/compose.yaml up
@@ -77,11 +80,22 @@ Connect to PSQL:
 env PGPASSWORD=eggs psql -U postgres -d trustify -h localhost -p 5432
 ```
 
-Import data (also see: [importer/README.md](importer/README.md) for more options):
+Point the app at an external db:
 
 ```shell
-env DB_USER=postgres DB_PASSWORD=eggs cargo run -p trustify-trustd -- importer csaf https://www.redhat.com
-env DB_USER=postgres DB_PASSWORD=eggs cargo run -p trustify-trustd -- importer sbom https://access.redhat.com/security/data/sbom/beta/
+trustd --help
+trustd --db-strategy managed --db-user postgres --db-password eggs
+```
+
+### Import some data
+
+Import data (also see: [modules/importer/README.md](modules/importer/README.md) for more options):
+
+```shell
+# SBOM's
+http POST localhost:8080/api/v1/importer/redhat-sbom sbom[source]=https://access.redhat.com/security/data/sbom/beta/ sbom[keys][]=https://access.redhat.com/security/data/97f5eac4.txt#77E79ABE93673533ED09EBE2DCE3823597F5EAC4 sbom[disabled]:=false sbom[onlyPatterns][]=quarkus sbom[period]=30s sbom[v3Signatures]:=true
+# CSAF's
+http POST localhost:8080/api/v1/importer/redhat-csaf csaf[source]=https://redhat.com/.well-known/csaf/provider-metadata.json csaf[disabled]:=false csaf[onlyPatterns][]="^cve-2023-" csaf[period]=30s csaf[v3Signatures]:=true
 ```
 
 ### Authentication
