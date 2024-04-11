@@ -3,6 +3,7 @@
 # for referencing people in the channel
 mapForChannel:
   ctron: "@ctron:dentrassi.de"
+  bobmcwhirter: "@bobmcwhirter:matrix.org"
 
 # for sending out a direct message to people
 # NOTE: in order for this to work, you will need to initiate a DM chat with the bot first
