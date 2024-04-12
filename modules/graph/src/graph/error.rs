@@ -16,5 +16,8 @@ pub enum Error {
     Semver(#[from] lenient_semver::parser::OwnedError),
 
     #[error(transparent)]
+    Search(#[from] trustify_module_search::service::Error),
+
+    #[error(transparent)]
     Any(#[from] anyhow::Error),
 }

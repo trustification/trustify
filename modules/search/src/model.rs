@@ -1,13 +1,16 @@
 use time::OffsetDateTime;
 use trustify_common::model::PaginatedResults;
 use trustify_entity::advisory;
+use utoipa::IntoParams;
 
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
+#[derive(IntoParams, Clone, Debug, serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchOptions {
+    /// The search filter
     #[serde(default)]
     pub q: String,
     #[serde(default)]
+    /// Sort options
     pub sort: String,
 }
 
