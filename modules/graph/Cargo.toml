@@ -9,6 +9,7 @@ trustify-entity = { workspace = true }
 trustify-common = { workspace = true }
 trustify-migration = { workspace = true }
 trustify-cvss = { workspace = true }
+trustify-module-search = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }

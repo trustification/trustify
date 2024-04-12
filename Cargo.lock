@@ -5507,6 +5507,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "sea-orm",
+ "serde",
  "serde_json",
  "time",
  "tokio",
@@ -5589,6 +5590,7 @@ dependencies = [
  "trustify-cvss",
  "trustify-entity",
  "trustify-migration",
+ "trustify-module-search",
  "utoipa",
 ]
 

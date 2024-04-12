@@ -2,7 +2,7 @@ use crate::db::limiter::Limiter;
 use sea_orm::{ConnectionTrait, DbErr, ItemsAndPagesNumber, SelectorTrait};
 use serde::{Serialize, Serializer};
 use std::num::NonZeroU64;
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 /// A struct wrapping an item with a revision.
 ///
@@ -18,7 +18,9 @@ pub struct Revisioned<T> {
     pub revision: String,
 }
 
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(
+    IntoParams, Copy, Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize,
+)]
 #[serde(rename_all = "camelCase")]
 pub struct Paginated {
     /// The first item to return, skipping all that come before it.
@@ -63,5 +65,12 @@ impl<R> PaginatedResults<R> {
             items: results,
             total,
         })
+    }
+
+    pub fn map<O, F: Fn(R) -> O>(mut self, f: F) -> PaginatedResults<O> {
+        PaginatedResults {
+            items: self.items.drain(..).map(f).collect(),
+            total: self.total,
+        }
     }
 }
