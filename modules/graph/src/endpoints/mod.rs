@@ -1,19 +1,29 @@
 pub mod package;
 pub mod vulnerability;
 
+pub mod advisory;
+
 use crate::graph;
 use crate::graph::Graph;
+use crate::model::advisory::AdvisorySummary;
 use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, ResponseError};
 use std::sync::Arc;
 use trustify_common::error::ErrorInformation;
+use trustify_common::model::PaginatedResults;
 use trustify_common::purl::PurlErr;
 use trustify_entity::importer;
-use utoipa::OpenApi;
+use utoipa::openapi::Schema;
+use utoipa::{OpenApi, ToSchema};
 
 pub fn configure(config: &mut web::ServiceConfig) {
     config
+        .service(
+            web::scope("/api/v1/advisory")
+                .service(advisory::all)
+                .service(advisory::get),
+        )
         .service(
             web::scope("/api/v1/package")
                 .service(package::dependencies)
@@ -33,12 +43,17 @@ pub fn configure(config: &mut web::ServiceConfig) {
     paths(
         package::dependencies,
         package::variants,
+        advisory::all,
+        advisory::get,
         vulnerability::all,
         vulnerability::advisories,
         vulnerability::affected_packages,
         vulnerability::affected_products
     ),
-    components(),
+    components(schemas(
+        crate::model::advisory::AdvisoryDetails,
+        crate::model::advisory::AdvisoryVulnerabilitySummary,
+    )),
     tags()
 )]
 pub struct ApiDoc;
