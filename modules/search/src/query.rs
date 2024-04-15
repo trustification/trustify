@@ -1,9 +1,13 @@
 use crate::service::Error;
 use regex::Regex;
 use sea_orm::sea_query::IntoCondition;
-use sea_orm::{ColumnTrait, ColumnType, Condition, EntityTrait, Iterable, Order};
+use sea_orm::{ColumnTrait, ColumnType, Condition, EntityTrait, Iterable, Order, Value};
+use std::fmt::Display;
 use std::str::FromStr;
 use std::sync::OnceLock;
+use time::format_description::well_known::Rfc3339;
+use time::macros::format_description;
+use time::{Date, OffsetDateTime};
 
 /////////////////////////////////////////////////////////////////////////
 // Public interface
@@ -20,13 +24,16 @@ pub struct Sort<T: EntityTrait> {
 }
 
 impl<T: EntityTrait> Filter<T> {
-    pub fn into_condition(&self) -> Condition {
-        match &self.operands {
+    pub fn into_condition(self) -> Condition {
+        match self.operands {
             Operand::Simple(col, v) => match self.operator {
                 Operator::Equal => col.eq(v).into_condition(),
                 Operator::NotEqual => col.ne(v).into_condition(),
                 op @ (Operator::Like | Operator::NotLike) => {
-                    let v = format!("%{}%", v.replace('%', r"\%").replace('_', r"\_"));
+                    let v = format!(
+                        "%{}%",
+                        v.unwrap::<String>().replace('%', r"\%").replace('_', r"\_")
+                    );
                     if op == Operator::Like {
                         col.like(v)
                     } else {
@@ -42,10 +49,10 @@ impl<T: EntityTrait> Filter<T> {
             },
             Operand::Composite(v) => match self.operator {
                 Operator::And => v
-                    .iter()
+                    .into_iter()
                     .fold(Condition::all(), |and, f| and.add(f.into_condition())),
                 Operator::Or => v
-                    .iter()
+                    .into_iter()
                     .fold(Condition::any(), |or, f| or.add(f.into_condition())),
                 _ => unreachable!(),
             },
@@ -105,6 +112,7 @@ impl<T: EntityTrait> FromStr for Filter<T> {
             let col = T::Column::from_str(field).map_err(|_| {
                 Error::SearchSyntax(format!("Invalid field name for filter: '{field}'"))
             })?;
+            let def = col.def();
             let operator = Operator::from_str(&caps["op"])?;
             Ok(Filter {
                 operator: match operator {
@@ -114,8 +122,12 @@ impl<T: EntityTrait> FromStr for Filter<T> {
                 operands: Operand::Composite(
                     caps["value"]
                         .split('|')
-                        .map(|s| Filter {
-                            operands: Operand::Simple(col, decode(s)),
+                        .map(decode)
+                        .map(|s| envalue(&s, def.get_column_type()))
+                        .collect::<Result<Vec<_>, _>>()?
+                        .into_iter()
+                        .map(|v| Filter {
+                            operands: Operand::Simple(col, v),
                             operator,
                         })
                         .collect(),
@@ -131,7 +143,7 @@ impl<T: EntityTrait> FromStr for Filter<T> {
                         .flat_map(|s| {
                             T::Column::iter().filter_map(|col| match col.def().get_column_type() {
                                 ColumnType::String(_) | ColumnType::Text => Some(Filter {
-                                    operands: Operand::<T>::Simple(col, decode(s)),
+                                    operands: Operand::<T>::Simple(col, decode(s).into()),
                                     operator: Operator::Like,
                                 }),
                                 _ => None,
@@ -188,7 +200,7 @@ impl FromStr for Operator {
 /////////////////////////////////////////////////////////////////////////
 
 enum Operand<T: EntityTrait> {
-    Simple(T::Column, String),
+    Simple(T::Column, Value),
     Composite(Vec<Filter<T>>),
 }
 
@@ -212,6 +224,25 @@ fn encode(s: &str) -> String {
 
 fn decode(s: &str) -> String {
     s.replace('\x07', "&").replace('\x08', "|")
+}
+
+fn envalue(s: &str, ct: &ColumnType) -> Result<Value, Error> {
+    fn err(e: impl Display) -> Error {
+        Error::SearchSyntax(format!(r#"conversion error: "{e}""#))
+    }
+    Ok(match ct {
+        ColumnType::Integer => s.parse::<i32>().map_err(err)?.into(),
+        ColumnType::TimestampWithTimeZone => {
+            if let Ok(odt) = OffsetDateTime::parse(s, &Rfc3339) {
+                odt.into()
+            } else if let Ok(d) = Date::parse(s, &format_description!("[year]-[month]-[day]")) {
+                d.into()
+            } else {
+                s.into()
+            }
+        }
+        _ => s.into(),
+    })
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -343,8 +374,8 @@ mod tests {
             r#"("advisory"."identifier" LIKE '%foo%' OR "advisory"."location" LIKE '%foo%' OR "advisory"."sha256" LIKE '%foo%' OR "advisory"."title" LIKE '%foo%') AND "advisory"."location" = 'bar'"#
         );
         assert_eq!(
-            where_clause(r"m\&m's&location=f\&oo&id=ba\&r")?,
-            r#"("advisory"."identifier" LIKE E'%m&m\'s%' OR "advisory"."location" LIKE E'%m&m\'s%' OR "advisory"."sha256" LIKE E'%m&m\'s%' OR "advisory"."title" LIKE E'%m&m\'s%') AND "advisory"."location" = 'f&oo' AND "advisory"."id" = 'ba&r'"#
+            where_clause(r"m\&m's&location=f\&oo&id=13")?,
+            r#"("advisory"."identifier" LIKE E'%m&m\'s%' OR "advisory"."location" LIKE E'%m&m\'s%' OR "advisory"."sha256" LIKE E'%m&m\'s%' OR "advisory"."title" LIKE E'%m&m\'s%') AND "advisory"."location" = 'f&oo' AND "advisory"."id" = 13"#
         );
         assert_eq!(
             where_clause("location=a|b|c")?,
@@ -364,7 +395,7 @@ mod tests {
         );
         assert_eq!(
             where_clause("a|b&id=1")?,
-            r#"("advisory"."identifier" LIKE '%a%' OR "advisory"."location" LIKE '%a%' OR "advisory"."sha256" LIKE '%a%' OR "advisory"."title" LIKE '%a%' OR "advisory"."identifier" LIKE '%b%' OR "advisory"."location" LIKE '%b%' OR "advisory"."sha256" LIKE '%b%' OR "advisory"."title" LIKE '%b%') AND "advisory"."id" = '1'"#
+            r#"("advisory"."identifier" LIKE '%a%' OR "advisory"."location" LIKE '%a%' OR "advisory"."sha256" LIKE '%a%' OR "advisory"."title" LIKE '%a%' OR "advisory"."identifier" LIKE '%b%' OR "advisory"."location" LIKE '%b%' OR "advisory"."sha256" LIKE '%b%' OR "advisory"."title" LIKE '%b%') AND "advisory"."id" = 1"#
         );
         assert_eq!(
             where_clause("a&b")?,
@@ -373,6 +404,18 @@ mod tests {
         assert_eq!(
             where_clause("here&location!~there|hereford")?,
             r#"("advisory"."identifier" LIKE '%here%' OR "advisory"."location" LIKE '%here%' OR "advisory"."sha256" LIKE '%here%' OR "advisory"."title" LIKE '%here%') AND ("advisory"."location" NOT LIKE '%there%' AND "advisory"."location" NOT LIKE '%hereford%')"#
+        );
+        assert_eq!(
+            where_clause("published>2023-11-03T23:20:50.52Z")?,
+            r#""advisory"."published" > '2023-11-03 23:20:50.520000 +00:00'"#
+        );
+        assert_eq!(
+            where_clause("published>2023-11-03T23:20:51-04:00")?,
+            r#""advisory"."published" > '2023-11-03 23:20:51.000000 -04:00'"#
+        );
+        assert_eq!(
+            where_clause("published>2023-11-03")?,
+            r#""advisory"."published" > '2023-11-03'"#
         );
 
         Ok(())
