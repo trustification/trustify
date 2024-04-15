@@ -25,9 +25,15 @@ impl<T: EntityTrait> Filter<T> {
             Operand::Simple(col, v) => match self.operator {
                 Operator::Equal => col.eq(v).into_condition(),
                 Operator::NotEqual => col.ne(v).into_condition(),
-                Operator::Like => col
-                    .contains(v.replace('%', r"\%").replace('_', r"\_"))
-                    .into_condition(),
+                op @ (Operator::Like | Operator::NotLike) => {
+                    let v = format!("%{}%", v.replace('%', r"\%").replace('_', r"\_"));
+                    if op == Operator::Like {
+                        col.like(v)
+                    } else {
+                        col.not_like(v)
+                    }
+                    .into_condition()
+                }
                 Operator::GreaterThan => col.gt(v).into_condition(),
                 Operator::GreaterThanOrEqual => col.gte(v).into_condition(),
                 Operator::LessThan => col.lt(v).into_condition(),
@@ -37,10 +43,10 @@ impl<T: EntityTrait> Filter<T> {
             Operand::Composite(v) => match self.operator {
                 Operator::And => v
                     .iter()
-                    .fold(Condition::all(), |and, t| and.add(t.into_condition())),
+                    .fold(Condition::all(), |and, f| and.add(f.into_condition())),
                 Operator::Or => v
                     .iter()
-                    .fold(Condition::any(), |or, t| or.add(t.into_condition())),
+                    .fold(Condition::any(), |or, f| or.add(f.into_condition())),
                 _ => unreachable!(),
             },
         }
@@ -72,11 +78,11 @@ impl<T: EntityTrait> FromStr for Filter<T> {
     /// `&` in the query should be escaped with a backslash, e.g. `\|`
     /// or `\&`.
     ///
-    /// `{op}` should be one of `=`, `!=`, `~`, `>=`, `>`, `<=`, or
-    /// `<`.
+    /// `{op}` should be one of `=`, `!=`, `~`, `!~, `>=`, `>`, `<=`,
+    /// or `<`.
     ///
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|>=|>|<=|<)(?<value>.*)$";
+        const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
         static LOCK: OnceLock<Regex> = OnceLock::new();
         #[allow(clippy::unwrap_used)]
         let filter = LOCK.get_or_init(|| (Regex::new(RE).unwrap()));
@@ -101,7 +107,10 @@ impl<T: EntityTrait> FromStr for Filter<T> {
             })?;
             let operator = Operator::from_str(&caps["op"])?;
             Ok(Filter {
-                operator: Operator::Or,
+                operator: match operator {
+                    Operator::NotLike | Operator::NotEqual => Operator::And,
+                    _ => Operator::Or,
+                },
                 operands: Operand::Composite(
                     caps["value"]
                         .split('|')
@@ -162,6 +171,7 @@ impl FromStr for Operator {
             "=" => Ok(Operator::Equal),
             "!=" => Ok(Operator::NotEqual),
             "~" => Ok(Operator::Like),
+            "!~" => Ok(Operator::NotLike),
             ">" => Ok(Operator::GreaterThan),
             ">=" => Ok(Operator::GreaterThanOrEqual),
             "<" => Ok(Operator::LessThan),
@@ -182,11 +192,12 @@ enum Operand<T: EntityTrait> {
     Composite(Vec<Filter<T>>),
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 enum Operator {
     Equal,
     NotEqual,
     Like,
+    NotLike,
     GreaterThan,
     GreaterThanOrEqual,
     LessThan,
@@ -214,24 +225,40 @@ mod tests {
     use test_log::test;
     use trustify_entity::advisory;
 
+    fn test_advisory_operator(s: &str, expected: Operator) {
+        match Filter::<advisory::Entity>::from_str(s) {
+            Ok(Filter {
+                operands: Operand::Composite(v),
+                ..
+            }) => assert_eq!(
+                v[0].operator, expected,
+                "The query '{s}' didn't resolve to {expected:?}"
+            ),
+            _ => panic!("The query '{s}' didn't resolve to {expected:?}"),
+        }
+    }
+
     #[test(tokio::test)]
     async fn filters() -> Result<(), anyhow::Error> {
         // Good filters
-        assert!(Filter::<advisory::Entity>::from_str("location=foo").is_ok());
-        assert!(Filter::<advisory::Entity>::from_str("location!=foo").is_ok());
-        assert!(Filter::<advisory::Entity>::from_str("location~foo").is_ok());
-        assert!(Filter::<advisory::Entity>::from_str("location>foo").is_ok());
-        assert!(Filter::<advisory::Entity>::from_str("location>=foo").is_ok());
-        assert!(Filter::<advisory::Entity>::from_str("location<foo").is_ok());
-        assert!(Filter::<advisory::Entity>::from_str("location<=foo").is_ok());
-        assert!(Filter::<advisory::Entity>::from_str("something").is_ok());
-        // Bad filters
+        test_advisory_operator("location=foo", Operator::Equal);
+        test_advisory_operator("location!=foo", Operator::NotEqual);
+        test_advisory_operator("location~foo", Operator::Like);
+        test_advisory_operator("location!~foo", Operator::NotLike);
+        test_advisory_operator("location>foo", Operator::GreaterThan);
+        test_advisory_operator("location>=foo", Operator::GreaterThanOrEqual);
+        test_advisory_operator("location<foo", Operator::LessThan);
+        test_advisory_operator("location<=foo", Operator::LessThanOrEqual);
+
+        // If a query matches the '{field}{op}{value}' regex, then the
+        // first operand must resolve to a field on the Entity
         assert!(Filter::<advisory::Entity>::from_str("foo=bar").is_err());
 
-        // There aren't many "bad filters" since random text is
+        // There aren't many bad queries since random text is
         // considered a "full-text search" in which an OR clause is
         // constructed from a LIKE clause for all string fields in the
         // entity.
+        test_advisory_operator("search the entity", Operator::Like);
 
         Ok(())
     }
@@ -284,6 +311,14 @@ mod tests {
             r#""advisory"."location" LIKE E'%f\\_o\\%o%'"#
         );
         assert_eq!(
+            where_clause("location!~foo")?,
+            r#""advisory"."location" NOT LIKE '%foo%'"#
+        );
+        assert_eq!(
+            where_clause("location!~f_o%o")?,
+            r#""advisory"."location" NOT LIKE E'%f\\_o\\%o%'"#
+        );
+        assert_eq!(
             where_clause("location>foo")?,
             r#""advisory"."location" > 'foo'"#
         );
@@ -316,6 +351,10 @@ mod tests {
             r#""advisory"."location" = 'a' OR "advisory"."location" = 'b' OR "advisory"."location" = 'c'"#
         );
         assert_eq!(
+            where_clause("location!=a|b|c")?,
+            r#""advisory"."location" <> 'a' AND "advisory"."location" <> 'b' AND "advisory"."location" <> 'c'"#
+        );
+        assert_eq!(
             where_clause(r"location=foo|\&\|")?,
             r#""advisory"."location" = 'foo' OR "advisory"."location" = '&|'"#
         );
@@ -330,6 +369,10 @@ mod tests {
         assert_eq!(
             where_clause("a&b")?,
             r#"("advisory"."identifier" LIKE '%a%' OR "advisory"."location" LIKE '%a%' OR "advisory"."sha256" LIKE '%a%' OR "advisory"."title" LIKE '%a%') AND ("advisory"."identifier" LIKE '%b%' OR "advisory"."location" LIKE '%b%' OR "advisory"."sha256" LIKE '%b%' OR "advisory"."title" LIKE '%b%')"#
+        );
+        assert_eq!(
+            where_clause("here&location!~there|hereford")?,
+            r#"("advisory"."identifier" LIKE '%here%' OR "advisory"."location" LIKE '%here%' OR "advisory"."sha256" LIKE '%here%' OR "advisory"."title" LIKE '%here%') AND ("advisory"."location" NOT LIKE '%there%' AND "advisory"."location" NOT LIKE '%hereford%')"#
         );
 
         Ok(())
