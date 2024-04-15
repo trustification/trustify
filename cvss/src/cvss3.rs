@@ -1,3 +1,4 @@
+use serde::{Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -21,6 +22,15 @@ impl Display for Cvss3Base {
             "CVSS:3.{}/AV:{}/AC:{}/PR:{}/UI:{}/S:{}/C:{}/I:{}/A:{}",
             self.minor_version, self.av, self.ac, self.pr, self.ui, self.s, self.c, self.i, self.a
         )
+    }
+}
+
+impl Serialize for Cvss3Base {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.collect_str(self)
     }
 }
 

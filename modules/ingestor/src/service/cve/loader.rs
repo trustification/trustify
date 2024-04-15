@@ -92,8 +92,6 @@ mod test {
 
         let loaded_advisory = graph
             .get_advisory(
-                "CVE-2024-28111",
-                "CVE-2024-28111.json",
                 "06908108e8097f2a56e628e7814a7bd54a5fc95f645b7c9fab02c1eb8dd9cc0c",
                 Transactional::None,
             )
@@ -111,8 +109,6 @@ mod test {
 
         let loaded_advisory = graph
             .get_advisory(
-                "CVE-2024-28111",
-                "CVE-2024-28111.json",
                 "06908108e8097f2a56e628e7814a7bd54a5fc95f645b7c9fab02c1eb8dd9cc0c",
                 Transactional::None,
             )

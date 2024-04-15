@@ -961,7 +961,7 @@ mod tests {
             .ingest_advisory(
                 "GHSA-1",
                 "http://ghsa.com/ghsa-1",
-                "2",
+                "3",
                 (),
                 Transactional::None,
             )

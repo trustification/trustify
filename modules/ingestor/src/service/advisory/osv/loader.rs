@@ -171,14 +171,7 @@ mod test {
 
         assert!(loaded_vulnerability.is_none());
 
-        let loaded_advisory = graph
-            .get_advisory(
-                "RUSTSEC-2021-0079",
-                "RUSTSEC-2021-0079.json",
-                checksum,
-                Transactional::None,
-            )
-            .await?;
+        let loaded_advisory = graph.get_advisory(checksum, Transactional::None).await?;
 
         assert!(loaded_advisory.is_none());
 
@@ -194,14 +187,7 @@ mod test {
 
         assert!(loaded_vulnerability.is_some());
 
-        let loaded_advisory = graph
-            .get_advisory(
-                "RUSTSEC-2021-0079",
-                "RUSTSEC-2021-0079.json",
-                checksum,
-                Transactional::None,
-            )
-            .await?;
+        let loaded_advisory = graph.get_advisory(checksum, Transactional::None).await?;
 
         assert!(loaded_advisory.is_some());
 

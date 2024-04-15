@@ -6,18 +6,26 @@ use crate::graph::Graph;
 use csaf::Csaf;
 use sea_orm::prelude::DateTimeUtc;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, EntityTrait, FromQueryResult, IntoActiveModel, QueryFilter};
+use sea_orm::{
+    ActiveModelTrait, EntityTrait, FromQueryResult, IntoActiveModel, QueryFilter, QueryOrder,
+};
 use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
 use std::cmp::min;
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
+use std::str::FromStr;
 use time::OffsetDateTime;
 use trustify_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
+use trustify_common::db::limiter::LimiterTrait;
 use trustify_common::db::Transactional;
+use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_common::purl::Purl;
 use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity as entity;
+use trustify_entity::{advisory, vulnerability};
+use trustify_module_search::model::SearchOptions;
+use trustify_module_search::query::{Filter, Sort};
 
 pub mod advisory_vulnerability;
 
@@ -39,6 +47,45 @@ impl From<()> for AdvisoryInformation {
 }
 
 impl Graph {
+    pub async fn advisories<TX: AsRef<Transactional>>(
+        &self,
+        search: SearchOptions,
+        paginated: Paginated,
+        tx: TX,
+    ) -> Result<PaginatedResults<AdvisoryContext>, Error> {
+        let connection = self.connection(&tx);
+
+        let SearchOptions { sort, q } = search;
+
+        let mut select = advisory::Entity::find()
+            .filter(Filter::<advisory::Entity>::from_str(&q)?.into_condition());
+
+        // comma-delimited sort param, e.g. 'field1:asc,field2:desc'
+        if !sort.is_empty() {
+            for s in sort
+                .split(',')
+                .map(Sort::<advisory::Entity>::from_str)
+                .collect::<Result<Vec<_>, _>>()?
+                .iter()
+            {
+                select = select.order_by(s.field, s.order.clone());
+            }
+        }
+        select = select.order_by_desc(advisory::Column::Id);
+
+        let limiter = select.limiting(&connection, paginated.offset, paginated.limit);
+
+        Ok(PaginatedResults {
+            total: limiter.total().await?,
+            items: limiter
+                .fetch()
+                .await?
+                .drain(0..)
+                .map(|each| (self, each).into())
+                .collect(),
+        })
+    }
+
     pub async fn get_advisory_by_id<TX: AsRef<Transactional>>(
         &self,
         id: i32,
@@ -52,14 +99,10 @@ impl Graph {
 
     pub async fn get_advisory<TX: AsRef<Transactional>>(
         &self,
-        identifier: &str,
-        location: &str,
         sha256: &str,
         tx: TX,
     ) -> Result<Option<AdvisoryContext>, Error> {
         Ok(entity::advisory::Entity::find()
-            .filter(Condition::all().add(entity::advisory::Column::Identifier.eq(identifier)))
-            .filter(Condition::all().add(entity::advisory::Column::Location.eq(location)))
             .filter(Condition::all().add(entity::advisory::Column::Sha256.eq(sha256.to_string())))
             .one(&self.connection(&tx))
             .await?
@@ -78,10 +121,7 @@ impl Graph {
         let location = location.into();
         let sha256 = sha256.into();
 
-        if let Some(found) = self
-            .get_advisory(&identifier, &location, &sha256, tx)
-            .await?
-        {
+        if let Some(found) = self.get_advisory(&sha256, tx).await? {
             return Ok(found);
         }
 
