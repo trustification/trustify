@@ -1,10 +1,11 @@
 mod tests;
 
 use crate::graph::error::Error;
-use crate::graph::sbom::{SbomContext, SbomInformation};
+use crate::graph::sbom::{PackageCache, SbomContext, SbomInformation};
 use sea_orm::TransactionTrait;
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
+use std::collections::HashMap;
 use std::io::Read;
 use time::OffsetDateTime;
 use tracing::instrument;
@@ -39,72 +40,96 @@ impl SbomContext {
         sbom_data: SPDX,
         tx: TX,
     ) -> Result<(), anyhow::Error> {
+        // create a lookup cache for id -> package information
+        let mut cache = HashMap::with_capacity(sbom_data.package_information.len());
+
+        for pi in &sbom_data.package_information {
+            cache.insert(&pi.package_spdx_identifier, pi);
+        }
+
         // For each thing described in the SBOM data, link it up to an sbom_cpe or sbom_package.
         for described in &sbom_data.document_creation_information.document_describes {
-            for described_package in sbom_data
-                .package_information
-                .iter()
-                .filter(|each| each.package_spdx_identifier.eq(described))
-            {
-                for reference in &described_package.external_reference {
-                    if reference.reference_type == "purl" {
-                        //log::debug!("describes pkg {}", reference.reference_locator);
+            let Some(described_package) = cache.get(described) else {
+                continue;
+            };
+
+            for reference in &described_package.external_reference {
+                match reference.reference_type.as_str() {
+                    "purl" => {
                         self.ingest_describes_package(
                             reference.reference_locator.as_str().try_into()?,
                             &tx,
                         )
                         .await?;
-                    } else if reference.reference_type == "cpe22Type" {
-                        //log::debug!("describes cpe22 {}", reference.reference_locator);
+                    }
+                    "cpe22Type" => {
                         if let Ok(cpe) = cpe::uri::Uri::parse(&reference.reference_locator) {
                             self.ingest_describes_cpe22(cpe, &tx).await?;
                         }
                     }
+                    _ => {}
                 }
             }
         }
 
+        let mut lookup_cache = PackageCache::new(
+            sbom_data.package_information.len(),
+            &self.graph,
+            tx.as_ref(),
+        );
+
         // connect all other tree-ish package trees in the context of this sbom.
         for package_info in &sbom_data.package_information {
-            let package_identifier = &package_info.package_spdx_identifier;
             for package_ref in &package_info.external_reference {
-                if package_ref.reference_type == "purl" {
-                    let package_a = package_ref.reference_locator.clone();
-                    //log::debug!("pkg_a: {}", package_a);
+                if package_ref.reference_type != "purl" {
+                    continue;
+                }
 
-                    for relationship in sbom_data.relationships_for_spdx_id(package_identifier) {
-                        if let Some(package) = sbom_data.package_information.iter().find(|each| {
-                            each.package_spdx_identifier == relationship.related_spdx_element
-                        }) {
-                            for reference in &package.external_reference {
-                                if reference.reference_type == "purl" {
-                                    let package_b = reference.reference_locator.clone();
+                let package_a = &package_ref.reference_locator;
+                //log::debug!("pkg_a: {}", package_a);
 
-                                    // Check for the degenerate case that seems to appear where an SBOM inceptions itself.
-                                    if package_a != package_b {
-                                        if let Ok((left, rel, right)) = SpdxRelationship(
-                                            &package_a,
-                                            &relationship.relationship_type,
-                                            &package_b,
-                                        )
-                                        .try_into()
-                                        {
-                                            self.ingest_package_relates_to_package(
-                                                left.try_into()?,
-                                                rel,
-                                                right.try_into()?,
-                                                &tx,
-                                            )
-                                            .await?
-                                        }
-                                    }
-                                }
-                            }
+                'rels: for relationship in
+                    sbom_data.relationships_for_spdx_id(&package_info.package_spdx_identifier)
+                {
+                    let Some(package) = cache.get(&relationship.related_spdx_element) else {
+                        continue 'rels;
+                    };
+
+                    'refs: for reference in &package.external_reference {
+                        if reference.reference_type != "purl" {
+                            continue 'refs;
                         }
+
+                        let package_b = &reference.reference_locator;
+
+                        // Check for the degenerate case that seems to appear where an SBOM inceptions itself.
+                        if package_a == package_b {
+                            continue 'refs;
+                        }
+
+                        // check if we have a valid relationship
+                        let Ok((left, rel, right)) =
+                            SpdxRelationship(package_a, &relationship.relationship_type, package_b)
+                                .try_into()
+                        else {
+                            continue 'refs;
+                        };
+
+                        // now add it
+                        self.ingest_package_relates_to_package(
+                            &mut lookup_cache,
+                            left.try_into()?,
+                            rel,
+                            right.try_into()?,
+                            &tx,
+                        )
+                        .await?
                     }
                 }
             }
         }
+
+        log::info!("Package cache: {lookup_cache:?}");
 
         Ok(())
     }

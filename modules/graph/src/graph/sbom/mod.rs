@@ -11,8 +11,11 @@ use sea_orm::{
     QueryTrait, RelationTrait, Select, Set,
 };
 use sea_query::{Condition, Func, JoinType, Query, SimpleExpr};
+use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
+use std::rc::Rc;
+use std::sync::Arc;
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::cpe::Cpe;
@@ -439,13 +442,15 @@ impl SbomContext {
     /// Within the context of *this* SBOM, ingest a relationship between
     /// two packages.
     #[instrument(skip(tx), err)]
-    async fn ingest_package_relates_to_package<TX: AsRef<Transactional>>(
-        &self,
+    async fn ingest_package_relates_to_package<'a, TX: AsRef<Transactional>>(
+        &'a self,
+        cache: &mut PackageCache<'a>,
         left_package_input: Purl,
         relationship: Relationship,
         right_package_input: Purl,
         tx: TX,
     ) -> Result<(), Error> {
+        /*
         let left_package = self
             .graph
             .ingest_qualified_package(left_package_input.clone(), &tx)
@@ -454,9 +459,12 @@ impl SbomContext {
         let right_package = self
             .graph
             .ingest_qualified_package(right_package_input.clone(), &tx)
-            .await;
+            .await;*/
 
-        match (&left_package, &right_package) {
+        let left_package = cache.lookup(&left_package_input).await;
+        let right_package = cache.lookup(&right_package_input).await;
+
+        match (&*left_package, &*right_package) {
             (Ok(left_package), Ok(right_package)) => {
                 if entity::package_relates_to_package::Entity::find()
                     .filter(entity::package_relates_to_package::Column::SbomId.eq(self.sbom.id))
@@ -488,20 +496,20 @@ impl SbomContext {
             (Err(_), Err(_)) => {
                 log::warn!(
                     "unable to ingest relationships between non-fully-qualified packages {}, {}",
-                    left_package_input.to_string(),
-                    right_package_input.to_string()
+                    left_package_input,
+                    right_package_input,
                 );
             }
             (Err(_), Ok(_)) => {
                 log::warn!(
                     "unable to ingest relationships involving a non-fully-qualified package {}",
-                    left_package_input.to_string()
+                    left_package_input
                 );
             }
             (Ok(_), Err(_)) => {
                 log::warn!(
                     "unable to ingest relationships involving a non-fully-qualified package {}",
-                    right_package_input.to_string()
+                    right_package_input
                 );
             }
         }
@@ -701,4 +709,47 @@ impl SbomContext {
     }
 
      */
+}
+
+pub struct PackageCache<'a> {
+    cache: HashMap<Purl, Rc<Result<QualifiedPackageContext<'a>, Error>>>,
+    graph: &'a Graph,
+    tx: &'a Transactional,
+    hits: usize,
+}
+
+impl<'a> Debug for PackageCache<'a> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PackageCache")
+            .field("cache", &self.cache.len())
+            .field("hits", &self.hits)
+            .finish()
+    }
+}
+
+impl<'a> PackageCache<'a> {
+    pub fn new(capacity: usize, graph: &'a Graph, tx: &'a Transactional) -> Self {
+        Self {
+            cache: HashMap::with_capacity(capacity),
+            graph,
+            tx,
+            hits: 0,
+        }
+    }
+
+    pub async fn lookup(&mut self, purl: &Purl) -> Rc<Result<QualifiedPackageContext<'a>, Error>> {
+        match self.cache.entry(purl.clone()) {
+            Entry::Occupied(entry) => {
+                self.hits += 1;
+                entry.get().clone()
+            }
+            Entry::Vacant(entry) => {
+                let result = self
+                    .graph
+                    .ingest_qualified_package(purl.clone(), &self.tx)
+                    .await;
+                entry.insert(Rc::new(result)).clone()
+            }
+        }
+    }
 }

@@ -1,6 +1,8 @@
 #![cfg(test)]
 
+use crate::graph::sbom::PackageCache;
 use crate::graph::Graph;
+use std::collections::HashMap;
 use std::convert::TryInto;
 use test_log::test;
 use trustify_common::db::{Database, Transactional};
@@ -198,6 +200,8 @@ async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
     let db = Database::for_test("transitive_dependency_of").await?;
     let system = Graph::new(db);
 
+    let mut cache = PackageCache::new(1, &system, &Transactional::None);
+
     let sbom1 = system
         .ingest_sbom(
             "http://sbomsRus.gov/thing1.json",
@@ -210,6 +214,7 @@ async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
 
     sbom1
         .ingest_package_relates_to_package(
+            &mut cache,
             "pkg://maven/io.quarkus/transitive-b@1.2.3".try_into()?,
             Relationship::DependencyOf,
             "pkg://maven/io.quarkus/transitive-a@1.2.3".try_into()?,
@@ -219,6 +224,7 @@ async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
 
     sbom1
         .ingest_package_relates_to_package(
+            &mut cache,
             "pkg://maven/io.quarkus/transitive-c@1.2.3".try_into()?,
             Relationship::DependencyOf,
             "pkg://maven/io.quarkus/transitive-b@1.2.3".try_into()?,
@@ -228,6 +234,7 @@ async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
 
     sbom1
         .ingest_package_relates_to_package(
+            &mut cache,
             "pkg://maven/io.quarkus/transitive-d@1.2.3".try_into()?,
             Relationship::DependencyOf,
             "pkg://maven/io.quarkus/transitive-c@1.2.3".try_into()?,
@@ -237,6 +244,7 @@ async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
 
     sbom1
         .ingest_package_relates_to_package(
+            &mut cache,
             "pkg://maven/io.quarkus/transitive-e@1.2.3".try_into()?,
             Relationship::DependencyOf,
             "pkg://maven/io.quarkus/transitive-c@1.2.3".try_into()?,
@@ -246,6 +254,7 @@ async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
 
     sbom1
         .ingest_package_relates_to_package(
+            &mut cache,
             "pkg://maven/io.quarkus/transitive-d@1.2.3".try_into()?,
             Relationship::DependencyOf,
             "pkg://maven/io.quarkus/transitive-b@1.2.3".try_into()?,
@@ -269,6 +278,8 @@ async fn ingest_package_relates_to_package_dependency_of() -> Result<(), anyhow:
     let db = Database::for_test("ingest_contains_packages").await?;
     let system = Graph::new(db);
 
+    let mut cache = PackageCache::new(1, &system, &Transactional::None);
+
     let sbom1 = system
         .ingest_sbom(
             "http://sbomsRus.gov/thing1.json",
@@ -281,6 +292,7 @@ async fn ingest_package_relates_to_package_dependency_of() -> Result<(), anyhow:
 
     sbom1
         .ingest_package_relates_to_package(
+            &mut cache,
             "pkg://maven/io.quarkus/quarkus-postgres@1.2.3".try_into()?,
             Relationship::DependencyOf,
             "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
@@ -300,6 +312,7 @@ async fn ingest_package_relates_to_package_dependency_of() -> Result<(), anyhow:
 
     sbom2
         .ingest_package_relates_to_package(
+            &mut cache,
             "pkg://maven/io.quarkus/quarkus-sqlite@1.2.3".try_into()?,
             Relationship::DependencyOf,
             "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
@@ -345,6 +358,8 @@ async fn sbom_vulnerabilities() -> Result<(), anyhow::Error> {
     let db = Database::for_test("sbom_vulnerabilities").await?;
     let system = Graph::new(db);
 
+    let mut cache = PackageCache::new(1, &system, &Transactional::None);
+
     println!("{:?}", system);
 
     let sbom = system
@@ -364,6 +379,7 @@ async fn sbom_vulnerabilities() -> Result<(), anyhow::Error> {
     println!("-------------------- B");
 
     sbom.ingest_package_relates_to_package(
+        &mut cache,
         "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
         Relationship::DependencyOf,
         "pkg://oci/my-app@1.2.3".try_into()?,
@@ -373,6 +389,7 @@ async fn sbom_vulnerabilities() -> Result<(), anyhow::Error> {
     println!("-------------------- C");
 
     sbom.ingest_package_relates_to_package(
+        &mut cache,
         "pkg://maven/io.quarkus/quarkus-postgres@1.2.3".try_into()?,
         Relationship::DependencyOf,
         "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
@@ -382,6 +399,7 @@ async fn sbom_vulnerabilities() -> Result<(), anyhow::Error> {
     println!("-------------------- D");
 
     sbom.ingest_package_relates_to_package(
+        &mut cache,
         "pkg://maven/postgres/postgres-driver@1.2.3".try_into()?,
         Relationship::DependencyOf,
         "pkg://maven/io.quarkus/quarkus-postgres@1.2.3".try_into()?,
