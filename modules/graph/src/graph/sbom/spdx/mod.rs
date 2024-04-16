@@ -1,3 +1,5 @@
+mod tests;
+
 use crate::graph::error::Error;
 use crate::graph::sbom::{SbomContext, SbomInformation};
 use sea_orm::TransactionTrait;
@@ -5,6 +7,7 @@ use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
 use std::io::Read;
 use time::OffsetDateTime;
+use tracing::instrument;
 use trustify_common::db::Transactional;
 use trustify_entity::relationship::Relationship;
 
@@ -30,6 +33,7 @@ impl<'a> From<Information<'a>> for SbomInformation {
 }
 
 impl SbomContext {
+    #[instrument(skip(tx, sbom_data), err)]
     pub async fn ingest_spdx<TX: AsRef<Transactional>>(
         &self,
         sbom_data: SPDX,
@@ -173,213 +177,4 @@ pub fn parse_spdx<R: Read>(data: R) -> Result<(SPDX, bool), serde_json::Error> {
     let json = serde_json::from_reader::<_, Value>(data)?;
     let (json, changed) = fix_license(json);
     Ok((serde_json::from_value(json)?, changed))
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::graph::sbom::spdx::Information;
-    use crate::graph::Graph;
-    use spdx_rs::models::SPDX;
-    use std::fs::File;
-    use std::path::PathBuf;
-    use std::str::FromStr;
-    use std::time::Instant;
-    use test_log::test;
-    use trustify_common::db::{Database, Transactional};
-    use trustify_entity::relationship::Relationship;
-
-    #[test(tokio::test)]
-    async fn parse_spdx_quarkus() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("parse_spdx_quarkus").await?;
-        let system = Graph::new(db);
-
-        let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-        let test_data = pwd.join("../../etc/test-data");
-
-        // nope, has bad license expressions
-        let sbom = test_data.join("quarkus-bom-2.13.8.Final-redhat-00004.json");
-
-        let sbom_data = File::open(sbom)?;
-
-        let start = Instant::now();
-        let parse_time = start.elapsed();
-
-        let start = Instant::now();
-
-        let (spdx, _) = super::parse_spdx(sbom_data)?;
-
-        let tx = system.transaction().await?;
-
-        let sbom = system
-            .ingest_sbom(
-                "test.com/my-sbom.json",
-                "10",
-                &spdx.document_creation_information.spdx_document_namespace,
-                Information(&spdx),
-                &tx,
-            )
-            .await?;
-
-        sbom.ingest_spdx(spdx, &tx).await?;
-        let ingest_time = start.elapsed();
-        let start = Instant::now();
-
-        // commit, then test
-        tx.commit().await?;
-
-        let described_cpe222 = sbom.describes_cpe22s(Transactional::None).await?;
-        assert_eq!(1, described_cpe222.len());
-
-        let described_packages = sbom.describes_packages(Transactional::None).await?;
-        log::info!("{:#?}", described_packages);
-
-        let contains = sbom
-            .related_packages(
-                Relationship::ContainedBy,
-                described_packages[0].clone().into(),
-                Transactional::None,
-            )
-            .await?;
-
-        log::info!("{}", contains.len());
-
-        assert!(contains.len() > 500);
-
-        let query_time = start.elapsed();
-
-        log::info!("parse {}ms", parse_time.as_millis());
-        log::info!("ingest {}ms", ingest_time.as_millis());
-        log::info!("query {}ms", query_time.as_millis());
-
-        Ok(())
-    }
-
-    // ignore because it's a slow slow slow test.
-    #[ignore]
-    #[test(tokio::test)]
-    async fn parse_spdx_openshift() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("parse_spdx_openshift").await?;
-        let system = Graph::new(db);
-
-        let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-        let test_data = pwd.join("../../etc/test-data");
-
-        // nope, has bad license expressions
-        let sbom = test_data.join("openshift-4.13.json");
-
-        let sbom_data = File::open(sbom)?;
-
-        let start = Instant::now();
-        let parse_time = start.elapsed();
-
-        let tx = system.transaction().await?;
-
-        let (spdx, _) = super::parse_spdx(sbom_data)?;
-
-        let start = Instant::now();
-        let sbom = system
-            .ingest_sbom(
-                "test.com/my-sbom.json",
-                "10",
-                &spdx.document_creation_information.spdx_document_namespace,
-                Information(&spdx),
-                &tx,
-            )
-            .await?;
-
-        sbom.ingest_spdx(spdx, &tx).await?;
-
-        tx.commit().await?;
-
-        let ingest_time = start.elapsed();
-        let start = Instant::now();
-
-        let described_cpe222 = sbom.describes_cpe22s(Transactional::None).await?;
-        assert_eq!(1, described_cpe222.len());
-
-        let described_packages = sbom.describes_packages(Transactional::None).await?;
-        log::info!("{:#?}", described_packages);
-
-        let contains = sbom
-            .related_packages(
-                Relationship::ContainedBy,
-                described_packages[0].clone().into(),
-                Transactional::None,
-            )
-            .await?;
-
-        println!("{}", contains.len());
-
-        assert!(contains.len() > 500);
-
-        let query_time = start.elapsed();
-
-        log::info!("parse {}ms", parse_time.as_millis());
-        log::info!("ingest {}ms", ingest_time.as_millis());
-        log::info!("query {}ms", query_time.as_millis());
-
-        Ok(())
-    }
-
-    #[test(tokio::test)]
-    async fn parse_spdx() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("parse_spdx").await?;
-        let system = Graph::new(db);
-
-        let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-        let test_data = pwd.join("../../etc/test-data");
-
-        //let sbom = test_data.join( "openshift-4.13.json");
-        let sbom = test_data.join("ubi9-9.2-755.1697625012.json");
-
-        let sbom = File::open(sbom)?;
-
-        let tx = system.transaction().await?;
-
-        let start = Instant::now();
-        let (spdx, _) = super::parse_spdx(sbom)?;
-        let parse_time = start.elapsed();
-
-        let start = Instant::now();
-        let sbom = system
-            .ingest_sbom(
-                "test.com/my-sbom.json",
-                "10",
-                &spdx.document_creation_information.spdx_document_namespace,
-                Information(&spdx),
-                &tx,
-            )
-            .await?;
-
-        sbom.ingest_spdx(spdx, &tx).await?;
-
-        tx.commit().await?;
-
-        let ingest_time = start.elapsed();
-        let start = Instant::now();
-
-        let described = sbom.describes_packages(Transactional::None).await?;
-
-        assert_eq!(1, described.len());
-
-        let contains = sbom
-            .related_packages(
-                Relationship::ContainedBy,
-                described[0].clone().into(),
-                Transactional::None,
-            )
-            .await?;
-
-        log::info!("{}", contains.len());
-
-        assert!(contains.len() > 500);
-
-        let query_time = start.elapsed();
-
-        log::info!("parse {}ms", parse_time.as_millis());
-        log::info!("ingest {}ms", ingest_time.as_millis());
-        log::info!("query {}ms", query_time.as_millis());
-
-        Ok(())
-    }
 }

@@ -3,3 +3,6 @@ target
 .DS_Store
 /data
 .trustify
+
+/flamegraph.svg
+/perf.data
