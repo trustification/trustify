@@ -1,4 +1,5 @@
 use crate::service::Error;
+use human_date_parser::{from_human_time, ParseResult};
 use regex::Regex;
 use sea_orm::sea_query::IntoCondition;
 use sea_orm::{ColumnTrait, ColumnType, Condition, EntityTrait, Iterable, Order, Value};
@@ -237,6 +238,12 @@ fn envalue(s: &str, ct: &ColumnType) -> Result<Value, Error> {
                 odt.into()
             } else if let Ok(d) = Date::parse(s, &format_description!("[year]-[month]-[day]")) {
                 d.into()
+            } else if let Ok(human) = from_human_time(s) {
+                match human {
+                    ParseResult::DateTime(dt) => dt.into(),
+                    ParseResult::Date(d) => d.into(),
+                    ParseResult::Time(t) => t.into(),
+                }
             } else {
                 s.into()
             }
@@ -252,6 +259,7 @@ fn envalue(s: &str, ct: &ColumnType) -> Result<Value, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::{Local, TimeDelta};
     use sea_orm::{QueryFilter, QuerySelect, QueryTrait};
     use test_log::test;
     use trustify_entity::advisory;
@@ -417,6 +425,67 @@ mod tests {
             where_clause("published>2023-11-03")?,
             r#""advisory"."published" > '2023-11-03'"#
         );
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn human_time() -> Result<(), anyhow::Error> {
+        let now = Local::now();
+        let yesterday = (now - TimeDelta::try_days(1).unwrap()).format("%Y-%m-%d");
+        let last_week = (now - TimeDelta::try_days(7).unwrap()).format("%Y-%m-%d");
+        let three_days_ago = (now - TimeDelta::try_days(3).unwrap()).format("%Y-%m-%d");
+        assert_eq!(
+            where_clause("published<yesterday")?,
+            format!(r#""advisory"."published" < '{yesterday}'"#)
+        );
+        assert_eq!(
+            where_clause("published>last week")?,
+            format!(r#""advisory"."published" > '{last_week}'"#)
+        );
+        let wc = where_clause("published=3 days ago")?;
+        let expected = &format!(r#""advisory"."published" = '{three_days_ago} "#);
+        assert!(
+            wc.starts_with(expected),
+            "expected '{wc}' to start with '{expected}'"
+        );
+
+        // Other possibilities, assuming it's New Year's day, 2010
+        //
+        // "Today 18:30" = "2010-01-01 18:30:00",
+        // "Yesterday 18:30" = "2009-12-31 18:30:00",
+        // "Tomorrow 18:30" = "2010-01-02 18:30:00",
+        // "Overmorrow 18:30" = "2010-01-03 18:30:00",
+        // "2022-11-07 13:25:30" = "2022-11-07 13:25:30",
+        // "15:20 Friday" = "2010-01-08 15:20:00",
+        // "This Friday 17:00" = "2010-01-08 17:00:00",
+        // "13:25, Next Tuesday" = "2010-01-12 13:25:00",
+        // "Last Friday at 19:45" = "2009-12-25 19:45:00",
+        // "Next week" = "2010-01-08 00:00:00",
+        // "This week" = "2010-01-01 00:00:00",
+        // "Last week" = "2009-12-25 00:00:00",
+        // "Next week Monday" = "2010-01-04 00:00:00",
+        // "This week Friday" = "2010-01-01 00:00:00",
+        // "This week Monday" = "2009-12-28 00:00:00",
+        // "Last week Tuesday" = "2009-12-22 00:00:00",
+        // "In 3 days" = "2010-01-04 00:00:00",
+        // "In 2 hours" = "2010-01-01 02:00:00",
+        // "In 5 minutes and 30 seconds" = "2010-01-01 00:05:30",
+        // "10 seconds ago" = "2009-12-31 23:59:50",
+        // "10 hours and 5 minutes ago" = "2009-12-31 13:55:00",
+        // "2 hours, 32 minutes and 7 seconds ago" = "2009-12-31 21:27:53",
+        // "1 years, 2 months, 3 weeks, 5 days, 8 hours, 17 minutes and 45 seconds ago" =
+        //     "2008-10-07 16:42:15",
+        // "1 year, 1 month, 1 week, 1 day, 1 hour, 1 minute and 1 second ago" = "2008-11-23 22:58:59",
+        // "A year ago" = "2009-01-01 00:00:00",
+        // "A month ago" = "2009-12-01 00:00:00",
+        // "A week ago" = "2009-12-25 00:00:00",
+        // "A day ago" = "2009-12-31 00:00:00",
+        // "An hour ago" = "2009-12-31 23:00:00",
+        // "A minute ago" = "2009-12-31 23:59:00",
+        // "A second ago" = "2009-12-31 23:59:59",
+        // "now" = "2010-01-01 00:00:00",
+        // "Overmorrow" = "2010-01-03 00:00:00"
 
         Ok(())
     }

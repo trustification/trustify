@@ -11,6 +11,7 @@ trustify-entity = { path = "../../entity" }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 csaf = { workspace = true }
+human-date-parser = { workspace = true }
 log = { workspace = true }
 regex = { workspace = true }
 reqwest = { workspace = true }
@@ -23,5 +24,6 @@ tokio = { workspace = true, features = ["full"] }
 utoipa = { workspace = true, features = ["actix_extras"] }
 
 [dev-dependencies]
+chrono = { workspace = true }
 test-log = { workspace = true, features = ["env_logger", "trace"] }
 url-escape = { workspace = true }
