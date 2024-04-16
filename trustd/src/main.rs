@@ -1,6 +1,7 @@
 use clap::Parser;
 use postgresql_embedded::PostgreSQL;
 use std::env;
+use std::fs::create_dir_all;
 use std::process::{ExitCode, Termination};
 use tokio::task::JoinSet;
 use trustify_auth::auth::AuthConfigArguments;
@@ -84,21 +85,23 @@ impl Trustd {
             let current_dir = env::current_dir()?;
             let work_dir = current_dir.join(".trustify");
             let db_dir = work_dir.join("postgres");
+            let data_dir = work_dir.join("data");
+            create_dir_all(&data_dir)?;
             let settings = Settings {
                 username: self.database.username.clone(),
                 password: self.database.password.clone(),
                 temporary: false,
                 installation_dir: db_dir.clone(),
+                data_dir,
                 ..Default::default()
             };
 
             let mut postgresql = PostgreSQL::new(PostgreSQL::default_version(), settings);
-            postgresql.setup().await?;
-            postgresql.start().await?;
+            postgresql.setup().await.unwrap();
+            postgresql.start().await.unwrap();
 
             let port = postgresql.settings().port;
             self.database.port = port;
-            self.creation = CreationMode::Bootstrap;
 
             managed_db.replace(postgresql);
 
