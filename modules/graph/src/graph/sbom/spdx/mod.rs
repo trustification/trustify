@@ -61,46 +61,41 @@ impl SbomContext {
                         }
                     }
                 }
+            }
+        }
 
-                // connect all other tree-ish package trees in the context of this sbom.
-                for package_info in &sbom_data.package_information {
-                    let package_identifier = &package_info.package_spdx_identifier;
-                    for package_ref in &package_info.external_reference {
-                        if package_ref.reference_type == "purl" {
-                            let package_a = package_ref.reference_locator.clone();
-                            //log::debug!("pkg_a: {}", package_a);
+        // connect all other tree-ish package trees in the context of this sbom.
+        for package_info in &sbom_data.package_information {
+            let package_identifier = &package_info.package_spdx_identifier;
+            for package_ref in &package_info.external_reference {
+                if package_ref.reference_type == "purl" {
+                    let package_a = package_ref.reference_locator.clone();
+                    //log::debug!("pkg_a: {}", package_a);
 
-                            for relationship in
-                                sbom_data.relationships_for_spdx_id(package_identifier)
-                            {
-                                if let Some(package) =
-                                    sbom_data.package_information.iter().find(|each| {
-                                        each.package_spdx_identifier
-                                            == relationship.related_spdx_element
-                                    })
-                                {
-                                    for reference in &package.external_reference {
-                                        if reference.reference_type == "purl" {
-                                            let package_b = reference.reference_locator.clone();
+                    for relationship in sbom_data.relationships_for_spdx_id(package_identifier) {
+                        if let Some(package) = sbom_data.package_information.iter().find(|each| {
+                            each.package_spdx_identifier == relationship.related_spdx_element
+                        }) {
+                            for reference in &package.external_reference {
+                                if reference.reference_type == "purl" {
+                                    let package_b = reference.reference_locator.clone();
 
-                                            // Check for the degenerate case that seems to appear where an SBOM inceptions itself.
-                                            if package_a != package_b {
-                                                if let Ok((left, rel, right)) = SpdxRelationship(
-                                                    &package_a,
-                                                    &relationship.relationship_type,
-                                                    &package_b,
-                                                )
-                                                .try_into()
-                                                {
-                                                    self.ingest_package_relates_to_package(
-                                                        left.try_into()?,
-                                                        rel,
-                                                        right.try_into()?,
-                                                        &tx,
-                                                    )
-                                                    .await?
-                                                }
-                                            }
+                                    // Check for the degenerate case that seems to appear where an SBOM inceptions itself.
+                                    if package_a != package_b {
+                                        if let Ok((left, rel, right)) = SpdxRelationship(
+                                            &package_a,
+                                            &relationship.relationship_type,
+                                            &package_b,
+                                        )
+                                        .try_into()
+                                        {
+                                            self.ingest_package_relates_to_package(
+                                                left.try_into()?,
+                                                rel,
+                                                right.try_into()?,
+                                                &tx,
+                                            )
+                                            .await?
                                         }
                                     }
                                 }
