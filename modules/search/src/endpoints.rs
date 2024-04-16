@@ -23,7 +23,8 @@ pub struct ApiDoc;
     context_path = "/api/v1/search",
     tag = "search",
     params(
-        ("q", Query, description = "The query expression"),
+        SearchOptions,
+        Paginated
     ),
     responses(
         (status = 200, description = "Advisory search result", body = [crate::model::PaginatedAdvisories])
@@ -45,7 +46,8 @@ async fn search_advisories(
     context_path = "/api/v1/search",
     tag = "search",
     params(
-        ("q", Query, description = "The query expression"),
+        SearchOptions,
+        Paginated
     ),
     responses(
         (status = 200, description = "SBOM search result", body = [crate::model::PaginatedSBOMs])
