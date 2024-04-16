@@ -20,7 +20,10 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Sbom::Location).string().not_null())
+                    .col(ColumnDef::new(Sbom::DocumentId).string().not_null())
                     .col(ColumnDef::new(Sbom::Sha256).string().not_null())
+                    .col(ColumnDef::new(Sbom::Title).string())
+                    .col(ColumnDef::new(Sbom::Published).timestamp_with_time_zone())
                     .to_owned(),
             )
             .await
@@ -39,4 +42,8 @@ pub enum Sbom {
     Id,
     Location,
     Sha256,
+    DocumentId,
+
+    Title,
+    Published,
 }

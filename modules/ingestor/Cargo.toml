@@ -5,11 +5,6 @@ edition = "2021"
 publish = false
 
 [dependencies]
-trustify-common = { workspace = true }
-trustify-cvss = { workspace = true }
-trustify-entity = { workspace = true }
-trustify-module-graph = { workspace = true }
-trustify-module-storage = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 bytes = { workspace = true }
@@ -20,6 +15,7 @@ futures = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }
 log = { workspace = true }
+packageurl = { workspace = true }
 reqwest = { workspace = true }
 ring = { workspace = true }
 sbom-walker = { workspace = true, features = ["crypto-openssl", "cyclonedx-bom", "spdx-rs"] }
@@ -30,8 +26,12 @@ sha2 = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true, features = ["serde-well-known"] }
 tokio = { workspace = true, features = ["full"] }
+trustify-common = { workspace = true }
+trustify-cvss = { workspace = true }
+trustify-entity = { workspace = true }
+trustify-module-graph = { workspace = true }
+trustify-module-storage = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras"] }
-packageurl = { workspace = true }
 
 [dev-dependencies]
 test-log = { workspace = true, features = ["env_logger", "trace"] }

@@ -18,6 +18,9 @@ pub enum Transactional {
 }
 
 impl Transactional {
+    /// Commit the database transaction.
+    ///
+    /// If there's no underlying database transaction, then this becomes a no-op.
     pub async fn commit(self) -> Result<(), DbErr> {
         match self {
             Transactional::None => {}
