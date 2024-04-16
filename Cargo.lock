@@ -3845,6 +3845,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-lzma"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d62915608f6cee1d7f2fc00f28b4f058ff79d6e4ec3c2fe0006b09b52437c84"
+dependencies = [
+ "pkg-config",
+ "vcpkg",
+]
+
+[[package]]
 name = "rust_decimal"
 version = "1.34.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5581,10 +5591,12 @@ dependencies = [
  "cpe",
  "csaf",
  "env_logger",
+ "humantime",
  "lenient_semver",
  "log",
  "packageurl",
  "postgresql_embedded",
+ "rust-lzma",
  "sea-orm",
  "sea-orm-migration",
  "sea-query",
@@ -5597,6 +5609,7 @@ dependencies = [
  "thiserror",
  "time",
  "tokio",
+ "tracing",
  "trustify-auth",
  "trustify-common",
  "trustify-cvss",
