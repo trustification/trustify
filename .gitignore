@@ -4,5 +4,5 @@ target
 /data
 .trustify
 
-/flamegraph.svg
-/perf.data
+/flamegraph*.svg
+/perf.data*
