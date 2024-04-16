@@ -1,6 +1,7 @@
 use crate::graph::vulnerability::VulnerabilityContext;
 use serde::Serialize;
 use time::OffsetDateTime;
+use trustify_common::advisory::AdvisoryVulnerabilityAssertions;
 use trustify_cvss::cvss3::Cvss3Base;
 use trustify_cvss::cvss4::Cvss4Base;
 use trustify_entity::advisory::Model;
@@ -34,18 +35,19 @@ impl From<Model> for AdvisorySummary {
 pub struct AdvisoryDetails {
     pub identifier: String,
     pub sha256: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub published: Option<OffsetDateTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub modified: Option<OffsetDateTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub withdrawn: Option<OffsetDateTime>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
-    pub vulnerabilities: Vec<AdvisoryVulnerabilitySummary>,
+    pub vulnerabilities: Vec<AdvisoryVulnerability>,
 }
 
 impl AdvisoryDetails {
-    pub fn new_summary(
-        advisory: Model,
-        vulnerabilities: Vec<AdvisoryVulnerabilitySummary>,
-    ) -> Self {
+    pub fn new_summary(advisory: Model, vulnerabilities: Vec<AdvisoryVulnerability>) -> Self {
         Self {
             identifier: advisory.identifier,
             sha256: advisory.sha256,
@@ -59,8 +61,9 @@ impl AdvisoryDetails {
 }
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
-pub struct AdvisoryVulnerabilitySummary {
+pub struct AdvisoryVulnerability {
     pub vulnerability_id: String,
     #[schema(value_type = Vec<String>)]
     pub cvss3_scores: Vec<Cvss3Base>,
+    pub assertions: AdvisoryVulnerabilityAssertions,
 }
