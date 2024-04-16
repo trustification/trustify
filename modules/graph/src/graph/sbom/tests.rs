@@ -6,9 +6,55 @@ use std::collections::HashMap;
 use std::convert::TryInto;
 use test_log::test;
 use trustify_common::db::{Database, Transactional};
+use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
 use trustify_entity::relationship::Relationship;
+use trustify_module_search::model::SearchOptions;
+
+#[test(tokio::test)]
+async fn query_sboms() -> Result<(), anyhow::Error> {
+    let db = Database::for_test("ingest_sboms").await?;
+    let system = Graph::new(db);
+
+    let sbom_v1 = system
+        .ingest_sbom("http://redhat.com/test.json", "8", "a", (), Transactional::None)
+        .await?;
+    let sbom_v1_again = system
+        .ingest_sbom("http://redhat.com/test.json", "8", "a", (), Transactional::None)
+        .await?;
+    let sbom_v2 = system
+        .ingest_sbom("http://myspace.com/test.json", "9", "b", (), Transactional::None)
+        .await?;
+
+    let other_sbom = system
+        .ingest_sbom("http://geocities.com/other.json", "10", "c", (), Transactional::None)
+        .await?;
+
+    assert_eq!(sbom_v1.sbom.id, sbom_v1_again.sbom.id);
+    assert_ne!(sbom_v1.sbom.id, sbom_v2.sbom.id);
+
+    let sboms = system
+        .sboms(SearchOptions::default(), Paginated::default(), ())
+        .await?;
+    assert_eq!(3, sboms.total);
+
+    let sboms = system
+        .sboms(
+            SearchOptions {
+                q: "myspace".to_string(),
+                ..Default::default()
+            },
+            Paginated::default(),
+            (),
+        )
+        .await?;
+    assert_eq!(1, sboms.total);
+
+    assert_eq!("http://myspace.com/test.json", sboms.items[0].sbom.location);
+
+    Ok(())
+}
 
 #[test(tokio::test)]
 async fn ingest_sboms() -> Result<(), anyhow::Error> {

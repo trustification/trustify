@@ -7,8 +7,8 @@ use crate::graph::cpe::CpeContext;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
 use crate::graph::Graph;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
-    QueryTrait, RelationTrait, Select, Set,
+    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
+    QuerySelect, QueryTrait, RelationTrait, Select, Set,
 };
 use sea_query::{Condition, Func, JoinType, OnConflict, Query, SimpleExpr};
 use std::collections::hash_map::Entry;
@@ -18,13 +18,19 @@ use std::rc::Rc;
 use std::sync::Arc;
 use time::OffsetDateTime;
 use tracing::instrument;
+use std::str::FromStr;
 use trustify_common::cpe::Cpe;
+use trustify_common::db::limiter::LimiterTrait;
 use trustify_common::db::Transactional;
+use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_common::package::PackageVulnerabilityAssertions;
 use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
 use trustify_entity as entity;
 use trustify_entity::relationship::Relationship;
+use trustify_entity::{sbom, vulnerability};
+use trustify_module_search::model::SearchOptions;
+use trustify_module_search::query::{Filter, Sort};
 
 pub mod spdx;
 mod tests;
@@ -44,6 +50,44 @@ impl From<()> for SbomInformation {
 type SelectEntity<E> = Select<E>;
 
 impl Graph {
+    pub async fn sboms<TX: AsRef<Transactional>>(
+        &self,
+        search: SearchOptions,
+        paginated: Paginated,
+        tx: TX,
+    ) -> Result<PaginatedResults<SbomContext>, Error> {
+        let connection = self.connection(&tx);
+
+        let SearchOptions { sort, q } = search;
+
+        let mut select =
+            sbom::Entity::find().filter(Filter::<sbom::Entity>::from_str(&q)?.into_condition());
+
+        if !sort.is_empty() {
+            for s in sort
+                .split(',')
+                .map(Sort::<sbom::Entity>::from_str)
+                .collect::<Result<Vec<_>, _>>()?
+                .iter()
+            {
+                select = select.order_by(s.field, s.order.clone());
+            }
+        }
+        select = select.order_by_desc(sbom::Column::Id);
+
+        let limiter = select.limiting(&connection, paginated.offset, paginated.limit);
+
+        Ok(PaginatedResults {
+            total: limiter.total().await?,
+            items: limiter
+                .fetch()
+                .await?
+                .drain(0..)
+                .map(|each| (self, each).into())
+                .collect(),
+        })
+    }
+
     pub async fn get_sbom_by_id<TX: AsRef<Transactional>>(
         &self,
         id: i32,
@@ -732,3 +776,6 @@ impl<'a> PackageCache<'a> {
         }
     }
 }
+
+
+

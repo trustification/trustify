@@ -3,7 +3,9 @@ use trustify_common::model::PaginatedResults;
 use trustify_entity::{advisory, sbom};
 use utoipa::IntoParams;
 
-#[derive(IntoParams, Clone, Debug, serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
+#[derive(
+    IntoParams, Clone, Default, Debug, serde::Deserialize, serde::Serialize, utoipa::ToSchema,
+)]
 #[serde(rename_all = "camelCase")]
 pub struct SearchOptions {
     /// The search filter
