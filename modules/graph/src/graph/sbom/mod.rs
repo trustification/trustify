@@ -13,6 +13,7 @@ use sea_orm::{
 use sea_query::{Condition, Func, JoinType, Query, SimpleExpr};
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
+use time::OffsetDateTime;
 use trustify_common::cpe::Cpe;
 use trustify_common::db::Transactional;
 use trustify_common::package::PackageVulnerabilityAssertions;
@@ -22,6 +23,18 @@ use trustify_entity as entity;
 use trustify_entity::relationship::Relationship;
 
 pub mod spdx;
+
+#[derive(Clone, Default)]
+pub struct SbomInformation {
+    pub title: Option<String>,
+    pub published: Option<OffsetDateTime>,
+}
+
+impl From<()> for SbomInformation {
+    fn from(value: ()) -> Self {
+        Self::default()
+    }
+}
 
 type SelectEntity<E> = Select<E>;
 
@@ -54,15 +67,24 @@ impl Graph {
         &self,
         location: &str,
         sha256: &str,
+        document_id: &str,
+        info: impl Into<SbomInformation>,
         tx: TX,
     ) -> Result<SbomContext, Error> {
         if let Some(found) = self.get_sbom(location, sha256).await? {
             return Ok(found);
         }
 
+        let SbomInformation { title, published } = info.into();
+
         let model = entity::sbom::ActiveModel {
+            document_id: Set(document_id.to_string()),
             location: Set(location.to_string()),
             sha256: Set(sha256.to_string()),
+
+            title: Set(title),
+            published: Set(published),
+
             ..Default::default()
         };
 
@@ -686,17 +708,41 @@ mod tests {
         let system = Graph::new(db);
 
         let sbom_v1 = system
-            .ingest_sbom("http://sbom.com/test.json", "8", Transactional::None)
+            .ingest_sbom(
+                "http://sbom.com/test.json",
+                "8",
+                "a",
+                (),
+                Transactional::None,
+            )
             .await?;
         let sbom_v1_again = system
-            .ingest_sbom("http://sbom.com/test.json", "8", Transactional::None)
+            .ingest_sbom(
+                "http://sbom.com/test.json",
+                "8",
+                "b",
+                (),
+                Transactional::None,
+            )
             .await?;
         let sbom_v2 = system
-            .ingest_sbom("http://sbom.com/test.json", "9", Transactional::None)
+            .ingest_sbom(
+                "http://sbom.com/test.json",
+                "9",
+                "c",
+                (),
+                Transactional::None,
+            )
             .await?;
 
         let other_sbom = system
-            .ingest_sbom("http://sbom.com/other.json", "10", Transactional::None)
+            .ingest_sbom(
+                "http://sbom.com/other.json",
+                "10",
+                "d",
+                (),
+                Transactional::None,
+            )
             .await?;
 
         assert_eq!(sbom_v1.sbom.id, sbom_v1_again.sbom.id);
@@ -711,13 +757,31 @@ mod tests {
         let system = Graph::new(db);
 
         let sbom_v1 = system
-            .ingest_sbom("http://sbom.com/test.json", "8", Transactional::None)
+            .ingest_sbom(
+                "http://sbom.com/test.json",
+                "8",
+                "a",
+                (),
+                Transactional::None,
+            )
             .await?;
         let sbom_v2 = system
-            .ingest_sbom("http://sbom.com/test.json", "9", Transactional::None)
+            .ingest_sbom(
+                "http://sbom.com/test.json",
+                "9",
+                "b",
+                (),
+                Transactional::None,
+            )
             .await?;
         let sbom_v3 = system
-            .ingest_sbom("http://sbom.com/test.json", "10", Transactional::None)
+            .ingest_sbom(
+                "http://sbom.com/test.json",
+                "10",
+                "c",
+                (),
+                Transactional::None,
+            )
             .await?;
 
         sbom_v1
@@ -761,13 +825,31 @@ mod tests {
         let system = Graph::new(db);
 
         let sbom_v1 = system
-            .ingest_sbom("http://sbom.com/test.json", "8", Transactional::None)
+            .ingest_sbom(
+                "http://sbom.com/test.json",
+                "8",
+                "a",
+                (),
+                Transactional::None,
+            )
             .await?;
         let sbom_v2 = system
-            .ingest_sbom("http://sbom.com/test.json", "9", Transactional::None)
+            .ingest_sbom(
+                "http://sbom.com/test.json",
+                "9",
+                "b",
+                (),
+                Transactional::None,
+            )
             .await?;
         let sbom_v3 = system
-            .ingest_sbom("http://sbom.com/test.json", "10", Transactional::None)
+            .ingest_sbom(
+                "http://sbom.com/test.json",
+                "10",
+                "c",
+                (),
+                Transactional::None,
+            )
             .await?;
 
         sbom_v1
@@ -814,6 +896,8 @@ mod tests {
             .ingest_sbom(
                 "http://sbomsRus.gov/thing1.json",
                 "8675309",
+                "a",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -883,6 +967,8 @@ mod tests {
             .ingest_sbom(
                 "http://sbomsRus.gov/thing1.json",
                 "8675309",
+                "a",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -900,6 +986,8 @@ mod tests {
             .ingest_sbom(
                 "http://sbomsRus.gov/thing2.json",
                 "8675308",
+                "b",
+                (),
                 Transactional::None,
             )
             .await?;
@@ -957,6 +1045,8 @@ mod tests {
             .ingest_sbom(
                 "http://sbomsRus.gov/thing1.json",
                 "8675309",
+                "a",
+                (),
                 Transactional::None,
             )
             .await?;

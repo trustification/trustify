@@ -1,5 +1,6 @@
 use crate::sbom_describes_package;
 use sea_orm::entity::prelude::*;
+use time::OffsetDateTime;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "sbom")]
@@ -8,6 +9,10 @@ pub struct Model {
     pub id: i32,
     pub location: String,
     pub sha256: String,
+    pub document_id: String,
+
+    pub title: Option<String>,
+    pub published: Option<OffsetDateTime>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

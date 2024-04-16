@@ -3,7 +3,7 @@ use anyhow::anyhow;
 use bytes::Bytes;
 use futures::Stream;
 use std::time::Instant;
-use trustify_common::db::Transactional;
+use trustify_module_graph::graph::sbom::spdx::{parse_spdx, Information};
 use trustify_module_storage::service::{StorageBackend, SyncAdapter};
 
 impl super::IngestorService {
@@ -29,13 +29,21 @@ impl super::IngestorService {
 
         log::info!("Storing: {source}");
 
+        // FIXME: consider adding a report entry in case of "fixing" things
+        let (spdx, _) = parse_spdx(data)?;
+
+        let tx = self.graph.transaction().await?;
+
+        let document_id = &spdx.document_creation_information.spdx_document_namespace;
+
         let sbom = self
             .graph
-            .ingest_sbom(source, &sha256, Transactional::None)
+            .ingest_sbom(source, &sha256, document_id, Information(&spdx), &tx)
             .await?;
 
-        // FIXME: consider adding a report entry in case of "fixing" things
-        sbom.ingest_spdx_data(data).await.map_err(Error::Generic)?;
+        sbom.ingest_spdx(spdx, &tx).await.map_err(Error::Generic)?;
+
+        tx.commit().await?;
 
         let duration = Instant::now() - start;
         log::info!("Ingested - took {}", humantime::Duration::from(duration));

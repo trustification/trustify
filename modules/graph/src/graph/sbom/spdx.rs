@@ -1,31 +1,40 @@
 use crate::graph::error::Error;
-use crate::graph::sbom::SbomContext;
+use crate::graph::sbom::{SbomContext, SbomInformation};
 use sea_orm::TransactionTrait;
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
 use std::io::Read;
+use time::OffsetDateTime;
 use trustify_common::db::Transactional;
 use trustify_entity::relationship::Relationship;
 
-impl SbomContext {
-    pub async fn ingest_spdx_data<R: Read>(&self, sbom_data: R) -> Result<(), anyhow::Error> {
-        let json = serde_json::from_reader::<_, Value>(sbom_data)?;
+pub struct Information<'a>(pub &'a SPDX);
 
-        let (json, _) = fix_license(json);
+impl<'a> From<Information<'a>> for SbomInformation {
+    fn from(value: Information<'a>) -> Self {
+        let sbom = value.0;
 
-        let spdx_data: SPDX = serde_json::from_value(json)?;
+        let published = OffsetDateTime::from_unix_timestamp(
+            sbom.document_creation_information
+                .creation_info
+                .created
+                .timestamp(),
+        )
+        .ok();
 
-        self.ingest_spdx(spdx_data).await?;
-
-        Ok(())
+        Self {
+            title: Some(sbom.document_creation_information.document_name.clone()),
+            published,
+        }
     }
+}
 
-    pub async fn ingest_spdx(&self, sbom_data: SPDX) -> Result<(), anyhow::Error> {
-        // FIXME: not sure this is correct. It may be that we need to use `DatabaseTransaction` instead of the `db` field
-        let sbom = self.clone();
-
-        let tx = self.graph.transaction().await?;
-
+impl SbomContext {
+    pub async fn ingest_spdx<TX: AsRef<Transactional>>(
+        &self,
+        sbom_data: SPDX,
+        tx: TX,
+    ) -> Result<(), anyhow::Error> {
         // For each thing described in the SBOM data, link it up to an sbom_cpe or sbom_package.
         for described in &sbom_data.document_creation_information.document_describes {
             for described_package in sbom_data
@@ -36,7 +45,7 @@ impl SbomContext {
                 for reference in &described_package.external_reference {
                     if reference.reference_type == "purl" {
                         //log::debug!("describes pkg {}", reference.reference_locator);
-                        sbom.ingest_describes_package(
+                        self.ingest_describes_package(
                             reference.reference_locator.as_str().try_into()?,
                             &tx,
                         )
@@ -44,7 +53,7 @@ impl SbomContext {
                     } else if reference.reference_type == "cpe22Type" {
                         //log::debug!("describes cpe22 {}", reference.reference_locator);
                         if let Ok(cpe) = cpe::uri::Uri::parse(&reference.reference_locator) {
-                            sbom.ingest_describes_cpe22(cpe, &tx).await?;
+                            self.ingest_describes_cpe22(cpe, &tx).await?;
                         }
                     }
                 }
@@ -79,7 +88,7 @@ impl SbomContext {
                                                 )
                                                 .try_into()
                                                 {
-                                                    sbom.ingest_package_relates_to_package(
+                                                    self.ingest_package_relates_to_package(
                                                         left.try_into()?,
                                                         rel,
                                                         right.try_into()?,
@@ -97,7 +106,6 @@ impl SbomContext {
                 }
             }
         }
-        tx.commit().await?;
 
         Ok(())
     }
@@ -140,7 +148,8 @@ impl<'spdx> TryFrom<SpdxRelationship<'spdx>> for (&'spdx str, Relationship, &'sp
     }
 }
 
-fn fix_license(mut json: Value) -> (Value, bool) {
+/// Check the document for invalid SPDX license expressions and replace them with `NOASSERTION`.
+pub fn fix_license(mut json: Value) -> (Value, bool) {
     let mut changed = false;
     if let Some(packages) = json["packages"].as_array_mut() {
         for package in packages {
@@ -157,8 +166,18 @@ fn fix_license(mut json: Value) -> (Value, bool) {
     (json, changed)
 }
 
+/// Parse a SPDX document, possibly replacing invalid license expressions.
+///
+/// Returns the parsed document and a flag indicating if license expressions got replaced.
+pub fn parse_spdx<R: Read>(data: R) -> Result<(SPDX, bool), serde_json::Error> {
+    let json = serde_json::from_reader::<_, Value>(data)?;
+    let (json, changed) = fix_license(json);
+    Ok((serde_json::from_value(json)?, changed))
+}
+
 #[cfg(test)]
 mod tests {
+    use crate::graph::sbom::spdx::Information;
     use crate::graph::Graph;
     use spdx_rs::models::SPDX;
     use std::fs::File;
@@ -186,13 +205,27 @@ mod tests {
         let parse_time = start.elapsed();
 
         let start = Instant::now();
+
+        let (spdx, _) = super::parse_spdx(sbom_data)?;
+
+        let tx = system.transaction().await?;
+
         let sbom = system
-            .ingest_sbom("test.com/my-sbom.json", "10", Transactional::None)
+            .ingest_sbom(
+                "test.com/my-sbom.json",
+                "10",
+                &spdx.document_creation_information.spdx_document_namespace,
+                Information(&spdx),
+                &tx,
+            )
             .await?;
 
-        sbom.ingest_spdx_data(sbom_data).await?;
+        sbom.ingest_spdx(spdx, &tx).await?;
         let ingest_time = start.elapsed();
         let start = Instant::now();
+
+        // commit, then test
+        tx.commit().await?;
 
         let described_cpe222 = sbom.describes_cpe22s(Transactional::None).await?;
         assert_eq!(1, described_cpe222.len());
@@ -239,12 +272,25 @@ mod tests {
         let start = Instant::now();
         let parse_time = start.elapsed();
 
+        let tx = system.transaction().await?;
+
+        let (spdx, _) = super::parse_spdx(sbom_data)?;
+
         let start = Instant::now();
         let sbom = system
-            .ingest_sbom("test.com/my-sbom.json", "10", Transactional::None)
+            .ingest_sbom(
+                "test.com/my-sbom.json",
+                "10",
+                &spdx.document_creation_information.spdx_document_namespace,
+                Information(&spdx),
+                &tx,
+            )
             .await?;
 
-        sbom.ingest_spdx_data(sbom_data).await?;
+        sbom.ingest_spdx(spdx, &tx).await?;
+
+        tx.commit().await?;
+
         let ingest_time = start.elapsed();
         let start = Instant::now();
 
@@ -288,16 +334,27 @@ mod tests {
 
         let sbom = File::open(sbom)?;
 
+        let tx = system.transaction().await?;
+
         let start = Instant::now();
-        let sbom_data: SPDX = serde_json::from_reader(sbom)?;
+        let (spdx, _) = super::parse_spdx(sbom)?;
         let parse_time = start.elapsed();
 
         let start = Instant::now();
         let sbom = system
-            .ingest_sbom("test.com/my-sbom.json", "10", Transactional::None)
+            .ingest_sbom(
+                "test.com/my-sbom.json",
+                "10",
+                &spdx.document_creation_information.spdx_document_namespace,
+                Information(&spdx),
+                &tx,
+            )
             .await?;
 
-        sbom.ingest_spdx(sbom_data).await?;
+        sbom.ingest_spdx(spdx, &tx).await?;
+
+        tx.commit().await?;
+
         let ingest_time = start.elapsed();
         let start = Instant::now();
 

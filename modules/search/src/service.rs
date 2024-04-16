@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::{
-    model::FoundAdvisory,
+    model::{FoundAdvisory, FoundSbom},
     query::{Filter, Sort},
 };
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
@@ -11,7 +11,7 @@ use trustify_common::{
     error::ErrorInformation,
     model::{Paginated, PaginatedResults},
 };
-use trustify_entity::advisory;
+use trustify_entity::{advisory, sbom};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -81,6 +81,44 @@ impl SearchService {
                 .await?
                 .into_iter()
                 .map(FoundAdvisory::from)
+                .collect(),
+        })
+    }
+
+    // `filters` should be of the form, "full text search({field}{op}{value})*", e.g.
+    // "some text&published>=2020/11/11&location=localhost&severity=low|high&modified=true"
+    pub async fn search_sboms<'a>(
+        &self,
+        filters: String,
+        sort: String,
+        paginated: Paginated,
+    ) -> Result<PaginatedResults<FoundSbom>, Error> {
+        let mut select = sbom::Entity::find()
+            .filter(Filter::<sbom::Entity>::from_str(&filters)?.into_condition());
+
+        // comma-delimited sort param, e.g. 'field1:asc,field2:desc'
+        if !sort.is_empty() {
+            for s in sort
+                .split(',')
+                .map(Sort::<advisory::Entity>::from_str)
+                .collect::<Result<Vec<_>, _>>()?
+                .iter()
+            {
+                select = select.order_by(s.field, s.order.clone());
+            }
+        }
+        // we always sort by ID last, so that we have a stable order for pagination
+        select = select.order_by_desc(sbom::Column::Id);
+
+        let limiting = select.limiting(&self.db, paginated.offset, paginated.limit);
+
+        Ok(PaginatedResults {
+            total: limiting.total().await?,
+            items: limiting
+                .fetch()
+                .await?
+                .into_iter()
+                .map(FoundSbom::from)
                 .collect(),
         })
     }
