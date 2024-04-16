@@ -192,8 +192,13 @@ mod test {
         assert!(loaded_advisory.is_some());
 
         let loaded_advisory = loaded_advisory.unwrap();
+        let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(()).await?;
+        assert_eq!(1, loaded_advisory_vulnerabilities.len());
+        let loaded_advisory_vulnerability = &loaded_advisory_vulnerabilities[0];
 
-        let affected_assertions = loaded_advisory.affected_assertions(()).await?;
+        let affected_assertions = loaded_advisory_vulnerability
+            .affected_assertions(())
+            .await?;
 
         assert_eq!(1, affected_assertions.assertions.len());
 
@@ -203,14 +208,13 @@ mod test {
         let affected_assertion = &affected_assertion.unwrap()[0];
 
         assert!(
-            matches!( affected_assertion, Assertion::Affected {vulnerability,start_version,end_version}
+            matches!( affected_assertion, Assertion::Affected {start_version,end_version}
                 if start_version == "0.0.0-0"
                 && end_version == "0.14.10"
-                && vulnerability == "CVE-2021-32714"
             )
         );
 
-        let fixed_assertions = loaded_advisory.fixed_assertions(()).await?;
+        let fixed_assertions = loaded_advisory_vulnerability.fixed_assertions(()).await?;
 
         assert_eq!(1, fixed_assertions.assertions.len());
 
@@ -222,12 +226,9 @@ mod test {
 
         let fixed_assertion = &fixed_assertion[0];
 
-        assert!(
-            matches!( fixed_assertion, Assertion::Fixed{vulnerability ,version }
-                if version == "0.14.10"
-                && vulnerability == "CVE-2021-32714"
-            )
-        );
+        assert!(matches!( fixed_assertion, Assertion::Fixed{version }
+            if version == "0.14.10"
+        ));
 
         let advisory_vuln = loaded_advisory
             .get_vulnerability("CVE-2021-32714", ())

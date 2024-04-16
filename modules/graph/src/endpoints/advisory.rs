@@ -1,7 +1,7 @@
 use crate::endpoints::vulnerability::advisories;
 use crate::endpoints::Error;
 use crate::graph::Graph;
-use crate::model::advisory::{AdvisoryDetails, AdvisorySummary, AdvisoryVulnerabilitySummary};
+use crate::model::advisory::{AdvisoryDetails, AdvisorySummary, AdvisoryVulnerability};
 use crate::model::vulnerability::Vulnerability;
 use actix_web::{get, web, HttpResponse, Responder};
 use trustify_common::model::Paginated;
@@ -72,9 +72,15 @@ pub async fn get(
 
                 // TODO: cvss4 scores
 
-                advisory_vulnerabilities.push(AdvisoryVulnerabilitySummary {
+                let assertions = advisory_vuln
+                    .vulnerability_assertions(&tx)
+                    .await
+                    .map_err(Error::System)?;
+
+                advisory_vulnerabilities.push(AdvisoryVulnerability {
                     vulnerability_id: vuln.vulnerability.identifier,
                     cvss3_scores,
+                    assertions,
                 })
             }
         }
