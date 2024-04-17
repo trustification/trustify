@@ -37,8 +37,6 @@ pub async fn all(
     context_path = "/api/v1/advisory",
     tag = "advisory",
     params(
-        SearchOptions,
-        Paginated,
         ("sha256", Path, description = "SHA256 of the advisory")
     ),
     responses(
@@ -48,9 +46,7 @@ pub async fn all(
 #[get("/{sha256}")]
 pub async fn get(
     state: web::Data<Graph>,
-    web::Query(sha256): web::Query<String>,
-    web::Query(search): web::Query<SearchOptions>,
-    web::Query(paginated): web::Query<Paginated>,
+    sha256: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
     let tx = state.transaction().await.map_err(Error::System)?;
     if let Some(advisory) = state
@@ -88,8 +84,129 @@ pub async fn get(
         let result_advisory =
             AdvisoryDetails::new_summary(advisory.advisory, advisory_vulnerabilities);
 
+        println!("RETURN {:#?}", result_advisory);
+
         Ok(HttpResponse::Ok().json(result_advisory))
     } else {
         Ok(HttpResponse::NotFound().finish())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::graph::advisory::AdvisoryInformation;
+    use crate::graph::Graph;
+    use crate::model::advisory::{AdvisoryDetails, AdvisorySummary};
+    use crate::model::vulnerability::Vulnerability;
+    use actix_web::test::TestRequest;
+    use actix_web::{web, App};
+    use std::sync::Arc;
+    use test_log::test;
+    use time::OffsetDateTime;
+    use trustify_common::db::Database;
+    use trustify_common::model::PaginatedResults;
+
+    #[test(actix_web::test)]
+    async fn all_advisories() -> Result<(), anyhow::Error> {
+        let db = Database::for_test("api_all_advisories").await?;
+        let graph = Arc::new(Graph::new(db));
+
+        let app = actix_web::test::init_service(
+            App::new()
+                .app_data(web::Data::from(graph.clone()))
+                .configure(crate::endpoints::configure),
+        )
+        .await;
+
+        let advisory = graph
+            .ingest_advisory(
+                "RHSA-1",
+                "http://redhat.com/",
+                "8675309",
+                AdvisoryInformation {
+                    title: Some("RHSA-1".to_string()),
+                    published: Some(OffsetDateTime::now_utc()),
+                    modified: None,
+                },
+                (),
+            )
+            .await?;
+
+        let advisory = graph
+            .ingest_advisory(
+                "RHSA-2",
+                "http://redhat.com/",
+                "8675319",
+                AdvisoryInformation {
+                    title: Some("RHSA-2".to_string()),
+                    published: Some(OffsetDateTime::now_utc()),
+                    modified: None,
+                },
+                (),
+            )
+            .await?;
+
+        let uri = "/api/v1/advisory";
+
+        let request = TestRequest::get().uri(uri).to_request();
+
+        let response: PaginatedResults<AdvisorySummary> =
+            actix_web::test::call_and_read_body_json(&app, request).await;
+
+        assert_eq!(2, response.items.len());
+
+        Ok(())
+    }
+
+    #[test(actix_web::test)]
+    async fn one_advisory() -> Result<(), anyhow::Error> {
+        let db = Database::for_test("api_one_advisory").await?;
+        let graph = Arc::new(Graph::new(db));
+
+        let app = actix_web::test::init_service(
+            App::new()
+                .app_data(web::Data::from(graph.clone()))
+                .configure(crate::endpoints::configure),
+        )
+        .await;
+
+        let advisory = graph
+            .ingest_advisory(
+                "RHSA-1",
+                "http://redhat.com/",
+                "8675309",
+                AdvisoryInformation {
+                    title: Some("RHSA-1".to_string()),
+                    published: Some(OffsetDateTime::now_utc()),
+                    modified: None,
+                },
+                (),
+            )
+            .await?;
+
+        let advisory = graph
+            .ingest_advisory(
+                "RHSA-2",
+                "http://redhat.com/",
+                "8675319",
+                AdvisoryInformation {
+                    title: Some("RHSA-2".to_string()),
+                    published: Some(OffsetDateTime::now_utc()),
+                    modified: None,
+                },
+                (),
+            )
+            .await?;
+
+        let uri = "/api/v1/advisory/8675319";
+
+        let request = TestRequest::get().uri(uri).to_request();
+
+        let response: AdvisoryDetails =
+            actix_web::test::call_and_read_body_json(&app, request).await;
+
+        println!("{:#?}", response);
+
+        Ok(())
     }
 }

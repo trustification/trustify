@@ -1,4 +1,4 @@
-use serde::{Serialize, Serializer};
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -34,6 +34,15 @@ impl Serialize for Cvss3Base {
     }
 }
 
+impl<'de> Deserialize<'de> for Cvss3Base {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        FromStr::from_str(&s).map_err(de::Error::custom)
+    }
+}
 #[derive(Copy, Clone, Debug)]
 pub enum Cvss3Error {
     Invalid,
@@ -46,6 +55,12 @@ pub enum Cvss3Error {
     Confidentiality,
     Integrity,
     Availability,
+}
+
+impl Display for Cvss3Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl FromStr for Cvss3Base {
