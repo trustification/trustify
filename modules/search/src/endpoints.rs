@@ -32,12 +32,12 @@ pub struct ApiDoc;
 #[get("/advisory")]
 /// Search for advisories
 async fn search_advisories(
-    web::Query(SearchOptions { q, sort }): web::Query<SearchOptions>,
+    web::Query(search): web::Query<SearchOptions>,
     web::Query(paginated): web::Query<Paginated>,
     service: web::Data<SearchService>,
 ) -> Result<impl Responder, Error> {
     Ok(web::Json(
-        service.search_advisories(q, sort, paginated).await?,
+        service.search_advisories(search, paginated).await?,
     ))
 }
 
@@ -54,9 +54,9 @@ async fn search_advisories(
 #[get("/sbom")]
 /// Search for SBOMs
 async fn search_sboms(
-    web::Query(SearchOptions { q, sort }): web::Query<SearchOptions>,
+    web::Query(search): web::Query<SearchOptions>,
     web::Query(paginated): web::Query<Paginated>,
     service: web::Data<SearchService>,
 ) -> Result<impl Responder, Error> {
-    Ok(web::Json(service.search_sboms(q, sort, paginated).await?))
+    Ok(web::Json(service.search_sboms(search, paginated).await?))
 }

@@ -1,5 +1,5 @@
 use crate::{
-    model::{FoundAdvisory, FoundSbom},
+    model::{FoundAdvisory, FoundSbom, SearchOptions},
     query::Query,
 };
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
@@ -49,13 +49,14 @@ impl SearchService {
     // "some text&published>=2020/11/11&location=localhost&severity=low|high&modified=true"
     pub async fn search_advisories<'a>(
         &self,
-        filters: String,
-        sort: String,
+        search: SearchOptions,
         paginated: Paginated,
     ) -> Result<PaginatedResults<FoundAdvisory>, Error> {
-        let limiting = advisory::Entity::find()
-            .filtering(&filters, &sort)?
-            .limiting(&self.db, paginated.offset, paginated.limit);
+        let limiting = advisory::Entity::find().filtering(search)?.limiting(
+            &self.db,
+            paginated.offset,
+            paginated.limit,
+        );
         Ok(PaginatedResults {
             total: limiting.total().await?,
             items: limiting
@@ -71,11 +72,10 @@ impl SearchService {
     // "some text&published>=2020/11/11&location=localhost&severity=low|high&modified=true"
     pub async fn search_sboms<'a>(
         &self,
-        filters: String,
-        sort: String,
+        search: SearchOptions,
         paginated: Paginated,
     ) -> Result<PaginatedResults<FoundSbom>, Error> {
-        let limiting = sbom::Entity::find().filtering(&filters, &sort)?.limiting(
+        let limiting = sbom::Entity::find().filtering(search)?.limiting(
             &self.db,
             paginated.offset,
             paginated.limit,
