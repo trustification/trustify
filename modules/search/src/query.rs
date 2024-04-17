@@ -18,28 +18,25 @@ use time::{Date, OffsetDateTime};
 /////////////////////////////////////////////////////////////////////////
 
 pub trait Query<T: EntityTrait> {
-    fn filtering(self, filters: &str, sorts: &str) -> Result<Select<T>, Error>;
+    fn filtering(self, q: &str, sort: &str) -> Result<Select<T>, Error>;
 }
 
 impl<T: EntityTrait> Query<T> for Select<T> {
-    fn filtering(self, filters: &str, sorts: &str) -> Result<Self, Error> {
+    fn filtering(self, q: &str, sort: &str) -> Result<Self, Error> {
         let id = T::Column::from_str("id")
             .map_err(|_| Error::SearchSyntax("Entity missing Id field".into()))?;
-        let result = if sorts.is_empty() {
-            self.filter(Filter::<T>::from_str(filters)?)
-                .order_by_desc(id)
+        Ok(if sort.is_empty() {
+            self.filter(Filter::<T>::from_str(q)?).order_by_desc(id)
         } else {
-            sorts
-                .split(',')
+            sort.split(',')
                 .map(Sort::<T>::from_str)
                 .collect::<Result<Vec<_>, _>>()?
-                .iter()
-                .fold(self.filter(Filter::<T>::from_str(filters)?), |select, s| {
-                    select.order_by(s.field, s.order.clone())
+                .into_iter()
+                .fold(self.filter(Filter::<T>::from_str(q)?), |select, s| {
+                    select.order_by(s.field, s.order)
                 })
                 .order_by_desc(id)
-        };
-        Ok(result)
+        })
     }
 }
 
