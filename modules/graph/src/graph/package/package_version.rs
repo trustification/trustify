@@ -14,6 +14,7 @@ use trustify_common::db::Transactional;
 use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
+use trustify_entity::qualified_package::Qualifiers;
 
 /// Live context for a package version.
 #[derive(Clone)]
@@ -53,26 +54,14 @@ impl<'g> PackageVersionContext<'g> {
         let qualified_package = entity::qualified_package::ActiveModel {
             id: Default::default(),
             package_version_id: Set(self.package_version.id),
+            qualifiers: Set(Some(Qualifiers(purl.qualifiers))),
         };
 
         let qualified_package = qualified_package
             .insert(&self.package.graph.connection(&tx))
             .await?;
 
-        for (k, v) in &purl.qualifiers {
-            let qualifier = entity::package_qualifier::ActiveModel {
-                id: Default::default(),
-                qualified_package_id: Set(qualified_package.id),
-                key: Set(k.clone()),
-                value: Set(v.clone()),
-            };
-
-            qualifier
-                .insert(&self.package.graph.connection(&tx))
-                .await?;
-        }
-
-        Ok((self, qualified_package, purl.qualifiers.clone()).into())
+        Ok((self, qualified_package).into())
     }
 
     pub async fn get_qualified_package<TX: AsRef<Transactional>>(
@@ -82,20 +71,8 @@ impl<'g> PackageVersionContext<'g> {
     ) -> Result<Option<QualifiedPackageContext<'g>>, Error> {
         let found = entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
-            .find_with_related(entity::package_qualifier::Entity)
-            .all(&self.package.graph.connection(&tx))
+            .one(&self.package.graph.connection(&tx))
             .await?;
-
-        for (qualified_package, qualifiers) in found {
-            let qualifiers_map = qualifiers
-                .iter()
-                .map(|qualifier| (qualifier.key.clone(), qualifier.value.clone()))
-                .collect::<HashMap<_, _>>();
-
-            if purl.qualifiers == qualifiers_map {
-                return Ok(Some((self, qualified_package, qualifiers_map).into()));
-            }
-        }
 
         Ok(None)
     }
@@ -191,18 +168,10 @@ impl<'g> PackageVersionContext<'g> {
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         Ok(entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
-            .find_with_related(entity::package_qualifier::Entity)
             .all(&self.package.graph.connection(&tx))
             .await?
-            .drain(0..)
-            .map(|(base, qualifiers)| {
-                let qualifiers_map = qualifiers
-                    .iter()
-                    .map(|qualifier| (qualifier.key.clone(), qualifier.value.clone()))
-                    .collect::<HashMap<_, _>>();
-
-                (self, base, qualifiers_map).into()
-            })
+            .into_iter()
+            .map(|base| (self, base).into())
             .collect())
     }
 }

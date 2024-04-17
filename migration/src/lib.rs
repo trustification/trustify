@@ -12,7 +12,6 @@ mod m0000140_create_package_version_range;
 mod m0000150_create_affected_package_version_range;
 mod m0000160_create_fixed_package_version;
 mod m0000170_create_not_affected_package_version;
-mod m0000180_create_package_qualifier;
 mod m0000190_sbom_describes_cpe;
 mod m0000200_sbom_describes_package;
 mod m0000210_create_relationship;
@@ -50,7 +49,6 @@ impl MigratorTrait for Migrator {
             Box::new(m0000150_create_affected_package_version_range::Migration),
             Box::new(m0000160_create_fixed_package_version::Migration),
             Box::new(m0000170_create_not_affected_package_version::Migration),
-            Box::new(m0000180_create_package_qualifier::Migration),
             Box::new(m0000190_sbom_describes_cpe::Migration),
             Box::new(m0000200_sbom_describes_package::Migration),
             Box::new(m0000210_create_relationship::Migration),
