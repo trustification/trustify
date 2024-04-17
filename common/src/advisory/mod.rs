@@ -8,7 +8,7 @@ pub struct AdvisoryVulnerabilityAssertions {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum Assertion {
     Affected {
         start_version: String,
