@@ -450,17 +450,6 @@ impl SbomContext {
         right_package_input: Purl,
         tx: TX,
     ) -> Result<(), Error> {
-        /*
-        let left_package = self
-            .graph
-            .ingest_qualified_package(left_package_input.clone(), &tx)
-            .await;
-
-        let right_package = self
-            .graph
-            .ingest_qualified_package(right_package_input.clone(), &tx)
-            .await;*/
-
         let left_package = cache.lookup(&left_package_input).await;
         let right_package = cache.lookup(&right_package_input).await;
 
