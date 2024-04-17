@@ -30,7 +30,7 @@ use trustify_entity as entity;
 use trustify_entity::relationship::Relationship;
 use trustify_entity::{sbom, vulnerability};
 use trustify_module_search::model::SearchOptions;
-use trustify_module_search::query::{Filter, Sort};
+use trustify_module_search::query::Query as TrustifyQuery;
 
 pub mod spdx;
 mod tests;
@@ -60,22 +60,11 @@ impl Graph {
 
         let SearchOptions { sort, q } = search;
 
-        let mut select =
-            sbom::Entity::find().filter(Filter::<sbom::Entity>::from_str(&q)?.into_condition());
-
-        if !sort.is_empty() {
-            for s in sort
-                .split(',')
-                .map(Sort::<sbom::Entity>::from_str)
-                .collect::<Result<Vec<_>, _>>()?
-                .iter()
-            {
-                select = select.order_by(s.field, s.order.clone());
-            }
-        }
-        select = select.order_by_desc(sbom::Column::Id);
-
-        let limiter = select.limiting(&connection, paginated.offset, paginated.limit);
+        let limiter = sbom::Entity::find().filtering(&q, &sort)?.limiting(
+            &connection,
+            paginated.offset,
+            paginated.limit,
+        );
 
         Ok(PaginatedResults {
             total: limiter.total().await?,

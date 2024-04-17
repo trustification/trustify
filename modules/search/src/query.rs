@@ -1,8 +1,11 @@
 use crate::service::Error;
 use human_date_parser::{from_human_time, ParseResult};
 use regex::Regex;
-use sea_orm::sea_query::IntoCondition;
-use sea_orm::{ColumnTrait, ColumnType, Condition, EntityTrait, Iterable, Order, Value};
+use sea_orm::sea_query::{ConditionExpression, IntoCondition};
+use sea_orm::{
+    ColumnTrait, ColumnType, Condition, EntityTrait, Iterable, Order, QueryFilter, QueryOrder,
+    Select, Value,
+};
 use std::fmt::Display;
 use std::str::FromStr;
 use std::sync::OnceLock;
@@ -14,22 +17,56 @@ use time::{Date, OffsetDateTime};
 // Public interface
 /////////////////////////////////////////////////////////////////////////
 
-pub struct Filter<T: EntityTrait> {
+pub trait Query<T: EntityTrait> {
+    fn filtering(self, filters: &str, sorts: &str) -> Result<Select<T>, Error>;
+}
+
+impl<T: EntityTrait> Query<T> for Select<T> {
+    fn filtering(self, filters: &str, sorts: &str) -> Result<Self, Error> {
+        let id = T::Column::from_str("id")
+            .map_err(|_| Error::SearchSyntax("Entity missing Id field".into()))?;
+        let result = if sorts.is_empty() {
+            self.filter(Filter::<T>::from_str(filters)?)
+                .order_by_desc(id)
+        } else {
+            sorts
+                .split(',')
+                .map(Sort::<T>::from_str)
+                .collect::<Result<Vec<_>, _>>()?
+                .iter()
+                .fold(self.filter(Filter::<T>::from_str(filters)?), |select, s| {
+                    select.order_by(s.field, s.order.clone())
+                })
+                .order_by_desc(id)
+        };
+        Ok(result)
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////
+// Internal types
+/////////////////////////////////////////////////////////////////////////
+
+struct Filter<T: EntityTrait> {
     operands: Operand<T>,
     operator: Operator,
 }
 
-pub struct Sort<T: EntityTrait> {
-    pub field: T::Column,
-    pub order: Order,
+struct Sort<T: EntityTrait> {
+    field: T::Column,
+    order: Order,
 }
 
-impl<T: EntityTrait> Filter<T> {
-    pub fn into_condition(self) -> Condition {
+/////////////////////////////////////////////////////////////////////////
+// SeaORM impls
+/////////////////////////////////////////////////////////////////////////
+
+impl<T: EntityTrait> IntoCondition for Filter<T> {
+    fn into_condition(self) -> Condition {
         match self.operands {
             Operand::Simple(col, v) => match self.operator {
-                Operator::Equal => col.eq(v).into_condition(),
-                Operator::NotEqual => col.ne(v).into_condition(),
+                Operator::Equal => col.eq(v),
+                Operator::NotEqual => col.ne(v),
                 op @ (Operator::Like | Operator::NotLike) => {
                     let v = format!(
                         "%{}%",
@@ -40,24 +77,26 @@ impl<T: EntityTrait> Filter<T> {
                     } else {
                         col.not_like(v)
                     }
-                    .into_condition()
                 }
-                Operator::GreaterThan => col.gt(v).into_condition(),
-                Operator::GreaterThanOrEqual => col.gte(v).into_condition(),
-                Operator::LessThan => col.lt(v).into_condition(),
-                Operator::LessThanOrEqual => col.lte(v).into_condition(),
+                Operator::GreaterThan => col.gt(v),
+                Operator::GreaterThanOrEqual => col.gte(v),
+                Operator::LessThan => col.lt(v),
+                Operator::LessThanOrEqual => col.lte(v),
                 _ => unreachable!(),
-            },
+            }
+            .into_condition(),
             Operand::Composite(v) => match self.operator {
-                Operator::And => v
-                    .into_iter()
-                    .fold(Condition::all(), |and, f| and.add(f.into_condition())),
-                Operator::Or => v
-                    .into_iter()
-                    .fold(Condition::any(), |or, f| or.add(f.into_condition())),
+                Operator::And => v.into_iter().fold(Condition::all(), |and, f| and.add(f)),
+                Operator::Or => v.into_iter().fold(Condition::any(), |or, f| or.add(f)),
                 _ => unreachable!(),
             },
         }
+    }
+}
+
+impl<T: EntityTrait> From<Filter<T>> for ConditionExpression {
+    fn from(f: Filter<T>) -> Self {
+        ConditionExpression::Condition(f.into_condition())
     }
 }
 
@@ -197,7 +236,7 @@ impl FromStr for Operator {
 }
 
 /////////////////////////////////////////////////////////////////////////
-// Non-public helpers
+// Internal helpers
 /////////////////////////////////////////////////////////////////////////
 
 enum Operand<T: EntityTrait> {
