@@ -599,13 +599,14 @@ mod tests {
     use serde_json::json;
     use std::collections::HashMap;
     use std::num::NonZeroU64;
+    use test_log::test;
     use trustify_common::db::{Database, Transactional};
     use trustify_common::model::Paginated;
     use trustify_common::purl::Purl;
     use trustify_entity::qualified_package;
     use trustify_entity::qualified_package::Qualifiers;
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_packages() -> Result<(), anyhow::Error> {
         let db = Database::for_test("ingest_packages").await?;
         let system = Graph::new(db);
@@ -638,7 +639,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_package_versions_missing_version() -> Result<(), anyhow::Error> {
         let db = Database::for_test("ingest_package_versions_missing_version").await?;
         let system = Graph::new(db);
@@ -655,16 +656,8 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_package_versions() -> Result<(), anyhow::Error> {
-        /*
-        env_logger::builder()
-            .filter_level(log::LevelFilter::Info)
-            .is_test(true)
-            .init();
-
-         */
-
         let db = Database::for_test("ingest_package_versions").await?;
         let system = Graph::new(db);
 
@@ -698,7 +691,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn get_versions_paginated() -> Result<(), anyhow::Error> {
         let db = Database::for_test("get_versions_paginated").await?;
         let system = Graph::new(db);
@@ -755,7 +748,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_qualified_packages_transactionally() -> Result<(), anyhow::Error> {
         let db = Database::for_test("ingest_qualified_packages_transactionally").await?;
         let system = Graph::new(db.clone());
@@ -787,16 +780,8 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_qualified_packages() -> Result<(), anyhow::Error> {
-        /*
-        env_logger::builder()
-            .filter_level(log::LevelFilter::Info)
-            .is_test(true)
-            .init();
-
-         */
-
         let db = Database::for_test("ingest_qualified_packages").await?;
         let system = Graph::new(db);
 
@@ -845,7 +830,7 @@ mod tests {
         Ok(())
     }
 
-    #[test_log::test(tokio::test)]
+    #[test(tokio::test)]
     async fn query_qualified_packages() -> Result<(), anyhow::Error> {
         let db = Database::for_test("query_qualified_packages").await?;
         let graph = Graph::new(db);
@@ -891,16 +876,8 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn ingest_package_version_ranges() -> Result<(), anyhow::Error> {
-        /*
-        env_logger::builder()
-            .filter_level(log::LevelFilter::Info)
-            .is_test(true)
-            .init();
-
-         */
-
         let db = Database::for_test("ingest_package_version_ranges").await?;
         let system = Graph::new(db);
 
@@ -943,16 +920,8 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn package_affected_assertions() -> Result<(), anyhow::Error> {
-        /*
-        env_logger::builder()
-            .filter_level(log::LevelFilter::Info)
-            .is_test(true)
-            .init();
-
-         */
-
         let db = Database::for_test("package_affected_assertions").await?;
         let system = Graph::new(db);
 
@@ -1051,7 +1020,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn package_not_affected_assertions() -> Result<(), anyhow::Error> {
         let db = Database::for_test("package_not_affected_assertions").await?;
         let system = Graph::new(db);
@@ -1113,7 +1082,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn package_vulnerability_assertions() -> Result<(), anyhow::Error> {
         let db = Database::for_test("package_vulnerability_assertions").await?;
         let system = Graph::new(db);
@@ -1184,7 +1153,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[test(tokio::test)]
     async fn advisories_mentioning_package() -> Result<(), anyhow::Error> {
         let db = Database::for_test("advisories_mentioning_package").await?;
         let system = Graph::new(db);
