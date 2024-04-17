@@ -32,6 +32,7 @@ impl MigrationTrait for Migration {
                             .integer()
                             .not_null(),
                     )
+                    .col(ColumnDef::new(QualifiedPackage::Qualifiers).json_binary())
                     .foreign_key(
                         ForeignKey::create()
                             .from_col(QualifiedPackage::PackageVersionId)
@@ -82,4 +83,5 @@ pub enum QualifiedPackage {
     Timestamp,
     // --
     PackageVersionId,
+    Qualifiers,
 }

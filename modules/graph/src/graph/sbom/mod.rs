@@ -610,13 +610,12 @@ impl SbomContext {
 
             let mut found = entity::qualified_package::Entity::find()
                 .filter(entity::qualified_package::Column::Id.in_subquery(related_query))
-                .find_with_related(entity::package_qualifier::Entity)
                 .all(&self.graph.connection(&tx))
                 .await?;
 
             let mut related = Vec::new();
 
-            for (base, qualifiers) in found.drain(0..) {
+            for base in found.into_iter() {
                 if let Some(package_version) =
                     entity::package_version::Entity::find_by_id(base.package_version_id)
                         .one(&self.graph.connection(&tx))
@@ -630,12 +629,7 @@ impl SbomContext {
                         let package = (&self.graph, package).into();
                         let package_version = (&package, package_version).into();
 
-                        let qualifiers_map = qualifiers
-                            .iter()
-                            .map(|qualifier| (qualifier.key.clone(), qualifier.value.clone()))
-                            .collect::<HashMap<_, _>>();
-
-                        related.push((&package_version, base, qualifiers_map).into());
+                        related.push((&package_version, base).into());
                     }
                 }
             }

@@ -15,8 +15,6 @@ use trustify_entity as entity;
 pub struct QualifiedPackageContext<'g> {
     pub(crate) package_version: PackageVersionContext<'g>,
     pub(crate) qualified_package: entity::qualified_package::Model,
-    // just a short-cut to avoid another query
-    pub(crate) qualifiers: HashMap<String, String>,
 }
 
 impl PartialEq for QualifiedPackageContext<'_> {
@@ -39,24 +37,18 @@ impl Debug for QualifiedPackageContext<'_> {
     }
 }
 
-impl<'g>
-    From<(
-        &PackageVersionContext<'g>,
-        entity::qualified_package::Model,
-        HashMap<String, String>,
-    )> for QualifiedPackageContext<'g>
+impl<'g> From<(&PackageVersionContext<'g>, entity::qualified_package::Model)>
+    for QualifiedPackageContext<'g>
 {
     fn from(
-        (package_version, qualified_package, qualifiers): (
+        (package_version, qualified_package): (
             &PackageVersionContext<'g>,
             entity::qualified_package::Model,
-            HashMap<String, String>,
         ),
     ) -> Self {
         Self {
             package_version: package_version.clone(),
             qualified_package,
-            qualifiers,
         }
     }
 }
@@ -68,7 +60,11 @@ impl<'g> From<QualifiedPackageContext<'g>> for Purl {
             namespace: value.package_version.package.package.namespace.clone(),
             name: value.package_version.package.package.name.clone(),
             version: Some(value.package_version.package_version.version.clone()),
-            qualifiers: value.qualifiers.clone(),
+            qualifiers: value
+                .qualified_package
+                .qualifiers
+                .map(|q| q.0)
+                .unwrap_or_default(),
         }
     }
 }

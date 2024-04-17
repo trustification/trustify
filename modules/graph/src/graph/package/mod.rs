@@ -123,25 +123,15 @@ impl Graph {
         tx: TX,
     ) -> Result<Option<QualifiedPackageContext>, Error> {
         let mut found = entity::qualified_package::Entity::find_by_id(id)
-            .find_with_related(entity::package_qualifier::Entity)
-            .all(&self.connection(&tx))
+            .one(&self.connection(&tx))
             .await?;
 
-        if !found.is_empty() {
-            let (qualified_package, ref mut qualifiers) = &mut found[0];
-
-            let qualifiers = qualifiers
-                .drain(0..)
-                .map(|qualifier| (qualifier.key, qualifier.value))
-                .collect();
-
+        if let Some(qualified_package) = found {
             if let Some(package_version) = self
                 .get_package_version_by_id(qualified_package.package_version_id, tx)
                 .await?
             {
-                Ok(Some(
-                    (&package_version, qualified_package.clone(), qualifiers).into(),
-                ))
+                Ok(Some((&package_version, qualified_package.clone()).into()))
             } else {
                 Ok(None)
             }
@@ -157,23 +147,17 @@ impl Graph {
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         let mut found = entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::Id.in_subquery(query))
-            .find_with_related(entity::package_qualifier::Entity)
             .all(&self.connection(&tx))
             .await?;
 
         let mut package_versions = Vec::new();
 
-        for (base, qualifiers) in &found {
+        for base in &found {
             if let Some(package_version) = self
                 .get_package_version_by_id(base.package_version_id, &tx)
                 .await?
             {
-                let qualifiers = qualifiers
-                    .iter()
-                    .map(|qualifier| (qualifier.key.clone(), qualifier.value.clone()))
-                    .collect();
-
-                let qualified_package = (&package_version, base.clone(), qualifiers).into();
+                let qualified_package = (&package_version, base.clone()).into();
                 package_versions.push(qualified_package);
             }
         }

@@ -8,7 +8,6 @@ pub mod importer;
 pub mod importer_report;
 pub mod not_affected_package_version;
 pub mod package;
-pub mod package_qualifier;
 pub mod package_relates_to_package;
 pub mod package_version;
 pub mod package_version_range;
