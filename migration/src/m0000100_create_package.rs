@@ -29,6 +29,14 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Package::Type).string().not_null())
                     .col(ColumnDef::new(Package::Namespace).string())
                     .col(ColumnDef::new(Package::Name).string().not_null())
+                    .index(
+                        Index::create()
+                            .unique()
+                            .if_not_exists()
+                            .col(Package::Type)
+                            .col(Package::Namespace)
+                            .col(Package::Name),
+                    )
                     .to_owned(),
             )
             .await
