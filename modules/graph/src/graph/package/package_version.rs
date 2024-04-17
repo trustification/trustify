@@ -71,10 +71,11 @@ impl<'g> PackageVersionContext<'g> {
     ) -> Result<Option<QualifiedPackageContext<'g>>, Error> {
         let found = entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
+            .filter(entity::qualified_package::Column::Qualifiers.eq(Qualifiers(purl.qualifiers)))
             .one(&self.package.graph.connection(&tx))
             .await?;
 
-        Ok(None)
+        Ok(found.map(|model| (self, model).into()))
     }
 
     pub async fn vulnerability_assertions<TX: AsRef<Transactional>>(
