@@ -82,7 +82,7 @@ async fn parse_spdx_openshift() -> Result<(), anyhow::Error> {
     let db = Database::for_test("parse_spdx_openshift").await?;
     let system = Graph::new(db);
 
-    let sbom = open_sbom("penshift-4.13.json")?;
+    let sbom = open_sbom("openshift-4.13.json")?;
 
     let start = Instant::now();
 
