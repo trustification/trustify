@@ -208,7 +208,17 @@ impl InitData {
                                         analytics_write_key: String::from(""),
                                     };
 
-                                    let index_html = generate_index_html(&ui).unwrap();
+                                    let index_html = generate_index_html(&ui).unwrap_or(
+                                        r#"
+                                        <!DOCTYPE html>
+                                        <html>
+                                            <body>
+                                                <h1>Error</h1>
+                                            </body>
+                                        </html>
+                                    "#
+                                        .to_string(),
+                                    );
                                     let http_response = HttpResponse::Ok()
                                         .content_type(actix_web::http::header::ContentType::html())
                                         .body(index_html);

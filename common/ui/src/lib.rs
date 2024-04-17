@@ -45,12 +45,12 @@ pub fn generate_index_html(ui: &UI) -> tera::Result<String> {
             "| default(value=branding.application.title)",
         );
 
-    let env_json = serde_json::to_string(&ui).expect("Could not create JSON from ENV");
+    let env_json = serde_json::to_string(&ui)?;
     let env_base64 = BASE64_STANDARD.encode(env_json.as_bytes());
 
     let branding_file_content =
-        fs::read_to_string(format!("{STATIC_DIR}/{}", "branding/strings.json")).unwrap();
-    let branding: Value = serde_json::from_str(&branding_file_content).unwrap();
+        fs::read_to_string(format!("{STATIC_DIR}/{}", "branding/strings.json"))?;
+    let branding: Value = serde_json::from_str(&branding_file_content)?;
 
     let mut context = tera::Context::new();
     context.insert("_env", &env_base64);

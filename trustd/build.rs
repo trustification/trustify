@@ -1,5 +1,5 @@
 use std::path::Path;
-use std::process::Command;
+use std::process::{Command, ExitStatus};
 use std::{fs, io};
 
 static UI_DIR: &str = "../ui";
@@ -17,30 +17,37 @@ fn main() {
 
     println!("cargo:rerun-if-changed={}", UI_DIR_SRC);
 
-    install_ui_deps();
-    build_ui();
-    copy_dir_all(UI_DIST_DIR, STATIC_DIR).unwrap();
+    let build_ui_status = install_ui_deps()
+        .and_then(|_| build_ui())
+        .and_then(|_| copy_dir_all(UI_DIST_DIR, STATIC_DIR));
+
+    match build_ui_status {
+        Ok(_) => println!("UI built successfully"),
+        Err(_) => println!("Error while building UI"),
+    }
 }
 
-fn install_ui_deps() {
-    if !Path::new("./ui/node_modules").exists() {
+fn install_ui_deps() -> io::Result<ExitStatus> {
+    if !Path::new("../ui/node_modules").exists() {
         println!("Installing node dependencies...");
         Command::new(NPM_CMD)
             .args(["clean-install", "--ignore-scripts"])
             .current_dir(UI_DIR)
             .status()
-            .unwrap();
+    } else {
+        Ok(ExitStatus::default())
     }
 }
 
-fn build_ui() {
+fn build_ui() -> io::Result<ExitStatus> {
     if !Path::new(STATIC_DIR).exists() {
         println!("Building UI...");
         Command::new(NPM_CMD)
             .args(["run", "build"])
             .current_dir(UI_DIR)
             .status()
-            .unwrap();
+    } else {
+        Ok(ExitStatus::default())
     }
 }
 
