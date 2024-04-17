@@ -1,11 +1,9 @@
-use std::str::FromStr;
-
 use crate::{
     model::{FoundAdvisory, FoundSbom},
-    query::{Filter, Sort},
+    query::Query,
 };
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
-use sea_orm::{EntityTrait, QueryFilter, QueryOrder};
+use sea_orm::EntityTrait;
 use trustify_common::{
     db::{limiter::LimiterTrait, Database},
     error::ErrorInformation,
@@ -55,25 +53,9 @@ impl SearchService {
         sort: String,
         paginated: Paginated,
     ) -> Result<PaginatedResults<FoundAdvisory>, Error> {
-        let mut select = advisory::Entity::find()
-            .filter(Filter::<advisory::Entity>::from_str(&filters)?.into_condition());
-
-        // comma-delimited sort param, e.g. 'field1:asc,field2:desc'
-        if !sort.is_empty() {
-            for s in sort
-                .split(',')
-                .map(Sort::<advisory::Entity>::from_str)
-                .collect::<Result<Vec<_>, _>>()?
-                .iter()
-            {
-                select = select.order_by(s.field, s.order.clone());
-            }
-        }
-        // we always sort by ID last, so that we have a stable order for pagination
-        select = select.order_by_desc(advisory::Column::Id);
-
-        let limiting = select.limiting(&self.db, paginated.offset, paginated.limit);
-
+        let limiting = advisory::Entity::find()
+            .filtering(&filters, &sort)?
+            .limiting(&self.db, paginated.offset, paginated.limit);
         Ok(PaginatedResults {
             total: limiting.total().await?,
             items: limiting
@@ -93,25 +75,11 @@ impl SearchService {
         sort: String,
         paginated: Paginated,
     ) -> Result<PaginatedResults<FoundSbom>, Error> {
-        let mut select = sbom::Entity::find()
-            .filter(Filter::<sbom::Entity>::from_str(&filters)?.into_condition());
-
-        // comma-delimited sort param, e.g. 'field1:asc,field2:desc'
-        if !sort.is_empty() {
-            for s in sort
-                .split(',')
-                .map(Sort::<advisory::Entity>::from_str)
-                .collect::<Result<Vec<_>, _>>()?
-                .iter()
-            {
-                select = select.order_by(s.field, s.order.clone());
-            }
-        }
-        // we always sort by ID last, so that we have a stable order for pagination
-        select = select.order_by_desc(sbom::Column::Id);
-
-        let limiting = select.limiting(&self.db, paginated.offset, paginated.limit);
-
+        let limiting = sbom::Entity::find().filtering(&filters, &sort)?.limiting(
+            &self.db,
+            paginated.offset,
+            paginated.limit,
+        );
         Ok(PaginatedResults {
             total: limiting.total().await?,
             items: limiting
