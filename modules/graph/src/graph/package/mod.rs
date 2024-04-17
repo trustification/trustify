@@ -589,13 +589,21 @@ impl<'g> PackageContext<'g> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
+    use crate::db::{LeftPackageId, QualifiedPackageTransitive};
     use crate::graph::error::Error;
     use crate::graph::Graph;
-    use sea_orm::TransactionTrait;
+    use sea_orm::{
+        EntityTrait, IntoSimpleExpr, QueryFilter, QuerySelect, QueryTrait, TransactionTrait,
+    };
+    use sea_query::{Expr, Func, IntoValueTuple, Query, SimpleExpr};
+    use serde_json::json;
+    use std::collections::HashMap;
     use std::num::NonZeroU64;
     use trustify_common::db::{Database, Transactional};
     use trustify_common::model::Paginated;
     use trustify_common::purl::Purl;
+    use trustify_entity::qualified_package;
+    use trustify_entity::qualified_package::Qualifiers;
 
     #[tokio::test]
     async fn ingest_packages() -> Result<(), anyhow::Error> {
@@ -832,6 +840,52 @@ mod tests {
         assert_eq!(
             "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar",
             Purl::from(pkg3).to_string().as_str()
+        );
+
+        Ok(())
+    }
+
+    #[test_log::test(tokio::test)]
+    async fn query_qualified_packages() -> Result<(), anyhow::Error> {
+        let db = Database::for_test("query_qualified_packages").await?;
+        let graph = Graph::new(db);
+
+        for i in [
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar",
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=pom",
+        ] {
+            graph
+                .ingest_qualified_package(i.try_into()?, Transactional::None)
+                .await?;
+        }
+
+        let qualifiers = json!({"type": "jar"});
+        // qualifiers @> '{"type": "jar"}'::jsonb
+        let select = qualified_package::Entity::find()
+            .select_only()
+            .column(qualified_package::Column::Id)
+            .filter(Expr::cust_with_exprs(
+                "$1 @> $2::jsonb",
+                [
+                    qualified_package::Column::Qualifiers.into_simple_expr(),
+                    SimpleExpr::Value(qualifiers.into()),
+                ],
+            ))
+            .into_query();
+        let result = graph
+            .get_qualified_packages_by_query(select, Transactional::None)
+            .await?;
+
+        log::info!("{result:?}");
+
+        assert_eq!(result.len(), 1);
+        assert_eq!(
+            result[0].qualified_package.qualifiers,
+            Some(Qualifiers(HashMap::from_iter([(
+                "type".into(),
+                "jar".into()
+            )])))
         );
 
         Ok(())
