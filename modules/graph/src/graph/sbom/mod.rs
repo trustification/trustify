@@ -15,10 +15,10 @@ use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
+use std::str::FromStr;
 use std::sync::Arc;
 use time::OffsetDateTime;
 use tracing::instrument;
-use std::str::FromStr;
 use trustify_common::cpe::Cpe;
 use trustify_common::db::limiter::LimiterTrait;
 use trustify_common::db::Transactional;
@@ -776,6 +776,3 @@ impl<'a> PackageCache<'a> {
         }
     }
 }
-
-
-
