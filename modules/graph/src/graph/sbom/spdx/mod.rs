@@ -8,7 +8,7 @@ use spdx_rs::models::{RelationshipType, SPDX};
 use std::collections::HashMap;
 use std::io::Read;
 use time::OffsetDateTime;
-use tracing::instrument;
+use tracing::{info_span, instrument};
 use trustify_common::db::Transactional;
 use trustify_entity::relationship::Relationship;
 
@@ -40,16 +40,19 @@ impl SbomContext {
         sbom_data: SPDX,
         tx: TX,
     ) -> Result<(), anyhow::Error> {
-        // create a lookup cache for id -> package information
-        let mut cache = HashMap::with_capacity(sbom_data.package_information.len());
+        // create a lookup cache for id[package information] -> package information
+        let id_cache = info_span!("build id_cache").in_scope(|| {
+            let mut cache = HashMap::with_capacity(sbom_data.package_information.len());
 
-        for pi in &sbom_data.package_information {
-            cache.insert(&pi.package_spdx_identifier, pi);
-        }
+            for pi in &sbom_data.package_information {
+                cache.insert(&pi.package_spdx_identifier, pi);
+            }
+            cache
+        });
 
         // For each thing described in the SBOM data, link it up to an sbom_cpe or sbom_package.
         for described in &sbom_data.document_creation_information.document_describes {
-            let Some(described_package) = cache.get(described) else {
+            let Some(described_package) = id_cache.get(described) else {
                 continue;
             };
 
@@ -72,7 +75,19 @@ impl SbomContext {
             }
         }
 
-        let mut lookup_cache = PackageCache::new(
+        // create a lookup cache of id[package information] -> relatives
+        let rel_cache = info_span!("build rel_cache").in_scope(|| {
+            let mut rel_cache = HashMap::<_, Vec<_>>::new();
+
+            for rel in &sbom_data.relationships {
+                rel_cache.entry(&rel.spdx_element_id).or_default().push(rel);
+            }
+            rel_cache
+        });
+
+        // prepare a lookup cache for packages in the database
+
+        let mut package_cache = PackageCache::new(
             sbom_data.package_information.len(),
             &self.graph,
             tx.as_ref(),
@@ -86,12 +101,13 @@ impl SbomContext {
                 }
 
                 let package_a = &package_ref.reference_locator;
-                //log::debug!("pkg_a: {}", package_a);
 
-                'rels: for relationship in
-                    sbom_data.relationships_for_spdx_id(&package_info.package_spdx_identifier)
+                'rels: for relationship in rel_cache
+                    .get(&package_info.package_spdx_identifier)
+                    .into_iter()
+                    .flatten()
                 {
-                    let Some(package) = cache.get(&relationship.related_spdx_element) else {
+                    let Some(package) = id_cache.get(&relationship.related_spdx_element) else {
                         continue 'rels;
                     };
 
@@ -117,7 +133,7 @@ impl SbomContext {
 
                         // now add it
                         self.ingest_package_relates_to_package(
-                            &mut lookup_cache,
+                            &mut package_cache,
                             left.try_into()?,
                             rel,
                             right.try_into()?,
@@ -129,7 +145,7 @@ impl SbomContext {
             }
         }
 
-        log::info!("Package cache: {lookup_cache:?}");
+        log::info!("Package cache: {package_cache:?}");
 
         Ok(())
     }

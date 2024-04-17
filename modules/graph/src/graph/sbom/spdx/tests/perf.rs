@@ -44,9 +44,11 @@ async fn ingest_spdx_medium() -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    sbom.ingest_spdx(spdx, &tx).await?;
+    let ingest_time_1 = start.elapsed();
 
-    let ingest_time = start.elapsed();
+    let start = Instant::now();
+    sbom.ingest_spdx(spdx, &tx).await?;
+    let ingest_time_2 = start.elapsed();
 
     let start = Instant::now();
     tx.commit().await?;
@@ -64,10 +66,11 @@ async fn ingest_spdx_medium() -> Result<(), anyhow::Error> {
 
     let query_time = start.elapsed();
 
-    log::info!("parse {}", humantime::Duration::from(parse_time));
-    log::info!("ingest {}", humantime::Duration::from(ingest_time));
-    log::info!("commit {}", humantime::Duration::from(commit_time));
-    log::info!("query {}", humantime::Duration::from(query_time));
+    log::info!("parse: {}", humantime::Duration::from(parse_time));
+    log::info!("ingest 1: {}", humantime::Duration::from(ingest_time_1));
+    log::info!("ingest 2: {}", humantime::Duration::from(ingest_time_2));
+    log::info!("commit: {}", humantime::Duration::from(commit_time));
+    log::info!("query: {}", humantime::Duration::from(query_time));
 
     Ok(())
 }
@@ -125,9 +128,9 @@ async fn parse_spdx_openshift() -> Result<(), anyhow::Error> {
 
     let query_time = start.elapsed();
 
-    log::info!("parse {}", humantime::Duration::from(parse_time));
-    log::info!("ingest {}", humantime::Duration::from(ingest_time));
-    log::info!("query {}", humantime::Duration::from(query_time));
+    log::info!("parse: {}", humantime::Duration::from(parse_time));
+    log::info!("ingest: {}", humantime::Duration::from(ingest_time));
+    log::info!("query: {}", humantime::Duration::from(query_time));
 
     Ok(())
 }
