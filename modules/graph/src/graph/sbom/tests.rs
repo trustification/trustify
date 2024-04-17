@@ -18,17 +18,41 @@ async fn query_sboms() -> Result<(), anyhow::Error> {
     let system = Graph::new(db);
 
     let sbom_v1 = system
-        .ingest_sbom("http://redhat.com/test.json", "8", "a", (), Transactional::None)
+        .ingest_sbom(
+            "http://redhat.com/test.json",
+            "8",
+            "a",
+            (),
+            Transactional::None,
+        )
         .await?;
     let sbom_v1_again = system
-        .ingest_sbom("http://redhat.com/test.json", "8", "a", (), Transactional::None)
+        .ingest_sbom(
+            "http://redhat.com/test.json",
+            "8",
+            "a",
+            (),
+            Transactional::None,
+        )
         .await?;
     let sbom_v2 = system
-        .ingest_sbom("http://myspace.com/test.json", "9", "b", (), Transactional::None)
+        .ingest_sbom(
+            "http://myspace.com/test.json",
+            "9",
+            "b",
+            (),
+            Transactional::None,
+        )
         .await?;
 
     let other_sbom = system
-        .ingest_sbom("http://geocities.com/other.json", "10", "c", (), Transactional::None)
+        .ingest_sbom(
+            "http://geocities.com/other.json",
+            "10",
+            "c",
+            (),
+            Transactional::None,
+        )
         .await?;
 
     assert_eq!(sbom_v1.sbom.id, sbom_v1_again.sbom.id);
