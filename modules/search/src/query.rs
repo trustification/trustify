@@ -1,3 +1,4 @@
+use crate::model::SearchOptions;
 use crate::service::Error;
 use human_date_parser::{from_human_time, ParseResult};
 use regex::Regex;
@@ -18,11 +19,12 @@ use time::{Date, OffsetDateTime};
 /////////////////////////////////////////////////////////////////////////
 
 pub trait Query<T: EntityTrait> {
-    fn filtering(self, q: &str, sort: &str) -> Result<Select<T>, Error>;
+    fn filtering(self, search: SearchOptions) -> Result<Select<T>, Error>;
 }
 
 impl<T: EntityTrait> Query<T> for Select<T> {
-    fn filtering(self, q: &str, sort: &str) -> Result<Self, Error> {
+    fn filtering(self, search: SearchOptions) -> Result<Self, Error> {
+        let SearchOptions { sort, q } = &search;
         let id = T::Column::from_str("id")
             .map_err(|_| Error::SearchSyntax("Entity missing Id field".into()))?;
         Ok(if sort.is_empty() {

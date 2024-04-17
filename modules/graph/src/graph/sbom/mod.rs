@@ -58,9 +58,7 @@ impl Graph {
     ) -> Result<PaginatedResults<SbomContext>, Error> {
         let connection = self.connection(&tx);
 
-        let SearchOptions { sort, q } = search;
-
-        let limiter = sbom::Entity::find().filtering(&q, &sort)?.limiting(
+        let limiter = sbom::Entity::find().filtering(search)?.limiting(
             &connection,
             paginated.offset,
             paginated.limit,
