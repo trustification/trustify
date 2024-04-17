@@ -6,8 +6,11 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub left_package_id: i32,
+    #[sea_orm(primary_key)]
     pub relationship: Relationship,
+    #[sea_orm(primary_key)]
     pub right_package_id: i32,
+    #[sea_orm(primary_key)]
     pub sbom_id: i32,
 }
 
