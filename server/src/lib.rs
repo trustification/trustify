@@ -2,6 +2,7 @@
 
 mod openapi;
 
+use actix_web::dev::{ServiceRequest, ServiceResponse};
 use actix_web::{
     body::MessageBody,
     dev::{ConnectionInfo, Url},
@@ -39,6 +40,7 @@ use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use trustify_module_storage::service::fs::FileSystemBackend;
+use trustify_ui::{generate_index_html, UI};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -172,7 +174,6 @@ impl InitData {
                 .default_authenticator(self.authenticator)
                 .authorizer(self.authorizer.clone())
                 .configure(move |svc| {
-                    svc.service(index);
                     svc.service(swagger_ui_with_auth(
                         openapi::openapi(),
                         swagger_oidc.clone(),
@@ -187,6 +188,35 @@ impl InitData {
                             );
                             trustify_module_fetch::endpoints::configure(svc, db.clone());
                         });
+
+                    svc.service(
+                        actix_files::Files::new("/", "./static")
+                            .index_file("index.html")
+                            .default_handler(|req: ServiceRequest| {
+                                let (http_req, _payload) = req.into_parts();
+                                async {
+                                    // TODO Set these values with ENV or Config values
+                                    let ui = UI {
+                                        version: String::from("99.0.0"),
+                                        auth_required: String::from("false"),
+                                        oidc_server_url: String::from(
+                                            "http://localhost:8180/realms/trustify",
+                                        ),
+                                        oidc_client_id: String::from("trustify-ui"),
+                                        oidc_scope: String::from("email"),
+                                        analytics_enabled: String::from("false"),
+                                        analytics_write_key: String::from(""),
+                                    };
+
+                                    let index_html = generate_index_html(&ui).unwrap();
+                                    let http_response = HttpResponse::Ok()
+                                        .content_type(actix_web::http::header::ContentType::html())
+                                        .body(index_html);
+
+                                    Ok(ServiceResponse::new(http_req, http_response))
+                                }
+                            }),
+                    );
                 })
         };
 

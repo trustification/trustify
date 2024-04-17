@@ -5,6 +5,7 @@ members = [
   "common",
   "common/auth",
   "common/infrastructure",
+  "common/ui",
   "cvss",
   "modules/fetch",
   "modules/importer",
@@ -112,6 +113,7 @@ trustify-module-ingestor = { path = "modules/ingestor" }
 trustify-module-search = { path = "modules/search" }
 trustify-module-storage = { path = "modules/storage" }
 trustify-server = { path = "server"}
+trustify-ui = { path = "common/ui" }
 
 [patch.crates-io]
 #csaf-walker = { git = "https://github.com/ctron/csaf-walker", rev = "7b6e64dd56e4be79e184b053ef754a42e1496fe0" }

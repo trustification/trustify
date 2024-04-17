@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+
+  "include": ["src/**/*", "config/**/*", "types/**/*"],
+
+  "compilerOptions": {
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@app/*": ["src/app/*"],
+      "@assets/*": [
+        "../node_modules/@patternfly/react-core/dist/styles/assets/*"
+      ]
+    },
+    "typeRoots": ["types/", "node_modules/@types", "../node_modules/@types"],
+
+    "target": "es2020",
+    "module": "es2020",
+    "moduleResolution": "bundler",
+
+    "allowJs": true,
+    "checkJs": false,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+
+    "noEmit": true
+  },
+
+  "ts-node": {
+    "compilerOptions": {
+      "module": "commonjs" // node16 == commonjs or es2020 depending on package.json/type
+    }
+  }
+}

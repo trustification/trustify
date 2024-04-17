@@ -12,6 +12,8 @@ trustify-module-fetch = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-importer = { workspace = true }
 trustify-module-storage = { workspace = true }
+trustify-ui = { workspace = true }
+actix-files = "0.6.5"
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
