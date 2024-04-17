@@ -63,6 +63,7 @@ async fn parse_spdx_quarkus() -> Result<(), anyhow::Error> {
     tx.commit().await?;
 
     let described_cpe222 = sbom.describes_cpe22s(Transactional::None).await?;
+    log::info!("{:#?}", described_cpe222);
     assert_eq!(1, described_cpe222.len());
 
     let described_packages = sbom.describes_packages(Transactional::None).await?;
