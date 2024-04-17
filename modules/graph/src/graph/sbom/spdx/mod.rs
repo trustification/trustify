@@ -93,6 +93,8 @@ impl SbomContext {
             tx.as_ref(),
         );
 
+        let mut num_rel = 0usize;
+
         // connect all other tree-ish package trees in the context of this sbom.
         for package_info in &sbom_data.package_information {
             for package_ref in &package_info.external_reference {
@@ -131,6 +133,8 @@ impl SbomContext {
                             continue 'refs;
                         };
 
+                        num_rel += 1;
+
                         // now add it
                         self.ingest_package_relates_to_package(
                             &mut package_cache,
@@ -146,6 +150,7 @@ impl SbomContext {
         }
 
         log::info!("Package cache: {package_cache:?}");
+        log::info!("Relationships added: {num_rel}");
 
         Ok(())
     }

@@ -32,24 +32,51 @@ impl MigrationTrait for Migration {
                             .integer()
                             .not_null(),
                     )
+                    .col(ColumnDef::new(PackageVersion::Version).string().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .from_col(PackageVersion::PackageId)
                             .to(Package::Table, Package::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
-                    .col(ColumnDef::new(PackageVersion::Version).string().not_null())
                     .to_owned(),
             )
-            .await
+            .await?;
+
+        manager
+            .create_index(
+                Index::create()
+                    .table(PackageVersion::Table)
+                    .name(INDEX_BY_PID_V)
+                    .if_not_exists()
+                    .col(PackageVersion::PackageId)
+                    .col(PackageVersion::Version)
+                    .to_owned(),
+            )
+            .await?;
+
+        Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
+            .drop_index(
+                Index::drop()
+                    .table(PackageVersion::Table)
+                    .name(INDEX_BY_PID_V)
+                    .if_exists()
+                    .to_owned(),
+            )
+            .await?;
+        manager
             .drop_table(Table::drop().table(PackageVersion::Table).to_owned())
-            .await
+            .await?;
+
+        Ok(())
     }
 }
+
+const INDEX_BY_PID_V: &str = "by_pid_v";
 
 #[derive(DeriveIden)]
 pub enum PackageVersion {

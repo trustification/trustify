@@ -244,13 +244,13 @@ impl Graph {
         tx: TX,
     ) -> Result<Option<PackageContext>, Error> {
         Ok(entity::package::Entity::find()
-            .filter(entity::package::Column::Type.eq(purl.ty.clone()))
+            .filter(entity::package::Column::Type.eq(purl.ty))
             .filter(if let Some(ns) = purl.namespace {
                 entity::package::Column::Namespace.eq(ns)
             } else {
                 entity::package::Column::Namespace.is_null()
             })
-            .filter(entity::package::Column::Name.eq(purl.name.clone()))
+            .filter(entity::package::Column::Name.eq(purl.name))
             .one(&self.connection(&tx))
             .await?
             .map(|package| (self, package).into()))

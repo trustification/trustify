@@ -10,7 +10,7 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
     QueryTrait, RelationTrait, Select, Set,
 };
-use sea_query::{Condition, Func, JoinType, Query, SimpleExpr};
+use sea_query::{Condition, Func, JoinType, OnConflict, Query, SimpleExpr};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
@@ -455,32 +455,28 @@ impl SbomContext {
 
         match (&*left_package, &*right_package) {
             (Ok(left_package), Ok(right_package)) => {
-                if entity::package_relates_to_package::Entity::find()
-                    .filter(entity::package_relates_to_package::Column::SbomId.eq(self.sbom.id))
-                    .filter(
-                        entity::package_relates_to_package::Column::LeftPackageId
-                            .eq(left_package.qualified_package.id),
-                    )
-                    .filter(
-                        entity::package_relates_to_package::Column::Relationship.eq(relationship),
-                    )
-                    .filter(
-                        entity::package_relates_to_package::Column::RightPackageId
-                            .eq(right_package.qualified_package.id),
-                    )
-                    .one(&self.graph.connection(&tx))
-                    .await?
-                    .is_none()
-                {
-                    let entity = entity::package_relates_to_package::ActiveModel {
-                        left_package_id: Set(left_package.qualified_package.id),
-                        relationship: Set(relationship),
-                        right_package_id: Set(right_package.qualified_package.id),
-                        sbom_id: Set(self.sbom.id),
-                    };
+                let entity = entity::package_relates_to_package::ActiveModel {
+                    left_package_id: Set(left_package.qualified_package.id),
+                    relationship: Set(relationship),
+                    right_package_id: Set(right_package.qualified_package.id),
+                    sbom_id: Set(self.sbom.id),
+                };
 
-                    entity.insert(&self.graph.connection(&tx)).await?;
-                }
+                // upsert
+
+                entity::package_relates_to_package::Entity::insert(entity)
+                    .on_conflict(
+                        OnConflict::columns([
+                            entity::package_relates_to_package::Column::LeftPackageId,
+                            entity::package_relates_to_package::Column::Relationship,
+                            entity::package_relates_to_package::Column::RightPackageId,
+                            entity::package_relates_to_package::Column::SbomId,
+                        ])
+                        .do_nothing()
+                        .to_owned(),
+                    )
+                    .exec(&self.graph.connection(&tx))
+                    .await?;
             }
             (Err(_), Err(_)) => {
                 log::warn!(

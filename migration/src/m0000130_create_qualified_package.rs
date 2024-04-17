@@ -40,15 +40,40 @@ impl MigrationTrait for Migration {
                     )
                     .to_owned(),
             )
-            .await
+            .await?;
+
+        manager
+            .create_index(
+                Index::create()
+                    .table(QualifiedPackage::Table)
+                    .name(INDEX_BY_PVID)
+                    .if_not_exists()
+                    .col(QualifiedPackage::PackageVersionId)
+                    .to_owned(),
+            )
+            .await?;
+
+        Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
+            .drop_index(
+                Index::drop()
+                    .table(QualifiedPackage::Table)
+                    .name(INDEX_BY_PVID)
+                    .to_owned(),
+            )
+            .await?;
+        manager
             .drop_table(Table::drop().table(QualifiedPackage::Table).to_owned())
-            .await
+            .await?;
+
+        Ok(())
     }
 }
+
+const INDEX_BY_PVID: &str = "by_pvid";
 
 #[derive(DeriveIden)]
 pub enum QualifiedPackage {
