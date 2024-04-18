@@ -15,8 +15,6 @@ pub struct Cvss3Base {
     pub a: Availability,
 }
 
-
-
 // Serialize Cvss3 scores back as a string, reconstituted from
 // the column deconstructed variant we're storing.
 impl Display for Cvss3Base {
