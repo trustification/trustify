@@ -12,8 +12,14 @@ use utoipa::ToSchema;
 pub struct AdvisorySummary {
     pub identifier: String,
     pub sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(with = "time::serde::rfc3339::option")]
     pub published: Option<OffsetDateTime>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(with = "time::serde::rfc3339::option")]
     pub modified: Option<OffsetDateTime>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(with = "time::serde::rfc3339::option")]
     pub withdrawn: Option<OffsetDateTime>,
     pub title: Option<String>,
 }
