@@ -44,7 +44,7 @@ impl<'g> CveLoader<'g> {
                 .await?;
         }
 
-        let hash = reader.finish();
+        let hash = reader.finish().map_err(|e| Error::Generic(e.into()))?;
         let enc_hash = hex::encode(hash);
 
         let advisory = self

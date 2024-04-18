@@ -39,7 +39,7 @@ impl<'g> OsvLoader<'g> {
                 .cloned()
                 .collect::<Vec<_>>()
         }) {
-            let hash = reader.finish();
+            let hash = reader.finish().map_err(|e| Error::Generic(e.into()))?;
             let enc_hash = hex::encode(hash);
             if checksum != enc_hash {
                 return Err(Error::Storage(anyhow::Error::msg(
