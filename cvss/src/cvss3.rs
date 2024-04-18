@@ -15,6 +15,10 @@ pub struct Cvss3Base {
     pub a: Availability,
 }
 
+
+
+// Serialize Cvss3 scores back as a string, reconstituted from
+// the column deconstructed variant we're storing.
 impl Display for Cvss3Base {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
