@@ -29,7 +29,7 @@ impl<R: Read> HashingRead<R> {
     /// Finishes reading all data from the inner reader and returns the hash digest
     pub fn finish(mut self) -> std::io::Result<Digest> {
         self.read_to_end(&mut Vec::new())?;
-        self.ctx.finish()
+        Ok(self.ctx.finish())
     }
 }
 
@@ -69,7 +69,7 @@ mod test {
     fn default_hash() {
         let data = rand_bytes();
         let reader = HashingRead::new(data.as_slice());
-        let digest_res = reader.finish();
+        let digest_res = reader.finish().unwrap();
         let digest_bytes = digest_res.as_ref();
 
         let expected_digest = digest(&SHA384, &data);
@@ -82,7 +82,7 @@ mod test {
     fn finish_hash() {
         let data = rand_bytes();
         let reader = HashingRead::new(data.as_slice());
-        let digest_res = reader.finish(); // This should !!! consume the reader entirely !!! and return the digest
+        let digest_res = reader.finish().unwrap(); // This should !!! consume the reader entirely !!! and return the digest
         let digest_bytes = digest_res.as_ref();
 
         let expected_digest = digest(&SHA384, &data);
