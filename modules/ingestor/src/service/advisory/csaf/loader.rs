@@ -51,9 +51,9 @@ impl<'g> CsafLoader<'g> {
 
         let tx = self.graph.transaction().await?;
 
-        let hash = reader.finish().map_err(|e| Error::Generic(e.into()))?;
-        let enc_hash = hex::encode(hash);
-        if checksum != enc_hash {
+        let digests = reader.finish().map_err(|e| Error::Generic(e.into()))?;
+        let encoded_sha256 = hex::encode(digests.sha256);
+        if checksum != encoded_sha256 {
             return Err(Error::Storage(anyhow::Error::msg(
                 "document integrity check failed",
             )));
@@ -63,7 +63,13 @@ impl<'g> CsafLoader<'g> {
 
         let advisory = self
             .graph
-            .ingest_advisory(&advisory_id, location, enc_hash, Information(&csaf), &tx)
+            .ingest_advisory(
+                &advisory_id,
+                location,
+                encoded_sha256,
+                Information(&csaf),
+                &tx,
+            )
             .await?;
 
         for vuln in csaf.vulnerabilities.iter().flatten() {
