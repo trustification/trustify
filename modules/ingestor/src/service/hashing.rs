@@ -27,8 +27,8 @@ impl<R: Read> HashingRead<R> {
     }
 
     /// Finishes reading all data from the inner reader and returns the hash digest
-    pub fn finish(mut self) -> Digest {
-        (&mut self).read_to_end(&mut Vec::new()).unwrap();
+    pub fn finish(mut self) -> std::io::Result<Digest> {
+        self.read_to_end(&mut Vec::new())?;
         self.ctx.finish()
     }
 }
