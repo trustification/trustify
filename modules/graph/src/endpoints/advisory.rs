@@ -8,15 +8,15 @@ use trustify_common::model::Paginated;
 use trustify_module_search::model::SearchOptions;
 
 #[utoipa::path(
-context_path = "/api/v1/advisory",
-tag = "advisory",
-params(
-SearchOptions,
-Paginated,
-),
-responses(
-(status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
-),
+    context_path = "/api/v1/advisory",
+    tag = "advisory",
+    params(
+	SearchOptions,
+	Paginated,
+    ),
+    responses(
+	(status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
+    ),
 )]
 #[get("")]
 pub async fn all(
@@ -34,14 +34,14 @@ pub async fn all(
 }
 
 #[utoipa::path(
-context_path = "/api/v1/advisory",
-tag = "advisory",
-params(
-("sha256", Path, description = "SHA256 of the advisory")
-),
-responses(
-(status = 200, description = "Matching advisory", body = AdvisoryDetails),
-),
+    context_path = "/api/v1/advisory",
+    tag = "advisory",
+    params(
+	("sha256", Path, description = "SHA256 of the advisory")
+    ),
+    responses(
+	(status = 200, description = "Matching advisory", body = AdvisoryDetails),
+    ),
 )]
 #[get("/{sha256}")]
 pub async fn get(
