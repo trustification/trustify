@@ -73,7 +73,7 @@ impl AdvisoryDetails {
 pub struct AdvisoryVulnerability {
     pub vulnerability_id: String,
     #[schema(default, value_type = Vec<String>)]
-    pub cvss3_scores: Vec<Cvss3Base>,
+    pub cvss3_scores: Vec<String>,
     #[serde(flatten)]
     pub assertions: AdvisoryVulnerabilityAssertions,
 }

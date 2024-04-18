@@ -25,7 +25,7 @@ use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity as entity;
 use trustify_entity::{advisory, vulnerability};
 use trustify_module_search::model::SearchOptions;
-use trustify_module_search::query::{Filter, Sort};
+use trustify_module_search::query::Query;
 
 pub mod advisory_vulnerability;
 
@@ -55,25 +55,11 @@ impl Graph {
     ) -> Result<PaginatedResults<AdvisoryContext>, Error> {
         let connection = self.connection(&tx);
 
-        let SearchOptions { sort, q } = search;
-
-        let mut select = advisory::Entity::find()
-            .filter(Filter::<advisory::Entity>::from_str(&q)?.into_condition());
-
-        // comma-delimited sort param, e.g. 'field1:asc,field2:desc'
-        if !sort.is_empty() {
-            for s in sort
-                .split(',')
-                .map(Sort::<advisory::Entity>::from_str)
-                .collect::<Result<Vec<_>, _>>()?
-                .iter()
-            {
-                select = select.order_by(s.field, s.order.clone());
-            }
-        }
-        select = select.order_by_desc(advisory::Column::Id);
-
-        let limiter = select.limiting(&connection, paginated.offset, paginated.limit);
+        let limiter = advisory::Entity::find().filtering(search)?.limiting(
+            &connection,
+            paginated.offset,
+            paginated.limit,
+        );
 
         Ok(PaginatedResults {
             total: limiter.total().await?,
