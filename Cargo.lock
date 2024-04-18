@@ -5671,6 +5671,7 @@ dependencies = [
  "humantime",
  "log",
  "packageurl",
+ "rand",
  "reqwest",
  "ring 0.17.8",
  "sbom-walker",
