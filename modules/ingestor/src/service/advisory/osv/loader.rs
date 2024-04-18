@@ -39,9 +39,9 @@ impl<'g> OsvLoader<'g> {
                 .cloned()
                 .collect::<Vec<_>>()
         }) {
-            let hash = reader.finish().map_err(|e| Error::Generic(e.into()))?;
-            let enc_hash = hex::encode(hash);
-            if checksum != enc_hash {
+            let digests = reader.finish().map_err(|e| Error::Generic(e.into()))?;
+            let encoded_sha256 = hex::encode(digests.sha256);
+            if checksum != encoded_sha256 {
                 return Err(Error::Storage(anyhow::Error::msg(
                     "document integrity check failed",
                 )));
@@ -54,7 +54,7 @@ impl<'g> OsvLoader<'g> {
             };
             let advisory = self
                 .graph
-                .ingest_advisory(&osv.id, location, enc_hash, information, &tx)
+                .ingest_advisory(&osv.id, location, encoded_sha256, information, &tx)
                 .await?;
 
             if let Some(withdrawn) = osv.withdrawn {

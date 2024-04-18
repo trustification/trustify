@@ -1,42 +1,81 @@
-use ring::digest::Algorithm;
-use ring::digest::Context;
-use ring::digest::{Digest, SHA384};
+use ring::digest::{Context, Digest, SHA256, SHA384, SHA512};
 use std::io::Read;
 
 pub struct HashingRead<R: Read> {
     inner: R,
-    ctx: Context,
+    contexts: Contexts,
 }
 
-impl<R: Read> HashingRead<R> {
-    /// Uses SHA-384 as the default hashing algorithm
-    pub fn new(inner: R) -> Self {
-        Self::new_with_algorithm(inner, &SHA384)
-    }
+pub struct Contexts {
+    sha512: Context,
+    sha384: Context,
+    sha256: Context,
+}
 
-    pub fn new_with_algorithm(inner: R, algorithm: &'static Algorithm) -> Self {
+impl Contexts {
+    fn new() -> Self {
         Self {
-            inner,
-            ctx: Context::new(algorithm),
+            sha512: Context::new(&SHA512),
+            sha384: Context::new(&SHA384),
+            sha256: Context::new(&SHA256),
         }
     }
 
-    /// Returns the hash digest of the data read so far
-    pub fn hash(&self) -> Digest {
-        self.ctx.clone().finish()
+    fn update(&mut self, data: &[u8]) {
+        self.sha512.update(data);
+        self.sha384.update(data);
+        self.sha256.update(data);
     }
 
-    /// Finishes reading all data from the inner reader and returns the hash digest
-    pub fn finish(mut self) -> std::io::Result<Digest> {
+    fn digests(&self) -> Digests {
+        Digests {
+            sha512: self.sha512.clone().finish(),
+            sha384: self.sha384.clone().finish(),
+            sha256: self.sha256.clone().finish(),
+        }
+    }
+
+    fn finish(self) -> Digests {
+        Digests {
+            sha512: self.sha512.finish(),
+            sha384: self.sha384.finish(),
+            sha256: self.sha256.finish(),
+        }
+    }
+}
+
+pub struct Digests {
+    pub sha512: Digest,
+    pub sha384: Digest,
+    pub sha256: Digest,
+}
+
+impl<R: Read> HashingRead<R> {
+    /// Creates a HashingRead that uses SHA-512, SHA-384, and SHA-256
+    pub fn new(inner: R) -> Self {
+        Self {
+            inner,
+            contexts: Contexts::new(),
+        }
+    }
+
+    /// Returns the current digests of the **data read so far**
+    pub fn digests(&self) -> Digests {
+        self.contexts.digests()
+    }
+
+    /// Finishes reading all data from the inner reader and returns the digests
+    /// Takes ownership of self to prevent misuse
+    pub fn finish(mut self) -> std::io::Result<Digests> {
         self.read_to_end(&mut Vec::new())?;
-        Ok(self.ctx.finish())
+        Ok(self.contexts.finish())
     }
 }
 
 impl<R: Read> Read for HashingRead<R> {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let len = self.inner.read(buf)?;
-        self.ctx.update(&buf[0..len]);
+        self.contexts.update(&buf[0..len]);
         Ok(len)
     }
 }
@@ -45,7 +84,7 @@ impl<R: Read> Read for HashingRead<R> {
 mod test {
     use super::HashingRead;
     use rand::RngCore;
-    use ring::digest::{digest, SHA384};
+    use ring::digest::{digest, SHA256, SHA384, SHA512};
     use std::io::Read;
 
     fn rand_bytes() -> [u8; 1024] {
@@ -64,44 +103,29 @@ mod test {
         assert_eq!(buf, data);
     }
 
-    /// HashingRead should return the correct hash when finish() is called
+    /// HashingRead should consume the reader entirely and return the correct hash when finish() is called
     #[test]
-    fn default_hash() {
+    fn reader_finish() {
         let data = rand_bytes();
         let reader = HashingRead::new(data.as_slice());
-        let digest_res = reader.finish().unwrap();
-        let digest_bytes = digest_res.as_ref();
-
-        let expected_digest = digest(&SHA384, &data);
-        let expected_digest_bytes = expected_digest.as_ref();
-        assert_eq!(digest_bytes, expected_digest_bytes);
+        let digests = reader.finish().unwrap(); // This should !!! consume the reader entirely !!! and return the digest
+        assert_eq!(digest(&SHA256, &data).as_ref(), digests.sha256.as_ref());
+        assert_eq!(digest(&SHA384, &data).as_ref(), digests.sha384.as_ref());
+        assert_eq!(digest(&SHA512, &data).as_ref(), digests.sha512.as_ref());
     }
 
-    /// HashingRead should consume the reader entirely and return the hash when finish() is called
+    /// HashingRead should return the correct hash of the data read so far when hash() is called
     #[test]
-    fn finish_hash() {
-        let data = rand_bytes();
-        let reader = HashingRead::new(data.as_slice());
-        let digest_res = reader.finish().unwrap(); // This should !!! consume the reader entirely !!! and return the digest
-        let digest_bytes = digest_res.as_ref();
-
-        let expected_digest = digest(&SHA384, &data);
-        let expected_digest_bytes = expected_digest.as_ref();
-        assert_eq!(digest_bytes, expected_digest_bytes);
-    }
-
-    /// HashingRead should return the hash of the data read so far when hash() is called
-    #[test]
-    fn intermediate_hash() {
+    fn intermediate_digests() {
         let data = rand_bytes();
         let mut reader = HashingRead::new(data.as_ref());
         let mut buf = Vec::new();
-        let num_bytes = reader.read(&mut buf).unwrap();
-        let digest_res = reader.hash();
-        let digest_bytes = digest_res.as_ref();
+        let bytes_read = reader.read(&mut buf).unwrap();
+        let digests = reader.digests();
 
-        let expected_digest = digest(&SHA384, &buf[0..num_bytes]);
-        let expected_digest_bytes = expected_digest.as_ref();
-        assert_eq!(digest_bytes, expected_digest_bytes);
+        let data_read = &data[0..bytes_read];
+        assert_eq!(digest(&SHA256, data_read).as_ref(), digests.sha256.as_ref());
+        assert_eq!(digest(&SHA384, data_read).as_ref(), digests.sha384.as_ref());
+        assert_eq!(digest(&SHA512, data_read).as_ref(), digests.sha512.as_ref());
     }
 }
