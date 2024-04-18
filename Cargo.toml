@@ -95,6 +95,7 @@ walker-common = "=0.6.0-alpha.8"
 walker-extras = "=0.6.0-alpha.8"
 bytes = "1.5"
 tokio-util = "0.7"
+rand = "0.8.5" # for testing
 
 trustify-server = { path = "server"}
 trustify-importer = { path = "importer"}
