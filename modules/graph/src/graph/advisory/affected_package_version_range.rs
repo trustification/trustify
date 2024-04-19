@@ -1,4 +1,5 @@
 use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
+use crate::model::advisory::AdvisoryVulnerability;
 use std::fmt::{Debug, Formatter};
 use trustify_entity::affected_package_version_range;
 use trustify_entity::affected_package_version_range::Model;
@@ -15,17 +16,10 @@ impl Debug for AffectedPackageVersionRangeContext<'_> {
     }
 }
 
-impl<'g>
-    From<(
-        &AdvisoryVulnerabilityContext<'g>,
-        affected_package_version_range::Model,
-    )> for AffectedPackageVersionRangeContext<'g>
-{
-    fn from(
-        (advisory_vulnerability, affected_package_version_range): (
-            &AdvisoryVulnerabilityContext<'g>,
-            Model,
-        ),
+impl<'g> AffectedPackageVersionRangeContext<'g> {
+    pub fn new(
+        advisory_vulnerability: &AdvisoryVulnerabilityContext<'g>,
+        affected_package_version_range: affected_package_version_range::Model,
     ) -> Self {
         Self {
             advisory_vulnerability: advisory_vulnerability.clone(),

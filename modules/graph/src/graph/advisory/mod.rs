@@ -67,7 +67,7 @@ impl Graph {
                 .fetch()
                 .await?
                 .drain(0..)
-                .map(|each| (self, each).into())
+                .map(|each| AdvisoryContext::new(self, each))
                 .collect(),
         })
     }
@@ -80,7 +80,7 @@ impl Graph {
         Ok(entity::advisory::Entity::find_by_id(id)
             .one(&self.connection(&tx))
             .await?
-            .map(|advisory| (self, advisory).into()))
+            .map(|advisory| AdvisoryContext::new(self, advisory)))
     }
 
     pub async fn get_advisory<TX: AsRef<Transactional>>(
@@ -92,7 +92,7 @@ impl Graph {
             .filter(Condition::all().add(entity::advisory::Column::Sha256.eq(sha256.to_string())))
             .one(&self.connection(&tx))
             .await?
-            .map(|sbom| (self, sbom).into()))
+            .map(|advisory| AdvisoryContext::new(self, advisory)))
     }
 
     pub async fn ingest_advisory<TX: AsRef<Transactional>>(
@@ -127,7 +127,7 @@ impl Graph {
             ..Default::default()
         };
 
-        Ok((self, model.insert(&self.db).await?).into())
+        Ok(AdvisoryContext::new(self, model.insert(&self.db).await?))
     }
 }
 
@@ -149,13 +149,11 @@ impl Debug for AdvisoryContext<'_> {
     }
 }
 
-impl<'g> From<(&'g Graph, entity::advisory::Model)> for AdvisoryContext<'g> {
-    fn from((graph, advisory): (&'g Graph, entity::advisory::Model)) -> Self {
+impl<'g> AdvisoryContext<'g> {
+    pub fn new(graph: &'g Graph, advisory: advisory::Model) -> Self {
         Self { graph, advisory }
     }
-}
 
-impl<'g> AdvisoryContext<'g> {
     pub async fn set_published_at<TX: AsRef<Transactional>>(
         &self,
         published_at: time::OffsetDateTime,

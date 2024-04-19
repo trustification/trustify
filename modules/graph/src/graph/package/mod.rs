@@ -21,6 +21,7 @@ use trustify_common::{
     purl::{Purl, PurlErr},
 };
 use trustify_entity as entity;
+use trustify_entity::package;
 
 pub mod package_version;
 pub mod package_version_range;
@@ -98,7 +99,10 @@ impl Graph {
                 name: Set(purl.name.clone()),
             };
 
-            Ok((self, model.insert(&self.connection(&tx)).await?).into())
+            Ok(PackageContext::new(
+                self,
+                model.insert(&self.connection(&tx)).await?,
+            ))
         }
     }
 
@@ -131,7 +135,10 @@ impl Graph {
                 .get_package_version_by_id(qualified_package.package_version_id, tx)
                 .await?
             {
-                Ok(Some((&package_version, qualified_package.clone()).into()))
+                Ok(Some(QualifiedPackageContext::new(
+                    &package_version,
+                    qualified_package.clone(),
+                )))
             } else {
                 Ok(None)
             }
@@ -157,7 +164,8 @@ impl Graph {
                 .get_package_version_by_id(base.package_version_id, &tx)
                 .await?
             {
-                let qualified_package = (&package_version, base.clone()).into();
+                let qualified_package =
+                    QualifiedPackageContext::new(&package_version, base.clone());
                 package_versions.push(qualified_package);
             }
         }
@@ -193,7 +201,7 @@ impl Graph {
                 .get_package_by_id(package_version.package_id, &tx)
                 .await?
             {
-                Ok(Some((&package, package_version).into()))
+                Ok(Some(PackageVersionContext::new(&package, package_version)))
             } else {
                 Ok(None)
             }
@@ -237,7 +245,7 @@ impl Graph {
             .filter(entity::package::Column::Name.eq(purl.name))
             .one(&self.connection(&tx))
             .await?
-            .map(|package| (self, package).into()))
+            .map(|package| PackageContext::new(self, package)))
     }
 
     pub(crate) async fn get_package_by_id<TX: AsRef<Transactional>>(
@@ -249,7 +257,7 @@ impl Graph {
             .one(&self.connection(&tx))
             .await?
         {
-            Ok(Some((self, found).into()))
+            Ok(Some(PackageContext::new(self, found)))
         } else {
             Ok(None)
         }
@@ -269,13 +277,11 @@ impl Debug for PackageContext<'_> {
     }
 }
 
-impl<'g> From<(&'g Graph, entity::package::Model)> for PackageContext<'g> {
-    fn from((graph, package): (&'g Graph, entity::package::Model)) -> Self {
+impl<'g> PackageContext<'g> {
+    pub fn new(graph: &'g Graph, package: package::Model) -> Self {
         Self { graph, package }
     }
-}
 
-impl<'g> PackageContext<'g> {
     /// Ensure the graph knows about and contains a record for a *version range* of this package.
     pub async fn ingest_package_version_range<TX: AsRef<Transactional>>(
         &self,
@@ -297,7 +303,10 @@ impl<'g> PackageContext<'g> {
                 end: Set(end.to_string()),
             };
 
-            Ok((self, entity.insert(&self.graph.connection(&tx)).await?).into())
+            Ok(PackageVersionRangeContext::new(
+                self,
+                entity.insert(&self.graph.connection(&tx)).await?,
+            ))
         }
     }
 
@@ -317,7 +326,9 @@ impl<'g> PackageContext<'g> {
             .filter(entity::package_version_range::Column::End.eq(end.to_string()))
             .one(&self.graph.connection(&tx))
             .await?
-            .map(|package_version_range| (self, package_version_range).into()))
+            .map(|package_version_range| {
+                PackageVersionRangeContext::new(self, package_version_range)
+            }))
     }
 
     /// Ensure the graph knows about and contains a record for a *version* of this package.
@@ -336,7 +347,10 @@ impl<'g> PackageContext<'g> {
                     version: Set(version.clone()),
                 };
 
-                Ok((self, model.insert(&self.graph.connection(&tx)).await?).into())
+                Ok(PackageVersionContext::new(
+                    self,
+                    model.insert(&self.graph.connection(&tx)).await?,
+                ))
             }
         } else {
             Err(Error::Purl(PurlErr::MissingVersion(purl.to_string())))
@@ -361,7 +375,7 @@ impl<'g> PackageContext<'g> {
             .one(&self.graph.connection(&tx))
             .await?
         {
-            Ok(Some((self, package_version).into()))
+            Ok(Some(PackageVersionContext::new(self, package_version)))
         } else {
             Ok(None)
         }
@@ -379,7 +393,7 @@ impl<'g> PackageContext<'g> {
             .all(&self.graph.connection(&tx))
             .await?
             .drain(0..)
-            .map(|each| (self, each).into())
+            .map(|each| PackageVersionContext::new(self, each))
             .collect())
     }
 
@@ -400,7 +414,7 @@ impl<'g> PackageContext<'g> {
                 .fetch()
                 .await?
                 .drain(0..)
-                .map(|each| (self, each).into())
+                .map(|each| PackageVersionContext::new(self, each))
                 .collect(),
         })
     }
@@ -581,7 +595,7 @@ impl<'g> PackageContext<'g> {
 
         Ok(advisories
             .drain(0..)
-            .map(|advisory| (self.graph, advisory).into())
+            .map(|advisory| AdvisoryContext::new(self.graph, advisory))
             .collect())
     }
 }

@@ -10,6 +10,7 @@ use trustify_common::db::Transactional;
 use trustify_common::package::PackageVulnerabilityAssertions;
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
+use trustify_entity::qualified_package;
 
 #[derive(Clone)]
 pub struct QualifiedPackageContext<'g> {
@@ -37,22 +38,6 @@ impl Debug for QualifiedPackageContext<'_> {
     }
 }
 
-impl<'g> From<(&PackageVersionContext<'g>, entity::qualified_package::Model)>
-    for QualifiedPackageContext<'g>
-{
-    fn from(
-        (package_version, qualified_package): (
-            &PackageVersionContext<'g>,
-            entity::qualified_package::Model,
-        ),
-    ) -> Self {
-        Self {
-            package_version: package_version.clone(),
-            qualified_package,
-        }
-    }
-}
-
 impl<'g> From<QualifiedPackageContext<'g>> for Purl {
     fn from(value: QualifiedPackageContext<'g>) -> Self {
         Self {
@@ -70,6 +55,15 @@ impl<'g> From<QualifiedPackageContext<'g>> for Purl {
 }
 
 impl<'g> QualifiedPackageContext<'g> {
+    pub fn new(
+        package_version: &PackageVersionContext<'g>,
+        qualified_package: qualified_package::Model,
+    ) -> Self {
+        Self {
+            package_version: package_version.clone(),
+            qualified_package,
+        }
+    }
     pub async fn sboms_containing<TX: AsRef<Transactional>>(
         &self,
         tx: TX,
