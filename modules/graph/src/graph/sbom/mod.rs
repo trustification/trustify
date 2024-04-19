@@ -4,7 +4,9 @@ use super::error::Error;
 use crate::db::{LeftPackageId, QualifiedPackageTransitive};
 use crate::graph::advisory::AdvisoryContext;
 use crate::graph::cpe::CpeContext;
+use crate::graph::package::package_version::PackageVersionContext;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
+use crate::graph::package::PackageContext;
 use crate::graph::Graph;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
@@ -70,7 +72,7 @@ impl Graph {
                 .fetch()
                 .await?
                 .drain(0..)
-                .map(|each| (self, each).into())
+                .map(|each| SbomContext::new(self, each))
                 .collect(),
         })
     }
@@ -83,7 +85,7 @@ impl Graph {
         Ok(entity::sbom::Entity::find_by_id(id)
             .one(&self.connection(&tx))
             .await?
-            .map(|sbom| (self, sbom).into()))
+            .map(|sbom| SbomContext::new(self, sbom)))
     }
 
     #[instrument(skip(tx))]
@@ -98,7 +100,7 @@ impl Graph {
             .filter(Condition::all().add(entity::sbom::Column::Sha256.eq(sha256.to_string())))
             .one(&self.connection(&tx))
             .await?
-            .map(|sbom| (self, sbom).into()))
+            .map(|sbom| SbomContext::new(self, sbom)))
     }
 
     #[instrument(skip(tx, info), err)]
@@ -127,7 +129,10 @@ impl Graph {
             ..Default::default()
         };
 
-        Ok((self, model.insert(&self.connection(&tx)).await?).into())
+        Ok(SbomContext::new(
+            self,
+            model.insert(&self.connection(&tx)).await?,
+        ))
     }
 
     /// Fetch a single SBOM located via internal `id`, external `location` (URL),
@@ -181,7 +186,7 @@ impl Graph {
         Ok(query
             .one(&self.connection(&tx))
             .await?
-            .map(|sbom| (self, sbom).into()))
+            .map(|sbom| SbomContext::new(self, sbom)))
     }
 
     async fn locate_many_sboms<TX: AsRef<Transactional>>(
@@ -193,7 +198,7 @@ impl Graph {
             .all(&self.connection(&tx))
             .await?
             .drain(0..)
-            .map(|sbom| (self, sbom).into())
+            .map(|sbom| SbomContext::new(self, sbom))
             .collect())
     }
 
@@ -206,7 +211,7 @@ impl Graph {
         Ok(entity::sbom::Entity::find_by_id(id)
             .one(&self.connection(&tx))
             .await?
-            .map(|sbom| (self, sbom).into()))
+            .map(|sbom| SbomContext::new(self, sbom)))
     }
 
     async fn locate_sbom_by_location<TX: AsRef<Transactional>>(
@@ -374,16 +379,14 @@ impl Debug for SbomContext {
     }
 }
 
-impl From<(&Graph, entity::sbom::Model)> for SbomContext {
-    fn from((system, sbom): (&Graph, entity::sbom::Model)) -> Self {
+impl SbomContext {
+    pub fn new(graph: &Graph, sbom: sbom::Model) -> Self {
         Self {
-            graph: system.clone(),
+            graph: graph.clone(),
             sbom,
         }
     }
-}
 
-impl SbomContext {
     #[instrument(skip(tx), err)]
     pub async fn ingest_describes_cpe22<C: Into<Cpe> + Debug, TX: AsRef<Transactional>>(
         &self,
@@ -657,10 +660,10 @@ impl SbomContext {
                             .one(&self.graph.connection(&tx))
                             .await?
                     {
-                        let package = (&self.graph, package).into();
-                        let package_version = (&package, package_version).into();
+                        let package = PackageContext::new(&self.graph, package);
+                        let package_version = PackageVersionContext::new(&package, package_version);
 
-                        related.push((&package_version, base).into());
+                        related.push(QualifiedPackageContext::new(&package_version, base));
                     }
                 }
             }

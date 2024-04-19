@@ -14,6 +14,7 @@ use trustify_common::db::Transactional;
 use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
+use trustify_entity::package_version;
 use trustify_entity::qualified_package::Qualifiers;
 
 /// Live context for a package version.
@@ -29,18 +30,14 @@ impl Debug for PackageVersionContext<'_> {
     }
 }
 
-impl<'g> From<(&PackageContext<'g>, entity::package_version::Model)> for PackageVersionContext<'g> {
-    fn from(
-        (package, package_version): (&PackageContext<'g>, entity::package_version::Model),
-    ) -> Self {
+impl<'g> PackageVersionContext<'g> {
+    pub fn new(package: &PackageContext<'g>, package_version: package_version::Model) -> Self {
         Self {
             package: package.clone(),
             package_version,
         }
     }
-}
 
-impl<'g> PackageVersionContext<'g> {
     pub async fn ingest_qualified_package<TX: AsRef<Transactional>>(
         &self,
         purl: Purl,
@@ -61,7 +58,7 @@ impl<'g> PackageVersionContext<'g> {
             .insert(&self.package.graph.connection(&tx))
             .await?;
 
-        Ok((self, qualified_package).into())
+        Ok(QualifiedPackageContext::new(self, qualified_package))
     }
 
     pub async fn get_qualified_package<TX: AsRef<Transactional>>(
@@ -75,7 +72,7 @@ impl<'g> PackageVersionContext<'g> {
             .one(&self.package.graph.connection(&tx))
             .await?;
 
-        Ok(found.map(|model| (self, model).into()))
+        Ok(found.map(|model| QualifiedPackageContext::new(self, model)))
     }
 
     pub async fn vulnerability_assertions<TX: AsRef<Transactional>>(
@@ -172,7 +169,7 @@ impl<'g> PackageVersionContext<'g> {
             .all(&self.package.graph.connection(&tx))
             .await?
             .into_iter()
-            .map(|base| (self, base).into())
+            .map(|base| QualifiedPackageContext::new(self, base))
             .collect())
     }
 }

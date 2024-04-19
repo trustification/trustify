@@ -14,17 +14,10 @@ impl Debug for FixedPackageVersionContext<'_> {
     }
 }
 
-impl<'g>
-    From<(
-        &AdvisoryVulnerabilityContext<'g>,
-        fixed_package_version::Model,
-    )> for FixedPackageVersionContext<'g>
-{
-    fn from(
-        (advisory_vulnerability, fixed_package_version): (
-            &AdvisoryVulnerabilityContext<'g>,
-            fixed_package_version::Model,
-        ),
+impl<'g> FixedPackageVersionContext<'g> {
+    pub fn new(
+        advisory_vulnerability: &AdvisoryVulnerabilityContext<'g>,
+        fixed_package_version: fixed_package_version::Model,
     ) -> Self {
         Self {
             advisory_vulnerability: advisory_vulnerability.clone(),

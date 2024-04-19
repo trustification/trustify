@@ -3,15 +3,12 @@
 use crate::graph::package::PackageContext;
 use std::fmt::{Debug, Formatter};
 use trustify_entity as entity;
+use trustify_entity::package_version_range;
 
-impl<'g> From<(&PackageContext<'g>, entity::package_version_range::Model)>
-    for PackageVersionRangeContext<'g>
-{
-    fn from(
-        (package, package_version_range): (
-            &PackageContext<'g>,
-            entity::package_version_range::Model,
-        ),
+impl<'g> PackageVersionRangeContext<'g> {
+    pub fn new(
+        package: &PackageContext<'g>,
+        package_version_range: package_version_range::Model,
     ) -> Self {
         Self {
             package: package.clone(),
@@ -19,8 +16,6 @@ impl<'g> From<(&PackageContext<'g>, entity::package_version_range::Model)>
         }
     }
 }
-
-impl PackageVersionRangeContext<'_> {}
 
 /// Context for package with
 #[derive(Clone)]

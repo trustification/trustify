@@ -14,17 +14,10 @@ impl Debug for NotAffectedPackageVersionContext<'_> {
     }
 }
 
-impl<'g>
-    From<(
-        &AdvisoryVulnerabilityContext<'g>,
-        not_affected_package_version::Model,
-    )> for NotAffectedPackageVersionContext<'g>
-{
-    fn from(
-        (advisory_vulnerability, not_affected_package_version): (
-            &AdvisoryVulnerabilityContext<'g>,
-            not_affected_package_version::Model,
-        ),
+impl<'g> NotAffectedPackageVersionContext<'g> {
+    pub fn new(
+        advisory_vulnerability: &AdvisoryVulnerabilityContext<'g>,
+        not_affected_package_version: not_affected_package_version::Model,
     ) -> Self {
         Self {
             advisory_vulnerability: advisory_vulnerability.clone(),
