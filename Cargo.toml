@@ -6,7 +6,7 @@ members = [
   "common/auth",
   "common/infrastructure",
   "cvss",
-  "modules/graph",
+  "modules/fetch",
   "modules/importer",
   "modules/ingestor",
   "modules/search",
@@ -104,7 +104,7 @@ trustify-cvss = { path = "cvss" }
 trustify-auth = { path = "common/auth", features = ["actix", "swagger"] }
 trustify-migration = { path = "migration" }
 trustify-entity = { path = "entity" }
-trustify-module-graph = { path = "modules/graph" }
+trustify-module-fetch = { path = "modules/fetch" }
 trustify-module-ingestor = { path = "modules/ingestor" }
 trustify-module-importer = { path = "modules/importer" }
 trustify-module-search = { path = "modules/search" }

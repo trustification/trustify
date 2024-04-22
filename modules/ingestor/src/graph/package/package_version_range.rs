@@ -20,8 +20,8 @@ impl<'g> PackageVersionRangeContext<'g> {
 /// Context for package with
 #[derive(Clone)]
 pub struct PackageVersionRangeContext<'g> {
-    pub(crate) package: PackageContext<'g>,
-    pub(crate) package_version_range: entity::package_version_range::Model,
+    pub package: PackageContext<'g>,
+    pub package_version_range: entity::package_version_range::Model,
 }
 
 impl Debug for PackageVersionRangeContext<'_> {

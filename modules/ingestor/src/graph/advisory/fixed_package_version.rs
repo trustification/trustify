@@ -4,8 +4,8 @@ use trustify_entity::fixed_package_version;
 
 #[derive(Clone)]
 pub struct FixedPackageVersionContext<'g> {
-    pub(crate) advisory_vulnerability: AdvisoryVulnerabilityContext<'g>,
-    pub(crate) fixed_package_version: fixed_package_version::Model,
+    pub advisory_vulnerability: AdvisoryVulnerabilityContext<'g>,
+    pub fixed_package_version: fixed_package_version::Model,
 }
 
 impl Debug for FixedPackageVersionContext<'_> {

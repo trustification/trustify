@@ -1,4 +1,4 @@
-use crate::{endpoints::Error, graph::Graph};
+use crate::{endpoints::Error};
 use actix_web::{get, web, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -23,7 +23,7 @@ pub struct PackageParams {
 )]
 #[get("/package/{purl}/dependencies")]
 pub async fn dependencies(
-    state: web::Data<Graph>,
+    //state: web::Data<Graph>,
     purl: web::Path<String>,
     params: web::Query<PackageParams>,
     authorizer: web::Data<Authorizer>,
@@ -36,14 +36,14 @@ pub async fn dependencies(
     /*
     if matches!(params.transitive, Some(true)) {
         let tree = state
-            .graph
+            .fetch
             .transitive_package_dependencies(purl.clone(), Transactional::None)
             .await
             .map_err(Error::from)?;
         Ok(HttpResponse::Ok().json(tree))
     } else {
         let dependencies = state
-            .graph
+            .fetch
             .direct_dependencies(purl.clone(), Transactional::None)
             .await
             .map_err(Error::from)?;
@@ -65,7 +65,7 @@ pub async fn dependencies(
 )]
 #[get("/package/{purl}/dependents")]
 pub async fn dependents(
-    state: web::Data<Graph>,
+    //state: web::Data<Graph>,
     purl: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().finish())
@@ -81,14 +81,14 @@ pub async fn dependents(
 )]
 #[get("/package/{purl}/variants")]
 pub async fn variants(
-    state: web::Data<Graph>,
+    //state: web::Data<Graph>,
     purl: web::Path<String>,
 ) -> Result<impl Responder, Error> {
     let purl: Purl = Purl::from_str(&purl)?;
 
     /*
     let response = state
-        .graph
+        .fetch
         .package_variants(purl)
         .await
         .map_err(Error::System)?;
@@ -108,7 +108,7 @@ pub async fn variants(
 )]
 #[get("/package/{purl}/vulnerabilities")]
 pub async fn vulnerabilities(
-    state: web::Data<Graph>,
+    //state: web::Data<Graph>,
     purl: web::Path<String>,
     params: web::Query<PackageParams>,
 ) -> actix_web::Result<impl Responder> {
@@ -132,16 +132,16 @@ mod tests {
     #[actix_web::test]
     async fn direct_dependencies() -> Result<(), anyhow::Error> {
         let state = Arc::new(AppState {
-            graph: bootstrap_system("package-dependencies").await?,
+            fetch: bootstrap_system("package-dependencies").await?,
         });
 
         let sbom = state
-            .graph
+            .fetch
             .ingest_sbom("http://test.com/package-dependencies", "7")
             .await?;
 
         state
-            .graph
+            .fetch
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
@@ -151,7 +151,7 @@ mod tests {
             .await?;
 
         state
-            .graph
+            .fetch
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
@@ -161,7 +161,7 @@ mod tests {
             .await?;
 
         state
-            .graph
+            .fetch
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 "pkg:maven/com.test/package-acd@1.0?type=jar",
@@ -171,7 +171,7 @@ mod tests {
             .await?;
 
         state
-            .graph
+            .fetch
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
@@ -206,16 +206,16 @@ mod tests {
     #[actix_web::test]
     async fn transitive_dependencies() -> Result<(), anyhow::Error> {
         let state = Arc::new(AppState {
-            graph: bootstrap_system("package-transitive-dependencies").await?,
+            fetch: bootstrap_system("package-transitive-dependencies").await?,
         });
 
         let sbom = state
-            .graph
+            .fetch
             .ingest_sbom("http://test.com/package-transitive-dependencies", "8")
             .await?;
 
         state
-            .graph
+            .fetch
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
@@ -225,7 +225,7 @@ mod tests {
             .await?;
 
         state
-            .graph
+            .fetch
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-a@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
@@ -235,7 +235,7 @@ mod tests {
             .await?;
 
         state
-            .graph
+            .fetch
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
                 "pkg:maven/com.test/package-acd@1.0?type=jar",
@@ -245,7 +245,7 @@ mod tests {
             .await?;
 
         state
-            .graph
+            .fetch
             .ingest_package_dependency(
                 "pkg:maven/com.test/package-ab@1.0?type=jar",
                 "pkg:maven/com.test/package-ac@1.0?type=jar",
@@ -284,31 +284,31 @@ mod tests {
     #[actix_web::test]
     async fn variants() -> Result<(), anyhow::Error> {
         let state = Arc::new(AppState {
-            graph: bootstrap_system("package-variants").await?,
+            fetch: bootstrap_system("package-variants").await?,
         });
 
         state
-            .graph
+            .fetch
             .ingest_package("pkg://maven/com.foo/test@1.2", Transactional::None)
             .await?;
         state
-            .graph
+            .fetch
             .ingest_package("pkg://maven/com.foo/test@1.3", Transactional::None)
             .await?;
         state
-            .graph
+            .fetch
             .ingest_package("pkg://maven/com.foo/test@1.4", Transactional::None)
             .await?;
         state
-            .graph
+            .fetch
             .ingest_package("pkg://maven/com.foo/test@1.5", Transactional::None)
             .await?;
         state
-            .graph
+            .fetch
             .ingest_package("pkg://maven/com.foo/test@1.6", Transactional::None)
             .await?;
         state
-            .graph
+            .fetch
             .ingest_package("pkg://maven/com.foo/test@1.6?foo=bar", Transactional::None)
             .await?;
 

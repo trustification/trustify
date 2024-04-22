@@ -20,8 +20,8 @@ use trustify_entity::qualified_package::Qualifiers;
 /// Live context for a package version.
 #[derive(Clone)]
 pub struct PackageVersionContext<'g> {
-    pub(crate) package: PackageContext<'g>,
-    pub(crate) package_version: entity::package_version::Model,
+    pub package: PackageContext<'g>,
+    pub package_version: entity::package_version::Model,
 }
 
 impl Debug for PackageVersionContext<'_> {
@@ -158,7 +158,7 @@ impl<'g> PackageVersionContext<'g> {
 
     /// Retrieve known variants of this package version.
     ///
-    /// Non-mutating to the graph.
+    /// Non-mutating to the fetch.
     pub async fn get_variants<TX: AsRef<Transactional>>(
         &self,
         pkg: Purl,

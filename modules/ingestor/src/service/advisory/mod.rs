@@ -2,7 +2,7 @@ use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader}
 use crate::service::Error;
 use std::io::Read;
 use std::str::FromStr;
-use trustify_module_graph::graph::Graph;
+use crate::graph::Graph;
 
 pub mod csaf;
 pub mod osv;

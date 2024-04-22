@@ -3,7 +3,7 @@ use anyhow::anyhow;
 use bytes::Bytes;
 use futures::Stream;
 use std::time::Instant;
-use trustify_module_graph::graph::sbom::spdx::{parse_spdx, Information};
+use crate::graph::sbom::spdx::{parse_spdx, Information};
 use trustify_module_storage::service::{StorageBackend, SyncAdapter};
 
 impl super::IngestorService {

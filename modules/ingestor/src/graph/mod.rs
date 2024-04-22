@@ -70,7 +70,7 @@ impl Graph {
         Ok(Transactional::Some(self.db.begin().await?))
     }
 
-    pub(crate) fn connection<'db, TX: AsRef<Transactional>>(
+    pub fn connection<'db, TX: AsRef<Transactional>>(
         &'db self,
         tx: &'db TX,
     ) -> ConnectionOrTransaction {

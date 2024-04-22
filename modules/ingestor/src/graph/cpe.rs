@@ -62,7 +62,7 @@ impl Graph {
         }
     }
 
-    pub(crate) async fn get_cpe_by_query<TX: AsRef<Transactional>>(
+    pub async fn get_cpe_by_query<TX: AsRef<Transactional>>(
         &self,
         query: SelectStatement,
         tx: TX,

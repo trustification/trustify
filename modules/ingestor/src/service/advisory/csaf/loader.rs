@@ -7,9 +7,9 @@ use std::io::Read;
 use time::OffsetDateTime;
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
-use trustify_module_graph::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
-use trustify_module_graph::graph::advisory::{AdvisoryContext, AdvisoryInformation};
-use trustify_module_graph::graph::Graph;
+use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
+use crate::graph::advisory::{AdvisoryContext, AdvisoryInformation};
+use crate::graph::Graph;
 
 struct Information<'a>(&'a Csaf);
 

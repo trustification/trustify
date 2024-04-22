@@ -1,15 +1,15 @@
 use crate::service::{cve::cve_record::v5::CveRecord, hashing::HashingRead, Error};
 use std::io::Read;
-use trustify_module_graph::graph::Graph;
+use crate::graph::Graph;
 
 /// Loader capable of parsing a CVE Record JSON file
 /// and manipulating the Graph to integrate it into
 /// the knowledge base.
 ///
 /// Should result in ensuring that a *vulnerability*
-/// related to the CVE Record exists in the graph, _along with_
+/// related to the CVE Record exists in the fetch, _along with_
 /// also ensuring that the CVE *advisory* ends up also
-/// in the graph.
+/// in the fetch.
 pub struct CveLoader<'g> {
     graph: &'g Graph,
 }

@@ -28,7 +28,7 @@ pub mod package_version_range;
 pub mod qualified_package;
 
 impl Graph {
-    /// Ensure the graph knows about and contains a record for a *fully-qualified* package.
+    /// Ensure the fetch knows about and contains a record for a *fully-qualified* package.
     ///
     /// This method will ensure the versioned package being referenced is also ingested.
     ///
@@ -48,7 +48,7 @@ impl Graph {
         package_version.ingest_qualified_package(purl, &tx).await
     }
 
-    /// Ensure the graph knows about and contains a record for a *versioned* package.
+    /// Ensure the fetch knows about and contains a record for a *versioned* package.
     ///
     /// This method will ensure the package being referenced is also ingested.
     pub async fn ingest_package_version<TX: AsRef<Transactional>>(
@@ -64,7 +64,7 @@ impl Graph {
         package.ingest_package_version(pkg.clone(), &tx).await
     }
 
-    /// Ensure the graph knows about and contains a record for a *versioned range* of a package.
+    /// Ensure the fetch knows about and contains a record for a *versioned range* of a package.
     ///
     /// This method will ensure the package being referenced is also ingested.
     pub async fn ingest_package_version_range<TX: AsRef<Transactional>>(
@@ -81,7 +81,7 @@ impl Graph {
             .await
     }
 
-    /// Ensure the graph knows about and contains a record for a *versionless* package.
+    /// Ensure the fetch knows about and contains a record for a *versionless* package.
     ///
     /// This method will ensure the package being referenced is also ingested.
     pub async fn ingest_package<TX: AsRef<Transactional>>(
@@ -108,7 +108,7 @@ impl Graph {
 
     /// Retrieve a *fully-qualified* package entry, if it exists.
     ///
-    /// Non-mutating to the graph.
+    /// Non-mutating to the fetch.
     pub async fn get_qualified_package<TX: AsRef<Transactional>>(
         &self,
         purl: Purl,
@@ -121,7 +121,7 @@ impl Graph {
         }
     }
 
-    pub(crate) async fn get_qualified_package_by_id<TX: AsRef<Transactional>>(
+    pub async fn get_qualified_package_by_id<TX: AsRef<Transactional>>(
         &self,
         id: i32,
         tx: TX,
@@ -147,7 +147,7 @@ impl Graph {
         }
     }
 
-    pub(crate) async fn get_qualified_packages_by_query<TX: AsRef<Transactional>>(
+    pub async fn get_qualified_packages_by_query<TX: AsRef<Transactional>>(
         &self,
         query: SelectStatement,
         tx: TX,
@@ -175,7 +175,7 @@ impl Graph {
 
     /// Retrieve a *versioned* package entry, if it exists.
     ///
-    /// Non-mutating to the graph.
+    /// Non-mutating to the fetch.
     pub async fn get_package_version<TX: AsRef<Transactional>>(
         &self,
         purl: Purl,
@@ -188,7 +188,7 @@ impl Graph {
         }
     }
 
-    pub(crate) async fn get_package_version_by_id<TX: AsRef<Transactional>>(
+    pub async fn get_package_version_by_id<TX: AsRef<Transactional>>(
         &self,
         id: i32,
         tx: TX,
@@ -212,7 +212,7 @@ impl Graph {
 
     /// Retrieve a *version range* of a package entry, if it exists.
     ///
-    /// Non-mutating to the graph.
+    /// Non-mutating to the fetch.
     pub async fn get_package_version_range<TX: AsRef<Transactional>>(
         &self,
         purl: Purl,
@@ -229,7 +229,7 @@ impl Graph {
 
     /// Retrieve a *versionless* package entry, if it exists.
     ///
-    /// Non-mutating to the graph.
+    /// Non-mutating to the fetch.
     pub async fn get_package<TX: AsRef<Transactional>>(
         &self,
         purl: Purl,
@@ -248,7 +248,7 @@ impl Graph {
             .map(|package| PackageContext::new(self, package)))
     }
 
-    pub(crate) async fn get_package_by_id<TX: AsRef<Transactional>>(
+    pub async fn get_package_by_id<TX: AsRef<Transactional>>(
         &self,
         id: i32,
         tx: TX,
@@ -267,8 +267,8 @@ impl Graph {
 /// Live context for base package.
 #[derive(Clone)]
 pub struct PackageContext<'g> {
-    pub(crate) graph: &'g Graph,
-    pub(crate) package: entity::package::Model,
+    pub graph: &'g Graph,
+    pub package: entity::package::Model,
 }
 
 impl Debug for PackageContext<'_> {
@@ -282,7 +282,7 @@ impl<'g> PackageContext<'g> {
         Self { graph, package }
     }
 
-    /// Ensure the graph knows about and contains a record for a *version range* of this package.
+    /// Ensure the fetch knows about and contains a record for a *version range* of this package.
     pub async fn ingest_package_version_range<TX: AsRef<Transactional>>(
         &self,
         purl: Purl,
@@ -312,7 +312,7 @@ impl<'g> PackageContext<'g> {
 
     /// Retrieve a *version range* package entry for this package, if it exists.
     ///
-    /// Non-mutating to the graph.
+    /// Non-mutating to the fetch.
     pub async fn get_package_version_range<TX: AsRef<Transactional>>(
         &self,
         purl: Purl,
@@ -331,7 +331,7 @@ impl<'g> PackageContext<'g> {
             }))
     }
 
-    /// Ensure the graph knows about and contains a record for a *version* of this package.
+    /// Ensure the fetch knows about and contains a record for a *version* of this package.
     pub async fn ingest_package_version<TX: AsRef<Transactional>>(
         &self,
         purl: Purl,
@@ -359,7 +359,7 @@ impl<'g> PackageContext<'g> {
 
     /// Retrieve a *version* package entry for this package, if it exists.
     ///
-    /// Non-mutating to the graph.
+    /// Non-mutating to the fetch.
     pub async fn get_package_version<TX: AsRef<Transactional>>(
         &self,
         purl: Purl,
@@ -383,7 +383,7 @@ impl<'g> PackageContext<'g> {
 
     /// Retrieve known versions of this package.
     ///
-    /// Non-mutating to the graph.
+    /// Non-mutating to the fetch.
     pub async fn get_versions<TX: AsRef<Transactional>>(
         &self,
         tx: TX,
