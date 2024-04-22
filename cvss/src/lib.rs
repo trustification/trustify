@@ -11,7 +11,7 @@ pub enum CvssBase {
     Cvss4(Cvss4Base),
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum CvssError {
     MajorVersion,
     Cvss3(Cvss3Error),

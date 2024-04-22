@@ -7,6 +7,8 @@ use crate::model::advisory::{
 use crate::model::vulnerability::Vulnerability;
 use actix_web::{get, web, HttpResponse, Responder};
 use trustify_common::model::{Paginated, PaginatedResults};
+use trustify_cvss::cvss3::score::Score;
+use trustify_cvss::cvss3::severity::Severity;
 use trustify_module_search::model::SearchOptions;
 
 #[utoipa::path(
@@ -44,17 +46,31 @@ pub async fn all(
         let advisory_vulnerabilities =
             advisory.vulnerabilities(&tx).await.map_err(Error::System)?;
 
-        for advisory_vulnerability in advisory_vulnerabilities {
-            if let Some(vulnerability) = advisory_vulnerability
+        for advisory_vuln in advisory_vulnerabilities {
+            if let Some(vulnerability) = advisory_vuln
                 .vulnerability(&tx)
                 .await
                 .map_err(Error::System)?
             {
+                let cvss3_scores = advisory_vuln
+                    .cvss3_scores(&tx)
+                    .await
+                    .map_err(Error::System)?;
+
+                let score = if let Some(average) = cvss3_scores
+                    .iter()
+                    .map(|e| e.score().value())
+                    .reduce(|accum, e| accum + e)
+                {
+                    Score::new(average)
+                } else {
+                    Score::new(0.0)
+                };
+
                 let summary = AdvisoryVulnerabilitySummary {
                     vulnerability_id: vulnerability.vulnerability.identifier,
-                    // TODO populate these
-                    severity: "".to_string(),
-                    score: 0.0,
+                    severity: score.severity().to_string(),
+                    score: score.value(),
                 };
                 vulnerability_summaries.push(summary);
             }

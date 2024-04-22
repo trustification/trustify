@@ -1,5 +1,10 @@
+use crate::cvss3::score::Score;
+use crate::cvss3::severity::Severity;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+
+pub mod score;
+pub mod severity;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Cvss3Base {
@@ -14,6 +19,93 @@ pub struct Cvss3Base {
     pub a: Availability,
 }
 
+impl Cvss3Base {
+    /// Calculate Base CVSS score: overall value for determining the severity
+    /// of a vulnerability, generally referred to as the "CVSS score".
+    ///
+    /// Described in CVSS v3.1 Specification: Section 2:
+    /// <https://www.first.org/cvss/specification-document#t6>
+    ///
+    /// > When the Base metrics are assigned values by an analyst, the Base
+    /// > equation computes a score ranging from 0.0 to 10.0.
+    /// >
+    /// > Specifically, the Base equation is derived from two sub equations:
+    /// > the Exploitability sub-score equation, and the Impact sub-score
+    /// > equation. The Exploitability sub-score equation is derived from the
+    /// > Base Exploitability metrics, while the Impact sub-score equation is
+    /// > derived from the Base Impact metrics.
+    pub fn score(&self) -> Score {
+        let exploitability = self.exploitability().value();
+        let iss = self.impact().value();
+
+        let iss_scoped = if !self.is_scope_changed() {
+            6.42 * iss
+        } else {
+            (7.52 * (iss - 0.029)) - (3.25 * (iss - 0.02).powf(15.0))
+        };
+
+        let score = if iss_scoped <= 0.0 {
+            0.0
+        } else if !self.is_scope_changed() {
+            (iss_scoped + exploitability).min(10.0)
+        } else {
+            (1.08 * (iss_scoped + exploitability)).min(10.0)
+        };
+
+        Score::new(score).roundup()
+    }
+
+    /// Calculate Base Exploitability score: sub-score for measuring
+    /// ease of exploitation.
+    ///
+    /// Described in CVSS v3.1 Specification: Section 2:
+    /// <https://www.first.org/cvss/specification-document#t6>
+    ///
+    /// > The Exploitability metrics reflect the ease and technical means by which
+    /// > the vulnerability can be exploited. That is, they represent characteristics
+    /// > of *the thing that is vulnerable*, which we refer to formally as the
+    /// > *vulnerable component*.
+    pub fn exploitability(&self) -> Score {
+        let av_score = self.av.score();
+        let ac_score = self.ac.score();
+        let ui_score = self.ui.score();
+        let pr_score = self.pr.scoped_score(self.is_scope_changed());
+
+        (8.22 * av_score * ac_score * pr_score * ui_score).into()
+    }
+
+    /// Calculate Base Impact Score (ISS): sub-score for measuring the
+    /// consequences of successful exploitation.
+    ///
+    /// Described in CVSS v3.1 Specification: Section 2:
+    /// <https://www.first.org/cvss/specification-document#t6>
+    ///
+    /// > The Impact metrics reflect the direct consequence
+    /// > of a successful exploit, and represent the consequence to the
+    /// > *thing that suffers the impact*, which we refer to formally as the
+    /// > *impacted component*.
+    pub fn impact(&self) -> Score {
+        let c_score = self.c.score();
+        let i_score = self.i.score();
+        let a_score = self.a.score();
+        (1.0 - ((1.0 - c_score) * (1.0 - i_score) * (1.0 - a_score)).abs()).into()
+    }
+
+    /// Calculate Base CVSS `Severity` according to the
+    /// Qualitative Severity Rating Scale (i.e. Low / Medium / High / Critical)
+    ///
+    /// Described in CVSS v3.1 Specification: Section 5:
+    /// <https://www.first.org/cvss/specification-document#t17>
+    pub fn severity(&self) -> Severity {
+        self.score().severity()
+    }
+
+    /// Has the scope changed?
+    fn is_scope_changed(&self) -> bool {
+        self.s.is_changed()
+    }
+}
+
 // Serialize Cvss3 scores back as a string, reconstituted from
 // the column deconstructed variant we're storing.
 impl Display for Cvss3Base {
@@ -26,7 +118,7 @@ impl Display for Cvss3Base {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub enum Cvss3Error {
     Invalid,
     MinorVersion,
@@ -38,6 +130,7 @@ pub enum Cvss3Error {
     Confidentiality,
     Integrity,
     Availability,
+    InvalidSeverity { name: String },
 }
 
 impl Display for Cvss3Error {
@@ -126,10 +219,30 @@ impl FromStr for AttackVector {
     }
 }
 
+impl AttackVector {
+    fn score(self) -> f64 {
+        match self {
+            AttackVector::Physical => 0.20,
+            AttackVector::Local => 0.55,
+            AttackVector::Adjacent => 0.62,
+            AttackVector::Network => 0.85,
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub enum AttackComplexity {
     Low,
     High,
+}
+
+impl AttackComplexity {
+    fn score(self) -> f64 {
+        match self {
+            AttackComplexity::High => 0.44,
+            AttackComplexity::Low => 0.77,
+        }
+    }
 }
 
 impl Display for AttackComplexity {
@@ -165,6 +278,28 @@ pub enum PrivilegesRequired {
     None,
     Low,
     High,
+}
+
+impl PrivilegesRequired {
+    pub fn scoped_score(self, scope_change: bool) -> f64 {
+        match self {
+            PrivilegesRequired::High => {
+                if scope_change {
+                    0.50
+                } else {
+                    0.27
+                }
+            }
+            PrivilegesRequired::Low => {
+                if scope_change {
+                    0.68
+                } else {
+                    0.62
+                }
+            }
+            PrivilegesRequired::None => 0.85,
+        }
+    }
 }
 
 impl Display for PrivilegesRequired {
@@ -203,6 +338,15 @@ pub enum UserInteraction {
     Required,
 }
 
+impl UserInteraction {
+    fn score(self) -> f64 {
+        match self {
+            UserInteraction::Required => 0.62,
+            UserInteraction::None => 0.85,
+        }
+    }
+}
+
 impl Display for UserInteraction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -231,10 +375,16 @@ impl FromStr for UserInteraction {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Scope {
     Unchanged,
     Changed,
+}
+
+impl Scope {
+    pub fn is_changed(self) -> bool {
+        self == Scope::Changed
+    }
 }
 
 impl Display for Scope {
@@ -270,6 +420,16 @@ pub enum Confidentiality {
     None,
     Low,
     High,
+}
+
+impl Confidentiality {
+    fn score(self) -> f64 {
+        match self {
+            Confidentiality::None => 0.0,
+            Confidentiality::Low => 0.22,
+            Confidentiality::High => 0.56,
+        }
+    }
 }
 
 impl Display for Confidentiality {
@@ -309,6 +469,16 @@ pub enum Integrity {
     High,
 }
 
+impl Integrity {
+    fn score(self) -> f64 {
+        match self {
+            Integrity::None => 0.0,
+            Integrity::Low => 0.22,
+            Integrity::High => 0.56,
+        }
+    }
+}
+
 impl Display for Integrity {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -344,6 +514,16 @@ pub enum Availability {
     None,
     Low,
     High,
+}
+
+impl Availability {
+    fn score(self) -> f64 {
+        match self {
+            Availability::None => 0.0,
+            Availability::Low => 0.22,
+            Availability::High => 0.56,
+        }
+    }
 }
 
 impl Display for Availability {
