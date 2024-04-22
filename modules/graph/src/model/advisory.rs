@@ -22,17 +22,19 @@ pub struct AdvisorySummary {
     #[serde(with = "time::serde::rfc3339::option")]
     pub withdrawn: Option<OffsetDateTime>,
     pub title: Option<String>,
+    pub vulnerability_ids: Vec<String>,
 }
 
-impl From<Model> for AdvisorySummary {
-    fn from(value: Model) -> Self {
+impl AdvisorySummary {
+    pub fn new(advisory: Model, mut vulnerability_ids: Vec<String>) -> Self {
         Self {
-            identifier: value.identifier,
-            sha256: value.sha256,
-            published: value.published,
-            modified: value.modified,
-            withdrawn: value.withdrawn,
-            title: value.title,
+            identifier: advisory.identifier,
+            sha256: advisory.sha256,
+            published: advisory.published,
+            modified: advisory.modified,
+            withdrawn: advisory.withdrawn,
+            title: advisory.title,
+            vulnerability_ids,
         }
     }
 }
@@ -56,7 +58,7 @@ pub struct AdvisoryDetails {
 }
 
 impl AdvisoryDetails {
-    pub fn new_summary(advisory: Model, vulnerabilities: Vec<AdvisoryVulnerability>) -> Self {
+    pub fn new(advisory: Model, vulnerabilities: Vec<AdvisoryVulnerability>) -> Self {
         Self {
             identifier: advisory.identifier,
             sha256: advisory.sha256,
@@ -72,7 +74,7 @@ impl AdvisoryDetails {
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct AdvisoryVulnerability {
     pub vulnerability_id: String,
-    #[schema(default, value_type = Vec<String>)]
+    #[schema(default, value_type = Vec < String >)]
     pub cvss3_scores: Vec<String>,
     #[serde(flatten)]
     pub assertions: AdvisoryVulnerabilityAssertions,

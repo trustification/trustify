@@ -4,19 +4,19 @@ use crate::graph::Graph;
 use crate::model::advisory::{AdvisoryDetails, AdvisorySummary, AdvisoryVulnerability};
 use crate::model::vulnerability::Vulnerability;
 use actix_web::{get, web, HttpResponse, Responder};
-use trustify_common::model::Paginated;
+use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_module_search::model::SearchOptions;
 
 #[utoipa::path(
-    context_path = "/api/v1/advisory",
-    tag = "advisory",
-    params(
-	SearchOptions,
-	Paginated,
-    ),
-    responses(
-	(status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
-    ),
+context_path = "/api/v1/advisory",
+tag = "advisory",
+params(
+SearchOptions,
+Paginated,
+),
+responses(
+(status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
+),
 )]
 #[get("")]
 pub async fn all(
@@ -24,24 +24,49 @@ pub async fn all(
     web::Query(search): web::Query<SearchOptions>,
     web::Query(paginated): web::Query<Paginated>,
 ) -> actix_web::Result<impl Responder> {
-    let results = state
-        .advisories(search, paginated, ())
+    let tx = state.transaction().await.map_err(Error::System)?;
+
+    let advisory_contexts = state
+        .advisories(search, paginated, &tx)
         .await
-        .map_err(Error::System)?
-        .map(|e| AdvisorySummary::from(e.advisory));
+        .map_err(Error::System)?;
+
+    let mut results = PaginatedResults {
+        items: vec![],
+        total: advisory_contexts.total,
+    };
+
+    for advisory in advisory_contexts.items {
+        let mut vulnerability_ids = Vec::new();
+
+        let advisory_vulnerabilities =
+            advisory.vulnerabilities(&tx).await.map_err(Error::System)?;
+        for advisory_vulnerability in advisory_vulnerabilities {
+            if let Some(vulnerability) = advisory_vulnerability
+                .vulnerability(&tx)
+                .await
+                .map_err(Error::System)?
+            {
+                vulnerability_ids.push(vulnerability.vulnerability.identifier);
+            }
+        }
+        results
+            .items
+            .push(AdvisorySummary::new(advisory.advisory, vulnerability_ids))
+    }
 
     Ok(HttpResponse::Ok().json(results))
 }
 
 #[utoipa::path(
-    context_path = "/api/v1/advisory",
-    tag = "advisory",
-    params(
-	("sha256", Path, description = "SHA256 of the advisory")
-    ),
-    responses(
-	(status = 200, description = "Matching advisory", body = AdvisoryDetails),
-    ),
+context_path = "/api/v1/advisory",
+tag = "advisory",
+params(
+("sha256", Path, description = "SHA256 of the advisory")
+),
+responses(
+(status = 200, description = "Matching advisory", body = AdvisoryDetails),
+),
 )]
 #[get("/{sha256}")]
 pub async fn get(
@@ -84,10 +109,7 @@ pub async fn get(
             }
         }
 
-        let result_advisory =
-            AdvisoryDetails::new_summary(advisory.advisory, advisory_vulnerabilities);
-
-        println!("RETURN {:#?}", result_advisory);
+        let result_advisory = AdvisoryDetails::new(advisory.advisory, advisory_vulnerabilities);
 
         Ok(HttpResponse::Ok().json(result_advisory))
     } else {
@@ -108,6 +130,10 @@ mod test {
     use time::OffsetDateTime;
     use trustify_common::db::Database;
     use trustify_common::model::PaginatedResults;
+    use trustify_cvss::cvss3::{
+        AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
+        PrivilegesRequired, Scope, UserInteraction,
+    };
 
     #[test(actix_web::test)]
     async fn all_advisories() -> Result<(), anyhow::Error> {
@@ -135,6 +161,24 @@ mod test {
             )
             .await?;
 
+        let advisory_vuln = advisory.link_to_vulnerability("CVE-123", ()).await?;
+        advisory_vuln
+            .ingest_cvss3_score(
+                Cvss3Base {
+                    minor_version: 0,
+                    av: AttackVector::Network,
+                    ac: AttackComplexity::Low,
+                    pr: PrivilegesRequired::None,
+                    ui: UserInteraction::None,
+                    s: Scope::Unchanged,
+                    c: Confidentiality::None,
+                    i: Integrity::None,
+                    a: Availability::None,
+                },
+                (),
+            )
+            .await?;
+
         let advisory = graph
             .ingest_advisory(
                 "RHSA-2",
@@ -157,6 +201,14 @@ mod test {
             actix_web::test::call_and_read_body_json(&app, request).await;
 
         assert_eq!(2, response.items.len());
+
+        let rhsa_1 = &response.items.iter().find(|e| e.identifier == "RHSA-1");
+
+        assert!(rhsa_1.is_some());
+
+        let rhsa_1 = rhsa_1.unwrap();
+
+        assert!(rhsa_1.vulnerability_ids.contains(&"CVE-123".to_string()));
 
         Ok(())
     }
@@ -201,6 +253,24 @@ mod test {
             )
             .await?;
 
+        let advisory_vuln = advisory.link_to_vulnerability("CVE-123", ()).await?;
+        advisory_vuln
+            .ingest_cvss3_score(
+                Cvss3Base {
+                    minor_version: 0,
+                    av: AttackVector::Network,
+                    ac: AttackComplexity::Low,
+                    pr: PrivilegesRequired::None,
+                    ui: UserInteraction::None,
+                    s: Scope::Unchanged,
+                    c: Confidentiality::None,
+                    i: Integrity::None,
+                    a: Availability::None,
+                },
+                (),
+            )
+            .await?;
+
         let uri = "/api/v1/advisory/8675319";
 
         let request = TestRequest::get().uri(uri).to_request();
@@ -208,7 +278,11 @@ mod test {
         let response: AdvisoryDetails =
             actix_web::test::call_and_read_body_json(&app, request).await;
 
-        println!("{:#?}", response);
+        assert_eq!(1, response.vulnerabilities.len());
+
+        let vuln = &response.vulnerabilities[0];
+
+        assert_eq!(1, vuln.cvss3_scores.len());
 
         Ok(())
     }
