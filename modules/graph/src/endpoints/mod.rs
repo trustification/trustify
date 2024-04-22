@@ -52,7 +52,8 @@ pub fn configure(config: &mut web::ServiceConfig) {
     ),
     components(schemas(
         crate::model::advisory::AdvisoryDetails,
-        crate::model::advisory::AdvisoryVulnerability,
+        crate::model::advisory::AdvisoryVulnerabilitySummary,
+        crate::model::advisory::AdvisoryVulnerabilityDetails,
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
     )),

@@ -1,22 +1,24 @@
 use crate::endpoints::vulnerability::advisories;
 use crate::endpoints::Error;
 use crate::graph::Graph;
-use crate::model::advisory::{AdvisoryDetails, AdvisorySummary, AdvisoryVulnerability};
+use crate::model::advisory::{
+    AdvisoryDetails, AdvisorySummary, AdvisoryVulnerabilityDetails, AdvisoryVulnerabilitySummary,
+};
 use crate::model::vulnerability::Vulnerability;
 use actix_web::{get, web, HttpResponse, Responder};
 use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_module_search::model::SearchOptions;
 
 #[utoipa::path(
-context_path = "/api/v1/advisory",
-tag = "advisory",
-params(
-SearchOptions,
-Paginated,
-),
-responses(
-(status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
-),
+    context_path = "/api/v1/advisory",
+    tag = "advisory",
+    params(
+        SearchOptions,
+        Paginated,
+    ),
+    responses(
+        (status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
+    ),
 )]
 #[get("")]
 pub async fn all(
@@ -37,36 +39,44 @@ pub async fn all(
     };
 
     for advisory in advisory_contexts.items {
-        let mut vulnerability_ids = Vec::new();
+        let mut vulnerability_summaries = Vec::new();
 
         let advisory_vulnerabilities =
             advisory.vulnerabilities(&tx).await.map_err(Error::System)?;
+
         for advisory_vulnerability in advisory_vulnerabilities {
             if let Some(vulnerability) = advisory_vulnerability
                 .vulnerability(&tx)
                 .await
                 .map_err(Error::System)?
             {
-                vulnerability_ids.push(vulnerability.vulnerability.identifier);
+                let summary = AdvisoryVulnerabilitySummary {
+                    vulnerability_id: vulnerability.vulnerability.identifier,
+                    // TODO populate these
+                    severity: "".to_string(),
+                    score: 0.0,
+                };
+                vulnerability_summaries.push(summary);
             }
         }
-        results
-            .items
-            .push(AdvisorySummary::new(advisory.advisory, vulnerability_ids))
+        results.items.push(AdvisorySummary::new(
+            advisory.advisory,
+            vulnerability_summaries,
+        ))
     }
 
     Ok(HttpResponse::Ok().json(results))
 }
 
 #[utoipa::path(
-context_path = "/api/v1/advisory",
-tag = "advisory",
-params(
-("sha256", Path, description = "SHA256 of the advisory")
-),
-responses(
-(status = 200, description = "Matching advisory", body = AdvisoryDetails),
-),
+    context_path = "/api/v1/advisory",
+    tag = "advisory",
+    params(
+        ("sha256", Path, description = "SHA256 of the advisory")
+    ),
+    responses(
+        (status = 200, description = "Matching advisory", body = AdvisoryDetails),
+    ),
 )]
 #[get("/{sha256}")]
 pub async fn get(
@@ -101,7 +111,7 @@ pub async fn get(
                     .await
                     .map_err(Error::System)?;
 
-                advisory_vulnerabilities.push(AdvisoryVulnerability {
+                advisory_vulnerabilities.push(AdvisoryVulnerabilityDetails {
                     vulnerability_id: vuln.vulnerability.identifier,
                     cvss3_scores,
                     assertions,
@@ -208,7 +218,10 @@ mod test {
 
         let rhsa_1 = rhsa_1.unwrap();
 
-        assert!(rhsa_1.vulnerability_ids.contains(&"CVE-123".to_string()));
+        assert!(rhsa_1
+            .vulnerabilities
+            .iter()
+            .any(|e| e.vulnerability_id == "CVE-123"));
 
         Ok(())
     }
