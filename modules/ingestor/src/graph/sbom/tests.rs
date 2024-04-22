@@ -525,9 +525,9 @@ async fn ingest_contains_packages() -> Result<(), anyhow::Error> {
     .is_test(true)
     .init();
 
-        let graph = InnerSystem::for_test("ingest_contains_packages").await?;
+        let fetch = InnerSystem::for_test("ingest_contains_packages").await?;
 
-        let sbom = graph
+        let sbom = fetch
             .ingest_sbom("http://sboms.mobi/something.json", "7", Transactional::None)
             .await?;
 
@@ -585,11 +585,11 @@ async fn ingest_and_fetch_sbom_packages() -> Result<(), anyhow::Error> {
         .init();
 
      */
-    let graph = InnerSystem::for_test("ingest_and_fetch_sbom_packages").await?;
+    let fetch = InnerSystem::for_test("ingest_and_fetch_sbom_packages").await?;
 
-    let sbom_v1 = graph.ingest_sbom("http://sbom.com/test.json", "8").await?;
-    let sbom_v2 = graph.ingest_sbom("http://sbom.com/test.json", "9").await?;
-    let sbom_v3 = graph
+    let sbom_v1 = fetch.ingest_sbom("http://sbom.com/test.json", "8").await?;
+    let sbom_v2 = fetch.ingest_sbom("http://sbom.com/test.json", "9").await?;
+    let sbom_v3 = fetch
         .ingest_sbom("http://sbom.com/test.json", "10")
         .await?;
 

@@ -4,9 +4,9 @@ mod sbom;
 use crate::service::IngestorService;
 use actix_web::web;
 use trustify_common::db::Database;
-use trustify_module_graph::graph::Graph;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use utoipa::OpenApi;
+use crate::graph::Graph;
 
 /// Mount the ingestor module
 pub fn configure(

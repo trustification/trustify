@@ -1,13 +1,13 @@
 use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
-use crate::model::advisory::AdvisoryVulnerabilityDetails;
+//use crate::model::advisory::AdvisoryVulnerabilityDetails;
 use std::fmt::{Debug, Formatter};
 use trustify_entity::affected_package_version_range;
 use trustify_entity::affected_package_version_range::Model;
 
 #[derive(Clone)]
 pub struct AffectedPackageVersionRangeContext<'g> {
-    pub(crate) advisory_vulnerability: AdvisoryVulnerabilityContext<'g>,
-    pub(crate) affected_package_version_range: affected_package_version_range::Model,
+    pub advisory_vulnerability: AdvisoryVulnerabilityContext<'g>,
+    pub affected_package_version_range: affected_package_version_range::Model,
 }
 
 impl Debug for AffectedPackageVersionRangeContext<'_> {

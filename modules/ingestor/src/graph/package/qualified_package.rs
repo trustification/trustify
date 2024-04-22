@@ -14,8 +14,8 @@ use trustify_entity::qualified_package;
 
 #[derive(Clone)]
 pub struct QualifiedPackageContext<'g> {
-    pub(crate) package_version: PackageVersionContext<'g>,
-    pub(crate) qualified_package: entity::qualified_package::Model,
+    pub package_version: PackageVersionContext<'g>,
+    pub qualified_package: entity::qualified_package::Model,
 }
 
 impl PartialEq for QualifiedPackageContext<'_> {
@@ -78,10 +78,10 @@ impl<'g> QualifiedPackageContext<'g> {
                 entity::sbom_contains_package::Column::QualifiedPackageId
                     .eq(self.qualified_package.id),
             )
-            .all(&self.package_version.package.graph.connection(tx))
+            .all(&self.package_version.package.fetch.connection(tx))
             .await?
             .drain(0..)
-            .map(|sbom| (&self.package_version.package.graph, sbom).into())
+            .map(|sbom| (&self.package_version.package.fetch, sbom).into())
             .collect())
 
          */
@@ -188,17 +188,17 @@ mod tests {
     /*
     #[tokio::test]
     async fn sboms_containing() -> Result<(), anyhow::Error> {
-        let graph = InnerSystem::for_test("sboms_containing").await?;
+        let fetch = InnerSystem::for_test("sboms_containing").await?;
 
-        let sbom1 = graph
+        let sbom1 = fetch
             .ingest_sbom("http://sbom.com/one.json", "1", Transactional::None)
             .await?;
 
-        let sbom2 = graph
+        let sbom2 = fetch
             .ingest_sbom("http://sbom.com/two.json", "2", Transactional::None)
             .await?;
 
-        let sbom3 = graph
+        let sbom3 = fetch
             .ingest_sbom("http://sbom.com/three.json", "3", Transactional::None)
             .await?;
 
@@ -223,7 +223,7 @@ mod tests {
             )
             .await?;
 
-        let pkg = graph
+        let pkg = fetch
             .ingest_qualified_package(
                 "pkg://maven/io.quarkus/quarkus-core@1.2.3",
                 Transactional::None,

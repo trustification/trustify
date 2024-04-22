@@ -139,9 +139,9 @@ impl Graph {
     /// described pURL, described CPE, or sha256 hash.
     ///
     /// Fetching by pURL, CPE or location may result in a single result where multiple
-    /// may exist in the graph in actuality.
+    /// may exist in the fetch in actuality.
     ///
-    /// If the requested SBOM does not exist in the graph, it will not exist
+    /// If the requested SBOM does not exist in the fetch, it will not exist
     /// after this query either. This function is *non-mutating*.
     pub async fn locate_sbom<TX: AsRef<Transactional>>(
         &self,
@@ -363,7 +363,7 @@ impl Graph {
 
 #[derive(Clone)]
 pub struct SbomContext {
-    pub(crate) graph: Graph,
+    pub graph: Graph,
     pub sbom: entity::sbom::Model,
 }
 
@@ -715,7 +715,7 @@ impl SbomContext {
             )
             .filter(sbom_dependency::Column::SbomId.eq(self.sbom.id))
             .find_with_related(package_qualifier::Entity)
-            .all(&self.graph.connection(tx))
+            .all(&self.fetch.connection(tx))
             .await?;
 
         Ok(packages_to_purls(found)?)

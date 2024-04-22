@@ -35,7 +35,7 @@ use trustify_infrastructure::{
     tracing::Tracing,
     Infrastructure, InfrastructureConfig, InitContext, Metrics,
 };
-use trustify_module_graph::graph::Graph;
+use trustify_module_ingestor::graph::Graph;
 use trustify_module_importer::server::importer;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use trustify_module_storage::service::fs::FileSystemBackend;
@@ -176,7 +176,6 @@ impl InitData {
                     ));
                     svc.app_data(web::Data::from(self.graph.clone()))
                         .configure(|svc| {
-                            trustify_module_graph::endpoints::configure(svc);
                             trustify_module_importer::endpoints::configure(svc, db.clone());
                             trustify_module_ingestor::endpoints::configure(
                                 svc,

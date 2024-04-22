@@ -1,3 +1,4 @@
+/*
 use crate::graph::vulnerability::VulnerabilityContext;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
@@ -86,3 +87,6 @@ pub struct AdvisoryVulnerabilityDetails {
     #[serde(flatten)]
     pub assertions: AdvisoryVulnerabilityAssertions,
 }
+
+
+ */

@@ -4,8 +4,8 @@ use trustify_entity::not_affected_package_version;
 
 #[derive(Clone)]
 pub struct NotAffectedPackageVersionContext<'g> {
-    pub(crate) advisory_vulnerability: AdvisoryVulnerabilityContext<'g>,
-    pub(crate) not_affected_package_version: not_affected_package_version::Model,
+    pub advisory_vulnerability: AdvisoryVulnerabilityContext<'g>,
+    pub not_affected_package_version: not_affected_package_version::Model,
 }
 
 impl Debug for NotAffectedPackageVersionContext<'_> {

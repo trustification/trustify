@@ -1,9 +1,11 @@
 use crate::endpoints::vulnerability::advisories;
 use crate::endpoints::Error;
-use crate::graph::Graph;
+/*
 use crate::model::advisory::{
     AdvisoryDetails, AdvisorySummary, AdvisoryVulnerabilityDetails, AdvisoryVulnerabilitySummary,
 };
+
+ */
 use crate::model::vulnerability::Vulnerability;
 use actix_web::{get, web, HttpResponse, Responder};
 use trustify_common::model::{Paginated, PaginatedResults};
@@ -24,10 +26,12 @@ use trustify_module_search::model::SearchOptions;
 )]
 #[get("")]
 pub async fn all(
-    state: web::Data<Graph>,
+    //state: web::Data<Graph>,
     web::Query(search): web::Query<SearchOptions>,
     web::Query(paginated): web::Query<Paginated>,
 ) -> actix_web::Result<impl Responder> {
+    Ok(HttpResponse::Ok().finish())
+        /*
     let tx = state.transaction().await.map_err(Error::System)?;
 
     let advisory_contexts = state
@@ -81,7 +85,10 @@ pub async fn all(
         ))
     }
 
+
+
     Ok(HttpResponse::Ok().json(results))
+         */
 }
 
 #[utoipa::path(
@@ -96,9 +103,11 @@ pub async fn all(
 )]
 #[get("/{sha256}")]
 pub async fn get(
-    state: web::Data<Graph>,
+    //state: web::Data<Graph>,
     sha256: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
+    Ok(HttpResponse::Ok().finish())
+        /*
     let tx = state.transaction().await.map_err(Error::System)?;
     if let Some(advisory) = state
         .get_advisory(&sha256, &tx)
@@ -141,8 +150,11 @@ pub async fn get(
     } else {
         Ok(HttpResponse::NotFound().finish())
     }
+
+         */
 }
 
+/*
 #[cfg(test)]
 mod test {
     use crate::graph::advisory::AdvisoryInformation;
@@ -316,3 +328,6 @@ mod test {
         Ok(())
     }
 }
+
+
+ */

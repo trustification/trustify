@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 trustify-common = { workspace = true }
 trustify-entity = { workspace = true }
-trustify-module-graph = { workspace = true }
+#trustify-module-fetch = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }
 actix-web = { workspace = true }

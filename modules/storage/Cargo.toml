@@ -5,9 +5,9 @@ edition = "2021"
 publish = false
 
 [dependencies]
-trustify-common = { path = "../../common" }
-trustify-entity = { path = "../../entity" }
-trustify-module-graph = { path = "../graph" }
+trustify-common = { workspace = true }
+trustify-entity = { workspace = true }
+#trustify-module-fetch = { path = "../fetch" }
 
 actix-web = { workspace = true }
 anyhow = { workspace = true }
