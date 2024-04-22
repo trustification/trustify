@@ -10,7 +10,7 @@ use trustify_common::config::{Database, DbStrategy, StorageConfig};
 use trustify_common::db::CreationMode;
 use trustify_infrastructure::app::http::HttpServerConfig;
 use trustify_infrastructure::endpoint::Trustify;
-use trustify_infrastructure::{Infrastructure, InfrastructureConfig};
+use trustify_infrastructure::InfrastructureConfig;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(clap::Subcommand, Debug)]
@@ -57,16 +57,9 @@ pub struct Trustd {
 }
 
 impl Trustd {
-    async fn run(self) -> anyhow::Result<ExitCode> {
-        match Infrastructure::from(self.infra.clone())
-            .run(
-                "trustd",
-                |_| async { Ok(()) },
-                |_context| async move { self.run_command().await },
-            )
-            .await
-        {
-            Ok(_) => Ok(ExitCode::SUCCESS),
+    async fn run(self) -> ExitCode {
+        match self.run_command().await {
+            Ok(code) => code,
             Err(err) => {
                 log::error!("Error: {err}");
                 for (n, err) in err.chain().skip(1).enumerate() {
@@ -75,17 +68,18 @@ impl Trustd {
                     }
                     log::error!("\t{err}");
                 }
-                Ok(ExitCode::FAILURE)
+
+                ExitCode::FAILURE
             }
         }
     }
 
-    async fn run_command(mut self) -> anyhow::Result<()> {
+    async fn run_command(mut self) -> anyhow::Result<ExitCode> {
         // to keep in scope while running.
         let mut managed_db = None;
 
         if matches!(self.database.db_strategy, DbStrategy::Managed) {
-            log::info!("setting up managed DB");
+            println!("setting up managed DB");
             use postgresql_embedded::Settings;
 
             let current_dir = env::current_dir()?;
@@ -103,16 +97,16 @@ impl Trustd {
             };
 
             let mut postgresql = PostgreSQL::new(PostgreSQL::default_version(), settings);
-            postgresql.setup().await?;
-            postgresql.start().await?;
+            postgresql.setup().await.unwrap();
+            postgresql.start().await.unwrap();
 
             let port = postgresql.settings().port;
             self.database.port = port;
 
             managed_db.replace(postgresql);
 
-            log::info!("postgresql installed under {:?}", db_dir);
-            log::info!("running on port {}", port);
+            println!("postgresql installed under {:?}", db_dir);
+            println!("running on port {}", port);
         }
 
         let mut handles = JoinSet::new();
@@ -146,7 +140,7 @@ impl Trustd {
             }
         }
 
-        Ok(())
+        Ok(ExitCode::SUCCESS)
     }
 }
 
