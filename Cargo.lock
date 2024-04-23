@@ -1560,7 +1560,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a009aa4810eb158359dda09d0c87378e4bbb89b5a801f016885a4707ba24f7ea"
 dependencies = [
  "log",
- "regex",
 ]
 
 [[package]]
@@ -1569,10 +1568,7 @@ version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "38b35839ba51819680ba087cd351788c9a3c476841207e0b8cee0b04722343b9"
 dependencies = [
- "anstream",
- "anstyle",
  "env_filter",
- "humantime",
  "log",
 ]
 
@@ -5627,7 +5623,6 @@ dependencies = [
  "async-trait",
  "cpe",
  "csaf",
- "env_logger",
  "humantime",
  "lenient_semver",
  "log",
@@ -5684,6 +5679,7 @@ dependencies = [
  "time",
  "tokio",
  "tokio-util",
+ "tracing",
  "trustify-common",
  "trustify-entity",
  "trustify-module-ingestor",
@@ -5705,7 +5701,6 @@ dependencies = [
  "chrono",
  "cpe",
  "csaf",
- "env_logger",
  "futures",
  "hex",
  "humantime",
@@ -5736,7 +5731,6 @@ dependencies = [
  "trustify-common",
  "trustify-cvss",
  "trustify-entity",
- "trustify-migration",
  "trustify-module-search",
  "trustify-module-storage",
  "url-escape",
