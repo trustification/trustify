@@ -3,18 +3,19 @@ use std::env;
 use std::fs::create_dir_all;
 use std::process::ExitCode;
 use trustify_common::config::Database;
+use trustify_common::db;
 
 #[derive(clap::Args, Debug)]
 pub struct Run {
     #[command(subcommand)]
-    command: Command,
+    pub(crate) command: Command,
     #[command(flatten)]
-    database: Database,
+    pub(crate) database: Database,
 }
 
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
-    Start,
+    Create,
     Migrate,
     Refresh,
 }
@@ -23,12 +24,20 @@ impl Run {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
         use Command::*;
         match self.command {
-            Start => self.start().await,
-            _ => Ok(ExitCode::SUCCESS),
+            Create => self.config(db::CreationMode::Bootstrap).await,
+            Migrate => self.config(db::CreationMode::Default).await,
+            Refresh => self.config(db::CreationMode::RefreshSchema).await,
         }
     }
 
-    async fn start(mut self) -> anyhow::Result<ExitCode> {
+    async fn config(self, mode: db::CreationMode) -> anyhow::Result<ExitCode> {
+        match db::Database::with_external_config(&self.database, mode).await {
+            Ok(_) => Ok(ExitCode::SUCCESS),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    pub async fn start(&mut self) -> anyhow::Result<PostgreSQL> {
         println!("setting up managed DB");
         use postgresql_embedded::Settings;
 
@@ -56,12 +65,6 @@ impl Run {
         println!("postgresql installed under {:?}", db_dir);
         println!("running on port {}", port);
 
-        match tokio::signal::ctrl_c().await {
-            Ok(()) => {
-                postgresql.stop().await.unwrap();
-                Ok(ExitCode::SUCCESS)
-            }
-            Err(err) => Err(err.into()),
-        }
+        Ok(postgresql)
     }
 }

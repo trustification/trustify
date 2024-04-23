@@ -7,7 +7,7 @@
 Let's call this "PM mode":
 
 ```shell
-cargo run --bin trustd -- --auth-disabled
+cargo run --bin trustd
 ```
 That will create its own database on your local filesystem. Point your browser at http://localhost:8080/swagger-ui/ to view the API.
 

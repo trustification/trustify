@@ -47,7 +47,27 @@ impl Trustd {
         match self.command {
             Some(Command::Api(run)) => run.run().await,
             Some(Command::Db(run)) => run.run().await,
-            None => Ok(ExitCode::SUCCESS),
+            None => {
+                let Some(Command::Db(mut db)) =
+                    Trustd::parse_from(["trustd", "db", "migrate"]).command
+                else {
+                    unreachable!()
+                };
+                let postgres = db.start().await?;
+                if let Err(_) = postgres.database_exists(&db.database.name).await {
+                    db.command = db::Command::Create;
+                }
+                db.run().await?;
+
+                let api = Trustd::parse_from([
+                    "trustd",
+                    "api",
+                    "--auth-disabled",
+                    "--db-port",
+                    &postgres.settings().port.to_string(),
+                ]);
+                Ok(tokio::task::spawn_local(api.run()).await?)
+            }
         }
     }
 }
