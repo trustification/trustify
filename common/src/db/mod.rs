@@ -120,6 +120,16 @@ pub struct Database {
 }
 
 impl Database {
+    pub fn connection<'db, TX: AsRef<Transactional>>(
+        &'db self,
+        tx: &'db TX,
+    ) -> ConnectionOrTransaction {
+        match tx.as_ref() {
+            Transactional::None => ConnectionOrTransaction::Connection(&self.db),
+            Transactional::Some(tx) => ConnectionOrTransaction::Transaction(tx),
+        }
+    }
+
     async fn new(
         username: &str,
         password: &str,

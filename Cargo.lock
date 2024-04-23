@@ -5615,6 +5615,7 @@ dependencies = [
  "trustify-cvss",
  "trustify-entity",
  "trustify-migration",
+ "trustify-module-ingestor",
  "trustify-module-search",
  "utoipa",
 ]
