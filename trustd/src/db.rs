@@ -33,7 +33,7 @@ impl Run {
     async fn config(self, mode: db::CreationMode) -> anyhow::Result<ExitCode> {
         match db::Database::with_external_config(&self.database, mode).await {
             Ok(_) => Ok(ExitCode::SUCCESS),
-            Err(e) => Err(e.into()),
+            Err(e) => Err(e),
         }
     }
 
