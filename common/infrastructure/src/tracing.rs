@@ -154,7 +154,6 @@ fn init_no_tracing() {
         .with(
             tracing_subscriber::fmt::layer()
                 .with_ansi(true)
-                .with_target(false)
                 .with_level(true)
                 .compact(),
         )
