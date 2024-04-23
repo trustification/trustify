@@ -9,6 +9,7 @@ use crate::service::ImporterService;
 use std::time::Duration;
 use time::OffsetDateTime;
 use tokio::time::MissedTickBehavior;
+use tracing::instrument;
 use trustify_common::db::Database;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 
@@ -23,6 +24,7 @@ struct Server {
 }
 
 impl Server {
+    #[instrument(skip_all, err)]
     async fn run(&self) -> anyhow::Result<()> {
         let service = ImporterService::new(self.db.clone());
 
@@ -46,6 +48,8 @@ impl Server {
 
                 // record timestamp before processing, so that we can use it as "since" marker
                 let last_run = OffsetDateTime::now_utc();
+
+                log::info!("Starting run: {}", importer.name);
 
                 let (last_error, report) = match self
                     .run_once(importer.data.configuration, importer.data.last_run)
@@ -73,6 +77,7 @@ impl Server {
         }
     }
 
+    #[instrument(skip_all, fields(), err, ret)]
     async fn run_once(
         &self,
         configuration: ImporterConfiguration,

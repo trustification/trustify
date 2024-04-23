@@ -9,6 +9,7 @@ trustify-entity = { workspace = true }
 #trustify-module-fetch = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }
+
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
@@ -29,6 +30,7 @@ thiserror = { workspace = true }
 time = { workspace = true, features = ["serde-well-known"] }
 tokio = { workspace = true, features = ["full"] }
 tokio-util = { workspace = true, features = ["full"] }
+tracing = { workspace = true }
 url = { workspace = true, features = ["serde"] }
 utoipa = { workspace = true, features = ["actix_extras", "time", "url"] }
 uuid = { workspace = true, features = ["v4"] }

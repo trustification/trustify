@@ -16,7 +16,6 @@ anyhow = { workspace = true }
 async-trait = { workspace = true }
 cpe = { workspace = true }
 csaf = { workspace = true }
-env_logger = { workspace = true }
 lenient_semver = { workspace = true }
 log = { workspace = true }
 packageurl = { workspace = true }
