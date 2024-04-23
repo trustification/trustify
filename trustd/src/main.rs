@@ -54,7 +54,7 @@ impl Trustd {
                     unreachable!()
                 };
                 let postgres = db.start().await?;
-                if let Err(_) = postgres.database_exists(&db.database.name).await {
+                if postgres.database_exists(&db.database.name).await.is_err() {
                     db.command = db::Command::Create;
                 }
                 db.run().await?;
