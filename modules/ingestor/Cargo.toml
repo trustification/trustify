@@ -45,5 +45,6 @@ utoipa = { workspace = true, features = ["actix_extras"] }
 
 [dev-dependencies]
 test-log = { workspace = true, features = ["env_logger", "trace"] }
+rust-lzma = "0.6"
 url-escape = { workspace = true }
 rand = { workspace = true }
