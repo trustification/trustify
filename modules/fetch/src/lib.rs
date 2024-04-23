@@ -3,3 +3,4 @@
 
 pub mod endpoints;
 mod model;
+mod service;

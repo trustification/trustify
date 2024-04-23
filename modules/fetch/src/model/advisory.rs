@@ -1,5 +1,3 @@
-/*
-use crate::graph::vulnerability::VulnerabilityContext;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use trustify_common::advisory::AdvisoryVulnerabilityAssertions;
@@ -88,5 +86,3 @@ pub struct AdvisoryVulnerabilityDetails {
     pub assertions: AdvisoryVulnerabilityAssertions,
 }
 
-
- */
