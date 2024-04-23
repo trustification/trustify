@@ -1,9 +1,9 @@
 use core::fmt;
-use log::LevelFilter;
 use opentelemetry::{propagation::Injector, Context, KeyValue};
 use opentelemetry_sdk::Resource;
 use reqwest::RequestBuilder;
 use std::sync::Once;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq)]
 pub enum Tracing {
@@ -145,15 +145,22 @@ fn init_otlp(name: &str) {
 }
 
 fn init_no_tracing() {
-    let mut builder = env_logger::builder();
-    builder.format_timestamp_millis();
+    let filter = tracing_subscriber::EnvFilter::builder()
+        .with_default_directive(tracing_subscriber::filter::LevelFilter::INFO.into())
+        .from_env_lossy();
 
-    if std::env::var("RUST_LOG").ok().is_none() {
-        eprintln!("Default to INFO logging; use RUST_LOG environment variable to change");
-        builder.filter_level(LevelFilter::Info);
-    }
+    let result = tracing_subscriber::registry()
+        .with(filter)
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_ansi(true)
+                .with_target(false)
+                .with_level(true)
+                .compact(),
+        )
+        .try_init();
 
-    if let Err(e) = builder.try_init() {
-        eprintln!("Error initializing logging: {:?}", e);
+    if let Err(err) = result {
+        eprintln!("Error initializing logging: {:?}", err);
     }
 }
