@@ -5676,6 +5676,7 @@ dependencies = [
  "rand",
  "reqwest",
  "ring 0.17.8",
+ "rust-lzma",
  "sbom-walker",
  "sea-orm",
  "sea-orm-migration",

@@ -149,7 +149,7 @@ mod test {
     use trustify_common::advisory::Assertion;
 
     use trustify_common::db::{Database, Transactional};
-    use trustify_module_graph::graph::Graph;
+    use crate::graph::Graph;
 
     use crate::service::advisory::osv::loader::OsvLoader;
 
