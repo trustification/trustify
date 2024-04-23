@@ -37,7 +37,6 @@ impl Trustd {
                     }
                     eprintln!("\t{err}");
                 }
-
                 ExitCode::FAILURE
             }
         }
@@ -47,29 +46,30 @@ impl Trustd {
         match self.command {
             Some(Command::Api(run)) => run.run().await,
             Some(Command::Db(run)) => run.run().await,
-            None => {
-                let Some(Command::Db(mut db)) =
-                    Trustd::parse_from(["trustd", "db", "migrate"]).command
-                else {
-                    unreachable!()
-                };
-                let postgres = db.start().await?;
-                if postgres.database_exists(&db.database.name).await.is_err() {
-                    db.command = db::Command::Create;
-                }
-                db.run().await?;
-
-                let api = Trustd::parse_from([
-                    "trustd",
-                    "api",
-                    "--auth-disabled",
-                    "--db-port",
-                    &postgres.settings().port.to_string(),
-                ]);
-                Ok(tokio::task::spawn_local(api.run()).await?)
-            }
+            None => pm_mode().await,
         }
     }
+}
+
+// Project Manager Mode
+async fn pm_mode() -> anyhow::Result<ExitCode> {
+    let Some(Command::Db(mut db)) = Trustd::parse_from(["trustd", "db", "migrate"]).command else {
+        unreachable!()
+    };
+    let postgres = db.start().await?;
+    if postgres.database_exists(&db.database.name).await.is_err() {
+        db.command = db::Command::Create;
+    }
+    db.run().await?;
+
+    let api = Trustd::parse_from([
+        "trustd",
+        "api",
+        "--auth-disabled",
+        "--db-port",
+        &postgres.settings().port.to_string(),
+    ]);
+    Ok(tokio::task::spawn_local(api.run()).await?)
 }
 
 #[actix_web::main]
