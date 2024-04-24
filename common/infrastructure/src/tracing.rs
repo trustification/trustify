@@ -3,6 +3,7 @@ use log::LevelFilter;
 use opentelemetry::{propagation::Injector, Context, KeyValue};
 use opentelemetry_sdk::Resource;
 use reqwest::RequestBuilder;
+use std::sync::Once;
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq)]
 pub enum Tracing {
@@ -91,10 +92,11 @@ fn sampler() -> opentelemetry_sdk::trace::Sampler {
     }
 }
 
+static INIT: Once = Once::new();
 pub fn init_tracing(name: &str, tracing: Tracing) {
     match tracing {
         Tracing::Disabled => {
-            init_no_tracing();
+            INIT.call_once(init_no_tracing);
         }
         Tracing::Enabled => {
             init_otlp(name);
