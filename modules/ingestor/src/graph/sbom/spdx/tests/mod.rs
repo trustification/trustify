@@ -5,7 +5,6 @@ mod perf;
 use crate::graph::sbom::spdx::Information;
 use crate::graph::Graph;
 use lzma::LzmaReader;
-use spdx_rs::models::SPDX;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;

@@ -2,7 +2,6 @@
 
 use crate::graph::sbom::PackageCache;
 use crate::graph::Graph;
-use std::collections::HashMap;
 use std::convert::TryInto;
 use test_log::test;
 use trustify_common::db::{Database, Transactional};
@@ -45,7 +44,7 @@ async fn query_sboms() -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let other_sbom = system
+    let _other_sbom = system
         .ingest_sbom(
             "http://geocities.com/other.json",
             "10",
@@ -113,7 +112,7 @@ async fn ingest_sboms() -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let other_sbom = system
+    let _other_sbom = system
         .ingest_sbom(
             "http://sbom.com/other.json",
             "10",
@@ -332,7 +331,7 @@ async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let results = sbom1
+    let _results = sbom1
         .related_packages_transitively(
             &[Relationship::DependencyOf],
             "pkg://maven/io.quarkus/transitive-a@1.2.3".try_into()?,
