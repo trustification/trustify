@@ -7,7 +7,6 @@ publish = false
 [dependencies]
 trustify-common = { workspace = true }
 trustify-entity = { workspace = true }
-#trustify-module-fetch = { path = "../fetch" }
 
 actix-web = { workspace = true }
 anyhow = { workspace = true }
