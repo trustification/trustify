@@ -26,23 +26,7 @@ pub struct Trustd {
 }
 
 impl Trustd {
-    async fn run(self) -> ExitCode {
-        match self.run_command().await {
-            Ok(code) => code,
-            Err(err) => {
-                eprintln!("Error: {err}");
-                for (n, err) in err.chain().skip(1).enumerate() {
-                    if n == 0 {
-                        eprintln!("Caused by:");
-                    }
-                    eprintln!("\t{err}");
-                }
-                ExitCode::FAILURE
-            }
-        }
-    }
-
-    async fn run_command(self) -> anyhow::Result<ExitCode> {
+    async fn run(self) -> anyhow::Result<ExitCode> {
         match self.command {
             Some(Command::Api(run)) => run.run().await,
             Some(Command::Db(run)) => run.run().await,
@@ -69,12 +53,24 @@ async fn pm_mode() -> anyhow::Result<ExitCode> {
         "--db-port",
         &postgres.settings().port.to_string(),
     ]);
-    Ok(tokio::task::spawn_local(api.run()).await?)
+    tokio::task::spawn_local(api.run()).await?
 }
 
 #[actix_web::main]
 async fn main() -> impl Termination {
-    Trustd::parse().run().await
+    match Trustd::parse().run().await {
+        Ok(code) => code,
+        Err(err) => {
+            eprintln!("Error: {err}");
+            for (n, err) in err.chain().skip(1).enumerate() {
+                if n == 0 {
+                    eprintln!("Caused by:");
+                }
+                eprintln!("\t{err}");
+            }
+            ExitCode::FAILURE
+        }
+    }
 }
 
 #[cfg(test)]

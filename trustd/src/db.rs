@@ -5,6 +5,7 @@ use std::process::ExitCode;
 use std::time::Duration;
 use trustify_common::config::Database;
 use trustify_common::db;
+use trustify_infrastructure::tracing::{init_tracing, Tracing};
 
 #[derive(clap::Args, Debug)]
 pub struct Run {
@@ -23,6 +24,7 @@ pub enum Command {
 
 impl Run {
     pub async fn run(self) -> anyhow::Result<ExitCode> {
+        init_tracing("db-run", Tracing::Disabled);
         use Command::*;
         match self.command {
             Create => self.config(db::CreationMode::Bootstrap).await,
@@ -39,15 +41,15 @@ impl Run {
     }
 
     pub async fn start(&mut self) -> anyhow::Result<PostgreSQL> {
-        println!("setting up managed DB");
-        use postgresql_embedded::Settings;
+        init_tracing("db-start", Tracing::Disabled);
+        log::info!("setting up managed DB");
 
         let current_dir = env::current_dir()?;
         let work_dir = current_dir.join(".trustify");
         let db_dir = work_dir.join("postgres");
         let data_dir = work_dir.join("data");
         create_dir_all(&data_dir)?;
-        let settings = Settings {
+        let settings = postgresql_embedded::Settings {
             username: self.database.username.clone(),
             password: self.database.password.clone(),
             temporary: false,
@@ -63,8 +65,8 @@ impl Run {
         let port = postgresql.settings().port;
         self.database.port = port;
 
-        println!("postgresql installed under {:?}", db_dir);
-        println!("running on port {}", port);
+        log::info!("postgresql installed under {:?}", db_dir);
+        log::info!("running on port {}", port);
 
         Ok(postgresql)
     }
