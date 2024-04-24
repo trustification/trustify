@@ -1,16 +1,10 @@
-use super::{open_sbom, open_sbom_xz};
+use super::{open_sbom_xz};
 use crate::graph::sbom::spdx::{parse_spdx, Information};
 use crate::graph::Graph;
-use lzma::LzmaReader;
-use std::fs::File;
-use std::io::{BufReader, Read};
-use std::path::PathBuf;
-use std::str::FromStr;
 use std::time::Instant;
 use test_log::test;
 use tracing::{info_span, instrument};
 use trustify_common::db::{Database, Transactional};
-use trustify_entity::relationship::Relationship;
 
 // #[ignore] no need to ignore, this runs about a minute and a half, and we should improve on that
 #[test(tokio::test)]

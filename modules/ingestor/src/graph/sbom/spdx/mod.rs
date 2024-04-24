@@ -1,3 +1,4 @@
+#[cfg(test)]
 mod tests;
 
 use crate::graph::sbom::{PackageCache, SbomContext, SbomInformation};

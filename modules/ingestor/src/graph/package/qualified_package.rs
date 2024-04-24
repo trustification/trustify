@@ -145,7 +145,7 @@ mod tests {
             .link_to_vulnerability("CVE-2", Transactional::None)
             .await?;
 
-        let affected_core = advisory_vulnerability
+        let _affected_core = advisory_vulnerability
             .ingest_affected_package_range(
                 "pkg://maven/io.quarkus/quarkus-core".try_into()?,
                 "1.0.2",
@@ -154,7 +154,7 @@ mod tests {
             )
             .await?;
 
-        let affected_addons = advisory_vulnerability
+        let _affected_addons = advisory_vulnerability
             .ingest_affected_package_range(
                 "pkg://maven/io.quarkus/quarkus-addons".try_into()?,
                 "1.0.2",
@@ -174,7 +174,7 @@ mod tests {
             .vulnerability_assertions(Transactional::None)
             .await?;
 
-        let pkg_addons = system
+        let _pkg_addons = system
             .ingest_qualified_package(
                 "pkg://maven/io.quarkus/quarkus-core@1.0.4".try_into()?,
                 Transactional::None,

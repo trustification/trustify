@@ -247,7 +247,6 @@ impl<'g> AdvisoryContext<'g> {
 mod test {
     use crate::graph::Graph;
     use test_log::test;
-    use trustify_common::advisory::Assertion;
     use trustify_common::db::{Database, Transactional};
 
     #[test(tokio::test)]
@@ -368,7 +367,7 @@ mod test {
             .link_to_vulnerability("CVE-1234567", Transactional::None)
             .await?;
 
-        let affected = advisory_vulnerability
+        let _affected = advisory_vulnerability
             .ingest_affected_package_range(
                 "pkg://maven/io.quarkus/quarkus-core".try_into()?,
                 "1.0.2",

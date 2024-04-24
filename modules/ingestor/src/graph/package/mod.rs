@@ -609,7 +609,7 @@ mod tests {
     use sea_orm::{
         EntityTrait, IntoSimpleExpr, QueryFilter, QuerySelect, QueryTrait, TransactionTrait,
     };
-    use sea_query::{Expr, Func, IntoValueTuple, Query, SimpleExpr};
+    use sea_query::{Expr, SimpleExpr};
     use serde_json::json;
     use test_log::test;
 
@@ -619,7 +619,6 @@ mod tests {
     use trustify_entity::qualified_package;
     use trustify_entity::qualified_package::Qualifiers;
 
-    use crate::db::{LeftPackageId, QualifiedPackageTransitive};
     use crate::graph::error::Error;
     use crate::graph::Graph;
 
@@ -714,7 +713,7 @@ mod tests {
         let system = Graph::new(db);
 
         const TOTAL_ITEMS: u64 = 200;
-        let page_size = NonZeroU64::new(50).unwrap();
+        let _page_size = NonZeroU64::new(50).unwrap();
 
         for v in 0..TOTAL_ITEMS {
             let version = format!("pkg://maven/io.quarkus/quarkus-core@{v}").try_into()?;
@@ -749,7 +748,7 @@ mod tests {
         assert_eq!(TOTAL_ITEMS, paginated.total);
         assert_eq!(50, paginated.items.len());
 
-        let next_paginated = pkg
+        let _next_paginated = pkg
             .get_versions_paginated(
                 Paginated {
                     offset: 100,
@@ -772,7 +771,7 @@ mod tests {
 
         let tx_system = system.clone();
 
-        db.transaction(|tx| {
+        db.transaction(|_tx| {
             Box::pin(async move {
                 let pkg1 = tx_system
                     .ingest_qualified_package(
@@ -1219,7 +1218,7 @@ mod tests {
             )
             .await?;
 
-        let unrelated_advisory = system
+        let _unrelated_advisory = system
             .ingest_advisory(
                 "RHSA-299",
                 "http://redhat.com/rhsa-299",
