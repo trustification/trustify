@@ -2,6 +2,7 @@ use postgresql_embedded::PostgreSQL;
 use std::env;
 use std::fs::create_dir_all;
 use std::process::ExitCode;
+use std::time::Duration;
 use trustify_common::config::Database;
 use trustify_common::db;
 
@@ -51,10 +52,10 @@ impl Run {
             password: self.database.password.clone(),
             temporary: false,
             installation_dir: db_dir.clone(),
+            timeout: Some(Duration::from_secs(30)),
             data_dir,
             ..Default::default()
         };
-
         let mut postgresql = PostgreSQL::new(PostgreSQL::default_version(), settings);
         postgresql.setup().await?;
         postgresql.start().await?;
