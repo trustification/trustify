@@ -3,27 +3,17 @@
 use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::graph::error::Error;
 use crate::graph::Graph;
-use csaf::Csaf;
-use sea_orm::prelude::DateTimeUtc;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{
-    ActiveModelTrait, EntityTrait, FromQueryResult, IntoActiveModel, QueryFilter, QueryOrder,
-};
+use sea_orm::{ActiveModelTrait, EntityTrait, IntoActiveModel, QueryFilter};
 use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
-use std::cmp::min;
-use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
-use std::str::FromStr;
 use time::OffsetDateTime;
-use trustify_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
 use trustify_common::db::limiter::LimiterTrait;
 use trustify_common::db::Transactional;
 use trustify_common::model::{Paginated, PaginatedResults};
-use trustify_common::purl::Purl;
-use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity as entity;
-use trustify_entity::{advisory, vulnerability};
+use trustify_entity::advisory;
 use trustify_module_search::model::SearchOptions;
 use trustify_module_search::query::Query;
 
@@ -41,7 +31,7 @@ pub struct AdvisoryInformation {
 }
 
 impl From<()> for AdvisoryInformation {
-    fn from(value: ()) -> Self {
+    fn from(_value: ()) -> Self {
         Self::default()
     }
 }

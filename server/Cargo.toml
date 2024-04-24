@@ -8,7 +8,7 @@ trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
 trustify-infrastructure = { workspace = true }
 trustify-entity = { workspace = true }
-#trustify-module-fetch = { workspace = true }
+trustify-module-fetch = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-importer = { workspace = true }
 trustify-module-search = { workspace = true }

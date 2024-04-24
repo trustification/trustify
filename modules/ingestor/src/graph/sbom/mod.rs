@@ -2,23 +2,20 @@
 
 use super::error::Error;
 use crate::db::{LeftPackageId, QualifiedPackageTransitive};
-use crate::graph::advisory::AdvisoryContext;
 use crate::graph::cpe::CpeContext;
 use crate::graph::package::package_version::PackageVersionContext;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
 use crate::graph::package::PackageContext;
 use crate::graph::Graph;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
-    QuerySelect, QueryTrait, RelationTrait, Select, Set,
+    ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QuerySelect, QueryTrait,
+    RelationTrait, Select, Set,
 };
 use sea_query::{Condition, Func, JoinType, OnConflict, Query, SimpleExpr};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
-use std::str::FromStr;
-use std::sync::Arc;
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::cpe::Cpe;
@@ -30,11 +27,13 @@ use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
 use trustify_entity as entity;
 use trustify_entity::relationship::Relationship;
-use trustify_entity::{sbom, vulnerability};
+use trustify_entity::sbom;
 use trustify_module_search::model::SearchOptions;
 use trustify_module_search::query::Query as TrustifyQuery;
 
 pub mod spdx;
+
+#[cfg(test)]
 mod tests;
 
 #[derive(Clone, Default)]
@@ -44,7 +43,7 @@ pub struct SbomInformation {
 }
 
 impl From<()> for SbomInformation {
-    fn from(value: ()) -> Self {
+    fn from(_value: ()) -> Self {
         Self::default()
     }
 }
@@ -174,7 +173,6 @@ impl Graph {
             SbomLocator::Sha256(sha256) => self.locate_sboms_by_sha256(&sha256, tx).await,
             SbomLocator::Purl(purl) => self.locate_sboms_by_purl(purl, tx).await,
             SbomLocator::Cpe(cpe) => self.locate_sboms_by_cpe22(cpe, tx).await,
-            _ => todo!(),
         }
     }
 
@@ -207,7 +205,7 @@ impl Graph {
         id: i32,
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
-        let query = entity::sbom::Entity::find_by_id(id);
+        let _query = entity::sbom::Entity::find_by_id(id);
         Ok(entity::sbom::Entity::find_by_id(id)
             .one(&self.connection(&tx))
             .await?
@@ -545,12 +543,6 @@ impl SbomContext {
         let pkg = self.graph.get_qualified_package(pkg, &tx).await?;
 
         if let Some(pkg) = pkg {
-            #[derive(Debug, FromQueryResult)]
-            struct Related {
-                left_package_id: i32,
-                right_package_id: i32,
-            }
-
             Ok(self
                 .graph
                 .get_qualified_packages_by_query(
@@ -582,12 +574,6 @@ impl SbomContext {
         let pkg = self.graph.get_qualified_package(pkg, &tx).await?;
 
         if let Some(pkg) = pkg {
-            #[derive(Debug, FromQueryResult)]
-            struct Related {
-                left_package_id: i32,
-                right_package_id: i32,
-            }
-
             let rels: SimpleExpr = SimpleExpr::Custom(format!(
                 "array[{}]",
                 relationships
@@ -642,7 +628,7 @@ impl SbomContext {
                 )
                 .into_query();
 
-            let mut found = entity::qualified_package::Entity::find()
+            let found = entity::qualified_package::Entity::find()
                 .filter(entity::qualified_package::Column::Id.in_subquery(related_query))
                 .all(&self.graph.connection(&tx))
                 .await?;

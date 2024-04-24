@@ -1,8 +1,6 @@
 mod tests;
 
-use crate::graph::error::Error;
 use crate::graph::sbom::{PackageCache, SbomContext, SbomInformation};
-use sea_orm::TransactionTrait;
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
 use std::collections::HashMap;

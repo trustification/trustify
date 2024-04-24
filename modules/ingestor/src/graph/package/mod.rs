@@ -1,19 +1,17 @@
 //! Support for packages.
 
-use crate::graph::advisory::AdvisoryContext;
-use crate::graph::error::Error;
-use crate::graph::Graph;
+use std::fmt::{Debug, Formatter};
+
+use sea_orm::RelationTrait;
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
+    QueryTrait, Set,
+};
+use sea_query::{JoinType, SelectStatement, UnionType};
+
 use package_version::PackageVersionContext;
 use package_version_range::PackageVersionRangeContext;
 use qualified_package::QualifiedPackageContext;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, PaginatorTrait, QueryFilter,
-    QuerySelect, QueryTrait, Set,
-};
-use sea_orm::{ItemsAndPagesNumber, RelationTrait};
-use sea_query::{JoinType, SelectStatement, UnionType};
-use std::borrow::Borrow;
-use std::fmt::{Debug, Formatter};
 use trustify_common::{
     db::{limiter::LimiterTrait, Transactional},
     model::{Paginated, PaginatedResults},
@@ -22,6 +20,10 @@ use trustify_common::{
 };
 use trustify_entity as entity;
 use trustify_entity::package;
+
+use crate::graph::advisory::AdvisoryContext;
+use crate::graph::error::Error;
+use crate::graph::Graph;
 
 pub mod package_version;
 pub mod package_version_range;
@@ -126,7 +128,7 @@ impl Graph {
         id: i32,
         tx: TX,
     ) -> Result<Option<QualifiedPackageContext>, Error> {
-        let mut found = entity::qualified_package::Entity::find_by_id(id)
+        let found = entity::qualified_package::Entity::find_by_id(id)
             .one(&self.connection(&tx))
             .await?;
 
@@ -152,7 +154,7 @@ impl Graph {
         query: SelectStatement,
         tx: TX,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        let mut found = entity::qualified_package::Entity::find()
+        let found = entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::Id.in_subquery(query))
             .all(&self.connection(&tx))
             .await?;
@@ -315,7 +317,7 @@ impl<'g> PackageContext<'g> {
     /// Non-mutating to the fetch.
     pub async fn get_package_version_range<TX: AsRef<Transactional>>(
         &self,
-        purl: Purl,
+        _purl: Purl,
         start: &str,
         end: &str,
         tx: TX,
@@ -454,13 +456,12 @@ impl<'g> PackageContext<'g> {
         struct AffectedVersion {
             start: String,
             end: String,
-            advisory_id: i32,
             identifier: String,
             location: String,
             sha256: String,
         }
 
-        let mut affected_version_ranges = entity::affected_package_version_range::Entity::find()
+        let affected_version_ranges = entity::affected_package_version_range::Entity::find()
             .column_as(entity::package_version_range::Column::Start, "start")
             .column_as(entity::package_version_range::Column::End, "end")
             .column_as(entity::advisory::Column::Id, "advisory_id")
@@ -514,13 +515,12 @@ impl<'g> PackageContext<'g> {
         #[derive(FromQueryResult, Debug)]
         struct NotAffectedVersion {
             version: String,
-            advisory_id: i32,
             identifier: String,
             location: String,
             sha256: String,
         }
 
-        let mut not_affected_versions = entity::not_affected_package_version::Entity::find()
+        let not_affected_versions = entity::not_affected_package_version::Entity::find()
             .column_as(entity::package_version::Column::Version, "version")
             .column_as(entity::advisory::Column::Id, "advisory_id")
             .column_as(entity::advisory::Column::Identifier, "identifier")
@@ -572,7 +572,7 @@ impl<'g> PackageContext<'g> {
             .filter(entity::package_version::Column::PackageId.eq(self.package.id))
             .into_query();
 
-        let mut affected_subquery = entity::affected_package_version_range::Entity::find()
+        let affected_subquery = entity::affected_package_version_range::Entity::find()
             .select_only()
             .column(entity::affected_package_version_range::Column::AdvisoryId)
             .join(
@@ -603,22 +603,25 @@ impl<'g> PackageContext<'g> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use crate::db::{LeftPackageId, QualifiedPackageTransitive};
-    use crate::graph::error::Error;
-    use crate::graph::Graph;
+    use std::collections::HashMap;
+    use std::num::NonZeroU64;
+
     use sea_orm::{
         EntityTrait, IntoSimpleExpr, QueryFilter, QuerySelect, QueryTrait, TransactionTrait,
     };
     use sea_query::{Expr, Func, IntoValueTuple, Query, SimpleExpr};
     use serde_json::json;
-    use std::collections::HashMap;
-    use std::num::NonZeroU64;
     use test_log::test;
+
     use trustify_common::db::{Database, Transactional};
     use trustify_common::model::Paginated;
     use trustify_common::purl::Purl;
     use trustify_entity::qualified_package;
     use trustify_entity::qualified_package::Qualifiers;
+
+    use crate::db::{LeftPackageId, QualifiedPackageTransitive};
+    use crate::graph::error::Error;
+    use crate::graph::Graph;
 
     #[test(tokio::test)]
     async fn ingest_packages() -> Result<(), anyhow::Error> {

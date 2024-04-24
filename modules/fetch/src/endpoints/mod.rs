@@ -4,10 +4,12 @@ pub mod vulnerability;
 pub mod advisory;
 
 //use crate::model::advisory::AdvisorySummary;
+use crate::service::FetchService;
 use actix_web::body::BoxBody;
 use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, ResponseError};
 use std::sync::Arc;
+use trustify_common::db::Database;
 use trustify_common::error::ErrorInformation;
 use trustify_common::model::PaginatedResults;
 use trustify_common::purl::PurlErr;
@@ -15,8 +17,10 @@ use trustify_entity::importer;
 use utoipa::openapi::Schema;
 use utoipa::{OpenApi, ToSchema};
 
-pub fn configure(config: &mut web::ServiceConfig) {
+pub fn configure(config: &mut web::ServiceConfig, db: Database) {
+    let service = FetchService::new(db);
     config
+        .app_data(web::Data::new(service))
         .service(
             web::scope("/api/v1/advisory")
                 .service(advisory::all)
@@ -86,7 +90,7 @@ impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse<BoxBody> {
         match self {
             //Self::System(err) => {
-                //HttpResponse::InternalServerError().json(ErrorInformation::new("System", err))
+            //HttpResponse::InternalServerError().json(ErrorInformation::new("System", err))
             //}
             Self::Purl(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("InvalidPurlSyntax", err))

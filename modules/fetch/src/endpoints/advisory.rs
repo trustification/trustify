@@ -7,6 +7,7 @@ use crate::model::advisory::{
 
  */
 use crate::model::vulnerability::Vulnerability;
+use crate::service::{AdvisoryKey, FetchService};
 use actix_web::{get, web, HttpResponse, Responder};
 use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_cvss::cvss3::score::Score;
@@ -26,69 +27,11 @@ use trustify_module_search::model::SearchOptions;
 )]
 #[get("")]
 pub async fn all(
-    //state: web::Data<Graph>,
+    state: web::Data<FetchService>,
     web::Query(search): web::Query<SearchOptions>,
     web::Query(paginated): web::Query<Paginated>,
 ) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().finish())
-        /*
-    let tx = state.transaction().await.map_err(Error::System)?;
-
-    let advisory_contexts = state
-        .advisories(search, paginated, &tx)
-        .await
-        .map_err(Error::System)?;
-
-    let mut results = PaginatedResults {
-        items: vec![],
-        total: advisory_contexts.total,
-    };
-
-    for advisory in advisory_contexts.items {
-        let mut vulnerability_summaries = Vec::new();
-
-        let advisory_vulnerabilities =
-            advisory.vulnerabilities(&tx).await.map_err(Error::System)?;
-
-        for advisory_vuln in advisory_vulnerabilities {
-            if let Some(vulnerability) = advisory_vuln
-                .vulnerability(&tx)
-                .await
-                .map_err(Error::System)?
-            {
-                let cvss3_scores = advisory_vuln
-                    .cvss3_scores(&tx)
-                    .await
-                    .map_err(Error::System)?;
-
-                let score = if let Some(average) = cvss3_scores
-                    .iter()
-                    .map(|e| e.score().value())
-                    .reduce(|accum, e| accum + e)
-                {
-                    Score::new(average)
-                } else {
-                    Score::new(0.0)
-                };
-
-                let summary = AdvisoryVulnerabilitySummary {
-                    vulnerability_id: vulnerability.vulnerability.identifier,
-                    severity: score.severity().to_string(),
-                    score: score.value(),
-                };
-                vulnerability_summaries.push(summary);
-            }
-        }
-        results.items.push(AdvisorySummary::new(
-            advisory.advisory,
-            vulnerability_summaries,
-        ))
-    }
-
-
-
-    Ok(HttpResponse::Ok().json(results))
-         */
+    Ok(HttpResponse::Ok().json(state.fetch_advisories(search, paginated, ()).await?))
 }
 
 #[utoipa::path(
@@ -103,64 +46,25 @@ pub async fn all(
 )]
 #[get("/{sha256}")]
 pub async fn get(
-    //state: web::Data<Graph>,
+    state: web::Data<FetchService>,
     sha256: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().finish())
-        /*
-    let tx = state.transaction().await.map_err(Error::System)?;
-    if let Some(advisory) = state
-        .get_advisory(&sha256, &tx)
-        .await
-        .map_err(Error::System)?
-    {
-        let mut advisory_vulnerabilities = Vec::new();
-        for advisory_vuln in &advisory.vulnerabilities(&tx).await.map_err(Error::System)? {
-            if let Some(vuln) = advisory_vuln
-                .vulnerability(&tx)
-                .await
-                .map_err(Error::System)?
-            {
-                let cvss3_scores = advisory_vuln
-                    .cvss3_scores(&tx)
-                    .await
-                    .map_err(Error::System)?
-                    .drain(..)
-                    .map(|e| e.to_string())
-                    .collect();
+    let fetched = state
+        .fetch_advisory(AdvisoryKey::Sha256(sha256.to_string()), ())
+        .await?;
 
-                // TODO: cvss4 scores
-
-                let assertions = advisory_vuln
-                    .vulnerability_assertions(&tx)
-                    .await
-                    .map_err(Error::System)?;
-
-                advisory_vulnerabilities.push(AdvisoryVulnerabilityDetails {
-                    vulnerability_id: vuln.vulnerability.identifier,
-                    cvss3_scores,
-                    assertions,
-                })
-            }
-        }
-
-        let result_advisory = AdvisoryDetails::new(advisory.advisory, advisory_vulnerabilities);
-
-        Ok(HttpResponse::Ok().json(result_advisory))
+    if let Some(fetched) = fetched {
+        Ok(HttpResponse::Ok().json(fetched))
     } else {
         Ok(HttpResponse::NotFound().finish())
     }
-
-         */
 }
 
-/*
 #[cfg(test)]
 mod test {
-    use crate::graph::advisory::AdvisoryInformation;
-    use crate::graph::Graph;
     use crate::model::advisory::{AdvisoryDetails, AdvisorySummary};
     use crate::model::vulnerability::Vulnerability;
+    use crate::service::FetchService;
     use actix_web::test::TestRequest;
     use actix_web::{web, App};
     use std::sync::Arc;
@@ -172,16 +76,16 @@ mod test {
         AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
         PrivilegesRequired, Scope, UserInteraction,
     };
+    use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
+    use trustify_module_ingestor::graph::Graph;
 
     #[test(actix_web::test)]
     async fn all_advisories() -> Result<(), anyhow::Error> {
         let db = Database::for_test("api_all_advisories").await?;
-        let graph = Arc::new(Graph::new(db));
+        let graph = Graph::new(db.clone());
 
         let app = actix_web::test::init_service(
-            App::new()
-                .app_data(web::Data::from(graph.clone()))
-                .configure(crate::endpoints::configure),
+            App::new().configure(|mut config| crate::endpoints::configure(config, db)),
         )
         .await;
 
@@ -256,13 +160,11 @@ mod test {
 
     #[test(actix_web::test)]
     async fn one_advisory() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("api_one_advisory").await?;
-        let graph = Arc::new(Graph::new(db));
+        let db = Database::for_test("api_all_advisories").await?;
+        let graph = Graph::new(db.clone());
 
         let app = actix_web::test::init_service(
-            App::new()
-                .app_data(web::Data::from(graph.clone()))
-                .configure(crate::endpoints::configure),
+            App::new().configure(|mut config| crate::endpoints::configure(config, db)),
         )
         .await;
 
@@ -328,6 +230,3 @@ mod test {
         Ok(())
     }
 }
-
-
- */

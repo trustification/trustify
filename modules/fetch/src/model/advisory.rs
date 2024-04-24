@@ -85,4 +85,3 @@ pub struct AdvisoryVulnerabilityDetails {
     #[serde(flatten)]
     pub assertions: AdvisoryVulnerabilityAssertions,
 }
-

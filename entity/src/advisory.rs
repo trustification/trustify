@@ -1,6 +1,6 @@
+use crate::{advisory_vulnerability, vulnerability};
 use sea_orm::entity::prelude::*;
 use time::OffsetDateTime;
-use crate::{advisory_vulnerability, vulnerability};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "advisory")]
@@ -22,7 +22,7 @@ pub enum Relation {
     AdvisoryVulnerabilities,
 
     #[sea_orm(has_many = "super::vulnerability::Entity")]
-    Vulnerability
+    Vulnerability,
 }
 
 impl Related<advisory_vulnerability::Entity> for Entity {
@@ -37,10 +37,9 @@ impl Related<vulnerability::Entity> for Entity {
     }
 
     fn via() -> Option<RelationDef> {
-        Some( advisory_vulnerability::Relation::Advisory.def().rev() )
+        Some(advisory_vulnerability::Relation::Advisory.def().rev())
     }
 }
-
 
 /*
 

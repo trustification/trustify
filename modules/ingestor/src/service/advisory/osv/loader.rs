@@ -1,3 +1,5 @@
+use crate::graph::advisory::AdvisoryInformation;
+use crate::graph::Graph;
 use crate::service::{
     advisory::osv::schema::{Event, Package, SeverityType, Vulnerability},
     hashing::HashingRead,
@@ -7,8 +9,6 @@ use std::io::Read;
 use std::str::FromStr;
 use trustify_common::purl::Purl;
 use trustify_cvss::cvss3::Cvss3Base;
-use crate::graph::advisory::AdvisoryInformation;
-use crate::graph::Graph;
 
 pub struct OsvLoader<'g> {
     graph: &'g Graph,
@@ -148,8 +148,8 @@ mod test {
     use test_log::test;
     use trustify_common::advisory::Assertion;
 
-    use trustify_common::db::{Database, Transactional};
     use crate::graph::Graph;
+    use trustify_common::db::{Database, Transactional};
 
     use crate::service::advisory::osv::loader::OsvLoader;
 
