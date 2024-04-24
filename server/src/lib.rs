@@ -107,10 +107,12 @@ impl InitData {
             log::warn!("Authentication is disabled");
         }
 
-        let swagger_oidc: Option<Arc<SwaggerUiOidc>> =
-            SwaggerUiOidc::from_devmode_or_config(run.devmode, run.swagger_ui_oidc)
+        let swagger_oidc = match authenticator.is_some() {
+            true => SwaggerUiOidc::from_devmode_or_config(run.devmode, run.swagger_ui_oidc)
                 .await?
-                .map(Arc::new);
+                .map(Arc::new),
+            false => None,
+        };
 
         let db = db::Database::new(&run.database).await?;
         let graph = Graph::new(db.clone());
