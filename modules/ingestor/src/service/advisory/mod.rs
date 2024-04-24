@@ -1,8 +1,8 @@
+use crate::graph::Graph;
 use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader};
 use crate::service::Error;
 use std::io::Read;
 use std::str::FromStr;
-use crate::graph::Graph;
 
 pub mod csaf;
 pub mod osv;

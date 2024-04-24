@@ -8,7 +8,6 @@ use sea_orm::{
     RelationTrait, Set,
 };
 use sea_query::JoinType;
-use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use trustify_common::db::Transactional;
 use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
@@ -112,13 +111,12 @@ impl<'g> PackageVersionContext<'g> {
         #[derive(FromQueryResult, Debug)]
         struct NotAffectedVersion {
             version: String,
-            advisory_id: i32,
             identifier: String,
             location: String,
             sha256: String,
         }
 
-        let mut not_affected_versions = entity::not_affected_package_version::Entity::find()
+        let not_affected_versions = entity::not_affected_package_version::Entity::find()
             .column_as(entity::package_version::Column::Version, "version")
             .column_as(entity::advisory::Column::Id, "advisory_id")
             .column_as(entity::advisory::Column::Identifier, "identifier")
@@ -161,7 +159,7 @@ impl<'g> PackageVersionContext<'g> {
     /// Non-mutating to the fetch.
     pub async fn get_variants<TX: AsRef<Transactional>>(
         &self,
-        pkg: Purl,
+        _pkg: Purl,
         tx: TX,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         Ok(entity::qualified_package::Entity::find()

@@ -17,10 +17,6 @@ pub enum Relation {
         from = "super::package_version::Column::PackageId"
         to = "super::package::Column::Id")]
     Package,
-    //#[sea_orm(has_many = "super::package_qualifier::Entity")]
-    //PackageQualifiers,
-    //#[sea_orm(has_many = "super::sbom::Entity")]
-    //SbomDependents,
 }
 
 impl Related<super::package::Entity> for Entity {

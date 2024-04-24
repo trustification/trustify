@@ -3,7 +3,6 @@
 use crate::graph::error::Error;
 use crate::graph::package::package_version::PackageVersionContext;
 use crate::graph::sbom::SbomContext;
-use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
 use trustify_common::db::Transactional;
@@ -66,7 +65,7 @@ impl<'g> QualifiedPackageContext<'g> {
     }
     pub async fn sboms_containing<TX: AsRef<Transactional>>(
         &self,
-        tx: TX,
+        _tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
         /*
         Ok(entity::sbom::Entity::find()

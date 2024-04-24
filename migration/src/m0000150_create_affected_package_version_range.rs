@@ -1,3 +1,4 @@
+use crate::m0000040_create_vulnerability::Vulnerability;
 use crate::m0000060_create_advisory::Advisory;
 use crate::m0000140_create_package_version_range::PackageVersionRange;
 use sea_orm_migration::prelude::*;
@@ -32,6 +33,16 @@ impl MigrationTrait for Migration {
                             .to(Advisory::Table, Advisory::Id),
                     )
                     .col(
+                        ColumnDef::new(AffectedPackageVersionRange::VulnerabilityId)
+                            .integer()
+                            .not_null(),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from_col(AffectedPackageVersionRange::VulnerabilityId)
+                            .to(Vulnerability::Table, Vulnerability::Id),
+                    )
+                    .col(
                         ColumnDef::new(AffectedPackageVersionRange::PackageVersionRangeId)
                             .integer()
                             .not_null(),
@@ -64,5 +75,6 @@ pub enum AffectedPackageVersionRange {
     //Timestamp,
     // --
     AdvisoryId,
+    VulnerabilityId,
     PackageVersionRangeId,
 }

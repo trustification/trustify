@@ -5582,7 +5582,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "trustify-module-graph"
+name = "trustify-module-fetch"
 version = "0.1.0"
 dependencies = [
  "actix-web",
@@ -5778,6 +5778,7 @@ dependencies = [
  "trustify-common",
  "trustify-entity",
  "trustify-infrastructure",
+ "trustify-module-fetch",
  "trustify-module-importer",
  "trustify-module-ingestor",
  "trustify-module-search",

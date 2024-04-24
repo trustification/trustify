@@ -1,3 +1,6 @@
+use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
+use crate::graph::advisory::{AdvisoryContext, AdvisoryInformation};
+use crate::graph::Graph;
 use crate::service::advisory::csaf::util::resolve_purls;
 use crate::service::hashing::HashingRead;
 use crate::service::Error;
@@ -7,9 +10,6 @@ use std::io::Read;
 use time::OffsetDateTime;
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
-use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
-use crate::graph::advisory::{AdvisoryContext, AdvisoryInformation};
-use crate::graph::Graph;
 
 struct Information<'a>(&'a Csaf);
 

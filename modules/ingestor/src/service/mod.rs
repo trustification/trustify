@@ -3,11 +3,11 @@ pub mod cve;
 pub mod hashing;
 pub mod sbom;
 
+use crate::graph::Graph;
 use actix_web::body::BoxBody;
 use actix_web::{HttpResponse, ResponseError};
 use sea_orm::error::DbErr;
 use trustify_common::error::ErrorInformation;
-use crate::graph::Graph;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 
 #[derive(Debug, thiserror::Error)]

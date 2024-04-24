@@ -1,16 +1,5 @@
-use anyhow::Context;
-use log::debug;
-use migration::Migrator;
-use postgresql_embedded;
-use postgresql_embedded::PostgreSQL;
-use sea_orm::{
-    ConnectOptions, ConnectionTrait, Database, DatabaseConnection, DatabaseTransaction, DbErr,
-    Statement, TransactionTrait,
-};
-use sea_orm_migration::MigratorTrait;
+use sea_orm::{DbErr, TransactionTrait};
 use std::fmt::{Debug, Display, Formatter};
-use std::sync::Arc;
-use tempfile::TempDir;
 use trustify_common::db::{ConnectionOrTransaction, Transactional};
 
 mod cpe;

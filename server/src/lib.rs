@@ -35,8 +35,8 @@ use trustify_infrastructure::{
     tracing::Tracing,
     Infrastructure, InfrastructureConfig, InitContext, Metrics,
 };
-use trustify_module_ingestor::graph::Graph;
 use trustify_module_importer::server::importer;
+use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use trustify_module_storage::service::fs::FileSystemBackend;
 use utoipa::OpenApi;
@@ -183,6 +183,7 @@ impl InitData {
                                 storage.clone(),
                             );
                             trustify_module_search::endpoints::configure(svc, db.clone());
+                            trustify_module_fetch::endpoints::configure(svc, db.clone());
                         });
                 })
         };

@@ -1,4 +1,4 @@
-use crate::{advisory, package_version_range};
+use crate::{advisory, package_version_range, vulnerability};
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
@@ -7,6 +7,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub advisory_id: i32,
+    pub vulnerability_id: i32,
     pub package_version_range_id: i32,
 }
 
@@ -22,6 +23,11 @@ pub enum Relation {
         from = "super::affected_package_version_range::Column::AdvisoryId"
         to = "super::advisory::Column::Id")]
     Advisory,
+    #[sea_orm(
+        belongs_to = "super::vulnerability::Entity",
+        from = "super::affected_package_version_range::Column::VulnerabilityId"
+        to = "super::vulnerability::Column::Id")]
+    Vulnerability,
 }
 
 impl Related<package_version_range::Entity> for Entity {
@@ -33,6 +39,12 @@ impl Related<package_version_range::Entity> for Entity {
 impl Related<advisory::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Advisory.def()
+    }
+}
+
+impl Related<vulnerability::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Vulnerability.def()
     }
 }
 
