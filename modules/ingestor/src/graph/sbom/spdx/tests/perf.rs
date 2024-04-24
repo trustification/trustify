@@ -1,4 +1,4 @@
-use super::{open_sbom_xz};
+use super::open_sbom_xz;
 use crate::graph::sbom::spdx::{parse_spdx, Information};
 use crate::graph::Graph;
 use std::time::Instant;
