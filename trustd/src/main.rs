@@ -1,6 +1,7 @@
 use clap::Parser;
 use std::env;
 use std::process::{ExitCode, Termination};
+use tokio::task::{spawn_local, LocalSet};
 
 mod db;
 
@@ -53,10 +54,13 @@ async fn pm_mode() -> anyhow::Result<ExitCode> {
         "--db-port",
         &postgres.settings().port.to_string(),
     ]);
-    tokio::task::spawn_local(api.run()).await?
+
+    LocalSet::new()
+        .run_until(async { spawn_local(api.run()).await? })
+        .await
 }
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> impl Termination {
     match Trustd::parse().run().await {
         Ok(code) => code,
