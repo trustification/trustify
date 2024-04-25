@@ -1,9 +1,11 @@
 use postgresql_embedded::{PostgreSQL, Settings};
+use tempfile::TempDir;
 use test_context::{test_context, AsyncTestContext};
 
 pub struct TrustifyContext {
     pub db: crate::db::Database,
     postgresql: PostgreSQL,
+    tempdir: TempDir,
 }
 
 impl AsyncTestContext for TrustifyContext {
@@ -32,7 +34,11 @@ impl AsyncTestContext for TrustifyContext {
         };
         let db = crate::db::Database::bootstrap(&config).await.unwrap();
 
-        TrustifyContext { db, postgresql }
+        TrustifyContext {
+            db,
+            postgresql,
+            tempdir,
+        }
     }
 
     async fn teardown(self) {
