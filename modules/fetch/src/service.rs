@@ -396,7 +396,7 @@ mod test {
     }
 
     #[test(actix_web::test)]
-    async fn one_advisory() -> Result<(), anyhow::Error> {
+    async fn single_advisory() -> Result<(), anyhow::Error> {
         let db = Database::for_test("fetch_one_advisory").await?;
         let graph = Arc::new(Graph::new(db.clone()));
 

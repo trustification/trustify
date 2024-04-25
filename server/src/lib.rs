@@ -48,10 +48,6 @@ pub struct Run {
     #[command(flatten)]
     pub database: Database,
 
-    /// The database creation mode
-    #[arg(long, env, value_enum, default_value_t = db::CreationMode::Default)]
-    pub creation: db::CreationMode,
-
     #[arg(long, env)]
     pub devmode: bool,
 
@@ -116,7 +112,7 @@ impl InitData {
                 .await?
                 .map(Arc::new);
 
-        let db = db::Database::with_external_config(&run.database, run.creation).await?;
+        let db = db::Database::new(&run.database).await?;
         let graph = Graph::new(db.clone());
 
         let check = Local::spawn_periodic("no database connection", Duration::from_secs(1), {

@@ -1,52 +1,17 @@
 use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]
-pub enum DbStrategy {
-    External,
-    Managed,
-}
-
-impl Display for DbStrategy {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DbStrategy::External => {
-                write!(f, "external")
-            }
-            DbStrategy::Managed => {
-                write!(f, "managed")
-            }
-        }
-    }
-}
-
 #[derive(clap::Args, Debug, Clone)]
 #[command(next_help_heading = "Database")]
 #[group(id = "database")]
 pub struct Database {
-    #[arg(
-        id = "db-strategy",
-        long,
-        env,
-        default_value_t = DbStrategy::Managed,
-    )]
-    pub db_strategy: DbStrategy,
-    #[arg(
-        id = "db-user",
-        long,
-        env = "DB_USER",
-        default_value = "trustify",
-        required = false,
-        required_if_eq("db-strategy", "external")
-    )]
+    #[arg(id = "db-user", long, env = "DB_USER", default_value = "trustify")]
     pub username: String,
     #[arg(
         id = "db-password",
         long,
         env = "DB_PASSWORD",
-        default_value = "trustify",
-        required = false,
-        required_if_eq("db-strategy", "external")
+        default_value = "trustify"
     )]
     pub password: String,
     #[arg(id = "db-host", long, env = "DB_HOST", default_value = "localhost")]
