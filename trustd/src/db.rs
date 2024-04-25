@@ -60,7 +60,7 @@ impl Run {
 
     pub async fn start(&mut self) -> anyhow::Result<PostgreSQL> {
         init_tracing("db-start", Tracing::Disabled);
-        log::info!("setting up managed DB");
+        log::warn!("Setting up managed DB; not suitable for production use!");
 
         let current_dir = env::current_dir()?;
         let work_dir = current_dir.join(".trustify");
@@ -83,8 +83,8 @@ impl Run {
         let port = postgresql.settings().port;
         self.database.port = port;
 
-        log::info!("postgresql installed under {:?}", db_dir);
-        log::info!("running on port {}", port);
+        log::info!("PostgreSQL installed in {:?}", db_dir);
+        log::info!("Running on port {}", port);
 
         Ok(postgresql)
     }
