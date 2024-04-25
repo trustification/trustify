@@ -274,7 +274,6 @@ async fn ingest_and_locate_sboms_describing_cpes(
     Ok(())
 }
 
-#[ignore]
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
 async fn transitive_dependency_of(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
@@ -437,7 +436,6 @@ async fn ingest_package_relates_to_package_dependency_of(
     Ok(())
 }
 
-#[ignore]
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
 async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
