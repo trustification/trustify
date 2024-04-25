@@ -66,12 +66,14 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
     use std::str::FromStr;
-    use trustify_common::db::Database;
+    use test_context::test_context;
+    use trustify_common::db::test::TrustifyContext;
     use trustify_module_storage::service::fs::FileSystemBackend;
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test_log::test(actix_web::test)]
-    async fn upload_default_csaf_format() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("upload_advisory_csaf").await?;
+    async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let (storage, _temp) = FileSystemBackend::for_test().await?;
 
         let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
@@ -96,9 +98,10 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test_log::test(actix_web::test)]
-    async fn upload_osv_format() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("upload_advisory_osv").await?;
+    async fn upload_osv_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let (storage, _temp) = FileSystemBackend::for_test().await?;
 
         let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
@@ -123,9 +126,10 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test_log::test(actix_web::test)]
-    async fn upload_unknown_format() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("upload_unknown_format").await?;
+    async fn upload_unknown_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let (storage, _temp) = FileSystemBackend::for_test().await?;
         let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
 

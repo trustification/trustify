@@ -8,8 +8,9 @@ use actix_web::{
     test as actix, App,
 };
 use std::time::Duration;
+use test_context::test_context;
 use test_log::test;
-use trustify_common::db::Database;
+use trustify_common::db::test::TrustifyContext;
 
 fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
     ImporterConfiguration::Sbom(SbomImporter {
@@ -25,9 +26,10 @@ fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
     })
 }
 
+#[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
-async fn test_default() {
-    let db = Database::for_test("test_default").await.unwrap();
+async fn test_default(ctx: TrustifyContext) {
+    let db = ctx.db;
     let app =
         actix::init_service(App::new().configure(|svc| super::endpoints::configure(svc, db))).await;
 
@@ -120,9 +122,10 @@ async fn test_default() {
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
 }
 
+#[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
-async fn test_oplock() {
-    let db = Database::for_test("test_oplock").await.unwrap();
+async fn test_oplock(ctx: TrustifyContext) {
+    let db = ctx.db;
     let app =
         actix::init_service(App::new().configure(|svc| super::endpoints::configure(svc, db))).await;
 

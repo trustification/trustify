@@ -3,17 +3,20 @@
 use crate::graph::sbom::PackageCache;
 use crate::graph::Graph;
 use std::convert::TryInto;
+use test_context::test_context;
 use test_log::test;
-use trustify_common::db::{Database, Transactional};
+use trustify_common::db::test::TrustifyContext;
+use trustify_common::db::Transactional;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
 use trustify_entity::relationship::Relationship;
 use trustify_module_search::model::SearchOptions;
 
+#[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
-async fn query_sboms() -> Result<(), anyhow::Error> {
-    let db = Database::for_test("ingest_sboms").await?;
+async fn query_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
     let system = Graph::new(db);
 
     let sbom_v1 = system
@@ -79,9 +82,10 @@ async fn query_sboms() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
-async fn ingest_sboms() -> Result<(), anyhow::Error> {
-    let db = Database::for_test("ingest_sboms").await?;
+async fn ingest_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
     let system = Graph::new(db);
 
     let sbom_v1 = system
@@ -128,9 +132,12 @@ async fn ingest_sboms() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
-async fn ingest_and_fetch_sboms_describing_purls() -> Result<(), anyhow::Error> {
-    let db = Database::for_test("ingest_and_fetch_sboms_describing_purls").await?;
+async fn ingest_and_fetch_sboms_describing_purls(
+    ctx: TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
     let system = Graph::new(db);
 
     let sbom_v1 = system
@@ -196,9 +203,12 @@ async fn ingest_and_fetch_sboms_describing_purls() -> Result<(), anyhow::Error> 
     Ok(())
 }
 
+#[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
-async fn ingest_and_locate_sboms_describing_cpes() -> Result<(), anyhow::Error> {
-    let db = Database::for_test("ingest_and_locate_sboms_describing_cpes").await?;
+async fn ingest_and_locate_sboms_describing_cpes(
+    ctx: TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
     let system = Graph::new(db);
 
     let sbom_v1 = system
@@ -264,9 +274,10 @@ async fn ingest_and_locate_sboms_describing_cpes() -> Result<(), anyhow::Error> 
     Ok(())
 }
 
+#[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
-async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
-    let db = Database::for_test("transitive_dependency_of").await?;
+async fn transitive_dependency_of(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
     let system = Graph::new(db);
 
     let mut cache = PackageCache::new(1, &system, &Transactional::None);
@@ -342,9 +353,12 @@ async fn transitive_dependency_of() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
-async fn ingest_package_relates_to_package_dependency_of() -> Result<(), anyhow::Error> {
-    let db = Database::for_test("ingest_contains_packages").await?;
+async fn ingest_package_relates_to_package_dependency_of(
+    ctx: TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
     let system = Graph::new(db);
 
     let mut cache = PackageCache::new(1, &system, &Transactional::None);
@@ -422,9 +436,10 @@ async fn ingest_package_relates_to_package_dependency_of() -> Result<(), anyhow:
     Ok(())
 }
 
+#[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
-async fn sbom_vulnerabilities() -> Result<(), anyhow::Error> {
-    let db = Database::for_test("sbom_vulnerabilities").await?;
+async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
     let system = Graph::new(db);
 
     let mut cache = PackageCache::new(1, &system, &Transactional::None);

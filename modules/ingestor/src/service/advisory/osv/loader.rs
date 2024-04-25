@@ -145,17 +145,19 @@ mod test {
     use std::path::PathBuf;
     use std::str::FromStr;
 
+    use test_context::test_context;
     use test_log::test;
-    use trustify_common::advisory::Assertion;
+    use trustify_common::{advisory::Assertion, db::test::TrustifyContext};
 
     use crate::graph::Graph;
-    use trustify_common::db::{Database, Transactional};
+    use trustify_common::db::Transactional;
 
     use crate::service::advisory::osv::loader::OsvLoader;
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn loader() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("ingestors_osv_loader").await?;
+    async fn loader(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let graph = Graph::new(db);
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;

@@ -611,9 +611,11 @@ mod tests {
     };
     use sea_query::{Expr, SimpleExpr};
     use serde_json::json;
+    use test_context::test_context;
     use test_log::test;
 
-    use trustify_common::db::{Database, Transactional};
+    use trustify_common::db::test::TrustifyContext;
+    use trustify_common::db::Transactional;
     use trustify_common::model::Paginated;
     use trustify_common::purl::Purl;
     use trustify_entity::qualified_package;
@@ -622,9 +624,10 @@ mod tests {
     use crate::graph::error::Error;
     use crate::graph::Graph;
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn ingest_packages() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("ingest_packages").await?;
+    async fn ingest_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let pkg1 = system
@@ -655,9 +658,12 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn ingest_package_versions_missing_version() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("ingest_package_versions_missing_version").await?;
+    async fn ingest_package_versions_missing_version(
+        ctx: TrustifyContext,
+    ) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let result = system
@@ -672,9 +678,10 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn ingest_package_versions() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("ingest_package_versions").await?;
+    async fn ingest_package_versions(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let pkg1 = system
@@ -707,9 +714,10 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn get_versions_paginated() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("get_versions_paginated").await?;
+    async fn get_versions_paginated(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         const TOTAL_ITEMS: u64 = 200;
@@ -764,9 +772,12 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn ingest_qualified_packages_transactionally() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("ingest_qualified_packages_transactionally").await?;
+    async fn ingest_qualified_packages_transactionally(
+        ctx: TrustifyContext,
+    ) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db.clone());
 
         let tx_system = system.clone();
@@ -796,9 +807,10 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn ingest_qualified_packages() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("ingest_qualified_packages").await?;
+    async fn ingest_qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let pkg1 = system
@@ -846,9 +858,10 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn query_qualified_packages() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("query_qualified_packages").await?;
+    async fn query_qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let graph = Graph::new(db);
 
         for i in [
@@ -892,9 +905,10 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn ingest_package_version_ranges() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("ingest_package_version_ranges").await?;
+    async fn ingest_package_version_ranges(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let range1 = system
@@ -936,9 +950,10 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn package_affected_assertions() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("package_affected_assertions").await?;
+    async fn package_affected_assertions(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let redhat_advisory = system
@@ -1036,9 +1051,10 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn package_not_affected_assertions() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("package_not_affected_assertions").await?;
+    async fn package_not_affected_assertions(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let redhat_advisory = system
@@ -1098,9 +1114,10 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn package_vulnerability_assertions() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("package_vulnerability_assertions").await?;
+    async fn package_vulnerability_assertions(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let redhat_advisory = system
@@ -1169,9 +1186,10 @@ mod tests {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn advisories_mentioning_package() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("advisories_mentioning_package").await?;
+    async fn advisories_mentioning_package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let redhat_advisory = system

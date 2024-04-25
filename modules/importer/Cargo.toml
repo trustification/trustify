@@ -37,3 +37,4 @@ walker-extras = { workspace = true }
 
 [dev-dependencies]
 test-log = { workspace = true, features = ["env_logger", "trace"] }
+test-context = { workspace = true }

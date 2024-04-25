@@ -70,14 +70,16 @@ mod test {
     use std::str::FromStr;
 
     use crate::graph::Graph;
+    use test_context::test_context;
     use test_log::test;
-    use trustify_common::db::{Database, Transactional};
+    use trustify_common::db::{test::TrustifyContext, Transactional};
 
     use crate::service::cve::loader::CveLoader;
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn cve_loader() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("ingestors_cve_loader").await?;
+    async fn cve_loader(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let graph = Graph::new(db);
 
         let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
