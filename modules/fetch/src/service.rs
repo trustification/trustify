@@ -320,9 +320,10 @@ mod test {
     use actix_web::App;
     use std::str::FromStr;
     use std::sync::Arc;
+    use test_context::test_context;
     use test_log::test;
     use time::OffsetDateTime;
-    use trustify_common::db::Database;
+    use trustify_common::db::{test::TrustifyContext, Database};
     use trustify_common::model::Paginated;
     use trustify_common::purl::Purl;
     use trustify_cvss::cvss3::{
@@ -333,9 +334,10 @@ mod test {
     use trustify_module_ingestor::graph::Graph;
     use trustify_module_search::model::SearchOptions;
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(actix_web::test)]
-    async fn all_advisories() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("fetch_advisories").await?;
+    async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let graph = Arc::new(Graph::new(db.clone()));
 
         let advisory = graph
@@ -395,9 +397,10 @@ mod test {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(actix_web::test)]
-    async fn single_advisory() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("fetch_one_advisory").await?;
+    async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let graph = Arc::new(Graph::new(db.clone()));
 
         let advisory = graph

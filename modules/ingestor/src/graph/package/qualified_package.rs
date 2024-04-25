@@ -123,12 +123,14 @@ impl<'g> QualifiedPackageContext<'g> {
 #[cfg(test)]
 mod tests {
     use crate::graph::Graph;
-    use trustify_common::db::{Database, Transactional};
+    use test_context::test_context;
+    use trustify_common::db::{test::TrustifyContext, Transactional};
 
     #[ignore]
+    #[test_context(TrustifyContext, skip_teardown)]
     #[tokio::test]
-    async fn vulnerability_assertions() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("vulnerability_assertions").await?;
+    async fn vulnerability_assertions(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let advisory = system

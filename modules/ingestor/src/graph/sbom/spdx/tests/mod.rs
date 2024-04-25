@@ -10,9 +10,11 @@ use std::io::{BufReader, Read};
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Instant;
+use test_context::test_context;
 use test_log::test;
 use tracing::{info_span, instrument};
-use trustify_common::db::{Database, Transactional};
+use trustify_common::db::test::TrustifyContext;
+use trustify_common::db::Transactional;
 use trustify_entity::relationship::Relationship;
 
 pub fn open_sbom(name: &str) -> anyhow::Result<impl Read> {
@@ -27,10 +29,11 @@ pub fn open_sbom_xz(name: &str) -> anyhow::Result<impl Read> {
     Ok(LzmaReader::new_decompressor(open_sbom(name)?)?)
 }
 
+#[test_context(TrustifyContext, skip_teardown)]
 #[instrument]
 #[test(tokio::test)]
-async fn parse_spdx_quarkus() -> Result<(), anyhow::Error> {
-    let db = Database::for_test("parse_spdx_quarkus").await?;
+async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
     let system = Graph::new(db);
 
     // nope, has bad license expressions
@@ -89,9 +92,10 @@ async fn parse_spdx_quarkus() -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+#[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
-async fn parse_spdx() -> Result<(), anyhow::Error> {
-    let db = Database::for_test("parse_spdx").await?;
+async fn parse_spdx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
     let system = Graph::new(db);
 
     let sbom = open_sbom("ubi9-9.2-755.1697625012.json")?;

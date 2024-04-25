@@ -1,4 +1,5 @@
 pub mod limiter;
+pub mod test;
 
 use anyhow::Context;
 use migration::{Migrator, MigratorTrait};
@@ -144,33 +145,6 @@ impl Database {
         Migrator::refresh(&self.db).await?;
         log::warn!("refreshing database schema... done!");
         Ok(self)
-    }
-
-    pub async fn for_test(name: &str) -> Result<Self, anyhow::Error> {
-        use postgresql_embedded::Settings;
-
-        let tempdir = tempfile::tempdir()?;
-        let installation_dir = tempdir.path().to_path_buf();
-        let settings = Settings {
-            username: "postgres".to_string(),
-            password: "trustify".to_string(),
-            temporary: true,
-            installation_dir,
-            ..Default::default()
-        };
-
-        let mut postgresql = PostgreSQL::new(PostgreSQL::default_version(), settings);
-        postgresql.setup().await?;
-        postgresql.start().await?;
-
-        let config = crate::config::Database {
-            username: "postgres".into(),
-            password: "trustify".into(),
-            host: "localhost".into(),
-            port: postgresql.settings().port,
-            name: name.into(),
-        };
-        Self::bootstrap(&config).await
     }
 
     pub async fn bootstrap(database: &crate::config::Database) -> Result<Self, anyhow::Error> {

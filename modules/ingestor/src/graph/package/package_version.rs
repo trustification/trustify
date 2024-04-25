@@ -176,11 +176,15 @@ impl<'g> PackageVersionContext<'g> {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use crate::graph::Graph;
-    use trustify_common::db::{Database, Transactional};
+    use test_context::test_context;
+    use trustify_common::db::{test::TrustifyContext, Transactional};
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[tokio::test]
-    async fn package_version_not_affected_assertions() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("package_version_not_affected_assertions").await?;
+    async fn package_version_not_affected_assertions(
+        ctx: TrustifyContext,
+    ) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let redhat_advisory = system

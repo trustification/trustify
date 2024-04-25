@@ -2,15 +2,18 @@ use super::open_sbom_xz;
 use crate::graph::sbom::spdx::{parse_spdx, Information};
 use crate::graph::Graph;
 use std::time::Instant;
+use test_context::test_context;
 use test_log::test;
 use tracing::{info_span, instrument};
-use trustify_common::db::{Database, Transactional};
+use trustify_common::db::test::TrustifyContext;
+use trustify_common::db::Transactional;
 
 // #[ignore] no need to ignore, this runs about a minute and a half, and we should improve on that
+#[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
 #[instrument]
-async fn ingest_spdx_medium() -> Result<(), anyhow::Error> {
-    let db = Database::for_test("ingest_spdx_medium").await?;
+async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
     let system = Graph::new(db);
 
     let sbom = open_sbom_xz("openshift-container-storage-4.8.z.json.xz")?;
@@ -70,10 +73,11 @@ async fn ingest_spdx_medium() -> Result<(), anyhow::Error> {
 }
 
 // ignore because it's a slow slow slow test.
+#[test_context(TrustifyContext, skip_teardown)]
 #[ignore]
 #[test(tokio::test)]
-async fn ingest_spdx_large() -> Result<(), anyhow::Error> {
-    let db = Database::for_test("ingest_spdx_large").await?;
+async fn ingest_spdx_large(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
     let system = Graph::new(db);
 
     let sbom = open_sbom_xz("openshift-4.13.json.xz")?;

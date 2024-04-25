@@ -246,12 +246,14 @@ impl<'g> AdvisoryContext<'g> {
 #[cfg(test)]
 mod test {
     use crate::graph::Graph;
+    use test_context::test_context;
     use test_log::test;
-    use trustify_common::db::{Database, Transactional};
+    use trustify_common::db::{test::TrustifyContext, Transactional};
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn ingest_advisories() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("ingest_advisories").await?;
+    async fn ingest_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let advisory1 = system
@@ -290,9 +292,12 @@ mod test {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn ingest_affected_package_version_range() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("ingest_affected_package_version_range").await?;
+    async fn ingest_affected_package_version_range(
+        ctx: TrustifyContext,
+    ) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let advisory = system
@@ -348,9 +353,10 @@ mod test {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn ingest_fixed_package_version() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("ingest_fixed_package_version").await?;
+    async fn ingest_fixed_package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let advisory = system
@@ -409,9 +415,10 @@ mod test {
         Ok(())
     }
 
+    #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
-    async fn ingest_advisory_cve() -> Result<(), anyhow::Error> {
-        let db = Database::for_test("ingest_advisory_cve").await?;
+    async fn ingest_advisory_cve(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
         let system = Graph::new(db);
 
         let advisory = system

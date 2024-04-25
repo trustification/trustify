@@ -48,3 +48,4 @@ test-log = { workspace = true, features = ["env_logger", "trace"] }
 rust-lzma = "0.6"
 url-escape = { workspace = true }
 rand = { workspace = true }
+test-context = { workspace = true }
