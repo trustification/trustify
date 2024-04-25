@@ -27,15 +27,33 @@ impl Run {
         init_tracing("db-run", Tracing::Disabled);
         use Command::*;
         match self.command {
-            Create => self.config(db::CreationMode::Bootstrap).await,
-            Migrate => self.config(db::CreationMode::Default).await,
-            Refresh => self.config(db::CreationMode::RefreshSchema).await,
+            Create => self.create().await,
+            Migrate => self.migrate().await,
+            Refresh => self.refresh().await,
         }
     }
 
-    async fn config(self, mode: db::CreationMode) -> anyhow::Result<ExitCode> {
-        match db::Database::with_external_config(&self.database, mode).await {
+    async fn create(self) -> anyhow::Result<ExitCode> {
+        match db::Database::bootstrap(&self.database).await {
             Ok(_) => Ok(ExitCode::SUCCESS),
+            Err(e) => Err(e),
+        }
+    }
+    async fn refresh(self) -> anyhow::Result<ExitCode> {
+        match db::Database::new(&self.database).await {
+            Ok(db) => {
+                db.refresh().await?;
+                Ok(ExitCode::SUCCESS)
+            }
+            Err(e) => Err(e),
+        }
+    }
+    async fn migrate(self) -> anyhow::Result<ExitCode> {
+        match db::Database::new(&self.database).await {
+            Ok(db) => {
+                db.migrate().await?;
+                Ok(ExitCode::SUCCESS)
+            }
             Err(e) => Err(e),
         }
     }

@@ -12,5 +12,4 @@ pub mod package;
 pub mod purl;
 pub mod reqwest;
 pub mod sbom;
-pub mod test_util;
 pub mod tls;

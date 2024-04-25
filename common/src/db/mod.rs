@@ -1,7 +1,7 @@
 pub mod limiter;
 
 use anyhow::Context;
-use migration::{async_trait::async_trait, Migrator, MigratorTrait};
+use migration::{Migrator, MigratorTrait};
 use postgresql_embedded::PostgreSQL;
 use sea_orm::{
     prelude::async_trait, ConnectOptions, ConnectionTrait, DatabaseConnection, DatabaseTransaction,
@@ -98,25 +98,9 @@ impl ConnectionTrait for ConnectionOrTransaction<'_> {
     }
 }
 
-#[derive(Debug)]
-enum DbStrategy {
-    External,
-    Managed(Arc<(PostgreSQL, TempDir)>),
-}
-
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, clap::ValueEnum)]
-pub enum CreationMode {
-    #[default]
-    Default,
-    #[value(name("refresh"))]
-    RefreshSchema,
-    Bootstrap,
-}
-
 #[derive(Clone, Debug)]
 pub struct Database {
-    pub db: DatabaseConnection,
-    db_strategy: Arc<DbStrategy>,
+    db: DatabaseConnection,
 }
 
 impl Database {
@@ -130,16 +114,12 @@ impl Database {
         }
     }
 
-    async fn new(
-        username: &str,
-        password: &str,
-        host: &str,
-        port: impl Into<Option<u16>>,
-        db_name: &str,
-        db_strategy: DbStrategy,
-        refresh_schema: bool,
-    ) -> Result<Self, anyhow::Error> {
-        let port = port.into().unwrap_or(5432);
+    pub async fn new(database: &crate::config::Database) -> Result<Self, anyhow::Error> {
+        let username = &database.username;
+        let password = &database.password;
+        let host = &database.host;
+        let port = database.port;
+        let db_name = &database.name;
         let url = format!("postgres://{username}:{password}@{host}:{port}/{db_name}");
         log::info!("connect to {}", url);
 
@@ -149,64 +129,21 @@ impl Database {
 
         let db = sea_orm::Database::connect(opt).await?;
 
-        if refresh_schema {
-            log::warn!("refreshing database schema...");
-            Migrator::refresh(&db).await?;
-            log::warn!("refreshing database schema... done!");
-        } else {
-            log::debug!("applying migrations");
-            Migrator::up(&db, None).await?;
-            log::debug!("applied migrations");
-        }
-
-        Ok(Self {
-            db,
-            db_strategy: Arc::new(db_strategy),
-        })
+        Ok(Self { db })
     }
 
-    pub async fn with_external_config(
-        database: &crate::config::Database,
-        creation: CreationMode,
-    ) -> Result<Self, anyhow::Error> {
-        match creation {
-            CreationMode::Default => {
-                Self::new(
-                    &database.username,
-                    &database.password,
-                    &database.host,
-                    database.port,
-                    &database.name,
-                    DbStrategy::External,
-                    false,
-                )
-                .await
-            }
-            CreationMode::RefreshSchema => {
-                Self::new(
-                    &database.username,
-                    &database.password,
-                    &database.host,
-                    database.port,
-                    &database.name,
-                    DbStrategy::External,
-                    true,
-                )
-                .await
-            }
-            CreationMode::Bootstrap => {
-                log::warn!("Bootstrapping database");
-                Self::bootstrap(
-                    &database.username,
-                    &database.password,
-                    &database.host,
-                    database.port,
-                    &database.name,
-                    DbStrategy::External,
-                )
-                .await
-            }
-        }
+    pub async fn migrate(self) -> Result<Self, anyhow::Error> {
+        log::debug!("applying migrations");
+        Migrator::up(&self.db, None).await?;
+        log::debug!("applied migrations");
+        Ok(self)
+    }
+
+    pub async fn refresh(self) -> Result<Self, anyhow::Error> {
+        log::warn!("refreshing database schema...");
+        Migrator::refresh(&self.db).await?;
+        log::warn!("refreshing database schema... done!");
+        Ok(self)
     }
 
     pub async fn for_test(name: &str) -> Result<Self, anyhow::Error> {
@@ -226,31 +163,20 @@ impl Database {
         postgresql.setup().await?;
         postgresql.start().await?;
 
-        Self::bootstrap(
-            "postgres",
-            "trustify",
-            "localhost",
-            Some(postgresql.settings().port),
-            name,
-            DbStrategy::Managed(Arc::new((postgresql, tempdir))),
-        )
-        .await
+        let config = crate::config::Database {
+            username: "postgres".into(),
+            password: "trustify".into(),
+            host: "localhost".into(),
+            port: postgresql.settings().port,
+            name: name.into(),
+        };
+        Self::bootstrap(&config).await
     }
 
-    async fn bootstrap(
-        username: &str,
-        password: &str,
-        host: &str,
-        port: impl Into<Option<u16>> + Copy,
-        db_name: &str,
-        db_strategy: DbStrategy,
-    ) -> Result<Self, anyhow::Error> {
+    pub async fn bootstrap(database: &crate::config::Database) -> Result<Self, anyhow::Error> {
         let url = format!(
             "postgres://{}:{}@{}:{}/postgres",
-            username,
-            password,
-            host,
-            port.into().unwrap_or(5432)
+            database.username, database.password, database.host, database.port,
         );
         log::debug!("bootstrap to {}", url);
         let db = sea_orm::Database::connect(url).await?;
@@ -258,21 +184,20 @@ impl Database {
         let drop_db_result = db
             .execute(Statement::from_string(
                 db.get_database_backend(),
-                format!("DROP DATABASE IF EXISTS \"{}\";", db_name),
+                format!("DROP DATABASE IF EXISTS \"{}\";", database.name),
             ))
             .await?;
 
         let create_db_result = db
             .execute(Statement::from_string(
                 db.get_database_backend(),
-                format!("CREATE DATABASE \"{}\";", db_name),
+                format!("CREATE DATABASE \"{}\";", database.name),
             ))
             .await?;
 
         db.close().await?;
 
-        // we don't need to refresh the schema as we just re-created the database
-        Self::new(username, password, host, port, db_name, db_strategy, false).await
+        Self::new(database).await?.migrate().await
     }
 
     pub async fn close(self) -> anyhow::Result<()> {
@@ -305,7 +230,7 @@ impl DerefMut for Database {
     }
 }
 
-#[async_trait]
+#[crate::db::async_trait::async_trait]
 impl ConnectionTrait for Database {
     fn get_database_backend(&self) -> DbBackend {
         self.db.get_database_backend()
