@@ -5819,7 +5819,6 @@ dependencies = [
 name = "trustify-trustd"
 version = "0.1.0"
 dependencies = [
- "actix-web",
  "anyhow",
  "clap",
  "log",

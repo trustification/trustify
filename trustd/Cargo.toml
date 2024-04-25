@@ -12,7 +12,6 @@ trustify-server = { workspace = true }
 trustify-common = { workspace = true }
 trustify-infrastructure = { workspace = true }
 trustify-auth = { workspace = true }
-actix-web = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 log = { workspace = true }
