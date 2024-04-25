@@ -8,7 +8,6 @@ use tracing::{info_span, instrument};
 use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Transactional;
 
-// #[ignore] no need to ignore, this runs about a minute and a half, and we should improve on that
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
 #[instrument]

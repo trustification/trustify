@@ -126,7 +126,6 @@ mod tests {
     use test_context::test_context;
     use trustify_common::db::{test::TrustifyContext, Transactional};
 
-    #[ignore]
     #[test_context(TrustifyContext, skip_teardown)]
     #[tokio::test]
     async fn vulnerability_assertions(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
