@@ -49,6 +49,7 @@ impl MigrationTrait for Migration {
                     .table(PackageVersion::Table)
                     .name(INDEX_BY_PID_V)
                     .if_not_exists()
+                    .unique()
                     .col(PackageVersion::PackageId)
                     .col(PackageVersion::Version)
                     .to_owned(),
