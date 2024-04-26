@@ -44,11 +44,7 @@ impl<'g> From<QualifiedPackageContext<'g>> for Purl {
             namespace: value.package_version.package.package.namespace.clone(),
             name: value.package_version.package.package.name.clone(),
             version: Some(value.package_version.package_version.version.clone()),
-            qualifiers: value
-                .qualified_package
-                .qualifiers
-                .map(|q| q.0)
-                .unwrap_or_default(),
+            qualifiers: value.qualified_package.qualifiers.0,
         }
     }
 }

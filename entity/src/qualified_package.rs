@@ -8,7 +8,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub package_version_id: i32,
-    pub qualifiers: Option<Qualifiers>,
+    pub qualifiers: Qualifiers,
 }
 
 #[derive(

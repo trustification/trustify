@@ -32,7 +32,11 @@ impl MigrationTrait for Migration {
                             .integer()
                             .not_null(),
                     )
-                    .col(ColumnDef::new(QualifiedPackage::Qualifiers).json_binary())
+                    .col(
+                        ColumnDef::new(QualifiedPackage::Qualifiers)
+                            .json_binary()
+                            .not_null(),
+                    )
                     .foreign_key(
                         ForeignKey::create()
                             .from_col(QualifiedPackage::PackageVersionId)
