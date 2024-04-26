@@ -40,10 +40,10 @@ impl Debug for QualifiedPackageContext<'_> {
 impl<'g> From<QualifiedPackageContext<'g>> for Purl {
     fn from(value: QualifiedPackageContext<'g>) -> Self {
         Self {
-            ty: value.package_version.package.package.r#type.clone(),
-            namespace: value.package_version.package.package.namespace.clone(),
-            name: value.package_version.package.package.name.clone(),
-            version: Some(value.package_version.package_version.version.clone()),
+            ty: value.package_version.package.package.r#type,
+            namespace: value.package_version.package.package.namespace,
+            name: value.package_version.package.package.name,
+            version: Some(value.package_version.package_version.version),
             qualifiers: value.qualified_package.qualifiers.0,
         }
     }
