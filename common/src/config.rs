@@ -27,7 +27,7 @@ pub struct Database {
 // #[arg(...)]'s above
 impl Default for Database {
     fn default() -> Self {
-	#[allow(clippy::expect_used)]
+        #[allow(clippy::expect_used)]
         Database {
             username: env::var("DB_USER").unwrap_or("trustify".into()),
             password: env::var("DB_PASSWORD").unwrap_or("trustify".into()),
