@@ -1,19 +1,17 @@
-use crate::endpoints::vulnerability::advisories;
-use crate::endpoints::Error;
+use actix_web::{get, web, HttpResponse, Responder};
+
+use crate::service::advisory::AdvisoryKey;
+use trustify_common::model::Paginated;
+use trustify_module_search::model::SearchOptions;
+
+use crate::service::FetchService;
+
 /*
 use crate::model::advisory::{
     AdvisoryDetails, AdvisorySummary, AdvisoryVulnerabilityDetails, AdvisoryVulnerabilitySummary,
 };
 
  */
-use crate::model::vulnerability::Vulnerability;
-use crate::service::{AdvisoryKey, FetchService};
-use actix_web::{get, web, HttpResponse, Responder};
-use trustify_common::model::{Paginated, PaginatedResults};
-use trustify_cvss::cvss3::score::Score;
-use trustify_cvss::cvss3::severity::Severity;
-use trustify_module_search::model::SearchOptions;
-
 #[utoipa::path(
     context_path = "/api/v1/advisory",
     tag = "advisory",
@@ -62,17 +60,13 @@ pub async fn get(
 
 #[cfg(test)]
 mod test {
-    use crate::model::advisory::{AdvisoryDetails, AdvisorySummary};
-    use crate::model::vulnerability::Vulnerability;
-    use crate::service::FetchService;
     use actix_web::test::TestRequest;
-    use actix_web::{web, App};
-    use std::sync::Arc;
+    use actix_web::App;
     use test_context::test_context;
     use test_log::test;
     use time::OffsetDateTime;
+
     use trustify_common::db::test::TrustifyContext;
-    use trustify_common::db::Database;
     use trustify_common::model::PaginatedResults;
     use trustify_cvss::cvss3::{
         AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
@@ -80,6 +74,8 @@ mod test {
     };
     use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
     use trustify_module_ingestor::graph::Graph;
+
+    use crate::model::advisory::{AdvisoryDetails, AdvisorySummary};
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(actix_web::test)]

@@ -39,9 +39,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         .service(
             web::scope("/api/v1/vulnerability")
                 .service(vulnerability::all)
-                .service(vulnerability::advisories)
-                .service(vulnerability::affected_packages)
-                .service(vulnerability::affected_products),
+                .service(vulnerability::get),
         );
 }
 
@@ -55,14 +53,18 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         advisory::all,
         advisory::get,
         vulnerability::all,
-        vulnerability::advisories,
-        vulnerability::affected_packages,
-        vulnerability::affected_products,
+        //vulnerability::advisories,
+        //vulnerability::affected_packages,
+        //vulnerability::affected_products,
+        vulnerability::get,
     ),
     components(schemas(
-        //crate::model::advisory::AdvisoryDetails,
-        //crate::model::advisory::AdvisoryVulnerabilitySummary,
-        //crate::model::advisory::AdvisoryVulnerabilityDetails,
+        crate::model::advisory::AdvisorySummary,
+        crate::model::advisory::AdvisoryDetails,
+        crate::model::advisory::AdvisoryVulnerabilitySummary,
+        crate::model::advisory::AdvisoryVulnerabilityDetails,
+        crate::model::vulnerability::VulnerabilitySummary,
+        crate::model::vulnerability::VulnerabilityAdvisorySummary,
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
     )),
@@ -72,8 +74,6 @@ pub struct ApiDoc;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    //#[error(transparent)]
-    //System(graph::error::Error),
     #[error(transparent)]
     Purl(#[from] PurlErr),
     #[error(transparent)]
@@ -84,21 +84,9 @@ pub enum Error {
     Any(#[from] anyhow::Error),
 }
 
-/*
-impl From<graph::error::Error> for Error {
-    fn from(inner: graph::error::Error) -> Self {
-        Self::System(inner)
-    }
-}
-
- */
-
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse<BoxBody> {
         match self {
-            //Self::System(err) => {
-            //HttpResponse::InternalServerError().json(ErrorInformation::new("System", err))
-            //}
             Self::Purl(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("InvalidPurlSyntax", err))
             }
