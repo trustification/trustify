@@ -6,16 +6,15 @@ use crate::graph::cpe::CpeContext;
 use crate::graph::package::package_version::PackageVersionContext;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
 use crate::graph::package::PackageContext;
+use crate::graph::sbom::cache::PackageCache;
 use crate::graph::Graph;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QuerySelect, QueryTrait,
     RelationTrait, Select, Set,
 };
 use sea_query::{Condition, Func, JoinType, OnConflict, Query, SimpleExpr};
-use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
-use std::rc::Rc;
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::cpe::Cpe;
@@ -31,6 +30,7 @@ use trustify_entity::sbom;
 use trustify_module_search::model::SearchOptions;
 use trustify_module_search::query::Query as TrustifyQuery;
 
+mod cache;
 pub mod spdx;
 
 #[cfg(test)]
@@ -471,44 +471,24 @@ impl SbomContext {
             .await
     }
 
-    /// Within the context of *this* SBOM, ingest a relationship between
-    /// two packages.
-    #[instrument(skip(tx), err)]
-    async fn ingest_package_relates_to_package<'a, TX: AsRef<Transactional>>(
+    async fn create_relationship<'a>(
         &'a self,
         cache: &mut PackageCache<'a>,
-        left_package_input: Purl,
+        left_package_input: &Purl,
         relationship: Relationship,
-        right_package_input: Purl,
-        tx: TX,
-    ) -> Result<(), Error> {
-        let left_package = cache.lookup(&left_package_input).await;
-        let right_package = cache.lookup(&right_package_input).await;
+        right_package_input: &Purl,
+    ) -> Result<Option<entity::package_relates_to_package::ActiveModel>, Error> {
+        let left_package = cache.lookup(left_package_input).await;
+        let right_package = cache.lookup(right_package_input).await;
 
         match (&*left_package, &*right_package) {
             (Ok(left_package), Ok(right_package)) => {
-                let entity = entity::package_relates_to_package::ActiveModel {
+                return Ok(Some(entity::package_relates_to_package::ActiveModel {
                     left_package_id: Set(left_package.qualified_package.id),
                     relationship: Set(relationship),
                     right_package_id: Set(right_package.qualified_package.id),
                     sbom_id: Set(self.sbom.id),
-                };
-
-                // upsert
-
-                entity::package_relates_to_package::Entity::insert(entity)
-                    .on_conflict(
-                        OnConflict::columns([
-                            entity::package_relates_to_package::Column::LeftPackageId,
-                            entity::package_relates_to_package::Column::Relationship,
-                            entity::package_relates_to_package::Column::RightPackageId,
-                            entity::package_relates_to_package::Column::SbomId,
-                        ])
-                        .do_nothing()
-                        .to_owned(),
-                    )
-                    .exec(&self.graph.connection(&tx))
-                    .await?;
+                }))
             }
             (Err(_), Err(_)) => {
                 log::warn!(
@@ -530,6 +510,55 @@ impl SbomContext {
                 );
             }
         }
+
+        Ok(None)
+    }
+
+    /// Within the context of *this* SBOM, ingest a relationship between
+    /// two packages.
+    #[instrument(skip(tx), err)]
+    async fn ingest_package_relates_to_package<'a, TX: AsRef<Transactional>>(
+        &'a self,
+        cache: &mut PackageCache<'a>,
+        left_package_input: &Purl,
+        relationship: Relationship,
+        right_package_input: &Purl,
+        tx: TX,
+    ) -> Result<(), Error> {
+        let rel = self
+            .create_relationship(cache, left_package_input, relationship, right_package_input)
+            .await?;
+
+        self.ingest_package_relates_to_package_many(tx, rel).await?;
+
+        Ok(())
+    }
+
+    /// Within the context of *this* SBOM, ingest a relationship between
+    /// two packages.
+    #[instrument(skip(tx, entities), err)]
+    async fn ingest_package_relates_to_package_many<TX, I>(
+        &self,
+        tx: TX,
+        entities: I,
+    ) -> Result<(), Error>
+    where
+        TX: AsRef<Transactional>,
+        I: IntoIterator<Item = entity::package_relates_to_package::ActiveModel>,
+    {
+        entity::package_relates_to_package::Entity::insert_many(entities)
+            .on_conflict(
+                OnConflict::columns([
+                    entity::package_relates_to_package::Column::LeftPackageId,
+                    entity::package_relates_to_package::Column::Relationship,
+                    entity::package_relates_to_package::Column::RightPackageId,
+                    entity::package_relates_to_package::Column::SbomId,
+                ])
+                .do_nothing()
+                .to_owned(),
+            )
+            .exec(&self.graph.connection(&tx))
+            .await?;
 
         Ok(())
     }
@@ -708,45 +737,4 @@ impl SbomContext {
     }
 
      */
-}
-
-pub struct PackageCache<'a> {
-    cache: HashMap<Purl, Rc<Result<QualifiedPackageContext<'a>, Error>>>,
-    graph: &'a Graph,
-    tx: &'a Transactional,
-    hits: usize,
-}
-
-impl<'a> Debug for PackageCache<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("PackageCache")
-            .field("cache", &self.cache.len())
-            .field("hits", &self.hits)
-            .finish()
-    }
-}
-
-impl<'a> PackageCache<'a> {
-    pub fn new(capacity: usize, graph: &'a Graph, tx: &'a Transactional) -> Self {
-        Self {
-            cache: HashMap::with_capacity(capacity),
-            graph,
-            tx,
-            hits: 0,
-        }
-    }
-
-    #[instrument]
-    pub async fn lookup(&mut self, purl: &Purl) -> Rc<Result<QualifiedPackageContext<'a>, Error>> {
-        match self.cache.entry(purl.clone()) {
-            Entry::Occupied(entry) => {
-                self.hits += 1;
-                entry.get().clone()
-            }
-            Entry::Vacant(entry) => {
-                let result = self.graph.ingest_qualified_package(purl, &self.tx).await;
-                entry.insert(Rc::new(result)).clone()
-            }
-        }
-    }
 }
