@@ -736,6 +736,7 @@ impl<'a> PackageCache<'a> {
         }
     }
 
+    #[instrument]
     pub async fn lookup(&mut self, purl: &Purl) -> Rc<Result<QualifiedPackageContext<'a>, Error>> {
         match self.cache.entry(purl.clone()) {
             Entry::Occupied(entry) => {
