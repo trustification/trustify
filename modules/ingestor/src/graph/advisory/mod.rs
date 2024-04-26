@@ -316,7 +316,7 @@ mod test {
 
         let affected1 = advisory_vulnerability
             .ingest_affected_package_range(
-                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                &"pkg://maven/io.quarkus/quarkus-core".try_into()?,
                 "1.0.2",
                 "1.2.0",
                 Transactional::None,
@@ -325,7 +325,7 @@ mod test {
 
         let affected2 = advisory_vulnerability
             .ingest_affected_package_range(
-                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                &"pkg://maven/io.quarkus/quarkus-core".try_into()?,
                 "1.0.2",
                 "1.2.0",
                 Transactional::None,
@@ -334,7 +334,7 @@ mod test {
 
         let affected3 = advisory_vulnerability
             .ingest_affected_package_range(
-                "pkg://maven/io.quarkus/quarkus-addons".try_into()?,
+                &"pkg://maven/io.quarkus/quarkus-addons".try_into()?,
                 "1.0.2",
                 "1.2.0",
                 Transactional::None,
@@ -375,7 +375,7 @@ mod test {
 
         let _affected = advisory_vulnerability
             .ingest_affected_package_range(
-                "pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                &"pkg://maven/io.quarkus/quarkus-core".try_into()?,
                 "1.0.2",
                 "1.2.0",
                 Transactional::None,
@@ -384,21 +384,21 @@ mod test {
 
         let fixed1 = advisory_vulnerability
             .ingest_fixed_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.0".try_into()?,
+                &"pkg://maven/io.quarkus/quarkus-core@1.2.0".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let fixed2 = advisory_vulnerability
             .ingest_fixed_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.0".try_into()?,
+                &"pkg://maven/io.quarkus/quarkus-core@1.2.0".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let fixed3 = advisory_vulnerability
             .ingest_fixed_package_version(
-                "pkg://maven/io.quarkus/quarkus-addons@1.2.0".try_into()?,
+                &"pkg://maven/io.quarkus/quarkus-addons@1.2.0".try_into()?,
                 Transactional::None,
             )
             .await?;

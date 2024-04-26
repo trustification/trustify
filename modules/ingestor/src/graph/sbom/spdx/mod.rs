@@ -59,7 +59,7 @@ impl SbomContext {
                 match reference.reference_type.as_str() {
                     "purl" => {
                         self.ingest_describes_package(
-                            reference.reference_locator.as_str().try_into()?,
+                            &reference.reference_locator.as_str().try_into()?,
                             &tx,
                         )
                         .await?;

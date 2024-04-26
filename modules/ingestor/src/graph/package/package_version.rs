@@ -39,10 +39,10 @@ impl<'g> PackageVersionContext<'g> {
 
     pub async fn ingest_qualified_package<TX: AsRef<Transactional>>(
         &self,
-        purl: Purl,
+        purl: &Purl,
         tx: TX,
     ) -> Result<QualifiedPackageContext<'g>, Error> {
-        if let Some(found) = self.get_qualified_package(purl.clone(), &tx).await? {
+        if let Some(found) = self.get_qualified_package(purl, &tx).await? {
             return Ok(found);
         }
 
@@ -50,7 +50,7 @@ impl<'g> PackageVersionContext<'g> {
         let qualified_package = entity::qualified_package::ActiveModel {
             id: Default::default(),
             package_version_id: Set(self.package_version.id),
-            qualifiers: Set(Some(Qualifiers(purl.qualifiers))),
+            qualifiers: Set(Some(Qualifiers(purl.qualifiers.clone()))),
         };
 
         let qualified_package = qualified_package
@@ -62,12 +62,15 @@ impl<'g> PackageVersionContext<'g> {
 
     pub async fn get_qualified_package<TX: AsRef<Transactional>>(
         &self,
-        purl: Purl,
+        purl: &Purl,
         tx: TX,
     ) -> Result<Option<QualifiedPackageContext<'g>>, Error> {
         let found = entity::qualified_package::Entity::find()
             .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
-            .filter(entity::qualified_package::Column::Qualifiers.eq(Qualifiers(purl.qualifiers)))
+            .filter(
+                entity::qualified_package::Column::Qualifiers
+                    .eq(Qualifiers(purl.qualifiers.clone())),
+            )
             .one(&self.package.graph.connection(&tx))
             .await?;
 
@@ -203,7 +206,7 @@ mod tests {
 
         redhat_advisory_vulnerability
             .ingest_not_affected_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2".try_into()?,
+                &"pkg://maven/io.quarkus/quarkus-core@1.2".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -224,14 +227,14 @@ mod tests {
 
         ghsa_advisory_vulnerability
             .ingest_not_affected_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.2".try_into()?,
+                &"pkg://maven/io.quarkus/quarkus-core@1.2.2".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg_version = system
             .get_package_version(
-                "pkg://maven/io.quarkus/quarkus-core@1.2.2".try_into()?,
+                &"pkg://maven/io.quarkus/quarkus-core@1.2.2".try_into()?,
                 Transactional::None,
             )
             .await?

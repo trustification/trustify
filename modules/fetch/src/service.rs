@@ -436,7 +436,10 @@ mod test {
             .await?;
 
         advisory_vuln
-            .ingest_fixed_package_version(Purl::from_str("pkg://maven/org.apache/log4j@1.2.3")?, ())
+            .ingest_fixed_package_version(
+                &Purl::from_str("pkg://maven/org.apache/log4j@1.2.3")?,
+                (),
+            )
             .await?;
 
         let advisory = graph

@@ -90,10 +90,7 @@ impl<'g> OsvLoader<'g> {
                                         if let (Some(start), Some(end)) = &parsed_range {
                                             advisory_vuln
                                                 .ingest_affected_package_range(
-                                                    purl.clone(),
-                                                    start,
-                                                    end,
-                                                    &tx,
+                                                    &purl, start, end, &tx,
                                                 )
                                                 .await?;
                                         }
@@ -103,7 +100,7 @@ impl<'g> OsvLoader<'g> {
                                             fixed_purl.version = Some(fixed.clone());
 
                                             advisory_vuln
-                                                .ingest_fixed_package_version(fixed_purl, &tx)
+                                                .ingest_fixed_package_version(&fixed_purl, &tx)
                                                 .await?;
                                         }
                                     }

@@ -17,6 +17,7 @@ use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Transactional;
 use trustify_entity::relationship::Relationship;
 
+#[instrument]
 pub fn open_sbom(name: &str) -> anyhow::Result<impl Read> {
     let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
     let test_data = pwd.join("../../etc/test-data");
@@ -25,6 +26,7 @@ pub fn open_sbom(name: &str) -> anyhow::Result<impl Read> {
     Ok(BufReader::new(File::open(sbom)?))
 }
 
+#[instrument]
 pub fn open_sbom_xz(name: &str) -> anyhow::Result<impl Read> {
     Ok(LzmaReader::new_decompressor(open_sbom(name)?)?)
 }
@@ -74,7 +76,7 @@ async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let contains = sbom
         .related_packages(
             Relationship::ContainedBy,
-            described_packages[0].clone().into(),
+            &described_packages[0].clone().into(),
             Transactional::None,
         )
         .await?;
@@ -131,7 +133,7 @@ async fn parse_spdx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let contains = sbom
         .related_packages(
             Relationship::ContainedBy,
-            described[0].clone().into(),
+            &described[0].clone().into(),
             Transactional::None,
         )
         .await?;

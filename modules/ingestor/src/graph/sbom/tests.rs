@@ -170,21 +170,21 @@ async fn ingest_and_fetch_sboms_describing_purls(
 
     sbom_v1
         .ingest_describes_package(
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+            &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
             Transactional::None,
         )
         .await?;
 
     sbom_v2
         .ingest_describes_package(
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+            &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
             Transactional::None,
         )
         .await?;
 
     sbom_v3
         .ingest_describes_package(
-            "pkg://maven/io.quarkus/quarkus-core@1.9.3".try_into()?,
+            &"pkg://maven/io.quarkus/quarkus-core@1.9.3".try_into()?,
             Transactional::None,
         )
         .await?;
@@ -345,7 +345,7 @@ async fn transitive_dependency_of(ctx: TrustifyContext) -> Result<(), anyhow::Er
     let _results = sbom1
         .related_packages_transitively(
             &[Relationship::DependencyOf],
-            "pkg://maven/io.quarkus/transitive-a@1.2.3".try_into()?,
+            &"pkg://maven/io.quarkus/transitive-a@1.2.3".try_into()?,
             Transactional::None,
         )
         .await?;
@@ -406,7 +406,7 @@ async fn ingest_package_relates_to_package_dependency_of(
     let dependencies = sbom1
         .related_packages(
             Relationship::DependencyOf,
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+            &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
             Transactional::None,
         )
         .await?;
@@ -421,7 +421,7 @@ async fn ingest_package_relates_to_package_dependency_of(
     let dependencies = sbom2
         .related_packages(
             Relationship::DependencyOf,
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+            &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
             Transactional::None,
         )
         .await?;
@@ -458,7 +458,7 @@ async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error>
 
     println!("-------------------- A");
 
-    sbom.ingest_describes_package("pkg://oci/my-app@1.2.3".try_into()?, Transactional::None)
+    sbom.ingest_describes_package(&"pkg://oci/my-app@1.2.3".try_into()?, Transactional::None)
         .await?;
     println!("-------------------- B");
 
@@ -507,7 +507,7 @@ async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error>
 
     advisory_vulnerability
         .ingest_affected_package_range(
-            "pkg://maven/postgres/postgres-driver".try_into()?,
+            &"pkg://maven/postgres/postgres-driver".try_into()?,
             "1.1",
             "1.9",
             Transactional::None,
