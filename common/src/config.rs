@@ -1,3 +1,4 @@
+use std::env;
 use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
 
@@ -20,6 +21,23 @@ pub struct Database {
     pub port: u16,
     #[arg(id = "db-name", long, env = "DB_NAME", default_value = "trustify")]
     pub name: String,
+}
+
+// TODO: figure out how to make clap use this and remove the redundant
+// #[arg(...)]'s above
+impl Default for Database {
+    fn default() -> Self {
+        Database {
+            username: env::var("DB_USER").unwrap_or("trustify".into()),
+            password: env::var("DB_PASSWORD").unwrap_or("trustify".into()),
+            host: env::var("DB_HOST").unwrap_or("localhost".into()),
+            port: env::var("DB_PORT")
+                .unwrap_or("5432".into())
+                .parse::<u16>()
+                .expect("Port should be an integer"),
+            name: env::var("DB_NAME").unwrap_or("trustify".into()),
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]

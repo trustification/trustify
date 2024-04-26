@@ -1,16 +1,29 @@
+use std::env;
+
 use postgresql_embedded::{PostgreSQL, Settings};
 use tempfile::TempDir;
 use test_context::{test_context, AsyncTestContext};
 
 pub struct TrustifyContext {
     pub db: crate::db::Database,
-    postgresql: PostgreSQL,
-    tempdir: TempDir,
+    postgresql: Option<PostgreSQL>,
+    tempdir: Option<TempDir>,
 }
 
 impl AsyncTestContext for TrustifyContext {
     #[allow(clippy::unwrap_used)]
     async fn setup() -> TrustifyContext {
+        if env::var("EXTERNAL_TEST_DB").is_ok() {
+            log::warn!("Using external database from 'DB_*' env vars");
+            let config = crate::config::Database::default();
+            let db = crate::db::Database::new(&config).await.unwrap();
+            return TrustifyContext {
+                db,
+                postgresql: None,
+                tempdir: None,
+            };
+        }
+
         let tempdir = tempfile::tempdir().unwrap();
         let installation_dir = tempdir.path().to_path_buf();
         let settings = Settings {
@@ -36,8 +49,8 @@ impl AsyncTestContext for TrustifyContext {
 
         TrustifyContext {
             db,
-            postgresql,
-            tempdir,
+            postgresql: Some(postgresql),
+            tempdir: Some(tempdir),
         }
     }
 
