@@ -50,7 +50,7 @@ impl<'g> PackageVersionContext<'g> {
         let qualified_package = entity::qualified_package::ActiveModel {
             id: Default::default(),
             package_version_id: Set(self.package_version.id),
-            qualifiers: Set(Some(Qualifiers(purl.qualifiers.clone()))),
+            qualifiers: Set(Qualifiers(purl.qualifiers.clone())),
         };
 
         let qualified_package = qualified_package
