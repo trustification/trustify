@@ -4,16 +4,14 @@ use crate::graph::Graph;
 use std::time::Instant;
 use test_context::test_context;
 use test_log::test;
-use tracing::{info_span, instrument};
-use trustify_common::db::test::TrustifyContext;
-use trustify_common::db::Transactional;
+use tracing::{info_span, instrument, Instrument};
+use trustify_common::db::{test::TrustifyContext, Transactional};
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
 #[instrument]
 async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let system = Graph::new(db);
+    let system = Graph::new(ctx.db);
 
     let sbom = open_sbom_xz("openshift-container-storage-4.8.z.json.xz")?;
 
@@ -47,18 +45,24 @@ async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let ingest_time_2 = start.elapsed();
 
     let start = Instant::now();
-    tx.commit().await?;
+    tx.commit().instrument(info_span!("commit")).await?;
     let commit_time = start.elapsed();
 
     // query
 
     let start = Instant::now();
 
-    let described_cpe222 = sbom.describes_cpe22s(Transactional::None).await?;
-    assert_eq!(1, described_cpe222.len());
+    async {
+        let described_cpe222 = sbom.describes_cpe22s(Transactional::None).await?;
+        assert_eq!(1, described_cpe222.len());
 
-    let described_packages = sbom.describes_packages(Transactional::None).await?;
-    log::info!("{:#?}", described_packages);
+        let described_packages = sbom.describes_packages(Transactional::None).await?;
+        log::info!("{:#?}", described_packages);
+
+        Ok::<_, anyhow::Error>(())
+    }
+    .instrument(info_span!("assert"))
+    .await?;
 
     let query_time = start.elapsed();
 
