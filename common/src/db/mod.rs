@@ -133,18 +133,20 @@ impl Database {
         Ok(Self { db })
     }
 
-    pub async fn migrate(self) -> Result<Self, anyhow::Error> {
+    pub async fn migrate(&self) -> Result<(), anyhow::Error> {
         log::debug!("applying migrations");
         Migrator::up(&self.db, None).await?;
         log::debug!("applied migrations");
-        Ok(self)
+
+        Ok(())
     }
 
-    pub async fn refresh(self) -> Result<Self, anyhow::Error> {
+    pub async fn refresh(&self) -> Result<(), anyhow::Error> {
         log::warn!("refreshing database schema...");
         Migrator::refresh(&self.db).await?;
         log::warn!("refreshing database schema... done!");
-        Ok(self)
+
+        Ok(())
     }
 
     pub async fn bootstrap(database: &crate::config::Database) -> Result<Self, anyhow::Error> {
@@ -171,7 +173,10 @@ impl Database {
 
         db.close().await?;
 
-        Self::new(database).await?.migrate().await
+        let db = Self::new(database).await?;
+        db.migrate().await?;
+
+        Ok(db)
     }
 
     pub async fn close(self) -> anyhow::Result<()> {
