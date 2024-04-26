@@ -1,17 +1,15 @@
 //! Support for packages.
 
-use std::fmt::{Debug, Formatter};
-
-use sea_orm::RelationTrait;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
-    QueryTrait, Set,
-};
-use sea_query::{JoinType, SelectStatement, UnionType};
-
 use package_version::PackageVersionContext;
 use package_version_range::PackageVersionRangeContext;
 use qualified_package::QualifiedPackageContext;
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
+    QueryTrait, RelationTrait, Set,
+};
+use sea_query::{JoinType, SelectStatement, UnionType};
+use std::fmt::{Debug, Formatter};
+use tracing::instrument;
 use trustify_common::{
     db::{limiter::LimiterTrait, Transactional},
     model::{Paginated, PaginatedResults},
@@ -19,7 +17,6 @@ use trustify_common::{
     purl::{Purl, PurlErr},
 };
 use trustify_entity as entity;
-use trustify_entity::package;
 
 use crate::graph::advisory::AdvisoryContext;
 use crate::graph::error::Error;
@@ -36,17 +33,14 @@ impl Graph {
     ///
     /// The `pkg` parameter does not necessarily require the presence of qualifiers, but
     /// is assumed to be *complete*.
+    #[instrument(skip(self, tx), err)]
     pub async fn ingest_qualified_package<TX: AsRef<Transactional>>(
         &self,
         purl: &Purl,
         tx: TX,
     ) -> Result<QualifiedPackageContext, Error> {
-        if let Some(found) = self.get_qualified_package(purl, &tx).await? {
-            return Ok(found);
-        }
-
-        let package_version = self.ingest_package_version(purl, &tx).await?;
-
+        let package = self.ingest_package(purl, &tx).await?;
+        let package_version = package.ingest_package_version(purl, &tx).await?;
         package_version.ingest_qualified_package(purl, &tx).await
     }
 
@@ -280,7 +274,7 @@ impl Debug for PackageContext<'_> {
 }
 
 impl<'g> PackageContext<'g> {
-    pub fn new(graph: &'g Graph, package: package::Model) -> Self {
+    pub fn new(graph: &'g Graph, package: entity::package::Model) -> Self {
         Self { graph, package }
     }
 
@@ -367,20 +361,15 @@ impl<'g> PackageContext<'g> {
         purl: &Purl,
         tx: TX,
     ) -> Result<Option<PackageVersionContext<'g>>, Error> {
-        if let Some(package_version) = entity::package_version::Entity::find()
-            .join(
-                JoinType::Join,
-                entity::package_version::Relation::Package.def(),
-            )
-            .filter(entity::package::Column::Id.eq(self.package.id))
+        Ok(entity::package_version::Entity::find()
+            .filter(entity::package_version::Column::PackageId.eq(self.package.id))
             .filter(entity::package_version::Column::Version.eq(purl.version.clone()))
             .one(&self.graph.connection(&tx))
-            .await?
-        {
-            Ok(Some(PackageVersionContext::new(self, package_version)))
-        } else {
-            Ok(None)
-        }
+            .await
+            .map(|package_version| {
+                package_version
+                    .map(|package_version| PackageVersionContext::new(self, package_version))
+            })?)
     }
 
     /// Retrieve known versions of this package.
@@ -787,14 +776,14 @@ mod tests {
                 let pkg1 = tx_system
                     .ingest_qualified_package(
                         &"pkg://oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012".try_into()?,
-                        Transactional::None,
+                        &Transactional::None,
                     )
                     .await?;
 
                 let pkg2 = tx_system
                     .ingest_qualified_package(
                     &"pkg://oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012".try_into()?,
-                        Transactional::None,
+                        &Transactional::None,
                     )
                     .await?;
 
@@ -816,28 +805,28 @@ mod tests {
         let pkg1 = system
             .ingest_qualified_package(
                 &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
-                Transactional::None,
+                &Transactional::None,
             )
             .await?;
 
         let pkg2 = system
             .ingest_qualified_package(
                 &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
-                Transactional::None,
+                &Transactional::None,
             )
             .await?;
 
         let pkg3 = system
             .ingest_qualified_package(
                 &"pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar".try_into()?,
-                Transactional::None,
+                &Transactional::None,
             )
             .await?;
 
         let pkg4 = system
             .ingest_qualified_package(
                 &"pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar".try_into()?,
-                Transactional::None,
+                &Transactional::None,
             )
             .await?;
 
@@ -870,7 +859,7 @@ mod tests {
             "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=pom",
         ] {
             graph
-                .ingest_qualified_package(&i.try_into()?, Transactional::None)
+                .ingest_qualified_package(&i.try_into()?, &Transactional::None)
                 .await?;
         }
 
@@ -896,10 +885,7 @@ mod tests {
         assert_eq!(result.len(), 1);
         assert_eq!(
             result[0].qualified_package.qualifiers,
-            Some(Qualifiers(HashMap::from_iter([(
-                "type".into(),
-                "jar".into()
-            )])))
+            Qualifiers(HashMap::from_iter([("type".into(), "jar".into())]))
         );
 
         Ok(())
