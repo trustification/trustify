@@ -92,7 +92,7 @@ impl SbomContext {
             tx.as_ref(),
         );
 
-        let mut num_rel = 0usize;
+        let mut rels = Vec::with_capacity(sbom_data.package_information.len());
 
         // connect all other tree-ish package trees in the context of this sbom.
         for package_info in &sbom_data.package_information {
@@ -132,24 +132,25 @@ impl SbomContext {
                             continue 'refs;
                         };
 
-                        num_rel += 1;
-
-                        // now add it
-                        self.ingest_package_relates_to_package(
-                            &mut package_cache,
-                            left.try_into()?,
-                            rel,
-                            right.try_into()?,
-                            &tx,
-                        )
-                        .await?
+                        rels.extend(
+                            self.create_relationship(
+                                &mut package_cache,
+                                &left.try_into()?,
+                                rel,
+                                &right.try_into()?,
+                            )
+                            .await?,
+                        );
                     }
                 }
             }
         }
 
         log::info!("Package cache: {package_cache:?}");
-        log::info!("Relationships added: {num_rel}");
+        log::info!("Relationships: {}", rels.len());
+
+        self.ingest_package_relates_to_package_many(&tx, rels)
+            .await?;
 
         Ok(())
     }
