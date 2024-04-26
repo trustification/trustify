@@ -12,7 +12,6 @@ pub struct TrustifyContext {
 }
 
 impl AsyncTestContext for TrustifyContext {
-    #[allow(clippy::unwrap_used)]
     #[instrument]
     async fn setup() -> TrustifyContext {
         if env::var("EXTERNAL_TEST_DB").is_ok() {
@@ -26,7 +25,7 @@ impl AsyncTestContext for TrustifyContext {
             };
         }
 
-        let tempdir = tempfile::tempdir().unwrap();
+        let tempdir = tempfile::tempdir().expect("Creating the test database tmp directory");
         let installation_dir = tempdir.path().to_path_buf();
         let settings = Settings {
             username: "postgres".to_string(),
@@ -38,8 +37,14 @@ impl AsyncTestContext for TrustifyContext {
 
         let mut postgresql = async {
             let mut postgresql = PostgreSQL::new(PostgreSQL::default_version(), settings);
-            postgresql.setup().await.unwrap();
-            postgresql.start().await.unwrap();
+            postgresql
+                .setup()
+                .await
+                .expect("Setting up the test database");
+            postgresql
+                .start()
+                .await
+                .expect("Starting the test database");
             postgresql
         }
         .instrument(info_span!("start database"))
@@ -52,7 +57,9 @@ impl AsyncTestContext for TrustifyContext {
             name: "test".into(),
             port: postgresql.settings().port,
         };
-        let db = crate::db::Database::bootstrap(&config).await.unwrap();
+        let db = crate::db::Database::bootstrap(&config)
+            .await
+            .expect("Bootstrapping the test database");
 
         TrustifyContext {
             db,
