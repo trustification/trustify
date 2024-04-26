@@ -115,6 +115,11 @@ impl InitData {
         };
 
         let db = db::Database::new(&run.database).await?;
+
+        if run.devmode {
+            db.migrate().await?;
+        }
+
         let graph = Graph::new(db.clone());
 
         let check = Local::spawn_periodic("no database connection", Duration::from_secs(1), {
