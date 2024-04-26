@@ -12,6 +12,7 @@ use sqlx::error::ErrorKind;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use tempfile::TempDir;
+use tracing::instrument;
 
 pub enum Transactional {
     None,
@@ -22,6 +23,7 @@ impl Transactional {
     /// Commit the database transaction.
     ///
     /// If there's no underlying database transaction, then this becomes a no-op.
+    #[instrument(skip_all, fields(transactional=matches!(self, Transactional::Some(_))))]
     pub async fn commit(self) -> Result<(), DbErr> {
         match self {
             Transactional::None => {}
@@ -133,6 +135,7 @@ impl Database {
         Ok(Self { db })
     }
 
+    #[instrument]
     pub async fn migrate(&self) -> Result<(), anyhow::Error> {
         log::debug!("applying migrations");
         Migrator::up(&self.db, None).await?;
@@ -141,6 +144,7 @@ impl Database {
         Ok(())
     }
 
+    #[instrument]
     pub async fn refresh(&self) -> Result<(), anyhow::Error> {
         log::warn!("refreshing database schema...");
         Migrator::refresh(&self.db).await?;
@@ -149,6 +153,7 @@ impl Database {
         Ok(())
     }
 
+    #[instrument]
     pub async fn bootstrap(database: &crate::config::Database) -> Result<Self, anyhow::Error> {
         let url = format!(
             "postgres://{}:{}@{}:{}/postgres",

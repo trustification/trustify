@@ -1,6 +1,7 @@
 use postgresql_embedded::{PostgreSQL, Settings};
 use tempfile::TempDir;
 use test_context::{test_context, AsyncTestContext};
+use tracing::{info_span, instrument, Instrument};
 
 pub struct TrustifyContext {
     pub db: crate::db::Database,
@@ -10,6 +11,7 @@ pub struct TrustifyContext {
 
 impl AsyncTestContext for TrustifyContext {
     #[allow(clippy::unwrap_used)]
+    #[instrument]
     async fn setup() -> TrustifyContext {
         let tempdir = tempfile::tempdir().unwrap();
         let installation_dir = tempdir.path().to_path_buf();
@@ -21,9 +23,14 @@ impl AsyncTestContext for TrustifyContext {
             ..Default::default()
         };
 
-        let mut postgresql = PostgreSQL::new(PostgreSQL::default_version(), settings);
-        postgresql.setup().await.unwrap();
-        postgresql.start().await.unwrap();
+        let mut postgresql = async {
+            let mut postgresql = PostgreSQL::new(PostgreSQL::default_version(), settings);
+            postgresql.setup().await.unwrap();
+            postgresql.start().await.unwrap();
+            postgresql
+        }
+        .instrument(info_span!("start database"))
+        .await;
 
         let config = crate::config::Database {
             username: "postgres".into(),
