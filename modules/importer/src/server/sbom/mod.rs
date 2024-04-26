@@ -52,6 +52,7 @@ impl super::Server {
 
         let ingestor = IngestorService::new(Graph::new(self.db.clone()), self.storage.clone());
         let storage = storage::StorageVisitor {
+            source: importer.source,
             ingestor,
             report: report.clone(),
         };

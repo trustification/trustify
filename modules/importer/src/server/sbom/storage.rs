@@ -18,32 +18,27 @@ pub enum StorageError {
 }
 
 pub struct StorageVisitor {
+    pub source: String,
     pub ingestor: IngestorService,
     /// the report to report our messages to
     pub report: Arc<Mutex<ReportBuilder>>,
 }
 
-pub struct StorageContext {
-    source: String,
-}
-
 #[async_trait(?Send)]
 impl ValidatedVisitor for StorageVisitor {
     type Error = StorageError;
-    type Context = StorageContext;
+    type Context = ();
 
     async fn visit_context(
         &self,
-        context: &ValidationContext,
+        _context: &ValidationContext,
     ) -> Result<Self::Context, Self::Error> {
-        Ok(StorageContext {
-            source: context.url.to_string(),
-        })
+        Ok(())
     }
 
     async fn visit_sbom(
         &self,
-        context: &Self::Context,
+        _context: &Self::Context,
         result: Result<ValidatedSbom, ValidationError>,
     ) -> Result<(), Self::Error> {
         let doc = result?;
@@ -57,7 +52,7 @@ impl ValidatedVisitor for StorageVisitor {
         };
 
         self.ingestor
-            .ingest_sbom(&context.source, ReaderStream::new(data.as_ref()))
+            .ingest_sbom(&self.source, ReaderStream::new(data.as_ref()))
             .await
             .map_err(|err| StorageError::Storage(err.into()))?;
 
