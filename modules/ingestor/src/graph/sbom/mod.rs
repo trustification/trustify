@@ -151,7 +151,7 @@ impl Graph {
             SbomLocator::Id(id) => self.locate_sbom_by_id(id, tx).await,
             SbomLocator::Location(location) => self.locate_sbom_by_location(&location, tx).await,
             SbomLocator::Sha256(sha256) => self.locate_sbom_by_sha256(&sha256, tx).await,
-            SbomLocator::Purl(purl) => self.locate_sbom_by_purl(purl, tx).await,
+            SbomLocator::Purl(purl) => self.locate_sbom_by_purl(&purl, tx).await,
             SbomLocator::Cpe(cpe) => self.locate_sbom_by_cpe22(&cpe, tx).await,
         }
     }
@@ -171,7 +171,7 @@ impl Graph {
             }
             SbomLocator::Location(location) => self.locate_sboms_by_location(&location, tx).await,
             SbomLocator::Sha256(sha256) => self.locate_sboms_by_sha256(&sha256, tx).await,
-            SbomLocator::Purl(purl) => self.locate_sboms_by_purl(purl, tx).await,
+            SbomLocator::Purl(purl) => self.locate_sboms_by_purl(&purl, tx).await,
             SbomLocator::Cpe(cpe) => self.locate_sboms_by_cpe22(cpe, tx).await,
         }
     }
@@ -266,7 +266,7 @@ impl Graph {
 
     async fn locate_sbom_by_purl<TX: AsRef<Transactional>>(
         &self,
-        purl: Purl,
+        purl: &Purl,
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         let package = self.get_qualified_package(purl, &tx).await?;
@@ -292,7 +292,7 @@ impl Graph {
 
     async fn locate_sboms_by_purl<TX: AsRef<Transactional>>(
         &self,
-        purl: Purl,
+        purl: &Purl,
         tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
         let package = self.get_qualified_package(purl, &tx).await?;
@@ -413,7 +413,7 @@ impl SbomContext {
     #[instrument(skip(tx), err)]
     pub async fn ingest_describes_package<TX: AsRef<Transactional>>(
         &self,
-        purl: Purl,
+        purl: &Purl,
         tx: TX,
     ) -> Result<(), Error> {
         let fetch = entity::sbom_describes_package::Entity::find()
@@ -537,7 +537,7 @@ impl SbomContext {
     pub async fn related_packages_transitively_x<TX: AsRef<Transactional>>(
         &self,
         relationship: Relationship,
-        pkg: Purl,
+        pkg: &Purl,
         tx: TX,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         let pkg = self.graph.get_qualified_package(pkg, &tx).await?;
@@ -568,7 +568,7 @@ impl SbomContext {
     pub async fn related_packages_transitively<TX: AsRef<Transactional>>(
         &self,
         relationships: &[Relationship],
-        pkg: Purl,
+        pkg: &Purl,
         tx: TX,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         let pkg = self.graph.get_qualified_package(pkg, &tx).await?;
@@ -611,7 +611,7 @@ impl SbomContext {
     pub async fn related_packages<TX: AsRef<Transactional>>(
         &self,
         relationship: Relationship,
-        pkg: Purl,
+        pkg: &Purl,
         tx: TX,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         let pkg = self.graph.get_qualified_package(pkg, &tx).await?;
@@ -672,7 +672,7 @@ impl SbomContext {
             applicable.extend(
                 self.related_packages_transitively(
                     &[Relationship::DependencyOf, Relationship::ContainedBy],
-                    pkg.into(),
+                    &pkg.into(),
                     Transactional::None,
                 )
                 .await?,
@@ -743,10 +743,7 @@ impl<'a> PackageCache<'a> {
                 entry.get().clone()
             }
             Entry::Vacant(entry) => {
-                let result = self
-                    .graph
-                    .ingest_qualified_package(purl.clone(), &self.tx)
-                    .await;
+                let result = self.graph.ingest_qualified_package(purl, &self.tx).await;
                 entry.insert(Rc::new(result)).clone()
             }
         }

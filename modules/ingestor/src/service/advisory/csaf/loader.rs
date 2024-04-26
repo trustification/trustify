@@ -110,7 +110,7 @@ impl<'g> CsafLoader<'g> {
             for purl in resolve_purls(csaf, r) {
                 let package = Purl::from(purl.clone());
                 advisory_vulnerability
-                    .ingest_fixed_package_version(package, &tx)
+                    .ingest_fixed_package_version(&package, &tx)
                     .await?;
             }
         }
@@ -118,7 +118,7 @@ impl<'g> CsafLoader<'g> {
             for purl in resolve_purls(csaf, r) {
                 let package = Purl::from(purl.clone());
                 advisory_vulnerability
-                    .ingest_not_affected_package_version(package, &tx)
+                    .ingest_not_affected_package_version(&package, &tx)
                     .await?;
             }
         }

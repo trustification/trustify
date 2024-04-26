@@ -1,5 +1,6 @@
 use sea_orm::{DbErr, TransactionTrait};
 use std::fmt::{Debug, Display, Formatter};
+use tracing::instrument;
 use trustify_common::db::{ConnectionOrTransaction, Transactional};
 
 mod cpe;
@@ -55,6 +56,7 @@ impl Graph {
     ///
     /// The transaction will be rolled-back unless explicitly `commit()`'d before
     /// it drops.
+    #[instrument]
     pub async fn transaction(&self) -> Result<Transactional, error::Error> {
         Ok(Transactional::Some(self.db.begin().await?))
     }

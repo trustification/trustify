@@ -45,7 +45,7 @@ async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let ingest_time_2 = start.elapsed();
 
     let start = Instant::now();
-    tx.commit().instrument(info_span!("commit")).await?;
+    tx.commit().await?;
     let commit_time = start.elapsed();
 
     // query
