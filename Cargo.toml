@@ -121,3 +121,6 @@ trustify-infrastructure = { path = "common/infrastructure" }
 #csaf-walker = { path = "../../csaf-walker/csaf" }
 #sbom-walker = { path = "../../csaf-walker/sbom" }
 #walker-common = { path = "../../csaf-walker/common" }
+
+#test-log = { path = "../test-log" }
+test-log = { git = "https://github.com/ctron/test-log", rev = "0945dd80d104102f64d364934e2fb7ccce08262f" }
