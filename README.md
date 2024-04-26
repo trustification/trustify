@@ -87,6 +87,12 @@ trustd --help
 trustd --db-strategy managed --db-user postgres --db-password eggs
 ```
 
+#### If test failures on OSX
+
+Potentially our concurrent Postgres installations during testing can exhaust shared-memory.
+Adjusting shared-memory on OSX is not straight-forward.
+Use [this guide](https://unix.stackexchange.com/questions/689295/values-from-sysctl-a-dont-match-etc-sysctl-conf-even-after-restart).
+
 ### Import some data
 
 Import data (also see: [modules/importer/README.md](modules/importer/README.md) for more options):
