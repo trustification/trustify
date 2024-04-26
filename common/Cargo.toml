@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-trustify-migration = { workspace = true }
 trustify-cvss = { workspace = true }
+trustify-migration = { workspace = true }
+
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 cpe = { workspace = true }
@@ -16,14 +17,15 @@ packageurl = { workspace = true }
 pem = { workspace = true }
 postgresql_embedded = { workspace = true, features = ["blocking", "bundled", "tokio"] }
 reqwest = { workspace = true, features = ["native-tls"] }
-utoipa = { workspace = true }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 sqlx = { workspace = true }
 tempfile = { workspace = true }
-thiserror = { workspace = true }
 test-context = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+utoipa = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }
