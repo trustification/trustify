@@ -13,6 +13,7 @@ pub struct TrustifyContext {
 
 impl AsyncTestContext for TrustifyContext {
     #[instrument]
+    #[allow(clippy::expect_used)]
     async fn setup() -> TrustifyContext {
         if env::var("EXTERNAL_TEST_DB").is_ok() {
             log::warn!("Using external database from 'DB_*' env vars");
