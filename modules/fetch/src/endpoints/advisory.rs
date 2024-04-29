@@ -62,12 +62,15 @@ pub async fn get(
 mod test {
     use actix_web::test::TestRequest;
     use actix_web::App;
+    use serde_json::Value;
+    use std::str::FromStr;
     use test_context::test_context;
     use test_log::test;
     use time::OffsetDateTime;
 
     use trustify_common::db::test::TrustifyContext;
     use trustify_common::model::PaginatedResults;
+    use trustify_common::purl::Purl;
     use trustify_cvss::cvss3::{
         AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
         PrivilegesRequired, Scope, UserInteraction,
@@ -152,7 +155,7 @@ mod test {
         assert!(rhsa_1
             .vulnerabilities
             .iter()
-            .any(|e| e.vulnerability_id == "CVE-123"));
+            .any(|e| e.identifier == "CVE-123"));
 
         Ok(())
     }
@@ -203,13 +206,20 @@ mod test {
                     minor_version: 0,
                     av: AttackVector::Network,
                     ac: AttackComplexity::Low,
-                    pr: PrivilegesRequired::None,
+                    pr: PrivilegesRequired::High,
                     ui: UserInteraction::None,
-                    s: Scope::Unchanged,
-                    c: Confidentiality::None,
+                    s: Scope::Changed,
+                    c: Confidentiality::High,
                     i: Integrity::None,
                     a: Availability::None,
                 },
+                (),
+            )
+            .await?;
+
+        advisory_vuln
+            .ingest_not_affected_package_version(
+                &Purl::from_str("pkg://maven/log4j/log4j@1.2.3")?,
                 (),
             )
             .await?;
@@ -218,8 +228,18 @@ mod test {
 
         let request = TestRequest::get().uri(uri).to_request();
 
+        /*
+        let response: Value =
+            actix_web::test::call_and_read_body_json(&app, request).await;
+
+        println!("{:#?}", response);
+
+         */
+
         let response: AdvisoryDetails =
             actix_web::test::call_and_read_body_json(&app, request).await;
+
+        log::debug!("{:#?}", response);
 
         assert_eq!(1, response.vulnerabilities.len());
 
