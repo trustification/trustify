@@ -5,8 +5,8 @@ use sea_orm::FromQueryResult;
 #[sea_orm(table_name = "package_version")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i32,
-    pub package_id: i32,
+    pub id: Uuid,
+    pub package_id: Uuid,
     pub version: String,
 }
 

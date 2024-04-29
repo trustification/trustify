@@ -1,8 +1,8 @@
 
-create or replace function qualified_package_transitive(sbom_id_param integer, start_package_id integer, relationships_param integer[])
+create or replace function qualified_package_transitive(sbom_id_param integer, start_package_id uuid, relationships_param integer[])
     returns table (
-        left_package_id integer,
-        right_package_id integer
+        left_package_id uuid,
+        right_package_id uuid
     )
 as $$
     begin

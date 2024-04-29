@@ -3,10 +3,10 @@
 use super::error::Error;
 use crate::db::{LeftPackageId, QualifiedPackageTransitive};
 use crate::graph::cpe::CpeContext;
+use crate::graph::package::creator::Creator;
 use crate::graph::package::package_version::PackageVersionContext;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
 use crate::graph::package::PackageContext;
-use crate::graph::sbom::cache::PackageCache;
 use crate::graph::Graph;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QuerySelect, QueryTrait,
@@ -18,6 +18,7 @@ use std::fmt::{Debug, Formatter};
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::cpe::Cpe;
+use trustify_common::db::chunk::EntityChunkedIter;
 use trustify_common::db::limiter::LimiterTrait;
 use trustify_common::db::Transactional;
 use trustify_common::model::{Paginated, PaginatedResults};
@@ -30,7 +31,6 @@ use trustify_entity::sbom;
 use trustify_module_search::model::SearchOptions;
 use trustify_module_search::query::Query as TrustifyQuery;
 
-mod cache;
 pub mod spdx;
 
 #[cfg(test)]
@@ -471,71 +471,56 @@ impl SbomContext {
             .await
     }
 
-    async fn create_relationship<'a>(
-        &'a self,
-        cache: &mut PackageCache<'a>,
+    fn create_relationship(
+        &self,
         left_package_input: &Purl,
         relationship: Relationship,
         right_package_input: &Purl,
-    ) -> Result<Option<entity::package_relates_to_package::ActiveModel>, Error> {
-        let left_package = cache.lookup(left_package_input).await;
-        let right_package = cache.lookup(right_package_input).await;
+    ) -> entity::package_relates_to_package::ActiveModel {
+        let left_package = left_package_input.qualifier_uuid();
+        let right_package = right_package_input.qualifier_uuid();
 
-        match (&*left_package, &*right_package) {
-            (Ok(left_package), Ok(right_package)) => {
-                return Ok(Some(entity::package_relates_to_package::ActiveModel {
-                    left_package_id: Set(left_package.qualified_package.id),
-                    relationship: Set(relationship),
-                    right_package_id: Set(right_package.qualified_package.id),
-                    sbom_id: Set(self.sbom.id),
-                }))
-            }
-            (Err(_), Err(_)) => {
-                log::warn!(
-                    "unable to ingest relationships between non-fully-qualified packages {}, {}",
-                    left_package_input,
-                    right_package_input,
-                );
-            }
-            (Err(_), Ok(_)) => {
-                log::warn!(
-                    "unable to ingest relationships involving a non-fully-qualified package {}",
-                    left_package_input
-                );
-            }
-            (Ok(_), Err(_)) => {
-                log::warn!(
-                    "unable to ingest relationships involving a non-fully-qualified package {}",
-                    right_package_input
-                );
-            }
+        entity::package_relates_to_package::ActiveModel {
+            left_package_id: Set(left_package),
+            relationship: Set(relationship),
+            right_package_id: Set(right_package),
+            sbom_id: Set(self.sbom.id),
         }
-
-        Ok(None)
     }
 
     /// Within the context of *this* SBOM, ingest a relationship between
     /// two packages.
+    ///
+    /// The packages will be created if they don't yet exist.
     #[instrument(skip(tx), err)]
     async fn ingest_package_relates_to_package<'a, TX: AsRef<Transactional>>(
         &'a self,
-        cache: &mut PackageCache<'a>,
         left_package_input: &Purl,
         relationship: Relationship,
         right_package_input: &Purl,
         tx: TX,
     ) -> Result<(), Error> {
-        let rel = self
-            .create_relationship(cache, left_package_input, relationship, right_package_input)
-            .await?;
+        // ensure the packages exist first
 
-        self.ingest_package_relates_to_package_many(tx, rel).await?;
+        let mut creator = Creator::new();
+        creator.add(left_package_input.clone());
+        creator.add(right_package_input.clone());
+        creator.create(&self.graph.connection(&tx)).await?;
+
+        // now create the relationship
+
+        let rel = self.create_relationship(left_package_input, relationship, right_package_input);
+
+        self.ingest_package_relates_to_package_many(tx, [rel])
+            .await?;
 
         Ok(())
     }
 
     /// Within the context of *this* SBOM, ingest a relationship between
     /// two packages.
+    ///
+    /// The packages must already be created.
     #[instrument(skip(tx, entities), err)]
     async fn ingest_package_relates_to_package_many<TX, I>(
         &self,
@@ -546,19 +531,21 @@ impl SbomContext {
         TX: AsRef<Transactional>,
         I: IntoIterator<Item = entity::package_relates_to_package::ActiveModel>,
     {
-        entity::package_relates_to_package::Entity::insert_many(entities)
-            .on_conflict(
-                OnConflict::columns([
-                    entity::package_relates_to_package::Column::LeftPackageId,
-                    entity::package_relates_to_package::Column::Relationship,
-                    entity::package_relates_to_package::Column::RightPackageId,
-                    entity::package_relates_to_package::Column::SbomId,
-                ])
-                .do_nothing()
-                .to_owned(),
-            )
-            .exec(&self.graph.connection(&tx))
-            .await?;
+        for batch in &entities.into_iter().chunked() {
+            entity::package_relates_to_package::Entity::insert_many(batch)
+                .on_conflict(
+                    OnConflict::columns([
+                        entity::package_relates_to_package::Column::LeftPackageId,
+                        entity::package_relates_to_package::Column::Relationship,
+                        entity::package_relates_to_package::Column::RightPackageId,
+                        entity::package_relates_to_package::Column::SbomId,
+                    ])
+                    .do_nothing()
+                    .to_owned(),
+                )
+                .exec(&self.graph.connection(&tx))
+                .await?;
+        }
 
         Ok(())
     }

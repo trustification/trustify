@@ -7,7 +7,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub sbom_id: i32,
     #[sea_orm(primary_key)]
-    pub qualified_package_id: i32,
+    pub qualified_package_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

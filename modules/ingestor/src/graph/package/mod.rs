@@ -3,6 +3,7 @@
 use package_version::PackageVersionContext;
 use package_version_range::PackageVersionRangeContext;
 use qualified_package::QualifiedPackageContext;
+use sea_orm::prelude::Uuid;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
     QueryTrait, RelationTrait, Set,
@@ -90,7 +91,7 @@ impl Graph {
             Ok(found)
         } else {
             let model = entity::package::ActiveModel {
-                id: Default::default(),
+                id: Set(purl.package_uuid()),
                 r#type: Set(purl.ty.clone()),
                 namespace: Set(purl.namespace.clone()),
                 name: Set(purl.name.clone()),
@@ -120,7 +121,7 @@ impl Graph {
 
     pub async fn get_qualified_package_by_id<TX: AsRef<Transactional>>(
         &self,
-        id: i32,
+        id: Uuid,
         tx: TX,
     ) -> Result<Option<QualifiedPackageContext>, Error> {
         let found = entity::qualified_package::Entity::find_by_id(id)
@@ -187,7 +188,7 @@ impl Graph {
 
     pub async fn get_package_version_by_id<TX: AsRef<Transactional>>(
         &self,
-        id: i32,
+        id: Uuid,
         tx: TX,
     ) -> Result<Option<PackageVersionContext>, Error> {
         if let Some(package_version) = entity::package_version::Entity::find_by_id(id)
@@ -247,7 +248,7 @@ impl Graph {
 
     pub async fn get_package_by_id<TX: AsRef<Transactional>>(
         &self,
-        id: i32,
+        id: Uuid,
         tx: TX,
     ) -> Result<Option<PackageContext>, Error> {
         if let Some(found) = entity::package::Entity::find_by_id(id)
@@ -339,7 +340,7 @@ impl<'g> PackageContext<'g> {
                 Ok(found)
             } else {
                 let model = entity::package_version::ActiveModel {
-                    id: Default::default(),
+                    id: Set(purl.version_uuid()),
                     package_id: Set(self.package.id),
                     version: Set(version.clone()),
                 };
@@ -593,8 +594,9 @@ impl<'g> PackageContext<'g> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use std::collections::HashMap;
+    use std::collections::BTreeMap;
     use std::num::NonZeroU64;
+    use std::str::FromStr;
 
     use sea_orm::{
         EntityTrait, IntoSimpleExpr, QueryFilter, QuerySelect, QueryTrait, TransactionTrait,
@@ -886,7 +888,7 @@ mod tests {
         assert_eq!(result.len(), 1);
         assert_eq!(
             result[0].qualified_package.qualifiers,
-            Qualifiers(HashMap::from_iter([("type".into(), "jar".into())]))
+            Qualifiers(BTreeMap::from_iter([("type".into(), "jar".into())]))
         );
 
         Ok(())
@@ -1259,5 +1261,30 @@ mod tests {
         assert!(advisories.contains(&ghsa_advisory));
 
         Ok(())
+    }
+
+    #[test]
+    fn test_uuid() {
+        let purl = Purl::from_str("pkg://maven/io.quarkus/quarkus-core@1.2").unwrap();
+
+        assert_eq!(
+            purl.package_uuid().to_string(),
+            "d2df7e32-548d-52f0-b31d-61463b78ce90"
+        );
+        assert_eq!(
+            purl.version_uuid().to_string(),
+            "709c07a3-3936-5d83-8c4f-734991725cbd"
+        );
+
+        let purl = Purl::from_str("pkg://maven/io.quarkus/quarkus-core@1.3").unwrap();
+
+        assert_eq!(
+            purl.package_uuid().to_string(),
+            "d2df7e32-548d-52f0-b31d-61463b78ce90"
+        );
+        assert_eq!(
+            purl.version_uuid().to_string(),
+            "3f263e61-f8a3-5345-ad80-c615c27299e1"
+        );
     }
 }

@@ -1,70 +1,109 @@
-use crate::graph::package::qualified_package::QualifiedPackageContext;
-use crate::graph::{error::Error, package::PackageContext};
-use sea_orm::{ConnectionTrait, EntityTrait};
-use std::collections::{BTreeMap, HashMap, HashSet};
-use trustify_common::purl::Purl;
-use trustify_entity::package;
+use crate::graph::error::Error;
+use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait};
+use sea_query::OnConflict;
+use std::collections::{HashMap, HashSet};
+use trustify_common::{db::chunk::EntityChunkedIter, purl::Purl};
+use trustify_entity::{
+    package, package_version,
+    qualified_package::{self, Qualifiers},
+};
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-struct PackageLevel {
-    r#type: String,
-    namespace: Option<String>,
-    name: String,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-struct VersionLevel(String);
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-struct QualifierLevel(BTreeMap<String, String>);
-
-fn split(purl: Purl) -> (PackageLevel, VersionLevel, QualifierLevel) {
-    (
-        PackageLevel {
-            r#type: purl.ty,
-            namespace: purl.namespace,
-            name: purl.name,
-        },
-        VersionLevel(purl.version.unwrap_or_default()),
-        QualifierLevel(BTreeMap::from_iter(purl.qualifiers)),
-    )
-}
-
+#[derive(Default)]
 pub struct Creator {
-    scheduled: HashMap<PackageLevel, HashMap<VersionLevel, Vec<QualifierLevel>>>,
+    purls: HashSet<Purl>,
 }
 
 impl Creator {
     pub fn new() -> Self {
-        Self {
-            scheduled: Default::default(),
-        }
+        Self::default()
     }
 
-    fn add(&mut self, purl: Purl) {
-        let (package, version, qualifier) = split(purl);
-        self.scheduled
-            .entry(package)
-            .or_default()
-            .entry(version)
-            .or_default()
-            .push(qualifier);
+    pub fn add(&mut self, purl: Purl) {
+        self.purls.insert(purl);
     }
 
-    pub async fn create<'g, C>(
-        self,
-        db: C,
-    ) -> Result<HashMap<Purl, QualifiedPackageContext<'g>>, Error>
+    pub async fn create<'g, C>(self, db: &C) -> Result<(), Error>
     where
         C: ConnectionTrait,
     {
         // insert all packages
 
-        // let packages =
+        let mut packages = HashMap::new();
+        let mut versions = HashMap::new();
+        let mut qualifieds = HashMap::new();
+
+        for purl in self.purls {
+            let (package, version, qualified) = purl.uuids();
+            packages
+                .entry(package)
+                .or_insert_with(|| package::ActiveModel {
+                    id: Set(package),
+                    r#type: Set(purl.ty),
+                    namespace: Set(purl.namespace),
+                    name: Set(purl.name),
+                });
+
+            versions
+                .entry(version)
+                .or_insert_with(|| package_version::ActiveModel {
+                    id: Set(version),
+                    package_id: Set(package),
+                    version: Set(purl.version.unwrap_or_default()),
+                });
+
+            qualifieds
+                .entry(qualified)
+                .or_insert_with(|| qualified_package::ActiveModel {
+                    id: Set(qualified),
+                    package_version_id: Set(version),
+                    qualifiers: Set(Qualifiers(purl.qualifiers)),
+                });
+        }
+
+        // insert packages
+
+        for batch in &packages.into_values().chunked() {
+            package::Entity::insert_many(batch)
+                .on_conflict(
+                    OnConflict::columns([package::Column::Id])
+                        .do_nothing()
+                        .to_owned(),
+                )
+                .do_nothing()
+                .exec(db)
+                .await?;
+        }
 
         // insert all package versions
+
+        for batch in &versions.into_values().chunked() {
+            package_version::Entity::insert_many(batch)
+                .on_conflict(
+                    OnConflict::columns([package_version::Column::Id])
+                        .do_nothing()
+                        .to_owned(),
+                )
+                .do_nothing()
+                .exec(db)
+                .await?;
+        }
+
         // insert all qualified packages
+
+        for batch in &qualifieds.into_values().chunked() {
+            qualified_package::Entity::insert_many(batch)
+                .on_conflict(
+                    OnConflict::columns([qualified_package::Column::Id])
+                        .do_nothing()
+                        .to_owned(),
+                )
+                .do_nothing()
+                .exec(db)
+                .await?;
+        }
+
         // return result
-        todo!()
+
+        Ok(())
     }
 }

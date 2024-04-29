@@ -4605,6 +4605,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha1_smol"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae1a47186c03a32177042e55dbc5fd5aee900b8e0069a8d70fba96a9375cd012"
+
+[[package]]
 name = "sha1collisiondetection"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5661,6 +5667,7 @@ dependencies = [
  "anyhow",
  "clap",
  "cpe",
+ "itertools 0.12.1",
  "lenient_semver",
  "log",
  "native-tls",
@@ -5681,6 +5688,7 @@ dependencies = [
  "trustify-cvss",
  "trustify-migration",
  "utoipa",
+ "uuid",
 ]
 
 [[package]]
@@ -5706,6 +5714,7 @@ dependencies = [
  "tokio",
  "trustify-common",
  "trustify-cvss",
+ "uuid",
 ]
 
 [[package]]
@@ -5840,6 +5849,7 @@ dependencies = [
  "futures",
  "hex",
  "humantime",
+ "itertools 0.12.1",
  "lenient_semver",
  "log",
  "packageurl",
@@ -6156,6 +6166,7 @@ checksum = "a183cf7feeba97b4dd1c0d46788634f6221d87fa961b305bed08c851829efcc0"
 dependencies = [
  "getrandom",
  "serde",
+ "sha1_smol",
 ]
 
 [[package]]

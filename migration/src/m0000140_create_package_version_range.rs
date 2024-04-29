@@ -29,7 +29,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(PackageVersionRange::PackageId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .foreign_key(

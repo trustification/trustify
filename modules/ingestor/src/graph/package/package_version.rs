@@ -48,7 +48,7 @@ impl<'g> PackageVersionContext<'g> {
 
         // No appropriate qualified package, create one.
         let qualified_package = entity::qualified_package::ActiveModel {
-            id: Default::default(),
+            id: Set(purl.qualifier_uuid()),
             package_version_id: Set(self.package_version.id),
             qualifiers: Set(Qualifiers(purl.qualifiers.clone())),
         };

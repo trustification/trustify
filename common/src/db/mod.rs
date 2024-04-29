@@ -1,3 +1,4 @@
+pub mod chunk;
 pub mod limiter;
 pub mod test;
 
