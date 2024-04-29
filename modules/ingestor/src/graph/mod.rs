@@ -1,5 +1,5 @@
 use sea_orm::{DbErr, TransactionTrait};
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::Debug;
 use tracing::instrument;
 use trustify_common::db::{ConnectionOrTransaction, Transactional};
 
@@ -16,36 +16,13 @@ pub struct Graph {
     db: trustify_common::db::Database,
 }
 
+#[derive(Debug, thiserror::Error)]
 pub enum Error<E: Send> {
-    Database(DbErr),
+    #[error(transparent)]
+    Database(#[from] DbErr),
+    #[error(transparent)]
     Transaction(E),
 }
-
-impl<E: Send> From<DbErr> for Error<E> {
-    fn from(value: DbErr) -> Self {
-        Self::Database(value)
-    }
-}
-
-impl<E: Send> Debug for Error<E> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Transaction(_) => f.debug_tuple("Transaction").finish(),
-            Self::Database(err) => f.debug_tuple("Database").field(err).finish(),
-        }
-    }
-}
-
-impl<E: Send + Display> std::fmt::Display for Error<E> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Transaction(inner) => write!(f, "transaction error: {}", inner),
-            Self::Database(err) => write!(f, "database error: {err}"),
-        }
-    }
-}
-
-impl<E: Send + Display> std::error::Error for Error<E> {}
 
 impl Graph {
     pub fn new(db: trustify_common::db::Database) -> Self {
