@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
@@ -6,6 +6,7 @@ use std::str::FromStr;
 use packageurl::PackageUrl;
 use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum PurlErr {
@@ -15,13 +16,62 @@ pub enum PurlErr {
     Package(#[from] packageurl::Error),
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Purl {
     pub ty: String,
     pub namespace: Option<String>,
     pub name: String,
     pub version: Option<String>,
-    pub qualifiers: HashMap<String, String>,
+    pub qualifiers: BTreeMap<String, String>,
+}
+
+const NAMESPACE: Uuid = Uuid::from_bytes([
+    0x37, 0x38, 0xb4, 0x3d, 0xfd, 0x03, 0x4a, 0x9d, 0x84, 0x9c, 0x48, 0x9b, 0xec, 0x61, 0x0f, 0x06,
+]);
+
+impl Purl {
+    pub fn package_uuid(&self) -> Uuid {
+        let mut result = Uuid::new_v5(&NAMESPACE, self.ty.as_bytes());
+        if let Some(namespace) = &self.namespace {
+            result = Uuid::new_v5(&result, namespace.as_bytes());
+        }
+        Uuid::new_v5(&result, self.name.as_bytes())
+    }
+
+    fn then_version_uuid(&self, package: &Uuid) -> Uuid {
+        Uuid::new_v5(
+            package,
+            self.version
+                .as_ref()
+                .map(|v| v.as_bytes())
+                .unwrap_or_default(),
+        )
+    }
+
+    pub fn version_uuid(&self) -> Uuid {
+        self.then_version_uuid(&self.package_uuid())
+    }
+
+    fn then_qualifier_uuid(&self, version: &Uuid) -> Uuid {
+        let mut result = *version;
+        for (k, v) in &self.qualifiers {
+            result = Uuid::new_v5(&result, k.as_bytes());
+            result = Uuid::new_v5(&result, v.as_bytes());
+        }
+
+        result
+    }
+
+    pub fn qualifier_uuid(&self) -> Uuid {
+        self.then_qualifier_uuid(&self.version_uuid())
+    }
+
+    pub fn uuids(&self) -> (Uuid, Uuid, Uuid) {
+        let package = self.package_uuid();
+        let version = self.then_version_uuid(&package);
+        let qualified = self.then_qualifier_uuid(&version);
+        (package, version, qualified)
+    }
 }
 
 impl Serialize for Purl {
@@ -67,27 +117,6 @@ impl<'de> Visitor<'de> for PurlVisitor {
         v.try_into().map_err(Error::custom)
     }
 }
-
-impl Hash for Purl {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        //state.write(self.package_url.to_string().as_bytes())
-        state.write(self.ty.as_bytes());
-        if let Some(ns) = &self.namespace {
-            state.write(ns.as_bytes())
-        }
-        state.write(self.name.as_bytes());
-        if let Some(version) = &self.version {
-            state.write(&[b'@']);
-            state.write(version.as_bytes());
-        }
-        for (k, v) in &self.qualifiers {
-            state.write(k.as_bytes());
-            state.write(v.as_bytes());
-        }
-    }
-}
-
-impl Eq for Purl {}
 
 impl Display for Purl {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

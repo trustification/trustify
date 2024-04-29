@@ -17,9 +17,8 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(QualifiedPackage::Id)
-                            .integer()
+                            .uuid()
                             .not_null()
-                            .auto_increment()
                             .primary_key(),
                     )
                     .col(
@@ -29,7 +28,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(QualifiedPackage::PackageVersionId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .col(

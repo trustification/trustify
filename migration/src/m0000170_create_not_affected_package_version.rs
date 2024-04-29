@@ -44,7 +44,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(NotAffectedPackageVersion::PackageVersionId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .foreign_key(

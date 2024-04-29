@@ -5,11 +5,11 @@ use sea_orm::entity::prelude::*;
 #[sea_orm(table_name = "package_relates_to_package")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub left_package_id: i32,
+    pub left_package_id: Uuid,
     #[sea_orm(primary_key)]
     pub relationship: Relationship,
     #[sea_orm(primary_key)]
-    pub right_package_id: i32,
+    pub right_package_id: Uuid,
     #[sea_orm(primary_key)]
     pub sbom_id: i32,
 }

@@ -1,20 +1,20 @@
 use sea_orm::entity::prelude::*;
 use sea_orm::{FromJsonQueryResult, FromQueryResult};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "qualified_package")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i32,
-    pub package_version_id: i32,
+    pub id: Uuid,
+    pub package_version_id: Uuid,
     pub qualifiers: Qualifiers,
 }
 
 #[derive(
     Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, FromJsonQueryResult,
 )]
-pub struct Qualifiers(pub HashMap<String, String>);
+pub struct Qualifiers(pub BTreeMap<String, String>);
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {

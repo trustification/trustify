@@ -10,6 +10,7 @@ trustify-migration = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 cpe = { workspace = true }
+itertools = { workspace = true }
 lenient_semver = { workspace = true }
 log = { workspace = true }
 native-tls = { workspace = true }
@@ -26,6 +27,7 @@ test-context = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true }
+uuid = { workspace = true, features = ["v5"] }
 
 [dev-dependencies]
 serde_json = { workspace = true }

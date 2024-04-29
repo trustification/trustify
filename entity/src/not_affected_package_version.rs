@@ -8,7 +8,7 @@ pub struct Model {
     pub id: i32,
     pub advisory_id: i32,
     pub vulnerability_id: i32,
-    pub package_version_id: i32,
+    pub package_version_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

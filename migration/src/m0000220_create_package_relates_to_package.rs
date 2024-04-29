@@ -17,7 +17,7 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(PackageRelatesToPackage::LeftPackageId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .foreign_key(
@@ -37,7 +37,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(PackageRelatesToPackage::RightPackageId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .foreign_key(

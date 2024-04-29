@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests;
 
-use crate::graph::sbom::{PackageCache, SbomContext, SbomInformation};
+use crate::graph::package::creator::Creator;
+use crate::graph::sbom::{SbomContext, SbomInformation};
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
 use std::collections::HashMap;
@@ -84,15 +85,8 @@ impl SbomContext {
             rel_cache
         });
 
-        // prepare a lookup cache for packages in the database
-
-        let mut package_cache = PackageCache::new(
-            sbom_data.package_information.len(),
-            &self.graph,
-            tx.as_ref(),
-        );
-
         let mut rels = Vec::with_capacity(sbom_data.package_information.len());
+        let mut creator = Creator::new();
 
         // connect all other tree-ish package trees in the context of this sbom.
         for package_info in &sbom_data.package_information {
@@ -132,22 +126,21 @@ impl SbomContext {
                             continue 'refs;
                         };
 
-                        rels.extend(
-                            self.create_relationship(
-                                &mut package_cache,
-                                &left.try_into()?,
-                                rel,
-                                &right.try_into()?,
-                            )
-                            .await?,
-                        );
+                        let left = left.try_into()?;
+                        let right = right.try_into()?;
+
+                        rels.push(self.create_relationship(&left, rel, &right));
+
+                        creator.add(left);
+                        creator.add(right);
                     }
                 }
             }
         }
 
-        log::info!("Package cache: {package_cache:?}");
         log::info!("Relationships: {}", rels.len());
+
+        creator.create(&self.graph.connection(&tx)).await?;
 
         self.ingest_package_relates_to_package_many(&tx, rels)
             .await?;

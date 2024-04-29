@@ -14,13 +14,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Package::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(Package::Id)
-                            .integer()
-                            .not_null()
-                            .auto_increment()
-                            .primary_key(),
-                    )
+                    .col(ColumnDef::new(Package::Id).uuid().not_null().primary_key())
                     .col(
                         ColumnDef::new(Package::Timestamp)
                             .timestamp_with_time_zone()

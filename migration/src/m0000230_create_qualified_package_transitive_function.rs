@@ -15,7 +15,12 @@ impl MigrationTrait for Migration {
             .map(|_| ())
     }
 
-    async fn down(&self, _manager: &SchemaManager) -> Result<(), DbErr> {
+    async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .get_connection()
+            .execute_unprepared(r#"drop function if exists qualified_package_transitive"#)
+            .await?;
+
         Ok(())
     }
 }

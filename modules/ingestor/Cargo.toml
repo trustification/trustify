@@ -20,6 +20,7 @@ csaf = { workspace = true }
 futures = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }
+itertools = { workspace = true }
 lenient_semver = { workspace = true }
 log = { workspace = true }
 packageurl = { workspace = true }

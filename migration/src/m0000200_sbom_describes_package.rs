@@ -27,7 +27,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(SbomDescribesPackage::QualifiedPackageId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .primary_key(

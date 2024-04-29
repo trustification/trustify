@@ -3,6 +3,7 @@
 use crate::graph::error::Error;
 use crate::graph::package::package_version::PackageVersionContext;
 use crate::graph::sbom::SbomContext;
+use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
 use trustify_common::db::Transactional;
@@ -27,7 +28,7 @@ impl Eq for QualifiedPackageContext<'_> {}
 
 impl Hash for QualifiedPackageContext<'_> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        state.write_i32(self.qualified_package.id)
+        state.write(self.qualified_package.id.as_bytes());
     }
 }
 
@@ -44,7 +45,7 @@ impl<'g> From<QualifiedPackageContext<'g>> for Purl {
             namespace: value.package_version.package.package.namespace,
             name: value.package_version.package.package.name,
             version: Some(value.package_version.package_version.version),
-            qualifiers: value.qualified_package.qualifiers.0,
+            qualifiers: BTreeMap::from_iter(value.qualified_package.qualifiers.0),
         }
     }
 }

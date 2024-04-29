@@ -17,9 +17,8 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(PackageVersion::Id)
-                            .integer()
+                            .uuid()
                             .not_null()
-                            .auto_increment()
                             .primary_key(),
                     )
                     .col(
@@ -27,11 +26,7 @@ impl MigrationTrait for Migration {
                             .timestamp_with_time_zone()
                             .default(Func::cust(Now)),
                     )
-                    .col(
-                        ColumnDef::new(PackageVersion::PackageId)
-                            .integer()
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(PackageVersion::PackageId).uuid().not_null())
                     .col(ColumnDef::new(PackageVersion::Version).string().not_null())
                     .foreign_key(
                         ForeignKey::create()

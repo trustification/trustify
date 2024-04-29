@@ -4,14 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+trustify-common = { workspace = true }
+trustify-cvss = { workspace = true }
+
+chrono = { workspace = true }
 sea-orm = { workspace = true, features = ["sqlx-postgres", "runtime-tokio-rustls", "macros", "with-json"] }
+serde = { workspace = true }
 serde_json = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-trustify-common = { workspace = true }
-trustify-cvss = { workspace = true }
-chrono = { workspace = true }
-serde = { workspace = true }
+uuid = { workspace = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }
