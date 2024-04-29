@@ -38,5 +38,5 @@ walker-common = { workspace = true }
 walker-extras = { workspace = true }
 
 [dev-dependencies]
-test-log = { workspace = true, features = ["env_logger", "trace"] }
+test-log = { workspace = true, features = ["log", "trace"] }
 test-context = { workspace = true }

@@ -79,7 +79,7 @@ spdx-rs = "0.5.3"
 sqlx = "0.7"
 tempfile = "3"
 test-context = "0.3"
-test-log = { version = "0.2.15", default-features = false }
+test-log = "0.2.15"
 thiserror = "1.0.58"
 time = "0.3"
 tokio = "1.30.0"
@@ -123,4 +123,4 @@ trustify-infrastructure = { path = "common/infrastructure" }
 #walker-common = { path = "../../csaf-walker/common" }
 
 #test-log = { path = "../test-log" }
-test-log = { git = "https://github.com/ctron/test-log", rev = "0945dd80d104102f64d364934e2fb7ccce08262f" }
+test-log = { git = "https://github.com/ctron/test-log", rev = "f746a54ca32fd7861491cb6e544fee07be095b82" }

@@ -5224,7 +5224,7 @@ dependencies = [
 [[package]]
 name = "test-log"
 version = "0.2.15"
-source = "git+https://github.com/ctron/test-log?rev=0945dd80d104102f64d364934e2fb7ccce08262f#0945dd80d104102f64d364934e2fb7ccce08262f"
+source = "git+https://github.com/ctron/test-log?rev=f746a54ca32fd7861491cb6e544fee07be095b82#f746a54ca32fd7861491cb6e544fee07be095b82"
 dependencies = [
  "env_logger",
  "test-log-macros",
@@ -5234,7 +5234,7 @@ dependencies = [
 [[package]]
 name = "test-log-macros"
 version = "0.2.15"
-source = "git+https://github.com/ctron/test-log?rev=0945dd80d104102f64d364934e2fb7ccce08262f#0945dd80d104102f64d364934e2fb7ccce08262f"
+source = "git+https://github.com/ctron/test-log?rev=f746a54ca32fd7861491cb6e544fee07be095b82#f746a54ca32fd7861491cb6e544fee07be095b82"
 dependencies = [
  "proc-macro2",
  "quote",
