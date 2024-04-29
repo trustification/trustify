@@ -1,7 +1,7 @@
-pub mod package;
-pub mod vulnerability;
-
 pub mod advisory;
+pub mod package;
+pub mod sbom;
+pub mod vulnerability;
 
 //use crate::model::advisory::AdvisorySummary;
 use crate::service::FetchService;
@@ -21,6 +21,11 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let service = FetchService::new(db);
     config
         .app_data(web::Data::new(service))
+        .service(
+            web::scope("/api/v1/sbom")
+                .service(sbom::all)
+                .service(sbom::packages),
+        )
         .service(
             web::scope("/api/v1/advisory")
                 .service(advisory::all)
@@ -43,6 +48,8 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        sbom::all,
+        sbom::packages,
         package::dependencies,
         package::variants,
         advisory::all,
@@ -50,7 +57,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         vulnerability::all,
         vulnerability::advisories,
         vulnerability::affected_packages,
-        vulnerability::affected_products
+        vulnerability::affected_products,
     ),
     components(schemas(
         //crate::model::advisory::AdvisoryDetails,

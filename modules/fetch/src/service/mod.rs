@@ -1,3 +1,5 @@
+mod sbom;
+
 use crate::error::Error;
 use crate::model::advisory::{
     AdvisoryDetails, AdvisorySummary, AdvisoryVulnerabilityDetails, AdvisoryVulnerabilitySummary,

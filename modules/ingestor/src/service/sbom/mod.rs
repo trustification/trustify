@@ -27,10 +27,15 @@ impl super::IngestorService {
             .map_err(Error::Storage)?
             .ok_or_else(|| Error::Storage(anyhow!("File went missing during upload")))?;
 
-        log::info!("Storing: {source}");
+        log::debug!("Source: {source}");
 
         // FIXME: consider adding a report entry in case of "fixing" things
         let (spdx, _) = parse_spdx(data)?;
+
+        log::info!(
+            "Storing: {}",
+            spdx.document_creation_information.document_name
+        );
 
         let tx = self.graph.transaction().await?;
 
