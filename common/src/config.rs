@@ -6,26 +6,23 @@ use std::path::PathBuf;
 #[command(next_help_heading = "Database")]
 #[group(id = "database")]
 pub struct Database {
-    #[arg(id = "db-user", long, env = "DB_USER", default_value = "trustify")]
+    #[arg(id = "db-user", long, env = "DB_USER", default_value_t = Self::default().username)]
     pub username: String,
     #[arg(
         id = "db-password",
         long,
         env = "DB_PASSWORD",
-        default_value = "trustify"
+        default_value_t = Self::default().password,
     )]
     pub password: String,
-    #[arg(id = "db-host", long, env = "DB_HOST", default_value = "localhost")]
+    #[arg(id = "db-host", long, env = "DB_HOST", default_value_t = Self::default().host)]
     pub host: String,
-    #[arg(id = "db-port", long, env = "DB_PORT", default_value_t = 5432)]
+    #[arg(id = "db-port", long, env = "DB_PORT", default_value_t = Self::default().port)]
     pub port: u16,
-    #[arg(id = "db-name", long, env = "DB_NAME", default_value = "trustify")]
+    #[arg(id = "db-name", long, env = "DB_NAME", default_value_t = Self::default().name)]
     pub name: String,
 }
 
-// TODO: figure out how to make clap use this and remove the redundant
-// #[arg(...)]'s above.
-//
 // It would seem we could combine `default_value_t` with `flatten` on
 // the relevant field in the parent parser.
 //
