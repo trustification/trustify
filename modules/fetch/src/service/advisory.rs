@@ -1,10 +1,11 @@
 
 use crate::error::Error;
-use crate::model::advisory::{
-    AdvisoryDetails, AdvisorySummary, AdvisoryVulnerabilityDetails, AdvisoryVulnerabilitySummary,
-};
+use crate::model::advisory::{AdvisoryDetails, AdvisorySummary};
+use crate::model::vulnerability::{VulnerabilityDetails, VulnerabilitySummary};
 use sea_orm::{ColumnTrait, EntityTrait, LoaderTrait, QueryFilter};
 use std::collections::HashMap;
+use std::future::Future;
+use std::pin::Pin;
 use trustify_common::advisory::{AdvisoryVulnerabilityAssertions, Assertion};
 use trustify_common::db::limiter::LimiterTrait;
 use trustify_common::db::{Database, Transactional};
@@ -27,7 +28,41 @@ pub enum AdvisoryKey {
 
 impl super::FetchService {
 
-    pub async fn fetch_advisories<TX: AsRef<Transactional>>(
+    pub(crate) async fn advisory_summaries<TX: AsRef<Transactional> + Sync + Send>(
+        &self,
+        advisories: &Vec<advisory::Model>,
+        tx: TX,
+    ) -> Result<Vec<AdvisorySummary>, Error> {
+        let mut vulns = advisories
+            .load_many_to_many(
+                vulnerability::Entity,
+                advisory_vulnerability::Entity,
+                &self.db.connection(&tx),
+            )
+            .await?;
+
+        let mut advisory_summaries = Vec::new();
+
+        for (advisory, mut vuln) in advisories.iter().zip(vulns.drain(..)) {
+            let vulnerabilities = self
+                .vulnerability_summaries_for_advisory(&vuln, advisory.id, &tx)
+                .await?;
+
+            advisory_summaries.push(AdvisorySummary {
+                identifier: advisory.identifier.clone(),
+                sha256: advisory.sha256.clone(),
+                published: advisory.published,
+                modified: advisory.modified,
+                withdrawn: advisory.withdrawn,
+                title: advisory.title.clone(),
+                vulnerabilities,
+            })
+        }
+
+        Ok(advisory_summaries)
+    }
+
+    pub async fn fetch_advisories<TX: AsRef<Transactional> + Sync + Send>(
         &self,
         search: SearchOptions,
         paginated: Paginated,
@@ -43,69 +78,13 @@ impl super::FetchService {
 
         let total = limiter.total().await?;
 
-        let mut advisories = limiter.fetch().await?;
-
-        let mut vulns = advisories
-            .load_many_to_many(
-                vulnerability::Entity,
-                advisory_vulnerability::Entity,
-                &self.db.connection(&tx),
-            )
-            .await?;
-
-        let mut advisory_summaries = Vec::new();
-
-        for (advisory, mut vuln) in advisories.drain(..).zip(vulns.drain(..)) {
-            let mut cvss3s = vuln
-                .load_many(
-                    cvss3::Entity::find().filter(cvss3::Column::AdvisoryId.eq(advisory.id)),
-                    &self.db.connection(&tx),
-                )
-                .await?;
-
-            let advisory_vulns: Vec<_> = vuln
-                .drain(..)
-                .zip(cvss3s.iter())
-                .map(|(vuln, cvss3)| {
-                    let score = if let Some(average) = cvss3
-                        .iter()
-                        .map(|e| {
-                            let base = Cvss3Base::from(e.clone());
-                            base.score().value()
-                        })
-                        .reduce(|accum, e| accum + e)
-                    {
-                        Score::new(average / cvss3.len() as f64)
-                    } else {
-                        Score::new(0.0)
-                    };
-
-                    AdvisoryVulnerabilitySummary {
-                        vulnerability_id: vuln.identifier,
-                        severity: score.severity().to_string(),
-                        score: score.value(),
-                    }
-                })
-                .collect();
-
-            advisory_summaries.push(AdvisorySummary {
-                identifier: advisory.identifier,
-                sha256: advisory.sha256,
-                published: advisory.published,
-                modified: advisory.modified,
-                withdrawn: advisory.withdrawn,
-                title: advisory.title,
-                vulnerabilities: advisory_vulns,
-            })
-        }
-
         Ok(PaginatedResults {
             total,
-            items: advisory_summaries,
+            items: self.advisory_summaries(&limiter.fetch().await?, tx).await?,
         })
     }
 
-    pub async fn fetch_advisory<TX: AsRef<Transactional>>(
+    pub async fn fetch_advisory<TX: AsRef<Transactional> + Sync + Send>(
         &self,
         key: AdvisoryKey,
         tx: TX,
@@ -130,180 +109,21 @@ impl super::FetchService {
 
         let (advisory, mut vulnerabilities) = results.remove(0);
 
-        let mut cvss3s = vulnerabilities
-            .load_many(
-                cvss3::Entity::find().filter(cvss3::Column::AdvisoryId.eq(advisory.id)),
-                &self.db.connection(&tx),
-            )
+        let vulnerabilities = self
+            .vulnerability_details(&vulnerabilities, Some(advisory.id), &tx)
             .await?;
-
-        let mut fixed = vulnerabilities
-            .load_many(
-                fixed_package_version::Entity::find()
-                    .filter(fixed_package_version::Column::AdvisoryId.eq(advisory.id)),
-                &self.db.connection(&tx),
-            )
-            .await?;
-
-        let mut affected = vulnerabilities
-            .load_many(
-                affected_package_version_range::Entity::find()
-                    .filter(affected_package_version_range::Column::AdvisoryId.eq(advisory.id)),
-                &self.db.connection(&tx),
-            )
-            .await?;
-
-        let mut not_affected = vulnerabilities
-            .load_many(
-                not_affected_package_version::Entity::find()
-                    .filter(not_affected_package_version::Column::AdvisoryId.eq(advisory.id)),
-                &self.db.connection(&tx),
-            )
-            .await?;
-
-        let mut advisory_vulns = Vec::new();
-
-        for ((((vuln, mut cvss3), mut fixed), mut affected), mut not_affected) in vulnerabilities
-            .drain(..)
-            .zip(cvss3s.drain(..))
-            .zip(fixed.drain(..))
-            .zip(affected.drain(..))
-            .zip(not_affected.drain(..))
-        {
-            let mut assertions = HashMap::new();
-
-            'fixed: {
-                let mut package_versions = fixed
-                    .load_one(package_version::Entity, &self.db.connection(&tx))
-                    .await?
-                    .iter()
-                    .flat_map(|e| e.clone())
-                    .collect::<Vec<_>>();
-
-                let mut packages = package_versions
-                    .load_one(package::Entity, &self.db.connection(&tx))
-                    .await?;
-
-                packages.drain(..).zip(package_versions.drain(..)).for_each(
-                    |(package, version)| {
-                        if let Some(package) = package {
-                            let package_assertions = assertions
-                                .entry(
-                                    Purl {
-                                        ty: package.r#type,
-                                        namespace: package.namespace,
-                                        name: package.name,
-                                        version: None,
-                                        qualifiers: Default::default(),
-                                    }
-                                    .to_string(),
-                                )
-                                .or_insert(vec![]);
-
-                            package_assertions.push(Assertion::Fixed {
-                                version: version.version,
-                            })
-                        }
-                    },
-                );
-            }
-
-            'affected: {
-                let mut package_version_ranges = affected
-                    .load_one(package_version_range::Entity, &self.db.connection(&tx))
-                    .await?
-                    .iter()
-                    .flat_map(|e| e.clone())
-                    .collect::<Vec<_>>();
-
-                let mut packages = package_version_ranges
-                    .load_one(package::Entity, &self.db.connection(&tx))
-                    .await?
-                    .drain(..)
-                    .collect::<Vec<_>>();
-
-                packages
-                    .drain(..)
-                    .zip(package_version_ranges.drain(..))
-                    .for_each(|(package, version_range)| {
-                        if let Some(package) = package {
-                            let package_assertions = assertions
-                                .entry(
-                                    Purl {
-                                        ty: package.r#type,
-                                        namespace: package.namespace,
-                                        name: package.name,
-                                        version: None,
-                                        qualifiers: Default::default(),
-                                    }
-                                    .to_string(),
-                                )
-                                .or_insert(vec![]);
-
-                            package_assertions.push(Assertion::Affected {
-                                start_version: version_range.start,
-                                end_version: version_range.end,
-                            })
-                        }
-                    });
-            }
-
-            'not_affected: {
-                let mut package_versions = not_affected
-                    .load_one(package_version::Entity, &self.db.connection(&tx))
-                    .await?
-                    .iter()
-                    .flat_map(|e| e.clone())
-                    .collect::<Vec<_>>();
-
-                let mut packages = package_versions
-                    .load_one(package::Entity, &self.db.connection(&tx))
-                    .await?
-                    .drain(..)
-                    .collect::<Vec<_>>();
-
-                packages.drain(..).zip(package_versions.drain(..)).for_each(
-                    |(package, version)| {
-                        if let Some(package) = package {
-                            let package_assertions = assertions
-                                .entry(
-                                    Purl {
-                                        ty: package.r#type,
-                                        namespace: package.namespace,
-                                        name: package.name,
-                                        version: None,
-                                        qualifiers: Default::default(),
-                                    }
-                                    .to_string(),
-                                )
-                                .or_insert(vec![]);
-
-                            package_assertions.push(Assertion::NotAffected {
-                                version: version.version,
-                            })
-                        }
-                    },
-                );
-            }
-
-            advisory_vulns.push(AdvisoryVulnerabilityDetails {
-                vulnerability_id: vuln.identifier,
-                cvss3_scores: cvss3
-                    .drain(..)
-                    .map(|e| Cvss3Base::from(e).to_string())
-                    .collect(),
-                assertions: AdvisoryVulnerabilityAssertions { assertions },
-            })
-        }
 
         Ok(Some(AdvisoryDetails {
-            identifier: advisory.identifier,
-            sha256: advisory.sha256,
-            published: advisory.published,
-            modified: advisory.modified,
-            withdrawn: advisory.withdrawn,
-            title: advisory.title,
-            vulnerabilities: advisory_vulns,
+            summary: AdvisorySummary {
+                identifier: advisory.identifier,
+                sha256: advisory.sha256,
+                published: advisory.published,
+                modified: advisory.modified,
+                withdrawn: advisory.withdrawn,
+                title: advisory.title,
+                vulnerabilities: vec![],
+            },
+            vulnerabilities,
         }))
     }
 }
@@ -387,8 +207,6 @@ mod test {
             .fetch_advisories(SearchOptions::default(), Paginated::default(), ())
             .await?;
 
-        println!("{:#?}", fetched);
-
         Ok(())
     }
 
@@ -456,8 +274,6 @@ mod test {
         let fetched = fetch
             .fetch_advisory(AdvisoryKey::Sha256("8675309".to_string()), ())
             .await?;
-
-        println!("{:#?}", fetched);
 
         Ok(())
     }
