@@ -25,5 +25,5 @@ utoipa = { workspace = true, features = ["actix_extras"] }
 
 [dev-dependencies]
 chrono = { workspace = true }
-test-log = { workspace = true, features = ["env_logger", "trace"] }
+test-log = { workspace = true, features = ["log", "trace"] }
 url-escape = { workspace = true }

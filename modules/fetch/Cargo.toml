@@ -37,6 +37,6 @@ utoipa = { workspace = true, features = ["actix_extras"] }
 [dev-dependencies]
 humantime = "2"
 rust-lzma = "0.6"
-test-log = { workspace = true, default-features = false, features = ["trace"] }
+test-log = { workspace = true, features = ["log", "trace"] }
 trustify-module-ingestor = { workspace = true }
 test-context = { workspace = true }

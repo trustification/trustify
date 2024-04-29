@@ -8,5 +8,5 @@ serde = { workspace = true, features = ["derive"] }
 thiserror = { workspace = true }
 
 [dev-dependencies]
-test-log = { workspace = true, features = ["env_logger", "trace"] }
+test-log = { workspace = true, features = ["log", "trace"] }
 tokio = { workspace = true, features = ["full"] }
