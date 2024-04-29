@@ -24,19 +24,31 @@ pub struct Database {
 }
 
 // TODO: figure out how to make clap use this and remove the redundant
-// #[arg(...)]'s above
+// #[arg(...)]'s above.
+//
+// It would seem we could combine `default_value_t` with `flatten` on
+// the relevant field in the parent parser.
+//
+// The clap authors disagree: https://github.com/clap-rs/clap/issues/3269
+//
 impl Default for Database {
     fn default() -> Self {
-        #[allow(clippy::expect_used)]
+        const DEFAULT_PORT: u16 = 5432;
         Database {
             username: env::var("DB_USER").unwrap_or("trustify".into()),
             password: env::var("DB_PASSWORD").unwrap_or("trustify".into()),
-            host: env::var("DB_HOST").unwrap_or("localhost".into()),
-            port: env::var("DB_PORT")
-                .unwrap_or("5432".into())
-                .parse::<u16>()
-                .expect("Port should be an integer"),
             name: env::var("DB_NAME").unwrap_or("trustify".into()),
+            host: env::var("DB_HOST").unwrap_or("localhost".into()),
+            port: match env::var("DB_PORT") {
+                Ok(s) => match s.parse::<u16>() {
+                    Ok(p) => p,
+                    Err(_) => {
+                        log::warn!("DB_PORT should be an integer; using {DEFAULT_PORT}");
+                        DEFAULT_PORT
+                    }
+                },
+                _ => DEFAULT_PORT,
+            },
         }
     }
 }
