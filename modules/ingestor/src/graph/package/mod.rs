@@ -22,6 +22,7 @@ use crate::graph::advisory::AdvisoryContext;
 use crate::graph::error::Error;
 use crate::graph::Graph;
 
+pub mod creator;
 pub mod package_version;
 pub mod package_version_range;
 pub mod qualified_package;
