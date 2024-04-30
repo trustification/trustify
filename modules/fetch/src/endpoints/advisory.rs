@@ -146,7 +146,10 @@ mod test {
 
         assert_eq!(2, response.items.len());
 
-        let rhsa_1 = &response.items.iter().find(|e| e.identifier == "RHSA-1");
+        let rhsa_1 = &response
+            .items
+            .iter()
+            .find(|e| e.head.identifier == "RHSA-1");
 
         assert!(rhsa_1.is_some());
 
@@ -155,7 +158,7 @@ mod test {
         assert!(rhsa_1
             .vulnerabilities
             .iter()
-            .any(|e| e.identifier == "CVE-123"));
+            .any(|e| e.head.identifier == "CVE-123"));
 
         Ok(())
     }
