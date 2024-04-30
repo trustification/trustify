@@ -16,10 +16,24 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    //#[sea_orm(has_many = "super::package_qualifier::Entity")]
-    //PackageQualifiers,
-    //#[sea_orm(has_many = "super::sbom::Entity")]
-    //SbomDependents,
+    #[sea_orm(
+        belongs_to = "super::qualified_package::Entity",
+        from = "Column::LeftPackageId",
+        to = "super::qualified_package::Column::Id"
+    )]
+    Left,
+    #[sea_orm(
+        belongs_to = "super::qualified_package::Entity",
+        from = "Column::RightPackageId",
+        to = "super::qualified_package::Column::Id"
+    )]
+    Right,
+    #[sea_orm(
+        belongs_to = "super::sbom::Entity",
+        from = "Column::SbomId",
+        to = "super::sbom::Column::Id"
+    )]
+    Sbom,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

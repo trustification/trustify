@@ -24,7 +24,8 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         .service(
             web::scope("/api/v1/sbom")
                 .service(sbom::all)
-                .service(sbom::packages),
+                .service(sbom::packages)
+                .service(sbom::related),
         )
         .service(
             web::scope("/api/v1/advisory")
@@ -48,6 +49,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     paths(
         sbom::all,
         sbom::packages,
+        sbom::related,
         package::dependencies,
         package::variants,
         advisory::all,

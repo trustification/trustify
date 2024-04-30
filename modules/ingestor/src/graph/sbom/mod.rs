@@ -471,6 +471,23 @@ impl SbomContext {
             .await
     }
 
+    #[instrument(skip(tx), err)]
+    pub async fn packages<TX: AsRef<Transactional>>(
+        &self,
+        tx: TX,
+    ) -> Result<Vec<QualifiedPackageContext>, Error> {
+        self.graph
+            .get_qualified_packages_by_query(
+                entity::sbom_package::Entity::find()
+                    .select_only()
+                    .column(entity::sbom_package::Column::QualifiedPackageId)
+                    .filter(entity::sbom_package::Column::SbomId.eq(self.sbom.id))
+                    .into_query(),
+                tx,
+            )
+            .await
+    }
+
     fn create_relationship(
         &self,
         left_package_input: &Purl,
@@ -505,7 +522,9 @@ impl SbomContext {
         let mut creator = Creator::new();
         creator.add(left_package_input.clone());
         creator.add(right_package_input.clone());
-        creator.create(&self.graph.connection(&tx)).await?;
+        creator
+            .create(&self.graph.connection(&tx), self.sbom.id)
+            .await?;
 
         // now create the relationship
 

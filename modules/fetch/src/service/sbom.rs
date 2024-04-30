@@ -1,23 +1,42 @@
 use super::FetchService;
-use crate::model::sbom::SbomPackage;
 use crate::{
     error::Error,
     model::{
         advisory::{AdvisorySummary, AdvisoryVulnerabilitySummary},
-        sbom::SbomSummary,
+        sbom::{SbomPackage, SbomPackageRelation, SbomSummary},
     },
 };
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait};
-use sea_query::JoinType;
-use trustify_common::{
-    db::limiter::LimiterTrait,
-    db::Transactional,
-    model::{Paginated, PaginatedResults},
+use sea_orm::{
+    ColumnTrait, ConnectionTrait, EntityTrait, LoaderTrait, QueryFilter, QueryOrder, QuerySelect,
+    RelationTrait, Select, SelectorTrait,
 };
-use trustify_entity::{package, package_version, qualified_package, sbom, sbom_describes_package};
+use sea_query::{Alias, Expr, IntoColumnRef, IntoTableRef, JoinType};
+use std::iter::{repeat, Flatten, Zip};
+use std::vec::IntoIter;
+use trustify_common::{
+    db::{
+        limiter::{Limiter, LimiterTrait},
+        Transactional,
+    },
+    model::{Paginated, PaginatedResults},
+    purl::Purl,
+};
+use trustify_entity::{
+    package, package_relates_to_package, package_version, qualified_package,
+    relationship::Relationship, sbom, sbom_describes_package, sbom_package,
+};
 use trustify_module_search::{model::SearchOptions, query::Query};
 
+#[derive(Clone, Eq, PartialEq, Default, Debug, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Which {
+    #[default]
+    Left,
+    Right,
+}
+
 impl FetchService {
+    /// fetch all SBOMs
     pub async fn fetch_sboms<TX: AsRef<Transactional>>(
         &self,
         search: SearchOptions,
@@ -50,39 +69,209 @@ impl FetchService {
         Ok(PaginatedResults { total, items })
     }
 
+    /// fetch all packages from an SBOM
     pub async fn fetch_sbom_packages<TX: AsRef<Transactional>>(
         &self,
         sbom_id: i32,
         search: SearchOptions,
         paginated: Paginated,
+        root: bool,
         tx: TX,
     ) -> Result<PaginatedResults<SbomPackage>, Error> {
         let connection = self.db.connection(&tx);
 
-        let limiter = qualified_package::Entity::find()
+        let mut query = qualified_package::Entity::find()
+            .join(JoinType::Join, sbom_package::Relation::Package.def().rev())
             .join(
                 JoinType::Join,
                 qualified_package::Relation::PackageVersion.def(),
             )
             .join(JoinType::Join, package_version::Relation::Package.def())
-            .join_rev(
-                JoinType::Join,
-                sbom_describes_package::Relation::Package.def(),
-            )
-            .filter(sbom_describes_package::Column::SbomId.eq(sbom_id))
-            .filtering(search)?
-            .limiting(&connection, paginated.offset, paginated.limit);
+            .filter(sbom_package::Column::SbomId.eq(sbom_id))
+            // see: https://github.com/trustification/trustify/issues/219
+            // .filtering(search)?
+            ;
 
-        let total = limiter.total().await?;
-        let sboms = limiter.fetch().await?;
-
-        let mut items = Vec::new();
-        for sbom in sboms {
-            items.push(SbomPackage {
-                purl: "foo".to_string(),
-            })
+        if root {
+            // limit to root level packages
+            query = query
+                .join_rev(
+                    JoinType::LeftJoin,
+                    package_relates_to_package::Relation::Left.def(),
+                )
+                // limit no-relationship
+                .filter(package_relates_to_package::Column::LeftPackageId.is_null());
         }
 
-        Ok(PaginatedResults { total, items })
+        let query = default_sort(query);
+
+        let limiter = query.limiting(&connection, paginated.offset, paginated.limit);
+
+        let total = limiter.total().await?;
+        let qualified = limiter.fetch().await?;
+
+        let items = purl_result(
+            &connection,
+            qualified,
+            |i| i.zip(repeat(())),
+            |package, version, qualified, _| {
+                let purl = into_purl(package, version, qualified).to_string();
+                SbomPackage { purl }
+            },
+        )
+        .await?;
+
+        Ok(PaginatedResults { items, total })
     }
+
+    /// fetch all packages from an SBOM
+    #[allow(clippy::too_many_arguments)]
+    pub async fn fetch_related_packages<TX: AsRef<Transactional>>(
+        &self,
+        sbom_id: i32,
+        search: SearchOptions,
+        paginated: Paginated,
+        which: Which,
+        reference: Purl,
+        relationship: Option<Relationship>,
+        tx: TX,
+    ) -> Result<PaginatedResults<SbomPackageRelation>, Error> {
+        let connection = self.db.connection(&tx);
+
+        // which way
+
+        log::info!("Which: {which:?}");
+
+        // select all qualified packages for which we have relationships
+
+        let (filter, join) = match which {
+            Which::Left => (
+                package_relates_to_package::Column::LeftPackageId,
+                package_relates_to_package::Relation::Right,
+            ),
+            Which::Right => (
+                package_relates_to_package::Column::RightPackageId,
+                package_relates_to_package::Relation::Left,
+            ),
+        };
+
+        let mut query = qualified_package::Entity::find()
+            .join_rev(JoinType::Join, join.def())
+            .join(
+                JoinType::Join,
+                qualified_package::Relation::PackageVersion.def(),
+            )
+            .join(JoinType::Join, package_version::Relation::Package.def())
+            // limit by sbom
+            .filter(package_relates_to_package::Column::SbomId.eq(sbom_id))
+            // limit by "which" side package
+            .filter(filter.eq(reference.qualifier_uuid()))
+            // see: https://github.com/trustification/trustify/issues/219
+            // .filtering(search)?
+            ;
+
+        if let Some(relationship) = relationship {
+            query = query.filter(package_relates_to_package::Column::Relationship.eq(relationship));
+        }
+
+        let query = default_sort(query);
+        let query = query.select_also(package_relates_to_package::Entity);
+
+        let limiter = query.limiting(&connection, paginated.offset, paginated.limit);
+
+        let total = limiter.total().await?;
+        let (qualified, rel): (Vec<_>, Vec<_>) = limiter.fetch().await?.into_iter().unzip();
+
+        let items = purl_result(
+            &connection,
+            qualified,
+            move |i| i.zip(rel.into_iter().flatten()),
+            |package, version, qualified, rel| {
+                let purl = into_purl(package, version, qualified).to_string();
+                SbomPackageRelation {
+                    package: purl.to_string(),
+                    relationship: rel.relationship,
+                }
+            },
+        )
+        .await?;
+
+        Ok(PaginatedResults { items, total })
+    }
+}
+
+/// apply default sort order, by purl
+fn default_sort(query: Select<qualified_package::Entity>) -> Select<qualified_package::Entity> {
+    query
+        .order_by_asc(package::Column::Type)
+        .order_by_asc(package::Column::Name)
+        .order_by_asc(package_version::Column::Version)
+        .order_by_asc(qualified_package::Column::Id)
+}
+
+fn into_purl(
+    package: package::Model,
+    version: package_version::Model,
+    qualified: qualified_package::Model,
+) -> Purl {
+    Purl {
+        ty: package.r#type,
+        namespace: package.namespace,
+        name: package.name,
+        version: if version.version.is_empty() {
+            None
+        } else {
+            Some(version.version)
+        },
+        qualifiers: qualified.qualifiers.0,
+    }
+}
+
+async fn purl_result<'db, T, C, I, Out, F, X>(
+    connection: &C,
+    qualified: Vec<qualified_package::Model>,
+    i: I,
+    f: F,
+) -> Result<Vec<T>, Error>
+where
+    C: ConnectionTrait,
+    I: FnOnce(
+        Zip<
+            Zip<IntoIter<qualified_package::Model>, IntoIter<package_version::Model>>,
+            Flatten<IntoIter<Option<package::Model>>>,
+        >,
+    ) -> Out,
+    Out: Iterator<
+        Item = (
+            (
+                (qualified_package::Model, package_version::Model),
+                package::Model,
+            ),
+            X,
+        ),
+    >,
+    F: Fn(package::Model, package_version::Model, qualified_package::Model, X) -> T,
+{
+    let package_version = qualified
+        .load_one(package_version::Entity, connection)
+        .await?
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
+    let package = package_version
+        .load_one(package::Entity, connection)
+        .await?
+        .into_iter()
+        .flatten();
+
+    let mut items = Vec::new();
+    for (((qualified, version), package), x) in i(qualified
+        .into_iter()
+        .zip(package_version.into_iter())
+        .zip(package))
+    {
+        items.push(f(package, version, qualified, x))
+    }
+
+    Ok(items)
 }

@@ -1,7 +1,7 @@
 use crate::model::advisory::AdvisoryVulnerabilitySummary;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
-use trustify_entity::sbom;
+use trustify_entity::{relationship::Relationship, sbom};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
@@ -21,4 +21,10 @@ pub struct SbomSummary {
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct SbomPackage {
     pub purl: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+pub struct SbomPackageRelation {
+    pub package: String,
+    pub relationship: Relationship,
 }
