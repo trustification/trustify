@@ -1,4 +1,3 @@
-
 use crate::error::Error;
 use crate::model::advisory::{
     AdvisoryDetails, AdvisoryHead, AdvisorySummary, AdvisoryVulnerabilityHead,
@@ -30,7 +29,6 @@ pub enum AdvisoryKey {
 }
 
 impl super::FetchService {
-
     pub(crate) async fn advisory_heads<TX: AsRef<Transactional> + Sync + Send>(
         &self,
         advisories: &[advisory::Model],
