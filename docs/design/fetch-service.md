@@ -72,4 +72,40 @@ The summary of an advisory includes the "head" as described above, plus a list o
 
 ### Details
 
+Details objects contain _all_ required information, and may link to _summaries_ of related objects (which may then link to _heads_ of their second-order related objects).
 
+```mermaid
+---
+title: General Structure
+---
+erDiagram
+    AdvisoryHead {
+        string sha256
+        string title
+        date published
+        date modified
+        date Withdrawn
+    }
+    AdvisoryVulnerabilityHead {
+        string severity
+        float score
+    }
+    VulnerabilityHead {
+        string identifier
+        string title
+    }
+    AdvisorySummary ||--|| AdvisoryHead : contains
+    AdvisorySummary ||--o{ AdvisoryVulnerabilityHead : references
+    AdvisoryVulnerabilityHead ||--|| VulnerabilityHead : includes
+    AdvisoryDetails ||--o{ AdvisoryVulnerabilitySummary : references
+    AdvisoryVulnerabilitySummary ||--|| VulnerabilityHead : includes
+    
+    VulnerabilitySummary ||--|| VulnerabilityHead : contains
+    VulnerabilitySummary ||--o{ VulnerabilityAdvisoryHead : references
+    VulnerabilityAdvisoryHead ||--|| AdvisoryHead : includes
+    VulnerabliityDetails ||--o{ VulnerbaililyAdvisorySummary: references
+    VulnerabilityAdvisorySummary ||--|| AdvisoryHead: includes
+        
+        
+
+```

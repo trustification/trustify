@@ -15,4 +15,3 @@ impl FetchService {
         Self { db }
     }
 }
-
