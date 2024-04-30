@@ -18,7 +18,9 @@ impl AsyncTestContext for TrustifyContext {
         if env::var("EXTERNAL_TEST_DB").is_ok() {
             log::warn!("Using external database from 'DB_*' env vars");
             let config = crate::config::Database::default();
-            let db = crate::db::Database::new(&config).await.unwrap();
+            let db = crate::db::Database::new(&config)
+                .await
+                .expect("Configuring the database");
             return TrustifyContext {
                 db,
                 postgresql: None,
