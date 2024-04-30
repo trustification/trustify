@@ -1,7 +1,10 @@
 
 use crate::error::Error;
-use crate::model::advisory::{AdvisoryDetails, AdvisorySummary};
-use crate::model::vulnerability::{VulnerabilityDetails, VulnerabilitySummary};
+use crate::model::advisory::{
+    AdvisoryDetails, AdvisoryHead, AdvisorySummary, AdvisoryVulnerabilityHead,
+    AdvisoryVulnerabilitySummary,
+};
+use crate::model::vulnerability::{VulnerabilityDetails, VulnerabilityHead, VulnerabilitySummary};
 use sea_orm::{ColumnTrait, EntityTrait, LoaderTrait, QueryFilter};
 use std::collections::HashMap;
 use std::future::Future;
@@ -28,6 +31,261 @@ pub enum AdvisoryKey {
 
 impl super::FetchService {
 
+    pub(crate) async fn advisory_heads<TX: AsRef<Transactional> + Sync + Send>(
+        &self,
+        advisories: &[advisory::Model],
+        tx: TX,
+    ) -> Result<Vec<AdvisoryHead>, Error> {
+        let mut heads = Vec::new();
+
+        for advisory in advisories.iter() {
+            heads.push(AdvisoryHead {
+                identifier: advisory.identifier.clone(),
+                sha256: advisory.sha256.clone(),
+                published: advisory.published,
+                modified: advisory.modified,
+                withdrawn: advisory.withdrawn,
+                title: advisory.title.clone(),
+            })
+        }
+
+        Ok(heads)
+    }
+
+    pub(crate) async fn advisory_vulnerability_heads<TX: AsRef<Transactional> + Sync + Send>(
+        &self,
+        advisory_id: i32,
+        vulnerabilities: &Vec<vulnerability::Model>,
+        tx: TX,
+    ) -> Result<Vec<AdvisoryVulnerabilityHead>, Error> {
+        let mut cvss3s = vulnerabilities
+            .load_many(
+                cvss3::Entity::find().filter(cvss3::Column::AdvisoryId.eq(advisory_id)),
+                &self.db.connection(&tx),
+            )
+            .await?;
+
+        let mut heads = Vec::new();
+
+        for ((vuln, cvss3)) in vulnerabilities.iter().zip(cvss3s.iter()) {
+            let score = if let Some(average) = cvss3
+                .iter()
+                .map(|e| {
+                    let base = Cvss3Base::from(e.clone());
+                    base.score().value()
+                })
+                .reduce(|accum, e| accum + e)
+            {
+                Score::new(average / cvss3.len() as f64)
+            } else {
+                Score::new(0.0)
+            };
+            if let Some(head) = self.vulnerability_head(vuln, &tx).await? {
+                heads.push(AdvisoryVulnerabilityHead {
+                    head,
+                    severity: score.severity().to_string(),
+                    score: score.value(),
+                });
+            }
+        }
+
+        Ok(heads)
+    }
+    pub(crate) async fn advisory_vulnerability_head<TX: AsRef<Transactional> + Sync + Send>(
+        &self,
+        advisory_id: i32,
+        vulnerability: &vulnerability::Model,
+        tx: TX,
+    ) -> Result<Option<AdvisoryVulnerabilityHead>, Error> {
+        Ok(self
+            .advisory_vulnerability_heads(advisory_id, &vec![vulnerability.clone()], tx)
+            .await?
+            .first()
+            .cloned())
+    }
+
+    pub async fn advisory_vulnerability_summaries<TX: AsRef<Transactional> + Sync + Send>(
+        &self,
+        advisory_id: i32,
+        vulnerabilities: &Vec<vulnerability::Model>,
+        tx: TX,
+    ) -> Result<Vec<AdvisoryVulnerabilitySummary>, Error> {
+        let mut fixed = vulnerabilities
+            .load_many(
+                fixed_package_version::Entity::find()
+                    .filter(fixed_package_version::Column::AdvisoryId.eq(advisory_id)),
+                &self.db.connection(&tx),
+            )
+            .await?;
+
+        let mut affected = vulnerabilities
+            .load_many(
+                affected_package_version_range::Entity::find()
+                    .filter(affected_package_version_range::Column::AdvisoryId.eq(advisory_id)),
+                &self.db.connection(&tx),
+            )
+            .await?;
+
+        let mut not_affected = vulnerabilities
+            .load_many(
+                not_affected_package_version::Entity::find()
+                    .filter(not_affected_package_version::Column::AdvisoryId.eq(advisory_id)),
+                &self.db.connection(&tx),
+            )
+            .await?;
+
+        let mut cvss3s = vulnerabilities
+            .load_many(
+                cvss3::Entity::find().filter(cvss3::Column::AdvisoryId.eq(advisory_id)),
+                &self.db.connection(&tx),
+            )
+            .await?;
+
+        let mut summaries = Vec::new();
+
+        for ((((vuln, mut fixed), mut affected), mut not_affected), mut cvss3) in vulnerabilities
+            .iter()
+            .zip(fixed.drain(..))
+            .zip(affected.drain(..))
+            .zip(not_affected.drain(..))
+            .zip(cvss3s.drain(..))
+        {
+            let mut assertions = HashMap::new();
+
+            'fixed: {
+                let mut package_versions = fixed
+                    .load_one(package_version::Entity, &self.db.connection(&tx))
+                    .await?
+                    .iter()
+                    .flat_map(|e| e.clone())
+                    .collect::<Vec<_>>();
+
+                let mut packages = package_versions
+                    .load_one(package::Entity, &self.db.connection(&tx))
+                    .await?;
+
+                packages.drain(..).zip(package_versions.drain(..)).for_each(
+                    |(package, version)| {
+                        if let Some(package) = package {
+                            let package_assertions = assertions
+                                .entry(
+                                    Purl {
+                                        ty: package.r#type,
+                                        namespace: package.namespace,
+                                        name: package.name,
+                                        version: None,
+                                        qualifiers: Default::default(),
+                                    }
+                                    .to_string(),
+                                )
+                                .or_insert(vec![]);
+
+                            package_assertions.push(Assertion::Fixed {
+                                version: version.version,
+                            })
+                        }
+                    },
+                );
+            }
+
+            'affected: {
+                let mut package_version_ranges = affected
+                    .load_one(package_version_range::Entity, &self.db.connection(&tx))
+                    .await?
+                    .iter()
+                    .flat_map(|e| e.clone())
+                    .collect::<Vec<_>>();
+
+                let mut packages = package_version_ranges
+                    .load_one(package::Entity, &self.db.connection(&tx))
+                    .await?
+                    .drain(..)
+                    .collect::<Vec<_>>();
+
+                packages
+                    .drain(..)
+                    .zip(package_version_ranges.drain(..))
+                    .for_each(|(package, version_range)| {
+                        if let Some(package) = package {
+                            let package_assertions = assertions
+                                .entry(
+                                    Purl {
+                                        ty: package.r#type,
+                                        namespace: package.namespace,
+                                        name: package.name,
+                                        version: None,
+                                        qualifiers: Default::default(),
+                                    }
+                                    .to_string(),
+                                )
+                                .or_insert(vec![]);
+
+                            package_assertions.push(Assertion::Affected {
+                                start_version: version_range.start,
+                                end_version: version_range.end,
+                            })
+                        }
+                    });
+            }
+
+            'not_affected: {
+                let mut package_versions = not_affected
+                    .load_one(package_version::Entity, &self.db.connection(&tx))
+                    .await?
+                    .iter()
+                    .flat_map(|e| e.clone())
+                    .collect::<Vec<_>>();
+
+                let mut packages = package_versions
+                    .load_one(package::Entity, &self.db.connection(&tx))
+                    .await?
+                    .drain(..)
+                    .collect::<Vec<_>>();
+
+                packages.drain(..).zip(package_versions.drain(..)).for_each(
+                    |(package, version)| {
+                        if let Some(package) = package {
+                            let package_assertions = assertions
+                                .entry(
+                                    Purl {
+                                        ty: package.r#type,
+                                        namespace: package.namespace,
+                                        name: package.name,
+                                        version: None,
+                                        qualifiers: Default::default(),
+                                    }
+                                    .to_string(),
+                                )
+                                .or_insert(vec![]);
+
+                            package_assertions.push(Assertion::NotAffected {
+                                version: version.version,
+                            })
+                        }
+                    },
+                );
+
+                let cvss3_scores = cvss3
+                    .drain(..)
+                    .map(|e| Cvss3Base::from(e).to_string())
+                    .collect();
+
+                if let Some(head) = self
+                    .advisory_vulnerability_head(advisory_id, vuln, &tx)
+                    .await?
+                {
+                    summaries.push(AdvisoryVulnerabilitySummary {
+                        head,
+                        cvss3_scores,
+                        assertions: Default::default(),
+                    });
+                }
+            }
+        }
+
+        Ok(summaries)
+    }
+
     pub(crate) async fn advisory_summaries<TX: AsRef<Transactional> + Sync + Send>(
         &self,
         advisories: &Vec<advisory::Model>,
@@ -41,25 +299,27 @@ impl super::FetchService {
             )
             .await?;
 
-        let mut advisory_summaries = Vec::new();
+        let mut summaries = Vec::new();
 
         for (advisory, mut vuln) in advisories.iter().zip(vulns.drain(..)) {
             let vulnerabilities = self
-                .vulnerability_summaries_for_advisory(&vuln, advisory.id, &tx)
+                .advisory_vulnerability_heads(advisory.id, &vuln, &tx)
                 .await?;
 
-            advisory_summaries.push(AdvisorySummary {
-                identifier: advisory.identifier.clone(),
-                sha256: advisory.sha256.clone(),
-                published: advisory.published,
-                modified: advisory.modified,
-                withdrawn: advisory.withdrawn,
-                title: advisory.title.clone(),
+            summaries.push(AdvisorySummary {
+                head: AdvisoryHead {
+                    identifier: advisory.identifier.clone(),
+                    sha256: advisory.sha256.clone(),
+                    published: advisory.published,
+                    modified: advisory.modified,
+                    withdrawn: advisory.withdrawn,
+                    title: advisory.title.clone(),
+                },
                 vulnerabilities,
             })
         }
 
-        Ok(advisory_summaries)
+        Ok(summaries)
     }
 
     pub async fn fetch_advisories<TX: AsRef<Transactional> + Sync + Send>(
@@ -110,18 +370,17 @@ impl super::FetchService {
         let (advisory, mut vulnerabilities) = results.remove(0);
 
         let vulnerabilities = self
-            .vulnerability_details(&vulnerabilities, Some(advisory.id), &tx)
+            .advisory_vulnerability_summaries(advisory.id, &vulnerabilities, &tx)
             .await?;
 
         Ok(Some(AdvisoryDetails {
-            summary: AdvisorySummary {
+            head: AdvisoryHead {
                 identifier: advisory.identifier,
                 sha256: advisory.sha256,
                 published: advisory.published,
                 modified: advisory.modified,
                 withdrawn: advisory.withdrawn,
                 title: advisory.title,
-                vulnerabilities: vec![],
             },
             vulnerabilities,
         }))
