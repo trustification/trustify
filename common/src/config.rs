@@ -6,48 +6,21 @@ use std::path::PathBuf;
 #[command(next_help_heading = "Database")]
 #[group(id = "database")]
 pub struct Database {
-    #[arg(id = "db-user", long, env = "DB_USER", default_value_t = Self::default().username)]
+    #[arg(id = "db-user", long, env = "DB_USER", default_value = "trustify")]
     pub username: String,
     #[arg(
         id = "db-password",
         long,
         env = "DB_PASSWORD",
-        default_value_t = Self::default().password,
+        default_value = "trustify"
     )]
     pub password: String,
-    #[arg(id = "db-host", long, env = "DB_HOST", default_value_t = Self::default().host)]
+    #[arg(id = "db-host", long, env = "DB_HOST", default_value = "localhost")]
     pub host: String,
-    #[arg(id = "db-port", long, env = "DB_PORT", default_value_t = Self::default().port)]
+    #[arg(id = "db-port", long, env = "DB_PORT", default_value_t = 5432)]
     pub port: u16,
-    #[arg(id = "db-name", long, env = "DB_NAME", default_value_t = Self::default().name)]
+    #[arg(id = "db-name", long, env = "DB_NAME", default_value = "trustify")]
     pub name: String,
-}
-
-// It would seem we could combine `default_value_t` with `flatten` on
-// the relevant field in the parent parser.
-//
-// The clap authors disagree: https://github.com/clap-rs/clap/issues/3269
-//
-impl Default for Database {
-    fn default() -> Self {
-        const DEFAULT_PORT: u16 = 5432;
-        Database {
-            username: env::var("DB_USER").unwrap_or("trustify".into()),
-            password: env::var("DB_PASSWORD").unwrap_or("trustify".into()),
-            name: env::var("DB_NAME").unwrap_or("trustify".into()),
-            host: env::var("DB_HOST").unwrap_or("localhost".into()),
-            port: match env::var("DB_PORT") {
-                Ok(s) => match s.parse::<u16>() {
-                    Ok(p) => p,
-                    Err(_) => {
-                        log::warn!("DB_PORT should be an integer; using {DEFAULT_PORT}");
-                        DEFAULT_PORT
-                    }
-                },
-                _ => DEFAULT_PORT,
-            },
-        }
-    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, clap::ValueEnum)]

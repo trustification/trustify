@@ -1,6 +1,7 @@
-use std::env;
-
+use crate::config::Database;
+use clap::{ArgMatches, FromArgMatches, Parser};
 use postgresql_embedded::{PostgreSQL, Settings};
+use std::env;
 use tempfile::TempDir;
 use test_context::{test_context, AsyncTestContext};
 use tracing::{info_span, instrument, Instrument};
@@ -11,14 +12,36 @@ pub struct TrustifyContext {
     tempdir: Option<TempDir>,
 }
 
+/// collect database information for the external test database.
+///
+/// **NOTE:** This may panic in case where the [`Database`] arguments cannot be parsed.
+#[allow(clippy::expect_used)]
+fn external_test_db() -> Database {
+    #[derive(clap::Parser)]
+    struct Cli {
+        #[command(flatten)]
+        database: Database,
+    }
+
+    Cli::try_parse_from(Vec::<String>::new())
+        .expect("Unable to extract test database arguments")
+        .database
+}
+
 impl AsyncTestContext for TrustifyContext {
     #[allow(clippy::unwrap_used)]
+    #[allow(clippy::expect_used)]
     #[instrument]
     async fn setup() -> TrustifyContext {
         if env::var("EXTERNAL_TEST_DB").is_ok() {
-            log::warn!("Using external database from 'DB_*' env vars");
-            let config = crate::config::Database::default();
-            let db = crate::db::Database::new(&config).await.unwrap();
+            let config = external_test_db();
+            log::warn!("Using external database from 'DB_*' env vars: {config:#?}");
+            let db = crate::db::Database::new(&config)
+                .await
+                .expect("failed connecting to the external test database");
+            db.migrate()
+                .await
+                .expect("failed to run database migration");
             return TrustifyContext {
                 db,
                 postgresql: None,
