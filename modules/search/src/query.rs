@@ -302,8 +302,20 @@ mod tests {
     use test_log::test;
     use trustify_entity::advisory;
 
-    fn test_advisory_operator(s: &str, expected: Operator) {
-        match Filter::<advisory::Entity>::from_str(s) {
+    // test helper
+    fn where_clause(query: &str) -> Result<String, anyhow::Error> {
+        Ok(advisory::Entity::find()
+            .select_only()
+            .column(advisory::Column::Id)
+            .filter(Filter::<advisory::Entity>::from_str(query)?.into_condition())
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string()[45..]
+            .to_string())
+    }
+
+    #[test(tokio::test)]
+    async fn filters() -> Result<(), anyhow::Error> {
+        let test = |s: &str, expected: Operator| match Filter::<advisory::Entity>::from_str(s) {
             Ok(Filter {
                 operands: Operand::Composite(v),
                 ..
@@ -312,20 +324,17 @@ mod tests {
                 "The query '{s}' didn't resolve to {expected:?}"
             ),
             _ => panic!("The query '{s}' didn't resolve to {expected:?}"),
-        }
-    }
+        };
 
-    #[test(tokio::test)]
-    async fn filters() -> Result<(), anyhow::Error> {
         // Good filters
-        test_advisory_operator("location=foo", Operator::Equal);
-        test_advisory_operator("location!=foo", Operator::NotEqual);
-        test_advisory_operator("location~foo", Operator::Like);
-        test_advisory_operator("location!~foo", Operator::NotLike);
-        test_advisory_operator("location>foo", Operator::GreaterThan);
-        test_advisory_operator("location>=foo", Operator::GreaterThanOrEqual);
-        test_advisory_operator("location<foo", Operator::LessThan);
-        test_advisory_operator("location<=foo", Operator::LessThanOrEqual);
+        test("location=foo", Operator::Equal);
+        test("location!=foo", Operator::NotEqual);
+        test("location~foo", Operator::Like);
+        test("location!~foo", Operator::NotLike);
+        test("location>foo", Operator::GreaterThan);
+        test("location>=foo", Operator::GreaterThanOrEqual);
+        test("location<foo", Operator::LessThan);
+        test("location<=foo", Operator::LessThanOrEqual);
 
         // If a query matches the '{field}{op}{value}' regex, then the
         // first operand must resolve to a field on the Entity
@@ -335,7 +344,7 @@ mod tests {
         // considered a "full-text search" in which an OR clause is
         // constructed from a LIKE clause for all string fields in the
         // entity.
-        test_advisory_operator("search the entity", Operator::Like);
+        test("search the entity", Operator::Like);
 
         Ok(())
     }
@@ -357,16 +366,6 @@ mod tests {
         assert!(Sort::<advisory::Entity>::from_str("location:asc:foo").is_err());
 
         Ok(())
-    }
-
-    fn where_clause(query: &str) -> Result<String, anyhow::Error> {
-        Ok(advisory::Entity::find()
-            .select_only()
-            .column(advisory::Column::Id)
-            .filter(Filter::<advisory::Entity>::from_str(query)?.into_condition())
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string()[45..]
-            .to_string())
     }
 
     #[test(tokio::test)]
