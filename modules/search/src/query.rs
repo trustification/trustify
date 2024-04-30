@@ -27,16 +27,19 @@ impl<T: EntityTrait> Query<T> for Select<T> {
         let SearchOptions { sort, q } = &search;
         let id = T::Column::from_str("id")
             .map_err(|_| Error::SearchSyntax("Entity missing Id field".into()))?;
+        let select = if q.is_empty() {
+            self
+        } else {
+            self.filter(Filter::<T>::from_str(q)?)
+        };
         Ok(if sort.is_empty() {
-            self.filter(Filter::<T>::from_str(q)?).order_by_desc(id)
+            select.order_by_desc(id)
         } else {
             sort.split(',')
                 .map(Sort::<T>::from_str)
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
-                .fold(self.filter(Filter::<T>::from_str(q)?), |select, s| {
-                    select.order_by(s.field, s.order)
-                })
+                .fold(select, |select, s| select.order_by(s.field, s.order))
                 .order_by_desc(id)
         })
     }
@@ -524,6 +527,20 @@ mod tests {
         // "now" = "2010-01-01 00:00:00",
         // "Overmorrow" = "2010-01-03 00:00:00"
 
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn default_filtering() -> Result<(), anyhow::Error> {
+        let expected = advisory::Entity::find()
+            .order_by_desc(advisory::Column::Id)
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+        let actual = advisory::Entity::find()
+            .filtering(SearchOptions::default())?
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+        assert_eq!(actual, expected);
         Ok(())
     }
 }
