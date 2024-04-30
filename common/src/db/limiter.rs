@@ -1,6 +1,6 @@
 use sea_orm::{
     ConnectionTrait, DbErr, EntityTrait, FromQueryResult, Paginator, PaginatorTrait, QuerySelect,
-    Select, SelectModel, Selector, SelectorTrait,
+    Select, SelectModel, SelectTwo, SelectTwoMany, SelectTwoModel, Selector, SelectorTrait,
 };
 use std::future::Future;
 use std::marker::PhantomData;
@@ -46,6 +46,31 @@ where
     M: FromQueryResult + Sized + Send + Sync + 'db,
 {
     type Selector = SelectModel<M>;
+
+    fn limiting(self, db: &'db C, offset: u64, limit: u64) -> Limiter<'db, C, Self::Selector> {
+        let selector = self
+            .clone()
+            .limit(NonZeroU64::new(limit).map(|limit| limit.get()))
+            .offset(NonZeroU64::new(offset).map(|offset| offset.get()))
+            .into_model();
+
+        Limiter {
+            db,
+            paginator: self.clone().paginate(db, 1),
+            selector,
+        }
+    }
+}
+
+impl<'db, C, M1, M2, E1, E2> LimiterTrait<'db, C> for SelectTwo<E1, E2>
+where
+    C: ConnectionTrait,
+    E1: EntityTrait<Model = M1>,
+    E2: EntityTrait<Model = M2>,
+    M1: FromQueryResult + Sized + Send + Sync + 'db,
+    M2: FromQueryResult + Sized + Send + Sync + 'db,
+{
+    type Selector = SelectTwoModel<M1, M2>;
 
     fn limiting(self, db: &'db C, offset: u64, limit: u64) -> Limiter<'db, C, Self::Selector> {
         let selector = self
