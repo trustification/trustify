@@ -13,6 +13,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
+utoipa = { workspace = true }
 uuid = { workspace = true }
 
 [dev-dependencies]

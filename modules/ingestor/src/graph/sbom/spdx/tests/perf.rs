@@ -59,6 +59,9 @@ async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         let described_packages = sbom.describes_packages(Transactional::None).await?;
         log::info!("{:#?}", described_packages);
 
+        let packages = sbom.packages(Transactional::None).await?;
+        assert_eq!(7992, packages.len());
+
         Ok::<_, anyhow::Error>(())
     }
     .instrument(info_span!("assert"))

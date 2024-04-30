@@ -5877,6 +5877,7 @@ dependencies = [
  "tokio",
  "trustify-common",
  "trustify-cvss",
+ "utoipa",
  "uuid",
 ]
 

@@ -1,7 +1,19 @@
 use sea_orm::{DeriveActiveEnum, EnumIter};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    EnumIter,
+    DeriveActiveEnum,
+    serde::Serialize,
+    serde::Deserialize,
+    utoipa::ToSchema,
+)]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
+#[serde(rename_all = "snake_case")]
 pub enum Relationship {
     #[sea_orm(num_value = 0)]
     ContainedBy,

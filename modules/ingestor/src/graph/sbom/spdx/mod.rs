@@ -140,7 +140,9 @@ impl SbomContext {
 
         log::info!("Relationships: {}", rels.len());
 
-        creator.create(&self.graph.connection(&tx)).await?;
+        creator
+            .create(&self.graph.connection(&tx), self.sbom.id)
+            .await?;
 
         self.ingest_package_relates_to_package_many(&tx, rels)
             .await?;

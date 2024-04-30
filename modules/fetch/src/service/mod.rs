@@ -1,10 +1,9 @@
-mod sbom;
-
-use trustify_common::db::Database;
-
 pub mod advisory;
 pub mod assertion;
+pub mod sbom;
 pub mod vulnerability;
+
+use trustify_common::db::Database;
 
 pub struct FetchService {
     db: Database,
