@@ -42,7 +42,7 @@ async fn pm_mode() -> anyhow::Result<ExitCode> {
         unreachable!()
     };
     let postgres = db.start().await?;
-    if postgres.database_exists(&db.database.name).await.is_err() {
+    if !postgres.database_exists(&db.database.name).await? {
         db.command = db::Command::Create;
     }
     db.run().await?;
