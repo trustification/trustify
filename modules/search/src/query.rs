@@ -4,8 +4,8 @@ use human_date_parser::{from_human_time, ParseResult};
 use regex::Regex;
 use sea_orm::sea_query::{ConditionExpression, IntoCondition};
 use sea_orm::{
-    ColumnTrait, ColumnType, Condition, EntityTrait, Iterable, Order, QueryFilter, QueryOrder,
-    Select, Value,
+    ColumnTrait, ColumnType, Condition, EntityTrait, Iden, Iterable, Order, QueryFilter,
+    QueryOrder, QueryTrait, Select, Value,
 };
 use std::fmt::Display;
 use std::str::FromStr;
@@ -24,24 +24,26 @@ pub trait Query<T: EntityTrait> {
 
 impl<T: EntityTrait> Query<T> for Select<T> {
     fn filtering(self, search: SearchOptions) -> Result<Self, Error> {
-        let SearchOptions { sort, q } = &search;
+        let SearchOptions { q, sort } = &search;
         let id = T::Column::from_str("id")
             .map_err(|_| Error::SearchSyntax("Entity missing Id field".into()))?;
-        let select = if q.is_empty() {
+
+        let mut result = if q.is_empty() {
             self
         } else {
             self.filter(Filter::<T>::from_str(q)?)
         };
-        Ok(if sort.is_empty() {
-            select.order_by_desc(id)
-        } else {
-            sort.split(',')
+
+        if !sort.is_empty() {
+            result = sort
+                .split(',')
                 .map(Sort::<T>::from_str)
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
-                .fold(select, |select, s| select.order_by(s.field, s.order))
-                .order_by_desc(id)
-        })
+                .fold(result, |select, s| select.order_by(s.field, s.order));
+        };
+
+        Ok(maintain_order(result, id))
     }
 }
 
@@ -138,7 +140,7 @@ impl<T: EntityTrait> FromStr for Filter<T> {
 
         let encoded = encode(s);
         if encoded.contains('&') {
-            // We have collection of filters and/or queries
+            // We have a collection of filters and/or queries
             Ok(Filter {
                 operator: Operator::And,
                 operands: Operand::Composite(
@@ -291,6 +293,19 @@ fn envalue(s: &str, ct: &ColumnType) -> Result<Value, Error> {
         }
         _ => s.into(),
     })
+}
+
+fn maintain_order<T: EntityTrait>(stmt: Select<T>, col: T::Column) -> Select<T> {
+    let s = stmt.build(sea_orm::DatabaseBackend::Postgres).to_string();
+    let tmp = T::default();
+    let table = tmp.table_name();
+    if let Some((_, orderby)) = s.rsplit_once(" ORDER BY ") {
+        let pat = format!(r#""{}"."{}""#, table, col.to_string());
+        if orderby.contains(&pat) {
+            return stmt;
+        }
+    }
+    stmt.order_by_desc(col)
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -532,15 +547,42 @@ mod tests {
 
     #[test(tokio::test)]
     async fn default_filtering() -> Result<(), anyhow::Error> {
-        let expected = advisory::Entity::find()
+        let expected_asc = advisory::Entity::find()
+            .filter(advisory::Column::Location.eq("foo"))
+            .order_by_asc(advisory::Column::Id)
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+        let expected_desc = advisory::Entity::find()
+            .filter(advisory::Column::Location.eq("foo"))
             .order_by_desc(advisory::Column::Id)
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
+
+        // already ordering by ID ASC, so leave it alone
         let actual = advisory::Entity::find()
+            .filter(advisory::Column::Location.eq("foo"))
+            .order_by_asc(advisory::Column::Id)
             .filtering(SearchOptions::default())?
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
-        assert_eq!(actual, expected);
+        assert_eq!(actual, expected_asc);
+
+        // No ordering, so order by ID DESC
+        let actual = advisory::Entity::find()
+            .filter(advisory::Column::Location.eq("foo"))
+            .filtering(SearchOptions::default())?
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+        assert_eq!(actual, expected_desc);
+
+        // already ordering by ID DESC, so don't add another
+        let actual = advisory::Entity::find()
+            .filter(advisory::Column::Location.eq("foo"))
+            .order_by_desc(advisory::Column::Id)
+            .filtering(SearchOptions::default())?
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+        assert_eq!(actual, expected_desc);
         Ok(())
     }
 }
