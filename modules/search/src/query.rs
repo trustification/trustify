@@ -2,7 +2,7 @@ use crate::model::SearchOptions;
 use crate::service::Error;
 use human_date_parser::{from_human_time, ParseResult};
 use regex::Regex;
-use sea_orm::sea_query::{ConditionExpression, IntoCondition};
+use sea_orm::sea_query::{extension::postgres::PgExpr, ConditionExpression, IntoCondition};
 use sea_orm::{
     ColumnTrait, ColumnType, Condition, EntityTrait, Iden, Iterable, Order, QueryFilter,
     QueryOrder, QueryTrait, Select, Value,
@@ -51,6 +51,7 @@ impl<T: EntityTrait> Query<T> for Select<T> {
 // Internal types
 /////////////////////////////////////////////////////////////////////////
 
+#[derive(Debug)]
 struct Filter<T: EntityTrait> {
     operands: Operand<T>,
     operator: Operator,
@@ -77,9 +78,9 @@ impl<T: EntityTrait> IntoCondition for Filter<T> {
                         v.unwrap::<String>().replace('%', r"\%").replace('_', r"\_")
                     );
                     if op == Operator::Like {
-                        col.like(v)
+                        col.into_expr().ilike(v)
                     } else {
-                        col.not_like(v)
+                        col.into_expr().not_ilike(v)
                     }
                 }
                 Operator::GreaterThan => col.gt(v),
@@ -243,6 +244,7 @@ impl FromStr for Operator {
 // Internal helpers
 /////////////////////////////////////////////////////////////////////////
 
+#[derive(Debug)]
 enum Operand<T: EntityTrait> {
     Simple(T::Column, Value),
     Composite(Vec<Filter<T>>),
@@ -398,19 +400,19 @@ mod tests {
         );
         assert_eq!(
             where_clause("location~foo")?,
-            r#""advisory"."location" LIKE '%foo%'"#
+            r#""advisory"."location" ILIKE '%foo%'"#
         );
         assert_eq!(
             where_clause("location~f_o%o")?,
-            r#""advisory"."location" LIKE E'%f\\_o\\%o%'"#
+            r#""advisory"."location" ILIKE E'%f\\_o\\%o%'"#
         );
         assert_eq!(
             where_clause("location!~foo")?,
-            r#""advisory"."location" NOT LIKE '%foo%'"#
+            r#""advisory"."location" NOT ILIKE '%foo%'"#
         );
         assert_eq!(
             where_clause("location!~f_o%o")?,
-            r#""advisory"."location" NOT LIKE E'%f\\_o\\%o%'"#
+            r#""advisory"."location" NOT ILIKE E'%f\\_o\\%o%'"#
         );
         assert_eq!(
             where_clause("location>foo")?,
@@ -429,18 +431,6 @@ mod tests {
             r#""advisory"."location" <= 'foo'"#
         );
         assert_eq!(
-            where_clause("foo")?,
-            r#""advisory"."identifier" LIKE '%foo%' OR "advisory"."location" LIKE '%foo%' OR "advisory"."sha256" LIKE '%foo%' OR "advisory"."title" LIKE '%foo%'"#
-        );
-        assert_eq!(
-            where_clause("foo&location=bar")?,
-            r#"("advisory"."identifier" LIKE '%foo%' OR "advisory"."location" LIKE '%foo%' OR "advisory"."sha256" LIKE '%foo%' OR "advisory"."title" LIKE '%foo%') AND "advisory"."location" = 'bar'"#
-        );
-        assert_eq!(
-            where_clause(r"m\&m's&location=f\&oo&id=13")?,
-            r#"("advisory"."identifier" LIKE E'%m&m\'s%' OR "advisory"."location" LIKE E'%m&m\'s%' OR "advisory"."sha256" LIKE E'%m&m\'s%' OR "advisory"."title" LIKE E'%m&m\'s%') AND "advisory"."location" = 'f&oo' AND "advisory"."id" = 13"#
-        );
-        assert_eq!(
             where_clause("location=a|b|c")?,
             r#""advisory"."location" = 'a' OR "advisory"."location" = 'b' OR "advisory"."location" = 'c'"#
         );
@@ -453,22 +443,6 @@ mod tests {
             r#""advisory"."location" = 'foo' OR "advisory"."location" = '&|'"#
         );
         assert_eq!(
-            where_clause("a|b|c")?,
-            r#""advisory"."identifier" LIKE '%a%' OR "advisory"."location" LIKE '%a%' OR "advisory"."sha256" LIKE '%a%' OR "advisory"."title" LIKE '%a%' OR "advisory"."identifier" LIKE '%b%' OR "advisory"."location" LIKE '%b%' OR "advisory"."sha256" LIKE '%b%' OR "advisory"."title" LIKE '%b%' OR "advisory"."identifier" LIKE '%c%' OR "advisory"."location" LIKE '%c%' OR "advisory"."sha256" LIKE '%c%' OR "advisory"."title" LIKE '%c%'"#
-        );
-        assert_eq!(
-            where_clause("a|b&id=1")?,
-            r#"("advisory"."identifier" LIKE '%a%' OR "advisory"."location" LIKE '%a%' OR "advisory"."sha256" LIKE '%a%' OR "advisory"."title" LIKE '%a%' OR "advisory"."identifier" LIKE '%b%' OR "advisory"."location" LIKE '%b%' OR "advisory"."sha256" LIKE '%b%' OR "advisory"."title" LIKE '%b%') AND "advisory"."id" = 1"#
-        );
-        assert_eq!(
-            where_clause("a&b")?,
-            r#"("advisory"."identifier" LIKE '%a%' OR "advisory"."location" LIKE '%a%' OR "advisory"."sha256" LIKE '%a%' OR "advisory"."title" LIKE '%a%') AND ("advisory"."identifier" LIKE '%b%' OR "advisory"."location" LIKE '%b%' OR "advisory"."sha256" LIKE '%b%' OR "advisory"."title" LIKE '%b%')"#
-        );
-        assert_eq!(
-            where_clause("here&location!~there|hereford")?,
-            r#"("advisory"."identifier" LIKE '%here%' OR "advisory"."location" LIKE '%here%' OR "advisory"."sha256" LIKE '%here%' OR "advisory"."title" LIKE '%here%') AND ("advisory"."location" NOT LIKE '%there%' AND "advisory"."location" NOT LIKE '%hereford%')"#
-        );
-        assert_eq!(
             where_clause("published>2023-11-03T23:20:50.52Z")?,
             r#""advisory"."published" > '2023-11-03 23:20:50.520000 +00:00'"#
         );
@@ -479,6 +453,49 @@ mod tests {
         assert_eq!(
             where_clause("published>2023-11-03")?,
             r#""advisory"."published" > '2023-11-03'"#
+        );
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn complex_ilikes() -> Result<(), anyhow::Error> {
+        // I broke this test out from the other conditions as these
+        // assertions resulted in very conservative parentheses when
+        // moving from LIKE to ILIKE. I think the extra parens are
+        // harmless, but I suspect it may be a bug that LIKE and ILIKE
+        // operators are treated differently, as their precedence
+        // should be the same on PostgreSQL.
+        //
+        // See https://github.com/SeaQL/sea-query/pull/675
+
+        assert_eq!(
+            where_clause("foo")?,
+            r#"("advisory"."identifier" ILIKE '%foo%') OR ("advisory"."location" ILIKE '%foo%') OR ("advisory"."sha256" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')"#
+        );
+        assert_eq!(
+            where_clause("foo&location=bar")?,
+            r#"(("advisory"."identifier" ILIKE '%foo%') OR ("advisory"."location" ILIKE '%foo%') OR ("advisory"."sha256" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')) AND "advisory"."location" = 'bar'"#
+        );
+        assert_eq!(
+            where_clause(r"m\&m's&location=f\&oo&id=13")?,
+            r#"(("advisory"."identifier" ILIKE E'%m&m\'s%') OR ("advisory"."location" ILIKE E'%m&m\'s%') OR ("advisory"."sha256" ILIKE E'%m&m\'s%') OR ("advisory"."title" ILIKE E'%m&m\'s%')) AND "advisory"."location" = 'f&oo' AND "advisory"."id" = 13"#
+        );
+        assert_eq!(
+            where_clause("a|b|c")?,
+            r#"("advisory"."identifier" ILIKE '%a%') OR ("advisory"."location" ILIKE '%a%') OR ("advisory"."sha256" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR ("advisory"."identifier" ILIKE '%b%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."sha256" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%') OR ("advisory"."identifier" ILIKE '%c%') OR ("advisory"."location" ILIKE '%c%') OR ("advisory"."sha256" ILIKE '%c%') OR ("advisory"."title" ILIKE '%c%')"#
+        );
+        assert_eq!(
+            where_clause("a|b&id=1")?,
+            r#"(("advisory"."identifier" ILIKE '%a%') OR ("advisory"."location" ILIKE '%a%') OR ("advisory"."sha256" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR ("advisory"."identifier" ILIKE '%b%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."sha256" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%')) AND "advisory"."id" = 1"#
+        );
+        assert_eq!(
+            where_clause("a&b")?,
+            r#"(("advisory"."identifier" ILIKE '%a%') OR ("advisory"."location" ILIKE '%a%') OR ("advisory"."sha256" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%')) AND (("advisory"."identifier" ILIKE '%b%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."sha256" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%'))"#
+        );
+        assert_eq!(
+            where_clause("here&location!~there|hereford")?,
+            r#"(("advisory"."identifier" ILIKE '%here%') OR ("advisory"."location" ILIKE '%here%') OR ("advisory"."sha256" ILIKE '%here%') OR ("advisory"."title" ILIKE '%here%')) AND (("advisory"."location" NOT ILIKE '%there%') AND ("advisory"."location" NOT ILIKE '%hereford%'))"#
         );
 
         Ok(())
