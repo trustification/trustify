@@ -2,6 +2,7 @@ use crate::model::vulnerability::{VulnerabilityDetails, VulnerabilityHead, Vulne
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use trustify_common::advisory::AdvisoryVulnerabilityAssertions;
+use trustify_common::paginated;
 use trustify_cvss::cvss3::Cvss3Base;
 use trustify_cvss::cvss4::Cvss4Base;
 use trustify_entity::advisory::Model;
@@ -31,6 +32,8 @@ pub struct AdvisorySummary {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub vulnerabilities: Vec<AdvisoryVulnerabilityHead>,
 }
+
+paginated!(AdvisorySummary);
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct AdvisoryDetails {

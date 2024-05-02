@@ -6,6 +6,8 @@ use std::str::FromStr;
 use packageurl::PackageUrl;
 use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use utoipa::openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, SchemaType};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -23,6 +25,18 @@ pub struct Purl {
     pub name: String,
     pub version: Option<String>,
     pub qualifiers: BTreeMap<String, String>,
+}
+
+impl<'s> ToSchema<'s> for Purl {
+    fn schema() -> (&'s str, RefOr<Schema>) {
+        (
+            "Purl",
+            ObjectBuilder::new()
+                .schema_type(SchemaType::String)
+                .format(Some(SchemaFormat::KnownFormat(KnownFormat::Uri)))
+                .into(),
+        )
+    }
 }
 
 const NAMESPACE: Uuid = Uuid::from_bytes([

@@ -31,10 +31,13 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
     components(schemas(
         crate::model::CommonImporter,
         crate::model::CsafImporter,
-        crate::model::SbomImporter,
         crate::model::Importer,
         crate::model::ImporterConfiguration,
         crate::model::ImporterData,
+        crate::model::ImporterReport,
+        crate::model::PaginatedImporterReport,
+        crate::model::RevisionedImporter,
+        crate::model::SbomImporter,
         crate::model::State,
     )),
     tags()
@@ -45,7 +48,7 @@ pub struct ApiDoc;
     context_path = "/api/v1/importer",
     tag = "importer",
     responses(
-        (status = 200, description = "List importer configurations", body = [crate::model::Importer])
+        (status = 200, description = "List importer configurations", body = [Importer])
     )
 )]
 #[get("")]
@@ -57,7 +60,7 @@ async fn list(service: web::Data<ImporterService>) -> Result<impl Responder, Err
 #[utoipa::path(
     context_path = "/api/v1/importer",
     tag = "importer",
-    request_body = crate::model::ImporterConfiguration,
+    request_body = ImporterConfiguration,
     params(
         ("name", Path, description = "The name of the importer"),
     ),
@@ -85,7 +88,7 @@ async fn create(
     ),
     responses(
         (status = 200, description = "Retrieved importer configuration",
-            body = crate::model::Importer,
+            body = Importer,
             headers(
                 ("etag" = String, description = "Revision ID")
             )
@@ -112,7 +115,7 @@ async fn read(
 #[utoipa::path(
     context_path = "/api/v1/importer",
     tag = "importer",
-    request_body = crate::model::ImporterConfiguration,
+    request_body = ImporterConfiguration,
     params(
         ("name", Path, description = "The name of the importer"),
         ("if-match", Header, description = "The revision to update"),
@@ -176,7 +179,7 @@ async fn delete(
     context_path = "/api/v1/importer",
     tag = "importer",
     responses(
-        (status = 200, description = "Retrieved importer reports"),
+        (status = 200, description = "Retrieved importer reports", body = PaginatedImporterReport),
     )
 )]
 #[get("/{name}/report")]

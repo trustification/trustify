@@ -6,6 +6,7 @@ use trustify_common::{model::Paginated, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use trustify_module_search::model::SearchOptions;
 
+/// Search for SBOMs
 #[utoipa::path(
     context_path = "/api/v1/sbom",
     tag = "sbom",
@@ -34,21 +35,22 @@ pub async fn all(
 
 #[derive(Clone, Debug, serde::Deserialize, utoipa::IntoParams)]
 struct PackagesQuery {
+    /// Flag if only root level packages should be considered
     #[serde(default)]
     pub root: bool,
 }
 
+/// Search for packages of an SBOM
 #[utoipa::path(
+    context_path = "/api/v1/sbom",
     params(
-        ("id", Path, description = "SBOM id to get packages for")
-    ),
-    params(
+        ("id", Path, description = "ID of the SBOM to get packages for"),
+        PackagesQuery,
         SearchOptions,
         Paginated,
-        PackagesQuery,
     ),
     responses(
-        (status = 200, description = "Packages"),
+        (status = 200, description = "Packages", body = PaginatedSbomPackage),
     ),
 )]
 #[get("/{id}/packages")]
@@ -72,30 +74,33 @@ pub async fn packages(
 
 #[derive(Clone, Debug, serde::Deserialize, utoipa::IntoParams)]
 struct RelatedQuery {
+    /// The Package to use as reference
+    pub reference: Purl,
+    /// Which side the reference should be on
     #[serde(default)]
     pub which: Which,
-    pub reference: Purl,
+    /// Optional relationship filter
     #[serde(default)]
     pub relationship: Option<Relationship>,
 }
 
+/// Search for related packages in an SBOM
 #[utoipa::path(
+    context_path = "/api/v1/sbom",
     params(
-        ("id", Path, description = "SBOM id to get packages for")
-    ),
-    params(
+        ("id", Path, description = "ID of SBOM to search packages in"),
+        RelatedQuery,
         SearchOptions,
         Paginated,
-        RelatedQuery,
     ),
     responses(
-        (status = 200, description = "Packages"),
+        (status = 200, description = "Packages", body = PaginatedSbomPackageRelation),
     ),
 )]
-#[get("/{sbom_id}/related")]
+#[get("/{id}/related")]
 pub async fn related(
     fetch: web::Data<FetchService>,
-    sbom_id: web::Path<i32>,
+    id: web::Path<i32>,
     web::Query(search): web::Query<SearchOptions>,
     web::Query(paginated): web::Query<Paginated>,
     web::Query(related): web::Query<RelatedQuery>,
@@ -104,11 +109,11 @@ pub async fn related(
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadSbom)?;
 
-    let sbom_id = sbom_id.into_inner();
+    let id = id.into_inner();
 
     let result = fetch
         .fetch_related_packages(
-            sbom_id,
+            id,
             search,
             paginated,
             related.which,
