@@ -460,14 +460,16 @@ mod tests {
 
     #[test(tokio::test)]
     async fn complex_ilikes() -> Result<(), anyhow::Error> {
-        // I broke this test out from the other conditions as these
-        // assertions resulted in very conservative parentheses when
-        // moving from LIKE to ILIKE. I think the extra parens are
-        // harmless, but I suspect it may be a bug that LIKE and ILIKE
-        // operators are treated differently, as their precedence
-        // should be the same on PostgreSQL.
         //
-        // See https://github.com/SeaQL/sea-query/pull/675
+        // I broke these assertions out into their own test as they
+        // resulted in very conservative parentheses when moving from
+        // LIKE to ILIKE. I think the extra parens are harmless, but I
+        // suspect it may be a bug that LIKE and ILIKE operators are
+        // treated differently, as their precedence should be the same
+        // on PostgreSQL.
+        //
+        // Upstream issue: https://github.com/SeaQL/sea-query/issues/776
+        // See also https://github.com/SeaQL/sea-query/pull/675
 
         assert_eq!(
             where_clause("foo")?,

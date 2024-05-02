@@ -67,7 +67,7 @@ async fn query_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let sboms = system
         .sboms(
             SearchOptions {
-                q: "myspace".to_string(),
+                q: "MySpAcE".to_string(),
                 ..Default::default()
             },
             Paginated::default(),
