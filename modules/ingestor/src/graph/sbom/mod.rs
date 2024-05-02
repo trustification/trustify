@@ -40,6 +40,7 @@ mod tests;
 pub struct SbomInformation {
     pub title: Option<String>,
     pub published: Option<OffsetDateTime>,
+    pub authors: Vec<String>,
 }
 
 impl From<()> for SbomInformation {
@@ -70,7 +71,7 @@ impl Graph {
             items: limiter
                 .fetch()
                 .await?
-                .drain(0..)
+                .into_iter()
                 .map(|each| SbomContext::new(self, each))
                 .collect(),
         })
@@ -81,7 +82,7 @@ impl Graph {
         id: i32,
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
-        Ok(entity::sbom::Entity::find_by_id(id)
+        Ok(sbom::Entity::find_by_id(id)
             .one(&self.connection(&tx))
             .await?
             .map(|sbom| SbomContext::new(self, sbom)))
@@ -95,8 +96,8 @@ impl Graph {
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         Ok(entity::sbom::Entity::find()
-            .filter(Condition::all().add(entity::sbom::Column::Location.eq(location)))
-            .filter(Condition::all().add(entity::sbom::Column::Sha256.eq(sha256.to_string())))
+            .filter(Condition::all().add(sbom::Column::Location.eq(location)))
+            .filter(Condition::all().add(sbom::Column::Sha256.eq(sha256.to_string())))
             .one(&self.connection(&tx))
             .await?
             .map(|sbom| SbomContext::new(self, sbom)))
@@ -115,15 +116,20 @@ impl Graph {
             return Ok(found);
         }
 
-        let SbomInformation { title, published } = info.into();
+        let SbomInformation {
+            title,
+            published,
+            authors,
+        } = info.into();
 
-        let model = entity::sbom::ActiveModel {
+        let model = sbom::ActiveModel {
             document_id: Set(document_id.to_string()),
             location: Set(location.to_string()),
             sha256: Set(sha256.to_string()),
 
             title: Set(title),
             published: Set(published),
+            authors: Set(authors),
 
             ..Default::default()
         };
@@ -178,7 +184,7 @@ impl Graph {
 
     async fn locate_one_sbom<TX: AsRef<Transactional>>(
         &self,
-        query: SelectEntity<entity::sbom::Entity>,
+        query: SelectEntity<sbom::Entity>,
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         Ok(query
@@ -189,7 +195,7 @@ impl Graph {
 
     async fn locate_many_sboms<TX: AsRef<Transactional>>(
         &self,
-        query: SelectEntity<entity::sbom::Entity>,
+        query: SelectEntity<sbom::Entity>,
         tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
         Ok(query
@@ -205,8 +211,8 @@ impl Graph {
         id: i32,
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
-        let _query = entity::sbom::Entity::find_by_id(id);
-        Ok(entity::sbom::Entity::find_by_id(id)
+        let _query = sbom::Entity::find_by_id(id);
+        Ok(sbom::Entity::find_by_id(id)
             .one(&self.connection(&tx))
             .await?
             .map(|sbom| SbomContext::new(self, sbom)))
@@ -218,8 +224,7 @@ impl Graph {
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         self.locate_one_sbom(
-            entity::sbom::Entity::find()
-                .filter(entity::sbom::Column::Location.eq(location.to_string())),
+            entity::sbom::Entity::find().filter(sbom::Column::Location.eq(location.to_string())),
             tx,
         )
         .await
@@ -231,8 +236,7 @@ impl Graph {
         tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
         self.locate_many_sboms(
-            entity::sbom::Entity::find()
-                .filter(entity::sbom::Column::Location.eq(location.to_string())),
+            entity::sbom::Entity::find().filter(sbom::Column::Location.eq(location.to_string())),
             tx,
         )
         .await
@@ -244,8 +248,7 @@ impl Graph {
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         self.locate_one_sbom(
-            entity::sbom::Entity::find()
-                .filter(entity::sbom::Column::Sha256.eq(sha256.to_string())),
+            entity::sbom::Entity::find().filter(sbom::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
         .await
@@ -257,8 +260,7 @@ impl Graph {
         tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
         self.locate_many_sboms(
-            entity::sbom::Entity::find()
-                .filter(entity::sbom::Column::Sha256.eq(sha256.to_string())),
+            entity::sbom::Entity::find().filter(sbom::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
         .await
@@ -362,7 +364,7 @@ impl Graph {
 #[derive(Clone)]
 pub struct SbomContext {
     pub graph: Graph,
-    pub sbom: entity::sbom::Model,
+    pub sbom: sbom::Model,
 }
 
 impl PartialEq for SbomContext {

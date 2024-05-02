@@ -59,12 +59,13 @@ impl FetchService {
         let mut items = Vec::new();
         for sbom in sboms {
             items.push(SbomSummary {
-                identifier: sbom.id,
+                id: sbom.id,
                 sha256: sbom.sha256,
                 document_id: sbom.document_id,
 
                 title: sbom.title,
                 published: sbom.published,
+                authors: sbom.authors,
             })
         }
 
