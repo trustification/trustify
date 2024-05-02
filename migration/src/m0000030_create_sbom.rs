@@ -24,6 +24,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Sbom::Sha256).string().not_null())
                     .col(ColumnDef::new(Sbom::Title).string())
                     .col(ColumnDef::new(Sbom::Published).timestamp_with_time_zone())
+                    .col(ColumnDef::new(Sbom::Authors).array(ColumnType::String(None)))
                     .to_owned(),
             )
             .await
@@ -46,4 +47,5 @@ pub enum Sbom {
 
     Title,
     Published,
+    Authors,
 }

@@ -29,6 +29,12 @@ impl<'a> From<Information<'a>> for SbomInformation {
         Self {
             title: Some(sbom.document_creation_information.document_name.clone()),
             published,
+            authors: value
+                .0
+                .document_creation_information
+                .creation_info
+                .creators
+                .clone(),
         }
     }
 }

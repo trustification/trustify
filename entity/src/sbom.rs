@@ -13,6 +13,7 @@ pub struct Model {
 
     pub title: Option<String>,
     pub published: Option<OffsetDateTime>,
+    pub authors: Vec<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
