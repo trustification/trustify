@@ -1,6 +1,7 @@
 use crate::model::advisory::AdvisoryVulnerabilitySummary;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
+use trustify_common::paginated;
 use trustify_entity::{relationship::Relationship, sbom};
 use utoipa::ToSchema;
 
@@ -18,13 +19,19 @@ pub struct SbomSummary {
     pub published: Option<OffsetDateTime>,
 }
 
+paginated!(SbomSummary);
+
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct SbomPackage {
     pub purl: String,
 }
+
+paginated!(SbomPackage);
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct SbomPackageRelation {
     pub package: String,
     pub relationship: Relationship,
 }
+
+paginated!(SbomPackageRelation);

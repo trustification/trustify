@@ -27,11 +27,13 @@ use trustify_entity::{
 };
 use trustify_module_search::{model::SearchOptions, query::Query};
 
-#[derive(Clone, Eq, PartialEq, Default, Debug, serde::Deserialize)]
+#[derive(Clone, Eq, PartialEq, Default, Debug, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Which {
+    /// Originating side
     #[default]
     Left,
+    /// Target side
     Right,
 }
 

@@ -7,7 +7,7 @@ pub use sbom::*;
 use std::ops::{Deref, DerefMut};
 use std::time::Duration;
 use time::OffsetDateTime;
-use trustify_common::model::{PaginatedResults, Revisioned};
+use trustify_common::{model::Revisioned, paginated, revisioned};
 use trustify_entity::{
     importer::{self, Model},
     importer_report,
@@ -131,7 +131,7 @@ impl TryFrom<Model> for Importer {
     }
 }
 
-pub struct RevisionedImporter(pub Revisioned<Importer>);
+revisioned!(Importer);
 
 impl TryFrom<Model> for RevisionedImporter {
     type Error = serde_json::Error;
@@ -179,7 +179,7 @@ pub struct ImporterReport {
     pub report: serde_json::Value,
 }
 
-pub struct PaginatedImporterReport(pub PaginatedResults<ImporterReport>);
+paginated!(ImporterReport);
 
 impl From<importer_report::Model> for ImporterReport {
     fn from(value: importer_report::Model) -> Self {

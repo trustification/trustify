@@ -4,10 +4,13 @@ use serde::{Serialize, Serializer};
 use std::num::NonZeroU64;
 use utoipa::{IntoParams, ToSchema};
 
+pub use concat_idents::concat_idents;
+
 /// A struct wrapping an item with a revision.
 ///
 /// If the revision should not be part of the payload, but e.g. an HTTP header (like `ETag`), this
 /// struct can help carrying both pieces.
+// NOTE: This struct must be synced with the version in the [`revisioned`] macro below.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct Revisioned<T> {
     /// The actual value
@@ -16,6 +19,39 @@ pub struct Revisioned<T> {
     ///
     /// An opaque string that should have no meaning to the user, only to the backend.
     pub revision: String,
+}
+
+/// Creates a revisioned newtype for the provided type.
+#[macro_export]
+macro_rules! revisioned {
+    ($n:ident) => {
+        $crate::model::concat_idents!(RevisionedType = Revisioned, $n {
+            #[derive(Clone, std::fmt::Debug, serde::Deserialize, serde::Serialize)]
+            pub struct RevisionedType(pub trustify_common::model::Revisioned<$n>);
+
+            impl<'s> utoipa::ToSchema<'s> for RevisionedType {
+                fn schema() -> (&'s str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>) {
+                    /// A struct wrapping an item with a revision.
+                    ///
+                    /// If the revision should not be part of the payload, but e.g. an HTTP header (like `ETag`), this
+                    /// struct can help carrying both pieces.
+                    #[derive(Clone, std::fmt::Debug, serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
+                    #[serde(rename_all = "camelCase")]
+                    #[schema(as = $n)]
+                    struct __SchemaType {
+                        /// The actual value
+                        pub value: $n,
+                        /// The revision.
+                        ///
+                        /// An opaque string that should have no meaning to the user, only to the backend.
+                        pub revision: String,
+                    }
+
+                    __SchemaType::schema()
+                }
+            }
+        });
+    };
 }
 
 #[derive(
@@ -44,6 +80,7 @@ mod default {
     }
 }
 
+// NOTE: This struct must be aligned with the struct in the [`paginated`] macro below.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct PaginatedResults<R> {
@@ -73,4 +110,23 @@ impl<R> PaginatedResults<R> {
             total: self.total,
         }
     }
+}
+
+/// Creates an explicit ad-hoc [`PaginatedResults<T>`] type which can be used for `utoipa`. The
+/// name of the type will be `PaginatedFoo` if the type is `Foo`.
+#[macro_export]
+macro_rules! paginated {
+    ($n:ident) => {
+        $crate::model::concat_idents!(PaginatedType = Paginated, $n {
+            /// Paginated returned items
+            #[derive(Clone, Debug, serde::Deserialize, serde::Serialize, ToSchema)]
+            #[serde(rename_all = "camelCase")]
+            pub struct PaginatedType {
+                /// Returned items
+                pub items: Vec<$n>,
+                /// Total number of items found
+                pub total: u64,
+            }
+        });
+    };
 }

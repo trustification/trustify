@@ -1,17 +1,8 @@
+use crate::{service::advisory::AdvisoryKey, service::FetchService};
 use actix_web::{get, web, HttpResponse, Responder};
-
-use crate::service::advisory::AdvisoryKey;
 use trustify_common::model::Paginated;
 use trustify_module_search::model::SearchOptions;
 
-use crate::service::FetchService;
-
-/*
-use crate::model::advisory::{
-    AdvisoryDetails, AdvisorySummary, AdvisoryVulnerabilityDetails, AdvisoryVulnerabilitySummary,
-};
-
- */
 #[utoipa::path(
     context_path = "/api/v1/advisory",
     tag = "advisory",
@@ -40,6 +31,7 @@ pub async fn all(
     ),
     responses(
         (status = 200, description = "Matching advisory", body = AdvisoryDetails),
+        (status = 404, description = "Matching advisory not found"),
     ),
 )]
 #[get("/{sha256}")]

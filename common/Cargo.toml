@@ -9,6 +9,7 @@ trustify-migration = { workspace = true }
 
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
+concat-idents = { workspace = true }
 cpe = { workspace = true }
 itertools = { workspace = true }
 lenient_semver = { workspace = true }
@@ -26,7 +27,7 @@ tempfile = { workspace = true }
 test-context = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
-utoipa = { workspace = true }
+utoipa = { workspace = true, features = ["url"] }
 uuid = { workspace = true, features = ["v5"] }
 
 [dev-dependencies]
