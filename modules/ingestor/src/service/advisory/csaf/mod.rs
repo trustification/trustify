@@ -31,7 +31,7 @@ impl super::super::IngestorService {
             .map_err(Error::Storage)?
             .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?;
 
-        let result = fmt.load(&self.graph, source, reader, &sha256).await?;
+        let result = fmt.load(&self.graph, source, reader).await?;
 
         let duration = Instant::now() - start;
         log::info!(

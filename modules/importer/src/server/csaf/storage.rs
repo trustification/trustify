@@ -36,13 +36,9 @@ impl ValidatedVisitor for StorageVisitor {
     ) -> Result<(), Self::Error> {
         let doc = result?;
         let location = doc.context.url().to_string();
-
+        let fmt = Format::from_bytes(&doc.data).map_err(|e| StorageError::Storage(e.into()))?;
         self.ingestor
-            .ingest(
-                &location,
-                Format::CSAF,
-                ReaderStream::new(doc.data.as_ref()),
-            )
+            .ingest(&location, fmt, ReaderStream::new(doc.data.as_ref()))
             .await
             .map_err(|err| StorageError::Storage(err.into()))?;
 
