@@ -1,23 +1,10 @@
 use crate::service::{advisory::Format, Error, IngestorService};
 use actix_web::{get, post, web, HttpResponse, Responder};
-use std::str::FromStr;
-
-#[derive(Clone, Debug, serde::Deserialize)]
-pub struct UploadAdvisoryQuery {
-    /// The source of the document.
-    ///
-    /// Only the base source, not the full document URL.
-    pub location: String,
-    pub format: Option<String>,
-}
+use futures::{future::ok, stream::once};
 
 #[utoipa::path(
     tag = "ingestor",
     request_body = Vec <u8>,
-    params(
-        ("format" = String, Query, description = "Format of the submitted advisory document (`csaf`, `osv`, ...)"),
-        ("location" = String, Query, description = "Source the document came from"),
-    ),
     responses(
         (status = 201, description = "Upload a file"),
         (status = 400, description = "The file could not be parsed as an advisory"),
@@ -27,13 +14,11 @@ pub struct UploadAdvisoryQuery {
 /// Upload a new advisory
 pub async fn upload_advisory(
     service: web::Data<IngestorService>,
-    payload: web::Payload,
-    web::Query(UploadAdvisoryQuery { location, format }): web::Query<UploadAdvisoryQuery>,
+    bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
-    let fmt = format
-        .map(|f| Format::from_str(&f))
-        .unwrap_or(Ok(Format::CSAF))?;
-    let advisory_id = service.ingest(&location, fmt, payload).await?;
+    let fmt = Format::from_bytes(&bytes);
+    let payload = once(ok::<bytes::Bytes, Error>(bytes));
+    let advisory_id = service.ingest("rest-api", fmt, payload).await?;
     Ok(HttpResponse::Created().json(advisory_id))
 }
 
@@ -47,6 +32,7 @@ pub async fn upload_advisory(
 #[get("/advisories/{id}")]
 /// Download an advisory
 pub async fn download_advisory(
+    // TODO: Do we use this?!?!?!
     service: web::Data<IngestorService>,
     path: web::Path<i32>,
 ) -> Result<impl Responder, Error> {
@@ -82,9 +68,9 @@ mod tests {
             .to_request();
 
         let response = test::call_service(&app, request).await;
-        log::debug!("response: {response:?}");
-
         assert!(response.status().is_success());
+        let id: String = test::read_body_json(response).await;
+        assert_eq!(id, "CVE-2023-33201");
 
         Ok(())
     }
@@ -104,9 +90,9 @@ mod tests {
             .to_request();
 
         let response = test::call_service(&app, request).await;
-        log::debug!("response: {response:?}");
-
         assert!(response.status().is_success());
+        let id: String = test::read_body_json(response).await;
+        assert_eq!(id, "RUSTSEC-2021-0079");
 
         Ok(())
     }
