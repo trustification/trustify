@@ -138,10 +138,6 @@ fn events_to_range(events: &[Event]) -> (Option<String>, Option<String>) {
 
 #[cfg(test)]
 mod test {
-    use std::fs::File;
-    use std::path::PathBuf;
-    use std::str::FromStr;
-
     use test_context::test_context;
     use test_log::test;
     use trustify_common::{advisory::Assertion, db::test::TrustifyContext};
@@ -157,37 +153,28 @@ mod test {
         let db = ctx.db;
         let graph = Graph::new(db);
 
-        let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-        let test_data = pwd.join("../../etc/test-data/osv");
-
-        let osv_json = test_data.join("RUSTSEC-2021-0079.json");
-        let osv_file = File::open(osv_json)?;
+        let data = include_bytes!("../../../../../../etc/test-data/osv/RUSTSEC-2021-0079.json");
         let checksum = "d113c2bd1ad6c3ac00a3a8d3f89d3f38de935f8ede0d174a55afe9911960cf51";
 
         let loaded_vulnerability = graph
             .get_vulnerability("CVE-2021-32714", Transactional::None)
             .await?;
-
         assert!(loaded_vulnerability.is_none());
 
         let loaded_advisory = graph.get_advisory(checksum, Transactional::None).await?;
-
         assert!(loaded_advisory.is_none());
 
         let loader = OsvLoader::new(&graph);
-
         loader
-            .load("RUSTSEC-2021-0079.json", osv_file, checksum)
+            .load("RUSTSEC-2021-0079.json", &data[..], checksum)
             .await?;
 
         let loaded_vulnerability = graph
             .get_vulnerability("CVE-2021-32714", Transactional::None)
             .await?;
-
         assert!(loaded_vulnerability.is_some());
 
         let loaded_advisory = graph.get_advisory(checksum, Transactional::None).await?;
-
         assert!(loaded_advisory.is_some());
 
         let loaded_advisory = loaded_advisory.unwrap();
@@ -198,14 +185,12 @@ mod test {
         let affected_assertions = loaded_advisory_vulnerability
             .affected_assertions(())
             .await?;
-
         assert_eq!(1, affected_assertions.assertions.len());
 
         let affected_assertion = affected_assertions.assertions.get("pkg://cargo/hyper");
         assert!(affected_assertion.is_some());
 
         let affected_assertion = &affected_assertion.unwrap()[0];
-
         assert!(
             matches!( affected_assertion, Assertion::Affected {start_version,end_version}
                 if start_version == "0.0.0-0"
@@ -214,7 +199,6 @@ mod test {
         );
 
         let fixed_assertions = loaded_advisory_vulnerability.fixed_assertions(()).await?;
-
         assert_eq!(1, fixed_assertions.assertions.len());
 
         let fixed_assertion = fixed_assertions.assertions.get("pkg://cargo/hyper");
@@ -224,7 +208,6 @@ mod test {
         assert_eq!(1, fixed_assertion.len());
 
         let fixed_assertion = &fixed_assertion[0];
-
         assert!(matches!( fixed_assertion, Assertion::Fixed{version }
             if version == "0.14.10"
         ));
@@ -232,17 +215,13 @@ mod test {
         let advisory_vuln = loaded_advisory
             .get_vulnerability("CVE-2021-32714", ())
             .await?;
-
         assert!(advisory_vuln.is_some());
 
         let advisory_vuln = advisory_vuln.unwrap();
-
         let scores = advisory_vuln.cvss3_scores(()).await?;
-
         assert_eq!(1, scores.len());
 
         let score = scores[0];
-
         assert_eq!(
             score.to_string(),
             "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H"

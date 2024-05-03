@@ -65,10 +65,6 @@ impl<'g> CveLoader<'g> {
 
 #[cfg(test)]
 mod test {
-    use std::fs::File;
-    use std::path::PathBuf;
-    use std::str::FromStr;
-
     use crate::graph::Graph;
     use test_context::test_context;
     use test_log::test;
@@ -81,15 +77,9 @@ mod test {
     async fn cve_loader(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         let db = ctx.db;
         let graph = Graph::new(db);
-
-        let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-        let test_data = pwd.join("../../etc/test-data/mitre");
-
-        let cve_json = test_data.join("CVE-2024-28111.json");
-        let cve_file = File::open(cve_json)?;
+        let data = include_bytes!("../../../../../etc/test-data/mitre/CVE-2024-28111.json");
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
-
         assert!(loaded_vulnerability.is_none());
 
         let loaded_advisory = graph
@@ -98,15 +88,12 @@ mod test {
                 Transactional::None,
             )
             .await?;
-
         assert!(loaded_advisory.is_none());
 
         let loader = CveLoader::new(&graph);
-
-        loader.load("CVE-2024-28111.json", cve_file).await?;
+        loader.load("CVE-2024-28111.json", &data[..]).await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
-
         assert!(loaded_vulnerability.is_some());
 
         let loaded_advisory = graph
@@ -115,15 +102,11 @@ mod test {
                 Transactional::None,
             )
             .await?;
-
         assert!(loaded_advisory.is_some());
 
         let loaded_vulnerability = loaded_vulnerability.unwrap();
-
         let descriptions = loaded_vulnerability.descriptions("en", ()).await?;
-
         assert_eq!(1, descriptions.len());
-
         assert!(descriptions[0]
             .starts_with("Canarytokens helps track activity and actions on a network"));
 

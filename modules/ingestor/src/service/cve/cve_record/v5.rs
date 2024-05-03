@@ -99,22 +99,15 @@ pub struct ProblemTypeDescription {
 #[cfg(test)]
 mod test {
     use crate::service::cve::cve_record::v5::CveRecord;
-    use std::fs::File;
-    use std::path::PathBuf;
-    use std::str::FromStr;
     use test_log::test;
 
     #[test(tokio::test)]
     async fn serde() -> Result<(), anyhow::Error> {
-        let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-        let test_data = pwd.join("../../etc/test-data/mitre");
+        let cve: CveRecord = serde_json::from_slice(include_bytes!(
+            "../../../../../../etc/test-data/mitre/CVE-2024-28111.json"
+        ))?;
 
-        let cve_json = test_data.join("CVE-2024-28111.json");
-
-        let cve_file = File::open(cve_json)?;
-
-        let cve: CveRecord = serde_json::from_reader(cve_file)?;
-
+        assert_eq!(cve.data_type, "CVE_RECORD");
         log::debug!("{:#?}", cve);
 
         Ok(())
