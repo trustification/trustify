@@ -48,7 +48,7 @@ fn validate_token_exp<'max_age>(
     if exp <= now.timestamp() {
         return Err(Validation::Expired(
             chrono::DateTime::from_timestamp(exp, 0)
-                .map(|exp| Expiry::Expires(exp.naive_utc()))
+                .map(Expiry::Expires)
                 .unwrap_or_else(|| Expiry::NotUnix(exp)),
         )
         .into());

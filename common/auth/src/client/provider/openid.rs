@@ -1,7 +1,8 @@
 use super::{
-    super::{error::Error, Expires},
+    super::error::Error,
     {Credentials, TokenProvider},
 };
+use crate::client::Expires;
 use crate::devmode;
 use anyhow::Context;
 use core::fmt::{self, Debug, Formatter};
@@ -148,7 +149,7 @@ impl From<OpenIdTokenProviderConfigArguments> for Option<OpenIdTokenProviderConf
 #[derive(Clone)]
 pub struct OpenIdTokenProvider {
     client: Arc<openid::Client>,
-    current_token: Arc<RwLock<Option<openid::Bearer>>>,
+    current_token: Arc<RwLock<Option<openid::TemporalBearerGuard>>>,
     refresh_before: chrono::Duration,
 }
 
@@ -206,7 +207,7 @@ impl OpenIdTokenProvider {
         match self.current_token.read().await.deref() {
             Some(token) if !token.expires_before(self.refresh_before) => {
                 log::debug!("Token still valid");
-                return Ok(token.clone());
+                return Ok(token.as_ref().clone());
             }
             _ => {}
         }
@@ -225,7 +226,7 @@ impl OpenIdTokenProvider {
             // check if someone else refreshed the token in the meantime
             Some(token) if !token.expires_before(self.refresh_before) => {
                 log::debug!("Token already got refreshed");
-                return Ok(token.clone());
+                return Ok(token.as_ref().clone());
             }
             _ => {}
         }
@@ -241,27 +242,29 @@ impl OpenIdTokenProvider {
             // if we have an expired one, refresh it
             Some(current_token) => {
                 log::debug!("Refreshing token ... ");
-                match current_token.refresh_token.is_some() {
-                    true => self.client.refresh_token(current_token, None).await?,
+                match current_token.as_ref().refresh_token.is_some() {
+                    true => self.client.refresh_token(current_token, None).await?.into(),
                     false => self.initial_token().await?,
                 }
             }
         };
 
-        log::debug!("Next token: {:?}", next_token);
+        log::debug!("Next token: {:?}", next_token.as_ref());
 
-        lock.replace(next_token.clone());
+        let result = next_token.as_ref().clone();
+        lock.replace(next_token);
 
         // done
 
-        Ok(next_token)
+        Ok(result)
     }
 
-    async fn initial_token(&self) -> Result<openid::Bearer, openid::error::Error> {
+    async fn initial_token(&self) -> Result<openid::TemporalBearerGuard, openid::error::Error> {
         Ok(self
             .client
             .request_token_using_client_credentials(None)
-            .await?)
+            .await?
+            .into())
     }
 }
 

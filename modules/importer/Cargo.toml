@@ -12,7 +12,6 @@ trustify-module-storage = { workspace = true }
 
 actix-web = { workspace = true }
 anyhow = { workspace = true }
-async-trait = { workspace = true }
 csaf = { workspace = true }
 csaf-walker = { workspace = true, features = ["crypto-openssl", "csaf"] }
 humantime-serde = { workspace = true }

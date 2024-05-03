@@ -2,7 +2,6 @@ use crate::server::{
     report::{Phase, ReportVisitor, Severity},
     sbom::storage::{StorageError, StorageVisitor},
 };
-use async_trait::async_trait;
 use sbom_walker::{
     retrieve::RetrievalError,
     validation::{ValidatedSbom, ValidatedVisitor, ValidationContext, ValidationError},
@@ -11,14 +10,13 @@ use walker_common::utils::url::Urlify;
 
 pub struct SbomReportVisitor(pub ReportVisitor<StorageVisitor>);
 
-#[async_trait(?Send)]
 impl ValidatedVisitor for SbomReportVisitor {
     type Error = <StorageVisitor as ValidatedVisitor>::Error;
     type Context = <StorageVisitor as ValidatedVisitor>::Context;
 
     async fn visit_context(
         &self,
-        context: &ValidationContext,
+        context: &ValidationContext<'_>,
     ) -> Result<Self::Context, Self::Error> {
         self.0.next.visit_context(context).await
     }
