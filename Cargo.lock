@@ -5989,6 +5989,7 @@ dependencies = [
  "actix-web",
  "anyhow",
  "bytes",
+ "bytesize",
  "chrono",
  "cpe",
  "csaf",

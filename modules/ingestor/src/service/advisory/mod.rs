@@ -1,4 +1,7 @@
+use bytes::Bytes;
+
 use crate::graph::Graph;
+use crate::service::advisory::osv::schema::Vulnerability;
 use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader};
 use crate::service::Error;
 use std::io::Read;
@@ -41,6 +44,13 @@ impl<'g> Format {
                 let loader = OsvLoader::new(graph);
                 loader.load(source, reader, checksum).await
             }
+        }
+    }
+    pub fn from_bytes(bytes: &Bytes) -> Format {
+        if serde_json::from_slice::<Vulnerability>(bytes).is_ok() {
+            Format::OSV
+        } else {
+            Format::CSAF
         }
     }
 }
