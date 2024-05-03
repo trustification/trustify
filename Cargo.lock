@@ -6020,6 +6020,7 @@ dependencies = [
  "thiserror",
  "time",
  "tokio",
+ "tokio-util",
  "tracing",
  "trustify-common",
  "trustify-cvss",

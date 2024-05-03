@@ -1,30 +1,19 @@
+use ::csaf::Csaf;
 use bytes::Bytes;
+use ring::digest;
 
 use crate::graph::Graph;
 use crate::service::advisory::osv::schema::Vulnerability;
 use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader};
 use crate::service::Error;
 use std::io::Read;
-use std::str::FromStr;
 
 pub mod csaf;
 pub mod osv;
 
 pub enum Format {
-    OSV,
-    CSAF,
-}
-
-impl FromStr for Format {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "osv" => Ok(Self::OSV),
-            "csaf" => Ok(Self::CSAF),
-            _ => Err(Error::UnsupportedFormat(s.into())),
-        }
-    }
+    OSV(Vulnerability, String),
+    CSAF(Csaf, String),
 }
 
 impl<'g> Format {
@@ -33,24 +22,28 @@ impl<'g> Format {
         graph: &'g Graph,
         source: &str,
         reader: R,
-        checksum: &str,
     ) -> Result<String, Error> {
         match self {
-            Format::CSAF => {
+            Format::CSAF(_, ref checksum) => {
                 let loader = CsafLoader::new(graph);
                 loader.load(source, reader, checksum).await
             }
-            Format::OSV => {
+            Format::OSV(_, ref checksum) => {
                 let loader = OsvLoader::new(graph);
                 loader.load(source, reader, checksum).await
             }
         }
     }
-    pub fn from_bytes(bytes: &Bytes) -> Format {
-        if serde_json::from_slice::<Vulnerability>(bytes).is_ok() {
-            Format::OSV
+    pub fn from_bytes(bytes: &Bytes) -> Result<Self, Error> {
+        if let Ok(v) = serde_json::from_slice::<Vulnerability>(bytes) {
+            Ok(Format::OSV(v, checksum(bytes)))
+        } else if let Ok(v) = serde_json::from_slice::<Csaf>(bytes) {
+            Ok(Format::CSAF(v, checksum(bytes)))
         } else {
-            Format::CSAF
+            Err(Error::UnsupportedFormat("unknown".into()))
         }
     }
+}
+fn checksum(bytes: &Bytes) -> String {
+    hex::encode(digest::digest(&digest::SHA256, bytes))
 }

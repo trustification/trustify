@@ -1,6 +1,6 @@
 use crate::service::{advisory::Format, Error, IngestorService};
 use actix_web::{get, post, web, HttpResponse, Responder};
-use futures::{future::ok, stream::once};
+use tokio_util::io::ReaderStream;
 
 #[utoipa::path(
     tag = "ingestor",
@@ -16,8 +16,8 @@ pub async fn upload_advisory(
     service: web::Data<IngestorService>,
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
-    let fmt = Format::from_bytes(&bytes);
-    let payload = once(ok::<bytes::Bytes, Error>(bytes));
+    let fmt = Format::from_bytes(&bytes)?;
+    let payload = ReaderStream::new(&*bytes);
     let advisory_id = service.ingest("rest-api", fmt, payload).await?;
     Ok(HttpResponse::Created().json(advisory_id))
 }
