@@ -63,9 +63,6 @@ mod tests {
     use super::super::configure;
 
     use actix_web::{http::StatusCode, test, test::TestRequest, App};
-    use std::fs;
-    use std::path::PathBuf;
-    use std::str::FromStr;
     use test_context::test_context;
     use trustify_common::db::test::TrustifyContext;
     use trustify_module_storage::service::fs::FileSystemBackend;
@@ -75,15 +72,9 @@ mod tests {
     async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         let db = ctx.db;
         let (storage, _temp) = FileSystemBackend::for_test().await?;
-
         let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
+        let payload = include_str!("../../../../etc/test-data/cve-2023-33201.json");
 
-        let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-        let test_data = pwd.join("../../etc/test-data");
-
-        let advisory = test_data.join("cve-2023-33201.json");
-
-        let payload = fs::read_to_string(advisory).expect("File not found");
         let uri = "/advisories?location=test-csaf";
         let request = TestRequest::post()
             .uri(uri)
@@ -103,15 +94,9 @@ mod tests {
     async fn upload_osv_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         let db = ctx.db;
         let (storage, _temp) = FileSystemBackend::for_test().await?;
-
         let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
+        let payload = include_str!("../../../../etc/test-data/osv/RUSTSEC-2021-0079.json");
 
-        let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-        let test_data = pwd.join("../../etc/test-data/osv");
-
-        let advisory = test_data.join("RUSTSEC-2021-0079.json");
-
-        let payload = fs::read_to_string(advisory).expect("File not found");
         let uri = "/advisories?location=test-osv&format=osv";
         let request = TestRequest::post()
             .uri(uri)
