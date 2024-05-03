@@ -33,7 +33,7 @@ impl Default for Database {
         const DEFAULT_PORT: u16 = 5432;
         Database {
             username: env::var("DB_USER").unwrap_or("postgres".into()),
-            password: env::var("DB_PASSWORD").unwrap_or("postgres".into()),
+            password: env::var("DB_PASSWORD").unwrap_or("trustify".into()),
             name: env::var("DB_NAME").unwrap_or("trustify".into()),
             host: env::var("DB_HOST").unwrap_or("localhost".into()),
             port: match env::var("DB_PORT") {
