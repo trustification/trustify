@@ -1,5 +1,4 @@
 use crate::server::report::ScannerError;
-use async_trait::async_trait;
 use regex::Regex;
 use std::str::FromStr;
 use walker_common::utils::url::Urlify;
@@ -52,7 +51,6 @@ impl<T> Filter<T> {
     }
 }
 
-#[async_trait(?Send)]
 impl<T> csaf::DiscoveredVisitor for Filter<T>
 where
     T: csaf::DiscoveredVisitor,
@@ -62,7 +60,7 @@ where
 
     async fn visit_context(
         &self,
-        context: &csaf::DiscoveredContext,
+        context: &csaf::DiscoveredContext<'_>,
     ) -> Result<Self::Context, Self::Error> {
         self.next.visit_context(context).await
     }
@@ -80,7 +78,6 @@ where
     }
 }
 
-#[async_trait(?Send)]
 impl<T> sbom::DiscoveredVisitor for Filter<T>
 where
     T: sbom::DiscoveredVisitor,
@@ -90,7 +87,7 @@ where
 
     async fn visit_context(
         &self,
-        context: &sbom::DiscoveredContext,
+        context: &sbom::DiscoveredContext<'_>,
     ) -> Result<Self::Context, Self::Error> {
         self.next.visit_context(context).await
     }

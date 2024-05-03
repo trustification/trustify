@@ -1,5 +1,4 @@
 use crate::server::report::ReportBuilder;
-use async_trait::async_trait;
 use csaf_walker::validation::{
     ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError,
 };
@@ -22,12 +21,11 @@ pub struct StorageVisitor {
     pub report: Arc<Mutex<ReportBuilder>>,
 }
 
-#[async_trait(? Send)]
 impl ValidatedVisitor for StorageVisitor {
     type Error = StorageError;
     type Context = ();
 
-    async fn visit_context(&self, _: &ValidationContext) -> Result<Self::Context, Self::Error> {
+    async fn visit_context(&self, _: &ValidationContext<'_>) -> Result<Self::Context, Self::Error> {
         Ok(())
     }
 

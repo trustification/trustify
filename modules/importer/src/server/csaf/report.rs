@@ -2,7 +2,6 @@ use crate::server::{
     csaf::storage::{StorageError, StorageVisitor},
     report::{Phase, ReportVisitor, Severity},
 };
-use async_trait::async_trait;
 use csaf_walker::{
     retrieve::RetrievalError,
     validation::{ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError},
@@ -11,14 +10,13 @@ use walker_common::utils::url::Urlify;
 
 pub struct CsafReportVisitor(pub ReportVisitor<StorageVisitor>);
 
-#[async_trait(?Send)]
 impl ValidatedVisitor for CsafReportVisitor {
     type Error = <StorageVisitor as ValidatedVisitor>::Error;
     type Context = <StorageVisitor as ValidatedVisitor>::Context;
 
     async fn visit_context(
         &self,
-        context: &ValidationContext,
+        context: &ValidationContext<'_>,
     ) -> Result<Self::Context, Self::Error> {
         self.0.next.visit_context(context).await
     }
