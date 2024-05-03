@@ -1,7 +1,7 @@
+use crate::query::SearchOptions;
 use crate::{service::advisory::AdvisoryKey, service::FetchService};
 use actix_web::{get, web, HttpResponse, Responder};
 use trustify_common::model::Paginated;
-use trustify_module_search::model::SearchOptions;
 
 #[utoipa::path(
     context_path = "/api/v1/advisory",

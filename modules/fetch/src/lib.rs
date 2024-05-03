@@ -4,4 +4,5 @@
 pub mod endpoints;
 pub mod error;
 mod model;
+mod query;
 mod service;

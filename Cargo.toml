@@ -9,7 +9,6 @@ members = [
   "modules/fetch",
   "modules/importer",
   "modules/ingestor",
-  "modules/search",
   "modules/storage",
   "entity",
   "migration",

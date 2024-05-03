@@ -1,10 +1,10 @@
+use crate::query::SearchOptions;
 use crate::service::sbom::Which;
 use crate::service::FetchService;
 use actix_web::{get, web, HttpResponse, Responder};
 use trustify_auth::{authenticator::user::UserInformation, authorizer::Authorizer, Permission};
 use trustify_common::{model::Paginated, purl::Purl};
 use trustify_entity::relationship::Relationship;
-use trustify_module_search::model::SearchOptions;
 
 /// Search for SBOMs
 #[utoipa::path(

@@ -1,4 +1,5 @@
 use super::FetchService;
+use crate::query::{Query, SearchOptions};
 use crate::{
     error::Error,
     model::{
@@ -25,7 +26,6 @@ use trustify_entity::{
     package, package_relates_to_package, package_version, qualified_package,
     relationship::Relationship, sbom, sbom_describes_package, sbom_package,
 };
-use trustify_module_search::{model::SearchOptions, query::Query};
 
 #[derive(Clone, Eq, PartialEq, Default, Debug, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -91,9 +91,7 @@ impl FetchService {
             )
             .join(JoinType::Join, package_version::Relation::Package.def())
             .filter(sbom_package::Column::SbomId.eq(sbom_id))
-            // see: https://github.com/trustification/trustify/issues/219
-            // .filtering(search)?
-            ;
+            .filtering(search)?;
 
         if root {
             // limit to root level packages
@@ -169,9 +167,7 @@ impl FetchService {
             .filter(package_relates_to_package::Column::SbomId.eq(sbom_id))
             // limit by "which" side package
             .filter(filter.eq(reference.qualifier_uuid()))
-            // see: https://github.com/trustification/trustify/issues/219
-            // .filtering(search)?
-            ;
+            .filtering(search)?;
 
         if let Some(relationship) = relationship {
             query = query.filter(package_relates_to_package::Column::Relationship.eq(relationship));
@@ -277,4 +273,78 @@ where
     }
 
     Ok(items)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use test_context::test_context;
+    use test_log::test;
+    use trustify_common::db::test::TrustifyContext;
+    use trustify_module_ingestor::graph::Graph;
+
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test(tokio::test)]
+    async fn all_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
+        let system = Graph::new(db.clone());
+
+        let sbom_v1 = system
+            .ingest_sbom(
+                "http://redhat.com/test.json",
+                "8",
+                "a",
+                (),
+                Transactional::None,
+            )
+            .await?;
+        let sbom_v1_again = system
+            .ingest_sbom(
+                "http://redhat.com/test.json",
+                "8",
+                "a",
+                (),
+                Transactional::None,
+            )
+            .await?;
+        let sbom_v2 = system
+            .ingest_sbom(
+                "http://myspace.com/test.json",
+                "9",
+                "b",
+                (),
+                Transactional::None,
+            )
+            .await?;
+
+        let _other_sbom = system
+            .ingest_sbom(
+                "http://geocities.com/other.json",
+                "10",
+                "c",
+                (),
+                Transactional::None,
+            )
+            .await?;
+
+        assert_eq!(sbom_v1.sbom.id, sbom_v1_again.sbom.id);
+        assert_ne!(sbom_v1.sbom.id, sbom_v2.sbom.id);
+
+        let fetch = FetchService::new(db);
+
+        let fetched = fetch
+            .fetch_sboms(
+                SearchOptions {
+                    q: "MySpAcE".to_string(),
+                    ..Default::default()
+                },
+                Paginated::default(),
+                (),
+            )
+            .await?;
+
+        assert_eq!(1, fetched.total);
+
+        Ok(())
+    }
 }

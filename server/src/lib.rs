@@ -185,7 +185,6 @@ impl InitData {
                                 db.clone(),
                                 storage.clone(),
                             );
-                            trustify_module_search::endpoints::configure(svc, db.clone());
                             trustify_module_fetch::endpoints::configure(svc, db.clone());
                         });
                 })

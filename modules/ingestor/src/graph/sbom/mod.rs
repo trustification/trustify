@@ -19,17 +19,13 @@ use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::cpe::Cpe;
 use trustify_common::db::chunk::EntityChunkedIter;
-use trustify_common::db::limiter::LimiterTrait;
 use trustify_common::db::Transactional;
-use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_common::package::PackageVulnerabilityAssertions;
 use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
 use trustify_entity as entity;
 use trustify_entity::relationship::Relationship;
 use trustify_entity::sbom;
-use trustify_module_search::model::SearchOptions;
-use trustify_module_search::query::Query as TrustifyQuery;
 
 pub mod spdx;
 
@@ -52,31 +48,6 @@ impl From<()> for SbomInformation {
 type SelectEntity<E> = Select<E>;
 
 impl Graph {
-    pub async fn sboms<TX: AsRef<Transactional>>(
-        &self,
-        search: SearchOptions,
-        paginated: Paginated,
-        tx: TX,
-    ) -> Result<PaginatedResults<SbomContext>, Error> {
-        let connection = self.connection(&tx);
-
-        let limiter = sbom::Entity::find().filtering(search)?.limiting(
-            &connection,
-            paginated.offset,
-            paginated.limit,
-        );
-
-        Ok(PaginatedResults {
-            total: limiter.total().await?,
-            items: limiter
-                .fetch()
-                .await?
-                .into_iter()
-                .map(|each| SbomContext::new(self, each))
-                .collect(),
-        })
-    }
-
     pub async fn get_sbom_by_id<TX: AsRef<Transactional>>(
         &self,
         id: i32,
