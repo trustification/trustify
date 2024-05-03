@@ -9,17 +9,18 @@ trustify-entity = { workspace = true }
 trustify-common = { workspace = true }
 trustify-migration = { workspace = true }
 trustify-cvss = { workspace = true }
-trustify-module-search = { workspace = true }
 
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 cpe = { workspace = true }
 csaf = { workspace = true }
+human-date-parser = { workspace = true }
 lenient_semver = { workspace = true }
 log = { workspace = true }
 packageurl = { workspace = true }
 postgresql_embedded = { workspace = true, features = ["blocking", "bundled", "tokio"] }
+regex = { workspace = true }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros", "debug-print"] }
 sea-orm-migration = { workspace = true }
 sea-query = { workspace = true }
@@ -35,6 +36,7 @@ tracing = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras"] }
 
 [dev-dependencies]
+chrono = { workspace = true }
 humantime = "2"
 rust-lzma = "0.6"
 test-log = { workspace = true, features = ["log", "trace"] }

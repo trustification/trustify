@@ -1,5 +1,3 @@
-use crate::model::SearchOptions;
-use crate::service::Error;
 use human_date_parser::{from_human_time, ParseResult};
 use regex::Regex;
 use sea_orm::sea_query::{extension::postgres::PgExpr, ConditionExpression, IntoCondition};
@@ -13,10 +11,36 @@ use std::sync::OnceLock;
 use time::format_description::well_known::Rfc3339;
 use time::macros::format_description;
 use time::{Date, OffsetDateTime};
+use utoipa::IntoParams;
 
 /////////////////////////////////////////////////////////////////////////
 // Public interface
 /////////////////////////////////////////////////////////////////////////
+
+#[derive(
+    Clone,
+    Default,
+    Debug,
+    serde::Deserialize,
+    serde::Serialize,
+    utoipa::ToSchema,
+    utoipa::IntoParams,
+)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchOptions {
+    /// The search filter
+    #[serde(default)]
+    pub q: String,
+    #[serde(default)]
+    /// Sort options
+    pub sort: String,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("query syntax error: {0}")]
+    SearchSyntax(String),
+}
 
 pub trait Query<T: EntityTrait> {
     fn filtering(self, search: SearchOptions) -> Result<Select<T>, Error>;

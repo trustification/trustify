@@ -6,80 +6,9 @@ use test_context::test_context;
 use test_log::test;
 use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Transactional;
-use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
 use trustify_entity::relationship::Relationship;
-use trustify_module_search::model::SearchOptions;
-
-#[test_context(TrustifyContext, skip_teardown)]
-#[test(tokio::test)]
-async fn query_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let system = Graph::new(db);
-
-    let sbom_v1 = system
-        .ingest_sbom(
-            "http://redhat.com/test.json",
-            "8",
-            "a",
-            (),
-            Transactional::None,
-        )
-        .await?;
-    let sbom_v1_again = system
-        .ingest_sbom(
-            "http://redhat.com/test.json",
-            "8",
-            "a",
-            (),
-            Transactional::None,
-        )
-        .await?;
-    let sbom_v2 = system
-        .ingest_sbom(
-            "http://myspace.com/test.json",
-            "9",
-            "b",
-            (),
-            Transactional::None,
-        )
-        .await?;
-
-    let _other_sbom = system
-        .ingest_sbom(
-            "http://geocities.com/other.json",
-            "10",
-            "c",
-            (),
-            Transactional::None,
-        )
-        .await?;
-
-    assert_eq!(sbom_v1.sbom.id, sbom_v1_again.sbom.id);
-    assert_ne!(sbom_v1.sbom.id, sbom_v2.sbom.id);
-
-    let sboms = system
-        .sboms(SearchOptions::default(), Paginated::default(), ())
-        .await?;
-    assert_eq!(3, sboms.total);
-
-    let sboms = system
-        .sboms(
-            SearchOptions {
-                q: "MySpAcE".to_string(),
-                ..Default::default()
-            },
-            Paginated::default(),
-            (),
-        )
-        .await?;
-    assert_eq!(1, sboms.total);
-
-    assert_eq!("http://myspace.com/test.json", sboms.items[0].sbom.location);
-
-    Ok(())
-}
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]

@@ -9,13 +9,9 @@ use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
 use std::fmt::{Debug, Formatter};
 use time::OffsetDateTime;
-use trustify_common::db::limiter::LimiterTrait;
 use trustify_common::db::Transactional;
-use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_entity as entity;
 use trustify_entity::advisory;
-use trustify_module_search::model::SearchOptions;
-use trustify_module_search::query::Query;
 
 pub mod advisory_vulnerability;
 
@@ -37,31 +33,6 @@ impl From<()> for AdvisoryInformation {
 }
 
 impl Graph {
-    pub async fn advisories<TX: AsRef<Transactional>>(
-        &self,
-        search: SearchOptions,
-        paginated: Paginated,
-        tx: TX,
-    ) -> Result<PaginatedResults<AdvisoryContext>, Error> {
-        let connection = self.connection(&tx);
-
-        let limiter = advisory::Entity::find().filtering(search)?.limiting(
-            &connection,
-            paginated.offset,
-            paginated.limit,
-        );
-
-        Ok(PaginatedResults {
-            total: limiter.total().await?,
-            items: limiter
-                .fetch()
-                .await?
-                .drain(0..)
-                .map(|each| AdvisoryContext::new(self, each))
-                .collect(),
-        })
-    }
-
     pub async fn get_advisory_by_id<TX: AsRef<Transactional>>(
         &self,
         id: i32,

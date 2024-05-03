@@ -4,6 +4,7 @@ use crate::model::advisory::{
     AdvisoryVulnerabilitySummary,
 };
 use crate::model::vulnerability::{VulnerabilityDetails, VulnerabilityHead, VulnerabilitySummary};
+use crate::query::{Query, SearchOptions};
 use sea_orm::{ColumnTrait, EntityTrait, LoaderTrait, QueryFilter};
 use std::collections::HashMap;
 use std::future::Future;
@@ -19,8 +20,6 @@ use trustify_entity::{
     advisory, advisory_vulnerability, affected_package_version_range, cvss3, fixed_package_version,
     not_affected_package_version, package, package_version, package_version_range, vulnerability,
 };
-use trustify_module_search::model::SearchOptions;
-use trustify_module_search::query::Query;
 
 pub enum AdvisoryKey {
     Sha256(String),
@@ -388,6 +387,7 @@ impl super::FetchService {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::query::SearchOptions;
     use crate::service::FetchService;
     use actix_web::App;
     use std::str::FromStr;
@@ -404,7 +404,6 @@ mod test {
     };
     use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
     use trustify_module_ingestor::graph::Graph;
-    use trustify_module_search::model::SearchOptions;
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(actix_web::test)]

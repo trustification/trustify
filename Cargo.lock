@@ -5913,13 +5913,16 @@ dependencies = [
  "actix-web",
  "anyhow",
  "async-trait",
+ "chrono",
  "cpe",
  "csaf",
+ "human-date-parser",
  "humantime",
  "lenient_semver",
  "log",
  "packageurl",
  "postgresql_embedded",
+ "regex",
  "rust-lzma",
  "sea-orm",
  "sea-orm-migration",
@@ -5941,7 +5944,6 @@ dependencies = [
  "trustify-entity",
  "trustify-migration",
  "trustify-module-ingestor",
- "trustify-module-search",
  "utoipa",
 ]
 
@@ -6025,33 +6027,7 @@ dependencies = [
  "trustify-common",
  "trustify-cvss",
  "trustify-entity",
- "trustify-module-search",
  "trustify-module-storage",
- "url-escape",
- "utoipa",
-]
-
-[[package]]
-name = "trustify-module-search"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "anyhow",
- "chrono",
- "csaf",
- "human-date-parser",
- "log",
- "regex",
- "reqwest",
- "sea-orm",
- "serde",
- "serde_json",
- "test-log",
- "thiserror",
- "time",
- "tokio",
- "trustify-common",
- "trustify-entity",
  "url-escape",
  "utoipa",
 ]
@@ -6109,7 +6085,6 @@ dependencies = [
  "trustify-module-fetch",
  "trustify-module-importer",
  "trustify-module-ingestor",
- "trustify-module-search",
  "trustify-module-storage",
  "url",
  "url-escape",
