@@ -3,14 +3,14 @@ use actix_web::{get, post, web, HttpResponse, Responder};
 use tokio_util::io::ReaderStream;
 
 #[utoipa::path(
-    tag = "ingestor",
+    tag = "advisory",
     request_body = Vec <u8>,
     responses(
         (status = 201, description = "Upload a file"),
         (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
-#[post("/advisories")]
+#[post("/api/v1/advisory")]
 /// Upload a new advisory
 pub async fn upload_advisory(
     service: web::Data<IngestorService>,
@@ -23,13 +23,13 @@ pub async fn upload_advisory(
 }
 
 #[utoipa::path(
-    tag = "ingestor",
+    tag = "advisory",
     responses(
         (status = 200, description = "Download a an advisory", body = Vec<u8>),
         (status = 404, description = "The document could not be found"),
     )
 )]
-#[get("/advisories/{id}")]
+#[get("/api/v1/advisory/{id}")]
 /// Download an advisory
 pub async fn download_advisory(
     // TODO: Do we use this?!?!?!
@@ -61,7 +61,7 @@ mod tests {
         let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
         let payload = include_str!("../../../../etc/test-data/cve-2023-33201.json");
 
-        let uri = "/advisories?location=test-csaf";
+        let uri = "/api/v1/advisory";
         let request = TestRequest::post()
             .uri(uri)
             .set_payload(payload)
@@ -83,7 +83,7 @@ mod tests {
         let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
         let payload = include_str!("../../../../etc/test-data/osv/RUSTSEC-2021-0079.json");
 
-        let uri = "/advisories?location=test-osv&format=osv";
+        let uri = "/api/v1/advisory";
         let request = TestRequest::post()
             .uri(uri)
             .set_payload(payload)
@@ -104,7 +104,7 @@ mod tests {
         let (storage, _temp) = FileSystemBackend::for_test().await?;
         let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
 
-        let uri = "/advisories?location=testless&format=XYZ42";
+        let uri = "/api/v1/advisory";
         let request = TestRequest::post().uri(uri).to_request();
 
         let response = test::call_service(&app, request).await;

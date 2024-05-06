@@ -10,7 +10,7 @@ pub struct UploadSbomQuery {
 }
 
 #[utoipa::path(
-    tag = "ingestor",
+    tag = "sbom",
     request_body = Vec <u8>,
     params(
         ("location" = String, Query, description = "Source the document came from"),
@@ -20,7 +20,7 @@ pub struct UploadSbomQuery {
         (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
-#[post("/sboms")]
+#[post("/api/v1/sbom")]
 /// Upload a new advisory
 pub async fn upload_sbom(
     service: web::Data<IngestorService>,
@@ -32,13 +32,13 @@ pub async fn upload_sbom(
 }
 
 #[utoipa::path(
-    tag = "ingestor",
+    tag = "sbom",
     responses(
         (status = 200, description = "Download a an SBOM", body = Vec<u8>),
         (status = 404, description = "The document could not be found"),
     )
 )]
-#[get("/sboms/{id}")]
+#[get("/api/v1/sbom/{id}")]
 /// Download an SBOM
 pub async fn download_sbom(
     service: web::Data<IngestorService>,
