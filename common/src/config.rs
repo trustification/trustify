@@ -2,49 +2,55 @@ use std::env;
 use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
 
+const DB_NAME: &str = "trustify";
+const DB_USER: &str = "postgres";
+const DB_PASS: &str = "trustify";
+const DB_HOST: &str = "localhost";
+const DB_PORT: u16 = 5432;
+
+const ENV_DB_NAME: &str = "DB_NAME";
+const ENV_DB_USER: &str = "DB_USER";
+const ENV_DB_PASS: &str = "DB_PASSWORD";
+const ENV_DB_HOST: &str = "DB_HOST";
+const ENV_DB_PORT: &str = "DB_PORT";
+
 #[derive(clap::Args, Debug, Clone)]
 #[command(next_help_heading = "Database")]
 #[group(id = "database")]
 pub struct Database {
-    #[arg(id = "db-user", long, env = "DB_USER", default_value_t = Self::default().username)]
+    #[arg(id = "db-user", long, env = ENV_DB_USER, default_value_t = DB_USER.into())]
     pub username: String,
     #[arg(
         id = "db-password",
         long,
-        env = "DB_PASSWORD",
-        default_value_t = Self::default().password,
+        env = ENV_DB_PASS,
+        default_value_t = DB_PASS.into(),
     )]
     pub password: String,
-    #[arg(id = "db-host", long, env = "DB_HOST", default_value_t = Self::default().host)]
+    #[arg(id = "db-host", long, env = ENV_DB_HOST, default_value_t = DB_HOST.into())]
     pub host: String,
-    #[arg(id = "db-port", long, env = "DB_PORT", default_value_t = Self::default().port)]
+    #[arg(id = "db-port", long, env = ENV_DB_PORT, default_value_t = DB_PORT.into())]
     pub port: u16,
-    #[arg(id = "db-name", long, env = "DB_NAME", default_value_t = Self::default().name)]
+    #[arg(id = "db-name", long, env = ENV_DB_NAME, default_value_t = DB_NAME.into())]
     pub name: String,
 }
 
-// It would seem we could combine `default_value_t` with `flatten` on
-// the relevant field in the parent parser.
-//
-// The clap authors disagree: https://github.com/clap-rs/clap/issues/3269
-//
 impl Default for Database {
     fn default() -> Self {
-        const DEFAULT_PORT: u16 = 5432;
         Database {
-            username: env::var("DB_USER").unwrap_or("postgres".into()),
-            password: env::var("DB_PASSWORD").unwrap_or("trustify".into()),
-            name: env::var("DB_NAME").unwrap_or("trustify".into()),
-            host: env::var("DB_HOST").unwrap_or("localhost".into()),
-            port: match env::var("DB_PORT") {
+            username: env::var(ENV_DB_USER).unwrap_or(DB_USER.into()),
+            password: env::var(ENV_DB_PASS).unwrap_or(DB_PASS.into()),
+            name: env::var(ENV_DB_NAME).unwrap_or(DB_NAME.into()),
+            host: env::var(ENV_DB_HOST).unwrap_or(DB_HOST.into()),
+            port: match env::var(ENV_DB_PORT) {
                 Ok(s) => match s.parse::<u16>() {
                     Ok(p) => p,
                     Err(_) => {
-                        log::warn!("DB_PORT should be an integer; using {DEFAULT_PORT}");
-                        DEFAULT_PORT
+                        log::warn!("{ENV_DB_PORT} should be an integer; using {DB_PORT}");
+                        DB_PORT
                     }
                 },
-                _ => DEFAULT_PORT,
+                _ => DB_PORT,
             },
         }
     }
