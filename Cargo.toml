@@ -123,3 +123,5 @@ trustify-server = { path = "server"}
 #sbom-walker = { path = "../csaf-walker/sbom" }
 #walker-common = { path = "../csaf-walker/common" }
 #walker-extras = { path = "../csaf-walker/extras" }
+
+utoipa = { git = "https://github.com/juhaku/utoipa", rev = "09eb5abcac98c98d501f0ea4c760d3bf491a965e" }

@@ -21,7 +21,7 @@ pub struct PackageParams {
         (status = 200, description = "Dependencies"),
     ),
 )]
-#[get("/package/{purl}/dependencies")]
+#[get("/api/v1/package/{purl}/dependencies")]
 pub async fn dependencies(
     //state: web::Data<Graph>,
     purl: web::Path<String>,
@@ -63,7 +63,7 @@ pub async fn dependencies(
         (status = 200, description = "Affected packages"),
     ),
 )]
-#[get("/package/{purl}/dependents")]
+#[get("/api/v1/package/{purl}/dependents")]
 pub async fn dependents(
     //state: web::Data<Graph>,
     purl: web::Path<String>,
@@ -79,7 +79,7 @@ pub async fn dependents(
         (status = 200, description = "Affected packages"),
     ),
 )]
-#[get("/package/{purl}/variants")]
+#[get("/api/v1/package/{purl}/variants")]
 pub async fn variants(
     //state: web::Data<Graph>,
     purl: web::Path<String>,
@@ -106,7 +106,7 @@ pub async fn variants(
         (status = 200, description = "Affected packages"),
     ),
 )]
-#[get("/package/{purl}/vulnerabilities")]
+#[get("/api/v1/package/{purl}/vulnerabilities")]
 pub async fn vulnerabilities(
     //state: web::Data<Graph>,
     purl: web::Path<String>,
