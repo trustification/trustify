@@ -35,24 +35,18 @@ pub struct Database {
     pub name: String,
 }
 
-impl Default for Database {
-    fn default() -> Self {
-        Database {
+impl Database {
+    pub fn from_env() -> Result<Database, anyhow::Error> {
+        Ok(Database {
             username: env::var(ENV_DB_USER).unwrap_or(DB_USER.into()),
             password: env::var(ENV_DB_PASS).unwrap_or(DB_PASS.into()),
             name: env::var(ENV_DB_NAME).unwrap_or(DB_NAME.into()),
             host: env::var(ENV_DB_HOST).unwrap_or(DB_HOST.into()),
             port: match env::var(ENV_DB_PORT) {
-                Ok(s) => match s.parse::<u16>() {
-                    Ok(p) => p,
-                    Err(_) => {
-                        log::warn!("{ENV_DB_PORT} should be an integer; using {DB_PORT}");
-                        DB_PORT
-                    }
-                },
+                Ok(s) => s.parse::<u16>()?,
                 _ => DB_PORT,
             },
-        }
+        })
     }
 }
 
