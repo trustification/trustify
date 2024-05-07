@@ -1,1 +1,0 @@
-export { SimplePagination } from "./SimplePagination";
