@@ -34,7 +34,9 @@ fn main() {
 }
 
 fn clone_ui() -> io::Result<ExitStatus> {
-    Command::new(GIT_CMD).args(["submodule", "update"]).status()
+    Command::new(GIT_CMD)
+        .args(["submodule", "update", "--init", "--recursive"])
+        .status()
 }
 
 fn install_ui_deps() -> io::Result<ExitStatus> {

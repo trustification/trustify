@@ -7,7 +7,7 @@
 ### Requisites
 
 - Rust
-- NodeJS 20
+- NodeJS 20. You can use [NVM](https://github.com/nvm-sh/nvm) to install NodeJS.
 
 Let's call this "PM mode":
 
