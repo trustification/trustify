@@ -1,19 +1,21 @@
-use ::csaf::Csaf;
-use bytes::Bytes;
-use ring::digest;
-
+use super::cve::cve_record::v5::CveRecord;
+use super::cve::loader::CveLoader;
 use crate::graph::Graph;
 use crate::service::advisory::osv::schema::Vulnerability;
 use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader};
 use crate::service::Error;
+use ::csaf::Csaf;
+use bytes::Bytes;
+use ring::digest;
 use std::io::Read;
-
 pub mod csaf;
 pub mod osv;
 
+#[allow(clippy::large_enum_variant)]
 pub enum Format {
     OSV(Vulnerability, String),
     CSAF(Csaf, String),
+    CVE(CveRecord, String),
 }
 
 impl<'g> Format {
@@ -32,6 +34,10 @@ impl<'g> Format {
                 let loader = OsvLoader::new(graph);
                 loader.load(source, reader, checksum).await
             }
+            Format::CVE(_, ref checksum) => {
+                let loader = CveLoader::new(graph);
+                loader.load(source, reader, checksum).await
+            }
         }
     }
     pub fn from_bytes(bytes: &Bytes) -> Result<Self, Error> {
@@ -39,6 +45,8 @@ impl<'g> Format {
             Ok(Format::OSV(v, checksum(bytes)))
         } else if let Ok(v) = serde_json::from_slice::<Csaf>(bytes) {
             Ok(Format::CSAF(v, checksum(bytes)))
+        } else if let Ok(v) = serde_json::from_slice::<CveRecord>(bytes) {
+            Ok(Format::CVE(v, checksum(bytes)))
         } else {
             Err(Error::UnsupportedFormat("unknown".into()))
         }

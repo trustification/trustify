@@ -99,6 +99,28 @@ mod tests {
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test_log::test(actix_web::test)]
+    async fn upload_cve_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
+        let (storage, _temp) = FileSystemBackend::for_test().await?;
+        let app = test::init_service(App::new().configure(|svc| configure(svc, db, storage))).await;
+        let payload = include_str!("../../../../etc/test-data/mitre/CVE-2024-27088.json");
+
+        let uri = "/api/v1/advisory";
+        let request = TestRequest::post()
+            .uri(uri)
+            .set_payload(payload)
+            .to_request();
+
+        let response = test::call_service(&app, request).await;
+        assert!(response.status().is_success());
+        let id: String = test::read_body_json(response).await;
+        assert_eq!(id, "CVE-2024-27088");
+
+        Ok(())
+    }
+
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test_log::test(actix_web::test)]
     async fn upload_unknown_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         let db = ctx.db;
         let (storage, _temp) = FileSystemBackend::for_test().await?;
