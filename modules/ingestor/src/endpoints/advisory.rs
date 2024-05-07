@@ -1,4 +1,4 @@
-use crate::service::{advisory::Format, Error, IngestorService};
+use crate::service::{Error, Format, IngestorService};
 use actix_web::{get, post, web, HttpResponse, Responder};
 use tokio_util::io::ReaderStream;
 

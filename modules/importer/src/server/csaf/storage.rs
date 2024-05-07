@@ -5,7 +5,7 @@ use csaf_walker::validation::{
 use parking_lot::Mutex;
 use std::sync::Arc;
 use tokio_util::io::ReaderStream;
-use trustify_module_ingestor::service::{advisory::Format, IngestorService};
+use trustify_module_ingestor::service::{Format, IngestorService};
 
 #[derive(Debug, thiserror::Error)]
 pub enum StorageError {
