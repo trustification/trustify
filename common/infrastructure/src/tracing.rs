@@ -3,6 +3,7 @@ use opentelemetry::{propagation::Injector, Context, KeyValue};
 use opentelemetry_sdk::Resource;
 use reqwest::RequestBuilder;
 use std::sync::Once;
+use tracing_subscriber::fmt::time::ChronoLocal;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq)]
@@ -155,6 +156,7 @@ fn init_no_tracing() {
             tracing_subscriber::fmt::layer()
                 .with_ansi(true)
                 .with_level(true)
+                .with_timer(ChronoLocal::rfc_3339())
                 .compact(),
         )
         .try_init();
