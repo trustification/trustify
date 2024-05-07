@@ -11,11 +11,10 @@ use std::io::Read;
 pub mod csaf;
 pub mod osv;
 
-#[allow(clippy::large_enum_variant)]
 pub enum Format {
-    OSV(Vulnerability, String),
-    CSAF(Csaf, String),
-    CVE(CveRecord, String),
+    OSV { checksum: String },
+    CSAF { checksum: String },
+    CVE { checksum: String },
 }
 
 impl<'g> Format {
@@ -26,27 +25,28 @@ impl<'g> Format {
         reader: R,
     ) -> Result<String, Error> {
         match self {
-            Format::CSAF(_, ref checksum) => {
+            Format::CSAF { ref checksum } => {
                 let loader = CsafLoader::new(graph);
                 loader.load(source, reader, checksum).await
             }
-            Format::OSV(_, ref checksum) => {
+            Format::OSV { ref checksum } => {
                 let loader = OsvLoader::new(graph);
                 loader.load(source, reader, checksum).await
             }
-            Format::CVE(_, ref checksum) => {
+            Format::CVE { ref checksum } => {
                 let loader = CveLoader::new(graph);
                 loader.load(source, reader, checksum).await
             }
         }
     }
     pub fn from_bytes(bytes: &Bytes) -> Result<Self, Error> {
-        if let Ok(v) = serde_json::from_slice::<Vulnerability>(bytes) {
-            Ok(Format::OSV(v, checksum(bytes)))
-        } else if let Ok(v) = serde_json::from_slice::<Csaf>(bytes) {
-            Ok(Format::CSAF(v, checksum(bytes)))
-        } else if let Ok(v) = serde_json::from_slice::<CveRecord>(bytes) {
-            Ok(Format::CVE(v, checksum(bytes)))
+        let checksum = checksum(bytes);
+        if serde_json::from_slice::<Vulnerability>(bytes).is_ok() {
+            Ok(Format::OSV { checksum })
+        } else if serde_json::from_slice::<Csaf>(bytes).is_ok() {
+            Ok(Format::CSAF { checksum })
+        } else if serde_json::from_slice::<CveRecord>(bytes).is_ok() {
+            Ok(Format::CVE { checksum })
         } else {
             Err(Error::UnsupportedFormat("unknown".into()))
         }
