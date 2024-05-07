@@ -23,16 +23,15 @@ impl<'g> CveLoader<'g> {
         &self,
         location: L,
         record: R,
-    ) -> Result<(), Error> {
+        checksum: &str,
+    ) -> Result<String, Error> {
         let mut reader = HashingRead::new(record);
         let cve: CveRecord = serde_json::from_reader(&mut reader)?;
+        let id = cve.cve_metadata.cve_id();
 
         let tx = self.graph.transaction().await?;
 
-        let vulnerability = self
-            .graph
-            .ingest_vulnerability(cve.cve_metadata.cve_id(), &tx)
-            .await?;
+        let vulnerability = self.graph.ingest_vulnerability(id, &tx).await?;
 
         vulnerability
             .set_title(cve.containers.cna.title.clone(), &tx)
@@ -46,20 +45,23 @@ impl<'g> CveLoader<'g> {
 
         let digests = reader.finish().map_err(|e| Error::Generic(e.into()))?;
         let encoded_sha256 = hex::encode(digests.sha256);
+        if checksum != encoded_sha256 {
+            return Err(Error::Storage(anyhow::Error::msg(
+                "document integrity check failed",
+            )));
+        }
 
         let advisory = self
             .graph
-            .ingest_advisory(cve.cve_metadata.cve_id(), location, encoded_sha256, (), &tx)
+            .ingest_advisory(id, location, encoded_sha256, (), &tx)
             .await?;
 
         // Link the advisory to the backing vulnerability
-        advisory
-            .link_to_vulnerability(cve.cve_metadata.cve_id(), &tx)
-            .await?;
+        advisory.link_to_vulnerability(id, &tx).await?;
 
         tx.commit().await?;
 
-        Ok(())
+        Ok(id.into())
     }
 }
 
@@ -78,30 +80,23 @@ mod test {
         let db = ctx.db;
         let graph = Graph::new(db);
         let data = include_bytes!("../../../../../etc/test-data/mitre/CVE-2024-28111.json");
+        let checksum = "06908108e8097f2a56e628e7814a7bd54a5fc95f645b7c9fab02c1eb8dd9cc0c";
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
         assert!(loaded_vulnerability.is_none());
 
-        let loaded_advisory = graph
-            .get_advisory(
-                "06908108e8097f2a56e628e7814a7bd54a5fc95f645b7c9fab02c1eb8dd9cc0c",
-                Transactional::None,
-            )
-            .await?;
+        let loaded_advisory = graph.get_advisory(checksum, Transactional::None).await?;
         assert!(loaded_advisory.is_none());
 
         let loader = CveLoader::new(&graph);
-        loader.load("CVE-2024-28111.json", &data[..]).await?;
+        loader
+            .load("CVE-2024-28111.json", &data[..], checksum)
+            .await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
         assert!(loaded_vulnerability.is_some());
 
-        let loaded_advisory = graph
-            .get_advisory(
-                "06908108e8097f2a56e628e7814a7bd54a5fc95f645b7c9fab02c1eb8dd9cc0c",
-                Transactional::None,
-            )
-            .await?;
+        let loaded_advisory = graph.get_advisory(checksum, Transactional::None).await?;
         assert!(loaded_advisory.is_some());
 
         let loaded_vulnerability = loaded_vulnerability.unwrap();
