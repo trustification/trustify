@@ -249,14 +249,3 @@ fn build_url(ci: &ConnectionInfo, path: impl Display) -> Option<url::Url> {
     ))
     .ok()
 }
-
-#[get("/")]
-async fn index(ci: ConnectionInfo) -> Result<Json<Vec<url::Url>>, UrlGenerationError> {
-    let mut result = vec![];
-
-    result.extend(build_url(&ci, "/"));
-    result.extend(build_url(&ci, "/openapi.json"));
-    result.extend(build_url(&ci, "/swagger-ui/"));
-
-    Ok(Json(result))
-}
