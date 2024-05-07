@@ -1,14 +1,21 @@
 pub mod advisory;
 pub mod cve;
+mod format;
 pub mod hashing;
 pub mod sbom;
 
 use crate::graph::Graph;
 use actix_web::body::BoxBody;
 use actix_web::{HttpResponse, ResponseError};
+use anyhow::anyhow;
+use bytes::Bytes;
+pub use format::Format;
+use futures::Stream;
 use sea_orm::error::DbErr;
+use std::time::Instant;
 use trustify_common::error::ErrorInformation;
 use trustify_module_storage::service::dispatch::DispatchBackend;
+use trustify_module_storage::service::{StorageBackend, SyncAdapter};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -75,5 +82,39 @@ impl IngestorService {
             graph,
             storage: storage.into(),
         }
+    }
+
+    pub async fn ingest<S, E>(&self, source: &str, fmt: Format, stream: S) -> Result<String, Error>
+    where
+        E: std::error::Error,
+        S: Stream<Item = Result<Bytes, E>>,
+    {
+        let start = Instant::now();
+
+        let digest = self
+            .storage
+            .store(stream)
+            .await
+            .map_err(|err| Error::Storage(anyhow!("{err}")))?;
+        let sha256 = hex::encode(digest);
+
+        let storage = SyncAdapter::new(self.storage.clone());
+        let reader = storage
+            .retrieve(sha256.clone())
+            .await
+            .map_err(Error::Storage)?
+            .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?;
+
+        let result = fmt.load(&self.graph, source, reader).await?;
+
+        let duration = Instant::now() - start;
+        log::info!(
+            "Ingested: {} from {}: took {}",
+            result,
+            source,
+            humantime::Duration::from(duration),
+        );
+
+        Ok(result)
     }
 }
