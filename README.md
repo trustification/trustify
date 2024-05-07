@@ -4,6 +4,11 @@
 
 ## Quick start
 
+### Requisites
+
+- Rust
+- NodeJS 20
+
 Let's call this "PM mode":
 
 ```shell
@@ -11,7 +16,7 @@ cargo run --bin trustd
 ```
 That will create its own database on your local filesystem. Point your browser at http://localhost:8080/swagger-ui/ to view the API.
 
-You can then fire up the [trustify-ui](https://github.com/trustification/trustify-ui).
+You can see the UI working at http://localhost:8080
 
 ## Repository Organization
 
