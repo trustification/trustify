@@ -8,6 +8,11 @@ static UI_DIST_DIR: &str = "../ui/client/dist";
 static STATIC_DIR: &str = "../static";
 
 #[cfg(windows)]
+static GIT_CMD: &str = "git.cmd";
+#[cfg(not(windows))]
+static GIT_CMD: &str = "git";
+
+#[cfg(windows)]
 static NPM_CMD: &str = "npm.cmd";
 #[cfg(not(windows))]
 static NPM_CMD: &str = "npm";
@@ -17,7 +22,8 @@ fn main() {
 
     println!("cargo:rerun-if-changed={}", UI_DIR_SRC);
 
-    let build_ui_status = install_ui_deps()
+    let build_ui_status = clone_ui()
+        .and_then(|_| install_ui_deps())
         .and_then(|_| build_ui())
         .and_then(|_| copy_dir_all(UI_DIST_DIR, STATIC_DIR));
 
@@ -25,6 +31,10 @@ fn main() {
         Ok(_) => println!("UI built successfully"),
         Err(_) => println!("Error while building UI"),
     }
+}
+
+fn clone_ui() -> io::Result<ExitStatus> {
+    Command::new(GIT_CMD).args(["submodule", "update"]).status()
 }
 
 fn install_ui_deps() -> io::Result<ExitStatus> {
