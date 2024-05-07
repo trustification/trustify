@@ -29,7 +29,7 @@ pub async fn upload_advisory(
         (status = 404, description = "The document could not be found"),
     )
 )]
-#[get("/api/v1/advisory/{id}")]
+#[get("/api/v1/advisory/{id}/download")]
 /// Download an advisory
 pub async fn download_advisory(
     // TODO: Do we use this?!?!?!
