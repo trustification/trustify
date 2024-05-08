@@ -458,11 +458,10 @@ mod test {
             .await?;
 
         let fetch = FetchService::new(db);
-
         let fetched = fetch
             .fetch_advisories(SearchOptions::default(), Paginated::default(), ())
             .await?;
-
+        assert_eq!(fetched.total, 2);
         Ok(())
     }
 
@@ -526,10 +525,15 @@ mod test {
             .await?;
 
         let fetch = FetchService::new(db);
-
-        let fetched = fetch
-            .fetch_advisory(AdvisoryKey::Sha256("8675309".to_string()), ())
-            .await?;
+        let jenny = "8675309".to_string();
+        let fetched = fetch.fetch_advisory(AdvisoryKey::Sha256(jenny), ()).await?;
+        assert!(matches!(
+            fetched,
+            Some(AdvisoryDetails {
+                head: AdvisoryHead { sha256: jenny, .. },
+                ..
+            })
+        ));
 
         Ok(())
     }
