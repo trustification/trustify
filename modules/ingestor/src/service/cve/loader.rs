@@ -1,5 +1,9 @@
+use time::OffsetDateTime;
+
+use crate::graph::advisory::AdvisoryInformation;
 use crate::graph::Graph;
-use crate::service::{cve::cve_record::v5::CveRecord, hashing::HashingRead, Error};
+use crate::service::cve::cve_record::v5::{CveMetadata, CveRecord};
+use crate::service::{hashing::HashingRead, Error};
 use std::io::Read;
 
 /// Loader capable of parsing a CVE Record JSON file
@@ -51,9 +55,18 @@ impl<'g> CveLoader<'g> {
             )));
         }
 
+        let information = AdvisoryInformation {
+            title: cve.containers.cna.title,
+            published: match cve.cve_metadata {
+                CveMetadata::Published(ref m) => m.date_published,
+                CveMetadata::Rejected(ref m) => m.date_published,
+            }
+            .and_then(|d| OffsetDateTime::from_unix_timestamp(d.timestamp()).ok()),
+            modified: None,
+        };
         let advisory = self
             .graph
-            .ingest_advisory(id, location, encoded_sha256, (), &tx)
+            .ingest_advisory(id, location, encoded_sha256, information, &tx)
             .await?;
 
         // Link the advisory to the backing vulnerability

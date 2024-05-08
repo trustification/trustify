@@ -92,7 +92,7 @@ tracing-bunyan-formatter = "0.3.7"
 tracing-opentelemetry = "0.23"
 tracing-subscriber = { version = "0.3.17", default-features = false }
 url = "2.5.0"
-url-escape = "0.1.1"
+urlencoding = "2"
 utoipa = "4"
 utoipa-swagger-ui = "6"
 uuid = "1.7.0"

@@ -31,4 +31,3 @@ utoipa = { workspace = true, features = ["actix_extras"] }
 
 [dev-dependencies]
 test-log = { workspace = true, features = ["log", "trace"] }
-url-escape = { workspace = true }
