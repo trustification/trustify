@@ -15,8 +15,6 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::package_version::Entity")]
     PackageVersions,
-    //#[sea_orm(has_many = "super::sbom::Entity")]
-    //SbomDependents,
 }
 
 impl Related<super::package_version::Entity> for Entity {
@@ -24,20 +22,6 @@ impl Related<super::package_version::Entity> for Entity {
         Relation::PackageVersions.def()
     }
 }
-
-/*
-impl Related<super::sbom::Entity> for Entity {
-    fn to() -> RelationDef {
-        //Relation::SbomDependents.def()
-        sbom_dependency::Relation::Sbom.def()
-    }
-
-    fn via() -> Option<RelationDef> {
-        Some(sbom_dependency::Relation::Sbom.def().rev())
-    }
-}
-
- */
 
 impl ActiveModelBehavior for ActiveModel {}
 

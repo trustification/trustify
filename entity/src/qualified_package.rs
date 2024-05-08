@@ -21,8 +21,15 @@ pub enum Relation {
     #[sea_orm(
         belongs_to = "super::package_version::Entity",
         from = "super::qualified_package::Column::PackageVersionId"
-    to = "super::package_version::Column::Id")]
+        to = "super::package_version::Column::Id"
+    )]
     PackageVersion,
+    #[sea_orm(
+        belongs_to = "super::sbom_package_purl_ref::Entity",
+        from = "Column::Id",
+        to = "super::sbom_package_purl_ref::Column::QualifiedPackageId"
+    )]
+    SbomPackage,
 }
 
 impl Related<super::package_version::Entity> for Entity {
@@ -31,19 +38,11 @@ impl Related<super::package_version::Entity> for Entity {
     }
 }
 
-/*
-impl Related<super::sbom::Entity> for Entity {
+impl Related<super::sbom_package_purl_ref::Entity> for Entity {
     fn to() -> RelationDef {
-        //Relation::SbomDependents.def()
-        sbom_dependency::Relation::Sbom.def()
-    }
-
-    fn via() -> Option<RelationDef> {
-        Some(sbom_dependency::Relation::Sbom.def().rev())
+        Relation::SbomPackage.def()
     }
 }
-
- */
 
 impl ActiveModelBehavior for ActiveModel {}
 

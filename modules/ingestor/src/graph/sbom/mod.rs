@@ -237,6 +237,35 @@ impl Graph {
         .await
     }
 
+    fn query_by_purl(package: QualifiedPackageContext) -> Select<entity::sbom::Entity> {
+        entity::sbom::Entity::find()
+            .join(
+                JoinType::LeftJoin,
+                entity::sbom_package::Relation::Sbom.def().rev(),
+            )
+            .join(
+                JoinType::Join,
+                entity::sbom_package_purl_ref::Relation::Purl.def().rev(),
+            )
+            .filter(
+                entity::sbom_package_purl_ref::Column::QualifiedPackageId
+                    .eq(package.qualified_package.id),
+            )
+    }
+
+    fn query_by_cpe(cpe: CpeContext) -> Select<entity::sbom::Entity> {
+        entity::sbom::Entity::find()
+            .join(
+                JoinType::LeftJoin,
+                entity::sbom_package::Relation::Sbom.def().rev(),
+            )
+            .join(
+                JoinType::Join,
+                entity::sbom_package_cpe_ref::Relation::Cpe.def().rev(),
+            )
+            .filter(entity::sbom_package_cpe_ref::Column::CpeId.eq(cpe.cpe.id))
+    }
+
     async fn locate_sbom_by_purl<TX: AsRef<Transactional>>(
         &self,
         purl: &Purl,
@@ -245,19 +274,8 @@ impl Graph {
         let package = self.get_qualified_package(purl, &tx).await?;
 
         if let Some(package) = package {
-            self.locate_one_sbom(
-                entity::sbom::Entity::find()
-                    .join(
-                        JoinType::LeftJoin,
-                        entity::sbom_describes_package::Relation::Sbom.def().rev(),
-                    )
-                    .filter(
-                        entity::sbom_describes_package::Column::QualifiedPackageId
-                            .eq(package.qualified_package.id),
-                    ),
-                &tx,
-            )
-            .await
+            self.locate_one_sbom(Self::query_by_purl(package), &tx)
+                .await
         } else {
             Ok(None)
         }
@@ -271,19 +289,8 @@ impl Graph {
         let package = self.get_qualified_package(purl, &tx).await?;
 
         if let Some(package) = package {
-            self.locate_many_sboms(
-                entity::sbom::Entity::find()
-                    .join(
-                        JoinType::LeftJoin,
-                        entity::sbom_describes_package::Relation::Sbom.def().rev(),
-                    )
-                    .filter(
-                        entity::sbom_describes_package::Column::QualifiedPackageId
-                            .eq(package.qualified_package.id),
-                    ),
-                &tx,
-            )
-            .await
+            self.locate_many_sboms(Self::query_by_purl(package), &tx)
+                .await
         } else {
             Ok(vec![])
         }
@@ -295,16 +302,7 @@ impl Graph {
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         if let Some(cpe) = self.get_cpe(cpe.clone(), &tx).await? {
-            self.locate_one_sbom(
-                entity::sbom::Entity::find()
-                    .join(
-                        JoinType::LeftJoin,
-                        entity::sbom_describes_cpe::Relation::Sbom.def().rev(),
-                    )
-                    .filter(entity::sbom_describes_cpe::Column::CpeId.eq(cpe.cpe.id)),
-                &tx,
-            )
-            .await
+            self.locate_one_sbom(Self::query_by_cpe(cpe), &tx).await
         } else {
             Ok(None)
         }
@@ -316,16 +314,7 @@ impl Graph {
         tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
         if let Some(found) = self.get_cpe(cpe, &tx).await? {
-            self.locate_many_sboms(
-                entity::sbom::Entity::find()
-                    .join(
-                        JoinType::LeftJoin,
-                        entity::sbom_describes_cpe::Relation::Sbom.def().rev(),
-                    )
-                    .filter(entity::sbom_describes_cpe::Column::CpeId.eq(found.cpe.id)),
-                &tx,
-            )
-            .await
+            self.locate_many_sboms(Self::query_by_cpe(cpe), &tx).await
         } else {
             Ok(vec![])
         }
@@ -356,58 +345,6 @@ impl SbomContext {
             graph: graph.clone(),
             sbom,
         }
-    }
-
-    #[instrument(skip(tx), err)]
-    pub async fn ingest_describes_cpe22<C: Into<Cpe> + Debug, TX: AsRef<Transactional>>(
-        &self,
-        cpe: C,
-        tx: TX,
-    ) -> Result<(), Error> {
-        let cpe = self.graph.ingest_cpe22(cpe, &tx).await?;
-
-        let fetch = entity::sbom_describes_cpe::Entity::find()
-            .filter(entity::sbom_describes_cpe::Column::SbomId.eq(self.sbom.id))
-            .filter(entity::sbom_describes_cpe::Column::CpeId.eq(cpe.cpe.id))
-            .one(&self.graph.connection(&tx))
-            .await?;
-
-        if fetch.is_none() {
-            let model = entity::sbom_describes_cpe::ActiveModel {
-                sbom_id: Set(self.sbom.id),
-                cpe_id: Set(cpe.cpe.id),
-            };
-
-            model.insert(&self.graph.connection(&tx)).await?;
-        }
-        Ok(())
-    }
-
-    #[instrument(skip(tx), err)]
-    pub async fn ingest_describes_package<TX: AsRef<Transactional>>(
-        &self,
-        purl: &Purl,
-        tx: TX,
-    ) -> Result<(), Error> {
-        let fetch = entity::sbom_describes_package::Entity::find()
-            .filter(
-                Condition::all()
-                    .add(entity::sbom_describes_package::Column::SbomId.eq(self.sbom.id)),
-            )
-            .one(&self.graph.connection(&tx))
-            .await?;
-
-        if fetch.is_none() {
-            let package = self.graph.ingest_qualified_package(purl, &tx).await?;
-
-            let model = entity::sbom_describes_package::ActiveModel {
-                sbom_id: Set(self.sbom.id),
-                qualified_package_id: Set(package.qualified_package.id),
-            };
-
-            model.insert(&self.graph.connection(&tx)).await?;
-        }
-        Ok(())
     }
 
     #[instrument(skip(tx), err)]

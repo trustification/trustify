@@ -19,13 +19,13 @@ mod m0000140_create_package_version_range;
 mod m0000150_create_affected_package_version_range;
 mod m0000160_create_fixed_package_version;
 mod m0000170_create_not_affected_package_version;
-mod m0000190_sbom_describes_cpe;
-mod m0000200_sbom_describes_package;
 mod m0000210_create_relationship;
 mod m0000220_create_package_relates_to_package;
 mod m0000230_create_qualified_package_transitive_function;
 mod m0000240_create_importer;
 mod m0000250_create_sbom_package;
+mod m0000260_sbom_package_cpe_ref;
+mod m0000270_sbom_package_purl_ref;
 
 pub struct Migrator;
 
@@ -51,8 +51,8 @@ impl MigratorTrait for Migrator {
             Box::new(m0000150_create_affected_package_version_range::Migration),
             Box::new(m0000160_create_fixed_package_version::Migration),
             Box::new(m0000170_create_not_affected_package_version::Migration),
-            Box::new(m0000190_sbom_describes_cpe::Migration),
-            Box::new(m0000200_sbom_describes_package::Migration),
+            Box::new(m0000260_sbom_package_cpe_ref::Migration),
+            Box::new(m0000270_sbom_package_purl_ref::Migration),
             Box::new(m0000210_create_relationship::Migration),
             Box::new(m0000220_create_package_relates_to_package::Migration),
             Box::new(m0000230_create_qualified_package_transitive_function::Migration),

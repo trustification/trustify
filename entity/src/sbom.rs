@@ -1,4 +1,3 @@
-use crate::sbom_describes_package;
 use sea_orm::entity::prelude::*;
 use time::OffsetDateTime;
 
@@ -18,23 +17,14 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::sbom_describes_package::Entity")]
-    DescribesPackage,
+    #[sea_orm(has_many = "super::sbom_package::Entity")]
+    Package,
 }
 
-impl Related<sbom_describes_package::Entity> for Entity {
+impl Related<super::sbom_package::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::DescribesPackage.def()
+        Relation::Package.def()
     }
 }
-
-/*
-impl Related<sbom_dependency::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::PackageDependencies.def()
-    }
-}
-
- */
 
 impl ActiveModelBehavior for ActiveModel {}

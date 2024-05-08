@@ -1,5 +1,6 @@
 use crate::m0000030_create_sbom::Sbom;
 use crate::m0000110_create_cpe::Cpe;
+use crate::m0000250_create_sbom_package::SbomPackage;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -12,31 +13,42 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(SbomDescribesCpe::Table)
+                    .table(SbomPackageCpeRef::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(SbomDescribesCpe::SbomId)
+                        ColumnDef::new(SbomPackageCpeRef::SbomId)
                             .integer()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .name("sbom_id")
-                            .from(SbomDescribesCpe::Table, SbomDescribesCpe::SbomId)
-                            .to(Sbom::Table, Sbom::Id),
+                            .from(
+                                SbomPackageCpeRef::Table,
+                                (SbomPackageCpeRef::SbomId, SbomPackageCpeRef::NodeId),
+                            )
+                            .to(SbomPackage::Table, (Sbom::SbomId, Sbom::NodeId))
+                            .on_delete(ForeignKeyAction::Cascade),
                     )
-                    .col(ColumnDef::new(SbomDescribesCpe::CpeId).integer().not_null())
+                    .col(
+                        ColumnDef::new(SbomPackageCpeRef::NodeId)
+                            .string()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(SbomPackageCpeRef::CpeId)
+                            .integer()
+                            .not_null(),
+                    )
                     .foreign_key(
                         ForeignKey::create()
-                            .name("cpe22_id")
-                            .from(SbomDescribesCpe::Table, SbomDescribesCpe::CpeId)
+                            .from(SbomPackageCpeRef::Table, SbomPackageCpeRef::CpeId)
                             .to(Cpe::Table, Cpe::Id),
                     )
                     .primary_key(
                         Index::create()
-                            .name("pk-sbom-cpe")
-                            .col(SbomDescribesCpe::SbomId)
-                            .col(SbomDescribesCpe::CpeId)
+                            .col(SbomPackageCpeRef::SbomId)
+                            .col(SbomPackageCpeRef::NodeId)
+                            .col(SbomPackageCpeRef::CpeId)
                             .primary(),
                     )
                     .to_owned(),
@@ -48,7 +60,7 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(
                 Table::drop()
-                    .table(SbomDescribesCpe::Table)
+                    .table(SbomPackageCpeRef::Table)
                     .if_exists()
                     .to_owned(),
             )
@@ -57,8 +69,10 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-pub enum SbomDescribesCpe {
+pub enum SbomPackageCpeRef {
     Table,
+
     SbomId,
+    NodeId,
     CpeId,
 }

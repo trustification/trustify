@@ -4,14 +4,17 @@ use sea_orm::entity::prelude::*;
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "package_relates_to_package")]
 pub struct Model {
+    // the SBOM the relationship belongs to
+    #[sea_orm(primary_key)]
+    pub sbom_id: i32,
+    // TODO: change to sbom package
     #[sea_orm(primary_key)]
     pub left_package_id: Uuid,
     #[sea_orm(primary_key)]
     pub relationship: Relationship,
+    // TODO: change to sbom package
     #[sea_orm(primary_key)]
     pub right_package_id: Uuid,
-    #[sea_orm(primary_key)]
-    pub sbom_id: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

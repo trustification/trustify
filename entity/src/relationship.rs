@@ -41,4 +41,6 @@ pub enum Relationship {
     BuildToolOf,
     #[sea_orm(num_value = 12)]
     DevToolOf,
+    #[sea_orm(num_value = 13)]
+    DescribedBy,
 }

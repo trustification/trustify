@@ -91,6 +91,7 @@ impl SbomContext {
             rel_cache
         });
 
+        // TODO: creator needs to be fed with purls, but rels need to use spdx-ids
         let mut rels = Vec::with_capacity(sbom_data.package_information.len());
         let mut creator = Creator::new();
 
@@ -168,6 +169,8 @@ impl<'spdx> TryFrom<SpdxRelationship<'spdx>> for (&'spdx str, Relationship, &'sp
         match rel {
             RelationshipType::Contains => Ok((right, Relationship::ContainedBy, left)),
             RelationshipType::ContainedBy => Ok((left, Relationship::ContainedBy, right)),
+            RelationshipType::Describes => Ok((right, Relationship::DescribedBy, left)),
+            RelationshipType::DescribedBy => Ok((left, Relationship::DescribedBy, right)),
             RelationshipType::DependsOn => Ok((right, Relationship::DependencyOf, left)),
             RelationshipType::DependencyOf => Ok((left, Relationship::DependencyOf, right)),
             RelationshipType::DevDependencyOf => Ok((left, Relationship::DevDependencyOf, right)),
