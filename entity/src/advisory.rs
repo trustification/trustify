@@ -21,11 +21,6 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    //#[sea_orm(has_many = "super::advisory_vulnerability::Entity")]
-    //AdvisoryVulnerabilities,
-
-    //#[sea_orm(has_many = "super::vulnerability::Entity")]
-    //Vulnerability,
     #[sea_orm(has_many = "super::cvss3::Entity")]
     Cvss3,
 
@@ -38,15 +33,6 @@ pub enum Relation {
     #[sea_orm(has_many = "super::not_affected_package_version::Entity")]
     NotAffectedPackageVersion,
 }
-
-/*
-impl Related<advisory_vulnerability::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::AdvisoryVulnerabilities.def()
-    }
-}
-
- */
 
 impl Related<vulnerability::Entity> for Entity {
     fn to() -> RelationDef {
