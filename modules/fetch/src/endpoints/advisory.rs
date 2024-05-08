@@ -52,8 +52,11 @@ pub async fn get(
 
 #[cfg(test)]
 mod test {
+    use actix_http::Request;
+    use actix_web::body::MessageBody;
+    use actix_web::dev::{Service, ServiceResponse};
     use actix_web::test::TestRequest;
-    use actix_web::App;
+    use actix_web::{App, Error};
     use serde_json::Value;
     use std::str::FromStr;
     use test_context::test_context;
@@ -67,10 +70,35 @@ mod test {
         AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
         PrivilegesRequired, Scope, UserInteraction,
     };
-    use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
     use trustify_module_ingestor::graph::Graph;
+    use trustify_module_ingestor::{
+        graph::advisory::AdvisoryInformation, service::IngestorService,
+    };
 
     use crate::model::advisory::{AdvisoryDetails, AdvisorySummary};
+
+    async fn query<S, B>(app: &S, q: &str) -> PaginatedResults<AdvisorySummary>
+    where
+        S: Service<Request, Response = ServiceResponse<B>, Error = Error>,
+        B: MessageBody,
+    {
+        let uri = format!("/api/v1/advisory?q={}", urlencoding::encode(q));
+        let req = TestRequest::get().uri(&uri).to_request();
+        actix_web::test::call_and_read_body_json(app, req).await
+    }
+
+    async fn ingest(service: &IngestorService, data: &[u8]) -> String {
+        use tokio_util::io::ReaderStream;
+        use trustify_module_ingestor::service::Format;
+        service
+            .ingest(
+                "unit-test",
+                Format::from_bytes(data).unwrap(),
+                ReaderStream::new(data),
+            )
+            .await
+            .unwrap()
+    }
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(actix_web::test)]
@@ -241,6 +269,49 @@ mod test {
         let vuln = &response.vulnerabilities[0];
 
         assert_eq!(1, vuln.cvss3_scores.len());
+
+        Ok(())
+    }
+
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test(actix_web::test)]
+    async fn search_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        use crate::endpoints::configure;
+        use actix_web::test::init_service;
+        use actix_web::web::Bytes;
+        use trustify_module_storage::service::fs::FileSystemBackend;
+
+        let db = ctx.db;
+        let graph = Graph::new(db.clone());
+        let (storage, _) = FileSystemBackend::for_test().await?;
+        let ingestor = IngestorService::new(graph, storage);
+        let app = init_service(App::new().configure(|mut config| configure(config, db))).await;
+        let mut response: PaginatedResults<AdvisorySummary>;
+
+        // No results before ingestion
+        let result = query(&app, "").await;
+        assert_eq!(result.total, 0);
+
+        // ingest some advisories
+        let data = include_bytes!("../../../../etc/test-data/mitre/CVE-2024-27088.json");
+        let id = ingest(&ingestor, data).await;
+        let data = include_bytes!("../../../../etc/test-data/mitre/CVE-2024-28111.json");
+        let id = ingest(&ingestor, data).await;
+
+        let result = query(&app, "").await;
+        assert_eq!(result.total, 2);
+        let result = query(&app, "csv").await;
+        assert_eq!(result.total, 1);
+        assert_eq!(result.items[0].head.identifier, "CVE-2024-28111");
+        let result = query(&app, "function#copy").await;
+        assert_eq!(result.total, 1);
+        assert_eq!(result.items[0].head.identifier, "CVE-2024-27088");
+        let result = query(&app, "tostringtokens").await;
+        assert_eq!(result.total, 1);
+        assert_eq!(result.items[0].head.identifier, "CVE-2024-27088");
+        let result = query(&app, "es5-ext").await;
+        assert_eq!(result.items[0].head.identifier, "CVE-2024-27088");
+        assert_eq!(result.total, 1);
 
         Ok(())
     }

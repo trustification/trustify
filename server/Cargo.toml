@@ -30,4 +30,4 @@ utoipa-swagger-ui = { workspace = true, features = ["actix-web"] }
 walker-common = { workspace = true }
 
 [dev-dependencies]
-url-escape = { workspace = true }
+urlencoding = { workspace = true }

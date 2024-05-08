@@ -5910,6 +5910,7 @@ dependencies = [
 name = "trustify-module-fetch"
 version = "0.1.0"
 dependencies = [
+ "actix-http",
  "actix-web",
  "anyhow",
  "async-trait",
@@ -5937,6 +5938,7 @@ dependencies = [
  "thiserror",
  "time",
  "tokio",
+ "tokio-util",
  "tracing",
  "trustify-auth",
  "trustify-common",
@@ -5944,6 +5946,8 @@ dependencies = [
  "trustify-entity",
  "trustify-migration",
  "trustify-module-ingestor",
+ "trustify-module-storage",
+ "urlencoding",
  "utoipa",
 ]
 
@@ -6028,7 +6032,6 @@ dependencies = [
  "trustify-cvss",
  "trustify-entity",
  "trustify-module-storage",
- "url-escape",
  "utoipa",
 ]
 
@@ -6058,7 +6061,6 @@ dependencies = [
  "tokio-util",
  "trustify-common",
  "trustify-entity",
- "url-escape",
  "utoipa",
 ]
 
@@ -6087,7 +6089,7 @@ dependencies = [
  "trustify-module-ingestor",
  "trustify-module-storage",
  "url",
- "url-escape",
+ "urlencoding",
  "utoipa",
  "utoipa-swagger-ui",
  "walker-common",
@@ -6204,15 +6206,6 @@ dependencies = [
  "idna 0.5.0",
  "percent-encoding",
  "serde",
-]
-
-[[package]]
-name = "url-escape"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44e0ce4d1246d075ca5abec4b41d33e87a6054d08e2366b63205665e950db218"
-dependencies = [
- "percent-encoding",
 ]
 
 [[package]]

@@ -5,7 +5,6 @@ use crate::service::advisory::osv::schema::Vulnerability;
 use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader};
 use crate::service::Error;
 use ::csaf::Csaf;
-use bytes::Bytes;
 use ring::digest;
 use std::io::Read;
 
@@ -37,7 +36,7 @@ impl<'g> Format {
             }
         }
     }
-    pub fn from_bytes(bytes: &Bytes) -> Result<Self, Error> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         let checksum = checksum(bytes);
         if serde_json::from_slice::<Vulnerability>(bytes).is_ok() {
             Ok(Format::OSV { checksum })
@@ -50,6 +49,6 @@ impl<'g> Format {
         }
     }
 }
-fn checksum(bytes: &Bytes) -> String {
+fn checksum(bytes: &[u8]) -> String {
     hex::encode(digest::digest(&digest::SHA256, bytes))
 }

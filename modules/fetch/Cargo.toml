@@ -41,4 +41,8 @@ humantime = "2"
 rust-lzma = "0.6"
 test-log = { workspace = true, features = ["log", "trace"] }
 trustify-module-ingestor = { workspace = true }
+trustify-module-storage = { workspace = true }
 test-context = { workspace = true }
+urlencoding = { workspace = true }
+tokio-util = { workspace = true }
+actix-http = { workspace = true }
