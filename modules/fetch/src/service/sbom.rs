@@ -24,7 +24,7 @@ use trustify_common::{
 };
 use trustify_entity::{
     package, package_relates_to_package, package_version, qualified_package,
-    relationship::Relationship, sbom, sbom_describes_package, sbom_package,
+    relationship::Relationship, sbom, sbom_package,
 };
 
 #[derive(Clone, Eq, PartialEq, Default, Debug, serde::Deserialize, utoipa::ToSchema)]
@@ -83,6 +83,7 @@ impl FetchService {
     ) -> Result<PaginatedResults<SbomPackage>, Error> {
         let connection = self.db.connection(&tx);
 
+        // TODO: select all sbom_packages, maybe then load purls and cpes
         let mut query = qualified_package::Entity::find()
             .join(JoinType::Join, sbom_package::Relation::Package.def().rev())
             .join(
@@ -93,6 +94,7 @@ impl FetchService {
             .filter(sbom_package::Column::SbomId.eq(sbom_id))
             .filtering(search)?;
 
+        // TODO: we might reconsider this, root level stuff can be found using document id ref
         if root {
             // limit to root level packages
             query = query

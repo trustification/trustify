@@ -53,7 +53,7 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .from_col(PackageRelatesToPackage::SbomId)
-                            .to(Sbom::Table, Sbom::Id),
+                            .to(Sbom::Table, Sbom::SbomId),
                     )
                     .primary_key(
                         Index::create()

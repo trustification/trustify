@@ -12,37 +12,38 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(SbomDescribesPackage::Table)
+                    .table(SbomPackagePurlRef::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(SbomDescribesPackage::SbomId)
+                        ColumnDef::new(SbomPackagePurlRef::SbomId)
                             .integer()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .name("sbom_id")
-                            .from(SbomDescribesPackage::Table, SbomDescribesPackage::SbomId)
-                            .to(Sbom::Table, Sbom::Id),
+                            .from(
+                                SbomPackagePurlRef::Table,
+                                (SbomPackagePurlRef::SbomId, SbomPackagePurlRef::NodeId),
+                            )
+                            .to(Sbom::Table, (Sbom::SbomId, Sbom::NodeId))
+                            .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(
-                        ColumnDef::new(SbomDescribesPackage::QualifiedPackageId)
+                        ColumnDef::new(SbomPackagePurlRef::QualifiedPackageId)
                             .uuid()
                             .not_null(),
                     )
                     .primary_key(
                         Index::create()
-                            .name("pk-sbom_package_id")
-                            .col(SbomDescribesPackage::SbomId)
-                            .col(SbomDescribesPackage::QualifiedPackageId)
+                            .col(SbomPackagePurlRef::SbomId)
+                            .col(SbomPackagePurlRef::QualifiedPackageId)
                             .primary(),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .name("qualified_package_id")
                             .from(
-                                SbomDescribesPackage::Table,
-                                SbomDescribesPackage::QualifiedPackageId,
+                                SbomPackagePurlRef::Table,
+                                SbomPackagePurlRef::QualifiedPackageId,
                             )
                             .to(QualifiedPackage::Table, QualifiedPackage::Id),
                     )
@@ -55,7 +56,7 @@ impl MigrationTrait for Migration {
         manager
             .drop_table(
                 Table::drop()
-                    .table(SbomDescribesPackage::Table)
+                    .table(SbomPackagePurlRef::Table)
                     .if_exists()
                     .to_owned(),
             )
@@ -64,8 +65,10 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-pub enum SbomDescribesPackage {
+pub enum SbomPackagePurlRef {
     Table,
+
     SbomId,
+    NodeId,
     QualifiedPackageId,
 }

@@ -26,7 +26,11 @@ paginated!(SbomSummary);
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct SbomPackage {
-    pub purl: String,
+    pub name: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub purl: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cpe: Vec<String>,
 }
 
 paginated!(SbomPackage);
