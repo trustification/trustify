@@ -25,6 +25,7 @@ actix-web-extras = "0.1"
 actix-web-httpauth = "0.8"
 actix-web-opentelemetry = "0.17"
 actix-web-prom = "0.8.0"
+actix-web-static-files = "4.0.1"
 anyhow = "1.0.72"
 async-std = "1"
 async-trait = "0.1.74"
@@ -80,6 +81,7 @@ sha2 = "0.10.8"
 spdx-expression = "0.5.2"
 spdx-rs = "0.5.3"
 sqlx = "0.7"
+static-files = "0.2.3"
 tempfile = "3"
 test-context = "0.3"
 test-log = "0.2.16"
@@ -112,6 +114,7 @@ trustify-module-ingestor = { path = "modules/ingestor" }
 trustify-module-search = { path = "modules/search" }
 trustify-module-storage = { path = "modules/storage" }
 trustify-server = { path = "server"}
+trustify-ui = { git = "https://github.com/bobmcwhirter/trustify-ui.git", branch = "cratify" }
 
 [patch.crates-io]
 #csaf-walker = { git = "https://github.com/ctron/csaf-walker", rev = "7b6e64dd56e4be79e184b053ef754a42e1496fe0" }

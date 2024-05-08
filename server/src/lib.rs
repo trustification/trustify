@@ -10,6 +10,7 @@ use actix_web::{
     web::Json,
     HttpRequest, HttpResponse, Responder,
 };
+use actix_web_static_files::ResourceFiles;
 use anyhow::Context;
 use futures::FutureExt;
 use std::fmt::Display;
@@ -18,6 +19,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
+use trustify_ui::{trustify_ui, UI};
 use trustify_auth::{
     auth::AuthConfigArguments,
     authenticator::Authenticator,
@@ -179,6 +181,19 @@ impl InitData {
                     ));
                     svc.app_data(web::Data::from(self.graph.clone()))
                         .configure(|svc| {
+                            svc.service( ResourceFiles::new( "/", trustify_ui(
+                                &UI {
+                                    version: String::from("99.0.0"),
+                                    auth_required: String::from("false"),
+                                    oidc_server_url: String::from(
+                                        "http://localhost:8180/realms/trustify",
+                                    ),
+                                    oidc_client_id: String::from("trustify-ui"),
+                                    oidc_scope: String::from("email"),
+                                    analytics_enabled: String::from("false"),
+                                    analytics_write_key: String::from(""),
+                                }
+                            ).unwrap() ) );
                             trustify_module_importer::endpoints::configure(svc, db.clone());
                             trustify_module_ingestor::endpoints::configure(
                                 svc,
