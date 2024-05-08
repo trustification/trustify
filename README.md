@@ -11,7 +11,19 @@ cargo run --bin trustd
 ```
 That will create its own database on your local filesystem. Point your browser at http://localhost:8080/swagger-ui/ to view the API.
 
-You can then fire up the [trustify-ui](https://github.com/trustification/trustify-ui).
+You can fire up the UI using:
+
+```shell
+podman run --network="host" \
+-e TRUSTIFICATION_API_URL=http://localhost:8080 \
+-e AUTH_REQUIRED=false \
+-e ANALYTICS_ENABLED=false \
+-e PORT=3000 \
+-p 3000:3000 \
+ghcr.io/trustification/trustify-ui:latest
+```
+
+Open the UI at http://localhost:3000
 
 ## Repository Organization
 
