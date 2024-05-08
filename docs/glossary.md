@@ -68,11 +68,6 @@ For instance, "All versions of RHEL 8.2.013, regardless of platform", or if more
 
 ### Artifact.
 
-> **NOTE**
-> CPEs are somewhat contentious, and used enough for us to not ignore, but not used enough to be a pivotal definition of "product" for any users of Trustify.
-> Not currently modelled
-
-
 For a given _package_, there may be zero or more instances of that package.
 Given `log4j-1.2.3.jar`, seventeen different people could compile the same source with the same arguments, and still end up with 17 distinct Java jars (due to non-reproducible builds).
 Each is an artifact of the _same_ package.
