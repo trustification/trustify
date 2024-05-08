@@ -174,13 +174,21 @@ impl InitData {
                 .default_authenticator(self.authenticator)
                 .authorizer(self.authorizer.clone())
                 .configure(move |svc| {
-                    svc.service(index);
+                    // Do we need this?
+                    //svc.service(index);
                     svc.service(swagger_ui_with_auth(
                         openapi::openapi(),
                         swagger_oidc.clone(),
                     ));
                     svc.app_data(web::Data::from(self.graph.clone()))
                         .configure(|svc| {
+                            trustify_module_importer::endpoints::configure(svc, db.clone());
+                            trustify_module_ingestor::endpoints::configure(
+                                svc,
+                                db.clone(),
+                                storage.clone(),
+                            );
+                            trustify_module_fetch::endpoints::configure(svc, db.clone());
                             svc.service( ResourceFiles::new( "/", trustify_ui(
                                 &UI {
                                     version: String::from("99.0.0"),
@@ -194,13 +202,6 @@ impl InitData {
                                     analytics_write_key: String::from(""),
                                 }
                             ).unwrap() ) );
-                            trustify_module_importer::endpoints::configure(svc, db.clone());
-                            trustify_module_ingestor::endpoints::configure(
-                                svc,
-                                db.clone(),
-                                storage.clone(),
-                            );
-                            trustify_module_fetch::endpoints::configure(svc, db.clone());
                         });
                 })
         };
