@@ -8,7 +8,6 @@ use trustify_entity::relationship::Relationship;
 
 /// Search for SBOMs
 #[utoipa::path(
-    context_path = "/api/v1/sbom",
     tag = "sbom",
     params(
         SearchOptions,
@@ -18,7 +17,7 @@ use trustify_entity::relationship::Relationship;
         (status = 200, description = "Matching SBOMs", body = PaginatedSbomSummary),
     ),
 )]
-#[get("")]
+#[get("/api/v1/sbom")]
 pub async fn all(
     fetch: web::Data<FetchService>,
     web::Query(search): web::Query<SearchOptions>,
@@ -42,7 +41,6 @@ struct PackagesQuery {
 
 /// Search for packages of an SBOM
 #[utoipa::path(
-    context_path = "/api/v1/sbom",
     params(
         ("id", Path, description = "ID of the SBOM to get packages for"),
         PackagesQuery,
@@ -53,7 +51,7 @@ struct PackagesQuery {
         (status = 200, description = "Packages", body = PaginatedSbomPackage),
     ),
 )]
-#[get("/{id}/packages")]
+#[get("/api/v1/sbom/{id}/packages")]
 pub async fn packages(
     fetch: web::Data<FetchService>,
     id: web::Path<i32>,
@@ -86,7 +84,6 @@ struct RelatedQuery {
 
 /// Search for related packages in an SBOM
 #[utoipa::path(
-    context_path = "/api/v1/sbom",
     params(
         ("id", Path, description = "ID of SBOM to search packages in"),
         RelatedQuery,
@@ -97,7 +94,7 @@ struct RelatedQuery {
         (status = 200, description = "Packages", body = PaginatedSbomPackageRelation),
     ),
 )]
-#[get("/{id}/related")]
+#[get("/api/v1/sbom/{id}/related")]
 pub async fn related(
     fetch: web::Data<FetchService>,
     id: web::Path<i32>,

@@ -6287,6 +6287,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "tempfile",
+ "test-context",
  "test-log",
  "thiserror",
  "tokio",

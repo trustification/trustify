@@ -4,7 +4,6 @@ use actix_web::{get, web, HttpResponse, Responder};
 use trustify_common::model::Paginated;
 
 #[utoipa::path(
-    context_path = "/api/v1/advisory",
     tag = "advisory",
     params(
         SearchOptions,
@@ -14,7 +13,7 @@ use trustify_common::model::Paginated;
         (status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
     ),
 )]
-#[get("")]
+#[get("/api/v1/advisory")]
 pub async fn all(
     state: web::Data<FetchService>,
     web::Query(search): web::Query<SearchOptions>,
@@ -24,7 +23,6 @@ pub async fn all(
 }
 
 #[utoipa::path(
-    context_path = "/api/v1/advisory",
     tag = "advisory",
     params(
         ("sha256", Path, description = "SHA256 of the advisory")
@@ -34,7 +32,7 @@ pub async fn all(
         (status = 404, description = "Matching advisory not found"),
     ),
 )]
-#[get("/{sha256}")]
+#[get("/api/v1/advisory/{sha256}")]
 pub async fn get(
     state: web::Data<FetchService>,
     sha256: web::Path<String>,

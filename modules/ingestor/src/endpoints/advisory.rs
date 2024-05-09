@@ -1,5 +1,5 @@
 use crate::service::{Error, Format, IngestorService};
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{post, web, HttpResponse, Responder};
 use tokio_util::io::ReaderStream;
 
 #[utoipa::path(
@@ -20,28 +20,6 @@ pub async fn upload_advisory(
     let payload = ReaderStream::new(&*bytes);
     let advisory_id = service.ingest("rest-api", fmt, payload).await?;
     Ok(HttpResponse::Created().json(advisory_id))
-}
-
-#[utoipa::path(
-    tag = "advisory",
-    responses(
-        (status = 200, description = "Download a an advisory", body = Vec<u8>),
-        (status = 404, description = "The document could not be found"),
-    )
-)]
-#[get("/api/v1/advisory/{id}/download")]
-/// Download an advisory
-pub async fn download_advisory(
-    // TODO: Do we use this?!?!?!
-    service: web::Data<IngestorService>,
-    path: web::Path<i32>,
-) -> Result<impl Responder, Error> {
-    let id = path.into_inner();
-
-    Ok(match service.retrieve_advisory(id).await? {
-        Some(stream) => HttpResponse::Ok().streaming(stream),
-        None => HttpResponse::NotFound().finish(),
-    })
 }
 
 #[cfg(test)]

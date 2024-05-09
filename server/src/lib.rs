@@ -201,6 +201,7 @@ impl InitData {
                             );
                             trustify_module_fetch::endpoints::configure(svc, db.clone());
                             trustify_module_ui::endpoints::configure(svc, &self.ui);
+                            trustify_module_storage::endpoints::configure(svc, storage.clone());
                         });
                 })
         };
