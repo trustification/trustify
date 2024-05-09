@@ -24,6 +24,7 @@ pub struct AdvisoryInformation {
     pub title: Option<String>,
     pub published: Option<OffsetDateTime>,
     pub modified: Option<OffsetDateTime>,
+    pub withdrawn: Option<OffsetDateTime>,
 }
 
 impl From<()> for AdvisoryInformation {
@@ -76,6 +77,7 @@ impl Graph {
             title,
             published,
             modified,
+            ..
         } = information.into();
 
         let model = entity::advisory::ActiveModel {
@@ -186,7 +188,7 @@ impl<'g> AdvisoryContext<'g> {
             return Ok(found);
         }
 
-        let vulnerability = self.graph.ingest_vulnerability(identifier, &tx).await?;
+        let vulnerability = self.graph.ingest_vulnerability(identifier, (), &tx).await?;
 
         let entity = entity::advisory_vulnerability::ActiveModel {
             advisory_id: Set(self.advisory.id),

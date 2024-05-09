@@ -1,7 +1,7 @@
 use super::cve::cve_record::v5::CveRecord;
 use super::cve::loader::CveLoader;
 use crate::graph::Graph;
-use crate::service::advisory::osv::schema::Vulnerability;
+use crate::service::advisory::osv;
 use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader};
 use crate::service::Error;
 use ::csaf::Csaf;
@@ -38,17 +38,37 @@ impl<'g> Format {
     }
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         let checksum = checksum(bytes);
-        if serde_json::from_slice::<Vulnerability>(bytes).is_ok() {
-            Ok(Format::OSV { checksum })
-        } else if serde_json::from_slice::<Csaf>(bytes).is_ok() {
-            Ok(Format::CSAF { checksum })
-        } else if serde_json::from_slice::<CveRecord>(bytes).is_ok() {
-            Ok(Format::CVE { checksum })
-        } else {
-            Err(Error::UnsupportedFormat("unknown".into()))
+
+        let mut potential_errors = Vec::new();
+
+        match serde_json::from_slice::<osv::schema::Vulnerability>(bytes) {
+            Ok(_) => return Ok(Format::OSV { checksum }),
+            Err(e) => {
+                potential_errors.push(format!("if osv: {}", e));
+            }
         }
+
+        match serde_json::from_slice::<Csaf>(bytes) {
+            Ok(_) => return Ok(Format::CSAF { checksum }),
+            Err(e) => {
+                potential_errors.push(format!("if csaf: {}", e));
+            }
+        }
+
+        match serde_json::from_slice::<CveRecord>(bytes) {
+            Ok(_) => return Ok(Format::CVE { checksum }),
+            Err(e) => {
+                potential_errors.push(format!("if cve: {}", e));
+            }
+        }
+
+        Err(Error::UnsupportedFormat(format!(
+            "unknown :: {:?}",
+            potential_errors
+        )))
     }
 }
+
 fn checksum(bytes: &[u8]) -> String {
     hex::encode(digest::digest(&digest::SHA256, bytes))
 }

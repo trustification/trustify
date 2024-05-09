@@ -26,6 +26,7 @@ impl<'a> From<Information<'a>> for AdvisoryInformation {
                 value.document.tracking.current_release_date.timestamp(),
             )
             .ok(),
+            withdrawn: None,
         }
     }
 }
