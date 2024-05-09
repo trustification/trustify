@@ -10,7 +10,6 @@ use actix_web::{
     web::Json,
     HttpRequest, HttpResponse, Responder,
 };
-use actix_web_static_files::ResourceFiles;
 use anyhow::Context;
 use futures::FutureExt;
 use std::fmt::Display;
@@ -40,7 +39,7 @@ use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use trustify_module_storage::service::fs::FileSystemBackend;
-use trustify_ui::{trustify_ui, UI};
+use trustify_module_ui::UI;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -81,6 +80,7 @@ struct InitData {
     http: HttpServerConfig<Trustify>,
     tracing: Tracing,
     swagger_oidc: Option<Arc<SwaggerUiOidc>>,
+    ui: UI,
 }
 
 impl Run {
@@ -146,7 +146,19 @@ impl InitData {
                 run.storage.fs_path
             ))?;
         }
+
         let storage = DispatchBackend::Filesystem(FileSystemBackend::new(storage).await?);
+
+        // TODO: where/how should we configure these details?
+        let ui = UI {
+            version: env!("CARGO_PKG_VERSION").to_string(),
+            auth_required: String::from("false"),
+            oidc_server_url: String::from("http://localhost:8180/realms/trustify"),
+            oidc_client_id: String::from("trustify-ui"),
+            oidc_scope: String::from("email"),
+            analytics_enabled: String::from("false"),
+            analytics_write_key: String::from(""),
+        };
 
         Ok(InitData {
             authenticator,
@@ -157,6 +169,7 @@ impl InitData {
             tracing: run.infra.tracing,
             swagger_oidc,
             storage,
+            ui,
         })
     }
 
@@ -174,8 +187,6 @@ impl InitData {
                 .default_authenticator(self.authenticator)
                 .authorizer(self.authorizer.clone())
                 .configure(move |svc| {
-                    // Do we need this?
-                    //svc.service(index);
                     svc.service(swagger_ui_with_auth(
                         openapi::openapi(),
                         swagger_oidc.clone(),
@@ -189,24 +200,7 @@ impl InitData {
                                 storage.clone(),
                             );
                             trustify_module_fetch::endpoints::configure(svc, db.clone());
-                            svc.service(
-                                ResourceFiles::new(
-                                    "/",
-                                    trustify_ui(&UI {
-                                        version: String::from("99.0.0"),
-                                        auth_required: String::from("false"),
-                                        oidc_server_url: String::from(
-                                            "http://localhost:8180/realms/trustify",
-                                        ),
-                                        oidc_client_id: String::from("trustify-ui"),
-                                        oidc_scope: String::from("email"),
-                                        analytics_enabled: String::from("false"),
-                                        analytics_write_key: String::from(""),
-                                    })
-                                    .unwrap(),
-                                )
-                                .resolve_not_found_to("")
-                            );
+                            trustify_module_ui::endpoints::configure(svc, &self.ui);
                         });
                 })
         };

@@ -6297,11 +6297,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "trustify-server"
+name = "trustify-module-ui"
 version = "0.1.0"
 dependencies = [
  "actix-web",
  "actix-web-static-files",
+ "log",
+ "trustify-ui",
+]
+
+[[package]]
+name = "trustify-server"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
  "anyhow",
  "clap",
  "csaf",
@@ -6321,7 +6330,7 @@ dependencies = [
  "trustify-module-importer",
  "trustify-module-ingestor",
  "trustify-module-storage",
- "trustify-ui",
+ "trustify-module-ui",
  "url",
  "urlencoding",
  "utoipa",
@@ -6349,7 +6358,7 @@ dependencies = [
 [[package]]
 name = "trustify-ui"
 version = "0.1.0"
-source = "git+https://github.com/bobmcwhirter/trustify-ui.git?branch=cratify#f6dea133f27e8f11c6d9a311caa03427f8941c7a"
+source = "git+https://github.com/trustification/trustify-ui.git#453a50222a313dda2cc5ed534d44e27ef692d5e1"
 dependencies = [
  "base64 0.22.1",
  "serde",

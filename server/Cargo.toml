@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actix-web-static-files = { workspace = true }
 trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
 trustify-infrastructure = { workspace = true }
@@ -13,6 +12,7 @@ trustify-module-fetch = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-importer = { workspace = true }
 trustify-module-storage = { workspace = true }
+trustify-module-ui = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
@@ -29,7 +29,6 @@ url = "2"
 utoipa = { workspace = true, features = ["actix_extras"] }
 utoipa-swagger-ui = { workspace = true, features = ["actix-web"] }
 walker-common = { workspace = true }
-trustify-ui = { workspace = true }
 
 [dev-dependencies]
 urlencoding = { workspace = true }

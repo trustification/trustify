@@ -1,0 +1,12 @@
+[package]
+name = "trustify-module-ui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = { workspace = true }
+log = { workspace = true }
+actix-web-static-files = { workspace = true }
+trustify-ui = { workspace = true }
+
+
