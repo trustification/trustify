@@ -1,8 +1,7 @@
-use time::OffsetDateTime;
-
 use crate::graph::advisory::AdvisoryInformation;
+use crate::graph::vulnerability::VulnerabilityInformation;
 use crate::graph::Graph;
-use crate::service::cve::cve_record::v5::{CveMetadata, CveRecord};
+use crate::service::cve::cve_record::v5::CveRecord;
 use crate::service::{hashing::HashingRead, Error};
 use std::io::Read;
 
@@ -35,10 +34,16 @@ impl<'g> CveLoader<'g> {
 
         let tx = self.graph.transaction().await?;
 
-        let vulnerability = self.graph.ingest_vulnerability(id, &tx).await?;
+        let information = VulnerabilityInformation {
+            title: cve.containers.cna.title.clone(),
+            published: cve.cve_metadata.date_published(),
+            modified: cve.cve_metadata.date_updated(),
+            withdrawn: cve.cve_metadata.date_rejected(),
+        };
 
-        vulnerability
-            .set_title(cve.containers.cna.title.clone(), &tx)
+        let vulnerability = self
+            .graph
+            .ingest_vulnerability(id, information, &tx)
             .await?;
 
         for description in cve.containers.cna.descriptions {
@@ -57,12 +62,9 @@ impl<'g> CveLoader<'g> {
 
         let information = AdvisoryInformation {
             title: cve.containers.cna.title,
-            published: match cve.cve_metadata {
-                CveMetadata::Published(ref m) => m.date_published,
-                CveMetadata::Rejected(ref m) => m.date_published,
-            }
-            .and_then(|d| OffsetDateTime::from_unix_timestamp(d.timestamp()).ok()),
-            modified: None,
+            published: cve.cve_metadata.date_published(),
+            modified: cve.cve_metadata.date_updated(),
+            withdrawn: cve.cve_metadata.date_rejected(),
         };
         let advisory = self
             .graph

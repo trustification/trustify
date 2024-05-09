@@ -51,6 +51,7 @@ impl<'g> OsvLoader<'g> {
                 title: osv.summary.clone(),
                 published: Some(osv.published),
                 modified: Some(osv.modified),
+                withdrawn: osv.withdrawn,
             };
             let advisory = self
                 .graph

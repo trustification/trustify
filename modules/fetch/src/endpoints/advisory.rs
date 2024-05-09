@@ -120,6 +120,7 @@ mod test {
                     title: Some("RHSA-1".to_string()),
                     published: Some(OffsetDateTime::now_utc()),
                     modified: None,
+                    withdrawn: None,
                 },
                 (),
             )
@@ -152,6 +153,7 @@ mod test {
                     title: Some("RHSA-2".to_string()),
                     published: Some(OffsetDateTime::now_utc()),
                     modified: None,
+                    withdrawn: None,
                 },
                 (),
             )
@@ -203,6 +205,7 @@ mod test {
                     title: Some("RHSA-1".to_string()),
                     published: Some(OffsetDateTime::now_utc()),
                     modified: None,
+                    withdrawn: None,
                 },
                 (),
             )
@@ -217,6 +220,7 @@ mod test {
                     title: Some("RHSA-2".to_string()),
                     published: Some(OffsetDateTime::now_utc()),
                     modified: None,
+                    withdrawn: None,
                 },
                 (),
             )

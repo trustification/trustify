@@ -1,5 +1,5 @@
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use time::OffsetDateTime;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -24,6 +24,34 @@ impl CveMetadata {
             CveMetadata::Rejected(inner) => &inner.cve_id,
         }
     }
+
+    pub fn date_reserved(&self) -> Option<OffsetDateTime> {
+        match self {
+            CveMetadata::Published(inner) => inner.date_reserved,
+            CveMetadata::Rejected(inner) => inner.date_reserved,
+        }
+    }
+
+    pub fn date_published(&self) -> Option<OffsetDateTime> {
+        match self {
+            CveMetadata::Published(inner) => inner.date_published,
+            CveMetadata::Rejected(inner) => inner.date_published,
+        }
+    }
+
+    pub fn date_updated(&self) -> Option<OffsetDateTime> {
+        match self {
+            CveMetadata::Published(inner) => inner.date_updated,
+            CveMetadata::Rejected(inner) => inner.date_updated,
+        }
+    }
+
+    pub fn date_rejected(&self) -> Option<OffsetDateTime> {
+        match self {
+            CveMetadata::Published(_) => None,
+            CveMetadata::Rejected(inner) => inner.date_rejected,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -33,10 +61,13 @@ pub struct MetadataPublished {
     pub assigner_org_id: String,
     pub assigner_short_name: Option<String>,
     pub requester_user_id: Option<String>,
-    pub date_updated: Option<DateTime<Utc>>,
     pub serial: Option<u64>,
-    pub date_reserved: Option<DateTime<Utc>>,
-    pub date_published: Option<DateTime<Utc>>,
+    #[serde(with = "time::serde::rfc3339::option")]
+    pub date_updated: Option<OffsetDateTime>,
+    #[serde(with = "time::serde::rfc3339::option")]
+    pub date_reserved: Option<OffsetDateTime>,
+    #[serde(with = "time::serde::rfc3339::option")]
+    pub date_published: Option<OffsetDateTime>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -46,11 +77,15 @@ pub struct MetadataRejected {
     pub assigner_org_id: String,
     pub assigner_short_name: Option<String>,
     pub requester_user_id: Option<String>,
-    pub date_updated: Option<DateTime<Utc>>,
     pub serial: Option<u64>,
-    pub date_reserved: Option<DateTime<Utc>>,
-    pub date_published: Option<DateTime<Utc>>,
-    pub date_rejected: Option<DateTime<Utc>>,
+    #[serde(with = "time::serde::rfc3339::option")]
+    pub date_updated: Option<OffsetDateTime>,
+    #[serde(with = "time::serde::rfc3339::option")]
+    pub date_reserved: Option<OffsetDateTime>,
+    #[serde(with = "time::serde::rfc3339::option")]
+    pub date_published: Option<OffsetDateTime>,
+    #[serde(with = "time::serde::rfc3339::option")]
+    pub date_rejected: Option<OffsetDateTime>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
