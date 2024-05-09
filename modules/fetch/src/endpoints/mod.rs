@@ -21,17 +21,11 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let service = FetchService::new(db);
     config
         .app_data(web::Data::new(service))
-        .service(
-            web::scope("/api/v1/sbom")
-                .service(sbom::all)
-                .service(sbom::packages)
-                .service(sbom::related),
-        )
-        .service(
-            web::scope("/api/v1/advisory")
-                .service(advisory::all)
-                .service(advisory::get),
-        )
+        .service(sbom::all)
+        .service(sbom::packages)
+        .service(sbom::related)
+        .service(advisory::all)
+        .service(advisory::get)
         .service(
             web::scope("/api/v1/package")
                 .service(package::dependencies)

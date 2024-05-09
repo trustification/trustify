@@ -11,6 +11,7 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     doc.merge(trustify_module_ingestor::endpoints::ApiDoc::openapi());
     doc.merge(trustify_module_importer::endpoints::ApiDoc::openapi());
     doc.merge(trustify_module_fetch::endpoints::ApiDoc::openapi());
+    doc.merge(trustify_module_storage::endpoints::ApiDoc::openapi());
 
     doc
 }

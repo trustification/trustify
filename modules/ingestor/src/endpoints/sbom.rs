@@ -1,5 +1,5 @@
 use crate::service::{Error, IngestorService};
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{post, web, HttpResponse, Responder};
 
 #[derive(Clone, Debug, serde::Deserialize)]
 pub struct UploadSbomQuery {
@@ -29,25 +29,4 @@ pub async fn upload_sbom(
 ) -> Result<impl Responder, Error> {
     let sbom_id = service.ingest_sbom(&location, payload).await?;
     Ok(HttpResponse::Created().json(sbom_id))
-}
-
-#[utoipa::path(
-    tag = "sbom",
-    responses(
-        (status = 200, description = "Download a an SBOM", body = Vec<u8>),
-        (status = 404, description = "The document could not be found"),
-    )
-)]
-#[get("/api/v1/sbom/{id}")]
-/// Download an SBOM
-pub async fn download_sbom(
-    service: web::Data<IngestorService>,
-    path: web::Path<i32>,
-) -> Result<impl Responder, Error> {
-    let id = path.into_inner();
-
-    Ok(match service.retrieve_sbom(id).await? {
-        Some(stream) => HttpResponse::Ok().streaming(stream),
-        None => HttpResponse::NotFound().finish(),
-    })
 }
