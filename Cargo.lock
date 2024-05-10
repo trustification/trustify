@@ -6134,8 +6134,14 @@ dependencies = [
 name = "trustify-migration"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "async-std",
  "sea-orm-migration",
+ "test-context",
+ "test-log",
+ "tokio",
+ "tokio-util",
+ "trustify-common",
 ]
 
 [[package]]
