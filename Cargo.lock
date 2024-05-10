@@ -6151,6 +6151,7 @@ dependencies = [
  "csaf",
  "human-date-parser",
  "humantime",
+ "jsonpath-rust",
  "lenient_semver",
  "log",
  "packageurl",

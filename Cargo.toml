@@ -70,6 +70,7 @@ rand = "0.8.5" # for testing
 regex = "1.10.3"
 reqwest = "0.12"
 ring = "0.17.8"
+rust-lzma = "0.6"
 sbom-walker = { version = "0.7.0", default-features = false }
 schemars = "0.8"
 sea-orm = "0.12"

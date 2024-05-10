@@ -29,7 +29,6 @@ pub struct AdvisoryHead {
 pub struct AdvisorySummary {
     #[serde(flatten)]
     pub head: AdvisoryHead,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub vulnerabilities: Vec<AdvisoryVulnerabilityHead>,
 }
 
@@ -39,7 +38,6 @@ paginated!(AdvisorySummary);
 pub struct AdvisoryDetails {
     #[serde(flatten)]
     pub head: AdvisoryHead,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub vulnerabilities: Vec<AdvisoryVulnerabilitySummary>,
 }
 
