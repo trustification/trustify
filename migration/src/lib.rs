@@ -2,6 +2,7 @@ pub use sea_orm_migration::prelude::*;
 
 mod m0000010_create_cvss3_enums;
 mod m0000020_create_cvss4_enums;
+mod m0000022_create_organization;
 mod m0000030_create_sbom;
 mod m0000040_create_vulnerability;
 mod m0000050_create_vulnerability_description;
@@ -34,6 +35,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m0000010_create_cvss3_enums::Migration),
             Box::new(m0000020_create_cvss4_enums::Migration),
+            Box::new(m0000022_create_organization::Migration),
             Box::new(m0000030_create_sbom::Migration),
             Box::new(m0000040_create_vulnerability::Migration),
             Box::new(m0000050_create_vulnerability_description::Migration),

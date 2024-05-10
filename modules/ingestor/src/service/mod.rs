@@ -84,7 +84,13 @@ impl IngestorService {
         }
     }
 
-    pub async fn ingest<S, E>(&self, source: &str, fmt: Format, stream: S) -> Result<String, Error>
+    pub async fn ingest<S, E>(
+        &self,
+        source: &str,
+        issuer: Option<String>,
+        fmt: Format,
+        stream: S,
+    ) -> Result<String, Error>
     where
         E: std::error::Error,
         S: Stream<Item = Result<Bytes, E>>,
@@ -105,7 +111,7 @@ impl IngestorService {
             .map_err(Error::Storage)?
             .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?;
 
-        let result = fmt.load(&self.graph, source, reader).await?;
+        let result = fmt.load(&self.graph, source, issuer, reader).await?;
 
         let duration = Instant::now() - start;
         log::info!(

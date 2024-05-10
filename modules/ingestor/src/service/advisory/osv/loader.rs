@@ -1,5 +1,6 @@
 use crate::graph::advisory::AdvisoryInformation;
 use crate::graph::Graph;
+use crate::service::advisory::osv::schema::ReferenceType;
 use crate::service::{
     advisory::osv::schema::{Event, Package, SeverityType, Vulnerability},
     hashing::HashingRead,
@@ -7,6 +8,7 @@ use crate::service::{
 };
 use std::io::Read;
 use std::str::FromStr;
+use std::sync::OnceLock;
 use trustify_common::purl::Purl;
 use trustify_cvss::cvss3::Cvss3Base;
 
@@ -22,11 +24,14 @@ impl<'g> OsvLoader<'g> {
     pub async fn load<L: Into<String>, R: Read>(
         &self,
         location: L,
+        issuser: Option<String>,
         record: R,
         checksum: &str,
     ) -> Result<String, Error> {
         let mut reader = HashingRead::new(record);
         let osv: Vulnerability = serde_json::from_reader(&mut reader)?;
+
+        let issuser = issuser.or(detect_organization(&osv));
 
         let advisory_id = osv.id.clone();
 
@@ -49,6 +54,7 @@ impl<'g> OsvLoader<'g> {
 
             let information = AdvisoryInformation {
                 title: osv.summary.clone(),
+                issuer: issuser,
                 published: Some(osv.published),
                 modified: Some(osv.modified),
                 withdrawn: osv.withdrawn,
@@ -117,6 +123,64 @@ impl<'g> OsvLoader<'g> {
     }
 }
 
+fn detect_organization(osv: &Vulnerability) -> Option<String> {
+    if let Some(references) = &osv.references {
+        let advisory_location = references
+            .iter()
+            .find(|reference| matches!(reference.reference_type, ReferenceType::Advisory));
+
+        if let Some(advisory_location) = advisory_location {
+            let url = &advisory_location.url;
+            return get_well_known_prefixes().detect(url);
+        }
+    }
+    None
+}
+
+struct PrefixMatcher {
+    prefixes: Vec<PrefixMapping>,
+}
+
+impl PrefixMatcher {
+    fn new() -> Self {
+        Self { prefixes: vec![] }
+    }
+
+    fn add(&mut self, prefix: impl Into<String>, name: impl Into<String>) {
+        self.prefixes.push(PrefixMapping {
+            prefix: prefix.into(),
+            name: name.into(),
+        })
+    }
+
+    fn detect(&self, input: &str) -> Option<String> {
+        self.prefixes
+            .iter()
+            .find(|each| input.starts_with(&each.prefix))
+            .map(|inner| inner.name.clone())
+    }
+}
+
+struct PrefixMapping {
+    prefix: String,
+    name: String,
+}
+
+fn get_well_known_prefixes() -> &'static PrefixMatcher {
+    WELL_KNOWN_PREFIXES.get_or_init(|| {
+        let mut matcher = PrefixMatcher::new();
+
+        matcher.add(
+            "https://rustsec.org/advisories/RUSTSEC",
+            "Rust Security Advisory Database",
+        );
+
+        matcher
+    })
+}
+
+static WELL_KNOWN_PREFIXES: OnceLock<PrefixMatcher> = OnceLock::new();
+
 fn events_to_range(events: &[Event]) -> (Option<String>, Option<String>) {
     let start = events.iter().find_map(|e| {
         if let Event::Introduced(version) = e {
@@ -167,7 +231,7 @@ mod test {
 
         let loader = OsvLoader::new(&graph);
         loader
-            .load("RUSTSEC-2021-0079.json", &data[..], checksum)
+            .load("RUSTSEC-2021-0079.json", None, &data[..], checksum)
             .await?;
 
         let loaded_vulnerability = graph
@@ -179,6 +243,9 @@ mod test {
         assert!(loaded_advisory.is_some());
 
         let loaded_advisory = loaded_advisory.unwrap();
+
+        assert!(loaded_advisory.advisory.issuer_id.is_some());
+
         let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(()).await?;
         assert_eq!(1, loaded_advisory_vulnerabilities.len());
         let loaded_advisory_vulnerability = &loaded_advisory_vulnerabilities[0];

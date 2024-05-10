@@ -18,6 +18,7 @@ impl<'a> From<Information<'a>> for AdvisoryInformation {
         let value = value.0;
         Self {
             title: Some(value.document.title.clone()),
+            issuer: Some(value.document.publisher.name.clone()),
             published: OffsetDateTime::from_unix_timestamp(
                 value.document.tracking.initial_release_date.timestamp(),
             )

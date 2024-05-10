@@ -62,6 +62,7 @@ impl<'g> CveLoader<'g> {
 
         let information = AdvisoryInformation {
             title: cve.containers.cna.title,
+            issuer: Some("CVE® (MITRE Corporation".to_string()),
             published: cve.cve_metadata.date_published(),
             modified: cve.cve_metadata.date_updated(),
             withdrawn: cve.cve_metadata.date_rejected(),

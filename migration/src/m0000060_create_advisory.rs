@@ -1,3 +1,4 @@
+use crate::m0000022_create_organization::Organization;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -18,6 +19,12 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .auto_increment()
                             .primary_key(),
+                    )
+                    .col(ColumnDef::new(Advisory::IssuerId).integer() /* allowed to be null if not known */)
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from_col(Advisory::IssuerId)
+                            .to(Organization::Table, Organization::Id)
                     )
                     .col(ColumnDef::new(Advisory::Published).timestamp_with_time_zone())
                     .col(ColumnDef::new(Advisory::Modified).timestamp_with_time_zone())
@@ -42,6 +49,7 @@ impl MigrationTrait for Migration {
 pub enum Advisory {
     Table,
     Id,
+    IssuerId,
     Published,
     Modified,
     Withdrawn,

@@ -93,6 +93,7 @@ mod test {
         service
             .ingest(
                 "unit-test",
+                Some("Capt Pickles Industrial Conglomerate".to_string()),
                 Format::from_bytes(data).unwrap(),
                 ReaderStream::new(data),
             )
@@ -118,6 +119,7 @@ mod test {
                 "8675309",
                 AdvisoryInformation {
                     title: Some("RHSA-1".to_string()),
+                    issuer: None,
                     published: Some(OffsetDateTime::now_utc()),
                     modified: None,
                     withdrawn: None,
@@ -151,6 +153,7 @@ mod test {
                 "8675319",
                 AdvisoryInformation {
                     title: Some("RHSA-2".to_string()),
+                    issuer: None,
                     published: Some(OffsetDateTime::now_utc()),
                     modified: None,
                     withdrawn: None,
@@ -203,6 +206,7 @@ mod test {
                 "8675309",
                 AdvisoryInformation {
                     title: Some("RHSA-1".to_string()),
+                    issuer: Some("Red Hat Product Security".to_string()),
                     published: Some(OffsetDateTime::now_utc()),
                     modified: None,
                     withdrawn: None,
@@ -218,6 +222,7 @@ mod test {
                 "8675319",
                 AdvisoryInformation {
                     title: Some("RHSA-2".to_string()),
+                    issuer: Some("Red Hat Product Security".to_string()),
                     published: Some(OffsetDateTime::now_utc()),
                     modified: None,
                     withdrawn: None,
@@ -258,6 +263,11 @@ mod test {
         let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
 
         log::debug!("{:#?}", response);
+
+        assert_eq!(
+            response.clone().path("$.issuer").unwrap(),
+            json!(["Red Hat Product Security"])
+        );
 
         let cvss3_scores = response
             .path("$.vulnerabilities[*].cvss3_scores.*")

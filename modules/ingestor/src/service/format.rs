@@ -19,18 +19,22 @@ impl<'g> Format {
         &self,
         graph: &'g Graph,
         source: &str,
+        issuer: Option<String>,
         reader: R,
     ) -> Result<String, Error> {
         match self {
             Format::CSAF { ref checksum } => {
+                // issuer is internal as publisher of the document.
                 let loader = CsafLoader::new(graph);
                 loader.load(source, reader, checksum).await
             }
             Format::OSV { ref checksum } => {
+                // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
                 let loader = OsvLoader::new(graph);
-                loader.load(source, reader, checksum).await
+                loader.load(source, issuer, reader, checksum).await
             }
             Format::CVE { ref checksum } => {
+                // issuer is always CVE Project
                 let loader = CveLoader::new(graph);
                 loader.load(source, reader, checksum).await
             }

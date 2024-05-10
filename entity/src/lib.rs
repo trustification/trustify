@@ -20,3 +20,5 @@ pub mod sbom_describes_package;
 pub mod sbom_package;
 pub mod vulnerability;
 pub mod vulnerability_description;
+
+pub mod organization;

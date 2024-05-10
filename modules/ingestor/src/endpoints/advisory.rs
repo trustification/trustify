@@ -1,10 +1,20 @@
 use crate::service::{Error, Format, IngestorService};
 use actix_web::{post, web, HttpResponse, Responder};
 use tokio_util::io::ReaderStream;
+use utoipa::IntoParams;
+
+#[derive(
+    IntoParams, Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize,
+)]
+struct UploadParams {
+    /// Optional issuer if it cannot be determined from advisory contents.
+    issuer: Option<String>,
+}
 
 #[utoipa::path(
     tag = "advisory",
-    request_body = Vec <u8>,
+    request_body = Vec < u8 >,
+    params( UploadParams ),
     responses(
         (status = 201, description = "Upload a file"),
         (status = 400, description = "The file could not be parsed as an advisory"),
@@ -14,11 +24,12 @@ use tokio_util::io::ReaderStream;
 /// Upload a new advisory
 pub async fn upload_advisory(
     service: web::Data<IngestorService>,
+    web::Query(UploadParams { issuer }): web::Query<UploadParams>,
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
     let fmt = Format::from_bytes(&bytes)?;
     let payload = ReaderStream::new(&*bytes);
-    let advisory_id = service.ingest("rest-api", fmt, payload).await?;
+    let advisory_id = service.ingest("rest-api", issuer, fmt, payload).await?;
     Ok(HttpResponse::Created().json(advisory_id))
 }
 
