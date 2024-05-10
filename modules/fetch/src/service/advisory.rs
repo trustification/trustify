@@ -5,7 +5,7 @@ use crate::model::advisory::{
 };
 use crate::model::vulnerability::{VulnerabilityDetails, VulnerabilityHead, VulnerabilitySummary};
 use crate::query::{Query, SearchOptions};
-use sea_orm::{ColumnTrait, EntityTrait, LoaderTrait, QueryFilter};
+use sea_orm::{ColumnTrait, EntityTrait, LoaderTrait, ModelTrait, QueryFilter};
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
@@ -18,7 +18,8 @@ use trustify_cvss::cvss3::score::Score;
 use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity::{
     advisory, advisory_vulnerability, affected_package_version_range, cvss3, fixed_package_version,
-    not_affected_package_version, package, package_version, package_version_range, vulnerability,
+    not_affected_package_version, organization, package, package_version, package_version_range,
+    vulnerability,
 };
 
 pub enum AdvisoryKey {
@@ -35,10 +36,15 @@ impl super::FetchService {
     ) -> Result<Vec<AdvisoryHead>, Error> {
         let mut heads = Vec::new();
 
-        for advisory in advisories.iter() {
+        let issuers = advisories
+            .load_one(organization::Entity, &self.db.connection(&tx))
+            .await?;
+
+        for (advisory, issuer) in advisories.iter().zip(issuers) {
             heads.push(AdvisoryHead {
                 identifier: advisory.identifier.clone(),
                 sha256: advisory.sha256.clone(),
+                issuer: issuer.map(|inner| inner.name),
                 published: advisory.published,
                 modified: advisory.modified,
                 withdrawn: advisory.withdrawn,
@@ -296,9 +302,17 @@ impl super::FetchService {
             )
             .await?;
 
+        let mut issusers = advisories
+            .load_one(organization::Entity, &self.db.connection(&tx))
+            .await?;
+
         let mut summaries = Vec::new();
 
-        for (advisory, mut vuln) in advisories.iter().zip(vulns.drain(..)) {
+        for ((advisory, mut vuln), issuser) in advisories
+            .iter()
+            .zip(vulns.drain(..))
+            .zip(issusers.drain(..))
+        {
             let vulnerabilities = self
                 .advisory_vulnerability_heads(advisory.id, &vuln, &tx)
                 .await?;
@@ -307,6 +321,7 @@ impl super::FetchService {
                 head: AdvisoryHead {
                     identifier: advisory.identifier.clone(),
                     sha256: advisory.sha256.clone(),
+                    issuer: issuser.map(|inner| inner.name),
                     published: advisory.published,
                     modified: advisory.modified,
                     withdrawn: advisory.withdrawn,
@@ -370,10 +385,16 @@ impl super::FetchService {
             .advisory_vulnerability_summaries(advisory.id, &vulnerabilities, &tx)
             .await?;
 
+        let issuer = advisory
+            .find_related(organization::Entity)
+            .one(&self.db.connection(&tx))
+            .await?;
+
         Ok(Some(AdvisoryDetails {
             head: AdvisoryHead {
                 identifier: advisory.identifier,
                 sha256: advisory.sha256,
+                issuer: issuer.map(|inner| inner.name),
                 published: advisory.published,
                 modified: advisory.modified,
                 withdrawn: advisory.withdrawn,
@@ -418,6 +439,7 @@ mod test {
                 "8675309",
                 AdvisoryInformation {
                     title: Some("RHSA-1".to_string()),
+                    issuer: None,
                     published: Some(OffsetDateTime::now_utc()),
                     modified: None,
                     withdrawn: None,
@@ -451,6 +473,7 @@ mod test {
                 "8675319",
                 AdvisoryInformation {
                     title: Some("RHSA-2".to_string()),
+                    issuer: None,
                     published: Some(OffsetDateTime::now_utc()),
                     modified: None,
                     withdrawn: None,
@@ -480,6 +503,7 @@ mod test {
                 "8675309",
                 AdvisoryInformation {
                     title: Some("RHSA-1".to_string()),
+                    issuer: None,
                     published: Some(OffsetDateTime::now_utc()),
                     modified: None,
                     withdrawn: None,
@@ -520,6 +544,7 @@ mod test {
                 "8675319",
                 AdvisoryInformation {
                     title: Some("RHSA-2".to_string()),
+                    issuer: None,
                     published: Some(OffsetDateTime::now_utc()),
                     modified: None,
                     withdrawn: None,

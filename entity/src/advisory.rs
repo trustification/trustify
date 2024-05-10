@@ -1,6 +1,6 @@
 use crate::{
     advisory_vulnerability, affected_package_version_range, cvss3, fixed_package_version,
-    not_affected_package_version, vulnerability,
+    not_affected_package_version, organization, vulnerability,
 };
 use sea_orm::entity::prelude::*;
 use time::OffsetDateTime;
@@ -11,6 +11,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
     pub identifier: String,
+    pub issuer_id: Option<i32>,
     pub location: String,
     pub sha256: String,
     pub published: Option<OffsetDateTime>,
@@ -21,6 +22,12 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(
+        belongs_to = "super::organization::Entity"
+        from = "Column::IssuerId"
+        to = "super::organization::Column::Id")]
+    Issuer,
+
     #[sea_orm(has_many = "super::cvss3::Entity")]
     Cvss3,
 
@@ -32,6 +39,12 @@ pub enum Relation {
 
     #[sea_orm(has_many = "super::not_affected_package_version::Entity")]
     NotAffectedPackageVersion,
+}
+
+impl Related<organization::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Issuer.def()
+    }
 }
 
 impl Related<vulnerability::Entity> for Entity {

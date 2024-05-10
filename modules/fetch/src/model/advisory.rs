@@ -13,6 +13,7 @@ use utoipa::ToSchema;
 pub struct AdvisoryHead {
     pub identifier: String,
     pub sha256: String,
+    pub issuer: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
     pub published: Option<OffsetDateTime>,

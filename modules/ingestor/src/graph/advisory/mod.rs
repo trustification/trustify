@@ -22,9 +22,20 @@ pub mod not_affected_package_version;
 #[derive(Clone, Default)]
 pub struct AdvisoryInformation {
     pub title: Option<String>,
+    pub issuer: Option<String>,
     pub published: Option<OffsetDateTime>,
     pub modified: Option<OffsetDateTime>,
     pub withdrawn: Option<OffsetDateTime>,
+}
+
+impl AdvisoryInformation {
+    pub fn has_data(&self) -> bool {
+        self.title.is_some()
+            || self.issuer.is_some()
+            || self.published.is_some()
+            || self.modified.is_some()
+            || self.withdrawn.is_some()
+    }
 }
 
 impl From<()> for AdvisoryInformation {
@@ -68,29 +79,34 @@ impl Graph {
         let identifier = identifier.into();
         let location = location.into();
         let sha256 = sha256.into();
+        let information = information.into();
 
-        if let Some(found) = self.get_advisory(&sha256, tx).await? {
+        if let Some(found) = self.get_advisory(&sha256, &tx).await? {
             return Ok(found);
         }
 
-        let AdvisoryInformation {
-            title,
-            published,
-            modified,
-            ..
-        } = information.into();
-
-        let model = entity::advisory::ActiveModel {
-            identifier: Set(identifier),
-            location: Set(location),
-            sha256: Set(sha256),
-            title: Set(title),
-            published: Set(published),
-            modified: Set(modified),
-            ..Default::default()
+        let organization = if let Some(issuer) = information.issuer {
+            Some(self.ingest_organization(issuer, (), &tx).await?)
+        } else {
+            None
         };
 
-        Ok(AdvisoryContext::new(self, model.insert(&self.db).await?))
+        let model = entity::advisory::ActiveModel {
+            id: Default::default(),
+            identifier: Set(identifier),
+            issuer_id: Set(organization.map(|org| org.organization.id)),
+            location: Set(location),
+            sha256: Set(sha256),
+            title: Set(information.title),
+            published: Set(information.published),
+            modified: Set(information.modified),
+            withdrawn: Default::default(),
+        };
+
+        Ok(AdvisoryContext::new(
+            self,
+            model.insert(&self.connection(&tx)).await?,
+        ))
     }
 }
 

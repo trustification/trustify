@@ -11,6 +11,8 @@ pub mod package;
 pub mod sbom;
 pub mod vulnerability;
 
+pub mod organization;
+
 #[derive(Debug, Clone)]
 pub struct Graph {
     db: trustify_common::db::Database,
