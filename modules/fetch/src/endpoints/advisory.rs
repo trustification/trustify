@@ -57,12 +57,13 @@ mod test {
     use actix_web::dev::{Service, ServiceResponse};
     use actix_web::test::TestRequest;
     use actix_web::{App, Error};
-    use serde_json::Value;
+    use serde_json::{json, Value};
     use std::str::FromStr;
     use test_context::test_context;
     use test_log::test;
     use time::OffsetDateTime;
 
+    use jsonpath_rust::{JsonPathFinder, JsonPathInst, JsonPathQuery, JsonPathValue};
     use trustify_common::db::test::TrustifyContext;
     use trustify_common::model::PaginatedResults;
     use trustify_common::purl::Purl;
@@ -75,7 +76,8 @@ mod test {
         graph::advisory::AdvisoryInformation, service::IngestorService,
     };
 
-    use crate::model::advisory::{AdvisoryDetails, AdvisorySummary};
+    use crate::model::advisory::{AdvisoryDetails, AdvisorySummary, AdvisoryVulnerabilitySummary};
+    use crate::model::vulnerability::VulnerabilitySummary;
 
     async fn query<S, B>(app: &S, q: &str) -> PaginatedResults<AdvisorySummary>
     where
@@ -255,24 +257,30 @@ mod test {
 
         let request = TestRequest::get().uri(uri).to_request();
 
-        /*
-        let response: Value =
-            actix_web::test::call_and_read_body_json(&app, request).await;
-
-        println!("{:#?}", response);
-
-         */
-
-        let response: AdvisoryDetails =
-            actix_web::test::call_and_read_body_json(&app, request).await;
+        let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
 
         log::debug!("{:#?}", response);
 
-        assert_eq!(1, response.vulnerabilities.len());
+        let cvss3_scores = response
+            .path("$.vulnerabilities[*].cvss3_scores.*")
+            .unwrap();
 
-        let vuln = &response.vulnerabilities[0];
+        log::debug!("{:#?}", cvss3_scores);
 
-        assert_eq!(1, vuln.cvss3_scores.len());
+        assert_eq!(
+            cvss3_scores,
+            json!(["CVSS:3.0/AV:N/AC:L/PR:H/UI:N/S:C/C:H/I:N/A:N"])
+        );
+
+        let uri = "/api/v1/advisory/8675309";
+
+        let request = TestRequest::get().uri(uri).to_request();
+
+        let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
+
+        let vulns = response.path("$.vulnerabilities").unwrap();
+
+        assert_eq!(vulns, json!([[]]));
 
         Ok(())
     }

@@ -37,8 +37,9 @@ utoipa = { workspace = true, features = ["actix_extras"] }
 
 [dev-dependencies]
 chrono = { workspace = true }
-humantime = "2"
-rust-lzma = "0.6"
+humantime = { workspace = true }
+jsonpath-rust = { workspace = true }
+rust-lzma = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }
