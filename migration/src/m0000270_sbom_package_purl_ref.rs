@@ -26,12 +26,6 @@ impl MigrationTrait for Migration {
                             .uuid()
                             .not_null(),
                     )
-                    .primary_key(
-                        Index::create()
-                            .col(SbomPackagePurlRef::SbomId)
-                            .col(SbomPackagePurlRef::QualifiedPackageId)
-                            .primary(),
-                    )
                     .foreign_key(
                         ForeignKey::create()
                             .from(
@@ -51,6 +45,13 @@ impl MigrationTrait for Migration {
                                 SbomPackagePurlRef::QualifiedPackageId,
                             )
                             .to(QualifiedPackage::Table, QualifiedPackage::Id),
+                    )
+                    .primary_key(
+                        Index::create()
+                            .col(SbomPackagePurlRef::SbomId)
+                            .col(SbomPackagePurlRef::NodeId)
+                            .col(SbomPackagePurlRef::QualifiedPackageId)
+                            .primary(),
                     )
                     .to_owned(),
             )

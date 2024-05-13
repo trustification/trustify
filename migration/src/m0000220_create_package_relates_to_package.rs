@@ -1,5 +1,4 @@
-use crate::m0000030_create_sbom::Sbom;
-use crate::m0000130_create_qualified_package::QualifiedPackage;
+use crate::m0000030_create_sbom::{Sbom, SbomNode};
 use crate::m0000210_create_relationship::Relationship;
 use sea_orm_migration::prelude::*;
 
@@ -16,14 +15,20 @@ impl MigrationTrait for Migration {
                     .table(PackageRelatesToPackage::Table)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(PackageRelatesToPackage::LeftPackageId)
-                            .uuid()
+                        ColumnDef::new(PackageRelatesToPackage::LeftNodeId)
+                            .string()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .from_col(PackageRelatesToPackage::LeftPackageId)
-                            .to(QualifiedPackage::Table, QualifiedPackage::Id),
+                            .from(
+                                PackageRelatesToPackage::Table,
+                                (
+                                    PackageRelatesToPackage::SbomId,
+                                    PackageRelatesToPackage::LeftNodeId,
+                                ),
+                            )
+                            .to(SbomNode::Table, (SbomNode::SbomId, SbomNode::NodeId)),
                     )
                     .col(
                         ColumnDef::new(PackageRelatesToPackage::Relationship)
@@ -36,14 +41,20 @@ impl MigrationTrait for Migration {
                             .to(Relationship::Table, Relationship::Id),
                     )
                     .col(
-                        ColumnDef::new(PackageRelatesToPackage::RightPackageId)
-                            .uuid()
+                        ColumnDef::new(PackageRelatesToPackage::RightNodeId)
+                            .string()
                             .not_null(),
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .from_col(PackageRelatesToPackage::RightPackageId)
-                            .to(QualifiedPackage::Table, QualifiedPackage::Id),
+                            .from(
+                                PackageRelatesToPackage::Table,
+                                (
+                                    PackageRelatesToPackage::SbomId,
+                                    PackageRelatesToPackage::RightNodeId,
+                                ),
+                            )
+                            .to(SbomNode::Table, (SbomNode::SbomId, SbomNode::NodeId)),
                     )
                     .col(
                         ColumnDef::new(PackageRelatesToPackage::SbomId)
@@ -57,10 +68,10 @@ impl MigrationTrait for Migration {
                     )
                     .primary_key(
                         Index::create()
-                            .col(PackageRelatesToPackage::LeftPackageId)
+                            .col(PackageRelatesToPackage::SbomId)
+                            .col(PackageRelatesToPackage::LeftNodeId)
                             .col(PackageRelatesToPackage::Relationship)
-                            .col(PackageRelatesToPackage::RightPackageId)
-                            .col(PackageRelatesToPackage::SbomId),
+                            .col(PackageRelatesToPackage::RightNodeId),
                     )
                     .to_owned(),
             )
@@ -81,8 +92,8 @@ impl MigrationTrait for Migration {
 #[derive(DeriveIden)]
 pub enum PackageRelatesToPackage {
     Table,
-    LeftPackageId,
+    LeftNodeId,
     Relationship,
-    RightPackageId,
+    RightNodeId,
     SbomId,
 }

@@ -11,6 +11,8 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(has_one = "super::sbom_node::Entity")]
+    Node,
     #[sea_orm(
         belongs_to = "super::sbom::Entity",
         from = "Column::SbomId",
@@ -29,6 +31,12 @@ pub enum Relation {
         to = "(super::sbom_package_cpe_ref::Column::SbomId, super::sbom_package_cpe_ref::Column::NodeId)"
     )]
     Cpe,
+}
+
+impl Related<super::sbom_node::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Node.def()
+    }
 }
 
 impl Related<super::sbom::Entity> for Entity {

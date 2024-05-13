@@ -12,4 +12,3 @@ trustify-ui = { workspace = true, optional = true }
 [features]
 default = [ "ui" ]
 ui = ["trustify-ui"]
-

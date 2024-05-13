@@ -19,12 +19,20 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(has_many = "super::sbom_package::Entity")]
-    Package,
+    Packages,
+    #[sea_orm(has_one = "super::sbom_node::Entity")]
+    Node,
 }
 
 impl Related<super::sbom_package::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Package.def()
+        Relation::Packages.def()
+    }
+}
+
+impl Related<super::sbom_node::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Node.def()
     }
 }
 

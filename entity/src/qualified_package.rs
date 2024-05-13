@@ -12,7 +12,7 @@ pub struct Model {
 }
 
 #[derive(
-    Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, FromJsonQueryResult,
+    Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize, FromJsonQueryResult,
 )]
 pub struct Qualifiers(pub BTreeMap<String, String>);
 

@@ -1,10 +1,19 @@
-use cpe::cpe::Cpe as _;
-use cpe::uri::{OwnedUri, Uri};
-use std::fmt::{Debug, Formatter};
+use cpe::{
+    cpe::Cpe as _,
+    uri::{OwnedUri, Uri},
+};
+use std::fmt::{Debug, Display, Formatter};
+use std::str::FromStr;
 
 #[derive(Clone)]
 pub struct Cpe {
-    uri: cpe::uri::OwnedUri,
+    uri: OwnedUri,
+}
+
+impl Display for Cpe {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self.uri, f)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -85,5 +94,15 @@ impl From<Uri<'_>> for Cpe {
 impl From<OwnedUri> for Cpe {
     fn from(uri: OwnedUri) -> Self {
         Self { uri }
+    }
+}
+
+impl FromStr for Cpe {
+    type Err = <OwnedUri as FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self {
+            uri: OwnedUri::from_str(s)?,
+        })
     }
 }

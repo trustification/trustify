@@ -1,3 +1,5 @@
+mod func;
+
 pub mod chunk;
 pub mod limiter;
 pub mod test;
@@ -14,6 +16,8 @@ use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 use tempfile::TempDir;
 use tracing::instrument;
+
+pub use func::*;
 
 pub enum Transactional {
     None,

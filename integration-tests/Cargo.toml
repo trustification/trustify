@@ -14,6 +14,7 @@ trustify-module-importer = { workspace = true }
 trustify-module-storage = { workspace = true }
 
 anyhow = { workspace = true }
+cpe = { workspace = true }
 humantime = { workspace = true }
 log = { workspace = true }
 rust-lzma = { workspace = true }
@@ -23,3 +24,4 @@ tracing = { workspace = true }
 [dev-dependencies]
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
+spdx-rs = { workspace = true }

@@ -1,14 +1,44 @@
 use super::open_sbom_xz;
+use spdx_rs::models::SPDX;
+use std::collections::HashSet;
 use std::time::Instant;
 use test_context::test_context;
 use test_log::test;
 use tracing::{info_span, instrument, Instrument};
 use trustify_common::db::{test::TrustifyContext, Transactional};
+use trustify_common::model::Paginated;
+use trustify_module_fetch::model::sbom::SbomPackage;
 use trustify_module_fetch::service::FetchService;
 use trustify_module_ingestor::graph::{
     sbom::spdx::{parse_spdx, Information},
     Graph,
 };
+
+/// remove all relationships having broken references
+fn fix_rels(mut spdx: SPDX) -> SPDX {
+    let mut ids = spdx
+        .package_information
+        .iter()
+        .map(|p| &p.package_spdx_identifier)
+        .collect::<HashSet<_>>();
+
+    ids.insert(&spdx.document_creation_information.spdx_identifier);
+
+    spdx.relationships.retain(|rel| {
+        let r = ids.contains(&rel.spdx_element_id) && ids.contains(&rel.related_spdx_element);
+        if !r {
+            log::warn!(
+                "Dropping - left: {}, rel: {:?}, right: {}",
+                rel.spdx_element_id,
+                rel.relationship_type,
+                rel.related_spdx_element
+            );
+        }
+        r
+    });
+
+    spdx
+}
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
@@ -24,6 +54,14 @@ async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let start = Instant::now();
     let (spdx, _) = info_span!("parse json").in_scope(|| parse_spdx(sbom))?;
     let parse_time = start.elapsed();
+
+    // bad data: we need to clean out some relations in the SBOM due do brocken references
+    let spdx = fix_rels(spdx);
+
+    log::warn!(
+        "describes: {:?}",
+        spdx.document_creation_information.document_describes
+    );
 
     // start transaction
 
@@ -63,17 +101,29 @@ async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
         log::info!("{:#?}", described);
         assert_eq!(1, described.items.len());
+        assert_eq!(
+            described.items[0],
+            SbomPackage {
+                id: "SPDXRef-5fbf9e8d-2f8f-4cfe-a145-b69a1f7d73cc".to_string(),
+                name: "RHEL-8-RHOCS-4.8".to_string(),
+                purl: vec![],
+                cpe: vec!["cpe:/a:redhat:openshift_container_storage:4.8:*:el8:*".into()],
+            }
+        );
 
         let packages = fetch
             .fetch_sbom_packages(
                 sbom.sbom.sbom_id,
                 Default::default(),
-                Default::default(),
-                false,
+                Paginated {
+                    offset: 0,
+                    limit: 1,
+                },
                 (),
             )
             .await?;
-        assert_eq!(7992, packages.total);
+        assert_eq!(1, packages.items.len());
+        assert_eq!(7994, packages.total);
 
         Ok::<_, anyhow::Error>(())
     }
