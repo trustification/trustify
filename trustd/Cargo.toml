@@ -8,7 +8,7 @@ name = "trustd"
 path = "src/main.rs"
 
 [dependencies]
-trustify-server = { workspace = true }
+trustify-server = { workspace = true, default-features = false }
 trustify-common = { workspace = true }
 trustify-infrastructure = { workspace = true }
 trustify-auth = { workspace = true }
@@ -19,3 +19,7 @@ postgresql_embedded = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
+
+[features]
+default = [ "ui" ]
+ui = ["trustify-server/ui"]

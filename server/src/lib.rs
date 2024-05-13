@@ -28,20 +28,16 @@ use trustify_common::{
     config::{Database, StorageConfig},
     db,
 };
-use trustify_infrastructure::{
-    app::http::{HttpServerBuilder, HttpServerConfig},
-    endpoint::Trustify,
-    health::checks::{Local, Probe},
-    tracing::Tracing,
-    Infrastructure, InfrastructureConfig, InitContext, Metrics,
-};
+use trustify_infrastructure::{app::http::{HttpServerBuilder, HttpServerConfig}, endpoint::Trustify, health::checks::{Local, Probe}, tracing::Tracing, Infrastructure, InfrastructureConfig, InitContext, Metrics};
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use trustify_module_storage::service::fs::FileSystemBackend;
-use trustify_module_ui::UI;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
+
+#[cfg(feature = "ui")]
+use trustify_module_ui::UI;
 
 /// Run the API server
 #[derive(clap::Args, Debug)]
@@ -80,6 +76,7 @@ struct InitData {
     http: HttpServerConfig<Trustify>,
     tracing: Tracing,
     swagger_oidc: Option<Arc<SwaggerUiOidc>>,
+    #[cfg(feature = "ui")]
     ui: UI,
 }
 
@@ -149,8 +146,9 @@ impl InitData {
 
         let storage = DispatchBackend::Filesystem(FileSystemBackend::new(storage).await?);
 
-        // TODO: where/how should we configure these details?
+        #[cfg(feature = "ui")]
         let ui = UI {
+            // TODO: where/how should we configure these details?
             version: env!("CARGO_PKG_VERSION").to_string(),
             auth_required: String::from("false"),
             oidc_server_url: String::from("http://localhost:8180/realms/trustify"),
@@ -169,6 +167,7 @@ impl InitData {
             tracing: run.infra.tracing,
             swagger_oidc,
             storage,
+            #[cfg(feature = "ui")]
             ui,
         })
     }
@@ -200,6 +199,7 @@ impl InitData {
                                 storage.clone(),
                             );
                             trustify_module_fetch::endpoints::configure(svc, db.clone());
+                            #[cfg(feature = "ui")]
                             trustify_module_ui::endpoints::configure(svc, &self.ui);
                             trustify_module_storage::endpoints::configure(svc, storage.clone());
                         });

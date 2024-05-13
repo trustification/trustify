@@ -32,3 +32,7 @@ walker-common = { workspace = true }
 
 [dev-dependencies]
 urlencoding = { workspace = true }
+
+[features]
+default = [ "ui" ]
+ui = ["trustify-module-ui/ui"]
