@@ -12,10 +12,8 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(SbomPackage::Table)
                     .if_not_exists()
-                    /*
-                    .col(ColumnDef::new(SbomPackage::SbomId).integer().not_null())
+                    .col(ColumnDef::new(SbomPackage::SbomId).uuid().not_null())
                     .col(ColumnDef::new(SbomPackage::NodeId).string().not_null())
-                    .col(ColumnDef::new(SbomPackage::Name).string().not_null())
                     .primary_key(
                         Index::create()
                             .col(SbomPackage::SbomId)
@@ -23,11 +21,13 @@ impl MigrationTrait for Migration {
                     )
                     .foreign_key(
                         ForeignKey::create()
-                            .from_col(SbomPackage::SbomId)
-                            .to(Sbom::Table, Sbom::SbomId)
+                            .from(
+                                SbomPackage::Table,
+                                (SbomPackage::SbomId, SbomPackage::NodeId),
+                            )
+                            .to(SbomNode::Table, (SbomNode::SbomId, SbomNode::NodeId))
                             .on_delete(ForeignKeyAction::Cascade),
-                    )*/
-                    .extra(format!("INHERITS({})", SbomNode::Table.to_string()))
+                    )
                     .to_owned(),
             )
             .await?;
@@ -51,7 +51,6 @@ impl MigrationTrait for Migration {
 #[derive(DeriveIden)]
 pub enum SbomPackage {
     Table,
-    //SbomId,
-    //NodeId,
-    //Name,
+    SbomId,
+    NodeId,
 }

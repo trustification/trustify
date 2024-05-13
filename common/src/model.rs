@@ -90,10 +90,13 @@ pub struct PaginatedResults<R> {
 
 impl<R> PaginatedResults<R> {
     /// Create a new paginated result
-    pub async fn new<C, S>(limiter: Limiter<'_, C, S>) -> Result<PaginatedResults<S::Item>, DbErr>
+    pub async fn new<C, S1, S2>(
+        limiter: Limiter<'_, C, S1, S2>,
+    ) -> Result<PaginatedResults<S1::Item>, DbErr>
     where
         C: ConnectionTrait,
-        S: SelectorTrait,
+        S1: SelectorTrait,
+        S2: SelectorTrait,
     {
         let total = limiter.total().await?;
         let results = limiter.fetch().await?;

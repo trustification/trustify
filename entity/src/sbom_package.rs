@@ -4,7 +4,7 @@ use sea_orm::entity::prelude::*;
 #[sea_orm(table_name = "sbom_package")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub sbom_id: i32,
+    pub sbom_id: Uuid,
     #[sea_orm(primary_key)]
     pub node_id: String,
 }
@@ -14,7 +14,7 @@ pub enum Relation {
     #[sea_orm(
         belongs_to = "super::sbom::Entity",
         from = "Column::SbomId",
-        to = "super::sbom::Column::Id"
+        to = "super::sbom::Column::SbomId"
     )]
     Sbom,
     #[sea_orm(

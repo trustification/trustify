@@ -7,13 +7,18 @@ use crate::{
         sbom::{SbomPackage, SbomPackageRelation, SbomSummary},
     },
 };
+use sea_orm::prelude::Uuid;
 use sea_orm::{
-    ColumnTrait, ConnectionTrait, EntityTrait, LoaderTrait, QueryFilter, QueryOrder, QuerySelect,
-    RelationTrait, Select, SelectorTrait,
+    ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, IntoSimpleExpr, LoaderTrait,
+    QueryFilter, QueryOrder, QuerySelect, QueryTrait, RelationTrait, Select, SelectorTrait,
 };
-use sea_query::{Alias, Expr, IntoColumnRef, IntoTableRef, JoinType};
+use sea_query::SimpleExpr::FunctionCall;
+use sea_query::{Alias, Expr, Func, Iden, IntoColumnRef, IntoTableRef, JoinType, SimpleExpr};
+use std::fmt::Write;
 use std::iter::{repeat, Flatten, Zip};
 use std::vec::IntoIter;
+use trustify_common::db::limiter;
+use trustify_common::db::limiter::limit_selector;
 use trustify_common::{
     db::{
         limiter::{Limiter, LimiterTrait},
@@ -24,8 +29,27 @@ use trustify_common::{
 };
 use trustify_entity::{
     package, package_relates_to_package, package_version, qualified_package,
-    relationship::Relationship, sbom, sbom_package,
+    relationship::Relationship, sbom, sbom_package, sbom_package_purl_ref,
 };
+use utoipa::openapi::path::ParameterStyle::Simple;
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub enum SbomPackageReference<'a> {
+    Root,
+    Package(&'a str),
+}
+
+impl<'a> From<&'a str> for SbomPackageReference<'a> {
+    fn from(value: &'a str) -> Self {
+        Self::Package(value)
+    }
+}
+
+impl<'a> From<()> for SbomPackageReference<'a> {
+    fn from(value: ()) -> Self {
+        Self::Root
+    }
+}
 
 #[derive(Clone, Eq, PartialEq, Default, Debug, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -59,11 +83,11 @@ impl FetchService {
         let mut items = Vec::new();
         for sbom in sboms {
             items.push(SbomSummary {
-                id: sbom.id,
+                id: sbom.sbom_id,
                 sha256: sbom.sha256,
                 document_id: sbom.document_id,
 
-                title: sbom.title,
+                name: sbom.name,
                 published: sbom.published,
                 authors: sbom.authors,
             })
@@ -75,7 +99,7 @@ impl FetchService {
     /// fetch all packages from an SBOM
     pub async fn fetch_sbom_packages<TX: AsRef<Transactional>>(
         &self,
-        sbom_id: i32,
+        sbom_id: Uuid,
         search: SearchOptions,
         paginated: Paginated,
         root: bool,
@@ -83,18 +107,50 @@ impl FetchService {
     ) -> Result<PaginatedResults<SbomPackage>, Error> {
         let connection = self.db.connection(&tx);
 
+        #[derive(FromQueryResult)]
+        struct Row {
+            id: String,
+            name: String,
+            purls: Vec<String>,
+            // FIXME: cpes: Vec<String>,
+        }
+
+        struct ArrayAgg;
+        impl Iden for ArrayAgg {
+            #[allow(clippy::unwrap_used)]
+            fn unquoted(&self, s: &mut dyn Write) {
+                s.write_str("array_agg").unwrap();
+            }
+        }
+
         // TODO: select all sbom_packages, maybe then load purls and cpes
-        let mut query = qualified_package::Entity::find()
-            .join(JoinType::Join, sbom_package::Relation::Package.def().rev())
-            .join(
-                JoinType::Join,
-                qualified_package::Relation::PackageVersion.def(),
+        let mut query = sbom_package::Entity::find()
+            .select_only()
+            .column_as(sbom_package::Column::NodeId, "id")
+            .column_as(sbom_package::Column::Name, "name")
+            .column_as(
+                SimpleExpr::from(
+                    Func::cust(ArrayAgg)
+                        .arg(sbom_package_purl_ref::Column::QualifiedPackageId.into_expr()),
+                ),
+                "purls",
             )
-            .join(JoinType::Join, package_version::Relation::Package.def())
+            .join(JoinType::Join, sbom_package::Relation::Purl.def().rev())
             .filter(sbom_package::Column::SbomId.eq(sbom_id))
-            .filtering(search)?;
+            .filtering(search)?
+            .order_by_asc(sbom_package::Column::Name);
+
+        /*
+        .join(
+            JoinType::Join,
+            qualified_package::Relation::PackageVersion.def(),
+        )
+        .join(JoinType::Join, package_version::Relation::Package.def())
+        .filter(sbom_package::Column::SbomId.eq(sbom_id))
+        .filtering(search)?;*/
 
         // TODO: we might reconsider this, root level stuff can be found using document id ref
+        /*
         if root {
             // limit to root level packages
             query = query
@@ -104,15 +160,28 @@ impl FetchService {
                 )
                 // limit no-relationship
                 .filter(package_relates_to_package::Column::LeftPackageId.is_null());
-        }
+        }*/
 
-        let query = default_sort(query);
+        // let query = default_sort(query);
 
-        let limiter = query.limiting(&connection, paginated.offset, paginated.limit);
+        let limiter =
+            limit_selector::<'_, _, _, _, Row>(&self.db, query, paginated.offset, paginated.limit);
+        // let limiter = query.limiting(query);
 
         let total = limiter.total().await?;
-        let qualified = limiter.fetch().await?;
+        let packages = limiter.fetch().await?;
 
+        let items = packages
+            .into_iter()
+            .map(|row| SbomPackage {
+                id: row.id,
+                name: row.name,
+                purl: row.purls,
+                cpe: vec![],
+            })
+            .collect();
+
+        /*
         let items = purl_result(
             &connection,
             qualified,
@@ -123,19 +192,39 @@ impl FetchService {
             },
         )
         .await?;
+        */
 
         Ok(PaginatedResults { items, total })
+    }
+
+    pub async fn describes_packages<TX: AsRef<Transactional>>(
+        &self,
+        sbom_id: Uuid,
+        paginated: Paginated,
+        tx: TX,
+    ) -> Result<PaginatedResults<SbomPackage>, Error> {
+        self.fetch_related_packages(
+            sbom_id,
+            Default::default(),
+            paginated,
+            Which::Left,
+            SbomPackageReference::Root,
+            Some(Relationship::DescribedBy),
+            tx,
+        )
+        .await
+        .map(|r| r.map(|rel| rel.package))
     }
 
     /// fetch all packages from an SBOM
     #[allow(clippy::too_many_arguments)]
     pub async fn fetch_related_packages<TX: AsRef<Transactional>>(
         &self,
-        sbom_id: i32,
+        sbom_id: Uuid,
         search: SearchOptions,
         paginated: Paginated,
         which: Which,
-        reference: Purl,
+        reference: impl Into<SbomPackageReference<'_>>,
         relationship: Option<Relationship>,
         tx: TX,
     ) -> Result<PaginatedResults<SbomPackageRelation>, Error> {
@@ -168,14 +257,14 @@ impl FetchService {
             // limit by sbom
             .filter(package_relates_to_package::Column::SbomId.eq(sbom_id))
             // limit by "which" side package
-            .filter(filter.eq(reference.qualifier_uuid()))
+            // FIXME: .filter(filter.eq(reference.qualifier_uuid()))
             .filtering(search)?;
 
         if let Some(relationship) = relationship {
             query = query.filter(package_relates_to_package::Column::Relationship.eq(relationship));
         }
 
-        let query = default_sort(query);
+        // FIXME: let query = default_sort(query);
         let query = query.select_also(package_relates_to_package::Entity);
 
         let limiter = query.limiting(&connection, paginated.offset, paginated.limit);
@@ -190,7 +279,14 @@ impl FetchService {
             |package, version, qualified, rel| {
                 let purl = into_purl(package, version, qualified).to_string();
                 SbomPackageRelation {
-                    package: purl.to_string(),
+                    // package: purl.to_string(),
+                    // FIXME: implement
+                    package: SbomPackage {
+                        id: "id".into(),
+                        name: "name".into(),
+                        purl: vec![],
+                        cpe: vec![],
+                    },
                     relationship: rel.relationship,
                 }
             },
@@ -199,15 +295,28 @@ impl FetchService {
 
         Ok(PaginatedResults { items, total })
     }
-}
 
-/// apply default sort order, by purl
-fn default_sort(query: Select<qualified_package::Entity>) -> Select<qualified_package::Entity> {
-    query
-        .order_by_asc(package::Column::Type)
-        .order_by_asc(package::Column::Name)
-        .order_by_asc(package_version::Column::Version)
-        .order_by_asc(qualified_package::Column::Id)
+    pub async fn related_packages<TX: AsRef<Transactional>>(
+        &self,
+        sbom_id: Uuid,
+        relationship: Relationship,
+        pkg: impl Into<SbomPackageReference<'_>>,
+        tx: TX,
+    ) -> Result<Vec<SbomPackage>, Error> {
+        let result = self
+            .fetch_related_packages(
+                sbom_id,
+                Default::default(),
+                Default::default(),
+                Which::Left,
+                pkg,
+                Some(relationship),
+                tx,
+            )
+            .await?;
+
+        Ok(result.items.into_iter().map(|r| r.package).collect())
+    }
 }
 
 fn into_purl(
@@ -329,8 +438,8 @@ mod test {
             )
             .await?;
 
-        assert_eq!(sbom_v1.sbom.id, sbom_v1_again.sbom.id);
-        assert_ne!(sbom_v1.sbom.id, sbom_v2.sbom.id);
+        assert_eq!(sbom_v1.sbom.sbom_id, sbom_v1_again.sbom.sbom_id);
+        assert_ne!(sbom_v1.sbom.sbom_id, sbom_v2.sbom.sbom_id);
 
         let fetch = FetchService::new(db);
 

@@ -1,17 +1,21 @@
 use super::open_sbom_xz;
-use crate::graph::sbom::spdx::{parse_spdx, Information};
-use crate::graph::Graph;
 use std::time::Instant;
 use test_context::test_context;
 use test_log::test;
 use tracing::{info_span, instrument, Instrument};
 use trustify_common::db::{test::TrustifyContext, Transactional};
+use trustify_module_fetch::service::FetchService;
+use trustify_module_ingestor::graph::{
+    sbom::spdx::{parse_spdx, Information},
+    Graph,
+};
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
 #[instrument]
 async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let system = Graph::new(ctx.db);
+    let system = Graph::new(ctx.db.clone());
+    let fetch = FetchService::new(ctx.db);
 
     let sbom = open_sbom_xz("openshift-container-storage-4.8.z.json.xz")?;
 
@@ -53,14 +57,23 @@ async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let start = Instant::now();
 
     async {
-        let described_cpe222 = sbom.describes_cpe22s(Transactional::None).await?;
-        assert_eq!(1, described_cpe222.len());
+        let described = fetch
+            .describes_packages(sbom.sbom.sbom_id, Default::default(), ())
+            .await?;
 
-        let described_packages = sbom.describes_packages(Transactional::None).await?;
-        log::info!("{:#?}", described_packages);
+        log::info!("{:#?}", described);
+        assert_eq!(1, described.items.len());
 
-        let packages = sbom.packages(Transactional::None).await?;
-        assert_eq!(7992, packages.len());
+        let packages = fetch
+            .fetch_sbom_packages(
+                sbom.sbom.sbom_id,
+                Default::default(),
+                Default::default(),
+                false,
+                (),
+            )
+            .await?;
+        assert_eq!(7992, packages.total);
 
         Ok::<_, anyhow::Error>(())
     }
@@ -84,7 +97,8 @@ async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test(tokio::test)]
 async fn ingest_spdx_large(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
-    let system = Graph::new(db);
+    let system = Graph::new(db.clone());
+    let fetch = FetchService::new(db);
 
     let sbom = open_sbom_xz("openshift-4.13.json.xz")?;
 
@@ -116,12 +130,13 @@ async fn ingest_spdx_large(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let start = Instant::now();
 
-    let described_cpe222 = sbom.describes_cpe22s(Transactional::None).await?;
-    log::info!("{:#?}", described_cpe222);
-    assert_eq!(3, described_cpe222.len());
-
-    let described_packages = sbom.describes_packages(Transactional::None).await?;
-    log::info!("{:#?}", described_packages);
+    let described = fetch
+        .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
+        .await?;
+    log::info!("{:#?}", described);
+    assert_eq!(1, described.items.len());
+    let first = &described.items[0];
+    assert_eq!(3, first.cpe.len());
 
     let query_time = start.elapsed();
 

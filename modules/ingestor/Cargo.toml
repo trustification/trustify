@@ -43,9 +43,10 @@ tokio = { workspace = true, features = ["full"] }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras"] }
+uuid = { workspace = true, features = ["v7"] }
 
 [dev-dependencies]
-test-log = { workspace = true, features = ["log", "trace"] }
-rust-lzma = "0.6"
 rand = { workspace = true }
+rust-lzma = { workspace = true }
 test-context = { workspace = true }
+test-log = { workspace = true, features = ["log", "trace"] }

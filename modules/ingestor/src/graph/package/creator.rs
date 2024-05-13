@@ -6,7 +6,6 @@ use trustify_common::{db::chunk::EntityChunkedIter, purl::Purl};
 use trustify_entity::{
     package, package_version,
     qualified_package::{self, Qualifiers},
-    sbom_package,
 };
 
 #[derive(Default)]
@@ -23,7 +22,7 @@ impl Creator {
         self.purls.insert(purl);
     }
 
-    pub async fn create<'g, C>(self, db: &C, sbom_id: i32) -> Result<(), Error>
+    pub async fn create<'g, C>(self, db: &C) -> Result<(), Error>
     where
         C: ConnectionTrait,
     {
@@ -32,7 +31,6 @@ impl Creator {
         let mut packages = HashMap::new();
         let mut versions = HashMap::new();
         let mut qualifieds = HashMap::new();
-        let mut sbom_packages = HashMap::new();
 
         for purl in self.purls {
             let (package, version, qualified) = purl.uuids();
@@ -59,13 +57,6 @@ impl Creator {
                     id: Set(qualified),
                     package_version_id: Set(version),
                     qualifiers: Set(Qualifiers(purl.qualifiers)),
-                });
-
-            sbom_packages
-                .entry(qualified)
-                .or_insert_with(|| sbom_package::ActiveModel {
-                    sbom_id: Set(sbom_id),
-                    qualified_package_id: Set(qualified),
                 });
         }
 
@@ -105,23 +96,6 @@ impl Creator {
                     OnConflict::columns([qualified_package::Column::Id])
                         .do_nothing()
                         .to_owned(),
-                )
-                .do_nothing()
-                .exec(db)
-                .await?;
-        }
-
-        // insert all qualified packages references
-
-        for batch in &sbom_packages.into_values().chunked() {
-            sbom_package::Entity::insert_many(batch)
-                .on_conflict(
-                    OnConflict::columns([
-                        sbom_package::Column::SbomId,
-                        sbom_package::Column::QualifiedPackageId,
-                    ])
-                    .do_nothing()
-                    .to_owned(),
                 )
                 .do_nothing()
                 .exec(db)

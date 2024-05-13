@@ -1,7 +1,8 @@
 use crate::query::SearchOptions;
-use crate::service::sbom::Which;
+use crate::service::sbom::{SbomPackageReference, Which};
 use crate::service::FetchService;
 use actix_web::{get, web, HttpResponse, Responder};
+use sea_orm::prelude::Uuid;
 use trustify_auth::{authenticator::user::UserInformation, authorizer::Authorizer, Permission};
 use trustify_common::{model::Paginated, purl::Purl};
 use trustify_entity::relationship::Relationship;
@@ -54,7 +55,7 @@ struct PackagesQuery {
 #[get("/api/v1/sbom/{id}/packages")]
 pub async fn packages(
     fetch: web::Data<FetchService>,
-    id: web::Path<i32>,
+    id: web::Path<Uuid>,
     web::Query(search): web::Query<SearchOptions>,
     web::Query(paginated): web::Query<Paginated>,
     web::Query(packages): web::Query<PackagesQuery>,
@@ -73,7 +74,7 @@ pub async fn packages(
 #[derive(Clone, Debug, serde::Deserialize, utoipa::IntoParams)]
 struct RelatedQuery {
     /// The Package to use as reference
-    pub reference: Purl,
+    pub reference: Option<String>,
     /// Which side the reference should be on
     #[serde(default)]
     pub which: Which,
@@ -97,7 +98,7 @@ struct RelatedQuery {
 #[get("/api/v1/sbom/{id}/related")]
 pub async fn related(
     fetch: web::Data<FetchService>,
-    id: web::Path<i32>,
+    id: web::Path<Uuid>,
     web::Query(search): web::Query<SearchOptions>,
     web::Query(paginated): web::Query<Paginated>,
     web::Query(related): web::Query<RelatedQuery>,
@@ -114,7 +115,10 @@ pub async fn related(
             search,
             paginated,
             related.which,
-            related.reference,
+            match &related.reference {
+                None => SbomPackageReference::Root,
+                Some(id) => SbomPackageReference::Package(&id),
+            },
             related.relationship,
             (),
         )

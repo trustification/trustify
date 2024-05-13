@@ -1,4 +1,3 @@
-use crate::m0000030_create_sbom::Sbom;
 use crate::m0000110_create_cpe::Cpe;
 use crate::m0000250_create_sbom_package::SbomPackage;
 use sea_orm_migration::prelude::*;
@@ -15,20 +14,7 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(SbomPackageCpeRef::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(SbomPackageCpeRef::SbomId)
-                            .integer()
-                            .not_null(),
-                    )
-                    .foreign_key(
-                        ForeignKey::create()
-                            .from(
-                                SbomPackageCpeRef::Table,
-                                (SbomPackageCpeRef::SbomId, SbomPackageCpeRef::NodeId),
-                            )
-                            .to(SbomPackage::Table, (Sbom::SbomId, Sbom::NodeId))
-                            .on_delete(ForeignKeyAction::Cascade),
-                    )
+                    .col(ColumnDef::new(SbomPackageCpeRef::SbomId).uuid().not_null())
                     .col(
                         ColumnDef::new(SbomPackageCpeRef::NodeId)
                             .string()
@@ -38,6 +24,18 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(SbomPackageCpeRef::CpeId)
                             .integer()
                             .not_null(),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from(
+                                SbomPackageCpeRef::Table,
+                                (SbomPackageCpeRef::SbomId, SbomPackageCpeRef::NodeId),
+                            )
+                            .to(
+                                SbomPackage::Table,
+                                (SbomPackage::SbomId, SbomPackage::NodeId),
+                            )
+                            .on_delete(ForeignKeyAction::Cascade),
                     )
                     .foreign_key(
                         ForeignKey::create()

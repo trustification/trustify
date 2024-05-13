@@ -1,9 +1,5 @@
-#![cfg(test)]
-
 mod perf;
 
-use crate::graph::sbom::spdx::Information;
-use crate::graph::Graph;
 use lzma::LzmaReader;
 use std::fs::File;
 use std::io::{BufReader, Read};
@@ -16,11 +12,14 @@ use tracing::{info_span, instrument};
 use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Transactional;
 use trustify_entity::relationship::Relationship;
+use trustify_module_fetch::model::sbom::SbomPackage;
+use trustify_module_fetch::service::FetchService;
+use trustify_module_ingestor::graph::{sbom::spdx::parse_spdx, sbom::spdx::Information, Graph};
 
 #[instrument]
 pub fn open_sbom(name: &str) -> anyhow::Result<impl Read> {
     let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-    let test_data = pwd.join("../../etc/test-data");
+    let test_data = pwd.join("../etc/test-data");
 
     let sbom = test_data.join(name);
     Ok(BufReader::new(File::open(sbom)?))
@@ -36,7 +35,8 @@ pub fn open_sbom_xz(name: &str) -> anyhow::Result<impl Read> {
 #[test(tokio::test)]
 async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
-    let system = Graph::new(db);
+    let system = Graph::new(db.clone());
+    let fetch = FetchService::new(db);
 
     // nope, has bad license expressions
     let sbom_data = open_sbom("quarkus-bom-2.13.8.Final-redhat-00004.json")?;
@@ -44,7 +44,7 @@ async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let start = Instant::now();
     let parse_time = start.elapsed();
 
-    let (spdx, _) = info_span!("parse json").in_scope(|| super::parse_spdx(sbom_data))?;
+    let (spdx, _) = info_span!("parse json").in_scope(|| parse_spdx(sbom_data))?;
 
     let start = Instant::now();
     let tx = system.transaction().await?;
@@ -66,17 +66,27 @@ async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     // commit, then test
     tx.commit().await?;
 
-    let described_cpe222 = sbom.describes_cpe22s(Transactional::None).await?;
-    log::info!("{:#?}", described_cpe222);
-    assert_eq!(1, described_cpe222.len());
+    let described = fetch
+        .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
+        .await?;
+    log::info!("{:#?}", described);
+    assert_eq!(1, described.items.len());
+    let first = &described.items[0];
+    assert_eq!(
+        &SbomPackage {
+            id: "".into(),
+            name: "".into(),
+            purl: vec![],
+            cpe: vec![],
+        },
+        first
+    );
 
-    let described_packages = sbom.describes_packages(Transactional::None).await?;
-    log::info!("{:#?}", described_packages);
-
-    let contains = sbom
+    let contains = fetch
         .related_packages(
+            sbom.sbom.sbom_id,
             Relationship::ContainedBy,
-            &described_packages[0].clone().into(),
+            first,
             Transactional::None,
         )
         .await?;
@@ -96,16 +106,17 @@ async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
-async fn parse_spdx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn test_parse_spdx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
-    let system = Graph::new(db);
+    let system = Graph::new(db.clone());
+    let fetch = FetchService::new(db);
 
     let sbom = open_sbom("ubi9-9.2-755.1697625012.json")?;
 
     let tx = system.transaction().await?;
 
     let start = Instant::now();
-    let (spdx, _) = super::parse_spdx(sbom)?;
+    let (spdx, _) = parse_spdx(sbom)?;
     let parse_time = start.elapsed();
 
     let start = Instant::now();
@@ -126,14 +137,18 @@ async fn parse_spdx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let ingest_time = start.elapsed();
     let start = Instant::now();
 
-    let described = sbom.describes_packages(Transactional::None).await?;
+    let described = fetch
+        .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
+        .await?;
 
-    assert_eq!(1, described.len());
+    assert_eq!(1, described.total);
+    let first = &described.items[0];
 
-    let contains = sbom
+    let contains = fetch
         .related_packages(
+            sbom.sbom.sbom_id,
             Relationship::ContainedBy,
-            &described[0].clone().into(),
+            first,
             Transactional::None,
         )
         .await?;
