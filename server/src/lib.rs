@@ -28,7 +28,13 @@ use trustify_common::{
     config::{Database, StorageConfig},
     db,
 };
-use trustify_infrastructure::{app::http::{HttpServerBuilder, HttpServerConfig}, endpoint::Trustify, health::checks::{Local, Probe}, tracing::Tracing, Infrastructure, InfrastructureConfig, InitContext, Metrics};
+use trustify_infrastructure::{
+    app::http::{HttpServerBuilder, HttpServerConfig},
+    endpoint::Trustify,
+    health::checks::{Local, Probe},
+    tracing::Tracing,
+    Infrastructure, InfrastructureConfig, InitContext, Metrics,
+};
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::service::dispatch::DispatchBackend;
