@@ -231,7 +231,7 @@ mod test {
 
         let loader = OsvLoader::new(&graph);
         loader
-            .load("RUSTSEC-2021-0079.json", None,&data[..], checksum)
+            .load("RUSTSEC-2021-0079.json", None, &data[..], checksum)
             .await?;
 
         let loaded_vulnerability = graph
