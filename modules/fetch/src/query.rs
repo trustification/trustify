@@ -2,8 +2,8 @@ use human_date_parser::{from_human_time, ParseResult};
 use regex::Regex;
 use sea_orm::sea_query::{extension::postgres::PgExpr, ConditionExpression, IntoCondition};
 use sea_orm::{
-    ColumnTrait, ColumnType, Condition, EntityTrait, Iden, Iterable, Order, QueryFilter,
-    QueryOrder, QueryTrait, Select, Value,
+    ColumnTrait, ColumnType, Condition, EntityName, EntityTrait, Iden, Iterable, Order,
+    PrimaryKeyToColumn, QueryFilter, QueryOrder, QueryTrait, Select, Value,
 };
 use std::fmt::Display;
 use std::str::FromStr;
@@ -49,8 +49,6 @@ pub trait Query<T: EntityTrait> {
 impl<T: EntityTrait> Query<T> for Select<T> {
     fn filtering(self, search: SearchOptions) -> Result<Self, Error> {
         let SearchOptions { q, sort } = &search;
-        let id = T::Column::from_str("id")
-            .map_err(|_| Error::SearchSyntax("Entity missing Id field".into()))?;
 
         let mut result = if q.is_empty() {
             self
@@ -67,7 +65,7 @@ impl<T: EntityTrait> Query<T> for Select<T> {
                 .fold(result, |select, s| select.order_by(s.field, s.order));
         };
 
-        Ok(maintain_order(result, id))
+        Ok(maintain_order(result))
     }
 }
 
@@ -321,17 +319,23 @@ fn envalue(s: &str, ct: &ColumnType) -> Result<Value, Error> {
     })
 }
 
-fn maintain_order<T: EntityTrait>(stmt: Select<T>, col: T::Column) -> Select<T> {
+fn maintain_order<T: EntityTrait>(stmt: Select<T>) -> Select<T> {
+    let binding = T::default();
+    let table = binding.table_name();
     let s = stmt.build(sea_orm::DatabaseBackend::Postgres).to_string();
-    let tmp = T::default();
-    let table = tmp.table_name();
-    if let Some((_, orderby)) = s.rsplit_once(" ORDER BY ") {
+    let orderby = match s.rsplit_once(" ORDER BY ") {
+        Some((_, v)) => v,
+        None => "",
+    };
+    T::PrimaryKey::iter().fold(stmt, |stmt, pk| {
+        let col = pk.into_column();
         let pat = format!(r#""{}"."{}""#, table, col.to_string());
         if orderby.contains(&pat) {
-            return stmt;
+            stmt
+        } else {
+            stmt.order_by_desc(col)
         }
-    }
-    stmt.order_by_desc(col)
+    })
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -626,6 +630,80 @@ mod tests {
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
         assert_eq!(actual, expected_desc);
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn missing_id() -> Result<(), anyhow::Error> {
+        mod missing_id {
+            use sea_orm::entity::prelude::*;
+
+            #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
+            #[sea_orm(table_name = "nothing")]
+            pub struct Model {
+                #[sea_orm(primary_key)]
+                pub at_all: i32,
+            }
+            #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+            pub enum Relation {}
+            impl ActiveModelBehavior for ActiveModel {}
+        }
+
+        let expected = missing_id::Entity::find()
+            .order_by_desc(missing_id::Column::AtAll)
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+        let actual = missing_id::Entity::find()
+            .filtering(SearchOptions::default())?
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+        assert_eq!(expected, actual);
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn composite_key() -> Result<(), anyhow::Error> {
+        mod composite_key {
+            use sea_orm::entity::prelude::*;
+
+            #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
+            #[sea_orm(table_name = "nothing")]
+            pub struct Model {
+                #[sea_orm(primary_key)]
+                pub more: i32,
+                #[sea_orm(primary_key)]
+                pub at_all: i32,
+            }
+            #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+            pub enum Relation {}
+            impl ActiveModelBehavior for ActiveModel {}
+        }
+
+        let expected = composite_key::Entity::find()
+            .order_by_desc(composite_key::Column::More)
+            .order_by_desc(composite_key::Column::AtAll)
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+        let actual = composite_key::Entity::find()
+            .filtering(SearchOptions::default())?
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+        assert_eq!(expected, actual);
+
+        let expected_asc = composite_key::Entity::find()
+            .order_by_asc(composite_key::Column::AtAll)
+            .order_by_asc(composite_key::Column::More)
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+        let actual = composite_key::Entity::find()
+            .order_by_asc(composite_key::Column::AtAll)
+            .order_by_asc(composite_key::Column::More)
+            .filtering(SearchOptions::default())?
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+        assert_eq!(expected_asc, actual);
+
         Ok(())
     }
 }
