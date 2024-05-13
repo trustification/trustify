@@ -1,19 +1,23 @@
 use crate::graph::package::creator::Creator;
 use crate::graph::sbom::{SbomContext, SbomInformation};
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ConnectionTrait, EntityTrait};
+use sea_orm::EntityTrait;
+use sea_query::OnConflict;
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
-use std::collections::HashMap;
 use std::io::Read;
 use std::str::FromStr;
 use time::OffsetDateTime;
-use tracing::{info_span, instrument};
-use trustify_common::db::chunk::EntityChunkedIter;
-use trustify_common::db::Transactional;
-use trustify_common::purl::Purl;
-use trustify_entity::relationship::Relationship;
-use trustify_entity::{sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref};
+use tracing::instrument;
+use trustify_common::cpe::Cpe;
+use trustify_common::{
+    db::{chunk::EntityChunkedIter, Transactional},
+    purl::Purl,
+};
+use trustify_entity::{
+    package_relates_to_package, relationship::Relationship, sbom_node, sbom_package,
+    sbom_package_cpe_ref, sbom_package_purl_ref,
+};
 
 pub struct Information<'a>(pub &'a SPDX);
 
@@ -52,17 +56,22 @@ impl SbomContext {
     ) -> Result<(), anyhow::Error> {
         let mut creator = Creator::new();
 
+        let mut nodes = Vec::with_capacity(sbom_data.package_information.len());
         let mut packages = Vec::with_capacity(sbom_data.package_information.len());
         // assuming most packages will have a purl -> with_capacity
         let mut purl_refs = Vec::with_capacity(sbom_data.package_information.len());
         // assuming most packages will not have a CPE -> new
-        let mut cpe_refs = Vec::<sbom_package_cpe_ref::ActiveModel>::new();
+        let mut cpe_refs = Vec::new();
 
         for package in &sbom_data.package_information {
-            packages.push(sbom_package::ActiveModel {
+            nodes.push(sbom_node::ActiveModel {
                 sbom_id: Set(self.sbom.sbom_id),
                 node_id: Set(package.package_spdx_identifier.clone()),
                 name: Set(package.package_name.clone()),
+            });
+            packages.push(sbom_package::ActiveModel {
+                sbom_id: Set(self.sbom.sbom_id),
+                node_id: Set(package.package_spdx_identifier.clone()),
             });
 
             for r in &package.external_reference {
@@ -77,11 +86,22 @@ impl SbomContext {
                             creator.add(purl);
                         }
                     }
-                    // FIXME: add cpe22Type
+                    "cpe22Type" => {
+                        if let Ok(cpe) = Cpe::from_str(&r.reference_locator) {
+                            let cpe = self.graph.ingest_cpe22(cpe, &tx).await?;
+                            cpe_refs.push(sbom_package_cpe_ref::ActiveModel {
+                                sbom_id: Set(self.sbom.sbom_id),
+                                node_id: Set(package.package_spdx_identifier.clone()),
+                                cpe_id: Set(cpe.cpe.id),
+                            });
+                        }
+                    }
                     _ => {}
                 }
             }
         }
+
+        let db = self.graph.connection(&tx);
 
         // create all purls
 
@@ -89,143 +109,120 @@ impl SbomContext {
 
         // batch insert packages
 
+        for batch in &nodes.into_iter().chunked() {
+            sbom_node::Entity::insert_many(batch)
+                .on_conflict(
+                    OnConflict::columns([sbom_node::Column::SbomId, sbom_node::Column::NodeId])
+                        .do_nothing()
+                        .to_owned(),
+                )
+                .do_nothing()
+                .exec(&db)
+                .await?;
+        }
+
         for batch in &packages.into_iter().chunked() {
             sbom_package::Entity::insert_many(batch)
-                .exec(&self.graph.connection(&tx))
+                .on_conflict(
+                    OnConflict::columns([
+                        sbom_package::Column::SbomId,
+                        sbom_package::Column::NodeId,
+                    ])
+                    .do_nothing()
+                    .to_owned(),
+                )
+                .do_nothing()
+                .exec(&db)
                 .await?;
         }
 
         for batch in &purl_refs.into_iter().chunked() {
             sbom_package_purl_ref::Entity::insert_many(batch)
-                .exec(&self.graph.connection(&tx))
+                .on_conflict(
+                    OnConflict::columns([
+                        sbom_package_purl_ref::Column::SbomId,
+                        sbom_package_purl_ref::Column::NodeId,
+                        sbom_package_purl_ref::Column::QualifiedPackageId,
+                    ])
+                    .do_nothing()
+                    .to_owned(),
+                )
+                .do_nothing()
+                .exec(&db)
                 .await?;
         }
 
         for batch in &cpe_refs.into_iter().chunked() {
             sbom_package_cpe_ref::Entity::insert_many(batch)
-                .exec(&self.graph.connection(&tx))
+                .on_conflict(
+                    OnConflict::columns([
+                        sbom_package_cpe_ref::Column::SbomId,
+                        sbom_package_cpe_ref::Column::NodeId,
+                        sbom_package_cpe_ref::Column::CpeId,
+                    ])
+                    .do_nothing()
+                    .to_owned(),
+                )
+                .do_nothing()
+                .exec(&db)
                 .await?;
         }
 
-        // create a lookup cache for id[package information] -> package information
-        let id_cache = info_span!("build id_cache").in_scope(|| {
-            let mut cache = HashMap::with_capacity(sbom_data.package_information.len());
+        let mut rels = Vec::with_capacity(sbom_data.relationships.len());
 
-            for pi in &sbom_data.package_information {
-                cache.insert(&pi.package_spdx_identifier, pi);
-            }
-            cache
-        });
+        for described in sbom_data.document_creation_information.document_describes {
+            rels.push(package_relates_to_package::ActiveModel {
+                sbom_id: Set(self.sbom.sbom_id),
+                left_node_id: Set(sbom_data
+                    .document_creation_information
+                    .spdx_identifier
+                    .clone()),
+                relationship: Set(Relationship::DescribedBy),
+                right_node_id: Set(described),
+            });
+        }
 
-        // replace with: create A -[described by]-> B
-        /*
-        // For each thing described in the SBOM data, link it up to an sbom_cpe or sbom_package.
-        for described in &sbom_data.document_creation_information.document_describes {
-            let Some(described_package) = id_cache.get(described) else {
+        for rel in &sbom_data.relationships {
+            let Ok(SpdxRelationship(left, rel, right)) = rel.try_into() else {
                 continue;
             };
 
-            for reference in &described_package.external_reference {
-                match reference.reference_type.as_str() {
-                    "purl" => {
-                        self.ingest_describes_package(
-                            &reference.reference_locator.as_str().try_into()?,
-                            &tx,
-                        )
-                        .await?;
-                    }
-                    "cpe22Type" => {
-                        if let Ok(cpe) = cpe::uri::Uri::parse(&reference.reference_locator) {
-                            self.ingest_describes_cpe22(cpe, &tx).await?;
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
-        */
-
-        // create a lookup cache of id[package information] -> relatives
-        let rel_cache = info_span!("build rel_cache").in_scope(|| {
-            let mut rel_cache = HashMap::<_, Vec<_>>::new();
-
-            for rel in &sbom_data.relationships {
-                rel_cache.entry(&rel.spdx_element_id).or_default().push(rel);
-            }
-            rel_cache
-        });
-
-        // TODO: creator needs to be fed with purls, but rels need to use spdx-ids
-        let mut rels = Vec::with_capacity(sbom_data.package_information.len());
-
-        // connect all other tree-ish package trees in the context of this sbom.
-        /*
-        for package_info in &sbom_data.package_information {
-            for package_ref in &package_info.external_reference {
-                if package_ref.reference_type != "purl" {
-                    continue;
-                }
-
-                let package_a = &package_ref.reference_locator;
-
-                'rels: for relationship in rel_cache
-                    .get(&package_info.package_spdx_identifier)
-                    .into_iter()
-                    .flatten()
-                {
-                    let Some(package) = id_cache.get(&relationship.related_spdx_element) else {
-                        continue 'rels;
-                    };
-
-                    'refs: for reference in &package.external_reference {
-                        if reference.reference_type != "purl" {
-                            continue 'refs;
-                        }
-
-                        let package_b = &reference.reference_locator;
-
-                        // Check for the degenerate case that seems to appear where an SBOM inceptions itself.
-                        if package_a == package_b {
-                            continue 'refs;
-                        }
-
-                        // check if we have a valid relationship
-                        let Ok((left, rel, right)) =
-                            SpdxRelationship(package_a, &relationship.relationship_type, package_b)
-                                .try_into()
-                        else {
-                            continue 'refs;
-                        };
-
-                        let left = left.try_into()?;
-                        let right = right.try_into()?;
-
-                        rels.push(self.create_relationship(&left, rel, &right));
-
-                        creator.add(left);
-                        creator.add(right);
-                    }
-                }
-            }
+            rels.push(package_relates_to_package::ActiveModel {
+                sbom_id: Set(self.sbom.sbom_id),
+                left_node_id: Set(left.to_string()),
+                relationship: Set(rel),
+                right_node_id: Set(right.to_string()),
+            });
         }
 
-        log::info!("Relationships: {}", rels.len());
-        */
-
-        self.ingest_package_relates_to_package_many(&tx, rels)
-            .await?;
+        for batch in &rels.into_iter().chunked() {
+            package_relates_to_package::Entity::insert_many(batch)
+                .on_conflict(
+                    OnConflict::columns([
+                        package_relates_to_package::Column::SbomId,
+                        package_relates_to_package::Column::LeftNodeId,
+                        package_relates_to_package::Column::Relationship,
+                        package_relates_to_package::Column::RightNodeId,
+                    ])
+                    .do_nothing()
+                    .to_owned(),
+                )
+                .do_nothing()
+                .exec(&db)
+                .await?;
+        }
 
         Ok(())
     }
 }
 
-pub struct SpdxRelationship<'spdx>(&'spdx str, &'spdx RelationshipType, &'spdx str);
+pub struct SpdxRelationship<'spdx>(pub &'spdx str, pub Relationship, pub &'spdx str);
 
-impl<'spdx> TryFrom<SpdxRelationship<'spdx>> for (&'spdx str, Relationship, &'spdx str) {
+impl<'spdx> TryFrom<(&'spdx str, &'spdx RelationshipType, &'spdx str)> for SpdxRelationship<'spdx> {
     type Error = ();
 
     fn try_from(
-        SpdxRelationship(left, rel, right): SpdxRelationship<'spdx>,
+        (left, rel, right): (&'spdx str, &'spdx RelationshipType, &'spdx str),
     ) -> Result<Self, Self::Error> {
         match rel {
             RelationshipType::Contains => Ok((right, Relationship::ContainedBy, left)),
@@ -255,6 +252,20 @@ impl<'spdx> TryFrom<SpdxRelationship<'spdx>> for (&'spdx str, Relationship, &'sp
             RelationshipType::DevToolOf => Ok((left, Relationship::DevToolOf, right)),
             _ => Err(()),
         }
+        .map(|(left, rel, right)| Self(left, rel, right))
+    }
+}
+
+impl<'spdx> TryFrom<&'spdx spdx_rs::models::Relationship> for SpdxRelationship<'spdx> {
+    type Error = ();
+
+    fn try_from(value: &'spdx spdx_rs::models::Relationship) -> Result<Self, Self::Error> {
+        (
+            value.spdx_element_id.as_str(),
+            &value.relationship_type,
+            value.related_spdx_element.as_str(),
+        )
+            .try_into()
     }
 }
 

@@ -14,6 +14,7 @@ use sea_orm::{DeriveActiveEnum, EnumIter};
 )]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
 #[serde(rename_all = "snake_case")]
+// When adding a new variant, also add this to the "relationship" table.
 pub enum Relationship {
     #[sea_orm(num_value = 0)]
     ContainedBy,

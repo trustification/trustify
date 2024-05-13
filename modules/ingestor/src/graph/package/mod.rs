@@ -145,6 +145,7 @@ impl Graph {
         }
     }
 
+    #[instrument(skip(self, tx), err)]
     pub async fn get_qualified_packages_by_query<TX: AsRef<Transactional>>(
         &self,
         query: SelectStatement,
@@ -186,6 +187,7 @@ impl Graph {
         }
     }
 
+    #[instrument(skip(self, tx), err)]
     pub async fn get_package_version_by_id<TX: AsRef<Transactional>>(
         &self,
         id: Uuid,
@@ -246,6 +248,7 @@ impl Graph {
             .map(|package| PackageContext::new(self, package)))
     }
 
+    #[instrument(skip(self, tx), err)]
     pub async fn get_package_by_id<TX: AsRef<Transactional>>(
         &self,
         id: Uuid,
@@ -416,6 +419,7 @@ impl<'g> PackageContext<'g> {
     ///
     /// Assertions are a mixture of "affected" and "not affected", for any version
     /// of this package, from any relevant advisory making statements.
+    #[instrument(skip(self, tx), err)]
     pub async fn vulnerability_assertions<TX: AsRef<Transactional>>(
         &self,
         tx: TX,

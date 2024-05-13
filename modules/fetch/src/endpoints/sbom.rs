@@ -33,18 +33,10 @@ pub async fn all(
     Ok(HttpResponse::Ok().json(result))
 }
 
-#[derive(Clone, Debug, serde::Deserialize, utoipa::IntoParams)]
-struct PackagesQuery {
-    /// Flag if only root level packages should be considered
-    #[serde(default)]
-    pub root: bool,
-}
-
 /// Search for packages of an SBOM
 #[utoipa::path(
     params(
         ("id", Path, description = "ID of the SBOM to get packages for"),
-        PackagesQuery,
         SearchOptions,
         Paginated,
     ),
@@ -58,14 +50,13 @@ pub async fn packages(
     id: web::Path<Uuid>,
     web::Query(search): web::Query<SearchOptions>,
     web::Query(paginated): web::Query<Paginated>,
-    web::Query(packages): web::Query<PackagesQuery>,
     authorizer: web::Data<Authorizer>,
     user: UserInformation,
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadSbom)?;
 
     let result = fetch
-        .fetch_sbom_packages(id.into_inner(), search, paginated, packages.root, ())
+        .fetch_sbom_packages(id.into_inner(), search, paginated, ())
         .await?;
 
     Ok(HttpResponse::Ok().json(result))
@@ -117,7 +108,7 @@ pub async fn related(
             related.which,
             match &related.reference {
                 None => SbomPackageReference::Root,
-                Some(id) => SbomPackageReference::Package(&id),
+                Some(id) => SbomPackageReference::Package(id),
             },
             related.relationship,
             (),

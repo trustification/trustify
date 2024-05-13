@@ -1,7 +1,7 @@
 #![cfg(test)]
 
-use crate::graph::Graph;
 use std::convert::TryInto;
+use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::db::test::TrustifyContext;
@@ -9,6 +9,8 @@ use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
 use trustify_entity::relationship::Relationship;
+use trustify_module_fetch::service::FetchService;
+use trustify_module_ingestor::graph::Graph;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
@@ -54,9 +56,9 @@ async fn ingest_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    assert_eq!(sbom_v1.sbom.id, sbom_v1_again.sbom.id);
+    assert_eq!(sbom_v1.sbom.sbom_id, sbom_v1_again.sbom.sbom_id);
 
-    assert_ne!(sbom_v1.sbom.id, sbom_v2.sbom.id);
+    assert_ne!(sbom_v1.sbom.sbom_id, sbom_v2.sbom.sbom_id);
     Ok(())
 }
 
@@ -98,21 +100,21 @@ async fn ingest_and_fetch_sboms_describing_purls(
 
     sbom_v1
         .ingest_describes_package(
-            &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
             Transactional::None,
         )
         .await?;
 
     sbom_v2
         .ingest_describes_package(
-            &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
             Transactional::None,
         )
         .await?;
 
     sbom_v3
         .ingest_describes_package(
-            &"pkg://maven/io.quarkus/quarkus-core@1.9.3".try_into()?,
+            "pkg://maven/io.quarkus/quarkus-core@1.9.3".try_into()?,
             Transactional::None,
         )
         .await?;
@@ -169,28 +171,28 @@ async fn ingest_and_locate_sboms_describing_cpes(
 
     sbom_v1
         .ingest_describes_cpe22(
-            cpe::uri::Uri::parse("cpe:/a:redhat:quarkus:2.13::el8")?,
+            "cpe:/a:redhat:quarkus:2.13::el8".parse()?,
             Transactional::None,
         )
         .await?;
 
     sbom_v2
         .ingest_describes_cpe22(
-            cpe::uri::Uri::parse("cpe:/a:redhat:quarkus:2.13::el8")?,
+            "cpe:/a:redhat:quarkus:2.13::el8".parse()?,
             Transactional::None,
         )
         .await?;
 
     sbom_v3
         .ingest_describes_cpe22(
-            cpe::uri::Uri::parse("cpe:/a:redhat:not-quarkus:2.13::el8")?,
+            "cpe:/a:redhat:not-quarkus:2.13::el8".parse()?,
             Transactional::None,
         )
         .await?;
 
     let found = system
         .locate_sboms(
-            SbomLocator::Cpe(cpe::uri::Uri::parse("cpe:/a:redhat:quarkus:2.13::el8")?.into()),
+            SbomLocator::Cpe("cpe:/a:redhat:quarkus:2.13::el8".parse()?),
             Transactional::None,
         )
         .await?;
@@ -220,45 +222,45 @@ async fn transitive_dependency_of(ctx: TrustifyContext) -> Result<(), anyhow::Er
 
     sbom1
         .ingest_package_relates_to_package(
-            &"pkg://maven/io.quarkus/transitive-b@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/transitive-b@1.2.3")?,
             Relationship::DependencyOf,
-            &"pkg://maven/io.quarkus/transitive-a@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/transitive-a@1.2.3")?,
             Transactional::None,
         )
         .await?;
 
     sbom1
         .ingest_package_relates_to_package(
-            &"pkg://maven/io.quarkus/transitive-c@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/transitive-c@1.2.3")?,
             Relationship::DependencyOf,
-            &"pkg://maven/io.quarkus/transitive-b@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/transitive-b@1.2.3")?,
             Transactional::None,
         )
         .await?;
 
     sbom1
         .ingest_package_relates_to_package(
-            &"pkg://maven/io.quarkus/transitive-d@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/transitive-d@1.2.3")?,
             Relationship::DependencyOf,
-            &"pkg://maven/io.quarkus/transitive-c@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/transitive-c@1.2.3")?,
             Transactional::None,
         )
         .await?;
 
     sbom1
         .ingest_package_relates_to_package(
-            &"pkg://maven/io.quarkus/transitive-e@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/transitive-e@1.2.3")?,
             Relationship::DependencyOf,
-            &"pkg://maven/io.quarkus/transitive-c@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/transitive-c@1.2.3")?,
             Transactional::None,
         )
         .await?;
 
     sbom1
         .ingest_package_relates_to_package(
-            &"pkg://maven/io.quarkus/transitive-d@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/transitive-d@1.2.3")?,
             Relationship::DependencyOf,
-            &"pkg://maven/io.quarkus/transitive-b@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/transitive-b@1.2.3")?,
             Transactional::None,
         )
         .await?;
@@ -280,7 +282,8 @@ async fn ingest_package_relates_to_package_dependency_of(
     ctx: TrustifyContext,
 ) -> Result<(), anyhow::Error> {
     let db = ctx.db;
-    let system = Graph::new(db);
+    let system = Graph::new(db.clone());
+    let fetch = FetchService::new(db);
 
     let sbom1 = system
         .ingest_sbom(
@@ -294,9 +297,9 @@ async fn ingest_package_relates_to_package_dependency_of(
 
     sbom1
         .ingest_package_relates_to_package(
-            &"pkg://maven/io.quarkus/quarkus-postgres@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/quarkus-postgres@1.2.3")?,
             Relationship::DependencyOf,
-            &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/quarkus-core@1.2.3")?,
             Transactional::None,
         )
         .await?;
@@ -313,17 +316,18 @@ async fn ingest_package_relates_to_package_dependency_of(
 
     sbom2
         .ingest_package_relates_to_package(
-            &"pkg://maven/io.quarkus/quarkus-sqlite@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/quarkus-sqlite@1.2.3")?,
             Relationship::DependencyOf,
-            &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+            Purl::from_str("pkg://maven/io.quarkus/quarkus-core@1.2.3")?,
             Transactional::None,
         )
         .await?;
 
-    let dependencies = sbom1
+    let dependencies = fetch
         .related_packages(
+            sbom1.sbom.sbom_id,
             Relationship::DependencyOf,
-            &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3",
             Transactional::None,
         )
         .await?;
@@ -331,14 +335,15 @@ async fn ingest_package_relates_to_package_dependency_of(
     assert_eq!(1, dependencies.len());
 
     assert_eq!(
-        "pkg://maven/io.quarkus/quarkus-postgres@1.2.3",
-        Purl::from(dependencies[0].clone()).to_string()
+        vec!["pkg://maven/io.quarkus/quarkus-postgres@1.2.3"],
+        dependencies[0].purl
     );
 
-    let dependencies = sbom2
+    let dependencies = fetch
         .related_packages(
+            sbom2.sbom.sbom_id,
             Relationship::DependencyOf,
-            &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+            "pkg://maven/io.quarkus/quarkus-core@1.2.3",
             Transactional::None,
         )
         .await?;
@@ -346,8 +351,8 @@ async fn ingest_package_relates_to_package_dependency_of(
     assert_eq!(1, dependencies.len());
 
     assert_eq!(
-        "pkg://maven/io.quarkus/quarkus-sqlite@1.2.3",
-        Purl::from(dependencies[0].clone()).to_string()
+        vec!["pkg://maven/io.quarkus/quarkus-sqlite@1.2.3"],
+        dependencies[0].purl
     );
 
     Ok(())
@@ -373,32 +378,32 @@ async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error>
 
     println!("-------------------- A");
 
-    sbom.ingest_describes_package(&"pkg://oci/my-app@1.2.3".try_into()?, Transactional::None)
+    sbom.ingest_describes_package("pkg://oci/my-app@1.2.3".try_into()?, Transactional::None)
         .await?;
     println!("-------------------- B");
 
     sbom.ingest_package_relates_to_package(
-        &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+        Purl::from_str("pkg://maven/io.quarkus/quarkus-core@1.2.3")?,
         Relationship::DependencyOf,
-        &"pkg://oci/my-app@1.2.3".try_into()?,
+        Purl::from_str("pkg://oci/my-app@1.2.3")?,
         Transactional::None,
     )
     .await?;
     println!("-------------------- C");
 
     sbom.ingest_package_relates_to_package(
-        &"pkg://maven/io.quarkus/quarkus-postgres@1.2.3".try_into()?,
+        Purl::from_str("pkg://maven/io.quarkus/quarkus-postgres@1.2.3")?,
         Relationship::DependencyOf,
-        &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+        Purl::from_str("pkg://maven/io.quarkus/quarkus-core@1.2.3")?,
         Transactional::None,
     )
     .await?;
     println!("-------------------- D");
 
     sbom.ingest_package_relates_to_package(
-        &"pkg://maven/postgres/postgres-driver@1.2.3".try_into()?,
+        Purl::from_str("pkg://maven/postgres/postgres-driver@1.2.3")?,
         Relationship::DependencyOf,
-        &"pkg://maven/io.quarkus/quarkus-postgres@1.2.3".try_into()?,
+        Purl::from_str("pkg://maven/io.quarkus/quarkus-postgres@1.2.3")?,
         Transactional::None,
     )
     .await?;

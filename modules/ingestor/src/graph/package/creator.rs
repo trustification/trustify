@@ -2,6 +2,7 @@ use crate::graph::error::Error;
 use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait};
 use sea_query::OnConflict;
 use std::collections::{HashMap, HashSet};
+use tracing::instrument;
 use trustify_common::{db::chunk::EntityChunkedIter, purl::Purl};
 use trustify_entity::{
     package, package_version,
@@ -22,10 +23,15 @@ impl Creator {
         self.purls.insert(purl);
     }
 
+    #[instrument(skip_all, fields(num_purls = self.purls.len()), err)]
     pub async fn create<'g, C>(self, db: &C) -> Result<(), Error>
     where
         C: ConnectionTrait,
     {
+        if self.purls.is_empty() {
+            return Ok(());
+        }
+
         // insert all packages
 
         let mut packages = HashMap::new();

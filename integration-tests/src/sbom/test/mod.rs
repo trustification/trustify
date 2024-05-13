@@ -1,3 +1,5 @@
+#![cfg(test)]
+
 mod perf;
 
 use lzma::LzmaReader;
@@ -13,6 +15,7 @@ use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Transactional;
 use trustify_entity::relationship::Relationship;
 use trustify_module_fetch::model::sbom::SbomPackage;
+use trustify_module_fetch::service::sbom::Which;
 use trustify_module_fetch::service::FetchService;
 use trustify_module_ingestor::graph::{sbom::spdx::parse_spdx, sbom::spdx::Information, Graph};
 
@@ -74,10 +77,12 @@ async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let first = &described.items[0];
     assert_eq!(
         &SbomPackage {
-            id: "".into(),
-            name: "".into(),
-            purl: vec![],
-            cpe: vec![],
+            id: "SPDXRef-b52acd7c-3a3f-441e-aef0-bbdaa1ec8acf".into(),
+            name: "quarkus-bom".into(),
+            purl: vec![
+                "pkg://maven/com.redhat.quarkus.platform/quarkus-bom@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=pom".into()
+            ],
+            cpe: vec!["cpe:/a:redhat:quarkus:2.13:*:el8:*".to_string()],
         },
         first
     );
@@ -145,13 +150,17 @@ async fn test_parse_spdx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let first = &described.items[0];
 
     let contains = fetch
-        .related_packages(
+        .fetch_related_packages(
             sbom.sbom.sbom_id,
-            Relationship::ContainedBy,
+            Default::default(),
+            Default::default(),
+            Which::Right,
             first,
-            Transactional::None,
+            Some(Relationship::ContainedBy),
+            (),
         )
-        .await?;
+        .await?
+        .items;
 
     log::info!("{}", contains.len());
 

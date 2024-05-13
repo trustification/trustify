@@ -6091,9 +6091,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "cpe",
+ "log",
  "sea-orm",
  "serde",
  "serde_json",
+ "test-log",
  "time",
  "tokio",
  "trustify-common",
@@ -6141,9 +6144,11 @@ name = "trustify-integration-tests"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "cpe",
  "humantime",
  "log",
  "rust-lzma",
+ "spdx-rs",
  "test-context",
  "test-log",
  "tokio",

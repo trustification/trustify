@@ -15,6 +15,7 @@ pub mod package_version_range;
 pub mod qualified_package;
 pub mod relationship;
 pub mod sbom;
+pub mod sbom_node;
 pub mod sbom_package;
 pub mod sbom_package_cpe_ref;
 pub mod sbom_package_purl_ref;

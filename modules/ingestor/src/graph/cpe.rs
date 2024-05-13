@@ -1,11 +1,13 @@
 use crate::graph::error::Error;
 use crate::graph::Graph;
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, NotSet, QueryFilter, Set};
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
 use sea_query::SelectStatement;
 use std::fmt::{Debug, Formatter};
-use trustify_common::cpe::Component::Value;
-use trustify_common::cpe::{Component, Cpe, CpeType};
-use trustify_common::db::Transactional;
+use tracing::instrument;
+use trustify_common::{
+    cpe::{Component, Component::Value, Cpe, CpeType},
+    db::Transactional,
+};
 use trustify_entity as entity;
 
 impl Graph {
@@ -71,57 +73,24 @@ impl Graph {
             .filter(entity::cpe::Column::Id.in_subquery(query))
             .all(&self.connection(&tx))
             .await?
-            .drain(0..)
+            .into_iter()
             .map(|cpe22| (self, cpe22).into())
             .collect())
     }
 
-    pub async fn ingest_cpe22<C: Into<Cpe>, TX: AsRef<Transactional>>(
-        &self,
-        cpe: C,
-        tx: TX,
-    ) -> Result<CpeContext, Error> {
+    #[instrument(skip(self, tx), err)]
+    pub async fn ingest_cpe22<C, TX>(&self, cpe: C, tx: TX) -> Result<CpeContext, Error>
+    where
+        C: Into<Cpe> + Debug,
+        TX: AsRef<Transactional>,
+    {
         let cpe = cpe.into();
 
         if let Some(found) = self.get_cpe(cpe.clone(), &tx).await? {
             return Ok(found);
         }
 
-        let entity = entity::cpe::ActiveModel {
-            id: Default::default(),
-            part: match cpe.part() {
-                CpeType::Any => Set(Some("*".to_string())),
-                CpeType::Hardware => Set(Some("h".to_string())),
-                CpeType::OperatingSystem => Set(Some("o".to_string())),
-                CpeType::Application => Set(Some("a".to_string())),
-            },
-            vendor: match cpe.vendor() {
-                Component::Any => Set(Some("*".to_string())),
-                Component::NotApplicable => NotSet,
-                Value(inner) => Set(Some(inner)),
-            },
-            product: match cpe.product() {
-                Component::Any => Set(Some("*".to_string())),
-                Component::NotApplicable => NotSet,
-                Value(inner) => Set(Some(inner)),
-            },
-            version: match cpe.version() {
-                Component::Any => Set(Some("*".to_string())),
-                Component::NotApplicable => NotSet,
-                Value(inner) => Set(Some(inner)),
-            },
-            update: match cpe.update() {
-                Component::Any => Set(Some("*".to_string())),
-                Component::NotApplicable => NotSet,
-                Value(inner) => Set(Some(inner)),
-            },
-            edition: match cpe.edition() {
-                Component::Any => Set(Some("*".to_string())),
-                Component::NotApplicable => NotSet,
-                Value(inner) => Set(Some(inner)),
-            },
-            language: Default::default(),
-        };
+        let entity: entity::cpe::ActiveModel = cpe.into();
 
         Ok((self, entity.insert(&self.connection(&tx)).await?).into())
     }

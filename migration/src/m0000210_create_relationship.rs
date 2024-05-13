@@ -41,6 +41,7 @@ impl MigrationTrait for Migration {
             (10, "VariantOf"),
             (11, "BuildToolOf"),
             (12, "DevToolOf"),
+            (13, "DescribedBy"),
         ];
 
         for (id, description) in data {

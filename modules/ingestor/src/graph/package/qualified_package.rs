@@ -6,6 +6,7 @@ use crate::graph::sbom::SbomContext;
 use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
+use tracing::instrument;
 use trustify_common::db::Transactional;
 use trustify_common::package::PackageVulnerabilityAssertions;
 use trustify_common::purl::Purl;
@@ -84,6 +85,7 @@ impl<'g> QualifiedPackageContext<'g> {
         todo!()
     }
 
+    #[instrument(skip(self, tx))]
     pub async fn vulnerability_assertions<TX: AsRef<Transactional>>(
         &self,
         tx: TX,
