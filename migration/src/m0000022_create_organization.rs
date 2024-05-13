@@ -11,7 +11,6 @@ impl MigrationTrait for Migration {
             .create_table(
                 Table::create()
                     .table(Organization::Table)
-                    .if_not_exists()
                     .col(
                         ColumnDef::new(Organization::Id)
                             .integer()
@@ -34,7 +33,6 @@ impl MigrationTrait for Migration {
             .drop_table(
                 Table::drop()
                     .table(Organization::Table)
-                    .if_exists()
                     .to_owned(),
             )
             .await
