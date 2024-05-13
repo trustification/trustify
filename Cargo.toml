@@ -115,8 +115,8 @@ trustify-module-importer = { path = "modules/importer" }
 trustify-module-ingestor = { path = "modules/ingestor" }
 trustify-module-search = { path = "modules/search" }
 trustify-module-storage = { path = "modules/storage" }
-trustify-module-ui = { path = "modules/ui" }
-trustify-server = { path = "server"}
+trustify-module-ui = { path = "modules/ui", default-features = false }
+trustify-server = { path = "server", default-features = false }
 trustify-ui = { git = "https://github.com/trustification/trustify-ui.git" }
 
 [patch.crates-io]
