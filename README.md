@@ -9,9 +9,20 @@ Let's call this "PM mode":
 ```shell
 cargo run --bin trustd
 ```
-That will create its own database on your local filesystem. Point your browser at http://localhost:8080/swagger-ui/ to view the API.
 
-You can fire up the UI using:
+or
+
+```shell
+cargo run --bin trustd --no-default-features
+```
+
+That will create its own database on your local filesystem.
+The first command also contains **UI** so point your browser at <http://localhost:8080>.
+The second runs without **UI** then you can go at <http://localhost:8080/swagger-ui/> to view the API.
+
+### Running containerized UI
+
+You can also fire up the UI using:
 
 ```shell
 podman run --network="host" \
@@ -23,7 +34,7 @@ podman run --network="host" \
 ghcr.io/trustification/trustify-ui:latest
 ```
 
-Open the UI at http://localhost:3000
+Open the UI at <http://localhost:3000>
 
 ## Repository Organization
 
