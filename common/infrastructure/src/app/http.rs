@@ -392,6 +392,7 @@ impl HttpServerBuilder {
 
     pub fn metrics(mut self, registry: impl Into<Registry>, namespace: impl AsRef<str>) -> Self {
         let metrics = PrometheusMetricsBuilder::new(namespace.as_ref())
+            .endpoint("/metrics")
             .registry(registry.into())
             .build();
 
