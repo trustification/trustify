@@ -17,8 +17,10 @@ env:
 jobs:
 
   ci:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
