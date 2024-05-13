@@ -24,14 +24,14 @@ impl<'g> OsvLoader<'g> {
     pub async fn load<L: Into<String>, R: Read>(
         &self,
         location: L,
-        issuser: Option<String>,
+        issuer: Option<String>,
         record: R,
         checksum: &str,
     ) -> Result<String, Error> {
         let mut reader = HashingRead::new(record);
         let osv: Vulnerability = serde_json::from_reader(&mut reader)?;
 
-        let issuser = issuser.or(detect_organization(&osv));
+        let issuer = issuer.or(detect_organization(&osv));
 
         let advisory_id = osv.id.clone();
 
@@ -54,7 +54,7 @@ impl<'g> OsvLoader<'g> {
 
             let information = AdvisoryInformation {
                 title: osv.summary.clone(),
-                issuer: issuser,
+                issuer,
                 published: Some(osv.published),
                 modified: Some(osv.modified),
                 withdrawn: osv.withdrawn,
@@ -231,7 +231,7 @@ mod test {
 
         let loader = OsvLoader::new(&graph);
         loader
-            .load("RUSTSEC-2021-0079.json", None, &data[..], checksum)
+            .load("RUSTSEC-2021-0079.json", None,&data[..], checksum)
             .await?;
 
         let loaded_vulnerability = graph
