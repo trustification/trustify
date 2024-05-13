@@ -6,22 +6,24 @@ use std::future::Future;
 use std::marker::PhantomData;
 use std::num::NonZeroU64;
 
-pub struct Limiter<'db, C, S>
+pub struct Limiter<'db, C, S1, S2>
 where
     C: ConnectionTrait,
-    S: SelectorTrait + 'db,
+    S1: SelectorTrait + 'db,
+    S2: SelectorTrait + 'db,
 {
     db: &'db C,
-    selector: Selector<S>,
-    paginator: Paginator<'db, C, S>,
+    selector: Selector<S1>,
+    paginator: Paginator<'db, C, S2>,
 }
 
-impl<'db, C, S> Limiter<'db, C, S>
+impl<'db, C, S1, S2> Limiter<'db, C, S1, S2>
 where
     C: ConnectionTrait,
-    S: SelectorTrait + 'db,
+    S1: SelectorTrait + 'db,
+    S2: SelectorTrait + 'db,
 {
-    pub async fn fetch(self) -> Result<Vec<S::Item>, DbErr> {
+    pub async fn fetch(self) -> Result<Vec<S1::Item>, DbErr> {
         self.selector.all(self.db).await
     }
 
@@ -34,20 +36,32 @@ pub trait LimiterTrait<'db, C>
 where
     C: ConnectionTrait,
 {
-    type Selector: SelectorTrait + 'db;
+    type FetchSelector: SelectorTrait + 'db;
+    type CountSelector: SelectorTrait + 'db;
 
-    fn limiting(self, db: &'db C, offset: u64, limit: u64) -> Limiter<'db, C, Self::Selector>;
+    fn limiting(
+        self,
+        db: &'db C,
+        offset: u64,
+        limit: u64,
+    ) -> Limiter<'db, C, Self::FetchSelector, Self::CountSelector>;
 }
 
-impl<'db, C, M, E> LimiterTrait<'db, C> for Select<E>
+impl<'db, C, E, M> LimiterTrait<'db, C> for Select<E>
 where
     C: ConnectionTrait,
     E: EntityTrait<Model = M>,
     M: FromQueryResult + Sized + Send + Sync + 'db,
 {
-    type Selector = SelectModel<M>;
+    type FetchSelector = SelectModel<M>;
+    type CountSelector = SelectModel<M>;
 
-    fn limiting(self, db: &'db C, offset: u64, limit: u64) -> Limiter<'db, C, Self::Selector> {
+    fn limiting(
+        self,
+        db: &'db C,
+        offset: u64,
+        limit: u64,
+    ) -> Limiter<'db, C, Self::FetchSelector, Self::CountSelector> {
         let selector = self
             .clone()
             .limit(NonZeroU64::new(limit).map(|limit| limit.get()))
@@ -62,6 +76,31 @@ where
     }
 }
 
+pub fn limit_selector<'db, C, E, EM, M>(
+    db: &'db C,
+    select: Select<E>,
+    offset: u64,
+    limit: u64,
+) -> Limiter<'db, C, SelectModel<M>, SelectModel<EM>>
+where
+    C: ConnectionTrait,
+    E: EntityTrait<Model = EM>,
+    M: FromQueryResult + Sized + Send + Sync + 'db,
+    EM: FromQueryResult + Sized + Send + Sync + 'db,
+{
+    let selector = select
+        .clone()
+        .limit(NonZeroU64::new(limit).map(|limit| limit.get()))
+        .offset(NonZeroU64::new(offset).map(|offset| offset.get()))
+        .into_model();
+
+    Limiter {
+        db,
+        paginator: select.paginate(db, 1),
+        selector,
+    }
+}
+
 impl<'db, C, M1, M2, E1, E2> LimiterTrait<'db, C> for SelectTwo<E1, E2>
 where
     C: ConnectionTrait,
@@ -70,9 +109,15 @@ where
     M1: FromQueryResult + Sized + Send + Sync + 'db,
     M2: FromQueryResult + Sized + Send + Sync + 'db,
 {
-    type Selector = SelectTwoModel<M1, M2>;
+    type FetchSelector = SelectTwoModel<M1, M2>;
+    type CountSelector = SelectTwoModel<M1, M2>;
 
-    fn limiting(self, db: &'db C, offset: u64, limit: u64) -> Limiter<'db, C, Self::Selector> {
+    fn limiting(
+        self,
+        db: &'db C,
+        offset: u64,
+        limit: u64,
+    ) -> Limiter<'db, C, Self::FetchSelector, Self::CountSelector> {
         let selector = self
             .clone()
             .limit(NonZeroU64::new(limit).map(|limit| limit.get()))

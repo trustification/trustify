@@ -5,9 +5,10 @@ use bytes::Bytes;
 use futures::Stream;
 use std::time::Instant;
 use trustify_module_storage::service::{StorageBackend, SyncAdapter};
+use uuid::Uuid;
 
 impl super::IngestorService {
-    pub async fn ingest_sbom<S, E>(&self, source: &str, stream: S) -> Result<i32, Error>
+    pub async fn ingest_sbom<S, E>(&self, source: &str, stream: S) -> Result<Uuid, Error>
     where
         E: std::error::Error,
         S: Stream<Item = Result<Bytes, E>>,
@@ -53,6 +54,6 @@ impl super::IngestorService {
         let duration = Instant::now() - start;
         log::info!("Ingested - took {}", humantime::Duration::from(duration));
 
-        Ok(sbom.sbom.id)
+        Ok(sbom.sbom.sbom_id)
     }
 }

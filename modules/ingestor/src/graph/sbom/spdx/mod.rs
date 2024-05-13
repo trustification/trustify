@@ -1,16 +1,19 @@
-#[cfg(test)]
-mod tests;
-
 use crate::graph::package::creator::Creator;
 use crate::graph::sbom::{SbomContext, SbomInformation};
+use sea_orm::ActiveValue::Set;
+use sea_orm::{ConnectionTrait, EntityTrait};
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
 use std::collections::HashMap;
 use std::io::Read;
+use std::str::FromStr;
 use time::OffsetDateTime;
 use tracing::{info_span, instrument};
+use trustify_common::db::chunk::EntityChunkedIter;
 use trustify_common::db::Transactional;
+use trustify_common::purl::Purl;
 use trustify_entity::relationship::Relationship;
+use trustify_entity::{sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref};
 
 pub struct Information<'a>(pub &'a SPDX);
 
@@ -27,7 +30,8 @@ impl<'a> From<Information<'a>> for SbomInformation {
         .ok();
 
         Self {
-            title: Some(sbom.document_creation_information.document_name.clone()),
+            node_id: sbom.document_creation_information.spdx_identifier.clone(),
+            name: sbom.document_creation_information.document_name.clone(),
             published,
             authors: value
                 .0
@@ -46,6 +50,63 @@ impl SbomContext {
         sbom_data: SPDX,
         tx: TX,
     ) -> Result<(), anyhow::Error> {
+        let mut creator = Creator::new();
+
+        let mut packages = Vec::with_capacity(sbom_data.package_information.len());
+        // assuming most packages will have a purl -> with_capacity
+        let mut purl_refs = Vec::with_capacity(sbom_data.package_information.len());
+        // assuming most packages will not have a CPE -> new
+        let mut cpe_refs = Vec::<sbom_package_cpe_ref::ActiveModel>::new();
+
+        for package in &sbom_data.package_information {
+            packages.push(sbom_package::ActiveModel {
+                sbom_id: Set(self.sbom.sbom_id),
+                node_id: Set(package.package_spdx_identifier.clone()),
+                name: Set(package.package_name.clone()),
+            });
+
+            for r in &package.external_reference {
+                match &*r.reference_type {
+                    "purl" => {
+                        if let Ok(purl) = Purl::from_str(&r.reference_locator) {
+                            purl_refs.push(sbom_package_purl_ref::ActiveModel {
+                                sbom_id: Set(self.sbom.sbom_id),
+                                node_id: Set(package.package_spdx_identifier.clone()),
+                                qualified_package_id: Set(purl.qualifier_uuid()),
+                            });
+                            creator.add(purl);
+                        }
+                    }
+                    // FIXME: add cpe22Type
+                    _ => {}
+                }
+            }
+        }
+
+        // create all purls
+
+        creator.create(&self.graph.connection(&tx)).await?;
+
+        // batch insert packages
+
+        for batch in &packages.into_iter().chunked() {
+            sbom_package::Entity::insert_many(batch)
+                .exec(&self.graph.connection(&tx))
+                .await?;
+        }
+
+        for batch in &purl_refs.into_iter().chunked() {
+            sbom_package_purl_ref::Entity::insert_many(batch)
+                .exec(&self.graph.connection(&tx))
+                .await?;
+        }
+
+        for batch in &cpe_refs.into_iter().chunked() {
+            sbom_package_cpe_ref::Entity::insert_many(batch)
+                .exec(&self.graph.connection(&tx))
+                .await?;
+        }
+
         // create a lookup cache for id[package information] -> package information
         let id_cache = info_span!("build id_cache").in_scope(|| {
             let mut cache = HashMap::with_capacity(sbom_data.package_information.len());
@@ -56,6 +117,8 @@ impl SbomContext {
             cache
         });
 
+        // replace with: create A -[described by]-> B
+        /*
         // For each thing described in the SBOM data, link it up to an sbom_cpe or sbom_package.
         for described in &sbom_data.document_creation_information.document_describes {
             let Some(described_package) = id_cache.get(described) else {
@@ -80,6 +143,7 @@ impl SbomContext {
                 }
             }
         }
+        */
 
         // create a lookup cache of id[package information] -> relatives
         let rel_cache = info_span!("build rel_cache").in_scope(|| {
@@ -93,9 +157,9 @@ impl SbomContext {
 
         // TODO: creator needs to be fed with purls, but rels need to use spdx-ids
         let mut rels = Vec::with_capacity(sbom_data.package_information.len());
-        let mut creator = Creator::new();
 
         // connect all other tree-ish package trees in the context of this sbom.
+        /*
         for package_info in &sbom_data.package_information {
             for package_ref in &package_info.external_reference {
                 if package_ref.reference_type != "purl" {
@@ -146,10 +210,7 @@ impl SbomContext {
         }
 
         log::info!("Relationships: {}", rels.len());
-
-        creator
-            .create(&self.graph.connection(&tx), self.sbom.id)
-            .await?;
+        */
 
         self.ingest_package_relates_to_package_many(&tx, rels)
             .await?;

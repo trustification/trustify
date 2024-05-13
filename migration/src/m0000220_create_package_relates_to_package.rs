@@ -47,7 +47,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(PackageRelatesToPackage::SbomId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .foreign_key(

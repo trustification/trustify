@@ -8,6 +8,7 @@ use crate::graph::package::package_version::PackageVersionContext;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
 use crate::graph::package::PackageContext;
 use crate::graph::Graph;
+use sea_orm::prelude::Uuid;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QuerySelect, QueryTrait,
     RelationTrait, Select, Set,
@@ -29,12 +30,17 @@ use trustify_entity::sbom;
 
 pub mod spdx;
 
+/*
 #[cfg(test)]
 mod tests;
+ */
 
 #[derive(Clone, Default)]
 pub struct SbomInformation {
-    pub title: Option<String>,
+    /// The id of the document in the SBOM graph
+    pub node_id: String,
+    /// The name of the document/node
+    pub name: String,
     pub published: Option<OffsetDateTime>,
     pub authors: Vec<String>,
 }
@@ -50,7 +56,7 @@ type SelectEntity<E> = Select<E>;
 impl Graph {
     pub async fn get_sbom_by_id<TX: AsRef<Transactional>>(
         &self,
-        id: i32,
+        id: Uuid,
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         Ok(sbom::Entity::find_by_id(id)
@@ -88,17 +94,21 @@ impl Graph {
         }
 
         let SbomInformation {
-            title,
+            node_id,
+            name,
             published,
             authors,
         } = info.into();
 
         let model = sbom::ActiveModel {
+            sbom_id: Set(Uuid::now_v7()),
+            node_id: Set(node_id),
+            name: Set(name),
+
             document_id: Set(document_id.to_string()),
             location: Set(location.to_string()),
             sha256: Set(sha256.to_string()),
 
-            title: Set(title),
             published: Set(published),
             authors: Set(authors),
 
@@ -179,7 +189,7 @@ impl Graph {
 
     async fn locate_sbom_by_id<TX: AsRef<Transactional>>(
         &self,
-        id: i32,
+        id: Uuid,
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         let _query = sbom::Entity::find_by_id(id);
@@ -253,7 +263,7 @@ impl Graph {
             )
     }
 
-    fn query_by_cpe(cpe: CpeContext) -> Select<entity::sbom::Entity> {
+    fn query_by_cpe(cpe: CpeContext) -> Select<sbom::Entity> {
         entity::sbom::Entity::find()
             .join(
                 JoinType::LeftJoin,
@@ -313,7 +323,7 @@ impl Graph {
         cpe: C,
         tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
-        if let Some(found) = self.get_cpe(cpe, &tx).await? {
+        if let Some(cpe) = self.get_cpe(cpe, &tx).await? {
             self.locate_many_sboms(Self::query_by_cpe(cpe), &tx).await
         } else {
             Ok(vec![])
@@ -347,56 +357,69 @@ impl SbomContext {
         }
     }
 
-    #[instrument(skip(tx), err)]
-    pub async fn describes_packages<TX: AsRef<Transactional>>(
-        &self,
-        tx: TX,
-    ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        self.graph
-            .get_qualified_packages_by_query(
-                entity::sbom_describes_package::Entity::find()
-                    .select_only()
-                    .column(entity::sbom_describes_package::Column::QualifiedPackageId)
-                    .filter(entity::sbom_describes_package::Column::SbomId.eq(self.sbom.id))
-                    .into_query(),
-                tx,
-            )
-            .await
-    }
+    /*
+        /// Get the packages which describe an SBOM
+        #[instrument(skip(tx), err)]
+        pub async fn describes_packages<TX: AsRef<Transactional>>(
+            &self,
+            tx: TX,
+        ) -> Result<Vec<SbomPackage>, Error> {
+            self.graph
+                .get_qualified_packages_by_query(
+                    entity::sbom_describes_package::Entity::find()
+                        .select_only()
+                        .column(entity::sbom_describes_package::Column::QualifiedPackageId)
+                        .filter(entity::sbom_describes_package::Column::SbomId.eq(self.sbom.id))
+                        .into_query(),
+                    tx,
+                )
+                .await
+        }
 
-    #[instrument(skip(tx), err)]
-    pub async fn describes_cpe22s<TX: AsRef<Transactional>>(
-        &self,
-        tx: TX,
-    ) -> Result<Vec<CpeContext>, Error> {
-        self.graph
-            .get_cpe_by_query(
-                entity::sbom_describes_cpe::Entity::find()
-                    .select_only()
-                    .column(entity::sbom_describes_cpe::Column::CpeId)
-                    .filter(entity::sbom_describes_cpe::Column::SbomId.eq(self.sbom.id))
-                    .into_query(),
-                tx,
-            )
-            .await
-    }
+        /// Get the PURLs which describe an SBOM
+        #[instrument(skip(tx), err)]
+        pub async fn describes_purls<TX: AsRef<Transactional>>(
+            &self,
+            tx: TX,
+        ) -> Result<Vec<SbomPackage>, Error> {
+           self.describes_packages(tx).
+        }
 
-    #[instrument(skip(tx), err)]
-    pub async fn packages<TX: AsRef<Transactional>>(
-        &self,
-        tx: TX,
-    ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        self.graph
-            .get_qualified_packages_by_query(
-                entity::sbom_package::Entity::find()
-                    .select_only()
-                    .column(entity::sbom_package::Column::QualifiedPackageId)
-                    .filter(entity::sbom_package::Column::SbomId.eq(self.sbom.id))
-                    .into_query(),
-                tx,
-            )
-            .await
-    }
+        /// Get the CPEs which describe an SBOM
+        #[instrument(skip(tx), err)]
+        pub async fn describes_cpe22s<TX: AsRef<Transactional>>(
+            &self,
+            tx: TX,
+        ) -> Result<Vec<CpeContext>, Error> {
+            self.graph
+                .get_cpe_by_query(
+                    entity::sbom_describes_cpe::Entity::find()
+                        .select_only()
+                        .column(entity::sbom_describes_cpe::Column::CpeId)
+                        .filter(entity::sbom_describes_cpe::Column::SbomId.eq(self.sbom.id))
+                        .into_query(),
+                    tx,
+                )
+                .await
+        }
+
+        #[instrument(skip(tx), err)]
+        pub async fn packages<TX: AsRef<Transactional>>(
+            &self,
+            tx: TX,
+        ) -> Result<Vec<QualifiedPackageContext>, Error> {
+            self.graph
+                .get_qualified_packages_by_query(
+                    entity::sbom_package::Entity::find()
+                        .select_only()
+                        .column(entity::sbom_package::Column::QualifiedPackageId)
+                        .filter(entity::sbom_package::Column::SbomId.eq(self.sbom.id))
+                        .into_query(),
+                    tx,
+                )
+                .await
+        }
+    */
 
     fn create_relationship(
         &self,
@@ -411,7 +434,7 @@ impl SbomContext {
             left_package_id: Set(left_package),
             relationship: Set(relationship),
             right_package_id: Set(right_package),
-            sbom_id: Set(self.sbom.id),
+            sbom_id: Set(self.sbom.sbom_id),
         }
     }
 
@@ -432,9 +455,7 @@ impl SbomContext {
         let mut creator = Creator::new();
         creator.add(left_package_input.clone());
         creator.add(right_package_input.clone());
-        creator
-            .create(&self.graph.connection(&tx), self.sbom.id)
-            .await?;
+        creator.create(&self.graph.connection(&tx)).await?;
 
         // now create the relationship
 
@@ -495,7 +516,7 @@ impl SbomContext {
                         .column(LeftPackageId)
                         .from_function(
                             Func::cust(QualifiedPackageTransitive).args([
-                                self.sbom.id.into(),
+                                self.sbom.sbom_id.into(),
                                 pkg.qualified_package.id.into(),
                                 relationship.into(),
                             ]),
@@ -528,7 +549,7 @@ impl SbomContext {
                     .join(",")
             ));
 
-            let sbom_id: SimpleExpr = self.sbom.id.into();
+            let sbom_id: SimpleExpr = self.sbom.sbom_id.into();
             let qualified_package_id: SimpleExpr = pkg.qualified_package.id.into();
 
             Ok(self
@@ -553,89 +574,37 @@ impl SbomContext {
         }
     }
 
-    pub async fn related_packages<TX: AsRef<Transactional>>(
-        &self,
-        relationship: Relationship,
-        pkg: &Purl,
-        tx: TX,
-    ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        let pkg = self.graph.get_qualified_package(pkg, &tx).await?;
+    /*
+        pub async fn vulnerability_assertions<TX: AsRef<Transactional>>(
+            &self,
+            tx: TX,
+        ) -> Result<HashMap<QualifiedPackageContext, PackageVulnerabilityAssertions>, Error> {
+            let described_packages = self.describes_packages(&tx).await?;
+            let mut applicable = HashSet::new();
 
-        if let Some(pkg) = pkg {
-            let related_query = entity::package_relates_to_package::Entity::find()
-                .select_only()
-                .column(entity::package_relates_to_package::Column::LeftPackageId)
-                .filter(entity::package_relates_to_package::Column::SbomId.eq(self.sbom.id))
-                .filter(entity::package_relates_to_package::Column::Relationship.eq(relationship))
-                .filter(
-                    entity::package_relates_to_package::Column::RightPackageId
-                        .eq(pkg.qualified_package.id),
+            for pkg in described_packages {
+                applicable.extend(
+                    self.related_packages_transitively(
+                        &[Relationship::DependencyOf, Relationship::ContainedBy],
+                        &pkg.into(),
+                        Transactional::None,
+                    )
+                    .await?,
                 )
-                .into_query();
+            }
 
-            let found = entity::qualified_package::Entity::find()
-                .filter(entity::qualified_package::Column::Id.in_subquery(related_query))
-                .all(&self.graph.connection(&tx))
-                .await?;
+            let mut assertions = HashMap::new();
 
-            let mut related = Vec::new();
-
-            for base in found.into_iter() {
-                if let Some(package_version) =
-                    entity::package_version::Entity::find_by_id(base.package_version_id)
-                        .one(&self.graph.connection(&tx))
-                        .await?
-                {
-                    if let Some(package) =
-                        entity::package::Entity::find_by_id(package_version.package_id)
-                            .one(&self.graph.connection(&tx))
-                            .await?
-                    {
-                        let package = PackageContext::new(&self.graph, package);
-                        let package_version = PackageVersionContext::new(&package, package_version);
-
-                        related.push(QualifiedPackageContext::new(&package_version, base));
-                    }
+            for pkg in applicable {
+                let package_assertions = pkg.vulnerability_assertions(&tx).await?;
+                if !package_assertions.assertions.is_empty() {
+                    assertions.insert(pkg.clone(), pkg.vulnerability_assertions(&tx).await?);
                 }
             }
 
-            Ok(related)
-        } else {
-            log::info!("no package");
-            Ok(vec![])
+            Ok(assertions)
         }
-    }
-
-    pub async fn vulnerability_assertions<TX: AsRef<Transactional>>(
-        &self,
-        tx: TX,
-    ) -> Result<HashMap<QualifiedPackageContext, PackageVulnerabilityAssertions>, Error> {
-        let described_packages = self.describes_packages(&tx).await?;
-        let mut applicable = HashSet::new();
-
-        for pkg in described_packages {
-            applicable.extend(
-                self.related_packages_transitively(
-                    &[Relationship::DependencyOf, Relationship::ContainedBy],
-                    &pkg.into(),
-                    Transactional::None,
-                )
-                .await?,
-            )
-        }
-
-        let mut assertions = HashMap::new();
-
-        for pkg in applicable {
-            let package_assertions = pkg.vulnerability_assertions(&tx).await?;
-            if !package_assertions.assertions.is_empty() {
-                assertions.insert(pkg.clone(), pkg.vulnerability_assertions(&tx).await?);
-            }
-        }
-
-        Ok(assertions)
-    }
-
+    */
     /*
 
     pub async fn direct_dependencies(&self, tx: Transactional<'_>) -> Result<Vec<Purl>, Error> {

@@ -11,16 +11,10 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(SbomNode::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(SbomNode::SbomId).integer().not_null())
+                    .col(ColumnDef::new(SbomNode::SbomId).uuid().not_null())
                     .col(ColumnDef::new(SbomNode::NodeId).string().not_null())
                     .col(ColumnDef::new(SbomNode::Name).string().not_null())
                     .primary_key(Index::create().col(SbomNode::SbomId).col(SbomNode::NodeId))
-                    .foreign_key(
-                        ForeignKey::create()
-                            .from_col(SbomNode::SbomId)
-                            .to(Sbom::Table, Sbom::SbomId)
-                            .on_delete(ForeignKeyAction::Cascade),
-                    )
                     .to_owned(),
             )
             .await?;
@@ -30,24 +24,29 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Sbom::Table)
                     .if_not_exists()
-                    /*
-                    .col(
-                        ColumnDef::new(Sbom::SbomId)
-                            .integer()
-                            .not_null()
-                            .auto_increment()
-                            .primary_key(),
-                    )*/
+                    .col(ColumnDef::new(Sbom::SbomId).uuid().not_null())
+                    .col(ColumnDef::new(Sbom::NodeId).string().not_null())
                     .col(ColumnDef::new(Sbom::Location).string().not_null())
                     .col(ColumnDef::new(Sbom::DocumentId).string().not_null())
                     .col(ColumnDef::new(Sbom::Sha256).string().not_null())
-                    .col(ColumnDef::new(Sbom::Title).string())
                     .col(ColumnDef::new(Sbom::Published).timestamp_with_time_zone())
                     .col(ColumnDef::new(Sbom::Authors).array(ColumnType::String(None)))
-                    .extra(format!("INHERITS({})", SbomNode::Table.to_string()))
+                    .primary_key(Index::create().col(Sbom::SbomId))
                     .to_owned(),
             )
-            .await
+            .await?;
+
+        manager
+            .create_foreign_key(
+                ForeignKey::create()
+                    .from(Sbom::Table, (Sbom::SbomId, Sbom::NodeId))
+                    .to(SbomNode::Table, (SbomNode::SbomId, SbomNode::NodeId))
+                    .on_delete(ForeignKeyAction::Cascade)
+                    .to_owned(),
+            )
+            .await?;
+
+        Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
@@ -77,14 +76,12 @@ pub enum Sbom {
     // an internal SBOM id
     #[allow(clippy::enum_variant_names)]
     SbomId,
-    // the SPDX node id
     NodeId,
     Location,
     Sha256,
     // the SPDX namespace
     DocumentId,
 
-    Title,
     Published,
     Authors,
 }

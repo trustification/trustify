@@ -1,5 +1,6 @@
-use crate::m0000030_create_sbom::Sbom;
 use crate::m0000130_create_qualified_package::QualifiedPackage;
+use crate::m0000250_create_sbom_package::SbomPackage;
+use crate::m0000260_sbom_package_cpe_ref::SbomPackageCpeRef;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -14,19 +15,11 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(SbomPackagePurlRef::Table)
                     .if_not_exists()
+                    .col(ColumnDef::new(SbomPackagePurlRef::SbomId).uuid().not_null())
                     .col(
-                        ColumnDef::new(SbomPackagePurlRef::SbomId)
-                            .integer()
+                        ColumnDef::new(SbomPackageCpeRef::NodeId)
+                            .string()
                             .not_null(),
-                    )
-                    .foreign_key(
-                        ForeignKey::create()
-                            .from(
-                                SbomPackagePurlRef::Table,
-                                (SbomPackagePurlRef::SbomId, SbomPackagePurlRef::NodeId),
-                            )
-                            .to(Sbom::Table, (Sbom::SbomId, Sbom::NodeId))
-                            .on_delete(ForeignKeyAction::Cascade),
                     )
                     .col(
                         ColumnDef::new(SbomPackagePurlRef::QualifiedPackageId)
@@ -38,6 +31,18 @@ impl MigrationTrait for Migration {
                             .col(SbomPackagePurlRef::SbomId)
                             .col(SbomPackagePurlRef::QualifiedPackageId)
                             .primary(),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from(
+                                SbomPackagePurlRef::Table,
+                                (SbomPackagePurlRef::SbomId, SbomPackagePurlRef::NodeId),
+                            )
+                            .to(
+                                SbomPackage::Table,
+                                (SbomPackage::SbomId, SbomPackage::NodeId),
+                            )
+                            .on_delete(ForeignKeyAction::Cascade),
                     )
                     .foreign_key(
                         ForeignKey::create()

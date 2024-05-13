@@ -51,13 +51,13 @@ impl MigratorTrait for Migrator {
             Box::new(m0000150_create_affected_package_version_range::Migration),
             Box::new(m0000160_create_fixed_package_version::Migration),
             Box::new(m0000170_create_not_affected_package_version::Migration),
-            Box::new(m0000260_sbom_package_cpe_ref::Migration),
-            Box::new(m0000270_sbom_package_purl_ref::Migration),
             Box::new(m0000210_create_relationship::Migration),
             Box::new(m0000220_create_package_relates_to_package::Migration),
             Box::new(m0000230_create_qualified_package_transitive_function::Migration),
             Box::new(m0000240_create_importer::Migration),
             Box::new(m0000250_create_sbom_package::Migration),
+            Box::new(m0000260_sbom_package_cpe_ref::Migration),
+            Box::new(m0000270_sbom_package_purl_ref::Migration),
         ]
     }
 }

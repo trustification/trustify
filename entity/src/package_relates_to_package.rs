@@ -6,7 +6,7 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     // the SBOM the relationship belongs to
     #[sea_orm(primary_key)]
-    pub sbom_id: i32,
+    pub sbom_id: Uuid,
     // TODO: change to sbom package
     #[sea_orm(primary_key)]
     pub left_package_id: Uuid,
@@ -34,7 +34,7 @@ pub enum Relation {
     #[sea_orm(
         belongs_to = "super::sbom::Entity",
         from = "Column::SbomId",
-        to = "super::sbom::Column::Id"
+        to = "super::sbom::Column::SbomId"
     )]
     Sbom,
 }

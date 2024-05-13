@@ -3,6 +3,6 @@
 
 pub mod endpoints;
 pub mod error;
-mod model;
-mod query;
-mod service;
+pub mod model;
+pub mod query;
+pub mod service;
