@@ -1,9 +1,9 @@
-use crate::query::SearchOptions;
 use crate::service::sbom::{SbomPackageReference, Which};
 use crate::service::FetchService;
 use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::prelude::Uuid;
 use trustify_auth::{authenticator::user::UserInformation, authorizer::Authorizer, Permission};
+use trustify_common::db::query::SearchOptions;
 use trustify_common::{model::Paginated, purl::Purl};
 use trustify_entity::relationship::Relationship;
 

@@ -10,7 +10,7 @@ pub enum Error {
     Database(#[from] DbErr),
 
     #[error(transparent)]
-    Search(#[from] crate::query::Error),
+    Search(#[from] trustify_common::db::query::Error),
 
     #[error(transparent)]
     Any(#[from] anyhow::Error),

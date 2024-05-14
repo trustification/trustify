@@ -6051,6 +6051,8 @@ dependencies = [
  "clap",
  "concat-idents",
  "cpe",
+ "human-date-parser",
+ "humantime",
  "itertools 0.12.1",
  "lenient_semver",
  "log",
@@ -6058,6 +6060,7 @@ dependencies = [
  "packageurl",
  "pem",
  "postgresql_embedded",
+ "regex",
  "reqwest",
  "sea-orm",
  "serde",
@@ -6067,6 +6070,7 @@ dependencies = [
  "test-context",
  "test-log",
  "thiserror",
+ "time",
  "tokio",
  "tracing",
  "trustify-cvss",
@@ -6178,6 +6182,69 @@ dependencies = [
 ]
 
 [[package]]
+name = "trustify-model"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "sea-orm",
+ "serde",
+ "thiserror",
+ "time",
+ "trustify-common",
+ "trustify-cvss",
+ "trustify-entity",
+ "utoipa",
+]
+
+[[package]]
+name = "trustify-module-advisory"
+version = "0.1.0"
+dependencies = [
+ "actix-http",
+ "actix-web",
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "cpe",
+ "csaf",
+ "human-date-parser",
+ "humantime",
+ "jsonpath-rust",
+ "lenient_semver",
+ "log",
+ "packageurl",
+ "postgresql_embedded",
+ "regex",
+ "rust-lzma",
+ "sea-orm",
+ "sea-orm-migration",
+ "sea-query",
+ "serde",
+ "serde_json",
+ "spdx-expression",
+ "spdx-rs",
+ "tempfile",
+ "test-context",
+ "test-log",
+ "thiserror",
+ "time",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "trustify-auth",
+ "trustify-common",
+ "trustify-cvss",
+ "trustify-entity",
+ "trustify-migration",
+ "trustify-model",
+ "trustify-module-ingestor",
+ "trustify-module-storage",
+ "urlencoding",
+ "utoipa",
+]
+
+[[package]]
 name = "trustify-module-fetch"
 version = "0.1.0"
 dependencies = [
@@ -6217,6 +6284,7 @@ dependencies = [
  "trustify-cvss",
  "trustify-entity",
  "trustify-migration",
+ "trustify-model",
  "trustify-module-ingestor",
  "trustify-module-storage",
  "urlencoding",
@@ -6349,6 +6417,53 @@ dependencies = [
 ]
 
 [[package]]
+name = "trustify-module-vulnerability"
+version = "0.1.0"
+dependencies = [
+ "actix-http",
+ "actix-web",
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "cpe",
+ "csaf",
+ "human-date-parser",
+ "humantime",
+ "jsonpath-rust",
+ "lenient_semver",
+ "log",
+ "packageurl",
+ "postgresql_embedded",
+ "regex",
+ "rust-lzma",
+ "sea-orm",
+ "sea-orm-migration",
+ "sea-query",
+ "serde",
+ "serde_json",
+ "spdx-expression",
+ "spdx-rs",
+ "tempfile",
+ "test-context",
+ "test-log",
+ "thiserror",
+ "time",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "trustify-auth",
+ "trustify-common",
+ "trustify-cvss",
+ "trustify-entity",
+ "trustify-migration",
+ "trustify-model",
+ "trustify-module-ingestor",
+ "trustify-module-storage",
+ "urlencoding",
+ "utoipa",
+]
+
+[[package]]
 name = "trustify-server"
 version = "0.1.0"
 dependencies = [
@@ -6368,11 +6483,13 @@ dependencies = [
  "trustify-common",
  "trustify-entity",
  "trustify-infrastructure",
+ "trustify-module-advisory",
  "trustify-module-fetch",
  "trustify-module-importer",
  "trustify-module-ingestor",
  "trustify-module-storage",
  "trustify-module-ui",
+ "trustify-module-vulnerability",
  "url",
  "urlencoding",
  "utoipa",

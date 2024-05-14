@@ -11,6 +11,8 @@ anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 concat-idents = { workspace = true }
 cpe = { workspace = true }
+human-date-parser = { workspace = true }
+humantime = { workspace = true }
 itertools = { workspace = true }
 lenient_semver = { workspace = true }
 log = { workspace = true }
@@ -19,11 +21,13 @@ packageurl = { workspace = true }
 pem = { workspace = true }
 postgresql_embedded = { workspace = true, features = ["blocking", "bundled", "tokio"] }
 reqwest = { workspace = true, features = ["native-tls"] }
+regex = { workspace = true }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 sqlx = { workspace = true }
 tempfile = { workspace = true }
+time = { workspace = true }
 test-context = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }

@@ -1,0 +1,20 @@
+[package]
+name = "trustify-model"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+trustify-common = { workspace = true }
+trustify-cvss = { workspace = true }
+trustify-entity = { workspace = true }
+
+anyhow = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+time = { workspace = true }
+thiserror = { workspace = true }
+utoipa = { workspace = true }
+sea-orm = { workspace = true }
+
+[dev-dependencies]
+anyhow = { workspace = true }

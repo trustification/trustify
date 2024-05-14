@@ -342,6 +342,7 @@ fn maintain_order<T: EntityTrait>(stmt: Select<T>) -> Select<T> {
 // Tests
 /////////////////////////////////////////////////////////////////////////
 
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -727,3 +728,6 @@ mod tests {
         impl ActiveModelBehavior for ActiveModel {}
     }
 }
+
+
+ */

@@ -1,11 +1,7 @@
 use super::FetchService;
 use crate::{
     error::Error,
-    model::{
-        advisory::{AdvisorySummary, AdvisoryVulnerabilitySummary},
-        sbom::{SbomPackage, SbomPackageRelation, SbomSummary},
-    },
-    query::{Query, SearchOptions},
+    model::sbom::{SbomPackage, SbomPackageRelation, SbomSummary},
 };
 use sea_orm::{
     prelude::{Json, Uuid},
@@ -41,6 +37,7 @@ use trustify_entity::{
     sbom, sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
 };
 use utoipa::openapi::path::ParameterStyle::Simple;
+use trustify_common::db::query::{Query, SearchOptions};
 
 // TODO: think about a way to add CPE and PURLs too
 #[derive(Clone, Eq, PartialEq, Debug)]
