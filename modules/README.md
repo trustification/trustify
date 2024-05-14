@@ -6,7 +6,7 @@ Currently, we have:
 
 * `graph` – The core graph model, correlation between the different SBOM and advisory entities.
 * `ingestor` – Data ingestion functionality.
-* `importer` – Scheduled data import management and execution. Uses `ingestor` for ingesting data. 
+* `importer` – Scheduled data import management and execution. Uses `ingestor` for ingesting data.
 
 There's an ideal (not enforced) layout of modules:
 

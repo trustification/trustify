@@ -1,30 +1,30 @@
-Find SBOMs:
+# Find SBOMs
 
-```bash
+```shell
 http GET localhost:8080/api/v1/sbom limit==5 offset==0
 ```
 
 Retrieve SBOM:
 
-```bash
+```shell
 http GET localhost:8080/sboms/1
 ```
 
 Get SBOM packages:
 
-```bash
+```shell
 http GET localhost:8080/api/v1/sbom/1/packages limit==5 offset==0
 ```
 
 Get SBOM top-level packages:
 
-```bash
+```shell
 http GET localhost:8080/api/v1/sbom/1/packages limit==5 offset==0 root==true
 ```
 
 Get related packages:
 
-```bash
+```shell
 http GET localhost:8080/api/v1/sbom/1/related limit==5 offset==0 reference==<purl>
 ```
 
@@ -34,6 +34,6 @@ It also is possible to limit the search to a specific relationship type by provi
 
 For example:
 
-```bash
+```shell
 http GET localhost:8080/api/v1/sbom/1/related limit==5 offset==0 reference==pkg://maven/com.redhat.quarkus.platform/quarkus-bom@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=pom which==right
 ```

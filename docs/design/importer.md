@@ -42,13 +42,13 @@ class IngestorService {
 class Importer {
     +string name
     +uuid revision
-    
+
     +state state
     +timestamp? last_change
     +timestamp? last_run
     +timestamp? last_success
     +string? last_error
-    
+
     +ImporterConfiguration configuration
 }
 
@@ -85,4 +85,3 @@ loop
     ImporterService ->> ImporterReport: store report
 end
 ```
-
