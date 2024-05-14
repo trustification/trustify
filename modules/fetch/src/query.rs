@@ -348,18 +348,6 @@ mod tests {
     use chrono::{Local, TimeDelta};
     use sea_orm::{QueryFilter, QuerySelect, QueryTrait};
     use test_log::test;
-    use trustify_entity::advisory;
-
-    // test helper
-    fn where_clause(query: &str) -> Result<String, anyhow::Error> {
-        Ok(advisory::Entity::find()
-            .select_only()
-            .column(advisory::Column::Id)
-            .filter(Filter::<advisory::Entity>::from_str(query)?.into_condition())
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string()[45..]
-            .to_string())
-    }
 
     #[test(tokio::test)]
     async fn filters() -> Result<(), anyhow::Error> {
@@ -501,31 +489,31 @@ mod tests {
 
         assert_eq!(
             where_clause("foo")?,
-            r#"("advisory"."identifier" ILIKE '%foo%') OR ("advisory"."location" ILIKE '%foo%') OR ("advisory"."sha256" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')"#
+            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')"#
         );
         assert_eq!(
             where_clause("foo&location=bar")?,
-            r#"(("advisory"."identifier" ILIKE '%foo%') OR ("advisory"."location" ILIKE '%foo%') OR ("advisory"."sha256" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')) AND "advisory"."location" = 'bar'"#
+            r#"(("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')) AND "advisory"."location" = 'bar'"#
         );
         assert_eq!(
             where_clause(r"m\&m's&location=f\&oo&id=13")?,
-            r#"(("advisory"."identifier" ILIKE E'%m&m\'s%') OR ("advisory"."location" ILIKE E'%m&m\'s%') OR ("advisory"."sha256" ILIKE E'%m&m\'s%') OR ("advisory"."title" ILIKE E'%m&m\'s%')) AND "advisory"."location" = 'f&oo' AND "advisory"."id" = 13"#
+            r#"(("advisory"."location" ILIKE E'%m&m\'s%') OR ("advisory"."title" ILIKE E'%m&m\'s%')) AND "advisory"."location" = 'f&oo' AND "advisory"."id" = 13"#
         );
         assert_eq!(
             where_clause("a|b|c")?,
-            r#"("advisory"."identifier" ILIKE '%a%') OR ("advisory"."location" ILIKE '%a%') OR ("advisory"."sha256" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR ("advisory"."identifier" ILIKE '%b%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."sha256" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%') OR ("advisory"."identifier" ILIKE '%c%') OR ("advisory"."location" ILIKE '%c%') OR ("advisory"."sha256" ILIKE '%c%') OR ("advisory"."title" ILIKE '%c%')"#
+            r#"("advisory"."location" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%') OR ("advisory"."location" ILIKE '%c%') OR ("advisory"."title" ILIKE '%c%')"#
         );
         assert_eq!(
             where_clause("a|b&id=1")?,
-            r#"(("advisory"."identifier" ILIKE '%a%') OR ("advisory"."location" ILIKE '%a%') OR ("advisory"."sha256" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR ("advisory"."identifier" ILIKE '%b%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."sha256" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%')) AND "advisory"."id" = 1"#
+            r#"(("advisory"."location" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%')) AND "advisory"."id" = 1"#
         );
         assert_eq!(
             where_clause("a&b")?,
-            r#"(("advisory"."identifier" ILIKE '%a%') OR ("advisory"."location" ILIKE '%a%') OR ("advisory"."sha256" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%')) AND (("advisory"."identifier" ILIKE '%b%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."sha256" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%'))"#
+            r#"(("advisory"."location" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%')) AND (("advisory"."location" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%'))"#
         );
         assert_eq!(
             where_clause("here&location!~there|hereford")?,
-            r#"(("advisory"."identifier" ILIKE '%here%') OR ("advisory"."location" ILIKE '%here%') OR ("advisory"."sha256" ILIKE '%here%') OR ("advisory"."title" ILIKE '%here%')) AND (("advisory"."location" NOT ILIKE '%there%') AND ("advisory"."location" NOT ILIKE '%hereford%'))"#
+            r#"(("advisory"."location" ILIKE '%here%') OR ("advisory"."title" ILIKE '%here%')) AND (("advisory"."location" NOT ILIKE '%there%') AND ("advisory"."location" NOT ILIKE '%hereford%'))"#
         );
 
         Ok(())
@@ -705,5 +693,37 @@ mod tests {
         assert_eq!(expected_asc, actual);
 
         Ok(())
+    }
+
+    /////////////////////////////////////////////////////////////////////////
+    // Test helpers
+    /////////////////////////////////////////////////////////////////////////
+
+    fn where_clause(query: &str) -> Result<String, anyhow::Error> {
+        Ok(advisory::Entity::find()
+            .select_only()
+            .column(advisory::Column::Id)
+            .filter(Filter::<advisory::Entity>::from_str(query)?.into_condition())
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string()[45..]
+            .to_string())
+    }
+
+    mod advisory {
+        use sea_orm::entity::prelude::*;
+        use time::OffsetDateTime;
+
+        #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
+        #[sea_orm(table_name = "advisory")]
+        pub struct Model {
+            #[sea_orm(primary_key)]
+            pub id: i32,
+            pub location: String,
+            pub title: String,
+            pub published: Option<OffsetDateTime>,
+        }
+        #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+        pub enum Relation {}
+        impl ActiveModelBehavior for ActiveModel {}
     }
 }
