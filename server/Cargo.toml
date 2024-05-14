@@ -13,6 +13,8 @@ trustify-module-ingestor = { workspace = true }
 trustify-module-importer = { workspace = true }
 trustify-module-storage = { workspace = true }
 trustify-module-ui = { workspace = true }
+trustify-module-advisory = { workspace = true }
+trustify-module-vulnerability = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }

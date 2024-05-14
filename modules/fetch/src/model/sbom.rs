@@ -1,4 +1,3 @@
-use crate::model::advisory::AdvisoryVulnerabilitySummary;
 use crate::service::sbom::SbomPackageReference;
 use sea_orm::prelude::Uuid;
 use sea_orm::FromQueryResult;
