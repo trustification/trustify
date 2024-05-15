@@ -100,6 +100,9 @@ pub struct CommonImporter {
 
     #[serde(with = "humantime_serde")]
     pub period: Duration,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
 }
 
 impl TryFrom<Model> for Importer {

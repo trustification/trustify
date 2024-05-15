@@ -17,6 +17,7 @@ fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
         common: CommonImporter {
             disabled: false,
             period: Duration::from_secs(30),
+            description: None,
         },
         source: source.into(),
         keys: vec![],

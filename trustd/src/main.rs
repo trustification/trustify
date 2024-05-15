@@ -1,7 +1,14 @@
 use clap::Parser;
 use std::env;
 use std::process::{ExitCode, Termination};
+use std::time::Duration;
 use tokio::task::{spawn_local, LocalSet};
+use trustify_common::config::Database;
+use trustify_module_importer::model::{
+    CommonImporter, CsafImporter, ImporterConfiguration, SbomImporter,
+};
+use trustify_module_importer::service::{Error, ImporterService};
+use url::Url;
 
 mod db;
 
@@ -41,11 +48,17 @@ async fn pm_mode() -> anyhow::Result<ExitCode> {
     let Some(Command::Db(mut db)) = Trustd::parse_from(["trustd", "db", "migrate"]).command else {
         unreachable!()
     };
+
     let postgres = db.start().await?;
+    let database = db.database.clone();
+
     if !postgres.database_exists(&db.database.name).await? {
         db.command = db::Command::Create;
     }
     db.run().await?;
+
+    // after we have the database structure, add some sample data
+    sample_data(&database).await?;
 
     let api = Trustd::parse_from([
         "trustd",
@@ -58,6 +71,54 @@ async fn pm_mode() -> anyhow::Result<ExitCode> {
     LocalSet::new()
         .run_until(async { spawn_local(api.run()).await? })
         .await
+}
+
+async fn sample_data(db: &Database) -> anyhow::Result<()> {
+    let db = trustify_common::db::Database::new(db).await?;
+
+    let importer = ImporterService::new(db);
+    importer
+        .create(
+            "redhat-sbom".into(),
+            ImporterConfiguration::Sbom(SbomImporter {
+                common: CommonImporter {
+                    disabled: true,
+                    period: Duration::from_secs(300),
+                    description: Some("All Red Hat SBOMs".into())
+                },
+                source: "https://access.redhat.com/security/data/sbom/beta/".to_string(),
+                keys: vec![
+                    Url::parse("https://access.redhat.com/security/data/97f5eac4.txt#77E79ABE93673533ED09EBE2DCE3823597F5EAC4")?
+                ],
+                v3_signatures: true,
+                only_patterns: vec![],
+            }),
+        )
+        .await.or_else(|err|match err {
+            Error::AlreadyExists(_) =>Ok(()),
+            err => Err(err)
+        })?;
+    importer
+        .create(
+            "redhat-csaf-vex-2024".into(),
+            ImporterConfiguration::Csaf(CsafImporter {
+                common: CommonImporter {
+                    disabled: true,
+                    period: Duration::from_secs(300),
+                    description: Some("Red Hat VEX files from 2024".into()),
+                },
+                source: "redhat.com".to_string(),
+                v3_signatures: true,
+                only_patterns: vec!["^cve-2024-".into()],
+            }),
+        )
+        .await
+        .or_else(|err| match err {
+            Error::AlreadyExists(_) => Ok(()),
+            err => Err(err),
+        })?;
+
+    Ok(())
 }
 
 #[tokio::main]
