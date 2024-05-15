@@ -624,7 +624,6 @@ mod tests {
         Ok(())
     }
 
-    #[allow(clippy::module_inception)]
     #[test(tokio::test)]
     async fn group_by() -> Result<(), anyhow::Error> {
         let query = advisory::Entity::find()
@@ -640,9 +639,25 @@ mod tests {
             query
         );
 
+        let query = advisory::Entity::find()
+            .select_only()
+            .column(advisory::Column::Location)
+            .filtering(SearchOptions {
+                q: "location= GROUP BY ".into(),
+                sort: "".into(),
+            })?
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+
+        assert_eq!(
+            r#"SELECT "advisory"."location" FROM "advisory" WHERE "advisory"."location" = ' GROUP BY ' ORDER BY "advisory"."id" DESC"#,
+            query
+        );
+
         Ok(())
     }
 
+    #[allow(clippy::module_inception)]
     #[test(tokio::test)]
     async fn missing_id() -> Result<(), anyhow::Error> {
         mod missing_id {
