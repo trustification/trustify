@@ -20,6 +20,7 @@ use std::fmt::{Debug, Write};
 use std::iter::{repeat, Flatten, Zip};
 use std::vec::IntoIter;
 use tracing::instrument;
+use trustify_common::db::query::{Query, SearchOptions};
 use trustify_common::{
     cpe::Cpe,
     db::{
@@ -37,7 +38,6 @@ use trustify_entity::{
     sbom, sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
 };
 use utoipa::openapi::path::ParameterStyle::Simple;
-use trustify_common::db::query::{Query, SearchOptions};
 
 // TODO: think about a way to add CPE and PURLs too
 #[derive(Clone, Eq, PartialEq, Debug)]

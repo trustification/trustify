@@ -35,6 +35,7 @@ utoipa = { workspace = true, features = ["url"] }
 uuid = { workspace = true, features = ["v5"] }
 
 [dev-dependencies]
+chrono = { workspace = true }
 serde_json = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 tokio = { workspace = true, features = ["full"] }
