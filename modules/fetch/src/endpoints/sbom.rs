@@ -3,7 +3,7 @@ use crate::service::FetchService;
 use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::prelude::Uuid;
 use trustify_auth::{authenticator::user::UserInformation, authorizer::Authorizer, Permission};
-use trustify_common::db::query::SearchOptions;
+use trustify_common::db::query::Query;
 use trustify_common::{model::Paginated, purl::Purl};
 use trustify_entity::relationship::Relationship;
 
@@ -11,7 +11,7 @@ use trustify_entity::relationship::Relationship;
 #[utoipa::path(
     tag = "sbom",
     params(
-        SearchOptions,
+        Query,
         Paginated,
     ),
     responses(
@@ -21,7 +21,7 @@ use trustify_entity::relationship::Relationship;
 #[get("/api/v1/sbom")]
 pub async fn all(
     fetch: web::Data<FetchService>,
-    web::Query(search): web::Query<SearchOptions>,
+    web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     authorizer: web::Data<Authorizer>,
     user: UserInformation,
@@ -37,7 +37,7 @@ pub async fn all(
 #[utoipa::path(
     params(
         ("id", Path, description = "ID of the SBOM to get packages for"),
-        SearchOptions,
+        Query,
         Paginated,
     ),
     responses(
@@ -48,7 +48,7 @@ pub async fn all(
 pub async fn packages(
     fetch: web::Data<FetchService>,
     id: web::Path<Uuid>,
-    web::Query(search): web::Query<SearchOptions>,
+    web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     authorizer: web::Data<Authorizer>,
     user: UserInformation,
@@ -79,7 +79,7 @@ struct RelatedQuery {
     params(
         ("id", Path, description = "ID of SBOM to search packages in"),
         RelatedQuery,
-        SearchOptions,
+        Query,
         Paginated,
     ),
     responses(
@@ -90,7 +90,7 @@ struct RelatedQuery {
 pub async fn related(
     fetch: web::Data<FetchService>,
     id: web::Path<Uuid>,
-    web::Query(search): web::Query<SearchOptions>,
+    web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     web::Query(related): web::Query<RelatedQuery>,
     authorizer: web::Data<Authorizer>,
