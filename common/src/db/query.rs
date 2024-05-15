@@ -99,7 +99,7 @@ impl<T: EntityTrait> Filtering<T> for Select<T> {
                 .fold(result, |select, s| select.order_by(s.field, s.order));
         };
 
-        Ok(maintain_order(result))
+        Ok(result)
     }
 }
 
@@ -355,25 +355,6 @@ fn envalue(s: &str, ct: &ColumnType) -> Result<Value, Error> {
     })
 }
 
-fn maintain_order<T: EntityTrait>(stmt: Select<T>) -> Select<T> {
-    let binding = T::default();
-    let table = binding.table_name();
-    let s = stmt.build(sea_orm::DatabaseBackend::Postgres).to_string();
-    let orderby = match s.rsplit_once(" ORDER BY ") {
-        Some((_, v)) => v,
-        None => "",
-    };
-    T::PrimaryKey::iter().fold(stmt, |stmt, pk| {
-        let col = pk.into_column();
-        let pat = format!(r#""{}"."{}""#, table, col.to_string());
-        if orderby.contains(&pat) {
-            stmt
-        } else {
-            stmt.order_by_desc(col)
-        }
-    })
-}
-
 /////////////////////////////////////////////////////////////////////////
 // Tests
 /////////////////////////////////////////////////////////////////////////
@@ -612,123 +593,6 @@ mod tests {
         // "A second ago" = "2009-12-31 23:59:59",
         // "now" = "2010-01-01 00:00:00",
         // "Overmorrow" = "2010-01-03 00:00:00"
-
-        Ok(())
-    }
-
-    #[test(tokio::test)]
-    async fn default_filtering() -> Result<(), anyhow::Error> {
-        let expected_asc = advisory::Entity::find()
-            .filter(advisory::Column::Location.eq("foo"))
-            .order_by_asc(advisory::Column::Id)
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string();
-        let expected_desc = advisory::Entity::find()
-            .filter(advisory::Column::Location.eq("foo"))
-            .order_by_desc(advisory::Column::Id)
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string();
-
-        // already ordering by ID ASC, so leave it alone
-        let actual = advisory::Entity::find()
-            .filter(advisory::Column::Location.eq("foo"))
-            .order_by_asc(advisory::Column::Id)
-            .filtering(q(""))?
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string();
-        assert_eq!(actual, expected_asc);
-
-        // No ordering, so order by ID DESC
-        let actual = advisory::Entity::find()
-            .filter(advisory::Column::Location.eq("foo"))
-            .filtering(q(""))?
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string();
-        assert_eq!(actual, expected_desc);
-
-        // already ordering by ID DESC, so don't add another
-        let actual = advisory::Entity::find()
-            .filter(advisory::Column::Location.eq("foo"))
-            .order_by_desc(advisory::Column::Id)
-            .filtering(q(""))?
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string();
-        assert_eq!(actual, expected_desc);
-        Ok(())
-    }
-
-    #[allow(clippy::module_inception)]
-    #[test(tokio::test)]
-    async fn missing_id() -> Result<(), anyhow::Error> {
-        mod missing_id {
-            use sea_orm::entity::prelude::*;
-
-            #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
-            #[sea_orm(table_name = "nothing")]
-            pub struct Model {
-                #[sea_orm(primary_key)]
-                pub at_all: i32,
-            }
-            #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-            pub enum Relation {}
-            impl ActiveModelBehavior for ActiveModel {}
-        }
-
-        let expected = missing_id::Entity::find()
-            .order_by_desc(missing_id::Column::AtAll)
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string();
-        let actual = missing_id::Entity::find()
-            .filtering(q(""))?
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string();
-        assert_eq!(expected, actual);
-
-        Ok(())
-    }
-
-    #[allow(clippy::module_inception)]
-    #[test(tokio::test)]
-    async fn composite_key() -> Result<(), anyhow::Error> {
-        mod composite_key {
-            use sea_orm::entity::prelude::*;
-
-            #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
-            #[sea_orm(table_name = "nothing")]
-            pub struct Model {
-                #[sea_orm(primary_key)]
-                pub more: i32,
-                #[sea_orm(primary_key)]
-                pub at_all: i32,
-            }
-            #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-            pub enum Relation {}
-            impl ActiveModelBehavior for ActiveModel {}
-        }
-
-        let expected = composite_key::Entity::find()
-            .order_by_desc(composite_key::Column::More)
-            .order_by_desc(composite_key::Column::AtAll)
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string();
-        let actual = composite_key::Entity::find()
-            .filtering(q(""))?
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string();
-        assert_eq!(expected, actual);
-
-        let expected_asc = composite_key::Entity::find()
-            .order_by_asc(composite_key::Column::AtAll)
-            .order_by_asc(composite_key::Column::More)
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string();
-        let actual = composite_key::Entity::find()
-            .order_by_asc(composite_key::Column::AtAll)
-            .order_by_asc(composite_key::Column::More)
-            .filtering(q(""))?
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string();
-        assert_eq!(expected_asc, actual);
 
         Ok(())
     }
