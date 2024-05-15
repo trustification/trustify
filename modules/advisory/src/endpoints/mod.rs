@@ -1,6 +1,6 @@
 use crate::service::{AdvisoryKey, AdvisoryService};
 use actix_web::{get, web, HttpResponse, Responder};
-use trustify_common::db::query::SearchOptions;
+use trustify_common::db::query::Query;
 use trustify_common::db::Database;
 use trustify_common::model::Paginated;
 use utoipa::OpenApi;
@@ -33,7 +33,7 @@ pub struct ApiDoc;
 #[utoipa::path(
     tag = "advisory",
     params(
-        SearchOptions,
+        Query,
         Paginated,
     ),
     responses(
@@ -43,7 +43,7 @@ pub struct ApiDoc;
 #[get("")]
 pub async fn all(
     state: web::Data<AdvisoryService>,
-    web::Query(search): web::Query<SearchOptions>,
+    web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(state.fetch_advisories(search, paginated, ()).await?))

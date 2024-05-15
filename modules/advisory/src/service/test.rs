@@ -4,7 +4,7 @@ use std::sync::Arc;
 use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
-use trustify_common::db::test::TrustifyContext;
+use trustify_common::db::{query::q, test::TrustifyContext};
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_cvss::cvss3::{
@@ -73,7 +73,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let fetch = AdvisoryService::new(db);
     let fetched = fetch
-        .fetch_advisories(SearchOptions::default(), Paginated::default(), ())
+        .fetch_advisories(q(""), Paginated::default(), ())
         .await?;
     assert_eq!(fetched.total, 2);
     Ok(())

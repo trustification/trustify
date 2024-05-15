@@ -20,7 +20,7 @@ use std::fmt::{Debug, Write};
 use std::iter::{repeat, Flatten, Zip};
 use std::vec::IntoIter;
 use tracing::instrument;
-use trustify_common::db::query::{Query, SearchOptions};
+use trustify_common::db::query::{q, Filtering, Query};
 use trustify_common::{
     cpe::Cpe,
     db::{
@@ -74,7 +74,7 @@ impl FetchService {
     /// fetch all SBOMs
     pub async fn fetch_sboms<TX: AsRef<Transactional>>(
         &self,
-        search: SearchOptions,
+        search: Query,
         paginated: Paginated,
         tx: TX,
     ) -> Result<PaginatedResults<SbomSummary>, Error> {
@@ -114,7 +114,7 @@ impl FetchService {
     pub async fn fetch_sbom_packages<TX: AsRef<Transactional>>(
         &self,
         sbom_id: Uuid,
-        search: SearchOptions,
+        search: Query,
         paginated: Paginated,
         tx: TX,
     ) -> Result<PaginatedResults<SbomPackage>, Error> {
@@ -200,7 +200,7 @@ impl FetchService {
     pub async fn fetch_related_packages<TX: AsRef<Transactional>>(
         &self,
         sbom_id: Uuid,
-        search: SearchOptions,
+        search: Query,
         paginated: Paginated,
         which: Which,
         reference: impl Into<SbomPackageReference<'_>> + Debug,
@@ -529,14 +529,7 @@ mod test {
         let fetch = FetchService::new(db);
 
         let fetched = fetch
-            .fetch_sboms(
-                SearchOptions {
-                    q: "MySpAcE".to_string(),
-                    ..Default::default()
-                },
-                Paginated::default(),
-                (),
-            )
+            .fetch_sboms(q("MySpAcE"), Paginated::default(), ())
             .await?;
 
         assert_eq!(1, fetched.total);

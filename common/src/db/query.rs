@@ -17,38 +17,72 @@ use utoipa::IntoParams;
 // Public interface
 /////////////////////////////////////////////////////////////////////////
 
-#[derive(
-    Clone,
-    Default,
-    Debug,
-    serde::Deserialize,
-    serde::Serialize,
-    utoipa::ToSchema,
-    utoipa::IntoParams,
-)]
-#[serde(rename_all = "camelCase")]
-pub struct SearchOptions {
-    /// The search filter
-    #[serde(default)]
-    pub q: String,
-    #[serde(default)]
-    /// Sort options
-    pub sort: String,
+/// Convenience function for creating a search query
+///
+/// ```
+/// use trustify_common::db::query::q;
+///
+/// let query = q("foo&bar>100").sort("bar:desc");
+///
+/// ```
+pub fn q(s: &str) -> Query {
+    Query::q(s)
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("query syntax error: {0}")]
-    SearchSyntax(String),
+impl Query {
+    /// Form expected: `{query}*{filter}*`
+    ///
+    /// where `{filter}` is of the form `{field}{op}{value}`
+    ///
+    /// Multiple queries and/or filters should be `&`-delimited
+    ///
+    /// The `{query}` text will result in an OR clause of LIKE clauses
+    /// for every [String] field in the associated
+    /// [Entity](sea_orm::EntityTrait). Optional filters of the form
+    /// `{field}{op}{value}` may further constrain the results. Each
+    /// `{field}` must name an actual
+    /// [Column](sea_orm::EntityTrait::Column) variant.
+    ///
+    /// Both `{query}` and `{value}` may contain `|`-delimited
+    /// alternate values that will result in an OR clause. Any `|` or
+    /// `&` within a query/value should be escaped with a backslash,
+    /// e.g. `\|` or `\&`.
+    ///
+    /// `{op}` should be one of `=`, `!=`, `~`, `!~, `>=`, `>`, `<=`,
+    /// or `<`.
+    pub fn q(s: &str) -> Self {
+        Self {
+            q: s.into(),
+            sort: String::default(),
+        }
+    }
+
+    /// Form expected: `{sort}*`
+    ///
+    /// where `{sort}` is of the form `{field}[:order]` and the
+    /// optional `order` should be one of `asc` or `desc`. If omitted,
+    /// the order defaults to `asc`.
+    ///
+    /// Multiple sorts should be `&`-delimited
+    ///
+    /// Each `{field}` must name an actual
+    /// [Column](sea_orm::EntityTrait::Column) variant.
+    ///
+    pub fn sort(self, s: &str) -> Self {
+        Self {
+            q: self.q,
+            sort: s.into(),
+        }
+    }
 }
 
-pub trait Query<T: EntityTrait> {
-    fn filtering(self, search: SearchOptions) -> Result<Select<T>, Error>;
+pub trait Filtering<T: EntityTrait> {
+    fn filtering(self, search: Query) -> Result<Select<T>, Error>;
 }
 
-impl<T: EntityTrait> Query<T> for Select<T> {
-    fn filtering(self, search: SearchOptions) -> Result<Self, Error> {
-        let SearchOptions { q, sort } = &search;
+impl<T: EntityTrait> Filtering<T> for Select<T> {
+    fn filtering(self, search: Query) -> Result<Self, Error> {
+        let Query { q, sort } = &search;
 
         let mut result = if q.is_empty() {
             self
@@ -67,6 +101,29 @@ impl<T: EntityTrait> Query<T> for Select<T> {
 
         Ok(maintain_order(result))
     }
+}
+
+#[derive(
+    Clone,
+    Default,
+    Debug,
+    serde::Deserialize,
+    serde::Serialize,
+    utoipa::ToSchema,
+    utoipa::IntoParams,
+)]
+#[serde(rename_all = "camelCase")]
+pub struct Query {
+    #[serde(default)]
+    pub q: String,
+    #[serde(default)]
+    pub sort: String,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("query syntax error: {0}")]
+    SearchSyntax(String),
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -134,27 +191,6 @@ impl<T: EntityTrait> From<Filter<T>> for ConditionExpression {
 impl<T: EntityTrait> FromStr for Filter<T> {
     type Err = Error;
 
-    /// Create a Filter for a given Entity from a string
-    ///
-    /// Form expected: `{search}*({field}{op}{value})*`
-    ///
-    /// Multiple queries and/or filters should be `&`-delimited
-    ///
-    /// The `{search}` text will result in an OR clause of LIKE
-    /// clauses for each [String] field in the associated
-    /// [Entity](sea_orm::EntityTrait). Optional filters of the form
-    /// `{field}{op}{value}` may further constrain the results. Each
-    /// `{field}` must name an actual
-    /// [Column](sea_orm::EntityTrait::Column) variant.
-    ///
-    /// Both `{search}` and `{value}` may contain `|`-delimited
-    /// alternate values that will result in an OR clause. Any `|` or
-    /// `&` in the query should be escaped with a backslash, e.g. `\|`
-    /// or `\&`.
-    ///
-    /// `{op}` should be one of `=`, `!=`, `~`, `!~, `>=`, `>`, `<=`,
-    /// or `<`.
-    ///
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
         static LOCK: OnceLock<Regex> = OnceLock::new();
@@ -597,7 +633,7 @@ mod tests {
         let actual = advisory::Entity::find()
             .filter(advisory::Column::Location.eq("foo"))
             .order_by_asc(advisory::Column::Id)
-            .filtering(SearchOptions::default())?
+            .filtering(q(""))?
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
         assert_eq!(actual, expected_asc);
@@ -605,7 +641,7 @@ mod tests {
         // No ordering, so order by ID DESC
         let actual = advisory::Entity::find()
             .filter(advisory::Column::Location.eq("foo"))
-            .filtering(SearchOptions::default())?
+            .filtering(q(""))?
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
         assert_eq!(actual, expected_desc);
@@ -614,7 +650,7 @@ mod tests {
         let actual = advisory::Entity::find()
             .filter(advisory::Column::Location.eq("foo"))
             .order_by_desc(advisory::Column::Id)
-            .filtering(SearchOptions::default())?
+            .filtering(q(""))?
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
         assert_eq!(actual, expected_desc);
@@ -643,7 +679,7 @@ mod tests {
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
         let actual = missing_id::Entity::find()
-            .filtering(SearchOptions::default())?
+            .filtering(q(""))?
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
         assert_eq!(expected, actual);
@@ -676,7 +712,7 @@ mod tests {
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
         let actual = composite_key::Entity::find()
-            .filtering(SearchOptions::default())?
+            .filtering(q(""))?
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
         assert_eq!(expected, actual);
@@ -689,7 +725,7 @@ mod tests {
         let actual = composite_key::Entity::find()
             .order_by_asc(composite_key::Column::AtAll)
             .order_by_asc(composite_key::Column::More)
-            .filtering(SearchOptions::default())?
+            .filtering(q(""))?
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
         assert_eq!(expected_asc, actual);

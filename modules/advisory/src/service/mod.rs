@@ -2,7 +2,7 @@ use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 
 use crate::Error;
 use trustify_common::db::limiter::LimiterTrait;
-use trustify_common::db::query::{Query, SearchOptions};
+use trustify_common::db::query::{Filtering, Query};
 use trustify_common::db::{Database, Transactional};
 use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_entity::advisory;
@@ -24,7 +24,7 @@ impl AdvisoryService {
 
     pub async fn fetch_advisories<TX: AsRef<Transactional> + Sync + Send>(
         &self,
-        search: SearchOptions,
+        search: Query,
         paginated: Paginated,
         tx: TX,
     ) -> Result<PaginatedResults<AdvisorySummary>, Error> {
