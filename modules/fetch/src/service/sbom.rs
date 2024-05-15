@@ -13,10 +13,9 @@ use sea_orm::{
     QueryFilter, QueryOrder, QuerySelect, QueryTrait, RelationTrait, Select, SelectColumns,
     SelectorTrait,
 };
-use sea_query::extension::postgres::PgExpr;
 use sea_query::{
-    Alias, Expr, Func, Iden, IntoColumnRef, IntoIden, IntoTableRef, JoinType, SimpleExpr,
-    SimpleExpr::FunctionCall,
+    extension::postgres::PgExpr, Alias, Expr, Func, Iden, IntoColumnRef, IntoIden, IntoTableRef,
+    JoinType, SimpleExpr, SimpleExpr::FunctionCall,
 };
 use serde::Deserialize;
 use serde_json::Value;
@@ -25,8 +24,8 @@ use std::fmt::{Debug, Write};
 use std::iter::{repeat, Flatten, Zip};
 use std::vec::IntoIter;
 use tracing::instrument;
-use trustify_common::cpe::Cpe;
 use trustify_common::{
+    cpe::Cpe,
     db::{
         limiter::{self, limit_selector, Limiter, LimiterTrait},
         ArrayAgg, JsonBuildObject, ToJson, Transactional,
@@ -34,18 +33,21 @@ use trustify_common::{
     model::{Paginated, PaginatedResults},
     purl::Purl,
 };
-use trustify_entity::cpe::CpeDto;
 use trustify_entity::{
-    cpe, package, package_relates_to_package, package_version, qualified_package,
-    qualified_package::Qualifiers, relationship::Relationship, sbom, sbom_node, sbom_package,
-    sbom_package_cpe_ref, sbom_package_purl_ref,
+    cpe::{self, CpeDto},
+    package, package_relates_to_package, package_version, qualified_package,
+    qualified_package::Qualifiers,
+    relationship::Relationship,
+    sbom, sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
 };
 use utoipa::openapi::path::ParameterStyle::Simple;
 
 // TODO: think about a way to add CPE and PURLs too
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum SbomPackageReference<'a> {
+    /// Reference the root of an SBOM
     Root,
+    /// Reference a package inside an SBOM, by its node id.
     Package(&'a str),
 }
 
@@ -107,7 +109,10 @@ impl FetchService {
         Ok(PaginatedResults { total, items })
     }
 
-    /// fetch all packages from an SBOM
+    /// Fetch all packages from an SBOM.
+    ///
+    /// If you need to find packages based on their relationship, even in the relationship to
+    /// SBOM itself, use [`Self::fetch_related_packages`].
     #[instrument(skip(self, tx), err)]
     pub async fn fetch_sbom_packages<TX: AsRef<Transactional>>(
         &self,
@@ -146,11 +151,15 @@ impl FetchService {
 
         let query = query.order_by_asc(sbom_package::Column::NodeId);
 
+        // limit and execute
+
         let limiter =
             limit_selector::<'_, _, _, _, Row>(&self.db, query, paginated.offset, paginated.limit);
 
         let total = limiter.total().await?;
         let packages = limiter.fetch().await?;
+
+        // collect results
 
         let items = packages
             .into_iter()
@@ -167,6 +176,7 @@ impl FetchService {
         Ok(PaginatedResults { items, total })
     }
 
+    /// Get all packages describing the SBOM.
     #[instrument(skip(self, tx), err)]
     pub async fn describes_packages<TX: AsRef<Transactional>>(
         &self,
@@ -187,7 +197,7 @@ impl FetchService {
         .map(|r| r.map(|rel| rel.package))
     }
 
-    /// fetch all packages from an SBOM
+    /// Fetch all related packages in the context of an SBOM.
     #[allow(clippy::too_many_arguments)]
     #[instrument(skip(self, tx), err)]
     pub async fn fetch_related_packages<TX: AsRef<Transactional>>(
@@ -275,7 +285,7 @@ impl FetchService {
             query = query.filter(package_relates_to_package::Column::Relationship.eq(relationship));
         }
 
-        // apply limits
+        // limit and execute
 
         let limiter =
             limit_selector::<'_, _, _, _, Row>(&self.db, query, paginated.offset, paginated.limit);
@@ -304,6 +314,9 @@ impl FetchService {
         Ok(PaginatedResults { items, total })
     }
 
+    /// A simplified version of [`Self::fetch_related_packages`].
+    ///
+    /// It uses [`Which::Right`] and the provided reference, [`Default::default`] for the rest.
     pub async fn related_packages<TX: AsRef<Transactional>>(
         &self,
         sbom_id: Uuid,
@@ -426,73 +439,6 @@ fn package_from_row(id: String, name: String, purls: Vec<Value>, cpes: Vec<Value
             .map(|cpe| cpe.to_string())
             .collect(),
     }
-}
-
-fn into_purl(
-    package: package::Model,
-    version: package_version::Model,
-    qualified: qualified_package::Model,
-) -> Purl {
-    Purl {
-        ty: package.r#type,
-        namespace: package.namespace,
-        name: package.name,
-        version: if version.version.is_empty() {
-            None
-        } else {
-            Some(version.version)
-        },
-        qualifiers: qualified.qualifiers.0,
-    }
-}
-
-async fn purl_result<'db, T, C, I, Out, F, X>(
-    connection: &C,
-    qualified: Vec<qualified_package::Model>,
-    i: I,
-    f: F,
-) -> Result<Vec<T>, Error>
-where
-    C: ConnectionTrait,
-    I: FnOnce(
-        Zip<
-            Zip<IntoIter<qualified_package::Model>, IntoIter<package_version::Model>>,
-            Flatten<IntoIter<Option<package::Model>>>,
-        >,
-    ) -> Out,
-    Out: Iterator<
-        Item = (
-            (
-                (qualified_package::Model, package_version::Model),
-                package::Model,
-            ),
-            X,
-        ),
-    >,
-    F: Fn(package::Model, package_version::Model, qualified_package::Model, X) -> T,
-{
-    let package_version = qualified
-        .load_one(package_version::Entity, connection)
-        .await?
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>();
-    let package = package_version
-        .load_one(package::Entity, connection)
-        .await?
-        .into_iter()
-        .flatten();
-
-    let mut items = Vec::new();
-    for (((qualified, version), package), x) in i(qualified
-        .into_iter()
-        .zip(package_version.into_iter())
-        .zip(package))
-    {
-        items.push(f(package, version, qualified, x))
-    }
-
-    Ok(items)
 }
 
 #[derive(Clone, Debug, Deserialize)]
