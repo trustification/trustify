@@ -1,3 +1,4 @@
+use crate::advisory;
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
@@ -12,5 +13,11 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
+
+impl Related<advisory::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::advisory::Relation::Issuer.def().rev()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}

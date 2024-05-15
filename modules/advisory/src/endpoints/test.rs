@@ -207,7 +207,7 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     log::debug!("{:#?}", response);
 
     assert_eq!(
-        response.clone().path("$.issuer").unwrap(),
+        response.clone().path("$.issuer.name").unwrap(),
         json!(["Red Hat Product Security"])
     );
 

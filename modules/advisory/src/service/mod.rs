@@ -59,7 +59,9 @@ impl AdvisoryService {
             .await?;
 
         if let Some(advisory) = results {
-            Ok(AdvisoryDetails::from_entity(&advisory, &connection).await?)
+            Ok(Some(
+                AdvisoryDetails::from_entity(&advisory, &connection).await?,
+            ))
         } else {
             Ok(None)
         }
