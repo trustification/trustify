@@ -6048,6 +6048,7 @@ name = "trustify-common"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "clap",
  "concat-idents",
  "cpe",
