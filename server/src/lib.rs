@@ -207,6 +207,7 @@ impl InitData {
                             trustify_module_fetch::endpoints::configure(svc, db.clone());
 
                             trustify_module_advisory::endpoints::configure(svc, db.clone());
+                            trustify_module_organization::endpoints::configure(svc, db.clone());
                             trustify_module_vulnerability::endpoints::configure(svc, db.clone());
                             #[cfg(feature = "ui")]
                             trustify_module_ui::endpoints::configure(svc, &self.ui);

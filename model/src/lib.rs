@@ -1,6 +1,7 @@
 use sea_orm::DbErr;
 
 pub mod advisory;
+pub mod organization;
 pub mod vulnerability;
 
 #[derive(Debug, thiserror::Error)]

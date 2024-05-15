@@ -22,7 +22,7 @@ impl AdvisoryDetails {
     pub async fn from_entity(
         advisory: &advisory::Model,
         tx: &ConnectionOrTransaction<'_>,
-    ) -> Result<Option<Self>, Error> {
+    ) -> Result<Self, Error> {
         let vulnerabilities = advisory.find_related(vulnerability::Entity).all(tx).await?;
 
         let vulnerabilities =
@@ -30,17 +30,9 @@ impl AdvisoryDetails {
 
         let issuer = advisory.find_related(organization::Entity).one(tx).await?;
 
-        Ok(Some(AdvisoryDetails {
-            head: AdvisoryHead {
-                identifier: advisory.identifier.clone(),
-                sha256: advisory.sha256.clone(),
-                issuer: issuer.map(|inner| inner.name),
-                published: advisory.published,
-                modified: advisory.modified,
-                withdrawn: advisory.withdrawn,
-                title: advisory.title.clone(),
-            },
+        Ok(AdvisoryDetails {
+            head: AdvisoryHead::from_entity(advisory, issuer, tx).await?,
             vulnerabilities,
-        }))
+        })
     }
 }

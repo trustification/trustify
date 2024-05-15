@@ -30,7 +30,7 @@ impl AdvisorySummary {
 
         let mut summaries = Vec::new();
 
-        for ((advisory, vulnerabilities), issuser) in entities
+        for ((advisory, vulnerabilities), issuer) in entities
             .iter()
             .zip(vulnerabilities.drain(..))
             .zip(issuers.drain(..))
@@ -39,15 +39,7 @@ impl AdvisorySummary {
                 AdvisoryVulnerabilityHead::from_entities(advisory, &vulnerabilities, tx).await?;
 
             summaries.push(AdvisorySummary {
-                head: AdvisoryHead {
-                    identifier: advisory.identifier.clone(),
-                    sha256: advisory.sha256.clone(),
-                    issuer: issuser.map(|inner| inner.name),
-                    published: advisory.published,
-                    modified: advisory.modified,
-                    withdrawn: advisory.withdrawn,
-                    title: advisory.title.clone(),
-                },
+                head: AdvisoryHead::from_entity(advisory, issuer, tx).await?,
                 vulnerabilities,
             })
         }

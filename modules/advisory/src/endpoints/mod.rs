@@ -32,6 +32,7 @@ pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "advisory",
+    context_path = "/api/v1/advisory",
     params(
         Query,
         Paginated,
@@ -51,6 +52,7 @@ pub async fn all(
 
 #[utoipa::path(
     tag = "advisory",
+    context_path = "/api/v1/advisory",
     params(
         ("sha256", Path, description = "SHA256 of the advisory")
     ),
@@ -59,7 +61,7 @@ pub async fn all(
         (status = 404, description = "Matching advisory not found"),
     ),
 )]
-#[get("{sha256}")]
+#[get("/{sha256}")]
 pub async fn get(
     state: web::Data<AdvisoryService>,
     sha256: web::Path<String>,

@@ -1,0 +1,32 @@
+[package]
+name = "trustify-module-organization"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+trustify-auth = { workspace = true }
+trustify-entity = { workspace = true }
+trustify-common = { workspace = true }
+trustify-migration = { workspace = true }
+trustify-model = { workspace = true }
+trustify-cvss = { workspace = true }
+
+actix-web = { workspace = true }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+log = { workspace = true }
+sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros", "debug-print"] }
+sea-orm-migration = { workspace = true }
+sea-query = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+utoipa = { workspace = true, features = ["actix_extras"] }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+test-log = { workspace = true, features = ["log", "trace"] }
+test-context = { workspace = true }
+trustify-module-ingestor = { workspace = true }
+trustify-module-storage = { workspace = true }
+jsonpath-rust = { workspace = true }
