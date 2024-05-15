@@ -621,6 +621,7 @@ mod tests {
         Ok(())
     }
 
+    #[allow(clippy::module_inception)]
     #[test(tokio::test)]
     async fn missing_id() -> Result<(), anyhow::Error> {
         mod missing_id {
@@ -650,6 +651,7 @@ mod tests {
         Ok(())
     }
 
+    #[allow(clippy::module_inception)]
     #[test(tokio::test)]
     async fn composite_key() -> Result<(), anyhow::Error> {
         mod composite_key {
