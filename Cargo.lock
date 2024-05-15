@@ -6512,7 +6512,9 @@ dependencies = [
  "trustify-auth",
  "trustify-common",
  "trustify-infrastructure",
+ "trustify-module-importer",
  "trustify-server",
+ "url",
 ]
 
 [[package]]
