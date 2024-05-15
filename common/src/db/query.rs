@@ -320,13 +320,16 @@ fn envalue(s: &str, ct: &ColumnType) -> Result<Value, Error> {
 }
 
 fn maintain_order<T: EntityTrait>(stmt: Select<T>) -> Select<T> {
-    let binding = T::default();
-    let table = binding.table_name();
     let s = stmt.build(sea_orm::DatabaseBackend::Postgres).to_string();
+    if s.contains(" GROUP BY ") {
+        return stmt; // you're on your own, grouper!
+    }
     let orderby = match s.rsplit_once(" ORDER BY ") {
         Some((_, v)) => v,
         None => "",
     };
+    let binding = T::default();
+    let table = binding.table_name();
     T::PrimaryKey::iter().fold(stmt, |stmt, pk| {
         let col = pk.into_column();
         let pat = format!(r#""{}"."{}""#, table, col.to_string());
@@ -622,6 +625,24 @@ mod tests {
     }
 
     #[allow(clippy::module_inception)]
+    #[test(tokio::test)]
+    async fn group_by() -> Result<(), anyhow::Error> {
+        let query = advisory::Entity::find()
+            .select_only()
+            .column(advisory::Column::Location)
+            .group_by(advisory::Column::Location)
+            .filtering(Default::default())?
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+
+        assert_eq!(
+            r#"SELECT "advisory"."location" FROM "advisory" GROUP BY "advisory"."location""#,
+            query
+        );
+
+        Ok(())
+    }
+
     #[test(tokio::test)]
     async fn missing_id() -> Result<(), anyhow::Error> {
         mod missing_id {
