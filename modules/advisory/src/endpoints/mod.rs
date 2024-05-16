@@ -9,7 +9,8 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let service = AdvisoryService::new(db);
     config
         .app_data(web::Data::new(service))
-        .service(web::scope("/api/v1/advisory").service(all).service(get));
+        .service(all)
+        .service(get);
 }
 
 #[derive(OpenApi)]
@@ -32,7 +33,6 @@ pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "advisory",
-    context_path = "/api/v1/advisory",
     params(
         Query,
         Paginated,
@@ -41,7 +41,7 @@ pub struct ApiDoc;
         (status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
     ),
 )]
-#[get("")]
+#[get("/api/v1/advisory")]
 pub async fn all(
     state: web::Data<AdvisoryService>,
     web::Query(search): web::Query<Query>,
@@ -52,7 +52,6 @@ pub async fn all(
 
 #[utoipa::path(
     tag = "advisory",
-    context_path = "/api/v1/advisory",
     params(
         ("sha256", Path, description = "SHA256 of the advisory")
     ),
@@ -61,7 +60,7 @@ pub async fn all(
         (status = 404, description = "Matching advisory not found"),
     ),
 )]
-#[get("/{sha256}")]
+#[get("/api/v1/advisory/{sha256}")]
 pub async fn get(
     state: web::Data<AdvisoryService>,
     sha256: web::Path<String>,
