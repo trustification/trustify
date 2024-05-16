@@ -1,0 +1,47 @@
+# NOTE: The comments bellow are based on hyperfoil-example-comments.
+name: pm-mode
+http:
+  host: http://[::1]:8080
+  sharedConnections: 100
+# Simulation consists of phases - potentially independent workloads.
+phases:
+# `basic` is the name of the single phase in this benchmark.
+- basic:
+    # `atOnce` with `users: 1` results in running the scenario below just once
+    atOnce:
+      users: 1
+      scenario:
+      # The only sequence in this scenario is called `fetchSboms`.
+      - fetchSboms:
+        # In the only step in this sequence we'll do a HTTP GET request
+        # to `http://localhost:8080/sboms`
+        - httpRequest:
+            GET: /sboms
+            # Inject helpers to make this request synchronous, i.e. keep
+            # the sequence blocked until Hyperfoil processes the response.
+            sync: true
+# Over one minute ramp the number of users started each second from 1 to 100
+- rampUp:
+    increasingRate:
+      initialUsersPerSec: 1
+      targetUsersPerSec: 100
+      # We expect at most 200 users being active at one moment
+      maxSessions: 200
+      duration: 1m
+      scenario:
+      - fetchSboms:
+        - httpRequest:
+            GET: /sboms
+            sync: true
+      - fetchVulnerabilities:
+        - httpRequest:
+            GET: /vulnerabilities
+            sync: true
+      - fetchAdvisories:
+        - httpRequest:
+            GET: /advisories
+            sync: true
+      - fetchImporters:
+        - httpRequest:
+            GET: /importers
+            sync: true
