@@ -1,7 +1,7 @@
 //! Support for a *fully-qualified* package.
 
 use crate::graph::error::Error;
-use crate::graph::package::package_version::PackageVersionContext;
+use crate::graph::purl::package_version::PackageVersionContext;
 use crate::graph::sbom::SbomContext;
 use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};

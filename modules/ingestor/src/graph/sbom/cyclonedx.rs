@@ -1,21 +1,22 @@
-use crate::graph::package::creator::PurlCreator;
-use crate::graph::sbom::{PackageCreator, PackageReference, SbomContext, SbomInformation};
-use crate::graph::Graph;
+use crate::graph::{
+    purl::creator::PurlCreator,
+    sbom::{PackageCreator, PackageReference, SbomContext, SbomInformation},
+    Graph,
+};
 use cyclonedx_bom::prelude::{Bom, Component, Components};
 use sea_orm::ConnectionTrait;
 use std::str::FromStr;
-use time::format_description::well_known::Iso8601;
-use time::OffsetDateTime;
+use time::{format_description::well_known::Iso8601, OffsetDateTime};
 use tracing::instrument;
-use trustify_common::cpe::Cpe;
-use trustify_common::db::Transactional;
-use trustify_common::purl::Purl;
+use trustify_common::{cpe::Cpe, db::Transactional, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use uuid::Uuid;
 
 /// Marker we use for identifying the document itself.
 ///
-/// Similar to the SPDX doc id
+/// Similar to the SPDX doc id, which is attached to the document itself. CycloneDX doesn't have
+/// such a concept, but can still attach a component to the document via a dedicated metadata
+/// component.
 const CYCLONEDX_DOC_REF: &str = "CycloneDX-doc-ref";
 
 pub struct Information<'a>(pub &'a Bom);
@@ -107,6 +108,7 @@ impl SbomContext {
     }
 }
 
+/// Creator of CycloneDX components and dependencies
 #[derive(Debug, Default)]
 struct Creator<'a> {
     sbom_id: Uuid,
