@@ -67,16 +67,13 @@ pub struct Paginated {
     /// The maximum number of entries to return.
     ///
     /// Zero means: no limit
-    #[serde(default)]
+    #[serde(default = "default::limit")]
     pub limit: u64,
 }
 
 mod default {
-    use std::num::NonZeroU64;
-
-    #[allow(clippy::unwrap_used)]
-    pub(super) fn page_size() -> NonZeroU64 {
-        NonZeroU64::new(50).unwrap()
+    pub(super) const fn limit() -> u64 {
+        25
     }
 }
 
