@@ -1,20 +1,25 @@
 //! Support for SBOMs.
 
 use super::error::Error;
-use crate::db::{LeftPackageId, QualifiedPackageTransitive};
-use crate::graph::cpe::CpeContext;
-use crate::graph::package::creator::PurlCreator;
-use crate::graph::package::qualified_package::QualifiedPackageContext;
-use crate::graph::Graph;
+use crate::{
+    db::{LeftPackageId, QualifiedPackageTransitive},
+    graph::{
+        cpe::CpeContext,
+        purl::{creator::PurlCreator, qualified_package::QualifiedPackageContext},
+        Graph,
+    },
+};
 use cpe::uri::OwnedUri;
 use sea_orm::{
     prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QuerySelect,
     QueryTrait, RelationTrait, Select, SelectColumns, Set,
 };
 use sea_query::{Alias, Condition, Func, JoinType, OnConflict, Query, SimpleExpr};
-use std::collections::{HashMap, HashSet};
-use std::fmt::{Debug, Formatter};
-use std::str::FromStr;
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::{Debug, Formatter},
+    str::FromStr,
+};
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{

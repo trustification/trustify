@@ -1,9 +1,8 @@
 //! Support for a *version range* of a package.
 
-use crate::graph::package::PackageContext;
+use crate::graph::purl::PackageContext;
 use std::fmt::{Debug, Formatter};
-use trustify_entity as entity;
-use trustify_entity::package_version_range;
+use trustify_entity::{self as entity, package_version_range};
 
 impl<'g> PackageVersionRangeContext<'g> {
     pub fn new(

@@ -9,6 +9,7 @@ use trustify_entity::{
     qualified_package::{self, Qualifiers},
 };
 
+/// Creator of PURLs.
 #[derive(Default)]
 pub struct PurlCreator {
     purls: HashSet<Purl>,

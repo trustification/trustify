@@ -7,7 +7,7 @@ mod cpe;
 
 pub mod advisory;
 pub mod error;
-pub mod package;
+pub mod purl;
 pub mod sbom;
 pub mod vulnerability;
 

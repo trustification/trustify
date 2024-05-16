@@ -1,5 +1,5 @@
 use crate::graph::{
-    package::creator::PurlCreator,
+    purl::creator::PurlCreator,
     sbom::{PackageCreator, PackageReference, SbomContext, SbomInformation},
 };
 use serde_json::Value;

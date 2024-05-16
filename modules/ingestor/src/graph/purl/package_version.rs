@@ -1,8 +1,9 @@
 //! Support for *versioned* package.
 
-use crate::graph::error::Error;
-use crate::graph::package::qualified_package::QualifiedPackageContext;
-use crate::graph::package::PackageContext;
+use crate::graph::{
+    error::Error,
+    purl::{qualified_package::QualifiedPackageContext, PackageContext},
+};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
     RelationTrait, Set,
