@@ -21,7 +21,7 @@ pub struct UploadSbomQuery {
     )
 )]
 #[post("/api/v1/sbom")]
-/// Upload a new advisory
+/// Upload a new SBOM
 pub async fn upload_sbom(
     service: web::Data<IngestorService>,
     payload: web::Payload,

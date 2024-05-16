@@ -18,10 +18,12 @@ cpe = { workspace = true }
 humantime = { workspace = true }
 log = { workspace = true }
 rust-lzma = { workspace = true }
+serde_json = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
+cyclonedx-bom = { workspace = true }
+spdx-rs = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
-spdx-rs = { workspace = true }

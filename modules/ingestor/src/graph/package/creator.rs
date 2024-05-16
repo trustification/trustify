@@ -10,11 +10,11 @@ use trustify_entity::{
 };
 
 #[derive(Default)]
-pub struct Creator {
+pub struct PurlCreator {
     purls: HashSet<Purl>,
 }
 
-impl Creator {
+impl PurlCreator {
     pub fn new() -> Self {
         Self::default()
     }

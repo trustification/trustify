@@ -3,7 +3,7 @@
 use super::error::Error;
 use crate::db::{LeftPackageId, QualifiedPackageTransitive};
 use crate::graph::cpe::CpeContext;
-use crate::graph::package::creator::Creator;
+use crate::graph::package::creator::PurlCreator;
 use crate::graph::package::qualified_package::QualifiedPackageContext;
 use crate::graph::Graph;
 use cpe::uri::OwnedUri;
@@ -29,6 +29,10 @@ use trustify_entity::{
     sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
 };
 
+mod common;
+pub use common::*;
+
+pub mod cyclonedx;
 pub mod spdx;
 
 #[derive(Clone, Default)]
@@ -508,7 +512,7 @@ impl SbomContext {
 
         // ensure the PURLs and CPEs exist first
 
-        let mut creator = Creator::new();
+        let mut creator = PurlCreator::new();
         let (left_node_id, left_purls, left_cpes) = match left {
             RelationshipReference::Root => (None, vec![], vec![]),
             RelationshipReference::Purl(purl) => {

@@ -1,8 +1,10 @@
 #![cfg(test)]
 
-mod basic;
+mod cyclonedx;
 mod perf;
+mod spdx;
 
+use cyclonedx_bom::prelude::Bom;
 use lzma::LzmaReader;
 use spdx_rs::models::SPDX;
 use std::collections::HashSet;
@@ -10,17 +12,14 @@ use std::fs::File;
 use std::future::Future;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
+use std::pin::Pin;
 use std::str::FromStr;
 use std::time::Instant;
 use tracing::{info_span, instrument, Instrument};
-use trustify_common::db::test::TrustifyContext;
-use trustify_common::db::Database;
+use trustify_common::db::{test::TrustifyContext, Database, Transactional};
 use trustify_module_fetch::service::FetchService;
 use trustify_module_ingestor::graph::{
-    sbom::{
-        spdx::{parse_spdx, Information},
-        SbomContext,
-    },
+    sbom::{self, spdx::parse_spdx, SbomContext, SbomInformation},
     Graph,
 };
 
@@ -39,7 +38,7 @@ pub fn open_sbom_xz(name: &str) -> anyhow::Result<impl Read> {
 }
 
 /// remove all relationships having broken references
-pub fn fix_rels(mut spdx: SPDX) -> SPDX {
+pub fn fix_spdx_rels(mut spdx: SPDX) -> SPDX {
     let mut ids = spdx
         .package_information
         .iter()
@@ -72,10 +71,62 @@ pub struct WithContext {
 }
 
 #[instrument(skip(ctx, f))]
-async fn test_with<F, Fut>(ctx: TrustifyContext, sbom: &str, f: F) -> anyhow::Result<()>
+async fn test_with_spdx<F, Fut>(ctx: TrustifyContext, sbom: &str, f: F) -> anyhow::Result<()>
 where
     F: FnOnce(WithContext) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
+{
+    test_with(
+        ctx,
+        sbom,
+        |data| {
+            let json = serde_json::from_slice(&data)?;
+            let (sbom, _) = parse_spdx(json)?;
+            Ok(fix_spdx_rels(sbom))
+        },
+        |ctx, sbom, tx| Box::pin(async move { ctx.ingest_spdx(sbom.clone(), &tx).await }),
+        |sbom| sbom::spdx::Information(sbom).into(),
+        f,
+    )
+    .await
+}
+
+#[instrument(skip(ctx, f))]
+async fn test_with_cyclonedx<F, Fut>(ctx: TrustifyContext, sbom: &str, f: F) -> anyhow::Result<()>
+where
+    F: FnOnce(WithContext) -> Fut,
+    Fut: Future<Output = anyhow::Result<()>>,
+{
+    test_with(
+        ctx,
+        sbom,
+        |data| Ok(Bom::parse_from_json(&*data)?),
+        |ctx, sbom, tx| Box::pin(async move { ctx.ingest_cyclonedx(sbom.clone(), &tx).await }),
+        |sbom| sbom::cyclonedx::Information(sbom).into(),
+        f,
+    )
+    .await
+}
+
+#[instrument(skip(ctx, p, i, c, f))]
+async fn test_with<B, P, I, C, F, FFut>(
+    ctx: TrustifyContext,
+    sbom: &str,
+    p: P,
+    i: I,
+    c: C,
+    f: F,
+) -> anyhow::Result<()>
+where
+    P: FnOnce(Vec<u8>) -> anyhow::Result<B>,
+    for<'a> I: FnOnce(
+        &'a SbomContext,
+        B,
+        &'a Transactional,
+    ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + 'a>>,
+    C: FnOnce(&B) -> SbomInformation,
+    F: FnOnce(WithContext) -> FFut,
+    FFut: Future<Output = anyhow::Result<()>>,
 {
     // The `ctx` must live until the end of this function. Otherwise, it will tear down the database
     // while we're testing. So we take the `db` and offer it to the test, but we hold on the `ctx`
@@ -86,33 +137,30 @@ where
     let fetch = FetchService::new(db.clone());
 
     let start = Instant::now();
-    let (spdx, _) = info_span!("parse json").in_scope(|| {
-        Ok::<_, anyhow::Error>(if sbom.ends_with(".xz") {
-            parse_spdx(open_sbom_xz(sbom)?)?
+    let sbom = info_span!("parse json").in_scope(|| {
+        let mut buffer = Vec::new();
+        if sbom.ends_with(".xz") {
+            open_sbom_xz(sbom)?.read_to_end(&mut buffer)?;
         } else {
-            parse_spdx(open_sbom(sbom)?)?
-        })
+            open_sbom(sbom)?.read_to_end(&mut buffer)?;
+        };
+
+        p(buffer)
     })?;
 
-    let spdx = fix_rels(spdx);
     let parse_time = start.elapsed();
 
     let tx = graph.transaction().await?;
 
     let start = Instant::now();
-    let sbom = graph
-        .ingest_sbom(
-            "test.com/my-sbom.json",
-            "10",
-            &spdx.document_creation_information.spdx_document_namespace,
-            Information(&spdx),
-            &tx,
-        )
+    let ctx = graph
+        .ingest_sbom("test.com/my-sbom.json", "10", "document-id", c(&sbom), &tx)
         .await?;
     let ingest_time_1 = start.elapsed();
 
     let start = Instant::now();
-    sbom.ingest_spdx(spdx.clone(), &tx).await?;
+    i(&ctx, sbom, &tx).await?;
+    // sbom.ingest_spdx(sbom.clone(), &tx).await?;
     let ingest_time_2 = start.elapsed();
 
     // commit
@@ -125,7 +173,7 @@ where
 
     let start = Instant::now();
     f(WithContext {
-        sbom,
+        sbom: ctx,
         db,
         graph,
         fetch,
