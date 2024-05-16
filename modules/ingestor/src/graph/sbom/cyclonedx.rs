@@ -156,8 +156,11 @@ impl<'a> Creator<'a> {
         db: &impl ConnectionTrait,
     ) -> anyhow::Result<()> {
         let mut purls = PurlCreator::new();
-        let mut packages =
-            PackageCreator::new(self.sbom_id, self.components.len(), self.relations.len());
+        let mut packages = PackageCreator::with_capacity(
+            self.sbom_id,
+            self.components.len(),
+            self.relations.len(),
+        );
 
         for comp in self.components {
             let node_id = comp

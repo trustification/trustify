@@ -7,6 +7,7 @@ use trustify_entity::{
 };
 use uuid::Uuid;
 
+// Creator of packages and relationships.
 pub struct PackageCreator {
     sbom_id: Uuid,
     nodes: Vec<sbom_node::ActiveModel>,
@@ -22,7 +23,18 @@ pub enum PackageReference {
 }
 
 impl PackageCreator {
-    pub fn new(sbom_id: Uuid, capacity_packages: usize, capacity_rel: usize) -> Self {
+    pub fn new(sbom_id: Uuid) -> Self {
+        Self {
+            sbom_id,
+            nodes: Vec::new(),
+            packages: Vec::new(),
+            purl_refs: Vec::new(),
+            cpe_refs: Vec::new(),
+            rels: Vec::new(),
+        }
+    }
+
+    pub fn with_capacity(sbom_id: Uuid, capacity_packages: usize, capacity_rel: usize) -> Self {
         Self {
             sbom_id,
             nodes: Vec::with_capacity(capacity_packages),
@@ -71,7 +83,6 @@ impl PackageCreator {
     }
 
     pub fn relate(&mut self, left: String, rel: Relationship, right: String) {
-        // TODO: consider validating node ids
         self.rels.push(package_relates_to_package::ActiveModel {
             sbom_id: Set(self.sbom_id),
             left_node_id: Set(left),
