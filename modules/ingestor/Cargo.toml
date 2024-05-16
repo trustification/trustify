@@ -17,6 +17,7 @@ bytesize = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 cpe = { workspace = true }
 csaf = { workspace = true }
+cyclonedx-bom = { workspace = true }
 futures = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }

@@ -1,4 +1,4 @@
-use super::{test_with, WithContext};
+use super::{test_with_spdx, WithContext};
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
@@ -12,7 +12,7 @@ use trustify_module_fetch::model::sbom::SbomPackage;
 #[test(tokio::test)]
 #[instrument]
 async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    test_with(
+    test_with_spdx(
         ctx,
         "openshift-container-storage-4.8.z.json.xz",
         |WithContext { fetch, sbom, .. }| async move {
@@ -57,7 +57,7 @@ async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[ignore]
 #[test(tokio::test)]
 async fn ingest_spdx_large(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    test_with(
+    test_with_spdx(
         ctx,
         "openshift-4.13.json.xz",
         |WithContext { fetch, sbom, .. }| async move {

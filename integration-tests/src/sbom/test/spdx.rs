@@ -1,4 +1,4 @@
-use crate::sbom::test::{test_with, WithContext};
+use crate::sbom::test::{test_with_spdx, WithContext};
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
@@ -10,7 +10,7 @@ use trustify_module_fetch::{model::sbom::SbomPackage, service::sbom::Which};
 #[instrument]
 #[test(tokio::test)]
 async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    test_with(
+    test_with_spdx(
         ctx,
         "quarkus-bom-2.13.8.Final-redhat-00004.json",
         |WithContext { fetch, sbom, .. }| async move {
@@ -53,7 +53,7 @@ async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
 async fn test_parse_spdx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    test_with(
+    test_with_spdx(
         ctx,
         "ubi9-9.2-755.1697625012.json",
         |WithContext { fetch, sbom, .. }| async move {
