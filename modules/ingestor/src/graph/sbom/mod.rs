@@ -14,7 +14,7 @@ use sea_orm::{
     prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QuerySelect,
     QueryTrait, RelationTrait, Select, SelectColumns, Set,
 };
-use sea_query::{Alias, Condition, Func, JoinType, OnConflict, Query, SimpleExpr};
+use sea_query::{Alias, Condition, Func, JoinType, Query, SimpleExpr};
 use std::{
     collections::{HashMap, HashSet},
     fmt::{Debug, Formatter},
@@ -23,10 +23,7 @@ use std::{
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{
-    cpe::Cpe,
-    db::{chunk::EntityChunkedIter, Transactional},
-    package::PackageVulnerabilityAssertions,
-    purl::Purl,
+    cpe::Cpe, db::Transactional, package::PackageVulnerabilityAssertions, purl::Purl,
     sbom::SbomLocator,
 };
 use trustify_entity::{
@@ -484,20 +481,6 @@ impl SbomContext {
         }
     */
 
-    fn create_relationship(
-        &self,
-        left_node_id: String,
-        relationship: Relationship,
-        right_node_id: String,
-    ) -> package_relates_to_package::ActiveModel {
-        package_relates_to_package::ActiveModel {
-            left_node_id: Set(left_node_id),
-            relationship: Set(relationship),
-            right_node_id: Set(right_node_id),
-            sbom_id: Set(self.sbom.sbom_id),
-        }
-    }
-
     /// Within the context of *this* SBOM, ingest a relationship between
     /// two packages.
     ///
@@ -572,11 +555,9 @@ impl SbomContext {
         let left_node_id = left_node_id.unwrap_or_else(|| self.sbom.node_id.clone());
         let right_node_id = right_node_id.unwrap_or_else(|| self.sbom.node_id.clone());
 
-        let rel =
-            self.create_relationship(left_node_id.clone(), relationship, right_node_id.clone());
-
-        self.ingest_package_relates_to_package_many(tx, [rel])
-            .await?;
+        let mut packages = PackageCreator::new(self.sbom.sbom_id);
+        packages.relate(left_node_id, relationship, right_node_id);
+        packages.create(&self.graph.db.connection(&tx)).await?;
 
         Ok(())
     }
@@ -613,27 +594,10 @@ impl SbomContext {
         Ok(())
     }
 
-    fn create_package(
-        &self,
-        node_id: String,
-        name: String,
-    ) -> (sbom_node::ActiveModel, sbom_package::ActiveModel) {
-        (
-            sbom_node::ActiveModel {
-                sbom_id: Set(self.sbom.sbom_id),
-                node_id: Set(node_id.clone()),
-                name: Set(name),
-            },
-            sbom_package::ActiveModel {
-                sbom_id: Set(self.sbom.sbom_id),
-                node_id: Set(node_id),
-            },
-        )
-    }
-
     /// Ingest a single package for this SBOM.
     ///
     /// **NOTE:** This function ingests a single package, and is terribly slow.
+    /// Use the [`PackageCreator`] for creating more than one.
     #[instrument(skip(self, tx), err)]
     async fn ingest_package<TX: AsRef<Transactional>>(
         &self,
@@ -643,109 +607,17 @@ impl SbomContext {
         cpes: Vec<i32>,
         tx: TX,
     ) -> Result<(), Error> {
-        let (node, package) = self.create_package(node_id.clone(), name);
+        let mut creator = PackageCreator::new(self.sbom.sbom_id);
 
-        let db = self.graph.db.connection(&tx);
+        let refs = purls
+            .into_iter()
+            .map(PackageReference::Purl)
+            .chain(cpes.into_iter().map(PackageReference::Cpe));
+        creator.add(node_id, name, refs);
 
-        sbom_node::Entity::insert(node)
-            .on_conflict(
-                OnConflict::columns([sbom_node::Column::SbomId, sbom_node::Column::NodeId])
-                    .do_nothing()
-                    .to_owned(),
-            )
-            .do_nothing()
-            .exec(&db)
-            .await?;
-
-        sbom_package::Entity::insert(package)
-            .on_conflict(
-                OnConflict::columns([sbom_package::Column::SbomId, sbom_package::Column::NodeId])
-                    .do_nothing()
-                    .to_owned(),
-            )
-            .do_nothing()
-            .exec(&db)
-            .await?;
-
-        // add purls
-
-        sbom_package_purl_ref::Entity::insert_many(purls.into_iter().map(|purl| {
-            sbom_package_purl_ref::ActiveModel {
-                sbom_id: Set(self.sbom.sbom_id),
-                node_id: Set(node_id.clone()),
-                qualified_package_id: Set(purl),
-            }
-        }))
-        .on_conflict(
-            OnConflict::columns([
-                sbom_package_purl_ref::Column::SbomId,
-                sbom_package_purl_ref::Column::NodeId,
-                sbom_package_purl_ref::Column::QualifiedPackageId,
-            ])
-            .do_nothing()
-            .to_owned(),
-        )
-        .do_nothing()
-        .exec(&db)
-        .await?;
-
-        // add CPEs
-
-        sbom_package_cpe_ref::Entity::insert_many(cpes.into_iter().map(|cpe| {
-            sbom_package_cpe_ref::ActiveModel {
-                sbom_id: Set(self.sbom.sbom_id),
-                node_id: Set(node_id.clone()),
-                cpe_id: Set(cpe),
-            }
-        }))
-        .on_conflict(
-            OnConflict::columns([
-                sbom_package_cpe_ref::Column::SbomId,
-                sbom_package_cpe_ref::Column::NodeId,
-                sbom_package_cpe_ref::Column::CpeId,
-            ])
-            .do_nothing()
-            .to_owned(),
-        )
-        .do_nothing()
-        .exec(&db)
-        .await?;
+        creator.create(&self.graph.db.connection(&tx)).await?;
 
         // done
-
-        Ok(())
-    }
-
-    /// Within the context of *this* SBOM, ingest a relationship between
-    /// two packages.
-    ///
-    /// The packages must already be created.
-    #[instrument(skip(tx, entities), err)]
-    async fn ingest_package_relates_to_package_many<TX, I>(
-        &self,
-        tx: TX,
-        entities: I,
-    ) -> Result<(), Error>
-    where
-        TX: AsRef<Transactional>,
-        I: IntoIterator<Item = entity::package_relates_to_package::ActiveModel>,
-    {
-        for batch in &entities.into_iter().chunked() {
-            package_relates_to_package::Entity::insert_many(batch)
-                .on_conflict(
-                    OnConflict::columns([
-                        package_relates_to_package::Column::LeftNodeId,
-                        package_relates_to_package::Column::Relationship,
-                        package_relates_to_package::Column::RightNodeId,
-                        package_relates_to_package::Column::SbomId,
-                    ])
-                    .do_nothing()
-                    .to_owned(),
-                )
-                .do_nothing()
-                .exec(&self.graph.connection(&tx))
-                .await?;
-        }
 
         Ok(())
     }

@@ -47,7 +47,7 @@ impl SbomContext {
     ) -> Result<(), anyhow::Error> {
         let mut creator = PurlCreator::new();
 
-        let mut packages = PackageCreator::new(
+        let mut packages = PackageCreator::with_capacity(
             self.sbom.sbom_id,
             sbom_data.package_information.len(),
             sbom_data.relationships.len(),
