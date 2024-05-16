@@ -209,9 +209,11 @@ impl InitData {
                             trustify_module_advisory::endpoints::configure(svc, db.clone());
                             trustify_module_organization::endpoints::configure(svc, db.clone());
                             trustify_module_vulnerability::endpoints::configure(svc, db.clone());
+                            trustify_module_storage::endpoints::configure(svc, storage.clone());
+                            // I think the UI must come last due to
+                            // its use of `resolve_not_found_to`
                             #[cfg(feature = "ui")]
                             trustify_module_ui::endpoints::configure(svc, &self.ui);
-                            trustify_module_storage::endpoints::configure(svc, storage.clone());
                         });
                 })
         };
