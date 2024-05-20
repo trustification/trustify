@@ -27,6 +27,8 @@ mod m0000250_create_sbom_package;
 mod m0000260_sbom_package_cpe_ref;
 mod m0000270_sbom_package_purl_ref;
 mod m0000280_add_advisory_vulnerability_meta;
+mod m0000290_create_product;
+mod m0000300_create_product_version;
 
 pub struct Migrator;
 
@@ -60,6 +62,8 @@ impl MigratorTrait for Migrator {
             Box::new(m0000260_sbom_package_cpe_ref::Migration),
             Box::new(m0000270_sbom_package_purl_ref::Migration),
             Box::new(m0000280_add_advisory_vulnerability_meta::Migration),
+            Box::new(m0000290_create_product::Migration),
+            Box::new(m0000300_create_product_version::Migration),
         ]
     }
 }

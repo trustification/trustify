@@ -12,6 +12,7 @@ pub mod sbom;
 pub mod vulnerability;
 
 pub mod organization;
+pub mod product;
 
 #[derive(Debug, Clone)]
 pub struct Graph {

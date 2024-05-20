@@ -5,11 +5,15 @@ use crate::{
     db::{LeftPackageId, QualifiedPackageTransitive},
     graph::{
         cpe::CpeContext,
+        product::product_version::ProductVersionContext,
+        product::ProductContext,
         purl::{creator::PurlCreator, qualified_package::QualifiedPackageContext},
         Graph,
     },
 };
 use cpe::uri::OwnedUri;
+use entity::{product, product_version};
+use sea_orm::ModelTrait;
 use sea_orm::{
     prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QuerySelect,
     QueryTrait, RelationTrait, Select, SelectColumns, Set,
@@ -723,6 +727,43 @@ impl SbomContext {
         }
 
         Ok(assertions)
+    }
+
+    pub async fn link_to_product<'a, TX: AsRef<Transactional>>(
+        &self,
+        product_version: ProductVersionContext<'a>,
+        tx: TX,
+    ) -> Result<ProductVersionContext<'a>, Error> {
+        let mut entity = product_version::ActiveModel::from(product_version.product_version);
+        entity.sbom_id = Set(Some(self.sbom.sbom_id));
+        let model = entity.update(&self.graph.connection(&tx)).await?;
+        Ok(ProductVersionContext::new(&product_version.product, model))
+    }
+
+    pub async fn get_product<TX: AsRef<Transactional>>(
+        &self,
+        tx: TX,
+    ) -> Result<Option<ProductVersionContext>, Error> {
+        if let Some(vers) = product_version::Entity::find()
+            .filter(product_version::Column::SbomId.eq(self.sbom.sbom_id))
+            .one(&self.graph.connection(&tx))
+            .await?
+        {
+            if let Some(prod) = vers
+                .find_related(product::Entity)
+                .one(&self.graph.connection(&tx))
+                .await?
+            {
+                Ok(Some(ProductVersionContext::new(
+                    &ProductContext::new(&self.graph, prod),
+                    vers,
+                )))
+            } else {
+                Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
     }
 
     /*
