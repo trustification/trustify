@@ -20,9 +20,9 @@ jobs:
             os: ubuntu-latest
             target: x86_64-unknown-linux-musl
 
-          - build: macos
-            os: macos-latest
-            target: x86_64-apple-darwin
+          # - build: macos
+          #   os: macos-latest
+          #   target: x86_64-apple-darwin
 
           - build: windows-gnu
             os: windows-latest
@@ -36,9 +36,9 @@ jobs:
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      - name: Install openssl
-        if: matrix.os == 'macos-latest'
-        run: brew install openssl
+      # - name: Install openssl
+      #   if: matrix.os == 'macos-latest'
+      #   run: brew install openssl
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@1.76.0
