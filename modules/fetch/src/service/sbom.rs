@@ -139,14 +139,9 @@ impl FetchService {
             .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
             .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def());
 
-        let query = join_purls_and_cpes(query);
-
-        // FIXME: disabled due to https://github.com/trustification/trustify/issues/291
-        // let mut query = query.filtering(search)?;
-
-        // default order
-
-        let query = query.order_by_asc(sbom_package::Column::NodeId);
+        query = join_purls_and_cpes(query)
+            .filtering(search)?
+            .order_by_asc(sbom_package::Column::NodeId); // default order
 
         // limit and execute
 
@@ -255,11 +250,11 @@ impl FetchService {
 
         // collect PURLs and CPEs
 
-        let query = join_purls_and_cpes(query);
+        query = join_purls_and_cpes(query);
 
         // filter for reference
 
-        let query = match reference.into() {
+        query = match reference.into() {
             SbomPackageReference::Root => {
                 // sbom - add join to sbom table
                 query.join(JoinType::Join, sbom_node::Relation::Sbom.def())
@@ -272,12 +267,10 @@ impl FetchService {
 
         // apply filter conditions
 
-        // FIXME: disabled due to https://github.com/trustification/trustify/issues/291
-        // let mut query = query.filtering(search)?;
+        query = query.filtering(search)?;
 
         // add relationship type filter
 
-        let mut query = query;
         if let Some(relationship) = relationship {
             query = query.filter(package_relates_to_package::Column::Relationship.eq(relationship));
         }
