@@ -38,7 +38,7 @@ jobs:
 
       - name: Install openssl
         if: matrix.os == 'macos-latest'
-        run: brew install openssl-dev
+        run: brew install openssl
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@1.76.0
