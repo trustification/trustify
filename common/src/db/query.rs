@@ -22,7 +22,7 @@ use utoipa::IntoParams;
 /// ```
 /// use trustify_common::db::query::q;
 ///
-/// let query = q("foo&bar>100").sort("bar:desc");
+/// let query = q("foo&bar>100").sort("bar:desc,baz");
 ///
 /// ```
 pub fn q(s: &str) -> Query {
@@ -63,7 +63,7 @@ impl Query {
     /// optional `order` should be one of `asc` or `desc`. If omitted,
     /// the order defaults to `asc`.
     ///
-    /// Multiple sorts should be `&`-delimited
+    /// Multiple sorts should be `,`-delimited
     ///
     /// Each `{field}` must name an actual
     /// [Column](sea_orm::EntityTrait::Column) variant.
@@ -365,6 +365,21 @@ mod tests {
     use chrono::{Local, TimeDelta};
     use sea_orm::{QueryFilter, QuerySelect, QueryTrait};
     use test_log::test;
+
+    #[test(tokio::test)]
+    async fn happy_path() -> Result<(), anyhow::Error> {
+        let stmt = advisory::Entity::find()
+            .filtering(q("foo&published>2024-04-20").sort("location,title:desc"))?
+            .order_by_desc(advisory::Column::Id)
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string()[106..]
+            .to_string();
+        assert_eq!(
+            stmt,
+            r#"WHERE (("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')) AND "advisory"."published" > '2024-04-20' ORDER BY "advisory"."location" ASC, "advisory"."title" DESC, "advisory"."id" DESC"#
+        );
+        Ok(())
+    }
 
     #[test(tokio::test)]
     async fn filters() -> Result<(), anyhow::Error> {
