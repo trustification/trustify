@@ -1392,7 +1392,7 @@ dependencies = [
 [[package]]
 name = "cyclonedx-bom"
 version = "0.5.0"
-source = "git+https://github.com/ctron/cyclonedx-rust-cargo?rev=3c8ebf47a00f9b4b596712af61602695ae5134f3#3c8ebf47a00f9b4b596712af61602695ae5134f3"
+source = "git+https://github.com/CycloneDX/cyclonedx-rust-cargo?branch=main#3d50dddae101d3eefb88a894568b215e4ba8dde9"
 dependencies = [
  "base64 0.21.7",
  "cyclonedx-bom-macros",
@@ -1416,7 +1416,7 @@ dependencies = [
 [[package]]
 name = "cyclonedx-bom-macros"
 version = "0.1.0"
-source = "git+https://github.com/ctron/cyclonedx-rust-cargo?rev=3c8ebf47a00f9b4b596712af61602695ae5134f3#3c8ebf47a00f9b4b596712af61602695ae5134f3"
+source = "git+https://github.com/CycloneDX/cyclonedx-rust-cargo?branch=main#3d50dddae101d3eefb88a894568b215e4ba8dde9"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3375,6 +3375,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
+name = "openssl-src"
+version = "300.2.3+3.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5cff92b6f71555b61bb9315f7c64da3ca43d87531622120fea0195fc761b4843"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "openssl-sys"
 version = "0.9.102"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3382,6 +3391,7 @@ checksum = "c597637d56fbc83893a35eb0dd04b2b8e7a50c91e64e9493e398b5df4fb45fa2"
 dependencies = [
  "cc",
  "libc",
+ "openssl-src",
  "pkg-config",
  "vcpkg",
 ]

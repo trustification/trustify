@@ -142,5 +142,5 @@ trustify-ui = { git = "https://github.com/trustification/trustify-ui.git" }
 
 # required due to:
 # * https://github.com/CycloneDX/cyclonedx-rust-cargo/pull/708
-cyclonedx-bom = { git = "https://github.com/ctron/cyclonedx-rust-cargo", rev = "3c8ebf47a00f9b4b596712af61602695ae5134f3" }
+cyclonedx-bom = { git = "https://github.com/CycloneDX/cyclonedx-rust-cargo", branch = "main" }
 
