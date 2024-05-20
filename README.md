@@ -18,8 +18,19 @@ cargo run --bin trustd --no-default-features
 
 That will create its own database on your local filesystem.
 
-* The first command also contains **UI** so point your browser at <http://localhost:8080>.
-* The second runs without **UI** then you can go at <http://localhost:8080/swagger-ui/> to view the API.
+* You can go at <http://localhost:8080> to view the UI.
+* You can go at <http://localhost:8080/swagger-ui/> to view the API.
+
+### Running server with the latest version of the UI
+
+- The server renders the UI from the `./static-local` folder
+- If the `./static` directory exists then it will be used for serving the UI
+
+Copy the UI static files executing:
+
+```shell
+podman cp $(docker create --name ui-download ghcr.io/trustification/trustify-ui:latest):/opt/app-root/dist/client/dist static && podman rm ui-download
+```
 
 ### Running containerized UI
 

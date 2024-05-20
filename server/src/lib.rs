@@ -39,11 +39,9 @@ use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use trustify_module_storage::service::fs::FileSystemBackend;
+use trustify_ui::UI;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-
-#[cfg(feature = "ui")]
-use trustify_module_ui::UI;
 
 /// Run the API server
 #[derive(clap::Args, Debug)]
@@ -82,7 +80,6 @@ struct InitData {
     http: HttpServerConfig<Trustify>,
     tracing: Tracing,
     swagger_oidc: Option<Arc<SwaggerUiOidc>>,
-    #[cfg(feature = "ui")]
     ui: UI,
 }
 
@@ -152,7 +149,6 @@ impl InitData {
 
         let storage = DispatchBackend::Filesystem(FileSystemBackend::new(storage).await?);
 
-        #[cfg(feature = "ui")]
         let ui = UI {
             // TODO: where/how should we configure these details?
             version: env!("CARGO_PKG_VERSION").to_string(),
@@ -173,7 +169,6 @@ impl InitData {
             tracing: run.infra.tracing,
             swagger_oidc,
             storage,
-            #[cfg(feature = "ui")]
             ui,
         })
     }
@@ -212,7 +207,6 @@ impl InitData {
                             trustify_module_storage::endpoints::configure(svc, storage.clone());
                             // I think the UI must come last due to
                             // its use of `resolve_not_found_to`
-                            #[cfg(feature = "ui")]
                             trustify_module_ui::endpoints::configure(svc, &self.ui);
                         });
                 })

@@ -22,7 +22,3 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 url = { workspace = true }
-
-[features]
-default = ["ui"]
-ui = ["trustify-server/ui"]

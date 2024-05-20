@@ -6622,7 +6622,12 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "actix-web-static-files",
+ "base64 0.22.1",
  "log",
+ "serde",
+ "serde_json",
+ "static-files",
+ "tera",
  "trustify-ui",
 ]
 
@@ -6701,6 +6706,7 @@ dependencies = [
  "trustify-module-storage",
  "trustify-module-ui",
  "trustify-module-vulnerability",
+ "trustify-ui",
  "url",
  "urlencoding",
  "utoipa",
@@ -6730,7 +6736,7 @@ dependencies = [
 [[package]]
 name = "trustify-ui"
 version = "0.1.0"
-source = "git+https://github.com/trustification/trustify-ui.git#453a50222a313dda2cc5ed534d44e27ef692d5e1"
+source = "git+https://github.com/carlosthe19916/trustify-ui?branch=static-ui#505720e95fbb4bdc2bf72ee4c723f4b92966330b"
 dependencies = [
  "base64 0.22.1",
  "serde",

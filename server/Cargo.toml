@@ -32,10 +32,7 @@ url = "2"
 utoipa = { workspace = true, features = ["actix_extras"] }
 utoipa-swagger-ui = { workspace = true, features = ["actix-web"] }
 walker-common = { workspace = true }
+trustify-ui = { workspace = true }
 
 [dev-dependencies]
 urlencoding = { workspace = true }
-
-[features]
-default = [ "ui" ]
-ui = ["trustify-module-ui/ui"]

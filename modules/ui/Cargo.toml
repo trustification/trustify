@@ -7,8 +7,13 @@ edition = "2021"
 actix-web = { workspace = true }
 log = { workspace = true }
 actix-web-static-files = { workspace = true }
-trustify-ui = { workspace = true, optional = true }
+trustify-ui = { workspace = true }
 
-[features]
-default = [ "ui" ]
-ui = ["trustify-ui"]
+static-files = "0.2.1"
+serde_json = "1.0.117"
+tera = "1.19.1"
+base64 = "0.22.1"
+serde = { version = "1.0.201", features = ["derive"] }
+
+[build-dependencies]
+static-files = "0.2.1"
