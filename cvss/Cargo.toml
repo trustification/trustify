@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
-thiserror = { workspace = true }
 
 [dev-dependencies]
 test-log = { workspace = true, features = ["log", "trace"] }

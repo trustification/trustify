@@ -9,7 +9,6 @@ trustify-cvss = { workspace = true }
 trustify-entity = { workspace = true }
 
 anyhow = { workspace = true }
-chrono = { workspace = true }
 serde = { workspace = true }
 time = { workspace = true }
 thiserror = { workspace = true }

@@ -7,7 +7,6 @@ edition = "2021"
 trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
 trustify-infrastructure = { workspace = true }
-trustify-entity = { workspace = true }
 trustify-module-fetch = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-importer = { workspace = true }
@@ -19,19 +18,11 @@ trustify-module-vulnerability = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
-csaf = { workspace = true }
 futures = { workspace = true }
 log = { workspace = true }
-once_cell = { workspace = true }
-parking_lot = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true, features = ["raw_value"] }
-sha2 = { workspace = true }
-thiserror = { workspace = true }
 url = "2"
 utoipa = { workspace = true, features = ["actix_extras"] }
 utoipa-swagger-ui = { workspace = true, features = ["actix-web"] }
-walker-common = { workspace = true }
 
 [dev-dependencies]
 urlencoding = { workspace = true }

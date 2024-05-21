@@ -8,7 +8,6 @@ name = "trustd"
 path = "src/main.rs"
 
 [dependencies]
-trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
 trustify-module-importer = { workspace = true }
 trustify-infrastructure = { workspace = true }
@@ -18,8 +17,6 @@ anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 log = { workspace = true }
 postgresql_embedded = { workspace = true }
-serde_json = { workspace = true }
-thiserror = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 url = { workspace = true }
 
