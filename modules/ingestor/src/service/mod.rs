@@ -84,6 +84,10 @@ impl IngestorService {
         }
     }
 
+    pub fn storage(&self) -> &DispatchBackend {
+        &self.storage
+    }
+
     pub async fn ingest<S, E>(
         &self,
         source: &str,

@@ -1,0 +1,44 @@
+[package]
+name = "trustify-module-fundamental"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+trustify-auth = { workspace = true }
+trustify-entity = { workspace = true }
+trustify-common = { workspace = true }
+trustify-cvss = { workspace = true }
+trustify-module-ingestor = { workspace = true }
+trustify-module-storage = { workspace = true }
+
+actix-http = { workspace = true }
+actix-web = { workspace = true }
+anyhow = { workspace = true }
+futures-util = { workspace = true }
+log = { workspace = true }
+sea-orm = { workspace = true }
+sea-query = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+time = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+tokio-util = { workspace = true }
+tracing = { workspace = true }
+utoipa = { workspace = true, features = ["actix_extras"] }
+
+[dev-dependencies]
+bytesize = { workspace = true }
+chrono = { workspace = true }
+hex = { workspace = true }
+humantime = { workspace = true }
+jsonpath-rust = { workspace = true }
+log = { workspace = true }
+serde_json = { workspace = true }
+rust-lzma = { workspace = true }
+test-log = { workspace = true, features = ["log", "trace"] }
+trustify-cvss = { workspace = true }
+test-context = { workspace = true }
+urlencoding = { workspace = true }
+tokio-util = { workspace = true }
+actix-http = { workspace = true }

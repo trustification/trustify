@@ -35,4 +35,4 @@ jobs:
       - name: Test
         run: cargo test -- --nocapture
         env:
-          RUST_LOG: debug
+          RUST_LOG: info
