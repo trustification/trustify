@@ -396,8 +396,7 @@ impl HttpServerBuilder {
             .build();
 
         self.metrics_factory = Some(Arc::new(move || {
-            let m = metrics.as_ref();
-            m.cloned().map_err(|err| anyhow!("{err}"))
+            metrics.as_ref().cloned().map_err(|err| anyhow!("{err}"))
         }));
 
         self
