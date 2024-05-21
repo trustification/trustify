@@ -36,9 +36,11 @@ jobs:
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
-      # - name: Install openssl
-      #   if: matrix.os == 'macos-latest'
-      #   run: brew install openssl
+      - name: openssl-dev
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssl-dev
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@1.76.0
