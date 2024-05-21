@@ -25,6 +25,18 @@ This may be simply in reference to the vulnerability *as it exists in source-cod
 Other, more-involved stakeholders (product vendors, upstream project owners) may issue *additional* advisories.
 These opinions may be in reference to *concrete* shipped products, contextualized to how the vulnerable code is *actually used*.
 
+### SBOM
+
+An SBOM is a source-of-someone's-truth about "what's inside it?", so
+everything in our DB is ultimately sourced from some
+source-of-truth. We can't really say definitively "product X is
+composed of A1, A2 + A3". Instead, we can have multiple simultaneous
+statements -- SBOM's -- from multiple people saying "product X is
+claimed by Bob to be A1 + A2" and "product X is claimed by Jim to be
+A1 + A97". So an SBOM is the entity to track the origin of the
+supposed "evidence" of assertional statements about products... about
+packages... about vulnerabilities...
+
 ### Package
 
 A package is an atomic artifact or component.
