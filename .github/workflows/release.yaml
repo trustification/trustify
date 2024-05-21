@@ -2,8 +2,6 @@ name: release
 
 on:
   push:
-    branches:
-      - "jcrossley3:releasing"
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+*"
 
