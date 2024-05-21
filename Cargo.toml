@@ -127,7 +127,7 @@ trustify-module-advisory = { path = "modules/advisory" }
 trustify-module-organization = { path = "modules/organization" }
 trustify-module-vulnerability = { path = "modules/vulnerability" }
 trustify-server = { path = "server", default-features = false }
-trustify-ui = { git = "https://github.com/trustification/trustify-ui.git" }
+trustify-ui = { git = "https://github.com/trustification/trustify-ui.git", tag = "static-main" }
 
 [patch.crates-io]
 #csaf-walker = { git = "https://github.com/ctron/csaf-walker", rev = "7b6e64dd56e4be79e184b053ef754a42e1496fe0" }
