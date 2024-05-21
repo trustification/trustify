@@ -61,7 +61,7 @@ impl<E: Endpoint> FromArgMatches for EndpointServerConfig<E> {
 
     fn update_from_arg_matches(&mut self, matches: &ArgMatches) -> Result<(), Error> {
         if let Some(bind) = matches.get_one::<String>("bind") {
-            self.bind = bind.clone()
+            self.bind.clone_from(bind)
         }
 
         if let Some(port) = matches.get_one::<u16>("port") {
