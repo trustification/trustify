@@ -4,7 +4,7 @@ use test_log::test;
 use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Transactional;
 use trustify_common::model::Paginated;
-use trustify_module_fetch::model::sbom::SbomPackage;
+use trustify_module_fundamental::sbom::model::SbomPackage;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
@@ -12,8 +12,8 @@ async fn test_parse_cyclonedx(ctx: TrustifyContext) -> Result<(), anyhow::Error>
     test_with_cyclonedx(
         ctx,
         "zookeeper-3.9.2-cyclonedx.json",
-        |WithContext { fetch, sbom, .. }| async move {
-            let described = fetch
+        |WithContext { service, sbom, .. }| async move {
+            let described = service
                 .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
                 .await?;
 
@@ -29,7 +29,7 @@ async fn test_parse_cyclonedx(ctx: TrustifyContext) -> Result<(), anyhow::Error>
                 }]
             );
 
-            let packages = fetch
+            let packages = service
                 .fetch_sbom_packages(
                     sbom.sbom.sbom_id,
                     Default::default(),

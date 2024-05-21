@@ -5,7 +5,7 @@ edition = "2021"
 
 [dev-dependencies]
 trustify-module-ingestor = { workspace = true }
-trustify-module-fetch = { workspace = true }
+trustify-module-fundamental = { workspace = true }
 trustify-entity = { workspace = true }
 trustify-common = { workspace = true }
 tracing = { workspace = true }

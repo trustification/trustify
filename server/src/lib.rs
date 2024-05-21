@@ -11,6 +11,7 @@ use actix_web::{
     HttpRequest, HttpResponse, Responder,
 };
 use anyhow::Context;
+use bytesize::ByteSize;
 use futures::FutureExt;
 use std::fmt::Display;
 use std::fs::create_dir_all;
@@ -181,6 +182,8 @@ impl InitData {
     async fn run(self, metrics: &Metrics) -> anyhow::Result<()> {
         let swagger_oidc = self.swagger_oidc;
 
+        let limit = ByteSize::gb(1).as_u64() as usize;
+
         let http = {
             let graph = self.graph.clone();
             let db = self.db.clone();
@@ -192,26 +195,21 @@ impl InitData {
                 .default_authenticator(self.authenticator)
                 .authorizer(self.authorizer.clone())
                 .configure(move |svc| {
-                    svc.service(swagger_ui_with_auth(
-                        openapi::openapi(),
-                        swagger_oidc.clone(),
-                    ));
+                    svc.app_data(web::PayloadConfig::default().limit(limit))
+                        .service(swagger_ui_with_auth(
+                            openapi::openapi(),
+                            swagger_oidc.clone(),
+                        ));
                     svc.app_data(web::Data::from(self.graph.clone()))
                         .configure(|svc| {
                             trustify_module_importer::endpoints::configure(svc, db.clone());
-                            trustify_module_ingestor::endpoints::configure(
+
+                            trustify_module_fundamental::endpoints::configure(
                                 svc,
                                 db.clone(),
                                 storage.clone(),
                             );
-                            trustify_module_fetch::endpoints::configure(svc, db.clone());
 
-                            trustify_module_advisory::endpoints::configure(svc, db.clone());
-                            trustify_module_organization::endpoints::configure(svc, db.clone());
-                            trustify_module_vulnerability::endpoints::configure(svc, db.clone());
-                            trustify_module_storage::endpoints::configure(svc, storage.clone());
-                            // I think the UI must come last due to
-                            // its use of `resolve_not_found_to`
                             #[cfg(feature = "ui")]
                             trustify_module_ui::endpoints::configure(svc, &self.ui);
                         });

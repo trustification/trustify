@@ -17,7 +17,7 @@ use std::str::FromStr;
 use std::time::Instant;
 use tracing::{info_span, instrument, Instrument};
 use trustify_common::db::{test::TrustifyContext, Database, Transactional};
-use trustify_module_fetch::service::FetchService;
+use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::graph::{
     sbom::{self, spdx::parse_spdx, SbomContext, SbomInformation},
     Graph,
@@ -67,7 +67,7 @@ pub struct WithContext {
     pub sbom: SbomContext,
     pub db: Database,
     pub graph: Graph,
-    pub fetch: FetchService,
+    pub service: SbomService,
 }
 
 #[instrument(skip(ctx, f))]
@@ -134,7 +134,7 @@ where
 
     let db = ctx.db;
     let graph = Graph::new(db.clone());
-    let fetch = FetchService::new(db.clone());
+    let service = SbomService::new(db.clone());
 
     let start = Instant::now();
     let sbom = info_span!("parse json").in_scope(|| {
@@ -176,7 +176,7 @@ where
         sbom: ctx,
         db,
         graph,
-        fetch,
+        service,
     })
     .instrument(info_span!("assert"))
     .await?;

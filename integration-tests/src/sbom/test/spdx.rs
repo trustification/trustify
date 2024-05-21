@@ -4,7 +4,7 @@ use test_log::test;
 use tracing::instrument;
 use trustify_common::{db::test::TrustifyContext, db::Transactional};
 use trustify_entity::relationship::Relationship;
-use trustify_module_fetch::{model::sbom::SbomPackage, service::sbom::Which};
+use trustify_module_fundamental::sbom::model::{SbomPackage, Which};
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[instrument]
@@ -13,8 +13,8 @@ async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     test_with_spdx(
         ctx,
         "quarkus-bom-2.13.8.Final-redhat-00004.json",
-        |WithContext { fetch, sbom, .. }| async move {
-            let described = fetch
+        |WithContext { service, sbom, .. }| async move {
+            let described = service
                 .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
                 .await?;
             log::info!("{:#?}", described);
@@ -32,7 +32,7 @@ async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
                 first
             );
 
-            let contains = fetch
+            let contains = service
                 .related_packages(
                     sbom.sbom.sbom_id,
                     Relationship::ContainedBy,
@@ -56,15 +56,15 @@ async fn test_parse_spdx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     test_with_spdx(
         ctx,
         "ubi9-9.2-755.1697625012.json",
-        |WithContext { fetch, sbom, .. }| async move {
-            let described = fetch
+        |WithContext { service, sbom, .. }| async move {
+            let described = service
                 .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
                 .await?;
 
             assert_eq!(1, described.total);
             let first = &described.items[0];
 
-            let contains = fetch
+            let contains = service
                 .fetch_related_packages(
                     sbom.sbom.sbom_id,
                     Default::default(),

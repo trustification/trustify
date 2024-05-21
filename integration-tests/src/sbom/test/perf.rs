@@ -6,7 +6,7 @@ use trustify_common::{
     db::{test::TrustifyContext, Transactional},
     model::Paginated,
 };
-use trustify_module_fetch::model::sbom::SbomPackage;
+use trustify_module_fundamental::sbom::model::SbomPackage;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
@@ -15,8 +15,8 @@ async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     test_with_spdx(
         ctx,
         "openshift-container-storage-4.8.z.json.xz",
-        |WithContext { fetch, sbom, .. }| async move {
-            let described = fetch
+        |WithContext { service, sbom, .. }| async move {
+            let described = service
                 .describes_packages(sbom.sbom.sbom_id, Default::default(), ())
                 .await?;
 
@@ -32,7 +32,7 @@ async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
                 }
             );
 
-            let packages = fetch
+            let packages = service
                 .fetch_sbom_packages(
                     sbom.sbom.sbom_id,
                     Default::default(),
@@ -60,8 +60,8 @@ async fn ingest_spdx_large(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     test_with_spdx(
         ctx,
         "openshift-4.13.json.xz",
-        |WithContext { fetch, sbom, .. }| async move {
-            let described = fetch
+        |WithContext { service, sbom, .. }| async move {
+            let described = service
                 .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
                 .await?;
             log::info!("{:#?}", described);

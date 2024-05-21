@@ -8,15 +8,11 @@ members = [
   "entity",
   "integration-tests",
   "migration",
-  "model",
-  "modules/fetch",
   "modules/importer",
+  "modules/ui",
+  "modules/fundamental",
   "modules/ingestor",
   "modules/storage",
-  "modules/ui",
-  "modules/advisory",
-  "modules/organization",
-  "modules/vulnerability",
   "server",
   "trustd",
 ]
@@ -116,18 +112,13 @@ trustify-entity = { path = "entity" }
 trustify-importer = { path = "importer"}
 trustify-infrastructure = { path = "common/infrastructure" }
 trustify-migration = { path = "migration" }
-trustify-model = { path = "model" }
-trustify-module-fetch = { path = "modules/fetch" }
+trustify-module-fundamental = { path = "modules/fundamental" }
 trustify-module-importer = { path = "modules/importer" }
-trustify-module-ingestor = { path = "modules/ingestor" }
-trustify-module-search = { path = "modules/search" }
-trustify-module-storage = { path = "modules/storage" }
 trustify-module-ui = { path = "modules/ui", default-features = false }
-trustify-module-advisory = { path = "modules/advisory" }
-trustify-module-organization = { path = "modules/organization" }
-trustify-module-vulnerability = { path = "modules/vulnerability" }
 trustify-server = { path = "server", default-features = false }
 trustify-ui = { git = "https://github.com/trustification/trustify-ui.git", tag = "static-main" }
+trustify-module-ingestor = { path = "modules/ingestor" }
+trustify-module-storage = { path = "modules/storage" }
 
 [patch.crates-io]
 #csaf-walker = { git = "https://github.com/ctron/csaf-walker", rev = "7b6e64dd56e4be79e184b053ef754a42e1496fe0" }

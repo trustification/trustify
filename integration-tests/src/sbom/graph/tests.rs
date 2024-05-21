@@ -9,7 +9,7 @@ use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
 use trustify_entity::relationship::Relationship;
-use trustify_module_fetch::service::FetchService;
+use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::graph::Graph;
 
 #[test_context(TrustifyContext, skip_teardown)]
@@ -283,7 +283,7 @@ async fn ingest_package_relates_to_package_dependency_of(
 ) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let system = Graph::new(db.clone());
-    let fetch = FetchService::new(db);
+    let fetch = SbomService::new(db);
 
     let sbom1 = system
         .ingest_sbom(
