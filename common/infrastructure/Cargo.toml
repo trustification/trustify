@@ -18,7 +18,7 @@ clap = { workspace = true, features = ["derive", "env", "string"] }
 futures = { workspace = true }
 http = { workspace = true }
 log = { workspace = true }
-openssl = { workspace = true }
+openssl = { workspace = true, features = [ "vendored" ] }
 opentelemetry = { workspace = true }
 opentelemetry-otlp = { workspace = true }
 opentelemetry_sdk = { workspace = true, features = ["rt-tokio"] }
