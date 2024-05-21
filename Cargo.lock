@@ -1392,7 +1392,7 @@ dependencies = [
 [[package]]
 name = "cyclonedx-bom"
 version = "0.5.0"
-source = "git+https://github.com/ctron/cyclonedx-rust-cargo?rev=3c8ebf47a00f9b4b596712af61602695ae5134f3#3c8ebf47a00f9b4b596712af61602695ae5134f3"
+source = "git+https://github.com/CycloneDX/cyclonedx-rust-cargo?branch=main#3d50dddae101d3eefb88a894568b215e4ba8dde9"
 dependencies = [
  "base64 0.21.7",
  "cyclonedx-bom-macros",
@@ -1416,7 +1416,7 @@ dependencies = [
 [[package]]
 name = "cyclonedx-bom-macros"
 version = "0.1.0"
-source = "git+https://github.com/ctron/cyclonedx-rust-cargo?rev=3c8ebf47a00f9b4b596712af61602695ae5134f3#3c8ebf47a00f9b4b596712af61602695ae5134f3"
+source = "git+https://github.com/CycloneDX/cyclonedx-rust-cargo?branch=main#3d50dddae101d3eefb88a894568b215e4ba8dde9"
 dependencies = [
  "proc-macro2",
  "quote",
