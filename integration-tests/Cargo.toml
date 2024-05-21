@@ -3,26 +3,18 @@ name = "trustify-integration-tests"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
-trustify-auth = { workspace = true }
-trustify-common = { workspace = true }
-trustify-infrastructure = { workspace = true }
-trustify-entity = { workspace = true }
-trustify-module-fetch = { workspace = true }
-trustify-module-ingestor = { workspace = true }
-trustify-module-importer = { workspace = true }
-trustify-module-storage = { workspace = true }
-
-anyhow = { workspace = true }
-cpe = { workspace = true }
-humantime = { workspace = true }
-log = { workspace = true }
-rust-lzma = { workspace = true }
-serde_json = { workspace = true }
-tokio = { workspace = true }
-tracing = { workspace = true }
-
 [dev-dependencies]
+trustify-module-ingestor = { workspace = true }
+trustify-module-fetch = { workspace = true }
+trustify-entity = { workspace = true }
+trustify-common = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+serde_json = { workspace = true }
+rust-lzma = { workspace = true }
+log = { workspace = true }
+humantime = { workspace = true }
+anyhow = { workspace = true }
 cyclonedx-bom = { workspace = true }
 spdx-rs = { workspace = true }
 test-context = { workspace = true }

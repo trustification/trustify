@@ -12,7 +12,6 @@ actix-web-httpauth = { workspace = true }
 actix-web-opentelemetry = { workspace = true }
 actix-web-prom = { workspace = true }
 anyhow = { workspace = true }
-async-trait = { workspace = true }
 bytesize = { workspace = true }
 clap = { workspace = true, features = ["derive", "env", "string"] }
 futures = { workspace = true }

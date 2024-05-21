@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 trustify-common = { workspace = true }
 trustify-entity = { workspace = true }
-#trustify-module-fetch = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }
 
@@ -23,8 +22,6 @@ sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "
 sea-query = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-sha2 = { workspace = true }
-sqlx = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true, features = ["serde-well-known"] }
 tokio = { workspace = true, features = ["full"] }
@@ -34,7 +31,6 @@ url = { workspace = true, features = ["serde"] }
 utoipa = { workspace = true, features = ["actix_extras", "time", "url"] }
 uuid = { workspace = true, features = ["v4"] }
 walker-common = { workspace = true }
-walker-extras = { workspace = true }
 
 [dev-dependencies]
 test-log = { workspace = true, features = ["log", "trace"] }
