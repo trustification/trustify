@@ -22,6 +22,7 @@ reqwest = { workspace = true, features = ["native-tls"] }
 regex = { workspace = true }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 sqlx = { workspace = true }
 tempfile = { workspace = true }
 time = { workspace = true }
