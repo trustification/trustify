@@ -260,7 +260,6 @@ async fn search_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let result = query(&app, "").await;
     assert_eq!(result.total, 0);
 
-
     // ingest some advisories
     let data = include_bytes!("../../../../../etc/test-data/mitre/CVE-2024-27088.json");
     let _id = ingest(&ingestor, data).await;
