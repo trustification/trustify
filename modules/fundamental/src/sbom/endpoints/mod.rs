@@ -45,6 +45,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
         trustify_common::purl::Purl,
+        trustify_common::hash::HashKey,
         trustify_entity::relationship::Relationship,
     )),
     tags()

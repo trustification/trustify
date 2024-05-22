@@ -36,6 +36,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
         trustify_common::purl::Purl,
+        trustify_common::hash::HashKey,
     )),
     tags()
 )]
@@ -63,7 +64,7 @@ pub async fn all(
 #[utoipa::path(
     tag = "advisory",
     params(
-        ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
+        ("key" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
     ),
     responses(
         (status = 200, description = "Matching advisory", body = AdvisoryDetails),

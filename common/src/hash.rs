@@ -1,7 +1,10 @@
 use serde::de::{Error, Visitor};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use serde_json::Value;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+use utoipa::openapi::{Object, RefOr, Schema, SchemaType};
+use utoipa::ToSchema;
 
 #[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
@@ -9,6 +12,18 @@ pub enum HashKey {
     Sha256(String),
     Sha384(String),
     Sha512(String),
+}
+
+impl<'__s> ToSchema<'__s> for HashKey {
+    fn schema() -> (&'__s str, RefOr<Schema>) {
+        let mut obj = Object::with_type(SchemaType::String);
+        obj.description = Some("A hash/digest prefixed with its type.".to_string());
+        obj.example = Some(Value::String(
+            "sha256:dc60aeb735c16a71b6fc56e84ddb8193e3a6d1ef0b7e958d77e78fc039a5d04e".to_string(),
+        ));
+
+        ("HashKey", RefOr::T(Schema::Object(obj)))
+    }
 }
 
 impl Serialize for HashKey {
