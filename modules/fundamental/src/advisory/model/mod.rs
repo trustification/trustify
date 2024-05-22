@@ -9,6 +9,7 @@ pub use details::advisory_vulnerability::*;
 pub use details::*;
 pub use summary::*;
 use trustify_common::db::ConnectionOrTransaction;
+use trustify_common::hash::HashKey;
 use trustify_entity::{advisory, organization};
 
 mod details;
@@ -17,7 +18,7 @@ mod summary;
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct AdvisoryHead {
     pub identifier: String,
-    pub sha256: String,
+    pub hashes: Vec<HashKey>,
     pub issuer: Option<OrganizationSummary>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
@@ -47,7 +48,7 @@ impl AdvisoryHead {
 
         Ok(Self {
             identifier: entity.identifier.clone(),
-            sha256: entity.sha256.clone(),
+            hashes: vec![HashKey::Sha256(entity.sha256.clone())],
             issuer,
             published: entity.published,
             modified: entity.modified,
@@ -73,7 +74,7 @@ impl AdvisoryHead {
 
             heads.push(Self {
                 identifier: advisory.identifier.clone(),
-                sha256: advisory.sha256.clone(),
+                hashes: vec![HashKey::Sha256(advisory.sha256.clone())],
                 issuer,
                 published: advisory.published,
                 modified: advisory.modified,
