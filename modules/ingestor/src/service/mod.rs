@@ -12,7 +12,6 @@ use bytes::Bytes;
 pub use format::Format;
 use futures::Stream;
 use sea_orm::error::DbErr;
-use std::str::FromStr;
 use std::time::Instant;
 use trustify_common::error::ErrorInformation;
 use trustify_common::hash::{HashKey, HashKeyError};
@@ -117,7 +116,7 @@ impl IngestorService {
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
         let sha256 = hex::encode(digest);
 
-        let hash_key = HashKey::from_str(&sha256)?;
+        let hash_key = HashKey::Sha256(sha256);
 
         let storage = SyncAdapter::new(self.storage.clone());
         let reader = storage
