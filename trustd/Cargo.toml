@@ -20,6 +20,11 @@ postgresql_embedded = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 url = { workspace = true }
 
+openssl = "*"
+
 [features]
 default = ["ui"]
 ui = ["trustify-server/ui"]
+vendored = [
+    "openssl/vendored",
+]
