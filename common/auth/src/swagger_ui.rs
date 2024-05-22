@@ -7,7 +7,7 @@ use utoipa::openapi::{
     security::{AuthorizationCode, Flow, OAuth2, Scopes, SecurityScheme},
     OpenApi, SecurityRequirement,
 };
-use utoipa_swagger_ui::{oauth, SwaggerUi};
+use utoipa_swagger_ui::{oauth, Config, SwaggerUi};
 
 #[derive(Clone, Debug, Default, clap::Args)]
 #[command(
@@ -109,10 +109,16 @@ impl SwaggerUiOidc {
 /// Create an [`HttpServiceFactory`] for Swagger UI with OIDC authentication
 #[cfg(feature = "actix")]
 pub fn swagger_ui_with_auth(
-    mut openapi: utoipa::openapi::OpenApi,
+    mut openapi: OpenApi,
     swagger_ui_oidc: Option<Arc<SwaggerUiOidc>>,
 ) -> impl HttpServiceFactory {
-    let mut swagger = SwaggerUi::new("/swagger-ui/{_:.*}");
+    let config = Config::new(["/openapi.json"])
+        .doc_expansion("list")
+        .persist_authorization(true)
+        .use_base_layout()
+        .request_snippets_enabled(true);
+
+    let mut swagger = SwaggerUi::new("/openapi/{_:.*}").config(config);
 
     if let Some(swagger_ui_oidc) = &swagger_ui_oidc {
         swagger = swagger_ui_oidc.apply(swagger, &mut openapi);
