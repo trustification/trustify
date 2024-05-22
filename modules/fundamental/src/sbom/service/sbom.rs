@@ -13,6 +13,7 @@ use serde_json::Value;
 use std::fmt::Debug;
 use tracing::instrument;
 use trustify_common::db::query::{Filtering, Query};
+use trustify_common::hash::HashKey;
 use trustify_common::{
     cpe::Cpe,
     db::{
@@ -53,7 +54,7 @@ impl SbomService {
             if let Some(node) = node {
                 items.push(SbomSummary {
                     id: sbom.sbom_id,
-                    sha256: sbom.sha256,
+                    hashes: vec![HashKey::Sha256(sbom.sha256)],
                     document_id: sbom.document_id,
 
                     name: node.name,
