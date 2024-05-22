@@ -205,7 +205,7 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_not_affected_package_version(&Purl::from_str("pkg://maven/log4j/log4j@1.2.3")?, ())
         .await?;
 
-    let uri = "/api/v1/advisory/8675319";
+    let uri = "/api/v1/advisory/sha256:8675319";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -229,7 +229,7 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         json!(["CVSS:3.0/AV:N/AC:L/PR:H/UI:N/S:C/C:H/I:N/A:N"])
     );
 
-    let uri = "/api/v1/advisory/8675309";
+    let uri = "/api/v1/advisory/sha256:8675309";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -259,6 +259,7 @@ async fn search_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     // No results before ingestion
     let result = query(&app, "").await;
     assert_eq!(result.total, 0);
+
 
     // ingest some advisories
     let data = include_bytes!("../../../../../etc/test-data/mitre/CVE-2024-27088.json");
@@ -292,7 +293,7 @@ async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::
     let app = actix_web::test::init_service(App::new().configure(|svc| {
         let limit = ByteSize::gb(1).as_u64() as usize;
         svc.app_data(web::PayloadConfig::default().limit(limit));
-        crate::endpoints::configure(svc, db, storage)
+        configure(svc, db, storage)
     }))
     .await;
     let payload = include_str!("../../../../../etc/test-data/cve-2023-33201.json");
