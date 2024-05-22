@@ -16,6 +16,7 @@ use tokio::{
     io::{AsyncSeekExt, AsyncWriteExt},
 };
 use tokio_util::io::ReaderStream;
+use trustify_common::hash::{HashKey, HashKeyError};
 
 /// A filesystem backed store
 ///
@@ -149,8 +150,30 @@ impl StorageBackend for FileSystemBackend {
 
     async fn retrieve(
         self,
-        hash: String,
+        hash_key: HashKey,
     ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error> {
+        let hash = match hash_key {
+            HashKey::Sha256(inner) => inner,
+            HashKey::Sha384(inner) => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Unsupported,
+                    HashKeyError::UnsupportedAlgorithm(inner.clone()),
+                ));
+            }
+            HashKey::Sha512(inner) => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Unsupported,
+                    HashKeyError::UnsupportedAlgorithm(inner.clone()),
+                ));
+            }
+            _ => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    HashKeyError::UnsupportedAlgorithm("unknown".to_string()),
+                ));
+            }
+        };
+
         let target = level_dir(&self.content, &hash, NUM_LEVELS);
         create_dir_all(&target).await?;
         let target = target.join(hash);

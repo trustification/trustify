@@ -7,7 +7,9 @@ use bytes::Bytes;
 use cyclonedx_bom::prelude::Bom;
 use futures::Stream;
 use serde_json::Value;
+use std::str::FromStr;
 use std::time::Instant;
+use trustify_common::hash::HashKey;
 use trustify_module_storage::service::{StorageBackend, SyncAdapter};
 use uuid::Uuid;
 
@@ -25,9 +27,12 @@ impl super::IngestorService {
             .await
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
         let sha256 = hex::encode(digest);
+
+        let hash_key = HashKey::from_str(&sha256)?;
+
         let storage = SyncAdapter::new(self.storage.clone());
         let data = storage
-            .retrieve(sha256.clone())
+            .retrieve(hash_key)
             .await
             .map_err(Error::Storage)?
             .ok_or_else(|| Error::Storage(anyhow!("File went missing during upload")))?;

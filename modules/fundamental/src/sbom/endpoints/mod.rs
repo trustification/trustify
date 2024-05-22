@@ -1,6 +1,7 @@
 use actix_web::{get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use sea_orm::prelude::Uuid;
+use std::str::FromStr;
 use utoipa::OpenApi;
 
 use trustify_auth::authenticator::user::UserInformation;
@@ -8,6 +9,7 @@ use trustify_auth::authorizer::Authorizer;
 use trustify_auth::Permission;
 use trustify_common::db::query::Query;
 use trustify_common::db::Database;
+use trustify_common::hash::HashKey;
 use trustify_common::model::Paginated;
 use trustify_entity::relationship::Relationship;
 use trustify_module_ingestor::service::IngestorService;
@@ -204,18 +206,13 @@ pub async fn download(
     service: web::Data<IngestorService>,
     key: web::Path<String>,
 ) -> Result<impl Responder, Error> {
-    // TODO support various hashes
-    let hash = key.into_inner();
-
-    let Some(hash) = hash.strip_prefix("sha256:") else {
-        return Err(Error::UnsupportedHashAlgorithm);
-    };
+    let hash_key = HashKey::from_str(&key).map_err(Error::HashKey)?;
 
     let stream = service
         .get_ref()
         .storage()
         .clone()
-        .retrieve(hash.to_string())
+        .retrieve(hash_key)
         .await
         .map_err(Error::Storage)?
         .map(|stream| stream.map_err(Error::Storage));

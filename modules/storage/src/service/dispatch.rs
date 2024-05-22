@@ -1,7 +1,10 @@
-use super::*;
 use bytes::Bytes;
 use futures::{Stream, TryStreamExt};
 use sha2::{digest::Output, Sha256};
+
+use trustify_common::hash::HashKey;
+
+use super::*;
 
 /// A common backend, dispatching to the ones we support.
 ///
@@ -33,14 +36,14 @@ impl StorageBackend for DispatchBackend {
 
     async fn retrieve(
         self,
-        hash: String,
+        hash_key: HashKey,
     ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error>
     where
         Self: Sized,
     {
         match self {
             Self::Filesystem(backend) => backend
-                .retrieve(hash)
+                .retrieve(hash_key)
                 .await
                 .map(|stream| stream.map(|stream| stream.map_err(anyhow::Error::from)))
                 .map_err(anyhow::Error::from),
