@@ -9,13 +9,12 @@ name = "migration"
 path = "src/lib.rs"
 
 [dependencies]
-async-std = { workspace = true, features = ["attributes", "tokio1"] }
 sea-orm-migration = { workspace = true, features = ["runtime-tokio-rustls", "sqlx-postgres"] }
+tokio = { workspace = true, features = ["full"] }
 
 [dev-dependencies]
 trustify-common = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 tokio-util = { workspace = true }
-tokio = { workspace = true, features = ["full"] }
 anyhow = { workspace = true }
