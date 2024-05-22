@@ -3,10 +3,13 @@ use actix_web::body::BoxBody;
 use actix_web::{HttpResponse, ResponseError};
 use sea_orm::DbErr;
 use trustify_common::error::ErrorInformation;
+use trustify_common::hash::HashKeyError;
 use trustify_common::purl::PurlErr;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error(transparent)]
+    HashKey(HashKeyError),
     #[error(transparent)]
     Database(anyhow::Error),
     #[error(transparent)]
@@ -62,6 +65,9 @@ impl ResponseError for Error {
                 .json(ErrorInformation::new("Database error", err)),
             Error::Query(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Query error", err))
+            }
+            Error::HashKey(err) => {
+                HttpResponse::BadRequest().json(ErrorInformation::new("Hash key", err))
             }
         }
     }

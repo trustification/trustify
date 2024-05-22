@@ -12,13 +12,17 @@ use bytes::Bytes;
 pub use format::Format;
 use futures::Stream;
 use sea_orm::error::DbErr;
+use std::str::FromStr;
 use std::time::Instant;
 use trustify_common::error::ErrorInformation;
+use trustify_common::hash::{HashKey, HashKeyError};
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use trustify_module_storage::service::{StorageBackend, SyncAdapter};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error(transparent)]
+    HashKey(#[from] HashKeyError),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
     #[error(transparent)]
@@ -66,6 +70,11 @@ impl ResponseError for Error {
                 message: format!("Unsupported advisory format: {fmt}"),
                 details: None,
             }),
+            Error::HashKey(inner) => HttpResponse::BadRequest().json(ErrorInformation {
+                error: "Digest key error".into(),
+                message: inner.to_string(),
+                details: None,
+            }),
         }
     }
 }
@@ -108,9 +117,11 @@ impl IngestorService {
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
         let sha256 = hex::encode(digest);
 
+        let hash_key = HashKey::from_str(&sha256)?;
+
         let storage = SyncAdapter::new(self.storage.clone());
         let reader = storage
-            .retrieve(sha256.clone())
+            .retrieve(hash_key)
             .await
             .map_err(Error::Storage)?
             .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?;

@@ -1,10 +1,12 @@
-use crate::advisory::service::{AdvisoryKey, AdvisoryService};
+use crate::advisory::service::AdvisoryService;
 use crate::Error;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
+use std::str::FromStr;
 use tokio_util::io::ReaderStream;
 use trustify_common::db::query::Query;
 use trustify_common::db::Database;
+use trustify_common::hash::HashKey;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
@@ -61,21 +63,20 @@ pub async fn all(
 #[utoipa::path(
     tag = "advisory",
     params(
-        ("sha256", Path, description = "SHA256 of the advisory")
+        ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
     ),
     responses(
         (status = 200, description = "Matching advisory", body = AdvisoryDetails),
         (status = 404, description = "Matching advisory not found"),
     ),
 )]
-#[get("/api/v1/advisory/{sha256}")]
+#[get("/api/v1/advisory/{key}")]
 pub async fn get(
     state: web::Data<AdvisoryService>,
-    sha256: web::Path<String>,
+    key: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
-    let fetched = state
-        .fetch_advisory(AdvisoryKey::Sha256(sha256.to_string()), ())
-        .await?;
+    let hash_key = HashKey::from_str(&key).map_err(Error::HashKey)?;
+    let fetched = state.fetch_advisory(hash_key, ()).await?;
 
     if let Some(fetched) = fetched {
         Ok(HttpResponse::Ok().json(fetched))
@@ -129,18 +130,13 @@ pub async fn download(
     service: web::Data<IngestorService>,
     key: web::Path<String>,
 ) -> Result<impl Responder, Error> {
-    // TODO support various hashes
-    let hash = key.into_inner();
-
-    let Some(hash) = hash.strip_prefix("sha256:") else {
-        return Err(Error::UnsupportedHashAlgorithm);
-    };
+    let hash_key = HashKey::from_str(&key).map_err(Error::HashKey)?;
 
     let stream = service
         .get_ref()
         .storage()
         .clone()
-        .retrieve(hash.to_string())
+        .retrieve(hash_key)
         .await
         .map_err(Error::Storage)?
         .map(|stream| stream.map_err(Error::Storage));
