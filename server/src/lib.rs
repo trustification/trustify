@@ -242,7 +242,7 @@ async fn index(ci: ConnectionInfo) -> Result<Json<Vec<url::Url>>, UrlGenerationE
 
     result.extend(build_url(&ci, "/"));
     result.extend(build_url(&ci, "/openapi.json"));
-    result.extend(build_url(&ci, "/swagger-ui/"));
+    result.extend(build_url(&ci, "/openapi/"));
 
     Ok(Json(result))
 }
