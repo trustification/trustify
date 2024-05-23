@@ -6,12 +6,30 @@ use std::str::FromStr;
 use utoipa::openapi::{Object, RefOr, Schema, SchemaType};
 use utoipa::ToSchema;
 
-#[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
+#[derive(Clone, Debug, PartialEq)]
 pub enum HashKey {
     Sha256(String),
     Sha384(String),
     Sha512(String),
+}
+
+impl HashKey {
+    pub fn prefix(&self) -> &'static str {
+        match self {
+            HashKey::Sha256(_) => "sha256",
+            HashKey::Sha384(_) => "sha384",
+            HashKey::Sha512(_) => "sha512",
+        }
+    }
+
+    pub fn value(&self) -> &String {
+        match self {
+            HashKey::Sha256(inner) => inner,
+            HashKey::Sha384(inner) => inner,
+            HashKey::Sha512(inner) => inner,
+        }
+    }
 }
 
 impl<'__s> ToSchema<'__s> for HashKey {
