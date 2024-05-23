@@ -156,20 +156,20 @@ impl StorageBackend for FileSystemBackend {
             HashKey::Sha256(inner) => inner,
             HashKey::Sha384(inner) => {
                 return Err(std::io::Error::new(
-                    std::io::ErrorKind::Unsupported,
+                    ErrorKind::Unsupported,
                     HashKeyError::UnsupportedAlgorithm(inner.clone()),
                 ));
             }
             HashKey::Sha512(inner) => {
                 return Err(std::io::Error::new(
-                    std::io::ErrorKind::Unsupported,
+                    ErrorKind::Unsupported,
                     HashKeyError::UnsupportedAlgorithm(inner.clone()),
                 ));
             }
-            _ => {
+            unsupported => {
                 return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidInput,
-                    HashKeyError::UnsupportedAlgorithm("unknown".to_string()),
+                    ErrorKind::InvalidInput,
+                    HashKeyError::UnsupportedAlgorithm(unsupported.prefix().to_string()),
                 ));
             }
         };
