@@ -295,7 +295,7 @@ async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::
         configure(svc, db, storage)
     }))
     .await;
-    let payload = include_str!("../../../../../etc/test-data/cve-2023-33201.json");
+    let payload = include_str!("../../../../../etc/test-data/csaf/cve-2023-33201.json");
 
     let uri = "/api/v1/advisory";
     let request = TestRequest::post()
@@ -399,7 +399,7 @@ async fn download_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     )
     .await;
 
-    let data: &[u8] = include_bytes!("../../../../../etc/test-data/cve-2023-33201.json");
+    let data: &[u8] = include_bytes!("../../../../../etc/test-data/csaf/cve-2023-33201.json");
     let digest: String = storage.store(ReaderStream::new(data)).await?.encode_hex();
 
     let uri = format!("/api/v1/advisory/sha256:{digest}/download");
