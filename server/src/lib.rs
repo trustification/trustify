@@ -157,10 +157,10 @@ impl InitData {
         let ui = UI {
             // TODO: where/how should we configure these details?
             version: env!("CARGO_PKG_VERSION").to_string(),
-            auth_required: String::from("false"),
-            oidc_server_url: String::from("http://localhost:8180/realms/trustify"),
-            oidc_client_id: String::from("trustify-ui"),
-            oidc_scope: String::from("email"),
+            auth_required: String::from("true"),
+            oidc_server_url: String::from("http://localhost:8090/realms/chicken"),
+            oidc_client_id: String::from("frontend"),
+            oidc_scope: String::from("openid"),
             analytics_enabled: String::from("false"),
             analytics_write_key: String::from(""),
         };
