@@ -44,6 +44,12 @@ impl Related<super::sbom_package_purl_ref::Entity> for Entity {
     }
 }
 
+impl Related<super::package::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::package_version::Relation::Package.def()
+    }
+}
+
 impl ActiveModelBehavior for ActiveModel {}
 
 #[derive(FromQueryResult, Debug)]
