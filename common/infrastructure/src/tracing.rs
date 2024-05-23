@@ -3,7 +3,7 @@ use opentelemetry::{propagation::Injector, Context, KeyValue};
 use opentelemetry_sdk::Resource;
 use reqwest::RequestBuilder;
 use std::sync::Once;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq)]
 pub enum Tracing {
@@ -145,9 +145,12 @@ fn init_otlp(name: &str) {
 }
 
 fn init_no_tracing() {
-    let filter = tracing_subscriber::EnvFilter::builder()
-        .with_default_directive(tracing_subscriber::filter::LevelFilter::INFO.into())
-        .from_env_lossy();
+    const RUST_LOG: &str = "info,actix_web_prom=error";
+
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+        eprintln!("RUST_LOG is unset, using default: '{RUST_LOG}'");
+        EnvFilter::new(RUST_LOG)
+    });
 
     let result = tracing_subscriber::registry()
         .with(filter)
