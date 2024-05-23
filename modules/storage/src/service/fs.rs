@@ -154,18 +154,6 @@ impl StorageBackend for FileSystemBackend {
     ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error> {
         let hash = match hash_key {
             HashKey::Sha256(inner) => inner,
-            HashKey::Sha384(inner) => {
-                return Err(std::io::Error::new(
-                    ErrorKind::Unsupported,
-                    HashKeyError::UnsupportedAlgorithm(inner.clone()),
-                ));
-            }
-            HashKey::Sha512(inner) => {
-                return Err(std::io::Error::new(
-                    ErrorKind::Unsupported,
-                    HashKeyError::UnsupportedAlgorithm(inner.clone()),
-                ));
-            }
             unsupported => {
                 return Err(std::io::Error::new(
                     ErrorKind::InvalidInput,
