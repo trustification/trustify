@@ -7,9 +7,11 @@ use crate::service::Error;
 use csaf::vulnerability::{ProductStatus, Vulnerability};
 use csaf::Csaf;
 use std::io::Read;
+use std::str::FromStr;
 use time::OffsetDateTime;
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
+use trustify_cvss::cvss3::Cvss3Base;
 
 struct Information<'a>(&'a Csaf);
 
@@ -97,6 +99,23 @@ impl<'g> CsafLoader<'g> {
                 self.ingest_product_statuses(csaf, &advisory_vulnerability, product_status, &tx)
                     .await?;
             }
+
+            if let Some(scores) = &vulnerability.scores {
+                for score in scores {
+                    if let Some(v3) = &score.cvss_v3 {
+                        match Cvss3Base::from_str(&v3.to_string()) {
+                            Ok(cvss3) => {
+                                advisory_vulnerability
+                                    .ingest_cvss3_score(cvss3, &tx)
+                                    .await?;
+                            }
+                            Err(err) => {
+                                log::warn!("Unable to parse CVSS3: {:#?}", err);
+                            }
+                        }
+                    }
+                }
+            }
         }
         Ok(())
     }
@@ -136,6 +155,95 @@ impl<'g> CsafLoader<'g> {
 
              */
         }
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use crate::graph::Graph;
+    use test_context::test_context;
+    use test_log::test;
+    // use trustify_common::advisory::Assertion;
+    use trustify_common::db::{test::TrustifyContext, Transactional};
+
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test(tokio::test)]
+    async fn loader(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
+        let graph = Graph::new(db);
+
+        let data = include_bytes!("../../../../../../etc/test-data/csaf/CVE-2023-20862.json");
+        let checksum = "819cd97589668bc2ad38648e903306bf81062164d1ccc0d2e82803cdafe3cadf";
+
+        let loader = CsafLoader::new(&graph);
+        loader
+            .load("CVE-2023-20862.json", &data[..], checksum)
+            .await?;
+
+        let loaded_vulnerability = graph
+            .get_vulnerability("CVE-2023-20862", Transactional::None)
+            .await?;
+        assert!(loaded_vulnerability.is_some());
+
+        let loaded_advisory = graph.get_advisory(checksum, Transactional::None).await?;
+        assert!(loaded_advisory.is_some());
+
+        let loaded_advisory = loaded_advisory.unwrap();
+
+        assert!(loaded_advisory.advisory.issuer_id.is_some());
+
+        let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(()).await?;
+        assert_eq!(1, loaded_advisory_vulnerabilities.len());
+        // let loaded_advisory_vulnerability = &loaded_advisory_vulnerabilities[0];
+
+        // let affected_assertions = loaded_advisory_vulnerability
+        //     .affected_assertions(())
+        //     .await?;
+        // assert_eq!(1, affected_assertions.assertions.len());
+
+        // let affected_assertion = affected_assertions.assertions.get("pkg://cargo/hyper");
+        // assert!(affected_assertion.is_some());
+
+        // let affected_assertion = &affected_assertion.unwrap()[0];
+        // assert!(
+        //     matches!( affected_assertion, Assertion::Affected {start_version,end_version}
+        //         if start_version == "0.0.0-0"
+        //         && end_version == "0.14.10"
+        //     )
+        // );
+
+        // let fixed_assertions = loaded_advisory_vulnerability.fixed_assertions(()).await?;
+        // assert_eq!(1, fixed_assertions.assertions.len());
+
+        // let fixed_assertion = fixed_assertions.assertions.get("pkg://cargo/hyper");
+        // assert!(fixed_assertion.is_some());
+
+        // let fixed_assertion = fixed_assertion.unwrap();
+        // assert_eq!(1, fixed_assertion.len());
+
+        // let fixed_assertion = &fixed_assertion[0];
+        // assert!(matches!( fixed_assertion, Assertion::Fixed{version }
+        //     if version == "0.14.10"
+        // ));
+
+        let advisory_vuln = loaded_advisory
+            .get_vulnerability("CVE-2023-20862", ())
+            .await?;
+        assert!(advisory_vuln.is_some());
+
+        let advisory_vuln = advisory_vuln.unwrap();
+        let scores = advisory_vuln.cvss3_scores(()).await?;
+        assert_eq!(1, scores.len());
+
+        let score = scores[0];
+        assert_eq!(
+            score.to_string(),
+            "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L"
+        );
 
         Ok(())
     }
