@@ -17,11 +17,20 @@ pub enum Relation {
         from = "super::package_version::Column::PackageId"
         to = "super::package::Column::Id")]
     Package,
+
+    #[sea_orm(has_many = "super::qualified_package::Entity")]
+    QualifiedPackage,
 }
 
 impl Related<super::package::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Package.def()
+    }
+}
+
+impl Related<super::qualified_package::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::QualifiedPackage.def()
     }
 }
 

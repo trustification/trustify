@@ -18,6 +18,8 @@ pub fn configure(
 
     crate::organization::endpoints::configure(config, db.clone());
 
+    crate::package::endpoints::configure(config, db.clone());
+
     crate::sbom::endpoints::configure(config, db.clone());
 
     crate::vulnerability::endpoints::configure(config, db.clone());

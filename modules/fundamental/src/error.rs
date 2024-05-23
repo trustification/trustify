@@ -28,6 +28,8 @@ pub enum Error {
     UnsupportedHashAlgorithm,
     #[error(transparent)]
     Storage(anyhow::Error),
+    #[error("Invalid data model {0}")]
+    Data(String),
 }
 
 unsafe impl Send for Error {}
@@ -69,6 +71,8 @@ impl ResponseError for Error {
             Error::HashKey(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Hash key", err))
             }
+            Error::Data(msg) => HttpResponse::InternalServerError()
+                .json(ErrorInformation::new("Data-model corruption", msg)),
         }
     }
 }
