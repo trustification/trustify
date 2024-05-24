@@ -5,9 +5,10 @@ use sea_orm::prelude::Uuid;
 #[utoipa::path(
     tag = "package",
     params(
+        ("uuid" = String, Path, description = "opaque UUID identifier for a base package")
     ),
     responses(
-        (status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
+        (status = 200, description = "Details for the versionless base package", body = PackageDetails),
     ),
 )]
 #[get("/api/v1/package/base/{uuid}")]
