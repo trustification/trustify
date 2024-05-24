@@ -36,11 +36,14 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         get,
     ),
     components(schemas(
+        crate::package::model::EcosystemHead,
         crate::package::model::QualifiedPackageHead,
         crate::package::model::PackageVersionHead,
         crate::package::model::PackageHead,
+        crate::package::model::summary::ecosystem::EcosystemSummary,
         crate::package::model::summary::package::PackageSummary,
         crate::package::model::summary::package::PaginatedPackageSummary,
+        crate::package::model::summary::package_version::PackageVersionSummary,
         crate::package::model::details::package::PackageDetails,
         crate::package::model::details::package_version::PackageVersionDetails,
         crate::package::model::details::qualified_package::QualifiedPackageDetails,
@@ -53,6 +56,7 @@ pub struct ApiDoc;
 #[utoipa::path(
     tag = "package",
     params(
+        ("uuid" = String, Path, description = "opaque UUID identifier for a fully-qualified package")
     ),
     responses(
         (status = 200, description = "Details for the qualified package", body = QualifiedPackageDetails),
