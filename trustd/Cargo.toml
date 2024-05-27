@@ -24,7 +24,10 @@ openssl = "*"
 
 [features]
 default = ["ui"]
+
 ui = ["trustify-server/ui"]
+garage-door = ["trustify-server/garage-door"]
+
 vendored = [
     "openssl/vendored",
 ]

@@ -98,6 +98,7 @@ impl actix_web::FromRequest for UserDetails {
                 core::future::ready(Ok(details.clone()))
             }
             Some(UserInformation::Anonymous) => {
+                log::debug!("Anonymous user, returning failure");
                 core::future::ready(Err(AuthorizationError::Failed.into()))
             }
             None => core::future::ready(Err(

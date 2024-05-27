@@ -17,6 +17,9 @@ pub async fn openid_validator(
             Ok(req)
         }
 
-        Err(err) => Err((err.into(), req)),
+        Err(err) => {
+            log::debug!("Failed to validate token: {err}");
+            Err((err.into(), req))
+        }
     }
 }

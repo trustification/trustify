@@ -1,26 +1,34 @@
+#[cfg(test)]
+mod test;
+
 use crate::advisory::service::AdvisoryService;
 use crate::Error;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use std::str::FromStr;
+use std::sync::Arc;
 use tokio_util::io::ReaderStream;
+use trustify_auth::authenticator::Authenticator;
 use trustify_common::db::query::Query;
 use trustify_common::db::Database;
 use trustify_common::hash::HashKey;
 use trustify_common::model::Paginated;
+use trustify_infrastructure::new_auth;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::{IntoParams, OpenApi};
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database) {
+pub fn configure(config: &mut web::ServiceConfig, db: Database, auth: Option<Arc<Authenticator>>) {
     let advisory_service = AdvisoryService::new(db);
 
-    config
-        .app_data(web::Data::new(advisory_service))
-        .service(all)
-        .service(get)
-        .service(upload)
-        .service(download);
+    config.app_data(web::Data::new(advisory_service)).service(
+        web::scope("/api/v1/advisory")
+            .wrap(new_auth!(auth))
+            .service(all)
+            .service(get)
+            .service(upload)
+            .service(download),
+    );
 }
 
 #[derive(OpenApi)]
@@ -44,6 +52,7 @@ pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "advisory",
+    context_path = "/api/v1/advisory",
     params(
         Query,
         Paginated,
@@ -52,7 +61,7 @@ pub struct ApiDoc;
         (status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
     ),
 )]
-#[get("/api/v1/advisory")]
+#[get("")]
 pub async fn all(
     state: web::Data<AdvisoryService>,
     web::Query(search): web::Query<Query>,
@@ -63,6 +72,7 @@ pub async fn all(
 
 #[utoipa::path(
     tag = "advisory",
+    context_path = "/api/v1/advisory",
     params(
         ("key" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
     ),
@@ -71,7 +81,7 @@ pub async fn all(
         (status = 404, description = "Matching advisory not found"),
     ),
 )]
-#[get("/api/v1/advisory/{key}")]
+#[get("/{key}")]
 pub async fn get(
     state: web::Data<AdvisoryService>,
     key: web::Path<String>,
@@ -96,6 +106,7 @@ struct UploadParams {
 
 #[utoipa::path(
     tag = "advisory",
+    context_path = "/api/v1/advisory",
     request_body = Vec <u8>,
     params( UploadParams ),
     responses(
@@ -103,7 +114,7 @@ struct UploadParams {
     (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
-#[post("/api/v1/advisory")]
+#[post("")]
 /// Upload a new advisory
 pub async fn upload(
     service: web::Data<IngestorService>,
@@ -118,6 +129,7 @@ pub async fn upload(
 
 #[utoipa::path(
     tag = "advisory",
+    context_path = "/api/v1/advisory",
     params(
         ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
     ),
@@ -126,7 +138,7 @@ pub async fn upload(
         (status = 404, description = "The document could not be found"),
     )
 )]
-#[get("/api/v1/advisory/{key}/download")]
+#[get("/{key}/download")]
 pub async fn download(
     service: web::Data<IngestorService>,
     key: web::Path<String>,
@@ -147,6 +159,3 @@ pub async fn download(
         None => HttpResponse::NotFound().finish(),
     })
 }
-
-#[cfg(test)]
-mod test;

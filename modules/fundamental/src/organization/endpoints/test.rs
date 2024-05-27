@@ -19,9 +19,10 @@ async fn all_organizations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Graph::new(db.clone());
 
-    let app =
-        actix_web::test::init_service(App::new().configure(|config| configure(config, db.clone())))
-            .await;
+    let app = actix_web::test::init_service(
+        App::new().configure(|config| configure(config, db.clone(), None)),
+    )
+    .await;
 
     graph
         .ingest_advisory(
@@ -80,9 +81,10 @@ async fn one_organization(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Graph::new(db.clone());
 
-    let app =
-        actix_web::test::init_service(App::new().configure(|config| configure(config, db.clone())))
-            .await;
+    let app = actix_web::test::init_service(
+        App::new().configure(|config| configure(config, db.clone(), None)),
+    )
+    .await;
 
     let advisory = graph
         .ingest_advisory(
