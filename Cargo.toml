@@ -41,11 +41,12 @@ concat-idents = "1"
 cpe = "0.1.3"
 csaf = "0.5.0"
 csaf-walker = { version = "0.7.0", default-features = false }
-cyclonedx-bom = "0.5.0"
+cyclonedx-bom = "0.6.0"
 env_logger = "0.11.0"
 futures = "0.3.30"
 futures-util = "0.3"
 hex = "0.4.3"
+hide = "0.1.5"
 http = "1"
 human-date-parser = "0.1"
 humantime = "2"
@@ -105,6 +106,8 @@ uuid = "1.7.0"
 walker-common = "0.7.0"
 walker-extras = "0.7.0"
 
+garage-door = "=0.1.0-alpha.2"
+
 trustify-auth = { path = "common/auth", features = ["actix", "swagger"] }
 trustify-common = { path = "common" }
 trustify-cvss = { path = "cvss" }
@@ -133,5 +136,8 @@ trustify-module-storage = { path = "modules/storage" }
 
 # required due to:
 # * https://github.com/CycloneDX/cyclonedx-rust-cargo/pull/708
-cyclonedx-bom = { git = "https://github.com/CycloneDX/cyclonedx-rust-cargo", branch = "main" }
+#cyclonedx-bom = { git = "https://github.com/CycloneDX/cyclonedx-rust-cargo", rev = "36098a232d3f208c7d4f36e8b1094a8dcc5ae2c4" }
 
+garage-door = { git = "https://github.com/ctron/garage-door", rev = "c02fdbbb95d4482d97497dfb62c41dede023b2ea" }
+#garage-door = { path = "../garage-door" }
+oxide-auth = { git = "https://github.com/ctron/oxide-auth", rev = "cd0c79c48a702ea6bb0b05e95e9eddcba8f6c77f" }

@@ -4,8 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
 trustify-entity = { workspace = true }
+trustify-infrastructure = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }
 

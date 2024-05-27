@@ -7,24 +7,31 @@ edition = "2021"
 trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
 trustify-infrastructure = { workspace = true }
-trustify-module-importer = { workspace = true }
-trustify-module-ui = { workspace = true }
 trustify-module-fundamental = { workspace = true }
+trustify-module-importer = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }
+trustify-module-ui = { workspace = true }
+
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 bytesize = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true }
+hide = { workspace = true, features = ["serde", "schemars"] }
 log = { workspace = true }
-url = "2"
+rand = { workspace = true }
+reqwest = { workspace = true }
+tokio = { workspace = true }
+url = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras"] }
 utoipa-swagger-ui = { workspace = true, features = ["actix-web"] }
+
+garage-door = { workspace = true, optional = true }
 
 [dev-dependencies]
 urlencoding = { workspace = true }
 
 [features]
-default = [ "ui" ]
+default = ["ui"]
 ui = ["trustify-module-ui/ui"]

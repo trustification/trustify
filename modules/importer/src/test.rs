@@ -32,7 +32,8 @@ fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
 async fn test_default(ctx: TrustifyContext) {
     let db = ctx.db;
     let app =
-        actix::init_service(App::new().configure(|svc| super::endpoints::configure(svc, db))).await;
+        actix::init_service(App::new().configure(|svc| super::endpoints::configure(svc, db, None)))
+            .await;
 
     // create one
 
@@ -128,7 +129,8 @@ async fn test_default(ctx: TrustifyContext) {
 async fn test_oplock(ctx: TrustifyContext) {
     let db = ctx.db;
     let app =
-        actix::init_service(App::new().configure(|svc| super::endpoints::configure(svc, db))).await;
+        actix::init_service(App::new().configure(|svc| super::endpoints::configure(svc, db, None)))
+            .await;
 
     // create one
 

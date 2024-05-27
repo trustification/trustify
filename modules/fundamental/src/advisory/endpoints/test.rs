@@ -59,7 +59,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let (storage, _) = FileSystemBackend::for_test().await?;
 
     let app = actix_web::test::init_service(
-        App::new().configure(|config| configure(config, db, storage.clone())),
+        App::new().configure(|config| configure(config, db, storage.clone(), None)),
     )
     .await;
 
@@ -147,7 +147,8 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let (storage, _) = FileSystemBackend::for_test().await?;
 
     let app = actix_web::test::init_service(
-        App::new().configure(|config| crate::endpoints::configure(config, db, storage.clone())),
+        App::new()
+            .configure(|config| crate::endpoints::configure(config, db, storage.clone(), None)),
     )
     .await;
 
@@ -253,7 +254,8 @@ async fn search_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let (storage, _) = FileSystemBackend::for_test().await?;
     let ingestor = IngestorService::new(graph, storage.clone());
     let app =
-        init_service(App::new().configure(|config| configure(config, db, storage.clone()))).await;
+        init_service(App::new().configure(|config| configure(config, db, storage.clone(), None)))
+            .await;
     let _response: PaginatedResults<AdvisorySummary>;
 
     // No results before ingestion
@@ -292,7 +294,7 @@ async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::
     let app = actix_web::test::init_service(App::new().configure(|svc| {
         let limit = ByteSize::gb(1).as_u64() as usize;
         svc.app_data(web::PayloadConfig::default().limit(limit));
-        configure(svc, db, storage)
+        configure(svc, db, storage, None)
     }))
     .await;
     let payload = include_str!("../../../../../etc/test-data/csaf/cve-2023-33201.json");
@@ -318,7 +320,7 @@ async fn upload_osv_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let (storage, _temp) = FileSystemBackend::for_test().await?;
     let app = actix_web::test::init_service(
-        App::new().configure(|svc| crate::endpoints::configure(svc, db, storage)),
+        App::new().configure(|svc| crate::endpoints::configure(svc, db, storage, None)),
     )
     .await;
     let payload = include_str!("../../../../../etc/test-data/osv/RUSTSEC-2021-0079.json");
@@ -343,7 +345,7 @@ async fn upload_cve_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let (storage, _temp) = FileSystemBackend::for_test().await?;
     let app = actix_web::test::init_service(
-        App::new().configure(|svc| crate::endpoints::configure(svc, db, storage)),
+        App::new().configure(|svc| crate::endpoints::configure(svc, db, storage, None)),
     )
     .await;
     let payload = include_str!("../../../../../etc/test-data/mitre/CVE-2024-27088.json");
@@ -370,7 +372,7 @@ async fn upload_unknown_format(ctx: TrustifyContext) -> Result<(), anyhow::Error
     let app = actix_web::test::init_service(App::new().configure(|svc| {
         let limit = ByteSize::gb(1).as_u64() as usize;
         svc.app_data(web::PayloadConfig::default().limit(limit));
-        crate::endpoints::configure(svc, db, storage)
+        crate::endpoints::configure(svc, db, storage, None)
     }))
     .await;
 
@@ -395,7 +397,7 @@ async fn download_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let (storage, _) = FileSystemBackend::for_test().await?;
     let app = actix_web::test::init_service(
-        App::new().configure(|svc| configure(svc, db, storage.clone())),
+        App::new().configure(|svc| configure(svc, db, storage.clone(), None)),
     )
     .await;
 
