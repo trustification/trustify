@@ -131,8 +131,10 @@ http POST localhost:8080/api/v1/importer/redhat-csaf csaf[source]=https://redhat
 ### Authentication
 
 By default, authentication is enabled. It can be disabled using the flag `--auth-disabled` when running the server.
-Also by default, there is no working authentication/authorization configuration. For development purposes, one can
+Also. by default, there is no working authentication/authorization configuration. For development purposes, one can
 use `--devmode` to use the Keycloak instance deployed with the compose deployment.
+
+Also see: [docs/oidc.md](docs/oidc.md)
 
 HTTP requests must provide the bearer token using the `Authorization` header. For that, a valid access token is
 required. There are tutorials using `curl` on getting such a token. It is also possible the use the `oidc` client tool:
