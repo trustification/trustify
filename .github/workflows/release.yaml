@@ -24,8 +24,10 @@ jobs:
           test -z "${HEAD_REF}" && (echo 'do-publish=true' >> $GITHUB_OUTPUT)
           if [[ "${{ github.event.ref }}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               echo release=true >> $GITHUB_OUTPUT
+              echo release=true >> $GITHUB_ENV
           elif [[ "${{ github.event.ref }}" =~ ^refs/tags/v.*$ ]]; then
               echo prerelease=true >> $GITHUB_OUTPUT
+              echo prerelease=true >> $GITHUB_ENV
           fi
       - name: Set version
         id: version
@@ -33,23 +35,59 @@ jobs:
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
           [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
           [ "$VERSION" == "main" ] && VERSION=latest
-          echo "Version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_ENV
       - name: Show result
         run: |
-          echo "Version: $VERSION"
+          echo "Version: $version"
           echo "Release: $release"
           echo "Pre-release: $prerelease"
+
+  # ensure that the version of the tag is the version of the crates
+  ensure-version:
+    runs-on: ubuntu-22.04
+    needs:
+      - init
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup cargo-binstall
+        run: |
+          curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+      - name: Setup cargo-workspaces
+        run: |
+          cargo binstall -y cargo-workspaces
+      - name: Set version
+        run: |
+          cargo ws version custom ${{ needs.init.outputs.version }} --all --no-git-commit --force "*" --yes
+      - name: Ensure this did not change anything
+        run: |
+          git diff --exit-code
+          if [ $? -gt 0 ]; then
+              echo "::error::Uncommitted changes after setting the version. This indicates that the version of the tag does not align with the version of the crates."
+              exit 1
+          fi
 
   build:
     name: Build
     runs-on: ${{ matrix.os }}
     needs:
       - init
+      - ensure-version
 
     strategy:
       fail-fast: false
       matrix:
+        edition: [ "", "-pm" ]
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-musl
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-22.04
@@ -58,13 +96,15 @@ jobs:
           - target: aarch64-unknown-linux-gnu
             os: ubuntu-22.04
             cross: "true"
-            args: --features vendored # The ubuntu version of cross is too old for openssl
+            # Cross' Ubuntu container is based on 20.04. Its OpenSSL version is too old for us.
+            args: --features vendored
+
 
           - target: x86_64-unknown-linux-musl
             os: ubuntu-22.04
+            args: --features vendored
             install: |
               sudo apt install -y musl-tools
-            args: --features vendored
           - target: aarch64-unknown-linux-musl
             os: ubuntu-22.04
             cross: "true"
@@ -85,8 +125,11 @@ jobs:
               vcpkg install openssl:x64-windows-static-md
 
     env:
-      binary_name: "trustd"
-      dirname: "trustd-${{ needs.init.outputs.version }}-${{ matrix.target }}"
+      # name of the binary output by the build
+      output_binary_name: "trustd"
+      # name of the binary available for download
+      download_binary_name: "trustd${{ matrix.edition }}"
+      dirname: "trustd${{ matrix.edition }}-${{ needs.init.outputs.version }}-${{ matrix.target }}"
 
     steps:
       - name: Checkout
@@ -100,7 +143,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-release-${{ hashFiles('**/Cargo.lock') }}
+          key: "${{ runner.os }}-release-${{ hashFiles('**/Cargo.lock') }}"
 
       - name: Export GitHub Actions cache environment variables for vcpkg
         uses: actions/github-script@v7
@@ -124,12 +167,19 @@ jobs:
         run: |
           rustup target add ${{ matrix.target }}
 
+      - name: Setup cargo-binstall (Linux)
+        if: runner.os != 'Windows'
+        run: |
+          curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+
+      - name: Setup cargo-binstall (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Set-ExecutionPolicy Unrestricted -Scope Process; iex (iwr "https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.ps1").Content
+
       - name: Setup Cross
         if: matrix.cross == 'true'
         run: |
-          curl -sSL https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz -o binstall.tar.gz
-          tar xzf binstall.tar.gz
-          mv cargo-binstall $HOME/.cargo/bin/
           cargo binstall cross -y
 
       - name: Build | Build
@@ -148,8 +198,14 @@ jobs:
           if [[ -n "${{ matrix.cross }}" ]]; then
             CMD="cross"
           fi
-          
+
+          # build options
+
           OPTS="--release"
+
+          if [[ "${{ matrix.edition }}" == "-pm" ]]; then
+            OPTS="$OPTS --features pm"
+          fi
           
           OPTS="$OPTS ${{ matrix.args }}"
           
@@ -165,10 +221,10 @@ jobs:
           mkdir -p "pack/$dirname"
           
           # if we have an alternate target, there is a sub-directory
-          if [[ -f "target/release/${binary_name}${{ matrix.ext }}" ]]; then
-            SRC="target/release/${binary_name}${{ matrix.ext }}"
-          elif [[ -f "target/${{ matrix.target }}/release/${binary_name}${{ matrix.ext }}" ]]; then
-            SRC="target/${{ matrix.target }}/release/${binary_name}${{ matrix.ext }}"
+          if [[ -f "target/release/${output_binary_name}${{ matrix.ext }}" ]]; then
+            SRC="target/release/${output_binary_name}${{ matrix.ext }}"
+          elif [[ -f "target/${{ matrix.target }}/release/${output_binary_name}${{ matrix.ext }}" ]]; then
+            SRC="target/${{ matrix.target }}/release/${output_binary_name}${{ matrix.ext }}"
           else
             echo "Unable to find output"
             find target
@@ -176,7 +232,8 @@ jobs:
           fi
           
           # stage for upload
-          mv -v "${SRC}" "pack/${dirname}"
+          mv -v "${SRC}" "pack/${dirname}/${download_binary_name}${{ matrix.ext }}"
+          cp LICENSE "pack/${dirname}/"
 
       - run: mkdir -p upload
 
@@ -195,7 +252,7 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: trustd-${{ matrix.target }}
+          name: trustd${{ matrix.edition }}-${{ matrix.target }}
           path: upload/*
           if-no-files-found: error
 
@@ -233,6 +290,10 @@ jobs:
 
       - name: Display staging area
         run: ls -R staging
+
+      - uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: 'staging/*'
 
       - name: Create Release
         env:

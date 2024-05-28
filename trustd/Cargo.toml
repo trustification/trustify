@@ -31,3 +31,7 @@ garage-door = ["trustify-server/garage-door"]
 vendored = [
     "openssl/vendored",
 ]
+pm = [
+    "garage-door",
+    "ui"
+]
