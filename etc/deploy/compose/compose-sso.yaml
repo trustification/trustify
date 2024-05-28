@@ -26,7 +26,7 @@ services:
       - KCADM_PATH=/opt/bitnami/keycloak/bin/kcadm.sh
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin123456
-      - REALM=chicken
+      - REALM=trustify
       - INIT_DATA=/init-sso/data
       - CHICKEN_ADMIN=admin
       - CHICKEN_ADMIN_PASSWORD=admin123456
