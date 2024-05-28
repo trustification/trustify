@@ -8,14 +8,14 @@ use trustify_auth::authenticator::Authenticator;
 use trustify_common::db::query::Query;
 use trustify_common::db::Database;
 use trustify_common::model::Paginated;
-use trustify_infrastructure::new_auth;
+use trustify_infrastructure::app::new_auth;
 use utoipa::OpenApi;
 
 pub fn configure(config: &mut web::ServiceConfig, db: Database, auth: Option<Arc<Authenticator>>) {
     let service = OrganizationService::new(db);
     config.app_data(web::Data::new(service)).service(
         web::scope("/api/v1/organization")
-            .wrap(new_auth!(auth))
+            .wrap(new_auth(auth))
             .service(all)
             .service(get),
     );

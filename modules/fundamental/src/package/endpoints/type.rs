@@ -5,19 +5,21 @@ use trustify_common::model::Paginated;
 
 #[utoipa::path(
     tag = "package",
+    context_path= "/api/v1/package",
     params(
     ),
     responses(
         (status = 200, description = "List of all known package types", body = Vec<EcosystemSummary>),
     ),
 )]
-#[get("/api/v1/package/type")]
+#[get("/type")]
 pub async fn all(service: web::Data<PackageService>) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(service.types(()).await?))
 }
 
 #[utoipa::path(
     tag = "package",
+    context_path= "/api/v1/package",
     params(
         Query,
         Paginated,
@@ -27,7 +29,7 @@ pub async fn all(service: web::Data<PackageService>) -> actix_web::Result<impl R
         (status = 200, description = "Information regarding packages within an type", body = PaginatedPackageSummary),
     ),
 )]
-#[get("/api/v1/package/type/{type}")]
+#[get("/type/{type}")]
 pub async fn get(
     service: web::Data<PackageService>,
     r#type: web::Path<String>,
@@ -43,6 +45,7 @@ pub async fn get(
 
 #[utoipa::path(
     tag = "package",
+    context_path= "/api/v1/package",
     params(
         ("type" = String, Path, description = "pURL identifier of a type"),
         ("namespace_and_name" = String, Path, description = "name of the package optionally preceeded by its namespace"),
@@ -52,7 +55,7 @@ pub async fn get(
         (status = 200, description = "Matching vulnerabilities", body = PackageDetails),
     ),
 )]
-#[get("/api/v1/package/type/{type}/{namespace_and_name:[^@]+}")]
+#[get("/type/{type}/{namespace_and_name:[^@]+}")]
 pub async fn get_package(
     service: web::Data<PackageService>,
     path: web::Path<(String, String)>,
@@ -70,6 +73,7 @@ pub async fn get_package(
 
 #[utoipa::path(
     tag = "package",
+    context_path= "/api/v1/package",
     params(
         ("type" = String, Path, description = "pURL identifier of a type"),
         ("namespace_and_name" = String, Path, description = "name of the package optionally preceeded by its namespace"),
@@ -79,7 +83,7 @@ pub async fn get_package(
         (status = 200, description = "Matching vulnerabilities", body = PackageVersionDetails),
     ),
 )]
-#[get("/api/v1/package/type/{type}/{namespace_and_name:[^@]+}@{version}")]
+#[get("/type/{type}/{namespace_and_name:[^@]+}@{version}")]
 pub async fn get_package_version(
     service: web::Data<PackageService>,
     path: web::Path<(String, String, String)>,

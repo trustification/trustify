@@ -219,7 +219,6 @@ impl InitData {
                             trustify_module_importer::endpoints::configure(
                                 svc,
                                 db.clone(),
-                                // FIXME: make it easier
                                 self.authenticator.clone(),
                             );
 
@@ -227,7 +226,6 @@ impl InitData {
                                 svc,
                                 db.clone(),
                                 storage.clone(),
-                                // FIXME: make it easier
                                 self.authenticator.clone(),
                             );
 

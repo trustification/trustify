@@ -78,7 +78,8 @@ async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&db).await?;
 
     let app =
-        actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
+        actix_web::test::init_service(App::new().configure(|config| configure(config, db, None)))
+            .await;
 
     let uri = "/api/v1/package/type";
 
@@ -110,7 +111,8 @@ async fn r#type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&db).await?;
 
     let app =
-        actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
+        actix_web::test::init_service(App::new().configure(|config| configure(config, db, None)))
+            .await;
 
     let uri = "/api/v1/package/type/maven";
 
@@ -147,7 +149,8 @@ async fn type_package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&db).await?;
 
     let app =
-        actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
+        actix_web::test::init_service(App::new().configure(|config| configure(config, db, None)))
+            .await;
 
     let uri = "/api/v1/package/type/maven/org.apache/log4j";
 
@@ -185,7 +188,8 @@ async fn type_package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error>
     setup(&db).await?;
 
     let app =
-        actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
+        actix_web::test::init_service(App::new().configure(|config| configure(config, db, None)))
+            .await;
 
     let uri = "/api/v1/package/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
@@ -218,7 +222,8 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&db).await?;
 
     let app =
-        actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
+        actix_web::test::init_service(App::new().configure(|config| configure(config, db, None)))
+            .await;
 
     let uri = "/api/v1/package/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
@@ -252,7 +257,8 @@ async fn version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&db).await?;
 
     let app =
-        actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
+        actix_web::test::init_service(App::new().configure(|config| configure(config, db, None)))
+            .await;
 
     let uri = "/api/v1/package/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
@@ -278,7 +284,8 @@ async fn base(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&db).await?;
 
     let app =
-        actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
+        actix_web::test::init_service(App::new().configure(|config| configure(config, db, None)))
+            .await;
 
     let uri = "/api/v1/package/type/maven/org.apache/log4j";
     let request = TestRequest::get().uri(uri).to_request();

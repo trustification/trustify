@@ -4,13 +4,14 @@ use actix_cors::Cors;
 use actix_web::{
     body::MessageBody,
     dev::{ServiceFactory, ServiceRequest, ServiceResponse},
-    middleware::Compress,
-    middleware::Logger,
+    middleware::{Compress, Logger},
     App, Error,
 };
 use actix_web_extras::middleware::Condition;
+use actix_web_httpauth::{extractors::bearer::BearerAuth, middleware::HttpAuthentication};
 use actix_web_opentelemetry::RequestTracing;
 use actix_web_prom::PrometheusMetrics;
+use futures::{future::LocalBoxFuture, FutureExt};
 use std::sync::Arc;
 use trustify_auth::{authenticator::Authenticator, authorizer::Authorizer};
 
@@ -24,19 +25,28 @@ pub struct AppOptions {
     pub tracing_logger: Option<RequestTracing>,
 }
 
-#[macro_export]
-macro_rules! new_auth {
-    ($auth:expr) => {
-        $crate::extras::middleware::Condition::from_option($auth.map(move |authenticator| {
-            $crate::httpauth::middleware::HttpAuthentication::bearer(move |req, auth| {
-                trustify_auth::authenticator::actix::openid_validator(
-                    req,
-                    auth,
-                    authenticator.clone(),
-                )
+/// create a new authenticator
+pub fn new_auth(
+    auth: Option<Arc<Authenticator>>,
+) -> Condition<
+    HttpAuthentication<
+        BearerAuth,
+        impl Fn(
+            ServiceRequest,
+            BearerAuth,
+        ) -> LocalBoxFuture<'static, Result<ServiceRequest, (Error, ServiceRequest)>>,
+    >,
+> {
+    Condition::from_option(auth.map(move |authenticator| {
+        HttpAuthentication::bearer(move |req, auth| {
+            let authenticator = authenticator.clone();
+            Box::pin(async move {
+                trustify_auth::authenticator::actix::openid_validator(req, auth, authenticator)
+                    .await
             })
-        }))
-    };
+            .boxed_local()
+        })
+    }))
 }
 
 /// Build a new HTTP app in a consistent way.
@@ -60,7 +70,7 @@ pub fn new_app(
     // the middleware here.
     App::new()
         // Handle authentication, might fail and return early
-        .wrap(new_auth!(options.authenticator))
+        .wrap(new_auth(options.authenticator))
         // Handle authorization
         .app_data(actix_web::web::Data::new(options.authorizer))
         // Handle CORS requests, this might finish early and not pass requests to the next entry

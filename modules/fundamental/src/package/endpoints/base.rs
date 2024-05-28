@@ -3,6 +3,7 @@ use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::prelude::Uuid;
 
 #[utoipa::path(
+    context_path= "/api/v1/package",
     tag = "package",
     params(
         ("uuid" = String, Path, description = "opaque UUID identifier for a base package")
@@ -11,7 +12,7 @@ use sea_orm::prelude::Uuid;
         (status = 200, description = "Details for the versionless base package", body = PackageDetails),
     ),
 )]
-#[get("/api/v1/package/base/{uuid}")]
+#[get("/base/{uuid}")]
 pub async fn get(
     service: web::Data<PackageService>,
     uuid: web::Path<Uuid>,
