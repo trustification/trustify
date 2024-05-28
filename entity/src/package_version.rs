@@ -34,20 +34,6 @@ impl Related<super::qualified_package::Entity> for Entity {
     }
 }
 
-/*
-impl Related<super::sbom::Entity> for Entity {
-    fn to() -> RelationDef {
-        //Relation::SbomDependents.def()
-        sbom_dependency::Relation::Sbom.def()
-    }
-
-    fn via() -> Option<RelationDef> {
-        Some(sbom_dependency::Relation::Sbom.def().rev())
-    }
-}
-
- */
-
 impl ActiveModelBehavior for ActiveModel {}
 
 #[derive(FromQueryResult, Debug)]
