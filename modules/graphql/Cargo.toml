@@ -1,0 +1,25 @@
+[package]
+name = "trustify-module-graphql"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+trustify-entity = { workspace = true }
+trustify-auth = { workspace = true }
+trustify-common = { workspace = true }
+trustify-infrastructure = { workspace = true }
+trustify-module-importer = { workspace = true }
+trustify-module-ui = { workspace = true }
+trustify-module-fundamental = { workspace = true }
+trustify-module-ingestor = { workspace = true }
+
+
+actix-cors = { workspace = true }
+anyhow = { workspace = true }
+actix-web = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+log = { workspace = true }
+uuid = { workspace = true }
+async-graphql = "7.0.5"
+async-graphql-actix-web = "7.0.5"
+thiserror = { workspace = true }

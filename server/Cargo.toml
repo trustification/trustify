@@ -12,8 +12,10 @@ trustify-module-importer = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }
 trustify-module-ui = { workspace = true }
+trustify-module-graphql = { workspace = true }
 
 actix-web = { workspace = true }
+actix-cors = { workspace = true }
 anyhow = { workspace = true }
 bytesize = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
@@ -28,6 +30,9 @@ utoipa = { workspace = true, features = ["actix_extras"] }
 utoipa-swagger-ui = { workspace = true, features = ["actix-web"] }
 
 garage-door = { workspace = true, optional = true }
+
+async-graphql = "7.0.5"
+async-graphql-actix-web = "7.0.5"
 
 [dev-dependencies]
 urlencoding = { workspace = true }
