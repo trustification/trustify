@@ -123,6 +123,6 @@ impl QualifiedPackageHead {
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct EcosystemHead {
+pub struct TypeHead {
     pub name: String,
 }

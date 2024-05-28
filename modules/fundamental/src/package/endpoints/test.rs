@@ -2,8 +2,8 @@ use crate::package::endpoints::configure;
 use crate::package::model::details::package::PackageDetails;
 use crate::package::model::details::package_version::PackageVersionDetails;
 use crate::package::model::details::qualified_package::QualifiedPackageDetails;
-use crate::package::model::summary::ecosystem::EcosystemSummary;
 use crate::package::model::summary::package::PackageSummary;
+use crate::package::model::summary::r#type::TypeSummary;
 use actix_web::test::TestRequest;
 use actix_web::App;
 use std::str::FromStr;
@@ -72,7 +72,7 @@ async fn setup(db: &Database) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
-async fn ecosystems(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
 
     setup(&db).await?;
@@ -80,32 +80,31 @@ async fn ecosystems(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let app =
         actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
 
-    let uri = "/api/v1/package/ecosystem";
+    let uri = "/api/v1/package/type";
 
     let request = TestRequest::get().uri(uri).to_request();
 
-    let response: Vec<EcosystemSummary> =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: Vec<TypeSummary> = actix_web::test::call_and_read_body_json(&app, request).await;
 
     assert_eq!(2, response.len());
 
     let maven = &response[0];
 
-    assert_eq!(1, maven.base);
-    assert_eq!(2, maven.version);
-    assert_eq!(3, maven.package);
+    assert_eq!(1, maven.counts.base);
+    assert_eq!(2, maven.counts.version);
+    assert_eq!(3, maven.counts.package);
 
     let rpm = &response[1];
-    assert_eq!(1, rpm.base);
-    assert_eq!(1, rpm.version);
-    assert_eq!(0, rpm.package);
+    assert_eq!(1, rpm.counts.base);
+    assert_eq!(1, rpm.counts.version);
+    assert_eq!(0, rpm.counts.package);
 
     Ok(())
 }
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
-async fn ecosystem(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn r#type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
 
     setup(&db).await?;
@@ -113,7 +112,7 @@ async fn ecosystem(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let app =
         actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
 
-    let uri = "/api/v1/package/ecosystem/maven";
+    let uri = "/api/v1/package/type/maven";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -125,7 +124,7 @@ async fn ecosystem(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let log4j = &response.items[0];
     assert_eq!("pkg://maven/org.apache/log4j", log4j.head.purl.to_string());
 
-    let uri = "/api/v1/package/ecosystem/rpm";
+    let uri = "/api/v1/package/type/rpm";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -142,7 +141,7 @@ async fn ecosystem(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
-async fn ecosystem_package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn type_package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
 
     setup(&db).await?;
@@ -150,7 +149,7 @@ async fn ecosystem_package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let app =
         actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
 
-    let uri = "/api/v1/package/ecosystem/maven/org.apache/log4j";
+    let uri = "/api/v1/package/type/maven/org.apache/log4j";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -180,7 +179,7 @@ async fn ecosystem_package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
-async fn ecosystem_package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn type_package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
 
     setup(&db).await?;
@@ -188,7 +187,7 @@ async fn ecosystem_package_version(ctx: TrustifyContext) -> Result<(), anyhow::E
     let app =
         actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
 
-    let uri = "/api/v1/package/ecosystem/maven/org.apache/log4j@1.2.3";
+    let uri = "/api/v1/package/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PackageVersionDetails =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -202,7 +201,7 @@ async fn ecosystem_package_version(ctx: TrustifyContext) -> Result<(), anyhow::E
         .iter()
         .any(|e| e.purl.to_string() == "pkg://maven/org.apache/log4j@1.2.3?jdk=17"));
 
-    let uri = "/api/v1/package/ecosystem/rpm/sendmail@4.4.4";
+    let uri = "/api/v1/package/type/rpm/sendmail@4.4.4";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PackageVersionDetails =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -221,7 +220,7 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let app =
         actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
 
-    let uri = "/api/v1/package/ecosystem/maven/org.apache/log4j@1.2.3";
+    let uri = "/api/v1/package/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PackageVersionDetails =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -255,7 +254,7 @@ async fn version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let app =
         actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
 
-    let uri = "/api/v1/package/ecosystem/maven/org.apache/log4j@1.2.3";
+    let uri = "/api/v1/package/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
     let log4j_123: PackageVersionDetails =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -281,7 +280,7 @@ async fn base(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let app =
         actix_web::test::init_service(App::new().configure(|config| configure(config, db))).await;
 
-    let uri = "/api/v1/package/ecosystem/maven/org.apache/log4j";
+    let uri = "/api/v1/package/type/maven/org.apache/log4j";
     let request = TestRequest::get().uri(uri).to_request();
     let log4j: PackageDetails = actix_web::test::call_and_read_body_json(&app, request).await;
     assert_eq!(2, log4j.versions.len());

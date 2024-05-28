@@ -4,7 +4,7 @@ use sea_orm::prelude::Uuid;
 use trustify_common::db::Database;
 use utoipa::OpenApi;
 
-mod ecosystem;
+mod r#type;
 
 mod base;
 
@@ -15,10 +15,10 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 
     config
         .app_data(web::Data::new(advisory_service))
-        .service(ecosystem::all)
-        .service(ecosystem::get)
-        .service(ecosystem::get_package)
-        .service(ecosystem::get_package_version)
+        .service(r#type::all)
+        .service(r#type::get)
+        .service(r#type::get_package)
+        .service(r#type::get_package_version)
         .service(base::get)
         .service(version::get)
         .service(get);
@@ -27,20 +27,20 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        ecosystem::all,
-        ecosystem::get,
-        ecosystem::get_package,
-        ecosystem::get_package_version,
+        r#type::all,
+        r#type::get,
+        r#type::get_package,
+        r#type::get_package_version,
         base::get,
         version::get,
         get,
     ),
     components(schemas(
-        crate::package::model::EcosystemHead,
+        crate::package::model::TypeHead,
         crate::package::model::QualifiedPackageHead,
         crate::package::model::PackageVersionHead,
         crate::package::model::PackageHead,
-        crate::package::model::summary::ecosystem::EcosystemSummary,
+        crate::package::model::summary::r#type::TypeSummary,
         crate::package::model::summary::package::PackageSummary,
         crate::package::model::summary::package::PaginatedPackageSummary,
         crate::package::model::summary::package_version::PackageVersionSummary,
