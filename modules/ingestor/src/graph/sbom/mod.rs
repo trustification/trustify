@@ -186,7 +186,7 @@ impl Graph {
             .map(|sbom| SbomContext::new(self, sbom)))
     }
 
-    async fn locate_many_sboms<TX: AsRef<Transactional>>(
+    pub async fn locate_many_sboms<TX: AsRef<Transactional>>(
         &self,
         query: SelectEntity<sbom::Entity>,
         tx: TX,
@@ -199,7 +199,7 @@ impl Graph {
             .collect())
     }
 
-    async fn locate_sbom_by_id<TX: AsRef<Transactional>>(
+    pub async fn locate_sbom_by_id<TX: AsRef<Transactional>>(
         &self,
         id: Uuid,
         tx: TX,
@@ -223,7 +223,7 @@ impl Graph {
         .await
     }
 
-    async fn locate_sboms_by_location<TX: AsRef<Transactional>>(
+    pub async fn locate_sboms_by_location<TX: AsRef<Transactional>>(
         &self,
         location: &str,
         tx: TX,

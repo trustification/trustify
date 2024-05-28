@@ -13,6 +13,7 @@ members = [
   "modules/fundamental",
   "modules/ingestor",
   "modules/storage",
+  "modules/graphql",
   "server",
   "trustd",
 ]
@@ -74,7 +75,7 @@ pem = "3"
 postgresql_embedded = "0.9.1"
 postgresql_archive = "0.9.1"
 prometheus = "0.13.3"
-rand = "0.8.5" # for testing
+rand = "0.8.5"                                                        # for testing
 regex = "1.10.3"
 reqwest = "0.12"
 ring = "0.17.8"
@@ -128,6 +129,7 @@ trustify-server = { path = "server", default-features = false }
 trustify-ui = { git = "https://github.com/trustification/trustify-ui.git", tag = "static-main" }
 trustify-module-ingestor = { path = "modules/ingestor" }
 trustify-module-storage = { path = "modules/storage" }
+trustify-module-graphql = { path = "modules/graphql" }
 
 [patch.crates-io]
 #csaf-walker = { git = "https://github.com/ctron/csaf-walker", rev = "7b6e64dd56e4be79e184b053ef754a42e1496fe0" }

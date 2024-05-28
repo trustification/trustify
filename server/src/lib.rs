@@ -7,15 +7,18 @@ mod sample_data;
 
 pub use sample_data::sample_data;
 
+use actix_cors::Cors;
 use actix_web::{
     body::MessageBody,
     dev::{ConnectionInfo, Url},
     error::UrlGenerationError,
-    get, web,
+    get, guard, web,
     web::Json,
-    HttpRequest, HttpResponse, Responder,
+    HttpRequest, HttpResponse, Responder, Result,
 };
 use anyhow::Context;
+use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
+use async_graphql_actix_web::GraphQL;
 use bytesize::ByteSize;
 use futures::{FutureExt, StreamExt};
 use std::fmt::Display;
@@ -46,6 +49,7 @@ use trustify_infrastructure::{
     tracing::Tracing,
     Infrastructure, InfrastructureConfig, InitContext, Metrics,
 };
+use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::{service::dispatch::DispatchBackend, service::fs::FileSystemBackend};
@@ -146,6 +150,12 @@ impl Run {
 
         Ok(ExitCode::SUCCESS)
     }
+}
+
+async fn index_graphiql() -> Result<HttpResponse> {
+    Ok(HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(GraphiQLSource::build().endpoint("/graphql").finish()))
 }
 
 impl InitData {
@@ -256,6 +266,13 @@ impl InitData {
             let db = self.db.clone();
             let storage = self.storage.clone();
 
+            let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
+                .data::<Arc<Graph>>(graph)
+                .data::<Arc<db::Database>>(Arc::new(self.db.clone()))
+                .finish();
+
+            println!("{}", &schema.sdl());
+
             HttpServerBuilder::try_from(self.http)?
                 .tracing(self.tracing)
                 .metrics(metrics.registry().clone(), SERVICE_ID)
@@ -266,6 +283,18 @@ impl InitData {
                             openapi::openapi(),
                             swagger_oidc.clone(),
                         ));
+                    svc.service(
+                        web::resource("/graphql")
+                            .wrap(Cors::permissive())
+                            .guard(guard::Post())
+                            .to(GraphQL::new(schema.clone())),
+                    );
+                    svc.service(
+                        web::resource("/graphql")
+                            .wrap(Cors::permissive())
+                            .guard(guard::Get())
+                            .to(index_graphiql),
+                    );
                     svc.app_data(web::Data::from(self.graph.clone()))
                         .service(
                             web::scope("/api")
@@ -330,7 +359,7 @@ async fn index(ci: ConnectionInfo) -> Result<Json<Vec<url::Url>>, UrlGenerationE
 
     result.extend(build_url(&ci, "/"));
     result.extend(build_url(&ci, "/openapi.json"));
-    result.extend(build_url(&ci, "/openapi/"));
+    result.extend(build_url(&ci, "/openapi.json"));
 
     Ok(Json(result))
 }

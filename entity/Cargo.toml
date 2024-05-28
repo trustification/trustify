@@ -7,8 +7,15 @@ edition = "2021"
 trustify-common = { workspace = true }
 trustify-cvss = { workspace = true }
 
+async-graphql = { version = "7.0.5", features = ["uuid", "time"] }
 cpe = { workspace = true }
-sea-orm = { workspace = true, features = ["sqlx-postgres", "runtime-tokio-rustls", "macros", "with-json", "postgres-array"] }
+sea-orm = { workspace = true, features = [
+    "sqlx-postgres",
+    "runtime-tokio-rustls",
+    "macros",
+    "with-json",
+    "postgres-array",
+] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 time = { workspace = true }
@@ -17,4 +24,4 @@ utoipa = { workspace = true }
 [dev-dependencies]
 anyhow = { workspace = true }
 log = { workspace = true }
-test-log = { workspace = true, features = ["log", "trace"]}
+test-log = { workspace = true, features = ["log", "trace"] }
