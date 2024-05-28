@@ -4,7 +4,7 @@ use sea_orm::prelude::Uuid;
 use std::sync::Arc;
 use trustify_auth::authenticator::Authenticator;
 use trustify_common::db::Database;
-use trustify_infrastructure::new_auth;
+use trustify_infrastructure::app::new_auth;
 use utoipa::OpenApi;
 
 mod r#type;
@@ -18,7 +18,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database, auth: Option<Arc
 
     config.app_data(web::Data::new(advisory_service)).service(
         web::scope("/api/v1/package")
-            .wrap(new_auth!(auth))
+            .wrap(new_auth(auth))
             .service(r#type::all)
             .service(r#type::get)
             .service(r#type::get_package)
@@ -59,6 +59,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database, auth: Option<Arc
 pub struct ApiDoc;
 
 #[utoipa::path(
+    context_path= "/api/v1/package",
     tag = "package",
     params(
         ("uuid" = String, Path, description = "opaque UUID identifier for a fully-qualified package")
@@ -67,7 +68,7 @@ pub struct ApiDoc;
         (status = 200, description = "Details for the qualified package", body = QualifiedPackageDetails),
     ),
 )]
-#[get("/api/v1/package/{uuid}")]
+#[get("/{uuid}")]
 pub async fn get(
     service: web::Data<PackageService>,
     uuid: web::Path<Uuid>,

@@ -11,7 +11,7 @@ use trustify_common::{
     db::Database,
     model::{Paginated, Revisioned},
 };
-use trustify_infrastructure::new_auth;
+use trustify_infrastructure::app::new_auth;
 use utoipa::OpenApi;
 
 /// mount the "importer" module
@@ -19,7 +19,7 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database, auth: Option<Arc<Au
     svc.app_data(web::Data::new(ImporterService::new(db)));
     svc.service(
         web::scope("/api/v1/importer")
-            .wrap(new_auth!(auth))
+            .wrap(new_auth(auth))
             .service(list)
             .service(create)
             .service(read)

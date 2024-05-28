@@ -14,7 +14,7 @@ use trustify_common::db::Database;
 use trustify_common::hash::HashKey;
 use trustify_common::model::Paginated;
 use trustify_entity::relationship::Relationship;
-use trustify_infrastructure::new_auth;
+use trustify_infrastructure::app::new_auth;
 use trustify_module_ingestor::service::IngestorService;
 use trustify_module_storage::service::StorageBackend;
 
@@ -27,7 +27,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database, auth: Option<Arc
 
     config.app_data(web::Data::new(sbom_service)).service(
         web::scope("/api/v1/sbom")
-            .wrap(new_auth!(auth))
+            .wrap(new_auth(auth))
             .service(all)
             .service(packages)
             .service(related)

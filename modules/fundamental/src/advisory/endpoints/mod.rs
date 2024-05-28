@@ -13,7 +13,7 @@ use trustify_common::db::query::Query;
 use trustify_common::db::Database;
 use trustify_common::hash::HashKey;
 use trustify_common::model::Paginated;
-use trustify_infrastructure::new_auth;
+use trustify_infrastructure::app::new_auth;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::{IntoParams, OpenApi};
@@ -23,7 +23,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database, auth: Option<Arc
 
     config.app_data(web::Data::new(advisory_service)).service(
         web::scope("/api/v1/advisory")
-            .wrap(new_auth!(auth))
+            .wrap(new_auth(auth))
             .service(all)
             .service(get)
             .service(upload)
