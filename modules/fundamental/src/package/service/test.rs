@@ -11,7 +11,7 @@ use trustify_module_ingestor::graph::Graph;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
-async fn ecosystems(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
     let service = PackageService::new(db);
@@ -42,12 +42,12 @@ async fn ecosystems(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
         .await?;
 
-    let ecosystems = service.ecosystems(()).await?;
+    let types = service.types(()).await?;
 
-    assert_eq!(2, ecosystems.len());
+    assert_eq!(2, types.len());
 
-    let rpm = ecosystems.iter().find(|e| e.head.name == "rpm");
-    let maven = ecosystems.iter().find(|e| e.head.name == "maven");
+    let rpm = types.iter().find(|e| e.head.name == "rpm");
+    let maven = types.iter().find(|e| e.head.name == "maven");
 
     assert!(rpm.is_some());
     assert!(maven.is_some());
@@ -55,20 +55,20 @@ async fn ecosystems(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let rpm = rpm.unwrap();
     let maven = maven.unwrap();
 
-    assert_eq!(rpm.base, 1);
-    assert_eq!(rpm.version, 0);
-    assert_eq!(rpm.package, 0);
+    assert_eq!(rpm.counts.base, 1);
+    assert_eq!(rpm.counts.version, 0);
+    assert_eq!(rpm.counts.package, 0);
 
-    assert_eq!(maven.base, 2);
-    assert_eq!(maven.version, 1);
-    assert_eq!(maven.package, 2);
+    assert_eq!(maven.counts.base, 2);
+    assert_eq!(maven.counts.version, 1);
+    assert_eq!(maven.counts.package, 2);
 
     Ok(())
 }
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
-async fn packages_for_ecosystems(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn packages_for_type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
     let service = PackageService::new(db);
@@ -97,7 +97,7 @@ async fn packages_for_ecosystems(ctx: TrustifyContext) -> Result<(), anyhow::Err
         .await?;
 
     let packages = service
-        .packages_for_ecosystem("maven", Query::default(), Paginated::default(), ())
+        .packages_for_type("maven", Query::default(), Paginated::default(), ())
         .await?;
 
     assert_eq!(packages.total, 2);
@@ -117,7 +117,7 @@ async fn packages_for_ecosystems(ctx: TrustifyContext) -> Result<(), anyhow::Err
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
-async fn packages_for_ecosystems_with_filtering(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn packages_for_type_with_filtering(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
     let service = PackageService::new(db);
@@ -146,7 +146,7 @@ async fn packages_for_ecosystems_with_filtering(ctx: TrustifyContext) -> Result<
         .await?;
 
     let packages = service
-        .packages_for_ecosystem("maven", q("myspace"), Paginated::default(), ())
+        .packages_for_type("maven", q("myspace"), Paginated::default(), ())
         .await?;
 
     assert_eq!(packages.total, 1);

@@ -8,12 +8,12 @@ use trustify_common::model::Paginated;
     params(
     ),
     responses(
-        (status = 200, description = "List of all known ecosystems", body = Vec<EcosystemSummary>),
+        (status = 200, description = "List of all known package types", body = Vec<EcosystemSummary>),
     ),
 )]
-#[get("/api/v1/package/ecosystem")]
+#[get("/api/v1/package/type")]
 pub async fn all(service: web::Data<PackageService>) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(service.ecosystems(()).await?))
+    Ok(HttpResponse::Ok().json(service.types(()).await?))
 }
 
 #[utoipa::path(
@@ -21,22 +21,22 @@ pub async fn all(service: web::Data<PackageService>) -> actix_web::Result<impl R
     params(
         Query,
         Paginated,
-        ("ecosystem" = String, Path, description = "pURL identifier of a type/ecosystem")
+        ("type" = String, Path, description = "pURL identifier of a type")
     ),
     responses(
-        (status = 200, description = "Information regarding packages within an ecosystem", body = PaginatedPackageSummary),
+        (status = 200, description = "Information regarding packages within an type", body = PaginatedPackageSummary),
     ),
 )]
-#[get("/api/v1/package/ecosystem/{ecosystem}")]
+#[get("/api/v1/package/type/{type}")]
 pub async fn get(
     service: web::Data<PackageService>,
-    ecosystem: web::Path<String>,
+    r#type: web::Path<String>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(
         service
-            .packages_for_ecosystem(&ecosystem, search, paginated, ())
+            .packages_for_type(&r#type, search, paginated, ())
             .await?,
     ))
 }
@@ -44,7 +44,7 @@ pub async fn get(
 #[utoipa::path(
     tag = "package",
     params(
-        ("ecosystem" = String, Path, description = "pURL identifier of a type/ecosystem"),
+        ("type" = String, Path, description = "pURL identifier of a type"),
         ("namespace_and_name" = String, Path, description = "name of the package optionally preceeded by its namespace"),
 
     ),
@@ -52,12 +52,12 @@ pub async fn get(
         (status = 200, description = "Matching vulnerabilities", body = PackageDetails),
     ),
 )]
-#[get("/api/v1/package/ecosystem/{ecosystem}/{namespace_and_name:[^@]+}")]
+#[get("/api/v1/package/type/{type}/{namespace_and_name:[^@]+}")]
 pub async fn get_package(
     service: web::Data<PackageService>,
     path: web::Path<(String, String)>,
 ) -> actix_web::Result<impl Responder> {
-    let (ecosys, namespace_and_name) = path.into_inner();
+    let (r#type, namespace_and_name) = path.into_inner();
 
     let (namespace, name) = if let Some((namespace, name)) = namespace_and_name.split_once('/') {
         (Some(namespace.to_string()), name.to_string())
@@ -65,13 +65,13 @@ pub async fn get_package(
         (None, namespace_and_name)
     };
 
-    Ok(HttpResponse::Ok().json(service.package(&ecosys, namespace, &name, ()).await?))
+    Ok(HttpResponse::Ok().json(service.package(&r#type, namespace, &name, ()).await?))
 }
 
 #[utoipa::path(
     tag = "package",
     params(
-        ("ecosystem" = String, Path, description = "pURL identifier of a type/ecosystem"),
+        ("type" = String, Path, description = "pURL identifier of a type"),
         ("namespace_and_name" = String, Path, description = "name of the package optionally preceeded by its namespace"),
         ("version" = String, Path, description = "version of the package"),
     ),
@@ -79,12 +79,12 @@ pub async fn get_package(
         (status = 200, description = "Matching vulnerabilities", body = PackageVersionDetails),
     ),
 )]
-#[get("/api/v1/package/ecosystem/{ecosystem}/{namespace_and_name:[^@]+}@{version}")]
+#[get("/api/v1/package/type/{type}/{namespace_and_name:[^@]+}@{version}")]
 pub async fn get_package_version(
     service: web::Data<PackageService>,
     path: web::Path<(String, String, String)>,
 ) -> actix_web::Result<impl Responder> {
-    let (ecosys, namespace_and_name, version) = path.into_inner();
+    let (r#type, namespace_and_name, version) = path.into_inner();
 
     let (namespace, name) = if let Some((namespace, name)) = namespace_and_name.split_once('/') {
         (Some(namespace.to_string()), name.to_string())
@@ -94,7 +94,7 @@ pub async fn get_package_version(
 
     Ok(HttpResponse::Ok().json(
         service
-            .package_version(&ecosys, namespace, &name, &version, ())
+            .package_version(&r#type, namespace, &name, &version, ())
             .await?,
     ))
 }

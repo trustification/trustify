@@ -1,8 +1,8 @@
 use crate::package::model::details::package::PackageDetails;
 use crate::package::model::details::package_version::PackageVersionDetails;
 use crate::package::model::details::qualified_package::QualifiedPackageDetails;
-use crate::package::model::summary::ecosystem::EcosystemSummary;
 use crate::package::model::summary::package::PackageSummary;
+use crate::package::model::summary::r#type::TypeSummary;
 use crate::Error;
 use sea_orm::prelude::Uuid;
 use sea_orm::{ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder, QuerySelect};
@@ -22,10 +22,7 @@ impl PackageService {
         Self { db }
     }
 
-    pub async fn ecosystems<TX: AsRef<Transactional>>(
-        &self,
-        tx: TX,
-    ) -> Result<Vec<EcosystemSummary>, Error> {
+    pub async fn types<TX: AsRef<Transactional>>(&self, tx: TX) -> Result<Vec<TypeSummary>, Error> {
         #[derive(FromQueryResult)]
         struct Ecosystem {
             r#type: String,
@@ -46,12 +43,12 @@ impl PackageService {
             .map(|e| e.r#type)
             .collect();
 
-        EcosystemSummary::from_names(&ecosystems, &connection).await
+        TypeSummary::from_names(&ecosystems, &connection).await
     }
 
-    pub async fn packages_for_ecosystem<TX: AsRef<Transactional>>(
+    pub async fn packages_for_type<TX: AsRef<Transactional>>(
         &self,
-        ecosystem: &str,
+        r#type: &str,
         query: Query,
         paginated: Paginated,
         tx: TX,
@@ -59,7 +56,7 @@ impl PackageService {
         let connection = self.db.connection(&tx);
 
         let limiter = package::Entity::find()
-            .filter(package::Column::Type.eq(ecosystem))
+            .filter(package::Column::Type.eq(r#type))
             .filtering(query)?
             .limiting(&connection, paginated.offset, paginated.limit);
 
@@ -73,7 +70,7 @@ impl PackageService {
 
     pub async fn package<TX: AsRef<Transactional>>(
         &self,
-        ecosystem: &str,
+        r#type: &str,
         namespace: Option<String>,
         name: &str,
         tx: TX,
@@ -81,7 +78,7 @@ impl PackageService {
         let connection = self.db.connection(&tx);
 
         let mut query = package::Entity::find()
-            .filter(package::Column::Type.eq(ecosystem))
+            .filter(package::Column::Type.eq(r#type))
             .filter(package::Column::Name.eq(name));
 
         if let Some(ns) = namespace {
@@ -101,7 +98,7 @@ impl PackageService {
 
     pub async fn package_version<TX: AsRef<Transactional>>(
         &self,
-        ecosystem: &str,
+        r#type: &str,
         namespace: Option<String>,
         name: &str,
         version: &str,
@@ -111,7 +108,7 @@ impl PackageService {
 
         let mut query = package_version::Entity::find()
             .left_join(package::Entity)
-            .filter(package::Column::Type.eq(ecosystem))
+            .filter(package::Column::Type.eq(r#type))
             .filter(package::Column::Name.eq(name))
             .filter(package_version::Column::Version.eq(version));
 
