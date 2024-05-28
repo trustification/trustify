@@ -17,6 +17,7 @@ use tokio_util::io::ReaderStream;
 use crate::advisory::model::AdvisorySummary;
 use crate::configure;
 use trustify_common::db::test::TrustifyContext;
+use trustify_common::db::Transactional;
 use trustify_common::model::PaginatedResults;
 use trustify_common::purl::Purl;
 use trustify_cvss::cvss3::{
@@ -79,7 +80,9 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let advisory_vuln = advisory.link_to_vulnerability("CVE-123", ()).await?;
+    let advisory_vuln = advisory
+        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .await?;
     advisory_vuln
         .ingest_cvss3_score(
             Cvss3Base {
@@ -183,7 +186,9 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let advisory_vuln = advisory.link_to_vulnerability("CVE-123", ()).await?;
+    let advisory_vuln = advisory
+        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .await?;
     advisory_vuln
         .ingest_cvss3_score(
             Cvss3Base {

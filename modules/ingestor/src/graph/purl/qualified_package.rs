@@ -142,7 +142,7 @@ mod tests {
             .await?;
 
         let advisory_vulnerability = advisory
-            .link_to_vulnerability("CVE-2", Transactional::None)
+            .link_to_vulnerability("CVE-2", None, Transactional::None)
             .await?;
 
         let _affected_core = advisory_vulnerability

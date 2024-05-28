@@ -28,6 +28,14 @@ pub struct AdvisoryInformation {
     pub withdrawn: Option<OffsetDateTime>,
 }
 
+pub struct AdvisoryVulnerabilityInformation {
+    pub title: Option<String>,
+    pub summary: Option<String>,
+    pub description: Option<String>,
+    pub discovery_date: Option<OffsetDateTime>,
+    pub release_date: Option<OffsetDateTime>,
+}
+
 impl AdvisoryInformation {
     pub fn has_data(&self) -> bool {
         self.title.is_some()
@@ -198,6 +206,7 @@ impl<'g> AdvisoryContext<'g> {
     pub async fn link_to_vulnerability<TX: AsRef<Transactional>>(
         &self,
         identifier: &str,
+        information: Option<AdvisoryVulnerabilityInformation>,
         tx: TX,
     ) -> Result<AdvisoryVulnerabilityContext, Error> {
         if let Some(found) = self.get_vulnerability(identifier, &tx).await? {
@@ -209,6 +218,13 @@ impl<'g> AdvisoryContext<'g> {
         let entity = entity::advisory_vulnerability::ActiveModel {
             advisory_id: Set(self.advisory.id),
             vulnerability_id: Set(vulnerability.vulnerability.id),
+            title: Set(information.as_ref().and_then(|info| info.title.clone())),
+            summary: Set(information.as_ref().and_then(|info| info.summary.clone())),
+            description: Set(information
+                .as_ref()
+                .and_then(|info| info.description.clone())),
+            discovery_date: Set(information.as_ref().and_then(|info| info.discovery_date)),
+            release_date: Set(information.and_then(|info| info.release_date)),
         };
 
         Ok((self, entity.insert(&self.graph.connection(&tx)).await?).into())
@@ -300,7 +316,7 @@ mod test {
             .await?;
 
         let advisory_vulnerability = advisory
-            .link_to_vulnerability("CVE-8675309", Transactional::None)
+            .link_to_vulnerability("CVE-8675309", None, Transactional::None)
             .await?;
 
         let affected1 = advisory_vulnerability
@@ -359,7 +375,7 @@ mod test {
             .await?;
 
         let advisory_vulnerability = advisory
-            .link_to_vulnerability("CVE-1234567", Transactional::None)
+            .link_to_vulnerability("CVE-1234567", None, Transactional::None)
             .await?;
 
         let _affected = advisory_vulnerability
@@ -421,13 +437,13 @@ mod test {
             .await?;
 
         advisory
-            .link_to_vulnerability("CVE-123", Transactional::None)
+            .link_to_vulnerability("CVE-123", None, Transactional::None)
             .await?;
         advisory
-            .link_to_vulnerability("CVE-123", Transactional::None)
+            .link_to_vulnerability("CVE-123", None, Transactional::None)
             .await?;
         advisory
-            .link_to_vulnerability("CVE-456", Transactional::None)
+            .link_to_vulnerability("CVE-456", None, Transactional::None)
             .await?;
 
         Ok(())

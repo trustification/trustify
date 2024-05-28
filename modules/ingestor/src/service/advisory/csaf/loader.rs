@@ -1,5 +1,7 @@
 use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
-use crate::graph::advisory::{AdvisoryContext, AdvisoryInformation};
+use crate::graph::advisory::{
+    AdvisoryContext, AdvisoryInformation, AdvisoryVulnerabilityInformation,
+};
 use crate::graph::Graph;
 use crate::service::advisory::csaf::util::resolve_purls;
 use crate::service::hashing::HashingRead;
@@ -93,7 +95,23 @@ impl<'g> CsafLoader<'g> {
         tx: TX,
     ) -> Result<(), Error> {
         if let Some(cve_id) = &vulnerability.cve {
-            let advisory_vulnerability = advisory.link_to_vulnerability(cve_id, &tx).await?;
+            let advisory_vulnerability = advisory
+                .link_to_vulnerability(
+                    cve_id,
+                    Some(AdvisoryVulnerabilityInformation {
+                        title: vulnerability.title.clone(),
+                        summary: None,
+                        description: None,
+                        discovery_date: vulnerability.discovery_date.and_then(|date| {
+                            OffsetDateTime::from_unix_timestamp(date.timestamp()).ok()
+                        }),
+                        release_date: vulnerability.release_date.and_then(|date| {
+                            OffsetDateTime::from_unix_timestamp(date.timestamp()).ok()
+                        }),
+                    }),
+                    &tx,
+                )
+                .await?;
 
             if let Some(product_status) = &vulnerability.product_status {
                 self.ingest_product_statuses(csaf, &advisory_vulnerability, product_status, &tx)

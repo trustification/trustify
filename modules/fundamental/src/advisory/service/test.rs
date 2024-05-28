@@ -37,7 +37,9 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let advisory_vuln = advisory.link_to_vulnerability("CVE-123", ()).await?;
+    let advisory_vuln = advisory
+        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .await?;
     advisory_vuln
         .ingest_cvss3_score(
             Cvss3Base {
@@ -101,7 +103,9 @@ async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let advisory_vuln = advisory.link_to_vulnerability("CVE-123", ()).await?;
+    let advisory_vuln = advisory
+        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .await?;
     advisory_vuln
         .ingest_cvss3_score(
             Cvss3Base {

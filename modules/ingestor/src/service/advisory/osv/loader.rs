@@ -1,4 +1,4 @@
-use crate::graph::advisory::AdvisoryInformation;
+use crate::graph::advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation};
 use crate::graph::Graph;
 use crate::service::advisory::osv::schema::ReferenceType;
 use crate::service::{
@@ -69,7 +69,19 @@ impl<'g> OsvLoader<'g> {
             }
 
             for cve_id in cve_ids {
-                let advisory_vuln = advisory.link_to_vulnerability(cve_id, &tx).await?;
+                let advisory_vuln = advisory
+                    .link_to_vulnerability(
+                        cve_id,
+                        Some(AdvisoryVulnerabilityInformation {
+                            title: osv.summary.clone(),
+                            summary: osv.summary.clone(),
+                            description: osv.details.clone(),
+                            discovery_date: None,
+                            release_date: None,
+                        }),
+                        &tx,
+                    )
+                    .await?;
 
                 for severity in osv.severity.iter().flatten() {
                     if matches!(severity.severity_type, SeverityType::CVSSv3) {
