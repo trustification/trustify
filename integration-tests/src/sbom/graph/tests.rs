@@ -419,7 +419,7 @@ async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         .await?;
 
     let advisory_vulnerability = advisory
-        .link_to_vulnerability("CVE-00000001", Transactional::None)
+        .link_to_vulnerability("CVE-00000001", None, Transactional::None)
         .await?;
 
     advisory_vulnerability

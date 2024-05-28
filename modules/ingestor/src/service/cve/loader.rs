@@ -1,4 +1,4 @@
-use crate::graph::advisory::AdvisoryInformation;
+use crate::graph::advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation};
 use crate::graph::vulnerability::VulnerabilityInformation;
 use crate::graph::Graph;
 use crate::service::cve::cve_record::v5::CveRecord;
@@ -46,10 +46,16 @@ impl<'g> CveLoader<'g> {
             .ingest_vulnerability(id, information, &tx)
             .await?;
 
+        let mut english_description = None;
+
         for description in cve.containers.cna.descriptions {
             vulnerability
                 .add_description(&description.lang, &description.value, &tx)
                 .await?;
+
+            if description.lang == "en" {
+                english_description = Some(description.value.clone());
+            }
         }
 
         let digests = reader.finish().map_err(|e| Error::Generic(e.into()))?;
@@ -61,7 +67,7 @@ impl<'g> CveLoader<'g> {
         }
 
         let information = AdvisoryInformation {
-            title: cve.containers.cna.title,
+            title: cve.containers.cna.title.clone(),
             issuer: Some("CVE® (MITRE Corporation".to_string()),
             published: cve.cve_metadata.date_published(),
             modified: cve.cve_metadata.date_updated(),
@@ -73,7 +79,19 @@ impl<'g> CveLoader<'g> {
             .await?;
 
         // Link the advisory to the backing vulnerability
-        advisory.link_to_vulnerability(id, &tx).await?;
+        advisory
+            .link_to_vulnerability(
+                id,
+                Some(AdvisoryVulnerabilityInformation {
+                    title: cve.containers.cna.title.clone(),
+                    summary: None,
+                    description: english_description,
+                    discovery_date: cve.cve_metadata.date_reserved(),
+                    release_date: cve.cve_metadata.date_published(),
+                }),
+                &tx,
+            )
+            .await?;
 
         tx.commit().await?;
 

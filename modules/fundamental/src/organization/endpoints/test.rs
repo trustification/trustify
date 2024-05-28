@@ -8,6 +8,7 @@ use test_context::test_context;
 use test_log::test;
 use trustify_common::db::query::Query;
 use trustify_common::db::test::TrustifyContext;
+use trustify_common::db::Transactional;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
 use trustify_module_ingestor::graph::Graph;
@@ -99,7 +100,9 @@ async fn one_organization(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    advisory.link_to_vulnerability("CVE-123", ()).await?;
+    advisory
+        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .await?;
 
     let service = crate::organization::service::OrganizationService::new(db);
 
