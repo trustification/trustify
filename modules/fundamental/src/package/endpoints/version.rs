@@ -4,7 +4,7 @@ use sea_orm::prelude::Uuid;
 
 #[utoipa::path(
     tag = "package",
-    context_path= "/api/v1/package",
+    context_path= "/api",
     params(
         ("uuid" = String, Path, description = "opaque UUID identifier for a package version")
     ),
@@ -12,7 +12,7 @@ use sea_orm::prelude::Uuid;
         (status = 200, description = "Details for the version of a package", body = PackageVersionDetails),
     ),
 )]
-#[get("/version/{uuid}")]
+#[get("/v1/package/version/{uuid}")]
 pub async fn get(
     service: web::Data<PackageService>,
     uuid: web::Path<Uuid>,

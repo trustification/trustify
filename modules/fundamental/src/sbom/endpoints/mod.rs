@@ -1,11 +1,10 @@
+use crate::sbom::model::{SbomPackageReference, Which};
+use crate::sbom::service::SbomService;
+use crate::Error;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
-use std::sync::Arc;
-use trustify_auth::authenticator::Authenticator;
-use utoipa::OpenApi;
-
 use trustify_auth::authenticator::user::UserInformation;
 use trustify_auth::authorizer::Authorizer;
 use trustify_auth::Permission;
@@ -14,26 +13,20 @@ use trustify_common::db::Database;
 use trustify_common::hash::HashKey;
 use trustify_common::model::Paginated;
 use trustify_entity::relationship::Relationship;
-use trustify_infrastructure::app::new_auth;
 use trustify_module_ingestor::service::IngestorService;
 use trustify_module_storage::service::StorageBackend;
+use utoipa::OpenApi;
 
-use crate::sbom::model::{SbomPackageReference, Which};
-use crate::sbom::service::SbomService;
-use crate::Error;
-
-pub fn configure(config: &mut web::ServiceConfig, db: Database, auth: Option<Arc<Authenticator>>) {
+pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let sbom_service = SbomService::new(db);
 
-    config.app_data(web::Data::new(sbom_service)).service(
-        web::scope("/api/v1/sbom")
-            .wrap(new_auth(auth))
-            .service(all)
-            .service(packages)
-            .service(related)
-            .service(upload)
-            .service(download),
-    );
+    config
+        .app_data(web::Data::new(sbom_service))
+        .service(all)
+        .service(packages)
+        .service(related)
+        .service(upload)
+        .service(download);
 }
 
 #[derive(OpenApi)]
@@ -59,7 +52,7 @@ pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "sbom",
-    context_path = "/api/v1/sbom",
+    context_path = "/api",
     params(
         Query,
         Paginated,
@@ -68,7 +61,7 @@ pub struct ApiDoc;
         (status = 200, description = "Matching SBOMs", body = PaginatedSbomSummary),
     ),
 )]
-#[get("")]
+#[get("/v1/sbom")]
 pub async fn all(
     fetch: web::Data<SbomService>,
     web::Query(search): web::Query<Query>,
@@ -85,7 +78,7 @@ pub async fn all(
 
 /// Search for packages of an SBOM
 #[utoipa::path(
-    context_path = "/api/v1/sbom",
+    context_path = "/api",
     params(
         ("id", Path, description = "ID of the SBOM to get packages for"),
         Query,
@@ -95,7 +88,7 @@ pub async fn all(
         (status = 200, description = "Packages", body = PaginatedSbomPackage),
     ),
 )]
-#[get("/{id}/packages")]
+#[get("/v1/sbom/{id}/packages")]
 pub async fn packages(
     fetch: web::Data<SbomService>,
     id: web::Path<Uuid>,
@@ -127,7 +120,7 @@ struct RelatedQuery {
 
 /// Search for related packages in an SBOM
 #[utoipa::path(
-    context_path = "/api/v1/sbom",
+    context_path = "/api",
     params(
         ("id", Path, description = "ID of SBOM to search packages in"),
         RelatedQuery,
@@ -138,7 +131,7 @@ struct RelatedQuery {
         (status = 200, description = "Packages", body = PaginatedSbomPackageRelation),
     ),
 )]
-#[get("/{id}/related")]
+#[get("/v1/sbom/{id}/related")]
 pub async fn related(
     fetch: web::Data<SbomService>,
     id: web::Path<Uuid>,
@@ -180,7 +173,7 @@ pub struct UploadSbomQuery {
 
 #[utoipa::path(
     tag = "sbom",
-    context_path = "/api/v1/sbom",
+    context_path = "/api",
     request_body = Vec <u8>,
     params(
         ("location" = String, Query, description = "Source the document came from"),
@@ -190,7 +183,7 @@ pub struct UploadSbomQuery {
         (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
-#[post("")]
+#[post("/v1/sbom")]
 /// Upload a new SBOM
 pub async fn upload(
     service: web::Data<IngestorService>,
@@ -203,7 +196,7 @@ pub async fn upload(
 
 #[utoipa::path(
     tag = "sbom",
-    context_path = "/api/v1/sbom",
+    context_path = "/api",
     params(
         ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
     ),
@@ -212,7 +205,7 @@ pub async fn upload(
         (status = 404, description = "The document could not be found"),
     )
 )]
-#[get("/{key}/download")]
+#[get("/v1/sbom/{key}/download")]
 pub async fn download(
     service: web::Data<IngestorService>,
     key: web::Path<String>,

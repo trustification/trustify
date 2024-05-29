@@ -1,7 +1,7 @@
 use crate::organization::endpoints::configure;
 use actix_web::cookie::time::OffsetDateTime;
 use actix_web::test::TestRequest;
-use actix_web::App;
+use actix_web::{web, App};
 use jsonpath_rust::JsonPathQuery;
 use serde_json::{json, Value};
 use test_context::test_context;
@@ -19,7 +19,7 @@ async fn all_organizations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let graph = Graph::new(db.clone());
 
     let app = actix_web::test::init_service(
-        App::new().configure(|config| configure(config, db.clone(), None)),
+        App::new().service(web::scope("/api").configure(|config| configure(config, db.clone()))),
     )
     .await;
 
@@ -81,7 +81,7 @@ async fn one_organization(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let graph = Graph::new(db.clone());
 
     let app = actix_web::test::init_service(
-        App::new().configure(|config| configure(config, db.clone(), None)),
+        App::new().service(web::scope("/api").configure(|config| configure(config, db.clone()))),
     )
     .await;
 
