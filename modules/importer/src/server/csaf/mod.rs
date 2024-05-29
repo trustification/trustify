@@ -1,3 +1,6 @@
+mod report;
+pub mod storage;
+
 use crate::{
     model::CsafImporter,
     server::{
@@ -13,17 +16,14 @@ use csaf_walker::{
     walker::Walker,
 };
 use parking_lot::Mutex;
-use std::sync::Arc;
-use std::time::SystemTime;
-use trustify_module_ingestor::graph::Graph;
-use trustify_module_ingestor::service::IngestorService;
+use std::{sync::Arc, time::SystemTime};
+use tracing::instrument;
+use trustify_module_ingestor::{graph::Graph, service::IngestorService};
 use url::Url;
 use walker_common::fetcher::Fetcher;
 
-mod report;
-pub mod storage;
-
 impl super::Server {
+    #[instrument(skip(self), ret)]
     pub async fn run_once_csaf(
         &self,
         importer: CsafImporter,
