@@ -33,6 +33,7 @@ use trustify_common::{
     config::{Database, StorageConfig},
     db,
 };
+use trustify_infrastructure::app::new_auth;
 use trustify_infrastructure::{
     app::http::{HttpServerBuilder, HttpServerConfig},
     endpoint::Trustify,
@@ -215,20 +216,20 @@ impl InitData {
                             swagger_oidc.clone(),
                         ));
                     svc.app_data(web::Data::from(self.graph.clone()))
+                        .service(
+                            web::scope("/api")
+                                .wrap(new_auth(self.authenticator.clone()))
+                                .configure(|svc| {
+                                    trustify_module_importer::endpoints::configure(svc, db.clone());
+
+                                    trustify_module_fundamental::endpoints::configure(
+                                        svc,
+                                        db.clone(),
+                                        storage.clone(),
+                                    );
+                                }),
+                        )
                         .configure(|svc| {
-                            trustify_module_importer::endpoints::configure(
-                                svc,
-                                db.clone(),
-                                self.authenticator.clone(),
-                            );
-
-                            trustify_module_fundamental::endpoints::configure(
-                                svc,
-                                db.clone(),
-                                storage.clone(),
-                                self.authenticator.clone(),
-                            );
-
                             // I think the UI must come last due to
                             // its use of `resolve_not_found_to`
                             #[cfg(feature = "ui")]

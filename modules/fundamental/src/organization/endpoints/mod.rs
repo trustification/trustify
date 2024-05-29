@@ -3,22 +3,17 @@ mod test;
 
 use crate::organization::service::OrganizationService;
 use actix_web::{get, web, HttpResponse, Responder};
-use std::sync::Arc;
-use trustify_auth::authenticator::Authenticator;
 use trustify_common::db::query::Query;
 use trustify_common::db::Database;
 use trustify_common::model::Paginated;
-use trustify_infrastructure::app::new_auth;
 use utoipa::OpenApi;
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database, auth: Option<Arc<Authenticator>>) {
+pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let service = OrganizationService::new(db);
-    config.app_data(web::Data::new(service)).service(
-        web::scope("/api/v1/organization")
-            .wrap(new_auth(auth))
-            .service(all)
-            .service(get),
-    );
+    config
+        .app_data(web::Data::new(service))
+        .service(all)
+        .service(get);
 }
 
 #[derive(OpenApi)]
@@ -36,7 +31,7 @@ pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "organization",
-    context_path = "/api/v1/organization",
+    context_path = "/api",
     params(
         Query,
         Paginated,
@@ -45,7 +40,7 @@ pub struct ApiDoc;
         (status = 200, description = "Matching organizations", body = PaginatedAdvisorySummary),
     ),
 )]
-#[get("")]
+#[get("/v1/organization")]
 pub async fn all(
     state: web::Data<OrganizationService>,
     web::Query(search): web::Query<Query>,
@@ -56,7 +51,7 @@ pub async fn all(
 
 #[utoipa::path(
     tag = "organization",
-    context_path = "/api/v1/organization",
+    context_path = "/api",
     params(
         ("id", Path, description = "Opaque ID of the organization")
     ),
@@ -65,7 +60,7 @@ pub async fn all(
         (status = 404, description = "Matching advisory not found"),
     ),
 )]
-#[get("/{id}")]
+#[get("/v1/organization/{id}")]
 pub async fn get(
     state: web::Data<OrganizationService>,
     id: web::Path<i32>,

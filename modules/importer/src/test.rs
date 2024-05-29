@@ -5,7 +5,7 @@ use super::model::{
 };
 use actix_web::{
     http::{header, StatusCode},
-    test as actix, App,
+    test as actix, web, App,
 };
 use std::time::Duration;
 use test_context::test_context;
@@ -31,9 +31,11 @@ fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
 #[test(actix_web::test)]
 async fn test_default(ctx: TrustifyContext) {
     let db = ctx.db;
-    let app =
-        actix::init_service(App::new().configure(|svc| super::endpoints::configure(svc, db, None)))
-            .await;
+    let app = actix::init_service(
+        App::new()
+            .service(web::scope("/api").configure(|svc| super::endpoints::configure(svc, db))),
+    )
+    .await;
 
     // create one
 
@@ -128,9 +130,11 @@ async fn test_default(ctx: TrustifyContext) {
 #[test(actix_web::test)]
 async fn test_oplock(ctx: TrustifyContext) {
     let db = ctx.db;
-    let app =
-        actix::init_service(App::new().configure(|svc| super::endpoints::configure(svc, db, None)))
-            .await;
+    let app = actix::init_service(
+        App::new()
+            .service(web::scope("/api").configure(|svc| super::endpoints::configure(svc, db))),
+    )
+    .await;
 
     // create one
 

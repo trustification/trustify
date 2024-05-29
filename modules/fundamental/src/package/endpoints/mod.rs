@@ -1,10 +1,7 @@
 use crate::package::service::PackageService;
 use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::prelude::Uuid;
-use std::sync::Arc;
-use trustify_auth::authenticator::Authenticator;
 use trustify_common::db::Database;
-use trustify_infrastructure::app::new_auth;
 use utoipa::OpenApi;
 
 mod r#type;
@@ -13,20 +10,18 @@ mod base;
 
 mod version;
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database, auth: Option<Arc<Authenticator>>) {
+pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let advisory_service = PackageService::new(db);
 
-    config.app_data(web::Data::new(advisory_service)).service(
-        web::scope("/api/v1/package")
-            .wrap(new_auth(auth))
-            .service(r#type::all)
-            .service(r#type::get)
-            .service(r#type::get_package)
-            .service(r#type::get_package_version)
-            .service(base::get)
-            .service(version::get)
-            .service(get),
-    );
+    config
+        .app_data(web::Data::new(advisory_service))
+        .service(r#type::all)
+        .service(r#type::get)
+        .service(r#type::get_package)
+        .service(r#type::get_package_version)
+        .service(base::get)
+        .service(version::get)
+        .service(get);
 }
 
 #[derive(OpenApi)]
@@ -59,7 +54,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database, auth: Option<Arc
 pub struct ApiDoc;
 
 #[utoipa::path(
-    context_path= "/api/v1/package",
+    context_path= "/api",
     tag = "package",
     params(
         ("uuid" = String, Path, description = "opaque UUID identifier for a fully-qualified package")
@@ -68,7 +63,7 @@ pub struct ApiDoc;
         (status = 200, description = "Details for the qualified package", body = QualifiedPackageDetails),
     ),
 )]
-#[get("/{uuid}")]
+#[get("/v1/package/{uuid}")]
 pub async fn get(
     service: web::Data<PackageService>,
     uuid: web::Path<Uuid>,

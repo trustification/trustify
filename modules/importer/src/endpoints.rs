@@ -5,21 +5,17 @@ use actix_web::{
     http::header::{self, ETag, EntityTag, IfMatch},
     post, put, web, HttpResponse, Responder,
 };
-use std::sync::Arc;
-use trustify_auth::authenticator::Authenticator;
 use trustify_common::{
     db::Database,
     model::{Paginated, Revisioned},
 };
-use trustify_infrastructure::app::new_auth;
 use utoipa::OpenApi;
 
 /// mount the "importer" module
-pub fn configure(svc: &mut web::ServiceConfig, db: Database, auth: Option<Arc<Authenticator>>) {
+pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
     svc.app_data(web::Data::new(ImporterService::new(db)));
     svc.service(
-        web::scope("/api/v1/importer")
-            .wrap(new_auth(auth))
+        web::scope("/v1/importer")
             .service(list)
             .service(create)
             .service(read)
