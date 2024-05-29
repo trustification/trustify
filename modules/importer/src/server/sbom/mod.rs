@@ -1,11 +1,14 @@
+mod report;
+pub mod storage;
+
 use crate::{
     model::SbomImporter,
-    server::report::{Report, ReportBuilder, ReportVisitor, ScannerError},
-    server::sbom::report::SbomReportVisitor,
+    server::{
+        common::{filter::Filter, validation},
+        report::{Report, ReportBuilder, ReportVisitor, ScannerError},
+        sbom::report::SbomReportVisitor,
+    },
 };
-
-use crate::server::common::filter::Filter;
-use crate::server::common::validation;
 use parking_lot::Mutex;
 use sbom_walker::{
     retrieve::RetrievingVisitor,
@@ -13,17 +16,14 @@ use sbom_walker::{
     validation::ValidationVisitor,
     walker::Walker,
 };
-use std::sync::Arc;
-use std::time::SystemTime;
-use trustify_module_ingestor::graph::Graph;
-use trustify_module_ingestor::service::IngestorService;
+use std::{sync::Arc, time::SystemTime};
+use tracing::instrument;
+use trustify_module_ingestor::{graph::Graph, service::IngestorService};
 use url::Url;
 use walker_common::fetcher::Fetcher;
 
-mod report;
-pub mod storage;
-
 impl super::Server {
+    #[instrument(skip(self), ret)]
     pub async fn run_once_sbom(
         &self,
         importer: SbomImporter,
