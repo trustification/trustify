@@ -1,11 +1,15 @@
 pub mod common;
 pub mod csaf;
+pub mod osv;
 pub mod report;
 pub mod sbom;
 
-use crate::model::{Importer, ImporterConfiguration};
-use crate::server::report::{Report, ScannerError};
-use crate::service::ImporterService;
+use crate::{
+    model::{Importer, ImporterConfiguration},
+    server::report::{Report, ScannerError},
+    service::ImporterService,
+};
+use std::path::PathBuf;
 use std::time::Duration;
 use time::OffsetDateTime;
 use tokio::time::MissedTickBehavior;
@@ -14,13 +18,39 @@ use trustify_common::db::Database;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 
 /// run the importer loop
-pub async fn importer(db: Database, storage: DispatchBackend) -> anyhow::Result<()> {
-    Server { db, storage }.run().await
+pub async fn importer(
+    db: Database,
+    storage: DispatchBackend,
+    working_dir: Option<PathBuf>,
+) -> anyhow::Result<()> {
+    Server {
+        db,
+        storage,
+        working_dir,
+    }
+    .run()
+    .await
+}
+
+#[derive(Clone, Debug)]
+pub struct RunOutput {
+    pub report: Report,
+    pub continuation: Option<serde_json::Value>,
+}
+
+impl From<Report> for RunOutput {
+    fn from(report: Report) -> Self {
+        Self {
+            report,
+            continuation: None,
+        }
+    }
 }
 
 struct Server {
     db: Database,
     storage: DispatchBackend,
+    working_dir: Option<PathBuf>,
 }
 
 impl Server {
@@ -51,15 +81,27 @@ impl Server {
 
                 log::info!("Starting run: {}", importer.name);
 
-                let (last_error, report) = match self
-                    .run_once(importer.data.configuration, importer.data.last_run)
+                let (last_error, report, continuation) = match self
+                    .run_once(
+                        importer.data.configuration,
+                        importer.data.last_run,
+                        importer.data.continuation,
+                    )
                     .await
                 {
-                    Ok(report) => (None, Some(report)),
-                    Err(ScannerError::Normal { err, report }) => {
-                        (Some(err.to_string()), Some(report))
-                    }
-                    Err(ScannerError::Critical(err)) => (Some(err.to_string()), None),
+                    Ok(RunOutput {
+                        report,
+                        continuation,
+                    }) => (None, Some(report), continuation),
+                    Err(ScannerError::Normal {
+                        err,
+                        output:
+                            RunOutput {
+                                report,
+                                continuation,
+                            },
+                    }) => (Some(err.to_string()), Some(report), continuation),
+                    Err(ScannerError::Critical(err)) => (Some(err.to_string()), None, None),
                 };
 
                 log::info!("Import run complete: {last_error:?}");
@@ -70,6 +112,7 @@ impl Server {
                         None,
                         last_run,
                         last_error,
+                        continuation,
                         report.and_then(|report| serde_json::to_value(report).ok()),
                     )
                     .await?;
@@ -82,12 +125,14 @@ impl Server {
         &self,
         configuration: ImporterConfiguration,
         last_run: Option<OffsetDateTime>,
-    ) -> Result<Report, ScannerError> {
+        continuation: serde_json::Value,
+    ) -> Result<RunOutput, ScannerError> {
         let last_run = last_run.map(|t| t.into());
 
         match configuration {
             ImporterConfiguration::Sbom(sbom) => self.run_once_sbom(sbom, last_run).await,
             ImporterConfiguration::Csaf(csaf) => self.run_once_csaf(csaf, last_run).await,
+            ImporterConfiguration::Osv(osv) => self.run_once_osv(osv, continuation).await,
         }
     }
 }

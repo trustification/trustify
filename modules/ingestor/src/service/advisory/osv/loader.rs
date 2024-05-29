@@ -1,6 +1,7 @@
 use crate::graph::advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation};
 use crate::graph::Graph;
 use crate::service::advisory::osv::schema::ReferenceType;
+use crate::service::advisory::osv::translate;
 use crate::service::{
     advisory::osv::schema::{Event, Package, SeverityType, Vulnerability},
     hashing::HashingRead,
@@ -98,31 +99,29 @@ impl<'g> OsvLoader<'g> {
 
                 for affected in &osv.affected {
                     if let Some(package) = &affected.package {
-                        match package {
-                            Package::Named { .. } => {
-                                todo!()
+                        let purl = match package {
+                            Package::Named { name, ecosystem } => {
+                                translate::to_purl(ecosystem, name)
                             }
-                            Package::Purl { purl } => {
-                                if let Ok(purl) = Purl::from_str(purl) {
-                                    for range in affected.ranges.iter().flatten() {
-                                        let parsed_range = events_to_range(&range.events);
-                                        if let (Some(start), Some(end)) = &parsed_range {
-                                            advisory_vuln
-                                                .ingest_affected_package_range(
-                                                    &purl, start, end, &tx,
-                                                )
-                                                .await?;
-                                        }
+                            Package::Purl { purl } => Purl::from_str(purl).ok(),
+                        };
 
-                                        if let (_, Some(fixed)) = &parsed_range {
-                                            let mut fixed_purl = purl.clone();
-                                            fixed_purl.version = Some(fixed.clone());
+                        if let Some(purl) = purl {
+                            for range in affected.ranges.iter().flatten() {
+                                let parsed_range = events_to_range(&range.events);
+                                if let (Some(start), Some(end)) = &parsed_range {
+                                    advisory_vuln
+                                        .ingest_affected_package_range(&purl, start, end, &tx)
+                                        .await?;
+                                }
 
-                                            advisory_vuln
-                                                .ingest_fixed_package_version(&fixed_purl, &tx)
-                                                .await?;
-                                        }
-                                    }
+                                if let (_, Some(fixed)) = &parsed_range {
+                                    let mut fixed_purl = purl.clone();
+                                    fixed_purl.version = Some(fixed.clone());
+
+                                    advisory_vuln
+                                        .ingest_fixed_package_version(&fixed_purl, &tx)
+                                        .await?;
                                 }
                             }
                         }

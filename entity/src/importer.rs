@@ -14,6 +14,9 @@ pub struct Model {
     pub last_run: Option<time::OffsetDateTime>,
     pub last_error: Option<String>,
 
+    /// an importer specific continuation token
+    pub continuation: Option<serde_json::Value>,
+
     pub configuration: serde_json::Value,
 }
 

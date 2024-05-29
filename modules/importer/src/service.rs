@@ -6,6 +6,7 @@ use sea_orm::{
 };
 use sea_query::{Alias, Expr, SimpleExpr};
 use time::OffsetDateTime;
+use tracing::instrument;
 use trustify_common::{
     db::{limiter::LimiterTrait, Database, DatabaseErrors},
     error::ErrorInformation,
@@ -91,6 +92,8 @@ impl ImporterService {
             last_run: Set(None),
             last_error: Set(None),
 
+            continuation: Set(None),
+
             configuration: Set(serde_json::to_value(configuration)?),
         };
 
@@ -109,6 +112,46 @@ impl ImporterService {
             .map(RevisionedImporter::try_from)
             .transpose()?
             .map(|r| r.0))
+    }
+
+    pub async fn patch_configuration<F>(
+        &self,
+        name: &str,
+        expected_revision: Option<&str>,
+        f: F,
+    ) -> Result<(), Error>
+    where
+        F: FnOnce(ImporterConfiguration) -> ImporterConfiguration,
+    {
+        // fetch the current state
+        let Some(current) = self.read(name).await? else {
+            // not found -> don't update
+            return Err(Error::NotFound(name.into()));
+        };
+
+        if let Some(expected) = expected_revision {
+            if expected != current.revision {
+                // we expected something, but found something else -> abort
+                return Err(Error::MidAirCollision);
+            }
+        }
+
+        // apply mutation
+
+        let configuration = f(current.value.data.configuration);
+
+        // store
+
+        self.update(
+            &self.db,
+            name,
+            Some(&current.revision),
+            vec![(
+                importer::Column::Configuration,
+                Expr::value(serde_json::to_value(configuration)?),
+            )],
+        )
+        .await
     }
 
     pub async fn update_configuration(
@@ -130,6 +173,7 @@ impl ImporterService {
     }
 
     /// Update state to indicate the start of an importer run
+    #[instrument(skip(self))]
     pub async fn update_start(
         &self,
         name: &str,
@@ -142,7 +186,7 @@ impl ImporterService {
             vec![
                 (
                     importer::Column::LastChange,
-                    Expr::value(time::OffsetDateTime::now_utc()),
+                    Expr::value(OffsetDateTime::now_utc()),
                 ),
                 (
                     importer::Column::State,
@@ -153,12 +197,14 @@ impl ImporterService {
         .await
     }
 
+    #[instrument(skip(self))]
     pub async fn update_finish(
         &self,
         name: &str,
         expected_revision: Option<&str>,
         last_run: OffsetDateTime,
         last_error: Option<String>,
+        continuation: Option<serde_json::Value>,
         report: Option<serde_json::Value>,
     ) -> Result<(), Error> {
         let tx = self.db.begin().await?;
@@ -173,6 +219,7 @@ impl ImporterService {
                 Expr::value(importer::State::Waiting),
             ),
             (importer::Column::LastChange, Expr::value(now)),
+            (importer::Column::Continuation, Expr::value(continuation)),
         ];
         if successful {
             updates.push((importer::Column::LastSuccess, Expr::value(now)));
@@ -241,6 +288,28 @@ impl ImporterService {
         }
     }
 
+    /// Reset the last-run timestamp and continuation token to force a new run
+    #[instrument(skip(self))]
+    pub async fn reset(&self, name: &str, expected_revision: Option<&str>) -> Result<(), Error> {
+        self.update(
+            &self.db,
+            name,
+            expected_revision,
+            vec![
+                (
+                    importer::Column::LastRun,
+                    Expr::value(None::<OffsetDateTime>),
+                ),
+                (
+                    importer::Column::Continuation,
+                    Expr::value(None::<serde_json::Value>),
+                ),
+            ],
+        )
+        .await
+    }
+
+    #[instrument(skip(self))]
     pub async fn delete(&self, name: &str, expected_revision: Option<&str>) -> Result<bool, Error> {
         let mut delete = importer::Entity::delete_many().filter(importer::Column::Name.eq(name));
 
@@ -258,6 +327,7 @@ impl ImporterService {
         Ok(result.rows_affected > 0)
     }
 
+    #[instrument(skip(self))]
     pub async fn get_reports(
         &self,
         name: &str,

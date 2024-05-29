@@ -1,7 +1,9 @@
 mod csaf;
+mod osv;
 mod sbom;
 
 pub use csaf::*;
+pub use osv::*;
 pub use sbom::*;
 
 use std::ops::{Deref, DerefMut};
@@ -72,6 +74,10 @@ pub struct ImporterData {
     /// The error of the last run (empty if successful)
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub last_error: Option<String>,
+
+    /// The continuation token of the importer.
+    #[serde(default, skip_serializing_if = "serde_json::Value::is_null")]
+    pub continuation: serde_json::Value,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
@@ -79,6 +85,7 @@ pub struct ImporterData {
 pub enum ImporterConfiguration {
     Sbom(SbomImporter),
     Csaf(CsafImporter),
+    Osv(OsvImporter),
 }
 
 impl Deref for ImporterConfiguration {
@@ -88,6 +95,17 @@ impl Deref for ImporterConfiguration {
         match self {
             Self::Sbom(importer) => &importer.common,
             Self::Csaf(importer) => &importer.common,
+            Self::Osv(importer) => &importer.common,
+        }
+    }
+}
+
+impl DerefMut for ImporterConfiguration {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        match self {
+            Self::Sbom(importer) => &mut importer.common,
+            Self::Csaf(importer) => &mut importer.common,
+            Self::Osv(importer) => &mut importer.common,
         }
     }
 }
@@ -117,6 +135,7 @@ impl TryFrom<Model> for Importer {
             last_success,
             last_run,
             last_error,
+            continuation,
             revision: _,
         }: Model,
     ) -> Result<Self, Self::Error> {
@@ -128,6 +147,7 @@ impl TryFrom<Model> for Importer {
                 last_success,
                 last_run,
                 last_error,
+                continuation: continuation.unwrap_or_default(),
                 configuration: serde_json::from_value(configuration)?,
             },
         })
@@ -148,6 +168,7 @@ impl TryFrom<Model> for RevisionedImporter {
             last_success,
             last_run,
             last_error,
+            continuation,
             revision,
         }: Model,
     ) -> Result<Self, Self::Error> {
@@ -160,6 +181,7 @@ impl TryFrom<Model> for RevisionedImporter {
                     last_success,
                     last_run,
                     last_error,
+                    continuation: continuation.unwrap_or_default(),
                     configuration: serde_json::from_value(configuration)?,
                 },
             },

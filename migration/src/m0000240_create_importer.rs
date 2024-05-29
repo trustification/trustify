@@ -23,6 +23,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Importer::LastError).string())
                     .col(ColumnDef::new(Importer::LastSuccess).timestamp_with_time_zone())
                     .col(ColumnDef::new(Importer::LastRun).timestamp_with_time_zone())
+                    .col(ColumnDef::new(Importer::Continuation).json_binary())
                     .col(ColumnDef::new(Importer::Configuration).json_binary())
                     .to_owned(),
             )
@@ -94,6 +95,8 @@ pub enum Importer {
     LastError,
     LastRun,
     LastSuccess,
+
+    Continuation,
 
     Configuration,
 }

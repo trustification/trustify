@@ -21,13 +21,15 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
             .service(read)
             .service(update)
             .service(delete)
-            .service(get_reports),
+            .service(get_reports)
+            .service(set_enabled)
+            .service(force),
     );
 }
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(list, create, read, update, delete, get_reports),
+    paths(list, create, read, update, delete, get_reports, set_enabled),
     components(schemas(
         crate::model::CommonImporter,
         crate::model::CsafImporter,
@@ -142,6 +144,74 @@ async fn update(
     service
         .update_configuration(&name, revision, configuration)
         .await?;
+
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[utoipa::path(
+    context_path = "/api/v1/importer/enable",
+    tag = "importer",
+    request_body = bool,
+    params(
+        ("name", Path, description = "The name of the importer"),
+        ("if-match", Header, description = "The revision to update"),
+    ),
+    responses(
+        (status = 201, description = "Updated the enable state"),
+        (status = 404, description = "An importer with that name does not exist"),
+        (status = 412, description = "The provided if-match header did not match the stored revision"),
+    )
+)]
+#[put("/{name}/enabled")]
+/// Update an existing importer configuration
+async fn set_enabled(
+    service: web::Data<ImporterService>,
+    name: web::Path<String>,
+    web::Header(if_match): web::Header<IfMatch>,
+    web::Json(state): web::Json<bool>,
+) -> Result<impl Responder, Error> {
+    let revision = match &if_match {
+        IfMatch::Any => None,
+        IfMatch::Items(items) => items.first().map(|etag| etag.tag()),
+    };
+
+    service
+        .patch_configuration(&name, revision, |mut configuration| {
+            configuration.disabled = !state;
+            configuration
+        })
+        .await?;
+
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[utoipa::path(
+    context_path = "/api/v1/importer/force",
+    tag = "importer",
+    request_body = bool,
+    params(
+        ("name", Path, description = "The name of the importer"),
+        ("if-match", Header, description = "The revision to update"),
+    ),
+    responses(
+        (status = 201, description = "Updated the state"),
+        (status = 404, description = "An importer with that name does not exist"),
+        (status = 412, description = "The provided if-match header did not match the stored revision"),
+    )
+)]
+#[put("/{name}/force")]
+/// Force an importer to run as soon as possible
+async fn force(
+    service: web::Data<ImporterService>,
+    name: web::Path<String>,
+    web::Header(if_match): web::Header<IfMatch>,
+) -> Result<impl Responder, Error> {
+    let revision = match &if_match {
+        IfMatch::Any => None,
+        IfMatch::Items(items) => items.first().map(|etag| etag.tag()),
+    };
+
+    service.reset(&name, revision).await?;
 
     Ok(HttpResponse::NoContent().finish())
 }
