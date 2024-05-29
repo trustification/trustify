@@ -29,6 +29,7 @@ pub enum Ecosystem {
     #[serde(rename = "OSS-Fuzz")]
     OssFuzz,
     PyPI,
+    Python,
     RubyGems,
     #[serde(rename = "crates.io")]
     CratesIO,
@@ -80,6 +81,10 @@ pub enum Ecosystem {
     AlpineV3_16,
     #[serde(rename = "Alpine:v3.17")]
     AlpineV3_17,
+    #[serde(rename = "Alpine:v3.18")]
+    AlpineV3_18,
+    #[serde(rename = "Alpine:v3.19")]
+    AlpineV3_19,
     #[serde(rename = "Alpine:v3.2")]
     AlpineV3_2,
     #[serde(rename = "Alpine:v3.3")]
@@ -102,6 +107,15 @@ pub enum Ecosystem {
     #[serde(rename = "Rocky Linux")]
     RockyLinux,
     AlmaLinux,
+    Hackage,
+    GHC,
+    #[serde(rename = "Photon OS")]
+    PhotonOS,
+    Bitnami,
+    CRAN,
+    Bioconductor,
+    SwiftURL,
+    Ubuntu,
 }
 
 /// Type of the affected range supplied. This can be an ecosystem
@@ -521,5 +535,52 @@ mod tests {
         assert!(!str_json.contains("database_specific"));
 
         Ok(())
+    }
+
+    /// ensure we can parse https://github.com/RConsortium/r-advisory-database/blob/main/vulns/commonmark/RSEC-2023-6.yaml
+    #[test]
+    fn test_osv_r() {
+        const YAML: &str = r#"id: RSEC-2023-6
+details: The commonmark package, specifically in its dependency on GitHub Flavored Markdown before version 0.29.0.gfm.1,
+  has a vulnerability related to time complexity. Parsing certain crafted markdown tables can take O(n * n) time,
+  leading to potential Denial of Service attacks. This issue does not affect the upstream cmark project and has been
+  fixed in version 0.29.0.gfm.1.
+summary: Denial of Service (DoS) vulnerability
+affected:
+- package:
+    name: commonmark
+    ecosystem: CRAN
+  ranges:
+  - type: ECOSYSTEM
+    events:
+    - introduced: "0.2"
+    - fixed: "1.8"
+  versions:
+  - "0.2"
+  - "0.4"
+  - "0.5"
+  - "0.6"
+  - "0.7"
+  - "0.8"
+  - "0.9"
+  - "1.0"
+  - "1.1"
+  - "1.2"
+  - "1.4"
+  - "1.5"
+  - "1.6"
+  - "1.7"
+references:
+- type: WEB
+  url: https://security-tracker.debian.org/tracker/CVE-2020-5238
+- type: WEB
+  url: https://github.com/r-lib/commonmark/issues/13
+- type: WEB
+  url: https://github.com/r-lib/commonmark/pull/18
+aliases:
+- CVE-2020-5238
+modified: "2023-10-20T07:27:00.600Z"
+published: "2023-10-06T05:00:00.600Z""#;
+        let _osv: Vulnerability = serde_yaml::from_str(YAML).expect("should parse");
     }
 }

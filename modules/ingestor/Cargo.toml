@@ -41,5 +41,6 @@ uuid = { workspace = true, features = ["v7"] }
 tokio = { workspace = true, features = ["full"] }
 rand = { workspace = true }
 rust-lzma = { workspace = true }
+serde_yaml = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }

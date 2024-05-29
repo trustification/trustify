@@ -3,10 +3,11 @@ pub mod storage;
 
 use crate::{
     model::CsafImporter,
+    server::RunOutput,
     server::{
         common::{filter::Filter, validation},
         csaf::report::CsafReportVisitor,
-        report::{Report, ReportBuilder, ReportVisitor, ScannerError},
+        report::{ReportBuilder, ReportVisitor, ScannerError},
     },
 };
 use csaf_walker::{
@@ -28,7 +29,7 @@ impl super::Server {
         &self,
         importer: CsafImporter,
         last_run: Option<SystemTime>,
-    ) -> Result<Report, ScannerError> {
+    ) -> Result<RunOutput, ScannerError> {
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
         let source: DispatchSource = match Url::parse(&importer.source) {
@@ -76,13 +77,17 @@ impl super::Server {
             // further processing, like storing the marker
             .map_err(|err| ScannerError::Normal {
                 err: err.into(),
-                report: report.lock().clone().build(),
+                output: RunOutput {
+                    report: report.lock().clone().build(),
+                    continuation: None,
+                },
             })?;
 
         Ok(match Arc::try_unwrap(report) {
             Ok(report) => report.into_inner(),
             Err(report) => report.lock().clone(),
         }
-        .build())
+        .build()
+        .into())
     }
 }

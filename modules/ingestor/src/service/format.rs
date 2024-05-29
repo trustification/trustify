@@ -9,9 +9,18 @@ use ring::digest;
 use std::io::Read;
 
 pub enum Format {
-    OSV { checksum: String },
-    CSAF { checksum: String },
-    CVE { checksum: String },
+    OSV {
+        /// SHA256 digest
+        checksum: String,
+    },
+    CSAF {
+        /// SHA256 digest
+        checksum: String,
+    },
+    CVE {
+        /// SHA256 digest
+        checksum: String,
+    },
 }
 
 impl<'g> Format {

@@ -3,6 +3,9 @@
 #[cfg(feature = "garage-door")]
 mod embedded_oidc;
 mod openapi;
+mod sample_data;
+
+pub use sample_data::sample_data;
 
 use actix_web::{
     body::MessageBody,
@@ -59,6 +62,9 @@ pub struct Run {
     #[arg(long, env)]
     pub devmode: bool,
 
+    #[arg(long, env)]
+    pub sample_data: bool,
+
     /// Location of the storage
     #[command(flatten)]
     pub storage: StorageConfig,
@@ -79,6 +85,9 @@ pub struct Run {
     #[cfg(feature = "garage-door")]
     #[arg(long, env)]
     pub embedded_oidc: bool,
+
+    /// The importer working directory
+    pub working_dir: Option<PathBuf>,
 }
 
 const SERVICE_ID: &str = "trustify";
@@ -96,6 +105,7 @@ struct InitData {
     embedded_oidc: Option<embedded_oidc::EmbeddedOidc>,
     #[cfg(feature = "ui")]
     ui: UI,
+    working_dir: Option<PathBuf>,
 }
 
 impl Run {
@@ -138,6 +148,10 @@ impl InitData {
 
         if run.devmode {
             db.migrate().await?;
+        }
+
+        if run.devmode || run.sample_data {
+            sample_data(db.clone()).await?;
         }
 
         let graph = Graph::new(db.clone());
@@ -192,6 +206,7 @@ impl InitData {
             embedded_oidc,
             #[cfg(feature = "ui")]
             ui,
+            working_dir: run.working_dir,
         })
     }
 
@@ -239,7 +254,8 @@ impl InitData {
         };
 
         let http = async { http.run().await }.boxed_local();
-        let importer = async { importer(self.db, self.storage).await }.boxed_local();
+        let importer =
+            async { importer(self.db, self.storage, self.working_dir).await }.boxed_local();
 
         let mut tasks = vec![http, importer];
 

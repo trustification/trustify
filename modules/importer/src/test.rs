@@ -68,6 +68,7 @@ async fn test_default(ctx: TrustifyContext) {
                 last_success: None,
                 last_run: None,
                 last_error: None,
+                continuation: serde_json::Value::Null,
             }
         }]
     );
@@ -103,6 +104,7 @@ async fn test_default(ctx: TrustifyContext) {
                 last_success: None,
                 last_error: None,
                 last_run: None,
+                continuation: serde_json::Value::Null,
             }
         }
     );
@@ -181,6 +183,7 @@ async fn test_oplock(ctx: TrustifyContext) {
                 last_success: None,
                 last_error: None,
                 last_run: None,
+                continuation: serde_json::Value::Null,
             }
         }
     );
@@ -217,6 +220,7 @@ async fn test_oplock(ctx: TrustifyContext) {
                 last_success: None,
                 last_error: None,
                 last_run: None,
+                continuation: serde_json::Value::Null,
             }
         }
     );
@@ -270,6 +274,7 @@ async fn test_oplock(ctx: TrustifyContext) {
                 last_success: None,
                 last_error: None,
                 last_run: None,
+                continuation: serde_json::Value::Null,
             }
         }
     );
@@ -305,6 +310,7 @@ async fn test_oplock(ctx: TrustifyContext) {
                 last_success: None,
                 last_error: None,
                 last_run: None,
+                continuation: serde_json::Value::Null,
             }
         }
     );

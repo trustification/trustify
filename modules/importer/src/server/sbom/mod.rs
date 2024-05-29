@@ -5,8 +5,9 @@ use crate::{
     model::SbomImporter,
     server::{
         common::{filter::Filter, validation},
-        report::{Report, ReportBuilder, ReportVisitor, ScannerError},
+        report::{ReportBuilder, ReportVisitor, ScannerError},
         sbom::report::SbomReportVisitor,
+        RunOutput,
     },
 };
 use parking_lot::Mutex;
@@ -28,7 +29,7 @@ impl super::Server {
         &self,
         importer: SbomImporter,
         last_run: Option<SystemTime>,
-    ) -> Result<Report, ScannerError> {
+    ) -> Result<RunOutput, ScannerError> {
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
         let source: DispatchSource = match Url::parse(&importer.source) {
@@ -85,13 +86,17 @@ impl super::Server {
             // further processing, like storing the marker
             .map_err(|err| ScannerError::Normal {
                 err: err.into(),
-                report: report.lock().clone().build(),
+                output: RunOutput {
+                    report: report.lock().clone().build(),
+                    continuation: None,
+                },
             })?;
 
         Ok(match Arc::try_unwrap(report) {
             Ok(report) => report.into_inner(),
             Err(report) => report.lock().clone(),
         }
-        .build())
+        .build()
+        .into())
     }
 }

@@ -1,3 +1,4 @@
+use crate::server::RunOutput;
 use parking_lot::Mutex;
 use std::collections::BTreeMap;
 use std::sync::Arc;
@@ -7,8 +8,11 @@ use time::OffsetDateTime;
     Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, serde::Deserialize, serde::Serialize,
 )]
 pub enum Phase {
+    /// Retrieving the document
     Retrieval,
+    /// Validating the retrieved document
     Validation,
+    /// Upload to storage
     Upload,
 }
 
@@ -114,20 +118,20 @@ pub enum ScannerError {
     Normal {
         #[source]
         err: anyhow::Error,
-        report: Report,
+        output: RunOutput,
     },
 }
 
 pub trait SplitScannerError {
-    /// Split a [`ScannerError`] into a result and a report, unless it was critical.
-    fn split(self) -> anyhow::Result<(Report, anyhow::Result<()>)>;
+    /// Split a [`ScannerError`] into a result and an output, unless it was critical.
+    fn split(self) -> anyhow::Result<(RunOutput, anyhow::Result<()>)>;
 }
 
-impl SplitScannerError for Result<Report, ScannerError> {
-    fn split(self) -> anyhow::Result<(Report, anyhow::Result<()>)> {
+impl SplitScannerError for Result<RunOutput, ScannerError> {
+    fn split(self) -> anyhow::Result<(RunOutput, anyhow::Result<()>)> {
         match self {
-            Ok(report) => Ok((report, Ok(()))),
-            Err(ScannerError::Normal { err, report }) => Ok((report, Err(err))),
+            Ok(output) => Ok((output, Ok(()))),
+            Err(ScannerError::Normal { err, output }) => Ok((output, Err(err))),
             Err(ScannerError::Critical(err)) => Err(err),
         }
     }

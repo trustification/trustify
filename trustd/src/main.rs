@@ -1,11 +1,9 @@
 use clap::Parser;
-use sample_data::sample_data;
 use std::env;
 use std::process::{ExitCode, Termination};
 use tokio::task::{spawn_local, LocalSet};
 
 mod db;
-mod sample_data;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(clap::Subcommand, Debug)]
@@ -45,21 +43,18 @@ async fn pm_mode() -> anyhow::Result<ExitCode> {
     };
 
     let postgres = db.start().await?;
-    let database = db.database.clone();
 
     if !postgres.database_exists(&db.database.name).await? {
         db.command = db::Command::Create;
     }
     db.run().await?;
 
-    // after we have the database structure, add some sample data
-    sample_data(&database).await?;
-
     let api = Trustd::parse_from([
         "trustd",
         "api",
         #[cfg(feature = "garage-door")]
         "--embedded-oidc",
+        "--sample-data",
         "--db-port",
         &postgres.settings().port.to_string(),
     ]);
