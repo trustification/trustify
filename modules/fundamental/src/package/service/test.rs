@@ -3,11 +3,15 @@ use std::str::FromStr;
 use std::sync::Arc;
 use test_context::test_context;
 use test_log::test;
+use tokio_util::io::ReaderStream;
 use trustify_common::db::query::{q, Query};
 use trustify_common::db::test::TrustifyContext;
+use trustify_common::db::Transactional;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_module_ingestor::graph::Graph;
+use trustify_module_ingestor::service::{Format, IngestorService};
+use trustify_module_storage::service::fs::FileSystemBackend;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
@@ -542,6 +546,56 @@ async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
 
     log::debug!("{:#?}", results);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn statuses(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+    let service = PackageService::new(db.clone());
+    let (storage, _tmp) = FileSystemBackend::for_test().await?;
+
+    let ingestor = IngestorService::new(Graph::new(db.clone()), storage);
+
+    // ingest an advisory
+    let data = include_bytes!("../../../../../etc/test-data/osv/RUSTSEC-2021-0079.json");
+    let data = ReaderStream::new(&data[..]);
+
+    ingestor
+        .ingest("test", Some("RUSTSEC".to_string()), Format::OSV, data)
+        .await?;
+
+    // backfill ingest the CVE record
+    let data = include_bytes!("../../../../../etc/test-data/cve/CVE-2021-32714.json");
+    let data = ReaderStream::new(&data[..]);
+
+    ingestor.ingest("test", None, Format::CVE, data).await?;
+
+    // finally ingest a specific known-affected version.
+
+    ingestor
+        .graph()
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:cargo/hyper@0.14.1")?,
+            Transactional::None,
+        )
+        .await?;
+
+    let results = service
+        .qualified_packages(Query::default(), Paginated::default(), Transactional::None)
+        .await?;
+
+    assert_eq!(1, results.items.len());
+
+    let uuid = results.items[0].head.uuid;
+
+    let _results = service
+        .qualified_package_by_uuid(&uuid, Transactional::None)
+        .await?;
+
+    //println!("{:#?}", _results);
 
     Ok(())
 }

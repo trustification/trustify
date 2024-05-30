@@ -44,3 +44,11 @@ impl Iden for Cvss3Score {
         write!(s, "cvss3_score").unwrap()
     }
 }
+
+pub struct VersionMatches;
+
+impl Iden for VersionMatches {
+    fn unquoted(&self, s: &mut dyn Write) {
+        write!(s, "version_matches").unwrap()
+    }
+}

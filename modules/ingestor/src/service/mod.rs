@@ -94,6 +94,10 @@ impl IngestorService {
         &self.storage
     }
 
+    pub fn graph(&self) -> &Graph {
+        &self.graph
+    }
+
     pub async fn ingest<S, E>(
         &self,
         source: &str,

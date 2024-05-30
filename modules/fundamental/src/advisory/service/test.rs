@@ -13,6 +13,7 @@ use trustify_cvss::cvss3::{
     AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
     PrivilegesRequired, Scope, UserInteraction,
 };
+use trustify_module_ingestor::graph::advisory::advisory_vulnerability::{VersionInfo, VersionSpec};
 use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
 use trustify_module_ingestor::graph::Graph;
 
@@ -268,7 +269,27 @@ async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
 
     advisory_vuln
-        .ingest_fixed_package_version(&Purl::from_str("pkg://maven/org.apache/log4j@1.2.3")?, ())
+        .ingest_package_status(
+            &Purl::from_str("pkg://maven/org.apache/log4j")?,
+            "fixed",
+            VersionInfo {
+                scheme: "semver".to_string(),
+                spec: VersionSpec::Exact("1.2.3".to_string()),
+            },
+            (),
+        )
+        .await?;
+
+    advisory_vuln
+        .ingest_package_status(
+            &Purl::from_str("pkg://maven/org.apache/log4j")?,
+            "fixed",
+            VersionInfo {
+                scheme: "semver".to_string(),
+                spec: VersionSpec::Exact("1.2.3".to_string()),
+            },
+            (),
+        )
         .await?;
 
     graph

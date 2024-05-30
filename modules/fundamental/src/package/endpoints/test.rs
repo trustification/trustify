@@ -7,15 +7,19 @@ use crate::package::model::summary::qualified_package::PaginatedQualifiedPackage
 use crate::package::model::summary::r#type::TypeSummary;
 use actix_web::test::TestRequest;
 use actix_web::{web, App};
+use serde_json::Value;
 use std::str::FromStr;
 use std::sync::Arc;
 use test_context::test_context;
 use test_log::test;
+use tokio_util::io::ReaderStream;
 use trustify_common::db::test::TrustifyContext;
-use trustify_common::db::Database;
+use trustify_common::db::{Database, Transactional};
 use trustify_common::model::PaginatedResults;
 use trustify_common::purl::Purl;
 use trustify_module_ingestor::graph::Graph;
+use trustify_module_ingestor::service::{Format, IngestorService};
+use trustify_module_storage::service::fs::FileSystemBackend;
 
 async fn setup(db: &Database) -> Result<(), anyhow::Error> {
     let graph = Arc::new(Graph::new(db.clone()));
@@ -250,6 +254,8 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let response: QualifiedPackageDetails =
         actix_web::test::call_and_read_body_json(&app, request).await;
 
+    log::debug!("{:#?}", response);
+
     assert_eq!(jdk17.uuid, response.head.uuid);
 
     Ok(())
@@ -371,6 +377,62 @@ async fn qualified_packages_filtering(ctx: TrustifyContext) -> Result<(), anyhow
         actix_web::test::call_and_read_body_json(&app, request).await;
 
     assert_eq!(3, response.items.len());
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn package_with_status(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+    let (storage, _tmp) = FileSystemBackend::for_test().await?;
+
+    let ingestor = IngestorService::new(Graph::new(db.clone()), storage);
+
+    ingestor
+        .graph()
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:cargo/hyper@0.14.1")?,
+            Transactional::None,
+        )
+        .await?;
+
+    // ingest an advisory
+
+    let data = include_bytes!("../../../../../etc/test-data/osv/RUSTSEC-2021-0079.json");
+    let data = ReaderStream::new(&data[..]);
+
+    ingestor
+        .ingest("test", Some("RUSTSEC".to_string()), Format::OSV, data)
+        .await?;
+
+    // backfill ingest the CVE record
+
+    let data = include_bytes!("../../../../../etc/test-data/cve/CVE-2021-32714.json");
+    let data = ReaderStream::new(&data[..]);
+
+    ingestor.ingest("test", None, Format::CVE, data).await?;
+
+    let app = actix_web::test::init_service(
+        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
+    )
+    .await;
+
+    let uri = "/api/v1/package?q=hyper";
+    let request = TestRequest::get().uri(uri).to_request();
+    let response: PaginatedQualifiedPackageSummary =
+        actix_web::test::call_and_read_body_json(&app, request).await;
+
+    assert_eq!(1, response.items.len());
+
+    let uuid = response.items[0].head.uuid;
+
+    let uri = format!("/api/v1/package/{uuid}");
+
+    let request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
+
+    log::debug!("{}", serde_json::to_string_pretty(&response)?);
 
     Ok(())
 }

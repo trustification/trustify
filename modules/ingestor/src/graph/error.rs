@@ -17,4 +17,7 @@ pub enum Error {
 
     #[error(transparent)]
     Any(#[from] anyhow::Error),
+
+    #[error("Invalid status {0}")]
+    InvalidStatus(String),
 }

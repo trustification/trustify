@@ -4,14 +4,9 @@ use crate::graph::{
     error::Error,
     purl::{qualified_package::QualifiedPackageContext, PackageContext},
 };
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QuerySelect,
-    RelationTrait, Set,
-};
-use sea_query::JoinType;
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use std::fmt::{Debug, Formatter};
 use trustify_common::db::Transactional;
-use trustify_common::package::{Assertion, Claimant, PackageVulnerabilityAssertions};
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
 use trustify_entity::package_version;
@@ -78,86 +73,6 @@ impl<'g> PackageVersionContext<'g> {
         Ok(found.map(|model| QualifiedPackageContext::new(self, model)))
     }
 
-    pub async fn vulnerability_assertions<TX: AsRef<Transactional>>(
-        &self,
-        tx: TX,
-    ) -> Result<PackageVulnerabilityAssertions, Error> {
-        let affected = self.affected_assertions(&tx).await?;
-
-        let not_affected = self.not_affected_assertions(&tx).await?;
-
-        let mut merged = PackageVulnerabilityAssertions::default();
-
-        merged.assertions.extend_from_slice(&affected.assertions);
-
-        merged
-            .assertions
-            .extend_from_slice(&not_affected.assertions);
-
-        Ok(merged)
-    }
-
-    pub async fn affected_assertions<TX: AsRef<Transactional>>(
-        &self,
-        tx: TX,
-    ) -> Result<PackageVulnerabilityAssertions, Error> {
-        let possibly_affected = self.package.affected_assertions(tx).await?;
-
-        let filtered = possibly_affected.filter_by_version(&self.package_version.version)?;
-
-        Ok(filtered)
-    }
-
-    pub async fn not_affected_assertions<TX: AsRef<Transactional>>(
-        &self,
-        tx: TX,
-    ) -> Result<PackageVulnerabilityAssertions, Error> {
-        #[derive(FromQueryResult, Debug)]
-        struct NotAffectedVersion {
-            version: String,
-            identifier: String,
-            location: String,
-            sha256: String,
-        }
-
-        let not_affected_versions = entity::not_affected_package_version::Entity::find()
-            .column_as(entity::package_version::Column::Version, "version")
-            .column_as(entity::advisory::Column::Id, "advisory_id")
-            .column_as(entity::advisory::Column::Identifier, "identifier")
-            .column_as(entity::advisory::Column::Location, "location")
-            .column_as(entity::advisory::Column::Sha256, "sha256")
-            .join(
-                JoinType::Join,
-                entity::not_affected_package_version::Relation::Advisory.def(),
-            )
-            .join(
-                JoinType::Join,
-                entity::not_affected_package_version::Relation::PackageVersion.def(),
-            )
-            .filter(entity::package_version::Column::Id.eq(self.package_version.id))
-            .into_model::<NotAffectedVersion>()
-            .all(&self.package.graph.connection(&tx))
-            .await?;
-
-        let mut assertions = PackageVulnerabilityAssertions::default();
-
-        for each in not_affected_versions {
-            let vulnerability = "not-implemented".to_string();
-
-            assertions.assertions.push(Assertion::NotAffected {
-                vulnerability,
-                claimant: Claimant {
-                    identifier: each.identifier,
-                    location: each.location,
-                    sha256: each.sha256,
-                },
-                version: each.version,
-            });
-        }
-
-        Ok(assertions)
-    }
-
     /// Retrieve known variants of this package version.
     ///
     /// Non-mutating to the fetch.
@@ -173,81 +88,5 @@ impl<'g> PackageVersionContext<'g> {
             .into_iter()
             .map(|base| QualifiedPackageContext::new(self, base))
             .collect())
-    }
-}
-
-#[cfg(test)]
-#[allow(clippy::unwrap_used)]
-mod tests {
-    use crate::graph::Graph;
-    use test_context::test_context;
-    use trustify_common::db::{test::TrustifyContext, Transactional};
-    use trustify_common::hashing::Digests;
-
-    #[test_context(TrustifyContext, skip_teardown)]
-    #[tokio::test]
-    async fn package_version_not_affected_assertions(
-        ctx: TrustifyContext,
-    ) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db);
-
-        let redhat_advisory = system
-            .ingest_advisory(
-                "RHSA-1",
-                "http://redhat.com/rhsa-1",
-                &Digests::digest("RHSA-1"),
-                (),
-                Transactional::None,
-            )
-            .await?;
-
-        let redhat_advisory_vulnerability = redhat_advisory
-            .link_to_vulnerability("CVE-1", None, Transactional::None)
-            .await?;
-
-        redhat_advisory_vulnerability
-            .ingest_not_affected_package_version(
-                &"pkg://maven/io.quarkus/quarkus-core@1.2".try_into()?,
-                Transactional::None,
-            )
-            .await?;
-
-        let ghsa_advisory = system
-            .ingest_advisory(
-                "GHSA-1",
-                "http://ghsa.com/ghsa-1",
-                &Digests::digest("GHSA-1"),
-                (),
-                Transactional::None,
-            )
-            .await?;
-
-        let ghsa_advisory_vulnerability = ghsa_advisory
-            .link_to_vulnerability("CVE-1", None, Transactional::None)
-            .await?;
-
-        ghsa_advisory_vulnerability
-            .ingest_not_affected_package_version(
-                &"pkg://maven/io.quarkus/quarkus-core@1.2.2".try_into()?,
-                Transactional::None,
-            )
-            .await?;
-
-        let pkg_version = system
-            .get_package_version(
-                &"pkg://maven/io.quarkus/quarkus-core@1.2.2".try_into()?,
-                Transactional::None,
-            )
-            .await?
-            .unwrap();
-
-        let assertions = pkg_version
-            .not_affected_assertions(Transactional::None)
-            .await?;
-
-        assert_eq!(assertions.assertions.len(), 1);
-
-        Ok(())
     }
 }

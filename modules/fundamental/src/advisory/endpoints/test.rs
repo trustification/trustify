@@ -12,7 +12,6 @@ use hex::ToHex;
 use jsonpath_rust::JsonPathQuery;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
-use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
@@ -22,7 +21,6 @@ use trustify_common::{
     db::{test::TrustifyContext, Transactional},
     id::Id,
     model::PaginatedResults,
-    purl::Purl,
 };
 use trustify_cvss::cvss3::{
     AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
@@ -216,10 +214,6 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    advisory_vuln
-        .ingest_not_affected_package_version(&Purl::from_str("pkg://maven/log4j/log4j@1.2.3")?, ())
-        .await?;
-
     let uri = format!("/api/v1/advisory/urn:uuid:{}", advisory2.advisory.id);
 
     let request = TestRequest::get().uri(&uri).to_request();
@@ -324,10 +318,6 @@ async fn one_advisory_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error>
             },
             (),
         )
-        .await?;
-
-    advisory_vuln
-        .ingest_not_affected_package_version(&Purl::from_str("pkg://maven/log4j/log4j@1.2.3")?, ())
         .await?;
 
     let uri = format!("/api/v1/advisory/{}", uuid.urn());

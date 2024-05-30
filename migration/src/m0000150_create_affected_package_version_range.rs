@@ -62,6 +62,7 @@ impl MigrationTrait for Migration {
             .drop_table(
                 Table::drop()
                     .table(AffectedPackageVersionRange::Table)
+                    .if_exists()
                     .to_owned(),
             )
             .await

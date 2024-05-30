@@ -20,6 +20,12 @@ pub enum Relation {
 
     #[sea_orm(has_many = "super::qualified_package::Entity")]
     QualifiedPackage,
+
+    #[sea_orm(has_many = "super::version_range::Entity")]
+    VersionRange,
+
+    #[sea_orm(has_many = "super::package_status::Entity")]
+    PackageStatus,
 }
 
 impl Related<super::package::Entity> for Entity {
@@ -31,6 +37,22 @@ impl Related<super::package::Entity> for Entity {
 impl Related<super::qualified_package::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::QualifiedPackage.def()
+    }
+}
+
+impl Related<super::version_range::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::VersionRange.def()
+    }
+
+    fn via() -> Option<RelationDef> {
+        Some(Relation::PackageStatus.def())
+    }
+}
+
+impl Related<super::package_status::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::PackageStatus.def()
     }
 }
 
