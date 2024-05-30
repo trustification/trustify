@@ -1,7 +1,4 @@
-use crate::{
-    advisory_vulnerability, affected_package_version_range, cvss3, fixed_package_version,
-    not_affected_package_version, organization, vulnerability,
-};
+use crate::{advisory_vulnerability, cvss3, organization, vulnerability};
 use async_graphql::*;
 use sea_orm::entity::prelude::*;
 use std::sync::Arc;
@@ -61,15 +58,6 @@ pub enum Relation {
 
     #[sea_orm(has_many = "super::cvss3::Entity")]
     Cvss3,
-
-    #[sea_orm(has_many = "super::fixed_package_version::Entity")]
-    FixedPackageVersion,
-
-    #[sea_orm(has_many = "super::affected_package_version_range::Entity")]
-    AffectedPackageVersionRange,
-
-    #[sea_orm(has_many = "super::not_affected_package_version::Entity")]
-    NotAffectedPackageVersion,
 }
 
 impl Related<organization::Entity> for Entity {
@@ -91,24 +79,6 @@ impl Related<vulnerability::Entity> for Entity {
 impl Related<cvss3::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Cvss3.def()
-    }
-}
-
-impl Related<not_affected_package_version::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::NotAffectedPackageVersion.def()
-    }
-}
-
-impl Related<fixed_package_version::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::FixedPackageVersion.def()
-    }
-}
-
-impl Related<affected_package_version_range::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::AffectedPackageVersionRange.def()
     }
 }
 

@@ -21,16 +21,12 @@ use sea_orm::{
 };
 use sea_query::{Alias, Condition, Func, JoinType, Query, SimpleExpr};
 use std::{
-    collections::{HashMap, HashSet},
     fmt::{Debug, Formatter},
     str::FromStr,
 };
 use time::OffsetDateTime;
 use tracing::instrument;
-use trustify_common::{
-    cpe::Cpe, db::Transactional, package::PackageVulnerabilityAssertions, purl::Purl,
-    sbom::SbomLocator,
-};
+use trustify_common::{cpe::Cpe, db::Transactional, purl::Purl, sbom::SbomLocator};
 use trustify_entity::{
     self as entity, package_relates_to_package, relationship::Relationship, sbom, sbom_node,
     sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
@@ -703,37 +699,6 @@ impl SbomContext {
         } else {
             Ok(vec![])
         }
-    }
-
-    #[instrument(skip(self, tx), err)]
-    pub async fn vulnerability_assertions<TX: AsRef<Transactional>>(
-        &self,
-        tx: TX,
-    ) -> Result<HashMap<QualifiedPackageContext, PackageVulnerabilityAssertions>, Error> {
-        let described_packages = self.describes_purls(&tx).await?;
-        let mut applicable = HashSet::new();
-
-        for pkg in described_packages {
-            applicable.extend(
-                self.related_packages_transitively(
-                    &[Relationship::DependencyOf, Relationship::ContainedBy],
-                    &pkg.into(),
-                    Transactional::None,
-                )
-                .await?,
-            )
-        }
-
-        let mut assertions = HashMap::new();
-
-        for pkg in applicable {
-            let package_assertions = pkg.vulnerability_assertions(&tx).await?;
-            if !package_assertions.assertions.is_empty() {
-                assertions.insert(pkg.clone(), pkg.vulnerability_assertions(&tx).await?);
-            }
-        }
-
-        Ok(assertions)
     }
 
     pub async fn link_to_product<'a, TX: AsRef<Transactional>>(

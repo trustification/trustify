@@ -34,6 +34,12 @@ mod m0000315_create_cvss3_scoring_function;
 mod m0000320_create_cvss3_score_column;
 mod m0000325_create_cvss3_severity_column;
 mod m0000330_add_sbom_version;
+mod m0000331_create_status;
+mod m0000335_create_version_scheme;
+mod m0000337_create_version_range;
+mod m0000340_create_package_status;
+mod m0000345_create_version_comparison_fns;
+mod m0000350_remove_old_assertion_tables;
 
 pub struct Migrator;
 
@@ -74,6 +80,12 @@ impl MigratorTrait for Migrator {
             Box::new(m0000320_create_cvss3_score_column::Migration),
             Box::new(m0000325_create_cvss3_severity_column::Migration),
             Box::new(m0000330_add_sbom_version::Migration),
+            Box::new(m0000331_create_status::Migration),
+            Box::new(m0000335_create_version_scheme::Migration),
+            Box::new(m0000337_create_version_range::Migration),
+            Box::new(m0000340_create_package_status::Migration),
+            Box::new(m0000345_create_version_comparison_fns::Migration),
+            Box::new(m0000350_remove_old_assertion_tables::Migration),
         ]
     }
 }

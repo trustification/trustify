@@ -1,3 +1,4 @@
+use crate::graph::advisory::advisory_vulnerability::{VersionInfo, VersionSpec};
 use crate::model::IngestResult;
 use crate::{
     graph::{
@@ -143,30 +144,59 @@ impl<'g> CsafLoader<'g> {
         for r in product_status.fixed.iter().flatten() {
             for purl in resolve_purls(csaf, r) {
                 let package = Purl::from(purl.clone());
-                advisory_vulnerability
-                    .ingest_fixed_package_version(&package, &tx)
-                    .await?;
+
+                if let Some(version) = &package.version {
+                    advisory_vulnerability
+                        .ingest_package_status(
+                            &package,
+                            "fixed",
+                            VersionInfo {
+                                scheme: "generic".to_string(),
+                                spec: VersionSpec::Exact(version.clone()),
+                            },
+                            &tx,
+                        )
+                        .await?
+                }
             }
         }
         for r in product_status.known_not_affected.iter().flatten() {
             for purl in resolve_purls(csaf, r) {
                 let package = Purl::from(purl.clone());
-                advisory_vulnerability
-                    .ingest_not_affected_package_version(&package, &tx)
-                    .await?;
+
+                if let Some(version) = &package.version {
+                    advisory_vulnerability
+                        .ingest_package_status(
+                            &package,
+                            "not_affected",
+                            VersionInfo {
+                                scheme: "generic".to_string(),
+                                spec: VersionSpec::Exact(version.clone()),
+                            },
+                            &tx,
+                        )
+                        .await?
+                }
             }
         }
-        for _r in product_status.known_affected.iter().flatten() {
-            /*
-            for purl in resolve_purls(&csaf, r) {
+        for r in product_status.known_affected.iter().flatten() {
+            for purl in resolve_purls(csaf, r) {
                 let package = Purl::from(purl.clone());
-                log::debug!("{}", package.to_string());
-                //advisory_vulnerability
-                    //.ingest_affected_package_range(package, Transactional::None)
-                    //.await?;
-            }
 
-             */
+                if let Some(version) = &package.version {
+                    advisory_vulnerability
+                        .ingest_package_status(
+                            &package,
+                            "affected",
+                            VersionInfo {
+                                scheme: "generic".to_string(),
+                                spec: VersionSpec::Exact(version.clone()),
+                            },
+                            &tx,
+                        )
+                        .await?
+                }
+            }
         }
 
         Ok(())

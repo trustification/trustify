@@ -18,10 +18,6 @@ use uuid::Uuid;
 
 pub mod advisory_vulnerability;
 
-pub mod affected_package_version_range;
-pub mod fixed_package_version;
-pub mod not_affected_package_version;
-
 #[derive(Clone, Default)]
 pub struct AdvisoryInformation {
     pub title: Option<String>,
@@ -136,7 +132,7 @@ impl Graph {
 
 #[derive(Clone)]
 pub struct AdvisoryContext<'g> {
-    graph: &'g Graph,
+    pub graph: &'g Graph,
     pub advisory: entity::advisory::Model,
 }
 
@@ -310,129 +306,6 @@ mod test {
 
         assert_eq!(advisory1.advisory.id, advisory2.advisory.id);
         assert_ne!(advisory1.advisory.id, advisory3.advisory.id);
-
-        Ok(())
-    }
-
-    #[test_context(TrustifyContext, skip_teardown)]
-    #[test(tokio::test)]
-    async fn ingest_affected_package_version_range(
-        ctx: TrustifyContext,
-    ) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db);
-
-        let advisory = system
-            .ingest_advisory(
-                "RHSA-GHSA-1",
-                "http://db.com/rhsa-ghsa-2",
-                &Digests::digest("RHSA-GHSA-1"),
-                (),
-                Transactional::None,
-            )
-            .await?;
-
-        let advisory_vulnerability = advisory
-            .link_to_vulnerability("CVE-8675309", None, Transactional::None)
-            .await?;
-
-        let affected1 = advisory_vulnerability
-            .ingest_affected_package_range(
-                &"pkg://maven/io.quarkus/quarkus-core".try_into()?,
-                "1.0.2",
-                "1.2.0",
-                Transactional::None,
-            )
-            .await?;
-
-        let affected2 = advisory_vulnerability
-            .ingest_affected_package_range(
-                &"pkg://maven/io.quarkus/quarkus-core".try_into()?,
-                "1.0.2",
-                "1.2.0",
-                Transactional::None,
-            )
-            .await?;
-
-        let affected3 = advisory_vulnerability
-            .ingest_affected_package_range(
-                &"pkg://maven/io.quarkus/quarkus-addons".try_into()?,
-                "1.0.2",
-                "1.2.0",
-                Transactional::None,
-            )
-            .await?;
-
-        assert_eq!(
-            affected1.affected_package_version_range.id,
-            affected2.affected_package_version_range.id
-        );
-        assert_ne!(
-            affected1.affected_package_version_range.id,
-            affected3.affected_package_version_range.id
-        );
-
-        Ok(())
-    }
-
-    #[test_context(TrustifyContext, skip_teardown)]
-    #[test(tokio::test)]
-    async fn ingest_fixed_package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db);
-
-        let advisory = system
-            .ingest_advisory(
-                "RHSA-GHSA-1",
-                "http://db.com/rhsa-ghsa-2",
-                &Digests::digest("RHSA-GHSA-1"),
-                (),
-                Transactional::None,
-            )
-            .await?;
-
-        let advisory_vulnerability = advisory
-            .link_to_vulnerability("CVE-1234567", None, Transactional::None)
-            .await?;
-
-        let _affected = advisory_vulnerability
-            .ingest_affected_package_range(
-                &"pkg://maven/io.quarkus/quarkus-core".try_into()?,
-                "1.0.2",
-                "1.2.0",
-                Transactional::None,
-            )
-            .await?;
-
-        let fixed1 = advisory_vulnerability
-            .ingest_fixed_package_version(
-                &"pkg://maven/io.quarkus/quarkus-core@1.2.0".try_into()?,
-                Transactional::None,
-            )
-            .await?;
-
-        let fixed2 = advisory_vulnerability
-            .ingest_fixed_package_version(
-                &"pkg://maven/io.quarkus/quarkus-core@1.2.0".try_into()?,
-                Transactional::None,
-            )
-            .await?;
-
-        let fixed3 = advisory_vulnerability
-            .ingest_fixed_package_version(
-                &"pkg://maven/io.quarkus/quarkus-addons@1.2.0".try_into()?,
-                Transactional::None,
-            )
-            .await?;
-
-        assert_eq!(
-            fixed1.fixed_package_version.id,
-            fixed2.fixed_package_version.id
-        );
-        assert_ne!(
-            fixed1.fixed_package_version.id,
-            fixed3.fixed_package_version.id
-        );
 
         Ok(())
     }

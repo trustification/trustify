@@ -419,32 +419,9 @@ async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         )
         .await?;
 
-    let advisory_vulnerability = advisory
+    let _advisory_vulnerability = advisory
         .link_to_vulnerability("CVE-00000001", None, Transactional::None)
         .await?;
-
-    advisory_vulnerability
-        .ingest_affected_package_range(
-            &"pkg://maven/postgres/postgres-driver".try_into()?,
-            "1.1",
-            "1.9",
-            Transactional::None,
-        )
-        .await?;
-
-    let assertions = sbom.vulnerability_assertions(Transactional::None).await?;
-
-    assert_eq!(1, assertions.len());
-
-    let affected_purls = assertions
-        .keys()
-        .map(|e| Purl::from(e.clone()))
-        .collect::<Vec<_>>();
-
-    assert_eq!(
-        affected_purls[0].to_string(),
-        "pkg://maven/postgres/postgres-driver@1.2.3"
-    );
 
     Ok(())
 }
