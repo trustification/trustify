@@ -12,13 +12,8 @@ export class Mapper {
   requestedReviewers() {
     let users = [];
 
-    for (let user of this.payload?.pull_request?.requested_reviewers) {
-
-      const login = user?.login;
-      if (login === undefined) {
-        continue;
-      }
-
+    const login = this.payload?.requested_reviewer?.login;
+    if (login !== undefined) {
       users.push(login);
     }
 
