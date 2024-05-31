@@ -13,4 +13,5 @@ pub mod package;
 pub mod purl;
 pub mod reqwest;
 pub mod sbom;
+pub mod time;
 pub mod tls;

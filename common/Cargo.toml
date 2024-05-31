@@ -7,6 +7,7 @@ edition = "2021"
 trustify-migration = { workspace = true }
 
 anyhow = { workspace = true }
+chrono = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 concat-idents = { workspace = true }
 cpe = { workspace = true }
@@ -18,22 +19,24 @@ native-tls = { workspace = true }
 packageurl = { workspace = true }
 pem = { workspace = true }
 postgresql_embedded = { workspace = true, features = ["blocking", "bundled", "tokio"] }
-reqwest = { workspace = true, features = ["native-tls"] }
 regex = { workspace = true }
+reqwest = { workspace = true, features = ["native-tls"] }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 sqlx = { workspace = true }
 tempfile = { workspace = true }
-time = { workspace = true }
 test-context = { workspace = true }
 thiserror = { workspace = true }
+time = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true, features = ["url"] }
 uuid = { workspace = true, features = ["v5"] }
 
 [dev-dependencies]
 chrono = { workspace = true }
+time = { workspace = true, features = ["macros"] }
+rstest = { workspace = true }
 serde_json = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 tokio = { workspace = true, features = ["full"] }
