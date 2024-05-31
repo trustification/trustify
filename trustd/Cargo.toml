@@ -21,6 +21,7 @@ tokio = { workspace = true, features = ["full"] }
 url = { workspace = true }
 
 openssl = "*"
+libz-sys = "*"
 
 [features]
 default = ["ui"]
@@ -30,6 +31,9 @@ garage-door = ["trustify-server/garage-door"]
 
 vendored = [
     "openssl/vendored",
+    # when using a vendored approach, we need to statically link zlib, otherwise we get some strange linker error
+    #   unresolvable R_AARCH64_ADR_PREL_PG_HI21 relocation against symbol `__stack_chk_guard@@GLIBC_2.17'
+    "libz-sys/static"
 ]
 pm = [
     "garage-door",
