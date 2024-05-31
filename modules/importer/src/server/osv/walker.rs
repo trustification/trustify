@@ -379,18 +379,6 @@ mod test {
     use super::*;
     use std::path::PathBuf;
 
-    struct Parse;
-
-    impl Callbacks for Parse {
-        fn process(&mut self, _path: &Path, osv: Vulnerability) -> Result<(), anyhow::Error> {
-            let data = serde_json::to_vec(&osv)?;
-            let _osv: trustify_module_ingestor::service::advisory::osv::schema::Vulnerability =
-                serde_json::from_slice(&data)?;
-
-            Ok(())
-        }
-    }
-
     #[test_log::test(tokio::test)]
     async fn test_walker() {
         const SOURCE: &str = "https://github.com/RConsortium/r-advisory-database";
@@ -401,7 +389,6 @@ mod test {
         let walker = OsvWalker::new(SOURCE)
             .path(Some("vulns"))
             .continuation(cont)
-            .callbacks(Parse)
             .working_dir(path.clone());
 
         let _cont = walker.run().await.expect("should not fail");
@@ -411,7 +398,6 @@ mod test {
         let walker = OsvWalker::new(SOURCE)
             .path(Some("vulns"))
             .continuation(cont)
-            .callbacks(Parse)
             .working_dir(path);
 
         walker.run().await.expect("should not fail");

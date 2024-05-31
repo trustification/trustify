@@ -1,7 +1,6 @@
 use super::cve::cve_record::v5::CveRecord;
 use super::cve::loader::CveLoader;
 use crate::graph::Graph;
-use crate::service::advisory::osv;
 use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader};
 use crate::service::Error;
 use ::csaf::Csaf;

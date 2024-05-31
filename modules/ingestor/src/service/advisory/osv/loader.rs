@@ -1,16 +1,13 @@
-use crate::graph::advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation};
-use crate::graph::Graph;
-use crate::service::advisory::osv::schema::ReferenceType;
-use crate::service::advisory::osv::translate;
-use crate::service::{
-    advisory::osv::schema::{Event, Package, SeverityType, Vulnerability},
-    hashing::HashingRead,
-    Error,
+use crate::{
+    graph::{
+        advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation},
+        Graph,
+    },
+    service::{advisory::osv::translate, hashing::HashingRead, Error},
 };
-use std::io::Read;
-use std::str::FromStr;
-use std::sync::OnceLock;
-use trustify_common::purl::Purl;
+use osv::schema::{Event, ReferenceType, SeverityType, Vulnerability};
+use std::{io::Read, str::FromStr, sync::OnceLock};
+use trustify_common::{purl::Purl, time::ChronoExt};
 use trustify_cvss::cvss3::Cvss3Base;
 
 pub struct OsvLoader<'g> {
@@ -56,9 +53,9 @@ impl<'g> OsvLoader<'g> {
             let information = AdvisoryInformation {
                 title: osv.summary.clone(),
                 issuer,
-                published: Some(osv.published),
-                modified: Some(osv.modified),
-                withdrawn: osv.withdrawn,
+                published: Some(osv.published.into_time()),
+                modified: Some(osv.modified.into_time()),
+                withdrawn: osv.withdrawn.map(ChronoExt::into_time),
             };
             let advisory = self
                 .graph
@@ -66,7 +63,9 @@ impl<'g> OsvLoader<'g> {
                 .await?;
 
             if let Some(withdrawn) = osv.withdrawn {
-                advisory.set_withdrawn_at(withdrawn, &tx).await?;
+                advisory
+                    .set_withdrawn_at(withdrawn.into_time(), &tx)
+                    .await?;
             }
 
             for cve_id in cve_ids {
@@ -99,14 +98,15 @@ impl<'g> OsvLoader<'g> {
 
                 for affected in &osv.affected {
                     if let Some(package) = &affected.package {
-                        let purl = match package {
-                            Package::Named { name, ecosystem } => {
-                                translate::to_purl(ecosystem, name)
-                            }
-                            Package::Purl { purl } => Purl::from_str(purl).ok(),
-                        };
+                        let mut purls = vec![];
 
-                        if let Some(purl) = purl {
+                        purls.extend(translate::to_purl(package).map(Purl::from));
+
+                        if let Some(purl) = &package.purl {
+                            purls.extend(Purl::from_str(purl).ok());
+                        }
+
+                        for purl in purls {
                             for range in affected.ranges.iter().flatten() {
                                 let parsed_range = events_to_range(&range.events);
                                 if let (Some(start), Some(end)) = &parsed_range {
