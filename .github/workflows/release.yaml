@@ -202,7 +202,7 @@ jobs:
 
           # build options
 
-          OPTS="--release"
+          OPTS="--no-default-features --release"
 
           if [[ "${{ matrix.edition }}" == "-pm" ]]; then
             OPTS="$OPTS --features pm"

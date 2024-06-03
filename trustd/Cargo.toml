@@ -11,7 +11,7 @@ path = "src/main.rs"
 trustify-common = { workspace = true }
 trustify-module-importer = { workspace = true }
 trustify-infrastructure = { workspace = true }
-trustify-server = { workspace = true, default-features = false }
+trustify-server = { workspace = true, features = [ "ui" ] }
 
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
@@ -24,9 +24,8 @@ openssl = "*"
 libz-sys = "*"
 
 [features]
-default = ["ui", "bundled"]
+default = ["pm"]
 
-ui = ["trustify-server/ui"]
 bundled = ["postgresql_embedded/bundled"]
 garage-door = ["trustify-server/garage-door"]
 
@@ -38,6 +37,5 @@ vendored = [
 ]
 pm = [
     "garage-door",
-    "ui",
     "bundled"
 ]

@@ -7,7 +7,7 @@
 Let's call this "PM mode":
 
 ```shell
-cargo run --bin trustd --features pm
+cargo run --bin trustd
 ```
 
 That will create its own database on your local filesystem.
