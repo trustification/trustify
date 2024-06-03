@@ -54,7 +54,7 @@ humantime = "2"
 humantime-serde = "1"
 indicatif = "0.17.8"
 indicatif-log-bridge = "0.2"
-itertools = "0.12"
+itertools = "0.13"
 jsonpath-rust = "0.5"
 lenient_semver = "0.4.2"
 log = "0.4.19"
@@ -75,7 +75,7 @@ rand = "0.8.5" # for testing
 regex = "1.10.3"
 reqwest = "0.12"
 ring = "0.17.8"
-rstest = "0.20"
+rstest = "0.21"
 rust-lzma = "0.6.0"
 sbom-walker = { version = "0.7.0", default-features = false }
 schemars = "0.8"
@@ -116,7 +116,6 @@ trustify-auth = { path = "common/auth", features = ["actix", "swagger"] }
 trustify-common = { path = "common" }
 trustify-cvss = { path = "cvss" }
 trustify-entity = { path = "entity" }
-trustify-importer = { path = "importer" }
 trustify-infrastructure = { path = "common/infrastructure" }
 trustify-migration = { path = "migration" }
 trustify-module-fundamental = { path = "modules/fundamental" }
