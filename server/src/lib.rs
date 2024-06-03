@@ -125,10 +125,21 @@ impl Run {
 
 impl InitData {
     async fn new(context: InitContext, run: Run) -> anyhow::Result<Self> {
-        #[cfg(feature = "garage-door")]
-        let embedded_oidc = embedded_oidc::spawn(run.embedded_oidc).await?;
+        // The devmode for the auth parts. This allows us to enable devmode for auth, but not
+        // for other parts.
+        #[allow(unused_mut)]
+        let mut auth_devmode = run.devmode;
 
-        let (authn, authz) = run.auth.split(run.devmode)?.unzip();
+        #[cfg(feature = "garage-door")]
+        let embedded_oidc = {
+            // When running with the embedded OIDC server, re-use devmode. Running the embedded OIDC
+            // without devmode doesn't make any sense. However, the pm-mode doesn't know about
+            // devmode. Also, enabling devmode might trigger other logic.
+            auth_devmode = true;
+            embedded_oidc::spawn(run.embedded_oidc).await?
+        };
+
+        let (authn, authz) = run.auth.split(auth_devmode)?.unzip();
         let authenticator: Option<Arc<Authenticator>> =
             Authenticator::from_config(authn).await?.map(Arc::new);
         let authorizer = Authorizer::new(authz);
@@ -138,7 +149,7 @@ impl InitData {
         }
 
         let swagger_oidc = match authenticator.is_some() {
-            true => SwaggerUiOidc::from_devmode_or_config(run.devmode, run.swagger_ui_oidc)
+            true => SwaggerUiOidc::from_devmode_or_config(auth_devmode, run.swagger_ui_oidc)
                 .await?
                 .map(Arc::new),
             false => None,
