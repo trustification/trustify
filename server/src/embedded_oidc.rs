@@ -37,10 +37,16 @@ fn create(enabled: bool) -> anyhow::Result<Option<Server>> {
     for id in PUBLIC_CLIENT_IDS {
         issuer = issuer.add_client(Client::Public {
             id: id.to_string(),
-            redirect_urls: vec![RedirectUrl::Exact {
-                url: "http://localhost".into(),
-                ignore_localhost_port: true,
-            }],
+            redirect_urls: vec![
+                RedirectUrl::Exact {
+                    url: "http://localhost".into(),
+                    ignore_localhost_port: true,
+                },
+                RedirectUrl::Exact {
+                    url: "http://localhost/openapi/oauth2-redirect.html".into(),
+                    ignore_localhost_port: true,
+                },
+            ],
             default_scope: SCOPE.to_string(),
         });
     }
