@@ -25,20 +25,22 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::task::JoinHandle;
-use trustify_auth::devmode::{FRONTEND_CLIENT_ID, ISSUER_URL, PUBLIC_CLIENT_IDS};
 use trustify_auth::{
     auth::AuthConfigArguments,
     authenticator::Authenticator,
     authorizer::Authorizer,
+    devmode::{FRONTEND_CLIENT_ID, ISSUER_URL, PUBLIC_CLIENT_IDS},
     swagger_ui::{swagger_ui_with_auth, SwaggerUiOidc, SwaggerUiOidcConfig},
 };
 use trustify_common::{
     config::{Database, StorageConfig},
     db,
 };
-use trustify_infrastructure::app::new_auth;
 use trustify_infrastructure::{
-    app::http::{HttpServerBuilder, HttpServerConfig},
+    app::{
+        http::{HttpServerBuilder, HttpServerConfig},
+        new_auth,
+    },
     endpoint::Trustify,
     health::checks::{Local, Probe},
     tracing::Tracing,
