@@ -24,9 +24,10 @@ openssl = "*"
 libz-sys = "*"
 
 [features]
-default = ["ui"]
+default = ["ui", "bundled"]
 
 ui = ["trustify-server/ui"]
+bundled = ["postgresql_embedded/bundled"]
 garage-door = ["trustify-server/garage-door"]
 
 vendored = [
@@ -37,5 +38,6 @@ vendored = [
 ]
 pm = [
     "garage-door",
-    "ui"
+    "ui",
+    "bundled"
 ]
