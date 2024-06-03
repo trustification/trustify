@@ -7,7 +7,6 @@ pub mod test;
 
 use anyhow::Context;
 use migration::{Migrator, MigratorTrait};
-use postgresql_embedded::PostgreSQL;
 use sea_orm::{
     prelude::async_trait, ConnectOptions, ConnectionTrait, DatabaseConnection, DatabaseTransaction,
     DbBackend, DbErr, ExecResult, QueryResult, RuntimeErr, Statement,
