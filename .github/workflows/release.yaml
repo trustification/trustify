@@ -341,28 +341,18 @@ jobs:
           path: image.tar
           if-no-files-found: error
 
-      - name: Log in to ghcr.io
-        uses: redhat-actions/podman-login@v1
-        with:
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          registry: "ghcr.io"
-
       # From here on, we start pushing artifacts
 
       # Push to ghcr.io
 
       - name: Push to ghcr.io
-        id: push-images
-        env:
-          IMAGE: "ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ needs.init.outputs.version }}"
-        run: |
-          podman push \
-            "${{ env.IMAGE_NAME }}:${{ needs.init.outputs.version }}" \
-            "${IMAGE}" \
-            --digestfile "${RUNNER_TEMP}/push.digest"
-          echo "imageDigest=$(cat ${RUNNER_TEMP}/push.digest)" >> $GITHUB_OUTPUT
-          rm ${RUNNER_TEMP}/push.digest
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ needs.init.outputs.version }}
+          registry: ghcr.io/${{ github.repository_owner }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       # Final step, create the GitHub release, attaching the files
 
