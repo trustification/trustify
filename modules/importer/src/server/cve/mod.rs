@@ -1,24 +1,22 @@
 mod walker;
 
 use crate::{
-    model::OsvImporter,
+    model::CveImporter,
     server::{
-        osv::{walker::Callbacks, walker::OsvWalker},
+        cve::walker::{Callbacks, CveWalker},
         report::{Phase, ReportBuilder, ScannerError, Severity},
         RunOutput,
     },
 };
-use osv::schema::Vulnerability;
+use cve::Cve;
 use parking_lot::Mutex;
 use sha2::Digest;
 use std::{path::Path, path::PathBuf, sync::Arc};
 use tokio::runtime::Handle;
 use tokio_util::io::ReaderStream;
 use tracing::instrument;
-use trustify_module_ingestor::{
-    graph::Graph,
-    service::{Format, IngestorService},
-};
+use trustify_module_ingestor::graph::Graph;
+use trustify_module_ingestor::service::{Format, IngestorService};
 
 struct Context {
     source: String,
@@ -27,8 +25,8 @@ struct Context {
 }
 
 impl Context {
-    fn store(&self, osv: Vulnerability) -> anyhow::Result<()> {
-        let data = serde_json::to_vec(&osv)?;
+    fn store(&self, cve: Cve) -> anyhow::Result<()> {
+        let data = serde_json::to_vec(&cve)?;
         let checksum = hex::encode(sha2::Sha256::digest(&data));
 
         Handle::current().block_on(async {
@@ -36,7 +34,7 @@ impl Context {
                 .ingest(
                     &self.source,
                     None,
-                    Format::OSV { checksum },
+                    Format::CVE { checksum },
                     ReaderStream::new(data.as_slice()),
                 )
                 .await
@@ -56,8 +54,8 @@ impl Callbacks for Context {
         );
     }
 
-    fn process(&mut self, path: &Path, osv: Vulnerability) -> anyhow::Result<()> {
-        if let Err(err) = self.store(osv) {
+    fn process(&mut self, path: &Path, cve: Cve) -> anyhow::Result<()> {
+        if let Err(err) = self.store(cve) {
             self.report.lock().add_error(
                 Phase::Upload,
                 path.to_string_lossy(),
@@ -72,9 +70,9 @@ impl Callbacks for Context {
 
 impl super::Server {
     #[instrument(skip(self), ret)]
-    pub async fn run_once_osv(
+    pub async fn run_once_cve(
         &self,
-        osv: OsvImporter,
+        cve: CveImporter,
         continuation: serde_json::Value,
     ) -> Result<RunOutput, ScannerError> {
         let ingestor = IngestorService::new(Graph::new(self.db.clone()), self.storage.clone());
@@ -84,15 +82,16 @@ impl super::Server {
 
         // working dir
 
-        let working_dir = self.create_working_dir("osv", &osv.source).await?;
+        let working_dir = self.create_working_dir("cve", &cve.source).await?;
 
         // run the walker
 
-        let walker = OsvWalker::new(osv.source.clone())
+        let walker = CveWalker::new(cve.source.clone())
             .continuation(continuation)
-            .path(osv.path)
+            .years(cve.years)
+            .start_year(cve.start_year)
             .callbacks(Context {
-                source: osv.source,
+                source: cve.source,
                 report: report.clone(),
                 ingestor,
             });

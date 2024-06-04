@@ -16,6 +16,7 @@ bytes = { workspace = true }
 bytesize = { workspace = true }
 cpe = { workspace = true }
 csaf = { workspace = true }
+cve = { workspace = true }
 cyclonedx-bom = { workspace = true }
 futures = { workspace = true }
 hex = { workspace = true }

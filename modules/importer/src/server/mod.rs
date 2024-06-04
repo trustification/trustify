@@ -1,5 +1,6 @@
 pub mod common;
 pub mod csaf;
+pub mod cve;
 pub mod osv;
 pub mod report;
 pub mod sbom;
@@ -120,7 +121,7 @@ impl Server {
         }
     }
 
-    #[instrument(skip_all, fields(), err, ret)]
+    #[instrument(skip_all, fields(), err)]
     async fn run_once(
         &self,
         configuration: ImporterConfiguration,
@@ -133,7 +134,26 @@ impl Server {
             ImporterConfiguration::Sbom(sbom) => self.run_once_sbom(sbom, last_run).await,
             ImporterConfiguration::Csaf(csaf) => self.run_once_csaf(csaf, last_run).await,
             ImporterConfiguration::Osv(osv) => self.run_once_osv(osv, continuation).await,
+            ImporterConfiguration::Cve(cve) => self.run_once_cve(cve, continuation).await,
         }
+    }
+
+    async fn create_working_dir(
+        &self,
+        r#type: &str,
+        source: &str,
+    ) -> anyhow::Result<Option<PathBuf>> {
+        let Some(working_dir) = &self.working_dir else {
+            return Ok(None);
+        };
+
+        let result = working_dir
+            .join(r#type)
+            .join(urlencoding::encode(source).as_ref());
+
+        tokio::fs::create_dir_all(&result).await?;
+
+        Ok(Some(result))
     }
 }
 

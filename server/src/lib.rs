@@ -89,6 +89,7 @@ pub struct Run {
     pub embedded_oidc: bool,
 
     /// The importer working directory
+    #[arg(long, env)]
     pub working_dir: Option<PathBuf>,
 }
 

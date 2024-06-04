@@ -1,8 +1,8 @@
 use crate::graph::advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation};
 use crate::graph::vulnerability::VulnerabilityInformation;
 use crate::graph::Graph;
-use crate::service::cve::cve_record::v5::CveRecord;
 use crate::service::{hashing::HashingRead, Error};
+use cve::{Cve, Timestamp};
 use std::io::Read;
 
 /// Loader capable of parsing a CVE Record JSON file
@@ -29,16 +29,44 @@ impl<'g> CveLoader<'g> {
         checksum: &str,
     ) -> Result<String, Error> {
         let mut reader = HashingRead::new(record);
-        let cve: CveRecord = serde_json::from_reader(&mut reader)?;
-        let id = cve.cve_metadata.cve_id();
+        let cve: Cve = serde_json::from_reader(&mut reader)?;
+        let id = cve.id();
 
         let tx = self.graph.transaction().await?;
 
+        let published = cve
+            .common_metadata()
+            .date_published
+            .map(Timestamp::assume_utc);
+        let modified = cve
+            .common_metadata()
+            .date_updated
+            .map(Timestamp::assume_utc);
+
+        let (title, assigned, withdrawn, descriptions) = match &cve {
+            Cve::Rejected(rejected) => (
+                None,
+                None,
+                rejected.metadata.date_rejected.map(Timestamp::assume_utc),
+                &rejected.containers.cna.rejected_reasons,
+            ),
+            Cve::Published(published) => (
+                published.containers.cna.title.as_ref(),
+                published
+                    .containers
+                    .cna
+                    .date_assigned
+                    .map(Timestamp::assume_utc),
+                None,
+                &published.containers.cna.descriptions,
+            ),
+        };
+
         let information = VulnerabilityInformation {
-            title: cve.containers.cna.title.clone(),
-            published: cve.cve_metadata.date_published(),
-            modified: cve.cve_metadata.date_updated(),
-            withdrawn: cve.cve_metadata.date_rejected(),
+            title: title.cloned(),
+            published,
+            modified,
+            withdrawn,
         };
 
         let vulnerability = self
@@ -48,12 +76,12 @@ impl<'g> CveLoader<'g> {
 
         let mut english_description = None;
 
-        for description in cve.containers.cna.descriptions {
+        for description in descriptions {
             vulnerability
-                .add_description(&description.lang, &description.value, &tx)
+                .add_description(&description.language, &description.value, &tx)
                 .await?;
 
-            if description.lang == "en" {
+            if description.language == "en" {
                 english_description = Some(description.value.clone());
             }
         }
@@ -67,11 +95,11 @@ impl<'g> CveLoader<'g> {
         }
 
         let information = AdvisoryInformation {
-            title: cve.containers.cna.title.clone(),
+            title: title.cloned(),
             issuer: Some("CVE® (MITRE Corporation".to_string()),
-            published: cve.cve_metadata.date_published(),
-            modified: cve.cve_metadata.date_updated(),
-            withdrawn: cve.cve_metadata.date_rejected(),
+            published,
+            modified,
+            withdrawn,
         };
         let advisory = self
             .graph
@@ -83,11 +111,11 @@ impl<'g> CveLoader<'g> {
             .link_to_vulnerability(
                 id,
                 Some(AdvisoryVulnerabilityInformation {
-                    title: cve.containers.cna.title.clone(),
+                    title: title.cloned(),
                     summary: None,
                     description: english_description,
-                    discovery_date: cve.cve_metadata.date_reserved(),
-                    release_date: cve.cve_metadata.date_published(),
+                    discovery_date: assigned,
+                    release_date: published,
                 }),
                 &tx,
             )
