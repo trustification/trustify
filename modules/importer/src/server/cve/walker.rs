@@ -1,5 +1,6 @@
 use crate::server::common::walker::{Continuation, Error, GitWalker, Handler, WorkingDirectory};
-use osv::schema::Vulnerability;
+use cve::Cve;
+use std::collections::HashSet;
 use std::{
     fmt::Debug,
     io::BufReader,
@@ -28,43 +29,70 @@ pub trait Callbacks: Send + 'static {
     ///
     /// Any error returned will terminate the walk with a critical error.
     #[allow(unused)]
-    fn process(&mut self, path: &Path, osv: Vulnerability) -> Result<(), anyhow::Error> {
+    fn process(&mut self, path: &Path, cve: Cve) -> Result<(), anyhow::Error> {
         Ok(())
     }
 }
 
 impl Callbacks for () {}
 
-struct OsvHandler<C>(C)
+struct CveHandler<C>
 where
-    C: Callbacks + Send + 'static;
+    C: Callbacks + Send + 'static,
+{
+    callbacks: C,
+    years: HashSet<u16>,
+    start_year: Option<u16>,
+}
 
-impl<C> Handler for OsvHandler<C>
+impl<C> Handler for CveHandler<C>
 where
     C: Callbacks + Send + 'static,
 {
     type Error = Error;
 
     fn process(&mut self, path: &Path, relative_path: &Path) -> Result<(), Self::Error> {
+        // Get the year, as we walk with a base of `cves`, that must be the year folder.
+        // If it is not, we skip it.
+        let Some(year) = relative_path
+            .iter()
+            .next()
+            .and_then(|s| s.to_string_lossy().parse::<u16>().ok())
+        else {
+            return Ok(());
+        };
+
+        // check the set of years
+        if !self.years.is_empty() && !self.years.contains(&year) {
+            return Ok(());
+        }
+
+        // check starting year
+        if let Some(start_year) = self.start_year {
+            if year < start_year {
+                return Ok(());
+            }
+        }
+
         match self.process_file(path, relative_path) {
             Ok(()) => Ok(()),
             Err(ProcessingError::Critical(err)) => Err(Error::Processing(err)),
             Err(err) => {
                 log::warn!("Failed to process file ({}): {err}", path.display());
-                self.0.loading_error(path.to_path_buf(), err.to_string());
+                self.callbacks
+                    .loading_error(path.to_path_buf(), err.to_string());
                 Ok(())
             }
         }
     }
 }
 
-impl<C> OsvHandler<C>
+impl<C> CveHandler<C>
 where
     C: Callbacks + Send + 'static,
 {
     fn process_file(&mut self, path: &Path, rel_path: &Path) -> Result<(), ProcessingError> {
-        let osv: Vulnerability = match path.extension().map(|s| s.to_string_lossy()).as_deref() {
-            Some("yaml") => serde_yaml::from_reader(BufReader::new(std::fs::File::open(path)?))?,
+        let cve: Cve = match path.extension().map(|s| s.to_string_lossy()).as_deref() {
             Some("json") => serde_json::from_reader(BufReader::new(std::fs::File::open(path)?))?,
             e => {
                 log::debug!("Skipping unknown extension: {e:?}");
@@ -73,36 +101,43 @@ where
         };
 
         log::trace!(
-            "OSV: {} ({})",
-            osv.id,
-            osv.summary.as_deref().unwrap_or("n/a")
+            "CVE ({}): {} ({:?})",
+            rel_path.display(),
+            cve.id(),
+            cve.common_metadata()
         );
 
-        self.0
-            .process(rel_path, osv)
+        self.callbacks
+            .process(rel_path, cve)
             .map_err(ProcessingError::Critical)?;
 
         Ok(())
     }
 }
 
-pub struct OsvWalker<C, T>
+pub struct CveWalker<C, T>
 where
     C: Callbacks,
     T: WorkingDirectory + Send + 'static,
 {
-    walker: GitWalker<OsvHandler<C>, T>,
+    walker: GitWalker<(), T>,
+    callbacks: C,
+    years: HashSet<u16>,
+    start_year: Option<u16>,
 }
 
-impl OsvWalker<(), ()> {
+impl CveWalker<(), ()> {
     pub fn new(source: impl Into<String>) -> Self {
         Self {
-            walker: GitWalker::new(source, OsvHandler(())),
+            walker: GitWalker::new(source, ()).path(Some("cves")),
+            callbacks: (),
+            years: Default::default(),
+            start_year: None,
         }
     }
 }
 
-impl<C, T> OsvWalker<C, T>
+impl<C, T> CveWalker<C, T>
 where
     C: Callbacks,
     T: WorkingDirectory + Send + 'static,
@@ -113,15 +148,13 @@ where
     pub fn working_dir<U: WorkingDirectory + Send + 'static>(
         self,
         working_dir: U,
-    ) -> OsvWalker<C, U> {
-        OsvWalker {
+    ) -> CveWalker<C, U> {
+        CveWalker {
             walker: self.walker.working_dir(working_dir),
+            callbacks: self.callbacks,
+            years: self.years,
+            start_year: self.start_year,
         }
-    }
-
-    pub fn path(mut self, path: Option<impl Into<String>>) -> Self {
-        self.walker = self.walker.path(path);
-        self
     }
 
     /// Set a continuation token from a previous run.
@@ -130,34 +163,54 @@ where
         self
     }
 
-    pub fn callbacks<U: Callbacks + Send + 'static>(self, callbacks: U) -> OsvWalker<U, T> {
-        OsvWalker {
-            walker: self.walker.handler(OsvHandler(callbacks)),
+    pub fn years(mut self, years: HashSet<u16>) -> Self {
+        self.years = years;
+        self
+    }
+
+    pub fn start_year(mut self, start_year: Option<u16>) -> Self {
+        self.start_year = start_year;
+        self
+    }
+
+    pub fn callbacks<U: Callbacks + Send + 'static>(self, callbacks: U) -> CveWalker<U, T> {
+        CveWalker {
+            walker: self.walker.handler(()),
+            callbacks,
+            years: self.years,
+            start_year: self.start_year,
         }
     }
 
     /// Run the walker
     #[instrument(skip(self), ret)]
     pub async fn run(self) -> Result<Continuation, Error> {
-        self.walker.run().await
+        self.walker
+            .handler(CveHandler {
+                callbacks: self.callbacks,
+                years: self.years,
+                start_year: self.start_year,
+            })
+            .run()
+            .await
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::server::common::walker::git_reset;
+    use crate::{model::DEFAULT_SOURCE_CVEPROJECT, server::common::walker::git_reset};
     use std::path::PathBuf;
 
+    /// test CVE walker, runs for a long time
+    #[ignore]
     #[test_log::test(tokio::test)]
     async fn test_walker() {
-        const SOURCE: &str = "https://github.com/RConsortium/r-advisory-database";
-        let path = PathBuf::from("target/test.data/test_walker.git");
+        let path = PathBuf::from("target/test.data/test_cve_walker.git");
 
         let cont = Continuation::default();
 
-        let walker = OsvWalker::new(SOURCE)
-            .path(Some("vulns"))
+        let walker = CveWalker::new(DEFAULT_SOURCE_CVEPROJECT)
             .continuation(cont)
             .working_dir(path.clone());
 
@@ -165,30 +218,10 @@ mod test {
 
         let cont = git_reset(&path, "HEAD~2").expect("must not fail");
 
-        let walker = OsvWalker::new(SOURCE)
-            .path(Some("vulns"))
+        let walker = CveWalker::new(DEFAULT_SOURCE_CVEPROJECT)
             .continuation(cont)
             .working_dir(path);
 
         walker.run().await.expect("should not fail");
-    }
-
-    /// ensure that using `path`, we can't escape the repo directory
-    #[test_log::test(tokio::test)]
-    async fn test_walker_fail_escape() {
-        const SOURCE: &str = "https://github.com/RConsortium/r-advisory-database";
-        let path = PathBuf::from("target/test.data/test_walker_fail_escape.git");
-
-        let cont = Continuation::default();
-
-        let walker = OsvWalker::new(SOURCE)
-            .path(Some("/etc"))
-            .continuation(cont)
-            .working_dir(path.clone());
-
-        let r = walker.run().await;
-
-        // must fail as we try to escape the repository root
-        assert!(r.is_err());
     }
 }

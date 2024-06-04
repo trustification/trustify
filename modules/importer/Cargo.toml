@@ -15,6 +15,7 @@ actix-web = { workspace = true }
 anyhow = { workspace = true }
 csaf = { workspace = true }
 csaf-walker = { workspace = true, features = ["crypto-openssl", "csaf"] }
+cve = { workspace = true }
 git2 = { workspace = true }
 hex = { workspace = true }
 humantime-serde = { workspace = true }

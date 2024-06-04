@@ -54,6 +54,8 @@ async fn pm_mode() -> anyhow::Result<ExitCode> {
         "api",
         #[cfg(feature = "garage-door")]
         "--embedded-oidc",
+        "--working-dir",
+        ".trustify/importer",
         "--sample-data",
         "--db-port",
         &postgres.settings().port.to_string(),

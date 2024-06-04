@@ -1265,6 +1265,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "cve"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c93fe9397675e55f01ae2f1268c9275bbc6d157c4966869f21aef3833ccac14"
+dependencies = [
+ "serde",
+ "serde_json",
+ "time",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "cvss"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6414,6 +6427,7 @@ dependencies = [
  "anyhow",
  "csaf",
  "csaf-walker",
+ "cve",
  "git2",
  "hex",
  "humantime-serde",
@@ -6460,6 +6474,7 @@ dependencies = [
  "bytesize",
  "cpe",
  "csaf",
+ "cve",
  "cyclonedx-bom 0.6.0",
  "futures",
  "hex",

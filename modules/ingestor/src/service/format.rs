@@ -1,9 +1,9 @@
-use super::cve::cve_record::v5::CveRecord;
 use super::cve::loader::CveLoader;
 use crate::graph::Graph;
 use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader};
 use crate::service::Error;
 use ::csaf::Csaf;
+use cve::Cve;
 use ring::digest;
 use std::io::Read;
 
@@ -48,6 +48,7 @@ impl<'g> Format {
             }
         }
     }
+
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         let checksum = checksum(bytes);
 
@@ -67,7 +68,7 @@ impl<'g> Format {
             }
         }
 
-        match serde_json::from_slice::<CveRecord>(bytes) {
+        match serde_json::from_slice::<Cve>(bytes) {
             Ok(_) => return Ok(Format::CVE { checksum }),
             Err(e) => {
                 potential_errors.push(format!("if cve: {}", e));

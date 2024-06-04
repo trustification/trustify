@@ -1,7 +1,9 @@
+use std::collections::HashSet;
 use std::time::Duration;
 use trustify_common::config::Database;
 use trustify_module_importer::model::{
-    CommonImporter, CsafImporter, ImporterConfiguration, OsvImporter, SbomImporter,
+    CommonImporter, CsafImporter, CveImporter, ImporterConfiguration, OsvImporter, SbomImporter,
+    DEFAULT_SOURCE_CVEPROJECT,
 };
 use trustify_module_importer::service::{Error, ImporterService};
 use url::Url;
@@ -43,6 +45,29 @@ async fn add_osv(
     .await
 }
 
+async fn add_cve(
+    importer: &ImporterService,
+    name: &str,
+    start_year: Option<u16>,
+    description: &str,
+) -> anyhow::Result<()> {
+    add(
+        importer,
+        name,
+        ImporterConfiguration::Cve(CveImporter {
+            common: CommonImporter {
+                disabled: true,
+                period: Duration::from_secs(300),
+                description: Some(description.into()),
+            },
+            source: DEFAULT_SOURCE_CVEPROJECT.into(),
+            years: HashSet::default(),
+            start_year,
+        }),
+    )
+    .await
+}
+
 pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()> {
     let importer = ImporterService::new(db);
 
@@ -73,6 +98,15 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
             v3_signatures: true,
             only_patterns: vec!["^cve-2024-".into()],
         }),
+    )
+    .await?;
+
+    add_cve(&importer, "cve", None, "CVE List V5").await?;
+    add_cve(
+        &importer,
+        "cve-from-2024",
+        Some(2024),
+        "CVE List V5 (starting 2024)",
     )
     .await?;
 
