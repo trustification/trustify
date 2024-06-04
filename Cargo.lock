@@ -1947,9 +1947,9 @@ dependencies = [
 
 [[package]]
 name = "garage-door"
-version = "0.1.0-rc.1"
+version = "0.1.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "568ce37e6cd1b58ffccb4bc7dfd535592cce49c195bc5b1fe377f857451bcdd0"
+checksum = "2a6dfa4484f6929b6c07acaac53671f87dacf2be9361b2d230e45e8e2d866ccc"
 dependencies = [
  "actix-cors",
  "actix-web",
