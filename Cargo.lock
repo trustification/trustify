@@ -1179,9 +1179,9 @@ dependencies = [
 
 [[package]]
 name = "csaf-walker"
-version = "0.7.5"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "450ef5313c8bb6e885c1403a3df72c6ae33d0d7496815c17778597d1d812c714"
+checksum = "ec2b9fe6035e9fa14bfc95ade2a68d0853bfd997b888e510f13dabdba033a4b2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1288,30 +1288,9 @@ dependencies = [
 
 [[package]]
 name = "cyclonedx-bom"
-version = "0.5.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ed94ea2aaea25fdfec8a03ce34f92c4d2c00d741d0de681b923256448d3835b"
-dependencies = [
- "base64 0.21.7",
- "fluent-uri",
- "once_cell",
- "ordered-float 4.2.0",
- "packageurl",
- "regex",
- "serde",
- "serde_json",
- "spdx",
- "thiserror",
- "time",
- "uuid",
- "xml-rs",
-]
-
-[[package]]
-name = "cyclonedx-bom"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b628f5a080c042a7d408692836093d6fe2c55c1b830b667229f20439b51aebd"
+checksum = "a01cb9724b305286db6e472056328b0bb914d2e8fd9cb2b91330d2c5d8df9734"
 dependencies = [
  "base64 0.21.7",
  "cyclonedx-bom-macros",
@@ -4719,16 +4698,16 @@ dependencies = [
 
 [[package]]
 name = "sbom-walker"
-version = "0.7.5"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0f17feb21367eb177c2dc8aca87616c052426b1c8861b16962a9af060d2d79a"
+checksum = "4eceb7654c46af631ff5abb1ae2a1012819fbfebb436c1d6d0e10ca51ed04575"
 dependencies = [
  "anyhow",
  "async-trait",
  "bytes",
  "chrono",
  "csv",
- "cyclonedx-bom 0.5.0",
+ "cyclonedx-bom",
  "digest",
  "filetime",
  "fluent-uri",
@@ -6362,7 +6341,7 @@ name = "trustify-integration-tests"
 version = "0.1.0-alpha.6"
 dependencies = [
  "anyhow",
- "cyclonedx-bom 0.6.0",
+ "cyclonedx-bom",
  "humantime",
  "log",
  "rust-lzma",
@@ -6484,7 +6463,7 @@ dependencies = [
  "cpe",
  "csaf",
  "cve",
- "cyclonedx-bom 0.6.0",
+ "cyclonedx-bom",
  "futures",
  "hex",
  "humantime",
@@ -6894,9 +6873,9 @@ dependencies = [
 
 [[package]]
 name = "walker-common"
-version = "0.7.5"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29ef219b08136e235f7acc61f8a30a92c21939334f859b0825181b1e5e65ca51"
+checksum = "80fb4e8e16e5c4249277a4e27c0c0ed832c6743f934458f7b613ea90cf785e06"
 dependencies = [
  "anyhow",
  "async-trait",

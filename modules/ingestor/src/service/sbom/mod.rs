@@ -89,8 +89,7 @@ impl super::IngestorService {
         source: &str,
         sha256: &str,
     ) -> Result<Uuid, Error> {
-        // FIXME: replace using only Value, once https://github.com/CycloneDX/cyclonedx-rust-cargo/pull/705 is released
-        let sbom = Bom::parse_from_json(&*serde_json::to_vec(&json)?)
+        let sbom = Bom::parse_json_value(json)
             .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
         log::info!(
@@ -140,7 +139,7 @@ fn is_spdx(json: &Value) -> bool {
 fn is_cyclonedx(json: &Value) -> bool {
     matches!(
         json["specVersion"].as_str(),
-        Some("1.2") | Some("1.3") | Some("1.4")
+        Some("1.3") | Some("1.4") | Some("1.5")
     )
 }
 
