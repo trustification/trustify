@@ -19,6 +19,7 @@ native-tls = { workspace = true }
 packageurl = { workspace = true }
 pem = { workspace = true }
 postgresql_embedded = { workspace = true, features = ["blocking", "tokio"] }
+postgresql_archive = { workspace = true }
 regex = { workspace = true }
 reqwest = { workspace = true, features = ["native-tls"] }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros"] }
