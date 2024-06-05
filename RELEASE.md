@@ -113,6 +113,12 @@ Technically, it is possible to make changes to the tag and just force-push it ag
 
 However, in most cases, it might be easier to accept defeat and try again with a new version.
 
+## Test/personal release
+
+To test, you can push a release tag to your personal fork of the repository. By default, this will run the release
+workflow in your personal repository, and create a release there. If that's ok for your fork, you can push and force
+push tags as you like, to fix and test the release process.
+
 ## Alternative approaches
 
 It is possible to just push the tag without waiting for the "next version" PR to be merged. The downside is that it
