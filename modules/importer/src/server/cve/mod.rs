@@ -10,7 +10,6 @@ use crate::{
 };
 use cve::Cve;
 use parking_lot::Mutex;
-use sha2::Digest;
 use std::{path::Path, path::PathBuf, sync::Arc};
 use tokio::runtime::Handle;
 use tokio_util::io::ReaderStream;
@@ -27,14 +26,13 @@ struct Context {
 impl Context {
     fn store(&self, cve: Cve) -> anyhow::Result<()> {
         let data = serde_json::to_vec(&cve)?;
-        let checksum = hex::encode(sha2::Sha256::digest(&data));
 
         Handle::current().block_on(async {
             self.ingestor
                 .ingest(
                     &self.source,
                     None,
-                    Format::CVE { checksum },
+                    Format::CVE,
                     ReaderStream::new(data.as_slice()),
                 )
                 .await
