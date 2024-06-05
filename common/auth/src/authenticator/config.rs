@@ -69,7 +69,7 @@ impl From<AuthenticatorConfigArguments> for Option<AuthenticatorConfig> {
 #[command(next_help_heading = "Authentication settings")]
 pub struct SingleAuthenticatorClientConfig {
     /// The client IDs to allow
-    #[arg(env = "AUTHENTICATOR_OIDC_CLIENT_IDS", long = "authentication-client-id", action = ArgAction::Append)]
+    #[arg(env = "AUTHENTICATOR_OIDC_CLIENT_IDS", long = "authentication-client-id", action = ArgAction::Append, value_delimiter = ',')]
     pub client_ids: Vec<String>,
 
     /// The issuer URL of the clients.
@@ -81,7 +81,7 @@ pub struct SingleAuthenticatorClientConfig {
     )]
     pub issuer_url: String,
 
-    /// Enforce an "audience" to he present in the access token
+    /// Enforce an "audience" to be present in the access token
     #[arg(
         env = "AUTHENTICATOR_OIDC_REQUIRED_AUDIENCE",
         long = "authentication-required-audience"

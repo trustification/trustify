@@ -92,4 +92,31 @@ mod tests {
         use clap::CommandFactory;
         Trustd::command().debug_assert();
     }
+
+    #[cfg(test)]
+    mod test {
+        use crate::{Command, Trustd};
+        use clap::Parser;
+        use temp_env::with_vars;
+
+        /// test splitting the client ids via comma
+        // We can only test this here as here we have the Trustd struct that clap can parse.
+        #[test]
+        fn test_multi_client_ids_env() {
+            let result = with_vars(
+                [("AUTHENTICATOR_OIDC_CLIENT_IDS", Some("frontend,walker"))],
+                || Trustd::try_parse_from(["trustd", "api"]),
+            );
+
+            let Ok(Trustd {
+                command: Some(Command::Api(run)),
+                ..
+            }) = result
+            else {
+                panic!("must parse into the api command");
+            };
+
+            assert_eq!(run.auth.clients.client_ids, vec!["frontend", "walker"])
+        }
+    }
 }
