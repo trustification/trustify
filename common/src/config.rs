@@ -72,7 +72,7 @@ pub struct StorageConfig {
     #[arg(
         id = "storage-strategy",
         long,
-        env,
+        env = "STORAGE_STRATEGY",
         default_value_t = StorageStrategy::Fs,
     )]
     pub storage_strategy: StorageStrategy,
@@ -80,7 +80,7 @@ pub struct StorageConfig {
     #[arg(
         id = "storage-fs-path",
         long,
-        env = "DB_NAME",
+        env = "STORAGE_FS_PATH",
         default_value = "./.trustify/storage",
         required = false,
         required_if_eq("storage-strategy", "fs")
