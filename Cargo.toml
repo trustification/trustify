@@ -111,7 +111,7 @@ walkdir = "2.5"
 walker-common = "0.8.0"
 walker-extras = "0.8.0"
 
-garage-door = "=0.1.0-rc.2"
+garage-door = "0.1.0"
 
 trustify-auth = { path = "common/auth", features = ["actix", "swagger"] }
 trustify-common = { path = "common" }
