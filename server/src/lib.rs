@@ -83,6 +83,10 @@ pub struct Run {
     #[command(flatten)]
     pub swagger_ui_oidc: SwaggerUiOidcConfig,
 
+    #[cfg(feature = "ui")]
+    #[command(flatten)]
+    pub ui: UiConfig,
+
     /// Enable the embedded OIDC server (WARNING: this is insecure and should only be used for demos)
     #[cfg(feature = "garage-door")]
     #[arg(long, env)]
@@ -91,6 +95,21 @@ pub struct Run {
     /// The importer working directory
     #[arg(long, env)]
     pub working_dir: Option<PathBuf>,
+}
+
+#[derive(clap::Args, Debug, Clone)]
+#[command(next_help_heading = "UI")]
+#[group(id = "ui")]
+pub struct UiConfig {
+    /// Issuer URL used by the UI
+    #[arg(id = "ui_issuer_url", long, env, default_value_t = ISSUER_URL.to_string())]
+    pub issuer_url: String,
+    /// Client ID used by the UI
+    #[arg(id = "ui_client_id", long, env, default_value_t = FRONTEND_CLIENT_ID.to_string())]
+    pub client_id: String,
+    /// Scopes to request
+    #[arg(id = "ui_scope", long, env, default_value = "openid")]
+    pub scope: String,
 }
 
 const SERVICE_ID: &str = "trustify";
@@ -200,9 +219,9 @@ impl InitData {
             // TODO: where/how should we configure these details?
             version: env!("CARGO_PKG_VERSION").to_string(),
             auth_required: authenticator.is_some().to_string(),
-            oidc_server_url: String::from(ISSUER_URL),
-            oidc_client_id: String::from(FRONTEND_CLIENT_ID),
-            oidc_scope: String::from("openid"),
+            oidc_server_url: run.ui.issuer_url,
+            oidc_client_id: run.ui.client_id,
+            oidc_scope: run.ui.scope,
             analytics_enabled: String::from("false"),
             analytics_write_key: String::from(""),
         };
