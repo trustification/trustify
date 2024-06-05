@@ -58,14 +58,26 @@ use trustify_module_ui::UI;
 /// Run the API server
 #[derive(clap::Args, Debug)]
 pub struct Run {
-    #[command(flatten)]
-    pub database: Database,
-
     #[arg(long, env)]
     pub devmode: bool,
 
     #[arg(long, env)]
     pub sample_data: bool,
+
+    /// Enable the embedded OIDC server (WARNING: this is insecure and should only be used for demos)
+    #[cfg(feature = "garage-door")]
+    #[arg(long, env)]
+    pub embedded_oidc: bool,
+
+    /// The importer working directory
+    #[arg(long, env)]
+    pub working_dir: Option<PathBuf>,
+
+    // flattened commands must go last
+    //
+    /// Database configuration
+    #[command(flatten)]
+    pub database: Database,
 
     /// Location of the storage
     #[command(flatten)]
@@ -86,15 +98,6 @@ pub struct Run {
     #[cfg(feature = "ui")]
     #[command(flatten)]
     pub ui: UiConfig,
-
-    /// Enable the embedded OIDC server (WARNING: this is insecure and should only be used for demos)
-    #[cfg(feature = "garage-door")]
-    #[arg(long, env)]
-    pub embedded_oidc: bool,
-
-    /// The importer working directory
-    #[arg(long, env)]
-    pub working_dir: Option<PathBuf>,
 }
 
 #[derive(clap::Args, Debug, Clone)]
@@ -102,13 +105,13 @@ pub struct Run {
 #[group(id = "ui")]
 pub struct UiConfig {
     /// Issuer URL used by the UI
-    #[arg(id = "ui_issuer_url", long, env, default_value_t = ISSUER_URL.to_string())]
+    #[arg(id = "ui-issuer-url", long, env = "UI_ISSUER_URL", default_value_t = ISSUER_URL.to_string())]
     pub issuer_url: String,
     /// Client ID used by the UI
-    #[arg(id = "ui_client_id", long, env, default_value_t = FRONTEND_CLIENT_ID.to_string())]
+    #[arg(id = "ui-client-id", long, env ="UI_CLIENT_ID", default_value_t = FRONTEND_CLIENT_ID.to_string())]
     pub client_id: String,
     /// Scopes to request
-    #[arg(id = "ui_scope", long, env, default_value = "openid")]
+    #[arg(id = "ui-scope", long, env = "UI_SCOPE", default_value = "openid")]
     pub scope: String,
 }
 
