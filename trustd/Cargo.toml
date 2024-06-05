@@ -23,6 +23,9 @@ url = { workspace = true }
 openssl = "*"
 libz-sys = "*"
 
+[dev-dependencies]
+temp-env = "0.3"
+
 [features]
 default = ["pm"]
 
