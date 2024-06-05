@@ -116,6 +116,7 @@ impl IngestorService {
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
         let sha256 = hex::encode(digest);
 
+        // TODO: can advisories have an algorithm prefix?
         let hash_key = HashKey::Sha256(sha256);
 
         let storage = SyncAdapter::new(self.storage.clone());
@@ -125,6 +126,7 @@ impl IngestorService {
             .map_err(Error::Storage)?
             .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?;
 
+        // TODO: advisories return string but sbom's return UUID?
         let result = fmt.load(&self.graph, source, issuer, reader).await?;
 
         let duration = Instant::now() - start;

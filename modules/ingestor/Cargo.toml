@@ -21,6 +21,7 @@ cyclonedx-bom = { workspace = true }
 futures = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }
+jsn = { workspace = true }
 lenient_semver = { workspace = true }
 log = { workspace = true }
 osv = { workspace = true, features = ["schema"] }
