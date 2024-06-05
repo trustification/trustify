@@ -87,6 +87,22 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
 
     add(
         &importer,
+        "redhat-csaf",
+        ImporterConfiguration::Csaf(CsafImporter {
+            common: CommonImporter {
+                disabled: true,
+                period: Duration::from_secs(300),
+                description: Some("All Red Hat CSAF data".into()),
+            },
+            source: "redhat.com".to_string(),
+            v3_signatures: true,
+            only_patterns: vec![],
+        }),
+    )
+    .await?;
+
+    add(
+        &importer,
         "redhat-csaf-vex-2024",
         ImporterConfiguration::Csaf(CsafImporter {
             common: CommonImporter {
