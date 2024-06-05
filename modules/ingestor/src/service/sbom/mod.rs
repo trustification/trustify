@@ -7,7 +7,6 @@ use bytes::Bytes;
 use cyclonedx_bom::prelude::Bom;
 use futures::Stream;
 use serde_json::Value;
-use std::str::FromStr;
 use std::time::Instant;
 use trustify_common::hash::HashKey;
 use trustify_module_storage::service::{StorageBackend, SyncAdapter};
@@ -28,7 +27,7 @@ impl super::IngestorService {
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
         let sha256 = hex::encode(digest);
 
-        let hash_key = HashKey::from_str(&sha256)?;
+        let hash_key = HashKey::Sha256(sha256.clone());
 
         let storage = SyncAdapter::new(self.storage.clone());
         let data = storage
@@ -143,4 +142,41 @@ fn is_cyclonedx(json: &Value) -> bool {
         json["specVersion"].as_str(),
         Some("1.2") | Some("1.3") | Some("1.4")
     )
+}
+
+#[cfg(test)]
+mod test {
+    use crate::graph::Graph;
+    use crate::service::IngestorService;
+    use bytes::Bytes;
+    use futures::stream;
+    use std::convert::Infallible;
+    use test_context::test_context;
+    use test_log::test;
+    use trustify_common::db::test::TrustifyContext;
+    use trustify_module_storage::service::fs::FileSystemBackend;
+
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test(tokio::test)]
+    async fn basic_sbom_test(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
+        let graph = Graph::new(db);
+        let data = include_bytes!(
+            "../../../../../etc/test-data/quarkus-bom-2.13.8.Final-redhat-00004.json"
+        );
+
+        let (storage, _tmp) = FileSystemBackend::for_test().await?;
+
+        let ingestor = IngestorService::new(graph, storage);
+
+        ingestor
+            .ingest_sbom(
+                "test",
+                stream::iter([Ok::<_, Infallible>(Bytes::from_static(data))]),
+            )
+            .await
+            .expect("must ingest");
+
+        Ok(())
+    }
 }
