@@ -5,7 +5,7 @@ use crate::Error;
 use trustify_common::db::limiter::LimiterTrait;
 use trustify_common::db::query::{Filtering, Query};
 use trustify_common::db::{Database, Transactional};
-use trustify_common::hash::HashKey;
+use trustify_common::hash::HashOrUuidKey;
 use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_entity::advisory;
 
@@ -42,14 +42,15 @@ impl AdvisoryService {
 
     pub async fn fetch_advisory<TX: AsRef<Transactional> + Sync + Send>(
         &self,
-        hash_key: HashKey,
+        hash_key: HashOrUuidKey,
         tx: TX,
     ) -> Result<Option<AdvisoryDetails>, Error> {
         let connection = self.db.connection(&tx);
 
         let results = advisory::Entity::find()
             .filter(match hash_key {
-                HashKey::Sha256(hash) => advisory::Column::Sha256.eq(hash),
+                HashOrUuidKey::Uuid(uuid) => advisory::Column::Id.eq(uuid),
+                HashOrUuidKey::Sha256(hash) => advisory::Column::Sha256.eq(hash),
                 _ => return Err(Error::UnsupportedHashAlgorithm),
             })
             .one(&connection)

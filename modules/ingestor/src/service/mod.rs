@@ -14,7 +14,7 @@ use futures::Stream;
 use sea_orm::error::DbErr;
 use std::time::Instant;
 use trustify_common::error::ErrorInformation;
-use trustify_common::hash::{HashKey, HashKeyError};
+use trustify_common::hash::{HashKeyError, HashOrUuidKey};
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use trustify_module_storage::service::{StorageBackend, SyncAdapter};
 
@@ -116,7 +116,7 @@ impl IngestorService {
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
         let sha256 = hex::encode(digest);
 
-        let hash_key = HashKey::Sha256(sha256.clone());
+        let hash_key = HashOrUuidKey::Sha256(sha256.clone());
 
         let storage = SyncAdapter::new(self.storage.clone());
         let reader = storage

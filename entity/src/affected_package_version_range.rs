@@ -6,7 +6,7 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i32,
-    pub advisory_id: i32,
+    pub advisory_id: Uuid,
     pub vulnerability_id: i32,
     pub package_version_range_id: i32,
 }

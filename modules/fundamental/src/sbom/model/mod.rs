@@ -1,7 +1,7 @@
 use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
-use trustify_common::hash::HashKey;
+use trustify_common::hash::HashOrUuidKey;
 use trustify_common::paginated;
 use trustify_entity::relationship::Relationship;
 use utoipa::ToSchema;
@@ -9,7 +9,7 @@ use utoipa::ToSchema;
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct SbomSummary {
     pub id: Uuid,
-    pub hashes: Vec<HashKey>,
+    pub hashes: Vec<HashOrUuidKey>,
 
     pub document_id: String,
 

@@ -144,7 +144,7 @@ async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
 
     let fetch = AdvisoryService::new(db);
-    let jenny = HashKey::from_str("sha256:8675309")?;
+    let jenny = HashOrUuidKey::from_str("sha256:8675309")?;
     let fetched = fetch.fetch_advisory(jenny.clone(), ()).await?;
     assert!(matches!(
             fetched,

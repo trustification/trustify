@@ -9,7 +9,7 @@ use std::str::FromStr;
 use tokio_util::io::ReaderStream;
 use trustify_common::db::query::Query;
 use trustify_common::db::Database;
-use trustify_common::hash::HashKey;
+use trustify_common::hash::HashOrUuidKey;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
@@ -39,7 +39,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
         trustify_common::purl::Purl,
-        trustify_common::hash::HashKey,
+        trustify_common::hash::HashOrUuidKey,
     )),
     tags()
 )]
@@ -69,7 +69,7 @@ pub async fn all(
     tag = "advisory",
     context_path = "/api",
     params(
-        ("key" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
+        ("key" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
         (status = 200, description = "Matching advisory", body = AdvisoryDetails),
@@ -81,7 +81,7 @@ pub async fn get(
     state: web::Data<AdvisoryService>,
     key: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
-    let hash_key = HashKey::from_str(&key).map_err(Error::HashKey)?;
+    let hash_key = HashOrUuidKey::from_str(&key).map_err(Error::HashKey)?;
     let fetched = state.fetch_advisory(hash_key, ()).await?;
 
     if let Some(fetched) = fetched {
@@ -138,7 +138,7 @@ pub async fn download(
     service: web::Data<IngestorService>,
     key: web::Path<String>,
 ) -> Result<impl Responder, Error> {
-    let hash_key = HashKey::from_str(&key).map_err(Error::HashKey)?;
+    let hash_key = HashOrUuidKey::from_str(&key).map_err(Error::HashKey)?;
 
     let stream = service
         .get_ref()

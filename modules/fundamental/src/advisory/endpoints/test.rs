@@ -253,6 +253,106 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
+async fn one_advisory_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+    let graph = Graph::new(db.clone());
+    let (storage, _) = FileSystemBackend::for_test().await?;
+
+    let app = actix_web::test::init_service(
+        App::new().service(
+            web::scope("/api")
+                .configure(|config| crate::endpoints::configure(config, db, storage.clone())),
+        ),
+    )
+    .await;
+
+    graph
+        .ingest_advisory(
+            "RHSA-1",
+            "http://redhat.com/",
+            "8675309",
+            AdvisoryInformation {
+                title: Some("RHSA-1".to_string()),
+                issuer: Some("Red Hat Product Security".to_string()),
+                published: Some(OffsetDateTime::now_utc()),
+                modified: None,
+                withdrawn: None,
+            },
+            (),
+        )
+        .await?;
+
+    let advisory = graph
+        .ingest_advisory(
+            "RHSA-2",
+            "http://redhat.com/",
+            "8675319",
+            AdvisoryInformation {
+                title: Some("RHSA-2".to_string()),
+                issuer: Some("Red Hat Product Security".to_string()),
+                published: Some(OffsetDateTime::now_utc()),
+                modified: None,
+                withdrawn: None,
+            },
+            (),
+        )
+        .await?;
+
+    let uuid = advisory.advisory.id;
+
+    let advisory_vuln = advisory
+        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .await?;
+    advisory_vuln
+        .ingest_cvss3_score(
+            Cvss3Base {
+                minor_version: 0,
+                av: AttackVector::Network,
+                ac: AttackComplexity::Low,
+                pr: PrivilegesRequired::High,
+                ui: UserInteraction::None,
+                s: Scope::Changed,
+                c: Confidentiality::High,
+                i: Integrity::None,
+                a: Availability::None,
+            },
+            (),
+        )
+        .await?;
+
+    advisory_vuln
+        .ingest_not_affected_package_version(&Purl::from_str("pkg://maven/log4j/log4j@1.2.3")?, ())
+        .await?;
+
+    let uri = format!("/api/v1/advisory/{}", uuid.urn());
+
+    let request = TestRequest::get().uri(&uri).to_request();
+
+    let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
+
+    log::debug!("{:#?}", response);
+
+    assert_eq!(
+        response.clone().path("$.issuer.name").unwrap(),
+        json!(["Red Hat Product Security"])
+    );
+
+    let cvss3_scores = response
+        .path("$.vulnerabilities[*].cvss3_scores.*")
+        .unwrap();
+
+    log::debug!("{:#?}", cvss3_scores);
+
+    assert_eq!(
+        cvss3_scores,
+        json!(["CVSS:3.0/AV:N/AC:L/PR:H/UI:N/S:C/C:H/I:N/A:N"])
+    );
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
 async fn search_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     use actix_web::test::init_service;
     use trustify_module_storage::service::fs::FileSystemBackend;
