@@ -22,7 +22,6 @@ use config::AuthenticatorClientConfig;
 use error::AuthenticationError;
 use futures_util::{stream, StreamExt, TryStreamExt};
 use jsonpath_rust::parser::model::JsonPath;
-use jsonpath_rust::path::config::JsonPathConfig;
 use jsonpath_rust::path::json_path_instance;
 use jsonpath_rust::JsonPathValue;
 use openid::{Client, Configurable, Discovered, Empty, Jws};
@@ -200,7 +199,6 @@ async fn create_client(config: AuthenticatorClientConfig) -> anyhow::Result<Auth
         additional_permissions: config.additional_permissions,
         group_selector,
         group_mappings: config.group_mappings,
-        config: JsonPathConfig::default(),
     })
 }
 
@@ -212,8 +210,6 @@ pub struct AuthenticatorClient {
     additional_permissions: Vec<String>,
     group_selector: Option<JsonPath>,
     group_mappings: HashMap<String, Vec<String>>,
-
-    config: JsonPathConfig,
 }
 
 impl AuthenticatorClient {
@@ -224,9 +220,7 @@ impl AuthenticatorClient {
         let groups = self
             .group_selector
             .as_ref()
-            .map(|selector| {
-                Self::extract_groups(&access_token.extended_claims, selector, self.config.clone())
-            })
+            .map(|selector| Self::extract_groups(&access_token.extended_claims, selector))
             .unwrap_or_default();
 
         permissions.extend(Self::map_groups(groups, &self.group_mappings));
@@ -238,8 +232,8 @@ impl AuthenticatorClient {
     }
 
     /// Extract the groups from the value/access token
-    fn extract_groups(value: &Value, selector: &JsonPath, config: JsonPathConfig) -> Vec<String> {
-        json_path_instance(selector, value, config)
+    fn extract_groups(value: &Value, selector: &JsonPath) -> Vec<String> {
+        json_path_instance(selector, value)
             .find(JsonPathValue::from_root(value))
             .into_iter()
             .filter_map(|group| match group {
@@ -289,7 +283,6 @@ impl Deref for AuthenticatorClient {
 #[cfg(test)]
 mod test {
     use super::*;
-    use jsonpath_rust::JsonPathFinder;
 
     fn assert_scope_mapping(scopes: &str, mappings: &[(&str, &[&str])], expected: &[&str]) {
         let mappings = mappings
@@ -340,26 +333,10 @@ mod test {
 }"#;
 
         let value: Value = serde_json::from_str(token).unwrap();
-
         const PATH: &str = r#"$.['foo:bar'][*]"#;
-        let alternative = JsonPathFinder::from_str(token, PATH)
-            .unwrap()
-            .find_slice()
-            .into_iter()
-            .flat_map(|v| {
-                // println!("Found: {v:?}");
-                match v {
-                    JsonPathValue::Slice(data, _) => data.as_str().map(ToString::to_string),
-                    JsonPathValue::NewValue(data) => data.as_str().map(ToString::to_string),
-                    _ => None,
-                }
-            })
-            .collect::<Vec<_>>();
-        assert_eq!(&alternative, &["manager", "reader"]);
 
         let selector = jsonpath_rust::parser::parser::parse_json_path(PATH).unwrap();
-        let groups =
-            AuthenticatorClient::extract_groups(&value, &selector, JsonPathConfig::default());
+        let groups = AuthenticatorClient::extract_groups(&value, &selector);
         assert_eq!(&groups, &["manager", "reader"]);
     }
 }
