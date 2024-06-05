@@ -9,7 +9,7 @@ use time::OffsetDateTime;
 #[sea_orm(table_name = "advisory")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i32,
+    pub id: Uuid,
     pub identifier: String,
     pub issuer_id: Option<i32>,
     pub location: String,

@@ -1,4 +1,6 @@
+use sea_orm::prelude::Uuid;
 use sea_orm::{LoaderTrait, ModelTrait};
+
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use utoipa::ToSchema;
@@ -9,7 +11,7 @@ pub use details::advisory_vulnerability::*;
 pub use details::*;
 pub use summary::*;
 use trustify_common::db::ConnectionOrTransaction;
-use trustify_common::hash::HashKey;
+use trustify_common::hash::HashOrUuidKey;
 use trustify_entity::{advisory, organization};
 
 mod details;
@@ -17,8 +19,10 @@ mod summary;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct AdvisoryHead {
+    #[serde(with = "uuid::serde::urn")]
+    pub uuid: Uuid,
     pub identifier: String,
-    pub hashes: Vec<HashKey>,
+    pub hashes: Vec<HashOrUuidKey>,
     pub issuer: Option<OrganizationSummary>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
@@ -47,8 +51,9 @@ impl AdvisoryHead {
         };
 
         Ok(Self {
+            uuid: entity.id,
             identifier: entity.identifier.clone(),
-            hashes: vec![HashKey::Sha256(entity.sha256.clone())],
+            hashes: vec![HashOrUuidKey::Sha256(entity.sha256.clone())],
             issuer,
             published: entity.published,
             modified: entity.modified,
@@ -73,8 +78,9 @@ impl AdvisoryHead {
             };
 
             heads.push(Self {
+                uuid: advisory.id,
                 identifier: advisory.identifier.clone(),
-                hashes: vec![HashKey::Sha256(advisory.sha256.clone())],
+                hashes: vec![HashOrUuidKey::Sha256(advisory.sha256.clone())],
                 issuer,
                 published: advisory.published,
                 modified: advisory.modified,

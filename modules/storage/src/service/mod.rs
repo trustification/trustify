@@ -8,7 +8,7 @@ use sha2::{digest::Output, Sha256};
 use std::fmt::Debug;
 use std::future::Future;
 use std::io::{Cursor, Read};
-use trustify_common::hash::HashKey;
+use trustify_common::hash::HashOrUuidKey;
 
 #[derive(Debug, thiserror::Error)]
 pub enum StoreError<S: Debug, B: Debug> {
@@ -33,7 +33,7 @@ pub trait StorageBackend {
     /// Retrieve the content as an async reader
     fn retrieve(
         self,
-        hash_key: HashKey,
+        hash_key: HashOrUuidKey,
     ) -> impl Future<Output = Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error>>;
 }
 
@@ -48,7 +48,7 @@ impl<T: StorageBackend> SyncAdapter<T> {
     /// Retrieve the content as a sync reader, the operation itself is async
     ///
     /// NOTE: The default implementation falls back to an in-memory buffer.
-    pub async fn retrieve(self, hash_key: HashKey) -> Result<Option<impl Read>, T::Error>
+    pub async fn retrieve(self, hash_key: HashOrUuidKey) -> Result<Option<impl Read>, T::Error>
     where
         Self: Sized,
     {

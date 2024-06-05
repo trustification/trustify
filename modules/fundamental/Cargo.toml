@@ -27,6 +27,7 @@ tokio = { workspace = true, features = ["full"] }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras"] }
+uuid = { workspace = true }
 
 [dev-dependencies]
 bytesize = { workspace = true }

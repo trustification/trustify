@@ -69,7 +69,7 @@ impl ResponseError for Error {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Query error", err))
             }
             Error::HashKey(err) => {
-                HttpResponse::BadRequest().json(ErrorInformation::new("Hash key", err))
+                HttpResponse::BadRequest().json(ErrorInformation::new("Key", err))
             }
             Error::Data(msg) => HttpResponse::InternalServerError()
                 .json(ErrorInformation::new("Data-model corruption", msg)),

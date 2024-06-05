@@ -6540,6 +6540,7 @@ dependencies = [
  "trustify-module-storage",
  "urlencoding",
  "utoipa",
+ "uuid",
 ]
 
 [[package]]

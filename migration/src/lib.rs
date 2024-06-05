@@ -29,6 +29,7 @@ mod m0000270_sbom_package_purl_ref;
 mod m0000280_add_advisory_vulnerability_meta;
 mod m0000290_create_product;
 mod m0000300_create_product_version;
+mod m0000310_alter_advisory_primary_key;
 
 pub struct Migrator;
 
@@ -64,6 +65,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000280_add_advisory_vulnerability_meta::Migration),
             Box::new(m0000290_create_product::Migration),
             Box::new(m0000300_create_product_version::Migration),
+            Box::new(m0000310_alter_advisory_primary_key::Migration),
         ]
     }
 }
@@ -73,5 +75,13 @@ pub struct Now;
 impl Iden for Now {
     fn unquoted(&self, s: &mut dyn Write) {
         write!(s, "now").unwrap()
+    }
+}
+
+pub struct UuidV4;
+
+impl Iden for UuidV4 {
+    fn unquoted(&self, s: &mut dyn Write) {
+        write!(s, "gen_random_uuid").unwrap()
     }
 }

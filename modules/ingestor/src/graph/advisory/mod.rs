@@ -12,6 +12,7 @@ use time::OffsetDateTime;
 use trustify_common::db::Transactional;
 use trustify_entity as entity;
 use trustify_entity::advisory;
+use uuid::Uuid;
 
 pub mod advisory_vulnerability;
 
@@ -55,7 +56,7 @@ impl From<()> for AdvisoryInformation {
 impl Graph {
     pub async fn get_advisory_by_id<TX: AsRef<Transactional>>(
         &self,
-        id: i32,
+        id: Uuid,
         tx: TX,
     ) -> Result<Option<AdvisoryContext>, Error> {
         Ok(entity::advisory::Entity::find_by_id(id)
