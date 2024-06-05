@@ -12,8 +12,8 @@ cargo run --bin trustd
 
 That will create its own database on your local filesystem.
 
-* The first command also contains **UI** so point your browser at <http://localhost:8080>.
-* The second runs without **UI** then you can go at <http://localhost:8080/swagger-ui/> to view the API.
+* To use the **UI**, navigate to: <http://localhost:8080>.
+* To use the **Swagger UI**, navigate to: <http://localhost:8080/openapi/>.
 
 ### Running containerized UI
 
