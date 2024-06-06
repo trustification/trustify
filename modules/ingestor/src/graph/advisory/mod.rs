@@ -118,7 +118,7 @@ impl Graph {
         let model = entity::advisory::ActiveModel {
             id: Default::default(),
             identifier: Set(identifier),
-            organization_id: Set(organization.map(|org| org.organization.id)),
+            issuer_id: Set(organization.map(|org| org.organization.id)),
             location: Set(location),
             sha256: Set(sha256),
             title: Set(information.title),

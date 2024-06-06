@@ -210,7 +210,7 @@ mod test {
 
         let loaded_advisory = loaded_advisory.unwrap();
 
-        assert!(loaded_advisory.advisory.organization_id.is_some());
+        assert!(loaded_advisory.advisory.issuer_id.is_some());
 
         let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(()).await?;
         assert_eq!(1, loaded_advisory_vulnerabilities.len());
