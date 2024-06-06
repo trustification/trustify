@@ -3,13 +3,14 @@ use std::sync::Arc;
 use trustify_common::db::Transactional;
 use trustify_entity::advisory::Model as Advisory;
 use trustify_module_ingestor::graph::Graph;
+use uuid::Uuid;
 
 #[derive(Default)]
 pub struct AdvisoryQuery;
 
 #[Object]
 impl AdvisoryQuery {
-    async fn get_advisory_by_id<'a>(&self, ctx: &Context<'a>, id: i32) -> FieldResult<Advisory> {
+    async fn get_advisory_by_id<'a>(&self, ctx: &Context<'a>, id: Uuid) -> FieldResult<Advisory> {
         let graph = ctx.data::<Arc<Graph>>()?;
         let advisory = graph.get_advisory_by_id(id, Transactional::None).await;
 
