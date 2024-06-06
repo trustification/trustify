@@ -271,8 +271,6 @@ impl InitData {
                 .data::<Arc<db::Database>>(Arc::new(self.db.clone()))
                 .finish();
 
-            println!("{}", &schema.sdl());
-
             HttpServerBuilder::try_from(self.http)?
                 .tracing(self.tracing)
                 .metrics(metrics.registry().clone(), SERVICE_ID)
@@ -285,12 +283,14 @@ impl InitData {
                         ));
                     svc.service(
                         web::resource("/graphql")
+                            .wrap(new_auth(self.authenticator.clone()))
                             .wrap(Cors::permissive())
                             .guard(guard::Post())
                             .to(GraphQL::new(schema.clone())),
                     );
                     svc.service(
                         web::resource("/graphql")
+                            .wrap(new_auth(self.authenticator.clone()))
                             .wrap(Cors::permissive())
                             .guard(guard::Get())
                             .to(index_graphiql),
