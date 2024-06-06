@@ -416,10 +416,9 @@ async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::
         .to_request();
 
     let response = actix_web::test::call_service(&app, request).await;
-
-    assert!(response.status().is_success());
-    let id: String = actix_web::test::read_body_json(response).await;
-    assert_eq!(id, "CVE-2023-33201");
+    let doc: Value = actix_web::test::read_body_json(response).await;
+    log::debug!("{doc}");
+    assert_eq!(doc.as_str(), Some("CVE-2023-33201"));
 
     Ok(())
 }
