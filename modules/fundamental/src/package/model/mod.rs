@@ -46,7 +46,7 @@ impl PackageHead {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct PackageVersionHead {
     pub uuid: Uuid,
     pub purl: Purl,
@@ -73,7 +73,7 @@ impl PackageVersionHead {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct QualifiedPackageHead {
     pub uuid: Uuid,
     pub purl: Purl,

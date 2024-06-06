@@ -2,7 +2,8 @@ use crate::package::endpoints::configure;
 use crate::package::model::details::package::PackageDetails;
 use crate::package::model::details::package_version::PackageVersionDetails;
 use crate::package::model::details::qualified_package::QualifiedPackageDetails;
-use crate::package::model::summary::package::PackageSummary;
+use crate::package::model::summary::package::{PackageSummary, PaginatedPackageSummary};
+use crate::package::model::summary::qualified_package::PaginatedQualifiedPackageSummary;
 use crate::package::model::summary::r#type::TypeSummary;
 use actix_web::test::TestRequest;
 use actix_web::{web, App};
@@ -304,6 +305,72 @@ async fn base(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let response: PackageDetails = actix_web::test::call_and_read_body_json(&app, request).await;
 
     assert_eq!(log4j.head.uuid, response.head.uuid);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn base_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+
+    setup(&db).await?;
+
+    let app = actix_web::test::init_service(
+        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
+    )
+    .await;
+
+    let uri = "/api/v1/package/base?q=log4j";
+    let request = TestRequest::get().uri(uri).to_request();
+    let response: PaginatedPackageSummary =
+        actix_web::test::call_and_read_body_json(&app, request).await;
+
+    assert_eq!(1, response.items.len());
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+
+    setup(&db).await?;
+
+    let app = actix_web::test::init_service(
+        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
+    )
+    .await;
+
+    let uri = "/api/v1/package?q=log4j";
+    let request = TestRequest::get().uri(uri).to_request();
+    let response: PaginatedQualifiedPackageSummary =
+        actix_web::test::call_and_read_body_json(&app, request).await;
+
+    assert_eq!(3, response.items.len());
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn qualified_packages_filtering(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+
+    setup(&db).await?;
+
+    let app = actix_web::test::init_service(
+        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
+    )
+    .await;
+
+    let uri = "/api/v1/package?q=type=maven";
+    let request = TestRequest::get().uri(uri).to_request();
+    let response: PaginatedQualifiedPackageSummary =
+        actix_web::test::call_and_read_body_json(&app, request).await;
+
+    assert_eq!(3, response.items.len());
 
     Ok(())
 }

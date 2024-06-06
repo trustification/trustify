@@ -2,11 +2,14 @@ use crate::package::model::details::package::PackageDetails;
 use crate::package::model::details::package_version::PackageVersionDetails;
 use crate::package::model::details::qualified_package::QualifiedPackageDetails;
 use crate::package::model::summary::package::PackageSummary;
+use crate::package::model::summary::qualified_package::QualifiedPackageSummary;
 use crate::package::model::summary::r#type::TypeSummary;
 use crate::Error;
 use sea_orm::prelude::Uuid;
-use sea_orm::{ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder, QuerySelect};
-use sea_query::Order;
+use sea_orm::{
+    ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder, QuerySelect, QueryTrait,
+};
+use sea_query::{Condition, Order};
 use trustify_common::db::limiter::LimiterTrait;
 use trustify_common::db::query::{Filtering, Query};
 use trustify_common::db::{Database, Transactional};
@@ -186,6 +189,60 @@ impl PackageService {
         } else {
             Ok(None)
         }
+    }
+
+    pub async fn packages<TX: AsRef<Transactional>>(
+        &self,
+        query: Query,
+        paginated: Paginated,
+        tx: TX,
+    ) -> Result<PaginatedResults<PackageSummary>, Error> {
+        let connection = self.db.connection(&tx);
+
+        let limiter = package::Entity::find().filtering(query)?.limiting(
+            &connection,
+            paginated.offset,
+            paginated.limit,
+        );
+
+        let total = limiter.total().await?;
+
+        Ok(PaginatedResults {
+            items: PackageSummary::from_entities(&limiter.fetch().await?, &connection).await?,
+            total,
+        })
+    }
+
+    pub async fn qualified_packages<TX: AsRef<Transactional>>(
+        &self,
+        query: Query,
+        paginated: Paginated,
+        tx: TX,
+    ) -> Result<PaginatedResults<QualifiedPackageSummary>, Error> {
+        let connection = self.db.connection(&tx);
+
+        let limiter = qualified_package::Entity::find()
+            .left_join(package_version::Entity)
+            .filter(
+                Condition::any().add(
+                    package_version::Column::PackageId.in_subquery(
+                        package::Entity::find()
+                            .filtering(query)?
+                            .select_only()
+                            .column(package::Column::Id)
+                            .into_query(),
+                    ),
+                ),
+            )
+            .limiting(&connection, paginated.offset, paginated.limit);
+
+        let total = limiter.total().await?;
+
+        Ok(PaginatedResults {
+            items: QualifiedPackageSummary::from_entities(&limiter.fetch().await?, &connection)
+                .await?,
+            total,
+        })
     }
 }
 

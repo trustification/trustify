@@ -385,3 +385,163 @@ async fn package_version_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Err
 
     Ok(())
 }
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+    let graph = Arc::new(Graph::new(db.clone()));
+    let service = PackageService::new(db);
+
+    let log4j = graph
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .await?;
+
+    let log4j_123 = log4j
+        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .await?;
+
+    log4j_123
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=11")?,
+            (),
+        )
+        .await?;
+
+    log4j_123
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=17")?,
+            (),
+        )
+        .await?;
+
+    let log4j_345 = log4j
+        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@3.4.5")?, ())
+        .await?;
+
+    log4j_345
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
+            (),
+        )
+        .await?;
+
+    log4j_345
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
+            (),
+        )
+        .await?;
+
+    let quarkus = graph
+        .ingest_package(&Purl::from_str("pkg:maven/org.jboss/quarkus")?, ())
+        .await?;
+
+    let quarkus_123 = quarkus
+        .ingest_package_version(&Purl::from_str("pkg:maven/org.jboss/quarkus@1.2.3")?, ())
+        .await?;
+
+    quarkus_123
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.jboss/quarkus@1.2.3?repository_url=http://jboss.org/")?,
+            (),
+        )
+        .await?;
+
+    let results = service
+        .packages(q("log4j"), Paginated::default(), ())
+        .await?;
+
+    assert_eq!(1, results.items.len());
+
+    let results = service
+        .packages(q("quarkus"), Paginated::default(), ())
+        .await?;
+
+    assert_eq!(1, results.items.len());
+
+    let results = service
+        .packages(q("jboss"), Paginated::default(), ())
+        .await?;
+
+    assert_eq!(1, results.items.len());
+
+    let results = service
+        .packages(q("maven"), Paginated::default(), ())
+        .await?;
+
+    assert_eq!(2, results.items.len());
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+    let graph = Arc::new(Graph::new(db.clone()));
+    let service = PackageService::new(db);
+
+    let log4j = graph
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .await?;
+
+    let log4j_123 = log4j
+        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .await?;
+
+    log4j_123
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=11")?,
+            (),
+        )
+        .await?;
+
+    log4j_123
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=17")?,
+            (),
+        )
+        .await?;
+
+    let log4j_345 = log4j
+        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@3.4.5")?, ())
+        .await?;
+
+    log4j_345
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
+            (),
+        )
+        .await?;
+
+    log4j_345
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
+            (),
+        )
+        .await?;
+
+    let quarkus = graph
+        .ingest_package(&Purl::from_str("pkg:maven/org.jboss/quarkus")?, ())
+        .await?;
+
+    let quarkus_123 = quarkus
+        .ingest_package_version(&Purl::from_str("pkg:maven/org.jboss/quarkus@1.2.3")?, ())
+        .await?;
+
+    quarkus_123
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.jboss/quarkus@1.2.3?repository_url=http://jboss.org/")?,
+            (),
+        )
+        .await?;
+
+    let results = service
+        .qualified_packages(q("log4j"), Paginated::default(), ())
+        .await?;
+
+    println!("{:#?}", results);
+
+    Ok(())
+}

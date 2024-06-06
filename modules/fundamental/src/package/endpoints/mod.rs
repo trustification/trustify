@@ -1,7 +1,9 @@
 use crate::package::service::PackageService;
 use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::prelude::Uuid;
+use trustify_common::db::query::Query;
 use trustify_common::db::Database;
+use trustify_common::model::Paginated;
 use utoipa::OpenApi;
 
 mod r#type;
@@ -20,8 +22,10 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         .service(r#type::get_package)
         .service(r#type::get_package_version)
         .service(base::get)
+        .service(base::all)
         .service(version::get)
-        .service(get);
+        .service(get)
+        .service(all);
 }
 
 #[derive(OpenApi)]
@@ -34,6 +38,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         base::get,
         version::get,
         get,
+        all,
     ),
     components(schemas(
         crate::package::model::TypeHead,
@@ -44,6 +49,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         crate::package::model::summary::package::PackageSummary,
         crate::package::model::summary::package::PaginatedPackageSummary,
         crate::package::model::summary::package_version::PackageVersionSummary,
+        crate::package::model::summary::qualified_package::PaginatedQualifiedPackageSummary,
         crate::package::model::details::package::PackageDetails,
         crate::package::model::details::package_version::PackageVersionDetails,
         crate::package::model::details::qualified_package::QualifiedPackageDetails,
@@ -69,6 +75,26 @@ pub async fn get(
     uuid: web::Path<Uuid>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(service.qualified_package_by_uuid(&uuid, ()).await?))
+}
+
+#[utoipa::path(
+    context_path= "/api",
+    tag = "package",
+    params(
+        Query,
+        Paginated,
+    ),
+    responses(
+        (status = 200, description = "All relevant matching qualified packages", body = PaginatedQualifiedPackageSummary),
+    ),
+)]
+#[get("/v1/package")]
+pub async fn all(
+    service: web::Data<PackageService>,
+    web::Query(search): web::Query<Query>,
+    web::Query(paginated): web::Query<Paginated>,
+) -> actix_web::Result<impl Responder> {
+    Ok(HttpResponse::Ok().json(service.qualified_packages(search, paginated, ()).await?))
 }
 
 #[cfg(test)]
