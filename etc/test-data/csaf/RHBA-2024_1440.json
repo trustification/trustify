@@ -1,0 +1,754 @@
+{
+  "document": {
+    "aggregate_severity": {
+      "namespace": "https://access.redhat.com/security/updates/classification/",
+      "text": "Important"
+    },
+    "category": "csaf_vex",
+    "csaf_version": "2.0",
+    "distribution": {
+      "text": "Copyright © Red Hat, Inc. All rights reserved.",
+      "tlp": {
+        "label": "WHITE",
+        "url": "https://www.first.org/tlp/"
+      }
+    },
+    "lang": "en",
+    "notes": [
+      {
+        "category": "summary",
+        "text": "Updated Release packages that fix several bugs and add various enhancements are now available.",
+        "title": "Topic"
+      },
+      {
+        "category": "general",
+        "text": "Migration Toolkit for Virtualization 2.5.6 Images",
+        "title": "Details"
+      },
+      {
+        "category": "legal_disclaimer",
+        "text": "This content is licensed under the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/). If you distribute this content, or a modified version of it, you must provide attribution to Red Hat Inc. and provide a link to the original.",
+        "title": "Terms of Use"
+      }
+    ],
+    "publisher": {
+      "category": "vendor",
+      "contact_details": "https://access.redhat.com/security/team/contact/",
+      "issuing_authority": "Red Hat Product Security is responsible for vulnerability handling across all Red Hat offerings.",
+      "name": "Red Hat Product Security",
+      "namespace": "https://www.redhat.com"
+    },
+    "references": [
+      {
+        "category": "self",
+        "summary": "https://access.redhat.com/errata/RHBA-2024:1440",
+        "url": "https://access.redhat.com/errata/RHBA-2024:1440"
+      },
+      {
+        "category": "external",
+        "summary": "MTV-952",
+        "url": "https://issues.redhat.com/browse/MTV-952"
+      },
+      {
+        "category": "external",
+        "summary": "MTV-987",
+        "url": "https://issues.redhat.com/browse/MTV-987"
+      },
+      {
+        "category": "external",
+        "summary": "MTV-992",
+        "url": "https://issues.redhat.com/browse/MTV-992"
+      },
+      {
+        "category": "self",
+        "summary": "Canonical URL",
+        "url": "https://access.redhat.com/security/data/csaf/v2/advisories/2024/rhba-2024_1440.json"
+      }
+    ],
+    "title": "Red Hat Bug Fix Advisory: MTV 2.5.6 Images",
+    "tracking": {
+      "current_release_date": "2024-06-04T07:30:07+00:00",
+      "generator": {
+        "date": "2024-06-04T07:30:07+00:00",
+        "engine": {
+          "name": "Red Hat SDEngine",
+          "version": "3.30.0"
+        }
+      },
+      "id": "RHBA-2024:1440",
+      "initial_release_date": "2024-03-20T11:13:11+00:00",
+      "revision_history": [
+        {
+          "date": "2024-03-20T11:13:11+00:00",
+          "number": "1",
+          "summary": "Initial version"
+        },
+        {
+          "date": "2024-03-20T11:13:11+00:00",
+          "number": "2",
+          "summary": "Last updated version"
+        },
+        {
+          "date": "2024-06-04T07:30:07+00:00",
+          "number": "3",
+          "summary": "Last generated version"
+        }
+      ],
+      "status": "final",
+      "version": "3"
+    }
+  },
+  "product_tree": {
+    "branches": [
+      {
+        "branches": [
+          {
+            "branches": [
+              {
+                "category": "product_name",
+                "name": "8Base-MTV-2.5",
+                "product": {
+                  "name": "8Base-MTV-2.5",
+                  "product_id": "9Base-MTV-2.5",
+                  "product_identification_helper": {
+                    "cpe": "cpe:/a:redhat:migration_toolkit_virtualization:2.5::el9"
+                  }
+                }
+              },
+              {
+                "category": "product_name",
+                "name": "8Base-MTV-2.5",
+                "product": {
+                  "name": "8Base-MTV-2.5",
+                  "product_id": "8Base-MTV-2.5",
+                  "product_identification_helper": {
+                    "cpe": "cpe:/a:redhat:migration_toolkit_virtualization:2.5::el8"
+                  }
+                }
+              }
+            ],
+            "category": "product_family",
+            "name": "Migration Toolkit for Virtualization"
+          },
+          {
+            "branches": [
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-api-rhel9&tag=2.5.6-8"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-console-plugin-rhel9&tag=2.5.6-4"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-controller-rhel9&tag=2.5.6-8"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-must-gather-api-rhel8&tag=2.5.6-2"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-must-gather-rhel8&tag=2.5.6-4"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-openstack-populator-rhel9&tag=2.5.6-8"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-operator-bundle&tag=2.5.6-22"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-rhel8-operator&tag=2.5.6-9"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-ova-provider-server-rhel9&tag=2.5.6-8"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-populator-controller-rhel9&tag=2.5.6-8"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-rhv-populator-rhel8&tag=2.5.6-7"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-validation-rhel9&tag=2.5.6-9"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-virt-v2v-rhel9&tag=2.5.6-8"
+                  }
+                }
+              },
+              {
+                "category": "product_version",
+                "name": "migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c_amd64",
+                "product": {
+                  "name": "migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c_amd64",
+                  "product_id": "migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c_amd64",
+                  "product_identification_helper": {
+                    "purl": "pkg:oci/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c?arch=amd64&repository_url=registry.redhat.io/migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8&tag=2.5.6-7"
+                  }
+                }
+              }
+            ],
+            "category": "architecture",
+            "name": "amd64"
+          }
+        ],
+        "category": "vendor",
+        "name": "Red Hat"
+      }
+    ],
+    "relationships": [
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b_amd64",
+        "relates_to_product_reference": "8Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63_amd64",
+        "relates_to_product_reference": "8Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212_amd64",
+        "relates_to_product_reference": "8Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413_amd64",
+        "relates_to_product_reference": "8Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c_amd64",
+        "relates_to_product_reference": "8Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64",
+        "relates_to_product_reference": "9Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64",
+        "relates_to_product_reference": "9Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118_amd64",
+        "relates_to_product_reference": "9Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c_amd64",
+        "relates_to_product_reference": "9Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91_amd64",
+        "relates_to_product_reference": "9Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff_amd64",
+        "relates_to_product_reference": "9Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e_amd64",
+        "relates_to_product_reference": "9Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942_amd64",
+        "relates_to_product_reference": "9Base-MTV-2.5"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "migration-toolkit-virtualization/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca_amd64 as a component of 8Base-MTV-2.5",
+          "product_id": "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca_amd64"
+        },
+        "product_reference": "migration-toolkit-virtualization/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca_amd64",
+        "relates_to_product_reference": "9Base-MTV-2.5"
+      }
+    ]
+  },
+  "vulnerabilities": [
+    {
+      "cve": "CVE-2023-39326",
+      "cwe": {
+        "id": "CWE-400",
+        "name": "Uncontrolled Resource Consumption"
+      },
+      "discovery_date": "2023-12-06T00:00:00+00:00",
+      "flags": [
+        {
+          "label": "vulnerable_code_not_present",
+          "product_ids": [
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca_amd64"
+          ]
+        }
+      ],
+      "ids": [
+        {
+          "system_name": "Red Hat Bugzilla ID",
+          "text": "2253330"
+        }
+      ],
+      "notes": [
+        {
+          "category": "description",
+          "text": "A flaw was found in the Golang net/http/internal package. This issue may allow a malicious user to send an HTTP request and cause the receiver to read more bytes from network than are in the body (up to 1GiB), causing the receiver to fail reading the response, possibly leading to a Denial of Service (DoS).",
+          "title": "Vulnerability description"
+        },
+        {
+          "category": "summary",
+          "text": "golang: net/http/internal: Denial of Service (DoS) via Resource Consumption via HTTP requests",
+          "title": "Vulnerability summary"
+        },
+        {
+          "category": "general",
+          "text": "The CVSS score(s) listed for this vulnerability do not reflect the associated product's status, and are included for informational purposes to better understand the severity of this vulnerability.",
+          "title": "CVSS score applicability"
+        }
+      ],
+      "product_status": {
+        "fixed": [
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64"
+        ],
+        "known_not_affected": [
+          "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b_amd64",
+          "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63_amd64",
+          "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212_amd64",
+          "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413_amd64",
+          "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca_amd64"
+        ]
+      },
+      "references": [
+        {
+          "category": "self",
+          "summary": "Canonical URL",
+          "url": "https://access.redhat.com/security/cve/CVE-2023-39326"
+        },
+        {
+          "category": "external",
+          "summary": "RHBZ#2253330",
+          "url": "https://bugzilla.redhat.com/show_bug.cgi?id=2253330"
+        },
+        {
+          "category": "external",
+          "summary": "https://www.cve.org/CVERecord?id=CVE-2023-39326",
+          "url": "https://www.cve.org/CVERecord?id=CVE-2023-39326"
+        },
+        {
+          "category": "external",
+          "summary": "https://nvd.nist.gov/vuln/detail/CVE-2023-39326",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2023-39326"
+        },
+        {
+          "category": "external",
+          "summary": "https://pkg.go.dev/vuln/GO-2023-2382",
+          "url": "https://pkg.go.dev/vuln/GO-2023-2382"
+        }
+      ],
+      "release_date": "2023-12-06T00:00:00+00:00",
+      "remediations": [
+        {
+          "category": "vendor_fix",
+          "details": "Before applying this update, make sure all previously released errata relevant to your system have been applied.\n\nFor details on how to apply this update, refer to:\n\n        https://access.redhat.com/articles/11258",
+          "product_ids": [
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64"
+          ],
+          "restart_required": {
+            "category": "none"
+          },
+          "url": "https://access.redhat.com/errata/RHBA-2024:1440"
+        },
+        {
+          "category": "workaround",
+          "details": "No mitigation is available for this flaw.",
+          "product_ids": [
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca_amd64"
+          ]
+        }
+      ],
+      "scores": [
+        {
+          "cvss_v3": {
+            "attackComplexity": "LOW",
+            "attackVector": "NETWORK",
+            "availabilityImpact": "NONE",
+            "baseScore": 5.3,
+            "baseSeverity": "MEDIUM",
+            "confidentialityImpact": "LOW",
+            "integrityImpact": "NONE",
+            "privilegesRequired": "NONE",
+            "scope": "UNCHANGED",
+            "userInteraction": "NONE",
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N",
+            "version": "3.1"
+          },
+          "products": [
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64"
+          ]
+        }
+      ],
+      "threats": [
+        {
+          "category": "impact",
+          "details": "Moderate"
+        }
+      ],
+      "title": "golang: net/http/internal: Denial of Service (DoS) via Resource Consumption via HTTP requests"
+    },
+    {
+      "cve": "CVE-2023-42282",
+      "cwe": {
+        "id": "CWE-918",
+        "name": "Server-Side Request Forgery (SSRF)"
+      },
+      "discovery_date": "2024-02-20T00:00:00+00:00",
+      "flags": [
+        {
+          "label": "vulnerable_code_not_present",
+          "product_ids": [
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca_amd64"
+          ]
+        }
+      ],
+      "ids": [
+        {
+          "system_name": "Red Hat Bugzilla ID",
+          "text": "2265161"
+        }
+      ],
+      "notes": [
+        {
+          "category": "description",
+          "text": "A vulnerability was found in the NPM IP Package. This flaw allows an attacker to perform arbitrary code execution and obtain sensitive information via the isPublic() function by inducing a Server-Side Request Forgery (SSRF) attack and obtaining access to normally inaccessible resources.",
+          "title": "Vulnerability description"
+        },
+        {
+          "category": "summary",
+          "text": "nodejs-ip: arbitrary code execution via the isPublic() function",
+          "title": "Vulnerability summary"
+        },
+        {
+          "category": "other",
+          "text": "It appears that npm does not utilize the bundled code therefore Red Hat Enterprise Linux is not affected by this vulnerability.\n\nWhile the vulnerability in the NPM IP Package presents a significant security concern, it's categorized as important rather than critical due to several factors. Firstly, the misclassification of the private IP address 0x7f.1 as public by the isPublic() function does not directly lead to remote code execution or unauthorized access to critical systems. Instead, it facilitates SSRF attacks, which typically require additional conditions to fully exploit, such as the ability to influence server-side requests and responses. Additionally, the impact of SSRF attacks can vary depending on the specific environment and configuration of the affected system. While SSRF attacks can potentially lead to data exposure, service disruption, or lateral movement within a network, their severity is often mitigated by factors such as network segmentation, access controls, and the availability of sensitive resources.",
+          "title": "Statement"
+        },
+        {
+          "category": "general",
+          "text": "The CVSS score(s) listed for this vulnerability do not reflect the associated product's status, and are included for informational purposes to better understand the severity of this vulnerability.",
+          "title": "CVSS score applicability"
+        }
+      ],
+      "product_status": {
+        "fixed": [
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64"
+        ],
+        "known_not_affected": [
+          "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b_amd64",
+          "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63_amd64",
+          "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212_amd64",
+          "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413_amd64",
+          "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942_amd64",
+          "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca_amd64"
+        ]
+      },
+      "references": [
+        {
+          "category": "self",
+          "summary": "Canonical URL",
+          "url": "https://access.redhat.com/security/cve/CVE-2023-42282"
+        },
+        {
+          "category": "external",
+          "summary": "RHBZ#2265161",
+          "url": "https://bugzilla.redhat.com/show_bug.cgi?id=2265161"
+        },
+        {
+          "category": "external",
+          "summary": "https://www.cve.org/CVERecord?id=CVE-2023-42282",
+          "url": "https://www.cve.org/CVERecord?id=CVE-2023-42282"
+        },
+        {
+          "category": "external",
+          "summary": "https://nvd.nist.gov/vuln/detail/CVE-2023-42282",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2023-42282"
+        },
+        {
+          "category": "external",
+          "summary": "https://cosmosofcyberspace.github.io/npm_ip_cve/npm_ip_cve.html",
+          "url": "https://cosmosofcyberspace.github.io/npm_ip_cve/npm_ip_cve.html"
+        }
+      ],
+      "release_date": "2024-02-08T00:00:00+00:00",
+      "remediations": [
+        {
+          "category": "vendor_fix",
+          "details": "Before applying this update, make sure all previously released errata relevant to your system have been applied.\n\nFor details on how to apply this update, refer to:\n\n        https://access.redhat.com/articles/11258",
+          "product_ids": [
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64"
+          ],
+          "restart_required": {
+            "category": "none"
+          },
+          "url": "https://access.redhat.com/errata/RHBA-2024:1440"
+        },
+        {
+          "category": "workaround",
+          "details": "Mitigation for this issue is either not available or the currently available options don't meet the Red Hat Product Security criteria comprising ease of use and deployment, applicability to widespread installation base or stability.",
+          "product_ids": [
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-api-rhel8@sha256:2705373c12a52a6381c7eaec7de49926d27ef001230cd185b5a1bc69e10c353b_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-must-gather-rhel8@sha256:3280cc7d7e3ef235d92b0b094868438c474f88ac10ffc0bf8b5a62db02003c63_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhel8-operator@sha256:81a9daf048f6e4ff96d50e19df354f695d50724cec047981161b51e9bd3ac212_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-rhv-populator-rhel8@sha256:8f94983a110597a7bade03a71b45ace8fb7ad140d9e1729f5fb6b329802d7413_amd64",
+            "8Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-warm-rhel8@sha256:73cc6a3adbcce881ebe41aa3dbb27be1c85d9c0d2ff0533c83481db780449d7c_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-api-rhel9@sha256:0f4e01423ae4c7a6f825f2373c7766f78f12aba02d7521f20c57b7d8ab595c90_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-controller-rhel9@sha256:d0b80c42d50f35a897c1f6194bb945d39ead87d4f75e9b8749b445652b854118_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-openstack-populator-rhel9@sha256:48c96f917696e7e6fae056f60ca1c296e99cfc12d2306fd706c5eacc65a14c5c_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-operator-bundle@sha256:9d5aaf522aed32d5e63948e2ce9359d99603829aed91c3e0da2c529f555fec91_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-ova-provider-server-rhel9@sha256:981bee1559e7aca484f39fb46e5c1b7c54e0ff1ce74f1662a83e0ff4951f2dff_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-populator-controller-rhel9@sha256:45bc8de023bbdae27728c7756a5f701ea2c68f359aa1d0dac70040021465d82e_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-validation-rhel9@sha256:9f8b478fd28d214c2ddb28d892d1f3869d3a454ca664baa4a7657f420d55f942_amd64",
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-virt-v2v-rhel9@sha256:43276cd2620b7b75f3e1ec1741f7ed252246085c841f479dcc2e132d868d33ca_amd64"
+          ]
+        }
+      ],
+      "scores": [
+        {
+          "cvss_v3": {
+            "attackComplexity": "LOW",
+            "attackVector": "NETWORK",
+            "availabilityImpact": "HIGH",
+            "baseScore": 9.8,
+            "baseSeverity": "CRITICAL",
+            "confidentialityImpact": "HIGH",
+            "integrityImpact": "HIGH",
+            "privilegesRequired": "NONE",
+            "scope": "UNCHANGED",
+            "userInteraction": "NONE",
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+            "version": "3.1"
+          },
+          "products": [
+            "9Base-MTV-2.5:migration-toolkit-virtualization/mtv-console-plugin-rhel9@sha256:870717b17d1277d8b91b2cad27713d43043fa968babbbb96ab1bb76328f316bb_amd64"
+          ]
+        }
+      ],
+      "threats": [
+        {
+          "category": "impact",
+          "details": "Important"
+        }
+      ],
+      "title": "nodejs-ip: arbitrary code execution via the isPublic() function"
+    }
+  ]
+}
