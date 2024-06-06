@@ -7,11 +7,11 @@ use crate::{
 };
 use std::io::Read;
 
-pub struct SPDXLoader<'g> {
+pub struct SpdxLoader<'g> {
     graph: &'g Graph,
 }
 
-impl<'g> SPDXLoader<'g> {
+impl<'g> SpdxLoader<'g> {
     pub fn new(graph: &'g Graph) -> Self {
         Self { graph }
     }
