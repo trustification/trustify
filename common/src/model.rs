@@ -37,7 +37,6 @@ macro_rules! revisioned {
                     /// struct can help carrying both pieces.
                     #[derive(Clone, std::fmt::Debug, serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
                     #[serde(rename_all = "camelCase")]
-                    #[schema(as = $n)]
                     struct __SchemaType {
                         /// The actual value
                         pub value: $n,
@@ -47,7 +46,8 @@ macro_rules! revisioned {
                         pub revision: String,
                     }
 
-                    __SchemaType::schema()
+                    let (_, schema) = __SchemaType::schema();
+                    (concat!("Revisioned", stringify!($n)), schema)
                 }
             }
         });
