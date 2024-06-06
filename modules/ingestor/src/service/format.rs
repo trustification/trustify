@@ -1,4 +1,6 @@
 use super::cve::loader::CveLoader;
+use super::sbom::cyclonedx::CycloneDXLoader;
+use super::sbom::spdx::SPDXLoader;
 use crate::graph::Graph;
 use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader};
 use crate::service::Error;
@@ -39,8 +41,14 @@ impl<'g> Format {
                 let loader = CveLoader::new(graph);
                 loader.load(source, reader, checksum).await
             }
-            Format::SPDX => todo!(),
-            Format::CycloneDX => todo!(),
+            Format::SPDX => {
+                let loader = SPDXLoader::new(graph);
+                loader.load(source, reader, checksum).await
+            }
+            Format::CycloneDX => {
+                let loader = CycloneDXLoader::new(graph);
+                loader.load(source, reader, checksum).await
+            }
         }
     }
 

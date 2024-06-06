@@ -5,6 +5,7 @@ use actix_web::{get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
+use tokio_util::io::ReaderStream;
 use trustify_auth::authenticator::user::UserInformation;
 use trustify_auth::authorizer::Authorizer;
 use trustify_auth::Permission;
@@ -13,7 +14,7 @@ use trustify_common::db::Database;
 use trustify_common::hash::HashKey;
 use trustify_common::model::Paginated;
 use trustify_entity::relationship::Relationship;
-use trustify_module_ingestor::service::IngestorService;
+use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::OpenApi;
 
@@ -187,10 +188,12 @@ pub struct UploadSbomQuery {
 /// Upload a new SBOM
 pub async fn upload(
     service: web::Data<IngestorService>,
-    payload: web::Payload,
+    bytes: web::Bytes,
     web::Query(UploadSbomQuery { location }): web::Query<UploadSbomQuery>,
 ) -> Result<impl Responder, Error> {
-    let sbom_id = service.ingest_sbom(&location, payload).await?;
+    let fmt = Format::from_bytes(&bytes)?;
+    let payload = ReaderStream::new(&*bytes);
+    let sbom_id = service.ingest(&location, None, fmt, payload).await?;
     Ok(HttpResponse::Created().json(sbom_id))
 }
 

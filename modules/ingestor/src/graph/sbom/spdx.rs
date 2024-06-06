@@ -4,7 +4,7 @@ use crate::graph::{
 };
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
-use std::str::FromStr;
+use std::{io::Read, str::FromStr};
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, db::Transactional, purl::Purl};
@@ -192,7 +192,8 @@ pub fn fix_license(mut json: Value) -> (Value, bool) {
 /// Parse a SPDX document, possibly replacing invalid license expressions.
 ///
 /// Returns the parsed document and a flag indicating if license expressions got replaced.
-pub fn parse_spdx(json: Value) -> Result<(SPDX, bool), serde_json::Error> {
+pub fn parse_spdx<R: Read>(data: R) -> Result<(SPDX, bool), serde_json::Error> {
+    let json = serde_json::from_reader::<_, Value>(data)?;
     let (json, changed) = fix_license(json);
     Ok((serde_json::from_value(json)?, changed))
 }

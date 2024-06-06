@@ -80,8 +80,7 @@ where
         ctx,
         sbom,
         |data| {
-            let json = serde_json::from_slice(&data)?;
-            let (sbom, _) = parse_spdx(json)?;
+            let (sbom, _) = parse_spdx(&*data)?;
             Ok(fix_spdx_rels(sbom))
         },
         |ctx, sbom, tx| Box::pin(async move { ctx.ingest_spdx(sbom.clone(), &tx).await }),
