@@ -16,6 +16,7 @@ use trustify_common::db;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
+    #[graphql(name="name")]
     pub identifier: String,
     pub organization_id: Option<i32>,
     pub location: String,
