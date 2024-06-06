@@ -199,7 +199,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{model::DEFAULT_SOURCE_CVEPROJECT, server::common::walker::git_reset};
+    use crate::{model::DEFAULT_SOURCE_CVEPROJECT, server::common::walker::test::git_reset};
     use std::path::PathBuf;
 
     /// test CVE walker, runs for a long time

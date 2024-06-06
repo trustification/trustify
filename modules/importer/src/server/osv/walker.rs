@@ -146,7 +146,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::server::common::walker::git_reset;
+    use crate::server::common::walker::test::git_reset;
     use std::path::PathBuf;
 
     #[test_log::test(tokio::test)]

@@ -46,6 +46,7 @@ cyclonedx-bom = "0.6.1"
 env_logger = "0.11.0"
 futures = "0.3.30"
 futures-util = "0.3"
+garage-door = "0.1.0"
 git2 = { version = "0.18.3", features = ["ssh"] }
 hex = "0.4.3"
 hide = "0.1.5"
@@ -110,8 +111,7 @@ uuid = "1.7.0"
 walkdir = "2.5"
 walker-common = "0.8.0"
 walker-extras = "0.8.0"
-
-garage-door = "0.1.0"
+xshell = "0.2"
 
 trustify-auth = { path = "common/auth", features = ["actix", "swagger"] }
 trustify-common = { path = "common" }

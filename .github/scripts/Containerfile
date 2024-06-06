@@ -10,7 +10,7 @@ RUN mkdir /stage
 
 # install zlib and cleanup
 
-RUN dnf install --installroot /stage --setop install_weak_deps=false --nodocs -y zlib openssl
+RUN dnf install --installroot /stage --setop install_weak_deps=false --nodocs -y zlib openssl git
 RUN dnf clean all --installroot /stage
 
 # prepare our binary
