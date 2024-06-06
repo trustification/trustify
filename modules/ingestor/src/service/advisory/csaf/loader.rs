@@ -113,6 +113,8 @@ impl<'g> CsafLoader<'g> {
                 )
                 .await?;
 
+            log::debug!("{advisory_vulnerability:?}");
+
             if let Some(product_status) = &vulnerability.product_status {
                 self.ingest_product_statuses(csaf, &advisory_vulnerability, product_status, &tx)
                     .await?;
@@ -123,6 +125,7 @@ impl<'g> CsafLoader<'g> {
                     if let Some(v3) = &score.cvss_v3 {
                         match Cvss3Base::from_str(&v3.to_string()) {
                             Ok(cvss3) => {
+                                log::debug!("{cvss3:?}");
                                 advisory_vulnerability
                                     .ingest_cvss3_score(cvss3, &tx)
                                     .await?;
@@ -261,6 +264,52 @@ mod test {
         assert_eq!(
             score.to_string(),
             "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L"
+        );
+
+        Ok(())
+    }
+
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test(tokio::test)]
+    async fn multiple_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        use ring::digest;
+        let db = ctx.db;
+        let graph = Graph::new(db);
+        let loader = CsafLoader::new(&graph);
+
+        let data = include_bytes!("../../../../../../etc/test-data/csaf/rhsa-2024_3666.json");
+        let checksum = hex::encode(digest::digest(&digest::SHA256, data));
+
+        loader.load("test", &data[..], &checksum).await?;
+
+        let loaded_vulnerability = graph
+            .get_vulnerability("CVE-2024-23672", Transactional::None)
+            .await?;
+        assert!(loaded_vulnerability.is_some());
+
+        let loaded_advisory = graph.get_advisory(&checksum, Transactional::None).await?;
+        assert!(loaded_advisory.is_some());
+
+        let loaded_advisory = loaded_advisory.unwrap();
+
+        assert!(loaded_advisory.advisory.issuer_id.is_some());
+
+        let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(()).await?;
+        assert_eq!(2, loaded_advisory_vulnerabilities.len());
+
+        let advisory_vuln = loaded_advisory
+            .get_vulnerability("CVE-2024-23672", ())
+            .await?;
+        assert!(advisory_vuln.is_some());
+
+        let advisory_vuln = advisory_vuln.unwrap();
+        let scores = advisory_vuln.cvss3_scores(()).await?;
+        assert_eq!(1, scores.len());
+
+        let score = scores[0];
+        assert_eq!(
+            score.to_string(),
+            "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:H"
         );
 
         Ok(())
