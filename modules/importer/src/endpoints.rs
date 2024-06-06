@@ -33,10 +33,12 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
     components(schemas(
         crate::model::CommonImporter,
         crate::model::CsafImporter,
+        crate::model::CveImporter,
         crate::model::Importer,
         crate::model::ImporterConfiguration,
         crate::model::ImporterData,
         crate::model::ImporterReport,
+        crate::model::OsvImporter,
         crate::model::PaginatedImporterReport,
         crate::model::RevisionedImporter,
         crate::model::SbomImporter,
@@ -90,7 +92,7 @@ async fn create(
     ),
     responses(
         (status = 200, description = "Retrieved importer configuration",
-            body = Importer,
+            body = RevisionedImporter,
             headers(
                 ("etag" = String, description = "Revision ID")
             )
@@ -149,7 +151,7 @@ async fn update(
 }
 
 #[utoipa::path(
-    context_path = "/api/v1/importer/enable",
+    context_path = "/api/v1/importer",
     tag = "importer",
     request_body = bool,
     params(
