@@ -17,7 +17,7 @@ impl AdvisoryQuery {
             Ok(Some(advisory)) => Ok(Advisory {
                 id: advisory.advisory.id,
                 identifier: advisory.advisory.identifier,
-                organization_id: advisory.advisory.organization_id,
+                issuer_id: advisory.advisory.issuer_id,
                 location: advisory.advisory.location,
                 sha256: advisory.advisory.sha256,
                 published: advisory.advisory.published,
@@ -43,7 +43,7 @@ impl AdvisoryQuery {
                 Ok(Advisory {
                     id: advisory.advisory.id,
                     identifier: advisory.advisory.identifier,
-                    organization_id: advisory.advisory.organization_id,
+                    issuer_id: advisory.advisory.issuer_id,
                     location: advisory.advisory.location,
                     sha256: advisory.advisory.sha256,
                     published: advisory.advisory.published,

@@ -20,10 +20,10 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Advisory::OrganizationId).integer() /* allowed to be null if not known */)
+                    .col(ColumnDef::new(Advisory::IssuerId).integer() /* allowed to be null if not known */)
                     .foreign_key(
                         ForeignKey::create()
-                            .from_col(Advisory::OrganizationId)
+                            .from_col(Advisory::IssuerId)
                             .to(Organization::Table, Organization::Id)
                     )
                     .col(ColumnDef::new(Advisory::Published).timestamp_with_time_zone())
@@ -49,7 +49,7 @@ impl MigrationTrait for Migration {
 pub enum Advisory {
     Table,
     Id,
-    OrganizationId,
+    IssuerId,
     Published,
     Modified,
     Withdrawn,

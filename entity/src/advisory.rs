@@ -18,7 +18,7 @@ pub struct Model {
     pub id: Uuid,
     #[graphql(name="name")]
     pub identifier: String,
-    pub organization_id: Option<i32>,
+    pub issuer_id: Option<i32>,
     pub location: String,
     pub sha256: String,
     pub published: Option<OffsetDateTime>,
@@ -55,7 +55,7 @@ impl Model {
 pub enum Relation {
     #[sea_orm(
         belongs_to = "super::organization::Entity"
-        from = "Column::OrganizationId"
+        from = "Column::IssuerId"
         to = "super::organization::Column::Id")]
     Organization,
 
