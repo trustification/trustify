@@ -5,11 +5,11 @@ use crate::{
 use cyclonedx_bom::prelude::Bom;
 use std::io::Read;
 
-pub struct CycloneDXLoader<'g> {
+pub struct CyclonedxLoader<'g> {
     graph: &'g Graph,
 }
 
-impl<'g> CycloneDXLoader<'g> {
+impl<'g> CyclonedxLoader<'g> {
     pub fn new(graph: &'g Graph) -> Self {
         Self { graph }
     }
