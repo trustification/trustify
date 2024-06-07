@@ -1,23 +1,11 @@
+use crate::server::common::processing_error::ProcessingError;
 use crate::server::common::walker::{Continuation, Error, GitWalker, Handler, WorkingDirectory};
 use osv::schema::Vulnerability;
 use std::{
-    fmt::Debug,
     io::BufReader,
     path::{Path, PathBuf},
 };
 use tracing::instrument;
-
-#[derive(Debug, thiserror::Error)]
-pub enum ProcessingError {
-    #[error("critical error: {0}")]
-    Critical(anyhow::Error),
-    #[error(transparent)]
-    Io(#[from] std::io::Error),
-    #[error(transparent)]
-    Json(#[from] serde_json::Error),
-    #[error(transparent)]
-    Yaml(#[from] serde_yaml::Error),
-}
 
 pub trait Callbacks: Send + 'static {
     /// Handle an error while loading the file
