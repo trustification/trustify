@@ -11,8 +11,9 @@ use crate::{
     },
 };
 use csaf_walker::{
+    metadata::MetadataRetriever,
     retrieve::RetrievingVisitor,
-    source::{DispatchSource, FileSource, HttpOptions, HttpSource},
+    source::{HttpOptions, HttpSource},
     validation::ValidationVisitor,
     walker::Walker,
 };
@@ -32,14 +33,16 @@ impl super::Server {
     ) -> Result<RunOutput, ScannerError> {
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
-        let source: DispatchSource = match Url::parse(&importer.source) {
-            Ok(url) => HttpSource::new(
-                url,
-                Fetcher::new(Default::default()).await?,
-                HttpOptions::new().since(last_run),
-            )
-            .into(),
-            Err(_) => FileSource::new(&importer.source, None)?.into(),
+        let fetcher = Fetcher::new(Default::default()).await?;
+        let options = HttpOptions::new().since(last_run);
+
+        let source = match Url::parse(&importer.source) {
+            Ok(url) => HttpSource::new(url, fetcher, options),
+            Err(_) => HttpSource::new(
+                MetadataRetriever::new(importer.source.clone()),
+                fetcher,
+                options,
+            ),
         };
 
         // storage (called by validator)
