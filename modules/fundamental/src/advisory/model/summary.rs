@@ -1,13 +1,14 @@
-use crate::advisory::model::{AdvisoryHead, AdvisoryVulnerabilityHead};
-use crate::Error;
-use sea_orm::{ColumnTrait, EntityTrait, LoaderTrait, QueryFilter};
+use sea_orm::LoaderTrait;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
+
 use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::paginated;
 use trustify_cvss::cvss3::score::Score;
-use trustify_cvss::cvss3::Cvss3Base;
-use trustify_entity::{advisory, advisory_vulnerability, cvss3, organization, vulnerability};
-use utoipa::ToSchema;
+use trustify_entity::{advisory, advisory_vulnerability, organization, vulnerability};
+
+use crate::advisory::model::{AdvisoryHead, AdvisoryVulnerabilityHead};
+use crate::Error;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct AdvisorySummary {
@@ -25,6 +26,7 @@ paginated!(AdvisorySummary);
 impl AdvisorySummary {
     pub async fn from_entities(
         entities: &[advisory::Model],
+        averages: &[Option<f64>],
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
         let mut vulnerabilities = entities
@@ -35,28 +37,16 @@ impl AdvisorySummary {
 
         let mut summaries = Vec::new();
 
-        for ((advisory, vulnerabilities), issuer) in entities
+        for (((advisory, vulnerabilities), issuer), average_score) in entities
             .iter()
             .zip(vulnerabilities.drain(..))
             .zip(issuers.drain(..))
+            .zip(averages)
         {
-            let cvss3 = cvss3::Entity::find()
-                .filter(cvss3::Column::AdvisoryId.eq(advisory.id))
-                .all(tx)
-                .await?;
-
-            let total_score = cvss3
-                .iter()
-                .map(|e| {
-                    let base = Cvss3Base::from(e.clone());
-                    base.score().value()
-                })
-                .reduce(|accum, e| accum + e);
-
-            let average_score = total_score.map(|total| Score::new(total / cvss3.len() as f64));
-
             let vulnerabilities =
                 AdvisoryVulnerabilityHead::from_entities(advisory, &vulnerabilities, tx).await?;
+
+            let average_score = average_score.map(|score| Score::new(score).roundup());
 
             summaries.push(AdvisorySummary {
                 head: AdvisoryHead::from_entity(advisory, issuer, tx).await?,

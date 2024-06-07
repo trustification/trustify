@@ -76,6 +76,43 @@ where
     }
 }
 
+pub trait LimiterAsModelTrait<'db, C>
+where
+    C: ConnectionTrait,
+{
+    fn limiting_as<M: FromQueryResult + Sync + Send>(
+        self,
+        db: &'db C,
+        offset: u64,
+        limit: u64,
+    ) -> Limiter<'db, C, SelectModel<M>, SelectModel<M>>;
+}
+
+impl<'db, C, E> LimiterAsModelTrait<'db, C> for Select<E>
+where
+    C: ConnectionTrait,
+    E: EntityTrait,
+{
+    fn limiting_as<M: FromQueryResult + Sync + Send>(
+        self,
+        db: &'db C,
+        offset: u64,
+        limit: u64,
+    ) -> Limiter<'db, C, SelectModel<M>, SelectModel<M>> {
+        let selector = self
+            .clone()
+            .limit(NonZeroU64::new(limit).map(|limit| limit.get()))
+            .offset(NonZeroU64::new(offset).map(|offset| offset.get()))
+            .into_model::<M>();
+
+        Limiter {
+            db,
+            paginator: self.clone().into_model::<M>().paginate(db, 1),
+            selector,
+        }
+    }
+}
+
 pub fn limit_selector<'db, C, E, EM, M>(
     db: &'db C,
     select: Select<E>,

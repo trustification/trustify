@@ -437,6 +437,7 @@ fn envalue(s: &str, ct: &ColumnType) -> Result<Value, Error> {
     }
     Ok(match ct {
         ColumnType::Integer => s.parse::<i32>().map_err(err)?.into(),
+        ColumnType::Decimal(_) => s.parse::<f64>().map_err(err)?.into(),
         ColumnType::TimestampWithTimeZone => {
             if let Ok(odt) = OffsetDateTime::parse(s, &Rfc3339) {
                 odt.into()
