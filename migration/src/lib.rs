@@ -30,6 +30,7 @@ mod m0000280_add_advisory_vulnerability_meta;
 mod m0000290_create_product;
 mod m0000300_create_product_version;
 mod m0000310_alter_advisory_primary_key;
+mod m0000315_create_cvss3_scoring_function;
 
 pub struct Migrator;
 
@@ -66,6 +67,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000290_create_product::Migration),
             Box::new(m0000300_create_product_version::Migration),
             Box::new(m0000310_alter_advisory_primary_key::Migration),
+            Box::new(m0000315_create_cvss3_scoring_function::Migration),
         ]
     }
 }

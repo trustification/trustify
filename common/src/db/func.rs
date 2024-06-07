@@ -36,3 +36,11 @@ impl Iden for ToJson {
         s.write_str("to_json").unwrap();
     }
 }
+
+pub struct Cvss3Score;
+
+impl Iden for Cvss3Score {
+    fn unquoted(&self, s: &mut dyn Write) {
+        write!(s, "cvss3_score").unwrap()
+    }
+}

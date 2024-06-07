@@ -8,6 +8,7 @@ pub mod fixed_package_version;
 pub mod importer;
 pub mod importer_report;
 pub mod not_affected_package_version;
+pub mod organization;
 pub mod package;
 pub mod package_relates_to_package;
 pub mod package_version;
@@ -23,5 +24,3 @@ pub mod sbom_package_cpe_ref;
 pub mod sbom_package_purl_ref;
 pub mod vulnerability;
 pub mod vulnerability_description;
-
-pub mod organization;
