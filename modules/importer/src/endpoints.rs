@@ -29,7 +29,7 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(list, create, read, update, delete, get_reports, set_enabled),
+    paths(list, create, read, update, delete, get_reports, set_enabled, force),
     components(schemas(
         crate::model::CommonImporter,
         crate::model::CsafImporter,
@@ -188,7 +188,7 @@ async fn set_enabled(
 }
 
 #[utoipa::path(
-    context_path = "/api/v1/importer/force",
+    context_path = "/api/v1/importer",
     tag = "importer",
     request_body = bool,
     params(
@@ -201,7 +201,7 @@ async fn set_enabled(
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
-#[put("/{name}/force")]
+#[post("/{name}/force")]
 /// Force an importer to run as soon as possible
 async fn force(
     service: web::Data<ImporterService>,
