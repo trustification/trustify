@@ -6397,6 +6397,7 @@ dependencies = [
  "reqwest 0.12.4",
  "rstest",
  "sea-orm",
+ "sea-query",
  "serde",
  "serde_json",
  "sqlx",

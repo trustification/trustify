@@ -1,10 +1,14 @@
 use human_date_parser::{from_human_time, ParseResult};
 use regex::Regex;
+use sea_orm::entity::ColumnDef;
 use sea_orm::sea_query::{extension::postgres::PgExpr, ConditionExpression, IntoCondition};
 use sea_orm::{
-    ColumnTrait, ColumnType, Condition, EntityName, EntityTrait, Iden, Iterable, Order,
-    PrimaryKeyToColumn, QueryFilter, QueryOrder, QueryTrait, Select, Value,
+    sea_query, ColumnTrait, ColumnType, Condition, EntityName, EntityTrait, Iden, IntoIdentity,
+    Iterable, Order, PrimaryKeyToColumn, QueryFilter, QueryOrder, QuerySelect, QueryTrait, Select,
+    Value,
 };
+use sea_query::{BinOper, ColumnRef, DynIden, Expr, IntoColumnRef, SimpleExpr};
+use std::collections::HashMap;
 use std::fmt::Display;
 use std::str::FromStr;
 use std::sync::OnceLock;
@@ -77,26 +81,37 @@ impl Query {
 }
 
 pub trait Filtering<T: EntityTrait> {
-    fn filtering(self, search: Query) -> Result<Select<T>, Error>;
+    fn filtering(self, search: Query) -> Result<Self, Error>
+    where
+        Self: Sized,
+    {
+        self.filtering_with(search, Columns::from_entity::<T>())
+    }
+
+    fn filtering_with<C: IntoColumns>(self, search: Query, context: C) -> Result<Self, Error>
+    where
+        Self: Sized;
 }
 
 impl<T: EntityTrait> Filtering<T> for Select<T> {
-    fn filtering(self, search: Query) -> Result<Self, Error> {
+    fn filtering_with<C: IntoColumns>(self, search: Query, context: C) -> Result<Self, Error> {
         let Query { q, sort } = &search;
 
         let mut result = if q.is_empty() {
             self
         } else {
-            self.filter(Filter::<T>::from_str(q)?)
+            self.filter(Filter::from_str(q, context.columns())?)
         };
 
         if !sort.is_empty() {
             result = sort
                 .split(',')
-                .map(Sort::<T>::from_str)
+                .map(|s| Sort::from_str(s, context.columns()))
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
-                .fold(result, |select, s| select.order_by(s.field, s.order));
+                .fold(result, |select, s| {
+                    select.order_by(SimpleExpr::Column(s.field), s.order)
+                });
         };
 
         Ok(result)
@@ -126,76 +141,115 @@ pub enum Error {
     SearchSyntax(String),
 }
 
+pub trait IntoColumns {
+    fn columns(&self) -> Columns;
+}
+
+impl IntoColumns for Columns {
+    fn columns(&self) -> Columns {
+        self.clone()
+    }
+}
+
+impl IntoColumns for &Columns {
+    fn columns(&self) -> Columns {
+        (*self).clone()
+    }
+}
+
+impl<E: EntityTrait> IntoColumns for E {
+    fn columns(&self) -> Columns {
+        Columns::from_entity::<E>()
+    }
+}
+
+/// Context of columns which can be used for filtering and sorting.
+#[derive(Default, Debug, Clone)]
+pub struct Columns {
+    columns: Vec<(ColumnRef, ColumnDef)>,
+}
+
+impl Columns {
+    /// Construct a new columns context from an entity type.
+    pub fn from_entity<E: EntityTrait>() -> Self {
+        Columns::default().with_entity::<E>()
+    }
+
+    /// Add columns from an entity type into the context.
+    pub fn with_entity<E: EntityTrait>(mut self) -> Self {
+        for c in E::Column::iter() {
+            let (t, u) = c.clone().as_column_ref();
+            let column_ref = ColumnRef::TableColumn(t, u);
+            let column_def = c.def();
+            self.columns.push((column_ref, column_def));
+        }
+        self
+    }
+
+    /// Add an arbitrary column into the context.
+    pub fn add_column<I: IntoIdentity>(mut self, name: I, def: ColumnDef) -> Self {
+        self.columns
+            .push((name.into_identity().into_column_ref(), def));
+        self
+    }
+
+    /// Add columns from another column context.
+    ///
+    /// Any columns already existing within this context will *not* be replaced
+    /// by columns from the argument.
+    pub fn add_columns<C: IntoColumns>(mut self, columns: C) -> Self {
+        let columns = columns.columns();
+
+        for (col_ref, col_def) in columns.columns {
+            if !self
+                .columns
+                .iter()
+                .any(|(existing_col_ref, _)| *existing_col_ref == col_ref)
+            {
+                self.columns.push((col_ref, col_def))
+            }
+        }
+
+        self
+    }
+
+    /// Look up the column context for a given simple field name.
+    pub fn for_field(&self, field: &str) -> Option<(ColumnRef, ColumnDef)> {
+        self.columns
+            .iter()
+            .find(|(col_ref, col_def)| {
+                matches!( col_ref,
+                   ColumnRef::Column(name)
+                    | ColumnRef::TableColumn(_, name)
+                    | ColumnRef::SchemaTableColumn(_, _, name)
+                        if name.to_string() == field)
+            })
+            .cloned()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &(ColumnRef, ColumnDef)> {
+        self.columns.iter()
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////
 // Internal types
 /////////////////////////////////////////////////////////////////////////
 
 #[derive(Debug)]
-struct Filter<T: EntityTrait> {
-    operands: Operand<T>,
+struct Filter {
+    operands: Operand,
     operator: Operator,
 }
 
-struct Sort<T: EntityTrait> {
-    field: T::Column,
-    order: Order,
-}
-
-/////////////////////////////////////////////////////////////////////////
-// SeaORM impls
-/////////////////////////////////////////////////////////////////////////
-
-impl<T: EntityTrait> IntoCondition for Filter<T> {
-    fn into_condition(self) -> Condition {
-        match self.operands {
-            Operand::Simple(col, v) => match self.operator {
-                Operator::Equal => col.eq(v),
-                Operator::NotEqual => col.ne(v),
-                op @ (Operator::Like | Operator::NotLike) => {
-                    let v = format!(
-                        "%{}%",
-                        v.unwrap::<String>().replace('%', r"\%").replace('_', r"\_")
-                    );
-                    if op == Operator::Like {
-                        col.into_expr().ilike(v)
-                    } else {
-                        col.into_expr().not_ilike(v)
-                    }
-                }
-                Operator::GreaterThan => col.gt(v),
-                Operator::GreaterThanOrEqual => col.gte(v),
-                Operator::LessThan => col.lt(v),
-                Operator::LessThanOrEqual => col.lte(v),
-                _ => unreachable!(),
-            }
-            .into_condition(),
-            Operand::Composite(v) => match self.operator {
-                Operator::And => v.into_iter().fold(Condition::all(), |and, f| and.add(f)),
-                Operator::Or => v.into_iter().fold(Condition::any(), |or, f| or.add(f)),
-                _ => unreachable!(),
-            },
-        }
-    }
-}
-
-impl<T: EntityTrait> From<Filter<T>> for ConditionExpression {
-    fn from(f: Filter<T>) -> Self {
-        ConditionExpression::Condition(f.into_condition())
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////
-// FromStr impls
-/////////////////////////////////////////////////////////////////////////
-
-impl<T: EntityTrait> FromStr for Filter<T> {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+impl Filter {
+    fn from_str<C: IntoColumns>(s: &str, context: C) -> Result<Self, Error> {
         const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
         static LOCK: OnceLock<Regex> = OnceLock::new();
         #[allow(clippy::unwrap_used)]
         let filter = LOCK.get_or_init(|| (Regex::new(RE).unwrap()));
+
+        let columns = context.columns();
 
         let encoded = encode(s);
         if encoded.contains('&') {
@@ -205,17 +259,20 @@ impl<T: EntityTrait> FromStr for Filter<T> {
                 operands: Operand::Composite(
                     encoded
                         .split('&')
-                        .map(Self::from_str)
+                        .map(|e| Filter::from_str(e, columns.clone()))
                         .collect::<Result<Vec<_>, _>>()?,
                 ),
             })
         } else if let Some(caps) = filter.captures(&encoded) {
             // We have a filter: {field}{op}{value}
             let field = &caps["field"];
-            let col = T::Column::from_str(field).map_err(|_| {
-                Error::SearchSyntax(format!("Invalid field name for filter: '{field}'"))
-            })?;
-            let def = col.def();
+            let (col_ref, col_def) =
+                columns
+                    .clone()
+                    .for_field(field)
+                    .ok_or(Error::SearchSyntax(format!(
+                        "Invalid field name for filter: '{field}'"
+                    )))?;
             let operator = Operator::from_str(&caps["op"])?;
             Ok(Filter {
                 operator: match operator {
@@ -226,11 +283,11 @@ impl<T: EntityTrait> FromStr for Filter<T> {
                     caps["value"]
                         .split('|')
                         .map(decode)
-                        .map(|s| envalue(&s, def.get_column_type()))
+                        .map(|s| envalue(&s, col_def.get_column_type()))
                         .collect::<Result<Vec<_>, _>>()?
                         .into_iter()
                         .map(|v| Filter {
-                            operands: Operand::Simple(col, v),
+                            operands: Operand::Simple(col_ref.clone(), v),
                             operator,
                         })
                         .collect(),
@@ -244,12 +301,17 @@ impl<T: EntityTrait> FromStr for Filter<T> {
                     encoded
                         .split('|')
                         .flat_map(|s| {
-                            T::Column::iter().filter_map(|col| match col.def().get_column_type() {
-                                ColumnType::String(_) | ColumnType::Text => Some(Filter {
-                                    operands: Operand::<T>::Simple(col, decode(s).into()),
-                                    operator: Operator::Like,
-                                }),
-                                _ => None,
+                            columns.iter().filter_map(|(col_ref, col_def)| {
+                                match col_def.get_column_type() {
+                                    ColumnType::String(_) | ColumnType::Text => Some(Filter {
+                                        operands: Operand::Simple(
+                                            col_ref.clone(),
+                                            decode(s).into(),
+                                        ),
+                                        operator: Operator::Like,
+                                    }),
+                                    _ => None,
+                                }
                             })
                         })
                         .collect(),
@@ -259,9 +321,15 @@ impl<T: EntityTrait> FromStr for Filter<T> {
     }
 }
 
-impl<T: EntityTrait> FromStr for Sort<T> {
-    type Err = Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+struct Sort {
+    field: ColumnRef,
+    order: Order,
+}
+
+impl Sort {
+    fn from_str<C: IntoColumns>(s: &str, context: C) -> Result<Self, Error> {
+        let columns = context.columns();
+
         let s = s.to_lowercase();
         let (field, order) = match s.split(':').collect::<Vec<_>>()[..] {
             [f, "asc"] | [f] => (f, Order::Asc),
@@ -271,13 +339,82 @@ impl<T: EntityTrait> FromStr for Sort<T> {
             }
         };
         Ok(Self {
-            field: T::Column::from_str(field).map_err(|_| {
-                Error::SearchSyntax(format!("Invalid field name for sort: '{field}'"))
-            })?,
+            field: columns
+                .for_field(field)
+                .ok_or(Error::SearchSyntax(format!(
+                    "Invalid field name for sort: '{field}'"
+                )))?
+                .0,
             order,
         })
     }
 }
+
+/////////////////////////////////////////////////////////////////////////
+// SeaORM impls
+/////////////////////////////////////////////////////////////////////////
+
+impl IntoCondition for Filter {
+    fn into_condition(self) -> Condition {
+        match self.operands {
+            Operand::Simple(col, v) => match self.operator {
+                Operator::Equal => {
+                    let expr = Expr::val(v);
+                    Expr::col(col).binary(BinOper::Equal, expr)
+                }
+                Operator::NotEqual => {
+                    let expr = Expr::val(v);
+                    Expr::col(col).binary(BinOper::NotEqual, expr)
+                }
+
+                Operator::GreaterThan => {
+                    let expr = Expr::val(v);
+                    Expr::col(col).binary(BinOper::GreaterThan, expr)
+                }
+                Operator::GreaterThanOrEqual => {
+                    let expr = Expr::val(v);
+                    Expr::col(col).binary(BinOper::GreaterThanOrEqual, expr)
+                }
+                Operator::LessThan => {
+                    let expr = Expr::val(v);
+                    Expr::col(col).binary(BinOper::SmallerThan, expr)
+                }
+                Operator::LessThanOrEqual => {
+                    let expr = Expr::val(v);
+                    Expr::col(col).binary(BinOper::SmallerThanOrEqual, expr)
+                }
+                op @ (Operator::Like | Operator::NotLike) => {
+                    let v = format!(
+                        "%{}%",
+                        v.unwrap::<String>().replace('%', r"\%").replace('_', r"\_")
+                    );
+                    if op == Operator::Like {
+                        SimpleExpr::Column(col).ilike(v)
+                    } else {
+                        SimpleExpr::Column(col).not_ilike(v)
+                    }
+                }
+                _ => unreachable!(),
+            }
+            .into_condition(),
+            Operand::Composite(v) => match self.operator {
+                Operator::And => v.into_iter().fold(Condition::all(), |and, f| and.add(f)),
+                Operator::Or => v.into_iter().fold(Condition::any(), |or, f| or.add(f)),
+                _ => unreachable!(),
+            },
+        }
+    }
+}
+
+impl From<Filter> for ConditionExpression {
+    fn from(f: Filter) -> Self {
+        ConditionExpression::Condition(f.into_condition())
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////
+// FromStr impls
+/////////////////////////////////////////////////////////////////////////
 
 impl FromStr for Operator {
     type Err = Error;
@@ -303,9 +440,9 @@ impl FromStr for Operator {
 /////////////////////////////////////////////////////////////////////////
 
 #[derive(Debug)]
-enum Operand<T: EntityTrait> {
-    Simple(T::Column, Value),
-    Composite(Vec<Filter<T>>),
+enum Operand {
+    Simple(ColumnRef, Value),
+    Composite(Vec<Filter>),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -363,7 +500,8 @@ fn envalue(s: &str, ct: &ColumnType) -> Result<Value, Error> {
 mod tests {
     use super::*;
     use chrono::{Local, TimeDelta};
-    use sea_orm::{QueryFilter, QuerySelect, QueryTrait};
+    use sea_orm::{ColumnTypeTrait, QueryFilter, QuerySelect, QueryTrait};
+    use sea_query::{Func, Function, IntoIden};
     use test_log::test;
 
     #[test(tokio::test)]
@@ -383,7 +521,7 @@ mod tests {
 
     #[test(tokio::test)]
     async fn filters() -> Result<(), anyhow::Error> {
-        let test = |s: &str, expected: Operator| match Filter::<advisory::Entity>::from_str(s) {
+        let test = |s: &str, expected: Operator| match Filter::from_str(s, advisory::Entity) {
             Ok(Filter {
                 operands: Operand::Composite(v),
                 ..
@@ -406,7 +544,49 @@ mod tests {
 
         // If a query matches the '{field}{op}{value}' regex, then the
         // first operand must resolve to a field on the Entity
-        assert!(Filter::<advisory::Entity>::from_str("foo=bar").is_err());
+        assert!(Filter::from_str("foo=bar", advisory::Entity).is_err());
+
+        // There aren't many bad queries since random text is
+        // considered a "full-text search" in which an OR clause is
+        // constructed from a LIKE clause for all string fields in the
+        // entity.
+        test("search the entity", Operator::Like);
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn filters_extra_columns() -> Result<(), anyhow::Error> {
+        let test = |s: &str, expected: Operator| {
+            let columns = Columns::from_entity::<advisory::Entity>()
+                .add_column("location_len", ColumnType::Integer.def());
+            match Filter::from_str(s, columns) {
+                Ok(Filter {
+                    operands: Operand::Composite(v),
+                    ..
+                }) => assert_eq!(
+                    v[0].operator, expected,
+                    "The query '{s}' didn't resolve to {expected:?}"
+                ),
+                _ => panic!("The query '{s}' didn't resolve to {expected:?}"),
+            }
+        };
+
+        // Good filters
+        test("location=foo", Operator::Equal);
+        test("location!=foo", Operator::NotEqual);
+        test("location~foo", Operator::Like);
+        test("location!~foo", Operator::NotLike);
+        test("location>foo", Operator::GreaterThan);
+        test("location>=foo", Operator::GreaterThanOrEqual);
+        test("location<foo", Operator::LessThan);
+        test("location<=foo", Operator::LessThanOrEqual);
+
+        test("location_len>42", Operator::GreaterThan);
+
+        // If a query matches the '{field}{op}{value}' regex, then the
+        // first operand must resolve to a field on the Entity
+        assert!(Filter::from_str("foo=bar", advisory::Entity).is_err());
 
         // There aren't many bad queries since random text is
         // considered a "full-text search" in which an OR clause is
@@ -420,18 +600,61 @@ mod tests {
     #[test(tokio::test)]
     async fn sorts() -> Result<(), anyhow::Error> {
         // Good sorts
-        assert!(Sort::<advisory::Entity>::from_str("location").is_ok());
-        assert!(Sort::<advisory::Entity>::from_str("location:asc").is_ok());
-        assert!(Sort::<advisory::Entity>::from_str("location:desc").is_ok());
-        assert!(Sort::<advisory::Entity>::from_str("Location").is_ok());
-        assert!(Sort::<advisory::Entity>::from_str("Location:Asc").is_ok());
-        assert!(Sort::<advisory::Entity>::from_str("Location:Desc").is_ok());
+        assert!(Sort::from_str("location", advisory::Entity).is_ok());
+        assert!(Sort::from_str("location:asc", advisory::Entity).is_ok());
+        assert!(Sort::from_str("location:desc", advisory::Entity).is_ok());
+        assert!(Sort::from_str("Location", advisory::Entity).is_ok());
+        assert!(Sort::from_str("Location:Asc", advisory::Entity).is_ok());
+        assert!(Sort::from_str("Location:Desc", advisory::Entity).is_ok());
         // Bad sorts
-        assert!(Sort::<advisory::Entity>::from_str("foo").is_err());
-        assert!(Sort::<advisory::Entity>::from_str("foo:").is_err());
-        assert!(Sort::<advisory::Entity>::from_str(":foo").is_err());
-        assert!(Sort::<advisory::Entity>::from_str("location:foo").is_err());
-        assert!(Sort::<advisory::Entity>::from_str("location:asc:foo").is_err());
+        assert!(Sort::from_str("foo", advisory::Entity).is_err());
+        assert!(Sort::from_str("foo:", advisory::Entity).is_err());
+        assert!(Sort::from_str(":foo", advisory::Entity).is_err());
+        assert!(Sort::from_str("location:foo", advisory::Entity).is_err());
+        assert!(Sort::from_str("location:asc:foo", advisory::Entity).is_err());
+
+        // Good sorts with other columns
+        assert!(Sort::from_str(
+            "foo",
+            Columns::from_entity::<advisory::Entity>()
+                .add_column("foo", ColumnType::String(None).def())
+        )
+        .is_ok());
+
+        // Bad sorts with other columns
+        assert!(Sort::from_str(
+            "bar",
+            Columns::from_entity::<advisory::Entity>()
+                .add_column("foo", ColumnType::String(None).def())
+        )
+        .is_err());
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn conditions_on_extra_columns() -> Result<(), anyhow::Error> {
+        let query = advisory::Entity::find()
+            .column(advisory::Column::Id)
+            .expr_as_(
+                Func::char_length(Expr::col("location".into_identity())),
+                "location_len",
+            );
+
+        let sql = query
+            .filtering_with(
+                q("location_len>10"),
+                advisory::Entity
+                    .columns()
+                    .add_column("location_len", ColumnType::Integer.def()),
+            )?
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string();
+
+        assert_eq!(
+            sql,
+            r#"SELECT "advisory"."id", "advisory"."location", "advisory"."title", "advisory"."published", "advisory"."id", CHAR_LENGTH("location") AS "location_len" FROM "advisory" WHERE "location_len" > 10"#
+        );
 
         Ok(())
     }
@@ -620,7 +843,7 @@ mod tests {
         Ok(advisory::Entity::find()
             .select_only()
             .column(advisory::Column::Id)
-            .filter(Filter::<advisory::Entity>::from_str(query)?.into_condition())
+            .filter(Filter::from_str(query, advisory::Entity)?.into_condition())
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string()[45..]
             .to_string())
