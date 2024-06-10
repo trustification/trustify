@@ -96,17 +96,18 @@ pub trait Filtering<T: EntityTrait> {
 impl<T: EntityTrait> Filtering<T> for Select<T> {
     fn filtering_with<C: IntoColumns>(self, search: Query, context: C) -> Result<Self, Error> {
         let Query { q, sort } = &search;
+        let columns = context.columns();
 
         let mut result = if q.is_empty() {
             self
         } else {
-            self.filter(Filter::parse(q, context.columns())?)
+            self.filter(Filter::parse(q, &columns)?)
         };
 
         if !sort.is_empty() {
             result = sort
                 .split(',')
-                .map(|s| Sort::parse(s, context.columns()))
+                .map(|s| Sort::parse(s, &columns))
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
                 .fold(result, |select, s| {
@@ -142,23 +143,17 @@ pub enum Error {
 }
 
 pub trait IntoColumns {
-    fn columns(&self) -> Columns;
+    fn columns(self) -> Columns;
 }
 
 impl IntoColumns for Columns {
-    fn columns(&self) -> Columns {
-        self.clone()
-    }
-}
-
-impl IntoColumns for &Columns {
-    fn columns(&self) -> Columns {
-        (*self).clone()
+    fn columns(self) -> Columns {
+        self
     }
 }
 
 impl<E: EntityTrait> IntoColumns for E {
-    fn columns(&self) -> Columns {
+    fn columns(self) -> Columns {
         Columns::from_entity::<E>()
     }
 }
@@ -178,7 +173,7 @@ impl Columns {
     /// Add columns from an entity type into the context.
     pub fn with_entity<E: EntityTrait>(mut self) -> Self {
         for c in E::Column::iter() {
-            let (t, u) = c.clone().as_column_ref();
+            let (t, u) = c.as_column_ref();
             let column_ref = ColumnRef::TableColumn(t, u);
             let column_def = c.def();
             self.columns.push((column_ref, column_def));
@@ -243,13 +238,11 @@ struct Filter {
 }
 
 impl Filter {
-    fn parse<C: IntoColumns>(s: &str, context: C) -> Result<Self, Error> {
+    fn parse(s: &str, columns: &Columns) -> Result<Self, Error> {
         const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
         static LOCK: OnceLock<Regex> = OnceLock::new();
         #[allow(clippy::unwrap_used)]
         let filter = LOCK.get_or_init(|| (Regex::new(RE).unwrap()));
-
-        let columns = context.columns();
 
         let encoded = encode(s);
         if encoded.contains('&') {
@@ -259,20 +252,16 @@ impl Filter {
                 operands: Operand::Composite(
                     encoded
                         .split('&')
-                        .map(|e| Filter::parse(e, columns.clone()))
+                        .map(|e| Filter::parse(e, columns))
                         .collect::<Result<Vec<_>, _>>()?,
                 ),
             })
         } else if let Some(caps) = filter.captures(&encoded) {
             // We have a filter: {field}{op}{value}
             let field = &caps["field"];
-            let (col_ref, col_def) =
-                columns
-                    .clone()
-                    .for_field(field)
-                    .ok_or(Error::SearchSyntax(format!(
-                        "Invalid field name for filter: '{field}'"
-                    )))?;
+            let (col_ref, col_def) = columns.for_field(field).ok_or(Error::SearchSyntax(
+                format!("Invalid field name for filter: '{field}'"),
+            ))?;
             let operator = Operator::from_str(&caps["op"])?;
             Ok(Filter {
                 operator: match operator {
@@ -327,9 +316,7 @@ struct Sort {
 }
 
 impl Sort {
-    fn parse<C: IntoColumns>(s: &str, context: C) -> Result<Self, Error> {
-        let columns = context.columns();
-
+    fn parse(s: &str, columns: &Columns) -> Result<Self, Error> {
         let s = s.to_lowercase();
         let (field, order) = match s.split(':').collect::<Vec<_>>()[..] {
             [f, "asc"] | [f] => (f, Order::Asc),
@@ -521,7 +508,8 @@ mod tests {
 
     #[test(tokio::test)]
     async fn filters() -> Result<(), anyhow::Error> {
-        let test = |s: &str, expected: Operator| match Filter::parse(s, advisory::Entity) {
+        let test = |s: &str, expected: Operator| match Filter::parse(s, &advisory::Entity.columns())
+        {
             Ok(Filter {
                 operands: Operand::Composite(v),
                 ..
@@ -544,7 +532,7 @@ mod tests {
 
         // If a query matches the '{field}{op}{value}' regex, then the
         // first operand must resolve to a field on the Entity
-        assert!(Filter::parse("foo=bar", advisory::Entity).is_err());
+        assert!(Filter::parse("foo=bar", &advisory::Entity.columns()).is_err());
 
         // There aren't many bad queries since random text is
         // considered a "full-text search" in which an OR clause is
@@ -560,7 +548,7 @@ mod tests {
         let test = |s: &str, expected: Operator| {
             let columns = Columns::from_entity::<advisory::Entity>()
                 .add_column("location_len", ColumnType::Integer.def());
-            match Filter::parse(s, columns) {
+            match Filter::parse(s, &columns) {
                 Ok(Filter {
                     operands: Operand::Composite(v),
                     ..
@@ -586,7 +574,7 @@ mod tests {
 
         // If a query matches the '{field}{op}{value}' regex, then the
         // first operand must resolve to a field on the Entity
-        assert!(Filter::parse("foo=bar", advisory::Entity).is_err());
+        assert!(Filter::parse("foo=bar", &advisory::Entity.columns()).is_err());
 
         // There aren't many bad queries since random text is
         // considered a "full-text search" in which an OR clause is
@@ -599,24 +587,25 @@ mod tests {
 
     #[test(tokio::test)]
     async fn sorts() -> Result<(), anyhow::Error> {
+        let columns = advisory::Entity.columns();
         // Good sorts
-        assert!(Sort::parse("location", advisory::Entity).is_ok());
-        assert!(Sort::parse("location:asc", advisory::Entity).is_ok());
-        assert!(Sort::parse("location:desc", advisory::Entity).is_ok());
-        assert!(Sort::parse("Location", advisory::Entity).is_ok());
-        assert!(Sort::parse("Location:Asc", advisory::Entity).is_ok());
-        assert!(Sort::parse("Location:Desc", advisory::Entity).is_ok());
+        assert!(Sort::parse("location", &columns).is_ok());
+        assert!(Sort::parse("location:asc", &columns).is_ok());
+        assert!(Sort::parse("location:desc", &columns).is_ok());
+        assert!(Sort::parse("Location", &columns).is_ok());
+        assert!(Sort::parse("Location:Asc", &columns).is_ok());
+        assert!(Sort::parse("Location:Desc", &columns).is_ok());
         // Bad sorts
-        assert!(Sort::parse("foo", advisory::Entity).is_err());
-        assert!(Sort::parse("foo:", advisory::Entity).is_err());
-        assert!(Sort::parse(":foo", advisory::Entity).is_err());
-        assert!(Sort::parse("location:foo", advisory::Entity).is_err());
-        assert!(Sort::parse("location:asc:foo", advisory::Entity).is_err());
+        assert!(Sort::parse("foo", &columns).is_err());
+        assert!(Sort::parse("foo:", &columns).is_err());
+        assert!(Sort::parse(":foo", &columns).is_err());
+        assert!(Sort::parse("location:foo", &columns).is_err());
+        assert!(Sort::parse("location:asc:foo", &columns).is_err());
 
         // Good sorts with other columns
         assert!(Sort::parse(
             "foo",
-            Columns::from_entity::<advisory::Entity>()
+            &Columns::from_entity::<advisory::Entity>()
                 .add_column("foo", ColumnType::String(None).def())
         )
         .is_ok());
@@ -624,7 +613,7 @@ mod tests {
         // Bad sorts with other columns
         assert!(Sort::parse(
             "bar",
-            Columns::from_entity::<advisory::Entity>()
+            &Columns::from_entity::<advisory::Entity>()
                 .add_column("foo", ColumnType::String(None).def())
         )
         .is_err());
@@ -843,7 +832,7 @@ mod tests {
         Ok(advisory::Entity::find()
             .select_only()
             .column(advisory::Column::Id)
-            .filter(Filter::parse(query, advisory::Entity)?.into_condition())
+            .filter(Filter::parse(query, &advisory::Entity.columns())?.into_condition())
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string()[45..]
             .to_string())
