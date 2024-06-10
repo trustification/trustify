@@ -100,13 +100,13 @@ impl<T: EntityTrait> Filtering<T> for Select<T> {
         let mut result = if q.is_empty() {
             self
         } else {
-            self.filter(Filter::from_str(q, context.columns())?)
+            self.filter(Filter::parse(q, context.columns())?)
         };
 
         if !sort.is_empty() {
             result = sort
                 .split(',')
-                .map(|s| Sort::from_str(s, context.columns()))
+                .map(|s| Sort::parse(s, context.columns()))
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
                 .fold(result, |select, s| {
@@ -243,7 +243,7 @@ struct Filter {
 }
 
 impl Filter {
-    fn from_str<C: IntoColumns>(s: &str, context: C) -> Result<Self, Error> {
+    fn parse<C: IntoColumns>(s: &str, context: C) -> Result<Self, Error> {
         const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
         static LOCK: OnceLock<Regex> = OnceLock::new();
         #[allow(clippy::unwrap_used)]
@@ -259,7 +259,7 @@ impl Filter {
                 operands: Operand::Composite(
                     encoded
                         .split('&')
-                        .map(|e| Filter::from_str(e, columns.clone()))
+                        .map(|e| Filter::parse(e, columns.clone()))
                         .collect::<Result<Vec<_>, _>>()?,
                 ),
             })
@@ -327,7 +327,7 @@ struct Sort {
 }
 
 impl Sort {
-    fn from_str<C: IntoColumns>(s: &str, context: C) -> Result<Self, Error> {
+    fn parse<C: IntoColumns>(s: &str, context: C) -> Result<Self, Error> {
         let columns = context.columns();
 
         let s = s.to_lowercase();
@@ -521,7 +521,7 @@ mod tests {
 
     #[test(tokio::test)]
     async fn filters() -> Result<(), anyhow::Error> {
-        let test = |s: &str, expected: Operator| match Filter::from_str(s, advisory::Entity) {
+        let test = |s: &str, expected: Operator| match Filter::parse(s, advisory::Entity) {
             Ok(Filter {
                 operands: Operand::Composite(v),
                 ..
@@ -544,7 +544,7 @@ mod tests {
 
         // If a query matches the '{field}{op}{value}' regex, then the
         // first operand must resolve to a field on the Entity
-        assert!(Filter::from_str("foo=bar", advisory::Entity).is_err());
+        assert!(Filter::parse("foo=bar", advisory::Entity).is_err());
 
         // There aren't many bad queries since random text is
         // considered a "full-text search" in which an OR clause is
@@ -560,7 +560,7 @@ mod tests {
         let test = |s: &str, expected: Operator| {
             let columns = Columns::from_entity::<advisory::Entity>()
                 .add_column("location_len", ColumnType::Integer.def());
-            match Filter::from_str(s, columns) {
+            match Filter::parse(s, columns) {
                 Ok(Filter {
                     operands: Operand::Composite(v),
                     ..
@@ -586,7 +586,7 @@ mod tests {
 
         // If a query matches the '{field}{op}{value}' regex, then the
         // first operand must resolve to a field on the Entity
-        assert!(Filter::from_str("foo=bar", advisory::Entity).is_err());
+        assert!(Filter::parse("foo=bar", advisory::Entity).is_err());
 
         // There aren't many bad queries since random text is
         // considered a "full-text search" in which an OR clause is
@@ -600,21 +600,21 @@ mod tests {
     #[test(tokio::test)]
     async fn sorts() -> Result<(), anyhow::Error> {
         // Good sorts
-        assert!(Sort::from_str("location", advisory::Entity).is_ok());
-        assert!(Sort::from_str("location:asc", advisory::Entity).is_ok());
-        assert!(Sort::from_str("location:desc", advisory::Entity).is_ok());
-        assert!(Sort::from_str("Location", advisory::Entity).is_ok());
-        assert!(Sort::from_str("Location:Asc", advisory::Entity).is_ok());
-        assert!(Sort::from_str("Location:Desc", advisory::Entity).is_ok());
+        assert!(Sort::parse("location", advisory::Entity).is_ok());
+        assert!(Sort::parse("location:asc", advisory::Entity).is_ok());
+        assert!(Sort::parse("location:desc", advisory::Entity).is_ok());
+        assert!(Sort::parse("Location", advisory::Entity).is_ok());
+        assert!(Sort::parse("Location:Asc", advisory::Entity).is_ok());
+        assert!(Sort::parse("Location:Desc", advisory::Entity).is_ok());
         // Bad sorts
-        assert!(Sort::from_str("foo", advisory::Entity).is_err());
-        assert!(Sort::from_str("foo:", advisory::Entity).is_err());
-        assert!(Sort::from_str(":foo", advisory::Entity).is_err());
-        assert!(Sort::from_str("location:foo", advisory::Entity).is_err());
-        assert!(Sort::from_str("location:asc:foo", advisory::Entity).is_err());
+        assert!(Sort::parse("foo", advisory::Entity).is_err());
+        assert!(Sort::parse("foo:", advisory::Entity).is_err());
+        assert!(Sort::parse(":foo", advisory::Entity).is_err());
+        assert!(Sort::parse("location:foo", advisory::Entity).is_err());
+        assert!(Sort::parse("location:asc:foo", advisory::Entity).is_err());
 
         // Good sorts with other columns
-        assert!(Sort::from_str(
+        assert!(Sort::parse(
             "foo",
             Columns::from_entity::<advisory::Entity>()
                 .add_column("foo", ColumnType::String(None).def())
@@ -622,7 +622,7 @@ mod tests {
         .is_ok());
 
         // Bad sorts with other columns
-        assert!(Sort::from_str(
+        assert!(Sort::parse(
             "bar",
             Columns::from_entity::<advisory::Entity>()
                 .add_column("foo", ColumnType::String(None).def())
@@ -843,7 +843,7 @@ mod tests {
         Ok(advisory::Entity::find()
             .select_only()
             .column(advisory::Column::Id)
-            .filter(Filter::from_str(query, advisory::Entity)?.into_condition())
+            .filter(Filter::parse(query, advisory::Entity)?.into_condition())
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string()[45..]
             .to_string())
