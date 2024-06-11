@@ -167,18 +167,15 @@ pub struct Columns {
 impl Columns {
     /// Construct a new columns context from an entity type.
     pub fn from_entity<E: EntityTrait>() -> Self {
-        Columns::default().with_entity::<E>()
-    }
-
-    /// Add columns from an entity type into the context.
-    pub fn with_entity<E: EntityTrait>(mut self) -> Self {
-        for c in E::Column::iter() {
-            let (t, u) = c.as_column_ref();
-            let column_ref = ColumnRef::TableColumn(t, u);
-            let column_def = c.def();
-            self.columns.push((column_ref, column_def));
-        }
-        self
+        let columns = E::Column::iter()
+            .map(|c| {
+                let (t, u) = c.as_column_ref();
+                let column_ref = ColumnRef::TableColumn(t, u);
+                let column_def = c.def();
+                (column_ref, column_def)
+            })
+            .collect();
+        Self { columns }
     }
 
     /// Add an arbitrary column into the context.
@@ -188,31 +185,15 @@ impl Columns {
         self
     }
 
-    /// Add columns from another column context.
-    ///
-    /// Any columns already existing within this context will *not* be replaced
-    /// by columns from the argument.
-    pub fn add_columns<C: IntoColumns>(mut self, columns: C) -> Self {
-        let columns = columns.columns();
-
-        for (col_ref, col_def) in columns.columns {
-            if !self
-                .columns
-                .iter()
-                .any(|(existing_col_ref, _)| *existing_col_ref == col_ref)
-            {
-                self.columns.push((col_ref, col_def))
-            }
-        }
-
-        self
+    pub fn iter(&self) -> impl Iterator<Item = &(ColumnRef, ColumnDef)> {
+        self.columns.iter()
     }
 
     /// Look up the column context for a given simple field name.
-    pub fn for_field(&self, field: &str) -> Option<(ColumnRef, ColumnDef)> {
+    fn for_field(&self, field: &str) -> Option<(ColumnRef, ColumnDef)> {
         self.columns
             .iter()
-            .find(|(col_ref, col_def)| {
+            .find(|(col_ref, _)| {
                 matches!( col_ref,
                    ColumnRef::Column(name)
                     | ColumnRef::TableColumn(_, name)
@@ -220,10 +201,6 @@ impl Columns {
                         if name.to_string() == field)
             })
             .cloned()
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &(ColumnRef, ColumnDef)> {
-        self.columns.iter()
     }
 }
 
@@ -508,8 +485,8 @@ mod tests {
 
     #[test(tokio::test)]
     async fn filters() -> Result<(), anyhow::Error> {
-        let test = |s: &str, expected: Operator| match Filter::parse(s, &advisory::Entity.columns())
-        {
+        let columns = advisory::Entity.columns();
+        let test = |s: &str, expected: Operator| match Filter::parse(s, &columns) {
             Ok(Filter {
                 operands: Operand::Composite(v),
                 ..
@@ -532,7 +509,7 @@ mod tests {
 
         // If a query matches the '{field}{op}{value}' regex, then the
         // first operand must resolve to a field on the Entity
-        assert!(Filter::parse("foo=bar", &advisory::Entity.columns()).is_err());
+        assert!(Filter::parse("foo=bar", &columns).is_err());
 
         // There aren't many bad queries since random text is
         // considered a "full-text search" in which an OR clause is
@@ -546,8 +523,9 @@ mod tests {
     #[test(tokio::test)]
     async fn filters_extra_columns() -> Result<(), anyhow::Error> {
         let test = |s: &str, expected: Operator| {
-            let columns = Columns::from_entity::<advisory::Entity>()
-                .add_column("location_len", ColumnType::Integer.def());
+            let columns = advisory::Entity
+                .columns()
+                .add_column("len", ColumnType::Integer.def());
             match Filter::parse(s, &columns) {
                 Ok(Filter {
                     operands: Operand::Composite(v),
@@ -560,27 +538,14 @@ mod tests {
             }
         };
 
-        // Good filters
-        test("location=foo", Operator::Equal);
-        test("location!=foo", Operator::NotEqual);
-        test("location~foo", Operator::Like);
-        test("location!~foo", Operator::NotLike);
-        test("location>foo", Operator::GreaterThan);
-        test("location>=foo", Operator::GreaterThanOrEqual);
-        test("location<foo", Operator::LessThan);
-        test("location<=foo", Operator::LessThanOrEqual);
-
-        test("location_len>42", Operator::GreaterThan);
-
-        // If a query matches the '{field}{op}{value}' regex, then the
-        // first operand must resolve to a field on the Entity
-        assert!(Filter::parse("foo=bar", &advisory::Entity.columns()).is_err());
-
-        // There aren't many bad queries since random text is
-        // considered a "full-text search" in which an OR clause is
-        // constructed from a LIKE clause for all string fields in the
-        // entity.
-        test("search the entity", Operator::Like);
+        test("len=42", Operator::Equal);
+        test("len!=42", Operator::NotEqual);
+        test("len~42", Operator::Like);
+        test("len!~42", Operator::NotLike);
+        test("len>42", Operator::GreaterThan);
+        test("len>=42", Operator::GreaterThanOrEqual);
+        test("len<42", Operator::LessThan);
+        test("len<=42", Operator::LessThanOrEqual);
 
         Ok(())
     }
@@ -605,7 +570,8 @@ mod tests {
         // Good sorts with other columns
         assert!(Sort::parse(
             "foo",
-            &Columns::from_entity::<advisory::Entity>()
+            &advisory::Entity
+                .columns()
                 .add_column("foo", ColumnType::String(None).def())
         )
         .is_ok());
@@ -613,7 +579,8 @@ mod tests {
         // Bad sorts with other columns
         assert!(Sort::parse(
             "bar",
-            &Columns::from_entity::<advisory::Entity>()
+            &advisory::Entity
+                .columns()
                 .add_column("foo", ColumnType::String(None).def())
         )
         .is_err());
@@ -832,7 +799,7 @@ mod tests {
         Ok(advisory::Entity::find()
             .select_only()
             .column(advisory::Column::Id)
-            .filter(Filter::parse(query, &advisory::Entity.columns())?.into_condition())
+            .filtering(q(query))?
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string()[45..]
             .to_string())
