@@ -102,11 +102,11 @@ struct UploadParams {
 #[utoipa::path(
     tag = "advisory",
     context_path = "/api",
-    request_body = Vec <u8>,
-    params( UploadParams ),
+    request_body = Vec<u8>,
+    params(UploadParams),
     responses(
-    (status = 201, description = "Upload a file"),
-    (status = 400, description = "The file could not be parsed as an advisory"),
+        (status = 201, description = "Upload a file"),
+        (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
 #[post("/v1/advisory")]
@@ -135,12 +135,26 @@ pub async fn upload(
 )]
 #[get("/v1/advisory/{key}/download")]
 pub async fn download(
-    service: web::Data<IngestorService>,
+    ingestor: web::Data<IngestorService>,
+    advisory: web::Data<AdvisoryService>,
     key: web::Path<String>,
 ) -> Result<impl Responder, Error> {
     let hash_key = Id::from_str(&key).map_err(Error::HashKey)?;
 
-    let stream = service
+    let Some(adv) = advisory.fetch_advisory(hash_key, ()).await? else {
+        return Ok(HttpResponse::NotFound().finish());
+    };
+
+    let Some(hash) = adv.head.hashes.into_iter().find_map(|hash| match hash {
+        Id::Sha256(hash) => Some(hash),
+        _ => None,
+    }) else {
+        return Ok(HttpResponse::NotFound().finish());
+    };
+
+    let hash_key = Id::Sha256(hash);
+
+    let stream = ingestor
         .get_ref()
         .storage()
         .clone()
