@@ -7,7 +7,7 @@ pub mod config;
 pub mod cpe;
 pub mod db;
 pub mod error;
-pub mod hash;
+pub mod id;
 pub mod model;
 pub mod package;
 pub mod purl;

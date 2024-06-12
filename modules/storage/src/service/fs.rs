@@ -16,7 +16,7 @@ use tokio::{
     io::{AsyncSeekExt, AsyncWriteExt},
 };
 use tokio_util::io::ReaderStream;
-use trustify_common::hash::{HashKeyError, HashOrUuidKey};
+use trustify_common::id::{Id, IdError};
 
 /// A filesystem backed store
 ///
@@ -150,14 +150,14 @@ impl StorageBackend for FileSystemBackend {
 
     async fn retrieve(
         self,
-        hash_key: HashOrUuidKey,
+        hash_key: Id,
     ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error> {
         let hash = match hash_key {
-            HashOrUuidKey::Sha256(inner) => inner,
+            Id::Sha256(inner) => inner,
             unsupported => {
                 return Err(std::io::Error::new(
                     ErrorKind::InvalidInput,
-                    HashKeyError::UnsupportedAlgorithm(unsupported.prefix().to_string()),
+                    IdError::UnsupportedAlgorithm(unsupported.prefix().to_string()),
                 ));
             }
         };

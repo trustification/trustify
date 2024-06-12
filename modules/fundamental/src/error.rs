@@ -3,13 +3,13 @@ use actix_web::body::BoxBody;
 use actix_web::{HttpResponse, ResponseError};
 use sea_orm::DbErr;
 use trustify_common::error::ErrorInformation;
-use trustify_common::hash::HashKeyError;
+use trustify_common::id::IdError;
 use trustify_common::purl::PurlErr;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
-    HashKey(HashKeyError),
+    HashKey(IdError),
     #[error(transparent)]
     Database(anyhow::Error),
     #[error(transparent)]

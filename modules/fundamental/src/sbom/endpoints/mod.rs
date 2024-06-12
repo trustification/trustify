@@ -11,7 +11,7 @@ use trustify_auth::authorizer::Authorizer;
 use trustify_auth::Permission;
 use trustify_common::db::query::Query;
 use trustify_common::db::Database;
-use trustify_common::hash::HashOrUuidKey;
+use trustify_common::id::Id;
 use trustify_common::model::Paginated;
 use trustify_entity::relationship::Relationship;
 use trustify_module_ingestor::service::{Format, IngestorService};
@@ -44,7 +44,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
         trustify_common::purl::Purl,
-        trustify_common::hash::HashOrUuidKey,
+        trustify_common::id::Id,
         trustify_entity::relationship::Relationship,
     )),
     tags()
@@ -213,7 +213,7 @@ pub async fn download(
     service: web::Data<IngestorService>,
     key: web::Path<String>,
 ) -> Result<impl Responder, Error> {
-    let hash_key = HashOrUuidKey::from_str(&key).map_err(Error::HashKey)?;
+    let hash_key = Id::from_str(&key).map_err(Error::HashKey)?;
 
     let stream = service
         .get_ref()
