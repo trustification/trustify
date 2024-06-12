@@ -2,7 +2,7 @@ use bytes::Bytes;
 use futures::{Stream, TryStreamExt};
 use sha2::{digest::Output, Sha256};
 
-use trustify_common::hash::HashOrUuidKey;
+use trustify_common::id::Id;
 
 use super::*;
 
@@ -36,7 +36,7 @@ impl StorageBackend for DispatchBackend {
 
     async fn retrieve(
         self,
-        hash_key: HashOrUuidKey,
+        hash_key: Id,
     ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error>
     where
         Self: Sized,

@@ -14,14 +14,14 @@ use futures::Stream;
 use sea_orm::error::DbErr;
 use std::time::Instant;
 use trustify_common::error::ErrorInformation;
-use trustify_common::hash::{HashKeyError, HashOrUuidKey};
+use trustify_common::id::{Id, IdError};
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use trustify_module_storage::service::{StorageBackend, SyncAdapter};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
-    HashKey(#[from] HashKeyError),
+    HashKey(#[from] IdError),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
     #[error(transparent)]
@@ -116,7 +116,7 @@ impl IngestorService {
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
         let sha256 = hex::encode(digest);
 
-        let hash_key = HashOrUuidKey::Sha256(sha256.clone());
+        let hash_key = Id::Sha256(sha256.clone());
 
         let storage = SyncAdapter::new(self.storage.clone());
         let reader = storage

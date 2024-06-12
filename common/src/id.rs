@@ -9,34 +9,34 @@ use uuid::Uuid;
 
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
-pub enum HashOrUuidKey {
+pub enum Id {
     Uuid(Uuid),
     Sha256(String),
     Sha384(String),
     Sha512(String),
 }
 
-impl HashOrUuidKey {
+impl Id {
     pub fn prefix(&self) -> &'static str {
         match self {
-            HashOrUuidKey::Sha256(_) => "sha256",
-            HashOrUuidKey::Sha384(_) => "sha384",
-            HashOrUuidKey::Sha512(_) => "sha512",
-            HashOrUuidKey::Uuid(_) => "urn:uuid",
+            Id::Sha256(_) => "sha256",
+            Id::Sha384(_) => "sha384",
+            Id::Sha512(_) => "sha512",
+            Id::Uuid(_) => "urn:uuid",
         }
     }
 
     pub fn value(&self) -> String {
         match self {
-            HashOrUuidKey::Sha256(inner) => inner.clone(),
-            HashOrUuidKey::Sha384(inner) => inner.clone(),
-            HashOrUuidKey::Sha512(inner) => inner.clone(),
-            HashOrUuidKey::Uuid(inner) => inner.simple().to_string(),
+            Id::Sha256(inner) => inner.clone(),
+            Id::Sha384(inner) => inner.clone(),
+            Id::Sha512(inner) => inner.clone(),
+            Id::Uuid(inner) => inner.simple().to_string(),
         }
     }
 }
 
-impl<'__s> ToSchema<'__s> for HashOrUuidKey {
+impl<'__s> ToSchema<'__s> for Id {
     fn schema() -> (&'__s str, RefOr<Schema>) {
         let mut obj = Object::with_type(SchemaType::String);
         obj.description = Some("A hash/digest prefixed with its type.".to_string());
@@ -44,11 +44,11 @@ impl<'__s> ToSchema<'__s> for HashOrUuidKey {
             "sha256:dc60aeb735c16a71b6fc56e84ddb8193e3a6d1ef0b7e958d77e78fc039a5d04e".to_string(),
         ));
 
-        ("HashKey", RefOr::T(Schema::Object(obj)))
+        ("Id", RefOr::T(Schema::Object(obj)))
     }
 }
 
-impl Serialize for HashOrUuidKey {
+impl Serialize for Id {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -57,19 +57,19 @@ impl Serialize for HashOrUuidKey {
     }
 }
 
-impl<'de> Deserialize<'de> for HashOrUuidKey {
+impl<'de> Deserialize<'de> for Id {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_str(HashKeyVisitor)
+        deserializer.deserialize_str(IdVisitor)
     }
 }
 
-struct HashKeyVisitor;
+struct IdVisitor;
 
-impl<'de> Visitor<'de> for HashKeyVisitor {
-    type Value = HashOrUuidKey;
+impl<'de> Visitor<'de> for IdVisitor {
+    type Value = Id;
 
     fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
         formatter.write_str("a hash key with a valid prefix")
@@ -79,23 +79,23 @@ impl<'de> Visitor<'de> for HashKeyVisitor {
     where
         E: Error,
     {
-        HashOrUuidKey::from_str(v).map_err(|e| E::custom(e.to_string()))
+        Id::from_str(v).map_err(|e| E::custom(e.to_string()))
     }
 }
 
-impl Display for HashOrUuidKey {
+impl Display for Id {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            HashOrUuidKey::Sha256(inner) => {
+            Id::Sha256(inner) => {
                 write!(f, "sha256:{}", inner)
             }
-            HashOrUuidKey::Sha384(inner) => {
+            Id::Sha384(inner) => {
                 write!(f, "sha385:{}", inner)
             }
-            HashOrUuidKey::Sha512(inner) => {
+            Id::Sha512(inner) => {
                 write!(f, "sha512:{}", inner)
             }
-            HashOrUuidKey::Uuid(inner) => {
+            Id::Uuid(inner) => {
                 write!(f, "{}", inner.urn())
             }
         }
@@ -103,7 +103,7 @@ impl Display for HashOrUuidKey {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum HashKeyError {
+pub enum IdError {
     #[error("Missing prefix")]
     MissingPrefix,
     #[error("Unsupported algorithm {0}")]
@@ -112,8 +112,8 @@ pub enum HashKeyError {
     InvalidUuid(uuid::Error),
 }
 
-impl FromStr for HashOrUuidKey {
-    type Err = HashKeyError;
+impl FromStr for Id {
+    type Err = IdError;
 
     fn from_str(key: &str) -> Result<Self, Self::Err> {
         if let Some((prefix, value)) = key.split_once(':') {
@@ -122,7 +122,7 @@ impl FromStr for HashOrUuidKey {
                 "sha384" => Ok(Self::Sha384(value.to_string())),
                 "sha512" => Ok(Self::Sha512(value.to_string())),
                 "urn" => Ok(Self::Uuid(
-                    Uuid::try_parse(key).map_err(HashKeyError::InvalidUuid)?,
+                    Uuid::try_parse(key).map_err(IdError::InvalidUuid)?,
                 )),
                 _ => Err(Self::Err::UnsupportedAlgorithm(prefix.to_string())),
             }
@@ -134,7 +134,7 @@ impl FromStr for HashOrUuidKey {
 
 #[cfg(test)]
 mod test {
-    use crate::hash::HashOrUuidKey;
+    use crate::id::Id;
     use serde_json::json;
     use uuid::Uuid;
 
@@ -142,11 +142,11 @@ mod test {
     fn deserialize() -> Result<(), anyhow::Error> {
         let raw = "sha256:123123";
 
-        let key: HashOrUuidKey = serde_json::from_value(json!("sha256:123123"))?;
+        let key: Id = serde_json::from_value(json!("sha256:123123"))?;
 
-        assert_eq!(key, HashOrUuidKey::Sha256("123123".to_string()));
+        assert_eq!(key, Id::Sha256("123123".to_string()));
 
-        let _key: HashOrUuidKey =
+        let _key: Id =
             serde_json::from_value(json!("urn:uuid:2fd0d1b7-a908-4d63-9310-d57a7f77c6df"))?;
 
         Ok(())
@@ -154,7 +154,7 @@ mod test {
 
     #[test]
     fn serialize() -> Result<(), anyhow::Error> {
-        let key = HashOrUuidKey::Sha256("123123".to_string());
+        let key = Id::Sha256("123123".to_string());
 
         let raw = serde_json::to_string(&key)?;
 
