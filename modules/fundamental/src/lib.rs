@@ -15,3 +15,6 @@ pub use endpoints::configure;
 pub mod error;
 
 pub use error::Error;
+
+#[cfg(test)]
+pub mod test;

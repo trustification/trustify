@@ -1,23 +1,25 @@
-use std::str::FromStr;
-
+use crate::advisory::model::AdvisorySummary;
+use crate::configure;
+use crate::test::CallService;
 use actix_http::{Request, StatusCode};
 use actix_web::body::MessageBody;
 use actix_web::dev::{Service, ServiceResponse};
 use actix_web::test::TestRequest;
 use actix_web::{web, App, Error};
 use bytesize::ByteSize;
+use futures_util::future::LocalBoxFuture;
 use hex::ToHex;
 use jsonpath_rust::JsonPathQuery;
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
+use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
 use tokio_util::io::ReaderStream;
-
-use crate::advisory::model::AdvisorySummary;
-use crate::configure;
 use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Transactional;
+use trustify_common::id::Id;
 use trustify_common::model::PaginatedResults;
 use trustify_common::purl::Purl;
 use trustify_cvss::cvss3::{
@@ -27,7 +29,6 @@ use trustify_cvss::cvss3::{
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::{graph::advisory::AdvisoryInformation, service::IngestorService};
 use trustify_module_storage::service::fs::FileSystemBackend;
-use trustify_module_storage::service::StorageBackend;
 
 async fn query<S, B>(app: &S, q: &str) -> PaginatedResults<AdvisorySummary>
 where
@@ -39,7 +40,7 @@ where
     actix_web::test::call_and_read_body_json(app, req).await
 }
 
-async fn ingest(service: &IngestorService, data: &[u8]) -> String {
+async fn ingest(service: &IngestorService, data: &[u8]) -> Id {
     use trustify_module_ingestor::service::Format;
     service
         .ingest(
@@ -502,27 +503,87 @@ async fn upload_unknown_format(ctx: TrustifyContext) -> Result<(), anyhow::Error
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
-#[test(actix_web::test)]
-async fn download_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+const DOC: &[u8] = include_bytes!("../../../../../etc/test-data/csaf/cve-2023-33201.json");
+
+/// This will upload [`DOC`], and then call the test function, providing the upload id of the document.
+async fn with_upload<F>(ctx: TrustifyContext, f: F) -> anyhow::Result<()>
+where
+    for<'a> F: FnOnce(Id, &'a dyn CallService) -> LocalBoxFuture<'a, anyhow::Result<()>>,
+{
     let db = ctx.db;
     let (storage, _) = FileSystemBackend::for_test().await?;
     let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|svc| configure(svc, db, storage.clone()))),
+        App::new()
+            .app_data(web::PayloadConfig::default().limit(1024 * 1024))
+            .service(web::scope("/api").configure(|svc| configure(svc, db, storage.clone()))),
     )
     .await;
 
-    let data: &[u8] = include_bytes!("../../../../../etc/test-data/csaf/cve-2023-33201.json");
-    let digest: String = storage.store(ReaderStream::new(data)).await?.encode_hex();
+    // upload
 
-    let uri = format!("/api/v1/advisory/sha256:{digest}/download");
-    let request = TestRequest::get().uri(&uri).to_request();
+    let request = TestRequest::post()
+        .uri("/api/v1/advisory")
+        .set_payload(DOC)
+        .to_request();
 
     let response = actix_web::test::call_service(&app, request).await;
 
+    println!("Code: {}", response.status());
     assert!(response.status().is_success());
     let doc: Value = actix_web::test::read_body_json(response).await;
-    assert_eq!(doc["document"]["tracking"]["id"], "CVE-2023-33201");
+    let id = serde_json::from_value::<Id>(doc).expect("must be a parsable Id");
+
+    println!("ID: {id:?}");
+    assert!(matches!(id, Id::Uuid(_)));
+
+    f(id, &app).await?;
+
+    // download
 
     Ok(())
+}
+
+/// Test downloading a document by its SHA256 digest
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn download_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let digest: String = Sha256::digest(DOC).encode_hex();
+
+    with_upload(ctx, move |_id, app| {
+        Box::pin(async move {
+            let uri = format!("/api/v1/advisory/sha256:{digest}/download");
+            let request = TestRequest::get().uri(&uri).to_request();
+
+            let response = app.call_service(request).await;
+
+            assert!(response.status().is_success());
+            let doc: Value = actix_web::test::read_body_json(response).await;
+            assert_eq!(doc["document"]["tracking"]["id"], "CVE-2023-33201");
+
+            Ok(())
+        })
+    })
+    .await
+}
+
+/// Test downloading a document by its upload ID
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn download_advisory_by_id(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    with_upload(ctx, |id, app| {
+        Box::pin(async move {
+            let uri = format!("/api/v1/advisory/{id}/download");
+            let request = TestRequest::get().uri(&uri).to_request();
+
+            let response = app.call_service(request).await;
+
+            println!("Code: {}", response.status());
+            assert!(response.status().is_success());
+            let doc: Value = actix_web::test::read_body_json(response).await;
+            assert_eq!(doc["document"]["tracking"]["id"], "CVE-2023-33201");
+
+            Ok(())
+        })
+    })
+    .await
 }

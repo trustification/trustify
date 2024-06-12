@@ -30,17 +30,18 @@ utoipa = { workspace = true, features = ["actix_extras"] }
 uuid = { workspace = true }
 
 [dev-dependencies]
+actix-http = { workspace = true }
 bytesize = { workspace = true }
 chrono = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }
 jsonpath-rust = { workspace = true }
 log = { workspace = true }
-serde_json = { workspace = true }
 rust-lzma = { workspace = true }
-test-log = { workspace = true, features = ["log", "trace"] }
-trustify-cvss = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
 test-context = { workspace = true }
-urlencoding = { workspace = true }
+test-log = { workspace = true, features = ["log", "trace"] }
 tokio-util = { workspace = true }
-actix-http = { workspace = true }
+trustify-cvss = { workspace = true }
+urlencoding = { workspace = true }
