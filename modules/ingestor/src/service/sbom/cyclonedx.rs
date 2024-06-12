@@ -4,6 +4,7 @@ use crate::{
 };
 use cyclonedx_bom::prelude::Bom;
 use std::io::Read;
+use trustify_common::id::Id;
 
 pub struct CyclonedxLoader<'g> {
     graph: &'g Graph,
@@ -19,7 +20,7 @@ impl<'g> CyclonedxLoader<'g> {
         source: L,
         document: R,
         sha256: &str,
-    ) -> Result<String, Error> {
+    ) -> Result<Id, Error> {
         let sbom = Bom::parse_json_value(serde_json::from_reader(document)?)
             .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
@@ -54,7 +55,7 @@ impl<'g> CyclonedxLoader<'g> {
 
         tx.commit().await?;
 
-        Ok(ctx.sbom.sbom_id.to_string())
+        Ok(Id::Uuid(ctx.sbom.sbom_id))
     }
 }
 

@@ -102,7 +102,7 @@ impl IngestorService {
         issuer: Option<String>,
         fmt: Format,
         stream: S,
-    ) -> Result<String, Error>
+    ) -> Result<Id, Error>
     where
         E: std::error::Error,
         S: Stream<Item = Result<Bytes, E>>,

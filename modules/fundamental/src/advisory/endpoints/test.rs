@@ -416,9 +416,9 @@ async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::
         .to_request();
 
     let response = actix_web::test::call_service(&app, request).await;
-    let doc: Value = actix_web::test::read_body_json(response).await;
-    log::debug!("{doc}");
-    assert_eq!(doc.as_str(), Some("CVE-2023-33201"));
+    let id: Id = actix_web::test::read_body_json(response).await;
+    log::debug!("{id}");
+    assert!(matches!(id, Id::Uuid(_)));
 
     Ok(())
 }
@@ -442,8 +442,8 @@ async fn upload_osv_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let response = actix_web::test::call_service(&app, request).await;
     assert!(response.status().is_success());
-    let id: String = actix_web::test::read_body_json(response).await;
-    assert_eq!(id, "RUSTSEC-2021-0079");
+    let id: Id = actix_web::test::read_body_json(response).await;
+    assert!(matches!(id, Id::Uuid(_)));
 
     Ok(())
 }
@@ -467,8 +467,8 @@ async fn upload_cve_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let response = actix_web::test::call_service(&app, request).await;
     assert!(response.status().is_success());
-    let id: String = actix_web::test::read_body_json(response).await;
-    assert_eq!(id, "CVE-2024-27088");
+    let id: Id = actix_web::test::read_body_json(response).await;
+    assert!(matches!(id, Id::Uuid(_)));
 
     Ok(())
 }

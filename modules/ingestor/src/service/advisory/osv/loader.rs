@@ -7,6 +7,7 @@ use crate::{
 };
 use osv::schema::{Event, ReferenceType, SeverityType, Vulnerability};
 use std::{io::Read, str::FromStr, sync::OnceLock};
+use trustify_common::id::Id;
 use trustify_common::{purl::Purl, time::ChronoExt};
 use trustify_cvss::cvss3::Cvss3Base;
 
@@ -25,112 +26,111 @@ impl<'g> OsvLoader<'g> {
         issuer: Option<String>,
         record: R,
         checksum: &str,
-    ) -> Result<String, Error> {
+    ) -> Result<Id, Error> {
         let mut reader = HashingRead::new(record);
         let osv: Vulnerability = serde_json::from_reader(&mut reader)?;
 
         let issuer = issuer.or(detect_organization(&osv));
 
-        let advisory_id = osv.id.clone();
-
         let tx = self.graph.transaction().await?;
 
-        if let Some(cve_ids) = &osv.aliases.map(|aliases| {
+        let cve_ids = osv.aliases.iter().flat_map(|aliases| {
             aliases
                 .iter()
                 .filter(|e| e.starts_with("CVE-"))
                 .cloned()
                 .collect::<Vec<_>>()
-        }) {
-            let digests = reader.finish().map_err(|e| Error::Generic(e.into()))?;
-            let encoded_sha256 = hex::encode(digests.sha256);
-            if checksum != encoded_sha256 {
-                return Err(Error::Storage(anyhow::Error::msg(
-                    "document integrity check failed",
-                )));
-            }
+        });
 
-            let information = AdvisoryInformation {
-                title: osv.summary.clone(),
-                issuer,
-                published: Some(osv.published.into_time()),
-                modified: Some(osv.modified.into_time()),
-                withdrawn: osv.withdrawn.map(ChronoExt::into_time),
-            };
-            let advisory = self
-                .graph
-                .ingest_advisory(&osv.id, location, encoded_sha256, information, &tx)
+        let digests = reader.finish().map_err(|e| Error::Generic(e.into()))?;
+        let encoded_sha256 = hex::encode(digests.sha256);
+        if checksum != encoded_sha256 {
+            return Err(Error::Storage(anyhow::Error::msg(
+                "document integrity check failed",
+            )));
+        }
+
+        let information = AdvisoryInformation {
+            title: osv.summary.clone(),
+            issuer,
+            published: Some(osv.published.into_time()),
+            modified: Some(osv.modified.into_time()),
+            withdrawn: osv.withdrawn.map(ChronoExt::into_time),
+        };
+        let advisory = self
+            .graph
+            .ingest_advisory(&osv.id, location, encoded_sha256, information, &tx)
+            .await?;
+
+        if let Some(withdrawn) = osv.withdrawn {
+            advisory
+                .set_withdrawn_at(withdrawn.into_time(), &tx)
+                .await?;
+        }
+
+        for cve_id in cve_ids {
+            let advisory_vuln = advisory
+                .link_to_vulnerability(
+                    &cve_id,
+                    Some(AdvisoryVulnerabilityInformation {
+                        title: osv.summary.clone(),
+                        summary: osv.summary.clone(),
+                        description: osv.details.clone(),
+                        discovery_date: None,
+                        release_date: None,
+                    }),
+                    &tx,
+                )
                 .await?;
 
-            if let Some(withdrawn) = osv.withdrawn {
-                advisory
-                    .set_withdrawn_at(withdrawn.into_time(), &tx)
-                    .await?;
-            }
-
-            for cve_id in cve_ids {
-                let advisory_vuln = advisory
-                    .link_to_vulnerability(
-                        cve_id,
-                        Some(AdvisoryVulnerabilityInformation {
-                            title: osv.summary.clone(),
-                            summary: osv.summary.clone(),
-                            description: osv.details.clone(),
-                            discovery_date: None,
-                            release_date: None,
-                        }),
-                        &tx,
-                    )
-                    .await?;
-
-                for severity in osv.severity.iter().flatten() {
-                    if matches!(severity.severity_type, SeverityType::CVSSv3) {
-                        match Cvss3Base::from_str(&severity.score) {
-                            Ok(cvss3) => {
-                                advisory_vuln.ingest_cvss3_score(cvss3, &tx).await?;
-                            }
-                            Err(err) => {
-                                log::warn!("Unable to parse CVSS3: {:#?}", err);
-                            }
+            for severity in osv.severity.iter().flatten() {
+                if matches!(severity.severity_type, SeverityType::CVSSv3) {
+                    match Cvss3Base::from_str(&severity.score) {
+                        Ok(cvss3) => {
+                            advisory_vuln.ingest_cvss3_score(cvss3, &tx).await?;
+                        }
+                        Err(err) => {
+                            log::warn!("Unable to parse CVSS3: {:#?}", err);
                         }
                     }
                 }
+            }
 
-                for affected in &osv.affected {
-                    if let Some(package) = &affected.package {
-                        let mut purls = vec![];
+            for affected in &osv.affected {
+                if let Some(package) = &affected.package {
+                    let mut purls = vec![];
 
-                        purls.extend(translate::to_purl(package).map(Purl::from));
+                    purls.extend(translate::to_purl(package).map(Purl::from));
 
-                        if let Some(purl) = &package.purl {
-                            purls.extend(Purl::from_str(purl).ok());
-                        }
+                    if let Some(purl) = &package.purl {
+                        purls.extend(Purl::from_str(purl).ok());
+                    }
 
-                        for purl in purls {
-                            for range in affected.ranges.iter().flatten() {
-                                let parsed_range = events_to_range(&range.events);
-                                if let (Some(start), Some(end)) = &parsed_range {
-                                    advisory_vuln
-                                        .ingest_affected_package_range(&purl, start, end, &tx)
-                                        .await?;
-                                }
+                    for purl in purls {
+                        for range in affected.ranges.iter().flatten() {
+                            let parsed_range = events_to_range(&range.events);
+                            if let (Some(start), Some(end)) = &parsed_range {
+                                advisory_vuln
+                                    .ingest_affected_package_range(&purl, start, end, &tx)
+                                    .await?;
+                            }
 
-                                if let (_, Some(fixed)) = &parsed_range {
-                                    let mut fixed_purl = purl.clone();
-                                    fixed_purl.version = Some(fixed.clone());
+                            if let (_, Some(fixed)) = &parsed_range {
+                                let mut fixed_purl = purl.clone();
+                                fixed_purl.version = Some(fixed.clone());
 
-                                    advisory_vuln
-                                        .ingest_fixed_package_version(&fixed_purl, &tx)
-                                        .await?;
-                                }
+                                advisory_vuln
+                                    .ingest_fixed_package_version(&fixed_purl, &tx)
+                                    .await?;
                             }
                         }
                     }
                 }
             }
         }
+
         tx.commit().await?;
-        Ok(advisory_id)
+        Ok(Id::Uuid(advisory.advisory.id))
     }
 }
 

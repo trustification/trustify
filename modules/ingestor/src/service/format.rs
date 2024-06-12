@@ -6,6 +6,7 @@ use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader}
 use crate::service::Error;
 use jsn::{mask::*, Format as JsnFormat, TokenReader};
 use std::io::Read;
+use trustify_common::id::Id;
 
 #[derive(Debug)]
 pub enum Format {
@@ -24,7 +25,7 @@ impl<'g> Format {
         issuer: Option<String>,
         checksum: &str,
         reader: R,
-    ) -> Result<String, Error> {
+    ) -> Result<Id, Error> {
         match self {
             Format::CSAF => {
                 // issuer is internal as publisher of the document.
