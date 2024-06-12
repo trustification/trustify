@@ -4,6 +4,7 @@ use crate::graph::Graph;
 use crate::service::{hashing::HashingRead, Error};
 use cve::{Cve, Timestamp};
 use std::io::Read;
+use trustify_common::id::Id;
 
 /// Loader capable of parsing a CVE Record JSON file
 /// and manipulating the Graph to integrate it into
@@ -27,7 +28,7 @@ impl<'g> CveLoader<'g> {
         location: L,
         record: R,
         checksum: &str,
-    ) -> Result<String, Error> {
+    ) -> Result<Id, Error> {
         let mut reader = HashingRead::new(record);
         let cve: Cve = serde_json::from_reader(&mut reader)?;
         let id = cve.id();
@@ -123,7 +124,7 @@ impl<'g> CveLoader<'g> {
 
         tx.commit().await?;
 
-        Ok(id.into())
+        Ok(Id::Uuid(advisory.advisory.id))
     }
 }
 

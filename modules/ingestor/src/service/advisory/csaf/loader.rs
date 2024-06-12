@@ -12,6 +12,7 @@ use std::io::Read;
 use std::str::FromStr;
 use time::OffsetDateTime;
 use trustify_common::db::Transactional;
+use trustify_common::id::Id;
 use trustify_common::purl::Purl;
 use trustify_cvss::cvss3::Cvss3Base;
 
@@ -50,7 +51,7 @@ impl<'g> CsafLoader<'g> {
         location: L,
         document: R,
         checksum: &str,
-    ) -> Result<String, Error> {
+    ) -> Result<Id, Error> {
         let mut reader = HashingRead::new(document);
 
         let csaf: Csaf = serde_json::from_reader(&mut reader)?;
@@ -84,7 +85,8 @@ impl<'g> CsafLoader<'g> {
         }
 
         tx.commit().await?;
-        Ok(advisory_id)
+
+        Ok(Id::Uuid(advisory.advisory.id))
     }
 
     async fn ingest_vulnerability<TX: AsRef<Transactional>>(
