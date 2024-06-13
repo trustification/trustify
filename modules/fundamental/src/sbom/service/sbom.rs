@@ -1,8 +1,8 @@
 use super::SbomService;
-use crate::sbom::model::{
-    SbomPackage, SbomPackageReference, SbomPackageRelation, SbomSummary, Which,
+use crate::{
+    sbom::model::{SbomPackage, SbomPackageReference, SbomPackageRelation, SbomSummary, Which},
+    Error,
 };
-use crate::Error;
 use sea_orm::{
     prelude::Uuid, ColumnTrait, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
     QueryOrder, QuerySelect, RelationTrait, Select, SelectColumns,
@@ -12,14 +12,14 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::fmt::Debug;
 use tracing::instrument;
-use trustify_common::db::query::{Filtering, Query};
-use trustify_common::id::Id;
 use trustify_common::{
     cpe::Cpe,
     db::{
         limiter::{limit_selector, LimiterTrait},
+        query::{Filtering, Query},
         ArrayAgg, JsonBuildObject, ToJson, Transactional,
     },
+    id::Id,
     model::{Paginated, PaginatedResults},
     purl::Purl,
 };
@@ -32,6 +32,27 @@ use trustify_entity::{
 };
 
 impl SbomService {
+    /// fetch one sbom
+    pub async fn fetch_sbom<TX: AsRef<Transactional>>(
+        &self,
+        id: Id,
+        tx: TX,
+    ) -> Result<Option<SbomSummary>, Error> {
+        let connection = self.db.connection(&tx);
+
+        let select = match id {
+            Id::Uuid(id) => sbom::Entity::find_by_id(id),
+            Id::Sha256(sha256) => sbom::Entity::find().filter(sbom::Column::Sha256.eq(sha256)),
+            _ => return Err(Error::UnsupportedHashAlgorithm),
+        };
+
+        Ok(select
+            .find_also_related(sbom_node::Entity)
+            .one(&connection)
+            .await?
+            .and_then(Self::build_summary))
+    }
+
     /// fetch all SBOMs
     pub async fn fetch_sboms<TX: AsRef<Transactional>>(
         &self,
@@ -49,22 +70,22 @@ impl SbomService {
         let total = limiter.total().await?;
         let sboms = limiter.fetch().await?;
 
-        let mut items = Vec::with_capacity(sboms.len());
-        for (sbom, node) in sboms {
-            if let Some(node) = node {
-                items.push(SbomSummary {
-                    id: sbom.sbom_id,
-                    hashes: vec![Id::Sha256(sbom.sha256)],
-                    document_id: sbom.document_id,
-
-                    name: node.name,
-                    published: sbom.published,
-                    authors: sbom.authors,
-                })
-            }
-        }
+        let items = sboms.into_iter().filter_map(Self::build_summary).collect();
 
         Ok(PaginatedResults { total, items })
+    }
+
+    /// turn an (sbom, sbom_node) row into an [`SbomSummary`], if possible
+    fn build_summary((sbom, node): (sbom::Model, Option<sbom_node::Model>)) -> Option<SbomSummary> {
+        node.map(|node| SbomSummary {
+            id: sbom.sbom_id,
+            hashes: vec![Id::Sha256(sbom.sha256)],
+            document_id: sbom.document_id,
+
+            name: node.name,
+            published: sbom.published,
+            authors: sbom.authors,
+        })
     }
 
     /// Fetch all packages from an SBOM.

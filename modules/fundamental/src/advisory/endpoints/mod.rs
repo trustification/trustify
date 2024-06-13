@@ -143,11 +143,7 @@ pub async fn download(
     let id = Id::from_str(&key).map_err(Error::HashKey)?;
 
     // look up document by id
-    let Some(id) = advisory
-        .fetch_advisory(id, ())
-        .await?
-        .and_then(|adv| adv.head.find_sha256().cloned())
-    else {
+    let Some(advisory) = advisory.fetch_advisory(id, ()).await? else {
         return Ok(HttpResponse::NotFound().finish());
     };
 
@@ -155,7 +151,7 @@ pub async fn download(
         .get_ref()
         .storage()
         .clone()
-        .retrieve(id.try_into()?)
+        .retrieve(advisory.head.hashes.try_into()?)
         .await
         .map_err(Error::Storage)?
         .map(|stream| stream.map_err(Error::Storage));
