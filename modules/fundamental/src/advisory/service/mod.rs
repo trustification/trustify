@@ -2,7 +2,7 @@ use sea_orm::{
     ColumnTrait, ColumnTypeTrait, EntityTrait, FromQueryResult, IntoIdentity, QueryFilter,
     QuerySelect, QueryTrait,
 };
-use sea_query::{ColumnType, Func, FunctionCall, SimpleExpr};
+use sea_query::{ColumnType, Func, IntoColumnRef, SimpleExpr};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
@@ -42,13 +42,10 @@ impl AdvisoryService {
             pub withdrawn: Option<OffsetDateTime>,
             pub title: Option<String>,
             // all of advisory, plus some.
-            pub average_score_cvss3: Option<f64>,
+            pub average_score: Option<f64>,
         }
 
         let connection = self.db.connection(&tx);
-
-        let cvss3_score: FunctionCall = Func::cust("cvss3_score".into_identity());
-        let cvss3_score = cvss3_score.args([SimpleExpr::Custom("cvss3".to_string())]);
 
         // To be able to ORDER or WHERE using a synthetic column, we must first
         // SELECT col, extra_col FROM (SELECT col, random as extra_col FROM...)
@@ -57,7 +54,9 @@ impl AdvisoryService {
         let inner_query = advisory::Entity::find()
             .left_join(cvss3::Entity)
             .expr_as_(
-                SimpleExpr::FunctionCall(Func::avg(SimpleExpr::FunctionCall(cvss3_score))),
+                SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
+                    cvss3::Column::Score.into_column_ref(),
+                ))),
                 "average_score",
             )
             .group_by(advisory::Column::Id);
@@ -83,7 +82,7 @@ impl AdvisoryService {
 
         let items = limiter.fetch().await?;
 
-        let averages: Vec<_> = items.iter().map(|e| e.average_score_cvss3).collect();
+        let averages: Vec<_> = items.iter().map(|e| e.average_score).collect();
 
         let entities: Vec<_> = items
             .into_iter()

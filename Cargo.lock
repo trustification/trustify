@@ -6504,6 +6504,7 @@ dependencies = [
  "tokio",
  "tokio-util",
  "trustify-common",
+ "trustify-cvss",
 ]
 
 [[package]]
