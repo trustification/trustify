@@ -2,7 +2,7 @@ use crate::{advisory, vulnerability};
 use sea_orm::entity::prelude::*;
 use trustify_cvss::cvss3;
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "cvss3")]
 pub struct Model {
     #[sea_orm(primary_key)]
@@ -22,6 +22,8 @@ pub struct Model {
     pub c: Confidentiality,
     pub i: Integrity,
     pub a: Availability,
+
+    pub score: f64,
 }
 
 impl From<Model> for cvss3::Cvss3Base {
