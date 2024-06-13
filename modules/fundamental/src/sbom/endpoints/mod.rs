@@ -210,16 +210,20 @@ pub async fn upload(
 )]
 #[get("/v1/sbom/{key}/download")]
 pub async fn download(
-    service: web::Data<IngestorService>,
+    ingestor: web::Data<IngestorService>,
+    sbom: web::Data<SbomService>,
     key: web::Path<String>,
 ) -> Result<impl Responder, Error> {
     let id = Id::from_str(&key).map_err(Error::HashKey)?;
 
-    let stream = service
-        .get_ref()
+    let Some(sbom) = sbom.fetch_sbom(id, ()).await? else {
+        return Ok(HttpResponse::NotFound().finish());
+    };
+
+    let stream = ingestor
         .storage()
         .clone()
-        .retrieve(id.try_into()?)
+        .retrieve(sbom.hashes.try_into()?)
         .await
         .map_err(Error::Storage)?
         .map(|stream| stream.map_err(Error::Storage));
