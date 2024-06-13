@@ -16,7 +16,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(Cvss3::Table)
-                    .add_column(ColumnDef::new(Cvss3::Score).decimal())
+                    .add_column(ColumnDef::new(Cvss3::Score).double())
                     .to_owned(),
             )
             .await?;
