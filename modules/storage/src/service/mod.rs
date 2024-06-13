@@ -45,6 +45,7 @@ impl<T: StorageBackend> SyncAdapter<T> {
     pub fn new(delegate: T) -> Self {
         SyncAdapter { delegate }
     }
+
     /// Retrieve the content as a sync reader, the operation itself is async
     ///
     /// NOTE: The default implementation falls back to an in-memory buffer.
