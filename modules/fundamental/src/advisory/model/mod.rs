@@ -91,4 +91,8 @@ impl AdvisoryHead {
 
         Ok(heads)
     }
+
+    pub fn find_sha256(&self) -> Option<&Id> {
+        self.hashes.iter().find(|h| matches!(h, Id::Sha256(_)))
+    }
 }

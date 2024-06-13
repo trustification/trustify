@@ -140,12 +140,11 @@ pub async fn download(
     key: web::Path<String>,
 ) -> Result<impl Responder, Error> {
     let id = Id::from_str(&key).map_err(Error::HashKey)?;
-    let Some(hash_key) = advisory.fetch_advisory(id, ()).await?.and_then(|adv| {
-        adv.head
-            .hashes
-            .into_iter()
-            .find(|h| matches!(h, Id::Sha256(_)))
-    }) else {
+    let Some(hash_key) = advisory
+        .fetch_advisory(id, ())
+        .await?
+        .and_then(|adv| adv.head.find_sha256().cloned())
+    else {
         return Ok(HttpResponse::NotFound().finish());
     };
 
