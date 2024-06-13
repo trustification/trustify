@@ -2,6 +2,7 @@ use crate::sea_orm::{IntoIdentity, Statement};
 use sea_orm_migration::prelude::*;
 use std::str::FromStr;
 
+use crate::sea_orm::prelude::Uuid;
 use trustify_cvss::cvss3::Cvss3Base;
 
 #[derive(DeriveMigrationName)]
@@ -28,7 +29,8 @@ impl MigrationTrait for Migration {
                 manager.get_database_backend(),
                 Query::select()
                     .columns([
-                        Cvss3::Id,
+                        Cvss3::AdvisoryId,
+                        Cvss3::VulnerabilityId,
                         Cvss3::MinorVersion,
                         Cvss3::AV,
                         Cvss3::AC,
@@ -45,7 +47,8 @@ impl MigrationTrait for Migration {
             .await?;
 
         for row in results {
-            let id: i32 = row.try_get("", "id")?;
+            let advisory_id: Uuid = row.try_get("", "advisory_id")?;
+            let vulnerability_id: i32 = row.try_get("", "vulnerability_id")?;
             let minor_version: i32 = row.try_get("", "minor_version")?;
             let av: String = row.try_get("", "av")?;
             let ac: String = row.try_get("", "ac")?;
@@ -69,7 +72,11 @@ impl MigrationTrait for Migration {
                         &Query::update()
                             .table(Cvss3::Table)
                             .value(Cvss3::Score, score)
-                            .and_where(Expr::col("id".into_identity()).eq(id))
+                            .and_where(
+                                Expr::col("vulnerability_id".into_identity()).eq(vulnerability_id),
+                            )
+                            .and_where(Expr::col("advisory_id".into_identity()).eq(advisory_id))
+                            .and_where(Expr::col("minor_version".into_identity()).eq(minor_version))
                             .to_string(PostgresQueryBuilder),
                     )
                     .await?;
@@ -106,7 +113,8 @@ pub enum Cvss3 {
     Table,
     Score,
 
-    Id,
+    AdvisoryId,
+    VulnerabilityId,
     MinorVersion,
     AV,
     AC,
