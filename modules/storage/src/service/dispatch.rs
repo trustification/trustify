@@ -1,10 +1,6 @@
+use super::*;
 use bytes::Bytes;
 use futures::{Stream, TryStreamExt};
-use sha2::{digest::Output, Sha256};
-
-use trustify_common::id::Id;
-
-use super::*;
 
 /// A common backend, dispatching to the ones we support.
 ///
@@ -24,7 +20,7 @@ pub enum DispatchBackend {
 impl StorageBackend for DispatchBackend {
     type Error = anyhow::Error;
 
-    async fn store<E, S>(&self, stream: S) -> Result<Output<Sha256>, StoreError<E, Self::Error>>
+    async fn store<E, S>(&self, stream: S) -> Result<StorageResult, StoreError<E, Self::Error>>
     where
         E: Debug,
         S: Stream<Item = Result<Bytes, E>>,
@@ -36,14 +32,14 @@ impl StorageBackend for DispatchBackend {
 
     async fn retrieve(
         self,
-        hash_key: Id,
+        key: StorageKey,
     ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error>
     where
         Self: Sized,
     {
         match self {
             Self::Filesystem(backend) => backend
-                .retrieve(hash_key)
+                .retrieve(key)
                 .await
                 .map(|stream| stream.map(|stream| stream.map_err(anyhow::Error::from)))
                 .map_err(anyhow::Error::from),

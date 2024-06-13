@@ -5,11 +5,14 @@ use sea_orm::DbErr;
 use trustify_common::error::ErrorInformation;
 use trustify_common::id::IdError;
 use trustify_common::purl::PurlErr;
+use trustify_module_storage::service::StorageKeyError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
     HashKey(IdError),
+    #[error(transparent)]
+    StorageKey(#[from] StorageKeyError),
     #[error(transparent)]
     Database(anyhow::Error),
     #[error(transparent)]
@@ -70,6 +73,9 @@ impl ResponseError for Error {
             }
             Error::HashKey(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Key", err))
+            }
+            Error::StorageKey(err) => {
+                HttpResponse::BadRequest().json(ErrorInformation::new("Storage Key", err))
             }
             Error::Data(msg) => HttpResponse::InternalServerError()
                 .json(ErrorInformation::new("Data-model corruption", msg)),

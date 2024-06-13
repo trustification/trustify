@@ -1,8 +1,8 @@
-use crate::service::{StorageBackend, StoreError};
+use crate::service::{StorageBackend, StorageKey, StorageResult, StoreError};
 use anyhow::Context;
 use bytes::Bytes;
 use futures::{Stream, StreamExt};
-use sha2::{digest::Output, Digest, Sha256};
+use sha2::{Digest, Sha256, Sha384, Sha512};
 use std::{
     fmt::Debug,
     io::ErrorKind,
@@ -16,7 +16,6 @@ use tokio::{
     io::{AsyncSeekExt, AsyncWriteExt},
 };
 use tokio_util::io::ReaderStream;
-use trustify_common::id::{Id, IdError};
 
 /// A filesystem backed store
 ///
@@ -33,7 +32,7 @@ use trustify_common::id::{Id, IdError};
 /// ```
 ///
 /// The idea behind that is to limit the number of directory entries. For some filesystems,
-/// the performance can degrade is directories get too big (have too many entries).
+/// the performance can degrade if directories get too big (have too many entries).
 ///
 /// This layout limits the number of entries on the first two layers to 256, and limits the chance
 /// of a file ending up in the same directory by 65536. Assuming an average distribution of hashes,
@@ -82,7 +81,7 @@ impl FileSystemBackend {
 impl StorageBackend for FileSystemBackend {
     type Error = std::io::Error;
 
-    async fn store<E, S>(&self, stream: S) -> Result<Output<Sha256>, StoreError<E, Self::Error>>
+    async fn store<E, S>(&self, stream: S) -> Result<StorageResult, StoreError<E, Self::Error>>
     where
         E: Debug,
         S: Stream<Item = Result<Bytes, E>>,
@@ -94,7 +93,9 @@ impl StorageBackend for FileSystemBackend {
         // set up reader
 
         let mut stream = pin!(stream);
-        let mut digest = Sha256::new();
+        let mut sha256 = Sha256::new();
+        let mut sha384 = Sha384::new();
+        let mut sha512 = Sha512::new();
 
         // process reader
 
@@ -104,20 +105,26 @@ impl StorageBackend for FileSystemBackend {
             .transpose()
             .map_err(StoreError::Stream)?
         {
-            digest.update(&next);
+            sha256.update(&next);
+            sha384.update(&next);
+            sha512.update(&next);
             file.write_all(&next).await.map_err(StoreError::Backend)?;
         }
 
         // finalize the digest
 
-        let digest = digest.finalize();
+        let sha256 = sha256.finalize();
+        let sha256 = hex::encode(sha256);
+        let sha384 = sha384.finalize();
+        let sha384 = hex::encode(sha384);
+        let sha512 = sha512.finalize();
+        let sha512 = hex::encode(sha512);
 
         // create the target path
 
-        let hash = hex::encode(digest);
-        let target = level_dir(&self.content, &hash, NUM_LEVELS);
+        let target = level_dir(&self.content, &sha256, NUM_LEVELS);
         create_dir_all(&target).await.map_err(StoreError::Backend)?;
-        let target = target.join(hash);
+        let target = target.join(&sha256);
 
         let mut target = File::create(target).await.map_err(StoreError::Backend)?;
 
@@ -145,23 +152,18 @@ impl StorageBackend for FileSystemBackend {
 
         // done
 
-        Ok(digest)
+        Ok(StorageResult {
+            key: StorageKey(sha256.clone()),
+            sha256,
+            sha384,
+            sha512,
+        })
     }
 
     async fn retrieve(
         self,
-        hash_key: Id,
+        StorageKey(hash): StorageKey,
     ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error> {
-        let hash = match hash_key {
-            Id::Sha256(inner) => inner,
-            unsupported => {
-                return Err(std::io::Error::new(
-                    ErrorKind::InvalidInput,
-                    IdError::UnsupportedAlgorithm(unsupported.prefix().to_string()),
-                ));
-            }
-        };
-
         let target = level_dir(&self.content, &hash, NUM_LEVELS);
         create_dir_all(&target).await?;
         let target = target.join(hash);
@@ -217,8 +219,7 @@ mod test {
             .await
             .expect("store must succeed");
 
-        let hash = hex::encode(digest);
-        assert_eq!(hash, DIGEST);
+        assert_eq!(digest.key.to_string(), DIGEST);
 
         let target = dir
             .path()

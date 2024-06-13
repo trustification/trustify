@@ -213,13 +213,13 @@ pub async fn download(
     service: web::Data<IngestorService>,
     key: web::Path<String>,
 ) -> Result<impl Responder, Error> {
-    let hash_key = Id::from_str(&key).map_err(Error::HashKey)?;
+    let id = Id::from_str(&key).map_err(Error::HashKey)?;
 
     let stream = service
         .get_ref()
         .storage()
         .clone()
-        .retrieve(hash_key)
+        .retrieve(id.try_into()?)
         .await
         .map_err(Error::Storage)?
         .map(|stream| stream.map_err(Error::Storage));
