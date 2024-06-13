@@ -109,24 +109,21 @@ impl IngestorService {
     {
         let start = Instant::now();
 
-        let digest = self
+        let result = self
             .storage
             .store(stream)
             .await
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
-        let sha256 = hex::encode(digest);
-
-        let hash_key = Id::Sha256(sha256.clone());
 
         let storage = SyncAdapter::new(self.storage.clone());
         let reader = storage
-            .retrieve(hash_key)
+            .retrieve(result.key)
             .await
             .map_err(Error::Storage)?
             .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?;
 
         let result = fmt
-            .load(&self.graph, source, issuer, &sha256, reader)
+            .load(&self.graph, source, issuer, &result.sha256, reader)
             .await?;
 
         let duration = Instant::now() - start;

@@ -139,8 +139,11 @@ pub async fn download(
     advisory: web::Data<AdvisoryService>,
     key: web::Path<String>,
 ) -> Result<impl Responder, Error> {
+    // the user requested id
     let id = Id::from_str(&key).map_err(Error::HashKey)?;
-    let Some(hash_key) = advisory
+
+    // look up document by id
+    let Some(id) = advisory
         .fetch_advisory(id, ())
         .await?
         .and_then(|adv| adv.head.find_sha256().cloned())
@@ -152,7 +155,7 @@ pub async fn download(
         .get_ref()
         .storage()
         .clone()
-        .retrieve(hash_key)
+        .retrieve(id.try_into()?)
         .await
         .map_err(Error::Storage)?
         .map(|stream| stream.map_err(Error::Storage));

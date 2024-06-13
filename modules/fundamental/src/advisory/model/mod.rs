@@ -92,6 +92,7 @@ impl AdvisoryHead {
         Ok(heads)
     }
 
+    /// Get the [`Id::Sha256`] variant from the hashes if there is one.
     pub fn find_sha256(&self) -> Option<&Id> {
         self.hashes.iter().find(|h| matches!(h, Id::Sha256(_)))
     }
