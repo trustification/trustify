@@ -139,20 +139,15 @@ pub async fn download(
     advisory: web::Data<AdvisoryService>,
     key: web::Path<String>,
 ) -> Result<impl Responder, Error> {
-    let hash_key = Id::from_str(&key).map_err(Error::HashKey)?;
-
-    let Some(adv) = advisory.fetch_advisory(hash_key, ()).await? else {
-        return Ok(HttpResponse::NotFound().finish());
-    };
-
-    let Some(hash) = adv.head.hashes.into_iter().find_map(|hash| match hash {
-        Id::Sha256(hash) => Some(hash),
-        _ => None,
+    let id = Id::from_str(&key).map_err(Error::HashKey)?;
+    let Some(hash_key) = advisory.fetch_advisory(id, ()).await?.and_then(|adv| {
+        adv.head
+            .hashes
+            .into_iter()
+            .find(|h| matches!(h, Id::Sha256(_)))
     }) else {
         return Ok(HttpResponse::NotFound().finish());
     };
-
-    let hash_key = Id::Sha256(hash);
 
     let stream = ingestor
         .get_ref()
