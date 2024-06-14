@@ -32,7 +32,7 @@ impl ChronoExt for DateTime<Utc> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+    use chrono::NaiveDate;
     use time::macros::datetime;
 
     fn input(year: i32, month: u32, day: u32, hour: u32, min: u32, sec: u32) -> DateTime<Utc> {

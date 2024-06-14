@@ -1,9 +1,7 @@
 use sea_orm::{
     ConnectionTrait, DbErr, EntityTrait, FromQueryResult, Paginator, PaginatorTrait, QuerySelect,
-    Select, SelectModel, SelectTwo, SelectTwoMany, SelectTwoModel, Selector, SelectorTrait,
+    Select, SelectModel, SelectTwo, SelectTwoModel, Selector, SelectorTrait,
 };
-use std::future::Future;
-use std::marker::PhantomData;
 use std::num::NonZeroU64;
 
 pub struct Limiter<'db, C, S1, S2>

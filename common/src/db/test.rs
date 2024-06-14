@@ -4,9 +4,10 @@ use postgresql_archive::Version;
 use postgresql_embedded::{PostgreSQL, Settings};
 use std::str::FromStr;
 use tempfile::TempDir;
-use test_context::{test_context, AsyncTestContext};
+use test_context::AsyncTestContext;
 use tracing::{info_span, instrument, Instrument};
 
+#[allow(dead_code)]
 pub struct TrustifyContext {
     pub db: crate::db::Database,
     postgresql: Option<PostgreSQL>,
@@ -45,7 +46,7 @@ impl AsyncTestContext for TrustifyContext {
             ..Default::default()
         };
 
-        let mut postgresql = async {
+        let postgresql = async {
             let version = Version::from_str("16.3.0").expect("valid psql version");
             let mut postgresql = PostgreSQL::new(version, settings);
             postgresql

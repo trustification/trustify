@@ -1,7 +1,3 @@
-#![allow(unused)]
-
-use crate::config::Database;
-
 pub mod advisory;
 pub mod config;
 pub mod cpe;
