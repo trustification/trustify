@@ -1,11 +1,11 @@
-use crate::advisory::model::AdvisorySummary;
-use crate::configure;
-use crate::test::CallService;
+use crate::{advisory::model::AdvisorySummary, configure, test::CallService};
 use actix_http::{Request, StatusCode};
-use actix_web::body::MessageBody;
-use actix_web::dev::{Service, ServiceResponse};
-use actix_web::test::TestRequest;
-use actix_web::{web, App, Error};
+use actix_web::{
+    body::MessageBody,
+    dev::{Service, ServiceResponse},
+    test::TestRequest,
+    web, App, Error,
+};
 use bytesize::ByteSize;
 use futures_util::future::LocalBoxFuture;
 use hex::ToHex;
@@ -17,17 +17,21 @@ use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
 use tokio_util::io::ReaderStream;
-use trustify_common::db::test::TrustifyContext;
-use trustify_common::db::Transactional;
-use trustify_common::id::Id;
-use trustify_common::model::PaginatedResults;
-use trustify_common::purl::Purl;
+use trustify_common::{
+    db::{test::TrustifyContext, Transactional},
+    id::Id,
+    model::PaginatedResults,
+    purl::Purl,
+};
 use trustify_cvss::cvss3::{
     AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
     PrivilegesRequired, Scope, UserInteraction,
 };
-use trustify_module_ingestor::graph::Graph;
-use trustify_module_ingestor::{graph::advisory::AdvisoryInformation, service::IngestorService};
+use trustify_module_ingestor::{
+    graph::{advisory::AdvisoryInformation, Graph},
+    model::IngestResult,
+    service::IngestorService,
+};
 use trustify_module_storage::service::fs::FileSystemBackend;
 
 async fn query<S, B>(app: &S, q: &str) -> PaginatedResults<AdvisorySummary>
@@ -40,7 +44,7 @@ where
     actix_web::test::call_and_read_body_json(app, req).await
 }
 
-async fn ingest(service: &IngestorService, data: &[u8]) -> Id {
+async fn ingest(service: &IngestorService, data: &[u8]) -> IngestResult {
     use trustify_module_ingestor::service::Format;
     service
         .ingest(

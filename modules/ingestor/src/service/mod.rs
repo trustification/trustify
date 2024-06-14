@@ -6,16 +6,14 @@ mod format;
 pub use format::Format;
 
 use crate::graph::Graph;
+use crate::model::IngestResult;
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
 use anyhow::anyhow;
 use bytes::Bytes;
 use futures::Stream;
 use sea_orm::error::DbErr;
 use std::time::Instant;
-use trustify_common::{
-    error::ErrorInformation,
-    id::{Id, IdError},
-};
+use trustify_common::{error::ErrorInformation, id::IdError};
 use trustify_module_storage::service::{dispatch::DispatchBackend, StorageBackend, SyncAdapter};
 
 #[derive(Debug, thiserror::Error)]
@@ -102,7 +100,7 @@ impl IngestorService {
         issuer: Option<String>,
         fmt: Format,
         stream: S,
-    ) -> Result<Id, Error>
+    ) -> Result<IngestResult, Error>
     where
         E: std::error::Error,
         S: Stream<Item = Result<Bytes, E>>,
@@ -128,8 +126,9 @@ impl IngestorService {
 
         let duration = Instant::now() - start;
         log::info!(
-            "Ingested: {} from {}: took {}",
-            result,
+            "Ingested: {} ({}) from {}: took {}",
+            result.id,
+            result.document_id,
             source,
             humantime::Duration::from(duration),
         );

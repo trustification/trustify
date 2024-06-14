@@ -1,3 +1,4 @@
+use crate::model::IngestResult;
 use crate::{
     graph::{
         sbom::spdx::{self, parse_spdx},
@@ -23,7 +24,7 @@ impl<'g> SpdxLoader<'g> {
         source: L,
         json: R,
         digests: &Digests,
-    ) -> Result<Id, Error> {
+    ) -> Result<IngestResult, Error> {
         // FIXME: consider adding a report entry in case of "fixing" things
         let (spdx, _) = parse_spdx(json)?;
 
@@ -34,14 +35,17 @@ impl<'g> SpdxLoader<'g> {
 
         let tx = self.graph.transaction().await?;
 
-        let document_id = &spdx.document_creation_information.spdx_document_namespace;
+        let document_id = spdx
+            .document_creation_information
+            .spdx_document_namespace
+            .clone();
 
         let sbom = self
             .graph
             .ingest_sbom(
                 &source.into(),
                 digests,
-                document_id,
+                &document_id,
                 spdx::Information(&spdx),
                 &tx,
             )
@@ -51,7 +55,10 @@ impl<'g> SpdxLoader<'g> {
 
         tx.commit().await?;
 
-        Ok(Id::Uuid(sbom.sbom.sbom_id))
+        Ok(IngestResult {
+            id: Id::Uuid(sbom.sbom.sbom_id),
+            document_id,
+        })
     }
 }
 

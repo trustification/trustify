@@ -118,8 +118,8 @@ pub async fn upload(
 ) -> Result<impl Responder, Error> {
     let fmt = Format::from_bytes(&bytes)?;
     let payload = ReaderStream::new(&*bytes);
-    let advisory_id = service.ingest("rest-api", issuer, fmt, payload).await?;
-    Ok(HttpResponse::Created().json(advisory_id))
+    let result = service.ingest("rest-api", issuer, fmt, payload).await?;
+    Ok(HttpResponse::Created().json(result))
 }
 
 #[utoipa::path(
