@@ -31,22 +31,6 @@ impl AdvisoryService {
         paginated: Paginated,
         tx: TX,
     ) -> Result<PaginatedResults<AdvisorySummary>, Error> {
-        #[derive(FromQueryResult, Debug)]
-        pub(crate) struct AdvisoryCatcher {
-            pub id: Uuid,
-            pub identifier: String,
-            pub issuer_id: Option<i32>,
-            pub location: String,
-            pub sha256: String,
-            pub published: Option<OffsetDateTime>,
-            pub modified: Option<OffsetDateTime>,
-            pub withdrawn: Option<OffsetDateTime>,
-            pub title: Option<String>,
-            // all of advisory, plus some.
-            pub average_score: Option<f64>,
-            pub average_severity: Option<Severity>,
-        }
-
         let connection = self.db.connection(&tx);
 
         // To be able to ORDER or WHERE using a synthetic column, we must first
@@ -152,23 +136,99 @@ impl AdvisoryService {
     ) -> Result<Option<AdvisoryDetails>, Error> {
         let connection = self.db.connection(&tx);
 
-        let results = advisory::Entity::find()
+        // To be able to ORDER or WHERE using a synthetic column, we must first
+        // SELECT col, extra_col FROM (SELECT col, random as extra_col FROM...)
+        // which involves mucking about inside the Select<E> to re-target from
+        // the original underlying table it expects the entity to live in.
+        let inner_query = advisory::Entity::find()
+            .left_join(cvss3::Entity)
+            .expr_as_(
+                SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
+                    cvss3::Column::Score.into_column_ref(),
+                ))),
+                "average_score",
+            )
+            .expr_as_(
+                SimpleExpr::FunctionCall(Func::cust("cvss3_severity".into_identity()).arg(
+                    SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
+                        cvss3::Column::Score.into_column_ref(),
+                    ))),
+                )),
+                "average_severity",
+            )
+            .group_by(advisory::Column::Id);
+
+        let mut outer_query = advisory::Entity::find();
+
+        // Alias the inner query as exactly the table the entity is expecting
+        // so that column aliases link up correctly.
+        QueryTrait::query(&mut outer_query)
+            .from_clear()
+            .from_subquery(inner_query.into_query(), "advisory".into_identity());
+
+        let results = outer_query
+            .column_as(
+                SimpleExpr::Column(ColumnRef::Column(
+                    "average_score".into_identity().into_iden(),
+                )),
+                "average_score",
+            )
+            .column_as(
+                SimpleExpr::Column(ColumnRef::Column(
+                    "average_severity".into_identity().into_iden(),
+                ))
+                .cast_as("TEXT".into_identity()),
+                "average_severity",
+            )
             .filter(match hash_key {
                 Id::Uuid(uuid) => advisory::Column::Id.eq(uuid),
                 Id::Sha256(hash) => advisory::Column::Sha256.eq(hash),
                 _ => return Err(Error::UnsupportedHashAlgorithm),
             })
+            .into_model::<AdvisoryCatcher>()
             .one(&connection)
             .await?;
 
         if let Some(advisory) = results {
+            let entity = advisory::Model {
+                id: advisory.id,
+                identifier: advisory.identifier,
+                issuer_id: advisory.issuer_id,
+                location: advisory.location,
+                sha256: advisory.sha256,
+                published: advisory.published,
+                modified: advisory.modified,
+                withdrawn: advisory.withdrawn,
+                title: advisory.title,
+            };
+
+            let average_score = advisory.average_score;
+            let average_severity = advisory.average_severity;
+
             Ok(Some(
-                AdvisoryDetails::from_entity(&advisory, &connection).await?,
+                AdvisoryDetails::from_entity(&entity, average_score, average_severity, &connection)
+                    .await?,
             ))
         } else {
             Ok(None)
         }
     }
+}
+
+#[derive(FromQueryResult, Debug)]
+struct AdvisoryCatcher {
+    pub id: Uuid,
+    pub identifier: String,
+    pub issuer_id: Option<i32>,
+    pub location: String,
+    pub sha256: String,
+    pub published: Option<OffsetDateTime>,
+    pub modified: Option<OffsetDateTime>,
+    pub withdrawn: Option<OffsetDateTime>,
+    pub title: Option<String>,
+    // all of advisory, plus some.
+    pub average_score: Option<f64>,
+    pub average_severity: Option<Severity>,
 }
 
 #[cfg(test)]
