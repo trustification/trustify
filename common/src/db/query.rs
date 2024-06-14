@@ -479,7 +479,7 @@ fn envalue(s: &str, ct: &ColumnType) -> Result<ValueOrSimpleExpr, Error> {
         ColumnType::Integer => {
             ValueOrSimpleExpr::Value(Value::from(s.parse::<i32>().map_err(err)?))
         }
-        ColumnType::Decimal(_) => {
+        ColumnType::Decimal(_) | ColumnType::Float | ColumnType::Double => {
             ValueOrSimpleExpr::Value(Value::from(s.parse::<f64>().map_err(err)?))
         }
         ColumnType::Enum { name, variants } => ValueOrSimpleExpr::SimpleExpr(SimpleExpr::AsEnum(
@@ -522,14 +522,15 @@ mod tests {
     #[test(tokio::test)]
     async fn happy_path() -> Result<(), anyhow::Error> {
         let stmt = advisory::Entity::find()
+            .select_only()
+            .column(advisory::Column::Id)
             .filtering(q("foo&published>2024-04-20").sort("location,title:desc"))?
             .order_by_desc(advisory::Column::Id)
             .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string()[106..]
             .to_string();
         assert_eq!(
             stmt,
-            r#"WHERE (("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')) AND "advisory"."published" > '2024-04-20' ORDER BY "advisory"."location" ASC, "advisory"."title" DESC, "advisory"."id" DESC"#
+            r#"SELECT "advisory"."id" FROM "advisory" WHERE (("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')) AND "advisory"."published" > '2024-04-20' ORDER BY "advisory"."location" ASC, "advisory"."title" DESC, "advisory"."id" DESC"#
         );
         Ok(())
     }
@@ -642,6 +643,7 @@ mod tests {
     #[test(tokio::test)]
     async fn conditions_on_extra_columns() -> Result<(), anyhow::Error> {
         let query = advisory::Entity::find()
+            .select_only()
             .column(advisory::Column::Id)
             .expr_as_(
                 Func::char_length(Expr::col("location".into_identity())),
@@ -660,7 +662,7 @@ mod tests {
 
         assert_eq!(
             sql,
-            r#"SELECT "advisory"."id", "advisory"."location", "advisory"."title", "advisory"."published", "advisory"."id", CHAR_LENGTH("location") AS "location_len" FROM "advisory" WHERE "location_len" > 10"#
+            r#"SELECT "advisory"."id", CHAR_LENGTH("location") AS "location_len" FROM "advisory" WHERE "location_len" > 10"#
         );
 
         Ok(())
@@ -842,6 +844,57 @@ mod tests {
         Ok(())
     }
 
+    #[test(tokio::test)]
+    async fn translation() -> Result<(), anyhow::Error> {
+        let test = |query: Query, expected: &str| {
+            let stmt = advisory::Entity::find()
+                .select_only()
+                .column(advisory::Column::Id)
+                .filtering_with(
+                    query,
+                    advisory::Entity.columns().translator(|f, op, v| {
+                        match (f, op, v) {
+                            ("severity", "=", "low") => Some("score>=0&score<3"),
+                            ("severity", "=", "medium") => Some("score>=3&score<6"),
+                            ("severity", "=", "high") => Some("score>=6&score<10"),
+                            ("severity", ">", "low") => Some("score>3"),
+                            ("severity", ">", "medium") => Some("score>6"),
+                            ("severity", ">", "high") => Some("score>10"),
+                            ("severity", "<", "low") => Some("score<0"),
+                            ("severity", "<", "medium") => Some("score<3"),
+                            ("severity", "<", "high") => Some("score<6"),
+                            _ => None,
+                        }
+                        .map(String::from)
+                        .or_else(|| match (f, v) {
+                            ("severity", "") => Some(format!("score:{op}")),
+                            _ => None,
+                        })
+                    }),
+                )
+                .unwrap()
+                .build(sea_orm::DatabaseBackend::Postgres)
+                .to_string()[45..]
+                .to_string();
+            assert_eq!(stmt, expected);
+        };
+
+        test(
+            q("severity>medium").sort("severity:desc"),
+            r#""advisory"."score" > 6 ORDER BY "advisory"."score" DESC"#,
+        );
+        test(
+            q("severity=medium"),
+            r#""advisory"."score" >= 3 AND "advisory"."score" < 6"#,
+        );
+        test(
+            q("severity=low|high"),
+            r#"("advisory"."score" >= 0 AND "advisory"."score" < 3) OR ("advisory"."score" >= 6 AND "advisory"."score" < 10)"#,
+        );
+
+        Ok(())
+    }
+
     /////////////////////////////////////////////////////////////////////////
     // Test helpers
     /////////////////////////////////////////////////////////////////////////
@@ -868,9 +921,22 @@ mod tests {
             pub location: String,
             pub title: String,
             pub published: Option<OffsetDateTime>,
+            pub severity: Severity,
+            pub score: f64,
         }
         #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
         pub enum Relation {}
         impl ActiveModelBehavior for ActiveModel {}
+
+        #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+        #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "severity")]
+        pub enum Severity {
+            #[sea_orm(string_value = "low")]
+            Low,
+            #[sea_orm(string_value = "medium")]
+            Medium,
+            #[sea_orm(string_value = "high")]
+            High,
+        }
     }
 }
