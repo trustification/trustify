@@ -32,6 +32,7 @@ mod m0000300_create_product_version;
 mod m0000310_alter_advisory_primary_key;
 mod m0000315_create_cvss3_scoring_function;
 mod m0000320_create_cvss3_score_column;
+mod m0000325_create_cvss3_severity_column;
 
 pub struct Migrator;
 
@@ -70,6 +71,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000310_alter_advisory_primary_key::Migration),
             Box::new(m0000315_create_cvss3_scoring_function::Migration),
             Box::new(m0000320_create_cvss3_score_column::Migration),
+            Box::new(m0000325_create_cvss3_severity_column::Migration),
         ]
     }
 }

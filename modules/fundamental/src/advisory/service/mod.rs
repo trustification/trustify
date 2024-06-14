@@ -2,7 +2,7 @@ use sea_orm::{
     ColumnTrait, ColumnTypeTrait, EntityTrait, FromQueryResult, IntoIdentity, QueryFilter,
     QuerySelect, QueryTrait,
 };
-use sea_query::{ColumnType, Func, IntoColumnRef, SimpleExpr};
+use sea_query::{ColumnRef, ColumnType, Func, IntoColumnRef, IntoIden, SimpleExpr};
 use time::OffsetDateTime;
 use uuid::Uuid;
 
@@ -13,6 +13,7 @@ use trustify_common::db::query::{Columns, Filtering, Query};
 use trustify_common::db::{Database, Transactional};
 use trustify_common::id::Id;
 use trustify_common::model::{Paginated, PaginatedResults};
+use trustify_entity::cvss3::Severity;
 use trustify_entity::{advisory, cvss3};
 
 pub struct AdvisoryService {
@@ -43,6 +44,7 @@ impl AdvisoryService {
             pub title: Option<String>,
             // all of advisory, plus some.
             pub average_score: Option<f64>,
+            pub average_severity: Option<Severity>,
         }
 
         let connection = self.db.connection(&tx);
@@ -59,6 +61,14 @@ impl AdvisoryService {
                 ))),
                 "average_score",
             )
+            .expr_as_(
+                SimpleExpr::FunctionCall(Func::cust("cvss3_severity".into_identity()).arg(
+                    SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
+                        cvss3::Column::Score.into_column_ref(),
+                    ))),
+                )),
+                "average_severity",
+            )
             .group_by(advisory::Column::Id);
 
         let mut outer_query = advisory::Entity::find();
@@ -71,10 +81,37 @@ impl AdvisoryService {
 
         // And then proceed as usual.
         let limiter = outer_query
+            .column_as(
+                SimpleExpr::Column(ColumnRef::Column(
+                    "average_score".into_identity().into_iden(),
+                )),
+                "average_score",
+            )
+            .column_as(
+                SimpleExpr::Column(ColumnRef::Column(
+                    "average_severity".into_identity().into_iden(),
+                ))
+                .cast_as("TEXT".into_identity()),
+                "average_severity",
+            )
             .filtering_with(
                 search,
                 Columns::from_entity::<advisory::Entity>()
-                    .add_column("average_score", ColumnType::Decimal(None).def()),
+                    .add_column("average_score", ColumnType::Decimal(None).def())
+                    .add_column(
+                        "average_severity",
+                        ColumnType::Enum {
+                            name: "cvss3_severity".into_identity().into_iden(),
+                            variants: vec![
+                                "none".into_identity().into_iden(),
+                                "low".into_identity().into_iden(),
+                                "medium".into_identity().into_iden(),
+                                "high".into_identity().into_iden(),
+                                "critical".into_identity().into_iden(),
+                            ],
+                        }
+                        .def(),
+                    ),
             )?
             .limiting_as::<AdvisoryCatcher>(&connection, paginated.offset, paginated.limit);
 
@@ -82,7 +119,10 @@ impl AdvisoryService {
 
         let items = limiter.fetch().await?;
 
-        let averages: Vec<_> = items.iter().map(|e| e.average_score).collect();
+        let averages: Vec<_> = items
+            .iter()
+            .map(|e| (e.average_score, e.average_severity.clone()))
+            .collect();
 
         let entities: Vec<_> = items
             .into_iter()

@@ -5,6 +5,7 @@ use utoipa::ToSchema;
 use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::paginated;
 use trustify_cvss::cvss3::score::Score;
+use trustify_entity::cvss3::Severity;
 use trustify_entity::{advisory, advisory_vulnerability, organization, vulnerability};
 
 use crate::advisory::model::{AdvisoryHead, AdvisoryVulnerabilityHead};
@@ -26,7 +27,7 @@ paginated!(AdvisorySummary);
 impl AdvisorySummary {
     pub async fn from_entities(
         entities: &[advisory::Model],
-        averages: &[Option<f64>],
+        averages: &[(Option<f64>, Option<Severity>)],
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
         let mut vulnerabilities = entities
@@ -37,7 +38,7 @@ impl AdvisorySummary {
 
         let mut summaries = Vec::new();
 
-        for (((advisory, vulnerabilities), issuer), average_score) in entities
+        for (((advisory, vulnerabilities), issuer), (average_score, average_severity)) in entities
             .iter()
             .zip(vulnerabilities.drain(..))
             .zip(issuers.drain(..))
@@ -50,7 +51,9 @@ impl AdvisorySummary {
 
             summaries.push(AdvisorySummary {
                 head: AdvisoryHead::from_entity(advisory, issuer, tx).await?,
-                average_severity: average_score.map(|score| score.severity().to_string()),
+                average_severity: average_severity
+                    .as_ref()
+                    .map(|severity| severity.to_string()),
                 average_score: average_score.map(|score| score.value()),
                 vulnerabilities,
             })

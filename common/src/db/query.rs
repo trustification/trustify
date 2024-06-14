@@ -4,8 +4,8 @@ use sea_orm::entity::ColumnDef;
 use sea_orm::sea_query::{extension::postgres::PgExpr, ConditionExpression, IntoCondition};
 use sea_orm::{
     sea_query, ColumnTrait, ColumnType, Condition, EntityName, EntityTrait, Iden, IntoIdentity,
-    Iterable, Order, PrimaryKeyToColumn, QueryFilter, QueryOrder, QuerySelect, QueryTrait, Select,
-    Value,
+    IntoSimpleExpr, Iterable, Order, PrimaryKeyToColumn, QueryFilter, QueryOrder, QuerySelect,
+    QueryTrait, Select, Value,
 };
 use sea_query::{BinOper, ColumnRef, DynIden, Expr, IntoColumnRef, SimpleExpr};
 use std::collections::HashMap;
@@ -272,7 +272,9 @@ impl Filter {
                                     ColumnType::String(_) | ColumnType::Text => Some(Filter {
                                         operands: Operand::Simple(
                                             col_ref.clone(),
-                                            decode(s).into(),
+                                            ValueOrSimpleExpr::Value(Value::String(Some(
+                                                decode(s).into(),
+                                            ))),
                                         ),
                                         operator: Operator::Like,
                                     }),
@@ -322,40 +324,35 @@ impl IntoCondition for Filter {
     fn into_condition(self) -> Condition {
         match self.operands {
             Operand::Simple(col, v) => match self.operator {
-                Operator::Equal => {
-                    let expr = Expr::val(v);
-                    Expr::col(col).binary(BinOper::Equal, expr)
-                }
+                Operator::Equal => Expr::col(col).binary(BinOper::Equal, v.into_simple_expr()),
                 Operator::NotEqual => {
-                    let expr = Expr::val(v);
-                    Expr::col(col).binary(BinOper::NotEqual, expr)
+                    Expr::col(col).binary(BinOper::NotEqual, v.into_simple_expr())
                 }
-
                 Operator::GreaterThan => {
-                    let expr = Expr::val(v);
-                    Expr::col(col).binary(BinOper::GreaterThan, expr)
+                    Expr::col(col).binary(BinOper::GreaterThan, v.into_simple_expr())
                 }
                 Operator::GreaterThanOrEqual => {
-                    let expr = Expr::val(v);
-                    Expr::col(col).binary(BinOper::GreaterThanOrEqual, expr)
+                    Expr::col(col).binary(BinOper::GreaterThanOrEqual, v.into_simple_expr())
                 }
                 Operator::LessThan => {
-                    let expr = Expr::val(v);
-                    Expr::col(col).binary(BinOper::SmallerThan, expr)
+                    Expr::col(col).binary(BinOper::SmallerThan, v.into_simple_expr())
                 }
                 Operator::LessThanOrEqual => {
-                    let expr = Expr::val(v);
-                    Expr::col(col).binary(BinOper::SmallerThanOrEqual, expr)
+                    Expr::col(col).binary(BinOper::SmallerThanOrEqual, v.into_simple_expr())
                 }
                 op @ (Operator::Like | Operator::NotLike) => {
-                    let v = format!(
-                        "%{}%",
-                        v.unwrap::<String>().replace('%', r"\%").replace('_', r"\_")
-                    );
-                    if op == Operator::Like {
-                        SimpleExpr::Column(col).ilike(v)
+                    if let ValueOrSimpleExpr::Value(v) = v {
+                        let v = format!(
+                            "%{}%",
+                            v.unwrap::<String>().replace('%', r"\%").replace('_', r"\_")
+                        );
+                        if op == Operator::Like {
+                            SimpleExpr::Column(col).ilike(v)
+                        } else {
+                            SimpleExpr::Column(col).not_ilike(v)
+                        }
                     } else {
-                        SimpleExpr::Column(col).not_ilike(v)
+                        SimpleExpr::Column(col)
                     }
                 }
                 _ => unreachable!(),
@@ -404,8 +401,23 @@ impl FromStr for Operator {
 /////////////////////////////////////////////////////////////////////////
 
 #[derive(Debug)]
+enum ValueOrSimpleExpr {
+    Value(Value),
+    SimpleExpr(SimpleExpr),
+}
+
+impl IntoSimpleExpr for ValueOrSimpleExpr {
+    fn into_simple_expr(self) -> SimpleExpr {
+        match self {
+            ValueOrSimpleExpr::Value(inner) => SimpleExpr::Value(inner),
+            ValueOrSimpleExpr::SimpleExpr(inner) => inner,
+        }
+    }
+}
+
+#[derive(Debug)]
 enum Operand {
-    Simple(ColumnRef, Value),
+    Simple(ColumnRef, ValueOrSimpleExpr),
     Composite(Vec<Filter>),
 }
 
@@ -431,29 +443,39 @@ fn decode(s: &str) -> String {
     s.replace('\x07', "&").replace('\x08', "|")
 }
 
-fn envalue(s: &str, ct: &ColumnType) -> Result<Value, Error> {
+fn envalue(s: &str, ct: &ColumnType) -> Result<ValueOrSimpleExpr, Error> {
     fn err(e: impl Display) -> Error {
         Error::SearchSyntax(format!(r#"conversion error: "{e}""#))
     }
     Ok(match ct {
-        ColumnType::Integer => s.parse::<i32>().map_err(err)?.into(),
-        ColumnType::Decimal(_) => s.parse::<f64>().map_err(err)?.into(),
+        ColumnType::Integer => {
+            ValueOrSimpleExpr::Value(Value::from(s.parse::<i32>().map_err(err)?))
+        }
+        ColumnType::Decimal(_) => {
+            ValueOrSimpleExpr::Value(Value::from(s.parse::<f64>().map_err(err)?))
+        }
+        ColumnType::Enum { name, variants } => ValueOrSimpleExpr::SimpleExpr(SimpleExpr::AsEnum(
+            name.clone(),
+            Box::new(SimpleExpr::Value(Value::String(Some(Box::new(
+                s.to_owned(),
+            ))))),
+        )),
         ColumnType::TimestampWithTimeZone => {
             if let Ok(odt) = OffsetDateTime::parse(s, &Rfc3339) {
-                odt.into()
+                ValueOrSimpleExpr::Value(Value::from(odt))
             } else if let Ok(d) = Date::parse(s, &format_description!("[year]-[month]-[day]")) {
-                d.into()
+                ValueOrSimpleExpr::Value(Value::from(d))
             } else if let Ok(human) = from_human_time(s) {
                 match human {
-                    ParseResult::DateTime(dt) => dt.into(),
-                    ParseResult::Date(d) => d.into(),
-                    ParseResult::Time(t) => t.into(),
+                    ParseResult::DateTime(dt) => ValueOrSimpleExpr::Value(Value::from(dt)),
+                    ParseResult::Date(d) => ValueOrSimpleExpr::Value(Value::from(d)),
+                    ParseResult::Time(t) => ValueOrSimpleExpr::Value(Value::from(t)),
                 }
             } else {
-                s.into()
+                ValueOrSimpleExpr::Value(Value::from(s))
             }
         }
-        _ => s.into(),
+        _ => ValueOrSimpleExpr::Value(Value::from(s)),
     })
 }
 
