@@ -13,6 +13,7 @@ use crate::{
 };
 use cpe::uri::OwnedUri;
 use entity::{product, product_version};
+use hex::ToHex;
 use sea_orm::ModelTrait;
 use sea_orm::{
     prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QuerySelect,
@@ -37,6 +38,7 @@ use trustify_entity::{
 
 mod common;
 pub use common::*;
+use trustify_common::hashing::Digests;
 
 pub mod cyclonedx;
 pub mod spdx;
@@ -72,7 +74,7 @@ impl Graph {
     }
 
     #[instrument(skip(tx))]
-    pub async fn get_sbom<TX: AsRef<Transactional>>(
+    pub async fn get_sbom_by_digest<TX: AsRef<Transactional>>(
         &self,
         location: &str,
         sha256: &str,
@@ -90,12 +92,14 @@ impl Graph {
     pub async fn ingest_sbom<TX: AsRef<Transactional>>(
         &self,
         location: &str,
-        sha256: &str,
+        digests: &Digests,
         document_id: &str,
         info: impl Into<SbomInformation>,
         tx: TX,
     ) -> Result<SbomContext, Error> {
-        if let Some(found) = self.get_sbom(location, sha256, &tx).await? {
+        let sha256 = digests.sha256.encode_hex::<String>();
+
+        if let Some(found) = self.get_sbom_by_digest(location, &sha256, &tx).await? {
             return Ok(found);
         }
 
@@ -124,7 +128,7 @@ impl Graph {
 
             document_id: Set(document_id.to_string()),
             location: Set(location.to_string()),
-            sha256: Set(sha256.to_string()),
+            sha256: Set(sha256),
 
             published: Set(published),
             authors: Set(authors),

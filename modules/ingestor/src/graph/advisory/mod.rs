@@ -3,6 +3,7 @@
 use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
 use crate::graph::error::Error;
 use crate::graph::Graph;
+use hex::ToHex;
 use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, EntityTrait, IntoActiveModel, QueryFilter};
 use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
@@ -10,6 +11,7 @@ use sea_query::{Condition, JoinType};
 use std::fmt::{Debug, Formatter};
 use time::OffsetDateTime;
 use trustify_common::db::Transactional;
+use trustify_common::hashing::Digests;
 use trustify_entity as entity;
 use trustify_entity::advisory;
 use uuid::Uuid;
@@ -65,7 +67,7 @@ impl Graph {
             .map(|advisory| AdvisoryContext::new(self, advisory)))
     }
 
-    pub async fn get_advisory<TX: AsRef<Transactional>>(
+    pub async fn get_advisory_by_digest<TX: AsRef<Transactional>>(
         &self,
         sha256: &str,
         tx: TX,
@@ -81,16 +83,16 @@ impl Graph {
         &self,
         identifier: impl Into<String>,
         location: impl Into<String>,
-        sha256: impl Into<String>,
+        digests: &Digests,
         information: impl Into<AdvisoryInformation>,
         tx: TX,
     ) -> Result<AdvisoryContext, Error> {
         let identifier = identifier.into();
         let location = location.into();
-        let sha256 = sha256.into();
+        let sha256 = digests.sha256.encode_hex::<String>();
         let information = information.into();
 
-        if let Some(found) = self.get_advisory(&sha256, &tx).await? {
+        if let Some(found) = self.get_advisory_by_digest(&sha256, &tx).await? {
             return Ok(found);
         }
 

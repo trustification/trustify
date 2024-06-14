@@ -7,7 +7,7 @@ use crate::{
 };
 use osv::schema::{Event, ReferenceType, SeverityType, Vulnerability};
 use std::{io::Read, str::FromStr, sync::OnceLock};
-use trustify_common::hashing::HashingRead;
+use trustify_common::hashing::Digests;
 use trustify_common::id::Id;
 use trustify_common::{purl::Purl, time::ChronoExt};
 use trustify_cvss::cvss3::Cvss3Base;
@@ -26,10 +26,9 @@ impl<'g> OsvLoader<'g> {
         location: L,
         issuer: Option<String>,
         record: R,
-        checksum: &str,
+        digests: &Digests,
     ) -> Result<Id, Error> {
-        let mut reader = HashingRead::new(record);
-        let osv: Vulnerability = serde_json::from_reader(&mut reader)?;
+        let osv: Vulnerability = serde_json::from_reader(record)?;
 
         let issuer = issuer.or(detect_organization(&osv));
 
@@ -43,14 +42,6 @@ impl<'g> OsvLoader<'g> {
                 .collect::<Vec<_>>()
         });
 
-        let digests = reader.finish().map_err(|e| Error::Generic(e.into()))?;
-        let encoded_sha256 = hex::encode(digests.sha256);
-        if checksum != encoded_sha256 {
-            return Err(Error::Storage(anyhow::Error::msg(
-                "document integrity check failed",
-            )));
-        }
-
         let information = AdvisoryInformation {
             title: osv.summary.clone(),
             issuer,
@@ -60,7 +51,7 @@ impl<'g> OsvLoader<'g> {
         };
         let advisory = self
             .graph
-            .ingest_advisory(&osv.id, location, encoded_sha256, information, &tx)
+            .ingest_advisory(&osv.id, location, digests, information, &tx)
             .await?;
 
         if let Some(withdrawn) = osv.withdrawn {
@@ -238,7 +229,9 @@ mod test {
             .await?;
         assert!(loaded_vulnerability.is_none());
 
-        let loaded_advisory = graph.get_advisory(checksum, Transactional::None).await?;
+        let loaded_advisory = graph
+            .get_advisory_by_digest(checksum, Transactional::None)
+            .await?;
         assert!(loaded_advisory.is_none());
 
         let loader = OsvLoader::new(&graph);
@@ -251,7 +244,9 @@ mod test {
             .await?;
         assert!(loaded_vulnerability.is_some());
 
-        let loaded_advisory = graph.get_advisory(checksum, Transactional::None).await?;
+        let loaded_advisory = graph
+            .get_advisory_by_digest(checksum, Transactional::None)
+            .await?;
         assert!(loaded_advisory.is_some());
 
         let loaded_advisory = loaded_advisory.unwrap();
