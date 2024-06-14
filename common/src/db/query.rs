@@ -3,20 +3,16 @@ use regex::Regex;
 use sea_orm::entity::ColumnDef;
 use sea_orm::sea_query::{extension::postgres::PgExpr, ConditionExpression, IntoCondition};
 use sea_orm::{
-    sea_query, ColumnTrait, ColumnType, Condition, EntityName, EntityTrait, Iden, IntoIdentity,
-    IntoSimpleExpr, Iterable, Order, PrimaryKeyToColumn, QueryFilter, QueryOrder, QuerySelect,
-    QueryTrait, Select, Value,
+    sea_query, ColumnTrait, ColumnType, Condition, EntityTrait, IntoIdentity, IntoSimpleExpr,
+    Iterable, Order, QueryFilter, QueryOrder, Select, Value,
 };
-use sea_query::{BinOper, ColumnRef, DynIden, Expr, IntoColumnRef, SimpleExpr};
-use std::collections::HashMap;
+use sea_query::{BinOper, ColumnRef, Expr, IntoColumnRef, SimpleExpr};
 use std::fmt::Display;
 use std::str::FromStr;
-use std::sync::Arc;
 use std::sync::OnceLock;
 use time::format_description::well_known::Rfc3339;
 use time::macros::format_description;
 use time::{Date, OffsetDateTime};
-use utoipa::IntoParams;
 
 /////////////////////////////////////////////////////////////////////////
 // Public interface
@@ -482,7 +478,7 @@ fn envalue(s: &str, ct: &ColumnType) -> Result<ValueOrSimpleExpr, Error> {
         ColumnType::Decimal(_) | ColumnType::Float | ColumnType::Double => {
             ValueOrSimpleExpr::Value(Value::from(s.parse::<f64>().map_err(err)?))
         }
-        ColumnType::Enum { name, variants } => ValueOrSimpleExpr::SimpleExpr(SimpleExpr::AsEnum(
+        ColumnType::Enum { name, .. } => ValueOrSimpleExpr::SimpleExpr(SimpleExpr::AsEnum(
             name.clone(),
             Box::new(SimpleExpr::Value(Value::String(Some(Box::new(
                 s.to_owned(),
@@ -515,8 +511,8 @@ fn envalue(s: &str, ct: &ColumnType) -> Result<ValueOrSimpleExpr, Error> {
 mod tests {
     use super::*;
     use chrono::{Local, TimeDelta};
-    use sea_orm::{ColumnTypeTrait, QueryFilter, QuerySelect, QueryTrait};
-    use sea_query::{Func, Function, IntoIden};
+    use sea_orm::{ColumnTypeTrait, QuerySelect, QueryTrait};
+    use sea_query::Func;
     use test_log::test;
 
     #[test(tokio::test)]

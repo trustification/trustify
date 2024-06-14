@@ -1,5 +1,5 @@
 use serde::de::{Error, Visitor};
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -136,12 +136,9 @@ impl FromStr for Id {
 mod test {
     use crate::id::Id;
     use serde_json::json;
-    use uuid::Uuid;
 
     #[test]
     fn deserialize() -> Result<(), anyhow::Error> {
-        let raw = "sha256:123123";
-
         let key: Id = serde_json::from_value(json!("sha256:123123"))?;
 
         assert_eq!(key, Id::Sha256("123123".to_string()));
