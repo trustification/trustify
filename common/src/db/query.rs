@@ -11,6 +11,7 @@ use sea_query::{BinOper, ColumnRef, DynIden, Expr, IntoColumnRef, SimpleExpr};
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::str::FromStr;
+use std::sync::Arc;
 use std::sync::OnceLock;
 use time::format_description::well_known::Rfc3339;
 use time::macros::format_description;
@@ -41,19 +42,19 @@ impl Query {
     /// Multiple queries and/or filters should be `&`-delimited
     ///
     /// The `{query}` text will result in an OR clause of LIKE clauses
-    /// for every [String] field in the associated
-    /// [Entity](sea_orm::EntityTrait). Optional filters of the form
-    /// `{field}{op}{value}` may further constrain the results. Each
-    /// `{field}` must name an actual
-    /// [Column](sea_orm::EntityTrait::Column) variant.
+    /// for every [String] field in the associated Columns. Optional
+    /// filters of the form `{field}{op}{value}` may further constrain
+    /// the results. Each `{field}` name must correspond to one of the
+    /// selected Columns.
     ///
     /// Both `{query}` and `{value}` may contain `|`-delimited
-    /// alternate values that will result in an OR clause. Any `|` or
-    /// `&` within a query/value should be escaped with a backslash,
-    /// e.g. `\|` or `\&`.
+    /// alternate values that will result in an OR clause. Any literal
+    /// `|` or `&` within a query or value should be escaped with a
+    /// backslash, e.g. `\|` or `\&`.
     ///
     /// `{op}` should be one of `=`, `!=`, `~`, `!~, `>=`, `>`, `<=`,
     /// or `<`.
+    ///
     pub fn q(s: &str) -> Self {
         Self {
             q: s.into(),
@@ -69,8 +70,8 @@ impl Query {
     ///
     /// Multiple sorts should be `,`-delimited
     ///
-    /// Each `{field}` must name an actual
-    /// [Column](sea_orm::EntityTrait::Column) variant.
+    /// Each `{field}` name must correspond to one of the selected
+    /// Columns.
     ///
     pub fn sort(self, s: &str) -> Self {
         Self {
@@ -95,7 +96,7 @@ pub trait Filtering<T: EntityTrait> {
 
 impl<T: EntityTrait> Filtering<T> for Select<T> {
     fn filtering_with<C: IntoColumns>(self, search: Query, context: C) -> Result<Self, Error> {
-        let Query { q, sort } = &search;
+        let Query { q, sort, .. } = &search;
         let columns = context.columns();
 
         let mut result = if q.is_empty() {
@@ -120,13 +121,7 @@ impl<T: EntityTrait> Filtering<T> for Select<T> {
 }
 
 #[derive(
-    Clone,
-    Default,
-    Debug,
-    serde::Deserialize,
-    serde::Serialize,
-    utoipa::ToSchema,
-    utoipa::IntoParams,
+    Default, Debug, serde::Deserialize, serde::Serialize, utoipa::ToSchema, utoipa::IntoParams,
 )]
 #[serde(rename_all = "camelCase")]
 pub struct Query {
@@ -162,7 +157,10 @@ impl<E: EntityTrait> IntoColumns for E {
 #[derive(Default, Debug, Clone)]
 pub struct Columns {
     columns: Vec<(ColumnRef, ColumnDef)>,
+    translator: Option<Translator>,
 }
+
+pub type Translator = fn(&str, &str, &str) -> Option<String>;
 
 impl Columns {
     /// Construct a new columns context from an entity type.
@@ -175,13 +173,22 @@ impl Columns {
                 (column_ref, column_def)
             })
             .collect();
-        Self { columns }
+        Self {
+            columns,
+            translator: None,
+        }
     }
 
     /// Add an arbitrary column into the context.
     pub fn add_column<I: IntoIdentity>(mut self, name: I, def: ColumnDef) -> Self {
         self.columns
             .push((name.into_identity().into_column_ref(), def));
+        self
+    }
+
+    /// Add a translator to the context
+    pub fn translator(mut self, f: Translator) -> Self {
+        self.translator = Some(f);
         self
     }
 
@@ -198,9 +205,16 @@ impl Columns {
                    ColumnRef::Column(name)
                     | ColumnRef::TableColumn(_, name)
                     | ColumnRef::SchemaTableColumn(_, _, name)
-                        if name.to_string() == field)
+                        if name.to_string().eq_ignore_ascii_case(field))
             })
             .cloned()
+    }
+
+    fn translate(&self, field: &str, op: &str, value: &str) -> Option<String> {
+        match self.translator {
+            None => None,
+            Some(f) => f(field, op, value),
+        }
     }
 }
 
@@ -229,7 +243,7 @@ impl Filter {
                 operands: Operand::Composite(
                     encoded
                         .split('&')
-                        .map(|e| Filter::parse(e, columns))
+                        .map(|s| Filter::parse(s, columns))
                         .collect::<Result<Vec<_>, _>>()?,
                 ),
             })
@@ -239,7 +253,8 @@ impl Filter {
             let (col_ref, col_def) = columns.for_field(field).ok_or(Error::SearchSyntax(
                 format!("Invalid field name for filter: '{field}'"),
             ))?;
-            let operator = Operator::from_str(&caps["op"])?;
+            let op = &caps["op"];
+            let operator = Operator::from_str(op)?;
             Ok(Filter {
                 operator: match operator {
                     Operator::NotLike | Operator::NotEqual => Operator::And,
@@ -249,12 +264,15 @@ impl Filter {
                     caps["value"]
                         .split('|')
                         .map(decode)
-                        .map(|s| envalue(&s, col_def.get_column_type()))
+                        .map(|s| envalue(&s, col_def.get_column_type()).map(|v| (s, v)))
                         .collect::<Result<Vec<_>, _>>()?
                         .into_iter()
-                        .map(|v| Filter {
-                            operands: Operand::Simple(col_ref.clone(), v),
-                            operator,
+                        .flat_map(|(s, v)| match columns.translate(field, op, &s) {
+                            Some(x) => Filter::parse(&x, columns),
+                            None => Ok(Filter {
+                                operands: Operand::Simple(col_ref.clone(), v),
+                                operator,
+                            }),
                         })
                         .collect(),
                 ),
@@ -296,23 +314,33 @@ struct Sort {
 
 impl Sort {
     fn parse(s: &str, columns: &Columns) -> Result<Self, Error> {
-        let s = s.to_lowercase();
         let (field, order) = match s.split(':').collect::<Vec<_>>()[..] {
-            [f, "asc"] | [f] => (f, Order::Asc),
-            [f, "desc"] => (f, Order::Desc),
+            [f] => (f, String::from("asc")),
+            [f, dir] => (f, dir.to_lowercase()),
             _ => {
                 return Err(Error::SearchSyntax(format!("Invalid sort: '{s}'")));
             }
         };
-        Ok(Self {
-            field: columns
-                .for_field(field)
-                .ok_or(Error::SearchSyntax(format!(
-                    "Invalid field name for sort: '{field}'"
-                )))?
-                .0,
-            order,
-        })
+        match columns.translate(field, &order, "") {
+            Some(s) => Sort::parse(&s, columns),
+            None => Ok(Self {
+                field: columns
+                    .for_field(field)
+                    .ok_or(Error::SearchSyntax(format!(
+                        "Invalid sort field: '{field}'"
+                    )))?
+                    .0,
+                order: match order.as_str() {
+                    "asc" => Order::Asc,
+                    "desc" => Order::Desc,
+                    dir => {
+                        return Err(Error::SearchSyntax(format!(
+                            "Invalid sort direction: '{dir}'"
+                        )));
+                    }
+                },
+            }),
+        }
     }
 }
 
