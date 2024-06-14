@@ -1,5 +1,6 @@
 use crate::{advisory, vulnerability};
 use sea_orm::entity::prelude::*;
+use std::fmt::{Display, Formatter};
 use trustify_cvss::cvss3;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
@@ -24,6 +25,7 @@ pub struct Model {
     pub a: Availability,
 
     pub score: f64,
+    pub severity: Severity,
 }
 
 impl From<Model> for cvss3::Cvss3Base {
@@ -307,6 +309,55 @@ impl From<cvss3::Availability> for Availability {
             cvss3::Availability::None => Self::None,
             cvss3::Availability::Low => Self::Low,
             cvss3::Availability::High => Self::High,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_severity")]
+pub enum Severity {
+    #[sea_orm(string_value = "none")]
+    None,
+    #[sea_orm(string_value = "low")]
+    Low,
+    #[sea_orm(string_value = "medium")]
+    Medium,
+    #[sea_orm(string_value = "high")]
+    High,
+    #[sea_orm(string_value = "critical")]
+    Critical,
+}
+
+impl Display for Severity {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Severity::None => {
+                write!(f, "none")
+            }
+            Severity::Low => {
+                write!(f, "low")
+            }
+            Severity::Medium => {
+                write!(f, "medium")
+            }
+            Severity::High => {
+                write!(f, "high")
+            }
+            Severity::Critical => {
+                write!(f, "critical")
+            }
+        }
+    }
+}
+
+impl From<cvss3::severity::Severity> for Severity {
+    fn from(value: cvss3::severity::Severity) -> Self {
+        match value {
+            cvss3::severity::Severity::None => Self::None,
+            cvss3::severity::Severity::Low => Self::Low,
+            cvss3::severity::Severity::Medium => Self::Medium,
+            cvss3::severity::Severity::High => Self::High,
+            cvss3::severity::Severity::Critical => Self::Critical,
         }
     }
 }
