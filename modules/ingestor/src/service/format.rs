@@ -6,6 +6,7 @@ use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader}
 use crate::service::Error;
 use jsn::{mask::*, Format as JsnFormat, TokenReader};
 use std::io::Read;
+use trustify_common::hashing::Digests;
 use trustify_common::id::Id;
 
 #[derive(Debug)]
@@ -23,32 +24,32 @@ impl<'g> Format {
         graph: &'g Graph,
         source: &str,
         issuer: Option<String>,
-        checksum: &str,
+        digests: &Digests,
         reader: R,
     ) -> Result<Id, Error> {
         match self {
             Format::CSAF => {
                 // issuer is internal as publisher of the document.
                 let loader = CsafLoader::new(graph);
-                loader.load(source, reader, checksum).await
+                loader.load(source, reader, digests).await
             }
             Format::OSV => {
                 // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
                 let loader = OsvLoader::new(graph);
-                loader.load(source, issuer, reader, checksum).await
+                loader.load(source, issuer, reader, digests).await
             }
             Format::CVE => {
                 // issuer is always CVE Project
                 let loader = CveLoader::new(graph);
-                loader.load(source, reader, checksum).await
+                loader.load(source, reader, digests).await
             }
             Format::SPDX => {
                 let loader = SpdxLoader::new(graph);
-                loader.load(source, reader, checksum).await
+                loader.load(source, reader, digests).await
             }
             Format::CycloneDX => {
                 let loader = CyclonedxLoader::new(graph);
-                loader.load(source, reader, checksum).await
+                loader.load(source, reader, digests).await
             }
         }
     }

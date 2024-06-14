@@ -6,6 +6,7 @@ use crate::{
     service::Error,
 };
 use std::io::Read;
+use trustify_common::hashing::Digests;
 use trustify_common::id::Id;
 
 pub struct SpdxLoader<'g> {
@@ -21,7 +22,7 @@ impl<'g> SpdxLoader<'g> {
         &self,
         source: L,
         json: R,
-        sha256: &str,
+        digests: &Digests,
     ) -> Result<Id, Error> {
         // FIXME: consider adding a report entry in case of "fixing" things
         let (spdx, _) = parse_spdx(json)?;
@@ -39,7 +40,7 @@ impl<'g> SpdxLoader<'g> {
             .graph
             .ingest_sbom(
                 &source.into(),
-                sha256,
+                digests,
                 document_id,
                 spdx::Information(&spdx),
                 &tx,

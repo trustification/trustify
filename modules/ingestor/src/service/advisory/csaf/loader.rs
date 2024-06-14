@@ -1,19 +1,21 @@
-use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
-use crate::graph::advisory::{
-    AdvisoryContext, AdvisoryInformation, AdvisoryVulnerabilityInformation,
+use crate::{
+    graph::{
+        advisory::{
+            advisory_vulnerability::AdvisoryVulnerabilityContext, AdvisoryContext,
+            AdvisoryInformation, AdvisoryVulnerabilityInformation,
+        },
+        Graph,
+    },
+    service::{advisory::csaf::util::resolve_purls, Error},
 };
-use crate::graph::Graph;
-use crate::service::advisory::csaf::util::resolve_purls;
-use crate::service::Error;
-use csaf::vulnerability::{ProductStatus, Vulnerability};
-use csaf::Csaf;
+use csaf::{
+    vulnerability::{ProductStatus, Vulnerability},
+    Csaf,
+};
 use std::io::Read;
 use std::str::FromStr;
 use time::OffsetDateTime;
-use trustify_common::db::Transactional;
-use trustify_common::hashing::HashingRead;
-use trustify_common::id::Id;
-use trustify_common::purl::Purl;
+use trustify_common::{db::Transactional, hashing::Digests, id::Id, purl::Purl};
 use trustify_cvss::cvss3::Cvss3Base;
 
 struct Information<'a>(&'a Csaf);
@@ -50,33 +52,17 @@ impl<'g> CsafLoader<'g> {
         &self,
         location: L,
         document: R,
-        checksum: &str,
+        digests: &Digests,
     ) -> Result<Id, Error> {
-        let mut reader = HashingRead::new(document);
-
-        let csaf: Csaf = serde_json::from_reader(&mut reader)?;
+        let csaf: Csaf = serde_json::from_reader(document)?;
 
         let tx = self.graph.transaction().await?;
-
-        let digests = reader.finish().map_err(|e| Error::Generic(e.into()))?;
-        let encoded_sha256 = hex::encode(digests.sha256);
-        if checksum != encoded_sha256 {
-            return Err(Error::Storage(anyhow::Error::msg(
-                "document integrity check failed",
-            )));
-        }
 
         let advisory_id = csaf.document.tracking.id.clone();
 
         let advisory = self
             .graph
-            .ingest_advisory(
-                &advisory_id,
-                location,
-                encoded_sha256,
-                Information(&csaf),
-                &tx,
-            )
+            .ingest_advisory(&advisory_id, location, digests, Information(&csaf), &tx)
             .await?;
 
         for vuln in csaf.vulnerabilities.iter().flatten() {
@@ -186,6 +172,7 @@ impl<'g> CsafLoader<'g> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use hex::ToHex;
 
     use crate::graph::Graph;
     use test_context::test_context;
@@ -200,11 +187,12 @@ mod test {
         let graph = Graph::new(db);
 
         let data = include_bytes!("../../../../../../etc/test-data/csaf/CVE-2023-20862.json");
-        let checksum = "819cd97589668bc2ad38648e903306bf81062164d1ccc0d2e82803cdafe3cadf";
+
+        let digests = Digests::digest(&data);
 
         let loader = CsafLoader::new(&graph);
         loader
-            .load("CVE-2023-20862.json", &data[..], checksum)
+            .load("CVE-2023-20862.json", &data[..], &digests)
             .await?;
 
         let loaded_vulnerability = graph
@@ -212,7 +200,9 @@ mod test {
             .await?;
         assert!(loaded_vulnerability.is_some());
 
-        let loaded_advisory = graph.get_advisory(checksum, Transactional::None).await?;
+        let loaded_advisory = graph
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
+            .await?;
         assert!(loaded_advisory.is_some());
 
         let loaded_advisory = loaded_advisory.unwrap();
@@ -274,22 +264,23 @@ mod test {
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn multiple_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        use ring::digest;
         let db = ctx.db;
         let graph = Graph::new(db);
         let loader = CsafLoader::new(&graph);
 
         let data = include_bytes!("../../../../../../etc/test-data/csaf/rhsa-2024_3666.json");
-        let checksum = hex::encode(digest::digest(&digest::SHA256, data));
+        let digests = Digests::digest(&data);
 
-        loader.load("test", &data[..], &checksum).await?;
+        loader.load("test", &data[..], &digests).await?;
 
         let loaded_vulnerability = graph
             .get_vulnerability("CVE-2024-23672", Transactional::None)
             .await?;
         assert!(loaded_vulnerability.is_some());
 
-        let loaded_advisory = graph.get_advisory(&checksum, Transactional::None).await?;
+        let loaded_advisory = graph
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
+            .await?;
         assert!(loaded_advisory.is_some());
 
         let loaded_advisory = loaded_advisory.unwrap();

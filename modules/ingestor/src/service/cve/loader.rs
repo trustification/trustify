@@ -4,8 +4,7 @@ use crate::graph::Graph;
 use crate::service::Error;
 use cve::{Cve, Timestamp};
 use std::io::Read;
-use trustify_common::hashing::HashingRead;
-use trustify_common::id::Id;
+use trustify_common::{hashing::Digests, id::Id};
 
 /// Loader capable of parsing a CVE Record JSON file
 /// and manipulating the Graph to integrate it into
@@ -28,10 +27,9 @@ impl<'g> CveLoader<'g> {
         &self,
         location: L,
         record: R,
-        checksum: &str,
+        digests: &Digests,
     ) -> Result<Id, Error> {
-        let mut reader = HashingRead::new(record);
-        let cve: Cve = serde_json::from_reader(&mut reader)?;
+        let cve: Cve = serde_json::from_reader(record)?;
         let id = cve.id();
 
         let tx = self.graph.transaction().await?;
@@ -88,14 +86,6 @@ impl<'g> CveLoader<'g> {
             }
         }
 
-        let digests = reader.finish().map_err(|e| Error::Generic(e.into()))?;
-        let encoded_sha256 = hex::encode(digests.sha256);
-        if checksum != encoded_sha256 {
-            return Err(Error::Storage(anyhow::Error::msg(
-                "document integrity check failed",
-            )));
-        }
-
         let information = AdvisoryInformation {
             title: title.cloned(),
             issuer: Some("CVE® (MITRE Corporation".to_string()),
@@ -105,7 +95,7 @@ impl<'g> CveLoader<'g> {
         };
         let advisory = self
             .graph
-            .ingest_advisory(id, location, encoded_sha256, information, &tx)
+            .ingest_advisory(id, location, digests, information, &tx)
             .await?;
 
         // Link the advisory to the backing vulnerability
@@ -149,7 +139,9 @@ mod test {
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
         assert!(loaded_vulnerability.is_none());
 
-        let loaded_advisory = graph.get_advisory(checksum, Transactional::None).await?;
+        let loaded_advisory = graph
+            .get_advisory_by_digest(checksum, Transactional::None)
+            .await?;
         assert!(loaded_advisory.is_none());
 
         let loader = CveLoader::new(&graph);
@@ -160,7 +152,9 @@ mod test {
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
         assert!(loaded_vulnerability.is_some());
 
-        let loaded_advisory = graph.get_advisory(checksum, Transactional::None).await?;
+        let loaded_advisory = graph
+            .get_advisory_by_digest(checksum, Transactional::None)
+            .await?;
         assert!(loaded_advisory.is_some());
 
         let loaded_vulnerability = loaded_vulnerability.unwrap();

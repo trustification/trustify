@@ -6,12 +6,10 @@ mod format;
 pub use format::Format;
 
 use crate::graph::Graph;
-use actix_web::body::BoxBody;
-use actix_web::{HttpResponse, ResponseError};
+use actix_web::{body::BoxBody, HttpResponse, ResponseError};
 use anyhow::anyhow;
 use bytes::Bytes;
 use futures::Stream;
-use hex::ToHex;
 use sea_orm::error::DbErr;
 use std::time::Instant;
 use trustify_common::{
@@ -125,13 +123,7 @@ impl IngestorService {
             .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?;
 
         let result = fmt
-            .load(
-                &self.graph,
-                source,
-                issuer,
-                &result.digests.sha256.encode_hex::<String>(),
-                reader,
-            )
+            .load(&self.graph, source, issuer, &result.digests, reader)
             .await?;
 
         let duration = Instant::now() - start;

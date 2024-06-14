@@ -4,7 +4,7 @@ use crate::{
 };
 use cyclonedx_bom::prelude::Bom;
 use std::io::Read;
-use trustify_common::id::Id;
+use trustify_common::{hashing::Digests, id::Id};
 
 pub struct CyclonedxLoader<'g> {
     graph: &'g Graph,
@@ -19,7 +19,7 @@ impl<'g> CyclonedxLoader<'g> {
         &self,
         source: L,
         document: R,
-        sha256: &str,
+        digests: &Digests,
     ) -> Result<Id, Error> {
         let sbom = Bom::parse_json_value(serde_json::from_reader(document)?)
             .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
@@ -42,7 +42,7 @@ impl<'g> CyclonedxLoader<'g> {
             .graph
             .ingest_sbom(
                 &source.into(),
-                sha256,
+                digests,
                 &document_id,
                 cyclonedx::Information(&sbom),
                 &tx,

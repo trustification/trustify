@@ -57,6 +57,14 @@ pub struct Digests {
     pub sha256: Digest,
 }
 
+impl Digests {
+    pub fn digest(data: impl AsRef<[u8]>) -> Self {
+        let mut contexts = Contexts::new();
+        contexts.update(data.as_ref());
+        contexts.finish()
+    }
+}
+
 impl<R: Read> HashingRead<R> {
     /// Creates a HashingRead that uses SHA-512, SHA-384, and SHA-256
     pub fn new(inner: R) -> Self {
