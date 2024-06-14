@@ -1,6 +1,7 @@
 use crate::graph::advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation};
 use crate::graph::vulnerability::VulnerabilityInformation;
 use crate::graph::Graph;
+use crate::model::IngestResult;
 use crate::service::Error;
 use cve::{Cve, Timestamp};
 use std::io::Read;
@@ -28,7 +29,7 @@ impl<'g> CveLoader<'g> {
         location: L,
         record: R,
         digests: &Digests,
-    ) -> Result<Id, Error> {
+    ) -> Result<IngestResult, Error> {
         let cve: Cve = serde_json::from_reader(record)?;
         let id = cve.id();
 
@@ -115,7 +116,10 @@ impl<'g> CveLoader<'g> {
 
         tx.commit().await?;
 
-        Ok(Id::Uuid(advisory.advisory.id))
+        Ok(IngestResult {
+            id: Id::Uuid(advisory.advisory.id),
+            document_id: id.to_string(),
+        })
     }
 }
 

@@ -1,3 +1,4 @@
+use crate::model::IngestResult;
 use crate::{
     graph::{sbom::cyclonedx, Graph},
     service::Error,
@@ -20,7 +21,7 @@ impl<'g> CyclonedxLoader<'g> {
         source: L,
         document: R,
         digests: &Digests,
-    ) -> Result<Id, Error> {
+    ) -> Result<IngestResult, Error> {
         let sbom = Bom::parse_json_value(serde_json::from_reader(document)?)
             .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
@@ -55,7 +56,10 @@ impl<'g> CyclonedxLoader<'g> {
 
         tx.commit().await?;
 
-        Ok(Id::Uuid(ctx.sbom.sbom_id))
+        Ok(IngestResult {
+            id: Id::Uuid(ctx.sbom.sbom_id),
+            document_id,
+        })
     }
 }
 

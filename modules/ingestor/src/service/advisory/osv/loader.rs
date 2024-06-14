@@ -1,3 +1,4 @@
+use crate::model::IngestResult;
 use crate::{
     graph::{
         advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation},
@@ -27,7 +28,7 @@ impl<'g> OsvLoader<'g> {
         issuer: Option<String>,
         record: R,
         digests: &Digests,
-    ) -> Result<Id, Error> {
+    ) -> Result<IngestResult, Error> {
         let osv: Vulnerability = serde_json::from_reader(record)?;
 
         let issuer = issuer.or(detect_organization(&osv));
@@ -122,7 +123,11 @@ impl<'g> OsvLoader<'g> {
         }
 
         tx.commit().await?;
-        Ok(Id::Uuid(advisory.advisory.id))
+
+        Ok(IngestResult {
+            id: Id::Uuid(advisory.advisory.id),
+            document_id: osv.id,
+        })
     }
 }
 

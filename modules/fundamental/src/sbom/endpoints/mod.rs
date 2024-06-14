@@ -193,8 +193,8 @@ pub async fn upload(
 ) -> Result<impl Responder, Error> {
     let fmt = Format::from_bytes(&bytes)?;
     let payload = ReaderStream::new(&*bytes);
-    let sbom_id = service.ingest(&location, None, fmt, payload).await?;
-    Ok(HttpResponse::Created().json(sbom_id))
+    let result = service.ingest(&location, None, fmt, payload).await?;
+    Ok(HttpResponse::Created().json(result))
 }
 
 #[utoipa::path(

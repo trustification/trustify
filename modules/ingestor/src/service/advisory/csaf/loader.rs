@@ -1,3 +1,4 @@
+use crate::model::IngestResult;
 use crate::{
     graph::{
         advisory::{
@@ -53,7 +54,7 @@ impl<'g> CsafLoader<'g> {
         location: L,
         document: R,
         digests: &Digests,
-    ) -> Result<Id, Error> {
+    ) -> Result<IngestResult, Error> {
         let csaf: Csaf = serde_json::from_reader(document)?;
 
         let tx = self.graph.transaction().await?;
@@ -72,7 +73,10 @@ impl<'g> CsafLoader<'g> {
 
         tx.commit().await?;
 
-        Ok(Id::Uuid(advisory.advisory.id))
+        Ok(IngestResult {
+            id: Id::Uuid(advisory.advisory.id),
+            document_id: advisory_id,
+        })
     }
 
     async fn ingest_vulnerability<TX: AsRef<Transactional>>(

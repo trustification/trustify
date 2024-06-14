@@ -2,12 +2,12 @@ use super::cve::loader::CveLoader;
 use super::sbom::cyclonedx::CyclonedxLoader;
 use super::sbom::spdx::SpdxLoader;
 use crate::graph::Graph;
+use crate::model::IngestResult;
 use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader};
 use crate::service::Error;
 use jsn::{mask::*, Format as JsnFormat, TokenReader};
 use std::io::Read;
 use trustify_common::hashing::Digests;
-use trustify_common::id::Id;
 
 #[derive(Debug)]
 pub enum Format {
@@ -26,7 +26,7 @@ impl<'g> Format {
         issuer: Option<String>,
         digests: &Digests,
         reader: R,
-    ) -> Result<Id, Error> {
+    ) -> Result<IngestResult, Error> {
         match self {
             Format::CSAF => {
                 // issuer is internal as publisher of the document.
