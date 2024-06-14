@@ -287,13 +287,16 @@ async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let fetch = AdvisoryService::new(db);
     let jenny = Id::from_str("sha256:8675309")?;
     let fetched = fetch.fetch_advisory(jenny.clone(), ()).await?;
+
     assert!(matches!(
             fetched,
             Some(AdvisoryDetails {
                 head: AdvisoryHead { hashes, .. },
+            average_severity: Some(average_severity),
+
                 ..
             })
-        if hashes.contains(&jenny) ));
+        if hashes.contains(&jenny) && average_severity == "critical"));
 
     Ok(())
 }
