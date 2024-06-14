@@ -2,7 +2,7 @@ use crate::service::{StorageBackend, StorageKey, StorageResult, StoreError};
 use anyhow::Context;
 use bytes::Bytes;
 use futures::{Stream, StreamExt};
-use sha2::{Digest, Sha256, Sha384, Sha512};
+use hex::ToHex;
 use std::{
     fmt::Debug,
     io::ErrorKind,
@@ -16,6 +16,7 @@ use tokio::{
     io::{AsyncSeekExt, AsyncWriteExt},
 };
 use tokio_util::io::ReaderStream;
+use trustify_common::hashing::Contexts;
 
 /// A filesystem backed store
 ///
@@ -93,9 +94,7 @@ impl StorageBackend for FileSystemBackend {
         // set up reader
 
         let mut stream = pin!(stream);
-        let mut sha256 = Sha256::new();
-        let mut sha384 = Sha384::new();
-        let mut sha512 = Sha512::new();
+        let mut contexts = Contexts::new();
 
         // process reader
 
@@ -105,26 +104,20 @@ impl StorageBackend for FileSystemBackend {
             .transpose()
             .map_err(StoreError::Stream)?
         {
-            sha256.update(&next);
-            sha384.update(&next);
-            sha512.update(&next);
+            contexts.update(&next);
             file.write_all(&next).await.map_err(StoreError::Backend)?;
         }
 
         // finalize the digest
 
-        let sha256 = sha256.finalize();
-        let sha256 = hex::encode(sha256);
-        let sha384 = sha384.finalize();
-        let sha384 = hex::encode(sha384);
-        let sha512 = sha512.finalize();
-        let sha512 = hex::encode(sha512);
+        let digests = contexts.finish();
+        let key: String = digests.sha256.encode_hex();
 
         // create the target path
 
-        let target = level_dir(&self.content, &sha256, NUM_LEVELS);
+        let target = level_dir(&self.content, &key, NUM_LEVELS);
         create_dir_all(&target).await.map_err(StoreError::Backend)?;
-        let target = target.join(&sha256);
+        let target = target.join(&key);
 
         let mut target = File::create(target).await.map_err(StoreError::Backend)?;
 
@@ -153,10 +146,8 @@ impl StorageBackend for FileSystemBackend {
         // done
 
         Ok(StorageResult {
-            key: StorageKey(sha256.clone()),
-            sha256,
-            sha384,
-            sha512,
+            key: StorageKey(key),
+            digests,
         })
     }
 
@@ -199,6 +190,7 @@ fn level_dir(base: impl AsRef<Path>, hash: &str, levels: usize) -> PathBuf {
 #[cfg(test)]
 mod test {
     use super::*;
+    use sha2::{Digest, Sha256};
     use tempfile::tempdir;
     use test_log::test;
 

@@ -3,10 +3,11 @@ use crate::{
         advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation},
         Graph,
     },
-    service::{advisory::osv::translate, hashing::HashingRead, Error},
+    service::{advisory::osv::translate, Error},
 };
 use osv::schema::{Event, ReferenceType, SeverityType, Vulnerability};
 use std::{io::Read, str::FromStr, sync::OnceLock};
+use trustify_common::hashing::HashingRead;
 use trustify_common::id::Id;
 use trustify_common::{purl::Purl, time::ChronoExt};
 use trustify_cvss::cvss3::Cvss3Base;

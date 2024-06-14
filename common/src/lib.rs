@@ -3,6 +3,7 @@ pub mod config;
 pub mod cpe;
 pub mod db;
 pub mod error;
+pub mod hashing;
 pub mod id;
 pub mod model;
 pub mod package;

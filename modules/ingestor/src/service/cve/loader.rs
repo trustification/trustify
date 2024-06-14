@@ -1,9 +1,10 @@
 use crate::graph::advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation};
 use crate::graph::vulnerability::VulnerabilityInformation;
 use crate::graph::Graph;
-use crate::service::{hashing::HashingRead, Error};
+use crate::service::Error;
 use cve::{Cve, Timestamp};
 use std::io::Read;
+use trustify_common::hashing::HashingRead;
 use trustify_common::id::Id;
 
 /// Loader capable of parsing a CVE Record JSON file
