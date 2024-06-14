@@ -1,22 +1,24 @@
 pub mod advisory;
 pub mod cve;
-mod format;
-pub mod hashing;
 pub mod sbom;
+
+mod format;
+pub use format::Format;
 
 use crate::graph::Graph;
 use actix_web::body::BoxBody;
 use actix_web::{HttpResponse, ResponseError};
 use anyhow::anyhow;
 use bytes::Bytes;
-pub use format::Format;
 use futures::Stream;
+use hex::ToHex;
 use sea_orm::error::DbErr;
 use std::time::Instant;
-use trustify_common::error::ErrorInformation;
-use trustify_common::id::{Id, IdError};
-use trustify_module_storage::service::dispatch::DispatchBackend;
-use trustify_module_storage::service::{StorageBackend, SyncAdapter};
+use trustify_common::{
+    error::ErrorInformation,
+    id::{Id, IdError},
+};
+use trustify_module_storage::service::{dispatch::DispatchBackend, StorageBackend, SyncAdapter};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -123,7 +125,13 @@ impl IngestorService {
             .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?;
 
         let result = fmt
-            .load(&self.graph, source, issuer, &result.sha256, reader)
+            .load(
+                &self.graph,
+                source,
+                issuer,
+                &result.digests.sha256.encode_hex::<String>(),
+                reader,
+            )
             .await?;
 
         let duration = Instant::now() - start;

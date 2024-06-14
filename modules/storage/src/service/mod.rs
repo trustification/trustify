@@ -7,6 +7,7 @@ use futures::{Stream, TryStreamExt};
 use std::fmt::{Debug, Display, Formatter};
 use std::future::Future;
 use std::io::{Cursor, Read};
+use trustify_common::hashing::Digests;
 use trustify_common::id::Id;
 
 #[derive(Debug, thiserror::Error)]
@@ -60,9 +61,7 @@ impl TryFrom<Vec<Id>> for StorageKey {
 #[derive(Clone, Debug)]
 pub struct StorageResult {
     pub key: StorageKey,
-    pub sha256: String,
-    pub sha384: String,
-    pub sha512: String,
+    pub digests: Digests,
 }
 
 pub trait StorageBackend {

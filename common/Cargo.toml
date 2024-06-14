@@ -22,6 +22,7 @@ postgresql_embedded = { workspace = true, features = ["blocking", "tokio"] }
 postgresql_archive = { workspace = true }
 regex = { workspace = true }
 reqwest = { workspace = true, features = ["native-tls"] }
+ring = { workspace = true }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros"] }
 sea-query = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
@@ -37,8 +38,9 @@ uuid = { workspace = true, features = ["v5"] }
 
 [dev-dependencies]
 chrono = { workspace = true }
-time = { workspace = true, features = ["macros"] }
+rand = { workspace = true }
 rstest = { workspace = true }
 serde_json = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
+time = { workspace = true, features = ["macros"] }
 tokio = { workspace = true, features = ["full"] }

@@ -13,7 +13,7 @@ pub struct Contexts {
 }
 
 impl Contexts {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             sha512: Context::new(&SHA512),
             sha384: Context::new(&SHA384),
@@ -21,13 +21,13 @@ impl Contexts {
         }
     }
 
-    fn update(&mut self, data: &[u8]) {
+    pub fn update(&mut self, data: &[u8]) {
         self.sha512.update(data);
         self.sha384.update(data);
         self.sha256.update(data);
     }
 
-    fn digests(&self) -> Digests {
+    pub fn digests(&self) -> Digests {
         Digests {
             sha512: self.sha512.clone().finish(),
             sha384: self.sha384.clone().finish(),
@@ -35,7 +35,7 @@ impl Contexts {
         }
     }
 
-    fn finish(self) -> Digests {
+    pub fn finish(self) -> Digests {
         Digests {
             sha512: self.sha512.finish(),
             sha384: self.sha384.finish(),
@@ -44,6 +44,13 @@ impl Contexts {
     }
 }
 
+impl Default for Contexts {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Digests {
     pub sha512: Digest,
     pub sha384: Digest,

@@ -4,7 +4,6 @@ use crate::graph::advisory::{
 };
 use crate::graph::Graph;
 use crate::service::advisory::csaf::util::resolve_purls;
-use crate::service::hashing::HashingRead;
 use crate::service::Error;
 use csaf::vulnerability::{ProductStatus, Vulnerability};
 use csaf::Csaf;
@@ -12,6 +11,7 @@ use std::io::Read;
 use std::str::FromStr;
 use time::OffsetDateTime;
 use trustify_common::db::Transactional;
+use trustify_common::hashing::HashingRead;
 use trustify_common::id::Id;
 use trustify_common::purl::Purl;
 use trustify_cvss::cvss3::Cvss3Base;
