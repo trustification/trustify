@@ -211,12 +211,14 @@ fn events_to_range(events: &[Event]) -> (Option<String>, Option<String>) {
 
 #[cfg(test)]
 mod test {
+    use hex::ToHex;
     use test_context::test_context;
     use test_log::test;
     use trustify_common::{advisory::Assertion, db::test::TrustifyContext};
 
     use crate::graph::Graph;
     use trustify_common::db::Transactional;
+    use trustify_common::hashing::Digests;
 
     use crate::service::advisory::osv::loader::OsvLoader;
 
@@ -227,7 +229,7 @@ mod test {
         let graph = Graph::new(db);
 
         let data = include_bytes!("../../../../../../etc/test-data/osv/RUSTSEC-2021-0079.json");
-        let checksum = "d113c2bd1ad6c3ac00a3a8d3f89d3f38de935f8ede0d174a55afe9911960cf51";
+        let digests = Digests::digest(data);
 
         let loaded_vulnerability = graph
             .get_vulnerability("CVE-2021-32714", Transactional::None)
@@ -235,13 +237,13 @@ mod test {
         assert!(loaded_vulnerability.is_none());
 
         let loaded_advisory = graph
-            .get_advisory_by_digest(checksum, Transactional::None)
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
             .await?;
         assert!(loaded_advisory.is_none());
 
         let loader = OsvLoader::new(&graph);
         loader
-            .load("RUSTSEC-2021-0079.json", None, &data[..], checksum)
+            .load("RUSTSEC-2021-0079.json", None, &data[..], &digests)
             .await?;
 
         let loaded_vulnerability = graph
@@ -250,7 +252,7 @@ mod test {
         assert!(loaded_vulnerability.is_some());
 
         let loaded_advisory = graph
-            .get_advisory_by_digest(checksum, Transactional::None)
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
             .await?;
         assert!(loaded_advisory.is_some());
 

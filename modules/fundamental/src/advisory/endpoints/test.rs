@@ -17,6 +17,7 @@ use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
 use tokio_util::io::ReaderStream;
+use trustify_common::hashing::Digests;
 use trustify_common::{
     db::{test::TrustifyContext, Transactional},
     id::Id,
@@ -74,7 +75,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_advisory(
             "RHSA-1",
             "http://redhat.com/",
-            "8675309",
+            &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
                 issuer: None,
@@ -110,7 +111,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_advisory(
             "RHSA-2",
             "http://redhat.com/",
-            "8675319",
+            &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
                 issuer: None,
@@ -163,11 +164,11 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     )
     .await;
 
-    graph
+    let advisory1 = graph
         .ingest_advisory(
             "RHSA-1",
             "http://redhat.com/",
-            "8675309",
+            &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
                 issuer: Some("Red Hat Product Security".to_string()),
@@ -179,11 +180,11 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let advisory = graph
+    let advisory2 = graph
         .ingest_advisory(
             "RHSA-2",
             "http://redhat.com/",
-            "8675319",
+            &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
                 issuer: Some("Red Hat Product Security".to_string()),
@@ -195,7 +196,7 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let advisory_vuln = advisory
+    let advisory_vuln = advisory2
         .link_to_vulnerability("CVE-123", None, Transactional::None)
         .await?;
     advisory_vuln
@@ -219,9 +220,9 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_not_affected_package_version(&Purl::from_str("pkg://maven/log4j/log4j@1.2.3")?, ())
         .await?;
 
-    let uri = "/api/v1/advisory/sha256:8675319";
+    let uri = format!("/api/v1/advisory/urn:uuid:{}", advisory2.advisory.id);
 
-    let request = TestRequest::get().uri(uri).to_request();
+    let request = TestRequest::get().uri(&uri).to_request();
 
     let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
 
@@ -243,9 +244,9 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         json!(["CVSS:3.0/AV:N/AC:L/PR:H/UI:N/S:C/C:H/I:N/A:N"])
     );
 
-    let uri = "/api/v1/advisory/sha256:8675309";
+    let uri = format!("/api/v1/advisory/urn:uuid:{}", advisory1.advisory.id);
 
-    let request = TestRequest::get().uri(uri).to_request();
+    let request = TestRequest::get().uri(&uri).to_request();
 
     let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
 
@@ -275,7 +276,7 @@ async fn one_advisory_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         .ingest_advisory(
             "RHSA-1",
             "http://redhat.com/",
-            "8675309",
+            &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
                 issuer: Some("Red Hat Product Security".to_string()),
@@ -291,7 +292,7 @@ async fn one_advisory_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         .ingest_advisory(
             "RHSA-2",
             "http://redhat.com/",
-            "8675319",
+            &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
                 issuer: Some("Red Hat Product Security".to_string()),
@@ -421,9 +422,10 @@ async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::
         .to_request();
 
     let response = actix_web::test::call_service(&app, request).await;
-    let id: Id = actix_web::test::read_body_json(response).await;
-    log::debug!("{id}");
-    assert!(matches!(id, Id::Uuid(_)));
+    let result: IngestResult = actix_web::test::read_body_json(response).await;
+    log::debug!("{result:?}");
+    assert!(matches!(result.id, Id::Uuid(_)));
+    assert_eq!(result.document_id, "CVE-2023-33201");
 
     Ok(())
 }
@@ -447,8 +449,9 @@ async fn upload_osv_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let response = actix_web::test::call_service(&app, request).await;
     assert!(response.status().is_success());
-    let id: Id = actix_web::test::read_body_json(response).await;
-    assert!(matches!(id, Id::Uuid(_)));
+    let result: IngestResult = actix_web::test::read_body_json(response).await;
+    assert!(matches!(result.id, Id::Uuid(_)));
+    assert_eq!(result.document_id, "RUSTSEC-2021-0079");
 
     Ok(())
 }
@@ -472,8 +475,9 @@ async fn upload_cve_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let response = actix_web::test::call_service(&app, request).await;
     assert!(response.status().is_success());
-    let id: Id = actix_web::test::read_body_json(response).await;
-    assert!(matches!(id, Id::Uuid(_)));
+    let result: IngestResult = actix_web::test::read_body_json(response).await;
+    assert!(matches!(result.id, Id::Uuid(_)));
+    assert_eq!(result.document_id, "CVE-2024-27088");
 
     Ok(())
 }
@@ -512,7 +516,7 @@ const DOC: &[u8] = include_bytes!("../../../../../etc/test-data/csaf/cve-2023-33
 /// This will upload [`DOC`], and then call the test function, providing the upload id of the document.
 async fn with_upload<F>(ctx: TrustifyContext, f: F) -> anyhow::Result<()>
 where
-    for<'a> F: FnOnce(Id, &'a dyn CallService) -> LocalBoxFuture<'a, anyhow::Result<()>>,
+    for<'a> F: FnOnce(IngestResult, &'a dyn CallService) -> LocalBoxFuture<'a, anyhow::Result<()>>,
 {
     let db = ctx.db;
     let (storage, _) = FileSystemBackend::for_test().await?;
@@ -534,13 +538,12 @@ where
 
     println!("Code: {}", response.status());
     assert!(response.status().is_success());
-    let doc: Value = actix_web::test::read_body_json(response).await;
-    let id = serde_json::from_value::<Id>(doc).expect("must be a parsable Id");
+    let result: IngestResult = actix_web::test::read_body_json(response).await;
 
-    println!("ID: {id:?}");
-    assert!(matches!(id, Id::Uuid(_)));
+    println!("ID: {result:?}");
+    assert!(matches!(result.id, Id::Uuid(_)));
 
-    f(id, &app).await?;
+    f(result, &app).await?;
 
     // download
 
@@ -574,9 +577,9 @@ async fn download_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn download_advisory_by_id(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    with_upload(ctx, |id, app| {
+    with_upload(ctx, |result, app| {
         Box::pin(async move {
-            let uri = format!("/api/v1/advisory/{id}/download");
+            let uri = format!("/api/v1/advisory/{}/download", result.id);
             let request = TestRequest::get().uri(&uri).to_request();
 
             let response = app.call_service(request).await;

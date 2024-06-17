@@ -191,8 +191,7 @@ mod test {
         let graph = Graph::new(db);
 
         let data = include_bytes!("../../../../../../etc/test-data/csaf/CVE-2023-20862.json");
-
-        let digests = Digests::digest(&data);
+        let digests = Digests::digest(data);
 
         let loader = CsafLoader::new(&graph);
         loader
@@ -273,7 +272,7 @@ mod test {
         let loader = CsafLoader::new(&graph);
 
         let data = include_bytes!("../../../../../../etc/test-data/csaf/rhsa-2024_3666.json");
-        let digests = Digests::digest(&data);
+        let digests = Digests::digest(data);
 
         loader.load("test", &data[..], &digests).await?;
 

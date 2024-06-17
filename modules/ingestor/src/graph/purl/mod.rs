@@ -612,6 +612,7 @@ mod tests {
 
     use trustify_common::db::test::TrustifyContext;
     use trustify_common::db::Transactional;
+    use trustify_common::hashing::Digests;
     use trustify_common::model::Paginated;
     use trustify_common::purl::Purl;
     use trustify_entity::qualified_package;
@@ -953,7 +954,7 @@ mod tests {
             .ingest_advisory(
                 "RHSA-1",
                 "http://redhat.com/rhsa-1",
-                "2",
+                &Digests::digest("RHSA-1"),
                 (),
                 Transactional::None,
             )
@@ -985,7 +986,7 @@ mod tests {
             .ingest_advisory(
                 "GHSA-1",
                 "http://ghsa.com/ghsa-1",
-                "3",
+                &Digests::digest("GHSA-1"),
                 (),
                 Transactional::None,
             )
@@ -1054,7 +1055,7 @@ mod tests {
             .ingest_advisory(
                 "RHSA-1",
                 "http://redhat.com/rhsa-1",
-                "2",
+                &Digests::digest("RHSA-1"),
                 (),
                 Transactional::None,
             )
@@ -1075,7 +1076,7 @@ mod tests {
             .ingest_advisory(
                 "GHSA-1",
                 "http://ghsa.com/ghsa-1",
-                "2",
+                &Digests::digest("RHSA-1"), // same
                 (),
                 Transactional::None,
             )
@@ -1117,7 +1118,7 @@ mod tests {
             .ingest_advisory(
                 "RHSA-1",
                 "http://redhat.com/rhsa-1",
-                "2",
+                &Digests::digest("RHSA-1"),
                 (),
                 Transactional::None,
             )
@@ -1147,7 +1148,7 @@ mod tests {
             .ingest_advisory(
                 "GHSA-1",
                 "http://ghsa.com/ghsa-1",
-                "2",
+                &Digests::digest("RHSA-1"), // same
                 (),
                 Transactional::None,
             )
@@ -1189,7 +1190,7 @@ mod tests {
             .ingest_advisory(
                 "RHSA-1",
                 "http://redhat.com/rhsa-1",
-                "2",
+                &Digests::digest("RHSA-1"),
                 (),
                 Transactional::None,
             )
@@ -1212,7 +1213,7 @@ mod tests {
             .ingest_advisory(
                 "GHSA-1",
                 "http://ghsa.gov/GHSA-1",
-                "3",
+                &Digests::digest("GHSA-1"),
                 (),
                 Transactional::None,
             )
@@ -1233,7 +1234,7 @@ mod tests {
             .ingest_advisory(
                 "RHSA-299",
                 "http://redhat.com/rhsa-299",
-                "17",
+                &Digests::digest("RHSA-299"),
                 (),
                 Transactional::None,
             )

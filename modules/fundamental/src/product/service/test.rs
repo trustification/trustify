@@ -4,6 +4,7 @@ use test_log::test;
 use trustify_common::db::query::Query;
 use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Transactional;
+use trustify_common::hashing::Digests;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::product::ProductInformation;
 use trustify_module_ingestor::graph::Graph;
@@ -38,7 +39,7 @@ async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let sbom = graph
         .ingest_sbom(
             "http://redhat.com/test.json",
-            "8",
+            &Digests::digest("RHSA-1"),
             "a",
             (),
             Transactional::None,
@@ -79,7 +80,7 @@ async fn link_sbom_to_product(ctx: TrustifyContext) -> Result<(), anyhow::Error>
     let sbom = graph
         .ingest_sbom(
             "http://redhat.com/test.json",
-            "8",
+            &Digests::digest("RHSA-1"),
             "a",
             (),
             Transactional::None,

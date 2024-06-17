@@ -182,6 +182,7 @@ mod tests {
     use crate::graph::Graph;
     use test_context::test_context;
     use trustify_common::db::{test::TrustifyContext, Transactional};
+    use trustify_common::hashing::Digests;
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[tokio::test]
@@ -195,7 +196,7 @@ mod tests {
             .ingest_advisory(
                 "RHSA-1",
                 "http://redhat.com/rhsa-1",
-                "2",
+                &Digests::digest("RHSA-1"),
                 (),
                 Transactional::None,
             )
@@ -216,7 +217,7 @@ mod tests {
             .ingest_advisory(
                 "GHSA-1",
                 "http://ghsa.com/ghsa-1",
-                "2",
+                &Digests::digest("GHSA-1"),
                 (),
                 Transactional::None,
             )

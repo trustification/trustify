@@ -6,6 +6,7 @@ use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
 use trustify_common::db::{query::q, test::TrustifyContext};
+use trustify_common::hashing::Digests;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_cvss::cvss3::{
@@ -25,7 +26,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_advisory(
             "RHSA-1",
             "http://redhat.com/",
-            "8675309",
+            &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
                 issuer: None,
@@ -61,7 +62,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_advisory(
             "RHSA-2",
             "http://redhat.com/",
-            "8675319",
+            &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
                 issuer: None,
@@ -94,7 +95,7 @@ async fn all_advisories_filtered_by_average_score(
         .ingest_advisory(
             "RHSA-1",
             "http://redhat.com/",
-            "8675309",
+            &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
                 issuer: None,
@@ -130,7 +131,7 @@ async fn all_advisories_filtered_by_average_score(
         .ingest_advisory(
             "RHSA-2",
             "http://redhat.com/",
-            "8675319",
+            &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
                 issuer: None,
@@ -163,7 +164,7 @@ async fn all_advisories_filtered_by_average_severity(
         .ingest_advisory(
             "RHSA-1",
             "http://redhat.com/",
-            "8675309",
+            &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
                 issuer: None,
@@ -199,7 +200,7 @@ async fn all_advisories_filtered_by_average_severity(
         .ingest_advisory(
             "RHSA-2",
             "http://redhat.com/",
-            "8675319",
+            &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
                 issuer: None,
@@ -228,11 +229,13 @@ async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
 
+    let digests = Digests::digest("RHSA-1");
+
     let advisory = graph
         .ingest_advisory(
             "RHSA-1",
             "http://redhat.com/",
-            "8675309",
+            &digests,
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
                 issuer: None,
@@ -272,7 +275,7 @@ async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_advisory(
             "RHSA-2",
             "http://redhat.com/",
-            "8675319",
+            &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
                 issuer: None,
@@ -285,7 +288,7 @@ async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
 
     let fetch = AdvisoryService::new(db);
-    let jenny = Id::from_str("sha256:8675309")?;
+    let jenny = Id::sha256(&digests.sha256);
     let fetched = fetch.fetch_advisory(jenny.clone(), ()).await?;
 
     assert!(matches!(

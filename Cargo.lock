@@ -6384,6 +6384,7 @@ dependencies = [
  "clap",
  "concat-idents",
  "cpe",
+ "hex",
  "human-date-parser",
  "itertools 0.13.0",
  "lenient_semver",

@@ -17,6 +17,7 @@ use std::str::FromStr;
 use std::time::Instant;
 use tracing::{info_span, instrument, Instrument};
 use trustify_common::db::{test::TrustifyContext, Database, Transactional};
+use trustify_common::hashing::Digests;
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::graph::{
     sbom::{self, spdx::parse_spdx, SbomContext, SbomInformation},
@@ -153,7 +154,13 @@ where
 
     let start = Instant::now();
     let ctx = graph
-        .ingest_sbom("test.com/my-sbom.json", "10", "document-id", c(&sbom), &tx)
+        .ingest_sbom(
+            "test.com/my-sbom.json",
+            &Digests::digest("10"),
+            "document-id",
+            c(&sbom),
+            &tx,
+        )
         .await?;
     let ingest_time_1 = start.elapsed();
 

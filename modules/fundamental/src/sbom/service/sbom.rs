@@ -449,6 +449,7 @@ mod test {
     use test_log::test;
     use trustify_common::db::query::q;
     use trustify_common::db::test::TrustifyContext;
+    use trustify_common::hashing::Digests;
     use trustify_module_ingestor::graph::Graph;
 
     #[test_context(TrustifyContext, skip_teardown)]
@@ -460,7 +461,7 @@ mod test {
         let sbom_v1 = system
             .ingest_sbom(
                 "http://redhat.com/test.json",
-                "8",
+                &Digests::digest("RHSA-1"),
                 "a",
                 (),
                 Transactional::None,
@@ -469,7 +470,7 @@ mod test {
         let sbom_v1_again = system
             .ingest_sbom(
                 "http://redhat.com/test.json",
-                "8",
+                &Digests::digest("RHSA-1"),
                 "a",
                 (),
                 Transactional::None,
@@ -478,7 +479,7 @@ mod test {
         let sbom_v2 = system
             .ingest_sbom(
                 "http://myspace.com/test.json",
-                "9",
+                &Digests::digest("RHSA-2"),
                 "b",
                 (),
                 Transactional::None,
@@ -488,7 +489,7 @@ mod test {
         let _other_sbom = system
             .ingest_sbom(
                 "http://geocities.com/other.json",
-                "10",
+                &Digests::digest("RHSA-3"),
                 "c",
                 (),
                 Transactional::None,

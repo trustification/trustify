@@ -124,6 +124,7 @@ mod tests {
     use crate::graph::Graph;
     use test_context::test_context;
     use trustify_common::db::{test::TrustifyContext, Transactional};
+    use trustify_common::hashing::Digests;
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[tokio::test]
@@ -135,7 +136,7 @@ mod tests {
             .ingest_advisory(
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
-                "2",
+                &Digests::digest("RHSA-GHSA-1"),
                 (),
                 Transactional::None,
             )

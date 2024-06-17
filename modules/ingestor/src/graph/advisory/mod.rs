@@ -257,6 +257,7 @@ mod test {
     use test_context::test_context;
     use test_log::test;
     use trustify_common::db::{test::TrustifyContext, Transactional};
+    use trustify_common::hashing::Digests;
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
@@ -268,7 +269,7 @@ mod test {
             .ingest_advisory(
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
-                "2",
+                &Digests::digest("RHSA-GHSA-1_1"),
                 (),
                 Transactional::None,
             )
@@ -278,7 +279,7 @@ mod test {
             .ingest_advisory(
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
-                "2",
+                &Digests::digest("RHSA-GHSA-1_1"),
                 (),
                 Transactional::None,
             )
@@ -288,7 +289,7 @@ mod test {
             .ingest_advisory(
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
-                "89",
+                &Digests::digest("RHSA-GHSA-1_2"),
                 (),
                 Transactional::None,
             )
@@ -312,7 +313,7 @@ mod test {
             .ingest_advisory(
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
-                "2",
+                &Digests::digest("RHSA-GHSA-1"),
                 (),
                 Transactional::None,
             )
@@ -371,7 +372,7 @@ mod test {
             .ingest_advisory(
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
-                "2",
+                &Digests::digest("RHSA-GHSA-1"),
                 (),
                 Transactional::None,
             )
@@ -433,7 +434,7 @@ mod test {
             .ingest_advisory(
                 "RHSA-GHSA-1",
                 "http://db.com/rhsa-ghsa-2",
-                "2",
+                &Digests::digest("RHSA-GHSA-1"),
                 (),
                 Transactional::None,
             )

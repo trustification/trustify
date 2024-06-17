@@ -11,6 +11,7 @@ chrono = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 concat-idents = { workspace = true }
 cpe = { workspace = true }
+hex = { workspace = true }
 human-date-parser = { workspace = true }
 itertools = { workspace = true }
 lenient_semver = { workspace = true }
