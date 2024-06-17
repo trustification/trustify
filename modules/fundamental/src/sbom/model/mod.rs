@@ -8,6 +8,7 @@ use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct SbomSummary {
+    #[serde(with = "uuid::serde::urn")]
     pub id: Uuid,
     pub hashes: Vec<Id>,
 

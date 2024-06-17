@@ -24,6 +24,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     config
         .app_data(web::Data::new(sbom_service))
         .service(all)
+        .service(get)
         .service(packages)
         .service(related)
         .service(upload)
@@ -32,7 +33,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(all, packages, related, upload, download,),
+    paths(all, get, packages, related, upload, download,),
     components(schemas(
         crate::sbom::model::PaginatedSbomPackage,
         crate::sbom::model::PaginatedSbomPackageRelation,
@@ -77,8 +78,36 @@ pub async fn all(
     Ok(HttpResponse::Ok().json(result))
 }
 
+#[utoipa::path(
+    tag = "sbom",
+    context_path = "/api",
+    params(
+        ("key" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+    ),
+    responses(
+        (status = 200, description = "Matching SBOM", body = SbomSummary),
+        (status = 404, description = "Matching SBOM not found"),
+    ),
+)]
+#[get("/v1/sbom/{key}")]
+pub async fn get(
+    fetcher: web::Data<SbomService>,
+    authorizer: web::Data<Authorizer>,
+    user: UserInformation,
+    key: web::Path<String>,
+) -> actix_web::Result<impl Responder> {
+    authorizer.require(&user, Permission::ReadSbom)?;
+
+    let hash_key = Id::from_str(&key).map_err(Error::HashKey)?;
+    match fetcher.fetch_sbom(hash_key, ()).await? {
+        Some(v) => Ok(HttpResponse::Ok().json(v)),
+        None => Ok(HttpResponse::NotFound().finish()),
+    }
+}
+
 /// Search for packages of an SBOM
 #[utoipa::path(
+    tag = "sbom",
     context_path = "/api",
     params(
         ("id", Path, description = "ID of the SBOM to get packages for"),
@@ -121,6 +150,7 @@ struct RelatedQuery {
 
 /// Search for related packages in an SBOM
 #[utoipa::path(
+    tag = "sbom",
     context_path = "/api",
     params(
         ("id", Path, description = "ID of SBOM to search packages in"),
