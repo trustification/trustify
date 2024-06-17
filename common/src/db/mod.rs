@@ -173,17 +173,18 @@ impl Database {
                 format!("DROP DATABASE IF EXISTS \"{}\";", database.name),
             ))
             .await?;
-
         let create_db_result = db
             .execute(Statement::from_string(
                 db.get_database_backend(),
                 format!("CREATE DATABASE \"{}\";", database.name),
             ))
             .await?;
-
         db.close().await?;
 
         let db = Self::new(database).await?;
+        let install_pg_stat_statements_ext_db_result = db
+            .execute_unprepared("CREATE EXTENSION IF NOT EXISTS \"pg_stat_statements\";")
+            .await?;
         db.migrate().await?;
 
         Ok(db)
