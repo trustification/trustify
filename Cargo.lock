@@ -6793,7 +6793,6 @@ dependencies = [
 name = "trustify-module-graphql"
 version = "0.1.0"
 dependencies = [
- "actix-cors",
  "actix-web",
  "anyhow",
  "async-graphql",

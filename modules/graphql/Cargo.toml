@@ -13,8 +13,6 @@ trustify-module-ui = { workspace = true }
 trustify-module-fundamental = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 
-
-actix-cors = { workspace = true }
 anyhow = { workspace = true }
 actix-web = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
