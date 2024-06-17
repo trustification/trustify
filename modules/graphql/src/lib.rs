@@ -1,4 +1,5 @@
 pub mod advisory;
+pub mod endpoints;
 pub mod organization;
 pub mod sbom;
 pub mod vulnerability;

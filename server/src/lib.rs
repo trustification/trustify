@@ -7,18 +7,15 @@ mod sample_data;
 
 pub use sample_data::sample_data;
 
-use actix_cors::Cors;
 use actix_web::{
     body::MessageBody,
     dev::{ConnectionInfo, Url},
     error::UrlGenerationError,
-    get, guard, web,
+    get, web,
     web::Json,
-    HttpRequest, HttpResponse, Responder, Result,
+    HttpRequest, Responder, Result,
 };
 use anyhow::Context;
-use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
-use async_graphql_actix_web::GraphQL;
 use bytesize::ByteSize;
 use futures::{FutureExt, StreamExt};
 use std::fmt::Display;
@@ -152,12 +149,6 @@ impl Run {
     }
 }
 
-async fn index_graphiql() -> Result<HttpResponse> {
-    Ok(HttpResponse::Ok()
-        .content_type("text/html; charset=utf-8")
-        .body(GraphiQLSource::build().endpoint("/graphql").finish()))
-}
-
 impl InitData {
     async fn new(context: InitContext, run: Run) -> anyhow::Result<Self> {
         // The devmode for the auth parts. This allows us to enable devmode for auth, but not
@@ -266,11 +257,6 @@ impl InitData {
             let db = self.db.clone();
             let storage = self.storage.clone();
 
-            let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-                .data::<Arc<Graph>>(graph)
-                .data::<Arc<db::Database>>(Arc::new(self.db.clone()))
-                .finish();
-
             HttpServerBuilder::try_from(self.http)?
                 .tracing(self.tracing)
                 .metrics(metrics.registry().clone(), SERVICE_ID)
@@ -281,20 +267,20 @@ impl InitData {
                             openapi::openapi(),
                             swagger_oidc.clone(),
                         ));
+                    svc.service(web::scope("/").wrap(new_auth(self.authenticator.clone())))
+                        .configure(|svc| {
+                            trustify_module_graphql::endpoints::configure(
+                                svc,
+                                db.clone(),
+                                graph.clone(),
+                            );
+                        });
                     svc.service(
-                        web::resource("/graphql")
-                            .wrap(new_auth(self.authenticator.clone()))
-                            .wrap(Cors::permissive())
-                            .guard(guard::Post())
-                            .to(GraphQL::new(schema.clone())),
-                    );
-                    svc.service(
-                        web::resource("/graphql")
-                            .wrap(new_auth(self.authenticator.clone()))
-                            .wrap(Cors::permissive())
-                            .guard(guard::Get())
-                            .to(index_graphiql),
-                    );
+                        web::scope("/").wrap(new_auth(self.authenticator.clone())), // .wrap(Cors::permissive()),
+                    )
+                    .configure(|svc| {
+                        trustify_module_graphql::endpoints::configure_graphiql(svc);
+                    });
                     svc.app_data(web::Data::from(self.graph.clone()))
                         .service(
                             web::scope("/api")
@@ -359,7 +345,7 @@ async fn index(ci: ConnectionInfo) -> Result<Json<Vec<url::Url>>, UrlGenerationE
 
     result.extend(build_url(&ci, "/"));
     result.extend(build_url(&ci, "/openapi.json"));
-    result.extend(build_url(&ci, "/openapi.json"));
+    result.extend(build_url(&ci, "/openapi/"));
 
     Ok(Json(result))
 }
