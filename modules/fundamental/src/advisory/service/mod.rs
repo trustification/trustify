@@ -95,7 +95,12 @@ impl AdvisoryService {
                             ],
                         }
                         .def(),
-                    ),
+                    )
+                    .translator(|f, op, v| match (f, v) {
+                        // v = "" for all sort fields
+                        ("average_severity", "") => Some(format!("average_score:{op}")),
+                        _ => None,
+                    }),
             )?
             .limiting_as::<AdvisoryCatcher>(&connection, paginated.offset, paginated.limit);
 
