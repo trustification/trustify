@@ -24,6 +24,7 @@ use trustify_common::{
     model::{Paginated, PaginatedResults},
     purl::Purl,
 };
+use trustify_entity::sbom::SbomNodeLink;
 use trustify_entity::{
     cpe::{self, CpeDto},
     package, package_relates_to_package, package_version,
@@ -70,7 +71,10 @@ impl SbomService {
 
         let limiter = sbom::Entity::find()
             .filtering(search)?
-            .find_also_related(sbom_node::Entity)
+            // FIXME: need to find a way to join this by node_id
+            .find_also_linked(SbomNodeLink)
+            // .join(JoinType::LeftJoin, sbom::Relation::SbomNode.def())
+            //.find_also_related(sbom_node::Entity)
             .limiting(&connection, paginated.offset, paginated.limit);
 
         let total = limiter.total().await?;
