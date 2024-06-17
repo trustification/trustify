@@ -21,6 +21,9 @@ pub struct SbomSummary {
 
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub authors: Vec<String>,
+
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub described_by: Vec<SbomPackage>,
 }
 
 paginated!(SbomSummary);
