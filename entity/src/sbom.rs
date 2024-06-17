@@ -1,5 +1,6 @@
 use async_graphql::SimpleObject;
 use sea_orm::entity::prelude::*;
+use sea_orm::LinkDef;
 use time::OffsetDateTime;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
@@ -24,6 +25,17 @@ pub enum Relation {
     Packages,
     #[sea_orm(has_one = "super::sbom_node::Entity")]
     Node,
+}
+
+pub struct SbomNodeLink;
+
+impl Linked for SbomNodeLink {
+    type FromEntity = Entity;
+    type ToEntity = super::sbom_node::Entity;
+
+    fn link(&self) -> Vec<LinkDef> {
+        vec![super::sbom_node::Relation::SbomNode.def().rev()]
+    }
 }
 
 impl Related<super::sbom_package::Entity> for Entity {
