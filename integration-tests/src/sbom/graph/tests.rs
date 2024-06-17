@@ -365,7 +365,7 @@ async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error>
     let db = ctx.db;
     let system = Graph::new(db);
 
-    println!("{:?}", system);
+    log::debug!("{:?}", system);
 
     let sbom = system
         .ingest_sbom(
@@ -377,11 +377,11 @@ async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         )
         .await?;
 
-    println!("-------------------- A");
+    log::debug!("-------------------- A");
 
     sbom.ingest_describes_package("pkg://oci/my-app@1.2.3".try_into()?, Transactional::None)
         .await?;
-    println!("-------------------- B");
+    log::debug!("-------------------- B");
 
     sbom.ingest_package_relates_to_package(
         Purl::from_str("pkg://maven/io.quarkus/quarkus-core@1.2.3")?,
@@ -390,7 +390,7 @@ async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         Transactional::None,
     )
     .await?;
-    println!("-------------------- C");
+    log::debug!("-------------------- C");
 
     sbom.ingest_package_relates_to_package(
         Purl::from_str("pkg://maven/io.quarkus/quarkus-postgres@1.2.3")?,
@@ -399,7 +399,7 @@ async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         Transactional::None,
     )
     .await?;
-    println!("-------------------- D");
+    log::debug!("-------------------- D");
 
     sbom.ingest_package_relates_to_package(
         Purl::from_str("pkg://maven/postgres/postgres-driver@1.2.3")?,

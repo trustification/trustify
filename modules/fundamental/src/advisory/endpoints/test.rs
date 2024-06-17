@@ -536,11 +536,11 @@ where
 
     let response = actix_web::test::call_service(&app, request).await;
 
-    println!("Code: {}", response.status());
+    log::debug!("Code: {}", response.status());
     assert!(response.status().is_success());
     let result: IngestResult = actix_web::test::read_body_json(response).await;
 
-    println!("ID: {result:?}");
+    log::debug!("ID: {result:?}");
     assert!(matches!(result.id, Id::Uuid(_)));
 
     f(result, &app).await?;
@@ -584,7 +584,7 @@ async fn download_advisory_by_id(ctx: TrustifyContext) -> Result<(), anyhow::Err
 
             let response = app.call_service(request).await;
 
-            println!("Code: {}", response.status());
+            log::debug!("Code: {}", response.status());
             assert!(response.status().is_success());
             let doc: Value = actix_web::test::read_body_json(response).await;
             assert_eq!(doc["document"]["tracking"]["id"], "CVE-2023-33201");
