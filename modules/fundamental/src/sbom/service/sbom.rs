@@ -3,6 +3,7 @@ use crate::{
     sbom::model::{SbomPackage, SbomPackageReference, SbomPackageRelation, SbomSummary, Which},
     Error,
 };
+use futures_util::{stream, StreamExt, TryStreamExt};
 use sea_orm::{
     prelude::Uuid, ColumnTrait, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
     QueryOrder, QuerySelect, RelationTrait, Select, SelectColumns,
@@ -25,8 +26,8 @@ use trustify_common::{
 };
 use trustify_entity::{
     cpe::{self, CpeDto},
-    package, package_relates_to_package, package_version, qualified_package,
-    qualified_package::Qualifiers,
+    package, package_relates_to_package, package_version,
+    qualified_package::{self, Qualifiers},
     relationship::Relationship,
     sbom, sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
 };
@@ -46,11 +47,16 @@ impl SbomService {
             _ => return Err(Error::UnsupportedHashAlgorithm),
         };
 
-        Ok(select
-            .find_also_related(sbom_node::Entity)
-            .one(&connection)
-            .await?
-            .and_then(Self::build_summary))
+        Ok(
+            match select
+                .find_also_related(sbom_node::Entity)
+                .one(&connection)
+                .await?
+            {
+                Some(row) => self.build_summary(row, &tx).await?,
+                None => None,
+            },
+        )
     }
 
     /// fetch all SBOMs
@@ -70,21 +76,41 @@ impl SbomService {
         let total = limiter.total().await?;
         let sboms = limiter.fetch().await?;
 
-        let items = sboms.into_iter().filter_map(Self::build_summary).collect();
+        let tx = tx.as_ref();
+        let items = stream::iter(sboms.into_iter())
+            .then(|row| async move { self.build_summary(row, &tx).await })
+            .try_filter_map(futures_util::future::ok)
+            .try_collect()
+            .await?;
 
         Ok(PaginatedResults { total, items })
     }
 
     /// turn an (sbom, sbom_node) row into an [`SbomSummary`], if possible
-    fn build_summary((sbom, node): (sbom::Model, Option<sbom_node::Model>)) -> Option<SbomSummary> {
-        node.map(|node| SbomSummary {
-            id: sbom.sbom_id,
-            hashes: vec![Id::Sha256(sbom.sha256)],
-            document_id: sbom.document_id,
+    async fn build_summary(
+        &self,
+        (sbom, node): (sbom::Model, Option<sbom_node::Model>),
+        tx: impl AsRef<Transactional>,
+    ) -> Result<Option<SbomSummary>, Error> {
+        // TODO: consider improving the n-select issue here
+        let described_by = self
+            .describes_packages(sbom.sbom_id, Paginated::default(), tx)
+            .await?
+            .items;
 
-            name: node.name,
-            published: sbom.published,
-            authors: sbom.authors,
+        Ok(match node {
+            Some(node) => Some(SbomSummary {
+                id: sbom.sbom_id,
+                hashes: vec![Id::Sha256(sbom.sha256)],
+                document_id: sbom.document_id,
+
+                name: node.name,
+                published: sbom.published,
+                authors: sbom.authors,
+
+                described_by,
+            }),
+            None => None,
         })
     }
 
@@ -184,7 +210,7 @@ impl SbomService {
     ) -> Result<PaginatedResults<SbomPackageRelation>, Error> {
         // which way
 
-        log::info!("Which: {which:?}");
+        log::debug!("Which: {which:?}");
 
         // select all qualified packages for which we have relationships
 
