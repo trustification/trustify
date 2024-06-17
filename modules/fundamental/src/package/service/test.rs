@@ -541,7 +541,7 @@ async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .qualified_packages(q("log4j"), Paginated::default(), ())
         .await?;
 
-    println!("{:#?}", results);
+    log::debug!("{:#?}", results);
 
     Ok(())
 }

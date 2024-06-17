@@ -217,7 +217,7 @@ async fn all_advisories_filtered_by_average_severity(
         .fetch_advisories(q("average_severity>=critical"), Paginated::default(), ())
         .await?;
 
-    println!("{:#?}", fetched);
+    log::debug!("{:#?}", fetched);
 
     assert_eq!(fetched.total, 1);
     Ok(())
