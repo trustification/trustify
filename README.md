@@ -20,9 +20,10 @@ That will create its own database on your local filesystem.
 You can also fire up the UI using:
 
 ```shell
-podman run --network="host" \
--e TRUSTIFICATION_API_URL=http://localhost:8080 \
--e AUTH_REQUIRED=false \
+podman run --network="host" --pull=always \
+-e TRUSTIFY_API_URL=http://localhost:8080 \
+-e OIDC_CLIENT_ID=frontend \
+-e OIDC_SERVER_URL=http://localhost:8090/realms/trustify \
 -e ANALYTICS_ENABLED=false \
 -e PORT=3000 \
 -p 3000:3000 \
