@@ -1,10 +1,18 @@
-use serde::de::{Error, Visitor};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use hex::ToHex;
+use ring::digest::Digest;
+use serde::{
+    de::{Error, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use serde_json::Value;
-use std::fmt::{Display, Formatter};
-use std::str::FromStr;
-use utoipa::openapi::{Object, RefOr, Schema, SchemaType};
-use utoipa::ToSchema;
+use std::{
+    fmt::{Display, Formatter},
+    str::FromStr,
+};
+use utoipa::{
+    openapi::{Object, RefOr, Schema, SchemaType},
+    ToSchema,
+};
 use uuid::Uuid;
 
 #[non_exhaustive]
@@ -33,6 +41,25 @@ impl Id {
             Id::Sha512(inner) => inner.clone(),
             Id::Uuid(inner) => inner.simple().to_string(),
         }
+    }
+
+    pub fn sha256(digest: &Digest) -> Self {
+        Self::from_digest(digest, Id::Sha256)
+    }
+
+    pub fn sha384(digest: &Digest) -> Self {
+        Self::from_digest(digest, Id::Sha384)
+    }
+
+    pub fn sha512(digest: &Digest) -> Self {
+        Self::from_digest(digest, Id::Sha512)
+    }
+
+    fn from_digest<F>(digest: &Digest, f: F) -> Self
+    where
+        F: FnOnce(String) -> Self,
+    {
+        f(digest.encode_hex())
     }
 }
 

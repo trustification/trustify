@@ -6,6 +6,7 @@ use test_context::test_context;
 use test_log::test;
 use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Transactional;
+use trustify_common::hashing::Digests;
 use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
 use trustify_entity::relationship::Relationship;
@@ -21,7 +22,7 @@ async fn ingest_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let sbom_v1 = system
         .ingest_sbom(
             "http://sbom.com/test.json",
-            "8",
+            &Digests::digest("8"),
             "a",
             (),
             Transactional::None,
@@ -30,7 +31,7 @@ async fn ingest_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let sbom_v1_again = system
         .ingest_sbom(
             "http://sbom.com/test.json",
-            "8",
+            &Digests::digest("8"),
             "b",
             (),
             Transactional::None,
@@ -39,7 +40,7 @@ async fn ingest_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let sbom_v2 = system
         .ingest_sbom(
             "http://sbom.com/test.json",
-            "9",
+            &Digests::digest("9"),
             "c",
             (),
             Transactional::None,
@@ -49,7 +50,7 @@ async fn ingest_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let _other_sbom = system
         .ingest_sbom(
             "http://sbom.com/other.json",
-            "10",
+            &Digests::digest("10"),
             "d",
             (),
             Transactional::None,
@@ -73,7 +74,7 @@ async fn ingest_and_fetch_sboms_describing_purls(
     let sbom_v1 = system
         .ingest_sbom(
             "http://sbom.com/test.json",
-            "8",
+            &Digests::digest("8"),
             "a",
             (),
             Transactional::None,
@@ -82,7 +83,7 @@ async fn ingest_and_fetch_sboms_describing_purls(
     let sbom_v2 = system
         .ingest_sbom(
             "http://sbom.com/test.json",
-            "9",
+            &Digests::digest("9"),
             "b",
             (),
             Transactional::None,
@@ -91,7 +92,7 @@ async fn ingest_and_fetch_sboms_describing_purls(
     let sbom_v3 = system
         .ingest_sbom(
             "http://sbom.com/test.json",
-            "10",
+            &Digests::digest("10"),
             "c",
             (),
             Transactional::None,
@@ -144,7 +145,7 @@ async fn ingest_and_locate_sboms_describing_cpes(
     let sbom_v1 = system
         .ingest_sbom(
             "http://sbom.com/test.json",
-            "8",
+            &Digests::digest("8"),
             "a",
             (),
             Transactional::None,
@@ -153,7 +154,7 @@ async fn ingest_and_locate_sboms_describing_cpes(
     let sbom_v2 = system
         .ingest_sbom(
             "http://sbom.com/test.json",
-            "9",
+            &Digests::digest("9"),
             "b",
             (),
             Transactional::None,
@@ -162,7 +163,7 @@ async fn ingest_and_locate_sboms_describing_cpes(
     let sbom_v3 = system
         .ingest_sbom(
             "http://sbom.com/test.json",
-            "10",
+            &Digests::digest("10"),
             "c",
             (),
             Transactional::None,
@@ -213,7 +214,7 @@ async fn transitive_dependency_of(ctx: TrustifyContext) -> Result<(), anyhow::Er
     let sbom1 = system
         .ingest_sbom(
             "http://sbomsRus.gov/thing1.json",
-            "8675309",
+            &Digests::digest("8675309"),
             "a",
             (),
             Transactional::None,
@@ -288,7 +289,7 @@ async fn ingest_package_relates_to_package_dependency_of(
     let sbom1 = system
         .ingest_sbom(
             "http://sbomsRus.gov/thing1.json",
-            "8675309",
+            &Digests::digest("8675309"),
             "a",
             (),
             Transactional::None,
@@ -307,7 +308,7 @@ async fn ingest_package_relates_to_package_dependency_of(
     let sbom2 = system
         .ingest_sbom(
             "http://sbomsRus.gov/thing2.json",
-            "8675308",
+            &Digests::digest("8675308"),
             "b",
             (),
             Transactional::None,
@@ -369,7 +370,7 @@ async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error>
     let sbom = system
         .ingest_sbom(
             "http://sbomsRus.gov/thing1.json",
-            "8675309",
+            &Digests::digest("8675309"),
             "a",
             (),
             Transactional::None,
@@ -412,7 +413,7 @@ async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         .ingest_advisory(
             "RHSA-1",
             "http://redhat.com/secdata/RHSA-1",
-            "7",
+            &Digests::digest("7"),
             (),
             Transactional::None,
         )

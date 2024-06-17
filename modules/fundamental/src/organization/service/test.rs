@@ -4,6 +4,7 @@ use test_context::test_context;
 use test_log::test;
 use trustify_common::db::query::Query;
 use trustify_common::db::test::TrustifyContext;
+use trustify_common::hashing::Digests;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
 use trustify_module_ingestor::graph::Graph;
@@ -18,7 +19,7 @@ async fn all_organizations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_advisory(
             "CPIC-1",
             "http://captpickles.com/",
-            "8675309",
+            &Digests::digest("CPIC-1"),
             AdvisoryInformation {
                 title: Some("CAPT-1".to_string()),
                 issuer: Some("Capt Pickles Industrial Conglomerate".to_string()),

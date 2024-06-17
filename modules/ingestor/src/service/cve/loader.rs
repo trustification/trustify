@@ -126,9 +126,11 @@ impl<'g> CveLoader<'g> {
 #[cfg(test)]
 mod test {
     use crate::graph::Graph;
+    use hex::ToHex;
     use test_context::test_context;
     use test_log::test;
     use trustify_common::db::{test::TrustifyContext, Transactional};
+    use trustify_common::hashing::Digests;
 
     use crate::service::cve::loader::CveLoader;
 
@@ -137,27 +139,28 @@ mod test {
     async fn cve_loader(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         let db = ctx.db;
         let graph = Graph::new(db);
+
         let data = include_bytes!("../../../../../etc/test-data/mitre/CVE-2024-28111.json");
-        let checksum = "06908108e8097f2a56e628e7814a7bd54a5fc95f645b7c9fab02c1eb8dd9cc0c";
+        let digests = Digests::digest(data);
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
         assert!(loaded_vulnerability.is_none());
 
         let loaded_advisory = graph
-            .get_advisory_by_digest(checksum, Transactional::None)
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
             .await?;
         assert!(loaded_advisory.is_none());
 
         let loader = CveLoader::new(&graph);
         loader
-            .load("CVE-2024-28111.json", &data[..], checksum)
+            .load("CVE-2024-28111.json", &data[..], &digests)
             .await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
         assert!(loaded_vulnerability.is_some());
 
         let loaded_advisory = graph
-            .get_advisory_by_digest(checksum, Transactional::None)
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
             .await?;
         assert!(loaded_advisory.is_some());
 
