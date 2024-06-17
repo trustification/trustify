@@ -57,7 +57,7 @@ pub enum Relation {
         belongs_to = "super::organization::Entity"
         from = "Column::IssuerId"
         to = "super::organization::Column::Id")]
-    Organization,
+    Issuer,
 
     #[sea_orm(has_many = "super::cvss3::Entity")]
     Cvss3,
@@ -74,7 +74,7 @@ pub enum Relation {
 
 impl Related<organization::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Organization.def()
+        Relation::Issuer.def()
     }
 }
 

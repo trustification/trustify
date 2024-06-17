@@ -18,7 +18,7 @@ pub enum Relation {}
 
 impl Related<advisory::Entity> for Entity {
     fn to() -> RelationDef {
-        super::advisory::Relation::Organization.def().rev()
+        super::advisory::Relation::Issuer.def().rev()
     }
 }
 
