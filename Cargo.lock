@@ -3363,7 +3363,7 @@ version = "5.0.0-alpha.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "098af5a5110b4deacf3200682963713b143ae9d28762b739bdb7b98429dfaf68"
 dependencies = [
- "base64 0.21.7",
+ "base64 0.22.1",
  "chrono",
  "getrandom",
  "http 1.1.0",
@@ -3993,9 +3993,9 @@ checksum = "7170ef9988bc169ba16dd36a7fa041e5c4cbeb6a35b76d4c03daded371eae7c0"
 
 [[package]]
 name = "postgresql_archive"
-version = "0.9.3"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "964c91fe88ad5a1fc53c0b5839c26390405acec8ea947d96c1daa37cfbf8d100"
+checksum = "4fbefc61e68cb0e03ba14e3f348317d21bce638b8c288db03773ea31e89a0662"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4024,9 +4024,9 @@ dependencies = [
 
 [[package]]
 name = "postgresql_commands"
-version = "0.9.3"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed7cd749aaf49c10d2c464e8da403a30c00103859ede075e94b086ebf81651a4"
+checksum = "c73732c1e7064ad5a07936b2fb5acc0394de474a62c99dea973696a3519bc0fd"
 dependencies = [
  "anyhow",
  "thiserror",
@@ -4036,9 +4036,9 @@ dependencies = [
 
 [[package]]
 name = "postgresql_embedded"
-version = "0.9.3"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1ee510b4d34ac43ad6c69186ffcf9403d55237bb0a8612facae601c0a14b59e"
+checksum = "52b35666fdefb65b71ab5873ea24f7736f7b47c5364688ce130a9dd01d181422"
 dependencies = [
  "anyhow",
  "bytes",
@@ -5141,7 +5141,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06f82708c8568218b8544b4abbba1f6483067dca0a946a54991c1d3f424dcade"
 dependencies = [
  "anyhow",
- "base64 0.21.7",
+ "base64 0.22.1",
  "buffered-reader",
  "chrono",
  "dyn-clone",

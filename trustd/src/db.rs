@@ -1,4 +1,5 @@
 use postgresql_embedded::PostgreSQL;
+use std::collections::HashMap;
 use std::env;
 use std::fs::create_dir_all;
 use std::process::ExitCode;
@@ -67,12 +68,17 @@ impl Run {
         let db_dir = work_dir.join("postgres");
         let data_dir = work_dir.join("data");
         create_dir_all(&data_dir)?;
+        let configuration = HashMap::from([(
+            "shared_preload_libraries".to_string(),
+            "pg_stat_statements".to_string(),
+        )]);
         let settings = postgresql_embedded::Settings {
             username: self.database.username.clone(),
             password: self.database.password.clone(),
             temporary: false,
             installation_dir: db_dir.clone(),
             timeout: Some(Duration::from_secs(30)),
+            configuration,
             data_dir,
             ..Default::default()
         };
