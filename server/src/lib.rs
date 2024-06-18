@@ -267,20 +267,18 @@ impl InitData {
                             openapi::openapi(),
                             swagger_oidc.clone(),
                         ));
-                    svc.service(web::scope("/").wrap(new_auth(self.authenticator.clone())))
-                        .configure(|svc| {
-                            trustify_module_graphql::endpoints::configure(
-                                svc,
-                                db.clone(),
-                                graph.clone(),
-                            );
-                        });
                     svc.service(
-                        web::scope("/").wrap(new_auth(self.authenticator.clone())), // .wrap(Cors::permissive()),
-                    )
-                    .configure(|svc| {
-                        trustify_module_graphql::endpoints::configure_graphiql(svc);
-                    });
+                        web::scope("/graphql")
+                            .wrap(new_auth(self.authenticator.clone()))
+                            .configure(|svc| {
+                                trustify_module_graphql::endpoints::configure(
+                                    svc,
+                                    db.clone(),
+                                    graph.clone(),
+                                );
+                                trustify_module_graphql::endpoints::configure_graphiql(svc);
+                            }),
+                    );
                     svc.app_data(web::Data::from(self.graph.clone()))
                         .service(
                             web::scope("/api")

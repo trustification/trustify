@@ -21,16 +21,12 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database, graph: Arc<Graph>) 
         .finish();
 
     svc.service(
-        web::resource("/graphql")
+        web::resource("/")
             .guard(guard::Post())
             .to(GraphQL::new(schema.clone())),
     );
 }
 
 pub fn configure_graphiql(svc: &mut web::ServiceConfig) {
-    svc.service(
-        web::resource("/graphql")
-            .guard(guard::Get())
-            .to(index_graphiql),
-    );
+    svc.service(web::resource("/").guard(guard::Get()).to(index_graphiql));
 }
