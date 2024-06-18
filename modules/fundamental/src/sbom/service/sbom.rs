@@ -24,13 +24,13 @@ use trustify_common::{
     model::{Paginated, PaginatedResults},
     purl::Purl,
 };
-use trustify_entity::sbom::SbomNodeLink;
 use trustify_entity::{
     cpe::{self, CpeDto},
     package, package_relates_to_package, package_version,
     qualified_package::{self, Qualifiers},
     relationship::Relationship,
-    sbom, sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
+    sbom::{self, SbomNodeLink},
+    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
 };
 
 impl SbomService {
@@ -202,12 +202,38 @@ impl SbomService {
         .map(|r| r.map(|rel| rel.package))
     }
 
-    #[instrument(skip(self, _tx), err)]
+    #[instrument(skip(self, tx), err)]
     pub async fn find_related_sboms(
         &self,
+        qualified_package_id: Uuid,
+        paginated: Paginated,
         tx: impl AsRef<Transactional>,
-    ) -> Result<Vec<SbomSummary>, Error> {
-        Ok(())
+    ) -> Result<PaginatedResults<SbomSummary>, Error> {
+        let db = self.db.connection(&tx);
+
+        let query = sbom::Entity::find()
+            .join(JoinType::Join, sbom::Relation::Packages.def())
+            .join(JoinType::Join, sbom_package::Relation::Purl.def())
+            .filter(sbom_package_purl_ref::Column::QualifiedPackageId.eq(qualified_package_id))
+            .find_also_linked(SbomNodeLink);
+
+        // limit and execute
+
+        let limiter = query.limiting(&db, paginated.offset, paginated.limit);
+
+        let total = limiter.total().await?;
+        let sboms = limiter.fetch().await?;
+
+        // collect results
+
+        let tx = tx.as_ref();
+        let items = stream::iter(sboms.into_iter())
+            .then(|row| async move { self.build_summary(row, &tx).await })
+            .try_filter_map(futures_util::future::ok)
+            .try_collect()
+            .await?;
+
+        Ok(PaginatedResults { items, total })
     }
 
     /// Fetch all related packages in the context of an SBOM.

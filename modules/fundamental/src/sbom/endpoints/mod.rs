@@ -11,8 +11,10 @@ use trustify_auth::authorizer::Authorizer;
 use trustify_auth::Permission;
 use trustify_common::db::query::Query;
 use trustify_common::db::Database;
+use trustify_common::error::ErrorInformation;
 use trustify_common::id::Id;
 use trustify_common::model::Paginated;
+use trustify_common::purl::Purl;
 use trustify_entity::relationship::Relationship;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
@@ -24,6 +26,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     config
         .app_data(web::Data::new(sbom_service))
         .service(all)
+        .service(all_related)
         .service(get)
         .service(packages)
         .service(related)
@@ -33,7 +36,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(all, get, packages, related, upload, download,),
+    paths(all, all_related, get, packages, related, upload, download,),
     components(schemas(
         crate::sbom::model::PaginatedSbomPackage,
         crate::sbom::model::PaginatedSbomPackageRelation,
@@ -74,6 +77,61 @@ pub async fn all(
     authorizer.require(&user, Permission::ReadSbom)?;
 
     let result = fetch.fetch_sboms(search, paginated, ()).await?;
+
+    Ok(HttpResponse::Ok().json(result))
+}
+
+#[derive(Clone, Debug, serde::Deserialize, utoipa::IntoParams)]
+struct AllRelatedQuery {
+    /// Find by PURL
+    #[serde(default)]
+    pub purl: Option<Purl>,
+    /// Find by a ID of a package
+    #[serde(default)]
+    pub id: Option<Uuid>,
+}
+
+/// Find all SBOMs containing the provided package.
+///
+/// The package can be provided either via a PURL or using the ID of a package as returned by
+/// other APIs, but not both.
+#[utoipa::path(
+    tag = "sbom",
+    context_path = "/api",
+    params(
+        Paginated,
+        AllRelatedQuery,
+    ),
+    responses(
+        (status = 200, description = "Matching SBOMs", body = PaginatedSbomSummary),
+    ),
+)]
+#[get("/v1/sbom/by-package")]
+pub async fn all_related(
+    sbom: web::Data<SbomService>,
+    web::Query(paginated): web::Query<Paginated>,
+    web::Query(all_related): web::Query<AllRelatedQuery>,
+    authorizer: web::Data<Authorizer>,
+    user: UserInformation,
+) -> actix_web::Result<impl Responder> {
+    authorizer.require(&user, Permission::ReadSbom)?;
+
+    let id = match (&all_related.purl, &all_related.id) {
+        (Some(purl), None) => purl.qualifier_uuid(),
+        (None, Some(id)) => *id,
+        _ => {
+            return Ok(HttpResponse::BadRequest().json(ErrorInformation {
+                error: "IdOrPurl".into(),
+                message: "Requires either `purl` or `id`".to_string(),
+                details: Some(format!(
+                    "Received - PURL: {:?}, ID: {:?}",
+                    all_related.purl, all_related.id
+                )),
+            }));
+        }
+    };
+
+    let result = sbom.find_related_sboms(id, paginated, ()).await?;
 
     Ok(HttpResponse::Ok().json(result))
 }
