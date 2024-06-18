@@ -25,6 +25,8 @@ libz-sys = "*"
 
 [dev-dependencies]
 temp-env = "0.3"
+reqwest = { workspace = true }
+regex = { workspace = true }
 
 [features]
 default = ["pm"]
