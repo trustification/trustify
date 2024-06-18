@@ -119,13 +119,13 @@ impl SbomService {
     ///
     /// If you need to find packages based on their relationship, even in the relationship to
     /// SBOM itself, use [`Self::fetch_related_packages`].
-    #[instrument(skip(self, _tx), err)]
+    #[instrument(skip(self, tx), err)]
     pub async fn fetch_sbom_packages<TX: AsRef<Transactional>>(
         &self,
         sbom_id: Uuid,
         search: Query,
         paginated: Paginated,
-        _tx: TX,
+        tx: TX,
     ) -> Result<PaginatedResults<SbomPackage>, Error> {
         #[derive(FromQueryResult)]
         struct Row {
@@ -135,6 +135,8 @@ impl SbomService {
             purls: Vec<Value>,
             cpes: Vec<Value>,
         }
+
+        let db = self.db.connection(&tx);
 
         let mut query = sbom_package::Entity::find()
             .filter(sbom_package::Column::SbomId.eq(sbom_id))
@@ -156,7 +158,7 @@ impl SbomService {
         // limit and execute
 
         let limiter =
-            limit_selector::<'_, _, _, _, Row>(&self.db, query, paginated.offset, paginated.limit);
+            limit_selector::<'_, _, _, _, Row>(&db, query, paginated.offset, paginated.limit);
 
         let total = limiter.total().await?;
         let packages = limiter.fetch().await?;
@@ -200,9 +202,17 @@ impl SbomService {
         .map(|r| r.map(|rel| rel.package))
     }
 
+    #[instrument(skip(self, _tx), err)]
+    pub async fn find_related_sboms(
+        &self,
+        tx: impl AsRef<Transactional>,
+    ) -> Result<Vec<SbomSummary>, Error> {
+        Ok(())
+    }
+
     /// Fetch all related packages in the context of an SBOM.
     #[allow(clippy::too_many_arguments)]
-    #[instrument(skip(self, _tx), err)]
+    #[instrument(skip(self, tx), err)]
     pub async fn fetch_related_packages<TX: AsRef<Transactional>>(
         &self,
         sbom_id: Uuid,
@@ -211,8 +221,10 @@ impl SbomService {
         which: Which,
         reference: impl Into<SbomPackageReference<'_>> + Debug,
         relationship: Option<Relationship>,
-        _tx: TX,
+        tx: TX,
     ) -> Result<PaginatedResults<SbomPackageRelation>, Error> {
+        let db = self.db.connection(&tx);
+
         // which way
 
         log::debug!("Which: {which:?}");
@@ -290,7 +302,7 @@ impl SbomService {
         // limit and execute
 
         let limiter =
-            limit_selector::<'_, _, _, _, Row>(&self.db, query, paginated.offset, paginated.limit);
+            limit_selector::<'_, _, _, _, Row>(&db, query, paginated.offset, paginated.limit);
 
         let total = limiter.total().await?;
         let packages = limiter.fetch().await?;
