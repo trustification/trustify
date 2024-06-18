@@ -22,6 +22,7 @@ async fn test_parse_cyclonedx(ctx: TrustifyContext) -> Result<(), anyhow::Error>
                 vec![SbomPackage {
                     id: "pkg:maven/org.apache.zookeeper/zookeeper@3.9.2?type=jar".to_string(),
                     name: "zookeeper".to_string(),
+                    version: Some("3.9.2".to_string()),
                     purl: vec![
                         "pkg://maven/org.apache.zookeeper/zookeeper@3.9.2?type=jar".to_string()
                     ],

@@ -7,6 +7,7 @@ pub struct Model {
     pub sbom_id: Uuid,
     #[sea_orm(primary_key)]
     pub node_id: String,
+    pub version: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

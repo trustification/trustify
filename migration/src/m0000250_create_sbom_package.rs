@@ -14,6 +14,7 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(ColumnDef::new(SbomPackage::SbomId).uuid().not_null())
                     .col(ColumnDef::new(SbomPackage::NodeId).string().not_null())
+                    .col(ColumnDef::new(SbomPackage::Version).string())
                     .primary_key(
                         Index::create()
                             .col(SbomPackage::SbomId)
@@ -53,4 +54,5 @@ pub enum SbomPackage {
     Table,
     SbomId,
     NodeId,
+    Version,
 }

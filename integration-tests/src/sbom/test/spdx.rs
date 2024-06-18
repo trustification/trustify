@@ -24,6 +24,7 @@ async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
                 &SbomPackage {
                     id: "SPDXRef-b52acd7c-3a3f-441e-aef0-bbdaa1ec8acf".into(),
                     name: "quarkus-bom".into(),
+                    version: Some("2.13.8.Final-redhat-00004".to_string()),
                     purl: vec![
                         "pkg://maven/com.redhat.quarkus.platform/quarkus-bom@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=pom".into()
                     ],

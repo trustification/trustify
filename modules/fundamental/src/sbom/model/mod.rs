@@ -1,8 +1,7 @@
 use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
-use trustify_common::id::Id;
-use trustify_common::paginated;
+use trustify_common::{id::Id, paginated};
 use trustify_entity::relationship::Relationship;
 use utoipa::ToSchema;
 
@@ -32,6 +31,7 @@ paginated!(SbomSummary);
 pub struct SbomPackage {
     pub id: String,
     pub name: String,
+    pub version: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub purl: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

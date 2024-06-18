@@ -77,6 +77,7 @@ impl SbomContext {
             packages.add(
                 package.package_spdx_identifier.clone(),
                 package.package_name.clone(),
+                package.package_version.clone(),
                 refs,
             );
         }

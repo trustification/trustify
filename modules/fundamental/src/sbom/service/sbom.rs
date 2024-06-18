@@ -71,10 +71,7 @@ impl SbomService {
 
         let limiter = sbom::Entity::find()
             .filtering(search)?
-            // FIXME: need to find a way to join this by node_id
             .find_also_linked(SbomNodeLink)
-            // .join(JoinType::LeftJoin, sbom::Relation::SbomNode.def())
-            //.find_also_related(sbom_node::Entity)
             .limiting(&connection, paginated.offset, paginated.limit);
 
         let total = limiter.total().await?;
@@ -134,6 +131,7 @@ impl SbomService {
         struct Row {
             id: String,
             name: String,
+            version: Option<String>,
             purls: Vec<Value>,
             cpes: Vec<Value>,
         }
@@ -144,6 +142,8 @@ impl SbomService {
             .select_only()
             .column_as(sbom_package::Column::NodeId, "id")
             .group_by(sbom_package::Column::NodeId)
+            .column_as(sbom_package::Column::Version, "version")
+            .group_by(sbom_package::Column::Version)
             .column_as(sbom_node::Column::Name, "name")
             .group_by(sbom_node::Column::Name)
             .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
@@ -169,9 +169,10 @@ impl SbomService {
                 |Row {
                      id,
                      name,
+                     version,
                      purls,
                      cpes,
-                 }| package_from_row(id, name, purls, cpes),
+                 }| package_from_row(id, name, version, purls, cpes),
             )
             .collect();
 
@@ -234,6 +235,7 @@ impl SbomService {
             id: String,
             relationship: Relationship,
             name: String,
+            version: Option<String>,
             purls: Vec<Value>,
             cpes: Vec<Value>,
         }
@@ -250,6 +252,8 @@ impl SbomService {
                 "relationship",
             )
             .group_by(package_relates_to_package::Column::Relationship)
+            .select_column_as(sbom_package::Column::Version, "version")
+            .group_by(sbom_package::Column::Version)
             // join the other side
             .join(JoinType::Join, join.def())
             .join(JoinType::Join, sbom_node::Relation::Package.def())
@@ -300,10 +304,11 @@ impl SbomService {
                      id,
                      relationship,
                      name,
+                     version,
                      purls,
                      cpes,
                  }| SbomPackageRelation {
-                    package: package_from_row(id, name, purls, cpes),
+                    package: package_from_row(id, name, version, purls, cpes),
                     relationship,
                 },
             )
@@ -407,10 +412,17 @@ where
 }
 
 /// Convert values from a "package row" into an SBOM package
-fn package_from_row(id: String, name: String, purls: Vec<Value>, cpes: Vec<Value>) -> SbomPackage {
+fn package_from_row(
+    id: String,
+    name: String,
+    version: Option<String>,
+    purls: Vec<Value>,
+    cpes: Vec<Value>,
+) -> SbomPackage {
     SbomPackage {
         id,
         name,
+        version,
         purl: purls
             .into_iter()
             .flat_map(|purl| serde_json::from_value::<PurlDto>(purl).ok())
@@ -535,6 +547,7 @@ mod test {
             .fetch_sboms(q("MySpAcE"), Paginated::default(), ())
             .await?;
 
+        println!("{:#?}", fetched.items);
         assert_eq!(1, fetched.total);
 
         Ok(())
