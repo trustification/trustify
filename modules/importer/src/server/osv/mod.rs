@@ -29,6 +29,8 @@ impl Context {
     fn store(&self, osv: Vulnerability) -> anyhow::Result<()> {
         let data = serde_json::to_vec(&osv)?;
 
+        self.report.lock().tick();
+
         Handle::current().block_on(async {
             self.ingestor
                 .ingest(
