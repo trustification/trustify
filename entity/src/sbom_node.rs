@@ -27,8 +27,8 @@ pub enum Relation {
     Sbom,
     #[sea_orm(
         belongs_to = "super::sbom::Entity",
-        from = "Column::NodeId",
-        to = "super::sbom::Column::NodeId"
+        from = "(Column::NodeId, Column::SbomId)",
+        to = "(super::sbom::Column::NodeId, super::sbom::Column::SbomId)"
     )]
     SbomNode,
 }

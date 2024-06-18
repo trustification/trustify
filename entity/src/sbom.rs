@@ -1,6 +1,5 @@
 use async_graphql::SimpleObject;
-use sea_orm::entity::prelude::*;
-use sea_orm::LinkDef;
+use sea_orm::{entity::prelude::*, LinkDef};
 use time::OffsetDateTime;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
