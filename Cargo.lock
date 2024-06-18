@@ -3590,7 +3590,7 @@ version = "5.0.0-alpha.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "098af5a5110b4deacf3200682963713b143ae9d28762b739bdb7b98429dfaf68"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.21.7",
  "chrono",
  "getrandom",
  "http 1.1.0",
@@ -5375,7 +5375,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06f82708c8568218b8544b4abbba1f6483067dca0a946a54991c1d3f424dcade"
 dependencies = [
  "anyhow",
- "base64 0.22.1",
+ "base64 0.21.7",
  "buffered-reader",
  "chrono",
  "dyn-clone",
@@ -6988,7 +6988,7 @@ dependencies = [
 [[package]]
 name = "trustify-ui"
 version = "0.1.0"
-source = "git+https://github.com/trustification/trustify-ui.git?tag=static-main#281dbf01b871c220d71acb69fd728beffbe56a9f"
+source = "git+https://github.com/trustification/trustify-ui.git?tag=static-main#17dde375da3176a0d09e36971b6e84fe352ac184"
 dependencies = [
  "base64 0.22.1",
  "serde",
