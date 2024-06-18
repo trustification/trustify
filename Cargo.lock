@@ -3826,8 +3826,9 @@ dependencies = [
 
 [[package]]
 name = "osv"
-version = "0.1.5"
-source = "git+https://github.com/gcmurphy/osv?rev=3b770461da43cfc50d1337fc3afc39f27a84e988#3b770461da43cfc50d1337fc3afc39f27a84e988"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55e388ca803ae91b7bda3aac77567fe6bd0b89394baf6439c23147a5366dc72e"
 dependencies = [
  "chrono",
  "serde",
