@@ -27,6 +27,8 @@ impl Context {
     fn store(&self, cve: Cve) -> anyhow::Result<()> {
         let data = serde_json::to_vec(&cve)?;
 
+        self.report.lock().tick();
+
         Handle::current().block_on(async {
             self.ingestor
                 .ingest(
