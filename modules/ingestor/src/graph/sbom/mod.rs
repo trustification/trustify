@@ -540,6 +540,7 @@ impl SbomContext {
             self.ingest_package(
                 left_node_id.clone(),
                 left_node_id.clone(),
+                None,
                 left_purls,
                 left_cpes,
                 &tx,
@@ -551,6 +552,7 @@ impl SbomContext {
             self.ingest_package(
                 right_node_id.clone(),
                 right_node_id.clone(),
+                None,
                 right_purls,
                 right_cpes,
                 &tx,
@@ -611,6 +613,7 @@ impl SbomContext {
         &self,
         node_id: String,
         name: String,
+        version: Option<String>,
         purls: Vec<Uuid>,
         cpes: Vec<i32>,
         tx: TX,
@@ -621,7 +624,7 @@ impl SbomContext {
             .into_iter()
             .map(PackageReference::Purl)
             .chain(cpes.into_iter().map(PackageReference::Cpe));
-        creator.add(node_id, name, refs);
+        creator.add(node_id, name, version, refs);
 
         creator.create(&self.graph.db.connection(&tx)).await?;
 

@@ -49,6 +49,7 @@ impl PackageCreator {
         &mut self,
         node_id: String,
         name: String,
+        version: Option<String>,
         refs: impl IntoIterator<Item = PackageReference>,
     ) {
         for r#ref in refs {
@@ -79,6 +80,7 @@ impl PackageCreator {
         self.packages.push(sbom_package::ActiveModel {
             sbom_id: Set(self.sbom_id),
             node_id: Set(node_id),
+            version: Set(version),
         });
     }
 

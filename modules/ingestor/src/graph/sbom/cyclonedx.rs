@@ -184,7 +184,12 @@ impl<'a> Creator<'a> {
                 }
             }
 
-            packages.add(node_id, comp.name.to_string(), refs);
+            packages.add(
+                node_id,
+                comp.name.to_string(),
+                comp.version.as_ref().map(|v| v.to_string()),
+                refs,
+            );
         }
 
         for (left, rel, right) in self.relations {
