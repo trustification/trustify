@@ -127,7 +127,7 @@ impl Database {
         let port = database.port;
         let db_name = &database.name;
         let url = format!("postgres://{username}:{password}@{host}:{port}/{db_name}");
-        log::info!("connect to {}", url);
+        log::debug!("connect to {}", url);
 
         let mut opt = ConnectOptions::new(url);
         opt.min_connections(16);

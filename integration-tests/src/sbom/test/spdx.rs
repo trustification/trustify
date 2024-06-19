@@ -17,7 +17,7 @@ async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             let described = service
                 .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
                 .await?;
-            log::info!("{:#?}", described);
+            log::debug!("{:#?}", described);
             assert_eq!(1, described.items.len());
             let first = &described.items[0];
             assert_eq!(
@@ -42,7 +42,7 @@ async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
                 )
                 .await?;
 
-            log::info!("{}", contains.len());
+            log::debug!("{}", contains.len());
 
             assert!(contains.len() > 500);
 
@@ -78,7 +78,7 @@ async fn test_parse_spdx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
                 .await?
                 .items;
 
-            log::info!("{}", contains.len());
+            log::debug!("{}", contains.len());
 
             assert!(contains.len() > 500);
 

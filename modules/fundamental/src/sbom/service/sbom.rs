@@ -587,7 +587,7 @@ mod test {
             .fetch_sboms(q("MySpAcE"), Paginated::default(), ())
             .await?;
 
-        println!("{:#?}", fetched.items);
+        log::debug!("{:#?}", fetched.items);
         assert_eq!(1, fetched.total);
 
         Ok(())
