@@ -207,6 +207,7 @@ impl SbomService {
         &self,
         qualified_package_id: Uuid,
         paginated: Paginated,
+        query: Query,
         tx: impl AsRef<Transactional>,
     ) -> Result<PaginatedResults<SbomSummary>, Error> {
         let db = self.db.connection(&tx);
@@ -215,6 +216,7 @@ impl SbomService {
             .join(JoinType::Join, sbom::Relation::Packages.def())
             .join(JoinType::Join, sbom_package::Relation::Purl.def())
             .filter(sbom_package_purl_ref::Column::QualifiedPackageId.eq(qualified_package_id))
+            .filtering(query)?
             .find_also_linked(SbomNodeLink);
 
         // limit and execute

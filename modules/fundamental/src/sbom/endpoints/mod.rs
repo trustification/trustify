@@ -99,6 +99,7 @@ struct AllRelatedQuery {
     tag = "sbom",
     context_path = "/api",
     params(
+        Query,
         Paginated,
         AllRelatedQuery,
     ),
@@ -109,6 +110,7 @@ struct AllRelatedQuery {
 #[get("/v1/sbom/by-package")]
 pub async fn all_related(
     sbom: web::Data<SbomService>,
+    web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     web::Query(all_related): web::Query<AllRelatedQuery>,
     authorizer: web::Data<Authorizer>,
@@ -131,7 +133,7 @@ pub async fn all_related(
         }
     };
 
-    let result = sbom.find_related_sboms(id, paginated, ()).await?;
+    let result = sbom.find_related_sboms(id, paginated, search, ()).await?;
 
     Ok(HttpResponse::Ok().json(result))
 }
