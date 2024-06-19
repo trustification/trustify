@@ -888,7 +888,7 @@ mod tests {
             .get_qualified_packages_by_query(select, Transactional::None)
             .await?;
 
-        log::info!("{result:?}");
+        log::debug!("{result:?}");
 
         assert_eq!(result.len(), 1);
         assert_eq!(

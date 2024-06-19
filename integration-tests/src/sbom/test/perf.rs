@@ -20,7 +20,7 @@ async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
                 .describes_packages(sbom.sbom.sbom_id, Default::default(), ())
                 .await?;
 
-            log::info!("{:#?}", described);
+            log::debug!("{:#?}", described);
             assert_eq!(1, described.items.len());
             assert_eq!(
                 described.items[0],
@@ -65,7 +65,7 @@ async fn ingest_spdx_large(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             let described = service
                 .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
                 .await?;
-            log::info!("{:#?}", described);
+            log::debug!("{:#?}", described);
             assert_eq!(1, described.items.len());
 
             let first = &described.items[0];
