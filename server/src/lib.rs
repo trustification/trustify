@@ -296,13 +296,6 @@ impl InitData {
                         web::scope("")
                             .wrap(new_auth(self.authenticator.clone()))
                             .configure(|svc| {
-                                trustify_module_importer::endpoints::configure(svc, db.clone());
-
-                                trustify_module_fundamental::endpoints::configure(
-                                    svc,
-                                    db.clone(),
-                                    storage.clone(),
-                                );
                                 trustify_module_ui::endpoints::configure(svc, &self.ui);
                             }),
                     );
