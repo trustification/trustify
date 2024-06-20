@@ -11,7 +11,7 @@ use actix_web::{
     body::MessageBody,
     dev::{ConnectionInfo, Url},
     error::UrlGenerationError,
-    get, web,
+    get, middleware, web,
     web::Json,
     HttpRequest, Responder, Result,
 };
@@ -266,9 +266,13 @@ impl InitData {
                         .service(swagger_ui_with_auth(
                             openapi::openapi(),
                             swagger_oidc.clone(),
-                        ));
+                        ))
+                        .service(web::redirect("/openapi", "/openapi/"));
                     svc.service(
                         web::scope("/graphql")
+                            .wrap(middleware::NormalizePath::new(
+                                middleware::TrailingSlash::Always,
+                            ))
                             .wrap(new_auth(self.authenticator.clone()))
                             .configure(|svc| {
                                 trustify_module_graphql::endpoints::configure(
