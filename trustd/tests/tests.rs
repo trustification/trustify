@@ -6,7 +6,6 @@ use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 
 #[tokio::test]
-#[ignore]
 async fn test_embedded_ui() {
     // This test creates a 'trustify/trustd/.trustify' directory, so we need to remove it.
     let trustify_dir = Path::new(".trustify");
