@@ -118,7 +118,9 @@ pub async fn upload(
 ) -> Result<impl Responder, Error> {
     let fmt = Format::from_bytes(&bytes)?;
     let payload = ReaderStream::new(&*bytes);
-    let result = service.ingest("rest-api", issuer, fmt, payload).await?;
+    let result = service
+        .ingest(("source", "rest-api"), issuer, fmt, payload)
+        .await?;
     Ok(HttpResponse::Created().json(result))
 }
 

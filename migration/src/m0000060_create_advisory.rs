@@ -30,7 +30,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Advisory::Modified).timestamp_with_time_zone())
                     .col(ColumnDef::new(Advisory::Withdrawn).timestamp_with_time_zone())
                     .col(ColumnDef::new(Advisory::Identifier).string().not_null())
-                    .col(ColumnDef::new(Advisory::Location).string().not_null())
+                    .col(ColumnDef::new(#[allow(deprecated)] Advisory::Location).string().not_null())
                     .col(ColumnDef::new(Advisory::Sha256).string().not_null())
                     .col(ColumnDef::new(Advisory::Title).string())
                     .to_owned(),
@@ -54,7 +54,9 @@ pub enum Advisory {
     Modified,
     Withdrawn,
     Identifier,
+    #[deprecated]
     Location,
     Sha256,
     Title,
+    Labels,
 }

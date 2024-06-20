@@ -14,6 +14,7 @@ use trustify_common::db::{Database, Transactional};
 use trustify_common::id::Id;
 use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_entity::cvss3::Severity;
+use trustify_entity::labels::Labels;
 use trustify_entity::{advisory, cvss3};
 
 pub struct AdvisoryService {
@@ -119,7 +120,7 @@ impl AdvisoryService {
                 id: e.id,
                 identifier: e.identifier,
                 issuer_id: e.issuer_id,
-                location: e.location,
+                labels: e.labels,
                 sha256: e.sha256,
                 published: e.published,
                 modified: e.modified,
@@ -199,7 +200,7 @@ impl AdvisoryService {
                 id: advisory.id,
                 identifier: advisory.identifier,
                 issuer_id: advisory.issuer_id,
-                location: advisory.location,
+                labels: advisory.labels,
                 sha256: advisory.sha256,
                 published: advisory.published,
                 modified: advisory.modified,
@@ -225,7 +226,7 @@ struct AdvisoryCatcher {
     pub id: Uuid,
     pub identifier: String,
     pub issuer_id: Option<i32>,
-    pub location: String,
+    pub labels: Labels,
     pub sha256: String,
     pub published: Option<OffsetDateTime>,
     pub modified: Option<OffsetDateTime>,

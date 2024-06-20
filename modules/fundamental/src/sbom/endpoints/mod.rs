@@ -76,7 +76,7 @@ pub async fn all(
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadSbom)?;
 
-    let result = fetch.fetch_sboms(search, paginated, ()).await?;
+    let result = fetch.fetch_sboms(search, paginated, (), ()).await?;
 
     Ok(HttpResponse::Ok().json(result))
 }
@@ -283,7 +283,9 @@ pub async fn upload(
 ) -> Result<impl Responder, Error> {
     let fmt = Format::from_bytes(&bytes)?;
     let payload = ReaderStream::new(&*bytes);
-    let result = service.ingest(&location, None, fmt, payload).await?;
+    let result = service
+        .ingest(("source", location), None, fmt, payload)
+        .await?;
     Ok(HttpResponse::Created().json(result))
 }
 

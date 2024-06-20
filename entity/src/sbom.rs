@@ -1,3 +1,4 @@
+use crate::labels::Labels;
 use async_graphql::SimpleObject;
 use sea_orm::{entity::prelude::*, LinkDef};
 use time::OffsetDateTime;
@@ -10,12 +11,14 @@ pub struct Model {
     pub sbom_id: Uuid,
     pub node_id: String,
 
-    pub location: String,
     pub sha256: String,
     pub document_id: String,
 
     pub published: Option<OffsetDateTime>,
     pub authors: Vec<String>,
+
+    #[graphql(derived(owned, into = "HashMap<String,String>", with = "Labels::from"))]
+    pub labels: Labels,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

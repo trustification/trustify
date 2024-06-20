@@ -1,14 +1,14 @@
-use crate::model::IngestResult;
 use crate::{
     graph::{
         sbom::spdx::{self, parse_spdx},
         Graph,
     },
+    model::IngestResult,
     service::Error,
 };
 use std::io::Read;
-use trustify_common::hashing::Digests;
-use trustify_common::id::Id;
+use trustify_common::{hashing::Digests, id::Id};
+use trustify_entity::labels::Labels;
 
 pub struct SpdxLoader<'g> {
     graph: &'g Graph,
@@ -19,9 +19,9 @@ impl<'g> SpdxLoader<'g> {
         Self { graph }
     }
 
-    pub async fn load<L: Into<String>, R: Read>(
+    pub async fn load<R: Read>(
         &self,
-        source: L,
+        labels: Labels,
         json: R,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
@@ -42,13 +42,7 @@ impl<'g> SpdxLoader<'g> {
 
         let sbom = self
             .graph
-            .ingest_sbom(
-                &source.into(),
-                digests,
-                &document_id,
-                spdx::Information(&spdx),
-                &tx,
-            )
+            .ingest_sbom(labels, digests, &document_id, spdx::Information(&spdx), &tx)
             .await?;
 
         sbom.ingest_spdx(spdx, &tx).await.map_err(Error::Generic)?;
@@ -87,7 +81,7 @@ mod test {
 
         ingestor
             .ingest(
-                "test",
+                ("source", "test"),
                 None,
                 Format::sbom_from_bytes(data)?,
                 stream::iter([Ok::<_, Infallible>(Bytes::from_static(data))]),

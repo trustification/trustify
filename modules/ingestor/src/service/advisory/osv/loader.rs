@@ -13,6 +13,7 @@ use trustify_common::hashing::Digests;
 use trustify_common::id::Id;
 use trustify_common::{purl::Purl, time::ChronoExt};
 use trustify_cvss::cvss3::Cvss3Base;
+use trustify_entity::labels::Labels;
 
 pub struct OsvLoader<'g> {
     graph: &'g Graph,
@@ -23,9 +24,9 @@ impl<'g> OsvLoader<'g> {
         Self { graph }
     }
 
-    pub async fn load<L: Into<String>, R: Read>(
+    pub async fn load<R: Read>(
         &self,
-        location: L,
+        labels: impl Into<Labels>,
         issuer: Option<String>,
         record: R,
         digests: &Digests,
@@ -53,7 +54,7 @@ impl<'g> OsvLoader<'g> {
         };
         let advisory = self
             .graph
-            .ingest_advisory(&osv.id, location, digests, information, &tx)
+            .ingest_advisory(&osv.id, labels, digests, information, &tx)
             .await?;
 
         if let Some(withdrawn) = osv.withdrawn {
@@ -299,7 +300,12 @@ mod test {
 
         let loader = OsvLoader::new(&graph);
         loader
-            .load("RUSTSEC-2021-0079.json", None, &data[..], &digests)
+            .load(
+                ("file", "RUSTSEC-2021-0079.json"),
+                None,
+                &data[..],
+                &digests,
+            )
             .await?;
 
         let loaded_vulnerability = graph

@@ -1,6 +1,7 @@
 use async_graphql::{Context, FieldError, FieldResult, Object};
 use std::sync::Arc;
 use trustify_common::db::Transactional;
+use trustify_entity::labels::Labels;
 use trustify_entity::sbom::Model as Sbom;
 use trustify_module_ingestor::graph::Graph;
 use uuid::Uuid;
@@ -18,7 +19,7 @@ impl SbomQuery {
             Ok(Some(sbom_context)) => Ok(Sbom {
                 sbom_id: sbom_context.sbom.sbom_id,
                 node_id: sbom_context.sbom.node_id,
-                location: sbom_context.sbom.location,
+                labels: sbom_context.sbom.labels,
                 sha256: sbom_context.sbom.sha256,
                 document_id: sbom_context.sbom.document_id,
                 published: sbom_context.sbom.published,
@@ -29,14 +30,14 @@ impl SbomQuery {
         }
     }
 
-    async fn get_sboms_by_location<'a>(
+    async fn get_sboms_by_labels<'a>(
         &self,
         ctx: &Context<'a>,
-        location: String,
+        labels: Labels,
     ) -> FieldResult<Vec<Sbom>> {
         let graph = ctx.data::<Arc<Graph>>()?;
         let sboms = match graph
-            .locate_sboms_by_location(&location, Transactional::None)
+            .locate_sboms_by_labels(labels, Transactional::None)
             .await
         {
             Ok(sbom) => sbom,
@@ -49,7 +50,7 @@ impl SbomQuery {
                 Ok(Sbom {
                     sbom_id: sbom.sbom.sbom_id,
                     node_id: sbom.sbom.node_id,
-                    location: sbom.sbom.location,
+                    labels: sbom.sbom.labels,
                     sha256: sbom.sbom.sha256,
                     document_id: sbom.sbom.document_id,
                     published: sbom.sbom.published,

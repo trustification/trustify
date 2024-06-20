@@ -6,6 +6,7 @@ use crate::service::Error;
 use cve::{Cve, Timestamp};
 use std::io::Read;
 use trustify_common::{hashing::Digests, id::Id};
+use trustify_entity::labels::Labels;
 
 /// Loader capable of parsing a CVE Record JSON file
 /// and manipulating the Graph to integrate it into
@@ -24,9 +25,9 @@ impl<'g> CveLoader<'g> {
         Self { graph }
     }
 
-    pub async fn load<L: Into<String>, R: Read>(
+    pub async fn load<R: Read>(
         &self,
-        location: L,
+        labels: impl Into<Labels>,
         record: R,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
@@ -96,7 +97,7 @@ impl<'g> CveLoader<'g> {
         };
         let advisory = self
             .graph
-            .ingest_advisory(id, location, digests, information, &tx)
+            .ingest_advisory(id, labels, digests, information, &tx)
             .await?;
 
         // Link the advisory to the backing vulnerability
@@ -153,7 +154,7 @@ mod test {
 
         let loader = CveLoader::new(&graph);
         loader
-            .load("CVE-2024-28111.json", &data[..], &digests)
+            .load(("file", "CVE-2024-28111.json"), &data[..], &digests)
             .await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;

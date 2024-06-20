@@ -28,6 +28,7 @@ impl super::Server {
     #[instrument(skip(self), ret)]
     pub async fn run_once_csaf(
         &self,
+        name: String,
         importer: CsafImporter,
         last_run: Option<SystemTime>,
     ) -> Result<RunOutput, ScannerError> {
@@ -49,6 +50,7 @@ impl super::Server {
 
         let ingestor = IngestorService::new(Graph::new(self.db.clone()), self.storage.clone());
         let storage = storage::StorageVisitor {
+            name,
             ingestor,
             report: report.clone(),
         };

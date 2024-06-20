@@ -47,7 +47,7 @@ async fn ingest(service: &IngestorService, data: &[u8]) -> IngestResult {
     use trustify_module_ingestor::service::Format;
     service
         .ingest(
-            "unit-test",
+            ("source", "unit-test"),
             Some("Capt Pickles Industrial Conglomerate".to_string()),
             Format::from_bytes(data).unwrap(),
             ReaderStream::new(data),
@@ -72,7 +72,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let advisory = graph
         .ingest_advisory(
             "RHSA-1",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
@@ -108,7 +108,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     graph
         .ingest_advisory(
             "RHSA-2",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
@@ -165,7 +165,7 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let advisory1 = graph
         .ingest_advisory(
             "RHSA-1",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
@@ -181,7 +181,7 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let advisory2 = graph
         .ingest_advisory(
             "RHSA-2",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
@@ -269,7 +269,7 @@ async fn one_advisory_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error>
     graph
         .ingest_advisory(
             "RHSA-1",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
@@ -285,7 +285,7 @@ async fn one_advisory_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error>
     let advisory = graph
         .ingest_advisory(
             "RHSA-2",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),

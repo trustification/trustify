@@ -86,6 +86,7 @@ impl Server {
 
                 let (last_error, report, continuation) = match self
                     .run_once(
+                        importer.name.clone(),
                         importer.data.configuration,
                         importer.data.last_run,
                         importer.data.continuation,
@@ -126,6 +127,7 @@ impl Server {
     #[instrument(skip_all, fields(), err)]
     async fn run_once(
         &self,
+        name: String,
         configuration: ImporterConfiguration,
         last_run: Option<OffsetDateTime>,
         continuation: serde_json::Value,
@@ -133,10 +135,10 @@ impl Server {
         let last_run = last_run.map(|t| t.into());
 
         match configuration {
-            ImporterConfiguration::Sbom(sbom) => self.run_once_sbom(sbom, last_run).await,
-            ImporterConfiguration::Csaf(csaf) => self.run_once_csaf(csaf, last_run).await,
-            ImporterConfiguration::Osv(osv) => self.run_once_osv(osv, continuation).await,
-            ImporterConfiguration::Cve(cve) => self.run_once_cve(cve, continuation).await,
+            ImporterConfiguration::Sbom(sbom) => self.run_once_sbom(name, sbom, last_run).await,
+            ImporterConfiguration::Csaf(csaf) => self.run_once_csaf(name, csaf, last_run).await,
+            ImporterConfiguration::Osv(osv) => self.run_once_osv(name, osv, continuation).await,
+            ImporterConfiguration::Cve(cve) => self.run_once_cve(name, cve, continuation).await,
         }
     }
 

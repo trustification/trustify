@@ -1,4 +1,4 @@
-use crate::{advisory_vulnerability, cvss3, organization, vulnerability};
+use crate::{advisory_vulnerability, cvss3, labels::Labels, organization, vulnerability};
 use async_graphql::*;
 use sea_orm::entity::prelude::*;
 use std::sync::Arc;
@@ -16,12 +16,12 @@ pub struct Model {
     #[graphql(name = "name")]
     pub identifier: String,
     pub issuer_id: Option<i32>,
-    pub location: String,
     pub sha256: String,
     pub published: Option<OffsetDateTime>,
     pub modified: Option<OffsetDateTime>,
     pub withdrawn: Option<OffsetDateTime>,
     pub title: Option<String>,
+    pub labels: Labels,
 }
 
 #[ComplexObject]

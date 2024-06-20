@@ -6,7 +6,6 @@ use uuid::Uuid;
 #[derive(Debug, Clone)]
 pub enum SbomLocator {
     Id(Uuid),
-    Location(String),
     Sha256(String),
     Purl(Purl),
     Cpe(Cpe),

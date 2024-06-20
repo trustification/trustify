@@ -8,6 +8,7 @@ use crate::service::Error;
 use jsn::{mask::*, Format as JsnFormat, TokenReader};
 use std::io::Read;
 use trustify_common::hashing::Digests;
+use trustify_entity::labels::Labels;
 
 #[derive(Debug)]
 pub enum Format {
@@ -22,7 +23,7 @@ impl<'g> Format {
     pub async fn load<R: Read>(
         &self,
         graph: &'g Graph,
-        source: &str,
+        labels: Labels,
         issuer: Option<String>,
         digests: &Digests,
         reader: R,
@@ -31,25 +32,25 @@ impl<'g> Format {
             Format::CSAF => {
                 // issuer is internal as publisher of the document.
                 let loader = CsafLoader::new(graph);
-                loader.load(source, reader, digests).await
+                loader.load(labels, reader, digests).await
             }
             Format::OSV => {
                 // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
                 let loader = OsvLoader::new(graph);
-                loader.load(source, issuer, reader, digests).await
+                loader.load(labels, issuer, reader, digests).await
             }
             Format::CVE => {
                 // issuer is always CVE Project
                 let loader = CveLoader::new(graph);
-                loader.load(source, reader, digests).await
+                loader.load(labels, reader, digests).await
             }
             Format::SPDX => {
                 let loader = SpdxLoader::new(graph);
-                loader.load(source, reader, digests).await
+                loader.load(labels, reader, digests).await
             }
             Format::CycloneDX => {
                 let loader = CyclonedxLoader::new(graph);
-                loader.load(source, reader, digests).await
+                loader.load(labels, reader, digests).await
             }
         }
     }

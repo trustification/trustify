@@ -14,10 +14,12 @@ use std::{path::Path, path::PathBuf, sync::Arc};
 use tokio::runtime::Handle;
 use tokio_util::io::ReaderStream;
 use tracing::instrument;
+use trustify_entity::labels::Labels;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::service::{Format, IngestorService};
 
 struct Context {
+    name: String,
     source: String,
     report: Arc<Mutex<ReportBuilder>>,
     ingestor: IngestorService,
@@ -32,7 +34,9 @@ impl Context {
         Handle::current().block_on(async {
             self.ingestor
                 .ingest(
-                    &self.source,
+                    Labels::new()
+                        .add("source", &self.source)
+                        .add("importer", &self.name),
                     None,
                     Format::CVE,
                     ReaderStream::new(data.as_slice()),
@@ -72,6 +76,7 @@ impl super::Server {
     #[instrument(skip(self), ret)]
     pub async fn run_once_cve(
         &self,
+        name: String,
         cve: CveImporter,
         continuation: serde_json::Value,
     ) -> Result<RunOutput, ScannerError> {
@@ -91,6 +96,7 @@ impl super::Server {
             .years(cve.years)
             .start_year(cve.start_year)
             .callbacks(Context {
+                name,
                 source: cve.source,
                 report: report.clone(),
                 ingestor,

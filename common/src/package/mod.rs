@@ -87,9 +87,7 @@ impl PackageVulnerabilityAssertions {
             .drain(0..)
             .filter(|each| {
                 !not_affected_for_version.iter().any(|not_affected| {
-                    each.sha256 == not_affected.sha256
-                        && each.location == not_affected.location
-                        && each.identifier == not_affected.identifier
+                    each.sha256 == not_affected.sha256 && each.identifier == not_affected.identifier
                 })
             })
             .collect();
@@ -167,7 +165,6 @@ pub enum Assertion {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Claimant {
     pub identifier: String,
-    pub location: String,
     pub sha256: String,
 }
 
@@ -184,7 +181,6 @@ mod tests {
                     vulnerability: "CVE-123".to_string(),
                     claimant: Claimant {
                         identifier: "rhsa-1".to_string(),
-                        location: "here".to_string(),
                         sha256: "1".to_string(),
                     },
                     start_version: "0".to_string(),
@@ -194,7 +190,6 @@ mod tests {
                     vulnerability: "CVE-123".to_string(),
                     claimant: Claimant {
                         identifier: "rhsa-1".to_string(),
-                        location: "here".to_string(),
                         sha256: "1".to_string(),
                     },
                     version: "1.2.0".to_string(),
@@ -203,7 +198,6 @@ mod tests {
                     vulnerability: "CVE-123".to_string(),
                     claimant: Claimant {
                         identifier: "ghsa-1".to_string(),
-                        location: "there".to_string(),
                         sha256: "1".to_string(),
                     },
                     version: "1.2".to_string(),
@@ -212,7 +206,6 @@ mod tests {
                     vulnerability: "CVE-123".to_string(),
                     claimant: Claimant {
                         identifier: "ghsa-1".to_string(),
-                        location: "there".to_string(),
                         sha256: "1".to_string(),
                     },
                     version: "1.2.3".to_string(),

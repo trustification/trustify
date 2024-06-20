@@ -155,7 +155,7 @@ where
     let start = Instant::now();
     let ctx = graph
         .ingest_sbom(
-            "test.com/my-sbom.json",
+            ("source", "test.com/my-sbom.json"),
             &Digests::digest("10"),
             "document-id",
             c(&sbom),

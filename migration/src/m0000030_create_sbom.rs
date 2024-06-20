@@ -26,7 +26,14 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(ColumnDef::new(Sbom::SbomId).uuid().not_null())
                     .col(ColumnDef::new(Sbom::NodeId).string().not_null())
-                    .col(ColumnDef::new(Sbom::Location).string().not_null())
+                    .col(
+                        ColumnDef::new(
+                            #[allow(deprecated)]
+                            Sbom::Location,
+                        )
+                        .string()
+                        .not_null(),
+                    )
                     .col(ColumnDef::new(Sbom::DocumentId).string().not_null())
                     .col(ColumnDef::new(Sbom::Sha256).string().not_null())
                     .col(ColumnDef::new(Sbom::Published).timestamp_with_time_zone())
@@ -77,6 +84,7 @@ pub enum Sbom {
     #[allow(clippy::enum_variant_names)]
     SbomId,
     NodeId,
+    #[deprecated]
     Location,
     Sha256,
     // the SPDX namespace
@@ -84,4 +92,5 @@ pub enum Sbom {
 
     Published,
     Authors,
+    Labels,
 }

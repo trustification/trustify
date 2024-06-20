@@ -19,6 +19,7 @@ use std::str::FromStr;
 use time::OffsetDateTime;
 use trustify_common::{db::Transactional, hashing::Digests, id::Id, purl::Purl};
 use trustify_cvss::cvss3::Cvss3Base;
+use trustify_entity::labels::Labels;
 
 struct Information<'a>(&'a Csaf);
 
@@ -50,9 +51,9 @@ impl<'g> CsafLoader<'g> {
         Self { graph }
     }
 
-    pub async fn load<L: Into<String>, R: Read>(
+    pub async fn load<R: Read>(
         &self,
-        location: L,
+        labels: impl Into<Labels>,
         document: R,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
@@ -64,7 +65,7 @@ impl<'g> CsafLoader<'g> {
 
         let advisory = self
             .graph
-            .ingest_advisory(&advisory_id, location, digests, Information(&csaf), &tx)
+            .ingest_advisory(&advisory_id, labels, digests, Information(&csaf), &tx)
             .await?;
 
         for vuln in csaf.vulnerabilities.iter().flatten() {
@@ -211,7 +212,6 @@ mod test {
     use crate::graph::Graph;
     use test_context::test_context;
     use test_log::test;
-    // use trustify_common::advisory::Assertion;
     use trustify_common::db::{test::TrustifyContext, Transactional};
 
     #[test_context(TrustifyContext, skip_teardown)]
@@ -225,7 +225,7 @@ mod test {
 
         let loader = CsafLoader::new(&graph);
         loader
-            .load("CVE-2023-20862.json", &data[..], &digests)
+            .load(("file", "CVE-2023-20862.json"), &data[..], &digests)
             .await?;
 
         let loaded_vulnerability = graph
@@ -304,7 +304,7 @@ mod test {
         let data = include_bytes!("../../../../../../etc/test-data/csaf/rhsa-2024_3666.json");
         let digests = Digests::digest(data);
 
-        loader.load("test", &data[..], &digests).await?;
+        loader.load(("source", "test"), &data[..], &digests).await?;
 
         let loaded_vulnerability = graph
             .get_vulnerability("CVE-2024-23672", Transactional::None)
