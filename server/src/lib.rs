@@ -296,6 +296,7 @@ impl InitData {
                         web::scope("")
                             .wrap(new_auth(self.authenticator.clone()))
                             .configure(|svc| {
+                                #[cfg(feature = "ui")]
                                 trustify_module_ui::endpoints::configure(svc, &self.ui);
                             }),
                     );
