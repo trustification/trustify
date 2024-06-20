@@ -279,27 +279,26 @@ impl InitData {
                                 trustify_module_graphql::endpoints::configure_graphiql(svc);
                             }),
                     );
-                    svc.app_data(web::Data::from(self.graph.clone())).service(
-                        web::scope("/api")
-                            .wrap(new_auth(self.authenticator.clone()))
-                            .configure(|svc| {
-                                trustify_module_importer::endpoints::configure(svc, db.clone());
+                    svc.app_data(web::Data::from(self.graph.clone()))
+                        .service(
+                            web::scope("/api")
+                                .wrap(new_auth(self.authenticator.clone()))
+                                .configure(|svc| {
+                                    trustify_module_importer::endpoints::configure(svc, db.clone());
 
-                                trustify_module_fundamental::endpoints::configure(
-                                    svc,
-                                    db.clone(),
-                                    storage.clone(),
-                                );
-                            }),
-                    );
-                    svc.app_data(web::Data::from(self.graph.clone())).service(
-                        web::scope("")
-                            .wrap(new_auth(self.authenticator.clone()))
-                            .configure(|svc| {
-                                #[cfg(feature = "ui")]
-                                trustify_module_ui::endpoints::configure(svc, &self.ui);
-                            }),
-                    );
+                                    trustify_module_fundamental::endpoints::configure(
+                                        svc,
+                                        db.clone(),
+                                        storage.clone(),
+                                    );
+                                }),
+                        )
+                        .configure(|svc| {
+                            // I think the UI must come last due to
+                            // its use of `resolve_not_found_to`
+                            #[cfg(feature = "ui")]
+                            trustify_module_ui::endpoints::configure(svc, &self.ui);
+                        });
                 })
         };
 
