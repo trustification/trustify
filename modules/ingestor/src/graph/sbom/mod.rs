@@ -1,5 +1,11 @@
 //! Support for SBOMs.
 
+pub mod cyclonedx;
+pub mod spdx;
+
+mod common;
+pub use common::*;
+
 use super::error::Error;
 use crate::{
     db::{LeftPackageId, QualifiedPackageTransitive},
@@ -14,30 +20,25 @@ use crate::{
 use cpe::uri::OwnedUri;
 use entity::{product, product_version};
 use hex::ToHex;
-use sea_orm::ModelTrait;
 use sea_orm::{
-    prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QuerySelect,
-    QueryTrait, RelationTrait, Select, SelectColumns, Set,
+    prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, ModelTrait, QueryFilter,
+    QuerySelect, QueryTrait, RelationTrait, Select, SelectColumns, Set,
 };
-use sea_query::{Alias, Condition, Func, JoinType, Query, SimpleExpr};
+use sea_query::extension::postgres::PgExpr;
+use sea_query::{Alias, Condition, Expr, Func, JoinType, Query, SimpleExpr};
 use std::{
     fmt::{Debug, Formatter},
     str::FromStr,
 };
 use time::OffsetDateTime;
 use tracing::instrument;
-use trustify_common::{cpe::Cpe, db::Transactional, purl::Purl, sbom::SbomLocator};
-use trustify_entity::{
-    self as entity, package_relates_to_package, relationship::Relationship, sbom, sbom_node,
-    sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
+use trustify_common::{
+    cpe::Cpe, db::Transactional, hashing::Digests, purl::Purl, sbom::SbomLocator,
 };
-
-mod common;
-pub use common::*;
-use trustify_common::hashing::Digests;
-
-pub mod cyclonedx;
-pub mod spdx;
+use trustify_entity::{
+    self as entity, labels::Labels, package_relates_to_package, relationship::Relationship, sbom,
+    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
+};
 
 #[derive(Clone, Default)]
 pub struct SbomInformation {
@@ -72,12 +73,10 @@ impl Graph {
     #[instrument(skip(tx))]
     pub async fn get_sbom_by_digest<TX: AsRef<Transactional>>(
         &self,
-        location: &str,
         sha256: &str,
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         Ok(entity::sbom::Entity::find()
-            .filter(Condition::all().add(sbom::Column::Location.eq(location)))
             .filter(Condition::all().add(sbom::Column::Sha256.eq(sha256.to_string())))
             .one(&self.connection(&tx))
             .await?
@@ -87,7 +86,7 @@ impl Graph {
     #[instrument(skip(tx, info), err)]
     pub async fn ingest_sbom<TX: AsRef<Transactional>>(
         &self,
-        location: &str,
+        labels: impl Into<Labels> + Debug,
         digests: &Digests,
         document_id: &str,
         info: impl Into<SbomInformation>,
@@ -95,7 +94,7 @@ impl Graph {
     ) -> Result<SbomContext, Error> {
         let sha256 = digests.sha256.encode_hex::<String>();
 
-        if let Some(found) = self.get_sbom_by_digest(location, &sha256, &tx).await? {
+        if let Some(found) = self.get_sbom_by_digest(&sha256, &tx).await? {
             return Ok(found);
         }
 
@@ -123,11 +122,12 @@ impl Graph {
             node_id: Set(node_id),
 
             document_id: Set(document_id.to_string()),
-            location: Set(location.to_string()),
             sha256: Set(sha256),
 
             published: Set(published),
             authors: Set(authors),
+
+            labels: Set(labels.into()),
         };
 
         Ok(SbomContext::new(self, model.insert(&connection).await?))
@@ -148,7 +148,6 @@ impl Graph {
     ) -> Result<Option<SbomContext>, Error> {
         match sbom_locator {
             SbomLocator::Id(id) => self.locate_sbom_by_id(id, tx).await,
-            SbomLocator::Location(location) => self.locate_sbom_by_location(&location, tx).await,
             SbomLocator::Sha256(sha256) => self.locate_sbom_by_sha256(&sha256, tx).await,
             SbomLocator::Purl(purl) => self.locate_sbom_by_purl(&purl, tx).await,
             SbomLocator::Cpe(cpe) => self.locate_sbom_by_cpe22(&cpe, tx).await,
@@ -168,7 +167,6 @@ impl Graph {
                     Ok(vec![])
                 }
             }
-            SbomLocator::Location(location) => self.locate_sboms_by_location(&location, tx).await,
             SbomLocator::Sha256(sha256) => self.locate_sboms_by_sha256(&sha256, tx).await,
             SbomLocator::Purl(purl) => self.locate_sboms_by_purl(&purl, tx).await,
             SbomLocator::Cpe(cpe) => self.locate_sboms_by_cpe22(cpe, tx).await,
@@ -211,25 +209,13 @@ impl Graph {
             .map(|sbom| SbomContext::new(self, sbom)))
     }
 
-    async fn locate_sbom_by_location<TX: AsRef<Transactional>>(
+    pub async fn locate_sboms_by_labels<TX: AsRef<Transactional>>(
         &self,
-        location: &str,
-        tx: TX,
-    ) -> Result<Option<SbomContext>, Error> {
-        self.locate_one_sbom(
-            entity::sbom::Entity::find().filter(sbom::Column::Location.eq(location.to_string())),
-            tx,
-        )
-        .await
-    }
-
-    pub async fn locate_sboms_by_location<TX: AsRef<Transactional>>(
-        &self,
-        location: &str,
+        labels: Labels,
         tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
         self.locate_many_sboms(
-            entity::sbom::Entity::find().filter(sbom::Column::Location.eq(location.to_string())),
+            sbom::Entity::find().filter(Expr::col(sbom::Column::Labels).contains(labels)),
             tx,
         )
         .await
@@ -241,7 +227,7 @@ impl Graph {
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         self.locate_one_sbom(
-            entity::sbom::Entity::find().filter(sbom::Column::Sha256.eq(sha256.to_string())),
+            sbom::Entity::find().filter(sbom::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
         .await

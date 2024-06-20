@@ -6,6 +6,7 @@ use crate::{
 use cyclonedx_bom::prelude::Bom;
 use std::io::Read;
 use trustify_common::{hashing::Digests, id::Id};
+use trustify_entity::labels::Labels;
 
 pub struct CyclonedxLoader<'g> {
     graph: &'g Graph,
@@ -16,9 +17,9 @@ impl<'g> CyclonedxLoader<'g> {
         Self { graph }
     }
 
-    pub async fn load<L: Into<String>, R: Read>(
+    pub async fn load<R: Read>(
         &self,
-        source: L,
+        labels: Labels,
         document: R,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
@@ -42,7 +43,7 @@ impl<'g> CyclonedxLoader<'g> {
         let ctx = self
             .graph
             .ingest_sbom(
-                &source.into(),
+                labels,
                 digests,
                 &document_id,
                 cyclonedx::Information(&sbom),
@@ -88,7 +89,7 @@ mod test {
 
         ingestor
             .ingest(
-                "test",
+                ("source", "test"),
                 None,
                 Format::sbom_from_bytes(data)?,
                 stream::iter([Ok::<_, Infallible>(Bytes::from_static(data))]),

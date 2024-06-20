@@ -28,7 +28,7 @@ async fn all_organizations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     graph
         .ingest_advisory(
             "CAPT-1",
-            "http://captpickles.com/",
+            ("source", "http://captpickles.com/"),
             &Digests::digest("CAPT-1"),
             AdvisoryInformation {
                 title: Some("CAPT-1".to_string()),
@@ -44,7 +44,7 @@ async fn all_organizations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     graph
         .ingest_advisory(
             "EMPORIUM-1",
-            "http://captpickles.com/",
+            ("source", "http://captpickles.com/"),
             &Digests::digest("EMPORIUM-1"),
             AdvisoryInformation {
                 title: Some("EMPORIUM-1".to_string()),
@@ -90,7 +90,7 @@ async fn one_organization(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let advisory = graph
         .ingest_advisory(
             "CAPT-1",
-            "http://captpickles.com/",
+            ("source", "http://captpickles.com/"),
             &Digests::digest("CAPT-1"),
             AdvisoryInformation {
                 title: Some("Pickles can experience a buffer overflow".to_string()),

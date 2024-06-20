@@ -8,6 +8,7 @@ use sea_orm::{
     prelude::Uuid, ColumnTrait, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
     QueryOrder, QuerySelect, RelationTrait, Select, SelectColumns,
 };
+use sea_query::extension::postgres::PgExpr;
 use sea_query::{Expr, Func, JoinType, SimpleExpr};
 use serde::Deserialize;
 use serde_json::Value;
@@ -24,6 +25,7 @@ use trustify_common::{
     model::{Paginated, PaginatedResults},
     purl::Purl,
 };
+use trustify_entity::labels::Labels;
 use trustify_entity::{
     cpe::{self, CpeDto},
     package, package_relates_to_package, package_version,
@@ -65,14 +67,24 @@ impl SbomService {
         &self,
         search: Query,
         paginated: Paginated,
+        labels: impl Into<Labels>,
+
         tx: TX,
     ) -> Result<PaginatedResults<SbomSummary>, Error> {
         let connection = self.db.connection(&tx);
+        let labels = labels.into();
 
-        let limiter = sbom::Entity::find()
-            .filtering(search)?
-            .find_also_linked(SbomNodeLink)
-            .limiting(&connection, paginated.offset, paginated.limit);
+        let mut query = sbom::Entity::find().filtering(search)?;
+
+        if !labels.is_empty() {
+            query = query.filter(Expr::col(sbom::Column::Labels).contains(labels));
+        }
+
+        let limiter = query.find_also_linked(SbomNodeLink).limiting(
+            &connection,
+            paginated.offset,
+            paginated.limit,
+        );
 
         let total = limiter.total().await?;
         let sboms = limiter.fetch().await?;
@@ -532,6 +544,7 @@ mod test {
     use trustify_common::db::query::q;
     use trustify_common::db::test::TrustifyContext;
     use trustify_common::hashing::Digests;
+    use trustify_entity::labels::Labels;
     use trustify_module_ingestor::graph::Graph;
 
     #[test_context(TrustifyContext, skip_teardown)]
@@ -542,27 +555,27 @@ mod test {
 
         let sbom_v1 = system
             .ingest_sbom(
-                "http://redhat.com/test.json",
+                Labels::default(),
                 &Digests::digest("RHSA-1"),
-                "a",
+                "http://redhat.com/test.json",
                 (),
                 Transactional::None,
             )
             .await?;
         let sbom_v1_again = system
             .ingest_sbom(
-                "http://redhat.com/test.json",
+                Labels::default(),
                 &Digests::digest("RHSA-1"),
-                "a",
+                "http://redhat.com/test.json",
                 (),
                 Transactional::None,
             )
             .await?;
         let sbom_v2 = system
             .ingest_sbom(
-                "http://myspace.com/test.json",
+                Labels::default(),
                 &Digests::digest("RHSA-2"),
-                "b",
+                "http://myspace.com/test.json",
                 (),
                 Transactional::None,
             )
@@ -570,9 +583,9 @@ mod test {
 
         let _other_sbom = system
             .ingest_sbom(
-                "http://geocities.com/other.json",
+                Labels::default(),
                 &Digests::digest("RHSA-3"),
-                "c",
+                "http://geocities.com/other.json",
                 (),
                 Transactional::None,
             )
@@ -584,10 +597,95 @@ mod test {
         let fetch = SbomService::new(db);
 
         let fetched = fetch
-            .fetch_sboms(q("MySpAcE"), Paginated::default(), ())
+            .fetch_sboms(q("MySpAcE"), Paginated::default(), (), ())
             .await?;
 
         log::debug!("{:#?}", fetched.items);
+        assert_eq!(1, fetched.total);
+
+        Ok(())
+    }
+
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test(tokio::test)]
+    async fn labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
+        let system = Graph::new(db.clone());
+
+        let _sbom1 = system
+            .ingest_sbom(
+                Labels::new()
+                    .add("source", "test")
+                    .add("ci", "job1")
+                    .add("team", "a"),
+                &Digests::digest("RHSA-1"),
+                "http://redhat.com/test1.json",
+                (),
+                Transactional::None,
+            )
+            .await?;
+
+        let _sbom2 = system
+            .ingest_sbom(
+                Labels::new()
+                    .add("source", "test")
+                    .add("ci", "job2")
+                    .add("team", "b"),
+                &Digests::digest("RHSA-2"),
+                "http://redhat.com/test2.json",
+                (),
+                Transactional::None,
+            )
+            .await?;
+
+        let _sbom3 = system
+            .ingest_sbom(
+                Labels::new()
+                    .add("source", "test")
+                    .add("ci", "job2")
+                    .add("team", "a"),
+                &Digests::digest("RHSA-3"),
+                "http://redhat.com/test3.json",
+                (),
+                Transactional::None,
+            )
+            .await?;
+
+        let service = SbomService::new(db);
+
+        let fetched = service
+            .fetch_sboms(Query::default(), Paginated::default(), ("ci", "job1"), ())
+            .await?;
+        assert_eq!(1, fetched.total);
+
+        let fetched = service
+            .fetch_sboms(Query::default(), Paginated::default(), ("ci", "job2"), ())
+            .await?;
+        assert_eq!(2, fetched.total);
+
+        let fetched = service
+            .fetch_sboms(Query::default(), Paginated::default(), ("ci", "job3"), ())
+            .await?;
+        assert_eq!(0, fetched.total);
+
+        let fetched = service
+            .fetch_sboms(Query::default(), Paginated::default(), ("foo", "bar"), ())
+            .await?;
+        assert_eq!(0, fetched.total);
+
+        let fetched = service
+            .fetch_sboms(Query::default(), Paginated::default(), (), ())
+            .await?;
+        assert_eq!(3, fetched.total);
+
+        let fetched = service
+            .fetch_sboms(
+                Query::default(),
+                Paginated::default(),
+                [("ci", "job2"), ("team", "a")],
+                (),
+            )
+            .await?;
         assert_eq!(1, fetched.total);
 
         Ok(())

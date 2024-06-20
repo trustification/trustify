@@ -40,6 +40,7 @@ mod m0000337_create_version_range;
 mod m0000340_create_package_status;
 mod m0000345_create_version_comparison_fns;
 mod m0000350_remove_old_assertion_tables;
+mod m0000355_labels;
 
 pub struct Migrator;
 
@@ -86,6 +87,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000340_create_package_status::Migration),
             Box::new(m0000345_create_version_comparison_fns::Migration),
             Box::new(m0000350_remove_old_assertion_tables::Migration),
+            Box::new(m0000355_labels::Migration),
         ]
     }
 }

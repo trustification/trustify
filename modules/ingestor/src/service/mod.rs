@@ -14,6 +14,7 @@ use futures::Stream;
 use sea_orm::error::DbErr;
 use std::time::Instant;
 use trustify_common::{error::ErrorInformation, id::IdError};
+use trustify_entity::labels::Labels;
 use trustify_module_storage::service::{dispatch::DispatchBackend, StorageBackend, SyncAdapter};
 
 #[derive(Debug, thiserror::Error)]
@@ -100,7 +101,7 @@ impl IngestorService {
 
     pub async fn ingest<S, E>(
         &self,
-        source: &str,
+        labels: impl Into<Labels>,
         issuer: Option<String>,
         fmt: Format,
         stream: S,
@@ -125,15 +126,14 @@ impl IngestorService {
             .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?;
 
         let result = fmt
-            .load(&self.graph, source, issuer, &result.digests, reader)
+            .load(&self.graph, labels.into(), issuer, &result.digests, reader)
             .await?;
 
         let duration = Instant::now() - start;
         log::info!(
-            "Ingested: {} ({}) from {}: took {}",
+            "Ingested: {} ({}): took {}",
             result.id,
             result.document_id,
-            source,
             humantime::Duration::from(duration),
         );
 

@@ -1,21 +1,26 @@
 use super::*;
 use crate::advisory::model::AdvisoryHead;
-use std::str::FromStr;
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
-use trustify_common::db::{query::q, test::TrustifyContext};
-use trustify_common::hashing::Digests;
-use trustify_common::model::Paginated;
-use trustify_common::purl::Purl;
+use trustify_common::{
+    db::{query::q, test::TrustifyContext},
+    hashing::Digests,
+    model::Paginated,
+    purl::Purl,
+};
 use trustify_cvss::cvss3::{
     AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
     PrivilegesRequired, Scope, UserInteraction,
 };
-use trustify_module_ingestor::graph::advisory::advisory_vulnerability::{VersionInfo, VersionSpec};
-use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
-use trustify_module_ingestor::graph::Graph;
+use trustify_module_ingestor::graph::{
+    advisory::{
+        advisory_vulnerability::{VersionInfo, VersionSpec},
+        AdvisoryInformation,
+    },
+    Graph,
+};
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
@@ -26,7 +31,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let advisory = graph
         .ingest_advisory(
             "RHSA-1",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
@@ -62,7 +67,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     graph
         .ingest_advisory(
             "RHSA-2",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
@@ -95,7 +100,7 @@ async fn all_advisories_filtered_by_average_score(
     let advisory = graph
         .ingest_advisory(
             "RHSA-1",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
@@ -131,7 +136,7 @@ async fn all_advisories_filtered_by_average_score(
     graph
         .ingest_advisory(
             "RHSA-2",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
@@ -164,7 +169,7 @@ async fn all_advisories_filtered_by_average_severity(
     let advisory = graph
         .ingest_advisory(
             "RHSA-1",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
@@ -200,7 +205,7 @@ async fn all_advisories_filtered_by_average_severity(
     graph
         .ingest_advisory(
             "RHSA-2",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
@@ -235,7 +240,7 @@ async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let advisory = graph
         .ingest_advisory(
             "RHSA-1",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &digests,
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
@@ -295,7 +300,7 @@ async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     graph
         .ingest_advisory(
             "RHSA-2",
-            "http://redhat.com/",
+            ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),

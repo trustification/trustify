@@ -38,7 +38,7 @@ async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let sbom = graph
         .ingest_sbom(
-            "http://redhat.com/test.json",
+            ("source", "http://redhat.com/test.json"),
             &Digests::digest("RHSA-1"),
             "a",
             (),
@@ -79,7 +79,7 @@ async fn link_sbom_to_product(ctx: TrustifyContext) -> Result<(), anyhow::Error>
 
     let sbom = graph
         .ingest_sbom(
-            "http://redhat.com/test.json",
+            ("source", "http://redhat.com/test.json"),
             &Digests::digest("RHSA-1"),
             "a",
             (),

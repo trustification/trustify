@@ -5,6 +5,7 @@ use csaf_walker::validation::{
 use parking_lot::Mutex;
 use std::sync::Arc;
 use tokio_util::io::ReaderStream;
+use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
 
 #[derive(Debug, thiserror::Error)]
@@ -16,6 +17,7 @@ pub enum StorageError {
 }
 
 pub struct StorageVisitor {
+    pub name: String,
     pub ingestor: IngestorService,
     /// the report to report our messages to
     pub report: Arc<Mutex<ReportBuilder>>,
@@ -39,7 +41,9 @@ impl ValidatedVisitor for StorageVisitor {
         let fmt = Format::from_bytes(&doc.data).map_err(|e| StorageError::Storage(e.into()))?;
         self.ingestor
             .ingest(
-                &location,
+                Labels::new()
+                    .add("source", &location)
+                    .add("importer", &self.name),
                 None, /* CSAF tracks issuer internally */
                 fmt,
                 ReaderStream::new(doc.data.as_ref()),

@@ -14,6 +14,7 @@ use trustify_common::db::Transactional;
 use trustify_common::hashing::Digests;
 use trustify_entity as entity;
 use trustify_entity::advisory;
+use trustify_entity::labels::Labels;
 use uuid::Uuid;
 
 pub mod advisory_vulnerability;
@@ -91,13 +92,13 @@ impl Graph {
     pub async fn ingest_advisory<TX: AsRef<Transactional>>(
         &self,
         identifier: impl Into<String>,
-        location: impl Into<String>,
+        labels: impl Into<Labels>,
         digests: &Digests,
         information: impl Into<AdvisoryInformation>,
         tx: TX,
     ) -> Result<AdvisoryContext, Error> {
         let identifier = identifier.into();
-        let location = location.into();
+        let labels = labels.into();
         let sha256 = digests.sha256.encode_hex::<String>();
         let information = information.into();
 
@@ -115,12 +116,12 @@ impl Graph {
             id: Default::default(),
             identifier: Set(identifier),
             issuer_id: Set(organization.map(|org| org.organization.id)),
-            location: Set(location),
             sha256: Set(sha256),
             title: Set(information.title),
             published: Set(information.published),
             modified: Set(information.modified),
             withdrawn: Default::default(),
+            labels: Set(labels),
         };
 
         Ok(AdvisoryContext::new(
@@ -267,6 +268,7 @@ mod test {
     use test_log::test;
     use trustify_common::db::{test::TrustifyContext, Transactional};
     use trustify_common::hashing::Digests;
+    use trustify_entity::labels::Labels;
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
@@ -277,7 +279,7 @@ mod test {
         let advisory1 = system
             .ingest_advisory(
                 "RHSA-GHSA-1",
-                "http://db.com/rhsa-ghsa-2",
+                Labels::from_one("source", "http://db.com/rhsa-ghsa-2"),
                 &Digests::digest("RHSA-GHSA-1_1"),
                 (),
                 Transactional::None,
@@ -287,7 +289,7 @@ mod test {
         let advisory2 = system
             .ingest_advisory(
                 "RHSA-GHSA-1",
-                "http://db.com/rhsa-ghsa-2",
+                Labels::from_one("source", "http://db.com/rhsa-ghsa-2"),
                 &Digests::digest("RHSA-GHSA-1_1"),
                 (),
                 Transactional::None,
@@ -297,7 +299,7 @@ mod test {
         let advisory3 = system
             .ingest_advisory(
                 "RHSA-GHSA-1",
-                "http://db.com/rhsa-ghsa-2",
+                Labels::from_one("source", "http://db.com/rhsa-ghsa-2"),
                 &Digests::digest("RHSA-GHSA-1_2"),
                 (),
                 Transactional::None,
@@ -319,7 +321,7 @@ mod test {
         let advisory = system
             .ingest_advisory(
                 "RHSA-GHSA-1",
-                "http://db.com/rhsa-ghsa-2",
+                Labels::from_one("source", "http://db.com/rhsa-ghsa-2"),
                 &Digests::digest("RHSA-GHSA-1"),
                 (),
                 Transactional::None,

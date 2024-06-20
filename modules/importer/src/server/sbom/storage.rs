@@ -5,6 +5,7 @@ use sbom_walker::validation::{
 };
 use std::sync::Arc;
 use tokio_util::io::ReaderStream;
+use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use walker_common::compression::decompress_opt;
 
@@ -17,6 +18,7 @@ pub enum StorageError {
 }
 
 pub struct StorageVisitor {
+    pub name: String,
     pub source: String,
     pub ingestor: IngestorService,
     /// the report to report our messages to
@@ -52,7 +54,14 @@ impl ValidatedVisitor for StorageVisitor {
         let fmt = Format::sbom_from_bytes(&data).map_err(|e| StorageError::Storage(e.into()))?;
 
         self.ingestor
-            .ingest(&self.source, None, fmt, ReaderStream::new(data.as_ref()))
+            .ingest(
+                Labels::new()
+                    .add("source", &self.source)
+                    .add("importer", &self.name),
+                None,
+                fmt,
+                ReaderStream::new(data.as_ref()),
+            )
             .await
             .map_err(|err| StorageError::Storage(err.into()))?;
 

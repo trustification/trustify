@@ -27,6 +27,7 @@ impl super::Server {
     #[instrument(skip(self), ret)]
     pub async fn run_once_sbom(
         &self,
+        name: String,
         importer: SbomImporter,
         last_run: Option<SystemTime>,
     ) -> Result<RunOutput, ScannerError> {
@@ -53,6 +54,7 @@ impl super::Server {
 
         let ingestor = IngestorService::new(Graph::new(self.db.clone()), self.storage.clone());
         let storage = storage::StorageVisitor {
+            name,
             source: importer.source,
             ingestor,
             report: report.clone(),

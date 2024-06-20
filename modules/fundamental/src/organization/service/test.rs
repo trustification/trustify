@@ -18,7 +18,7 @@ async fn all_organizations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     graph
         .ingest_advisory(
             "CPIC-1",
-            "http://captpickles.com/",
+            ("source", "http://captpickles.com/"),
             &Digests::digest("CPIC-1"),
             AdvisoryInformation {
                 title: Some("CAPT-1".to_string()),
