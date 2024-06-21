@@ -37,6 +37,7 @@ impl From<cpe::cpe::CpeType> for CpeType {
             cpe::cpe::CpeType::Hardware => Self::Hardware,
             cpe::cpe::CpeType::OperatingSystem => Self::OperatingSystem,
             cpe::cpe::CpeType::Application => Self::Application,
+            cpe::cpe::CpeType::Empty => todo!(),
         }
     }
 }
