@@ -20,13 +20,11 @@ postgresql_embedded = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 url = { workspace = true }
 
-openssl = "*"
-libz-sys = "*"
+openssl = { workspace = true }
+libz-sys = { workspace = true }
 
 [dev-dependencies]
-temp-env = "0.3"
-reqwest = { workspace = true }
-regex = { workspace = true }
+temp-env = { workspace = true }
 
 [features]
 default = ["pm"]

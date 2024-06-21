@@ -6976,8 +6976,6 @@ dependencies = [
  "log",
  "openssl",
  "postgresql_embedded",
- "regex",
- "reqwest 0.12.4",
  "temp-env",
  "tokio",
  "trustify-common",

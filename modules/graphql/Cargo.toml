@@ -18,6 +18,6 @@ actix-web = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 log = { workspace = true }
 uuid = { workspace = true }
-async-graphql = "7.0.5"
-async-graphql-actix-web = "7.0.5"
+async-graphql = { workspace = true }
+async-graphql-actix-web = { workspace = true }
 thiserror = { workspace = true }

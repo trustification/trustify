@@ -31,8 +31,8 @@ utoipa-swagger-ui = { workspace = true, features = ["actix-web"] }
 
 garage-door = { workspace = true, optional = true }
 
-async-graphql = "7.0.5"
-async-graphql-actix-web = "7.0.5"
+async-graphql = { workspace = true }
+async-graphql-actix-web = { workspace = true }
 
 [dev-dependencies]
 urlencoding = { workspace = true }
