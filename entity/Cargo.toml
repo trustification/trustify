@@ -7,7 +7,7 @@ edition = "2021"
 trustify-common = { workspace = true }
 trustify-cvss = { workspace = true }
 
-async-graphql = { version = "7.0.5", features = ["uuid", "time"] }
+async-graphql = { workspace = true, features = ["uuid", "time"] }
 cpe = { workspace = true }
 sea-orm = { workspace = true, features = [
     "sqlx-postgres",
