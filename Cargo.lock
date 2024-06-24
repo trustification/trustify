@@ -6721,6 +6721,7 @@ name = "trustify-integration-tests"
 version = "0.1.0-alpha.8"
 dependencies = [
  "anyhow",
+ "bytes",
  "cyclonedx-bom",
  "humantime",
  "log",
@@ -6735,6 +6736,7 @@ dependencies = [
  "trustify-entity",
  "trustify-module-fundamental",
  "trustify-module-ingestor",
+ "trustify-module-storage",
 ]
 
 [[package]]
