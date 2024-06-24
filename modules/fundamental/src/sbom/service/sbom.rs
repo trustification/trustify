@@ -50,7 +50,7 @@ impl SbomService {
 
         Ok(
             match select
-                .find_also_related(sbom_node::Entity)
+                .find_also_linked(SbomNodeLink)
                 .one(&connection)
                 .await?
             {
