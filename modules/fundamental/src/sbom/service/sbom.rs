@@ -205,7 +205,7 @@ impl SbomService {
             sbom_id,
             Default::default(),
             paginated,
-            Which::Left,
+            Which::Right,
             SbomPackageReference::Root,
             Some(Relationship::DescribedBy),
             tx,

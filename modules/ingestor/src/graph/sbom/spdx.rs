@@ -92,12 +92,12 @@ impl SbomContext {
 
         for described in sbom_data.document_creation_information.document_describes {
             packages.relate(
+                described,
+                Relationship::DescribedBy,
                 sbom_data
                     .document_creation_information
                     .spdx_identifier
                     .clone(),
-                Relationship::DescribedBy,
-                described,
             );
         }
 

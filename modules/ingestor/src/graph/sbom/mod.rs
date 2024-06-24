@@ -11,8 +11,7 @@ use crate::{
     db::{LeftPackageId, QualifiedPackageTransitive},
     graph::{
         cpe::CpeContext,
-        product::product_version::ProductVersionContext,
-        product::ProductContext,
+        product::{product_version::ProductVersionContext, ProductContext},
         purl::{creator::PurlCreator, qualified_package::QualifiedPackageContext},
         Graph,
     },
@@ -24,8 +23,9 @@ use sea_orm::{
     prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, ModelTrait, QueryFilter,
     QuerySelect, QueryTrait, RelationTrait, Select, SelectColumns, Set,
 };
-use sea_query::extension::postgres::PgExpr;
-use sea_query::{Alias, Condition, Expr, Func, JoinType, Query, SimpleExpr};
+use sea_query::{
+    extension::postgres::PgExpr, Alias, Condition, Expr, Func, JoinType, Query, SimpleExpr,
+};
 use std::{
     fmt::{Debug, Formatter},
     str::FromStr,
