@@ -5,8 +5,7 @@ use crate::{
     db::{LeftPackageId, QualifiedPackageTransitive},
     graph::{
         cpe::CpeContext,
-        product::product_version::ProductVersionContext,
-        product::ProductContext,
+        product::{product_version::ProductVersionContext, ProductContext},
         purl::{creator::PurlCreator, qualified_package::QualifiedPackageContext},
         Graph,
     },
@@ -14,10 +13,9 @@ use crate::{
 use cpe::uri::OwnedUri;
 use entity::{product, product_version};
 use hex::ToHex;
-use sea_orm::ModelTrait;
 use sea_orm::{
-    prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QuerySelect,
-    QueryTrait, RelationTrait, Select, SelectColumns, Set,
+    prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, ModelTrait, QueryFilter,
+    QuerySelect, QueryTrait, RelationTrait, Select, SelectColumns, Set,
 };
 use sea_query::{Alias, Condition, Func, JoinType, Query, SimpleExpr};
 use std::{
@@ -28,8 +26,8 @@ use std::{
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{
-    cpe::Cpe, db::Transactional, package::PackageVulnerabilityAssertions, purl::Purl,
-    sbom::SbomLocator,
+    cpe::Cpe, db::Transactional, hashing::Digests, package::PackageVulnerabilityAssertions,
+    purl::Purl, sbom::SbomLocator,
 };
 use trustify_entity::{
     self as entity, package_relates_to_package, relationship::Relationship, sbom, sbom_node,
@@ -38,7 +36,6 @@ use trustify_entity::{
 
 mod common;
 pub use common::*;
-use trustify_common::hashing::Digests;
 
 pub mod cyclonedx;
 pub mod spdx;

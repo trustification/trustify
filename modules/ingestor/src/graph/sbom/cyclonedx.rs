@@ -82,9 +82,9 @@ impl SbomContext {
                 creator.add(component);
                 if let Some(r#ref) = &component.bom_ref {
                     creator.relate(
-                        CYCLONEDX_DOC_REF.to_string(),
-                        Relationship::DescribedBy,
                         r#ref.to_string(),
+                        Relationship::DescribedBy,
+                        CYCLONEDX_DOC_REF.to_string(),
                     );
                 }
             }
