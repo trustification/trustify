@@ -564,14 +564,21 @@ async fn statuses(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let data = ReaderStream::new(&data[..]);
 
     ingestor
-        .ingest("test", Some("RUSTSEC".to_string()), Format::OSV, data)
+        .ingest(
+            ("source", "test"),
+            Some("RUSTSEC".to_string()),
+            Format::OSV,
+            data,
+        )
         .await?;
 
     // backfill ingest the CVE record
     let data = include_bytes!("../../../../../etc/test-data/cve/CVE-2021-32714.json");
     let data = ReaderStream::new(&data[..]);
 
-    ingestor.ingest("test", None, Format::CVE, data).await?;
+    ingestor
+        .ingest(("source", "test"), None, Format::CVE, data)
+        .await?;
 
     // finally ingest a specific known-affected version.
 
