@@ -1,4 +1,3 @@
-use crate::m0000030_create_sbom::SbomNode;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -37,7 +36,14 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-pub enum SbomFile {
+enum SbomNode {
+    Table,
+    SbomId,
+    NodeId,
+}
+
+#[derive(DeriveIden)]
+enum SbomFile {
     Table,
     SbomId,
     NodeId,
