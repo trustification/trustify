@@ -36,7 +36,7 @@ async fn quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result1 = ingest
         .ingest(
-            "test",
+            ("source", "test"),
             None,
             Format::SPDX,
             stream::once(async {
@@ -53,7 +53,7 @@ async fn quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result2 = ingest
         .ingest(
-            "test",
+            ("source", "test"),
             None,
             Format::SPDX,
             stream::once(async {
@@ -135,7 +135,7 @@ async fn nhc(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result1 = ingest
         .ingest(
-            "test",
+            ("source", "test"),
             None,
             Format::SPDX,
             xz_stream(include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz")),
@@ -151,7 +151,7 @@ async fn nhc(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result2 = ingest
         .ingest(
-            "test",
+            ("source", "test"),
             None,
             Format::SPDX,
             xz_stream(include_bytes!("data/nhc/v2/nhc-0.4.z.json.xz")),
@@ -213,7 +213,7 @@ async fn nhc_same(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result1 = ingest
         .ingest(
-            "test",
+            ("source", "test"),
             None,
             Format::SPDX,
             xz_stream(include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz")),
@@ -229,7 +229,7 @@ async fn nhc_same(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result2 = ingest
         .ingest(
-            "test",
+            ("source", "test"),
             None,
             Format::SPDX,
             xz_stream(include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz")),
@@ -293,7 +293,7 @@ async fn nhc_same_content(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result1 = ingest
         .ingest(
-            "test",
+            ("source", "test"),
             None,
             Format::SPDX,
             xz_stream(include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz")),
@@ -309,7 +309,7 @@ async fn nhc_same_content(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result2 = ingest
         .ingest(
-            "test",
+            ("source", "test"),
             None,
             Format::SPDX,
             stream::once({
@@ -385,7 +385,7 @@ async fn syft_rerun(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result1 = ingest
         .ingest(
-            "test",
+            ("source", "test"),
             None,
             Format::SPDX,
             xz_stream(include_bytes!("data/syft-ubi-example/v1.json.xz")),
@@ -401,7 +401,7 @@ async fn syft_rerun(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result2 = ingest
         .ingest(
-            "test",
+            ("source", "test"),
             None,
             Format::SPDX,
             xz_stream(include_bytes!("data/syft-ubi-example/v2.json.xz")),
