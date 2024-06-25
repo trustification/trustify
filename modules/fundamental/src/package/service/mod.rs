@@ -125,7 +125,7 @@ impl PackageService {
 
         if let Some(package_version) = package_version {
             Ok(Some(
-                PackageVersionDetails::from_entity(&package_version, &connection).await?,
+                PackageVersionDetails::from_entity(None, &package_version, &connection).await?,
             ))
         } else {
             Ok(None)
@@ -163,7 +163,7 @@ impl PackageService {
             .await?
         {
             Ok(Some(
-                PackageVersionDetails::from_entity(&package_version, &connection).await?,
+                PackageVersionDetails::from_entity(None, &package_version, &connection).await?,
             ))
         } else {
             Ok(None)
