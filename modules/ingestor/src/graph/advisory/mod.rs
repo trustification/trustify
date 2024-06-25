@@ -34,6 +34,7 @@ pub struct AdvisoryVulnerabilityInformation {
     pub description: Option<String>,
     pub discovery_date: Option<OffsetDateTime>,
     pub release_date: Option<OffsetDateTime>,
+    pub cwe: Option<String>,
 }
 
 impl AdvisoryInformation {
@@ -237,7 +238,8 @@ impl<'g> AdvisoryContext<'g> {
                 .as_ref()
                 .and_then(|info| info.description.clone())),
             discovery_date: Set(information.as_ref().and_then(|info| info.discovery_date)),
-            release_date: Set(information.and_then(|info| info.release_date)),
+            release_date: Set(information.as_ref().and_then(|info| info.release_date)),
+            cwe: Set(information.as_ref().and_then(|info| info.cwe.clone())),
         };
 
         Ok((self, entity.insert(&self.graph.connection(&tx)).await?).into())

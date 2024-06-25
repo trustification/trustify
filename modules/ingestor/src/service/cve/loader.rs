@@ -45,12 +45,13 @@ impl<'g> CveLoader<'g> {
             .date_updated
             .map(Timestamp::assume_utc);
 
-        let (title, assigned, withdrawn, descriptions) = match &cve {
+        let (title, assigned, withdrawn, descriptions, cwe) = match &cve {
             Cve::Rejected(rejected) => (
                 None,
                 None,
                 rejected.metadata.date_rejected.map(Timestamp::assume_utc),
                 &rejected.containers.cna.rejected_reasons,
+                None,
             ),
             Cve::Published(published) => (
                 published.containers.cna.title.as_ref(),
@@ -61,6 +62,13 @@ impl<'g> CveLoader<'g> {
                     .map(Timestamp::assume_utc),
                 None,
                 &published.containers.cna.descriptions,
+                published
+                    .containers
+                    .cna
+                    .problem_types
+                    .iter()
+                    .flat_map(|pt| pt.descriptions.iter())
+                    .find_map(|d| d.cwe_id.clone()),
             ),
         };
 
@@ -69,6 +77,7 @@ impl<'g> CveLoader<'g> {
             published,
             modified,
             withdrawn,
+            cwe: cwe.clone(),
         };
 
         let vulnerability = self
@@ -110,6 +119,7 @@ impl<'g> CveLoader<'g> {
                     description: english_description,
                     discovery_date: assigned,
                     release_date: published,
+                    cwe,
                 }),
                 &tx,
             )

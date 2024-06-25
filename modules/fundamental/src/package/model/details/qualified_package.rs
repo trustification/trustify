@@ -145,7 +145,7 @@ impl QualifiedPackageStatus {
         let status = status.map(|e| e.slug).unwrap_or("unknown".to_string());
 
         Ok(Self {
-            vulnerability: VulnerabilityHead::from_vulnerability_entity(vuln, tx).await?,
+            vulnerability: VulnerabilityHead::from_vulnerability_entity(vuln),
             status,
         })
     }
