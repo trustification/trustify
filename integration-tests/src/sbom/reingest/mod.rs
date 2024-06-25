@@ -1,7 +1,9 @@
 //! Testing to re-ingest a document, ensuring there is not stale data
 #![cfg(test)]
 
+use crate::sbom::stream::xz_stream;
 use bytes::Bytes;
+use serde_json::Value;
 use std::convert::Infallible;
 use std::str::FromStr;
 use test_context::futures::stream;
@@ -23,7 +25,7 @@ use trustify_module_storage::service::fs::FileSystemBackend;
 #[test_context(TrustifyContext, skip_teardown)]
 #[instrument]
 #[test(tokio::test)]
-async fn reingest_diff(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Graph::new(db.clone());
     let (storage, _tmp) = FileSystemBackend::for_test().await?;
@@ -39,7 +41,7 @@ async fn reingest_diff(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             Format::SPDX,
             stream::once(async {
                 Ok::<_, Infallible>(Bytes::from_static(include_bytes!(
-                    "data/v1/quarkus-bom-2.13.8.Final-redhat-00004.json"
+                    "data/quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json"
                 )))
             }),
         )
@@ -56,7 +58,7 @@ async fn reingest_diff(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             Format::SPDX,
             stream::once(async {
                 Ok::<_, Infallible>(Bytes::from_static(include_bytes!(
-                    "data/v2/quarkus-bom-2.13.8.Final-redhat-00004.json"
+                    "data/quarkus/v2/quarkus-bom-2.13.8.Final-redhat-00004.json"
                 )))
             }),
         )
@@ -91,8 +93,10 @@ async fn reingest_diff(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(sbom2.described_by.len(), 1);
 
     // clear the ID as that one will be different
+
     sbom1.described_by[0].id = "".into();
     sbom2.described_by[0].id = "".into();
+
     assert_eq!(sbom1.described_by[0], sbom2.described_by[0]);
 
     // but both sboms can be found by the same purl
@@ -109,6 +113,254 @@ async fn reingest_diff(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
 
     assert_eq!(sboms.total, 2);
+
+    // done
+
+    Ok(())
+}
+
+/// Re-ingest two versions of nhc. They to have the same name and mostly the same name and
+/// document id/namespace. However, they still get ingested as two different SBOMs.
+#[test_context(TrustifyContext, skip_teardown)]
+#[instrument]
+#[test(tokio::test)]
+async fn nhc(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+    let graph = Graph::new(db.clone());
+    let (storage, _tmp) = FileSystemBackend::for_test().await?;
+    let sbom = SbomService::new(db.clone());
+    let ingest = IngestorService::new(graph, storage);
+
+    // ingest the first version
+
+    let result1 = ingest
+        .ingest(
+            "test",
+            None,
+            Format::SPDX,
+            xz_stream(include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz")),
+        )
+        .await?;
+
+    assert_eq!(
+        result1.document_id,
+        "https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8"
+    );
+
+    // ingest the second version
+
+    let result2 = ingest
+        .ingest(
+            "test",
+            None,
+            Format::SPDX,
+            xz_stream(include_bytes!("data/nhc/v2/nhc-0.4.z.json.xz")),
+        )
+        .await?;
+
+    assert_eq!(
+        result2.document_id,
+        "https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8"
+    );
+
+    // now start testing
+
+    assert_ne!(result1.id, result2.id);
+
+    let mut sbom1 = sbom
+        .fetch_sbom(result1.id, ())
+        .await?
+        .expect("v1 must be found");
+    log::info!("SBOM1: {sbom1:?}");
+
+    let mut sbom2 = sbom
+        .fetch_sbom(result2.id, ())
+        .await?
+        .expect("v2 must be found");
+    log::info!("SBOM2: {sbom2:?}");
+
+    // both sboms have the same name
+
+    assert_eq!(sbom1.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom2.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom1.described_by.len(), 1);
+    assert_eq!(sbom2.described_by.len(), 1);
+
+    // clear the ID as that one will be different
+
+    sbom1.described_by[0].id = "".into();
+    sbom2.described_by[0].id = "".into();
+
+    assert_eq!(sbom1.described_by[0], sbom2.described_by[0]);
+
+    // done
+
+    Ok(())
+}
+
+/// Re-ingest the same version of nhc twice.
+#[test_context(TrustifyContext, skip_teardown)]
+#[instrument]
+#[test(tokio::test)]
+async fn nhc_same(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+    let graph = Graph::new(db.clone());
+    let (storage, _tmp) = FileSystemBackend::for_test().await?;
+    let sbom = SbomService::new(db.clone());
+    let ingest = IngestorService::new(graph, storage);
+
+    // ingest the first version
+
+    let result1 = ingest
+        .ingest(
+            "test",
+            None,
+            Format::SPDX,
+            xz_stream(include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz")),
+        )
+        .await?;
+
+    assert_eq!(
+        result1.document_id,
+        "https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8"
+    );
+
+    // ingest the same version again
+
+    let result2 = ingest
+        .ingest(
+            "test",
+            None,
+            Format::SPDX,
+            xz_stream(include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz")),
+        )
+        .await?;
+
+    assert_eq!(
+        result2.document_id,
+        "https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8"
+    );
+
+    // now start testing
+
+    // in this case, we get the same ID, as the digest of the content is the same
+
+    assert_eq!(result1.id, result2.id);
+
+    let mut sbom1 = sbom
+        .fetch_sbom(result1.id, ())
+        .await?
+        .expect("v1 must be found");
+    log::info!("SBOM1: {sbom1:?}");
+
+    let mut sbom2 = sbom
+        .fetch_sbom(result2.id, ())
+        .await?
+        .expect("v2 must be found");
+    log::info!("SBOM2: {sbom2:?}");
+
+    // both sboms have the same name
+
+    assert_eq!(sbom1.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom2.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom1.described_by.len(), 1);
+    assert_eq!(sbom2.described_by.len(), 1);
+
+    // clear the ID as that one will be different
+
+    sbom1.described_by[0].id = "".into();
+    sbom2.described_by[0].id = "".into();
+
+    assert_eq!(sbom1.described_by[0], sbom2.described_by[0]);
+
+    // done
+
+    Ok(())
+}
+
+/// Re-ingest the same version of nhc twice, but reformat the second one.
+#[test_context(TrustifyContext, skip_teardown)]
+#[instrument]
+#[test(tokio::test)]
+async fn nhc_same_content(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+    let graph = Graph::new(db.clone());
+    let (storage, _tmp) = FileSystemBackend::for_test().await?;
+    let sbom = SbomService::new(db.clone());
+    let ingest = IngestorService::new(graph, storage);
+
+    // ingest the first version
+
+    let result1 = ingest
+        .ingest(
+            "test",
+            None,
+            Format::SPDX,
+            xz_stream(include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz")),
+        )
+        .await?;
+
+    assert_eq!(
+        result1.document_id,
+        "https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8"
+    );
+
+    // ingest the second version
+
+    let result2 = ingest
+        .ingest(
+            "test",
+            None,
+            Format::SPDX,
+            stream::once({
+                // re-serialize file (non-pretty)
+                let json: Value = serde_json::from_slice(&lzma::decompress(include_bytes!(
+                    "data/nhc/v1/nhc-0.4.z.json.xz"
+                ))?)?;
+
+                let result = serde_json::to_vec(&json).map(Bytes::from);
+
+                async { result }
+            }),
+        )
+        .await?;
+
+    assert_eq!(
+        result2.document_id,
+        "https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8"
+    );
+
+    // now start testing
+
+    // in this case, we get a different ID, as the digest doesn't match
+
+    assert_ne!(result1.id, result2.id);
+
+    let mut sbom1 = sbom
+        .fetch_sbom(result1.id, ())
+        .await?
+        .expect("v1 must be found");
+    log::info!("SBOM1: {sbom1:?}");
+
+    let mut sbom2 = sbom
+        .fetch_sbom(result2.id, ())
+        .await?
+        .expect("v2 must be found");
+    log::info!("SBOM2: {sbom2:?}");
+
+    // both sboms have the same name
+
+    assert_eq!(sbom1.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom2.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom1.described_by.len(), 1);
+    assert_eq!(sbom2.described_by.len(), 1);
+
+    // clear the ID as that one will be different
+
+    sbom1.described_by[0].id = "".into();
+    sbom2.described_by[0].id = "".into();
+
+    assert_eq!(sbom1.described_by[0], sbom2.described_by[0]);
 
     // done
 
