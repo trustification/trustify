@@ -25,6 +25,8 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::sbom_package::Entity")]
     Packages,
+    #[sea_orm(has_many = "super::sbom_file::Entity")]
+    Files,
     #[sea_orm(has_one = "super::sbom_node::Entity")]
     Node,
 }
@@ -43,6 +45,12 @@ impl Linked for SbomNodeLink {
 impl Related<super::sbom_package::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Packages.def()
+    }
+}
+
+impl Related<super::sbom_file::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Files.def()
     }
 }
 

@@ -1,3 +1,4 @@
+use crate::graph::sbom::RelationshipCreator;
 use crate::graph::{
     purl::creator::PurlCreator,
     sbom::{PackageCreator, PackageReference, SbomContext, SbomInformation},
@@ -156,11 +157,9 @@ impl<'a> Creator<'a> {
         db: &impl ConnectionTrait,
     ) -> anyhow::Result<()> {
         let mut purls = PurlCreator::new();
-        let mut packages = PackageCreator::with_capacity(
-            self.sbom_id,
-            self.components.len(),
-            self.relations.len(),
-        );
+        let mut packages = PackageCreator::with_capacity(self.sbom_id, self.components.len());
+        let mut relationships =
+            RelationshipCreator::with_capacity(self.sbom_id, self.relations.len());
 
         for comp in self.components {
             let node_id = comp
@@ -193,11 +192,12 @@ impl<'a> Creator<'a> {
         }
 
         for (left, rel, right) in self.relations {
-            packages.relate(left, rel, right);
+            relationships.relate(left, rel, right);
         }
 
         purls.create(db).await?;
         packages.create(db).await?;
+        relationships.create(db).await?;
 
         Ok(())
     }
