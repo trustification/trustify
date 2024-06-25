@@ -1,6 +1,9 @@
 use crate::graph::{
     purl::creator::PurlCreator,
-    sbom::{PackageCreator, PackageReference, SbomContext, SbomInformation},
+    sbom::{
+        FileCreator, PackageCreator, PackageReference, RelationshipCreator, SbomContext,
+        SbomInformation,
+    },
 };
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
@@ -45,13 +48,12 @@ impl SbomContext {
         sbom_data: SPDX,
         tx: TX,
     ) -> Result<(), anyhow::Error> {
+        // prepare packages
+
         let mut creator = PurlCreator::new();
 
-        let mut packages = PackageCreator::with_capacity(
-            self.sbom.sbom_id,
-            sbom_data.package_information.len(),
-            sbom_data.relationships.len(),
-        );
+        let mut packages =
+            PackageCreator::with_capacity(self.sbom.sbom_id, sbom_data.package_information.len());
 
         for package in &sbom_data.package_information {
             let mut refs = Vec::new();
@@ -82,16 +84,30 @@ impl SbomContext {
             );
         }
 
+        // prepare files
+
+        let mut files =
+            FileCreator::with_capacity(self.sbom.sbom_id, sbom_data.file_information.len());
+
+        for file in sbom_data.file_information {
+            files.add(file.file_spdx_identifier, file.file_name);
+        }
+
+        // get database connection
+
         let db = self.graph.connection(&tx);
 
         // create all purls
 
         creator.create(&db).await?;
 
-        // create relationships
+        // prepare relationships
+
+        let mut relationships =
+            RelationshipCreator::with_capacity(self.sbom.sbom_id, sbom_data.relationships.len());
 
         for described in sbom_data.document_creation_information.document_describes {
-            packages.relate(
+            relationships.relate(
                 described,
                 Relationship::DescribedBy,
                 sbom_data
@@ -106,12 +122,14 @@ impl SbomContext {
                 continue;
             };
 
-            packages.relate(left.to_string(), rel, right.to_string());
+            relationships.relate(left.to_string(), rel, right.to_string());
         }
 
-        // batch insert packages & relationships
+        // batch insert packages, files and then relationships
 
         packages.create(&db).await?;
+        files.create(&db).await?;
+        relationships.create(&db).await?;
 
         // done
 

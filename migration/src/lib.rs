@@ -41,6 +41,7 @@ mod m0000340_create_package_status;
 mod m0000345_create_version_comparison_fns;
 mod m0000350_remove_old_assertion_tables;
 mod m0000355_labels;
+mod m0000360_add_sbom_file;
 
 pub struct Migrator;
 
@@ -88,6 +89,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000345_create_version_comparison_fns::Migration),
             Box::new(m0000350_remove_old_assertion_tables::Migration),
             Box::new(m0000355_labels::Migration),
+            Box::new(m0000360_add_sbom_file::Migration),
         ]
     }
 }

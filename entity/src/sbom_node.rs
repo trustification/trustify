@@ -20,6 +20,12 @@ pub enum Relation {
     )]
     Package,
     #[sea_orm(
+        belongs_to = "super::sbom_file::Entity",
+        from = "(Column::SbomId, Column::NodeId)",
+        to = "(super::sbom_file::Column::SbomId, super::sbom_file::Column::NodeId)"
+    )]
+    File,
+    #[sea_orm(
         belongs_to = "super::sbom::Entity",
         from = "Column::SbomId",
         to = "super::sbom::Column::SbomId"
@@ -36,6 +42,12 @@ pub enum Relation {
 impl Related<super::sbom_package::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Package.def()
+    }
+}
+
+impl Related<super::sbom_file::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::File.def()
     }
 }
 

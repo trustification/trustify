@@ -547,9 +547,9 @@ impl SbomContext {
         let left_node_id = left_node_id.unwrap_or_else(|| self.sbom.node_id.clone());
         let right_node_id = right_node_id.unwrap_or_else(|| self.sbom.node_id.clone());
 
-        let mut packages = PackageCreator::new(self.sbom.sbom_id);
-        packages.relate(left_node_id, relationship, right_node_id);
-        packages.create(&self.graph.db.connection(&tx)).await?;
+        let mut relationships = RelationshipCreator::new(self.sbom.sbom_id);
+        relationships.relate(left_node_id, relationship, right_node_id);
+        relationships.create(&self.graph.db.connection(&tx)).await?;
 
         Ok(())
     }
