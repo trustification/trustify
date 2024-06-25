@@ -1,5 +1,3 @@
-use crate::m0000030_create_sbom::Sbom;
-use crate::m0000060_create_advisory::Advisory;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -101,4 +99,18 @@ impl MigrationTrait for Migration {
 
         Ok(())
     }
+}
+
+#[derive(DeriveIden)]
+pub enum Sbom {
+    Table,
+    Location,
+    Labels,
+}
+
+#[derive(DeriveIden)]
+pub enum Advisory {
+    Table,
+    Location,
+    Labels,
 }
