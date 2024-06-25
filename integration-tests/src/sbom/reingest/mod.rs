@@ -366,3 +366,86 @@ async fn nhc_same_content(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     Ok(())
 }
+
+/// Run syft twice on the same container.
+///
+/// This should be the same SBOM, as it's built from exactly the same container. However, conforming
+/// to the SPDX spec, the document gets a new "document namespace".
+#[test_context(TrustifyContext, skip_teardown)]
+#[instrument]
+#[test(tokio::test)]
+async fn syft_rerun(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+    let graph = Graph::new(db.clone());
+    let (storage, _tmp) = FileSystemBackend::for_test().await?;
+    let sbom = SbomService::new(db.clone());
+    let ingest = IngestorService::new(graph, storage);
+
+    // ingest the first version
+
+    let result1 = ingest
+        .ingest(
+            "test",
+            None,
+            Format::SPDX,
+            xz_stream(include_bytes!("data/syft-ubi-example/v1.json.xz")),
+        )
+        .await?;
+
+    assert_eq!(
+        result1.document_id,
+        "https://anchore.com/syft/image/registry.access.redhat.com/ubi9/ubi-f41e17d4-e739-4d33-ab2e-48c95b856220"
+    );
+
+    // ingest the second version
+
+    let result2 = ingest
+        .ingest(
+            "test",
+            None,
+            Format::SPDX,
+            xz_stream(include_bytes!("data/syft-ubi-example/v2.json.xz")),
+        )
+        .await?;
+
+    assert_eq!(
+        result2.document_id,
+        "https://anchore.com/syft/image/registry.access.redhat.com/ubi9/ubi-768a701e-12fb-4ed1-a03b-463b784b01bf"
+    );
+
+    // now start testing
+
+    // in this case, we get the same ID, as the digest of the content is the same
+
+    assert_ne!(result1.id, result2.id);
+
+    let mut sbom1 = sbom
+        .fetch_sbom(result1.id, ())
+        .await?
+        .expect("v1 must be found");
+    log::info!("SBOM1: {sbom1:?}");
+
+    let mut sbom2 = sbom
+        .fetch_sbom(result2.id, ())
+        .await?
+        .expect("v2 must be found");
+    log::info!("SBOM2: {sbom2:?}");
+
+    // both sboms have the same name
+
+    assert_eq!(sbom1.name, "registry.access.redhat.com/ubi9/ubi");
+    assert_eq!(sbom2.name, "registry.access.redhat.com/ubi9/ubi");
+    assert_eq!(sbom1.described_by.len(), 1);
+    assert_eq!(sbom2.described_by.len(), 1);
+
+    // clear the ID as that one will be different
+
+    sbom1.described_by[0].id = "".into();
+    sbom2.described_by[0].id = "".into();
+
+    assert_eq!(sbom1.described_by[0], sbom2.described_by[0]);
+
+    // done
+
+    Ok(())
+}
