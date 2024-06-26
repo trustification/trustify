@@ -17,6 +17,7 @@ use csaf::{
 use std::io::Read;
 use std::str::FromStr;
 use time::OffsetDateTime;
+use tracing::{info_span, instrument};
 use trustify_common::{db::Transactional, hashing::Digests, id::Id, purl::Purl};
 use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity::labels::Labels;
@@ -51,13 +52,15 @@ impl<'g> CsafLoader<'g> {
         Self { graph }
     }
 
+    #[instrument(skip(self, labels, document), err)]
     pub async fn load<R: Read>(
         &self,
         labels: impl Into<Labels>,
         document: R,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
-        let csaf: Csaf = serde_json::from_reader(document)?;
+        let csaf: Csaf =
+            info_span!("parse document").in_scope(|| serde_json::from_reader(document))?;
 
         let tx = self.graph.transaction().await?;
 
@@ -81,6 +84,12 @@ impl<'g> CsafLoader<'g> {
         })
     }
 
+    #[instrument(skip_all,
+        fields(
+            csaf=csaf.document.tracking.id,
+            cve=vulnerability.cve
+        )
+    )]
     async fn ingest_vulnerability<TX: AsRef<Transactional>>(
         &self,
         csaf: &Csaf,
@@ -136,6 +145,7 @@ impl<'g> CsafLoader<'g> {
         Ok(())
     }
 
+    #[instrument(skip_all, err)]
     async fn ingest_product_statuses<TX: AsRef<Transactional>>(
         &self,
         csaf: &Csaf,

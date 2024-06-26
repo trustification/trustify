@@ -10,6 +10,7 @@ use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
 use std::fmt::{Debug, Formatter};
 use time::OffsetDateTime;
+use tracing::instrument;
 use trustify_common::db::Transactional;
 use trustify_common::hashing::Digests;
 use trustify_entity as entity;
@@ -65,6 +66,7 @@ impl Graph {
             .map(|advisory| AdvisoryContext::new(self, advisory)))
     }
 
+    #[instrument(skip(self, tx), err)]
     pub async fn get_advisory_by_digest<TX: AsRef<Transactional>>(
         &self,
         sha256: &str,
@@ -90,9 +92,10 @@ impl Graph {
             .collect())
     }
 
+    #[instrument(skip(self, labels, information, tx), err)]
     pub async fn ingest_advisory<TX: AsRef<Transactional>>(
         &self,
-        identifier: impl Into<String>,
+        identifier: impl Into<String> + Debug,
         labels: impl Into<Labels>,
         digests: &Digests,
         information: impl Into<AdvisoryInformation>,
@@ -200,6 +203,7 @@ impl<'g> AdvisoryContext<'g> {
         self.advisory.withdrawn
     }
 
+    #[instrument(skip(self, tx), err)]
     pub async fn get_vulnerability<TX: AsRef<Transactional>>(
         &self,
         identifier: &str,
@@ -217,6 +221,7 @@ impl<'g> AdvisoryContext<'g> {
             .map(|vuln| (self, vuln).into()))
     }
 
+    #[instrument(skip(self, information, tx), err)]
     pub async fn link_to_vulnerability<TX: AsRef<Transactional>>(
         &self,
         identifier: &str,
