@@ -5,7 +5,6 @@ use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
 use trustify_common::{db::test::TrustifyContext, hashing::Digests};
-use trustify_module_fundamental::advisory::service::AdvisoryService;
 use trustify_module_ingestor::{graph::Graph, service::advisory::csaf::loader::CsafLoader};
 
 #[test_context(TrustifyContext, skip_teardown)]
@@ -14,7 +13,6 @@ use trustify_module_ingestor::{graph::Graph, service::advisory::csaf::loader::Cs
 async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
     let db = ctx.db;
     let graph = Graph::new(db.clone());
-    let advisory = AdvisoryService::new(db.clone());
 
     let start = Instant::now();
 

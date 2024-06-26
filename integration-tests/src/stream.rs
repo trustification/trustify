@@ -15,6 +15,6 @@ pub fn xz_stream(data: &[u8]) -> impl Stream<Item = Result<Bytes, LzmaError>> {
 }
 
 /// Create a stream from a static BLOB.
-pub fn stream<'a>(data: &'static [u8]) -> impl Stream<Item = Result<Bytes, Infallible>> {
+pub fn stream(data: &'static [u8]) -> impl Stream<Item = Result<Bytes, Infallible>> {
     stream::once(async move { Ok(Bytes::from_static(data)) })
 }
