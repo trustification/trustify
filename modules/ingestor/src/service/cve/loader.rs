@@ -45,13 +45,20 @@ impl<'g> CveLoader<'g> {
             .date_updated
             .map(Timestamp::assume_utc);
 
-        let (title, assigned, withdrawn, descriptions, cwe) = match &cve {
+        let (title, assigned, withdrawn, descriptions, cwe, org_name) = match &cve {
             Cve::Rejected(rejected) => (
                 None,
                 None,
                 rejected.metadata.date_rejected.map(Timestamp::assume_utc),
                 &rejected.containers.cna.rejected_reasons,
                 None,
+                rejected
+                    .containers
+                    .cna
+                    .common
+                    .provider_metadata
+                    .short_name
+                    .as_ref(),
             ),
             Cve::Published(published) => (
                 published.containers.cna.title.as_ref(),
@@ -68,7 +75,14 @@ impl<'g> CveLoader<'g> {
                     .problem_types
                     .iter()
                     .flat_map(|pt| pt.descriptions.iter())
-                    .find_map(|d| d.cwe_id.clone()),
+                    .find_map(|d| d.cwe_id.as_ref()),
+                published
+                    .containers
+                    .cna
+                    .common
+                    .provider_metadata
+                    .short_name
+                    .as_ref(),
             ),
         };
 
@@ -77,7 +91,7 @@ impl<'g> CveLoader<'g> {
             published,
             modified,
             withdrawn,
-            cwe: cwe.clone(),
+            cwe: cwe.cloned(),
         };
 
         let vulnerability = self
@@ -99,7 +113,7 @@ impl<'g> CveLoader<'g> {
 
         let information = AdvisoryInformation {
             title: title.cloned(),
-            issuer: Some("CVE® (MITRE Corporation".to_string()),
+            issuer: org_name.cloned(),
             published,
             modified,
             withdrawn,
@@ -119,7 +133,7 @@ impl<'g> CveLoader<'g> {
                     description: english_description,
                     discovery_date: assigned,
                     release_date: published,
-                    cwe,
+                    cwe: cwe.cloned(),
                 }),
                 &tx,
             )
