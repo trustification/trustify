@@ -1,10 +1,9 @@
 //! Testing to re-ingest a document, ensuring there is not stale data
 #![cfg(test)]
 
-use crate::sbom::stream::xz_stream;
+use crate::stream::{stream, xz_stream};
 use bytes::Bytes;
 use serde_json::Value;
-use std::convert::Infallible;
 use std::str::FromStr;
 use test_context::futures::stream;
 use test_context::test_context;
@@ -39,11 +38,9 @@ async fn quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            stream::once(async {
-                Ok::<_, Infallible>(Bytes::from_static(include_bytes!(
-                    "data/quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json"
-                )))
-            }),
+            stream(include_bytes!(
+                "data/quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json"
+            )),
         )
         .await?;
 
@@ -56,11 +53,9 @@ async fn quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            stream::once(async {
-                Ok::<_, Infallible>(Bytes::from_static(include_bytes!(
-                    "data/quarkus/v2/quarkus-bom-2.13.8.Final-redhat-00004.json"
-                )))
-            }),
+            stream(include_bytes!(
+                "data/quarkus/v2/quarkus-bom-2.13.8.Final-redhat-00004.json"
+            )),
         )
         .await?;
 
