@@ -53,6 +53,8 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         crate::package::model::details::package::PackageDetails,
         crate::package::model::details::package_version::PackageVersionDetails,
         crate::package::model::details::qualified_package::QualifiedPackageDetails,
+        crate::package::model::details::qualified_package::QualifiedPackageAdvisory,
+        crate::package::model::details::qualified_package::QualifiedPackageStatus,
         trustify_common::purl::Purl,
     )),
     tags()
