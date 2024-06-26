@@ -166,7 +166,6 @@ where
 
     let start = Instant::now();
     i(&ctx, sbom, &tx).await?;
-    // sbom.ingest_spdx(sbom.clone(), &tx).await?;
     let ingest_time_2 = start.elapsed();
 
     // commit
