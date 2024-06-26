@@ -182,6 +182,26 @@ impl Columns {
         self
     }
 
+    /// Add columns from another column context.
+    ///
+    /// Any columns already existing within this context will *not* be replaced
+    /// by columns from the argument.
+    pub fn add_columns<C: IntoColumns>(mut self, columns: C) -> Self {
+        let columns = columns.columns();
+
+        for (col_ref, col_def) in columns.columns {
+            if !self
+                .columns
+                .iter()
+                .any(|(existing_col_ref, _)| *existing_col_ref == col_ref)
+            {
+                self.columns.push((col_ref, col_def))
+            }
+        }
+
+        self
+    }
+
     /// Add a translator to the context
     pub fn translator(mut self, f: Translator) -> Self {
         self.translator = Some(f);

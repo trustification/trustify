@@ -18,7 +18,7 @@ use trustify_common::{
     cpe::Cpe,
     db::{
         limiter::{limit_selector, LimiterTrait},
-        query::{Filtering, Query},
+        query::{Filtering, IntoColumns, Query},
         ArrayAgg, JsonBuildObject, ToJson, Transactional,
     },
     id::Id,
@@ -164,7 +164,14 @@ impl SbomService {
             .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def());
 
         query = join_purls_and_cpes(query)
-            .filtering(search)?
+            .filtering_with(
+                search,
+                sbom_package::Entity
+                    .columns()
+                    .add_columns(sbom_node::Entity)
+                    .add_columns(sbom_package_cpe_ref::Entity)
+                    .add_columns(sbom_package_purl_ref::Entity),
+            )?
             .order_by_asc(sbom_package::Column::NodeId); // default order
 
         // limit and execute
