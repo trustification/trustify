@@ -1,5 +1,3 @@
-use crate::graph::advisory::advisory_vulnerability::{VersionInfo, VersionSpec};
-use crate::model::IngestResult;
 use crate::{
     graph::{
         advisory::{
@@ -8,17 +6,17 @@ use crate::{
         },
         Graph,
     },
-    service::{advisory::csaf::util::resolve_purls, Error},
+    model::IngestResult,
+    service::{advisory::csaf::PackageStatusCreator, Error},
 };
 use csaf::{
     vulnerability::{ProductStatus, Vulnerability},
     Csaf,
 };
-use std::io::Read;
-use std::str::FromStr;
+use std::{io::Read, str::FromStr};
 use time::OffsetDateTime;
 use tracing::{info_span, instrument};
-use trustify_common::{db::Transactional, hashing::Digests, id::Id, purl::Purl};
+use trustify_common::{db::Transactional, hashing::Digests, id::Id};
 use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity::labels::Labels;
 
@@ -153,63 +151,18 @@ impl<'g> CsafLoader<'g> {
         product_status: &ProductStatus,
         tx: TX,
     ) -> Result<(), Error> {
-        for r in product_status.fixed.iter().flatten() {
-            for purl in resolve_purls(csaf, r) {
-                let package = Purl::from(purl.clone());
+        let mut creator = PackageStatusCreator::new(
+            advisory_vulnerability.advisory_vulnerability.advisory_id,
+            advisory_vulnerability
+                .advisory_vulnerability
+                .vulnerability_id,
+        );
 
-                if let Some(version) = &package.version {
-                    advisory_vulnerability
-                        .ingest_package_status(
-                            &package,
-                            "fixed",
-                            VersionInfo {
-                                scheme: "generic".to_string(),
-                                spec: VersionSpec::Exact(version.clone()),
-                            },
-                            &tx,
-                        )
-                        .await?
-                }
-            }
-        }
-        for r in product_status.known_not_affected.iter().flatten() {
-            for purl in resolve_purls(csaf, r) {
-                let package = Purl::from(purl.clone());
+        creator.add_all(csaf, &product_status.fixed, "fixed");
+        creator.add_all(csaf, &product_status.known_not_affected, "not_affected");
+        creator.add_all(csaf, &product_status.known_affected, "affected");
 
-                if let Some(version) = &package.version {
-                    advisory_vulnerability
-                        .ingest_package_status(
-                            &package,
-                            "not_affected",
-                            VersionInfo {
-                                scheme: "generic".to_string(),
-                                spec: VersionSpec::Exact(version.clone()),
-                            },
-                            &tx,
-                        )
-                        .await?
-                }
-            }
-        }
-        for r in product_status.known_affected.iter().flatten() {
-            for purl in resolve_purls(csaf, r) {
-                let package = Purl::from(purl.clone());
-
-                if let Some(version) = &package.version {
-                    advisory_vulnerability
-                        .ingest_package_status(
-                            &package,
-                            "affected",
-                            VersionInfo {
-                                scheme: "generic".to_string(),
-                                spec: VersionSpec::Exact(version.clone()),
-                            },
-                            &tx,
-                        )
-                        .await?
-                }
-            }
-        }
+        creator.create(&self.graph.connection(&tx)).await?;
 
         Ok(())
     }
