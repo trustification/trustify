@@ -1,5 +1,6 @@
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
-
+use std::fmt::Debug;
+use tracing::instrument;
 use trustify_common::db::Transactional;
 use trustify_entity::organization;
 
@@ -52,9 +53,10 @@ impl super::Graph {
             .map(|organization| OrganizationContext::new(self, organization)))
     }
 
+    #[instrument(skip(self, information, tx), err)]
     pub async fn ingest_organization<TX: AsRef<Transactional>>(
         &self,
-        name: impl Into<String>,
+        name: impl Into<String> + Debug,
         information: impl Into<OrganizationInformation>,
         tx: TX,
     ) -> Result<OrganizationContext, Error> {

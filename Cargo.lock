@@ -6722,6 +6722,7 @@ version = "0.1.0-alpha.8"
 dependencies = [
  "anyhow",
  "bytes",
+ "csaf",
  "cyclonedx-bom",
  "humantime",
  "log",
