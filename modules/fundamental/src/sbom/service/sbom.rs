@@ -169,6 +169,7 @@ impl SbomService {
                 sbom_package::Entity
                     .columns()
                     .add_columns(sbom_node::Entity)
+                    .add_columns(package::Entity)
                     .add_columns(sbom_package_cpe_ref::Entity)
                     .add_columns(sbom_package_purl_ref::Entity),
             )?

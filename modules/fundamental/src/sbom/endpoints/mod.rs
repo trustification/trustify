@@ -325,3 +325,6 @@ pub async fn download(
         None => HttpResponse::NotFound().finish(),
     })
 }
+
+#[cfg(test)]
+mod test;
