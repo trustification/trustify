@@ -6,21 +6,19 @@ use trustify_common::db::Database;
 use trustify_common::model::Paginated;
 use utoipa::OpenApi;
 
-mod r#type;
-
 mod base;
-
+mod r#type;
 mod version;
 
 pub fn configure(config: &mut web::ServiceConfig, db: Database) {
-    let advisory_service = PackageService::new(db);
+    let package_service = PackageService::new(db);
 
     config
-        .app_data(web::Data::new(advisory_service))
+        .app_data(web::Data::new(package_service))
         .service(r#type::all)
         .service(r#type::get)
-        .service(r#type::get_package)
-        .service(r#type::get_package_version)
+        .service(r#type::get_purl)
+        .service(r#type::get_purl_version)
         .service(base::get)
         .service(base::all)
         .service(version::get)
@@ -33,8 +31,8 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     paths(
         r#type::all,
         r#type::get,
-        r#type::get_package,
-        r#type::get_package_version,
+        r#type::get_purl,
+        r#type::get_purl_version,
         base::get,
         version::get,
         get,
@@ -63,34 +61,34 @@ pub struct ApiDoc;
 
 #[utoipa::path(
     context_path= "/api",
-    tag = "package",
+    tag = "purl",
     params(
-        ("uuid" = String, Path, description = "opaque UUID identifier for a fully-qualified package")
+        ("id" = String, Path, description = "opaque identifier for a fully-qualified PURL")
     ),
     responses(
-        (status = 200, description = "Details for the qualified package", body = QualifiedPackageDetails),
+        (status = 200, description = "Details for the qualified PURL", body = QualifiedPackageDetails),
     ),
 )]
-#[get("/v1/package/{uuid}")]
+#[get("/v1/package/by-purl/{id}")]
 pub async fn get(
     service: web::Data<PackageService>,
-    uuid: web::Path<Uuid>,
+    id: web::Path<Uuid>,
 ) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(service.qualified_package_by_uuid(&uuid, ()).await?))
+    Ok(HttpResponse::Ok().json(service.qualified_package_by_uuid(&id, ()).await?))
 }
 
 #[utoipa::path(
     context_path= "/api",
-    tag = "package",
+    tag = "purl",
     params(
         Query,
         Paginated,
     ),
     responses(
-        (status = 200, description = "All relevant matching qualified packages", body = PaginatedQualifiedPackageSummary),
+        (status = 200, description = "All relevant matching qualified PURLs", body = PaginatedQualifiedPackageSummary),
     ),
 )]
-#[get("/v1/package")]
+#[get("/v1/package/by-purl")]
 pub async fn all(
     service: web::Data<PackageService>,
     web::Query(search): web::Query<Query>,

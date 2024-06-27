@@ -25,7 +25,10 @@ impl PackageService {
         Self { db }
     }
 
-    pub async fn types<TX: AsRef<Transactional>>(&self, tx: TX) -> Result<Vec<TypeSummary>, Error> {
+    pub async fn purl_types<TX: AsRef<Transactional>>(
+        &self,
+        tx: TX,
+    ) -> Result<Vec<TypeSummary>, Error> {
         #[derive(FromQueryResult)]
         struct Ecosystem {
             r#type: String,
