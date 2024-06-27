@@ -140,7 +140,9 @@ impl QualifiedPackageStatus {
         package_status: &package_status::Model,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
-        let status = package_status.find_related(status::Entity).one(tx).await?;
+        let status = status::Entity::find_by_id(package_status.status_id)
+            .one(tx)
+            .await?;
 
         let status = status.map(|e| e.slug).unwrap_or("unknown".to_string());
 
