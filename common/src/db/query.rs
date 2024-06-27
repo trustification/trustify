@@ -527,7 +527,11 @@ fn encode(s: &str) -> String {
 }
 
 fn decode(s: &str) -> String {
-    s.replace('\x07', "&").replace('\x08', "|")
+    s.replace('\x07', "&")
+        .replace('\x08', "|")
+        .replace(r"\\", "\x08")
+        .replace('\\', "")
+        .replace('\x08', r"\")
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -698,6 +702,14 @@ mod tests {
             r#""advisory"."location" = 'foo'"#
         );
         assert_eq!(
+            where_clause(r"location=foo\=bar")?,
+            r#""advisory"."location" = 'foo=bar'"#
+        );
+        assert_eq!(
+            where_clause(r"location=foo\\bar")?,
+            r#""advisory"."location" = E'foo\\bar'"#
+        );
+        assert_eq!(
             where_clause("location!=foo")?,
             r#""advisory"."location" <> 'foo'"#
         );
@@ -785,6 +797,10 @@ mod tests {
         assert_eq!(
             where_clause("foo")?,
             r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')"#
+        );
+        assert_eq!(
+            where_clause(r"type\=jar")?,
+            r#"("advisory"."location" ILIKE '%type=jar%') OR ("advisory"."title" ILIKE '%type=jar%')"#
         );
         assert_eq!(
             where_clause("foo&location=bar")?,
