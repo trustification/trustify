@@ -25,6 +25,7 @@ impl Graph {
             CpeType::Hardware => query.filter(entity::cpe::Column::Part.eq("h")),
             CpeType::OperatingSystem => query.filter(entity::cpe::Column::Part.eq("o")),
             CpeType::Application => query.filter(entity::cpe::Column::Part.eq("a")),
+            CpeType::Empty => query.filter(entity::cpe::Column::Part.is_null()),
         };
 
         query = match cpe.vendor() {

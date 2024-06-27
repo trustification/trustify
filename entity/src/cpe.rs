@@ -45,6 +45,7 @@ impl ActiveModel {
                 CpeType::Hardware => Set(Some("h".to_string())),
                 CpeType::OperatingSystem => Set(Some("o".to_string())),
                 CpeType::Application => Set(Some("a".to_string())),
+                CpeType::Empty => Set(None),
             },
             vendor: match cpe.vendor() {
                 Component::Any => Set(Some("*".to_string())),
