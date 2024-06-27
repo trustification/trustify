@@ -87,7 +87,7 @@ async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     )
     .await;
 
-    let uri = "/api/v1/package/type";
+    let uri = "/api/v1/package/by-purl/type";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -121,7 +121,7 @@ async fn r#type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     )
     .await;
 
-    let uri = "/api/v1/package/type/maven";
+    let uri = "/api/v1/package/by-purl/type/maven";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -133,7 +133,7 @@ async fn r#type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let log4j = &response.items[0];
     assert_eq!("pkg://maven/org.apache/log4j", log4j.head.purl.to_string());
 
-    let uri = "/api/v1/package/type/rpm";
+    let uri = "/api/v1/package/by-purl/type/rpm";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -160,7 +160,7 @@ async fn type_package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     )
     .await;
 
-    let uri = "/api/v1/package/type/maven/org.apache/log4j";
+    let uri = "/api/v1/package/by-purl/type/maven/org.apache/log4j";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -200,7 +200,7 @@ async fn type_package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error>
     )
     .await;
 
-    let uri = "/api/v1/package/type/maven/org.apache/log4j@1.2.3";
+    let uri = "/api/v1/package/by-purl/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PackageVersionDetails =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -214,7 +214,7 @@ async fn type_package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         .iter()
         .any(|e| e.purl.to_string() == "pkg://maven/org.apache/log4j@1.2.3?jdk=17"));
 
-    let uri = "/api/v1/package/type/rpm/sendmail@4.4.4";
+    let uri = "/api/v1/package/by-purl/type/rpm/sendmail@4.4.4";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PackageVersionDetails =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -235,7 +235,7 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     )
     .await;
 
-    let uri = "/api/v1/package/type/maven/org.apache/log4j@1.2.3";
+    let uri = "/api/v1/package/by-purl/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PackageVersionDetails =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -249,7 +249,7 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(jdk17.is_some());
     let jdk17 = jdk17.unwrap();
 
-    let uri = format!("/api/v1/package/{}", jdk17.uuid);
+    let uri = format!("/api/v1/package/by-purl/{}", jdk17.uuid);
     let request = TestRequest::get().uri(&uri).to_request();
     let response: QualifiedPackageDetails =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -273,13 +273,13 @@ async fn version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     )
     .await;
 
-    let uri = "/api/v1/package/type/maven/org.apache/log4j@1.2.3";
+    let uri = "/api/v1/package/by-purl/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
     let log4j_123: PackageVersionDetails =
         actix_web::test::call_and_read_body_json(&app, request).await;
     assert_eq!(2, log4j_123.packages.len());
 
-    let uri = format!("/api/v1/package/version/{}", log4j_123.head.uuid);
+    let uri = format!("/api/v1/package/by-purl/version/{}", log4j_123.head.uuid);
     let request = TestRequest::get().uri(&uri).to_request();
     let response: PackageVersionDetails =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -301,12 +301,12 @@ async fn base(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     )
     .await;
 
-    let uri = "/api/v1/package/type/maven/org.apache/log4j";
+    let uri = "/api/v1/package/by-purl/type/maven/org.apache/log4j";
     let request = TestRequest::get().uri(uri).to_request();
     let log4j: PackageDetails = actix_web::test::call_and_read_body_json(&app, request).await;
     assert_eq!(2, log4j.versions.len());
 
-    let uri = format!("/api/v1/package/base/{}", log4j.head.uuid);
+    let uri = format!("/api/v1/package/by-purl/base/{}", log4j.head.uuid);
     let request = TestRequest::get().uri(&uri).to_request();
     let response: PackageDetails = actix_web::test::call_and_read_body_json(&app, request).await;
 
@@ -327,7 +327,7 @@ async fn base_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     )
     .await;
 
-    let uri = "/api/v1/package/base?q=log4j";
+    let uri = "/api/v1/package/by-purl/base?q=log4j";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PaginatedPackageSummary =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -349,7 +349,7 @@ async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     )
     .await;
 
-    let uri = "/api/v1/package?q=log4j";
+    let uri = "/api/v1/package/by-purl?q=log4j";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PaginatedQualifiedPackageSummary =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -371,7 +371,7 @@ async fn qualified_packages_filtering(ctx: TrustifyContext) -> Result<(), anyhow
     )
     .await;
 
-    let uri = "/api/v1/package?q=type=maven";
+    let uri = "/api/v1/package/by-purl?q=type=maven";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PaginatedQualifiedPackageSummary =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -425,7 +425,7 @@ async fn package_with_status(ctx: TrustifyContext) -> Result<(), anyhow::Error> 
     )
     .await;
 
-    let uri = "/api/v1/package?q=hyper";
+    let uri = "/api/v1/package/by-purl?q=hyper";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PaginatedQualifiedPackageSummary =
         actix_web::test::call_and_read_body_json(&app, request).await;
@@ -434,7 +434,7 @@ async fn package_with_status(ctx: TrustifyContext) -> Result<(), anyhow::Error> 
 
     let uuid = response.items[0].head.uuid;
 
-    let uri = format!("/api/v1/package/{uuid}");
+    let uri = format!("/api/v1/package/by-purl/{uuid}");
 
     let request = TestRequest::get().uri(&uri).to_request();
     let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;

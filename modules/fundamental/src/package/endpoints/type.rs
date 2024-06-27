@@ -4,32 +4,32 @@ use trustify_common::db::query::Query;
 use trustify_common::model::Paginated;
 
 #[utoipa::path(
-    tag = "package",
+    tag = "purl",
     context_path= "/api",
     params(
     ),
     responses(
-        (status = 200, description = "List of all known package types", body = Vec<EcosystemSummary>),
+        (status = 200, description = "List of all known PURL types", body = Vec<EcosystemSummary>),
     ),
 )]
-#[get("/v1/package/type")]
+#[get("/v1/package/by-purl/type")]
 pub async fn all(service: web::Data<PackageService>) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(service.types(()).await?))
+    Ok(HttpResponse::Ok().json(service.purl_types(()).await?))
 }
 
 #[utoipa::path(
-    tag = "package",
+    tag = "purl",
     context_path= "/api",
     params(
         Query,
         Paginated,
-        ("type" = String, Path, description = "pURL identifier of a type")
+        ("type" = String, Path, description = "PURL identifier of a type")
     ),
     responses(
-        (status = 200, description = "Information regarding packages within an type", body = PaginatedPackageSummary),
+        (status = 200, description = "Information regarding PURLs within an type", body = PaginatedPackageSummary),
     ),
 )]
-#[get("/v1/package/type/{type}")]
+#[get("/v1/package/by-purl/type/{type}")]
 pub async fn get(
     service: web::Data<PackageService>,
     r#type: web::Path<String>,
@@ -44,19 +44,19 @@ pub async fn get(
 }
 
 #[utoipa::path(
-    tag = "package",
+    tag = "purl",
     context_path= "/api",
     params(
-        ("type" = String, Path, description = "pURL identifier of a type"),
-        ("namespace_and_name" = String, Path, description = "name of the package optionally preceeded by its namespace"),
+        ("type" = String, Path, description = "PURL identifier of a type"),
+        ("namespace_and_name" = String, Path, description = "name of the package optionally preceded by its namespace"),
 
     ),
     responses(
         (status = 200, description = "Matching vulnerabilities", body = PackageDetails),
     ),
 )]
-#[get("/v1/package/type/{type}/{namespace_and_name:[^@]+}")]
-pub async fn get_package(
+#[get("/v1/package/by-purl/type/{type}/{namespace_and_name:[^@]+}")]
+pub async fn get_purl(
     service: web::Data<PackageService>,
     path: web::Path<(String, String)>,
 ) -> actix_web::Result<impl Responder> {
@@ -72,19 +72,19 @@ pub async fn get_package(
 }
 
 #[utoipa::path(
-    tag = "package",
+    tag = "purl",
     context_path= "/api",
     params(
-        ("type" = String, Path, description = "pURL identifier of a type"),
-        ("namespace_and_name" = String, Path, description = "name of the package optionally preceeded by its namespace"),
+        ("type" = String, Path, description = "PURL identifier of a type"),
+        ("namespace_and_name" = String, Path, description = "name of the package optionally preceded by its namespace"),
         ("version" = String, Path, description = "version of the package"),
     ),
     responses(
         (status = 200, description = "Matching vulnerabilities", body = PackageVersionDetails),
     ),
 )]
-#[get("/v1/package/type/{type}/{namespace_and_name:[^@]+}@{version}")]
-pub async fn get_package_version(
+#[get("/v1/package/by-purl/type/{type}/{namespace_and_name:[^@]+}@{version}")]
+pub async fn get_purl_version(
     service: web::Data<PackageService>,
     path: web::Path<(String, String, String)>,
 ) -> actix_web::Result<impl Responder> {

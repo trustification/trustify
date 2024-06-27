@@ -46,7 +46,7 @@ async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
         .await?;
 
-    let types = service.types(()).await?;
+    let types = service.purl_types(()).await?;
 
     assert_eq!(2, types.len());
 
