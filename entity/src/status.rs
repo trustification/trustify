@@ -1,3 +1,4 @@
+use crate::package_status;
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
@@ -11,6 +12,15 @@ pub struct Model {
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {}
+pub enum Relation {
+    #[sea_orm(has_many = "super::package_status::Entity")]
+    PackageStatus,
+}
+
+impl Related<package_status::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::PackageStatus.def()
+    }
+}
 
 impl ActiveModelBehavior for ActiveModel {}

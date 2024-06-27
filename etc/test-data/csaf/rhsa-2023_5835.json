@@ -1,0 +1,561 @@
+{
+  "document": {
+    "aggregate_severity": {
+      "namespace": "https://access.redhat.com/security/updates/classification/",
+      "text": "Important"
+    },
+    "category": "csaf_vex",
+    "csaf_version": "2.0",
+    "distribution": {
+      "text": "Copyright © Red Hat, Inc. All rights reserved.",
+      "tlp": {
+        "label": "WHITE",
+        "url": "https://www.first.org/tlp/"
+      }
+    },
+    "lang": "en",
+    "notes": [
+      {
+        "category": "summary",
+        "text": "An update for rhc-worker-script is now available for Red Hat Enterprise Linux 7.\n\nRed Hat Product Security has rated this update as having a security impact of Important. A Common Vulnerability Scoring System (CVSS) base score, which gives a detailed severity rating, is available for each vulnerability from the CVE link(s) in the References section.",
+        "title": "Topic"
+      },
+      {
+        "category": "general",
+        "text": "The rhc-worker-script packages provide Remote Host Configuration (rhc) worker for executing an interpreted programming language script on hosts managed by Red Hat Insights. \n\nSecurity Fix(es):\n\n* golang: net/http, x/net/http2: rapid stream resets can cause excessive work (CVE-2023-44487) (CVE-2023-39325)\n\n* HTTP/2: Multiple HTTP/2 enabled web servers are vulnerable to a DDoS attack (Rapid Reset Attack) (CVE-2023-44487)\n\nA Red Hat Security Bulletin which addresses further details about this flaw is available in the References section.\n\nFor more details about the security issue(s), including the impact, a CVSS score, acknowledgments, and other related information, refer to the CVE page(s) listed in the References section.",
+        "title": "Details"
+      },
+      {
+        "category": "legal_disclaimer",
+        "text": "This content is licensed under the Creative Commons Attribution 4.0 International License (https://creativecommons.org/licenses/by/4.0/). If you distribute this content, or a modified version of it, you must provide attribution to Red Hat Inc. and provide a link to the original.",
+        "title": "Terms of Use"
+      }
+    ],
+    "publisher": {
+      "category": "vendor",
+      "contact_details": "https://access.redhat.com/security/team/contact/",
+      "issuing_authority": "Red Hat Product Security is responsible for vulnerability handling across all Red Hat offerings.",
+      "name": "Red Hat Product Security",
+      "namespace": "https://www.redhat.com"
+    },
+    "references": [
+      {
+        "category": "self",
+        "summary": "https://access.redhat.com/errata/RHSA-2023:5835",
+        "url": "https://access.redhat.com/errata/RHSA-2023:5835"
+      },
+      {
+        "category": "external",
+        "summary": "https://access.redhat.com/security/updates/classification/#important",
+        "url": "https://access.redhat.com/security/updates/classification/#important"
+      },
+      {
+        "category": "external",
+        "summary": "https://access.redhat.com/security/vulnerabilities/RHSB-2023-003",
+        "url": "https://access.redhat.com/security/vulnerabilities/RHSB-2023-003"
+      },
+      {
+        "category": "external",
+        "summary": "2242803",
+        "url": "https://bugzilla.redhat.com/show_bug.cgi?id=2242803"
+      },
+      {
+        "category": "external",
+        "summary": "2243296",
+        "url": "https://bugzilla.redhat.com/show_bug.cgi?id=2243296"
+      },
+      {
+        "category": "self",
+        "summary": "Canonical URL",
+        "url": "https://access.redhat.com/security/data/csaf/v2/advisories/2023/rhsa-2023_5835.json"
+      }
+    ],
+    "title": "Red Hat Security Advisory: rhc-worker-script enhancement and security update",
+    "tracking": {
+      "current_release_date": "2024-04-28T02:55:15+00:00",
+      "generator": {
+        "date": "2024-04-28T02:55:15+00:00",
+        "engine": {
+          "name": "Red Hat SDEngine",
+          "version": "3.29.1"
+        }
+      },
+      "id": "RHSA-2023:5835",
+      "initial_release_date": "2023-10-18T07:59:41+00:00",
+      "revision_history": [
+        {
+          "date": "2023-10-18T07:59:41+00:00",
+          "number": "1",
+          "summary": "Initial version"
+        },
+        {
+          "date": "2023-10-18T07:59:41+00:00",
+          "number": "2",
+          "summary": "Last updated version"
+        },
+        {
+          "date": "2024-04-28T02:55:15+00:00",
+          "number": "3",
+          "summary": "Last generated version"
+        }
+      ],
+      "status": "final",
+      "version": "3"
+    }
+  },
+  "product_tree": {
+    "branches": [
+      {
+        "branches": [
+          {
+            "branches": [
+              {
+                "category": "product_name",
+                "name": "Red Hat Enterprise Linux Client (v. 7)",
+                "product": {
+                  "name": "Red Hat Enterprise Linux Client (v. 7)",
+                  "product_id": "7Client-7.9.Z",
+                  "product_identification_helper": {
+                    "cpe": "cpe:/o:redhat:enterprise_linux:7::client"
+                  }
+                }
+              },
+              {
+                "category": "product_name",
+                "name": "Red Hat Enterprise Linux Server (v. 7)",
+                "product": {
+                  "name": "Red Hat Enterprise Linux Server (v. 7)",
+                  "product_id": "7Server-7.9.Z",
+                  "product_identification_helper": {
+                    "cpe": "cpe:/o:redhat:enterprise_linux:7::server"
+                  }
+                }
+              },
+              {
+                "category": "product_name",
+                "name": "Red Hat Enterprise Linux Workstation (v. 7)",
+                "product": {
+                  "name": "Red Hat Enterprise Linux Workstation (v. 7)",
+                  "product_id": "7Workstation-7.9.Z",
+                  "product_identification_helper": {
+                    "cpe": "cpe:/o:redhat:enterprise_linux:7::workstation"
+                  }
+                }
+              }
+            ],
+            "category": "product_family",
+            "name": "Red Hat Enterprise Linux"
+          },
+          {
+            "branches": [
+              {
+                "category": "product_version",
+                "name": "rhc-worker-script-0:0.5-1.el7_9.src",
+                "product": {
+                  "name": "rhc-worker-script-0:0.5-1.el7_9.src",
+                  "product_id": "rhc-worker-script-0:0.5-1.el7_9.src",
+                  "product_identification_helper": {
+                    "purl": "pkg:rpm/redhat/rhc-worker-script@0.5-1.el7_9?arch=src"
+                  }
+                }
+              }
+            ],
+            "category": "architecture",
+            "name": "src"
+          },
+          {
+            "branches": [
+              {
+                "category": "product_version",
+                "name": "rhc-worker-script-0:0.5-1.el7_9.x86_64",
+                "product": {
+                  "name": "rhc-worker-script-0:0.5-1.el7_9.x86_64",
+                  "product_id": "rhc-worker-script-0:0.5-1.el7_9.x86_64",
+                  "product_identification_helper": {
+                    "purl": "pkg:rpm/redhat/rhc-worker-script@0.5-1.el7_9?arch=x86_64"
+                  }
+                }
+              }
+            ],
+            "category": "architecture",
+            "name": "x86_64"
+          }
+        ],
+        "category": "vendor",
+        "name": "Red Hat"
+      }
+    ],
+    "relationships": [
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "rhc-worker-script-0:0.5-1.el7_9.src as a component of Red Hat Enterprise Linux Client (v. 7)",
+          "product_id": "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src"
+        },
+        "product_reference": "rhc-worker-script-0:0.5-1.el7_9.src",
+        "relates_to_product_reference": "7Client-7.9.Z"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "rhc-worker-script-0:0.5-1.el7_9.x86_64 as a component of Red Hat Enterprise Linux Client (v. 7)",
+          "product_id": "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64"
+        },
+        "product_reference": "rhc-worker-script-0:0.5-1.el7_9.x86_64",
+        "relates_to_product_reference": "7Client-7.9.Z"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "rhc-worker-script-0:0.5-1.el7_9.src as a component of Red Hat Enterprise Linux Server (v. 7)",
+          "product_id": "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src"
+        },
+        "product_reference": "rhc-worker-script-0:0.5-1.el7_9.src",
+        "relates_to_product_reference": "7Server-7.9.Z"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "rhc-worker-script-0:0.5-1.el7_9.x86_64 as a component of Red Hat Enterprise Linux Server (v. 7)",
+          "product_id": "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64"
+        },
+        "product_reference": "rhc-worker-script-0:0.5-1.el7_9.x86_64",
+        "relates_to_product_reference": "7Server-7.9.Z"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "rhc-worker-script-0:0.5-1.el7_9.src as a component of Red Hat Enterprise Linux Workstation (v. 7)",
+          "product_id": "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src"
+        },
+        "product_reference": "rhc-worker-script-0:0.5-1.el7_9.src",
+        "relates_to_product_reference": "7Workstation-7.9.Z"
+      },
+      {
+        "category": "default_component_of",
+        "full_product_name": {
+          "name": "rhc-worker-script-0:0.5-1.el7_9.x86_64 as a component of Red Hat Enterprise Linux Workstation (v. 7)",
+          "product_id": "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64"
+        },
+        "product_reference": "rhc-worker-script-0:0.5-1.el7_9.x86_64",
+        "relates_to_product_reference": "7Workstation-7.9.Z"
+      }
+    ]
+  },
+  "vulnerabilities": [
+    {
+      "cve": "CVE-2023-39325",
+      "cwe": {
+        "id": "CWE-400",
+        "name": "Uncontrolled Resource Consumption"
+      },
+      "discovery_date": "2023-10-10T00:00:00+00:00",
+      "ids": [
+        {
+          "system_name": "Red Hat Bugzilla ID",
+          "text": "2243296"
+        }
+      ],
+      "notes": [
+        {
+          "category": "description",
+          "text": "A flaw was found in handling multiplexed streams in the HTTP/2 protocol. A client can repeatedly make a request for a new multiplex stream and immediately send an RST_STREAM frame to cancel it. This creates extra work for the server setting up and tearing down the streams while not hitting any server-side limit for the maximum number of active streams per connection, resulting in a denial of service due to server resource consumption. Red Hat has rated the severity of this flaw as 'Important' as the US Cybersecurity and Infrastructure Security Agency (CISA) declared this vulnerability an active exploit.\r\n\r\nCVE-2023-39325 was assigned for the `Rapid Reset Attack` in the Go language packages.",
+          "title": "Vulnerability description"
+        },
+        {
+          "category": "summary",
+          "text": "golang: net/http, x/net/http2: rapid stream resets can cause excessive work (CVE-2023-44487)",
+          "title": "Vulnerability summary"
+        },
+        {
+          "category": "other",
+          "text": "This CVE is related to CVE-2023-44487.\n\nThe majority of RHEL utilities are not long-running applications; instead, they are command-line tools. These tools utilize Golang package as build-time dependency, which is why they are classified as having a \"Moderate\" level of impact.",
+          "title": "Statement"
+        },
+        {
+          "category": "general",
+          "text": "The CVSS score(s) listed for this vulnerability do not reflect the associated product's status, and are included for informational purposes to better understand the severity of this vulnerability.",
+          "title": "CVSS score applicability"
+        }
+      ],
+      "product_status": {
+        "fixed": [
+          "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+          "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+          "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+          "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+          "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+          "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64"
+        ]
+      },
+      "references": [
+        {
+          "category": "self",
+          "summary": "Canonical URL",
+          "url": "https://access.redhat.com/security/cve/CVE-2023-39325"
+        },
+        {
+          "category": "external",
+          "summary": "RHBZ#2243296",
+          "url": "https://bugzilla.redhat.com/show_bug.cgi?id=2243296"
+        },
+        {
+          "category": "external",
+          "summary": "https://www.cve.org/CVERecord?id=CVE-2023-39325",
+          "url": "https://www.cve.org/CVERecord?id=CVE-2023-39325"
+        },
+        {
+          "category": "external",
+          "summary": "https://nvd.nist.gov/vuln/detail/CVE-2023-39325",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2023-39325"
+        },
+        {
+          "category": "external",
+          "summary": "https://access.redhat.com/security/cve/CVE-2023-44487",
+          "url": "https://access.redhat.com/security/cve/CVE-2023-44487"
+        },
+        {
+          "category": "external",
+          "summary": "https://access.redhat.com/security/vulnerabilities/RHSB-2023-003",
+          "url": "https://access.redhat.com/security/vulnerabilities/RHSB-2023-003"
+        },
+        {
+          "category": "external",
+          "summary": "https://go.dev/issue/63417",
+          "url": "https://go.dev/issue/63417"
+        },
+        {
+          "category": "external",
+          "summary": "https://pkg.go.dev/vuln/GO-2023-2102",
+          "url": "https://pkg.go.dev/vuln/GO-2023-2102"
+        },
+        {
+          "category": "external",
+          "summary": "https://www.cisa.gov/news-events/alerts/2023/10/10/http2-rapid-reset-vulnerability-cve-2023-44487",
+          "url": "https://www.cisa.gov/news-events/alerts/2023/10/10/http2-rapid-reset-vulnerability-cve-2023-44487"
+        }
+      ],
+      "release_date": "2023-10-10T00:00:00+00:00",
+      "remediations": [
+        {
+          "category": "vendor_fix",
+          "details": "Before applying this update, make sure all previously released errata relevant to your system have been applied.\n\nFor details on how to apply this update, refer to:\n\nhttps://access.redhat.com/articles/11258",
+          "product_ids": [
+            "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+            "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+            "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64"
+          ],
+          "restart_required": {
+            "category": "none"
+          },
+          "url": "https://access.redhat.com/errata/RHSA-2023:5835"
+        },
+        {
+          "category": "workaround",
+          "details": "The default stream concurrency limit in golang is 250 streams (requests) per HTTP/2 connection. This value may be adjusted in the golang.org/x/net/http2 package using the Server.MaxConcurrentStreams setting and the ConfigureServer function which are available in golang.org/x/net/http2.",
+          "product_ids": [
+            "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+            "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+            "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64"
+          ]
+        }
+      ],
+      "scores": [
+        {
+          "cvss_v3": {
+            "attackComplexity": "LOW",
+            "attackVector": "NETWORK",
+            "availabilityImpact": "HIGH",
+            "baseScore": 7.5,
+            "baseSeverity": "HIGH",
+            "confidentialityImpact": "NONE",
+            "integrityImpact": "NONE",
+            "privilegesRequired": "NONE",
+            "scope": "UNCHANGED",
+            "userInteraction": "NONE",
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+            "version": "3.1"
+          },
+          "products": [
+            "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+            "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+            "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64"
+          ]
+        }
+      ],
+      "threats": [
+        {
+          "category": "impact",
+          "details": "Important"
+        }
+      ],
+      "title": "golang: net/http, x/net/http2: rapid stream resets can cause excessive work (CVE-2023-44487)"
+    },
+    {
+      "cve": "CVE-2023-44487",
+      "cwe": {
+        "id": "CWE-400",
+        "name": "Uncontrolled Resource Consumption"
+      },
+      "discovery_date": "2023-10-09T00:00:00+00:00",
+      "ids": [
+        {
+          "system_name": "Red Hat Bugzilla ID",
+          "text": "2242803"
+        }
+      ],
+      "notes": [
+        {
+          "category": "description",
+          "text": "A flaw was found in handling multiplexed streams in the HTTP/2 protocol. A client can repeatedly make a request for a new multiplex stream and immediately send an RST_STREAM frame to cancel it. This creates extra work for the server setting up and tearing down the streams while not hitting any server-side limit for the maximum number of active streams per connection, resulting in a denial of service due to server resource consumption. Red Hat has rated the severity of this flaw as 'Important' as the US Cybersecurity and Infrastructure Security Agency (CISA) declared this vulnerability an active exploit.\r\n\r\nCVE-2023-39325 was assigned for the Rapid Reset Attack in the Go language packages.\r\n\r\nSecurity Bulletin\r\nhttps://access.redhat.com/security/vulnerabilities/RHSB-2023-003",
+          "title": "Vulnerability description"
+        },
+        {
+          "category": "summary",
+          "text": "HTTP/2: Multiple HTTP/2 enabled web servers are vulnerable to a DDoS attack (Rapid Reset Attack)",
+          "title": "Vulnerability summary"
+        },
+        {
+          "category": "other",
+          "text": "NGINX has been marked as Moderate Impact because, for performance and resource consumption reasons, NGINX limits the number of concurrent streams to a default of 128. In addition, to optimally balance network and server performance, NGINX allows the client to persist HTTP connections for up to 1000 requests by default using an HTTP keepalive.\n\nThe majority of RHEL utilities are not long-running applications; instead, they are command-line tools. These tools utilize Golang package as build-time dependency, which is why they are classified as having a \"Moderate\" level of impact.",
+          "title": "Statement"
+        },
+        {
+          "category": "general",
+          "text": "The CVSS score(s) listed for this vulnerability do not reflect the associated product's status, and are included for informational purposes to better understand the severity of this vulnerability.",
+          "title": "CVSS score applicability"
+        }
+      ],
+      "product_status": {
+        "fixed": [
+          "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+          "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+          "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+          "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+          "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+          "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64"
+        ]
+      },
+      "references": [
+        {
+          "category": "self",
+          "summary": "Canonical URL",
+          "url": "https://access.redhat.com/security/cve/CVE-2023-44487"
+        },
+        {
+          "category": "external",
+          "summary": "RHBZ#2242803",
+          "url": "https://bugzilla.redhat.com/show_bug.cgi?id=2242803"
+        },
+        {
+          "category": "external",
+          "summary": "https://www.cve.org/CVERecord?id=CVE-2023-44487",
+          "url": "https://www.cve.org/CVERecord?id=CVE-2023-44487"
+        },
+        {
+          "category": "external",
+          "summary": "https://nvd.nist.gov/vuln/detail/CVE-2023-44487",
+          "url": "https://nvd.nist.gov/vuln/detail/CVE-2023-44487"
+        },
+        {
+          "category": "external",
+          "summary": "https://github.com/dotnet/announcements/issues/277",
+          "url": "https://github.com/dotnet/announcements/issues/277"
+        },
+        {
+          "category": "external",
+          "summary": "https://pkg.go.dev/vuln/GO-2023-2102",
+          "url": "https://pkg.go.dev/vuln/GO-2023-2102"
+        },
+        {
+          "category": "external",
+          "summary": "https://www.cisa.gov/news-events/alerts/2023/10/10/http2-rapid-reset-vulnerability-cve-2023-44487",
+          "url": "https://www.cisa.gov/news-events/alerts/2023/10/10/http2-rapid-reset-vulnerability-cve-2023-44487"
+        },
+        {
+          "category": "external",
+          "summary": "https://www.nginx.com/blog/http-2-rapid-reset-attack-impacting-f5-nginx-products/",
+          "url": "https://www.nginx.com/blog/http-2-rapid-reset-attack-impacting-f5-nginx-products/"
+        }
+      ],
+      "release_date": "2023-10-10T00:00:00+00:00",
+      "remediations": [
+        {
+          "category": "vendor_fix",
+          "details": "Before applying this update, make sure all previously released errata relevant to your system have been applied.\n\nFor details on how to apply this update, refer to:\n\nhttps://access.redhat.com/articles/11258",
+          "product_ids": [
+            "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+            "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+            "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64"
+          ],
+          "restart_required": {
+            "category": "none"
+          },
+          "url": "https://access.redhat.com/errata/RHSA-2023:5835"
+        },
+        {
+          "category": "workaround",
+          "details": "Users are strongly urged to update their software as soon as fixes are available. \nThere are several mitigation approaches for this flaw. \n\n1. If circumstances permit, users may disable http2 endpoints to circumvent the flaw altogether until a fix is available.\n2. IP-based blocking or flood protection and rate control tools may be used at network endpoints to filter incoming traffic.\n3. Several package specific mitigations are also available. \n     a. nginx: https://www.nginx.com/blog/http-2-rapid-reset-attack-impacting-f5-nginx-products/\n     b. netty: https://github.com/netty/netty/security/advisories/GHSA-xpw8-rcwv-8f8p\n     c. haproxy: https://www.haproxy.com/blog/haproxy-is-not-affected-by-the-http-2-rapid-reset-attack-cve-2023-44487\n     d. nghttp2: https://github.com/nghttp2/nghttp2/security/advisories/GHSA-vx74-f528-fxqg\n     e. golang: The default stream concurrency limit in golang is 250 streams (requests) per HTTP/2 connection. This value may be adjusted in the golang.org/x/net/http2 package using the Server.MaxConcurrentStreams setting and the ConfigureServer function which are available in golang.org/x/net/http2.",
+          "product_ids": [
+            "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+            "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+            "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64"
+          ]
+        }
+      ],
+      "scores": [
+        {
+          "cvss_v3": {
+            "attackComplexity": "LOW",
+            "attackVector": "NETWORK",
+            "availabilityImpact": "HIGH",
+            "baseScore": 7.5,
+            "baseSeverity": "HIGH",
+            "confidentialityImpact": "NONE",
+            "integrityImpact": "NONE",
+            "privilegesRequired": "NONE",
+            "scope": "UNCHANGED",
+            "userInteraction": "NONE",
+            "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+            "version": "3.1"
+          },
+          "products": [
+            "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Client-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+            "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Server-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64",
+            "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.src",
+            "7Workstation-7.9.Z:rhc-worker-script-0:0.5-1.el7_9.x86_64"
+          ]
+        }
+      ],
+      "threats": [
+        {
+          "category": "exploit_status",
+          "date": "2023-10-10T00:00:00+00:00",
+          "details": "CISA: https://www.cisa.gov/known-exploited-vulnerabilities-catalog"
+        },
+        {
+          "category": "impact",
+          "details": "Important"
+        }
+      ],
+      "title": "HTTP/2: Multiple HTTP/2 enabled web servers are vulnerable to a DDoS attack (Rapid Reset Attack)"
+    }
+  ]
+}
