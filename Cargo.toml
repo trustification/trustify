@@ -49,6 +49,7 @@ cyclonedx-bom = "0.6.1"
 env_logger = "0.11.0"
 futures = "0.3.30"
 futures-util = "0.3"
+garage-door = "0.1.0"
 git2 = { version = "0.18.3", features = ["ssh"] }
 hex = "0.4.3"
 hide = "0.1.5"
@@ -75,8 +76,8 @@ osv = { version = "0.2.0", default-features = false }
 packageurl = "0.3.0"
 parking_lot = "0.12"
 pem = "3"
-postgresql_embedded = "0.10.1"
 postgresql_archive = "0.10.1"
+postgresql_embedded = "0.10.1"
 prometheus = "0.13.3"
 rand = "0.8.5"                                                        # for testing
 regex = "1.10.3"
@@ -97,8 +98,8 @@ spdx-expression = "0.5.2"
 spdx-rs = "0.5.3"
 sqlx = "0.7"
 static-files = "0.2.3"
-tempfile = "3"
 temp-env = "0.3"
+tempfile = "3"
 test-context = "0.3"
 test-log = "0.2.16"
 thiserror = "1.0.58"
@@ -117,8 +118,6 @@ uuid = "1.7.0"
 walkdir = "2.5"
 walker-common = "0.8.0"
 walker-extras = "0.8.0"
-
-garage-door = "0.1.0"
 
 trustify-auth = { path = "common/auth", features = ["actix", "swagger"] }
 trustify-common = { path = "common" }
