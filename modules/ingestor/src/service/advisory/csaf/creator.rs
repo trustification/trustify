@@ -13,6 +13,7 @@ use trustify_common::{db::chunk::EntityChunkedIter, purl::Purl};
 use trustify_entity::{package_status, status, version_range};
 use uuid::Uuid;
 
+#[derive(Debug, PartialEq)]
 struct PackageStatus {
     package: Purl,
     status: &'static str,
@@ -37,17 +38,22 @@ impl PackageStatusCreator {
     pub fn add_all(&mut self, csaf: &Csaf, ps: &Option<Vec<ProductIdT>>, status: &'static str) {
         for r in ps.iter().flatten() {
             for purl in resolve_purls(csaf, r) {
-                let package = Purl::from(purl.clone());
+                let mut package = Purl::from(purl.clone());
+                package.qualifiers.clear();
 
                 if let Some(version) = package.version.clone() {
-                    self.entries.push(PackageStatus {
+                    let status = PackageStatus {
                         package,
                         status,
                         info: VersionInfo {
                             scheme: "generic".to_string(),
                             spec: VersionSpec::Exact(version),
                         },
-                    });
+                    };
+
+                    if !self.entries.contains(&status) {
+                        self.entries.push(status);
+                    }
                 }
             }
         }
