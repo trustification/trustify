@@ -618,7 +618,42 @@ async fn unknown_statuses(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let ingestor = IngestorService::new(Graph::new(db.clone()), storage);
 
     // ingest an advisory
+    let data = include_bytes!("../../../../../etc/test-data/csaf/rhsa-2024_2049.json");
+    let data = ReaderStream::new(&data[..]);
+
+    ingestor
+        .ingest(("source", "test"), None, Format::CSAF, data)
+        .await?;
+
+    let data = include_bytes!("../../../../../etc/test-data/csaf/rhsa-2024_2054.json");
+    let data = ReaderStream::new(&data[..]);
+
+    ingestor
+        .ingest(("source", "test"), None, Format::CSAF, data)
+        .await?;
+
+    let data = include_bytes!("../../../../../etc/test-data/csaf/rhsa-2024_2071.json");
+    let data = ReaderStream::new(&data[..]);
+
+    ingestor
+        .ingest(("source", "test"), None, Format::CSAF, data)
+        .await?;
+
+    let data = include_bytes!("../../../../../etc/test-data/csaf/rhsa-2024_2776.json");
+    let data = ReaderStream::new(&data[..]);
+
+    ingestor
+        .ingest(("source", "test"), None, Format::CSAF, data)
+        .await?;
+
     let data = include_bytes!("../../../../../etc/test-data/csaf/rhsa-2024_2784.json");
+    let data = ReaderStream::new(&data[..]);
+
+    ingestor
+        .ingest(("source", "test"), None, Format::CSAF, data)
+        .await?;
+
+    let data = include_bytes!("../../../../../etc/test-data/csaf/rhsa-2024_3351.json");
     let data = ReaderStream::new(&data[..]);
 
     ingestor
@@ -627,15 +662,16 @@ async fn unknown_statuses(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let results = service
         .qualified_package_by_uuid(
-            &Uuid::from_str("0d73ffb8-3b33-5834-82e6-ea243bd7abbc")?,
+            //&Uuid::from_str("0d73ffb8-3b33-5834-82e6-ea243bd7abbc")?,
+            &Uuid::from_str("9b458d97-46a4-5837-89cc-dd1d65557c1f")?,
             Transactional::None,
         )
         .await?;
 
+    log::debug!("{:#?}", results);
+
     assert!(results.is_some());
-
     let results = serde_json::to_string_pretty(&results)?;
-
     assert!(!results.contains("unknown"));
 
     Ok(())
