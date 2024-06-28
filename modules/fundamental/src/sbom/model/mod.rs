@@ -2,7 +2,7 @@ use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use trustify_common::{id::Id, paginated};
-use trustify_entity::relationship::Relationship;
+use trustify_entity::{labels::Labels, relationship::Relationship};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
@@ -12,6 +12,8 @@ pub struct SbomSummary {
     pub hashes: Vec<Id>,
 
     pub document_id: String,
+    #[serde(default, skip_serializing_if = "Labels::is_empty")]
+    pub labels: Labels,
 
     pub name: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]

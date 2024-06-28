@@ -1,21 +1,17 @@
-use sea_orm::prelude::Uuid;
-use sea_orm::{LoaderTrait, ModelTrait};
+mod details;
+mod summary;
 
-use serde::{Deserialize, Serialize};
-use time::OffsetDateTime;
-use utoipa::ToSchema;
-
-use crate::organization::model::OrganizationSummary;
-use crate::Error;
 pub use details::advisory_vulnerability::*;
 pub use details::*;
 pub use summary::*;
-use trustify_common::db::ConnectionOrTransaction;
-use trustify_common::id::Id;
-use trustify_entity::{advisory, organization};
 
-mod details;
-mod summary;
+use crate::{organization::model::OrganizationSummary, Error};
+use sea_orm::{prelude::Uuid, LoaderTrait, ModelTrait};
+use serde::{Deserialize, Serialize};
+use time::OffsetDateTime;
+use trustify_common::{db::ConnectionOrTransaction, id::Id};
+use trustify_entity::{advisory, labels::Labels, organization};
+use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct AdvisoryHead {
@@ -34,6 +30,8 @@ pub struct AdvisoryHead {
     #[serde(with = "time::serde::rfc3339::option")]
     pub withdrawn: Option<OffsetDateTime>,
     pub title: Option<String>,
+    #[serde(default, skip_serializing_if = "Labels::is_empty")]
+    pub labels: Labels,
 }
 
 impl AdvisoryHead {
@@ -59,6 +57,7 @@ impl AdvisoryHead {
             modified: entity.modified,
             withdrawn: entity.withdrawn,
             title: entity.title.clone(),
+            labels: entity.labels.clone(),
         })
     }
 
@@ -86,6 +85,7 @@ impl AdvisoryHead {
                 modified: advisory.modified,
                 withdrawn: advisory.withdrawn,
                 title: advisory.title.clone(),
+                labels: advisory.labels.clone(),
             })
         }
 
