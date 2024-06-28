@@ -3714,7 +3714,7 @@ version = "5.0.0-alpha.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "098af5a5110b4deacf3200682963713b143ae9d28762b739bdb7b98429dfaf68"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.21.7",
  "chrono",
  "getrandom",
  "http 1.1.0",
@@ -5547,7 +5547,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c81335e4cf7506578920b35c011cd76a4b06a876cdef1f02802d53607ff84f49"
 dependencies = [
  "anyhow",
- "base64 0.22.1",
+ "base64 0.21.7",
  "buffered-reader",
  "chrono",
  "dyn-clone",
@@ -7131,6 +7131,7 @@ version = "0.1.0-alpha.9"
 dependencies = [
  "actix-web",
  "actix-web-static-files",
+ "anyhow",
  "trustify-ui",
 ]
 
@@ -7189,8 +7190,9 @@ dependencies = [
 [[package]]
 name = "trustify-ui"
 version = "0.1.0"
-source = "git+https://github.com/trustification/trustify-ui.git?tag=static-main#56aa9bf635c26def0118b1e2c25d02a3e26693dc"
+source = "git+https://github.com/trustification/trustify-ui.git?tag=static-main#b2d81aec3218a900bbb73bcdb69d483e96cbc48f"
 dependencies = [
+ "anyhow",
  "base64 0.22.1",
  "serde",
  "serde_json",

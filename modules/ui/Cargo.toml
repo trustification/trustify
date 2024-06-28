@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 actix-web = { workspace = true }
 actix-web-static-files = { workspace = true }
+anyhow = { workspace = true }
 trustify-ui = { workspace = true, optional = true }
 
 [features]
