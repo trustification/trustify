@@ -1,7 +1,8 @@
 use crate::labels::Labels;
 use async_graphql::SimpleObject;
-use sea_orm::{entity::prelude::*, LinkDef};
+use sea_orm::{entity::prelude::*, sea_query::IntoCondition, Condition, LinkDef};
 use time::OffsetDateTime;
+use trustify_common::id::{Id, IdError, TryFilterForId};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
 #[sea_orm(table_name = "sbom")]
@@ -61,3 +62,13 @@ impl Related<super::sbom_node::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+impl TryFilterForId for Entity {
+    fn try_filter(id: Id) -> Result<Condition, IdError> {
+        Ok(match id {
+            Id::Uuid(uuid) => Column::SbomId.eq(uuid).into_condition(),
+            Id::Sha256(hash) => Column::Sha256.eq(hash).into_condition(),
+            n => return Err(IdError::UnsupportedAlgorithm(n.prefix().to_string())),
+        })
+    }
+}

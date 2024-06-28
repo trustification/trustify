@@ -26,12 +26,14 @@ use trustify_cvss::cvss3::{
     AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
     PrivilegesRequired, Scope, UserInteraction,
 };
+use trustify_entity::labels::Labels;
 use trustify_module_ingestor::{
     graph::{advisory::AdvisoryInformation, Graph},
     model::IngestResult,
     service::IngestorService,
 };
 use trustify_module_storage::service::fs::FileSystemBackend;
+use uuid::Uuid;
 
 async fn query<S, B>(app: &S, q: &str) -> PaginatedResults<AdvisorySummary>
 where
@@ -578,6 +580,57 @@ async fn download_advisory_by_id(ctx: TrustifyContext) -> Result<(), anyhow::Err
             assert!(response.status().is_success());
             let doc: Value = actix_web::test::read_body_json(response).await;
             assert_eq!(doc["document"]["tracking"]["id"], "CVE-2023-33201");
+
+            Ok(())
+        })
+    })
+    .await
+}
+
+/// Test setting labels
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn set_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    with_upload(ctx, |result, app| {
+        Box::pin(async move {
+            // update labels
+
+            let request = TestRequest::patch()
+                .uri(&format!("/api/v1/advisory/{}/label", result.id))
+                .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
+                .to_request();
+
+            let response = app.call_service(request).await;
+
+            log::debug!("Code: {}", response.status());
+            assert_eq!(response.status(), StatusCode::NO_CONTENT);
+
+            Ok(())
+        })
+    })
+    .await
+}
+
+/// Test setting labels, for a document that does not exists
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn set_labels_not_found(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    with_upload(ctx, |_result, app| {
+        Box::pin(async move {
+            // update labels
+
+            let request = TestRequest::patch()
+                .uri(&format!(
+                    "/api/v1/advisory/{}/label",
+                    Id::Uuid(Uuid::now_v7())
+                ))
+                .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
+                .to_request();
+
+            let response = app.call_service(request).await;
+
+            log::debug!("Code: {}", response.status());
+            assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
             Ok(())
         })

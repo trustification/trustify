@@ -1,5 +1,7 @@
 use hex::ToHex;
 use ring::digest::Digest;
+use sea_orm::{EntityTrait, QueryFilter, Select, UpdateMany};
+use sea_query::Condition;
 use serde::{
     de::{Error, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
@@ -22,6 +24,34 @@ pub enum Id {
     Sha256(String),
     Sha384(String),
     Sha512(String),
+}
+
+/// Create a filter for an ID
+pub trait TryFilterForId {
+    /// Return a condition, filtering for the [`Id`]. Or an `Err(IdError::UnsupportedAlgorithm)` if the ID type is not supported.
+    fn try_filter(id: Id) -> Result<Condition, IdError>;
+}
+
+pub trait TrySelectForId: Sized {
+    fn try_filter(self, id: Id) -> Result<Self, IdError>;
+}
+
+impl<E> TrySelectForId for Select<E>
+where
+    E: EntityTrait + TryFilterForId,
+{
+    fn try_filter(self, id: Id) -> Result<Self, IdError> {
+        Ok(self.filter(E::try_filter(id)?))
+    }
+}
+
+impl<E> TrySelectForId for UpdateMany<E>
+where
+    E: EntityTrait + TryFilterForId,
+{
+    fn try_filter(self, id: Id) -> Result<Self, IdError> {
+        Ok(self.filter(E::try_filter(id)?))
+    }
 }
 
 impl Id {

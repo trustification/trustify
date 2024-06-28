@@ -1,21 +1,28 @@
-use sea_orm::{
-    ColumnTrait, ColumnTypeTrait, EntityTrait, FromQueryResult, IntoIdentity, QueryFilter,
-    QuerySelect, QueryTrait,
+use crate::{
+    advisory::model::{AdvisoryDetails, AdvisorySummary},
+    Error,
 };
-use sea_query::{ColumnRef, ColumnType, Func, IntoColumnRef, IntoIden, SimpleExpr};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::Set, ColumnTypeTrait, DatabaseBackend, EntityTrait,
+    FromQueryResult, IntoActiveModel, IntoIdentity, QuerySelect, QueryTrait, TransactionTrait,
+};
+use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, SimpleExpr};
 use time::OffsetDateTime;
+use trustify_common::{
+    db::{
+        limiter::LimiterAsModelTrait,
+        query::{Columns, Filtering, Query},
+        Database, Transactional,
+    },
+    id::{Id, TrySelectForId},
+    model::{Paginated, PaginatedResults},
+};
+use trustify_entity::{
+    advisory,
+    cvss3::{self, Severity},
+    labels::Labels,
+};
 use uuid::Uuid;
-
-use crate::advisory::model::{AdvisoryDetails, AdvisorySummary};
-use crate::Error;
-use trustify_common::db::limiter::LimiterAsModelTrait;
-use trustify_common::db::query::{Columns, Filtering, Query};
-use trustify_common::db::{Database, Transactional};
-use trustify_common::id::Id;
-use trustify_common::model::{Paginated, PaginatedResults};
-use trustify_entity::cvss3::Severity;
-use trustify_entity::labels::Labels;
-use trustify_entity::{advisory, cvss3};
 
 pub struct AdvisoryService {
     db: Database,
@@ -186,11 +193,7 @@ impl AdvisoryService {
                 .cast_as("TEXT".into_identity()),
                 "average_severity",
             )
-            .filter(match hash_key {
-                Id::Uuid(uuid) => advisory::Column::Id.eq(uuid),
-                Id::Sha256(hash) => advisory::Column::Sha256.eq(hash),
-                _ => return Err(Error::UnsupportedHashAlgorithm),
-            })
+            .try_filter(hash_key)?
             .into_model::<AdvisoryCatcher>()
             .one(&connection)
             .await?;
@@ -218,6 +221,77 @@ impl AdvisoryService {
         } else {
             Ok(None)
         }
+    }
+
+    /// Set the labels of an advisory
+    ///
+    /// Returns `Ok(Some(()))` if a document was found and updated. If no document was found, it will
+    /// return `Ok(None)`.
+    pub async fn set_labels(
+        &self,
+        id: Id,
+        labels: Labels,
+        tx: impl AsRef<Transactional>,
+    ) -> Result<Option<()>, Error> {
+        let db = self.db.connection(&tx);
+
+        let result = advisory::Entity::update_many()
+            .try_filter(id)?
+            .col_expr(advisory::Column::Labels, Expr::value(labels))
+            .exec(&db)
+            .await?;
+
+        Ok((result.rows_affected > 0).then_some(()))
+    }
+
+    /// Update the labels of an advisory
+    ///
+    /// Returns `Ok(Some(()))` if a document was found and updated. If no document was found, it will
+    /// return `Ok(None)`.
+    ///
+    /// The function will handle its own transaction.
+    pub async fn update_labels<F>(&self, id: Id, mutator: F) -> Result<Option<()>, Error>
+    where
+        F: FnOnce(Labels) -> Labels,
+    {
+        let tx = self.db.begin().await?;
+
+        // work around missing "FOR UPDATE" issue
+
+        let mut query = advisory::Entity::find()
+            .try_filter(id)?
+            .build(DatabaseBackend::Postgres);
+
+        query.sql.push_str(" FOR UPDATE");
+
+        // find the current entry
+
+        let Some(result) = advisory::Entity::find()
+            .from_raw_sql(query)
+            .one(&tx)
+            .await?
+        else {
+            // return early, nothing found
+            return Ok(None);
+        };
+
+        // perform the mutation
+
+        let labels = result.labels.clone();
+        let mut result = result.into_active_model();
+        result.labels = Set(mutator(labels));
+
+        // store
+
+        result.update(&tx).await?;
+
+        // commit
+
+        tx.commit().await?;
+
+        // return
+
+        Ok(Some(()))
     }
 }
 
