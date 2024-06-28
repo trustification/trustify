@@ -8,12 +8,13 @@ use crate::{
 use csaf::{definitions::ProductIdT, Csaf};
 use sea_orm::{ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use sea_query::IntoCondition;
+use std::collections::HashSet;
 use std::{collections::hash_map::Entry, collections::HashMap};
 use trustify_common::{db::chunk::EntityChunkedIter, purl::Purl};
 use trustify_entity::{package_status, status, version_range};
 use uuid::Uuid;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, Hash, PartialEq)]
 struct PackageStatus {
     package: Purl,
     status: &'static str,
@@ -23,7 +24,7 @@ struct PackageStatus {
 pub struct PackageStatusCreator {
     advisory_id: Uuid,
     vulnerability_id: i32,
-    entries: Vec<PackageStatus>,
+    entries: HashSet<PackageStatus>,
 }
 
 impl PackageStatusCreator {
@@ -31,7 +32,7 @@ impl PackageStatusCreator {
         Self {
             advisory_id,
             vulnerability_id,
-            entries: Vec::new(),
+            entries: HashSet::new(),
         }
     }
 
@@ -51,9 +52,7 @@ impl PackageStatusCreator {
                         },
                     };
 
-                    if !self.entries.contains(&status) {
-                        self.entries.push(status);
-                    }
+                    self.entries.insert(status);
                 }
             }
         }
