@@ -36,6 +36,8 @@ async-graphql-actix-web = { workspace = true }
 
 [dev-dependencies]
 urlencoding = { workspace = true }
+test-context = { workspace = true }
+test-log = { workspace = true, features = ["log", "trace"] }
 
 [features]
 default = ["ui"]

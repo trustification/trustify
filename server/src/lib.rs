@@ -123,7 +123,6 @@ const SERVICE_ID: &str = "trustify";
 struct InitData {
     authenticator: Option<Arc<Authenticator>>,
     authorizer: Authorizer,
-    graph: Arc<Graph>,
     db: db::Database,
     storage: DispatchBackend,
     http: HttpServerConfig<Trustify>,
@@ -193,8 +192,6 @@ impl InitData {
             sample_data(db.clone()).await?;
         }
 
-        let graph = Graph::new(db.clone());
-
         let check = Local::spawn_periodic("no database connection", Duration::from_secs(1), {
             let db = db.clone();
             move || {
@@ -235,7 +232,6 @@ impl InitData {
         Ok(InitData {
             authenticator,
             authorizer,
-            graph: Arc::new(graph),
             db,
             http: run.http,
             tracing: run.infra.tracing,
@@ -250,68 +246,28 @@ impl InitData {
     }
 
     async fn run(mut self, metrics: &Metrics) -> anyhow::Result<()> {
-        let swagger_oidc = self.swagger_oidc;
-        let ui = UiResources::new(&self.ui)?;
+        let ui = Arc::new(UiResources::new(&self.ui)?);
+        let db = self.db.clone();
+        let storage = self.storage.clone();
 
-        let limit = ByteSize::gb(1).as_u64() as usize;
-
+        let importer = async { importer(db, storage, self.working_dir).await }.boxed_local();
         let http = {
-            let graph = self.graph.clone();
-            let db = self.db.clone();
-            let storage = self.storage.clone();
-
             HttpServerBuilder::try_from(self.http)?
                 .tracing(self.tracing)
                 .metrics(metrics.registry().clone(), SERVICE_ID)
                 .authorizer(self.authorizer)
                 .configure(move |svc| {
-                    svc.app_data(web::PayloadConfig::default().limit(limit))
-                        .service(swagger_ui_with_auth(
-                            openapi::openapi(),
-                            swagger_oidc.clone(),
-                        ))
-                        .service(web::redirect("/openapi", "/openapi/"));
-                    svc.service(
-                        web::scope("/graphql")
-                            .wrap(middleware::NormalizePath::new(
-                                middleware::TrailingSlash::Always,
-                            ))
-                            .wrap(new_auth(self.authenticator.clone()))
-                            .configure(|svc| {
-                                trustify_module_graphql::endpoints::configure(
-                                    svc,
-                                    db.clone(),
-                                    graph.clone(),
-                                );
-                                trustify_module_graphql::endpoints::configure_graphiql(svc);
-                            }),
+                    configure(
+                        svc,
+                        self.db.clone(),
+                        self.storage.clone(),
+                        self.swagger_oidc.clone(),
+                        self.authenticator.clone(),
+                        ui.clone(),
                     );
-                    svc.app_data(web::Data::from(self.graph.clone()))
-                        .service(
-                            web::scope("/api")
-                                .wrap(new_auth(self.authenticator.clone()))
-                                .configure(|svc| {
-                                    trustify_module_importer::endpoints::configure(svc, db.clone());
-
-                                    trustify_module_fundamental::endpoints::configure(
-                                        svc,
-                                        db.clone(),
-                                        storage.clone(),
-                                    );
-                                }),
-                        )
-                        .configure(|svc| {
-                            // I think the UI must come last due to
-                            // its use of `resolve_not_found_to`
-                            #[cfg(feature = "ui")]
-                            trustify_module_ui::endpoints::configure(svc, &ui);
-                        });
                 })
         };
-
         let http = async { http.run().await }.boxed_local();
-        let importer =
-            async { importer(self.db, self.storage, self.working_dir).await }.boxed_local();
 
         let mut tasks = vec![http, importer];
 
@@ -335,6 +291,45 @@ impl InitData {
     }
 }
 
+fn configure(
+    svc: &mut web::ServiceConfig,
+    db: trustify_common::db::Database,
+    storage: impl Into<DispatchBackend>,
+    swagger_oidc: Option<Arc<SwaggerUiOidc>>,
+    auth: Option<Arc<Authenticator>>,
+    ui: Arc<UiResources>,
+) {
+    let limit = ByteSize::gb(1).as_u64() as usize;
+    let graph = Arc::new(Graph::new(db.clone()));
+
+    svc.app_data(web::PayloadConfig::default().limit(limit))
+        .service(swagger_ui_with_auth(openapi::openapi(), swagger_oidc))
+        .service(web::redirect("/openapi", "/openapi/"));
+    svc.service(
+        web::scope("/graphql")
+            .wrap(middleware::NormalizePath::new(
+                middleware::TrailingSlash::Always,
+            ))
+            .wrap(new_auth(auth.clone()))
+            .configure(|svc| {
+                trustify_module_graphql::endpoints::configure(svc, db.clone(), graph.clone());
+                trustify_module_graphql::endpoints::configure_graphiql(svc);
+            }),
+    );
+    svc.app_data(web::Data::from(graph))
+        .service(web::scope("/api").wrap(new_auth(auth)).configure(|svc| {
+            trustify_module_importer::endpoints::configure(svc, db.clone());
+
+            trustify_module_fundamental::endpoints::configure(svc, db.clone(), storage);
+        }))
+        .configure(|svc| {
+            // I think the UI must come last due to
+            // its use of `resolve_not_found_to`
+            #[cfg(feature = "ui")]
+            trustify_module_ui::endpoints::configure(svc, &ui);
+        });
+}
+
 fn build_url(ci: &ConnectionInfo, path: impl Display) -> Option<url::Url> {
     url::Url::parse(&format!(
         "{scheme}://{host}{path}",
@@ -353,4 +348,69 @@ async fn index(ci: ConnectionInfo) -> Result<Json<Vec<url::Url>>, UrlGenerationE
     result.extend(build_url(&ci, "/openapi/"));
 
     Ok(Json(result))
+}
+
+#[cfg(test)]
+mod test {
+    use std::sync::Arc;
+
+    use actix_web::{
+        body::{to_bytes, to_bytes_limited},
+        http::StatusCode,
+        test::{call_and_read_body, call_service, TestRequest},
+        web::{self, Bytes},
+        App,
+    };
+    use test_context::test_context;
+    use test_log::test;
+    use trustify_common::db::test::TrustifyContext;
+    use trustify_module_storage::service::fs::FileSystemBackend;
+    use trustify_module_ui::{endpoints::UiResources, UI};
+
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test(actix_web::test)]
+    async fn routing(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
+        let (storage, _) = FileSystemBackend::for_test().await?;
+        let ui = Arc::new(UiResources::new(&UI::default())?);
+        let app = actix_web::test::init_service(
+            App::new().configure(|svc| super::configure(svc, db, storage, None, None, ui)),
+        )
+        .await;
+
+        let req = TestRequest::get().uri("/").to_request();
+        let body = call_and_read_body(&app, req).await;
+        let text = std::str::from_utf8(&body)?;
+        assert!(text.contains("<title>Trustification</title>"));
+
+        let req = TestRequest::get().uri("/anything/at/all").to_request();
+        let body = call_and_read_body(&app, req).await;
+        let text = std::str::from_utf8(&body)?;
+        assert!(text.contains("<title>Trustification</title>"));
+
+        let req = TestRequest::get().uri("/openapi").to_request();
+        let resp = call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::TEMPORARY_REDIRECT);
+
+        let req = TestRequest::get().uri("/openapi/").to_request();
+        let body = call_and_read_body(&app, req).await;
+        let text = std::str::from_utf8(&body)?;
+        assert!(text.contains("<title>Swagger UI</title>"));
+
+        let req = TestRequest::get().uri("/graphql").to_request();
+        let body = call_and_read_body(&app, req).await;
+        let text = std::str::from_utf8(&body)?;
+        assert!(text.contains("<title>GraphiQL IDE</title>"));
+
+        let req = TestRequest::get().uri("/api").to_request();
+        let resp = call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+
+        let req = TestRequest::get().uri("/api/v1/advisory").to_request();
+        let body = call_and_read_body(&app, req).await;
+        let text = std::str::from_utf8(&body)?;
+        assert!(text.contains("items"));
+
+        Ok(())
+    }
 }
