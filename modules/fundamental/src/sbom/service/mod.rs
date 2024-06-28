@@ -1,4 +1,5 @@
 pub mod assertion;
+pub mod label;
 pub mod sbom;
 
 use trustify_common::db::Database;
