@@ -7152,6 +7152,8 @@ dependencies = [
  "log",
  "rand",
  "reqwest 0.12.5",
+ "test-context",
+ "test-log",
  "tokio",
  "trustify-auth",
  "trustify-common",
