@@ -15,27 +15,6 @@ async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
 
-    let pr = graph
-        .ingest_product(
-            "Trusted Profile Analyzer",
-            ProductInformation {
-                vendor: Some("Red Hat".to_string()),
-            },
-            (),
-        )
-        .await?;
-
-    let ver = pr.ingest_product_version("1.0.0".to_string(), ()).await?;
-
-    let service = crate::product::service::ProductService::new(db);
-
-    let prods = service
-        .fetch_products(Query::default(), Paginated::default(), ())
-        .await?;
-
-    assert_eq!(1, prods.total);
-    assert_eq!(1, prods.items.len());
-
     let sbom = graph
         .ingest_sbom(
             ("source", "http://redhat.com/test.json"),
@@ -46,11 +25,30 @@ async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let prv = ver
-        .link_to_sbom(sbom.sbom.sbom_id, Transactional::None)
+    let pr = graph
+        .ingest_product(
+            "Trusted Profile Analyzer",
+            ProductInformation {
+                vendor: Some("Red Hat".to_string()),
+            },
+            (),
+        )
         .await?;
 
-    let ver_sbom = prv
+    let ver = pr
+        .ingest_product_version("1.0.0".to_string(), Some(sbom.sbom.sbom_id), ())
+        .await?;
+
+    let service = crate::product::service::ProductService::new(db);
+
+    let prods = service
+        .fetch_products(Query::default(), Paginated::default(), ())
+        .await?;
+
+    assert_eq!(1, prods.total);
+    assert_eq!(1, prods.items.len());
+
+    let ver_sbom = ver
         .get_sbom(Transactional::None)
         .await?
         .expect("No sbom found");
@@ -75,7 +73,9 @@ async fn link_sbom_to_product(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         )
         .await?;
 
-    let prv = pr.ingest_product_version("1.0.0".to_string(), ()).await?;
+    let prv = pr
+        .ingest_product_version("1.0.0".to_string(), None, ())
+        .await?;
 
     let sbom = graph
         .ingest_sbom(

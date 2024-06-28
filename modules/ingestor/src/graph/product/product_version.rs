@@ -34,19 +34,19 @@ impl<'g> ProductVersionContext<'g> {
     }
 
     pub async fn link_to_sbom<TX: AsRef<Transactional>>(
-        &self,
+        mut self,
         sbom_id: Uuid,
         tx: TX,
-    ) -> Result<ProductVersionContext, Error> {
+    ) -> Result<ProductVersionContext<'g>, Error> {
         let mut product_version: product_version::ActiveModel = self.product_version.clone().into();
-
         product_version.sbom_id = Set(Some(sbom_id));
 
         let ver = product_version
             .update(&self.product.graph.connection(&tx))
             .await?;
+        self.product_version.sbom_id = ver.sbom_id;
 
-        Ok(ProductVersionContext::new(&self.product.clone(), ver))
+        Ok(self)
     }
 
     pub async fn get_sbom<TX: AsRef<Transactional>>(
