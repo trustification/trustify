@@ -1,5 +1,6 @@
 use crate::graph::sbom::RelationshipCreator;
 use crate::graph::{
+    product::ProductInformation,
     purl::creator::PurlCreator,
     sbom::{PackageCreator, PackageReference, SbomContext, SbomInformation},
     Graph,
@@ -80,6 +81,22 @@ impl SbomContext {
 
         if let Some(metadata) = &sbom.metadata {
             if let Some(component) = &metadata.component {
+                let pr = self
+                    .graph
+                    .ingest_product(
+                        component.name.clone(),
+                        ProductInformation {
+                            vendor: component.publisher.clone().map(|p| p.to_string()),
+                        },
+                        &tx,
+                    )
+                    .await?;
+
+                if let Some(ver) = component.version.clone() {
+                    pr.ingest_product_version(ver.to_string(), Some(self.sbom.sbom_id), &tx)
+                        .await?;
+                }
+
                 creator.add(component);
                 if let Some(r#ref) = &component.bom_ref {
                     creator.relate(

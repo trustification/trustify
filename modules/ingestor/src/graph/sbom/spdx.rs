@@ -1,4 +1,5 @@
 use crate::graph::{
+    product::ProductInformation,
     purl::creator::PurlCreator,
     sbom::{
         FileCreator, PackageCreator, PackageReference, RelationshipCreator, SbomContext,
@@ -52,6 +53,42 @@ impl SbomContext {
 
         let mut creator = PurlCreator::new();
 
+        // prepare relationships
+
+        let mut relationships =
+            RelationshipCreator::with_capacity(self.sbom.sbom_id, sbom_data.relationships.len());
+
+        let mut product_packages = vec![];
+
+        for described in sbom_data.document_creation_information.document_describes {
+            relationships.relate(
+                described,
+                Relationship::DescribedBy,
+                sbom_data
+                    .document_creation_information
+                    .spdx_identifier
+                    .clone(),
+            );
+            product_packages.push(
+                sbom_data
+                    .document_creation_information
+                    .spdx_identifier
+                    .clone(),
+            );
+        }
+
+        for rel in &sbom_data.relationships {
+            let Ok(SpdxRelationship(left, rel, right)) = rel.try_into() else {
+                continue;
+            };
+
+            relationships.relate(left.to_string(), rel, right.to_string());
+
+            if rel == Relationship::DescribedBy {
+                product_packages.push(left.to_string());
+            }
+        }
+
         let mut packages =
             PackageCreator::with_capacity(self.sbom.sbom_id, sbom_data.package_information.len());
 
@@ -82,6 +119,24 @@ impl SbomContext {
                 package.package_version.clone(),
                 refs,
             );
+
+            if product_packages.contains(&package.package_spdx_identifier) {
+                let pr = self
+                    .graph
+                    .ingest_product(
+                        package.package_name.clone(),
+                        ProductInformation {
+                            vendor: package.package_supplier.clone(),
+                        },
+                        &tx,
+                    )
+                    .await?;
+
+                if let Some(ver) = package.package_version.clone() {
+                    pr.ingest_product_version(ver, Some(self.sbom.sbom_id), &tx)
+                        .await?;
+                }
+            }
         }
 
         // prepare files
@@ -100,30 +155,6 @@ impl SbomContext {
         // create all purls
 
         creator.create(&db).await?;
-
-        // prepare relationships
-
-        let mut relationships =
-            RelationshipCreator::with_capacity(self.sbom.sbom_id, sbom_data.relationships.len());
-
-        for described in sbom_data.document_creation_information.document_describes {
-            relationships.relate(
-                described,
-                Relationship::DescribedBy,
-                sbom_data
-                    .document_creation_information
-                    .spdx_identifier
-                    .clone(),
-            );
-        }
-
-        for rel in &sbom_data.relationships {
-            let Ok(SpdxRelationship(left, rel, right)) = rel.try_into() else {
-                continue;
-            };
-
-            relationships.relate(left.to_string(), rel, right.to_string());
-        }
 
         // batch insert packages, files and then relationships
 

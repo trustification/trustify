@@ -79,7 +79,7 @@ impl MigrationTrait for Migration {
     }
 }
 
-const INDEX_BY_PID_V: &str = "by_productid_v";
+pub const INDEX_BY_PID_V: &str = "by_productid_v";
 
 #[derive(DeriveIden)]
 pub enum ProductVersion {

@@ -29,6 +29,7 @@ mod m0000270_sbom_package_purl_ref;
 mod m0000280_add_advisory_vulnerability_meta;
 mod m0000290_create_product;
 mod m0000300_create_product_version;
+mod m0000301_alter_product_version_index;
 mod m0000310_alter_advisory_primary_key;
 mod m0000315_create_cvss3_scoring_function;
 mod m0000320_create_cvss3_score_column;
@@ -85,6 +86,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000280_add_advisory_vulnerability_meta::Migration),
             Box::new(m0000290_create_product::Migration),
             Box::new(m0000300_create_product_version::Migration),
+            Box::new(m0000301_alter_product_version_index::Migration),
             Box::new(m0000310_alter_advisory_primary_key::Migration),
             Box::new(m0000315_create_cvss3_scoring_function::Migration),
             Box::new(m0000320_create_cvss3_score_column::Migration),

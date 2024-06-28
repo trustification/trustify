@@ -5,6 +5,7 @@ use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, ModelTrait, QueryFilte
 use trustify_common::db::Transactional;
 use trustify_entity as entity;
 use trustify_entity::product;
+use uuid::Uuid;
 
 use crate::graph::{error::Error, Graph};
 
@@ -26,19 +27,40 @@ impl<'g> ProductContext<'g> {
     pub async fn ingest_product_version<TX: AsRef<Transactional>>(
         &self,
         version: String,
+        sbom_id: Option<Uuid>,
         tx: TX,
     ) -> Result<ProductVersionContext<'g>, Error> {
-        let model = entity::product_version::ActiveModel {
-            id: Default::default(),
-            product_id: Set(self.product.id),
-            sbom_id: Set(None),
-            version: Set(version.clone()),
-        };
+        if let Some(found) = self.get_version(version.clone(), &tx).await? {
+            let product_version = ProductVersionContext::new(self, found.product_version.clone());
 
-        Ok(ProductVersionContext::new(
-            self,
-            model.insert(&self.graph.connection(&tx)).await?,
-        ))
+            if let Some(id) = sbom_id {
+                // If sbom is not yet set, link to the SBOM and update the context
+                if found.product_version.sbom_id.is_none() {
+                    Ok(product_version.link_to_sbom(id, &tx).await?)
+                } else {
+                    Ok(product_version)
+                }
+            } else {
+                Ok(product_version)
+            }
+        } else {
+            let model = entity::product_version::ActiveModel {
+                id: Default::default(),
+                product_id: Set(self.product.id),
+                sbom_id: Set(None),
+                version: Set(version.clone()),
+            };
+
+            let product_version =
+                ProductVersionContext::new(self, model.insert(&self.graph.connection(&tx)).await?);
+
+            // If there's an sbom_id, link to the SBOM and update the context
+            if let Some(id) = sbom_id {
+                Ok(product_version.link_to_sbom(id, &tx).await?)
+            } else {
+                Ok(product_version)
+            }
+        }
     }
 
     pub async fn get_vendor<TX: AsRef<Transactional>>(
@@ -52,6 +74,23 @@ impl<'g> ProductContext<'g> {
             .await?
         {
             Some(org) => Ok(Some(OrganizationContext::new(self.graph, org))),
+            None => Ok(None),
+        }
+    }
+
+    pub async fn get_version<TX: AsRef<Transactional>>(
+        &self,
+        version: String,
+        tx: TX,
+    ) -> Result<Option<ProductVersionContext>, Error> {
+        match self
+            .product
+            .find_related(entity::product_version::Entity)
+            .filter(entity::product_version::Column::Version.eq(version))
+            .one(&self.graph.connection(&tx))
+            .await?
+        {
+            Some(ver) => Ok(Some(ProductVersionContext::new(self, ver))),
             None => Ok(None),
         }
     }
@@ -84,22 +123,38 @@ impl super::Graph {
         let name = name.into();
         let information = information.into();
 
-        let vendor = if let Some(vendor) = information.vendor {
-            Some(self.ingest_organization(vendor, (), &tx).await?)
+        if let Some(vendor) = information.vendor {
+            if let Some(found) = self
+                .get_product_by_organization(vendor.clone(), &name, &tx)
+                .await?
+            {
+                Ok(found)
+            } else {
+                let org = self.ingest_organization(vendor, (), &tx).await?;
+
+                let entity = product::ActiveModel {
+                    id: Default::default(),
+                    name: Set(name),
+                    vendor_id: Set(Some(org.organization.id)),
+                };
+
+                Ok(ProductContext::new(
+                    self,
+                    entity.insert(&self.connection(&tx)).await?,
+                ))
+            }
         } else {
-            None
-        };
+            let entity = product::ActiveModel {
+                id: Default::default(),
+                name: Set(name),
+                vendor_id: Set(None),
+            };
 
-        let entity = product::ActiveModel {
-            id: Default::default(),
-            name: Set(name),
-            vendor_id: Set(vendor.map(|org| org.organization.id)),
-        };
-
-        Ok(ProductContext::new(
-            self,
-            entity.insert(&self.connection(&tx)).await?,
-        ))
+            Ok(ProductContext::new(
+                self,
+                entity.insert(&self.connection(&tx)).await?,
+            ))
+        }
     }
 
     pub async fn get_product_by_name<TX: AsRef<Transactional>>(
@@ -112,5 +167,24 @@ impl super::Graph {
             .one(&self.connection(&tx))
             .await?
             .map(|product| ProductContext::new(self, product)))
+    }
+
+    pub async fn get_product_by_organization<TX: AsRef<Transactional>>(
+        &self,
+        org: impl Into<String>,
+        name: impl Into<String>,
+        tx: TX,
+    ) -> Result<Option<ProductContext>, Error> {
+        if let Some(found) = self.get_organization_by_name(org, &tx).await? {
+            Ok(found
+                .organization
+                .find_related(product::Entity)
+                .filter(product::Column::Name.eq(name.into()))
+                .one(&self.connection(&tx))
+                .await?
+                .map(|product| ProductContext::new(self, product)))
+        } else {
+            Ok(None)
+        }
     }
 }
