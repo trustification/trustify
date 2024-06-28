@@ -1,3 +1,4 @@
+mod label;
 #[cfg(test)]
 mod test;
 
@@ -23,12 +24,14 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         .service(all)
         .service(get)
         .service(upload)
-        .service(download);
+        .service(download)
+        .service(label::set)
+        .service(label::update);
 }
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(all, get, upload, download),
+    paths(all, get, upload, download, label::set),
     components(schemas(
         crate::advisory::model::AdvisoryDetails,
         crate::advisory::model::AdvisoryHead,

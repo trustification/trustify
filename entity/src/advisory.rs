@@ -1,9 +1,12 @@
 use crate::{advisory_vulnerability, cvss3, labels::Labels, organization, vulnerability};
 use async_graphql::*;
-use sea_orm::entity::prelude::*;
+use sea_orm::{entity::prelude::*, sea_query::IntoCondition, Condition};
 use std::sync::Arc;
 use time::OffsetDateTime;
-use trustify_common::db;
+use trustify_common::{
+    db,
+    id::{Id, IdError, TryFilterForId},
+};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
 #[graphql(complex)]
@@ -83,3 +86,13 @@ impl Related<cvss3::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+impl TryFilterForId for Entity {
+    fn try_filter(id: Id) -> Result<Condition, IdError> {
+        Ok(match id {
+            Id::Uuid(uuid) => Column::Id.eq(uuid).into_condition(),
+            Id::Sha256(hash) => Column::Sha256.eq(hash).into_condition(),
+            n => return Err(IdError::UnsupportedAlgorithm(n.prefix().to_string())),
+        })
+    }
+}

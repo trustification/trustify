@@ -11,6 +11,7 @@ use std::ops::{Deref, DerefMut};
     serde::Serialize,
     serde::Deserialize,
     sea_orm::FromJsonQueryResult,
+    utoipa::ToSchema,
 )]
 pub struct Labels(pub HashMap<String, String>);
 
@@ -29,6 +30,32 @@ impl Labels {
 
     pub fn add(mut self, k: impl Into<String>, v: impl Into<String>) -> Self {
         self.0.insert(k.into(), v.into());
+        self
+    }
+
+    pub fn extend<I, K, V>(mut self, i: I) -> Self
+    where
+        I: IntoIterator<Item = (K, V)>,
+        K: Into<String>,
+        V: Into<String>,
+    {
+        self.0
+            .extend(i.into_iter().map(|(k, v)| (k.into(), v.into())));
+        self
+    }
+
+    /// Apply a label update.
+    ///
+    /// This will apply the provided update to the current set of labels. Updates with an empty
+    /// value will remove the label.
+    pub fn apply(mut self, update: Labels) -> Self {
+        for (k, v) in update.0 {
+            if v.is_empty() {
+                self.remove(&k);
+            } else {
+                self.insert(k, v);
+            }
+        }
         self
     }
 }
@@ -84,5 +111,25 @@ impl Deref for Labels {
 impl DerefMut for Labels {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn apply_update() {
+        let original = Labels::new().extend([("foo", "1"), ("bar", "2")]);
+        let modified =
+            original.apply(Labels::new().extend([("foo", "2"), ("bar", ""), ("baz", "3")]));
+
+        assert_eq!(
+            modified.0,
+            HashMap::from_iter([
+                ("foo".to_string(), "2".to_string()),
+                ("baz".to_string(), "3".to_string())
+            ])
+        );
     }
 }

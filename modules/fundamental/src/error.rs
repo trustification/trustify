@@ -10,7 +10,7 @@ use trustify_module_storage::service::StorageKeyError;
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
-    HashKey(IdError),
+    HashKey(#[from] IdError),
     #[error(transparent)]
     StorageKey(#[from] StorageKeyError),
     #[error(transparent)]
