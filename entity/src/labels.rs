@@ -58,6 +58,10 @@ impl Labels {
         }
         self
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
 }
 
 impl<'a> FromIterator<(&'a str, &'a str)> for Labels {

@@ -119,6 +119,7 @@ impl SbomService {
                 authors: sbom.authors,
 
                 described_by,
+                labels: sbom.labels,
             }),
             None => None,
         })

@@ -30,18 +30,18 @@ impl AdvisorySummary {
         averages: &[(Option<f64>, Option<Severity>)],
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
-        let mut vulnerabilities = entities
+        let vulnerabilities = entities
             .load_many_to_many(vulnerability::Entity, advisory_vulnerability::Entity, tx)
             .await?;
 
-        let mut issuers = entities.load_one(organization::Entity, tx).await?;
+        let issuers = entities.load_one(organization::Entity, tx).await?;
 
-        let mut summaries = Vec::new();
+        let mut summaries = Vec::with_capacity(issuers.len());
 
         for (((advisory, vulnerabilities), issuer), (average_score, average_severity)) in entities
             .iter()
-            .zip(vulnerabilities.drain(..))
-            .zip(issuers.drain(..))
+            .zip(vulnerabilities.into_iter())
+            .zip(issuers.into_iter())
             .zip(averages)
         {
             let vulnerabilities =
