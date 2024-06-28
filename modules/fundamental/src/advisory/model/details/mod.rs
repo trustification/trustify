@@ -38,7 +38,7 @@ impl AdvisoryDetails {
         let issuer = advisory.find_related(organization::Entity).one(tx).await?;
 
         Ok(AdvisoryDetails {
-            head: AdvisoryHead::from_entity(advisory, issuer, tx).await?,
+            head: AdvisoryHead::from_advisory(advisory, issuer, tx).await?,
             vulnerabilities,
             average_severity: average_severity.map(|e| e.to_string()),
             average_score,

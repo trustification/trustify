@@ -1,4 +1,4 @@
-use crate::{advisory, vulnerability};
+use crate::{advisory, advisory_vulnerability, vulnerability};
 use sea_orm::entity::prelude::*;
 use std::fmt::{Display, Formatter};
 use trustify_cvss::cvss3;
@@ -57,6 +57,12 @@ pub enum Relation {
     from = "super::cvss3::Column::VulnerabilityIdentifier"
     to = "super::vulnerability::Column::Identifier")]
     Vulnerability,
+
+    #[sea_orm(
+        belongs_to = "super::advisory_vulnerability::Entity",
+        from = "(super::cvss3::Column::AdvisoryId, super::cvss3::Column::VulnerabilityIdentifier)"
+        to = "(super::advisory_vulnerability::Column::AdvisoryId, super::advisory_vulnerability::Column::VulnerabilityIdentifier)")]
+    AdvisoryVulnerability,
 }
 
 impl Related<advisory::Entity> for Entity {
@@ -68,6 +74,12 @@ impl Related<advisory::Entity> for Entity {
 impl Related<vulnerability::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Vulnerability.def()
+    }
+}
+
+impl Related<advisory_vulnerability::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::AdvisoryVulnerability.def()
     }
 }
 

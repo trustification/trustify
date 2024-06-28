@@ -35,7 +35,7 @@ pub struct AdvisoryHead {
 }
 
 impl AdvisoryHead {
-    pub async fn from_entity(
+    pub async fn from_advisory(
         entity: &advisory::Model,
         issuer: Option<organization::Model>,
         tx: &ConnectionOrTransaction<'_>,
