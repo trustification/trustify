@@ -327,39 +327,6 @@ mod test {
         assert_eq!(1, loaded_advisory_vulnerabilities.len());
         let _loaded_advisory_vulnerability = &loaded_advisory_vulnerabilities[0];
 
-        /*
-        let affected_assertions = loaded_advisory_vulnerability
-            .affected_assertions(())
-            .await?;
-        assert_eq!(1, affected_assertions.assertions.len());
-
-        let affected_assertion = affected_assertions.assertions.get("pkg://cargo/hyper");
-        assert!(affected_assertion.is_some());
-
-        let affected_assertion = &affected_assertion.unwrap()[0];
-        assert!(
-            matches!( affected_assertion, Assertion::Affected {start_version,end_version}
-                if start_version == "0.0.0-0"
-                && end_version == "0.14.10"
-            )
-        );
-
-        let fixed_assertions = loaded_advisory_vulnerability.fixed_assertions(()).await?;
-        assert_eq!(1, fixed_assertions.assertions.len());
-
-        let fixed_assertion = fixed_assertions.assertions.get("pkg://cargo/hyper");
-        assert!(fixed_assertion.is_some());
-
-        let fixed_assertion = fixed_assertion.unwrap();
-        assert_eq!(1, fixed_assertion.len());
-
-        let fixed_assertion = &fixed_assertion[0];
-        assert!(matches!( fixed_assertion, Assertion::Fixed{version }
-            if version == "0.14.10"
-        ));
-
-         */
-
         let advisory_vuln = loaded_advisory
             .get_vulnerability("CVE-2021-32714", ())
             .await?;

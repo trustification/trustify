@@ -155,7 +155,8 @@ impl<'g> CsafLoader<'g> {
             advisory_vulnerability.advisory_vulnerability.advisory_id,
             advisory_vulnerability
                 .advisory_vulnerability
-                .vulnerability_id,
+                .vulnerability_id
+                .clone(),
         );
 
         creator.add_all(csaf, &product_status.fixed, "fixed");

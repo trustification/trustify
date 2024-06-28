@@ -5,9 +5,9 @@ use crate::graph::error::Error;
 use crate::graph::Graph;
 use hex::ToHex;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, EntityTrait, IntoActiveModel, QueryFilter};
-use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
-use sea_query::{Condition, JoinType};
+use sea_orm::ColumnTrait;
+use sea_orm::{ActiveModelTrait, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter};
+use sea_query::Condition;
 use std::fmt::{Debug, Formatter};
 use time::OffsetDateTime;
 use tracing::instrument;
@@ -209,13 +209,10 @@ impl<'g> AdvisoryContext<'g> {
         identifier: &str,
         tx: TX,
     ) -> Result<Option<AdvisoryVulnerabilityContext<'g>>, Error> {
-        Ok(entity::advisory_vulnerability::Entity::find()
-            .join(
-                JoinType::Join,
-                entity::advisory_vulnerability::Relation::Vulnerability.def(),
-            )
-            .filter(entity::advisory_vulnerability::Column::AdvisoryId.eq(self.advisory.id))
-            .filter(entity::vulnerability::Column::Identifier.eq(identifier))
+        Ok(self
+            .advisory
+            .find_related(entity::advisory_vulnerability::Entity)
+            .filter(entity::advisory_vulnerability::Column::VulnerabilityId.eq(identifier))
             .one(&self.graph.connection(&tx))
             .await?
             .map(|vuln| (self, vuln).into()))
@@ -228,15 +225,9 @@ impl<'g> AdvisoryContext<'g> {
         information: Option<AdvisoryVulnerabilityInformation>,
         tx: TX,
     ) -> Result<AdvisoryVulnerabilityContext, Error> {
-        if let Some(found) = self.get_vulnerability(identifier, &tx).await? {
-            return Ok(found);
-        }
-
-        let vulnerability = self.graph.ingest_vulnerability(identifier, (), &tx).await?;
-
         let entity = entity::advisory_vulnerability::ActiveModel {
             advisory_id: Set(self.advisory.id),
-            vulnerability_id: Set(vulnerability.vulnerability.id),
+            vulnerability_id: Set(identifier.to_string()),
             title: Set(information.as_ref().and_then(|info| info.title.clone())),
             summary: Set(information.as_ref().and_then(|info| info.summary.clone())),
             description: Set(information
@@ -254,12 +245,9 @@ impl<'g> AdvisoryContext<'g> {
         &self,
         tx: TX,
     ) -> Result<Vec<AdvisoryVulnerabilityContext>, Error> {
-        Ok(entity::advisory_vulnerability::Entity::find()
-            .join(
-                JoinType::Join,
-                entity::advisory_vulnerability::Relation::Vulnerability.def(),
-            )
-            .filter(entity::advisory_vulnerability::Column::AdvisoryId.eq(self.advisory.id))
+        Ok(self
+            .advisory
+            .find_related(entity::advisory_vulnerability::Entity)
             .all(&self.graph.connection(&tx))
             .await?
             .drain(0..)

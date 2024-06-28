@@ -1,4 +1,4 @@
-use crate::{advisory, vulnerability};
+use crate::{advisory, advisory_vulnerability, vulnerability};
 use sea_orm::entity::prelude::*;
 use std::fmt::{Display, Formatter};
 use trustify_cvss::cvss3;
@@ -10,7 +10,7 @@ pub struct Model {
     pub advisory_id: Uuid,
 
     #[sea_orm(primary_key)]
-    pub vulnerability_id: i32,
+    pub vulnerability_id: String,
 
     #[sea_orm(primary_key)]
     pub minor_version: i32,
@@ -53,10 +53,16 @@ pub enum Relation {
     Advisory,
 
     #[sea_orm(
-    belongs_to = "super::advisory::Entity",
+    belongs_to = "super::vulnerability::Entity",
     from = "super::cvss3::Column::VulnerabilityId"
-    to = "super::advisory::Column::Id")]
+    to = "super::vulnerability::Column::Id")]
     Vulnerability,
+
+    #[sea_orm(
+        belongs_to = "super::advisory_vulnerability::Entity",
+        from = "(super::cvss3::Column::AdvisoryId, super::cvss3::Column::VulnerabilityId)"
+        to = "(super::advisory_vulnerability::Column::AdvisoryId, super::advisory_vulnerability::Column::VulnerabilityId)")]
+    AdvisoryVulnerability,
 }
 
 impl Related<advisory::Entity> for Entity {
@@ -68,6 +74,12 @@ impl Related<advisory::Entity> for Entity {
 impl Related<vulnerability::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Vulnerability.def()
+    }
+}
+
+impl Related<advisory_vulnerability::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::AdvisoryVulnerability.def()
     }
 }
 
