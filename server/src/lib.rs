@@ -8,6 +8,9 @@ mod sample_data;
 
 pub use sample_data::sample_data;
 
+#[cfg(feature = "ui")]
+use trustify_module_ui::UI;
+
 use actix_web::{
     body::MessageBody,
     dev::{ConnectionInfo, Url},
@@ -51,11 +54,9 @@ use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::{service::dispatch::DispatchBackend, service::fs::FileSystemBackend};
+use trustify_module_ui::endpoints::UiResources;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-
-#[cfg(feature = "ui")]
-use trustify_module_ui::UI;
 
 /// Run the API server
 #[derive(clap::Args, Debug)]
@@ -250,6 +251,7 @@ impl InitData {
 
     async fn run(mut self, metrics: &Metrics) -> anyhow::Result<()> {
         let swagger_oidc = self.swagger_oidc;
+        let ui = UiResources::new(&self.ui)?;
 
         let limit = ByteSize::gb(1).as_u64() as usize;
 
@@ -302,7 +304,7 @@ impl InitData {
                             // I think the UI must come last due to
                             // its use of `resolve_not_found_to`
                             #[cfg(feature = "ui")]
-                            trustify_module_ui::endpoints::configure(svc, &self.ui);
+                            trustify_module_ui::endpoints::configure(svc, &ui);
                         });
                 })
         };
