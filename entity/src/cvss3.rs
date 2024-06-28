@@ -10,7 +10,7 @@ pub struct Model {
     pub advisory_id: Uuid,
 
     #[sea_orm(primary_key)]
-    pub vulnerability_id: i32,
+    pub vulnerability_identifier: String,
 
     #[sea_orm(primary_key)]
     pub minor_version: i32,
@@ -53,9 +53,9 @@ pub enum Relation {
     Advisory,
 
     #[sea_orm(
-    belongs_to = "super::advisory::Entity",
-    from = "super::cvss3::Column::VulnerabilityId"
-    to = "super::advisory::Column::Id")]
+    belongs_to = "super::vulnerability::Entity",
+    from = "super::cvss3::Column::VulnerabilityIdentifier"
+    to = "super::vulnerability::Column::Identifier")]
     Vulnerability,
 }
 

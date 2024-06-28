@@ -23,15 +23,15 @@ struct PackageStatus {
 
 pub struct PackageStatusCreator {
     advisory_id: Uuid,
-    vulnerability_id: i32,
+    vulnerability_identifier: String,
     entries: HashSet<PackageStatus>,
 }
 
 impl PackageStatusCreator {
-    pub fn new(advisory_id: Uuid, vulnerability_id: i32) -> Self {
+    pub fn new(advisory_id: Uuid, vulnerability_identifier: String) -> Self {
         Self {
             advisory_id,
-            vulnerability_id,
+            vulnerability_identifier,
             entries: HashSet::new(),
         }
     }
@@ -122,7 +122,7 @@ impl PackageStatusCreator {
             let package_status = package_status::ActiveModel {
                 id: Default::default(),
                 advisory_id: Set(self.advisory_id),
-                vulnerability_id: Set(self.vulnerability_id),
+                vulnerability_identifier: Set(self.vulnerability_identifier.clone()),
                 status_id: Set(status.id),
                 package_id: Set(package_id),
                 version_range_id: Set(version_range_id),

@@ -228,15 +228,9 @@ impl<'g> AdvisoryContext<'g> {
         information: Option<AdvisoryVulnerabilityInformation>,
         tx: TX,
     ) -> Result<AdvisoryVulnerabilityContext, Error> {
-        if let Some(found) = self.get_vulnerability(identifier, &tx).await? {
-            return Ok(found);
-        }
-
-        let vulnerability = self.graph.ingest_vulnerability(identifier, (), &tx).await?;
-
         let entity = entity::advisory_vulnerability::ActiveModel {
             advisory_id: Set(self.advisory.id),
-            vulnerability_id: Set(vulnerability.vulnerability.id),
+            vulnerability_identifier: Set(identifier.to_string()),
             title: Set(information.as_ref().and_then(|info| info.title.clone())),
             summary: Set(information.as_ref().and_then(|info| info.summary.clone())),
             description: Set(information

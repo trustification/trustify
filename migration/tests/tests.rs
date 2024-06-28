@@ -20,3 +20,9 @@ async fn test_migrations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     Ok(())
 }
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(tokio::test)]
+async fn only_up_migration(_ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    Ok(())
+}
