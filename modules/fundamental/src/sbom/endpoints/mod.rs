@@ -1,3 +1,7 @@
+mod label;
+#[cfg(test)]
+mod test;
+
 use crate::sbom::model::{SbomPackageReference, Which};
 use crate::sbom::service::SbomService;
 use crate::Error;
@@ -31,12 +35,24 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         .service(packages)
         .service(related)
         .service(upload)
-        .service(download);
+        .service(download)
+        .service(label::set)
+        .service(label::update);
 }
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(all, all_related, get, packages, related, upload, download,),
+    paths(
+        all,
+        all_related,
+        get,
+        packages,
+        related,
+        upload,
+        download,
+        label::set,
+        label::update,
+    ),
     components(schemas(
         crate::sbom::model::PaginatedSbomPackage,
         crate::sbom::model::PaginatedSbomPackageRelation,
@@ -142,24 +158,24 @@ pub async fn all_related(
     tag = "sbom",
     context_path = "/api",
     params(
-        ("key" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
         (status = 200, description = "Matching SBOM", body = SbomSummary),
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
-#[get("/v1/sbom/{key}")]
+#[get("/v1/sbom/{id}")]
 pub async fn get(
     fetcher: web::Data<SbomService>,
     authorizer: web::Data<Authorizer>,
     user: UserInformation,
-    key: web::Path<String>,
+    id: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadSbom)?;
 
-    let hash_key = Id::from_str(&key).map_err(Error::HashKey)?;
-    match fetcher.fetch_sbom(hash_key, ()).await? {
+    let id = Id::from_str(&id).map_err(Error::HashKey)?;
+    match fetcher.fetch_sbom(id, ()).await? {
         Some(v) => Ok(HttpResponse::Ok().json(v)),
         None => Ok(HttpResponse::NotFound().finish()),
     }
@@ -254,14 +270,6 @@ pub async fn related(
     Ok(HttpResponse::Ok().json(result))
 }
 
-#[derive(Clone, Debug, serde::Deserialize)]
-pub struct UploadSbomQuery {
-    /// The source of the document.
-    ///
-    /// Only the base source, not the full document URL.
-    pub location: String,
-}
-
 #[utoipa::path(
     tag = "sbom",
     context_path = "/api",
@@ -279,12 +287,12 @@ pub struct UploadSbomQuery {
 pub async fn upload(
     service: web::Data<IngestorService>,
     bytes: web::Bytes,
-    web::Query(UploadSbomQuery { location }): web::Query<UploadSbomQuery>,
 ) -> Result<impl Responder, Error> {
     let fmt = Format::from_bytes(&bytes)?;
     let payload = ReaderStream::new(&*bytes);
+
     let result = service
-        .ingest(("source", location), None, fmt, payload)
+        .ingest(("source", "rest-api"), None, fmt, payload)
         .await?;
     Ok(HttpResponse::Created().json(result))
 }
@@ -325,6 +333,3 @@ pub async fn download(
         None => HttpResponse::NotFound().finish(),
     })
 }
-
-#[cfg(test)]
-mod test;

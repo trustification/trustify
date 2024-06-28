@@ -14,6 +14,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::fmt::Debug;
 use tracing::instrument;
+use trustify_common::id::TrySelectForId;
 use trustify_common::{
     cpe::Cpe,
     db::{
@@ -44,11 +45,7 @@ impl SbomService {
     ) -> Result<Option<SbomSummary>, Error> {
         let connection = self.db.connection(&tx);
 
-        let select = match id {
-            Id::Uuid(id) => sbom::Entity::find_by_id(id),
-            Id::Sha256(sha256) => sbom::Entity::find().filter(sbom::Column::Sha256.eq(sha256)),
-            _ => return Err(Error::UnsupportedHashAlgorithm),
-        };
+        let select = sbom::Entity::find().try_filter(id)?;
 
         Ok(
             match select
