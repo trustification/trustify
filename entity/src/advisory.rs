@@ -61,6 +61,9 @@ pub enum Relation {
 
     #[sea_orm(has_many = "super::cvss3::Entity")]
     Cvss3,
+
+    #[sea_orm(has_many = "super::advisory_vulnerability::Entity")]
+    AdvisoryVulnerability,
 }
 
 impl Related<organization::Entity> for Entity {
@@ -76,6 +79,12 @@ impl Related<vulnerability::Entity> for Entity {
 
     fn via() -> Option<RelationDef> {
         Some(advisory_vulnerability::Relation::Advisory.def().rev())
+    }
+}
+
+impl Related<advisory_vulnerability::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::AdvisoryVulnerability.def()
     }
 }
 

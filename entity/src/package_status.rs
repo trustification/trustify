@@ -7,7 +7,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
     pub advisory_id: Uuid,
-    pub vulnerability_id: i32,
+    pub vulnerability_id: String,
     pub status_id: Uuid,
     pub package_id: Uuid,
     pub version_range_id: Uuid,
