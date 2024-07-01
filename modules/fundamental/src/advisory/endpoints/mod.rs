@@ -2,16 +2,13 @@ mod label;
 #[cfg(test)]
 mod test;
 
-use crate::advisory::service::AdvisoryService;
-use crate::Error;
+use crate::{advisory::service::AdvisoryService, Error};
 use actix_web::{get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use std::str::FromStr;
 use tokio_util::io::ReaderStream;
-use trustify_common::db::query::Query;
-use trustify_common::db::Database;
-use trustify_common::id::Id;
-use trustify_common::model::Paginated;
+use trustify_common::{db::query::Query, db::Database, id::Id, model::Paginated};
+use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::{IntoParams, OpenApi};
@@ -99,7 +96,11 @@ pub async fn get(
 )]
 struct UploadParams {
     /// Optional issuer if it cannot be determined from advisory contents.
+    #[serde(default)]
     issuer: Option<String>,
+    /// Optional labels
+    #[serde(flatten, with = "trustify_entity::labels::prefixed")]
+    labels: Labels,
 }
 
 #[utoipa::path(
@@ -116,14 +117,12 @@ struct UploadParams {
 /// Upload a new advisory
 pub async fn upload(
     service: web::Data<IngestorService>,
-    web::Query(UploadParams { issuer }): web::Query<UploadParams>,
+    web::Query(UploadParams { issuer, labels }): web::Query<UploadParams>,
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
     let fmt = Format::from_bytes(&bytes)?;
     let payload = ReaderStream::new(&*bytes);
-    let result = service
-        .ingest(("source", "rest-api"), issuer, fmt, payload)
-        .await?;
+    let result = service.ingest(labels, issuer, fmt, payload).await?;
     Ok(HttpResponse::Created().json(result))
 }
 

@@ -2,24 +2,27 @@ mod label;
 #[cfg(test)]
 mod test;
 
-use crate::sbom::model::{SbomPackageReference, Which};
-use crate::sbom::service::SbomService;
-use crate::Error;
+use crate::{
+    sbom::{
+        model::{SbomPackageReference, Which},
+        service::SbomService,
+    },
+    Error,
+};
 use actix_web::{get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
 use tokio_util::io::ReaderStream;
-use trustify_auth::authenticator::user::UserInformation;
-use trustify_auth::authorizer::Authorizer;
-use trustify_auth::Permission;
-use trustify_common::db::query::Query;
-use trustify_common::db::Database;
-use trustify_common::error::ErrorInformation;
-use trustify_common::id::Id;
-use trustify_common::model::Paginated;
-use trustify_common::purl::Purl;
-use trustify_entity::relationship::Relationship;
+use trustify_auth::{authenticator::user::UserInformation, authorizer::Authorizer, Permission};
+use trustify_common::{
+    db::{query::Query, Database},
+    error::ErrorInformation,
+    id::Id,
+    model::Paginated,
+    purl::Purl,
+};
+use trustify_entity::{labels::Labels, relationship::Relationship};
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::OpenApi;
@@ -270,11 +273,18 @@ pub async fn related(
     Ok(HttpResponse::Ok().json(result))
 }
 
+#[derive(Clone, Debug, serde::Deserialize, utoipa::IntoParams)]
+struct UploadQuery {
+    #[serde(flatten, with = "trustify_entity::labels::prefixed")]
+    labels: Labels,
+}
+
 #[utoipa::path(
     tag = "sbom",
     context_path = "/api",
     request_body = Vec <u8>,
     params(
+        UploadQuery,
         ("location" = String, Query, description = "Source the document came from"),
     ),
     responses(
@@ -286,14 +296,13 @@ pub async fn related(
 /// Upload a new SBOM
 pub async fn upload(
     service: web::Data<IngestorService>,
+    web::Query(UploadQuery { labels }): web::Query<UploadQuery>,
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
     let fmt = Format::from_bytes(&bytes)?;
     let payload = ReaderStream::new(&*bytes);
 
-    let result = service
-        .ingest(("source", "rest-api"), None, fmt, payload)
-        .await?;
+    let result = service.ingest(labels, None, fmt, payload).await?;
     Ok(HttpResponse::Created().json(result))
 }
 

@@ -3,7 +3,9 @@ pub mod cve;
 pub mod sbom;
 
 mod format;
+
 pub use format::Format;
+use std::fmt::Debug;
 
 use crate::graph::Graph;
 use crate::model::IngestResult;
@@ -13,6 +15,7 @@ use bytes::Bytes;
 use futures::Stream;
 use sea_orm::error::DbErr;
 use std::time::Instant;
+use tracing::instrument;
 use trustify_common::{error::ErrorInformation, id::IdError};
 use trustify_entity::labels::Labels;
 use trustify_module_storage::service::{dispatch::DispatchBackend, StorageBackend, SyncAdapter};
@@ -99,9 +102,10 @@ impl IngestorService {
         &self.graph
     }
 
+    #[instrument(skip(self, stream), err)]
     pub async fn ingest<S, E>(
         &self,
-        labels: impl Into<Labels>,
+        labels: impl Into<Labels> + Debug,
         issuer: Option<String>,
         fmt: Format,
         stream: S,
