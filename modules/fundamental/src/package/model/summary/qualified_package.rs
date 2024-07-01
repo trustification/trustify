@@ -4,7 +4,7 @@ use sea_orm::{LoaderTrait, ModelTrait};
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::paginated;
-use trustify_entity::{package, package_version, qualified_package};
+use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
@@ -17,11 +17,11 @@ pub struct QualifiedPackageSummary {
 
 impl QualifiedPackageSummary {
     pub async fn from_entities(
-        qualified_packages: &Vec<qualified_package::Model>,
+        qualified_packages: &Vec<qualified_purl::Model>,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
         let package_versions = qualified_packages
-            .load_one(package_version::Entity, tx)
+            .load_one(versioned_purl::Entity, tx)
             .await?;
 
         let mut summaries = Vec::new();
@@ -32,7 +32,7 @@ impl QualifiedPackageSummary {
             if let (Some(package_version), qualified_package) = (package_version, qualified_package)
             {
                 if let Some(package) = package_version
-                    .find_related(package::Entity)
+                    .find_related(base_purl::Entity)
                     .one(tx)
                     .await?
                 {

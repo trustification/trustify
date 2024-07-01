@@ -28,12 +28,13 @@ use trustify_common::{
 };
 use trustify_entity::labels::Labels;
 use trustify_entity::{
+    base_purl,
     cpe::{self, CpeDto},
-    package, package_relates_to_package, package_version,
-    qualified_package::{self, Qualifiers},
+    package_relates_to_package,
+    qualified_purl::{self, Qualifiers},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
-    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
+    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, versioned_purl,
 };
 
 impl SbomService {
@@ -167,7 +168,7 @@ impl SbomService {
                 sbom_package::Entity
                     .columns()
                     .add_columns(sbom_node::Entity)
-                    .add_columns(package::Entity)
+                    .add_columns(base_purl::Entity)
                     .add_columns(sbom_package_cpe_ref::Entity)
                     .add_columns(sbom_package_purl_ref::Entity),
             )?
@@ -419,9 +420,9 @@ where
         )
         .join(
             JoinType::LeftJoin,
-            qualified_package::Relation::PackageVersion.def(),
+            qualified_purl::Relation::PackageVersion.def(),
         )
-        .join(JoinType::LeftJoin, package_version::Relation::Package.def())
+        .join(JoinType::LeftJoin, versioned_purl::Relation::Package.def())
         // aggregate the q -> v -> p hierarchy into an array of json objects
         .select_column_as(
             Expr::cust_with_exprs(
@@ -432,15 +433,15 @@ where
                             Func::cust(JsonBuildObject)
                                 // must match with PurlDto struct
                                 .arg("type")
-                                .arg(package::Column::Type.into_expr())
+                                .arg(base_purl::Column::Type.into_expr())
                                 .arg("name")
-                                .arg(package::Column::Name.into_expr())
+                                .arg(base_purl::Column::Name.into_expr())
                                 .arg("namespace")
-                                .arg(package::Column::Namespace.into_expr())
+                                .arg(base_purl::Column::Namespace.into_expr())
                                 .arg("version")
-                                .arg(package_version::Column::Version.into_expr())
+                                .arg(versioned_purl::Column::Version.into_expr())
                                 .arg("qualifiers")
-                                .arg(qualified_package::Column::Qualifiers.into_expr()),
+                                .arg(qualified_purl::Column::Qualifiers.into_expr()),
                         ),
                     ),
                     sbom_package_purl_ref::Column::QualifiedPackageId

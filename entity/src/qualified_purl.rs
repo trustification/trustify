@@ -19,9 +19,9 @@ pub struct Qualifiers(pub BTreeMap<String, String>);
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::package_version::Entity",
-        from = "super::qualified_package::Column::PackageVersionId"
-        to = "super::package_version::Column::Id"
+        belongs_to = "super::versioned_purl::Entity",
+        from = "super::qualified_purl::Column::PackageVersionId"
+        to = "super::versioned_purl::Column::Id"
     )]
     PackageVersion,
     #[sea_orm(
@@ -32,7 +32,7 @@ pub enum Relation {
     SbomPackage,
 }
 
-impl Related<super::package_version::Entity> for Entity {
+impl Related<super::versioned_purl::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::PackageVersion.def()
     }
@@ -44,9 +44,9 @@ impl Related<super::sbom_package_purl_ref::Entity> for Entity {
     }
 }
 
-impl Related<super::package::Entity> for Entity {
+impl Related<super::base_purl::Entity> for Entity {
     fn to() -> RelationDef {
-        super::package_version::Relation::Package.def()
+        super::versioned_purl::Relation::Package.def()
     }
 }
 

@@ -21,9 +21,9 @@ pub enum Relation {
     )]
     VersionRange,
 
-    #[sea_orm(belongs_to = "super::package::Entity",
+    #[sea_orm(belongs_to = "super::base_purl::Entity",
         from = "Column::PackageId"
-        to = "super::package::Column::Id"
+        to = "super::base_purl::Column::Id"
     )]
     Package,
 
@@ -45,7 +45,7 @@ pub enum Relation {
     )]
     Status,
 
-    #[sea_orm(has_many = "super::package_version::Entity")]
+    #[sea_orm(has_many = "super::versioned_purl::Entity")]
     PackageVersion,
 }
 
@@ -55,13 +55,13 @@ impl Related<version_range::Entity> for Entity {
     }
 }
 
-impl Related<super::package::Entity> for Entity {
+impl Related<super::base_purl::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Package.def()
     }
 }
 
-impl Related<super::package_version::Entity> for Entity {
+impl Related<super::versioned_purl::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::PackageVersion.def()
     }

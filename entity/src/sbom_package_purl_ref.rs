@@ -24,7 +24,7 @@ pub enum Relation {
     Sbom,
     #[sea_orm(has_many = "super::sbom_package::Entity")]
     Package,
-    #[sea_orm(has_one = "super::qualified_package::Entity")]
+    #[sea_orm(has_one = "super::qualified_purl::Entity")]
     Purl,
 }
 
@@ -34,7 +34,7 @@ impl Related<super::sbom::Entity> for Entity {
     }
 }
 
-impl Related<super::qualified_package::Entity> for Entity {
+impl Related<super::qualified_purl::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Purl.def()
     }

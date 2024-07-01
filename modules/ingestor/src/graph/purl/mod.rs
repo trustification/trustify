@@ -66,7 +66,7 @@ impl Graph {
         if let Some(found) = self.get_package(purl, &tx).await? {
             Ok(found)
         } else {
-            let model = entity::package::ActiveModel {
+            let model = entity::base_purl::ActiveModel {
                 id: Set(purl.package_uuid()),
                 r#type: Set(purl.ty.clone()),
                 namespace: Set(purl.namespace.clone()),
@@ -100,7 +100,7 @@ impl Graph {
         id: Uuid,
         tx: TX,
     ) -> Result<Option<QualifiedPackageContext>, Error> {
-        let found = entity::qualified_package::Entity::find_by_id(id)
+        let found = entity::qualified_purl::Entity::find_by_id(id)
             .one(&self.connection(&tx))
             .await?;
 
@@ -127,8 +127,8 @@ impl Graph {
         query: SelectStatement,
         tx: TX,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        let found = entity::qualified_package::Entity::find()
-            .filter(entity::qualified_package::Column::Id.in_subquery(query))
+        let found = entity::qualified_purl::Entity::find()
+            .filter(entity::qualified_purl::Column::Id.in_subquery(query))
             .all(&self.connection(&tx))
             .await?;
 
@@ -169,7 +169,7 @@ impl Graph {
         id: Uuid,
         tx: TX,
     ) -> Result<Option<PackageVersionContext>, Error> {
-        if let Some(package_version) = entity::package_version::Entity::find_by_id(id)
+        if let Some(package_version) = entity::versioned_purl::Entity::find_by_id(id)
             .one(&self.connection(&tx))
             .await?
         {
@@ -194,14 +194,14 @@ impl Graph {
         purl: &Purl,
         tx: TX,
     ) -> Result<Option<PackageContext>, Error> {
-        Ok(entity::package::Entity::find()
-            .filter(entity::package::Column::Type.eq(&purl.ty))
+        Ok(entity::base_purl::Entity::find()
+            .filter(entity::base_purl::Column::Type.eq(&purl.ty))
             .filter(if let Some(ns) = &purl.namespace {
-                entity::package::Column::Namespace.eq(ns)
+                entity::base_purl::Column::Namespace.eq(ns)
             } else {
-                entity::package::Column::Namespace.is_null()
+                entity::base_purl::Column::Namespace.is_null()
             })
-            .filter(entity::package::Column::Name.eq(&purl.name))
+            .filter(entity::base_purl::Column::Name.eq(&purl.name))
             .one(&self.connection(&tx))
             .await?
             .map(|package| PackageContext::new(self, package)))
@@ -213,7 +213,7 @@ impl Graph {
         id: Uuid,
         tx: TX,
     ) -> Result<Option<PackageContext>, Error> {
-        if let Some(found) = entity::package::Entity::find_by_id(id)
+        if let Some(found) = entity::base_purl::Entity::find_by_id(id)
             .one(&self.connection(&tx))
             .await?
         {
@@ -228,7 +228,7 @@ impl Graph {
 #[derive(Clone)]
 pub struct PackageContext<'g> {
     pub graph: &'g Graph,
-    pub package: entity::package::Model,
+    pub package: entity::base_purl::Model,
 }
 
 impl Debug for PackageContext<'_> {
@@ -238,7 +238,7 @@ impl Debug for PackageContext<'_> {
 }
 
 impl<'g> PackageContext<'g> {
-    pub fn new(graph: &'g Graph, package: entity::package::Model) -> Self {
+    pub fn new(graph: &'g Graph, package: entity::base_purl::Model) -> Self {
         Self { graph, package }
     }
 
@@ -252,7 +252,7 @@ impl<'g> PackageContext<'g> {
             if let Some(found) = self.get_package_version(purl, &tx).await? {
                 Ok(found)
             } else {
-                let model = entity::package_version::ActiveModel {
+                let model = entity::versioned_purl::ActiveModel {
                     id: Set(purl.version_uuid()),
                     package_id: Set(self.package.id),
                     version: Set(version.clone()),
@@ -276,9 +276,9 @@ impl<'g> PackageContext<'g> {
         purl: &Purl,
         tx: TX,
     ) -> Result<Option<PackageVersionContext<'g>>, Error> {
-        Ok(entity::package_version::Entity::find()
-            .filter(entity::package_version::Column::PackageId.eq(self.package.id))
-            .filter(entity::package_version::Column::Version.eq(purl.version.clone()))
+        Ok(entity::versioned_purl::Entity::find()
+            .filter(entity::versioned_purl::Column::PackageId.eq(self.package.id))
+            .filter(entity::versioned_purl::Column::Version.eq(purl.version.clone()))
             .one(&self.graph.connection(&tx))
             .await
             .map(|package_version| {
@@ -294,8 +294,8 @@ impl<'g> PackageContext<'g> {
         &self,
         tx: TX,
     ) -> Result<Vec<PackageVersionContext>, Error> {
-        Ok(entity::package_version::Entity::find()
-            .filter(entity::package_version::Column::PackageId.eq(self.package.id))
+        Ok(entity::versioned_purl::Entity::find()
+            .filter(entity::versioned_purl::Column::PackageId.eq(self.package.id))
             .all(&self.graph.connection(&tx))
             .await?
             .drain(0..)
@@ -310,8 +310,8 @@ impl<'g> PackageContext<'g> {
     ) -> Result<PaginatedResults<PackageVersionContext>, Error> {
         let connection = self.graph.connection(&tx);
 
-        let limiter = entity::package_version::Entity::find()
-            .filter(entity::package_version::Column::PackageId.eq(self.package.id))
+        let limiter = entity::versioned_purl::Entity::find()
+            .filter(entity::versioned_purl::Column::PackageId.eq(self.package.id))
             .limiting(&connection, paginated.limit, paginated.offset);
 
         Ok(PaginatedResults {
@@ -345,8 +345,8 @@ mod tests {
     use trustify_common::db::Transactional;
     use trustify_common::model::Paginated;
     use trustify_common::purl::Purl;
-    use trustify_entity::qualified_package;
-    use trustify_entity::qualified_package::Qualifiers;
+    use trustify_entity::qualified_purl;
+    use trustify_entity::qualified_purl::Qualifiers;
 
     use crate::graph::error::Error;
     use crate::graph::Graph;
@@ -603,13 +603,13 @@ mod tests {
 
         let qualifiers = json!({"type": "jar"});
         // qualifiers @> '{"type": "jar"}'::jsonb
-        let select = qualified_package::Entity::find()
+        let select = qualified_purl::Entity::find()
             .select_only()
-            .column(qualified_package::Column::Id)
+            .column(qualified_purl::Column::Id)
             .filter(Expr::cust_with_exprs(
                 "$1 @> $2::jsonb",
                 [
-                    qualified_package::Column::Qualifiers.into_simple_expr(),
+                    qualified_purl::Column::Qualifiers.into_simple_expr(),
                     SimpleExpr::Value(qualifiers.into()),
                 ],
             ))

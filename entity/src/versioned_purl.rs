@@ -13,12 +13,12 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::package::Entity",
-        from = "super::package_version::Column::PackageId"
-        to = "super::package::Column::Id")]
+        belongs_to = "super::base_purl::Entity",
+        from = "super::versioned_purl::Column::PackageId"
+        to = "super::base_purl::Column::Id")]
     Package,
 
-    #[sea_orm(has_many = "super::qualified_package::Entity")]
+    #[sea_orm(has_many = "super::qualified_purl::Entity")]
     QualifiedPackage,
 
     #[sea_orm(has_many = "super::version_range::Entity")]
@@ -28,13 +28,13 @@ pub enum Relation {
     PackageStatus,
 }
 
-impl Related<super::package::Entity> for Entity {
+impl Related<super::base_purl::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Package.def()
     }
 }
 
-impl Related<super::qualified_package::Entity> for Entity {
+impl Related<super::qualified_purl::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::QualifiedPackage.def()
     }

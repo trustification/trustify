@@ -5,8 +5,9 @@ use std::collections::{HashMap, HashSet};
 use tracing::instrument;
 use trustify_common::{db::chunk::EntityChunkedIter, purl::Purl};
 use trustify_entity::{
-    package, package_version,
-    qualified_package::{self, Qualifiers},
+    base_purl,
+    qualified_purl::{self, Qualifiers},
+    versioned_purl,
 };
 
 /// Creator of PURLs.
@@ -43,7 +44,7 @@ impl PurlCreator {
             let (package, version, qualified) = purl.uuids();
             packages
                 .entry(package)
-                .or_insert_with(|| package::ActiveModel {
+                .or_insert_with(|| base_purl::ActiveModel {
                     id: Set(package),
                     r#type: Set(purl.ty),
                     namespace: Set(purl.namespace),
@@ -52,7 +53,7 @@ impl PurlCreator {
 
             versions
                 .entry(version)
-                .or_insert_with(|| package_version::ActiveModel {
+                .or_insert_with(|| versioned_purl::ActiveModel {
                     id: Set(version),
                     package_id: Set(package),
                     version: Set(purl.version.unwrap_or_default()),
@@ -60,7 +61,7 @@ impl PurlCreator {
 
             qualifieds
                 .entry(qualified)
-                .or_insert_with(|| qualified_package::ActiveModel {
+                .or_insert_with(|| qualified_purl::ActiveModel {
                     id: Set(qualified),
                     package_version_id: Set(version),
                     qualifiers: Set(Qualifiers(purl.qualifiers)),
@@ -70,9 +71,9 @@ impl PurlCreator {
         // insert packages
 
         for batch in &packages.into_values().chunked() {
-            package::Entity::insert_many(batch)
+            base_purl::Entity::insert_many(batch)
                 .on_conflict(
-                    OnConflict::columns([package::Column::Id])
+                    OnConflict::columns([base_purl::Column::Id])
                         .do_nothing()
                         .to_owned(),
                 )
@@ -84,9 +85,9 @@ impl PurlCreator {
         // insert all package versions
 
         for batch in &versions.into_values().chunked() {
-            package_version::Entity::insert_many(batch)
+            versioned_purl::Entity::insert_many(batch)
                 .on_conflict(
-                    OnConflict::columns([package_version::Column::Id])
+                    OnConflict::columns([versioned_purl::Column::Id])
                         .do_nothing()
                         .to_owned(),
                 )
@@ -98,9 +99,9 @@ impl PurlCreator {
         // insert all qualified packages
 
         for batch in &qualifieds.into_values().chunked() {
-            qualified_package::Entity::insert_many(batch)
+            qualified_purl::Entity::insert_many(batch)
                 .on_conflict(
-                    OnConflict::columns([qualified_package::Column::Id])
+                    OnConflict::columns([qualified_purl::Column::Id])
                         .do_nothing()
                         .to_owned(),
                 )

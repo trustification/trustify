@@ -9,12 +9,12 @@ use std::hash::{Hash, Hasher};
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
-use trustify_entity::qualified_package;
+use trustify_entity::qualified_purl;
 
 #[derive(Clone)]
 pub struct QualifiedPackageContext<'g> {
     pub package_version: PackageVersionContext<'g>,
-    pub qualified_package: entity::qualified_package::Model,
+    pub qualified_package: entity::qualified_purl::Model,
 }
 
 impl PartialEq for QualifiedPackageContext<'_> {
@@ -52,7 +52,7 @@ impl<'g> From<QualifiedPackageContext<'g>> for Purl {
 impl<'g> QualifiedPackageContext<'g> {
     pub fn new(
         package_version: &PackageVersionContext<'g>,
-        qualified_package: qualified_package::Model,
+        qualified_package: qualified_purl::Model,
     ) -> Self {
         Self {
             package_version: package_version.clone(),

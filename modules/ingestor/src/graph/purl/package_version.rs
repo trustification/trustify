@@ -9,14 +9,14 @@ use std::fmt::{Debug, Formatter};
 use trustify_common::db::Transactional;
 use trustify_common::purl::Purl;
 use trustify_entity as entity;
-use trustify_entity::package_version;
-use trustify_entity::qualified_package::Qualifiers;
+use trustify_entity::qualified_purl::Qualifiers;
+use trustify_entity::versioned_purl;
 
 /// Live context for a package version.
 #[derive(Clone)]
 pub struct PackageVersionContext<'g> {
     pub package: PackageContext<'g>,
-    pub package_version: entity::package_version::Model,
+    pub package_version: entity::versioned_purl::Model,
 }
 
 impl Debug for PackageVersionContext<'_> {
@@ -26,7 +26,7 @@ impl Debug for PackageVersionContext<'_> {
 }
 
 impl<'g> PackageVersionContext<'g> {
-    pub fn new(package: &PackageContext<'g>, package_version: package_version::Model) -> Self {
+    pub fn new(package: &PackageContext<'g>, package_version: versioned_purl::Model) -> Self {
         Self {
             package: package.clone(),
             package_version,
@@ -43,7 +43,7 @@ impl<'g> PackageVersionContext<'g> {
         }
 
         // No appropriate qualified package, create one.
-        let qualified_package = entity::qualified_package::ActiveModel {
+        let qualified_package = entity::qualified_purl::ActiveModel {
             id: Set(purl.qualifier_uuid()),
             package_version_id: Set(self.package_version.id),
             qualifiers: Set(Qualifiers(purl.qualifiers.clone())),
@@ -61,11 +61,10 @@ impl<'g> PackageVersionContext<'g> {
         purl: &Purl,
         tx: TX,
     ) -> Result<Option<QualifiedPackageContext<'g>>, Error> {
-        let found = entity::qualified_package::Entity::find()
-            .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
+        let found = entity::qualified_purl::Entity::find()
+            .filter(entity::qualified_purl::Column::PackageVersionId.eq(self.package_version.id))
             .filter(
-                entity::qualified_package::Column::Qualifiers
-                    .eq(Qualifiers(purl.qualifiers.clone())),
+                entity::qualified_purl::Column::Qualifiers.eq(Qualifiers(purl.qualifiers.clone())),
             )
             .one(&self.package.graph.connection(&tx))
             .await?;
@@ -81,8 +80,8 @@ impl<'g> PackageVersionContext<'g> {
         _pkg: Purl,
         tx: TX,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        Ok(entity::qualified_package::Entity::find()
-            .filter(entity::qualified_package::Column::PackageVersionId.eq(self.package_version.id))
+        Ok(entity::qualified_purl::Entity::find()
+            .filter(entity::qualified_purl::Column::PackageVersionId.eq(self.package_version.id))
             .all(&self.package.graph.connection(&tx))
             .await?
             .into_iter()
