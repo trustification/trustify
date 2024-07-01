@@ -11,7 +11,9 @@ pub mod summary;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct PackageHead {
+    /// The ID of the base PURL
     pub uuid: Uuid,
+    /// The actual base PURL
     pub purl: Purl,
 }
 
@@ -48,8 +50,11 @@ impl PackageHead {
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct PackageVersionHead {
+    /// The ID of the versioned PURL
     pub uuid: Uuid,
+    /// The actual, versioned PURL
     pub purl: Purl,
+    /// The version from the PURL
     pub version: String,
 }
 
@@ -75,7 +80,9 @@ impl PackageVersionHead {
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct QualifiedPackageHead {
+    /// The ID of the qualified PURL
     pub uuid: Uuid,
+    /// The actual qualified PURL
     pub purl: Purl,
 }
 
