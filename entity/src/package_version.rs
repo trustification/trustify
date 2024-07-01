@@ -2,7 +2,7 @@ use sea_orm::entity::prelude::*;
 use sea_orm::FromQueryResult;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
-#[sea_orm(table_name = "package_version")]
+#[sea_orm(table_name = "versioned_purl")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,

@@ -3,7 +3,7 @@ use sea_orm::{FromJsonQueryResult, FromQueryResult};
 use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
-#[sea_orm(table_name = "qualified_package")]
+#[sea_orm(table_name = "qualified_purl")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
