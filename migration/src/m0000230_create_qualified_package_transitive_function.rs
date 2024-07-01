@@ -9,7 +9,7 @@ impl MigrationTrait for Migration {
         manager
             .get_connection()
             .execute_unprepared(include_str!(
-                "m0000220_create_qualified_package_transitive_function.sql"
+                "m0000230_create_qualified_package_transitive_function.sql"
             ))
             .await
             .map(|_| ())
