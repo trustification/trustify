@@ -356,7 +356,7 @@ mod test {
 
     use actix_web::{
         body::{to_bytes, to_bytes_limited},
-        http::StatusCode,
+        http::{header, StatusCode},
         test::{call_and_read_body, call_service, TestRequest},
         web::{self, Bytes},
         App,
@@ -391,6 +391,8 @@ mod test {
         let req = TestRequest::get().uri("/openapi").to_request();
         let resp = call_service(&app, req).await;
         assert_eq!(resp.status(), StatusCode::TEMPORARY_REDIRECT);
+        let loc = resp.headers().get(header::LOCATION);
+        assert!(loc.is_some_and(|x| x.eq("/openapi/")));
 
         let req = TestRequest::get().uri("/openapi/").to_request();
         let body = call_and_read_body(&app, req).await;
