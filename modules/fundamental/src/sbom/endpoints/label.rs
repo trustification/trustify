@@ -5,11 +5,11 @@ use trustify_entity::labels::Labels;
 
 /// Modify existing labels of an SBOM
 #[utoipa::path(
-    tag = "advisory",
+    tag = "sbom",
     context_path = "/api",
-    request_body = inline(Labels),
+    request_body = Labels,
     params(
-        ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("id" = Id, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
         (status = 204, description = "Modified the labels of the SBOM"),
@@ -35,11 +35,11 @@ pub async fn update(
 
 /// Replace the labels of an SBOM
 #[utoipa::path(
-    tag = "advisory",
+    tag = "sbom",
     context_path = "/api",
-    request_body = inline(Labels),
+    request_body = Labels,
     params(
-        ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("id" = Id, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
         (status = 204, description = "Replaced the labels of the SBOM"),

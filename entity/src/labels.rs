@@ -1,6 +1,9 @@
 use async_graphql::scalar;
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut};
+use utoipa::openapi::schema::AdditionalProperties;
+use utoipa::openapi::{Object, ObjectBuilder, RefOr, Schema, SchemaType};
+use utoipa::ToSchema;
 
 #[derive(
     Clone,
@@ -11,9 +14,20 @@ use std::ops::{Deref, DerefMut};
     ::serde::Serialize,
     ::serde::Deserialize,
     sea_orm::FromJsonQueryResult,
-    utoipa::ToSchema,
 )]
 pub struct Labels(pub HashMap<String, String>);
+
+impl<'s> ToSchema<'s> for Labels {
+    fn schema() -> (&'s str, RefOr<Schema>) {
+        let props = AdditionalProperties::RefOr(Object::with_type(SchemaType::String).into());
+        let object: Schema = ObjectBuilder::new()
+            .additional_properties(Some(props))
+            .build()
+            .into();
+
+        ("Labels", object.into())
+    }
+}
 
 scalar!(Labels);
 
@@ -169,7 +183,7 @@ pub mod prefixed {
             let mut result = Labels::new();
 
             while let Some((key, value)) = map.next_entry::<String, String>()? {
-                if let Some(key) = key.strip_prefix(&self.prefix) {
+                if let Some(key) = key.strip_prefix(self.prefix) {
                     result.0.insert(key.to_string(), value);
                 }
             }
@@ -244,7 +258,7 @@ mod test {
     #[test]
     fn serialize_labels() {
         assert_eq!(
-            serde_json::to_value(&Example {
+            serde_json::to_value(Example {
                 foo: "bar".to_string(),
                 bar: 42,
                 labels: Labels::new().add("foo", "bar").add("bar", "42"),
