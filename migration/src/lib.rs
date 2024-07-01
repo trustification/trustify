@@ -44,6 +44,7 @@ mod m0000355_labels;
 mod m0000360_add_sbom_file;
 mod m0000370_add_cwe;
 mod m0000380_create_package_status_index;
+mod m0000390_rename_package_purl;
 
 pub struct Migrator;
 
@@ -94,6 +95,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000360_add_sbom_file::Migration),
             Box::new(m0000370_add_cwe::Migration),
             Box::new(m0000380_create_package_status_index::Migration),
+            Box::new(m0000390_rename_package_purl::Migration),
         ]
     }
 }
