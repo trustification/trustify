@@ -6,11 +6,8 @@ use crate::graph::{
 };
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use std::fmt::{Debug, Formatter};
-use trustify_common::db::Transactional;
-use trustify_common::purl::Purl;
-use trustify_entity as entity;
-use trustify_entity::qualified_purl::Qualifiers;
-use trustify_entity::versioned_purl;
+use trustify_common::{db::Transactional, purl::Purl};
+use trustify_entity::{self as entity, qualified_purl::Qualifiers, versioned_purl};
 
 /// Live context for a package version.
 #[derive(Clone)]
@@ -45,7 +42,7 @@ impl<'g> PackageVersionContext<'g> {
         // No appropriate qualified package, create one.
         let qualified_package = entity::qualified_purl::ActiveModel {
             id: Set(purl.qualifier_uuid()),
-            package_version_id: Set(self.package_version.id),
+            versioned_purl_id: Set(self.package_version.id),
             qualifiers: Set(Qualifiers(purl.qualifiers.clone())),
         };
 
@@ -62,7 +59,7 @@ impl<'g> PackageVersionContext<'g> {
         tx: TX,
     ) -> Result<Option<QualifiedPackageContext<'g>>, Error> {
         let found = entity::qualified_purl::Entity::find()
-            .filter(entity::qualified_purl::Column::PackageVersionId.eq(self.package_version.id))
+            .filter(entity::qualified_purl::Column::VersionedPurlId.eq(self.package_version.id))
             .filter(
                 entity::qualified_purl::Column::Qualifiers.eq(Qualifiers(purl.qualifiers.clone())),
             )
@@ -81,7 +78,7 @@ impl<'g> PackageVersionContext<'g> {
         tx: TX,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         Ok(entity::qualified_purl::Entity::find()
-            .filter(entity::qualified_purl::Column::PackageVersionId.eq(self.package_version.id))
+            .filter(entity::qualified_purl::Column::VersionedPurlId.eq(self.package_version.id))
             .all(&self.package.graph.connection(&tx))
             .await?
             .into_iter()

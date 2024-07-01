@@ -1,5 +1,4 @@
-use sea_orm::entity::prelude::*;
-use sea_orm::{FromJsonQueryResult, FromQueryResult};
+use sea_orm::{entity::prelude::*, FromJsonQueryResult, FromQueryResult};
 use std::collections::BTreeMap;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
@@ -7,7 +6,7 @@ use std::collections::BTreeMap;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
-    pub package_version_id: Uuid,
+    pub versioned_purl_id: Uuid,
     pub qualifiers: Qualifiers,
 }
 
@@ -20,14 +19,14 @@ pub struct Qualifiers(pub BTreeMap<String, String>);
 pub enum Relation {
     #[sea_orm(
         belongs_to = "super::versioned_purl::Entity",
-        from = "super::qualified_purl::Column::PackageVersionId"
+        from = "super::qualified_purl::Column::VersionedPurlId"
         to = "super::versioned_purl::Column::Id"
     )]
     PackageVersion,
     #[sea_orm(
         belongs_to = "super::sbom_package_purl_ref::Entity",
         from = "Column::Id",
-        to = "super::sbom_package_purl_ref::Column::QualifiedPackageId"
+        to = "super::sbom_package_purl_ref::Column::QualifiedPurlId"
     )]
     SbomPackage,
 }
@@ -46,7 +45,7 @@ impl Related<super::sbom_package_purl_ref::Entity> for Entity {
 
 impl Related<super::base_purl::Entity> for Entity {
     fn to() -> RelationDef {
-        super::versioned_purl::Relation::Package.def()
+        super::versioned_purl::Relation::BasePurl.def()
     }
 }
 

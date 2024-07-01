@@ -252,9 +252,7 @@ impl Graph {
                 JoinType::Join,
                 sbom_package_purl_ref::Relation::Package.def(),
             )
-            .filter(
-                sbom_package_purl_ref::Column::QualifiedPackageId.eq(package.qualified_package.id),
-            )
+            .filter(sbom_package_purl_ref::Column::QualifiedPurlId.eq(package.qualified_package.id))
     }
 
     fn query_by_cpe(cpe: CpeContext) -> Select<sbom::Entity> {
@@ -426,7 +424,7 @@ impl SbomContext {
             .get_qualified_packages_by_query(
                 describes
                     .join(JoinType::Join, sbom_package::Relation::Purl.def())
-                    .select_column(sbom_package_purl_ref::Column::QualifiedPackageId)
+                    .select_column(sbom_package_purl_ref::Column::QualifiedPurlId)
                     .into_query(),
                 tx,
             )
