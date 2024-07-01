@@ -1,19 +1,29 @@
-use crate::package::model::details::package::PackageDetails;
-use crate::package::model::details::package_version::PackageVersionDetails;
-use crate::package::model::details::qualified_package::QualifiedPackageDetails;
-use crate::package::model::summary::package::PackageSummary;
-use crate::package::model::summary::qualified_package::QualifiedPackageSummary;
-use crate::package::model::summary::r#type::TypeSummary;
-use crate::Error;
-use sea_orm::prelude::Uuid;
+use crate::{
+    package::model::{
+        details::{
+            package::PackageDetails, package_version::PackageVersionDetails,
+            qualified_package::QualifiedPackageDetails,
+        },
+        summary::{
+            package::PackageSummary, qualified_package::QualifiedPackageSummary,
+            r#type::TypeSummary,
+        },
+    },
+    Error,
+};
 use sea_orm::{
-    ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder, QuerySelect, QueryTrait,
+    prelude::Uuid, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder, QuerySelect,
+    QueryTrait,
 };
 use sea_query::{Condition, Order};
-use trustify_common::db::limiter::LimiterTrait;
-use trustify_common::db::query::{Filtering, Query};
-use trustify_common::db::{Database, Transactional};
-use trustify_common::model::{Paginated, PaginatedResults};
+use trustify_common::{
+    db::{
+        limiter::LimiterTrait,
+        query::{Filtering, Query},
+        Database, Transactional,
+    },
+    model::{Paginated, PaginatedResults},
+};
 use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 
 pub struct PackageService {
@@ -227,7 +237,7 @@ impl PackageService {
             .left_join(versioned_purl::Entity)
             .filter(
                 Condition::any().add(
-                    versioned_purl::Column::PackageId.in_subquery(
+                    versioned_purl::Column::BasePurlId.in_subquery(
                         base_purl::Entity::find()
                             .filtering(query)?
                             .select_only()

@@ -1,5 +1,4 @@
-use sea_orm::entity::prelude::*;
-use sea_orm::FromQueryResult;
+use sea_orm::{entity::prelude::*, FromQueryResult};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "base_purl")]
@@ -14,10 +13,10 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(has_many = "super::versioned_purl::Entity")]
-    PackageVersions,
+    VersionedPurls,
 
     #[sea_orm(has_many = "super::qualified_purl::Entity")]
-    QualifiedPackages,
+    QualifiedPurls,
 
     #[sea_orm(has_many = "super::package_status::Entity")]
     PackageStatus,
@@ -28,17 +27,17 @@ pub enum Relation {
 
 impl Related<super::versioned_purl::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::PackageVersions.def()
+        Relation::VersionedPurls.def()
     }
 }
 
 impl Related<super::qualified_purl::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::QualifiedPackages.def()
+        Relation::QualifiedPurls.def()
     }
 
     fn via() -> Option<RelationDef> {
-        Some(super::versioned_purl::Relation::Package.def().rev())
+        Some(super::versioned_purl::Relation::BasePurl.def().rev())
     }
 }
 

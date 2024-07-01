@@ -1,7 +1,9 @@
-use crate::advisory::model::AdvisoryHead;
-use crate::package::model::{PackageHead, PackageVersionHead, QualifiedPackageHead};
-use crate::vulnerability::model::VulnerabilityHead;
-use crate::Error;
+use crate::{
+    advisory::model::AdvisoryHead,
+    package::model::{PackageHead, PackageVersionHead, QualifiedPackageHead},
+    vulnerability::model::VulnerabilityHead,
+    Error,
+};
 use sea_orm::{
     ColumnTrait, EntityTrait, LoaderTrait, ModelTrait, QueryFilter, QuerySelect, RelationTrait,
 };
@@ -59,7 +61,7 @@ impl PackageVersionDetails {
             .left_join(base_purl::Entity)
             .join(
                 JoinType::LeftJoin,
-                base_purl::Relation::PackageVersions.def(),
+                base_purl::Relation::VersionedPurls.def(),
             )
             .left_join(version_range::Entity)
             .filter(package_status::Column::PackageId.eq(package.id))

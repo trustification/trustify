@@ -8,13 +8,11 @@ use sea_orm::{
     prelude::Uuid, ColumnTrait, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
     QueryOrder, QuerySelect, RelationTrait, Select, SelectColumns,
 };
-use sea_query::extension::postgres::PgExpr;
-use sea_query::{Expr, Func, JoinType, SimpleExpr};
+use sea_query::{extension::postgres::PgExpr, Expr, Func, JoinType, SimpleExpr};
 use serde::Deserialize;
 use serde_json::Value;
 use std::fmt::Debug;
 use tracing::instrument;
-use trustify_common::id::TrySelectForId;
 use trustify_common::{
     cpe::Cpe,
     db::{
@@ -22,14 +20,14 @@ use trustify_common::{
         query::{Filtering, IntoColumns, Query},
         ArrayAgg, JsonBuildObject, ToJson, Transactional,
     },
-    id::Id,
+    id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},
     purl::Purl,
 };
-use trustify_entity::labels::Labels;
 use trustify_entity::{
     base_purl,
     cpe::{self, CpeDto},
+    labels::Labels,
     package_relates_to_package,
     qualified_purl::{self, Qualifiers},
     relationship::Relationship,
@@ -234,7 +232,7 @@ impl SbomService {
         let query = sbom::Entity::find()
             .join(JoinType::Join, sbom::Relation::Packages.def())
             .join(JoinType::Join, sbom_package::Relation::Purl.def())
-            .filter(sbom_package_purl_ref::Column::QualifiedPackageId.eq(qualified_package_id))
+            .filter(sbom_package_purl_ref::Column::QualifiedPurlId.eq(qualified_package_id))
             .filtering(query)?
             .find_also_linked(SbomNodeLink);
 
@@ -422,7 +420,7 @@ where
             JoinType::LeftJoin,
             qualified_purl::Relation::PackageVersion.def(),
         )
-        .join(JoinType::LeftJoin, versioned_purl::Relation::Package.def())
+        .join(JoinType::LeftJoin, versioned_purl::Relation::BasePurl.def())
         // aggregate the q -> v -> p hierarchy into an array of json objects
         .select_column_as(
             Expr::cust_with_exprs(
@@ -444,7 +442,7 @@ where
                                 .arg(qualified_purl::Column::Qualifiers.into_expr()),
                         ),
                     ),
-                    sbom_package_purl_ref::Column::QualifiedPackageId
+                    sbom_package_purl_ref::Column::QualifiedPurlId
                         .is_not_null()
                         .into_simple_expr(),
                 ],

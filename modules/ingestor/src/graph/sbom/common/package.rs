@@ -59,7 +59,7 @@ impl PackageCreator {
                     self.purl_refs.push(sbom_package_purl_ref::ActiveModel {
                         sbom_id: Set(self.sbom_id),
                         node_id: Set(node_id.clone()),
-                        qualified_package_id: Set(purl),
+                        qualified_purl_id: Set(purl),
                     });
                 }
             }
@@ -112,7 +112,7 @@ impl PackageCreator {
                     OnConflict::columns([
                         sbom_package_purl_ref::Column::SbomId,
                         sbom_package_purl_ref::Column::NodeId,
-                        sbom_package_purl_ref::Column::QualifiedPackageId,
+                        sbom_package_purl_ref::Column::QualifiedPurlId,
                     ])
                     .do_nothing()
                     .to_owned(),

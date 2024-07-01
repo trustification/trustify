@@ -55,7 +55,7 @@ impl PurlCreator {
                 .entry(version)
                 .or_insert_with(|| versioned_purl::ActiveModel {
                     id: Set(version),
-                    package_id: Set(package),
+                    base_purl_id: Set(package),
                     version: Set(purl.version.unwrap_or_default()),
                 });
 
@@ -63,7 +63,7 @@ impl PurlCreator {
                 .entry(qualified)
                 .or_insert_with(|| qualified_purl::ActiveModel {
                     id: Set(qualified),
-                    package_version_id: Set(version),
+                    versioned_purl_id: Set(version),
                     qualifiers: Set(Qualifiers(purl.qualifiers)),
                 });
         }

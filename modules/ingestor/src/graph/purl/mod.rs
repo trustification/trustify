@@ -1,9 +1,13 @@
 //! Support for packages.
 
+pub mod creator;
+pub mod package_version;
+pub mod qualified_package;
+
+use crate::graph::{error::Error, Graph};
 use package_version::PackageVersionContext;
 use qualified_package::QualifiedPackageContext;
-use sea_orm::prelude::Uuid;
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+use sea_orm::{prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use sea_query::SelectStatement;
 use std::fmt::{Debug, Formatter};
 use tracing::instrument;
@@ -13,13 +17,6 @@ use trustify_common::{
     purl::{Purl, PurlErr},
 };
 use trustify_entity as entity;
-
-use crate::graph::error::Error;
-use crate::graph::Graph;
-
-pub mod creator;
-pub mod package_version;
-pub mod qualified_package;
 
 impl Graph {
     /// Ensure the fetch knows about and contains a record for a *fully-qualified* package.
@@ -106,7 +103,7 @@ impl Graph {
 
         if let Some(qualified_package) = found {
             if let Some(package_version) = self
-                .get_package_version_by_id(qualified_package.package_version_id, tx)
+                .get_package_version_by_id(qualified_package.versioned_purl_id, tx)
                 .await?
             {
                 Ok(Some(QualifiedPackageContext::new(
@@ -136,7 +133,7 @@ impl Graph {
 
         for base in &found {
             if let Some(package_version) = self
-                .get_package_version_by_id(base.package_version_id, &tx)
+                .get_package_version_by_id(base.versioned_purl_id, &tx)
                 .await?
             {
                 let qualified_package =
@@ -174,7 +171,7 @@ impl Graph {
             .await?
         {
             if let Some(package) = self
-                .get_package_by_id(package_version.package_id, &tx)
+                .get_package_by_id(package_version.base_purl_id, &tx)
                 .await?
             {
                 Ok(Some(PackageVersionContext::new(&package, package_version)))
@@ -254,7 +251,7 @@ impl<'g> PackageContext<'g> {
             } else {
                 let model = entity::versioned_purl::ActiveModel {
                     id: Set(purl.version_uuid()),
-                    package_id: Set(self.package.id),
+                    base_purl_id: Set(self.package.id),
                     version: Set(version.clone()),
                 };
 
@@ -277,7 +274,7 @@ impl<'g> PackageContext<'g> {
         tx: TX,
     ) -> Result<Option<PackageVersionContext<'g>>, Error> {
         Ok(entity::versioned_purl::Entity::find()
-            .filter(entity::versioned_purl::Column::PackageId.eq(self.package.id))
+            .filter(entity::versioned_purl::Column::BasePurlId.eq(self.package.id))
             .filter(entity::versioned_purl::Column::Version.eq(purl.version.clone()))
             .one(&self.graph.connection(&tx))
             .await
@@ -295,7 +292,7 @@ impl<'g> PackageContext<'g> {
         tx: TX,
     ) -> Result<Vec<PackageVersionContext>, Error> {
         Ok(entity::versioned_purl::Entity::find()
-            .filter(entity::versioned_purl::Column::PackageId.eq(self.package.id))
+            .filter(entity::versioned_purl::Column::BasePurlId.eq(self.package.id))
             .all(&self.graph.connection(&tx))
             .await?
             .drain(0..)
@@ -311,7 +308,7 @@ impl<'g> PackageContext<'g> {
         let connection = self.graph.connection(&tx);
 
         let limiter = entity::versioned_purl::Entity::find()
-            .filter(entity::versioned_purl::Column::PackageId.eq(self.package.id))
+            .filter(entity::versioned_purl::Column::BasePurlId.eq(self.package.id))
             .limiting(&connection, paginated.limit, paginated.offset);
 
         Ok(PaginatedResults {
