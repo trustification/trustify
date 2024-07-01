@@ -28,7 +28,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(all, get, upload, download, label::set),
+    paths(all, get, upload, download, label::set, label::update),
     components(schemas(
         crate::advisory::model::AdvisoryDetails,
         crate::advisory::model::AdvisoryHead,
@@ -40,6 +40,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         trustify_common::advisory::Assertion,
         trustify_common::purl::Purl,
         trustify_common::id::Id,
+        trustify_entity::labels::Labels,
     )),
     tags()
 )]
@@ -98,7 +99,9 @@ struct UploadParams {
     /// Optional issuer if it cannot be determined from advisory contents.
     #[serde(default)]
     issuer: Option<String>,
-    /// Optional labels
+    /// Optional labels.
+    ///
+    /// Only use keys with a prefix of `labels.`
     #[serde(flatten, with = "trustify_entity::labels::prefixed")]
     labels: Labels,
 }

@@ -7,9 +7,9 @@ use trustify_entity::labels::Labels;
 #[utoipa::path(
     tag = "advisory",
     context_path = "/api",
-    request_body = inline(Labels),
+    request_body = Labels,
     params(
-        ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("id" = Id, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
         (status = 204, description = "Replaced the labels of the advisory"),
@@ -34,9 +34,9 @@ pub async fn set(
 #[utoipa::path(
     tag = "advisory",
     context_path = "/api",
-    request_body = inline(Labels),
+    request_body = Labels,
     params(
-        ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("id" = Id, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
         (status = 204, description = "Modified the labels of the advisory"),

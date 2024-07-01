@@ -68,6 +68,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         trustify_common::advisory::Assertion,
         trustify_common::purl::Purl,
         trustify_common::id::Id,
+        trustify_entity::labels::Labels,
         trustify_entity::relationship::Relationship,
     )),
     tags()
@@ -275,6 +276,9 @@ pub async fn related(
 
 #[derive(Clone, Debug, serde::Deserialize, utoipa::IntoParams)]
 struct UploadQuery {
+    /// Optional labels.
+    ///
+    /// Only use keys with a prefix of `labels.`
     #[serde(flatten, with = "trustify_entity::labels::prefixed")]
     labels: Labels,
 }
