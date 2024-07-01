@@ -8,8 +8,8 @@ use std::ops::{Deref, DerefMut};
     Default,
     PartialEq,
     Eq,
-    serde::Serialize,
-    serde::Deserialize,
+    ::serde::Serialize,
+    ::serde::Deserialize,
     sea_orm::FromJsonQueryResult,
     utoipa::ToSchema,
 )]
@@ -118,9 +118,71 @@ impl DerefMut for Labels {
     }
 }
 
+/// A module to serialize/deserialize labels with a prefix of `.labels`.
+///
+/// This can be embedded in a struct like this:
+///
+/// ```rust
+/// # use trustify_entity::labels::Labels;
+/// #[derive(serde::Deserialize)]
+/// struct Example {
+///   other_field: String,
+///   #[serde(flatten, with="trustify_entity::labels::prefixed")]
+///   labels: Labels,
+/// }
+/// ```
+pub mod prefixed {
+    use crate::labels::Labels;
+    use serde::de::{MapAccess, Visitor};
+    use serde::ser::SerializeMap;
+    use serde::{Deserializer, Serializer};
+    use std::fmt::Formatter;
+
+    pub fn serialize<S: Serializer>(labels: &Labels, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut m = serializer.serialize_map(Some(labels.0.len()))?;
+        for (k, v) in &labels.0 {
+            m.serialize_key(&format!("labels.{k}"))?;
+            m.serialize_value(v)?;
+        }
+        m.end()
+    }
+
+    pub fn deserialize<'a, D: Deserializer<'a>>(deserializer: D) -> Result<Labels, D::Error> {
+        deserializer.deserialize_map(PrefixLabelsVisitor { prefix: "labels." })
+    }
+
+    struct PrefixLabelsVisitor<'p> {
+        prefix: &'p str,
+    }
+
+    impl<'p, 'de> Visitor<'de> for PrefixLabelsVisitor<'p> {
+        type Value = Labels;
+
+        fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+            write!(formatter, "a map with fields prefixed by {}", self.prefix)
+        }
+
+        fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+        where
+            A: MapAccess<'de>,
+        {
+            let mut result = Labels::new();
+
+            while let Some((key, value)) = map.next_entry::<String, String>()? {
+                if let Some(key) = key.strip_prefix(&self.prefix) {
+                    result.0.insert(key.to_string(), value);
+                }
+            }
+
+            Ok(result)
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+    use serde_json::json;
 
     #[test]
     fn apply_update() {
@@ -134,6 +196,66 @@ mod test {
                 ("foo".to_string(), "2".to_string()),
                 ("baz".to_string(), "3".to_string())
             ])
+        );
+    }
+
+    #[derive(Clone, Debug, PartialEq, Eq, ::serde::Serialize, ::serde::Deserialize)]
+    struct Example {
+        foo: String,
+        bar: i32,
+        #[serde(flatten, with = "super::prefixed")]
+        labels: Labels,
+    }
+
+    #[test]
+    fn parse_labels() {
+        assert_eq!(
+            Example {
+                foo: "bar".to_string(),
+                bar: 42,
+                labels: Labels::new().add("foo", "bar").add("bar", "42"),
+            },
+            serde_json::from_value(json!({
+                "foo": "bar",
+                "bar": 42,
+                "labels.foo": "bar",
+                "labels.bar": "42",
+            }))
+            .expect("must parse"),
+        );
+    }
+
+    #[test]
+    fn parse_empty_labels() {
+        assert_eq!(
+            Example {
+                foo: "bar".to_string(),
+                bar: 42,
+                labels: Labels::new(),
+            },
+            serde_json::from_value(json!({
+                "foo": "bar",
+                "bar": 42,
+            }))
+            .expect("must parse"),
+        );
+    }
+
+    #[test]
+    fn serialize_labels() {
+        assert_eq!(
+            serde_json::to_value(&Example {
+                foo: "bar".to_string(),
+                bar: 42,
+                labels: Labels::new().add("foo", "bar").add("bar", "42"),
+            })
+            .expect("must serialize"),
+            json!({
+                "foo": "bar",
+                "bar": 42,
+                "labels.foo": "bar",
+                "labels.bar": "42",
+            }),
         );
     }
 }

@@ -1,4 +1,8 @@
-use crate::{advisory::model::AdvisorySummary, configure, test::CallService};
+use crate::{
+    advisory::{model::AdvisoryDetails, model::AdvisorySummary},
+    configure,
+    test::CallService,
+};
 use actix_http::{Request, StatusCode};
 use actix_web::{
     body::MessageBody,
@@ -16,9 +20,9 @@ use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
 use tokio_util::io::ReaderStream;
-use trustify_common::hashing::Digests;
 use trustify_common::{
     db::{test::TrustifyContext, Transactional},
+    hashing::Digests,
     id::Id,
     model::PaginatedResults,
 };
@@ -499,6 +503,49 @@ async fn upload_unknown_format(ctx: TrustifyContext) -> Result<(), anyhow::Error
         StatusCode::BAD_REQUEST,
         "Wrong HTTP response status"
     );
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn upload_with_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+    let (storage, _temp) = FileSystemBackend::for_test().await?;
+    let app = actix_web::test::init_service(App::new().configure(|svc| {
+        let limit = ByteSize::gb(1).as_u64() as usize;
+        svc.app_data(web::PayloadConfig::default().limit(limit))
+            .service(web::scope("/api").configure(|svc| configure(svc, db, storage)));
+    }))
+    .await;
+    let payload = include_str!("../../../../../etc/test-data/csaf/cve-2023-33201.json");
+
+    let uri = "/api/v1/advisory?labels.foo=bar&labels.bar=baz";
+    let request = TestRequest::post()
+        .uri(uri)
+        .set_payload(payload)
+        .to_request();
+
+    let response = actix_web::test::call_service(&app, request).await;
+    let result: IngestResult = actix_web::test::read_body_json(response).await;
+    log::debug!("{result:?}");
+    assert!(matches!(result.id, Id::Uuid(_)));
+    assert_eq!(result.document_id, "CVE-2023-33201");
+
+    // now check the labels
+
+    let request = TestRequest::get()
+        .uri(&format!("/api/v1/advisory/{}", result.id))
+        .to_request();
+    let response = actix_web::test::call_service(&app, request).await;
+    let result: AdvisoryDetails = actix_web::test::read_body_json(response).await;
+
+    assert_eq!(
+        result.head.labels,
+        Labels::new().add("foo", "bar").add("bar", "baz")
+    );
+
+    // done
 
     Ok(())
 }
