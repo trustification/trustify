@@ -18,7 +18,9 @@ pub struct AdvisoryHead {
     #[serde(with = "uuid::serde::urn")]
     pub uuid: Uuid,
     pub identifier: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub hashes: Vec<Id>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub issuer: Option<OrganizationSummary>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
@@ -29,6 +31,7 @@ pub struct AdvisoryHead {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
     pub withdrawn: Option<OffsetDateTime>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
     #[serde(default, skip_serializing_if = "Labels::is_empty")]
     pub labels: Labels,
