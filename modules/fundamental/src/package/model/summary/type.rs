@@ -3,7 +3,7 @@ use crate::Error;
 use sea_orm::{ColumnTrait, DeriveColumn, EntityTrait, EnumIter, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
-use trustify_entity::{package, package_version, qualified_package};
+use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
@@ -33,29 +33,29 @@ impl TypeSummary {
         let mut summaries = Vec::new();
 
         for name in names {
-            let base: Option<i64> = package::Entity::find()
-                .filter(package::Column::Type.eq(name))
+            let base: Option<i64> = base_purl::Entity::find()
+                .filter(base_purl::Column::Type.eq(name))
                 .select_only()
-                .column_as(package::Column::Id.count(), "count")
+                .column_as(base_purl::Column::Id.count(), "count")
                 .into_values::<_, QueryAs>()
                 .one(tx)
                 .await?;
 
-            let version: Option<i64> = package_version::Entity::find()
-                .left_join(package::Entity)
-                .filter(package::Column::Type.eq(name))
+            let version: Option<i64> = versioned_purl::Entity::find()
+                .left_join(base_purl::Entity)
+                .filter(base_purl::Column::Type.eq(name))
                 .select_only()
-                .column_as(package_version::Column::Id.count(), "count")
+                .column_as(versioned_purl::Column::Id.count(), "count")
                 .into_values::<_, QueryAs>()
                 .one(tx)
                 .await?;
 
-            let package: Option<i64> = qualified_package::Entity::find()
-                .left_join(package_version::Entity)
-                .left_join(package::Entity)
-                .filter(package::Column::Type.eq(name))
+            let package: Option<i64> = qualified_purl::Entity::find()
+                .left_join(versioned_purl::Entity)
+                .left_join(base_purl::Entity)
+                .filter(base_purl::Column::Type.eq(name))
                 .select_only()
-                .column_as(package_version::Column::Id.count(), "count")
+                .column_as(versioned_purl::Column::Id.count(), "count")
                 .into_values::<_, QueryAs>()
                 .one(tx)
                 .await?;

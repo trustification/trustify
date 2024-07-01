@@ -3,7 +3,7 @@ use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::purl::Purl;
-use trustify_entity::{package, package_version, qualified_package};
+use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 use utoipa::ToSchema;
 
 pub mod details;
@@ -19,7 +19,7 @@ pub struct PackageHead {
 
 impl PackageHead {
     pub async fn from_entity(
-        entity: &package::Model,
+        entity: &base_purl::Model,
         _tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
         Ok(PackageHead {
@@ -35,7 +35,7 @@ impl PackageHead {
     }
 
     pub async fn from_package_entities(
-        entities: &Vec<package::Model>,
+        entities: &Vec<base_purl::Model>,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
         let mut heads = Vec::new();
@@ -60,8 +60,8 @@ pub struct PackageVersionHead {
 
 impl PackageVersionHead {
     pub async fn from_entity(
-        package: &package::Model,
-        package_version: &package_version::Model,
+        package: &base_purl::Model,
+        package_version: &versioned_purl::Model,
         _tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
         Ok(Self {
@@ -88,9 +88,9 @@ pub struct QualifiedPackageHead {
 
 impl QualifiedPackageHead {
     pub async fn from_entity(
-        package: &package::Model,
-        package_version: &package_version::Model,
-        qualified_package: &qualified_package::Model,
+        package: &base_purl::Model,
+        package_version: &versioned_purl::Model,
+        qualified_package: &qualified_purl::Model,
         _tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
         Ok(Self {
@@ -106,9 +106,9 @@ impl QualifiedPackageHead {
     }
 
     pub async fn from_entities(
-        package: &package::Model,
-        package_version: &package_version::Model,
-        qualified_packages: &Vec<qualified_package::Model>,
+        package: &base_purl::Model,
+        package_version: &versioned_purl::Model,
+        qualified_packages: &Vec<qualified_purl::Model>,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
         let mut heads = Vec::new();

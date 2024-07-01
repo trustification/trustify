@@ -9,8 +9,8 @@ use sea_query::{Asterisk, Expr, Func, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use trustify_common::db::{ConnectionOrTransaction, VersionMatches};
 use trustify_entity::{
-    advisory, organization, package, package_status, package_version, qualified_package, status,
-    version_range, vulnerability,
+    advisory, base_purl, organization, package_status, qualified_purl, status, version_range,
+    versioned_purl, vulnerability,
 };
 use utoipa::ToSchema;
 
@@ -26,16 +26,16 @@ pub struct QualifiedPackageDetails {
 
 impl QualifiedPackageDetails {
     pub async fn from_entity(
-        package: Option<package::Model>,
-        package_version: Option<package_version::Model>,
-        qualified_package: &qualified_package::Model,
+        package: Option<base_purl::Model>,
+        package_version: Option<versioned_purl::Model>,
+        qualified_package: &qualified_purl::Model,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
         let package_version = if let Some(package_version) = package_version {
             package_version
         } else {
             qualified_package
-                .find_related(package_version::Entity)
+                .find_related(versioned_purl::Entity)
                 .one(tx)
                 .await?
                 .ok_or(Error::Data(
@@ -47,7 +47,7 @@ impl QualifiedPackageDetails {
             package
         } else {
             package_version
-                .find_related(package::Entity)
+                .find_related(base_purl::Entity)
                 .one(tx)
                 .await?
                 .ok_or(Error::Data("underlying package missing".to_string()))?
@@ -61,13 +61,16 @@ impl QualifiedPackageDetails {
                 version_range::Column::HighVersion,
                 version_range::Column::HighInclusive,
             ])
-            .left_join(package::Entity)
-            .join(JoinType::LeftJoin, package::Relation::PackageVersions.def())
+            .left_join(base_purl::Entity)
+            .join(
+                JoinType::LeftJoin,
+                base_purl::Relation::PackageVersions.def(),
+            )
             .left_join(version_range::Entity)
             .filter(package_status::Column::PackageId.eq(package.id))
             .filter(SimpleExpr::FunctionCall(
                 Func::cust(VersionMatches)
-                    .arg(Expr::col(package_version::Column::Version))
+                    .arg(Expr::col(versioned_purl::Column::Version))
                     .arg(Expr::col((version_range::Entity, Asterisk))),
             ))
             .all(tx)

@@ -4,7 +4,7 @@ use crate::Error;
 use sea_orm::ModelTrait;
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
-use trustify_entity::{package, package_version};
+use trustify_entity::{base_purl, versioned_purl};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
@@ -16,13 +16,10 @@ pub struct PackageDetails {
 
 impl PackageDetails {
     pub async fn from_entity(
-        package: &package::Model,
+        package: &base_purl::Model,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
-        let package_versions = package
-            .find_related(package_version::Entity)
-            .all(tx)
-            .await?;
+        let package_versions = package.find_related(versioned_purl::Entity).all(tx).await?;
 
         Ok(Self {
             head: PackageHead::from_entity(package, tx).await?,

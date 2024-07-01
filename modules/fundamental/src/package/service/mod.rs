@@ -14,7 +14,7 @@ use trustify_common::db::limiter::LimiterTrait;
 use trustify_common::db::query::{Filtering, Query};
 use trustify_common::db::{Database, Transactional};
 use trustify_common::model::{Paginated, PaginatedResults};
-use trustify_entity::{package, package_version, qualified_package};
+use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 
 pub struct PackageService {
     db: Database,
@@ -36,12 +36,12 @@ impl PackageService {
 
         let connection = self.db.connection(&tx);
 
-        let ecosystems: Vec<_> = package::Entity::find()
+        let ecosystems: Vec<_> = base_purl::Entity::find()
             .select_only()
-            .column(package::Column::Type)
-            .group_by(package::Column::Type)
+            .column(base_purl::Column::Type)
+            .group_by(base_purl::Column::Type)
             .distinct()
-            .order_by(package::Column::Type, Order::Asc)
+            .order_by(base_purl::Column::Type, Order::Asc)
             .into_model::<Ecosystem>()
             .all(&connection)
             .await?
@@ -61,8 +61,8 @@ impl PackageService {
     ) -> Result<PaginatedResults<PackageSummary>, Error> {
         let connection = self.db.connection(&tx);
 
-        let limiter = package::Entity::find()
-            .filter(package::Column::Type.eq(r#type))
+        let limiter = base_purl::Entity::find()
+            .filter(base_purl::Column::Type.eq(r#type))
             .filtering(query)?
             .limiting(&connection, paginated.offset, paginated.limit);
 
@@ -83,14 +83,14 @@ impl PackageService {
     ) -> Result<Option<PackageDetails>, Error> {
         let connection = self.db.connection(&tx);
 
-        let mut query = package::Entity::find()
-            .filter(package::Column::Type.eq(r#type))
-            .filter(package::Column::Name.eq(name));
+        let mut query = base_purl::Entity::find()
+            .filter(base_purl::Column::Type.eq(r#type))
+            .filter(base_purl::Column::Name.eq(name));
 
         if let Some(ns) = namespace {
-            query = query.filter(package::Column::Namespace.eq(ns));
+            query = query.filter(base_purl::Column::Namespace.eq(ns));
         } else {
-            query = query.filter(package::Column::Namespace.is_null());
+            query = query.filter(base_purl::Column::Namespace.is_null());
         }
 
         if let Some(package) = query.one(&connection).await? {
@@ -112,16 +112,16 @@ impl PackageService {
     ) -> Result<Option<PackageVersionDetails>, Error> {
         let connection = self.db.connection(&tx);
 
-        let mut query = package_version::Entity::find()
-            .left_join(package::Entity)
-            .filter(package::Column::Type.eq(r#type))
-            .filter(package::Column::Name.eq(name))
-            .filter(package_version::Column::Version.eq(version));
+        let mut query = versioned_purl::Entity::find()
+            .left_join(base_purl::Entity)
+            .filter(base_purl::Column::Type.eq(r#type))
+            .filter(base_purl::Column::Name.eq(name))
+            .filter(versioned_purl::Column::Version.eq(version));
 
         if let Some(ns) = namespace {
-            query = query.filter(package::Column::Namespace.eq(ns));
+            query = query.filter(base_purl::Column::Namespace.eq(ns));
         } else {
-            query = query.filter(package::Column::Namespace.is_null());
+            query = query.filter(base_purl::Column::Namespace.is_null());
         }
 
         let package_version = query.one(&connection).await?;
@@ -142,7 +142,7 @@ impl PackageService {
     ) -> Result<Option<PackageDetails>, Error> {
         let connection = self.db.connection(&tx);
 
-        if let Some(package) = package::Entity::find_by_id(*package_version_uuid)
+        if let Some(package) = base_purl::Entity::find_by_id(*package_version_uuid)
             .one(&connection)
             .await?
         {
@@ -161,7 +161,7 @@ impl PackageService {
     ) -> Result<Option<PackageVersionDetails>, Error> {
         let connection = self.db.connection(&tx);
 
-        if let Some(package_version) = package_version::Entity::find_by_id(*package_version_uuid)
+        if let Some(package_version) = versioned_purl::Entity::find_by_id(*package_version_uuid)
             .one(&connection)
             .await?
         {
@@ -180,10 +180,9 @@ impl PackageService {
     ) -> Result<Option<QualifiedPackageDetails>, Error> {
         let connection = self.db.connection(&tx);
 
-        if let Some(qualified_package) =
-            qualified_package::Entity::find_by_id(*qualified_package_uuid)
-                .one(&connection)
-                .await?
+        if let Some(qualified_package) = qualified_purl::Entity::find_by_id(*qualified_package_uuid)
+            .one(&connection)
+            .await?
         {
             Ok(Some(
                 QualifiedPackageDetails::from_entity(None, None, &qualified_package, &connection)
@@ -202,7 +201,7 @@ impl PackageService {
     ) -> Result<PaginatedResults<PackageSummary>, Error> {
         let connection = self.db.connection(&tx);
 
-        let limiter = package::Entity::find().filtering(query)?.limiting(
+        let limiter = base_purl::Entity::find().filtering(query)?.limiting(
             &connection,
             paginated.offset,
             paginated.limit,
@@ -224,15 +223,15 @@ impl PackageService {
     ) -> Result<PaginatedResults<QualifiedPackageSummary>, Error> {
         let connection = self.db.connection(&tx);
 
-        let limiter = qualified_package::Entity::find()
-            .left_join(package_version::Entity)
+        let limiter = qualified_purl::Entity::find()
+            .left_join(versioned_purl::Entity)
             .filter(
                 Condition::any().add(
-                    package_version::Column::PackageId.in_subquery(
-                        package::Entity::find()
+                    versioned_purl::Column::PackageId.in_subquery(
+                        base_purl::Entity::find()
                             .filtering(query)?
                             .select_only()
-                            .column(package::Column::Id)
+                            .column(base_purl::Column::Id)
                             .into_query(),
                     ),
                 ),
