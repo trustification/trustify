@@ -1,4 +1,4 @@
-use sea_orm::LoaderTrait;
+use sea_orm::{ColumnTrait, EntityTrait, LoaderTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -30,20 +30,23 @@ impl AdvisorySummary {
         averages: &[(Option<f64>, Option<Severity>)],
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
-        let vulnerabilities = entities
-            .load_many_to_many(vulnerability::Entity, advisory_vulnerability::Entity, tx)
-            .await?;
-
         let issuers = entities.load_one(organization::Entity, tx).await?;
 
         let mut summaries = Vec::with_capacity(issuers.len());
 
-        for (((advisory, vulnerabilities), issuer), (average_score, average_severity)) in entities
-            .iter()
-            .zip(vulnerabilities.into_iter())
-            .zip(issuers.into_iter())
-            .zip(averages)
+        for ((advisory, issuer), (average_score, average_severity)) in
+            entities.iter().zip(issuers.into_iter()).zip(averages)
         {
+            let vulnerabilities = vulnerability::Entity::find()
+                .right_join(advisory_vulnerability::Entity)
+                .column_as(
+                    advisory_vulnerability::Column::VulnerabilityIdentifier,
+                    "identifier",
+                )
+                .filter(advisory_vulnerability::Column::AdvisoryId.eq(advisory.id))
+                .all(tx)
+                .await?;
+
             let vulnerabilities =
                 AdvisoryVulnerabilityHead::from_entities(advisory, &vulnerabilities, tx).await?;
 
