@@ -43,7 +43,6 @@ uuid = { workspace = true, features = ["v7"] }
 [dev-dependencies]
 rand = { workspace = true }
 rstest = {workspace = true }
-rust-lzma = { workspace = true }
 serde_yaml = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }

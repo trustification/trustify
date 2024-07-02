@@ -4,6 +4,7 @@
 use crate::stream::{stream, xz_stream};
 use bytes::Bytes;
 use serde_json::Value;
+use std::io::Read;
 use std::str::FromStr;
 use test_context::futures::stream;
 use test_context::test_context;
@@ -17,6 +18,7 @@ use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::fs::FileSystemBackend;
+use xz2::read::XzDecoder;
 
 /// We re-ingest two versions of the same quarkus SBOM. However, as the quarkus SBOM doesn't have
 /// anything in common other than the filename (which doesn't matter), these are considered two
@@ -309,9 +311,12 @@ async fn nhc_same_content(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             Format::SPDX,
             stream::once({
                 // re-serialize file (non-pretty)
-                let json: Value = serde_json::from_slice(&lzma::decompress(include_bytes!(
-                    "data/nhc/v1/nhc-0.4.z.json.xz"
-                ))?)?;
+
+                let content = include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz");
+                let mut decoder = XzDecoder::new(&content[..]);
+                let mut extracted_content = Vec::new();
+                decoder.read_to_end(&mut extracted_content)?;
+                let json: Value = serde_json::from_slice(&extracted_content)?;
 
                 let result = serde_json::to_vec(&json).map(Bytes::from);
 
