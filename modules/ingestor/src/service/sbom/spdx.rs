@@ -35,6 +35,8 @@ impl<'g> SpdxLoader<'g> {
 
         let tx = self.graph.transaction().await?;
 
+        let labels = labels.add("type", "spdx");
+
         let document_id = spdx
             .document_creation_information
             .spdx_document_namespace

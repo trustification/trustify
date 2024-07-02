@@ -26,6 +26,8 @@ impl<'g> CyclonedxLoader<'g> {
         let sbom = Bom::parse_json_value(serde_json::from_reader(document)?)
             .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
+        let labels = labels.add("type", "cyclonedx");
+
         log::info!(
             "Storing - version: {}, serialNumber: {:?}",
             sbom.version,

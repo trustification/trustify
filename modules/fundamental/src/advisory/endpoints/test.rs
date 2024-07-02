@@ -542,7 +542,10 @@ async fn upload_with_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(
         result.head.labels,
-        Labels::new().add("foo", "bar").add("bar", "baz")
+        Labels::new()
+            .add("foo", "bar")
+            .add("bar", "baz")
+            .add("type", "csaf")
     );
 
     // done

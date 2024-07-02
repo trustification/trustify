@@ -37,6 +37,7 @@ async fn add_osv(
                 disabled: true,
                 period: Duration::from_secs(300),
                 description: Some(description.into()),
+                labels: Default::default(),
             },
             source: source.to_string(),
             path: base.map(|s| s.into()),
@@ -59,6 +60,7 @@ async fn add_cve(
                 disabled: true,
                 period: Duration::from_secs(300),
                 description: Some(description.into()),
+                labels: Default::default(),
             },
             source: DEFAULT_SOURCE_CVEPROJECT.into(),
             years: HashSet::default(),
@@ -75,7 +77,8 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         common: CommonImporter {
             disabled: true,
             period: Duration::from_secs(300),
-            description: Some("All Red Hat SBOMs".into())
+            description: Some("All Red Hat SBOMs".into()),
+            labels: Default::default(),
         },
         source: "https://access.redhat.com/security/data/sbom/beta/".to_string(),
         keys: vec![
@@ -93,6 +96,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
                 disabled: true,
                 period: Duration::from_secs(300),
                 description: Some("All Red Hat CSAF data".into()),
+                labels: Default::default(),
             },
             source: "redhat.com".to_string(),
             v3_signatures: true,
@@ -109,6 +113,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
                 disabled: true,
                 period: Duration::from_secs(300),
                 description: Some("Red Hat VEX files from 2024".into()),
+                labels: Default::default(),
             },
             source: "redhat.com".to_string(),
             v3_signatures: true,

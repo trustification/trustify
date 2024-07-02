@@ -52,6 +52,7 @@ impl super::Server {
         let storage = storage::StorageVisitor {
             name,
             ingestor,
+            labels: importer.common.labels,
             report: report.clone(),
         };
 

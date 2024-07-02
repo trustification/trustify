@@ -15,18 +15,21 @@ use tokio::runtime::Handle;
 use tokio_util::io::ReaderStream;
 use tracing::instrument;
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::graph::Graph;
-use trustify_module_ingestor::service::{Format, IngestorService};
+use trustify_module_ingestor::{
+    graph::Graph,
+    service::{Format, IngestorService},
+};
 
 struct Context {
     name: String,
     source: String,
+    labels: Labels,
     report: Arc<Mutex<ReportBuilder>>,
     ingestor: IngestorService,
 }
 
 impl Context {
-    fn store(&self, cve: Cve) -> anyhow::Result<()> {
+    fn store(&self, path: &Path, cve: Cve) -> anyhow::Result<()> {
         let data = serde_json::to_vec(&cve)?;
 
         self.report.lock().tick();
@@ -36,7 +39,9 @@ impl Context {
                 .ingest(
                     Labels::new()
                         .add("source", &self.source)
-                        .add("importer", &self.name),
+                        .add("importer", &self.name)
+                        .add("file", path.to_string_lossy())
+                        .extend(&self.labels.0),
                     None,
                     Format::CVE,
                     ReaderStream::new(data.as_slice()),
@@ -59,7 +64,7 @@ impl Callbacks for Context {
     }
 
     fn process(&mut self, path: &Path, cve: Cve) -> anyhow::Result<()> {
-        if let Err(err) = self.store(cve) {
+        if let Err(err) = self.store(path, cve) {
             self.report.lock().add_error(
                 Phase::Upload,
                 path.to_string_lossy(),
@@ -98,6 +103,7 @@ impl super::Server {
             .callbacks(Context {
                 name,
                 source: cve.source,
+                labels: cve.common.labels,
                 report: report.clone(),
                 ingestor,
             });

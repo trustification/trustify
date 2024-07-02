@@ -23,12 +23,13 @@ use trustify_module_ingestor::{
 struct Context {
     name: String,
     source: String,
+    labels: Labels,
     report: Arc<Mutex<ReportBuilder>>,
     ingestor: IngestorService,
 }
 
 impl Context {
-    fn store(&self, osv: Vulnerability) -> anyhow::Result<()> {
+    fn store(&self, path: &Path, osv: Vulnerability) -> anyhow::Result<()> {
         let data = serde_json::to_vec(&osv)?;
 
         self.report.lock().tick();
@@ -38,7 +39,9 @@ impl Context {
                 .ingest(
                     Labels::new()
                         .add("source", &self.source)
-                        .add("importer", &self.name),
+                        .add("importer", &self.name)
+                        .add("file", path.to_string_lossy())
+                        .extend(&self.labels.0),
                     None,
                     Format::OSV,
                     ReaderStream::new(data.as_slice()),
@@ -61,7 +64,7 @@ impl Callbacks for Context {
     }
 
     fn process(&mut self, path: &Path, osv: Vulnerability) -> anyhow::Result<()> {
-        if let Err(err) = self.store(osv) {
+        if let Err(err) = self.store(path, osv) {
             self.report.lock().add_error(
                 Phase::Upload,
                 path.to_string_lossy(),
@@ -99,6 +102,7 @@ impl super::Server {
             .callbacks(Context {
                 name,
                 source: osv.source,
+                labels: osv.common.labels,
                 report: report.clone(),
                 ingestor,
             });

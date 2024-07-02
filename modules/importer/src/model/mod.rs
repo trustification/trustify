@@ -12,6 +12,7 @@ use std::ops::{Deref, DerefMut};
 use std::time::Duration;
 use time::OffsetDateTime;
 use trustify_common::{model::Revisioned, paginated, revisioned};
+use trustify_entity::labels::Labels;
 use trustify_entity::{
     importer::{self, Model},
     importer_report,
@@ -118,14 +119,21 @@ impl DerefMut for ImporterConfiguration {
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct CommonImporter {
+    /// A flag to disable the importer, without deleting it.
     #[serde(default)]
     pub disabled: bool,
 
+    /// The period the importer should be run.
     #[serde(with = "humantime_serde")]
     pub period: Duration,
 
+    /// A description for users.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+
+    /// Labels which will be applied to the ingested documents.
+    #[serde(default, skip_serializing_if = "Labels::is_empty")]
+    pub labels: Labels,
 }
 
 impl TryFrom<Model> for Importer {
