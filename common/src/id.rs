@@ -1,3 +1,4 @@
+use crate::purl::PurlErr;
 use hex::ToHex;
 use ring::digest::Digest;
 use sea_orm::{EntityTrait, QueryFilter, Select, UpdateMany};
@@ -167,6 +168,8 @@ pub enum IdError {
     UnsupportedAlgorithm(String),
     #[error(transparent)]
     InvalidUuid(uuid::Error),
+    #[error(transparent)]
+    Purl(PurlErr),
 }
 
 impl FromStr for Id {

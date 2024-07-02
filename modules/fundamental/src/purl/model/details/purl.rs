@@ -1,6 +1,6 @@
 use crate::{
     advisory::model::AdvisoryHead,
-    package::model::{PackageHead, PackageVersionHead, QualifiedPackageHead},
+    purl::model::{BasePurlHead, PurlHead, VersionedPurlHead},
     vulnerability::model::VulnerabilityHead,
     Error,
 };
@@ -17,17 +17,17 @@ use trustify_entity::{
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct QualifiedPackageDetails {
+pub struct PurlDetails {
     #[serde(flatten)]
-    pub head: QualifiedPackageHead,
-    pub version: PackageVersionHead,
-    pub base: PackageHead,
+    pub head: PurlHead,
+    pub version: VersionedPurlHead,
+    pub base: BasePurlHead,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub advisories: Vec<QualifiedPackageAdvisory>,
+    pub advisories: Vec<PurlAdvisory>,
     // TODO link to advisories, sboms, etc
 }
 
-impl QualifiedPackageDetails {
+impl PurlDetails {
     pub async fn from_entity(
         package: Option<base_purl::Model>,
         package_version: Option<versioned_purl::Model>,
@@ -79,29 +79,23 @@ impl QualifiedPackageDetails {
             .all(tx)
             .await?;
 
-        Ok(QualifiedPackageDetails {
-            head: QualifiedPackageHead::from_entity(
-                &package,
-                &package_version,
-                qualified_package,
-                tx,
-            )
-            .await?,
-            version: PackageVersionHead::from_entity(&package, &package_version, tx).await?,
-            base: PackageHead::from_entity(&package, tx).await?,
-            advisories: QualifiedPackageAdvisory::from_entities(statuses, tx).await?,
+        Ok(PurlDetails {
+            head: PurlHead::from_entity(&package, &package_version, qualified_package, tx).await?,
+            version: VersionedPurlHead::from_entity(&package, &package_version, tx).await?,
+            base: BasePurlHead::from_entity(&package, tx).await?,
+            advisories: PurlAdvisory::from_entities(statuses, tx).await?,
         })
     }
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct QualifiedPackageAdvisory {
+pub struct PurlAdvisory {
     #[serde(flatten)]
     pub head: AdvisoryHead,
-    pub status: Vec<QualifiedPackageStatus>,
+    pub status: Vec<PurlStatus>,
 }
 
-impl QualifiedPackageAdvisory {
+impl PurlAdvisory {
     pub async fn from_entities(
         statuses: Vec<package_status::Model>,
         tx: &ConnectionOrTransaction<'_>,
@@ -110,12 +104,12 @@ impl QualifiedPackageAdvisory {
 
         let advisories = statuses.load_one(advisory::Entity, tx).await?;
 
-        let mut results: Vec<QualifiedPackageAdvisory> = Vec::new();
+        let mut results: Vec<PurlAdvisory> = Vec::new();
 
         for ((vuln, advisory), status) in vulns.iter().zip(advisories.iter()).zip(statuses.iter()) {
             if let (Some(vulnerability), Some(advisory)) = (vuln, advisory) {
                 let qualified_package_status =
-                    QualifiedPackageStatus::from_entity(vulnerability, status, tx).await?;
+                    PurlStatus::from_entity(vulnerability, status, tx).await?;
 
                 if let Some(entry) = results.iter_mut().find(|e| e.head.uuid == advisory.id) {
                     entry.status.push(qualified_package_status)
@@ -135,12 +129,12 @@ impl QualifiedPackageAdvisory {
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct QualifiedPackageStatus {
+pub struct PurlStatus {
     pub vulnerability: VulnerabilityHead,
     pub status: String,
 }
 
-impl QualifiedPackageStatus {
+impl PurlStatus {
     pub async fn from_entity(
         vuln: &vulnerability::Model,
         package_status: &package_status::Model,

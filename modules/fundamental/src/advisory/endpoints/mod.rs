@@ -82,7 +82,7 @@ pub async fn get(
     state: web::Data<AdvisoryService>,
     key: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
-    let hash_key = Id::from_str(&key).map_err(Error::HashKey)?;
+    let hash_key = Id::from_str(&key).map_err(Error::IdKey)?;
     let fetched = state.fetch_advisory(hash_key, ()).await?;
 
     if let Some(fetched) = fetched {
@@ -147,7 +147,7 @@ pub async fn download(
     key: web::Path<String>,
 ) -> Result<impl Responder, Error> {
     // the user requested id
-    let id = Id::from_str(&key).map_err(Error::HashKey)?;
+    let id = Id::from_str(&key).map_err(Error::IdKey)?;
 
     // look up document by id
     let Some(advisory) = advisory.fetch_advisory(id, ()).await? else {

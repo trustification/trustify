@@ -1,8 +1,8 @@
 pub mod advisory;
 pub mod organization;
 
-pub mod package;
 pub mod product;
+pub mod purl;
 pub mod sbom;
 pub mod vulnerability;
 

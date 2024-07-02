@@ -18,7 +18,7 @@ pub fn configure(
 
     crate::organization::endpoints::configure(config, db.clone());
 
-    crate::package::endpoints::configure(config, db.clone());
+    crate::purl::endpoints::configure(config, db.clone());
 
     crate::product::endpoints::configure(config, db.clone());
 

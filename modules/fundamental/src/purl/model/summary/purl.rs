@@ -1,4 +1,4 @@
-use crate::package::model::{PackageHead, PackageVersionHead, QualifiedPackageHead};
+use crate::purl::model::{BasePurlHead, PurlHead, VersionedPurlHead};
 use crate::Error;
 use sea_orm::{LoaderTrait, ModelTrait};
 use serde::{Deserialize, Serialize};
@@ -8,14 +8,14 @@ use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
-pub struct QualifiedPackageSummary {
+pub struct PurlSummary {
     #[serde(flatten)]
-    pub head: QualifiedPackageHead,
-    pub base: PackageHead,
-    pub version: PackageVersionHead,
+    pub head: PurlHead,
+    pub base: BasePurlHead,
+    pub version: VersionedPurlHead,
 }
 
-impl QualifiedPackageSummary {
+impl PurlSummary {
     pub async fn from_entities(
         qualified_packages: &Vec<qualified_purl::Model>,
         tx: &ConnectionOrTransaction<'_>,
@@ -36,16 +36,16 @@ impl QualifiedPackageSummary {
                     .one(tx)
                     .await?
                 {
-                    summaries.push(QualifiedPackageSummary {
-                        head: QualifiedPackageHead::from_entity(
+                    summaries.push(PurlSummary {
+                        head: PurlHead::from_entity(
                             &package,
                             package_version,
                             qualified_package,
                             tx,
                         )
                         .await?,
-                        base: PackageHead::from_entity(&package, tx).await?,
-                        version: PackageVersionHead::from_entity(&package, package_version, tx)
+                        base: BasePurlHead::from_entity(&package, tx).await?,
+                        version: VersionedPurlHead::from_entity(&package, package_version, tx)
                             .await?,
                     })
                 }
@@ -56,4 +56,4 @@ impl QualifiedPackageSummary {
     }
 }
 
-paginated!(QualifiedPackageSummary);
+paginated!(PurlSummary);

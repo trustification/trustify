@@ -1,4 +1,4 @@
-use crate::package::model::{PackageHead, PackageVersionHead, QualifiedPackageHead};
+use crate::purl::model::{BasePurlHead, PurlHead, VersionedPurlHead};
 use crate::Error;
 use sea_orm::LoaderTrait;
 use serde::{Deserialize, Serialize};
@@ -7,15 +7,15 @@ use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct PackageVersionSummary {
+pub struct VersionedPurlSummary {
     #[serde(flatten)]
-    pub head: PackageVersionHead,
-    pub base: PackageHead,
+    pub head: VersionedPurlHead,
+    pub base: BasePurlHead,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub packages: Vec<QualifiedPackageHead>,
+    pub purls: Vec<PurlHead>,
 }
 
-impl PackageVersionSummary {
+impl VersionedPurlSummary {
     pub async fn from_entities_with_common_package(
         package: &base_purl::Model,
         package_versions: &Vec<versioned_purl::Model>,
@@ -31,15 +31,10 @@ impl PackageVersionSummary {
             package_versions.iter().zip(qualified_packages.iter())
         {
             summaries.push(Self {
-                head: PackageVersionHead::from_entity(package, package_version, tx).await?,
-                base: PackageHead::from_entity(package, tx).await?,
-                packages: QualifiedPackageHead::from_entities(
-                    package,
-                    package_version,
-                    qualified_packages,
-                    tx,
-                )
-                .await?,
+                head: VersionedPurlHead::from_entity(package, package_version, tx).await?,
+                base: BasePurlHead::from_entity(package, tx).await?,
+                purls: PurlHead::from_entities(package, package_version, qualified_packages, tx)
+                    .await?,
             })
         }
 
