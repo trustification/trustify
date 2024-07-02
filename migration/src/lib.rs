@@ -46,6 +46,7 @@ mod m0000370_add_cwe;
 mod m0000380_create_package_status_index;
 mod m0000390_rename_package_purl;
 mod m0000395_alter_vulnerability_pk;
+mod m0000410_labels_index;
 
 pub struct Migrator;
 
@@ -98,6 +99,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000380_create_package_status_index::Migration),
             Box::new(m0000390_rename_package_purl::Migration),
             Box::new(m0000395_alter_vulnerability_pk::Migration),
+            Box::new(m0000410_labels_index::Migration),
         ]
     }
 }
