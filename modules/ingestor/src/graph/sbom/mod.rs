@@ -123,6 +123,8 @@ impl Graph {
 
             document_id: Set(document_id.to_string()),
             sha256: Set(sha256),
+            sha384: Set(Some(digests.sha384.encode_hex())),
+            sha512: Set(Some(digests.sha512.encode_hex())),
 
             published: Set(published),
             authors: Set(authors),

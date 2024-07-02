@@ -54,7 +54,11 @@ impl AdvisoryHead {
         Ok(Self {
             uuid: entity.id,
             identifier: entity.identifier.clone(),
-            hashes: vec![Id::Sha256(entity.sha256.clone())],
+            hashes: Id::build_vec(
+                entity.sha256.clone(),
+                entity.sha384.clone(),
+                entity.sha512.clone(),
+            ),
             issuer,
             published: entity.published,
             modified: entity.modified,
@@ -82,7 +86,11 @@ impl AdvisoryHead {
             heads.push(Self {
                 uuid: advisory.id,
                 identifier: advisory.identifier.clone(),
-                hashes: vec![Id::Sha256(advisory.sha256.clone())],
+                hashes: Id::build_vec(
+                    advisory.sha256.clone(),
+                    advisory.sha384.clone(),
+                    advisory.sha512.clone(),
+                ),
                 issuer,
                 published: advisory.published,
                 modified: advisory.modified,

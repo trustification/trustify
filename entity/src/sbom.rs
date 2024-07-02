@@ -13,6 +13,8 @@ pub struct Model {
     pub node_id: String,
 
     pub sha256: String,
+    pub sha384: Option<String>,
+    pub sha512: Option<String>,
     pub document_id: String,
 
     pub published: Option<OffsetDateTime>,
@@ -68,6 +70,8 @@ impl TryFilterForId for Entity {
         Ok(match id {
             Id::Uuid(uuid) => Column::SbomId.eq(uuid).into_condition(),
             Id::Sha256(hash) => Column::Sha256.eq(hash).into_condition(),
+            Id::Sha384(hash) => crate::advisory::Column::Sha384.eq(hash).into_condition(),
+            Id::Sha512(hash) => crate::advisory::Column::Sha512.eq(hash).into_condition(),
             n => return Err(IdError::UnsupportedAlgorithm(n.prefix().to_string())),
         })
     }

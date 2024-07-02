@@ -121,6 +121,8 @@ impl Graph {
             identifier: Set(identifier),
             issuer_id: Set(organization.map(|org| org.organization.id)),
             sha256: Set(sha256),
+            sha384: Set(Some(digests.sha384.encode_hex())),
+            sha512: Set(Some(digests.sha512.encode_hex())),
             title: Set(information.title),
             published: Set(information.published),
             modified: Set(information.modified),
