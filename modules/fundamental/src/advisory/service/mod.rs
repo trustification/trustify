@@ -303,7 +303,7 @@ impl AdvisoryService {
 struct AdvisoryCatcher {
     pub id: Uuid,
     pub identifier: String,
-    pub issuer_id: Option<i32>,
+    pub issuer_id: Option<Uuid>,
     pub labels: Labels,
     pub sha256: String,
     pub sha384: Option<String>,

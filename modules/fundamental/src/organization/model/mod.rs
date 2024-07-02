@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 mod details;
 mod summary;
@@ -12,7 +13,7 @@ use trustify_entity::organization;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct OrganizationHead {
-    pub id: i32,
+    pub id: Uuid,
     pub name: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cpe_key: Option<String>,

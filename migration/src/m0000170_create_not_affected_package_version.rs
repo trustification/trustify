@@ -1,6 +1,7 @@
 use crate::m0000040_create_vulnerability::Vulnerability;
 use crate::m0000060_create_advisory::Advisory;
 use crate::m0000120_create_package_version::PackageVersion;
+use crate::UuidV4;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -17,14 +18,14 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(NotAffectedPackageVersion::Id)
-                            .integer()
+                            .uuid()
                             .not_null()
-                            .auto_increment()
+                            .default(Func::cust(UuidV4))
                             .primary_key(),
                     )
                     .col(
                         ColumnDef::new(NotAffectedPackageVersion::AdvisoryId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .foreign_key(
@@ -34,7 +35,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(NotAffectedPackageVersion::VulnerabilityId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .foreign_key(

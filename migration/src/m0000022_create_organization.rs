@@ -1,3 +1,4 @@
+use crate::UuidV4;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -13,9 +14,9 @@ impl MigrationTrait for Migration {
                     .table(Organization::Table)
                     .col(
                         ColumnDef::new(Organization::Id)
-                            .integer()
+                            .uuid()
                             .not_null()
-                            .auto_increment()
+                            .default(Func::cust(UuidV4))
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Organization::Name).string().not_null())

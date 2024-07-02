@@ -20,11 +20,7 @@ impl MigrationTrait for Migration {
                             .string()
                             .not_null(),
                     )
-                    .col(
-                        ColumnDef::new(SbomPackageCpeRef::CpeId)
-                            .integer()
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(SbomPackageCpeRef::CpeId).uuid().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .from(

@@ -16,8 +16,8 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Cvss3::Table)
                     .if_not_exists()
-                    .col(ColumnDef::new(Cvss3::AdvisoryId).integer().not_null())
-                    .col(ColumnDef::new(Cvss3::VulnerabilityId).integer().not_null())
+                    .col(ColumnDef::new(Cvss3::AdvisoryId).uuid().not_null())
+                    .col(ColumnDef::new(Cvss3::VulnerabilityId).uuid().not_null())
                     .col(ColumnDef::new(Cvss3::MinorVersion).integer().not_null())
                     .primary_key(
                         Index::create()

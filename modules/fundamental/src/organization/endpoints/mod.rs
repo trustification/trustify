@@ -7,6 +7,7 @@ use trustify_common::db::query::Query;
 use trustify_common::db::Database;
 use trustify_common::model::Paginated;
 use utoipa::OpenApi;
+use uuid::Uuid;
 
 pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let service = OrganizationService::new(db);
@@ -63,7 +64,7 @@ pub async fn all(
 #[get("/v1/organization/{id}")]
 pub async fn get(
     state: web::Data<OrganizationService>,
-    id: web::Path<i32>,
+    id: web::Path<Uuid>,
 ) -> actix_web::Result<impl Responder> {
     let fetched = state.fetch_organization(*id, ()).await?;
 

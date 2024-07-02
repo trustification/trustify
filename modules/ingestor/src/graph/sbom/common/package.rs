@@ -15,7 +15,7 @@ pub struct PackageCreator {
 
 pub enum PackageReference {
     Purl(Uuid),
-    Cpe(i32),
+    Cpe(Uuid),
 }
 
 impl PackageCreator {
