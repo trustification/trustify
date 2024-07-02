@@ -149,7 +149,7 @@ oidc create confidential --name trusty --issuer http://localhost:8090/realms/chi
 Then one can perform `http` request using HTTPie like this:
 
 ```bash
-http localhost:8080/package/asdf/dependencies Authorization:$(oidc token trusty -b)
+http localhost:8080/purl/asdf/dependencies Authorization:$(oidc token trusty -b)
 ```
 
 ## Notes on models

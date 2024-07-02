@@ -178,7 +178,7 @@ pub async fn get(
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadSbom)?;
 
-    let id = Id::from_str(&id).map_err(Error::HashKey)?;
+    let id = Id::from_str(&id).map_err(Error::IdKey)?;
     match fetcher.fetch_sbom(id, ()).await? {
         Some(v) => Ok(HttpResponse::Ok().json(v)),
         None => Ok(HttpResponse::NotFound().finish()),
@@ -327,7 +327,7 @@ pub async fn download(
     sbom: web::Data<SbomService>,
     key: web::Path<String>,
 ) -> Result<impl Responder, Error> {
-    let id = Id::from_str(&key).map_err(Error::HashKey)?;
+    let id = Id::from_str(&key).map_err(Error::IdKey)?;
 
     let Some(sbom) = sbom.fetch_sbom(id, ()).await? else {
         return Ok(HttpResponse::NotFound().finish());

@@ -10,7 +10,7 @@ use trustify_module_storage::service::StorageKeyError;
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
-    HashKey(#[from] IdError),
+    IdKey(#[from] IdError),
     #[error(transparent)]
     StorageKey(#[from] StorageKeyError),
     #[error(transparent)]
@@ -71,9 +71,7 @@ impl ResponseError for Error {
             Error::Query(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Query error", err))
             }
-            Error::HashKey(err) => {
-                HttpResponse::BadRequest().json(ErrorInformation::new("Key", err))
-            }
+            Error::IdKey(err) => HttpResponse::BadRequest().json(ErrorInformation::new("Key", err)),
             Error::StorageKey(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Storage Key", err))
             }

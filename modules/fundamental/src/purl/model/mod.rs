@@ -10,19 +10,19 @@ pub mod details;
 pub mod summary;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
-pub struct PackageHead {
+pub struct BasePurlHead {
     /// The ID of the base PURL
     pub uuid: Uuid,
     /// The actual base PURL
     pub purl: Purl,
 }
 
-impl PackageHead {
+impl BasePurlHead {
     pub async fn from_entity(
         entity: &base_purl::Model,
         _tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
-        Ok(PackageHead {
+        Ok(BasePurlHead {
             uuid: entity.id,
             purl: Purl {
                 ty: entity.r#type.clone(),
@@ -49,7 +49,7 @@ impl PackageHead {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
-pub struct PackageVersionHead {
+pub struct VersionedPurlHead {
     /// The ID of the versioned PURL
     pub uuid: Uuid,
     /// The actual, versioned PURL
@@ -58,7 +58,7 @@ pub struct PackageVersionHead {
     pub version: String,
 }
 
-impl PackageVersionHead {
+impl VersionedPurlHead {
     pub async fn from_entity(
         package: &base_purl::Model,
         package_version: &versioned_purl::Model,
@@ -79,14 +79,14 @@ impl PackageVersionHead {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
-pub struct QualifiedPackageHead {
+pub struct PurlHead {
     /// The ID of the qualified PURL
     pub uuid: Uuid,
     /// The actual qualified PURL
     pub purl: Purl,
 }
 
-impl QualifiedPackageHead {
+impl PurlHead {
     pub async fn from_entity(
         package: &base_purl::Model,
         package_version: &versioned_purl::Model,

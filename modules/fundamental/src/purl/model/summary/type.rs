@@ -1,4 +1,4 @@
-use crate::package::model::TypeHead;
+use crate::purl::model::TypeHead;
 use crate::Error;
 use sea_orm::{ColumnTrait, DeriveColumn, EntityTrait, EnumIter, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};

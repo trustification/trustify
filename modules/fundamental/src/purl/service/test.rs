@@ -1,4 +1,4 @@
-use crate::package::service::PackageService;
+use crate::purl::service::PurlService;
 use std::str::FromStr;
 use std::sync::Arc;
 use test_context::test_context;
@@ -18,7 +18,7 @@ use trustify_module_storage::service::fs::FileSystemBackend;
 async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
-    let service = PackageService::new(db);
+    let service = PurlService::new(db);
 
     let log4j = graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
@@ -75,7 +75,7 @@ async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 async fn packages_for_type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
-    let service = PackageService::new(db);
+    let service = PurlService::new(db);
 
     let log4j = graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
@@ -101,7 +101,7 @@ async fn packages_for_type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
 
     let packages = service
-        .packages_for_type("maven", Query::default(), Paginated::default(), ())
+        .base_purls_by_type("maven", Query::default(), Paginated::default(), ())
         .await?;
 
     assert_eq!(packages.total, 2);
@@ -124,7 +124,7 @@ async fn packages_for_type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 async fn packages_for_type_with_filtering(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
-    let service = PackageService::new(db);
+    let service = PurlService::new(db);
 
     let log4j = graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
@@ -150,7 +150,7 @@ async fn packages_for_type_with_filtering(ctx: TrustifyContext) -> Result<(), an
         .await?;
 
     let packages = service
-        .packages_for_type("maven", q("myspace"), Paginated::default(), ())
+        .base_purls_by_type("maven", q("myspace"), Paginated::default(), ())
         .await?;
 
     assert_eq!(packages.total, 1);
@@ -168,7 +168,7 @@ async fn packages_for_type_with_filtering(ctx: TrustifyContext) -> Result<(), an
 async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
-    let service = PackageService::new(db);
+    let service = PurlService::new(db);
 
     let log4j = graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
@@ -222,7 +222,7 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
 
     let results = service
-        .package("maven", Some("org.apache".to_string()), "log4j", ())
+        .base_purl("maven", Some("org.apache".to_string()), "log4j", ())
         .await?;
 
     assert!(results.is_some());
@@ -239,7 +239,7 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 async fn package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
-    let service = PackageService::new(db);
+    let service = PurlService::new(db);
 
     let log4j = graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
@@ -282,7 +282,7 @@ async fn package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
 
     let results = service
-        .package_version(
+        .versioned_purl(
             "maven",
             Some("org.apache".to_string()),
             "log4j",
@@ -300,15 +300,15 @@ async fn package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         log4j_123.head.purl.to_string()
     );
 
-    assert_eq!(2, log4j_123.packages.len());
+    assert_eq!(2, log4j_123.purls.len());
 
     assert!(log4j_123
-        .packages
+        .purls
         .iter()
         .any(|e| e.purl.to_string() == "pkg://maven/org.apache/log4j@1.2.3?jdk=11"));
 
     assert!(log4j_123
-        .packages
+        .purls
         .iter()
         .any(|e| e.purl.to_string() == "pkg://maven/org.apache/log4j@1.2.3?jdk=17"));
 
@@ -320,7 +320,7 @@ async fn package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 async fn package_version_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
-    let service = PackageService::new(db);
+    let service = PurlService::new(db);
 
     let log4j = graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
@@ -363,7 +363,7 @@ async fn package_version_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Err
         .await?;
 
     let result = service
-        .package_version_by_uuid(&log4j_123.package_version.id, ())
+        .versioned_purl_by_uuid(&log4j_123.package_version.id, ())
         .await?;
 
     assert!(result.is_some());
@@ -375,15 +375,15 @@ async fn package_version_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Err
         log4j_123.head.purl.to_string()
     );
 
-    assert_eq!(2, log4j_123.packages.len());
+    assert_eq!(2, log4j_123.purls.len());
 
     assert!(log4j_123
-        .packages
+        .purls
         .iter()
         .any(|e| e.purl.to_string() == "pkg://maven/org.apache/log4j@1.2.3?jdk=11"));
 
     assert!(log4j_123
-        .packages
+        .purls
         .iter()
         .any(|e| e.purl.to_string() == "pkg://maven/org.apache/log4j@1.2.3?jdk=17"));
 
@@ -395,7 +395,7 @@ async fn package_version_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Err
 async fn packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
-    let service = PackageService::new(db);
+    let service = PurlService::new(db);
 
     let log4j = graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
@@ -453,25 +453,25 @@ async fn packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
 
     let results = service
-        .packages(q("log4j"), Paginated::default(), ())
+        .base_purls(q("log4j"), Paginated::default(), ())
         .await?;
 
     assert_eq!(1, results.items.len());
 
     let results = service
-        .packages(q("quarkus"), Paginated::default(), ())
+        .base_purls(q("quarkus"), Paginated::default(), ())
         .await?;
 
     assert_eq!(1, results.items.len());
 
     let results = service
-        .packages(q("jboss"), Paginated::default(), ())
+        .base_purls(q("jboss"), Paginated::default(), ())
         .await?;
 
     assert_eq!(1, results.items.len());
 
     let results = service
-        .packages(q("maven"), Paginated::default(), ())
+        .base_purls(q("maven"), Paginated::default(), ())
         .await?;
 
     assert_eq!(2, results.items.len());
@@ -484,7 +484,7 @@ async fn packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Arc::new(Graph::new(db.clone()));
-    let service = PackageService::new(db);
+    let service = PurlService::new(db);
 
     let log4j = graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
@@ -541,9 +541,7 @@ async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let results = service
-        .qualified_packages(q("log4j"), Paginated::default(), ())
-        .await?;
+    let results = service.purls(q("log4j"), Paginated::default(), ()).await?;
 
     log::debug!("{:#?}", results);
 
@@ -554,7 +552,7 @@ async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test(actix_web::test)]
 async fn statuses(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
-    let service = PackageService::new(db.clone());
+    let service = PurlService::new(db.clone());
     let (storage, _tmp) = FileSystemBackend::for_test().await?;
 
     let ingestor = IngestorService::new(Graph::new(db.clone()), storage);
@@ -591,16 +589,14 @@ async fn statuses(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
 
     let results = service
-        .qualified_packages(Query::default(), Paginated::default(), Transactional::None)
+        .purls(Query::default(), Paginated::default(), Transactional::None)
         .await?;
 
     assert_eq!(1, results.items.len());
 
     let uuid = results.items[0].head.uuid;
 
-    let _results = service
-        .qualified_package_by_uuid(&uuid, Transactional::None)
-        .await?;
+    let _results = service.purl_by_uuid(&uuid, Transactional::None).await?;
 
     Ok(())
 }
