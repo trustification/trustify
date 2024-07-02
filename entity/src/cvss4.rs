@@ -6,7 +6,7 @@ use trustify_cvss::cvss4;
 #[sea_orm(table_name = "cvss4")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub advisory_id: i32,
+    pub advisory_id: Uuid,
 
     #[sea_orm(primary_key)]
     pub vulnerability_id: String,

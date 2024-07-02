@@ -11,7 +11,7 @@ pub struct Model {
     pub node_id: String,
 
     #[sea_orm(primary_key)]
-    pub cpe_id: i32,
+    pub cpe_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

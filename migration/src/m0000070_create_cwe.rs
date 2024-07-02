@@ -1,6 +1,6 @@
 use sea_orm_migration::prelude::*;
 
-use crate::Now;
+use crate::{Now, UuidV4};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -16,9 +16,9 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(Cwe::Id)
-                            .integer()
+                            .uuid()
                             .not_null()
-                            .auto_increment()
+                            .default(Func::cust(UuidV4))
                             .primary_key(),
                     )
                     .col(

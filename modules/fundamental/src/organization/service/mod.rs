@@ -6,6 +6,7 @@ use trustify_common::db::query::{Filtering, Query};
 use trustify_common::db::{Database, Transactional};
 use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_entity::organization;
+use uuid::Uuid;
 
 pub struct OrganizationService {
     db: Database,
@@ -39,7 +40,7 @@ impl OrganizationService {
     }
     pub async fn fetch_organization<TX: AsRef<Transactional> + Sync + Send>(
         &self,
-        id: i32,
+        id: Uuid,
         tx: TX,
     ) -> Result<Option<OrganizationDetails>, Error> {
         let connection = self.db.connection(&tx);

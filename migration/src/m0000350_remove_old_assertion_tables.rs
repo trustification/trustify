@@ -1,4 +1,4 @@
-use crate::Now;
+use crate::{Now, UuidV4};
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -54,9 +54,9 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(PackageVersionRange::Id)
-                            .integer()
+                            .uuid()
                             .not_null()
-                            .auto_increment()
+                            .default(Func::cust(UuidV4))
                             .primary_key(),
                     )
                     .col(
@@ -92,9 +92,9 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(AffectedPackageVersionRange::Id)
-                            .integer()
+                            .uuid()
                             .not_null()
-                            .auto_increment()
+                            .default(Func::cust(UuidV4))
                             .primary_key(),
                     )
                     .col(
@@ -109,7 +109,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(AffectedPackageVersionRange::VulnerabilityId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .foreign_key(
@@ -119,7 +119,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(AffectedPackageVersionRange::PackageVersionRangeId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .foreign_key(
@@ -138,9 +138,9 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(NotAffectedPackageVersion::Id)
-                            .integer()
+                            .uuid()
                             .not_null()
-                            .auto_increment()
+                            .default(Func::cust(UuidV4))
                             .primary_key(),
                     )
                     .col(
@@ -155,7 +155,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(NotAffectedPackageVersion::VulnerabilityId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .foreign_key(
@@ -184,9 +184,9 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(FixedPackageVersion::Id)
-                            .integer()
+                            .uuid()
                             .not_null()
-                            .auto_increment()
+                            .default(Func::cust(UuidV4))
                             .primary_key(),
                     )
                     .col(
@@ -201,7 +201,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(FixedPackageVersion::VulnerabilityId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .foreign_key(

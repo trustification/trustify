@@ -8,7 +8,7 @@ use trustify_common::cpe::{Component, Cpe, CpeType};
 #[sea_orm(table_name = "cpe")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i32,
+    pub id: Uuid,
     pub part: Option<String>,
     pub vendor: Option<String>,
     pub product: Option<String>,
@@ -157,9 +157,11 @@ mod test {
         // parse into a CPE
         let cpe = Cpe::from_str(CPE).unwrap();
 
+        let id = Uuid::new_v4();
+
         // turn it into a model to be inserted
         let model = ActiveModel {
-            id: Set(0),
+            id: Set(id),
             ..cpe.into()
         };
 

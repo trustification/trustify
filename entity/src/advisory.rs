@@ -18,7 +18,7 @@ pub struct Model {
     pub id: Uuid,
     #[graphql(name = "name")]
     pub identifier: String,
-    pub issuer_id: Option<i32>,
+    pub issuer_id: Option<Uuid>,
     pub sha256: String,
     pub sha384: Option<String>,
     pub sha512: Option<String>,

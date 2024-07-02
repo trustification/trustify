@@ -26,7 +26,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(
                         ColumnDef::new(PackageStatus::VulnerabilityId)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .foreign_key(

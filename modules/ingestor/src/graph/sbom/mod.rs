@@ -597,7 +597,7 @@ impl SbomContext {
         name: String,
         version: Option<String>,
         purls: Vec<Uuid>,
-        cpes: Vec<i32>,
+        cpes: Vec<Uuid>,
         tx: TX,
     ) -> Result<(), Error> {
         let mut creator = PackageCreator::new(self.sbom.sbom_id);

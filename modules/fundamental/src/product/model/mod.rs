@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 mod summary;
 pub use summary::*;
@@ -10,7 +11,7 @@ use trustify_entity::product;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct ProductHead {
-    pub id: i32,
+    pub id: Uuid,
     pub name: String,
 }
 

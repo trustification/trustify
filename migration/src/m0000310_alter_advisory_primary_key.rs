@@ -380,9 +380,9 @@ impl MigrationTrait for Migration {
                     .table(Advisory::Table)
                     .add_column(
                         ColumnDef::new(Advisory::Idx)
-                            .integer()
+                            .uuid()
                             .unique_key()
-                            .auto_increment(),
+                            .default(Func::cust(UuidV4)),
                     )
                     .to_owned(),
             )
@@ -397,7 +397,7 @@ impl MigrationTrait for Migration {
                     .table(AdvisoryVulnerability::Table)
                     .add_column(
                         ColumnDef::new(AdvisoryVulnerability::AdvisoryIdx)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .to_owned(),
@@ -420,7 +420,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(Cvss3::Table)
-                    .add_column(ColumnDef::new(Cvss3::AdvisoryIdx).integer().not_null())
+                    .add_column(ColumnDef::new(Cvss3::AdvisoryIdx).uuid().not_null())
                     .to_owned(),
             )
             .await?;
@@ -441,7 +441,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(Cvss4::Table)
-                    .add_column(ColumnDef::new(Cvss4::AdvisoryIdx).integer().not_null())
+                    .add_column(ColumnDef::new(Cvss4::AdvisoryIdx).uuid().not_null())
                     .to_owned(),
             )
             .await?;
@@ -464,7 +464,7 @@ impl MigrationTrait for Migration {
                     .table(AffectedPackageVersionRange::Table)
                     .add_column(
                         ColumnDef::new(AffectedPackageVersionRange::AdvisoryIdx)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .to_owned(),
@@ -489,7 +489,7 @@ impl MigrationTrait for Migration {
                     .table(NotAffectedPackageVersion::Table)
                     .add_column(
                         ColumnDef::new(NotAffectedPackageVersion::AdvisoryIdx)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .to_owned(),
@@ -514,7 +514,7 @@ impl MigrationTrait for Migration {
                     .table(FixedPackageVersion::Table)
                     .add_column(
                         ColumnDef::new(FixedPackageVersion::AdvisoryIdx)
-                            .integer()
+                            .uuid()
                             .not_null(),
                     )
                     .to_owned(),

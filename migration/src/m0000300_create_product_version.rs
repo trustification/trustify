@@ -1,6 +1,6 @@
 use sea_orm_migration::prelude::*;
 
-use crate::{m0000030_create_sbom::Sbom, m0000290_create_product::Product, Now};
+use crate::{m0000030_create_sbom::Sbom, m0000290_create_product::Product, Now, UuidV4};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -16,9 +16,9 @@ impl MigrationTrait for Migration {
                     .if_not_exists()
                     .col(
                         ColumnDef::new(ProductVersion::Id)
-                            .integer()
+                            .uuid()
                             .not_null()
-                            .auto_increment()
+                            .default(Func::cust(UuidV4))
                             .primary_key(),
                     )
                     .col(
@@ -26,11 +26,7 @@ impl MigrationTrait for Migration {
                             .timestamp_with_time_zone()
                             .default(Func::cust(Now)),
                     )
-                    .col(
-                        ColumnDef::new(ProductVersion::ProductId)
-                            .integer()
-                            .not_null(),
-                    )
+                    .col(ColumnDef::new(ProductVersion::ProductId).uuid().not_null())
                     .col(ColumnDef::new(ProductVersion::SbomId).uuid())
                     .col(ColumnDef::new(ProductVersion::Version).string().not_null())
                     .foreign_key(

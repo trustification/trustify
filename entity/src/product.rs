@@ -6,9 +6,9 @@ use crate::organization;
 #[sea_orm(table_name = "product")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i32,
+    pub id: Uuid,
     pub name: String,
-    pub vendor_id: Option<i32>,
+    pub vendor_id: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

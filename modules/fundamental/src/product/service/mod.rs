@@ -5,6 +5,7 @@ use trustify_common::db::query::{Filtering, Query};
 use trustify_common::db::{Database, Transactional};
 use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_entity::product;
+use uuid::Uuid;
 
 use super::model::{ProductHead, ProductSummary};
 
@@ -41,7 +42,7 @@ impl ProductService {
 
     pub async fn fetch_product<TX: AsRef<Transactional> + Sync + Send>(
         &self,
-        id: i32,
+        id: Uuid,
         tx: TX,
     ) -> Result<Option<ProductHead>, Error> {
         let connection = self.db.connection(&tx);

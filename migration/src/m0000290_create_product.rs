@@ -1,6 +1,7 @@
 use sea_orm_migration::prelude::*;
 
 use crate::m0000022_create_organization::Organization;
+use crate::UuidV4;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -15,13 +16,13 @@ impl MigrationTrait for Migration {
                     .table(Product::Table)
                     .col(
                         ColumnDef::new(Product::Id)
-                            .integer()
+                            .uuid()
                             .not_null()
-                            .auto_increment()
+                            .default(Func::cust(UuidV4))
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Product::Name).string().not_null())
-                    .col(ColumnDef::new(Product::VendorId).integer() /* allowed to be null if not known */)
+                    .col(ColumnDef::new(Product::VendorId).uuid() /* allowed to be null if not known */)
                     .foreign_key(
                         ForeignKey::create()
                             .from_col(Product::VendorId)
