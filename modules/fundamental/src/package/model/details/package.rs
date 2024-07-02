@@ -11,6 +11,7 @@ use utoipa::ToSchema;
 pub struct PackageDetails {
     #[serde(flatten)]
     pub head: PackageHead,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub versions: Vec<PackageVersionSummary>,
 }
 

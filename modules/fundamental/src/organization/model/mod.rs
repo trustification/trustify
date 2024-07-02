@@ -14,7 +14,9 @@ use trustify_entity::organization;
 pub struct OrganizationHead {
     pub id: i32,
     pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cpe_key: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub website: Option<String>,
 }
 

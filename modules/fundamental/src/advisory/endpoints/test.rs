@@ -252,7 +252,7 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let vulns = response.path("$.vulnerabilities").unwrap();
 
-    assert_eq!(vulns, json!([[]]));
+    assert_eq!(vulns, Value::Null);
 
     Ok(())
 }

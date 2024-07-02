@@ -13,6 +13,7 @@ use crate::Error;
 pub struct OrganizationDetails {
     #[serde(flatten)]
     head: OrganizationHead,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     advisories: Vec<AdvisoryHead>,
 }
 

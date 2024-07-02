@@ -21,7 +21,9 @@ pub struct PackageVersionDetails {
     #[serde(flatten)]
     pub head: PackageVersionHead,
     pub base: PackageHead,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub packages: Vec<QualifiedPackageHead>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub advisories: Vec<PackageVersionAdvisory>,
 }
 

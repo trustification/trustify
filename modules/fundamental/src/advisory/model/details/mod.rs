@@ -1,25 +1,24 @@
+pub mod advisory_vulnerability;
+
+use crate::{advisory::model::AdvisoryHead, Error};
+use advisory_vulnerability::AdvisoryVulnerabilitySummary;
 use sea_orm::{ColumnTrait, EntityTrait, ModelTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
-
-use crate::advisory::model::AdvisoryHead;
-use advisory_vulnerability::AdvisoryVulnerabilitySummary;
 use trustify_common::db::ConnectionOrTransaction;
-use trustify_entity as entity;
-use trustify_entity::cvss3::Severity;
-
-use crate::Error;
-
-pub mod advisory_vulnerability;
+use trustify_entity::{self as entity, cvss3::Severity};
+use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct AdvisoryDetails {
     #[serde(flatten)]
     pub head: AdvisoryHead,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub vulnerabilities: Vec<AdvisoryVulnerabilitySummary>,
     /// Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub average_severity: Option<String>,
     /// Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub average_score: Option<f64>,
 }
 
