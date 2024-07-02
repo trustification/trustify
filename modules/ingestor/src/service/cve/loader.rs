@@ -33,6 +33,7 @@ impl<'g> CveLoader<'g> {
     ) -> Result<IngestResult, Error> {
         let cve: Cve = serde_json::from_reader(record)?;
         let id = cve.id();
+        let labels = labels.into().add("type", "cve");
 
         let tx = self.graph.transaction().await?;
 

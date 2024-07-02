@@ -33,6 +33,8 @@ impl<'g> OsvLoader<'g> {
     ) -> Result<IngestResult, Error> {
         let osv: Vulnerability = serde_json::from_reader(record)?;
 
+        let labels = labels.into().add("type", "osv");
+
         let issuer = issuer.or(detect_organization(&osv));
 
         let tx = self.graph.transaction().await?;

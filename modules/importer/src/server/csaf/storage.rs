@@ -7,6 +7,7 @@ use std::sync::Arc;
 use tokio_util::io::ReaderStream;
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
+use walker_common::utils::url::Urlify;
 
 #[derive(Debug, thiserror::Error)]
 pub enum StorageError {
@@ -21,6 +22,7 @@ pub struct StorageVisitor {
     pub ingestor: IngestorService,
     /// the report to report our messages to
     pub report: Arc<Mutex<ReportBuilder>>,
+    pub labels: Labels,
 }
 
 impl ValidatedVisitor for StorageVisitor {
@@ -38,12 +40,15 @@ impl ValidatedVisitor for StorageVisitor {
     ) -> Result<(), Self::Error> {
         let doc = result?;
         let location = doc.context.url().to_string();
+        let file = doc.possibly_relative_url();
         let fmt = Format::from_bytes(&doc.data).map_err(|e| StorageError::Storage(e.into()))?;
         self.ingestor
             .ingest(
                 Labels::new()
                     .add("source", &location)
-                    .add("importer", &self.name),
+                    .add("importer", &self.name)
+                    .add("file", file)
+                    .extend(&self.labels.0),
                 None, /* CSAF tracks issuer internally */
                 fmt,
                 ReaderStream::new(doc.data.as_ref()),

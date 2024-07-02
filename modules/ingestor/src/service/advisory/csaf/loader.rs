@@ -63,6 +63,7 @@ impl<'g> CsafLoader<'g> {
         let tx = self.graph.transaction().await?;
 
         let advisory_id = csaf.document.tracking.id.clone();
+        let labels = labels.into().add("type", "csaf");
 
         let advisory = self
             .graph
