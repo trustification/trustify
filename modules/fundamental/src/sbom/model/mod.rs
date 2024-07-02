@@ -9,6 +9,7 @@ use utoipa::ToSchema;
 pub struct SbomSummary {
     #[serde(with = "uuid::serde::urn")]
     pub id: Uuid,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub hashes: Vec<Id>,
 
     pub document_id: String,

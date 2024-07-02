@@ -22,6 +22,7 @@ pub struct QualifiedPackageDetails {
     pub head: QualifiedPackageHead,
     pub version: PackageVersionHead,
     pub base: PackageHead,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub advisories: Vec<QualifiedPackageAdvisory>,
     // TODO link to advisories, sboms, etc
 }
