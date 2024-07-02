@@ -26,6 +26,16 @@ pub enum Id {
     Sha512(String),
 }
 
+impl Id {
+    /// Create a `Vec<Id>` from a fields of a document.
+    pub fn build_vec(sha256: String, sha384: Option<String>, sha512: Option<String>) -> Vec<Self> {
+        let mut result = vec![Id::Sha256(sha256)];
+        result.extend(sha384.map(Id::Sha384));
+        result.extend(sha512.map(Id::Sha512));
+        result
+    }
+}
+
 /// Create a filter for an ID
 pub trait TryFilterForId {
     /// Return a condition, filtering for the [`Id`]. Or an `Err(IdError::UnsupportedAlgorithm)` if the ID type is not supported.
@@ -147,7 +157,7 @@ impl Display for Id {
                 write!(f, "sha256:{}", inner)
             }
             Id::Sha384(inner) => {
-                write!(f, "sha385:{}", inner)
+                write!(f, "sha384:{}", inner)
             }
             Id::Sha512(inner) => {
                 write!(f, "sha512:{}", inner)

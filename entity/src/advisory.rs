@@ -20,6 +20,8 @@ pub struct Model {
     pub identifier: String,
     pub issuer_id: Option<i32>,
     pub sha256: String,
+    pub sha384: Option<String>,
+    pub sha512: Option<String>,
     pub published: Option<OffsetDateTime>,
     pub modified: Option<OffsetDateTime>,
     pub withdrawn: Option<OffsetDateTime>,
@@ -101,6 +103,8 @@ impl TryFilterForId for Entity {
         Ok(match id {
             Id::Uuid(uuid) => Column::Id.eq(uuid).into_condition(),
             Id::Sha256(hash) => Column::Sha256.eq(hash).into_condition(),
+            Id::Sha384(hash) => Column::Sha384.eq(hash).into_condition(),
+            Id::Sha512(hash) => Column::Sha512.eq(hash).into_condition(),
             n => return Err(IdError::UnsupportedAlgorithm(n.prefix().to_string())),
         })
     }
