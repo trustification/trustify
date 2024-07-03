@@ -85,6 +85,10 @@ impl ValidatedVisitor for SbomReportVisitor {
                         format!("upload failed: {err}"),
                     );
                 }
+                StorageError::Canceled => {
+                    // propagate up
+                    return Err(StorageError::Canceled);
+                }
             }
         }
 

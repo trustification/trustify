@@ -1,42 +1,35 @@
-use crate::server::common::processing_error::ProcessingError;
-use crate::server::common::walker::{Continuation, Error, GitWalker, Handler, WorkingDirectory};
-use osv::schema::Vulnerability;
-use std::{
-    io::BufReader,
-    path::{Path, PathBuf},
+use crate::server::common::{
+    processing_error::ProcessingError,
+    walker::{
+        CallbackError, Callbacks, Continuation, Error, GitWalker, Handler, HandlerError,
+        WorkingDirectory,
+    },
 };
+use osv::schema::Vulnerability;
+use std::{io::BufReader, path::Path};
 use tracing::instrument;
-
-pub trait Callbacks: Send + 'static {
-    /// Handle an error while loading the file
-    #[allow(unused)]
-    fn loading_error(&mut self, path: PathBuf, message: String) {}
-
-    /// Process the file.
-    ///
-    /// Any error returned will terminate the walk with a critical error.
-    #[allow(unused)]
-    fn process(&mut self, path: &Path, osv: Vulnerability) -> Result<(), anyhow::Error> {
-        Ok(())
-    }
-}
-
-impl Callbacks for () {}
 
 struct OsvHandler<C>(C)
 where
-    C: Callbacks + Send + 'static;
+    C: Callbacks<Vulnerability> + Send + 'static;
 
 impl<C> Handler for OsvHandler<C>
 where
-    C: Callbacks + Send + 'static,
+    C: Callbacks<Vulnerability> + Send + 'static,
 {
     type Error = Error;
 
-    fn process(&mut self, path: &Path, relative_path: &Path) -> Result<(), Self::Error> {
+    fn process(
+        &mut self,
+        path: &Path,
+        relative_path: &Path,
+    ) -> Result<(), HandlerError<Self::Error>> {
         match self.process_file(path, relative_path) {
             Ok(()) => Ok(()),
-            Err(ProcessingError::Critical(err)) => Err(Error::Processing(err)),
+            Err(ProcessingError::Critical(err)) => {
+                Err(HandlerError::Processing(Error::Processing(err)))
+            }
+            Err(ProcessingError::Canceled) => Err(HandlerError::Canceled),
             Err(err) => {
                 log::warn!("Failed to process file ({}): {err}", path.display());
                 self.0.loading_error(path.to_path_buf(), err.to_string());
@@ -48,7 +41,7 @@ where
 
 impl<C> OsvHandler<C>
 where
-    C: Callbacks + Send + 'static,
+    C: Callbacks<Vulnerability> + Send + 'static,
 {
     fn process_file(&mut self, path: &Path, rel_path: &Path) -> Result<(), ProcessingError> {
         let osv: Vulnerability = match path.extension().map(|s| s.to_string_lossy()).as_deref() {
@@ -66,9 +59,10 @@ where
             osv.summary.as_deref().unwrap_or("n/a")
         );
 
-        self.0
-            .process(rel_path, osv)
-            .map_err(ProcessingError::Critical)?;
+        self.0.process(rel_path, osv).map_err(|err| match err {
+            CallbackError::Processing(err) => ProcessingError::Critical(err),
+            CallbackError::Canceled => ProcessingError::Canceled,
+        })?;
 
         Ok(())
     }
@@ -76,7 +70,7 @@ where
 
 pub struct OsvWalker<C, T>
 where
-    C: Callbacks,
+    C: Callbacks<Vulnerability>,
     T: WorkingDirectory + Send + 'static,
 {
     walker: GitWalker<OsvHandler<C>, T>,
@@ -92,7 +86,7 @@ impl OsvWalker<(), ()> {
 
 impl<C, T> OsvWalker<C, T>
 where
-    C: Callbacks,
+    C: Callbacks<Vulnerability>,
     T: WorkingDirectory + Send + 'static,
 {
     /// Set the working directory.
@@ -118,7 +112,10 @@ where
         self
     }
 
-    pub fn callbacks<U: Callbacks + Send + 'static>(self, callbacks: U) -> OsvWalker<U, T> {
+    pub fn callbacks<U: Callbacks<Vulnerability> + Send + 'static>(
+        self,
+        callbacks: U,
+    ) -> OsvWalker<U, T> {
         OsvWalker {
             walker: self.walker.handler(OsvHandler(callbacks)),
         }

@@ -3,7 +3,9 @@ mod walker;
 use crate::{
     model::CveImporter,
     server::{
-        cve::walker::{Callbacks, CveWalker},
+        common::walker::{CallbackError, Callbacks},
+        context::RunContext,
+        cve::walker::CveWalker,
         report::{Phase, ReportBuilder, ScannerError, Severity},
         RunOutput,
     },
@@ -21,7 +23,7 @@ use trustify_module_ingestor::{
 };
 
 struct Context {
-    name: String,
+    context: RunContext,
     source: String,
     labels: Labels,
     report: Arc<Mutex<ReportBuilder>>,
@@ -39,7 +41,7 @@ impl Context {
                 .ingest(
                     Labels::new()
                         .add("source", &self.source)
-                        .add("importer", &self.name)
+                        .add("importer", self.context.name())
                         .add("file", path.to_string_lossy())
                         .extend(&self.labels.0),
                     None,
@@ -53,7 +55,7 @@ impl Context {
     }
 }
 
-impl Callbacks for Context {
+impl Callbacks<Cve> for Context {
     fn loading_error(&mut self, path: PathBuf, message: String) {
         self.report.lock().add_error(
             Phase::Validation,
@@ -63,7 +65,7 @@ impl Callbacks for Context {
         );
     }
 
-    fn process(&mut self, path: &Path, cve: Cve) -> anyhow::Result<()> {
+    fn process(&mut self, path: &Path, cve: Cve) -> Result<(), CallbackError> {
         if let Err(err) = self.store(path, cve) {
             self.report.lock().add_error(
                 Phase::Upload,
@@ -73,7 +75,7 @@ impl Callbacks for Context {
             );
         }
 
-        Ok(())
+        self.context.check_canceled_sync(|| CallbackError::Canceled)
     }
 }
 
@@ -81,7 +83,7 @@ impl super::Server {
     #[instrument(skip(self), ret)]
     pub async fn run_once_cve(
         &self,
-        name: String,
+        context: RunContext,
         cve: CveImporter,
         continuation: serde_json::Value,
     ) -> Result<RunOutput, ScannerError> {
@@ -101,7 +103,7 @@ impl super::Server {
             .years(cve.years)
             .start_year(cve.start_year)
             .callbacks(Context {
-                name,
+                context,
                 source: cve.source,
                 labels: cve.common.labels,
                 report: report.clone(),
@@ -112,7 +114,13 @@ impl super::Server {
             Some(working_dir) => walker.working_dir(working_dir).run().await,
             None => walker.run().await,
         }
-        .map_err(|err| ScannerError::Critical(err.into()))?;
+        .map_err(|err| ScannerError::Normal {
+            err: err.into(),
+            output: RunOutput {
+                report: report.lock().clone().build(),
+                continuation: None,
+            },
+        })?;
 
         // extract the report
 

@@ -28,18 +28,32 @@ pub enum Error {
     Processing(#[source] anyhow::Error),
     #[error("{0} is not a relative subdirectory of the repository")]
     Path(String),
+    #[error("operation canceled")]
+    Canceled,
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum HandlerError<T> {
+    #[error(transparent)]
+    Processing(T),
+    #[error("operation canceled")]
+    Canceled,
 }
 
 pub trait Handler: Send + 'static {
     type Error: Display + Debug;
 
-    fn process(&mut self, path: &Path, relative_path: &Path) -> Result<(), Self::Error>;
+    fn process(
+        &mut self,
+        path: &Path,
+        relative_path: &Path,
+    ) -> Result<(), HandlerError<Self::Error>>;
 }
 
 impl Handler for () {
     type Error = Infallible;
 
-    fn process(&mut self, _: &Path, _: &Path) -> Result<(), Self::Error> {
+    fn process(&mut self, _: &Path, _: &Path) -> Result<(), HandlerError<Self::Error>> {
         Ok(())
     }
 }
@@ -321,7 +335,10 @@ where
 
             self.handler
                 .process(entry.path(), path)
-                .map_err(|err| Error::Processing(anyhow!("{err}")))?;
+                .map_err(|err| match err {
+                    HandlerError::Canceled => Error::Canceled,
+                    HandlerError::Processing(err) => Error::Processing(anyhow!("{err}")),
+                })?;
         }
 
         Ok(())

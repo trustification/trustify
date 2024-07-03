@@ -1,32 +1,17 @@
-use crate::server::common::processing_error::ProcessingError;
-use crate::server::common::walker::{Continuation, Error, GitWalker, Handler, WorkingDirectory};
-use cve::Cve;
-use std::collections::HashSet;
-use std::{
-    io::BufReader,
-    path::{Path, PathBuf},
+use crate::server::common::{
+    processing_error::ProcessingError,
+    walker::{
+        CallbackError, Callbacks, Continuation, Error, GitWalker, Handler, HandlerError,
+        WorkingDirectory,
+    },
 };
+use cve::Cve;
+use std::{collections::HashSet, io::BufReader, path::Path};
 use tracing::instrument;
-
-pub trait Callbacks: Send + 'static {
-    /// Handle an error while loading the file
-    #[allow(unused)]
-    fn loading_error(&mut self, path: PathBuf, message: String) {}
-
-    /// Process the file.
-    ///
-    /// Any error returned will terminate the walk with a critical error.
-    #[allow(unused)]
-    fn process(&mut self, path: &Path, cve: Cve) -> Result<(), anyhow::Error> {
-        Ok(())
-    }
-}
-
-impl Callbacks for () {}
 
 struct CveHandler<C>
 where
-    C: Callbacks + Send + 'static,
+    C: Callbacks<Cve> + Send + 'static,
 {
     callbacks: C,
     years: HashSet<u16>,
@@ -35,11 +20,15 @@ where
 
 impl<C> Handler for CveHandler<C>
 where
-    C: Callbacks + Send + 'static,
+    C: Callbacks<Cve> + Send + 'static,
 {
     type Error = Error;
 
-    fn process(&mut self, path: &Path, relative_path: &Path) -> Result<(), Self::Error> {
+    fn process(
+        &mut self,
+        path: &Path,
+        relative_path: &Path,
+    ) -> Result<(), HandlerError<Self::Error>> {
         // Get the year, as we walk with a base of `cves`, that must be the year folder.
         // If it is not, we skip it.
         let Some(year) = relative_path
@@ -64,7 +53,10 @@ where
 
         match self.process_file(path, relative_path) {
             Ok(()) => Ok(()),
-            Err(ProcessingError::Critical(err)) => Err(Error::Processing(err)),
+            Err(ProcessingError::Critical(err)) => {
+                Err(HandlerError::Processing(Error::Processing(err)))
+            }
+            Err(ProcessingError::Canceled) => Err(HandlerError::Canceled),
             Err(err) => {
                 log::warn!("Failed to process file ({}): {err}", path.display());
                 self.callbacks
@@ -77,7 +69,7 @@ where
 
 impl<C> CveHandler<C>
 where
-    C: Callbacks + Send + 'static,
+    C: Callbacks<Cve> + Send + 'static,
 {
     fn process_file(&mut self, path: &Path, rel_path: &Path) -> Result<(), ProcessingError> {
         let cve: Cve = match path.extension().map(|s| s.to_string_lossy()).as_deref() {
@@ -97,7 +89,10 @@ where
 
         self.callbacks
             .process(rel_path, cve)
-            .map_err(ProcessingError::Critical)?;
+            .map_err(|err| match err {
+                CallbackError::Processing(err) => ProcessingError::Critical(err),
+                CallbackError::Canceled => ProcessingError::Canceled,
+            })?;
 
         Ok(())
     }
@@ -105,7 +100,7 @@ where
 
 pub struct CveWalker<C, T>
 where
-    C: Callbacks,
+    C: Callbacks<Cve>,
     T: WorkingDirectory + Send + 'static,
 {
     walker: GitWalker<(), T>,
@@ -127,7 +122,7 @@ impl CveWalker<(), ()> {
 
 impl<C, T> CveWalker<C, T>
 where
-    C: Callbacks,
+    C: Callbacks<Cve>,
     T: WorkingDirectory + Send + 'static,
 {
     /// Set the working directory.
@@ -161,7 +156,7 @@ where
         self
     }
 
-    pub fn callbacks<U: Callbacks + Send + 'static>(self, callbacks: U) -> CveWalker<U, T> {
+    pub fn callbacks<U: Callbacks<Cve> + Send + 'static>(self, callbacks: U) -> CveWalker<U, T> {
         CveWalker {
             walker: self.walker.handler(()),
             callbacks,
