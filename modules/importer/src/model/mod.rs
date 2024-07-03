@@ -12,10 +12,10 @@ use std::ops::{Deref, DerefMut};
 use std::time::Duration;
 use time::OffsetDateTime;
 use trustify_common::{model::Revisioned, paginated, revisioned};
-use trustify_entity::labels::Labels;
-use trustify_entity::{
+pub(crate) use trustify_entity::{
     importer::{self, Model},
     importer_report,
+    labels::Labels,
 };
 use url::Url;
 use utoipa::ToSchema;
