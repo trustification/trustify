@@ -7,7 +7,7 @@ use crate::{
 use sea_orm::{
     ColumnTrait, EntityTrait, LoaderTrait, ModelTrait, QueryFilter, QuerySelect, RelationTrait,
 };
-use sea_query::{Asterisk, Expr, Func, JoinType, SimpleExpr};
+use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use trustify_common::db::{ConnectionOrTransaction, VersionMatches};
 use trustify_entity::{
@@ -76,7 +76,10 @@ impl PurlDetails {
                     .arg(Expr::col(versioned_purl::Column::Version))
                     .arg(Expr::col((version_range::Entity, Asterisk))),
             ))
-            .distinct_on([package_status::Column::Id])
+            .distinct_on([ColumnRef::TableColumn(
+                package_status::Entity.into_iden(),
+                package_status::Column::Id.into_iden(),
+            )])
             .all(tx)
             .await?;
 
