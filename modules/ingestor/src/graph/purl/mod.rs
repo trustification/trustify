@@ -225,18 +225,21 @@ impl Graph {
 #[derive(Clone)]
 pub struct PackageContext<'g> {
     pub graph: &'g Graph,
-    pub package: entity::base_purl::Model,
+    pub base_purl: entity::base_purl::Model,
 }
 
 impl Debug for PackageContext<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.package.fmt(f)
+        self.base_purl.fmt(f)
     }
 }
 
 impl<'g> PackageContext<'g> {
     pub fn new(graph: &'g Graph, package: entity::base_purl::Model) -> Self {
-        Self { graph, package }
+        Self {
+            graph,
+            base_purl: package,
+        }
     }
 
     /// Ensure the fetch knows about and contains a record for a *version* of this package.
@@ -251,7 +254,7 @@ impl<'g> PackageContext<'g> {
             } else {
                 let model = entity::versioned_purl::ActiveModel {
                     id: Set(purl.version_uuid()),
-                    base_purl_id: Set(self.package.id),
+                    base_purl_id: Set(self.base_purl.id),
                     version: Set(version.clone()),
                 };
 
@@ -274,7 +277,7 @@ impl<'g> PackageContext<'g> {
         tx: TX,
     ) -> Result<Option<PackageVersionContext<'g>>, Error> {
         Ok(entity::versioned_purl::Entity::find()
-            .filter(entity::versioned_purl::Column::BasePurlId.eq(self.package.id))
+            .filter(entity::versioned_purl::Column::BasePurlId.eq(self.base_purl.id))
             .filter(entity::versioned_purl::Column::Version.eq(purl.version.clone()))
             .one(&self.graph.connection(&tx))
             .await
@@ -292,7 +295,7 @@ impl<'g> PackageContext<'g> {
         tx: TX,
     ) -> Result<Vec<PackageVersionContext>, Error> {
         Ok(entity::versioned_purl::Entity::find()
-            .filter(entity::versioned_purl::Column::BasePurlId.eq(self.package.id))
+            .filter(entity::versioned_purl::Column::BasePurlId.eq(self.base_purl.id))
             .all(&self.graph.connection(&tx))
             .await?
             .drain(0..)
@@ -308,7 +311,7 @@ impl<'g> PackageContext<'g> {
         let connection = self.graph.connection(&tx);
 
         let limiter = entity::versioned_purl::Entity::find()
-            .filter(entity::versioned_purl::Column::BasePurlId.eq(self.package.id))
+            .filter(entity::versioned_purl::Column::BasePurlId.eq(self.base_purl.id))
             .limiting(&connection, paginated.limit, paginated.offset);
 
         Ok(PaginatedResults {
@@ -375,9 +378,9 @@ mod tests {
             )
             .await?;
 
-        assert_eq!(pkg1.package.id, pkg2.package.id,);
+        assert_eq!(pkg1.base_purl.id, pkg2.base_purl.id,);
 
-        assert_ne!(pkg1.package.id, pkg3.package.id);
+        assert_ne!(pkg1.base_purl.id, pkg3.base_purl.id);
 
         Ok(())
     }
@@ -429,10 +432,10 @@ mod tests {
             )
             .await?;
 
-        assert_eq!(pkg1.package.package.id, pkg2.package.package.id);
+        assert_eq!(pkg1.package.base_purl.id, pkg2.package.base_purl.id);
         assert_eq!(pkg1.package_version.id, pkg2.package_version.id);
 
-        assert_eq!(pkg1.package.package.id, pkg3.package.package.id);
+        assert_eq!(pkg1.package.base_purl.id, pkg3.package.base_purl.id);
         assert_ne!(pkg1.package_version.id, pkg3.package_version.id);
 
         Ok(())

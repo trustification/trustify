@@ -1,6 +1,7 @@
 use cpe::{error::CpeError, uri::Uri};
 use sea_orm::entity::prelude::*;
 use sea_orm::{NotSet, Set};
+use std::fmt::{Debug, Display, Formatter};
 use trustify_common::cpe::Component::Value;
 use trustify_common::cpe::{Component, Cpe, CpeType};
 
@@ -35,6 +36,29 @@ impl Related<super::sbom_package_cpe_ref::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+impl Display for Model {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let mut cpe = cpe::uri::Uri::new();
+        self.part.as_ref().map(|part| cpe.set_part(part));
+        self.vendor.as_ref().map(|vendor| cpe.set_vendor(vendor));
+        self.product
+            .as_ref()
+            .map(|product| cpe.set_product(product));
+        self.version
+            .as_ref()
+            .map(|version| cpe.set_version(version));
+        self.update.as_ref().map(|update| cpe.set_update(update));
+        self.edition
+            .as_ref()
+            .map(|edition| cpe.set_edition(edition));
+        self.language
+            .as_ref()
+            .map(|language| cpe.set_language(language));
+
+        Display::fmt(&cpe, f)
+    }
+}
 
 impl ActiveModel {
     pub fn from_cpe(cpe: Cpe) -> Self {

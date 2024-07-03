@@ -18,10 +18,10 @@ pub enum Relation {
     #[sea_orm(has_many = "super::qualified_purl::Entity")]
     QualifiedPurls,
 
-    #[sea_orm(has_many = "super::package_status::Entity")]
-    PackageStatus,
+    #[sea_orm(has_many = "super::purl_status::Entity")]
+    PurlStatus,
 
-    #[sea_orm(has_many = "super::package_status::Entity")]
+    #[sea_orm(has_many = "super::purl_status::Entity")]
     VersionRange,
 }
 
@@ -41,9 +41,9 @@ impl Related<super::qualified_purl::Entity> for Entity {
     }
 }
 
-impl Related<super::package_status::Entity> for Entity {
+impl Related<super::purl_status::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::PackageStatus.def()
+        Relation::PurlStatus.def()
     }
 }
 

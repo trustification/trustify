@@ -10,8 +10,9 @@ use sea_orm::{
 use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use trustify_common::db::{ConnectionOrTransaction, VersionMatches};
+use trustify_common::purl::Purl;
 use trustify_entity::{
-    advisory, base_purl, organization, package_status, qualified_purl, status, version_range,
+    advisory, base_purl, cpe, organization, purl_status, qualified_purl, status, version_range,
     versioned_purl, vulnerability,
 };
 use utoipa::ToSchema;
@@ -56,7 +57,7 @@ impl PurlDetails {
                 .ok_or(Error::Data("underlying package missing".to_string()))?
         };
 
-        let statuses = package_status::Entity::find()
+        let statuses = purl_status::Entity::find()
             .columns([
                 version_range::Column::Id,
                 version_range::Column::LowVersion,
@@ -70,15 +71,15 @@ impl PurlDetails {
                 base_purl::Relation::VersionedPurls.def(),
             )
             .left_join(version_range::Entity)
-            .filter(package_status::Column::PackageId.eq(package.id))
+            .filter(purl_status::Column::BasePurlId.eq(package.id))
             .filter(SimpleExpr::FunctionCall(
                 Func::cust(VersionMatches)
                     .arg(Expr::col(versioned_purl::Column::Version))
                     .arg(Expr::col((version_range::Entity, Asterisk))),
             ))
             .distinct_on([ColumnRef::TableColumn(
-                package_status::Entity.into_iden(),
-                package_status::Column::Id.into_iden(),
+                purl_status::Entity.into_iden(),
+                purl_status::Column::Id.into_iden(),
             )])
             .all(tx)
             .await?;
@@ -101,7 +102,7 @@ pub struct PurlAdvisory {
 
 impl PurlAdvisory {
     pub async fn from_entities(
-        statuses: Vec<package_status::Model>,
+        statuses: Vec<purl_status::Model>,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
         let vulns = statuses.load_one(vulnerability::Entity, tx).await?;
@@ -110,10 +111,23 @@ impl PurlAdvisory {
 
         let mut results: Vec<PurlAdvisory> = Vec::new();
 
-        for ((vuln, advisory), status) in vulns.iter().zip(advisories.iter()).zip(statuses.iter()) {
-            if let (Some(vulnerability), Some(advisory)) = (vuln, advisory) {
+        for ((vuln, advisory), status) in vulns
+            .into_iter()
+            .zip(advisories.iter())
+            .zip(statuses.iter())
+        {
+            let vulnerability = vuln.unwrap_or(vulnerability::Model {
+                id: status.vulnerability_id.clone(),
+                title: None,
+                published: None,
+                modified: None,
+                withdrawn: None,
+                cwe: None,
+            });
+
+            if let Some(advisory) = advisory {
                 let qualified_package_status =
-                    PurlStatus::from_entity(vulnerability, status, tx).await?;
+                    PurlStatus::from_entity(&vulnerability, status, tx).await?;
 
                 if let Some(entry) = results.iter_mut().find(|e| e.head.uuid == advisory.id) {
                     entry.status.push(qualified_package_status)
@@ -136,12 +150,21 @@ impl PurlAdvisory {
 pub struct PurlStatus {
     pub vulnerability: VulnerabilityHead,
     pub status: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context: Option<StatusContext>,
+}
+
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum StatusContext {
+    Purl(Purl),
+    Cpe(String),
 }
 
 impl PurlStatus {
     pub async fn from_entity(
         vuln: &vulnerability::Model,
-        package_status: &package_status::Model,
+        package_status: &purl_status::Model,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
         let status = status::Entity::find_by_id(package_status.status_id)
@@ -150,9 +173,18 @@ impl PurlStatus {
 
         let status = status.map(|e| e.slug).unwrap_or("unknown".to_string());
 
+        let cpe = if let Some(context_cpe) = package_status.context_cpe_id {
+            let cpe = cpe::Entity::find_by_id(context_cpe).one(tx).await?;
+
+            cpe.map(|cpe| cpe.to_string())
+        } else {
+            None
+        };
+
         Ok(Self {
             vulnerability: VulnerabilityHead::from_vulnerability_entity(vuln, tx).await?,
             status,
+            context: cpe.map(StatusContext::Cpe),
         })
     }
 }

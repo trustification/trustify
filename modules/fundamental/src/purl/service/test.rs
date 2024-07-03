@@ -1,3 +1,4 @@
+use crate::purl::model::details::purl::StatusContext;
 use crate::purl::service::PurlService;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -597,6 +598,63 @@ async fn statuses(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let uuid = results.items[0].head.uuid;
 
     let _results = service.purl_by_uuid(&uuid, Transactional::None).await?;
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn contextual_status(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+    let service = PurlService::new(db.clone());
+    let (storage, _tmp) = FileSystemBackend::for_test().await?;
+
+    let ingestor = IngestorService::new(Graph::new(db.clone()), storage);
+
+    // ingest an advisory
+    let data = include_bytes!("../../../../../etc/test-data/csaf/rhsa-2024_3666.json");
+    let data = ReaderStream::new(&data[..]);
+
+    ingestor
+        .ingest(("source", "test"), None, Format::CSAF, data)
+        .await?;
+
+    let results = service
+        .purls(Query::default(), Paginated::default(), Transactional::None)
+        .await?;
+
+    let tomcat_jsp = results
+        .items
+        .iter()
+        .find(|e| e.head.purl.to_string().contains("tomcat-jsp"));
+
+    assert!(tomcat_jsp.is_some());
+
+    let tomcat_jsp = tomcat_jsp.unwrap();
+
+    let uuid = tomcat_jsp.head.uuid;
+
+    let tomcat_jsp = service.purl_by_uuid(&uuid, Transactional::None).await?;
+
+    assert!(tomcat_jsp.is_some());
+
+    let tomcat_jsp = tomcat_jsp.unwrap();
+
+    assert_eq!(1, tomcat_jsp.advisories.len());
+
+    let advisory = &tomcat_jsp.advisories[0];
+
+    assert_eq!(2, advisory.status.len());
+
+    assert!( advisory.status.iter().any(|status| {
+        matches!( &status.context , Some(StatusContext::Cpe(cpe)) if cpe == "cpe:/a:redhat:enterprise_linux:8:*:appstream:*")
+        && status.vulnerability.identifier == "CVE-2024-24549"
+    }));
+
+    assert!( advisory.status.iter().any(|status| {
+        matches!( &status.context , Some(StatusContext::Cpe(cpe)) if cpe == "cpe:/a:redhat:enterprise_linux:8:*:appstream:*")
+            && status.vulnerability.identifier == "CVE-2024-23672"
+    }));
 
     Ok(())
 }

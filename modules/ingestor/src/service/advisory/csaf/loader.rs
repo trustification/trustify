@@ -7,7 +7,7 @@ use crate::{
         Graph,
     },
     model::IngestResult,
-    service::{advisory::csaf::PackageStatusCreator, Error},
+    service::{advisory::csaf::PurlStatusCreator, Error},
 };
 use csaf::{
     vulnerability::{ProductStatus, Vulnerability},
@@ -152,7 +152,7 @@ impl<'g> CsafLoader<'g> {
         product_status: &ProductStatus,
         tx: TX,
     ) -> Result<(), Error> {
-        let mut creator = PackageStatusCreator::new(
+        let mut creator = PurlStatusCreator::new(
             advisory_vulnerability.advisory_vulnerability.advisory_id,
             advisory_vulnerability
                 .advisory_vulnerability

@@ -11,7 +11,7 @@ use sea_query::{Asterisk, Expr, Func, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use trustify_common::db::{ConnectionOrTransaction, VersionMatches};
 use trustify_entity::{
-    advisory, base_purl, organization, package_status, qualified_purl, status, version_range,
+    advisory, base_purl, organization, purl_status, qualified_purl, status, version_range,
     versioned_purl, vulnerability,
 };
 use utoipa::ToSchema;
@@ -51,7 +51,7 @@ impl VersionedPurlDetails {
         let qualified_packages =
             PurlHead::from_entities(&package, package_version, &qualified_packages, tx).await?;
 
-        let statuses = package_status::Entity::find()
+        let statuses = purl_status::Entity::find()
             .columns([
                 version_range::Column::Id,
                 version_range::Column::LowVersion,
@@ -65,7 +65,7 @@ impl VersionedPurlDetails {
                 base_purl::Relation::VersionedPurls.def(),
             )
             .left_join(version_range::Entity)
-            .filter(package_status::Column::PackageId.eq(package.id))
+            .filter(purl_status::Column::BasePurlId.eq(package.id))
             .filter(SimpleExpr::FunctionCall(
                 Func::cust(VersionMatches)
                     .arg(Expr::col(versioned_purl::Column::Version))
@@ -92,7 +92,7 @@ pub struct VersionedPurlAdvisory {
 
 impl VersionedPurlAdvisory {
     pub async fn from_entities(
-        statuses: Vec<package_status::Model>,
+        statuses: Vec<purl_status::Model>,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
         let vulns = statuses.load_one(vulnerability::Entity, tx).await?;
@@ -132,7 +132,7 @@ pub struct VersionedPurlStatus {
 impl VersionedPurlStatus {
     pub async fn from_entity(
         vuln: &vulnerability::Model,
-        package_status: &package_status::Model,
+        package_status: &purl_status::Model,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
         let status = package_status.find_related(status::Entity).one(tx).await?;

@@ -2,15 +2,16 @@ use crate::version_range;
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
-#[sea_orm(table_name = "package_status")]
+#[sea_orm(table_name = "purl_status")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
     pub advisory_id: Uuid,
     pub vulnerability_id: String,
     pub status_id: Uuid,
-    pub package_id: Uuid,
+    pub base_purl_id: Uuid,
     pub version_range_id: Uuid,
+    pub context_cpe_id: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -22,7 +23,7 @@ pub enum Relation {
     VersionRange,
 
     #[sea_orm(belongs_to = "super::base_purl::Entity",
-        from = "Column::PackageId"
+        from = "Column::BasePurlId"
         to = "super::base_purl::Column::Id"
     )]
     Package,
@@ -46,7 +47,7 @@ pub enum Relation {
     Status,
 
     #[sea_orm(has_many = "super::versioned_purl::Entity")]
-    PackageVersion,
+    VersionedPurl,
 }
 
 impl Related<version_range::Entity> for Entity {
@@ -63,7 +64,7 @@ impl Related<super::base_purl::Entity> for Entity {
 
 impl Related<super::versioned_purl::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::PackageVersion.def()
+        Relation::VersionedPurl.def()
     }
 }
 
