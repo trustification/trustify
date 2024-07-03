@@ -20,12 +20,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Maximize build space
+        run: |
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          sudo rm -Rf ${JAVA_HOME_8_X64}
+          sudo rm -Rf ${JAVA_HOME_11_X64}
+          sudo rm -Rf ${JAVA_HOME_17_X64}
+          sudo rm -Rf ${RUBY_PATH}
+          df -h
+
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+
       - name: Format
         run: cargo fmt --check
       - name: Check
