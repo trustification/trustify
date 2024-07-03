@@ -76,6 +76,7 @@ impl PurlDetails {
                     .arg(Expr::col(versioned_purl::Column::Version))
                     .arg(Expr::col((version_range::Entity, Asterisk))),
             ))
+            .distinct_on([package_status::Column::Id])
             .all(tx)
             .await?;
 
