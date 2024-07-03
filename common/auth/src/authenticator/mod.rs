@@ -21,13 +21,10 @@ use claims::AccessTokenClaims;
 use config::AuthenticatorClientConfig;
 use error::AuthenticationError;
 use futures_util::{stream, StreamExt, TryStreamExt};
-use jsonpath_rust::parser::model::JsonPath;
-use jsonpath_rust::path::json_path_instance;
-use jsonpath_rust::JsonPathValue;
+use jsonpath_rust::{JsonPathInst, JsonPtr};
 use openid::{Client, Configurable, Discovered, Empty, Jws};
 use serde_json::Value;
-use std::collections::HashMap;
-use std::ops::Deref;
+use std::{collections::HashMap, ops::Deref, str::FromStr};
 use tracing::instrument;
 use trustify_common::reqwest::ClientFactory;
 
@@ -182,7 +179,7 @@ async fn create_client(config: AuthenticatorClientConfig) -> anyhow::Result<Auth
     let group_selector = config
         .group_selector
         .map(|selector| {
-            jsonpath_rust::parser::parser::parse_json_path(&selector).map_err(|err| {
+            JsonPathInst::from_str(&selector).map_err(|err| {
                 anyhow!(
                     "Unable to parse JSON path group selector for client '{}' / '{}': {err}",
                     config.issuer_url,
@@ -208,7 +205,7 @@ pub struct AuthenticatorClient {
     audience: Option<String>,
     scope_mappings: HashMap<String, Vec<String>>,
     additional_permissions: Vec<String>,
-    group_selector: Option<JsonPath>,
+    group_selector: Option<JsonPathInst>,
     group_mappings: HashMap<String, Vec<String>>,
 }
 
@@ -232,14 +229,13 @@ impl AuthenticatorClient {
     }
 
     /// Extract the groups from the value/access token
-    fn extract_groups(value: &Value, selector: &JsonPath) -> Vec<String> {
-        json_path_instance(selector, value)
-            .find(JsonPathValue::from_root(value))
+    fn extract_groups(value: &Value, selector: &JsonPathInst) -> Vec<String> {
+        selector
+            .find_slice(value)
             .into_iter()
             .filter_map(|group| match group {
-                JsonPathValue::Slice(data, _) => data.as_str().map(|s| s.to_string()),
-                JsonPathValue::NewValue(data) => data.as_str().map(|s| s.to_string()),
-                _ => None,
+                JsonPtr::Slice(data) => data.as_str().map(|s| s.to_string()),
+                JsonPtr::NewValue(data) => data.as_str().map(|s| s.to_string()),
             })
             .collect()
     }
@@ -335,7 +331,7 @@ mod test {
         let value: Value = serde_json::from_str(token).unwrap();
         const PATH: &str = r#"$.['foo:bar'][*]"#;
 
-        let selector = jsonpath_rust::parser::parser::parse_json_path(PATH).unwrap();
+        let selector = JsonPathInst::from_str(PATH).unwrap();
         let groups = AuthenticatorClient::extract_groups(&value, &selector);
         assert_eq!(&groups, &["manager", "reader"]);
     }
