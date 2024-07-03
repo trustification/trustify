@@ -4,6 +4,8 @@ use std::fmt::Debug;
 pub enum ProcessingError {
     #[error("critical error: {0}")]
     Critical(anyhow::Error),
+    #[error("operation canceled")]
+    Canceled,
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]

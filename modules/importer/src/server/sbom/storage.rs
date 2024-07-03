@@ -1,4 +1,4 @@
-use crate::server::report::ReportBuilder;
+use crate::server::{context::RunContext, report::ReportBuilder};
 use parking_lot::Mutex;
 use sbom_walker::validation::{
     ValidatedSbom, ValidatedVisitor, ValidationContext, ValidationError,
@@ -7,8 +7,7 @@ use std::sync::Arc;
 use tokio_util::io::ReaderStream;
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
-use walker_common::compression::decompress_opt;
-use walker_common::utils::url::Urlify;
+use walker_common::{compression::decompress_opt, utils::url::Urlify};
 
 #[derive(Debug, thiserror::Error)]
 pub enum StorageError {
@@ -16,10 +15,12 @@ pub enum StorageError {
     Validation(#[from] ValidationError),
     #[error(transparent)]
     Storage(anyhow::Error),
+    #[error("operation canceled")]
+    Canceled,
 }
 
 pub struct StorageVisitor {
-    pub name: String,
+    pub context: RunContext,
     pub source: String,
     pub labels: Labels,
     pub ingestor: IngestorService,
@@ -61,7 +62,7 @@ impl ValidatedVisitor for StorageVisitor {
             .ingest(
                 Labels::new()
                     .add("source", &self.source)
-                    .add("importer", &self.name)
+                    .add("importer", self.context.name())
                     .add("file", file)
                     .extend(&self.labels.0),
                 None,
@@ -71,6 +72,6 @@ impl ValidatedVisitor for StorageVisitor {
             .await
             .map_err(|err| StorageError::Storage(err.into()))?;
 
-        Ok(())
+        self.context.check_canceled(|| StorageError::Canceled).await
     }
 }

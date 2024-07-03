@@ -1,10 +1,12 @@
 pub mod common;
+pub mod context;
 pub mod csaf;
 pub mod cve;
 pub mod osv;
 pub mod report;
 pub mod sbom;
 
+use crate::server::context::RunContext;
 use crate::{
     model::{Importer, ImporterConfiguration, State},
     server::report::{Report, ScannerError},
@@ -84,9 +86,11 @@ impl Server {
 
                 log::info!("Starting run: {}", importer.name);
 
+                let context = RunContext::new(service.clone(), importer.name.clone());
+
                 let (last_error, report, continuation) = match self
                     .run_once(
-                        importer.name.clone(),
+                        context,
                         importer.data.configuration,
                         importer.data.last_run,
                         importer.data.continuation,
@@ -127,7 +131,7 @@ impl Server {
     #[instrument(skip_all, fields(), err)]
     async fn run_once(
         &self,
-        name: String,
+        context: RunContext,
         configuration: ImporterConfiguration,
         last_run: Option<OffsetDateTime>,
         continuation: serde_json::Value,
@@ -135,10 +139,10 @@ impl Server {
         let last_run = last_run.map(|t| t.into());
 
         match configuration {
-            ImporterConfiguration::Sbom(sbom) => self.run_once_sbom(name, sbom, last_run).await,
-            ImporterConfiguration::Csaf(csaf) => self.run_once_csaf(name, csaf, last_run).await,
-            ImporterConfiguration::Osv(osv) => self.run_once_osv(name, osv, continuation).await,
-            ImporterConfiguration::Cve(cve) => self.run_once_cve(name, cve, continuation).await,
+            ImporterConfiguration::Sbom(sbom) => self.run_once_sbom(context, sbom, last_run).await,
+            ImporterConfiguration::Csaf(csaf) => self.run_once_csaf(context, csaf, last_run).await,
+            ImporterConfiguration::Osv(osv) => self.run_once_osv(context, osv, continuation).await,
+            ImporterConfiguration::Cve(cve) => self.run_once_cve(context, cve, continuation).await,
         }
     }
 

@@ -1,3 +1,4 @@
+use crate::server::context::RunContext;
 use crate::server::report::ReportBuilder;
 use csaf_walker::validation::{
     ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError,
@@ -15,10 +16,12 @@ pub enum StorageError {
     Validation(#[from] ValidationError),
     #[error(transparent)]
     Storage(anyhow::Error),
+    #[error("operation canceled")]
+    Canceled,
 }
 
 pub struct StorageVisitor {
-    pub name: String,
+    pub context: RunContext,
     pub ingestor: IngestorService,
     /// the report to report our messages to
     pub report: Arc<Mutex<ReportBuilder>>,
@@ -46,7 +49,7 @@ impl ValidatedVisitor for StorageVisitor {
             .ingest(
                 Labels::new()
                     .add("source", &location)
-                    .add("importer", &self.name)
+                    .add("importer", self.context.name())
                     .add("file", file)
                     .extend(&self.labels.0),
                 None, /* CSAF tracks issuer internally */
@@ -56,6 +59,6 @@ impl ValidatedVisitor for StorageVisitor {
             .await
             .map_err(|err| StorageError::Storage(err.into()))?;
 
-        Ok(())
+        self.context.check_canceled(|| StorageError::Canceled).await
     }
 }

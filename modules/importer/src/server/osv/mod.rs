@@ -3,7 +3,9 @@ mod walker;
 use crate::{
     model::OsvImporter,
     server::{
-        osv::{walker::Callbacks, walker::OsvWalker},
+        common::walker::{CallbackError, Callbacks},
+        context::RunContext,
+        osv::walker::OsvWalker,
         report::{Phase, ReportBuilder, ScannerError, Severity},
         RunOutput,
     },
@@ -21,7 +23,7 @@ use trustify_module_ingestor::{
 };
 
 struct Context {
-    name: String,
+    context: RunContext,
     source: String,
     labels: Labels,
     report: Arc<Mutex<ReportBuilder>>,
@@ -39,7 +41,7 @@ impl Context {
                 .ingest(
                     Labels::new()
                         .add("source", &self.source)
-                        .add("importer", &self.name)
+                        .add("importer", self.context.name())
                         .add("file", path.to_string_lossy())
                         .extend(&self.labels.0),
                     None,
@@ -53,7 +55,7 @@ impl Context {
     }
 }
 
-impl Callbacks for Context {
+impl Callbacks<Vulnerability> for Context {
     fn loading_error(&mut self, path: PathBuf, message: String) {
         self.report.lock().add_error(
             Phase::Validation,
@@ -63,7 +65,7 @@ impl Callbacks for Context {
         );
     }
 
-    fn process(&mut self, path: &Path, osv: Vulnerability) -> anyhow::Result<()> {
+    fn process(&mut self, path: &Path, osv: Vulnerability) -> Result<(), CallbackError> {
         if let Err(err) = self.store(path, osv) {
             self.report.lock().add_error(
                 Phase::Upload,
@@ -73,7 +75,7 @@ impl Callbacks for Context {
             );
         }
 
-        Ok(())
+        self.context.check_canceled_sync(|| CallbackError::Canceled)
     }
 }
 
@@ -81,7 +83,7 @@ impl super::Server {
     #[instrument(skip(self), ret)]
     pub async fn run_once_osv(
         &self,
-        name: String,
+        context: RunContext,
         osv: OsvImporter,
         continuation: serde_json::Value,
     ) -> Result<RunOutput, ScannerError> {
@@ -100,7 +102,7 @@ impl super::Server {
             .continuation(continuation)
             .path(osv.path)
             .callbacks(Context {
-                name,
+                context,
                 source: osv.source,
                 labels: osv.common.labels,
                 report: report.clone(),

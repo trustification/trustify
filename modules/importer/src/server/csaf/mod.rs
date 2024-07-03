@@ -3,11 +3,12 @@ pub mod storage;
 
 use crate::{
     model::CsafImporter,
-    server::RunOutput,
     server::{
         common::{filter::Filter, validation},
+        context::RunContext,
         csaf::report::CsafReportVisitor,
         report::{ReportBuilder, ReportVisitor, ScannerError},
+        RunOutput,
     },
 };
 use csaf_walker::{
@@ -28,7 +29,7 @@ impl super::Server {
     #[instrument(skip(self), ret)]
     pub async fn run_once_csaf(
         &self,
-        name: String,
+        context: RunContext,
         importer: CsafImporter,
         last_run: Option<SystemTime>,
     ) -> Result<RunOutput, ScannerError> {
@@ -50,7 +51,7 @@ impl super::Server {
 
         let ingestor = IngestorService::new(Graph::new(self.db.clone()), self.storage.clone());
         let storage = storage::StorageVisitor {
-            name,
+            context,
             ingestor,
             labels: importer.common.labels,
             report: report.clone(),
