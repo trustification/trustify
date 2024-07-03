@@ -7,6 +7,7 @@ use time::OffsetDateTime;
 #[derive(
     Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, serde::Deserialize, serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub enum Phase {
     /// Retrieving the document
     Retrieval,
@@ -19,6 +20,7 @@ pub enum Phase {
 #[derive(
     Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, serde::Deserialize, serde::Serialize,
 )]
+#[serde(rename_all = "camelCase")]
 pub enum Severity {
     Error,
     Warning,
