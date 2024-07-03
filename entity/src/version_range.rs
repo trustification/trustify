@@ -1,4 +1,4 @@
-use crate::package_status;
+use crate::purl_status;
 use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
@@ -17,9 +17,9 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::package_status::Entity",
+        belongs_to = "super::purl_status::Entity",
         from = "super::version_range::Column::Id",
-        to = "super::package_status::Column::VersionRangeId"
+        to = "super::purl_status::Column::VersionRangeId"
     )]
     PackageStatus,
 
@@ -27,7 +27,7 @@ pub enum Relation {
     PackageVersion,
 }
 
-impl Related<package_status::Entity> for Entity {
+impl Related<purl_status::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::PackageStatus.def()
     }

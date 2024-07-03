@@ -3,9 +3,14 @@ use csaf::product_tree::ProductTree;
 use csaf::Csaf;
 use packageurl::PackageUrl;
 
-pub fn resolve_purls<'a>(csaf: &'a Csaf, id: &'a ProductIdT) -> Vec<&'a PackageUrl<'static>> {
+pub fn resolve_identifier<'a>(
+    csaf: &'a Csaf,
+    id: &'a ProductIdT,
+) -> Option<(
+    Option<&'a cpe::uri::OwnedUri>,
+    Option<&'a PackageUrl<'static>>,
+)> {
     let id = &id.0;
-    let mut result = vec![];
 
     if let Some(tree) = &csaf.product_tree {
         for rel in tree.relationships.iter().flatten() {
@@ -13,19 +18,27 @@ pub fn resolve_purls<'a>(csaf: &'a Csaf, id: &'a ProductIdT) -> Vec<&'a PackageU
                 continue;
             }
 
-            /*
-            let id = match &rel.category {
-                RelationshipCategory::DefaultComponentOf => &rel.product_reference,
-                RelationshipCategory::OptionalComponentOf => &rel.product_reference,
-            };*/
-            let id = &rel.product_reference;
+            let inner_id = &rel.product_reference;
+            let context = &rel.relates_to_product_reference;
 
-            let purls = trace_product(csaf, &id.0).into_iter().flat_map(branch_purl);
-            result.extend(purls);
+            let purls: Vec<_> = trace_product(csaf, &inner_id.0)
+                .into_iter()
+                .flat_map(branch_purl)
+                .collect();
+            let cpes: Vec<_> = trace_product(csaf, &context.0)
+                .into_iter()
+                .flat_map(branch_cpe)
+                .collect();
+
+            if cpes.is_empty() && purls.is_empty() {
+                return None;
+            } else {
+                return Some((cpes.first().cloned(), purls.first().cloned()));
+            }
         }
     }
 
-    result
+    None
 }
 
 pub fn branch_purl(branch: &Branch) -> Option<&PackageUrl<'static>> {
@@ -33,6 +46,15 @@ pub fn branch_purl(branch: &Branch) -> Option<&PackageUrl<'static>> {
         name.product_identification_helper
             .iter()
             .flat_map(|pih| pih.purl.as_ref())
+            .next()
+    })
+}
+
+pub fn branch_cpe(branch: &Branch) -> Option<&cpe::uri::OwnedUri> {
+    branch.product.as_ref().and_then(|name| {
+        name.product_identification_helper
+            .iter()
+            .flat_map(|pih| pih.cpe.as_ref())
             .next()
     })
 }

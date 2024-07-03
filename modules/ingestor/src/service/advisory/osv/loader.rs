@@ -111,6 +111,7 @@ impl<'g> OsvLoader<'g> {
                                 (Some(start), None) => {
                                     advisory_vuln
                                         .ingest_package_status(
+                                            None,
                                             &purl,
                                             "affected",
                                             VersionInfo {
@@ -128,6 +129,7 @@ impl<'g> OsvLoader<'g> {
                                 (None, Some(end)) => {
                                     advisory_vuln
                                         .ingest_package_status(
+                                            None,
                                             &purl,
                                             "affected",
                                             VersionInfo {
@@ -145,6 +147,7 @@ impl<'g> OsvLoader<'g> {
                                 (Some(start), Some(end)) => {
                                     advisory_vuln
                                         .ingest_package_status(
+                                            None,
                                             &purl,
                                             "affected",
                                             VersionInfo {
@@ -165,6 +168,7 @@ impl<'g> OsvLoader<'g> {
                             if let (_, Some(fixed)) = &parsed_range {
                                 advisory_vuln
                                     .ingest_package_status(
+                                        None,
                                         &purl,
                                         "fixed",
                                         VersionInfo {

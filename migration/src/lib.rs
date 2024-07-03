@@ -48,6 +48,8 @@ mod m0000390_rename_package_purl;
 mod m0000395_alter_vulnerability_pk;
 mod m0000410_labels_index;
 mod m0000420_add_digests;
+mod m0000440_alter_package_status_to_purl_status;
+mod m0000445_create_purl_status_cpe;
 
 pub struct Migrator;
 
@@ -102,6 +104,8 @@ impl MigratorTrait for Migrator {
             Box::new(m0000395_alter_vulnerability_pk::Migration),
             Box::new(m0000410_labels_index::Migration),
             Box::new(m0000420_add_digests::Migration),
+            Box::new(m0000440_alter_package_status_to_purl_status::Migration),
+            Box::new(m0000445_create_purl_status_cpe::Migration),
         ]
     }
 }

@@ -40,9 +40,9 @@ impl Debug for QualifiedPackageContext<'_> {
 impl<'g> From<QualifiedPackageContext<'g>> for Purl {
     fn from(value: QualifiedPackageContext<'g>) -> Self {
         Self {
-            ty: value.package_version.package.package.r#type,
-            namespace: value.package_version.package.package.namespace,
-            name: value.package_version.package.package.name,
+            ty: value.package_version.package.base_purl.r#type,
+            namespace: value.package_version.package.base_purl.namespace,
+            name: value.package_version.package.base_purl.name,
             version: Some(value.package_version.package_version.version),
             qualifiers: BTreeMap::from_iter(value.qualified_package.qualifiers.0),
         }
