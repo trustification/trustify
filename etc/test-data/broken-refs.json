@@ -1,0 +1,48 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "2023-11-01T13:30:00Z",
+    "creators": [
+      "Trustify"
+    ],
+    "comment": "This is an example for an SBOM with broken refs. Based upon an existing SBOM.",
+    "licenseListVersion": "3.8"
+  },
+  "dataLicense": "CC0-1.0",
+  "documentDescribes": [
+    "SPDXRef-87dfb6cc-1522-46b7-9212-ec7c1a72a5b7"
+  ],
+  "documentNamespace": "uri:just-an-example",
+  "name": "broken-refs",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-87dfb6cc-1522-46b7-9212-ec7c1a72a5b7",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "registry.redhat.io/ubi9:9.2-755.1697625012",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE_MANAGER",
+          "referenceLocator": "pkg:oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseComments": "Licensing information is automatically generated and may be incomplete or incorrect.",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "ubi9-container",
+      "originator": "NOASSERTION",
+      "packageFileName": "NOASSERTION",
+      "supplier": "Organization: Red Hat",
+      "versionInfo": "9.2-755.1697625012"
+    }
+  ],
+  "relationships": [
+    {
+      "relatedSpdxElement": "SPDXRef-87dfb6cc-1522-46b7-9212-ec7c1a72a5b7",
+      "relationshipType": "CONTAINED_BY",
+      "spdxElementId": "SPDXRef-0068e307-de91-4e82-b407-7a41217f9758"
+    }
+  ],
+  "spdxVersion": "SPDX-2.2"
+}
