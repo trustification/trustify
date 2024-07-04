@@ -1,10 +1,9 @@
-use crate::graph::sbom::ReferenceSource;
 use crate::graph::{
     product::ProductInformation,
     purl::creator::PurlCreator,
     sbom::{
-        FileCreator, PackageCreator, PackageReference, RelationshipCreator, SbomContext,
-        SbomInformation,
+        FileCreator, PackageCreator, PackageReference, References, RelationshipCreator,
+        SbomContext, SbomInformation,
     },
 };
 use serde_json::Value;
@@ -159,10 +158,8 @@ impl SbomContext {
 
         // validate relationships before inserting
 
-        relationships.validate([
-            &packages as &dyn ReferenceSource,
-            &files as &dyn ReferenceSource,
-        ])?;
+        let sources = References::new().add_source(&packages).add_source(&files);
+        relationships.validate(sources)?;
 
         // create packages, files, and relationships
 
