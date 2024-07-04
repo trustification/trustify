@@ -143,11 +143,13 @@ impl PackageCreator {
     }
 }
 
-impl ReferenceSource for PackageCreator {
-    fn extend_into<'s, E: Extend<&'s str>>(&'s self, e: &'s mut E) {
-        e.extend(self.nodes.iter().filter_map(|node| match &node.node_id {
-            Set(node_id) => Some(node_id.as_str()),
-            _ => None,
-        }))
+impl<'a> ReferenceSource<'a> for PackageCreator {
+    fn references(&'a self) -> impl IntoIterator<Item = &'a str> {
+        self.nodes
+            .iter()
+            .filter_map(move |node| match &node.node_id {
+                Set(node_id) => Some(node_id.as_str()),
+                _ => None,
+            })
     }
 }

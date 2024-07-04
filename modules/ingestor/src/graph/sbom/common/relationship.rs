@@ -1,3 +1,4 @@
+use anyhow::bail;
 use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait};
 use sea_query::OnConflict;
 use std::collections::HashSet;
@@ -42,25 +43,16 @@ impl RelationshipCreator {
     /// This expects a source of references to check against. If creating a fresh set of nodes and
     /// relationships, these sources would most likely be the creators (like [`super::PackageCreator`]).
     /// If nodes already exist in the database, those nodes would need to be extracted and provided.
-    pub fn validate<'s, I>(&self, sources: I) -> Result<(), anyhow::Error>
-    where
-        I: IntoIterator<Item = &'s dyn ReferenceSource>,
-    {
-        let mut refs = HashSet::new();
-
-        for source in sources.into_iter() {
-            source.extend_into(&mut refs);
-        }
-
+    pub fn validate(&self, sources: References) -> Result<(), anyhow::Error> {
         for rel in &self.rels {
             if let Set(left) = &rel.left_node_id {
-                if !refs.contains(left.as_str()) {
-                    // TODO: raise error
+                if !sources.refs.contains(left.as_str()) {
+                    bail!("Invalid SPDX reference: {left}");
                 }
             }
             if let Set(right) = &rel.right_node_id {
-                if !refs.contains(right.as_str()) {
-                    // TODO: raise error
+                if !sources.refs.contains(right.as_str()) {
+                    bail!("Invalid SPDX reference: {right}");
                 }
             }
         }
@@ -90,15 +82,41 @@ impl RelationshipCreator {
     }
 }
 
-/// A source of SBOM node references for validating.
-pub trait ReferenceSource {
-    fn extend_into<'s>(&'s self, e: &'s mut dyn Extend<&'s str>);
+#[derive(Default)]
+pub struct References<'a> {
+    pub refs: HashSet<&'a str>,
 }
 
-/*
-impl<'s> ReferenceSource for &[&'s str] {
-    fn extend_into<'s, E: Extend<&'s str>>(&self, e: &'s mut E) {
-        e.extend(self)
+impl<'a> IntoIterator for References<'a> {
+    type Item = &'a str;
+    type IntoIter = std::collections::hash_set::IntoIter<&'a str>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.refs.into_iter()
     }
 }
-*/
+
+impl<'a> References<'a> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn add_source<S>(mut self, source: &'a S) -> Self
+    where
+        S: ReferenceSource<'a> + 'a,
+    {
+        self.refs.extend(source.references());
+        self
+    }
+}
+
+/// A source of SBOM node references for validating.
+pub trait ReferenceSource<'a> {
+    fn references(&'a self) -> impl IntoIterator<Item = &'a str>;
+}
+
+impl<'a> ReferenceSource<'a> for &'a [&'a str] {
+    fn references(&'a self) -> impl IntoIterator<Item = &'a str> {
+        self.iter().copied()
+    }
+}
