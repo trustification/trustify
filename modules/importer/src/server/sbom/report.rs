@@ -76,6 +76,7 @@ impl ValidatedVisitor for SbomReportVisitor {
 
                     // If there's a signature error, we can't do much other than ignoring the
                     // current file. Once it gets updated, we can reprocess it.
+                    return Ok(());
                 }
                 StorageError::Storage(err) => {
                     self.0.report.lock().add_error(
