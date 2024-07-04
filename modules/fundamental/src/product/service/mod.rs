@@ -7,7 +7,7 @@ use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_entity::product;
 use uuid::Uuid;
 
-use super::model::{ProductHead, ProductSummary};
+use super::model::{summary::ProductSummary, ProductHead};
 
 pub struct ProductService {
     db: Database,

@@ -22,8 +22,8 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     paths(all, get),
     components(schemas(
         crate::product::model::ProductHead,
-        crate::product::model::ProductSummary,
-        crate::product::model::PaginatedProductSummary,
+        crate::product::model::summary::ProductSummary,
+        crate::product::model::summary::PaginatedProductSummary,
     )),
     tags()
 )]
@@ -37,7 +37,7 @@ pub struct ApiDoc;
         Paginated,
     ),
     responses(
-        (status = 200, description = "Matching products", body = PaginatedAdvisorySummary),
+        (status = 200, description = "Matching products", body = PaginatedProductSummary),
     ),
 )]
 #[get("/v1/product")]
