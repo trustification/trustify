@@ -34,7 +34,7 @@ pub enum Error {
     Storage(#[source] anyhow::Error),
     #[error(transparent)]
     Generic(anyhow::Error),
-    #[error("Invalid advisory format: {0}")]
+    #[error("Invalid format: {0}")]
     UnsupportedFormat(String),
 }
 
