@@ -34,8 +34,8 @@ pub struct Report {
     #[serde(with = "time::serde::rfc3339")]
     pub end_date: OffsetDateTime,
 
-    #[serde(default)]
-    pub numer_of_items: usize,
+    #[serde(default, alias = "numer_of_items")]
+    pub number_of_items: usize,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub messages: BTreeMap<Phase, BTreeMap<String, Vec<Message>>>,
 }
@@ -57,14 +57,14 @@ impl ReportBuilder {
             report: Report {
                 start_date: OffsetDateTime::now_utc(),
                 end_date: OffsetDateTime::now_utc(),
-                numer_of_items: 0,
+                number_of_items: 0,
                 messages: Default::default(),
             },
         }
     }
 
     pub fn tick(&mut self) {
-        self.report.numer_of_items += 1;
+        self.report.number_of_items += 1;
     }
 
     pub fn add_error(
