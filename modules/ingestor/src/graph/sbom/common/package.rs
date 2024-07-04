@@ -1,3 +1,4 @@
+use crate::graph::sbom::ReferenceSource;
 use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait};
 use sea_query::OnConflict;
 use trustify_common::db::chunk::EntityChunkedIter;
@@ -139,5 +140,14 @@ impl PackageCreator {
         }
 
         Ok(())
+    }
+}
+
+impl ReferenceSource for PackageCreator {
+    fn extend_into<'s, E: Extend<&'s str>>(&'s self, e: &'s mut E) {
+        e.extend(self.nodes.iter().filter_map(|node| match &node.node_id {
+            Set(node_id) => Some(node_id.as_str()),
+            _ => None,
+        }))
     }
 }

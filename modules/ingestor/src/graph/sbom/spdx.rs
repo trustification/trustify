@@ -1,3 +1,4 @@
+use crate::graph::sbom::ReferenceSource;
 use crate::graph::{
     product::ProductInformation,
     purl::creator::PurlCreator,
@@ -156,7 +157,14 @@ impl SbomContext {
 
         creator.create(&db).await?;
 
-        // batch insert packages, files and then relationships
+        // validate relationships before inserting
+
+        relationships.validate([
+            &packages as &dyn ReferenceSource,
+            &files as &dyn ReferenceSource,
+        ])?;
+
+        // create packages, files, and relationships
 
         packages.create(&db).await?;
         files.create(&db).await?;
