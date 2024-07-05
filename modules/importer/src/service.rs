@@ -203,7 +203,7 @@ impl ImporterService {
         &self,
         name: &str,
         expected_revision: Option<&str>,
-        last_run: OffsetDateTime,
+        start: OffsetDateTime,
         last_error: Option<String>,
         continuation: Option<serde_json::Value>,
         report: Option<serde_json::Value>,
@@ -214,7 +214,7 @@ impl ImporterService {
         let successful = last_error.is_none();
         let mut updates = vec![
             (importer::Column::LastError, Expr::value(last_error.clone())),
-            (importer::Column::LastRun, Expr::value(last_run)),
+            (importer::Column::LastRun, Expr::value(start)),
             (
                 importer::Column::State,
                 Expr::value(importer::State::Waiting),
@@ -223,7 +223,8 @@ impl ImporterService {
             (importer::Column::Continuation, Expr::value(continuation)),
         ];
         if successful {
-            updates.push((importer::Column::LastSuccess, Expr::value(now)));
+            // we use the `start` marker, so that `last_success` can be used as the next `since`
+            updates.push((importer::Column::LastSuccess, Expr::value(start)));
         }
 
         self.update(&tx, name, expected_revision, updates).await?;
