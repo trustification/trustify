@@ -27,9 +27,9 @@ impl<'g> OsvLoader<'g> {
     pub async fn load<R: Read>(
         &self,
         labels: impl Into<Labels>,
-        issuer: Option<String>,
         record: R,
         digests: &Digests,
+        issuer: Option<String>,
     ) -> Result<IngestResult, Error> {
         let osv: Vulnerability = serde_json::from_reader(record)?;
 
@@ -309,9 +309,9 @@ mod test {
         loader
             .load(
                 ("file", "RUSTSEC-2021-0079.json"),
-                None,
                 &data[..],
                 &digests,
+                None,
             )
             .await?;
 
