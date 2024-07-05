@@ -76,14 +76,15 @@ osv = { version = "0.2.0", default-features = false }
 packageurl = "0.3.0"
 parking_lot = "0.12"
 pem = "3"
-postgresql_archive = "0.13.0"
-postgresql_embedded = "0.13.0"
+postgresql_archive = "0.14.0"
+postgresql_embedded = "0.14.0"
 prometheus = "0.13.3"
 rand = "0.8.5"                                                        # for testing
 regex = "1.10.3"
 reqwest = "0.12"
 ring = "0.17.8"
 rstest = "0.21"
+rust-lzma = "0.6.0"
 sbom-walker = { version = "0.8.0", default-features = false }
 schemars = "0.8"
 sea-orm = "0.12"
@@ -117,7 +118,6 @@ uuid = "1.7.0"
 walkdir = "2.5"
 walker-common = "0.8.0"
 walker-extras = "0.8.0"
-xz2 = "0.1.7"
 
 trustify-auth = { path = "common/auth", features = ["actix", "swagger"] }
 trustify-common = { path = "common" }
