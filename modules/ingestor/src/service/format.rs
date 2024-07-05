@@ -37,7 +37,7 @@ impl<'g> Format {
             Format::OSV => {
                 // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
                 let loader = OsvLoader::new(graph);
-                loader.load(labels, issuer, reader, digests).await
+                loader.load(labels, reader, digests, issuer).await
             }
             Format::CVE => {
                 // issuer is always CVE Project
