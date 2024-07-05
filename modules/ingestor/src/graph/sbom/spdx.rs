@@ -1,5 +1,6 @@
 use crate::{
     graph::{
+        cpe::CpeCreator,
         product::ProductInformation,
         purl::creator::PurlCreator,
         sbom::{
@@ -9,9 +10,8 @@ use crate::{
     },
     service::Error,
 };
-
 use serde_json::Value;
-use spdx_rs::models::{ExternalPackageReferenceCategory, RelationshipType, SPDX};
+use spdx_rs::models::{RelationshipType, SPDX};
 use std::{io::Read, str::FromStr};
 use time::OffsetDateTime;
 use tracing::instrument;
@@ -55,7 +55,8 @@ impl SbomContext {
     ) -> Result<(), Error> {
         // prepare packages
 
-        let mut creator = PurlCreator::new();
+        let mut purls = PurlCreator::new();
+        let mut cpes = CpeCreator::new(self.graph.clone());
 
         // prepare relationships
 
@@ -100,21 +101,16 @@ impl SbomContext {
             let mut refs = Vec::new();
 
             for r in &package.external_reference {
-                // only add the package manager category, giving this package a name
-                if r.reference_category != ExternalPackageReferenceCategory::PackageManager {
-                    continue;
-                }
-
                 match &*r.reference_type {
                     "purl" => {
                         if let Ok(purl) = Purl::from_str(&r.reference_locator) {
                             refs.push(PackageReference::Purl(purl.qualifier_uuid()));
-                            creator.add(purl);
+                            purls.add(purl);
                         }
                     }
                     "cpe22Type" => {
                         if let Ok(cpe) = Cpe::from_str(&r.reference_locator) {
-                            let cpe = self.graph.ingest_cpe22(cpe, &tx).await?;
+                            let cpe = cpes.ingest(cpe, &tx).await?;
                             refs.push(PackageReference::Cpe(cpe.cpe.id));
                         }
                     }
@@ -163,7 +159,7 @@ impl SbomContext {
 
         // create all purls
 
-        creator.create(&db).await?;
+        purls.create(&db).await?;
 
         // validate relationships before inserting
 

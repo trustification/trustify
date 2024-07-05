@@ -125,6 +125,35 @@ impl Debug for CpeContext {
     }
 }
 
+#[derive(Debug)]
+pub struct CpeCreator {
+    graph: Graph,
+    cpes: HashMap<Cpe, CpeContext>,
+}
+
+impl CpeCreator {
+    pub fn new(graph: Graph) -> Self {
+        Self {
+            graph,
+            cpes: Default::default(),
+        }
+    }
+
+    pub async fn ingest(
+        &mut self,
+        cpe: Cpe,
+        tx: impl AsRef<Transactional>,
+    ) -> Result<CpeContext, Error> {
+        match self.cpes.entry(cpe) {
+            Entry::Occupied(entry) => Ok(entry.get().clone()),
+            Entry::Vacant(entry) => {
+                let cpe = self.graph.ingest_cpe22(entry.key().clone(), tx).await?;
+                Ok(entry.insert(cpe).clone())
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
