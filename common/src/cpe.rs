@@ -5,7 +5,7 @@ use cpe::{
 use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
 
-#[derive(Clone)]
+#[derive(Clone, Hash, Eq, PartialEq)]
 pub struct Cpe {
     uri: OwnedUri,
 }
@@ -21,6 +21,12 @@ pub enum Component {
     Any,
     NotApplicable,
     Value(String),
+}
+
+#[derive(Clone, Debug)]
+pub enum Language {
+    Any,
+    Language(String),
 }
 
 pub enum CpeType {
@@ -39,6 +45,15 @@ impl From<cpe::cpe::CpeType> for CpeType {
             cpe::cpe::CpeType::OperatingSystem => Self::OperatingSystem,
             cpe::cpe::CpeType::Application => Self::Application,
             cpe::cpe::CpeType::Empty => Self::Empty,
+        }
+    }
+}
+
+impl From<cpe::cpe::Language> for Language {
+    fn from(value: cpe::cpe::Language) -> Self {
+        match value {
+            cpe::cpe::Language::Any => Self::Any,
+            cpe::cpe::Language::Language(lang) => Self::Language(lang.into_string()),
         }
     }
 }
@@ -76,6 +91,10 @@ impl Cpe {
 
     pub fn edition(&self) -> Component {
         self.uri.edition().into()
+    }
+
+    pub fn language(&self) -> Language {
+        self.uri.language().clone().into()
     }
 }
 

@@ -1,9 +1,7 @@
 use cpe::{error::CpeError, uri::Uri};
-use sea_orm::entity::prelude::*;
-use sea_orm::{NotSet, Set};
+use sea_orm::{entity::prelude::*, Set};
 use std::fmt::{Debug, Display, Formatter};
-use trustify_common::cpe::Component::Value;
-use trustify_common::cpe::{Component, Cpe, CpeType};
+use trustify_common::cpe::{Component, Cpe, CpeType, Language};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "cpe")]
@@ -73,30 +71,33 @@ impl ActiveModel {
             },
             vendor: match cpe.vendor() {
                 Component::Any => Set(Some("*".to_string())),
-                Component::NotApplicable => NotSet,
-                Value(inner) => Set(Some(inner)),
+                Component::NotApplicable => Set(None),
+                Component::Value(inner) => Set(Some(inner)),
             },
             product: match cpe.product() {
                 Component::Any => Set(Some("*".to_string())),
-                Component::NotApplicable => NotSet,
-                Value(inner) => Set(Some(inner)),
+                Component::NotApplicable => Set(None),
+                Component::Value(inner) => Set(Some(inner)),
             },
             version: match cpe.version() {
                 Component::Any => Set(Some("*".to_string())),
-                Component::NotApplicable => NotSet,
-                Value(inner) => Set(Some(inner)),
+                Component::NotApplicable => Set(None),
+                Component::Value(inner) => Set(Some(inner)),
             },
             update: match cpe.update() {
                 Component::Any => Set(Some("*".to_string())),
-                Component::NotApplicable => NotSet,
-                Value(inner) => Set(Some(inner)),
+                Component::NotApplicable => Set(None),
+                Component::Value(inner) => Set(Some(inner)),
             },
             edition: match cpe.edition() {
                 Component::Any => Set(Some("*".to_string())),
-                Component::NotApplicable => NotSet,
-                Value(inner) => Set(Some(inner)),
+                Component::NotApplicable => Set(None),
+                Component::Value(inner) => Set(Some(inner)),
             },
-            language: Set(None),
+            language: match cpe.language() {
+                Language::Any => Set(Some("*".to_string())),
+                Language::Language(inner) => Set(Some(inner)),
+            },
         }
     }
 }
