@@ -3,18 +3,15 @@ pub mod cve;
 pub mod sbom;
 
 mod format;
-
 pub use format::Format;
-use std::fmt::Debug;
 
-use crate::graph::Graph;
-use crate::model::IngestResult;
+use crate::{graph::Graph, model::IngestResult};
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
 use anyhow::anyhow;
 use bytes::Bytes;
 use futures::Stream;
 use sea_orm::error::DbErr;
-use std::time::Instant;
+use std::{fmt::Debug, time::Instant};
 use tracing::instrument;
 use trustify_common::{error::ErrorInformation, id::IdError};
 use trustify_entity::labels::Labels;

@@ -1,11 +1,13 @@
+use crate::server::common::storage::StorageError;
 use crate::server::{
     report::{Phase, ReportVisitor, Severity},
-    sbom::storage::{StorageError, StorageVisitor},
+    sbom::storage::StorageVisitor,
 };
 use sbom_walker::{
     retrieve::RetrievalError,
     validation::{ValidatedSbom, ValidatedVisitor, ValidationContext, ValidationError},
 };
+use trustify_module_ingestor::service;
 use walker_common::utils::url::Urlify;
 
 pub struct SbomReportVisitor(pub ReportVisitor<StorageVisitor>);
@@ -78,6 +80,18 @@ impl ValidatedVisitor for SbomReportVisitor {
                     // current file. Once it gets updated, we can reprocess it.
                     return Ok(());
                 }
+                StorageError::Processing(err) => {
+                    self.0.report.lock().add_error(
+                        Phase::Upload,
+                        file,
+                        Severity::Error,
+                        format!("processing failed: {err}"),
+                    );
+
+                    // The file seems corrupt in some way, we can't deal with it until it got
+                    // updated.
+                    return Ok(());
+                }
                 StorageError::Storage(err) => {
                     self.0.report.lock().add_error(
                         Phase::Upload,
@@ -85,6 +99,15 @@ impl ValidatedVisitor for SbomReportVisitor {
                         Severity::Error,
                         format!("upload failed: {err}"),
                     );
+
+                    match &err {
+                        // db errors fail and bubble up
+                        service::Error::Db(_) => {}
+                        _ => {
+                            // all others just get logged
+                            return Ok(());
+                        }
+                    }
                 }
                 StorageError::Canceled => {
                     // propagate up

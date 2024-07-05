@@ -1,5 +1,5 @@
 use anyhow::bail;
-use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait};
+use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use std::collections::HashSet;
 use trustify_common::db::chunk::EntityChunkedIter;
@@ -60,7 +60,7 @@ impl RelationshipCreator {
         Ok(())
     }
 
-    pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), anyhow::Error> {
+    pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
         for batch in &self.rels.into_iter().chunked() {
             package_relates_to_package::Entity::insert_many(batch)
                 .on_conflict(
@@ -116,6 +116,12 @@ pub trait ReferenceSource<'a> {
 }
 
 impl<'a> ReferenceSource<'a> for &'a [&'a str] {
+    fn references(&'a self) -> impl IntoIterator<Item = &'a str> {
+        self.iter().copied()
+    }
+}
+
+impl<'a, const N: usize> ReferenceSource<'a> for [&'a str; N] {
     fn references(&'a self) -> impl IntoIterator<Item = &'a str> {
         self.iter().copied()
     }

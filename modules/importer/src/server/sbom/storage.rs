@@ -1,3 +1,4 @@
+use crate::server::common::storage::StorageError;
 use crate::server::{context::RunContext, report::ReportBuilder};
 use parking_lot::Mutex;
 use sbom_walker::validation::{
@@ -9,16 +10,6 @@ use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use walker_common::{compression::decompress_opt, utils::url::Urlify};
 
-#[derive(Debug, thiserror::Error)]
-pub enum StorageError {
-    #[error(transparent)]
-    Validation(#[from] ValidationError),
-    #[error(transparent)]
-    Storage(anyhow::Error),
-    #[error("operation canceled")]
-    Canceled,
-}
-
 pub struct StorageVisitor {
     pub context: RunContext,
     pub source: String,
@@ -29,7 +20,7 @@ pub struct StorageVisitor {
 }
 
 impl ValidatedVisitor for StorageVisitor {
-    type Error = StorageError;
+    type Error = StorageError<ValidationError>;
     type Context = ();
 
     async fn visit_context(
@@ -48,7 +39,7 @@ impl ValidatedVisitor for StorageVisitor {
 
         let (data, _compressed) = match decompress_opt(&doc.data, doc.url.path())
             .transpose()
-            .map_err(StorageError::Storage)?
+            .map_err(StorageError::Processing)?
         {
             Some(data) => (data, true),
             None => (doc.data.clone(), false),
@@ -56,7 +47,7 @@ impl ValidatedVisitor for StorageVisitor {
 
         let file = doc.possibly_relative_url();
 
-        let fmt = Format::sbom_from_bytes(&data).map_err(|e| StorageError::Storage(e.into()))?;
+        let fmt = Format::sbom_from_bytes(&data).map_err(|e| StorageError::Processing(e.into()))?;
 
         self.ingestor
             .ingest(
@@ -70,7 +61,7 @@ impl ValidatedVisitor for StorageVisitor {
                 ReaderStream::new(data.as_ref()),
             )
             .await
-            .map_err(|err| StorageError::Storage(err.into()))?;
+            .map_err(StorageError::Storage)?;
 
         self.context.check_canceled(|| StorageError::Canceled).await
     }
