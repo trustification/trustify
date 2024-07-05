@@ -4,7 +4,7 @@ use bytes::Bytes;
 use lzma::LzmaError;
 use std::convert::Infallible;
 
-use test_context::futures::{stream, Stream};
+use futures::{stream, Stream};
 
 /// Take a slice, xa decompress the data and return it as a stream.
 ///

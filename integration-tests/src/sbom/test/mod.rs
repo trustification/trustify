@@ -84,7 +84,7 @@ where
             let (sbom, _) = parse_spdx(&*data)?;
             Ok(fix_spdx_rels(sbom))
         },
-        |ctx, sbom, tx| Box::pin(async move { ctx.ingest_spdx(sbom.clone(), &tx).await }),
+        |ctx, sbom, tx| Box::pin(async move { Ok(ctx.ingest_spdx(sbom.clone(), &tx).await?) }),
         |sbom| sbom::spdx::Information(sbom).into(),
         f,
     )

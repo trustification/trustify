@@ -1,5 +1,5 @@
 use crate::graph::sbom::ReferenceSource;
-use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait};
+use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use trustify_common::db::chunk::EntityChunkedIter;
 use trustify_entity::{sbom_file, sbom_node};
@@ -42,7 +42,7 @@ impl FileCreator {
         });
     }
 
-    pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), anyhow::Error> {
+    pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
         for batch in &self.nodes.into_iter().chunked() {
             sbom_node::Entity::insert_many(batch)
                 .on_conflict(

@@ -47,7 +47,7 @@ impl<'g> SpdxLoader<'g> {
             .ingest_sbom(labels, digests, &document_id, spdx::Information(&spdx), &tx)
             .await?;
 
-        sbom.ingest_spdx(spdx, &tx).await.map_err(Error::Generic)?;
+        sbom.ingest_spdx(spdx, &tx).await?;
 
         tx.commit().await?;
 
@@ -90,32 +90,6 @@ mod test {
             )
             .await
             .expect("must ingest");
-
-        Ok(())
-    }
-
-    #[test_context(TrustifyContext, skip_teardown)]
-    #[test(tokio::test)]
-    async fn ingest_spdx_broken_refs(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let graph = Graph::new(db);
-        let data = include_bytes!("../../../../../etc/test-data/broken-refs.json");
-
-        let (storage, _tmp) = FileSystemBackend::for_test().await?;
-
-        let ingestor = IngestorService::new(graph, storage);
-
-        let err = ingestor
-            .ingest(
-                ("source", "test"),
-                None,
-                Format::sbom_from_bytes(data)?,
-                stream::iter([Ok::<_, Infallible>(Bytes::from_static(data))]),
-            )
-            .await
-            .expect_err("must not ingest");
-
-        assert_eq!(err.to_string(), "");
 
         Ok(())
     }

@@ -1,11 +1,13 @@
 use crate::server::{
-    csaf::storage::{StorageError, StorageVisitor},
+    common::storage::StorageError,
+    csaf::storage::StorageVisitor,
     report::{Phase, ReportVisitor, Severity},
 };
 use csaf_walker::{
     retrieve::RetrievalError,
     validation::{ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError},
 };
+use trustify_module_ingestor::service;
 use walker_common::utils::url::Urlify;
 
 pub struct CsafReportVisitor(pub ReportVisitor<StorageVisitor>);
@@ -78,6 +80,18 @@ impl ValidatedVisitor for CsafReportVisitor {
                     // current file. Once it gets updated, we can reprocess it.
                     return Ok(());
                 }
+                StorageError::Processing(err) => {
+                    self.0.report.lock().add_error(
+                        Phase::Upload,
+                        file,
+                        Severity::Error,
+                        format!("processing failed: {err}"),
+                    );
+
+                    // The file seems corrupt in some way, we can't deal with it until it got
+                    // updated.
+                    return Ok(());
+                }
                 StorageError::Storage(err) => {
                     self.0.report.lock().add_error(
                         Phase::Upload,
@@ -85,6 +99,15 @@ impl ValidatedVisitor for CsafReportVisitor {
                         Severity::Error,
                         format!("upload failed: {err}"),
                     );
+
+                    match err {
+                        // db errors fail and bubble up
+                        service::Error::Db(_) => {}
+                        _ => {
+                            // all others just get logged
+                            return Ok(());
+                        }
+                    }
                 }
                 StorageError::Canceled => {
                     // propagate up

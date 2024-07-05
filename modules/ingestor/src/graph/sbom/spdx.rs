@@ -1,13 +1,17 @@
-use crate::graph::{
-    product::ProductInformation,
-    purl::creator::PurlCreator,
-    sbom::{
-        FileCreator, PackageCreator, PackageReference, References, RelationshipCreator,
-        SbomContext, SbomInformation,
+use crate::{
+    graph::{
+        product::ProductInformation,
+        purl::creator::PurlCreator,
+        sbom::{
+            FileCreator, PackageCreator, PackageReference, References, RelationshipCreator,
+            SbomContext, SbomInformation,
+        },
     },
+    service::Error,
 };
+
 use serde_json::Value;
-use spdx_rs::models::{RelationshipType, SPDX};
+use spdx_rs::models::{ExternalPackageReferenceCategory, RelationshipType, SPDX};
 use std::{io::Read, str::FromStr};
 use time::OffsetDateTime;
 use tracing::instrument;
@@ -48,7 +52,7 @@ impl SbomContext {
         &self,
         sbom_data: SPDX,
         tx: TX,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), Error> {
         // prepare packages
 
         let mut creator = PurlCreator::new();
@@ -163,8 +167,15 @@ impl SbomContext {
 
         // validate relationships before inserting
 
-        let sources = References::new().add_source(&packages).add_source(&files);
-        relationships.validate(sources)?;
+        let doc_id = [sbom_data
+            .document_creation_information
+            .spdx_identifier
+            .as_str()];
+        let sources = References::new()
+            .add_source(&doc_id)
+            .add_source(&packages)
+            .add_source(&files);
+        relationships.validate(sources).map_err(Error::Generic)?;
 
         // create packages, files, and relationships
 
