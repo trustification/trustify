@@ -301,7 +301,8 @@ async fn nhc_same_content(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     );
 
     // ingest the second version
-
+    use std::io::Read;
+    use xz2::read::XzDecoder;
     let result2 = ingest
         .ingest(
             ("source", "test"),
@@ -309,10 +310,11 @@ async fn nhc_same_content(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             Format::SPDX,
             stream::once({
                 // re-serialize file (non-pretty)
-                let json: Value = serde_json::from_slice(&lzma::decompress(include_bytes!(
-                    "data/nhc/v1/nhc-0.4.z.json.xz"
-                ))?)?;
-
+                let data = include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz");
+                let mut reader = XzDecoder::new(&data[..]);
+                let mut buf: Vec<u8> = Vec::new();
+                reader.read_to_end(&mut buf).unwrap();
+                let json: Value = serde_json::from_slice(&buf)?;
                 let result = serde_json::to_vec(&json).map(Bytes::from);
 
                 async { result }
