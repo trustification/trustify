@@ -4,8 +4,9 @@ use std::time::Instant;
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
-use trustify_common::{db::test::TrustifyContext, hashing::Digests};
+use trustify_common::hashing::Digests;
 use trustify_module_ingestor::{graph::Graph, service::advisory::csaf::loader::CsafLoader};
+use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]

@@ -2,8 +2,8 @@ use migration::sea_orm::Statement;
 use migration::ConnectionTrait;
 use test_context::test_context;
 use test_log::test;
-use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Database;
+use trustify_test_context::TrustifyContext;
 
 async fn semver_cmp(db: &Database, left: &str, right: &str) -> Result<Option<i32>, anyhow::Error> {
     let result = db

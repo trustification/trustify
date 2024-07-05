@@ -16,6 +16,7 @@ members = [
   "modules/graphql",
   "server",
   "trustd",
+  "test-context",
 ]
 
 [workspace.dependencies]
@@ -106,6 +107,7 @@ thiserror = "1.0.58"
 time = "0.3"
 tokio = "1.30.0"
 tokio-util = "0.7"
+tokio-stream = "0.1.15"
 tracing = "0.1"
 tracing-bunyan-formatter = "0.3.7"
 tracing-opentelemetry = "0.23"
@@ -133,6 +135,7 @@ trustify-ui = { git = "https://github.com/trustification/trustify-ui.git", tag =
 trustify-module-ingestor = { path = "modules/ingestor" }
 trustify-module-storage = { path = "modules/storage" }
 trustify-module-graphql = { path = "modules/graphql" }
+trustify-test-context = { path = "test-context" }
 
 [patch.crates-io]
 #csaf-walker = { git = "https://github.com/ctron/csaf-walker", rev = "7b6e64dd56e4be79e184b053ef754a42e1496fe0" }

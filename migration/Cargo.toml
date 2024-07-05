@@ -15,6 +15,7 @@ trustify-cvss = { workspace = true }
 
 [dev-dependencies]
 trustify-common = { workspace = true }
+trustify-test-context = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 tokio-util = { workspace = true }

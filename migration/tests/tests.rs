@@ -1,7 +1,7 @@
 use migration::{Migrator, MigratorTrait};
 use test_context::test_context;
 use test_log::test;
-use trustify_common::db::test::TrustifyContext;
+use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]

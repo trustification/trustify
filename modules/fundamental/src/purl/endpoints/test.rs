@@ -12,14 +12,12 @@ use std::str::FromStr;
 use std::sync::Arc;
 use test_context::test_context;
 use test_log::test;
-use tokio_util::io::ReaderStream;
-use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::{Database, Transactional};
 use trustify_common::model::PaginatedResults;
 use trustify_common::purl::Purl;
 use trustify_module_ingestor::graph::Graph;
-use trustify_module_ingestor::service::{Format, IngestorService};
-use trustify_module_storage::service::fs::FileSystemBackend;
+use trustify_module_ingestor::service::Format;
+use trustify_test_context::TrustifyContext;
 
 async fn setup(db: &Database) -> Result<(), anyhow::Error> {
     let graph = Arc::new(Graph::new(db.clone()));
@@ -379,15 +377,10 @@ async fn qualified_packages_filtering(ctx: TrustifyContext) -> Result<(), anyhow
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn package_with_status(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let (storage, _tmp) = FileSystemBackend::for_test().await?;
-
-    let ingestor = IngestorService::new(Graph::new(db.clone()), storage);
-
-    ingestor
+async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ctx.ingestor
         .graph()
         .ingest_qualified_package(
             &Purl::from_str("pkg:cargo/hyper@0.14.1")?,
@@ -395,31 +388,15 @@ async fn package_with_status(ctx: TrustifyContext) -> Result<(), anyhow::Error> 
         )
         .await?;
 
-    // ingest an advisory
-
-    let data = include_bytes!("../../../../../etc/test-data/osv/RUSTSEC-2021-0079.json");
-    let data = ReaderStream::new(&data[..]);
-
-    ingestor
-        .ingest(
-            ("source", "test"),
-            Some("RUSTSEC".to_string()),
-            Format::OSV,
-            data,
-        )
-        .await?;
-
-    // backfill ingest the CVE record
-
-    let data = include_bytes!("../../../../../etc/test-data/cve/CVE-2021-32714.json");
-    let data = ReaderStream::new(&data[..]);
-
-    ingestor
-        .ingest(("source", "test"), None, Format::CVE, data)
-        .await?;
+    ctx.ingest_documents([
+        (Format::OSV, "osv/RUSTSEC-2021-0079.json"),
+        (Format::CVE, "cve/CVE-2021-32714.json"),
+    ])
+    .await?;
 
     let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
+        App::new()
+            .service(web::scope("/api").configure(|config| configure(config, ctx.db.clone()))),
     )
     .await;
 

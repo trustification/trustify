@@ -2,11 +2,9 @@ use super::{test_with_spdx, WithContext};
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
-use trustify_common::{
-    db::{test::TrustifyContext, Transactional},
-    model::Paginated,
-};
+use trustify_common::{db::Transactional, model::Paginated};
 use trustify_module_fundamental::sbom::model::SbomPackage;
+use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]

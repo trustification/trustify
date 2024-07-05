@@ -41,6 +41,7 @@ utoipa = { workspace = true, features = ["actix_extras"] }
 uuid = { workspace = true, features = ["v7"] }
 
 [dev-dependencies]
+trustify-test-context = { workspace = true }
 rand = { workspace = true }
 rstest = {workspace = true }
 serde_yaml = { workspace = true }

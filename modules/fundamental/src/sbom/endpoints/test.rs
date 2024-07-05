@@ -11,10 +11,11 @@ use test_context::test_context;
 use test_log::test;
 use tokio_util::io::ReaderStream;
 use trustify_auth::authorizer::Authorizer;
-use trustify_common::{db::test::TrustifyContext, id::Id, model::PaginatedResults};
+use trustify_common::{id::Id, model::PaginatedResults};
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::{graph::Graph, model::IngestResult, service::IngestorService};
 use trustify_module_storage::service::fs::FileSystemBackend;
+use trustify_test_context::TrustifyContext;
 use uuid::Uuid;
 
 async fn query<S, B>(app: &S, id: &str, q: &str) -> PaginatedResults<SbomPackage>

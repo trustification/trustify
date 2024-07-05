@@ -6,10 +6,10 @@ use serde_json::{json, Value};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::db::query::Query;
-use trustify_common::db::test::TrustifyContext;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::product::ProductInformation;
 use trustify_module_ingestor::graph::Graph;
+use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]

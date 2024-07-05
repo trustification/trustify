@@ -4,15 +4,13 @@ use std::str::FromStr;
 use std::sync::Arc;
 use test_context::test_context;
 use test_log::test;
-use tokio_util::io::ReaderStream;
 use trustify_common::db::query::{q, Query};
-use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Transactional;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_module_ingestor::graph::Graph;
-use trustify_module_ingestor::service::{Format, IngestorService};
-use trustify_module_storage::service::fs::FileSystemBackend;
+use trustify_module_ingestor::service::Format;
+use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
@@ -549,39 +547,17 @@ async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn statuses(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let service = PurlService::new(db.clone());
-    let (storage, _tmp) = FileSystemBackend::for_test().await?;
+async fn statuses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
+    ctx.ingest_documents([
+        (Format::OSV, "osv/RUSTSEC-2021-0079.json"),
+        (Format::CVE, "cve/CVE-2021-32714.json"),
+    ])
+    .await?;
 
-    let ingestor = IngestorService::new(Graph::new(db.clone()), storage);
-
-    // ingest an advisory
-    let data = include_bytes!("../../../../../etc/test-data/osv/RUSTSEC-2021-0079.json");
-    let data = ReaderStream::new(&data[..]);
-
-    ingestor
-        .ingest(
-            ("source", "test"),
-            Some("RUSTSEC".to_string()),
-            Format::OSV,
-            data,
-        )
-        .await?;
-
-    // backfill ingest the CVE record
-    let data = include_bytes!("../../../../../etc/test-data/cve/CVE-2021-32714.json");
-    let data = ReaderStream::new(&data[..]);
-
-    ingestor
-        .ingest(("source", "test"), None, Format::CVE, data)
-        .await?;
-
-    // finally ingest a specific known-affected version.
-
-    ingestor
+    ctx.ingestor
         .graph()
         .ingest_qualified_package(
             &Purl::from_str("pkg:cargo/hyper@0.14.1")?,
