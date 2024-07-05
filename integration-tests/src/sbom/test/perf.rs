@@ -76,3 +76,49 @@ async fn ingest_spdx_large(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     )
     .await
 }
+
+/// A test having a lot of CPEs to ingest
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(tokio::test)]
+#[instrument]
+async fn ingest_spdx_medium_cpes(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    test_with_spdx(
+        ctx,
+        "rhel-br-9.2.0.json.xz",
+        |WithContext { service, sbom, .. }| async move {
+            let described = service
+                .describes_packages(sbom.sbom.sbom_id, Default::default(), ())
+                .await?;
+
+            log::debug!("{:#?}", described);
+            assert_eq!(1, described.items.len());
+            assert_eq!(
+                described.items[0],
+                SbomPackage {
+                    id: "SPDXRef-59713547-8cb2-4cf4-a310-1e28c7a7b35a".to_string(),
+                    name: "RHEL-BR-9.2.0".to_string(),
+                    version: Some("9.2.0".to_string()),
+                    purl: vec![],
+                    cpe: vec![],
+                }
+            );
+
+            let packages = service
+                .fetch_sbom_packages(
+                    sbom.sbom.sbom_id,
+                    Default::default(),
+                    Paginated {
+                        offset: 0,
+                        limit: 1,
+                    },
+                    (),
+                )
+                .await?;
+            assert_eq!(1, packages.items.len());
+            assert_eq!(50668, packages.total);
+
+            Ok(())
+        },
+    )
+    .await
+}
