@@ -96,6 +96,11 @@ impl SbomContext {
             let mut refs = Vec::new();
 
             for r in &package.external_reference {
+                // only add the package manager category, giving this package a name
+                if r.reference_category != ExternalPackageReferenceCategory::PackageManager {
+                    continue;
+                }
+
                 match &*r.reference_type {
                     "purl" => {
                         if let Ok(purl) = Purl::from_str(&r.reference_locator) {
