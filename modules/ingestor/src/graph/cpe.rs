@@ -1,11 +1,13 @@
-use crate::graph::error::Error;
-use crate::graph::Graph;
+use crate::graph::{error::Error, Graph};
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
 use sea_query::SelectStatement;
-use std::fmt::{Debug, Formatter};
+use std::{
+    collections::{hash_map::Entry, HashMap},
+    fmt::{Debug, Formatter},
+};
 use tracing::instrument;
 use trustify_common::{
-    cpe::{Component, Component::Value, Cpe, CpeType},
+    cpe::{Component, Cpe, CpeType, Language},
     db::Transactional,
 };
 use trustify_entity as entity;
@@ -31,31 +33,36 @@ impl Graph {
         query = match cpe.vendor() {
             Component::Any => query.filter(entity::cpe::Column::Vendor.eq("*")),
             Component::NotApplicable => query.filter(entity::cpe::Column::Vendor.is_null()),
-            Value(inner) => query.filter(entity::cpe::Column::Vendor.eq(inner)),
+            Component::Value(inner) => query.filter(entity::cpe::Column::Vendor.eq(inner)),
         };
 
         query = match cpe.product() {
             Component::Any => query.filter(entity::cpe::Column::Product.eq("*")),
             Component::NotApplicable => query.filter(entity::cpe::Column::Product.is_null()),
-            Value(inner) => query.filter(entity::cpe::Column::Product.eq(inner)),
+            Component::Value(inner) => query.filter(entity::cpe::Column::Product.eq(inner)),
         };
 
         query = match cpe.version() {
             Component::Any => query.filter(entity::cpe::Column::Version.eq("*")),
             Component::NotApplicable => query.filter(entity::cpe::Column::Version.is_null()),
-            Value(inner) => query.filter(entity::cpe::Column::Version.eq(inner)),
+            Component::Value(inner) => query.filter(entity::cpe::Column::Version.eq(inner)),
         };
 
         query = match cpe.update() {
             Component::Any => query.filter(entity::cpe::Column::Update.eq("*")),
             Component::NotApplicable => query.filter(entity::cpe::Column::Update.is_null()),
-            Value(inner) => query.filter(entity::cpe::Column::Update.eq(inner)),
+            Component::Value(inner) => query.filter(entity::cpe::Column::Update.eq(inner)),
         };
 
         query = match cpe.edition() {
             Component::Any => query.filter(entity::cpe::Column::Edition.eq("*")),
             Component::NotApplicable => query.filter(entity::cpe::Column::Edition.is_null()),
-            Value(inner) => query.filter(entity::cpe::Column::Edition.eq(inner)),
+            Component::Value(inner) => query.filter(entity::cpe::Column::Edition.eq(inner)),
+        };
+
+        query = match cpe.language() {
+            Language::Any => query.filter(entity::cpe::Column::Language.eq("*")),
+            Language::Language(inner) => query.filter(entity::cpe::Column::Language.eq(inner)),
         };
 
         if let Some(found) = query.one(&self.connection(&tx)).await? {
@@ -115,5 +122,30 @@ impl From<(&Graph, entity::cpe::Model)> for CpeContext {
 impl Debug for CpeContext {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.cpe.fmt(f)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::str::FromStr;
+    use test_context::test_context;
+    use test_log::test;
+    use trustify_common::db::test::TrustifyContext;
+
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test(tokio::test)]
+    async fn ingest_cpe(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
+        let graph = Graph::new(db);
+
+        let cpe = Cpe::from_str("cpe:/a:redhat:enterprise_linux:9::crb")?;
+
+        let c1 = graph.ingest_cpe22(cpe.clone(), ()).await?;
+        let c2 = graph.ingest_cpe22(cpe, ()).await?;
+
+        assert_eq!(c1.cpe.id, c2.cpe.id);
+
+        Ok(())
     }
 }
