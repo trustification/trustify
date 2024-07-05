@@ -3,7 +3,6 @@ mod func;
 pub mod chunk;
 pub mod limiter;
 pub mod query;
-pub mod test;
 
 use anyhow::Context;
 use migration::{Migrator, MigratorTrait};

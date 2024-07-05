@@ -4,12 +4,7 @@ use std::{str::FromStr, sync::Arc};
 use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
-use trustify_common::{
-    db::{query::q, test::TrustifyContext},
-    hashing::Digests,
-    model::Paginated,
-    purl::Purl,
-};
+use trustify_common::{db::query::q, hashing::Digests, model::Paginated, purl::Purl};
 use trustify_cvss::cvss3::{
     AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
     PrivilegesRequired, Scope, UserInteraction,
@@ -21,6 +16,7 @@ use trustify_module_ingestor::graph::{
     },
     Graph,
 };
+use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]

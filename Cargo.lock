@@ -6926,6 +6926,7 @@ dependencies = [
  "trustify-module-fundamental",
  "trustify-module-ingestor",
  "trustify-module-storage",
+ "trustify-test-context",
 ]
 
 [[package]]
@@ -6940,6 +6941,7 @@ dependencies = [
  "tokio-util",
  "trustify-common",
  "trustify-cvss",
+ "trustify-test-context",
 ]
 
 [[package]]
@@ -6975,6 +6977,7 @@ dependencies = [
  "trustify-infrastructure",
  "trustify-module-ingestor",
  "trustify-module-storage",
+ "trustify-test-context",
  "urlencoding",
  "utoipa",
  "uuid",
@@ -7039,6 +7042,7 @@ dependencies = [
  "trustify-infrastructure",
  "trustify-module-ingestor",
  "trustify-module-storage",
+ "trustify-test-context",
  "url",
  "urlencoding",
  "utoipa",
@@ -7088,6 +7092,7 @@ dependencies = [
  "trustify-cvss",
  "trustify-entity",
  "trustify-module-storage",
+ "trustify-test-context",
  "utoipa",
  "uuid",
 ]
@@ -7152,10 +7157,30 @@ dependencies = [
  "trustify-module-ingestor",
  "trustify-module-storage",
  "trustify-module-ui",
+ "trustify-test-context",
  "url",
  "urlencoding",
  "utoipa",
  "utoipa-swagger-ui",
+]
+
+[[package]]
+name = "trustify-test-context"
+version = "0.1.0-alpha.10"
+dependencies = [
+ "anyhow",
+ "log",
+ "postgresql_embedded",
+ "test-context",
+ "test-log",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+ "trustify-common",
+ "trustify-migration",
+ "trustify-module-ingestor",
+ "trustify-module-storage",
 ]
 
 [[package]]

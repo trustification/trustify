@@ -10,13 +10,13 @@ use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
 use trustify_common::db::query::Query;
-use trustify_common::db::test::TrustifyContext;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::fs::FileSystemBackend;
+use trustify_test_context::TrustifyContext;
 
 /// We re-ingest two versions of the same quarkus SBOM. However, as the quarkus SBOM doesn't have
 /// anything in common other than the filename (which doesn't matter), these are considered two

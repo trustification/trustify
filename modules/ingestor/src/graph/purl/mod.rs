@@ -341,12 +341,12 @@ mod tests {
     use test_context::test_context;
     use test_log::test;
 
-    use trustify_common::db::test::TrustifyContext;
     use trustify_common::db::Transactional;
     use trustify_common::model::Paginated;
     use trustify_common::purl::Purl;
     use trustify_entity::qualified_purl;
     use trustify_entity::qualified_purl::Qualifiers;
+    use trustify_test_context::TrustifyContext;
 
     use crate::graph::error::Error;
     use crate::graph::Graph;

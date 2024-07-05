@@ -67,13 +67,13 @@ mod test {
     use std::convert::Infallible;
     use test_context::test_context;
     use test_log::test;
-    use trustify_common::db::test::TrustifyContext;
     use trustify_module_storage::service::fs::FileSystemBackend;
+    use trustify_test_context::TrustifyContext;
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn ingest_spdx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
+        let db = ctx.db.clone();
         let graph = Graph::new(db);
         let data = include_bytes!("../../../../../etc/test-data/ubi9-9.2-755.1697625012.json");
 

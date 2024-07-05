@@ -155,8 +155,9 @@ mod test {
     use hex::ToHex;
     use test_context::test_context;
     use test_log::test;
-    use trustify_common::db::{test::TrustifyContext, Transactional};
+    use trustify_common::db::Transactional;
     use trustify_common::hashing::Digests;
+    use trustify_test_context::TrustifyContext;
 
     use crate::service::cve::loader::CveLoader;
 

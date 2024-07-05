@@ -16,13 +16,14 @@ use std::pin::Pin;
 use std::str::FromStr;
 use std::time::Instant;
 use tracing::{info_span, instrument, Instrument};
-use trustify_common::db::{test::TrustifyContext, Database, Transactional};
+use trustify_common::db::{Database, Transactional};
 use trustify_common::hashing::Digests;
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::graph::{
     sbom::{self, spdx::parse_spdx, SbomContext, SbomInformation},
     Graph,
 };
+use trustify_test_context::TrustifyContext;
 
 #[instrument]
 pub fn open_sbom(name: &str) -> anyhow::Result<impl Read> {

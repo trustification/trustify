@@ -2,9 +2,10 @@ use crate::sbom::test::{test_with_spdx, WithContext};
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
-use trustify_common::{db::test::TrustifyContext, db::Transactional};
+use trustify_common::db::Transactional;
 use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::sbom::model::{SbomPackage, Which};
+use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[instrument]

@@ -43,4 +43,5 @@ test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 tokio-util = { workspace = true }
 trustify-cvss = { workspace = true }
+trustify-test-context = { workspace = true }
 urlencoding = { workspace = true }

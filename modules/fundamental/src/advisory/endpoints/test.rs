@@ -19,24 +19,19 @@ use sha2::{Digest, Sha256};
 use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
-use tokio_util::io::ReaderStream;
-use trustify_common::{
-    db::{test::TrustifyContext, Transactional},
-    hashing::Digests,
-    id::Id,
-    model::PaginatedResults,
-};
+use trustify_common::{db::Transactional, hashing::Digests, id::Id, model::PaginatedResults};
 use trustify_cvss::cvss3::{
     AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
     PrivilegesRequired, Scope, UserInteraction,
 };
 use trustify_entity::labels::Labels;
+use trustify_module_ingestor::service::Format;
 use trustify_module_ingestor::{
     graph::{advisory::AdvisoryInformation, Graph},
     model::IngestResult,
-    service::IngestorService,
 };
 use trustify_module_storage::service::fs::FileSystemBackend;
+use trustify_test_context::TrustifyContext;
 use uuid::Uuid;
 
 async fn query<S, B>(app: &S, q: &str) -> PaginatedResults<AdvisorySummary>
@@ -49,33 +44,19 @@ where
     actix_web::test::call_and_read_body_json(app, req).await
 }
 
-async fn ingest(service: &IngestorService, data: &[u8]) -> IngestResult {
-    use trustify_module_ingestor::service::Format;
-    service
-        .ingest(
-            ("source", "unit-test"),
-            Some("Capt Pickles Industrial Conglomerate".to_string()),
-            Format::from_bytes(data).unwrap(),
-            ReaderStream::new(data),
-        )
-        .await
-        .unwrap()
-}
-
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Graph::new(db.clone());
-    let (storage, _) = FileSystemBackend::for_test().await?;
-
+async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = actix_web::test::init_service(
-        App::new()
-            .service(web::scope("/api").configure(|config| configure(config, db, storage.clone()))),
+        App::new().service(
+            web::scope("/api")
+                .configure(|config| configure(config, ctx.db.clone(), ctx.storage.clone())),
+        ),
     )
     .await;
 
-    let advisory = graph
+    let advisory = ctx
+        .graph
         .ingest_advisory(
             "RHSA-1",
             ("source", "http://redhat.com/"),
@@ -111,7 +92,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    graph
+    ctx.graph
         .ingest_advisory(
             "RHSA-2",
             ("source", "http://redhat.com/"),
@@ -353,19 +334,16 @@ async fn one_advisory_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error>
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn search_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn search_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     use actix_web::test::init_service;
-    use trustify_module_storage::service::fs::FileSystemBackend;
 
-    let db = ctx.db;
-    let graph = Graph::new(db.clone());
-    let (storage, _) = FileSystemBackend::for_test().await?;
-    let ingestor = IngestorService::new(graph, storage.clone());
     let app = init_service(
-        App::new()
-            .service(web::scope("/api").configure(|config| configure(config, db, storage.clone()))),
+        App::new().service(
+            web::scope("/api")
+                .configure(|config| configure(config, ctx.db.clone(), ctx.storage.clone())),
+        ),
     )
     .await;
     let _response: PaginatedResults<AdvisorySummary>;
@@ -375,10 +353,11 @@ async fn search_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(result.total, 0);
 
     // ingest some advisories
-    let data = include_bytes!("../../../../../etc/test-data/mitre/CVE-2024-27088.json");
-    let _id = ingest(&ingestor, data).await;
-    let data = include_bytes!("../../../../../etc/test-data/mitre/CVE-2024-28111.json");
-    let _id = ingest(&ingestor, data).await;
+    ctx.ingest_documents([
+        (Format::CVE, "mitre/CVE-2024-27088.json"),
+        (Format::CVE, "mitre/CVE-2024-28111.json"),
+    ])
+    .await?;
 
     let result = query(&app, "").await;
     assert_eq!(result.total, 2);

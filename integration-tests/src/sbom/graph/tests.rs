@@ -4,7 +4,6 @@ use std::convert::TryInto;
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
-use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Transactional;
 use trustify_common::hashing::Digests;
 use trustify_common::purl::Purl;
@@ -12,6 +11,7 @@ use trustify_common::sbom::SbomLocator;
 use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::graph::Graph;
+use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]

@@ -46,3 +46,4 @@ walker-common = { workspace = true }
 [dev-dependencies]
 test-log = { workspace = true, features = ["log", "trace"] }
 test-context = { workspace = true }
+trustify-test-context = { workspace = true }

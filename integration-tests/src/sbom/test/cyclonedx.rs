@@ -1,10 +1,10 @@
 use crate::sbom::test::{test_with_cyclonedx, WithContext};
 use test_context::test_context;
 use test_log::test;
-use trustify_common::db::test::TrustifyContext;
 use trustify_common::db::Transactional;
 use trustify_common::model::Paginated;
 use trustify_module_fundamental::sbom::model::SbomPackage;
+use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]

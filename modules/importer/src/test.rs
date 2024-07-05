@@ -10,7 +10,7 @@ use actix_web::{
 use std::time::Duration;
 use test_context::test_context;
 use test_log::test;
-use trustify_common::db::test::TrustifyContext;
+use trustify_test_context::TrustifyContext;
 
 fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
     ImporterConfiguration::Sbom(SbomImporter {

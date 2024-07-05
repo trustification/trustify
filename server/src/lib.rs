@@ -363,9 +363,9 @@ mod test {
     };
     use test_context::test_context;
     use test_log::test;
-    use trustify_common::db::test::TrustifyContext;
     use trustify_module_storage::service::fs::FileSystemBackend;
     use trustify_module_ui::{endpoints::UiResources, UI};
+    use trustify_test_context::TrustifyContext;
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(actix_web::test)]
