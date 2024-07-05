@@ -1,4 +1,4 @@
-use postgresql_embedded::PostgreSQL;
+use postgresql_embedded::{PostgreSQL, VersionReq};
 use std::collections::HashMap;
 use std::env;
 use std::fs::create_dir_all;
@@ -73,6 +73,7 @@ impl Run {
             "pg_stat_statements".to_string(),
         )]);
         let settings = postgresql_embedded::Settings {
+            version: VersionReq::parse("=16.3.0")?,
             username: self.database.username.clone(),
             password: self.database.password.clone(),
             temporary: false,
@@ -82,7 +83,7 @@ impl Run {
             data_dir,
             ..Default::default()
         };
-        let mut postgresql = PostgreSQL::new(PostgreSQL::default_version(), settings);
+        let mut postgresql = PostgreSQL::new(settings);
         postgresql.setup().await?;
         postgresql.start().await?;
 

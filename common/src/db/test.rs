@@ -1,9 +1,6 @@
 use std::env;
 
-use postgresql_archive::Version;
-use postgresql_embedded::{PostgreSQL, Settings};
-use std::str::FromStr;
-use tempfile::TempDir;
+use postgresql_embedded::{PostgreSQL, Settings, VersionReq};
 use test_context::AsyncTestContext;
 use tracing::{info_span, instrument, Instrument};
 
@@ -11,7 +8,6 @@ use tracing::{info_span, instrument, Instrument};
 pub struct TrustifyContext {
     pub db: crate::db::Database,
     postgresql: Option<PostgreSQL>,
-    tempdir: Option<TempDir>,
 }
 
 impl AsyncTestContext for TrustifyContext {
@@ -32,23 +28,20 @@ impl AsyncTestContext for TrustifyContext {
             return TrustifyContext {
                 db,
                 postgresql: None,
-                tempdir: None,
             };
         }
 
-        let tempdir = tempfile::tempdir().expect("Creating the test database tmp directory");
-        let installation_dir = tempdir.path().to_path_buf();
+        let version = VersionReq::parse("=16.3.0").expect("valid psql version");
         let settings = Settings {
+            version,
             username: "postgres".to_string(),
             password: "trustify".to_string(),
             temporary: true,
-            installation_dir,
             ..Default::default()
         };
 
         let postgresql = async {
-            let version = Version::from_str("16.3.0").expect("valid psql version");
-            let mut postgresql = PostgreSQL::new(version, settings);
+            let mut postgresql = PostgreSQL::new(settings);
             postgresql
                 .setup()
                 .await
@@ -76,7 +69,6 @@ impl AsyncTestContext for TrustifyContext {
         TrustifyContext {
             db,
             postgresql: Some(postgresql),
-            tempdir: Some(tempdir),
         }
     }
 
