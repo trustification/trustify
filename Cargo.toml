@@ -76,8 +76,8 @@ osv = { version = "0.2.0", default-features = false }
 packageurl = "0.3.0"
 parking_lot = "0.12"
 pem = "3"
-postgresql_archive = "0.10.1"
-postgresql_embedded = "0.10.1"
+postgresql_archive = "0.13.0"
+postgresql_embedded = "0.13.0"
 prometheus = "0.13.3"
 rand = "0.8.5"                                                        # for testing
 regex = "1.10.3"
