@@ -5,7 +5,6 @@ mod perf;
 mod spdx;
 
 use cyclonedx_bom::prelude::Bom;
-use lzma::LzmaReader;
 use spdx_rs::models::SPDX;
 use std::collections::HashSet;
 use std::fs::File;
@@ -23,6 +22,7 @@ use trustify_module_ingestor::graph::{
     sbom::{self, spdx::parse_spdx, SbomContext, SbomInformation},
     Graph,
 };
+use xz2::read::XzDecoder;
 
 #[instrument]
 pub fn open_sbom(name: &str) -> anyhow::Result<impl Read> {
@@ -35,7 +35,7 @@ pub fn open_sbom(name: &str) -> anyhow::Result<impl Read> {
 
 #[instrument]
 pub fn open_sbom_xz(name: &str) -> anyhow::Result<impl Read> {
-    Ok(LzmaReader::new_decompressor(open_sbom(name)?)?)
+    Ok(XzDecoder::new(open_sbom(name)?))
 }
 
 /// remove all relationships having broken references

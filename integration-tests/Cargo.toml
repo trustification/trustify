@@ -16,10 +16,10 @@ csaf = { workspace = true }
 cyclonedx-bom = { workspace = true }
 humantime = { workspace = true }
 log = { workspace = true }
-rust-lzma = { workspace = true }
 serde_json = { workspace = true }
 spdx-rs = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 tokio = { workspace = true }
 tracing = { workspace = true }
+xz2 = { workspace = true }
