@@ -30,7 +30,7 @@ impl super::Server {
         &self,
         context: RunContext,
         importer: SbomImporter,
-        last_run: Option<SystemTime>,
+        last_success: Option<SystemTime>,
     ) -> Result<RunOutput, ScannerError> {
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
@@ -44,7 +44,7 @@ impl super::Server {
                 HttpSource::new(
                     url,
                     Fetcher::new(Default::default()).await?,
-                    HttpOptions::new().since(last_run).keys(keys),
+                    HttpOptions::new().since(last_success).keys(keys),
                 )
                 .into()
             }

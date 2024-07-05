@@ -6,10 +6,12 @@ pub mod osv;
 pub mod report;
 pub mod sbom;
 
-use crate::server::context::RunContext;
 use crate::{
     model::{Importer, ImporterConfiguration, State},
-    server::report::{Report, ScannerError},
+    server::{
+        context::RunContext,
+        report::{Report, ScannerError},
+    },
     service::ImporterService,
 };
 use std::{path::PathBuf, time::Duration};
@@ -92,7 +94,7 @@ impl Server {
                     .run_once(
                         context,
                         importer.data.configuration,
-                        importer.data.last_run,
+                        importer.data.last_success,
                         importer.data.continuation,
                     )
                     .await
@@ -133,14 +135,18 @@ impl Server {
         &self,
         context: RunContext,
         configuration: ImporterConfiguration,
-        last_run: Option<OffsetDateTime>,
+        last_success: Option<OffsetDateTime>,
         continuation: serde_json::Value,
     ) -> Result<RunOutput, ScannerError> {
-        let last_run = last_run.map(|t| t.into());
+        let last_success = last_success.map(|t| t.into());
 
         match configuration {
-            ImporterConfiguration::Sbom(sbom) => self.run_once_sbom(context, sbom, last_run).await,
-            ImporterConfiguration::Csaf(csaf) => self.run_once_csaf(context, csaf, last_run).await,
+            ImporterConfiguration::Sbom(sbom) => {
+                self.run_once_sbom(context, sbom, last_success).await
+            }
+            ImporterConfiguration::Csaf(csaf) => {
+                self.run_once_csaf(context, csaf, last_success).await
+            }
             ImporterConfiguration::Osv(osv) => self.run_once_osv(context, osv, continuation).await,
             ImporterConfiguration::Cve(cve) => self.run_once_cve(context, cve, continuation).await,
         }

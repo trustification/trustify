@@ -31,12 +31,12 @@ impl super::Server {
         &self,
         context: RunContext,
         importer: CsafImporter,
-        last_run: Option<SystemTime>,
+        last_success: Option<SystemTime>,
     ) -> Result<RunOutput, ScannerError> {
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
         let fetcher = Fetcher::new(Default::default()).await?;
-        let options = HttpOptions::new().since(last_run);
+        let options = HttpOptions::new().since(last_success);
 
         let source = match Url::parse(&importer.source) {
             Ok(url) => HttpSource::new(url, fetcher, options),
