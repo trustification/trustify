@@ -51,6 +51,7 @@ mod m0000410_labels_index;
 mod m0000420_add_digests;
 mod m0000440_alter_package_status_to_purl_status;
 mod m0000445_create_purl_status_cpe;
+mod m0000450_alter_cpe_uuidv5;
 
 pub struct Migrator;
 
@@ -108,6 +109,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000420_add_digests::Migration),
             Box::new(m0000440_alter_package_status_to_purl_status::Migration),
             Box::new(m0000445_create_purl_status_cpe::Migration),
+            Box::new(m0000450_alter_cpe_uuidv5::Migration),
         ]
     }
 }

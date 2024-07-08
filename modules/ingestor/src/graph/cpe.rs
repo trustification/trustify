@@ -1,16 +1,17 @@
 use crate::graph::{error::Error, Graph};
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
-use sea_query::SelectStatement;
+use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, QueryFilter};
+use sea_query::{OnConflict, SelectStatement};
 use std::{
-    collections::{hash_map::Entry, HashMap},
+    collections::HashMap,
     fmt::{Debug, Formatter},
 };
 use tracing::instrument;
 use trustify_common::{
-    cpe::{Component, Cpe, CpeType, Language},
-    db::Transactional,
+    cpe::Cpe,
+    db::{chunk::EntityChunkedIter, Transactional},
 };
-use trustify_entity as entity;
+use trustify_entity::cpe;
+use uuid::Uuid;
 
 impl Graph {
     pub async fn get_cpe<C: Into<Cpe>, TX: AsRef<Transactional>>(
@@ -20,50 +21,7 @@ impl Graph {
     ) -> Result<Option<CpeContext>, Error> {
         let cpe = cpe.into();
 
-        let mut query = entity::cpe::Entity::find();
-
-        query = match cpe.part() {
-            CpeType::Any => query.filter(entity::cpe::Column::Part.eq("*")),
-            CpeType::Hardware => query.filter(entity::cpe::Column::Part.eq("h")),
-            CpeType::OperatingSystem => query.filter(entity::cpe::Column::Part.eq("o")),
-            CpeType::Application => query.filter(entity::cpe::Column::Part.eq("a")),
-            CpeType::Empty => query.filter(entity::cpe::Column::Part.is_null()),
-        };
-
-        query = match cpe.vendor() {
-            Component::Any => query.filter(entity::cpe::Column::Vendor.eq("*")),
-            Component::NotApplicable => query.filter(entity::cpe::Column::Vendor.is_null()),
-            Component::Value(inner) => query.filter(entity::cpe::Column::Vendor.eq(inner)),
-        };
-
-        query = match cpe.product() {
-            Component::Any => query.filter(entity::cpe::Column::Product.eq("*")),
-            Component::NotApplicable => query.filter(entity::cpe::Column::Product.is_null()),
-            Component::Value(inner) => query.filter(entity::cpe::Column::Product.eq(inner)),
-        };
-
-        query = match cpe.version() {
-            Component::Any => query.filter(entity::cpe::Column::Version.eq("*")),
-            Component::NotApplicable => query.filter(entity::cpe::Column::Version.is_null()),
-            Component::Value(inner) => query.filter(entity::cpe::Column::Version.eq(inner)),
-        };
-
-        query = match cpe.update() {
-            Component::Any => query.filter(entity::cpe::Column::Update.eq("*")),
-            Component::NotApplicable => query.filter(entity::cpe::Column::Update.is_null()),
-            Component::Value(inner) => query.filter(entity::cpe::Column::Update.eq(inner)),
-        };
-
-        query = match cpe.edition() {
-            Component::Any => query.filter(entity::cpe::Column::Edition.eq("*")),
-            Component::NotApplicable => query.filter(entity::cpe::Column::Edition.is_null()),
-            Component::Value(inner) => query.filter(entity::cpe::Column::Edition.eq(inner)),
-        };
-
-        query = match cpe.language() {
-            Language::Any => query.filter(entity::cpe::Column::Language.eq("*")),
-            Language::Language(inner) => query.filter(entity::cpe::Column::Language.eq(inner)),
-        };
+        let query = cpe::Entity::find_by_id(cpe.uuid());
 
         if let Some(found) = query.one(&self.connection(&tx)).await? {
             Ok(Some((self, found).into()))
@@ -77,8 +35,8 @@ impl Graph {
         query: SelectStatement,
         tx: TX,
     ) -> Result<Vec<CpeContext>, Error> {
-        Ok(entity::cpe::Entity::find()
-            .filter(entity::cpe::Column::Id.in_subquery(query))
+        Ok(cpe::Entity::find()
+            .filter(cpe::Column::Id.in_subquery(query))
             .all(&self.connection(&tx))
             .await?
             .into_iter()
@@ -98,7 +56,7 @@ impl Graph {
             return Ok(found);
         }
 
-        let entity: entity::cpe::ActiveModel = cpe.into();
+        let entity: cpe::ActiveModel = cpe.into();
 
         Ok((self, entity.insert(&self.connection(&tx)).await?).into())
     }
@@ -107,11 +65,11 @@ impl Graph {
 #[derive(Clone)]
 pub struct CpeContext {
     pub system: Graph,
-    pub cpe: entity::cpe::Model,
+    pub cpe: cpe::Model,
 }
 
-impl From<(&Graph, entity::cpe::Model)> for CpeContext {
-    fn from((system, cpe22): (&Graph, entity::cpe::Model)) -> Self {
+impl From<(&Graph, cpe::Model)> for CpeContext {
+    fn from((system, cpe22): (&Graph, cpe::Model)) -> Self {
         Self {
             system: system.clone(),
             cpe: cpe22,
@@ -125,32 +83,34 @@ impl Debug for CpeContext {
     }
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct CpeCreator {
-    graph: Graph,
-    cpes: HashMap<Cpe, CpeContext>,
+    cpes: HashMap<Uuid, cpe::ActiveModel>,
 }
 
 impl CpeCreator {
-    pub fn new(graph: Graph) -> Self {
-        Self {
-            graph,
-            cpes: Default::default(),
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    pub async fn ingest(
-        &mut self,
-        cpe: Cpe,
-        tx: impl AsRef<Transactional>,
-    ) -> Result<CpeContext, Error> {
-        match self.cpes.entry(cpe) {
-            Entry::Occupied(entry) => Ok(entry.get().clone()),
-            Entry::Vacant(entry) => {
-                let cpe = self.graph.ingest_cpe22(entry.key().clone(), tx).await?;
-                Ok(entry.insert(cpe).clone())
-            }
+    pub fn add(&mut self, cpe: Cpe) {
+        self.cpes.insert(cpe.uuid(), cpe.into());
+    }
+
+    pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
+        for batch in &self.cpes.into_values().chunked() {
+            cpe::Entity::insert_many(batch)
+                .on_conflict(
+                    OnConflict::columns([cpe::Column::Id])
+                        .do_nothing()
+                        .to_owned(),
+                )
+                .do_nothing()
+                .exec(db)
+                .await?;
         }
+
+        Ok(())
     }
 }
 

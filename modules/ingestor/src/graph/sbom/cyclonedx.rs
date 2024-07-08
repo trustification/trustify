@@ -1,10 +1,8 @@
-use crate::graph::cpe::CpeCreator;
-use crate::graph::sbom::RelationshipCreator;
 use crate::graph::{
+    cpe::CpeCreator,
     product::ProductInformation,
     purl::creator::PurlCreator,
-    sbom::{PackageCreator, PackageReference, SbomContext, SbomInformation},
-    Graph,
+    sbom::{PackageCreator, PackageReference, RelationshipCreator, SbomContext, SbomInformation},
 };
 use cyclonedx_bom::prelude::{Bom, Component, Components};
 use sea_orm::ConnectionTrait;
@@ -121,7 +119,7 @@ impl SbomContext {
             }
         }
 
-        creator.create(&self.graph, &tx, db).await?;
+        creator.create(db).await?;
 
         Ok(())
     }
@@ -168,14 +166,9 @@ impl<'a> Creator<'a> {
         self.relations.push((left, rel, right));
     }
 
-    pub async fn create(
-        self,
-        graph: &Graph,
-        tx: impl AsRef<Transactional>,
-        db: &impl ConnectionTrait,
-    ) -> anyhow::Result<()> {
+    pub async fn create(self, db: &impl ConnectionTrait) -> anyhow::Result<()> {
         let mut purls = PurlCreator::new();
-        let mut cpes = CpeCreator::new(graph.clone());
+        let mut cpes = CpeCreator::new();
         let mut packages = PackageCreator::with_capacity(self.sbom_id, self.components.len());
         let mut relationships =
             RelationshipCreator::with_capacity(self.sbom_id, self.relations.len());
@@ -197,8 +190,9 @@ impl<'a> Creator<'a> {
             }
             if let Some(cpe) = &comp.cpe {
                 if let Ok(cpe) = Cpe::from_str(cpe.as_ref()) {
-                    let cpe = cpes.ingest(cpe, &tx).await?;
-                    refs.push(PackageReference::Cpe(cpe.cpe.id));
+                    let id = cpe.uuid();
+                    cpes.add(cpe);
+                    refs.push(PackageReference::Cpe(id));
                 }
             }
 
@@ -215,6 +209,7 @@ impl<'a> Creator<'a> {
         }
 
         purls.create(db).await?;
+        cpes.create(db).await?;
         packages.create(db).await?;
         relationships.create(db).await?;
 

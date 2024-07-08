@@ -1,18 +1,16 @@
-use sea_orm::{DbErr, TransactionTrait};
-use std::fmt::Debug;
-use tracing::instrument;
-use trustify_common::db::{ConnectionOrTransaction, Transactional};
-
-mod cpe;
-
 pub mod advisory;
+pub mod cpe;
 pub mod error;
+pub mod organization;
+pub mod product;
 pub mod purl;
 pub mod sbom;
 pub mod vulnerability;
 
-pub mod organization;
-pub mod product;
+use sea_orm::{DbErr, TransactionTrait};
+use std::fmt::Debug;
+use tracing::instrument;
+use trustify_common::db::{ConnectionOrTransaction, Transactional};
 
 #[derive(Debug, Clone)]
 pub struct Graph {

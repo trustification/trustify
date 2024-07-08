@@ -12,6 +12,7 @@ use sea_orm::{
     QueryTrait,
 };
 use sea_query::{Condition, Order};
+use tracing::instrument;
 use trustify_common::purl::{Purl, PurlErr};
 use trustify_common::{
     db::{
@@ -278,6 +279,7 @@ impl PurlService {
         }
     }
 
+    #[instrument(skip(self, tx), err)]
     pub async fn purl_by_uuid<TX: AsRef<Transactional>>(
         &self,
         purl_uuid: &Uuid,
@@ -319,6 +321,7 @@ impl PurlService {
         })
     }
 
+    #[instrument(skip(self, tx), err)]
     pub async fn purls<TX: AsRef<Transactional>>(
         &self,
         query: Query,
