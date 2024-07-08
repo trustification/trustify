@@ -39,7 +39,6 @@ hex = { workspace = true }
 humantime = { workspace = true }
 jsonpath-rust = { workspace = true }
 log = { workspace = true }
-rust-lzma = { workspace = true }
 serde_json = { workspace = true }
 spdx-rs = { workspace = true }
 sha2 = { workspace = true }

@@ -2,7 +2,6 @@
 
 mod helpers;
 use bytes::Bytes;
-use helpers::stream::{stream, xz_stream};
 use serde_json::Value;
 use std::str::FromStr;
 use test_context::futures::stream;
@@ -21,41 +20,37 @@ use trustify_test_context::TrustifyContext;
 /// We re-ingest two versions of the same quarkus SBOM. However, as the quarkus SBOM doesn't have
 /// anything in common other than the filename (which doesn't matter), these are considered two
 /// different SBOMs.
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[instrument]
 #[test(tokio::test)]
-async fn quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
+async fn quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = &ctx.db;
     let graph = Graph::new(db.clone());
     let (storage, _tmp) = FileSystemBackend::for_test().await?;
     let sbom = SbomService::new(db.clone());
     let ingest = IngestorService::new(graph, storage);
 
     // ingest the first version
-
     let result1 = ingest
         .ingest(
             ("source", "test"),
             None,
             Format::SPDX,
-            stream(include_bytes!(
-                "data/quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json"
-            )),
+            ctx.document_stream("quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json")
+                .await?,
         )
         .await?;
 
     assert_eq!(result1.document_id, "https://access.redhat.com/security/data/sbom/beta/spdx/quarkus-bom-b52acd7c-3a3f-441e-aef0-bbdaa1ec8acf");
 
     // ingest the second version
-
     let result2 = ingest
         .ingest(
             ("source", "test"),
             None,
             Format::SPDX,
-            stream(include_bytes!(
-                "data/quarkus/v2/quarkus-bom-2.13.8.Final-redhat-00004.json"
-            )),
+            ctx.document_stream("quarkus/v2/quarkus-bom-2.13.8.Final-redhat-00004.json")
+                .await?,
         )
         .await?;
 
@@ -116,24 +111,23 @@ async fn quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
 /// Re-ingest two versions of nhc. They to have the same name and mostly the same name and
 /// document id/namespace. However, they still get ingested as two different SBOMs.
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[instrument]
 #[test(tokio::test)]
-async fn nhc(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
+async fn nhc(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = &ctx.db;
     let graph = Graph::new(db.clone());
     let (storage, _tmp) = FileSystemBackend::for_test().await?;
     let sbom = SbomService::new(db.clone());
     let ingest = IngestorService::new(graph, storage);
 
     // ingest the first version
-
     let result1 = ingest
         .ingest(
             ("source", "test"),
             None,
             Format::SPDX,
-            xz_stream(include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz")),
+            ctx.document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
         )
         .await?;
 
@@ -143,13 +137,12 @@ async fn nhc(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     );
 
     // ingest the second version
-
     let result2 = ingest
         .ingest(
             ("source", "test"),
             None,
             Format::SPDX,
-            xz_stream(include_bytes!("data/nhc/v2/nhc-0.4.z.json.xz")),
+            ctx.document_stream("nhc/v2/nhc-0.4.z.json.xz").await?,
         )
         .await?;
 
@@ -194,11 +187,11 @@ async fn nhc(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 }
 
 /// Re-ingest the same version of nhc twice.
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[instrument]
 #[test(tokio::test)]
-async fn nhc_same(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
+async fn nhc_same(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = &ctx.db;
     let graph = Graph::new(db.clone());
     let (storage, _tmp) = FileSystemBackend::for_test().await?;
     let sbom = SbomService::new(db.clone());
@@ -211,7 +204,7 @@ async fn nhc_same(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            xz_stream(include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz")),
+            ctx.document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
         )
         .await?;
 
@@ -227,7 +220,7 @@ async fn nhc_same(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            xz_stream(include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz")),
+            ctx.document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
         )
         .await?;
 
@@ -274,11 +267,11 @@ async fn nhc_same(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 }
 
 /// Re-ingest the same version of nhc twice, but reformat the second one.
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[instrument]
 #[test(tokio::test)]
-async fn nhc_same_content(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
+async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = &ctx.db;
     let graph = Graph::new(db.clone());
     let (storage, _tmp) = FileSystemBackend::for_test().await?;
     let sbom = SbomService::new(db.clone());
@@ -291,7 +284,7 @@ async fn nhc_same_content(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            xz_stream(include_bytes!("data/nhc/v1/nhc-0.4.z.json.xz")),
+            ctx.document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
         )
         .await?;
 
@@ -309,9 +302,8 @@ async fn nhc_same_content(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             Format::SPDX,
             stream::once({
                 // re-serialize file (non-pretty)
-                let json: Value = serde_json::from_slice(&lzma::decompress(include_bytes!(
-                    "data/nhc/v1/nhc-0.4.z.json.xz"
-                ))?)?;
+                let json: Value =
+                    serde_json::from_slice(&ctx.document_bytes("nhc/v1/nhc-0.4.z.json.xz").await?)?;
 
                 let result = serde_json::to_vec(&json).map(Bytes::from);
 
@@ -366,11 +358,11 @@ async fn nhc_same_content(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 ///
 /// This should be the same SBOM, as it's built from exactly the same container. However, conforming
 /// to the SPDX spec, the document gets a new "document namespace".
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[instrument]
 #[test(tokio::test)]
-async fn syft_rerun(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
+async fn syft_rerun(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = &ctx.db;
     let graph = Graph::new(db.clone());
     let (storage, _tmp) = FileSystemBackend::for_test().await?;
     let sbom = SbomService::new(db.clone());
@@ -383,7 +375,7 @@ async fn syft_rerun(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            xz_stream(include_bytes!("data/syft-ubi-example/v1.json.xz")),
+            ctx.document_stream("syft-ubi-example/v1.json.xz").await?,
         )
         .await?;
 
@@ -399,7 +391,7 @@ async fn syft_rerun(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            xz_stream(include_bytes!("data/syft-ubi-example/v2.json.xz")),
+            ctx.document_stream("syft-ubi-example/v2.json.xz").await?,
         )
         .await?;
 

@@ -1,16 +1,9 @@
 #![allow(dead_code)]
-pub mod stream;
-
 use cyclonedx_bom::prelude::Bom;
-use lzma::LzmaReader;
 use spdx_rs::models::SPDX;
 use std::collections::HashSet;
-use std::fs::File;
 use std::future::Future;
-use std::io::{BufReader, Read};
-use std::path::PathBuf;
 use std::pin::Pin;
-use std::str::FromStr;
 use std::time::Instant;
 use tracing::{info_span, instrument, Instrument};
 use trustify_common::db::{Database, Transactional};
@@ -22,20 +15,6 @@ use trustify_module_ingestor::graph::{
 };
 use trustify_module_ingestor::service::Discard;
 use trustify_test_context::TrustifyContext;
-
-#[instrument]
-pub fn open_sbom(name: &str) -> anyhow::Result<impl Read> {
-    let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-    let test_data = pwd.join("../../etc/test-data");
-
-    let sbom = test_data.join(name);
-    Ok(BufReader::new(File::open(sbom)?))
-}
-
-#[instrument]
-pub fn open_sbom_xz(name: &str) -> anyhow::Result<impl Read> {
-    Ok(LzmaReader::new_decompressor(open_sbom(name)?)?)
-}
 
 /// remove all relationships having broken references
 fn fix_spdx_rels(mut spdx: SPDX) -> SPDX {
@@ -71,7 +50,7 @@ pub struct WithContext {
 }
 
 #[instrument(skip(ctx, f))]
-pub async fn test_with_spdx<F, Fut>(ctx: TrustifyContext, sbom: &str, f: F) -> anyhow::Result<()>
+pub async fn test_with_spdx<F, Fut>(ctx: &TrustifyContext, sbom: &str, f: F) -> anyhow::Result<()>
 where
     F: FnOnce(WithContext) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
@@ -97,7 +76,7 @@ where
 
 #[instrument(skip(ctx, f))]
 pub async fn test_with_cyclonedx<F, Fut>(
-    ctx: TrustifyContext,
+    ctx: &TrustifyContext,
     sbom: &str,
     f: F,
 ) -> anyhow::Result<()>
@@ -118,7 +97,7 @@ where
 
 #[instrument(skip(ctx, p, i, c, f))]
 pub async fn test_with<B, P, I, C, F, FFut>(
-    ctx: TrustifyContext,
+    ctx: &TrustifyContext,
     sbom: &str,
     p: P,
     i: I,
@@ -126,7 +105,7 @@ pub async fn test_with<B, P, I, C, F, FFut>(
     f: F,
 ) -> anyhow::Result<()>
 where
-    P: FnOnce(Vec<u8>) -> anyhow::Result<B>,
+    P: FnOnce(&[u8]) -> anyhow::Result<B>,
     for<'a> I: FnOnce(
         &'a SbomContext,
         B,
@@ -140,21 +119,17 @@ where
     // while we're testing. So we take the `db` and offer it to the test, but we hold on the `ctx`
     // instance until that test returns.
 
-    let db = ctx.db;
+    let db = &ctx.db;
     let graph = Graph::new(db.clone());
     let service = SbomService::new(db.clone());
 
     let start = Instant::now();
-    let sbom = info_span!("parse json").in_scope(|| {
-        let mut buffer = Vec::new();
-        if sbom.ends_with(".xz") {
-            open_sbom_xz(sbom)?.read_to_end(&mut buffer)?;
-        } else {
-            open_sbom(sbom)?.read_to_end(&mut buffer)?;
-        };
-
-        p(buffer)
-    })?;
+    let sbom = info_span!("parse json")
+        .in_scope(|| async {
+            let bytes = ctx.document_bytes(sbom).await?;
+            p(&bytes[..])
+        })
+        .await?;
 
     let parse_time = start.elapsed();
 
@@ -187,7 +162,7 @@ where
     let start = Instant::now();
     f(WithContext {
         sbom: ctx,
-        db,
+        db: db.clone(),
         graph,
         service,
     })
