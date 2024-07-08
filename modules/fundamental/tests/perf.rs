@@ -1,4 +1,5 @@
-use super::{test_with_spdx, WithContext};
+mod helpers;
+use helpers::{test_with_spdx, WithContext};
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
