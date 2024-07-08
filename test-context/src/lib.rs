@@ -1,16 +1,18 @@
 use postgresql_embedded::{PostgreSQL, Settings, VersionReq};
-use std::convert::Infallible;
+use std::collections::HashMap;
 use std::env;
 use std::env::current_dir;
 use std::io::ErrorKind;
-use std::path::PathBuf;
-use test_context::futures::stream;
+use std::ops::Index;
+use std::path::{Path, PathBuf};
 use test_context::AsyncTestContext;
 use tokio::io::AsyncReadExt;
 use tokio_util::bytes::Bytes;
+use tokio_util::io::ReaderStream;
 use tracing::{info_span, instrument, Instrument};
 use trustify_common as common;
 use trustify_module_ingestor::graph::Graph;
+use trustify_module_ingestor::model::IngestResult;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::fs::FileSystemBackend;
 
@@ -23,28 +25,85 @@ pub struct TrustifyContext {
     postgresql: Option<PostgreSQL>,
 }
 
+pub struct IngestionResults {
+    results: HashMap<String, Result<IngestResult, anyhow::Error>>,
+}
+
+impl Index<&str> for IngestionResults {
+    type Output = Result<IngestResult, anyhow::Error>;
+
+    fn index(&self, index: &str) -> &Self::Output {
+        self.results.get(index).expect("valid document path")
+    }
+}
+
 impl TrustifyContext {
     pub async fn ingest_documents<'a, P: IntoIterator<Item = &'a str>>(
         &self,
         paths: P,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<IngestionResults, anyhow::Error> {
         let workspace_root = find_workspace_root()?;
         let test_data = workspace_root.join("etc").join("test-data");
 
+        let mut results = HashMap::new();
+
         for path in paths {
-            //ingestor.ingest((), None, Format::from_bytes(bytes), bytes)
-            let path = test_data.join(path);
-            let mut file = tokio::fs::File::open(path).await?;
-            let mut bytes = Vec::new();
-            file.read_to_end(&mut bytes).await?;
-
-            let format = Format::from_bytes(&bytes)?;
-
-            let stream = stream::iter([Ok::<_, Infallible>(Bytes::copy_from_slice(&bytes))]);
-
-            self.ingestor.ingest((), None, format, stream).await?;
+            results.insert(
+                path.to_string(),
+                self.ingest_document_inner(&test_data, path).await,
+            );
         }
-        Ok(())
+
+        Ok(IngestionResults { results })
+    }
+
+    pub async fn ingest_document(&self, path: &str) -> Result<IngestResult, anyhow::Error> {
+        let workspace_root = find_workspace_root()?;
+        let test_data = workspace_root.join("etc").join("test-data");
+
+        self.ingest_document_inner(&test_data, path).await
+    }
+
+    async fn ingest_document_inner(
+        &self,
+        test_data: &Path,
+        path: &str,
+    ) -> Result<IngestResult, anyhow::Error> {
+        let path_buf = test_data.join(path);
+        let mut file = tokio::fs::File::open(path_buf).await?;
+        let mut bytes = Vec::new();
+        file.read_to_end(&mut bytes).await?;
+
+        if path.ends_with(".xz") {
+            bytes = lzma::decompress(&bytes)?;
+        }
+
+        let format = Format::from_bytes(&bytes)?;
+        let stream = ReaderStream::new(bytes.as_ref());
+
+        self.ingestor
+            .ingest((), None, format, stream)
+            .await
+            .map_err(|e| e.into())
+    }
+
+    pub async fn document_bytes(&self, path: &str) -> Result<Bytes, anyhow::Error> {
+        let workspace_root = find_workspace_root()?;
+        let test_data = workspace_root.join("etc").join("test-data");
+        self.document_bytes_inner(&test_data, path).await
+    }
+
+    async fn document_bytes_inner(
+        &self,
+        test_data: &Path,
+        path: &str,
+    ) -> Result<Bytes, anyhow::Error> {
+        let path_buf = test_data.join(path);
+        let mut file = tokio::fs::File::open(path_buf).await?;
+        let mut bytes = Vec::new();
+        file.read_to_end(&mut bytes).await?;
+
+        Ok(Bytes::copy_from_slice(&bytes))
     }
 }
 
@@ -147,5 +206,26 @@ impl AsyncTestContext for TrustifyContext {
 
     async fn teardown(self) {
         // Perform any teardown you wish.
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::TrustifyContext;
+    use test_context::test_context;
+    use test_log::test;
+
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn ingest_documents(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let result = ctx
+            .ingest_documents(["zookeeper-3.9.2-cyclonedx.json"])
+            .await?;
+
+        let ingestion_result = &result["zookeeper-3.9.2-cyclonedx.json"];
+
+        assert!(ingestion_result.is_ok());
+
+        Ok(())
     }
 }

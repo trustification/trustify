@@ -12,6 +12,7 @@ test-context = { workspace = true }
 postgresql_embedded = { workspace = true }
 tracing = { workspace = true }
 anyhow = { workspace = true }
+rust-lzma = { workspace = true }
 log = { workspace = true }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
