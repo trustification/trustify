@@ -6905,32 +6905,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "trustify-integration-tests"
-version = "0.1.0-alpha.10"
-dependencies = [
- "anyhow",
- "bytes",
- "csaf",
- "cyclonedx-bom",
- "futures",
- "humantime",
- "log",
- "rust-lzma",
- "serde_json",
- "spdx-rs",
- "test-context",
- "test-log",
- "tokio",
- "tracing",
- "trustify-common",
- "trustify-entity",
- "trustify-module-fundamental",
- "trustify-module-ingestor",
- "trustify-module-storage",
- "trustify-test-context",
-]
-
-[[package]]
 name = "trustify-migration"
 version = "0.1.0-alpha.10"
 dependencies = [

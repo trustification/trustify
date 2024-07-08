@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+pub mod stream;
+
 use cyclonedx_bom::prelude::Bom;
 use lzma::LzmaReader;
 use spdx_rs::models::SPDX;
@@ -35,7 +38,6 @@ pub fn open_sbom_xz(name: &str) -> anyhow::Result<impl Read> {
 }
 
 /// remove all relationships having broken references
-#[allow(dead_code)]
 fn fix_spdx_rels(mut spdx: SPDX) -> SPDX {
     let mut ids = spdx
         .package_information

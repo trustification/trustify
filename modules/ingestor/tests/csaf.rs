@@ -1,5 +1,3 @@
-#![cfg(test)]
-
 use std::time::Instant;
 use test_context::test_context;
 use test_log::test;

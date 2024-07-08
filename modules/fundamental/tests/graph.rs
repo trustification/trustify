@@ -1,5 +1,3 @@
-#![cfg(test)]
-
 use std::convert::TryInto;
 use std::str::FromStr;
 use test_context::test_context;

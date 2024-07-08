@@ -1,4 +1,3 @@
-#![cfg(test)]
 //! Testing broken references
 
 use bytes::Bytes;
