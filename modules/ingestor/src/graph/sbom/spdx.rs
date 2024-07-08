@@ -102,18 +102,24 @@ impl SbomContext {
 
             for r in &package.external_reference {
                 match &*r.reference_type {
-                    "purl" => {
-                        if let Ok(purl) = Purl::from_str(&r.reference_locator) {
+                    "purl" => match Purl::from_str(&r.reference_locator) {
+                        Ok(purl) => {
                             refs.push(PackageReference::Purl(purl.qualifier_uuid()));
                             purls.add(purl);
                         }
-                    }
-                    "cpe22Type" => {
-                        if let Ok(cpe) = Cpe::from_str(&r.reference_locator) {
+                        Err(err) => {
+                            log::info!("Failed to parse PURL ({}): {err}", r.reference_locator);
+                        }
+                    },
+                    "cpe22Type" => match Cpe::from_str(&r.reference_locator) {
+                        Ok(cpe) => {
                             let cpe = cpes.ingest(cpe, &tx).await?;
                             refs.push(PackageReference::Cpe(cpe.cpe.id));
                         }
-                    }
+                        Err(err) => {
+                            log::info!("Failed to parse CPE ({}): {err}", r.reference_locator);
+                        }
+                    },
                     _ => {}
                 }
             }
