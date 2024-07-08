@@ -6935,7 +6935,6 @@ dependencies = [
  "humantime",
  "jsonpath-rust",
  "log",
- "rust-lzma",
  "sea-orm",
  "sea-query",
  "serde",
@@ -7150,6 +7149,7 @@ name = "trustify-test-context"
 version = "0.1.0-alpha.10"
 dependencies = [
  "anyhow",
+ "futures",
  "log",
  "postgresql_embedded",
  "rust-lzma",

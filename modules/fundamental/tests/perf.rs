@@ -7,10 +7,10 @@ use trustify_common::{db::Transactional, model::Paginated};
 use trustify_module_fundamental::sbom::model::SbomPackage;
 use trustify_test_context::TrustifyContext;
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(tokio::test)]
 #[instrument]
-async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn ingest_spdx_medium(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     test_with_spdx(
         ctx,
         "openshift-container-storage-4.8.z.json.xz",
@@ -53,10 +53,10 @@ async fn ingest_spdx_medium(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 }
 
 // ignore because it's a slow slow slow test.
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[ignore]
 #[test(tokio::test)]
-async fn ingest_spdx_large(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn ingest_spdx_large(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     test_with_spdx(
         ctx,
         "openshift-4.13.json.xz",
@@ -77,10 +77,10 @@ async fn ingest_spdx_large(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 }
 
 /// A test having a lot of CPEs to ingest
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(tokio::test)]
 #[instrument]
-async fn ingest_spdx_medium_cpes(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn ingest_spdx_medium_cpes(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     test_with_spdx(
         ctx,
         "rhel-br-9.2.0.json.xz",

@@ -8,10 +8,10 @@ use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::sbom::model::{SbomPackage, Which};
 use trustify_test_context::TrustifyContext;
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[instrument]
 #[test(tokio::test)]
-async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     test_with_spdx(
         ctx,
         "quarkus-bom-2.13.8.Final-redhat-00004.json",
@@ -53,9 +53,9 @@ async fn parse_spdx_quarkus(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     ).await
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(tokio::test)]
-async fn test_parse_spdx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn test_parse_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     test_with_spdx(
         ctx,
         "ubi9-9.2-755.1697625012.json",

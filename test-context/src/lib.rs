@@ -1,3 +1,4 @@
+use futures::{stream, Stream};
 use postgresql_embedded::{PostgreSQL, Settings, VersionReq};
 use std::env;
 use std::env::current_dir;
@@ -57,6 +58,14 @@ impl TrustifyContext {
             bytes = lzma::decompress(&bytes)?;
         }
         Ok(Bytes::copy_from_slice(&bytes))
+    }
+
+    pub async fn document_stream(
+        &self,
+        path: &str,
+    ) -> Result<impl Stream<Item = Result<Bytes, std::io::Error>>, anyhow::Error> {
+        let bytes = self.document_bytes(path).await?;
+        Ok(stream::once(async { Ok(bytes) }))
     }
 }
 
