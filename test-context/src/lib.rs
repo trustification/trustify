@@ -1,9 +1,7 @@
 use postgresql_embedded::{PostgreSQL, Settings, VersionReq};
-use std::collections::HashMap;
 use std::env;
 use std::env::current_dir;
 use std::io::ErrorKind;
-use std::ops::Index;
 use std::path::{Path, PathBuf};
 use test_context::AsyncTestContext;
 use tokio::io::AsyncReadExt;
@@ -25,37 +23,21 @@ pub struct TrustifyContext {
     postgresql: Option<PostgreSQL>,
 }
 
-pub struct IngestionResults {
-    results: HashMap<String, Result<IngestResult, anyhow::Error>>,
-}
-
-impl Index<&str> for IngestionResults {
-    type Output = Result<IngestResult, anyhow::Error>;
-
-    #[allow(clippy::expect_used)]
-    fn index(&self, index: &str) -> &Self::Output {
-        self.results.get(index).expect("valid document path")
-    }
-}
-
 impl TrustifyContext {
     pub async fn ingest_documents<'a, P: IntoIterator<Item = &'a str>>(
         &self,
         paths: P,
-    ) -> Result<IngestionResults, anyhow::Error> {
+    ) -> Result<Vec<IngestResult>, anyhow::Error> {
         let workspace_root = find_workspace_root()?;
         let test_data = workspace_root.join("etc").join("test-data");
 
-        let mut results = HashMap::new();
+        let mut results = Vec::new();
 
         for path in paths {
-            results.insert(
-                path.to_string(),
-                self.ingest_document_inner(&test_data, path).await,
-            );
+            results.push(self.ingest_document_inner(&test_data, path).await?);
         }
 
-        Ok(IngestionResults { results })
+        Ok(results)
     }
 
     pub async fn ingest_document(&self, path: &str) -> Result<IngestResult, anyhow::Error> {
@@ -223,9 +205,9 @@ mod test {
             .ingest_documents(["zookeeper-3.9.2-cyclonedx.json"])
             .await?;
 
-        let ingestion_result = &result["zookeeper-3.9.2-cyclonedx.json"];
+        let ingestion_result = &result[0];
 
-        assert!(ingestion_result.is_ok());
+        assert!(!ingestion_result.document_id.is_empty());
 
         Ok(())
     }
