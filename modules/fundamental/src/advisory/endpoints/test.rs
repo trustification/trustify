@@ -25,7 +25,6 @@ use trustify_cvss::cvss3::{
     PrivilegesRequired, Scope, UserInteraction,
 };
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::Format;
 use trustify_module_ingestor::{
     graph::{advisory::AdvisoryInformation, Graph},
     model::IngestResult,
@@ -353,11 +352,8 @@ async fn search_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(result.total, 0);
 
     // ingest some advisories
-    ctx.ingest_documents([
-        (Format::CVE, "mitre/CVE-2024-27088.json"),
-        (Format::CVE, "mitre/CVE-2024-28111.json"),
-    ])
-    .await?;
+    ctx.ingest_documents(["mitre/CVE-2024-27088.json", "mitre/CVE-2024-28111.json"])
+        .await?;
 
     let result = query(&app, "").await;
     assert_eq!(result.total, 2);
