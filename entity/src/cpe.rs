@@ -156,8 +156,18 @@ impl TryFrom<CpeDto> for Cpe {
     fn try_from(value: CpeDto) -> Result<Self, Self::Error> {
         let mut cpe = Uri::builder();
 
-        apply!(cpe, value => part, language);
+        apply!(cpe, value => part);
         apply_fix!(cpe, value => vendor, product, version, update, edition);
+
+        // apply the fix for the language field
+
+        if let Some(language) = &value.language {
+            if language == "*" {
+                cpe.language("ANY");
+            } else {
+                cpe.language(language);
+            }
+        }
 
         cpe.validate().map(|cpe| cpe.into())
     }
@@ -189,6 +199,17 @@ mod test {
             id: Set(id),
             ..cpe.into()
         };
+
+        assert_eq!(model.part, Set(Some("a".to_string())));
+        assert_eq!(model.vendor, Set(Some("redhat".to_string())));
+        assert_eq!(
+            model.product,
+            Set(Some("openshift_container_storage".to_string()))
+        );
+        assert_eq!(model.version, Set(Some("4.8".to_string())));
+        assert_eq!(model.update, Set(Some("*".to_string())));
+        assert_eq!(model.edition, Set(Some("el8".to_string())));
+        assert_eq!(model.language, Set(Some("*".to_string())));
 
         log::info!("cpe: {model:#?}");
 
