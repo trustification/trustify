@@ -31,6 +31,7 @@ uuid = { workspace = true }
 
 [dev-dependencies]
 actix-http = { workspace = true }
+bytes = { workspace = true }
 bytesize = { workspace = true }
 chrono = { workspace = true }
 hex = { workspace = true }
