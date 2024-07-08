@@ -16,7 +16,6 @@ use trustify_common::db::{Database, Transactional};
 use trustify_common::model::PaginatedResults;
 use trustify_common::purl::Purl;
 use trustify_module_ingestor::graph::Graph;
-use trustify_module_ingestor::service::Format;
 use trustify_test_context::TrustifyContext;
 
 async fn setup(db: &Database) -> Result<(), anyhow::Error> {
@@ -388,11 +387,8 @@ async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
         )
         .await?;
 
-    ctx.ingest_documents([
-        (Format::OSV, "osv/RUSTSEC-2021-0079.json"),
-        (Format::CVE, "cve/CVE-2021-32714.json"),
-    ])
-    .await?;
+    ctx.ingest_documents(["osv/RUSTSEC-2021-0079.json", "cve/CVE-2021-32714.json"])
+        .await?;
 
     let app = actix_web::test::init_service(
         App::new()

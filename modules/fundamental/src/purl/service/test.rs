@@ -4,12 +4,14 @@ use std::str::FromStr;
 use std::sync::Arc;
 use test_context::test_context;
 use test_log::test;
+use tokio_util::io::ReaderStream;
 use trustify_common::db::query::{q, Query};
 use trustify_common::db::Transactional;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_module_ingestor::graph::Graph;
-use trustify_module_ingestor::service::Format;
+use trustify_module_ingestor::service::{Format, IngestorService};
+use trustify_module_storage::service::fs::FileSystemBackend;
 use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext, skip_teardown)]
@@ -551,11 +553,8 @@ async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test(actix_web::test)]
 async fn statuses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let service = PurlService::new(ctx.db.clone());
-    ctx.ingest_documents([
-        (Format::OSV, "osv/RUSTSEC-2021-0079.json"),
-        (Format::CVE, "cve/CVE-2021-32714.json"),
-    ])
-    .await?;
+    ctx.ingest_documents(["osv/RUSTSEC-2021-0079.json", "cve/CVE-2021-32714.json"])
+        .await?;
 
     ctx.ingestor
         .graph()

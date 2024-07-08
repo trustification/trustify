@@ -1,10 +1,13 @@
 use postgresql_embedded::{PostgreSQL, Settings, VersionReq};
+use std::convert::Infallible;
 use std::env;
 use std::env::current_dir;
 use std::io::ErrorKind;
 use std::path::PathBuf;
+use test_context::futures::stream;
 use test_context::AsyncTestContext;
-use tokio_util::io::ReaderStream;
+use tokio::io::AsyncReadExt;
+use tokio_util::bytes::Bytes;
 use tracing::{info_span, instrument, Instrument};
 use trustify_common as common;
 use trustify_module_ingestor::graph::Graph;
@@ -21,18 +24,23 @@ pub struct TrustifyContext {
 }
 
 impl TrustifyContext {
-    pub async fn ingest_documents<'a, P: IntoIterator<Item = (Format, &'a str)>>(
+    pub async fn ingest_documents<'a, P: IntoIterator<Item = &'a str>>(
         &self,
         paths: P,
     ) -> Result<(), anyhow::Error> {
         let workspace_root = find_workspace_root()?;
         let test_data = workspace_root.join("etc").join("test-data");
 
-        for (format, path) in paths {
+        for path in paths {
             //ingestor.ingest((), None, Format::from_bytes(bytes), bytes)
             let path = test_data.join(path);
-            let file = tokio::fs::File::open(path).await?;
-            let stream = ReaderStream::new(file);
+            let mut file = tokio::fs::File::open(path).await?;
+            let mut bytes = Vec::new();
+            file.read_to_end(&mut bytes).await?;
+
+            let format = Format::from_bytes(&bytes)?;
+
+            let stream = stream::iter([Ok::<_, Infallible>(Bytes::copy_from_slice(&bytes))]);
 
             self.ingestor.ingest((), None, format, stream).await?;
         }
