@@ -1,4 +1,5 @@
-use crate::sbom::test::{test_with_cyclonedx, WithContext};
+mod helpers;
+use helpers::{test_with_cyclonedx, WithContext};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::db::Transactional;

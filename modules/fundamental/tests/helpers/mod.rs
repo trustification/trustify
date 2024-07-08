@@ -1,9 +1,3 @@
-#![cfg(test)]
-
-mod cyclonedx;
-mod perf;
-mod spdx;
-
 use cyclonedx_bom::prelude::Bom;
 use lzma::LzmaReader;
 use spdx_rs::models::SPDX;
@@ -29,7 +23,7 @@ use trustify_test_context::TrustifyContext;
 #[instrument]
 pub fn open_sbom(name: &str) -> anyhow::Result<impl Read> {
     let pwd = PathBuf::from_str(env!("CARGO_MANIFEST_DIR"))?;
-    let test_data = pwd.join("../etc/test-data");
+    let test_data = pwd.join("../../etc/test-data");
 
     let sbom = test_data.join(name);
     Ok(BufReader::new(File::open(sbom)?))
@@ -41,7 +35,8 @@ pub fn open_sbom_xz(name: &str) -> anyhow::Result<impl Read> {
 }
 
 /// remove all relationships having broken references
-pub fn fix_spdx_rels(mut spdx: SPDX) -> SPDX {
+#[allow(dead_code)]
+fn fix_spdx_rels(mut spdx: SPDX) -> SPDX {
     let mut ids = spdx
         .package_information
         .iter()
@@ -74,7 +69,7 @@ pub struct WithContext {
 }
 
 #[instrument(skip(ctx, f))]
-async fn test_with_spdx<F, Fut>(ctx: TrustifyContext, sbom: &str, f: F) -> anyhow::Result<()>
+pub async fn test_with_spdx<F, Fut>(ctx: TrustifyContext, sbom: &str, f: F) -> anyhow::Result<()>
 where
     F: FnOnce(WithContext) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
@@ -99,7 +94,11 @@ where
 }
 
 #[instrument(skip(ctx, f))]
-async fn test_with_cyclonedx<F, Fut>(ctx: TrustifyContext, sbom: &str, f: F) -> anyhow::Result<()>
+pub async fn test_with_cyclonedx<F, Fut>(
+    ctx: TrustifyContext,
+    sbom: &str,
+    f: F,
+) -> anyhow::Result<()>
 where
     F: FnOnce(WithContext) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
@@ -116,7 +115,7 @@ where
 }
 
 #[instrument(skip(ctx, p, i, c, f))]
-async fn test_with<B, P, I, C, F, FFut>(
+pub async fn test_with<B, P, I, C, F, FFut>(
     ctx: TrustifyContext,
     sbom: &str,
     p: P,

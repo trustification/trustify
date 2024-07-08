@@ -34,11 +34,14 @@ actix-http = { workspace = true }
 bytes = { workspace = true }
 bytesize = { workspace = true }
 chrono = { workspace = true }
+cyclonedx-bom = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }
 jsonpath-rust = { workspace = true }
 log = { workspace = true }
+rust-lzma = { workspace = true }
 serde_json = { workspace = true }
+spdx-rs = { workspace = true }
 sha2 = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
