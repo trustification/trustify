@@ -1214,8 +1214,7 @@ checksum = "06ea2b9bc92be3c2baa9334a323ebca2d6f074ff852cd1d7b11064035cd3868f"
 [[package]]
 name = "cpe"
 version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60a3c185473370ee529ba129d07a15fc2ae98f2530deafe6e68b01647d41359d"
+source = "git+https://github.com/ctron/cpe-rs?rev=c3c05e637f6eff7dd4933c2f56d070ee2ddfb44b#c3c05e637f6eff7dd4933c2f56d070ee2ddfb44b"
 dependencies = [
  "derive_builder",
  "language-tags",

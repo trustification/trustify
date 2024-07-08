@@ -145,10 +145,9 @@ trustify-module-graphql = { path = "modules/graphql" }
 #walker-common = { path = "../csaf-walker/common" }
 #walker-extras = { path = "../csaf-walker/extras" }
 
-# required due to:
-# * https://github.com/CycloneDX/cyclonedx-rust-cargo/pull/708
-#cyclonedx-bom = { git = "https://github.com/CycloneDX/cyclonedx-rust-cargo", rev = "36098a232d3f208c7d4f36e8b1094a8dcc5ae2c4" }
-
 #garage-door = { git = "https://github.com/ctron/garage-door", rev = "c02fdbbb95d4482d97497dfb62c41dede023b2ea" }
 #garage-door = { path = "../garage-door" }
 #oxide-auth = { git = "https://github.com/ctron/oxide-auth", rev = "cd0c79c48a702ea6bb0b05e95e9eddcba8f6c77f" }
+
+# required due to https://github.com/KenDJohnson/cpe-rs/pull/15
+cpe = { git = "https://github.com/ctron/cpe-rs", rev = "c3c05e637f6eff7dd4933c2f56d070ee2ddfb44b" }
