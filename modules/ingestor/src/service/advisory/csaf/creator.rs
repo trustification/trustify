@@ -115,6 +115,7 @@ impl PurlStatusCreator {
             let package_status = purl_status::Entity::find()
                 .filter(purl_status::Column::BasePurlId.eq(package_id))
                 .filter(purl_status::Column::AdvisoryId.eq(self.advisory_id))
+                .filter(purl_status::Column::VulnerabilityId.eq(&self.vulnerability_id))
                 .filter(purl_status::Column::StatusId.eq(status.id))
                 .filter(
                     cpe_id
