@@ -1,10 +1,8 @@
-#![cfg(test)]
-
 use bytes::Bytes;
 use lzma::LzmaError;
 use std::convert::Infallible;
 
-use futures::{stream, Stream};
+use test_context::futures::{stream, Stream};
 
 /// Take a slice, xa decompress the data and return it as a stream.
 ///

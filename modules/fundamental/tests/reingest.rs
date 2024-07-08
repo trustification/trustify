@@ -1,8 +1,8 @@
-//! Testing to re-ingest a document, ensuring there is not stale data
-#![cfg(test)]
+#![allow(clippy::expect_used)]
 
-use crate::stream::{stream, xz_stream};
+mod helpers;
 use bytes::Bytes;
+use helpers::stream::{stream, xz_stream};
 use serde_json::Value;
 use std::str::FromStr;
 use test_context::futures::stream;
