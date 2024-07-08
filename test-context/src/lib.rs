@@ -2,7 +2,7 @@ use postgresql_embedded::{PostgreSQL, Settings, VersionReq};
 use std::env;
 use std::env::current_dir;
 use std::io::ErrorKind;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use test_context::AsyncTestContext;
 use tokio::io::AsyncReadExt;
 use tokio_util::bytes::Bytes;
@@ -28,39 +28,15 @@ impl TrustifyContext {
         &self,
         paths: P,
     ) -> Result<Vec<IngestResult>, anyhow::Error> {
-        let workspace_root = find_workspace_root()?;
-        let test_data = workspace_root.join("etc").join("test-data");
-
         let mut results = Vec::new();
-
         for path in paths {
-            results.push(self.ingest_document_inner(&test_data, path).await?);
+            results.push(self.ingest_document(path).await?);
         }
-
         Ok(results)
     }
 
     pub async fn ingest_document(&self, path: &str) -> Result<IngestResult, anyhow::Error> {
-        let workspace_root = find_workspace_root()?;
-        let test_data = workspace_root.join("etc").join("test-data");
-
-        self.ingest_document_inner(&test_data, path).await
-    }
-
-    async fn ingest_document_inner(
-        &self,
-        test_data: &Path,
-        path: &str,
-    ) -> Result<IngestResult, anyhow::Error> {
-        let path_buf = test_data.join(path);
-        let mut file = tokio::fs::File::open(path_buf).await?;
-        let mut bytes = Vec::new();
-        file.read_to_end(&mut bytes).await?;
-
-        if path.ends_with(".xz") {
-            bytes = lzma::decompress(&bytes)?;
-        }
-
+        let bytes = self.document_bytes(path).await?;
         let format = Format::from_bytes(&bytes)?;
         let stream = ReaderStream::new(bytes.as_ref());
 
@@ -73,19 +49,13 @@ impl TrustifyContext {
     pub async fn document_bytes(&self, path: &str) -> Result<Bytes, anyhow::Error> {
         let workspace_root = find_workspace_root()?;
         let test_data = workspace_root.join("etc").join("test-data");
-        self.document_bytes_inner(&test_data, path).await
-    }
-
-    async fn document_bytes_inner(
-        &self,
-        test_data: &Path,
-        path: &str,
-    ) -> Result<Bytes, anyhow::Error> {
         let path_buf = test_data.join(path);
         let mut file = tokio::fs::File::open(path_buf).await?;
         let mut bytes = Vec::new();
         file.read_to_end(&mut bytes).await?;
-
+        if path.ends_with(".xz") {
+            bytes = lzma::decompress(&bytes)?;
+        }
         Ok(Bytes::copy_from_slice(&bytes))
     }
 }
