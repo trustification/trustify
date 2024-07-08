@@ -2,8 +2,8 @@
 //! Testing broken references
 
 use bytes::Bytes;
-use futures::stream;
 use std::convert::Infallible;
+use test_context::futures::stream;
 use test_context::test_context;
 use test_log::test;
 use trustify_module_fundamental::sbom::service::SbomService;
