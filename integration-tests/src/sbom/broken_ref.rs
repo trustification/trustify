@@ -17,7 +17,7 @@ use trustify_module_storage::service::fs::FileSystemBackend;
 async fn ingest_spdx_broken_refs(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
     let graph = Graph::new(db.clone());
-    let data = include_bytes!("../../../etc/test-data/broken-refs.json");
+    let data = include_bytes!("../../../etc/test-data/spdx/broken-refs.json");
 
     let (storage, _tmp) = FileSystemBackend::for_test().await?;
 
