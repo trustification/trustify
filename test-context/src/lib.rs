@@ -32,6 +32,7 @@ pub struct IngestionResults {
 impl Index<&str> for IngestionResults {
     type Output = Result<IngestResult, anyhow::Error>;
 
+    #[allow(clippy::expect_used)]
     fn index(&self, index: &str) -> &Self::Output {
         self.results.get(index).expect("valid document path")
     }
