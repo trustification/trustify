@@ -9,12 +9,10 @@ use actix_web::{
 use futures_util::future::LocalBoxFuture;
 use test_context::test_context;
 use test_log::test;
-use tokio_util::io::ReaderStream;
 use trustify_auth::authorizer::Authorizer;
 use trustify_common::{id::Id, model::PaginatedResults};
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::{graph::Graph, model::IngestResult, service::IngestorService};
-use trustify_module_storage::service::fs::FileSystemBackend;
+use trustify_module_ingestor::model::IngestResult;
 use trustify_test_context::TrustifyContext;
 use uuid::Uuid;
 
@@ -28,35 +26,24 @@ where
     actix_web::test::call_and_read_body_json(app, req).await
 }
 
-async fn ingest(service: &IngestorService, data: &[u8]) -> IngestResult {
-    use trustify_module_ingestor::service::Format;
-    service
-        .ingest(
-            ("source", "unit-test"),
-            None,
-            Format::from_bytes(data).unwrap(),
-            ReaderStream::new(data),
-        )
-        .await
-        .unwrap()
-}
-
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn filter_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Graph::new(db.clone());
-    let (storage, _) = FileSystemBackend::for_test().await?;
-    let ingestor = IngestorService::new(graph, storage.clone());
+async fn filter_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = actix_web::test::init_service(
         App::new()
-            .service(web::scope("/api").configure(|config| configure(config, db, storage.clone())))
+            .service(
+                web::scope("/api")
+                    .configure(|config| configure(config, ctx.db.clone(), ctx.storage.clone())),
+            )
             .app_data(web::Data::new(Authorizer::new(None))),
     )
     .await;
 
-    let data = include_bytes!("../../../../../etc/test-data/zookeeper-3.9.2-cyclonedx.json");
-    let id = ingest(&ingestor, data).await.id.to_string();
+    let id = ctx
+        .ingest_document("zookeeper-3.9.2-cyclonedx.json")
+        .await?
+        .id
+        .to_string();
 
     let result = query(&app, &id, "").await;
     assert_eq!(result.total, 41);
@@ -74,20 +61,18 @@ async fn filter_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-const DOC: &[u8] =
-    include_bytes!("../../../../../etc/test-data/quarkus-bom-2.13.8.Final-redhat-00004.json");
-
 /// This will upload [`DOC`], and then call the test function, providing the upload id of the document.
-async fn with_upload<F>(ctx: TrustifyContext, f: F) -> anyhow::Result<()>
+async fn with_upload<F>(ctx: &TrustifyContext, f: F) -> anyhow::Result<()>
 where
     for<'a> F: FnOnce(IngestResult, &'a dyn CallService) -> LocalBoxFuture<'a, anyhow::Result<()>>,
 {
-    let db = ctx.db;
-    let (storage, _) = FileSystemBackend::for_test().await?;
     let app = actix_web::test::init_service(
         App::new()
             .app_data(web::PayloadConfig::default().limit(5 * 1024 * 1024))
-            .service(web::scope("/api").configure(|svc| configure(svc, db, storage.clone()))),
+            .service(
+                web::scope("/api")
+                    .configure(|svc| configure(svc, ctx.db.clone(), ctx.storage.clone())),
+            ),
     )
     .await;
 
@@ -95,7 +80,10 @@ where
 
     let request = TestRequest::post()
         .uri("/api/v1/sbom")
-        .set_payload(DOC)
+        .set_payload(
+            ctx.document_bytes("quarkus-bom-2.13.8.Final-redhat-00004.json")
+                .await?,
+        )
         .to_request();
 
     let response = actix_web::test::call_service(&app, request).await;
@@ -115,9 +103,9 @@ where
 }
 
 /// Test setting labels
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn set_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn set_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     with_upload(ctx, |result, app| {
         Box::pin(async move {
             // update labels
@@ -139,9 +127,9 @@ async fn set_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 }
 
 /// Test setting labels, for a document that does not exists
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn set_labels_not_found(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn set_labels_not_found(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     with_upload(ctx, |_result, app| {
         Box::pin(async move {
             // update labels
