@@ -4,6 +4,7 @@ use cpe::{
 };
 use std::fmt::{Debug, Display, Formatter};
 use std::str::FromStr;
+use uuid::Uuid;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
 pub struct Cpe {
@@ -16,11 +17,54 @@ impl Display for Cpe {
     }
 }
 
+const NAMESPACE: Uuid = Uuid::from_bytes([
+    0x1b, 0xf1, 0x2a, 0xd5, 0x0d, 0x67, 0x41, 0x18, 0xa1, 0x38, 0xb8, 0x9f, 0x19, 0x35, 0xe0, 0xa7,
+]);
+
+impl Cpe {
+    /// Build a v5 UUID for this CPE.
+    pub fn uuid(&self) -> Uuid {
+        let result = Uuid::new_v5(
+            &NAMESPACE,
+            match self.part() {
+                CpeType::Any => b"*",
+                CpeType::Hardware => b"h",
+                CpeType::OperatingSystem => b"o",
+                CpeType::Application => b"a",
+                CpeType::Empty => b"",
+            },
+        );
+
+        let result = Uuid::new_v5(&result, self.vendor().as_ref().as_bytes());
+        let result = Uuid::new_v5(&result, self.product().as_ref().as_bytes());
+        let result = Uuid::new_v5(&result, self.version().as_ref().as_bytes());
+        let result = Uuid::new_v5(&result, self.update().as_ref().as_bytes());
+        let result = Uuid::new_v5(&result, self.edition().as_ref().as_bytes());
+
+        let result = match self.language() {
+            Language::Any => Uuid::new_v5(&result, b"*"),
+            Language::Language(value) => Uuid::new_v5(&result, value.as_bytes()),
+        };
+
+        result
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum Component {
     Any,
     NotApplicable,
     Value(String),
+}
+
+impl AsRef<str> for Component {
+    fn as_ref(&self) -> &str {
+        match self {
+            Self::Any => "*",
+            Self::NotApplicable => "",
+            Self::Value(value) => value,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -125,5 +169,19 @@ impl FromStr for Cpe {
         Ok(Self {
             uri: OwnedUri::from_str(s)?,
         })
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn uuid_simple() {
+        let cpe = Cpe::from_str("cpe:/a:redhat:enterprise_linux:9::crb").expect("must parse");
+        assert_eq!(
+            cpe.uuid().to_string(),
+            "61bca16a-febc-5d79-8b4d-f51fa37c876d"
+        );
     }
 }

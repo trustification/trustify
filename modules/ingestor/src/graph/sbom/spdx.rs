@@ -56,7 +56,7 @@ impl SbomContext {
         // prepare packages
 
         let mut purls = PurlCreator::new();
-        let mut cpes = CpeCreator::new(self.graph.clone());
+        let mut cpes = CpeCreator::new();
 
         // prepare relationships
 
@@ -113,8 +113,9 @@ impl SbomContext {
                     },
                     "cpe22Type" => match Cpe::from_str(&r.reference_locator) {
                         Ok(cpe) => {
-                            let cpe = cpes.ingest(cpe, &tx).await?;
-                            refs.push(PackageReference::Cpe(cpe.cpe.id));
+                            let id = cpe.uuid();
+                            cpes.add(cpe);
+                            refs.push(PackageReference::Cpe(id));
                         }
                         Err(err) => {
                             log::info!("Failed to parse CPE ({}): {err}", r.reference_locator);
@@ -163,9 +164,10 @@ impl SbomContext {
 
         let db = self.graph.connection(&tx);
 
-        // create all purls
+        // create all purls and CPEs
 
         purls.create(&db).await?;
+        cpes.create(&db).await?;
 
         // validate relationships before inserting
 

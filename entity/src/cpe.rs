@@ -61,7 +61,7 @@ impl Display for Model {
 impl ActiveModel {
     pub fn from_cpe(cpe: Cpe) -> Self {
         ActiveModel {
-            id: Default::default(),
+            id: Set(cpe.uuid()),
             part: match cpe.part() {
                 CpeType::Any => Set(Some("*".to_string())),
                 CpeType::Hardware => Set(Some("h".to_string())),
@@ -183,7 +183,6 @@ mod test {
     use trustify_common::cpe::Cpe;
 
     // currently broken due to: https://github.com/KenDJohnson/cpe-rs/issues/9
-    #[ignore]
     #[test]
     fn test_roundtrip() {
         // from here we start
@@ -192,7 +191,7 @@ mod test {
         // parse into a CPE
         let cpe = Cpe::from_str(CPE).unwrap();
 
-        let id = Uuid::new_v4();
+        let id = cpe.uuid();
 
         // turn it into a model to be inserted
         let model = ActiveModel {
@@ -215,7 +214,7 @@ mod test {
 
         // now turn into a model and destructure to ensure we don't miss any new fields
         let Model {
-            id: _,
+            id,
             part,
             vendor,
             product,
@@ -244,5 +243,9 @@ mod test {
         // ensure it's the same as the original one
 
         assert_eq!(CPE, format!("{cpe:0}"));
+
+        // including the v5 UUID
+
+        assert_eq!(id, cpe.uuid());
     }
 }

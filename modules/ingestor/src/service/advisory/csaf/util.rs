@@ -30,11 +30,11 @@ pub fn resolve_identifier<'a>(
                 .flat_map(branch_cpe)
                 .collect();
 
-            if cpes.is_empty() && purls.is_empty() {
-                return None;
+            return if cpes.is_empty() && purls.is_empty() {
+                None
             } else {
-                return Some((cpes.first().cloned(), purls.first().cloned()));
-            }
+                Some((cpes.first().cloned(), purls.first().cloned()))
+            };
         }
     }
 
