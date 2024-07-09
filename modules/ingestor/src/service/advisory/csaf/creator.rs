@@ -90,7 +90,7 @@ impl PurlStatusCreator {
             purls.add(ps.purl.clone());
 
             if let Some(cpe) = &ps.cpe {
-                cpes.add(Cpe::from(cpe.clone()));
+                cpes.add(cpe.clone());
             }
         }
 
