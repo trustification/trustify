@@ -1,4 +1,5 @@
 //! Testing broken references
+#![allow(clippy::expect_used)]
 
 use bytes::Bytes;
 use std::convert::Infallible;

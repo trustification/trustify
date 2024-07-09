@@ -59,7 +59,7 @@ where
         ctx,
         sbom,
         |data| {
-            let (sbom, _) = parse_spdx(&Discard, &*data)?;
+            let (sbom, _) = parse_spdx(&Discard, data)?;
             Ok(fix_spdx_rels(sbom))
         },
         |ctx, sbom, tx| {
@@ -87,7 +87,7 @@ where
     test_with(
         ctx,
         sbom,
-        |data| Ok(Bom::parse_from_json(&*data)?),
+        |data| Ok(Bom::parse_from_json(data)?),
         |ctx, sbom, tx| Box::pin(async move { ctx.ingest_cyclonedx(sbom.clone(), &tx).await }),
         |sbom| sbom::cyclonedx::Information(sbom).into(),
         f,
