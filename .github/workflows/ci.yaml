@@ -39,8 +39,8 @@ jobs:
 
       - name: Format
         run: cargo fmt --check
-      - name: Check
-        run: cargo check
+      - name: Build
+        run: cargo build
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings -D clippy::unwrap_used -D clippy::expect_used
       - name: Test
