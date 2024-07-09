@@ -145,6 +145,7 @@ impl<'g> CveLoader<'g> {
         Ok(IngestResult {
             id: Id::Uuid(advisory.advisory.id),
             document_id: id.to_string(),
+            warnings: vec![],
         })
     }
 }

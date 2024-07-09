@@ -191,6 +191,7 @@ impl<'g> OsvLoader<'g> {
         Ok(IngestResult {
             id: Id::Uuid(advisory.advisory.id),
             document_id: osv.id,
+            warnings: vec![],
         })
     }
 }

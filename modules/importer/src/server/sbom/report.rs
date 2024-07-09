@@ -1,6 +1,6 @@
-use crate::server::common::storage::StorageError;
 use crate::server::{
-    report::{Phase, ReportVisitor, Severity},
+    common::storage::StorageError,
+    report::{Phase, ReportVisitor},
     sbom::storage::StorageVisitor,
 };
 use sbom_walker::{
@@ -42,7 +42,6 @@ impl ValidatedVisitor for SbomReportVisitor {
                     self.0.report.lock().add_error(
                         Phase::Retrieval,
                         file,
-                        Severity::Error,
                         format!("retrieval of document failed: {code}"),
                     );
 
@@ -60,7 +59,6 @@ impl ValidatedVisitor for SbomReportVisitor {
                     self.0.report.lock().add_error(
                         Phase::Validation,
                         file,
-                        Severity::Error,
                         format!("digest mismatch - expected: {expected}, actual: {actual}"),
                     );
 
@@ -72,7 +70,6 @@ impl ValidatedVisitor for SbomReportVisitor {
                     self.0.report.lock().add_error(
                         Phase::Validation,
                         file,
-                        Severity::Error,
                         format!("unable to verify signature: {error}"),
                     );
 
@@ -84,7 +81,6 @@ impl ValidatedVisitor for SbomReportVisitor {
                     self.0.report.lock().add_error(
                         Phase::Upload,
                         file,
-                        Severity::Error,
                         format!("processing failed: {err}"),
                     );
 
@@ -96,7 +92,6 @@ impl ValidatedVisitor for SbomReportVisitor {
                     self.0.report.lock().add_error(
                         Phase::Upload,
                         file,
-                        Severity::Error,
                         format!("upload failed: {err}"),
                     );
 

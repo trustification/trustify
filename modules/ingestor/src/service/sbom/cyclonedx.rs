@@ -62,6 +62,7 @@ impl<'g> CyclonedxLoader<'g> {
         Ok(IngestResult {
             id: Id::Uuid(ctx.sbom.sbom_id),
             document_id,
+            warnings: vec![],
         })
     }
 }

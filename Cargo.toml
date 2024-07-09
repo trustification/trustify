@@ -86,7 +86,7 @@ reqwest = "0.12"
 ring = "0.17.8"
 rstest = "0.21"
 rust-lzma = "0.6.0"
-sbom-walker = { version = "0.8.0", default-features = false }
+sbom-walker = { version = "0.8.6", default-features = false }
 schemars = "0.8"
 sea-orm = "0.12"
 sea-orm-migration = "0.12.2"

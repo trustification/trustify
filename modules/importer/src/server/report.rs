@@ -1,7 +1,6 @@
 use crate::server::RunOutput;
 use parking_lot::Mutex;
-use std::collections::BTreeMap;
-use std::sync::Arc;
+use std::{collections::BTreeMap, iter, sync::Arc};
 use time::OffsetDateTime;
 
 #[derive(
@@ -46,6 +45,22 @@ pub struct Message {
     pub message: String,
 }
 
+impl Message {
+    pub fn error(message: impl Into<String>) -> Self {
+        Self {
+            severity: Severity::Error,
+            message: message.into(),
+        }
+    }
+
+    pub fn warning(message: impl Into<String>) -> Self {
+        Self {
+            severity: Severity::Warning,
+            message: message.into(),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct ReportBuilder {
     report: Report,
@@ -67,15 +82,47 @@ impl ReportBuilder {
         self.report.number_of_items += 1;
     }
 
-    pub fn add_error(
+    /// Add a single message
+    pub fn add_message(
         &mut self,
         phase: Phase,
         file: impl Into<String>,
         severity: Severity,
         message: impl Into<String>,
     ) {
+        self.extend_messages(
+            phase,
+            file,
+            [Message {
+                severity,
+                message: message.into(),
+            }],
+        )
+    }
+
+    /// Add a single error
+    pub fn add_error(&mut self, phase: Phase, file: impl Into<String>, message: impl Into<String>) {
+        self.add_message(phase, file, Severity::Error, message)
+    }
+
+    pub fn extend_messages(
+        &mut self,
+        phase: Phase,
+        file: impl Into<String>,
+        messages: impl IntoIterator<Item = Message>,
+    ) {
         let file = file.into();
-        let message = message.into();
+        let mut messages = messages.into_iter();
+
+        // check if we have at least one item
+
+        let first = messages.next();
+        let Some(first) = first else {
+            // if not, return without creating any phase or file
+            return;
+        };
+
+        // now add the first, and all remaining messages
 
         self.report
             .messages
@@ -83,7 +130,7 @@ impl ReportBuilder {
             .or_default()
             .entry(file)
             .or_default()
-            .push(Message { severity, message });
+            .extend(iter::once(first).chain(messages));
     }
 
     pub fn build(mut self) -> Report {

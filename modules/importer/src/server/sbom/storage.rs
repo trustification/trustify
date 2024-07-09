@@ -1,4 +1,5 @@
 use crate::server::common::storage::StorageError;
+use crate::server::report::{Message, Phase};
 use crate::server::{context::RunContext, report::ReportBuilder};
 use parking_lot::Mutex;
 use sbom_walker::validation::{
@@ -49,12 +50,13 @@ impl ValidatedVisitor for StorageVisitor {
 
         let fmt = Format::sbom_from_bytes(&data).map_err(|e| StorageError::Processing(e.into()))?;
 
-        self.ingestor
+        let result = self
+            .ingestor
             .ingest(
                 Labels::new()
                     .add("source", &self.source)
                     .add("importer", self.context.name())
-                    .add("file", file)
+                    .add("file", &file)
                     .extend(&self.labels.0),
                 None,
                 fmt,
@@ -62,6 +64,12 @@ impl ValidatedVisitor for StorageVisitor {
             )
             .await
             .map_err(StorageError::Storage)?;
+
+        self.report.lock().extend_messages(
+            Phase::Upload,
+            file,
+            result.warnings.into_iter().map(Message::warning),
+        );
 
         self.context.check_canceled(|| StorageError::Canceled).await
     }
