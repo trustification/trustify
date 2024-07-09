@@ -619,7 +619,7 @@ async fn contextual_status(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let advisory = &tomcat_jsp.advisories[0];
 
-    println!("{advisory:#?}");
+    log::debug!("{advisory:#?}");
 
     assert_eq!(2, advisory.status.len());
 
