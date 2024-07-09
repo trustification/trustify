@@ -113,9 +113,8 @@ impl SbomContext {
                     },
                     "cpe22Type" => match Cpe::from_str(&r.reference_locator) {
                         Ok(cpe) => {
-                            let id = cpe.uuid();
+                            refs.push(PackageReference::Cpe(cpe.uuid()));
                             cpes.add(cpe);
-                            refs.push(PackageReference::Cpe(id));
                         }
                         Err(err) => {
                             log::info!("Failed to parse CPE ({}): {err}", r.reference_locator);
