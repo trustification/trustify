@@ -5237,9 +5237,9 @@ dependencies = [
 
 [[package]]
 name = "sbom-walker"
-version = "0.8.3"
+version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb3974baea75511208b5f4626c4079f68e62982f1b4b0a17250d90f631247f55"
+checksum = "77465ef162006a314761555240855a680d8d12f756f7d98790790b56144bd2d7"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5254,6 +5254,7 @@ dependencies = [
  "http 1.1.0",
  "humantime",
  "log",
+ "parking_lot 0.12.3",
  "reqwest 0.12.5",
  "sequoia-openpgp",
  "serde",
@@ -7071,9 +7072,11 @@ dependencies = [
  "log",
  "osv",
  "packageurl",
+ "parking_lot 0.12.3",
  "rand",
  "ring",
  "rstest",
+ "sbom-walker",
  "sea-orm",
  "sea-query",
  "serde",
@@ -7521,9 +7524,9 @@ dependencies = [
 
 [[package]]
 name = "walker-common"
-version = "0.8.3"
+version = "0.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "965cafdb80b67e297fb0b0c440f05e46789a11a8e07970797983ffb9e33fc8a0"
+checksum = "fbefe8beabb52e3aedefe8cd8f255af4779882060592850855827663e18b13eb"
 dependencies = [
  "anyhow",
  "async-trait",

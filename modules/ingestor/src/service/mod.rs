@@ -10,7 +10,10 @@ use actix_web::{body::BoxBody, HttpResponse, ResponseError};
 use anyhow::anyhow;
 use bytes::Bytes;
 use futures::Stream;
+use parking_lot::Mutex;
+use sbom_walker::report::ReportSink;
 use sea_orm::error::DbErr;
+use std::sync::Arc;
 use std::{fmt::Debug, time::Instant};
 use tracing::instrument;
 use trustify_common::{error::ErrorInformation, id::IdError};
@@ -140,4 +143,29 @@ impl IngestorService {
 
         Ok(result)
     }
+}
+
+/// Capture warnings from the import process
+#[derive(Default)]
+pub(crate) struct Warnings(Arc<Mutex<Vec<String>>>);
+
+impl ReportSink for Warnings {
+    fn error(&self, msg: String) {
+        self.0.lock().push(msg);
+    }
+}
+
+impl From<Warnings> for Vec<String> {
+    fn from(value: Warnings) -> Self {
+        match Arc::try_unwrap(value.0) {
+            Ok(warnings) => warnings.into_inner(),
+            Err(warnings) => warnings.lock().clone(),
+        }
+    }
+}
+
+pub struct Discard;
+
+impl ReportSink for Discard {
+    fn error(&self, _msg: String) {}
 }

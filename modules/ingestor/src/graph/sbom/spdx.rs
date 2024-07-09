@@ -10,6 +10,7 @@ use crate::{
     },
     service::Error,
 };
+use sbom_walker::report::{check, ReportSink};
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
 use std::{io::Read, str::FromStr};
@@ -47,12 +48,17 @@ impl<'a> From<Information<'a>> for SbomInformation {
 }
 
 impl SbomContext {
-    #[instrument(skip(tx, sbom_data), err)]
+    #[instrument(skip(tx, sbom_data, warnings), err)]
     pub async fn ingest_spdx<TX: AsRef<Transactional>>(
         &self,
         sbom_data: SPDX,
+        warnings: &dyn ReportSink,
         tx: TX,
     ) -> Result<(), Error> {
+        // pre-flight checks
+
+        check::spdx::all(warnings, &sbom_data);
+
         // prepare packages
 
         let mut purls = PurlCreator::new();
@@ -246,15 +252,19 @@ impl<'spdx> TryFrom<&'spdx spdx_rs::models::Relationship> for SpdxRelationship<'
 }
 
 /// Check the document for invalid SPDX license expressions and replace them with `NOASSERTION`.
-pub fn fix_license(mut json: Value) -> (Value, bool) {
+pub fn fix_license(report: &dyn ReportSink, mut json: Value) -> (Value, bool) {
     let mut changed = false;
     if let Some(packages) = json["packages"].as_array_mut() {
         for package in packages {
             if let Some(declared) = package["licenseDeclared"].as_str() {
                 if let Err(err) = spdx_expression::SpdxExpression::parse(declared) {
-                    log::warn!("Replacing faulty SPDX license expression with NOASSERTION: {err}");
                     package["licenseDeclared"] = "NOASSERTION".into();
                     changed = true;
+
+                    let message =
+                        format!("Replacing faulty SPDX license expression with NOASSERTION: {err}");
+                    log::warn!("{message}");
+                    report.error(message);
                 }
             }
         }
@@ -266,8 +276,11 @@ pub fn fix_license(mut json: Value) -> (Value, bool) {
 /// Parse a SPDX document, possibly replacing invalid license expressions.
 ///
 /// Returns the parsed document and a flag indicating if license expressions got replaced.
-pub fn parse_spdx<R: Read>(data: R) -> Result<(SPDX, bool), serde_json::Error> {
+pub fn parse_spdx(
+    report: &dyn ReportSink,
+    data: impl Read,
+) -> Result<(SPDX, bool), serde_json::Error> {
     let json = serde_json::from_reader::<_, Value>(data)?;
-    let (json, changed) = fix_license(json);
+    let (json, changed) = fix_license(report, json);
     Ok((serde_json::from_value(json)?, changed))
 }

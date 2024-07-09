@@ -23,6 +23,7 @@ use trustify_module_ingestor::graph::{
     sbom::{self, spdx::parse_spdx, SbomContext, SbomInformation},
     Graph,
 };
+use trustify_module_ingestor::service::Discard;
 use trustify_test_context::TrustifyContext;
 
 #[instrument]
@@ -82,10 +83,15 @@ where
         ctx,
         sbom,
         |data| {
-            let (sbom, _) = parse_spdx(&*data)?;
+            let (sbom, _) = parse_spdx(&Discard, &*data)?;
             Ok(fix_spdx_rels(sbom))
         },
-        |ctx, sbom, tx| Box::pin(async move { Ok(ctx.ingest_spdx(sbom.clone(), &tx).await?) }),
+        |ctx, sbom, tx| {
+            Box::pin(async move {
+                ctx.ingest_spdx(sbom.clone(), &Discard, &tx).await?;
+                Ok(())
+            })
+        },
         |sbom| sbom::spdx::Information(sbom).into(),
         f,
     )

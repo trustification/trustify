@@ -6,7 +6,7 @@ use crate::{
         common::walker::{CallbackError, Callbacks},
         context::RunContext,
         osv::walker::OsvWalker,
-        report::{Phase, ReportBuilder, ScannerError, Severity},
+        report::{Phase, ReportBuilder, ScannerError},
         RunOutput,
     },
 };
@@ -57,22 +57,16 @@ impl Context {
 
 impl Callbacks<Vulnerability> for Context {
     fn loading_error(&mut self, path: PathBuf, message: String) {
-        self.report.lock().add_error(
-            Phase::Validation,
-            path.to_string_lossy(),
-            Severity::Error,
-            message,
-        );
+        self.report
+            .lock()
+            .add_error(Phase::Validation, path.to_string_lossy(), message);
     }
 
     fn process(&mut self, path: &Path, osv: Vulnerability) -> Result<(), CallbackError> {
         if let Err(err) = self.store(path, osv) {
-            self.report.lock().add_error(
-                Phase::Upload,
-                path.to_string_lossy(),
-                Severity::Error,
-                err.to_string(),
-            );
+            self.report
+                .lock()
+                .add_error(Phase::Upload, path.to_string_lossy(), err.to_string());
         }
 
         self.context.check_canceled_sync(|| CallbackError::Canceled)

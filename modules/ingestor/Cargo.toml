@@ -26,7 +26,9 @@ lenient_semver = { workspace = true }
 log = { workspace = true }
 osv = { workspace = true, features = ["schema"] }
 packageurl = { workspace = true }
+parking_lot = { workspace = true }
 ring = { workspace = true }
+sbom-walker = { workspace = true }
 sea-orm = { workspace = true }
 sea-query = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

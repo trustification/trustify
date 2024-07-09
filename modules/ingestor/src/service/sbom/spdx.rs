@@ -1,3 +1,4 @@
+use crate::service::Warnings;
 use crate::{
     graph::{
         sbom::spdx::{self, parse_spdx},
@@ -25,8 +26,9 @@ impl<'g> SpdxLoader<'g> {
         json: R,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
-        // FIXME: consider adding a report entry in case of "fixing" things
-        let (spdx, _) = parse_spdx(json)?;
+        let warnings = Warnings::default();
+
+        let (spdx, _) = parse_spdx(&warnings, json)?;
 
         log::info!(
             "Storing: {}",
@@ -47,13 +49,14 @@ impl<'g> SpdxLoader<'g> {
             .ingest_sbom(labels, digests, &document_id, spdx::Information(&spdx), &tx)
             .await?;
 
-        sbom.ingest_spdx(spdx, &tx).await?;
+        sbom.ingest_spdx(spdx, &warnings, &tx).await?;
 
         tx.commit().await?;
 
         Ok(IngestResult {
             id: Id::Uuid(sbom.sbom.sbom_id),
             document_id,
+            warnings: warnings.into(),
         })
     }
 }
