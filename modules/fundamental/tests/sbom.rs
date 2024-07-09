@@ -1,5 +1,4 @@
 #![allow(clippy::expect_used)]
-#![allow(dead_code)]
 
 mod spdx {
     use super::*;
