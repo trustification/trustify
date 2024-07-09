@@ -102,8 +102,8 @@ env PGPASSWORD=eggs psql -U postgres -d trustify -h localhost -p 5432
 Point the app at an external db:
 
 ```shell
-trustd api --help
-RUST_LOG=info trustd api --db-password eggs --devmode --auth-disabled
+cargo run --bin trustd api --help
+RUST_LOG=info cargo run --bin trustd api --db-password eggs --devmode --auth-disabled
 ```
 
 #### If test failures on OSX
