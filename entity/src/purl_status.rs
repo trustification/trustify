@@ -48,6 +48,18 @@ pub enum Relation {
 
     #[sea_orm(has_many = "super::versioned_purl::Entity")]
     VersionedPurl,
+
+    #[sea_orm(belongs_to = "super::advisory_vulnerability::Entity",
+        from = "(Column::AdvisoryId, Column::VulnerabilityId)"
+        to = "(super::advisory_vulnerability::Column::AdvisoryId, super::advisory_vulnerability::Column::VulnerabilityId)"
+    )]
+    AdvisoryVulnerability,
+
+    #[sea_orm(belongs_to = "super::cpe::Entity",
+        from = "Column::ContextCpeId"
+        to = "super::cpe::Column::Id"
+    )]
+    ContextCpe,
 }
 
 impl Related<version_range::Entity> for Entity {
@@ -83,6 +95,18 @@ impl Related<super::advisory::Entity> for Entity {
 impl Related<super::status::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Status.def()
+    }
+}
+
+impl Related<super::advisory_vulnerability::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::AdvisoryVulnerability.def()
+    }
+}
+
+impl Related<super::cpe::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::ContextCpe.def()
     }
 }
 

@@ -6913,6 +6913,7 @@ dependencies = [
  "bytes",
  "bytesize",
  "chrono",
+ "cpe",
  "cyclonedx-bom",
  "futures-util",
  "hex",
