@@ -25,7 +25,6 @@ pub struct PurlDetails {
     pub base: BasePurlHead,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub advisories: Vec<PurlAdvisory>,
-    // TODO link to advisories, sboms, etc
 }
 
 impl PurlDetails {
@@ -154,7 +153,7 @@ pub struct PurlStatus {
     pub context: Option<StatusContext>,
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Clone, Deserialize, Debug, ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum StatusContext {
     Purl(Purl),

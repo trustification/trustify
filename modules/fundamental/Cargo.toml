@@ -15,6 +15,7 @@ trustify-module-storage = { workspace = true }
 actix-http = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
+cpe = { workspace = true }
 futures-util = { workspace = true }
 log = { workspace = true }
 sea-orm = { workspace = true }
