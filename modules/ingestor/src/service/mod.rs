@@ -148,6 +148,12 @@ impl IngestorService {
 #[derive(Default)]
 pub(crate) struct Warnings(Arc<Mutex<Vec<String>>>);
 
+impl Warnings {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
 impl ReportSink for Warnings {
     fn error(&self, msg: String) {
         self.0.lock().push(msg);

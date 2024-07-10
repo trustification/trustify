@@ -7,12 +7,13 @@ use crate::{
         Graph,
     },
     model::IngestResult,
-    service::{advisory::csaf::PurlStatusCreator, Error},
+    service::{advisory::csaf::PurlStatusCreator, Error, Warnings},
 };
 use csaf::{
     vulnerability::{ProductStatus, Vulnerability},
     Csaf,
 };
+use sbom_walker::report::ReportSink;
 use std::{io::Read, str::FromStr};
 use time::OffsetDateTime;
 use tracing::{info_span, instrument};
@@ -57,6 +58,8 @@ impl<'g> CsafLoader<'g> {
         document: R,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
+        let warnings = Warnings::new();
+
         let csaf: Csaf =
             info_span!("parse document").in_scope(|| serde_json::from_reader(document))?;
 
@@ -71,7 +74,7 @@ impl<'g> CsafLoader<'g> {
             .await?;
 
         for vuln in csaf.vulnerabilities.iter().flatten() {
-            self.ingest_vulnerability(&csaf, &advisory, vuln, &tx)
+            self.ingest_vulnerability(&csaf, &advisory, vuln, &warnings, &tx)
                 .await?;
         }
 
@@ -80,7 +83,7 @@ impl<'g> CsafLoader<'g> {
         Ok(IngestResult {
             id: Id::Uuid(advisory.advisory.id),
             document_id: advisory_id,
-            warnings: vec![],
+            warnings: warnings.into(),
         })
     }
 
@@ -95,6 +98,7 @@ impl<'g> CsafLoader<'g> {
         csaf: &Csaf,
         advisory: &AdvisoryContext<'_>,
         vulnerability: &Vulnerability,
+        report: &dyn ReportSink,
         tx: TX,
     ) -> Result<(), Error> {
         if let Some(cve_id) = &vulnerability.cve {
@@ -124,19 +128,19 @@ impl<'g> CsafLoader<'g> {
                     .await?;
             }
 
-            if let Some(scores) = &vulnerability.scores {
-                for score in scores {
-                    if let Some(v3) = &score.cvss_v3 {
-                        match Cvss3Base::from_str(&v3.to_string()) {
-                            Ok(cvss3) => {
-                                log::debug!("{cvss3:?}");
-                                advisory_vulnerability
-                                    .ingest_cvss3_score(cvss3, &tx)
-                                    .await?;
-                            }
-                            Err(err) => {
-                                log::warn!("Unable to parse CVSS3: {:#?}", err);
-                            }
+            for score in vulnerability.scores.iter().flatten() {
+                if let Some(v3) = &score.cvss_v3 {
+                    match Cvss3Base::from_str(&v3.to_string()) {
+                        Ok(cvss3) => {
+                            log::debug!("{cvss3:?}");
+                            advisory_vulnerability
+                                .ingest_cvss3_score(cvss3, &tx)
+                                .await?;
+                        }
+                        Err(err) => {
+                            let msg = format!("Unable to parse CVSS3: {:#?}", err);
+                            log::info!("{msg}");
+                            report.error(msg);
                         }
                     }
                 }
