@@ -1,9 +1,13 @@
 use trustify_common::id::Id;
 
+/// The result of the ingestion process
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct IngestResult {
+    /// The internal ID of the document
     pub id: Id,
+    /// The ID declared by the document
     pub document_id: String,
+    /// Warnings that occurred during the import process
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub warnings: Vec<String>,
 }
