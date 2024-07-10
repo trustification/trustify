@@ -59,7 +59,11 @@ struct Server {
 }
 
 impl Server {
-    #[instrument(skip_all, err)]
+    // TODO: revisit this later
+    // discarding error instrumentation for a while... #[instrument(skip_all, err)]
+    // tracing_attributes crate is going crazy when enabling error instrumentation.
+    // https://docs.rs/tracing/latest/tracing/attr.instrument.html
+    #[instrument(skip_all)]
     async fn run(&self) -> anyhow::Result<()> {
         let service = ImporterService::new(self.db.clone());
 
