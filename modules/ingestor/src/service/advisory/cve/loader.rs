@@ -105,16 +105,16 @@ impl<'g> CveLoader<'g> {
             .await?;
 
         let mut english_description = None;
+        let mut entries = Vec::<(&str, &str)>::new();
 
         for description in descriptions {
-            vulnerability
-                .add_description(&description.language, &description.value, &tx)
-                .await?;
-
+            entries.push((&description.language, &description.value));
             if description.language == "en" {
                 english_description = Some(description.value.clone());
             }
         }
+
+        vulnerability.add_descriptions(entries, &tx).await?;
 
         let information = AdvisoryInformation {
             title: title.cloned(),
