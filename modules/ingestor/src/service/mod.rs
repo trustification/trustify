@@ -1,5 +1,4 @@
 pub mod advisory;
-pub mod cve;
 pub mod sbom;
 
 mod format;

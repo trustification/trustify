@@ -1,10 +1,12 @@
-use super::cve::loader::CveLoader;
-use super::sbom::cyclonedx::CyclonedxLoader;
-use super::sbom::spdx::SpdxLoader;
-use crate::graph::Graph;
-use crate::model::IngestResult;
-use crate::service::advisory::{csaf::loader::CsafLoader, osv::loader::OsvLoader};
-use crate::service::Error;
+use crate::{
+    graph::Graph,
+    model::IngestResult,
+    service::{
+        advisory::{csaf::loader::CsafLoader, cve::loader::CveLoader, osv::loader::OsvLoader},
+        sbom::{cyclonedx::CyclonedxLoader, spdx::SpdxLoader},
+        Error,
+    },
+};
 use jsn::{mask::*, Format as JsnFormat, TokenReader};
 use std::io::Read;
 use trustify_common::hashing::Digests;

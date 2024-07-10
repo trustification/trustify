@@ -1,8 +1,12 @@
-use crate::graph::advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation};
-use crate::graph::vulnerability::VulnerabilityInformation;
-use crate::graph::Graph;
-use crate::model::IngestResult;
-use crate::service::Error;
+use crate::{
+    graph::{
+        advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation},
+        vulnerability::VulnerabilityInformation,
+        Graph,
+    },
+    model::IngestResult,
+    service::Error,
+};
 use cve::{Cve, Timestamp};
 use std::io::Read;
 use trustify_common::{hashing::Digests, id::Id};
@@ -152,6 +156,7 @@ impl<'g> CveLoader<'g> {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use crate::graph::Graph;
     use hex::ToHex;
     use test_context::test_context;
@@ -160,15 +165,13 @@ mod test {
     use trustify_common::hashing::Digests;
     use trustify_test_context::TrustifyContext;
 
-    use crate::service::cve::loader::CveLoader;
-
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn cve_loader(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         let db = ctx.db;
         let graph = Graph::new(db);
 
-        let data = include_bytes!("../../../../../etc/test-data/mitre/CVE-2024-28111.json");
+        let data = include_bytes!("../../../../../../etc/test-data/mitre/CVE-2024-28111.json");
         let digests = Digests::digest(data);
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
