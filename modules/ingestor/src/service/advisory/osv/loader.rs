@@ -1,5 +1,6 @@
 use crate::graph::advisory::advisory_vulnerability::{Version, VersionInfo, VersionSpec};
 use crate::model::IngestResult;
+use crate::service::Warnings;
 use crate::{
     graph::{
         advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation},
@@ -8,6 +9,7 @@ use crate::{
     service::{advisory::osv::translate, Error},
 };
 use osv::schema::{Event, ReferenceType, SeverityType, Vulnerability};
+use sbom_walker::report::ReportSink;
 use std::{io::Read, str::FromStr, sync::OnceLock};
 use trustify_common::hashing::Digests;
 use trustify_common::id::Id;
@@ -31,6 +33,8 @@ impl<'g> OsvLoader<'g> {
         digests: &Digests,
         issuer: Option<String>,
     ) -> Result<IngestResult, Error> {
+        let warnings = Warnings::new();
+
         let osv: Vulnerability = serde_json::from_reader(record)?;
 
         let labels = labels.into().add("type", "osv");
@@ -88,7 +92,9 @@ impl<'g> OsvLoader<'g> {
                             advisory_vuln.ingest_cvss3_score(cvss3, &tx).await?;
                         }
                         Err(err) => {
-                            log::warn!("Unable to parse CVSS3: {:#?}", err);
+                            let msg = format!("Unable to parse CVSS3: {:#?}", err);
+                            log::info!("{msg}");
+                            warnings.error(msg)
                         }
                     }
                 }
@@ -191,7 +197,7 @@ impl<'g> OsvLoader<'g> {
         Ok(IngestResult {
             id: Id::Uuid(advisory.advisory.id),
             document_id: osv.id,
-            warnings: vec![],
+            warnings: warnings.into(),
         })
     }
 }
