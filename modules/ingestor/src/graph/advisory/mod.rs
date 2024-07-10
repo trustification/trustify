@@ -7,7 +7,7 @@ use hex::ToHex;
 use sea_orm::ActiveValue::Set;
 use sea_orm::ColumnTrait;
 use sea_orm::{ActiveModelTrait, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter};
-use sea_query::Condition;
+use sea_query::{Condition, OnConflict};
 use std::fmt::{Debug, Formatter};
 use time::OffsetDateTime;
 use tracing::instrument;
@@ -240,7 +240,27 @@ impl<'g> AdvisoryContext<'g> {
             cwe: Set(information.as_ref().and_then(|info| info.cwe.clone())),
         };
 
-        Ok((self, entity.insert(&self.graph.connection(&tx)).await?).into())
+        // do an upsert, updating field on a conflict
+        let entity = entity::advisory_vulnerability::Entity::insert(entity)
+            .on_conflict(
+                OnConflict::columns([
+                    entity::advisory_vulnerability::Column::AdvisoryId,
+                    entity::advisory_vulnerability::Column::VulnerabilityId,
+                ])
+                .update_columns([
+                    entity::advisory_vulnerability::Column::Title,
+                    entity::advisory_vulnerability::Column::Summary,
+                    entity::advisory_vulnerability::Column::Description,
+                    entity::advisory_vulnerability::Column::DiscoveryDate,
+                    entity::advisory_vulnerability::Column::ReleaseDate,
+                    entity::advisory_vulnerability::Column::Cwe,
+                ])
+                .to_owned(),
+            )
+            .exec_with_returning(&self.graph.connection(&tx))
+            .await?;
+
+        Ok((self, entity).into())
     }
 
     pub async fn vulnerabilities<TX: AsRef<Transactional>>(
@@ -335,6 +355,10 @@ mod test {
         advisory
             .link_to_vulnerability("CVE-456", None, Transactional::None)
             .await?;
+
+        let vulns = advisory.vulnerabilities(()).await?;
+
+        assert_eq!(vulns.len(), 2);
 
         Ok(())
     }

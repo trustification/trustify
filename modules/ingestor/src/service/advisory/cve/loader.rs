@@ -114,8 +114,6 @@ impl<'g> CveLoader<'g> {
             }
         }
 
-        vulnerability.add_descriptions(entries, &tx).await?;
-
         let information = AdvisoryInformation {
             title: title.cloned(),
             issuer: org_name.cloned(),
@@ -142,6 +140,14 @@ impl<'g> CveLoader<'g> {
                 }),
                 &tx,
             )
+            .await?;
+
+        vulnerability
+            .drop_descriptions_for_advisory(advisory.advisory.id, &tx)
+            .await?;
+
+        vulnerability
+            .add_descriptions(advisory.advisory.id, entries, &tx)
             .await?;
 
         tx.commit().await?;
