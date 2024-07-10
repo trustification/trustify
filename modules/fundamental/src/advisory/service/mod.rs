@@ -146,7 +146,7 @@ impl AdvisoryService {
 
     pub async fn fetch_advisory<TX: AsRef<Transactional> + Sync + Send>(
         &self,
-        hash_key: Id,
+        id: Id,
         tx: TX,
     ) -> Result<Option<AdvisoryDetails>, Error> {
         let connection = self.db.connection(&tx);
@@ -195,7 +195,7 @@ impl AdvisoryService {
                 .cast_as("TEXT".into_identity()),
                 "average_severity",
             )
-            .try_filter(hash_key)?
+            .try_filter(id)?
             .into_model::<AdvisoryCatcher>()
             .one(&connection)
             .await?;
