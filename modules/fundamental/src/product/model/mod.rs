@@ -11,6 +11,7 @@ use trustify_entity::{product, product_version};
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct ProductHead {
+    #[serde(with = "uuid::serde::urn")]
     pub id: Uuid,
     pub name: String,
 }
