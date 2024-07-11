@@ -9,7 +9,7 @@ use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
-async fn reingest_osv(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     async fn assert(ctx: &TrustifyContext, result: IngestResult) -> anyhow::Result<()> {
         let Id::Uuid(id) = result.id else {
             bail!("must be an id")
