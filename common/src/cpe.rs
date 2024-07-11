@@ -172,6 +172,208 @@ impl FromStr for Cpe {
     }
 }
 
+pub trait CpeCompare: cpe::cpe::Cpe {
+    fn is_superset<O: CpeCompare>(&self, other: &O) -> bool {
+        self.compare(other).superset()
+    }
+
+    fn compare<O: CpeCompare>(&self, other: &O) -> CpeCmpResult {
+        let part = if self.part() != other.part() {
+            CpeCmp::Disjoint
+        } else {
+            CpeCmp::Equal
+        };
+
+        let vendor = Self::component_compare(self.vendor(), other.vendor());
+        let product = Self::component_compare(self.product(), other.product());
+        let version = Self::component_compare(self.version(), other.version());
+        let update = Self::component_compare(self.update(), other.update());
+        let edition = Self::component_compare(self.edition(), other.edition());
+        let language = Self::language_compare(self.language(), other.language());
+
+        CpeCmpResult {
+            part,
+            vendor,
+            product,
+            version,
+            update,
+            edition,
+            language,
+        }
+    }
+
+    fn language_compare(source: &cpe::cpe::Language, target: &cpe::cpe::Language) -> CpeCmp {
+        match (source, target) {
+            (cpe::cpe::Language::Any, _) => CpeCmp::Superset,
+            (_, cpe::cpe::Language::Any) => CpeCmp::Subset,
+            (
+                cpe::cpe::Language::Language(source_lang),
+                cpe::cpe::Language::Language(target_lang),
+            ) => {
+                if source_lang == target_lang {
+                    CpeCmp::Equal
+                } else {
+                    CpeCmp::Disjoint
+                }
+            }
+        }
+    }
+
+    fn component_compare(
+        source: cpe::component::Component,
+        target: cpe::component::Component,
+    ) -> CpeCmp {
+        if source == target {
+            return CpeCmp::Equal;
+        }
+
+        match (source, target) {
+            (
+                cpe::component::Component::Value(source_val),
+                cpe::component::Component::Value(target_val),
+            ) => {
+                if source_val.to_lowercase() == target_val.to_lowercase() {
+                    CpeCmp::Equal
+                } else {
+                    CpeCmp::Disjoint
+                }
+            }
+            (cpe::component::Component::Any, _) => CpeCmp::Superset,
+            (_, cpe::component::Component::Any) => CpeCmp::Subset,
+            (cpe::component::Component::NotApplicable, _)
+            | (_, cpe::component::Component::NotApplicable) => CpeCmp::Subset,
+        }
+    }
+}
+
+impl<T: cpe::cpe::Cpe> CpeCompare for T {
+    // defaults are perfectly sufficient.
+}
+
+#[allow(unused)]
+pub enum CpeCmp {
+    Undefined,
+    Superset,
+    Equal,
+    Subset,
+    Disjoint,
+}
+
+pub struct CpeCmpResult {
+    part: CpeCmp,
+    vendor: CpeCmp,
+    product: CpeCmp,
+    version: CpeCmp,
+    update: CpeCmp,
+    edition: CpeCmp,
+    language: CpeCmp,
+}
+
+#[allow(unused)]
+impl CpeCmpResult {
+    pub fn disjoint(&self) -> bool {
+        matches!(self.part, CpeCmp::Disjoint)
+            || matches!(self.vendor, CpeCmp::Disjoint)
+            || matches!(self.product, CpeCmp::Disjoint)
+            || matches!(self.version, CpeCmp::Disjoint)
+            || matches!(self.update, CpeCmp::Disjoint)
+            || matches!(self.edition, CpeCmp::Disjoint)
+            || matches!(self.language, CpeCmp::Disjoint)
+    }
+
+    pub fn superset(&self) -> bool {
+        matches!(self.part, CpeCmp::Superset | CpeCmp::Equal)
+            && matches!(self.vendor, CpeCmp::Superset | CpeCmp::Equal)
+            && matches!(self.product, CpeCmp::Superset | CpeCmp::Equal)
+            && matches!(self.version, CpeCmp::Superset | CpeCmp::Equal)
+            && matches!(self.update, CpeCmp::Superset | CpeCmp::Equal)
+            && matches!(self.edition, CpeCmp::Superset | CpeCmp::Equal)
+            && matches!(self.language, CpeCmp::Superset | CpeCmp::Disjoint)
+    }
+
+    pub fn subset(&self) -> bool {
+        matches!(self.part, CpeCmp::Subset | CpeCmp::Equal)
+            && matches!(self.vendor, CpeCmp::Subset | CpeCmp::Equal)
+            && matches!(self.product, CpeCmp::Subset | CpeCmp::Equal)
+            && matches!(self.version, CpeCmp::Subset | CpeCmp::Equal)
+            && matches!(self.update, CpeCmp::Subset | CpeCmp::Equal)
+            && matches!(self.edition, CpeCmp::Subset | CpeCmp::Equal)
+            && matches!(self.language, CpeCmp::Subset | CpeCmp::Disjoint)
+    }
+
+    pub fn equal(&self) -> bool {
+        matches!(self.part, CpeCmp::Equal)
+            && matches!(self.vendor, CpeCmp::Equal)
+            && matches!(self.product, CpeCmp::Equal)
+            && matches!(self.version, CpeCmp::Equal)
+            && matches!(self.update, CpeCmp::Equal)
+            && matches!(self.edition, CpeCmp::Equal)
+            && matches!(self.language, CpeCmp::Disjoint)
+    }
+}
+
+#[macro_export]
+macro_rules! apply {
+    ($c: expr, $v:expr => $n:ident) => {
+        if let Some($n) = &$v.$n {
+            $c.$n($n);
+        }
+    };
+    ($c: expr, $v:expr => $n:ident, $($m:ident),+) => {
+        apply!($c, $v => $n );
+        apply!($c, $v => $($m),+)
+    };
+}
+
+#[macro_export]
+macro_rules! apply_fix {
+    ($c: expr, $v:expr => $n:ident) => {
+        if let Some($n) = &$v.$n {
+            if $n == "*" {
+                $c.$n("");
+            } else {
+                $c.$n($n);
+            }
+
+        }
+    };
+    ($c: expr, $v:expr => $n:ident, $($m:tt),+) => {
+        apply_fix!($c, $v => $n );
+        apply_fix!($c, $v => $($m),+)
+    };
+}
+
+#[macro_export]
+macro_rules! impl_try_into_cpe {
+    ($ty:ty) => {
+        impl TryInto<cpe::uri::OwnedUri> for &$ty {
+            type Error = cpe::error::CpeError;
+
+            fn try_into(self) -> Result<cpe::uri::OwnedUri, Self::Error> {
+                use $crate::apply_fix;
+                use $crate::apply;
+
+                let mut cpe = Uri::builder();
+
+                apply!(cpe, self => part);
+                apply_fix!(cpe, self => vendor, product, version, update, edition);
+
+                // apply the fix for the language field
+
+                if let Some(language) = &self.language {
+                    if language == "*" {
+                        cpe.language("ANY");
+                    } else {
+                        cpe.language(language);
+                    }
+                }
+
+                Ok(cpe.validate()?.to_owned())
+            }
+        }
+    };
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

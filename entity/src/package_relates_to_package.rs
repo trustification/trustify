@@ -40,3 +40,9 @@ pub enum Relation {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+impl Related<super::sbom::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Sbom.def()
+    }
+}
