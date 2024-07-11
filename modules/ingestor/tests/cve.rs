@@ -19,6 +19,12 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             .get_advisory_by_id(id, ())
             .await?
             .expect("must be found");
+
+        assert_eq!(adv.vulnerabilities(()).await?.len(), 1);
+
+        let vulns = ctx.graph.get_vulnerabilities(()).await?;
+        assert_eq!(vulns.len(), 1);
+
         let vuln = ctx
             .graph
             .get_vulnerability("CVE-2021-32714", ())
@@ -26,9 +32,7 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             .expect("Must be found");
 
         let descriptions = vuln.descriptions("en", ()).await?;
-
         assert_eq!(descriptions.len(), 1);
-        assert_eq!(adv.vulnerabilities(()).await?.len(), 1);
 
         Ok(())
     }

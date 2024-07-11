@@ -102,6 +102,8 @@ impl<'g> CsafLoader<'g> {
         tx: TX,
     ) -> Result<(), Error> {
         if let Some(cve_id) = &vulnerability.cve {
+            self.graph.ingest_vulnerability(&cve_id, (), &tx).await?;
+
             let advisory_vulnerability = advisory
                 .link_to_vulnerability(
                     cve_id,
@@ -120,8 +122,6 @@ impl<'g> CsafLoader<'g> {
                     &tx,
                 )
                 .await?;
-
-            log::debug!("{advisory_vulnerability:?}");
 
             if let Some(product_status) = &vulnerability.product_status {
                 self.ingest_product_statuses(csaf, &advisory_vulnerability, product_status, &tx)

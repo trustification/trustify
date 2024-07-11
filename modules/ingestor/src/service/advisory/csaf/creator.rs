@@ -42,7 +42,6 @@ impl PurlStatusCreator {
     pub fn add_all(&mut self, csaf: &Csaf, ps: &Option<Vec<ProductIdT>>, status: &'static str) {
         for r in ps.iter().flatten() {
             if let Some((cpe, Some(purl))) = resolve_identifier(csaf, r) {
-                //println!("ADD {:#?} --  {:#?}", cpe, purl);
                 let mut purl = Purl::from(purl.clone());
                 purl.qualifiers.clear();
 
