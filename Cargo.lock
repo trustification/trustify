@@ -7029,6 +7029,7 @@ dependencies = [
  "cve",
  "cyclonedx-bom",
  "futures",
+ "futures-util",
  "hex",
  "humantime",
  "jsn",
