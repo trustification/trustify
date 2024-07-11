@@ -70,6 +70,8 @@ impl<'g> OsvLoader<'g> {
         }
 
         for cve_id in cve_ids {
+            self.graph.ingest_vulnerability(&cve_id, (), &tx).await?;
+
             let advisory_vuln = advisory
                 .link_to_vulnerability(
                     &cve_id,
