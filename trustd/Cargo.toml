@@ -22,6 +22,7 @@ url = { workspace = true }
 
 openssl = { workspace = true }
 libz-sys = { workspace = true }
+liblzma = { workspace = true }
 
 [dev-dependencies]
 temp-env = { workspace = true }
@@ -36,7 +37,8 @@ vendored = [
     "openssl/vendored",
     # when using a vendored approach, we need to statically link zlib, otherwise we get some strange linker error
     #   unresolvable R_AARCH64_ADR_PREL_PG_HI21 relocation against symbol `__stack_chk_guard@@GLIBC_2.17'
-    "libz-sys/static"
+    "libz-sys/static",
+    "liblzma/static",
 ]
 pm = [
     "garage-door",

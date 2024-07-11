@@ -8,16 +8,17 @@ trustify-common = { workspace = true }
 trustify-migration = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }
-test-context = { workspace = true }
-postgresql_embedded = { workspace = true }
-tracing = { workspace = true }
+
 anyhow = { workspace = true }
-rust-lzma = { workspace = true }
+futures = { workspace = true }
+liblzma = { workspace = true }
 log = { workspace = true }
+postgresql_embedded = { workspace = true }
+test-context = { workspace = true }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
 tokio-util = { workspace = true }
-futures = { workspace = true }
+tracing = { workspace = true }
 
 [dev-dependencies]
 #chrono = { workspace = true }

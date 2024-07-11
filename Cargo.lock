@@ -3283,6 +3283,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "liblzma"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "243510a5543c358949902b9e76daec3a32d7b03a43abce823e7c62a1a8360172"
+dependencies = [
+ "liblzma-sys",
+]
+
+[[package]]
+name = "liblzma-sys"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83cf78d20a45b5c0f3c7da2dcac255b230efe7d8684282bd35873164c1491187"
+dependencies = [
+ "cc",
+ "libc",
+ "pkg-config",
+]
+
+[[package]]
 name = "libm"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3712,7 +3732,7 @@ version = "5.0.0-alpha.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "098af5a5110b4deacf3200682963713b143ae9d28762b739bdb7b98429dfaf68"
 dependencies = [
- "base64 0.21.7",
+ "base64 0.22.1",
  "chrono",
  "getrandom",
  "http 1.1.0",
@@ -5069,16 +5089,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-lzma"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d62915608f6cee1d7f2fc00f28b4f058ff79d6e4ec3c2fe0006b09b52437c84"
-dependencies = [
- "pkg-config",
- "vcpkg",
-]
-
-[[package]]
 name = "rust_decimal"
 version = "1.35.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5532,7 +5542,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b870b0275eeae174058fcf0ce5affccaaafeb7eceeabce8d6c7f51fbe6a41e2a"
 dependencies = [
  "anyhow",
- "base64 0.21.7",
+ "base64 0.22.1",
  "buffered-reader",
  "chrono",
  "dyn-clone",
@@ -7137,9 +7147,9 @@ version = "0.1.0-alpha.11"
 dependencies = [
  "anyhow",
  "futures",
+ "liblzma",
  "log",
  "postgresql_embedded",
- "rust-lzma",
  "test-context",
  "test-log",
  "tokio",
@@ -7158,6 +7168,7 @@ version = "0.1.0-alpha.11"
 dependencies = [
  "anyhow",
  "clap",
+ "liblzma",
  "libz-sys",
  "log",
  "openssl",

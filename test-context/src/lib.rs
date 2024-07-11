@@ -55,7 +55,7 @@ impl TrustifyContext {
         let mut bytes = Vec::new();
         file.read_to_end(&mut bytes).await?;
         if path.ends_with(".xz") {
-            bytes = lzma::decompress(&bytes)?;
+            bytes = liblzma::decode_all(&*bytes)?;
         }
         Ok(Bytes::copy_from_slice(&bytes))
     }
