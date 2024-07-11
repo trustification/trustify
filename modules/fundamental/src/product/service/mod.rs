@@ -1,3 +1,5 @@
+use super::model::summary::ProductSummary;
+use crate::product::model::details::ProductDetails;
 use crate::Error;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use trustify_common::db::limiter::LimiterTrait;
@@ -6,8 +8,6 @@ use trustify_common::db::{Database, Transactional};
 use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_entity::product;
 use uuid::Uuid;
-
-use super::model::{summary::ProductSummary, ProductHead};
 
 pub struct ProductService {
     db: Database,
@@ -44,7 +44,7 @@ impl ProductService {
         &self,
         id: Uuid,
         tx: TX,
-    ) -> Result<Option<ProductHead>, Error> {
+    ) -> Result<Option<ProductDetails>, Error> {
         let connection = self.db.connection(&tx);
 
         if let Some(product) = product::Entity::find()
@@ -52,7 +52,9 @@ impl ProductService {
             .one(&connection)
             .await?
         {
-            Ok(Some(ProductHead::from_entity(&product, &connection).await?))
+            Ok(Some(
+                ProductDetails::from_entity(&product, &connection).await?,
+            ))
         } else {
             Ok(None)
         }
