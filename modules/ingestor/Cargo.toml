@@ -44,6 +44,8 @@ uuid = { workspace = true, features = ["v7"] }
 
 [dev-dependencies]
 trustify-test-context = { workspace = true }
+
+futures-util = { workspace = true }
 rand = { workspace = true }
 rstest = {workspace = true }
 serde_yaml = { workspace = true }
