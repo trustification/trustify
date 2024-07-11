@@ -30,6 +30,7 @@ impl ProductHead {
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct ProductVersionHead {
+    #[serde(with = "uuid::serde::urn")]
     pub id: Uuid,
     pub version: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
