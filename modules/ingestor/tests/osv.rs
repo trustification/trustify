@@ -1,33 +1,15 @@
+#![allow(clippy::expect_used)]
+
 use anyhow::bail;
-use std::time::Instant;
 use test_context::test_context;
 use test_log::test;
-use tracing::instrument;
 use trustify_common::id::Id;
 use trustify_module_ingestor::model::IngestResult;
 use trustify_test_context::TrustifyContext;
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(tokio::test)]
-#[instrument]
-async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
-    let start = Instant::now();
-
-    let result = ctx.ingest_document("csaf/cve-2023-33201.json").await?;
-
-    let ingest_time = start.elapsed();
-
-    log::info!("ingest: {}", humantime::Duration::from(ingest_time));
-
-    assert!(matches!(result.id, Id::Uuid(_)));
-
-    Ok(())
-}
-
-#[test_context(TrustifyContext, skip_teardown)]
-#[test(tokio::test)]
-#[instrument]
-async fn reingest(ctx: TrustifyContext) -> anyhow::Result<()> {
+async fn reingest_osv(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     async fn assert(ctx: &TrustifyContext, result: IngestResult) -> anyhow::Result<()> {
         let Id::Uuid(id) = result.id else {
             bail!("must be an id")
@@ -44,7 +26,7 @@ async fn reingest(ctx: TrustifyContext) -> anyhow::Result<()> {
         assert_eq!(all.len(), 1);
         assert_eq!(
             all[0].advisory_vulnerability.vulnerability_id,
-            "CVE-2023-33201"
+            "CVE-2021-32714"
         );
 
         let all = ctx.graph.get_vulnerabilities(()).await?;
@@ -52,11 +34,11 @@ async fn reingest(ctx: TrustifyContext) -> anyhow::Result<()> {
 
         let vuln = ctx
             .graph
-            .get_vulnerability("CVE-2023-33201", ())
+            .get_vulnerability("CVE-2021-32714", ())
             .await?
             .expect("Must be found");
 
-        assert_eq!(vuln.vulnerability.id, "CVE-2023-33201");
+        assert_eq!(vuln.vulnerability.id, "CVE-2021-32714");
 
         let descriptions = vuln.descriptions("en", ()).await?;
         assert_eq!(descriptions.len(), 0);
@@ -64,15 +46,17 @@ async fn reingest(ctx: TrustifyContext) -> anyhow::Result<()> {
         Ok(())
     }
 
-    // ingest the first time
+    // ingest once
 
-    let result = ctx.ingest_document("csaf/cve-2023-33201.json").await?;
-    assert(&ctx, result).await?;
+    let result = ctx.ingest_document("osv/RUSTSEC-2021-0079.json").await?;
+    assert(ctx, result).await?;
 
-    // ingest a second time
+    // ingest second time
 
-    let result = ctx.ingest_document("csaf/cve-2023-33201.json").await?;
-    assert(&ctx, result).await?;
+    let result = ctx.ingest_document("osv/RUSTSEC-2021-0079.json").await?;
+    assert(ctx, result).await?;
+
+    // done
 
     Ok(())
 }

@@ -120,6 +120,63 @@ pub struct CpeDto {
     pub language: Option<String>,
 }
 
+impl From<Model> for CpeDto {
+    fn from(value: Model) -> Self {
+        // turn into a model and destructure to ensure we don't miss any new fields
+
+        let Model {
+            id: _,
+            part,
+            vendor,
+            product,
+            version,
+            update,
+            edition,
+            language,
+        } = value;
+
+        Self {
+            part,
+            vendor,
+            product,
+            version,
+            update,
+            edition,
+            language,
+        }
+    }
+}
+
+impl From<Model> for (Uuid, CpeDto) {
+    fn from(value: Model) -> (Uuid, CpeDto) {
+        // turn into a model and destructure to ensure we don't miss any new fields
+
+        let Model {
+            id,
+            part,
+            vendor,
+            product,
+            version,
+            update,
+            edition,
+            language,
+        } = value;
+
+        (
+            id,
+            CpeDto {
+                part,
+                vendor,
+                product,
+                version,
+                update,
+                edition,
+                language,
+            },
+        )
+    }
+}
+
 macro_rules! apply {
     ($c: expr, $v:expr => $n:ident) => {
         if let Some($n) = &$v.$n {
@@ -212,29 +269,7 @@ mod test {
 
         log::info!("cpe: {model:#?}");
 
-        // now turn into a model and destructure to ensure we don't miss any new fields
-        let Model {
-            id,
-            part,
-            vendor,
-            product,
-            version,
-            update,
-            edition,
-            language,
-        } = model.try_into_model().unwrap();
-
-        // turn it into a DTO a read from the aggregate fields
-
-        let dto = CpeDto {
-            part,
-            vendor,
-            product,
-            version,
-            update,
-            edition,
-            language,
-        };
+        let (id, dto): (Uuid, CpeDto) = model.try_into_model().unwrap().into();
 
         // and turn it back into a CPE
 
