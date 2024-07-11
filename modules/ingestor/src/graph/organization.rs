@@ -6,6 +6,7 @@ use trustify_entity::organization;
 
 use crate::graph::{error::Error, Graph};
 
+#[derive(Clone, Debug)]
 pub struct OrganizationInformation {
     pub cpe_key: Option<String>,
     pub website: Option<String>,
@@ -40,10 +41,24 @@ impl<'g> OrganizationContext<'g> {
     }
 }
 
-impl super::Graph {
+impl Graph {
+    #[instrument(skip(self, tx), err)]
+    pub async fn get_organizations(
+        &self,
+        tx: impl AsRef<Transactional>,
+    ) -> Result<Vec<OrganizationContext>, Error> {
+        Ok(organization::Entity::find()
+            .all(&self.connection(&tx))
+            .await?
+            .into_iter()
+            .map(|organization| OrganizationContext::new(self, organization))
+            .collect())
+    }
+
+    #[instrument(skip(self, tx), err)]
     pub async fn get_organization_by_name<TX: AsRef<Transactional>>(
         &self,
-        name: impl Into<String>,
+        name: impl Into<String> + Debug,
         tx: TX,
     ) -> Result<Option<OrganizationContext>, Error> {
         Ok(organization::Entity::find()
@@ -53,11 +68,11 @@ impl super::Graph {
             .map(|organization| OrganizationContext::new(self, organization)))
     }
 
-    #[instrument(skip(self, information, tx), err)]
+    #[instrument(skip(self, tx), err)]
     pub async fn ingest_organization<TX: AsRef<Transactional>>(
         &self,
         name: impl Into<String> + Debug,
-        information: impl Into<OrganizationInformation>,
+        information: impl Into<OrganizationInformation> + Debug,
         tx: TX,
     ) -> Result<OrganizationContext, Error> {
         let name = name.into();

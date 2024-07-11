@@ -2,6 +2,8 @@ pub mod product_version;
 
 use entity::organization;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, ModelTrait, QueryFilter, Set};
+use std::fmt::Debug;
+use tracing::instrument;
 use trustify_common::db::Transactional;
 use trustify_entity as entity;
 use trustify_entity::product;
@@ -96,7 +98,7 @@ impl<'g> ProductContext<'g> {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct ProductInformation {
     pub vendor: Option<String>,
 }
@@ -113,11 +115,12 @@ impl From<()> for ProductInformation {
     }
 }
 
-impl super::Graph {
+impl Graph {
+    #[instrument(skip(self, tx), err)]
     pub async fn ingest_product<TX: AsRef<Transactional>>(
         &self,
-        name: impl Into<String>,
-        information: impl Into<ProductInformation>,
+        name: impl Into<String> + Debug,
+        information: impl Into<ProductInformation> + Debug,
         tx: TX,
     ) -> Result<ProductContext, Error> {
         let name = name.into();
@@ -157,9 +160,23 @@ impl super::Graph {
         }
     }
 
+    #[instrument(skip(self, tx), err)]
+    pub async fn get_products(
+        &self,
+        tx: impl AsRef<Transactional>,
+    ) -> Result<Vec<ProductContext>, Error> {
+        Ok(product::Entity::find()
+            .all(&self.connection(&tx))
+            .await?
+            .into_iter()
+            .map(|product| ProductContext::new(self, product))
+            .collect())
+    }
+
+    #[instrument(skip(self, tx), err)]
     pub async fn get_product_by_name<TX: AsRef<Transactional>>(
         &self,
-        name: impl Into<String>,
+        name: impl Into<String> + Debug,
         tx: TX,
     ) -> Result<Option<ProductContext>, Error> {
         Ok(product::Entity::find()
@@ -169,10 +186,11 @@ impl super::Graph {
             .map(|product| ProductContext::new(self, product)))
     }
 
+    #[instrument(skip(self, tx), err)]
     pub async fn get_product_by_organization<TX: AsRef<Transactional>>(
         &self,
-        org: impl Into<String>,
-        name: impl Into<String>,
+        org: impl Into<String> + Debug,
+        name: impl Into<String> + Debug,
         tx: TX,
     ) -> Result<Option<ProductContext>, Error> {
         if let Some(found) = self.get_organization_by_name(org, &tx).await? {
