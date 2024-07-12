@@ -40,4 +40,16 @@ impl VersionedPurlSummary {
 
         Ok(summaries)
     }
+
+    pub async fn from_entity(
+        base_purl: &base_purl::Model,
+        versioned_purl: &versioned_purl::Model,
+        tx: &ConnectionOrTransaction<'_>,
+    ) -> Result<Self, Error> {
+        Ok(Self {
+            head: VersionedPurlHead::from_entity(base_purl, versioned_purl, tx).await?,
+            base: BasePurlHead::from_entity(base_purl, tx).await?,
+            purls: vec![],
+        })
+    }
 }

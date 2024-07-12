@@ -22,7 +22,7 @@ pub enum Relation {
         from = "super::qualified_purl::Column::VersionedPurlId"
         to = "super::versioned_purl::Column::Id"
     )]
-    PackageVersion,
+    VersionedPurl,
     #[sea_orm(
         belongs_to = "super::sbom_package_purl_ref::Entity",
         from = "Column::Id",
@@ -33,7 +33,7 @@ pub enum Relation {
 
 impl Related<super::versioned_purl::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::PackageVersion.def()
+        Relation::VersionedPurl.def()
     }
 }
 

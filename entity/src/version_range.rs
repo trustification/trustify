@@ -1,5 +1,6 @@
-use crate::purl_status;
 use sea_orm::entity::prelude::*;
+use sea_orm::sea_query::{Asterisk, Func, IntoCondition, SimpleExpr};
+use trustify_common::db::VersionMatches;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "version_range")]
@@ -14,20 +15,37 @@ pub struct Model {
     pub high_inclusive: Option<bool>,
 }
 
-#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+#[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
-    #[sea_orm(
-        belongs_to = "super::purl_status::Entity",
-        from = "super::version_range::Column::Id",
-        to = "super::purl_status::Column::VersionRangeId"
-    )]
     PackageStatus,
-
-    #[sea_orm(has_many = "super::versioned_purl::Entity")]
-    PackageVersion,
+    VersionedPurls,
 }
 
-impl Related<purl_status::Entity> for Entity {
+impl RelationTrait for Relation {
+    fn def(&self) -> RelationDef {
+        match self {
+            Relation::PackageStatus => Entity::belongs_to(super::purl_status::Entity)
+                .from(Column::Id)
+                .to(super::purl_status::Column::VersionRangeId)
+                .into(),
+            Relation::VersionedPurls => Entity::has_many(super::versioned_purl::Entity)
+                .on_condition(|_left, _right| {
+                    SimpleExpr::FunctionCall(
+                        Func::cust(VersionMatches)
+                            .arg(Expr::col((
+                                super::versioned_purl::Entity,
+                                super::versioned_purl::Column::Version,
+                            )))
+                            .arg(Expr::col((Entity, Asterisk))),
+                    )
+                    .into_condition()
+                })
+                .into(),
+        }
+    }
+}
+
+impl Related<super::purl_status::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::PackageStatus.def()
     }

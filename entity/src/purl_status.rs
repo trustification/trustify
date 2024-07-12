@@ -1,5 +1,5 @@
-use crate::version_range;
 use sea_orm::entity::prelude::*;
+use sea_orm::LinkDef;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "purl_status")]
@@ -26,7 +26,10 @@ pub enum Relation {
         from = "Column::BasePurlId"
         to = "super::base_purl::Column::Id"
     )]
-    Package,
+    BasePurl,
+
+    #[sea_orm(has_many = "super::versioned_purl::Entity")]
+    VersionedPurl,
 
     #[sea_orm(belongs_to = "super::vulnerability::Entity",
         from = "Column::VulnerabilityId"
@@ -46,9 +49,6 @@ pub enum Relation {
     )]
     Status,
 
-    #[sea_orm(has_many = "super::versioned_purl::Entity")]
-    VersionedPurl,
-
     #[sea_orm(belongs_to = "super::advisory_vulnerability::Entity",
         from = "(Column::AdvisoryId, Column::VulnerabilityId)"
         to = "(super::advisory_vulnerability::Column::AdvisoryId, super::advisory_vulnerability::Column::VulnerabilityId)"
@@ -62,7 +62,21 @@ pub enum Relation {
     ContextCpe,
 }
 
-impl Related<version_range::Entity> for Entity {
+pub struct VersionedPurlLink;
+
+impl Linked for VersionedPurlLink {
+    type FromEntity = Entity;
+    type ToEntity = super::versioned_purl::Entity;
+
+    fn link(&self) -> Vec<LinkDef> {
+        vec![
+            Relation::VersionRange.def(),
+            super::version_range::Relation::VersionedPurls.def(),
+        ]
+    }
+}
+
+impl Related<super::version_range::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::VersionRange.def()
     }
@@ -70,7 +84,7 @@ impl Related<version_range::Entity> for Entity {
 
 impl Related<super::base_purl::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::Package.def()
+        Relation::BasePurl.def()
     }
 }
 

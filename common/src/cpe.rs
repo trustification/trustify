@@ -346,14 +346,14 @@ macro_rules! apply_fix {
 #[macro_export]
 macro_rules! impl_try_into_cpe {
     ($ty:ty) => {
-        impl TryInto<cpe::uri::OwnedUri> for &$ty {
-            type Error = cpe::error::CpeError;
+        impl TryInto<::cpe::uri::OwnedUri> for &$ty {
+            type Error = ::cpe::error::CpeError;
 
-            fn try_into(self) -> Result<cpe::uri::OwnedUri, Self::Error> {
+            fn try_into(self) -> Result<::cpe::uri::OwnedUri, Self::Error> {
                 use $crate::apply_fix;
                 use $crate::apply;
 
-                let mut cpe = Uri::builder();
+                let mut cpe = ::cpe::uri::Uri::builder();
 
                 apply!(cpe, self => part);
                 apply_fix!(cpe, self => vendor, product, version, update, edition);

@@ -2,6 +2,7 @@ use cpe::{error::CpeError, uri::Uri};
 use sea_orm::{entity::prelude::*, Set};
 use std::fmt::{Debug, Display, Formatter};
 use trustify_common::cpe::{Component, Cpe, CpeType, Language};
+use trustify_common::impl_try_into_cpe;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "cpe")]
@@ -16,6 +17,8 @@ pub struct Model {
     pub edition: Option<String>,
     pub language: Option<String>,
 }
+
+impl_try_into_cpe!(Model);
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {

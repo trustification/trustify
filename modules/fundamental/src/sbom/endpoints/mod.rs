@@ -336,7 +336,7 @@ pub async fn download(
     let stream = ingestor
         .storage()
         .clone()
-        .retrieve(sbom.hashes.try_into()?)
+        .retrieve(sbom.head.hashes.try_into()?)
         .await
         .map_err(Error::Storage)?
         .map(|stream| stream.map_err(Error::Storage));

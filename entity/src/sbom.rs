@@ -36,6 +36,37 @@ pub enum Relation {
     PackageRelatesToPackages,
 }
 
+pub struct SbomPurlsLink;
+
+impl Linked for SbomPurlsLink {
+    type FromEntity = Entity;
+    type ToEntity = super::qualified_purl::Entity;
+
+    fn link(&self) -> Vec<LinkDef> {
+        vec![
+            Relation::Packages.def(),
+            super::sbom_package::Relation::Purl.def(),
+            super::sbom_package_purl_ref::Relation::Purl.def(),
+        ]
+    }
+}
+
+pub struct SbomVersionedPurlsLink;
+
+impl Linked for SbomVersionedPurlsLink {
+    type FromEntity = Entity;
+    type ToEntity = super::base_purl::Entity;
+
+    fn link(&self) -> Vec<LinkDef> {
+        vec![
+            Relation::Packages.def(),
+            super::sbom_package::Relation::Purl.def(),
+            super::sbom_package_purl_ref::Relation::Purl.def(),
+            super::qualified_purl::Relation::VersionedPurl.def(),
+        ]
+    }
+}
+
 pub struct SbomNodeLink;
 
 impl Linked for SbomNodeLink {

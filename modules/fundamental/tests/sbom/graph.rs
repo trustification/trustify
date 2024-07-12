@@ -7,6 +7,7 @@ use trustify_common::hashing::Digests;
 use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
 use trustify_entity::relationship::Relationship;
+use trustify_module_fundamental::sbom::model::SbomPackagePurl;
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::graph::Graph;
 use trustify_test_context::TrustifyContext;
@@ -334,7 +335,9 @@ async fn ingest_package_relates_to_package_dependency_of(
     assert_eq!(1, dependencies.len());
 
     assert_eq!(
-        vec!["pkg://maven/io.quarkus/quarkus-postgres@1.2.3"],
+        vec![SbomPackagePurl::String(
+            "pkg://maven/io.quarkus/quarkus-postgres@1.2.3".to_string()
+        )],
         dependencies[0].purl
     );
 
@@ -350,7 +353,9 @@ async fn ingest_package_relates_to_package_dependency_of(
     assert_eq!(1, dependencies.len());
 
     assert_eq!(
-        vec!["pkg://maven/io.quarkus/quarkus-sqlite@1.2.3"],
+        vec![SbomPackagePurl::String(
+            "pkg://maven/io.quarkus/quarkus-sqlite@1.2.3".to_string()
+        )],
         dependencies[0].purl
     );
 

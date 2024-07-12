@@ -1,3 +1,6 @@
+pub mod details;
+
+use crate::purl::model::summary::purl::PurlSummary;
 use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
@@ -6,7 +9,7 @@ use trustify_entity::{labels::Labels, relationship::Relationship};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
-pub struct SbomSummary {
+pub struct SbomHead {
     #[serde(with = "uuid::serde::urn")]
     pub id: Uuid,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -17,6 +20,12 @@ pub struct SbomSummary {
     pub labels: Labels,
 
     pub name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+pub struct SbomSummary {
+    #[serde(flatten)]
+    pub head: SbomHead,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
     pub published: Option<OffsetDateTime>,
@@ -36,9 +45,22 @@ pub struct SbomPackage {
     pub name: String,
     pub version: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub purl: Vec<String>,
+    pub purl: Vec<SbomPackagePurl>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub cpe: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema)]
+#[serde(untagged)]
+pub enum SbomPackagePurl {
+    String(String),
+    Summary(PurlSummary),
+}
+
+impl From<&str> for SbomPackagePurl {
+    fn from(value: &str) -> Self {
+        Self::String(value.to_string())
+    }
 }
 
 // TODO: think about a way to add CPE and PURLs too

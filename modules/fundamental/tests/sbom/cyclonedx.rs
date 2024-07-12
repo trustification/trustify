@@ -3,7 +3,7 @@ use test_context::test_context;
 use test_log::test;
 use trustify_common::db::Transactional;
 use trustify_common::model::Paginated;
-use trustify_module_fundamental::sbom::model::SbomPackage;
+use trustify_module_fundamental::sbom::model::{SbomPackage, SbomPackagePurl};
 use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext)]
@@ -23,9 +23,9 @@ async fn test_parse_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error
                     id: "pkg:maven/org.apache.zookeeper/zookeeper@3.9.2?type=jar".to_string(),
                     name: "zookeeper".to_string(),
                     version: Some("3.9.2".to_string()),
-                    purl: vec![
+                    purl: vec![SbomPackagePurl::String(
                         "pkg://maven/org.apache.zookeeper/zookeeper@3.9.2?type=jar".to_string()
-                    ],
+                    )],
                     cpe: vec![],
                 }]
             );

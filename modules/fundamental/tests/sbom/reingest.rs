@@ -74,8 +74,8 @@ async fn quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // both sboms have different names
 
-    assert_eq!(sbom1.name, "quarkus-bom");
-    assert_eq!(sbom2.name, "quarkus-bom-2.13.8.Final-redhat-00004");
+    assert_eq!(sbom1.head.name, "quarkus-bom");
+    assert_eq!(sbom2.head.name, "quarkus-bom-2.13.8.Final-redhat-00004");
     assert_eq!(sbom1.described_by.len(), 1);
     assert_eq!(sbom2.described_by.len(), 1);
 
@@ -166,8 +166,8 @@ async fn nhc(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // both sboms have the same name
 
-    assert_eq!(sbom1.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom2.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom1.head.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom2.head.name, "RHWA-NHC-0.4-RHEL-8");
     assert_eq!(sbom1.described_by.len(), 1);
     assert_eq!(sbom2.described_by.len(), 1);
 
@@ -246,8 +246,8 @@ async fn nhc_same(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // both sboms have the same name
 
-    assert_eq!(sbom1.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom2.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom1.head.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom2.head.name, "RHWA-NHC-0.4-RHEL-8");
     assert_eq!(sbom1.described_by.len(), 1);
     assert_eq!(sbom2.described_by.len(), 1);
 
@@ -334,8 +334,8 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // both sboms have the same name
 
-    assert_eq!(sbom1.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom2.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom1.head.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom2.head.name, "RHWA-NHC-0.4-RHEL-8");
     assert_eq!(sbom1.described_by.len(), 1);
     assert_eq!(sbom2.described_by.len(), 1);
 
@@ -417,8 +417,8 @@ async fn syft_rerun(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // both sboms have the same name
 
-    assert_eq!(sbom1.name, "registry.access.redhat.com/ubi9/ubi");
-    assert_eq!(sbom2.name, "registry.access.redhat.com/ubi9/ubi");
+    assert_eq!(sbom1.head.name, "registry.access.redhat.com/ubi9/ubi");
+    assert_eq!(sbom2.head.name, "registry.access.redhat.com/ubi9/ubi");
     assert_eq!(sbom1.described_by.len(), 1);
     assert_eq!(sbom2.described_by.len(), 1);
 
