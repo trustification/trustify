@@ -1,3 +1,5 @@
+#![allow(clippy::expect_used)]
+
 use anyhow::bail;
 use std::time::Instant;
 use test_context::test_context;
