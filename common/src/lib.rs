@@ -12,3 +12,5 @@ pub mod reqwest;
 pub mod sbom;
 pub mod time;
 pub mod tls;
+
+pub mod uuid;
