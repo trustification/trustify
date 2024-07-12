@@ -34,7 +34,7 @@ thiserror = { workspace = true }
 time = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true, features = ["url"] }
-uuid = { workspace = true, features = ["v5"] }
+uuid = { workspace = true, features = ["v5", "serde"] }
 
 [dev-dependencies]
 chrono = { workspace = true }
