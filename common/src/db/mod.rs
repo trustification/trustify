@@ -4,6 +4,8 @@ pub mod chunk;
 pub mod limiter;
 pub mod query;
 
+pub mod multi_model;
+
 use anyhow::Context;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{

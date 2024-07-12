@@ -1,18 +1,21 @@
 use super::SbomService;
+use crate::sbom::model::details::{SbomAdvisory, SbomDetails};
+use crate::sbom::model::{SbomHead, SbomPackagePurl};
 use crate::{
     sbom::model::{SbomPackage, SbomPackageReference, SbomPackageRelation, SbomSummary, Which},
     Error,
 };
 use futures_util::{stream, StreamExt, TryStreamExt};
 use sea_orm::{
-    prelude::Uuid, ColumnTrait, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
-    QueryOrder, QuerySelect, RelationTrait, Select, SelectColumns,
+    prelude::Uuid, ColumnTrait, DbErr, EntityTrait, FromQueryResult, IntoSimpleExpr, ModelTrait,
+    QueryFilter, QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns,
 };
 use sea_query::{extension::postgres::PgExpr, Expr, Func, JoinType, SimpleExpr};
 use serde::Deserialize;
 use serde_json::Value;
 use std::fmt::Debug;
 use tracing::instrument;
+use trustify_common::db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel};
 use trustify_common::{
     cpe::Cpe,
     db::{
@@ -25,14 +28,15 @@ use trustify_common::{
     purl::Purl,
 };
 use trustify_entity::{
-    base_purl,
+    advisory, base_purl,
     cpe::{self, CpeDto},
     labels::Labels,
-    package_relates_to_package,
+    package_relates_to_package, purl_status,
     qualified_purl::{self, Qualifiers},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
-    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, versioned_purl,
+    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, status, versioned_purl,
+    vulnerability,
 };
 
 impl SbomService {
@@ -41,7 +45,7 @@ impl SbomService {
         &self,
         id: Id,
         tx: TX,
-    ) -> Result<Option<SbomSummary>, Error> {
+    ) -> Result<Option<SbomDetails>, Error> {
         let connection = self.db.connection(&tx);
 
         let select = sbom::Entity::find().try_filter(id)?;
@@ -52,7 +56,7 @@ impl SbomService {
                 .one(&connection)
                 .await?
             {
-                Some(row) => self.build_summary(row, &tx).await?,
+                Some(row) => self.build_details(row, &tx).await?,
                 None => None,
             },
         )
@@ -109,16 +113,84 @@ impl SbomService {
 
         Ok(match node {
             Some(node) => Some(SbomSummary {
-                id: sbom.sbom_id,
-                hashes: vec![Id::Sha256(sbom.sha256)],
-                document_id: sbom.document_id,
+                head: SbomHead {
+                    id: sbom.sbom_id,
+                    hashes: vec![Id::Sha256(sbom.sha256)],
+                    document_id: sbom.document_id,
+                    name: node.name,
+                    labels: sbom.labels,
+                },
 
-                name: node.name,
                 published: sbom.published,
                 authors: sbom.authors,
 
                 described_by,
-                labels: sbom.labels,
+            }),
+            None => None,
+        })
+    }
+
+    /// turn an (sbom, sbom_node) row into an [`SbomDetails`], if possible
+    async fn build_details(
+        &self,
+        (sbom, node): (sbom::Model, Option<sbom_node::Model>),
+        tx: impl AsRef<Transactional>,
+    ) -> Result<Option<SbomDetails>, Error> {
+        let connection = self.db.connection(&tx);
+
+        let described_by = self
+            .describes_packages(sbom.sbom_id, Paginated::default(), tx.as_ref())
+            .await?
+            .items;
+
+        let relevant_advisory_info = sbom
+            .find_related(sbom_package::Entity)
+            .join(JoinType::Join, sbom_package::Relation::Node.def())
+            .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
+            .join(
+                JoinType::LeftJoin,
+                sbom_package_purl_ref::Relation::Purl.def(),
+            )
+            .join(
+                JoinType::LeftJoin,
+                qualified_purl::Relation::VersionedPurl.def(),
+            )
+            .join(JoinType::LeftJoin, versioned_purl::Relation::BasePurl.def())
+            .join(JoinType::Join, base_purl::Relation::PurlStatus.def())
+            .join(JoinType::Join, purl_status::Relation::Status.def())
+            .join(
+                JoinType::LeftJoin,
+                purl_status::Relation::VersionRange.def(),
+            )
+            .join(JoinType::LeftJoin, purl_status::Relation::ContextCpe.def())
+            .join(JoinType::Join, purl_status::Relation::Advisory.def())
+            .join(JoinType::Join, purl_status::Relation::Vulnerability.def())
+            .select_only()
+            .try_into_multi_model::<QueryCatcher>()?
+            //.into_model::<QueryCatcher>()
+            .all(&connection)
+            .await?;
+
+        Ok(match node {
+            Some(node) => Some(SbomDetails {
+                head: SbomHead {
+                    id: sbom.sbom_id,
+                    hashes: vec![Id::Sha256(sbom.sha256)],
+                    document_id: sbom.document_id,
+                    name: node.name,
+                    labels: sbom.labels,
+                },
+
+                published: sbom.published,
+                authors: sbom.authors,
+
+                described_by: described_by.clone(),
+                advisories: SbomAdvisory::from_models(
+                    &described_by,
+                    &relevant_advisory_info,
+                    &connection,
+                )
+                .await?,
             }),
             None => None,
         })
@@ -418,7 +490,7 @@ where
         )
         .join(
             JoinType::LeftJoin,
-            qualified_purl::Relation::PackageVersion.def(),
+            qualified_purl::Relation::VersionedPurl.def(),
         )
         .join(JoinType::LeftJoin, versioned_purl::Relation::BasePurl.def())
         // aggregate the q -> v -> p hierarchy into an array of json objects
@@ -484,7 +556,7 @@ fn package_from_row(
             .into_iter()
             .flat_map(|purl| serde_json::from_value::<PurlDto>(purl).ok())
             .map(Purl::from)
-            .map(|purl| purl.to_string())
+            .map(|purl| SbomPackagePurl::String(purl.to_string()))
             .collect(),
         cpe: cpes
             .into_iter()
@@ -538,6 +610,50 @@ impl From<PurlDto> for Purl {
             },
             qualifiers: qualifiers.0,
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct QueryCatcher {
+    pub advisory: advisory::Model,
+    pub base_purl: base_purl::Model,
+    pub versioned_purl: versioned_purl::Model,
+    pub qualified_purl: qualified_purl::Model,
+    pub sbom_package: sbom_package::Model,
+    pub sbom_node: sbom_node::Model,
+    pub vulnerability: vulnerability::Model,
+    pub context_cpe: Option<cpe::Model>,
+    pub status: status::Model,
+}
+
+impl FromQueryResult for QueryCatcher {
+    fn from_query_result(res: &QueryResult, _pre: &str) -> Result<Self, DbErr> {
+        Ok(Self {
+            advisory: Self::from_query_result_multi_model(res, advisory::Entity)?,
+            vulnerability: Self::from_query_result_multi_model(res, vulnerability::Entity)?,
+            base_purl: Self::from_query_result_multi_model(res, base_purl::Entity)?,
+            versioned_purl: Self::from_query_result_multi_model(res, versioned_purl::Entity)?,
+            qualified_purl: Self::from_query_result_multi_model(res, qualified_purl::Entity)?,
+            sbom_package: Self::from_query_result_multi_model(res, sbom_package::Entity)?,
+            sbom_node: Self::from_query_result_multi_model(res, sbom_node::Entity)?,
+            context_cpe: Self::from_query_result_multi_model_optional(res, cpe::Entity)?,
+            status: Self::from_query_result_multi_model(res, status::Entity)?,
+        })
+    }
+}
+
+impl FromQueryResultMultiModel for QueryCatcher {
+    fn try_into_multi_model<E: EntityTrait>(select: Select<E>) -> Result<Select<E>, DbErr> {
+        select
+            .try_model_columns(advisory::Entity)?
+            .try_model_columns(vulnerability::Entity)?
+            .try_model_columns(base_purl::Entity)?
+            .try_model_columns(versioned_purl::Entity)?
+            .try_model_columns(qualified_purl::Entity)?
+            .try_model_columns(sbom_package::Entity)?
+            .try_model_columns(sbom_node::Entity)?
+            .try_model_columns(status::Entity)?
+            .try_model_columns(cpe::Entity)
     }
 }
 
