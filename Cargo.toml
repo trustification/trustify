@@ -77,8 +77,6 @@ osv = { version = "0.2.0", default-features = false }
 packageurl = "0.3.0"
 parking_lot = "0.12"
 pem = "3"
-postgresql_archive = "0.14.0"
-postgresql_embedded = "0.14.0"
 prometheus = "0.13.3"
 rand = "0.8.5"                                                        # for testing
 regex = "1.10.3"
@@ -135,6 +133,13 @@ trustify-module-ingestor = { path = "modules/ingestor" }
 trustify-module-storage = { path = "modules/storage" }
 trustify-module-graphql = { path = "modules/graphql" }
 trustify-test-context = { path = "test-context" }
+
+# These dependencies are active during both the build time and the run time. So they are normal dependencies
+# as well as build-dependencies. However, we can't control feature flags for build dependencies the way we do
+# it for normal dependencies. So enabling the vendor feature for openssl-sys doesn't work for the build-dependencies.
+# This will fail the build on targets where we need vendoring for openssl. Using rustls instead works around this issue.
+postgresql_archive = { version = "0.14.0", default-features = false, features = ["theseus", "rustls-tls"] }
+postgresql_embedded = { version = "0.14.0", default-features = false, features = ["theseus", "rustls-tls"] }
 
 [patch.crates-io]
 #csaf-walker = { git = "https://github.com/ctron/csaf-walker", rev = "7b6e64dd56e4be79e184b053ef754a42e1496fe0" }
