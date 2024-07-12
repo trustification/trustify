@@ -102,7 +102,7 @@ impl<'g> CsafLoader<'g> {
         tx: TX,
     ) -> Result<(), Error> {
         if let Some(cve_id) = &vulnerability.cve {
-            self.graph.ingest_vulnerability(&cve_id, (), &tx).await?;
+            self.graph.ingest_vulnerability(cve_id, (), &tx).await?;
 
             let advisory_vulnerability = advisory
                 .link_to_vulnerability(
