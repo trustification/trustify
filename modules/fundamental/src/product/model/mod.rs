@@ -33,7 +33,11 @@ pub struct ProductVersionHead {
     #[serde(with = "uuid::serde::urn")]
     pub id: Uuid,
     pub version: String,
-    #[serde(default, skip_serializing_if = "Option::is_none", with="trustify_common::uuid::serde::urn")]
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        with = "trustify_common::uuid::serde::urn"
+    )]
     pub sbom_id: Option<Uuid>,
 }
 
