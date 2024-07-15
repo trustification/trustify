@@ -38,7 +38,7 @@ pub struct ApiDoc;
         Paginated,
     ),
     responses(
-        (status = 200, description = "Matching organizations", body = PaginatedAdvisorySummary),
+        (status = 200, description = "Matching organizations", body = PaginatedOrganizationSummary),
     ),
 )]
 #[get("/v1/organization")]
@@ -57,8 +57,8 @@ pub async fn all(
         ("id", Path, description = "Opaque ID of the organization")
     ),
     responses(
-        (status = 200, description = "Matching advisory", body = AdvisoryDetails),
-        (status = 404, description = "Matching advisory not found"),
+        (status = 200, description = "Matching organization", body = OrganizationDetails),
+        (status = 404, description = "Matching organization not found"),
     ),
 )]
 #[get("/v1/organization/{id}")]
