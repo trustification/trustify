@@ -4,5 +4,7 @@ target
 /data
 .trustify
 
+*.cdx.json
+
 /flamegraph*.svg
 /perf.data*

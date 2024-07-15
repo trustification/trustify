@@ -181,6 +181,8 @@ jobs:
         run: |
           cargo binstall cross -y
 
+      - run: mkdir -p upload
+
       - name: Build | Build
         shell: bash
         env:
@@ -216,6 +218,18 @@ jobs:
 
           ${CMD} build ${OPTS}
 
+      - name: Install cargo-cyclonedx
+        shell: bash
+        run: |
+          cargo binstall -y cargo-cyclonedx
+
+      - name: Create SBOM
+        shell: bash
+        run: |
+          cargo cyclonedx -v --spec-version 1.5 --format json --describe binaries --target "${{ matrix.target }}"
+          
+          mv trustd/trustd_bin.cdx.json "upload/${{ env.dirname }}.cdx.json"
+
       - name: Move binary
         shell: bash
         run: |
@@ -235,8 +249,6 @@ jobs:
           # stage for upload
           mv -v "${SRC}" "pack/${dirname}/${download_binary_name}${{ matrix.ext }}"
           cp LICENSE "pack/${dirname}/"
-
-      - run: mkdir -p upload
 
       - name: Archive (zip)
         if: matrix.archive == 'zip'
