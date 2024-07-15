@@ -5,8 +5,9 @@ use sea_orm::ModelTrait;
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
 use trustify_entity::{organization, product, product_version};
+use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ProductDetails {
     #[serde(flatten)]
     pub head: ProductHead,

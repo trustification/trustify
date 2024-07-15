@@ -22,8 +22,10 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     paths(all, get),
     components(schemas(
         crate::product::model::ProductHead,
+        crate::product::model::ProductVersionHead,
         crate::product::model::summary::ProductSummary,
         crate::product::model::summary::PaginatedProductSummary,
+        crate::product::model::details::ProductDetails,
     )),
     tags()
 )]
@@ -56,7 +58,7 @@ pub async fn all(
         ("id", Path, description = "Opaque ID of the product")
     ),
     responses(
-        (status = 200, description = "Matching product", body = ProductHead),
+        (status = 200, description = "Matching product", body = ProductDetails),
         (status = 404, description = "Matching product not found"),
     ),
 )]
