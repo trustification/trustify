@@ -615,37 +615,6 @@ impl SbomContext {
         Ok(())
     }
 
-    pub async fn related_packages_transitively_x<TX: AsRef<Transactional>>(
-        &self,
-        relationship: Relationship,
-        pkg: &Purl,
-        tx: TX,
-    ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        let pkg = self.graph.get_qualified_package(pkg, &tx).await?;
-
-        if let Some(pkg) = pkg {
-            Ok(self
-                .graph
-                .get_qualified_packages_by_query(
-                    Query::select()
-                        .column(LeftPackageId)
-                        .from_function(
-                            Func::cust(QualifiedPackageTransitive).args([
-                                self.sbom.sbom_id.into(),
-                                pkg.qualified_package.id.into(),
-                                relationship.into(),
-                            ]),
-                            QualifiedPackageTransitive,
-                        )
-                        .to_owned(),
-                    &tx,
-                )
-                .await?)
-        } else {
-            Ok(vec![])
-        }
-    }
-
     #[instrument(skip(self, tx), err)]
     pub async fn related_packages_transitively<TX: AsRef<Transactional>>(
         &self,
