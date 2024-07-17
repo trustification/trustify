@@ -8,6 +8,7 @@ use sea_orm::{DeriveActiveEnum, EnumIter};
     Eq,
     EnumIter,
     DeriveActiveEnum,
+    strum::VariantArray,
     serde::Serialize,
     serde::Deserialize,
     utoipa::ToSchema,
