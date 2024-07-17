@@ -7,8 +7,5 @@ edition = "2021"
 actix-web = { workspace = true }
 actix-web-static-files = { workspace = true }
 anyhow = { workspace = true }
-trustify-ui = { workspace = true, optional = true }
+trustify-ui = { workspace = true }
 
-[features]
-default = [ "ui" ]
-ui = ["trustify-ui"]

@@ -11,7 +11,7 @@ path = "src/main.rs"
 trustify-common = { workspace = true }
 trustify-module-importer = { workspace = true }
 trustify-infrastructure = { workspace = true }
-trustify-server = { workspace = true, features = [ "ui" ] }
+trustify-server = { workspace = true }
 
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
