@@ -1,0 +1,100 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "2023-11-01T13:30:00Z",
+    "creators": [
+      "Trustify"
+    ],
+    "comment": "This is an example for an SBOM with two refs to the same package. Based upon an existing SBOM.",
+    "licenseListVersion": "3.8"
+  },
+  "dataLicense": "CC0-1.0",
+  "documentDescribes": [
+    "SPDXRef-A"
+  ],
+  "documentNamespace": "uri:just-an-example",
+  "name": "loop",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-A",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "foo",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:cargo/A@0.0.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseComments": "Licensing information is automatically generated and may be incomplete or incorrect.",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "A",
+      "originator": "NOASSERTION",
+      "packageFileName": "NOASSERTION",
+      "supplier": "Organization: Red Hat",
+      "versionInfo": "1"
+    },
+    {
+      "SPDXID": "SPDXRef-B",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "B",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:cargo/B@0.0.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseComments": "Licensing information is automatically generated and may be incomplete or incorrect.",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "bar",
+      "originator": "NOASSERTION",
+      "packageFileName": "NOASSERTION",
+      "supplier": "Organization: Red Hat",
+      "versionInfo": "1"
+    },
+    {
+      "SPDXID": "SPDXRef-C",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "B",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:cargo/C@0.0.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseComments": "Licensing information is automatically generated and may be incomplete or incorrect.",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "bar",
+      "originator": "NOASSERTION",
+      "packageFileName": "NOASSERTION",
+      "supplier": "Organization: Red Hat",
+      "versionInfo": "1"
+    }
+  ],
+  "relationships": [
+    {
+      "relatedSpdxElement": "SPDXRef-B",
+      "relationshipType": "CONTAINED_BY",
+      "spdxElementId": "SPDXRef-A"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-C",
+      "relationshipType": "CONTAINED_BY",
+      "spdxElementId": "SPDXRef-B"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-A",
+      "relationshipType": "DEV_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-C"
+    }
+  ],
+  "spdxVersion": "SPDX-2.2"
+}
