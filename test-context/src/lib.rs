@@ -1,3 +1,5 @@
+#![allow(clippy::expect_used)]
+
 use futures::{stream, Stream};
 use postgresql_embedded::{PostgreSQL, Settings, VersionReq};
 use std::env;
@@ -25,6 +27,23 @@ pub struct TrustifyContext {
 }
 
 impl TrustifyContext {
+    async fn new(db: common::db::Database, postgresql: impl Into<Option<PostgreSQL>>) -> Self {
+        let (storage, _) = FileSystemBackend::for_test()
+            .await
+            .expect("initializing the storage backend");
+        let graph = Graph::new(db.clone());
+
+        let ingestor = IngestorService::new(graph.clone(), storage.clone());
+
+        Self {
+            db,
+            graph,
+            storage,
+            ingestor,
+            postgresql: postgresql.into(),
+        }
+    }
+
     pub async fn ingest_documents<'a, P: IntoIterator<Item = &'a str>>(
         &self,
         paths: P,
@@ -99,20 +118,7 @@ impl AsyncTestContext for TrustifyContext {
             }
             .expect("Configuring the database");
 
-            let (storage, _) = FileSystemBackend::for_test()
-                .await
-                .expect("initializing the storage backend");
-            let graph = Graph::new(db.clone());
-
-            let ingestor = IngestorService::new(graph.clone(), storage.clone());
-
-            return TrustifyContext {
-                db,
-                storage,
-                graph,
-                ingestor,
-                postgresql: None,
-            };
+            return TrustifyContext::new(db, None).await;
         }
 
         let version = VersionReq::parse("=16.3.0").expect("valid psql version");
@@ -150,20 +156,7 @@ impl AsyncTestContext for TrustifyContext {
             .await
             .expect("Bootstrapping the test database");
 
-        let (storage, _) = FileSystemBackend::for_test()
-            .await
-            .expect("initializing the storage backend");
-        let graph = Graph::new(db.clone());
-
-        let ingestor = IngestorService::new(graph.clone(), storage.clone());
-
-        TrustifyContext {
-            db,
-            storage,
-            graph,
-            ingestor,
-            postgresql: Some(postgresql),
-        }
+        TrustifyContext::new(db, postgresql).await
     }
 
     async fn teardown(self) {
