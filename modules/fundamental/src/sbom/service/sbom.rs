@@ -380,7 +380,7 @@ impl SbomService {
     pub async fn related_packages<TX: AsRef<Transactional>>(
         &self,
         sbom_id: Uuid,
-        relationship: Relationship,
+        relationship: impl Into<Option<Relationship>>,
         pkg: impl Into<SbomPackageReference<'_>> + Debug,
         tx: TX,
     ) -> Result<Vec<SbomPackage>, Error> {
@@ -391,7 +391,7 @@ impl SbomService {
                 Default::default(),
                 Which::Right,
                 pkg,
-                Some(relationship),
+                relationship.into(),
                 tx,
             )
             .await?;
