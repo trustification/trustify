@@ -51,7 +51,7 @@ use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::{service::dispatch::DispatchBackend, service::fs::FileSystemBackend};
-use trustify_module_ui::{UI, endpoints::UiResources};
+use trustify_module_ui::{endpoints::UiResources, UI};
 
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
