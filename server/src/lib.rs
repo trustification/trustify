@@ -8,9 +8,6 @@ mod sample_data;
 
 pub use sample_data::sample_data;
 
-#[cfg(feature = "ui")]
-use trustify_module_ui::UI;
-
 use actix_web::{
     body::MessageBody,
     dev::{ConnectionInfo, Url},
@@ -54,7 +51,8 @@ use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_storage::{service::dispatch::DispatchBackend, service::fs::FileSystemBackend};
-use trustify_module_ui::endpoints::UiResources;
+use trustify_module_ui::{UI, endpoints::UiResources};
+
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -98,7 +96,6 @@ pub struct Run {
     #[command(flatten)]
     pub swagger_ui_oidc: SwaggerUiOidcConfig,
 
-    #[cfg(feature = "ui")]
     #[command(flatten)]
     pub ui: UiConfig,
 }
@@ -130,7 +127,6 @@ struct InitData {
     swagger_oidc: Option<Arc<SwaggerUiOidc>>,
     #[cfg(feature = "garage-door")]
     embedded_oidc: Option<embedded_oidc::EmbeddedOidc>,
-    #[cfg(feature = "ui")]
     ui: UI,
     working_dir: Option<PathBuf>,
 }
@@ -217,7 +213,6 @@ impl InitData {
 
         let storage = DispatchBackend::Filesystem(FileSystemBackend::new(storage).await?);
 
-        #[cfg(feature = "ui")]
         let ui = UI {
             // TODO: where/how should we configure these details?
             version: env!("CARGO_PKG_VERSION").to_string(),
@@ -239,7 +234,6 @@ impl InitData {
             storage,
             #[cfg(feature = "garage-door")]
             embedded_oidc,
-            #[cfg(feature = "ui")]
             ui,
             working_dir: run.working_dir,
         })
@@ -325,7 +319,6 @@ fn configure(
         .configure(|svc| {
             // I think the UI must come last due to
             // its use of `resolve_not_found_to`
-            #[cfg(feature = "ui")]
             trustify_module_ui::endpoints::configure(svc, &ui);
         });
 }
