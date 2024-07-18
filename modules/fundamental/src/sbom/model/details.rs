@@ -1,7 +1,7 @@
 use crate::advisory::model::AdvisoryHead;
 use crate::purl::model::details::purl::StatusContext;
 use crate::purl::model::summary::purl::PurlSummary;
-use crate::sbom::model::{SbomHead, SbomPackage, SbomPackagePurl};
+use crate::sbom::model::{SbomHead, SbomPackage};
 use crate::sbom::service::sbom::QueryCatcher;
 use crate::Error;
 use cpe::uri::OwnedUri;
@@ -129,7 +129,7 @@ impl SbomAdvisory {
                 id: each.sbom_package.node_id.clone(),
                 name: each.sbom_node.name.clone(),
                 version: each.sbom_package.version.clone(),
-                purl: vec![SbomPackagePurl::Summary(
+                purl: vec![
                     PurlSummary::from_entity(
                         &each.base_purl,
                         &each.versioned_purl,
@@ -137,7 +137,7 @@ impl SbomAdvisory {
                         tx,
                     )
                     .await?,
-                )],
+                ],
                 cpe: vec![],
             });
         }

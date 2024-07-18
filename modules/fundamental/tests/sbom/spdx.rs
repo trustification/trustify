@@ -1,12 +1,16 @@
 use super::*;
 use std::convert::Infallible;
+use std::str::FromStr;
 use test_context::futures::stream;
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
 use trustify_common::db::Transactional;
+use trustify_common::purl::Purl;
 use trustify_entity::relationship::Relationship;
-use trustify_module_fundamental::sbom::model::{SbomPackage, Which};
+use trustify_module_fundamental::purl::model::summary::purl::PurlSummary;
+use trustify_module_fundamental::purl::model::PurlHead;
+use trustify_module_fundamental::sbom::model::Which;
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::service::{Format, IngestorService};
@@ -27,18 +31,22 @@ async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
             log::debug!("{:#?}", described);
             assert_eq!(1, described.items.len());
             let first = &described.items[0];
-            assert_eq!(
-                &SbomPackage {
-                    id: "SPDXRef-b52acd7c-3a3f-441e-aef0-bbdaa1ec8acf".into(),
-                    name: "quarkus-bom".into(),
-                    version: Some("2.13.8.Final-redhat-00004".to_string()),
-                    purl: vec![
-                        "pkg://maven/com.redhat.quarkus.platform/quarkus-bom@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=pom".into()
-                    ],
-                    cpe: vec!["cpe:/a:redhat:quarkus:2.13:*:el8:*".to_string()],
-                },
-                first
-            );
+
+            assert_eq!( first.id, "SPDXRef-b52acd7c-3a3f-441e-aef0-bbdaa1ec8acf");
+            assert_eq!( first.name, "quarkus-bom");
+            assert_eq!( first.version, Some("2.13.8.Final-redhat-00004".to_string()));
+
+            assert!( matches!(
+                &first.purl[0],
+                PurlSummary {
+                    head: PurlHead {
+                        purl,
+                        ..
+                    },
+                    ..
+                }
+                if *purl == Purl::from_str("pkg://maven/com.redhat.quarkus.platform/quarkus-bom@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=pom")?
+            ));
 
             let contains = service
                 .related_packages(

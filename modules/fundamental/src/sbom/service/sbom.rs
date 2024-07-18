@@ -1,6 +1,7 @@
 use super::SbomService;
+use crate::purl::model::summary::purl::PurlSummary;
 use crate::sbom::model::details::{SbomAdvisory, SbomDetails};
-use crate::sbom::model::{SbomHead, SbomPackagePurl};
+use crate::sbom::model::SbomHead;
 use crate::{
     sbom::model::{SbomPackage, SbomPackageReference, SbomPackageRelation, SbomSummary, Which},
     Error,
@@ -16,6 +17,7 @@ use serde_json::Value;
 use std::fmt::Debug;
 use tracing::instrument;
 use trustify_common::db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel};
+use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::{
     cpe::Cpe,
     db::{
@@ -25,7 +27,6 @@ use trustify_common::{
     },
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},
-    purl::Purl,
 };
 use trustify_entity::{
     advisory, base_purl,
@@ -208,15 +209,6 @@ impl SbomService {
         paginated: Paginated,
         tx: TX,
     ) -> Result<PaginatedResults<SbomPackage>, Error> {
-        #[derive(FromQueryResult)]
-        struct Row {
-            id: String,
-            name: String,
-            version: Option<String>,
-            purls: Vec<Value>,
-            cpes: Vec<Value>,
-        }
-
         let db = self.db.connection(&tx);
 
         let mut query = sbom_package::Entity::find()
@@ -246,26 +238,23 @@ impl SbomService {
 
         // limit and execute
 
-        let limiter =
-            limit_selector::<'_, _, _, _, Row>(&db, query, paginated.offset, paginated.limit);
+        let limiter = limit_selector::<'_, _, _, _, PackageCatcher>(
+            &db,
+            query,
+            paginated.offset,
+            paginated.limit,
+        );
 
         let total = limiter.total().await?;
         let packages = limiter.fetch().await?;
 
         // collect results
 
-        let items = packages
-            .into_iter()
-            .map(
-                |Row {
-                     id,
-                     name,
-                     version,
-                     purls,
-                     cpes,
-                 }| package_from_row(id, name, version, purls, cpes),
-            )
-            .collect();
+        let mut items = Vec::new();
+
+        for row in packages {
+            items.push(package_from_row(row, &self.db.connection(&tx)).await?);
+        }
 
         Ok(PaginatedResults { items, total })
     }
@@ -359,16 +348,6 @@ impl SbomService {
             ),
         };
 
-        #[derive(FromQueryResult)]
-        struct Row {
-            id: String,
-            relationship: Relationship,
-            name: String,
-            version: Option<String>,
-            purls: Vec<Value>,
-            cpes: Vec<Value>,
-        }
-
         let mut query = package_relates_to_package::Entity::find()
             .filter(package_relates_to_package::Column::SbomId.eq(sbom_id))
             .select_only()
@@ -418,30 +397,28 @@ impl SbomService {
 
         // limit and execute
 
-        let limiter =
-            limit_selector::<'_, _, _, _, Row>(&db, query, paginated.offset, paginated.limit);
+        let limiter = limit_selector::<'_, _, _, _, PackageCatcher>(
+            &db,
+            query,
+            paginated.offset,
+            paginated.limit,
+        );
 
         let total = limiter.total().await?;
         let packages = limiter.fetch().await?;
 
         // collect results
 
-        let items = packages
-            .into_iter()
-            .map(
-                |Row {
-                     id,
-                     relationship,
-                     name,
-                     version,
-                     purls,
-                     cpes,
-                 }| SbomPackageRelation {
-                    package: package_from_row(id, name, version, purls, cpes),
+        let mut items = Vec::new();
+
+        for row in packages {
+            if let Some(relationship) = row.relationship {
+                items.push(SbomPackageRelation {
                     relationship,
-                },
-            )
-            .collect();
+                    package: package_from_row(row, &self.db.connection(&tx)).await?,
+                });
+            }
+        }
 
         Ok(PaginatedResults { items, total })
     }
@@ -502,14 +479,20 @@ where
                         Func::cust(ArrayAgg).arg(
                             Func::cust(JsonBuildObject)
                                 // must match with PurlDto struct
+                                .arg("base_purl_id")
+                                .arg(base_purl::Column::Id.into_expr())
                                 .arg("type")
                                 .arg(base_purl::Column::Type.into_expr())
                                 .arg("name")
                                 .arg(base_purl::Column::Name.into_expr())
                                 .arg("namespace")
                                 .arg(base_purl::Column::Namespace.into_expr())
+                                .arg("versioned_purl_id")
+                                .arg(versioned_purl::Column::Id.into_expr())
                                 .arg("version")
                                 .arg(versioned_purl::Column::Version.into_expr())
+                                .arg("qualified_purl_id")
+                                .arg(qualified_purl::Column::Id.into_expr())
                                 .arg("qualifiers")
                                 .arg(qualified_purl::Column::Qualifiers.into_expr()),
                         ),
@@ -540,25 +523,57 @@ where
         )
 }
 
-/// Convert values from a "package row" into an SBOM package
-fn package_from_row(
+#[derive(FromQueryResult)]
+struct PackageCatcher {
     id: String,
     name: String,
     version: Option<String>,
     purls: Vec<Value>,
     cpes: Vec<Value>,
-) -> SbomPackage {
-    SbomPackage {
-        id,
-        name,
-        version,
-        purl: purls
-            .into_iter()
-            .flat_map(|purl| serde_json::from_value::<PurlDto>(purl).ok())
-            .map(Purl::from)
-            .map(|purl| SbomPackagePurl::String(purl.to_string()))
-            .collect(),
-        cpe: cpes
+    relationship: Option<Relationship>,
+}
+
+/// Convert values from a "package row" into an SBOM package
+async fn package_from_row(
+    row: PackageCatcher,
+    tx: &ConnectionOrTransaction<'_>,
+) -> Result<SbomPackage, Error> {
+    let mut purls = Vec::new();
+
+    for purl in row.purls {
+        if let Ok(dto) = serde_json::from_value::<PurlDto>(purl) {
+            purls.push(
+                PurlSummary::from_entity(
+                    &base_purl::Model {
+                        id: dto.base_purl_id,
+                        r#type: dto.r#type,
+                        namespace: dto.namespace,
+                        name: dto.name,
+                    },
+                    &versioned_purl::Model {
+                        id: dto.versioned_purl_id,
+                        base_purl_id: dto.base_purl_id,
+                        version: dto.version,
+                    },
+                    &qualified_purl::Model {
+                        id: dto.qualified_purl_id,
+                        versioned_purl_id: dto.versioned_purl_id,
+                        qualifiers: dto.qualifiers,
+                    },
+                    tx,
+                )
+                .await?,
+            );
+        }
+    }
+
+    Ok(SbomPackage {
+        id: row.id,
+        name: row.name,
+        version: row.version,
+        purl: purls,
+        cpe: row
+            .cpes
             .into_iter()
             .flat_map(|cpe| {
                 serde_json::from_value::<CpeDto>(cpe)
@@ -577,19 +592,23 @@ fn package_from_row(
             })
             .map(|cpe| cpe.to_string())
             .collect(),
-    }
+    })
 }
 
 #[derive(Clone, Debug, Deserialize)]
 struct PurlDto {
+    base_purl_id: Uuid,
     r#type: String,
     name: String,
     #[serde(default)]
     namespace: Option<String>,
+    versioned_purl_id: Uuid,
     version: String,
+    qualified_purl_id: Uuid,
     qualifiers: Qualifiers,
 }
 
+/*
 impl From<PurlDto> for Purl {
     fn from(value: PurlDto) -> Self {
         let PurlDto {
@@ -612,6 +631,8 @@ impl From<PurlDto> for Purl {
         }
     }
 }
+
+ */
 
 #[derive(Debug)]
 pub struct QueryCatcher {
