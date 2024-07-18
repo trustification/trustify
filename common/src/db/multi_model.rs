@@ -23,10 +23,7 @@ impl<T: QuerySelect> ColumnsPrefixed for T {
                     ColumnRef::Column(name)
                     | ColumnRef::TableColumn(_, name)
                     | ColumnRef::SchemaTableColumn(_, _, name) => {
-                        let mut prefixed = String::new();
-                        prefixed.push_str(prefix);
-                        prefixed.push_str(&name.to_string());
-
+                        let prefixed = format!("{prefix}{}", name.to_string());
                         self = self.column_as(col, prefixed);
                     }
                     ColumnRef::Asterisk => {
