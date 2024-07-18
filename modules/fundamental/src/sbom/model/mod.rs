@@ -45,22 +45,9 @@ pub struct SbomPackage {
     pub name: String,
     pub version: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub purl: Vec<SbomPackagePurl>,
+    pub purl: Vec<PurlSummary>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub cpe: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema)]
-#[serde(untagged)]
-pub enum SbomPackagePurl {
-    String(String),
-    Summary(PurlSummary),
-}
-
-impl From<&str> for SbomPackagePurl {
-    fn from(value: &str) -> Self {
-        Self::String(value.to_string())
-    }
 }
 
 // TODO: think about a way to add CPE and PURLs too
