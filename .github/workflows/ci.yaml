@@ -36,11 +36,16 @@ jobs:
 
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
-
+      - name: Install binstall
+        run: curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
       - name: Format
         run: cargo fmt --check
       - name: Check
         run: cargo check
+      - name: Install cargo-all-features
+        run: cargo binstall -y cargo-all-features
+      - name: Check (all features)
+        run: cargo check-all-features
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings -D clippy::unwrap_used -D clippy::expect_used
       - name: Test
