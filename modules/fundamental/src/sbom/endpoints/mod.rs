@@ -63,7 +63,12 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         crate::sbom::model::SbomPackage,
         crate::sbom::model::SbomPackageRelation,
         crate::sbom::model::SbomSummary,
+        crate::sbom::model::details::SbomDetails,
+        crate::sbom::model::details::SbomAdvisory,
+        crate::sbom::model::details::SbomStatus,
+        crate::sbom::model::SbomHead,
         crate::sbom::model::Which,
+        crate::purl::model::details::purl::StatusContext,
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
         trustify_common::purl::Purl,
@@ -165,7 +170,7 @@ pub async fn all_related(
         ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
-        (status = 200, description = "Matching SBOM", body = SbomSummary),
+        (status = 200, description = "Matching SBOM", body = SbomDetails),
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
