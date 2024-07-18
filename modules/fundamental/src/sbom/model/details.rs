@@ -10,8 +10,9 @@ use std::collections::HashMap;
 use time::OffsetDateTime;
 use trustify_common::cpe::CpeCompare;
 use trustify_common::db::ConnectionOrTransaction;
+use utoipa::ToSchema;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SbomDetails {
     #[serde(flatten)]
     pub head: SbomHead,
@@ -27,7 +28,7 @@ pub struct SbomDetails {
     pub advisories: Vec<SbomAdvisory>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct SbomAdvisory {
     #[serde(flatten)]
     pub head: AdvisoryHead,
@@ -146,7 +147,7 @@ impl SbomAdvisory {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct SbomStatus {
     pub vulnerability_id: String,
     pub status: String,
