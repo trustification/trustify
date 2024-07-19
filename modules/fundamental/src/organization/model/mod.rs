@@ -11,12 +11,21 @@ pub use summary::*;
 use trustify_common::db::ConnectionOrTransaction;
 use trustify_entity::organization;
 
+/// An organization who may issue advisories, product SBOMs, or
+/// otherwise be involved in supply-chain evidence.
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct OrganizationHead {
+    /// The opaque UUID of the organization.
     pub id: Uuid,
+
+    /// The name of the organization.
     pub name: String,
+
+    /// The `CPE` key of the organization, if known.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cpe_key: Option<String>,
+
+    /// The website of the organization, if known.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub website: Option<String>,
 }
