@@ -4,6 +4,7 @@ use crate::{
 };
 use actix_http::StatusCode;
 use actix_web::test::TestRequest;
+use serde_json::Value;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::{id::Id, model::PaginatedResults};
@@ -95,6 +96,45 @@ async fn set_labels_not_found(ctx: &TrustifyContext) -> Result<(), anyhow::Error
         .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
         .to_request();
     let response = app.call_service(request).await;
+    log::debug!("Code: {}", response.status());
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    Ok(())
+}
+
+/// Test deleting an sbom
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn delete_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+    let result = ctx
+        .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
+        .await?;
+
+    let response = app
+        .call_service(
+            TestRequest::delete()
+                .uri(&format!("/api/v1/sbom/{}", result.id.clone()))
+                .to_request(),
+        )
+        .await;
+
+    log::debug!("Code: {}", response.status());
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // We get the old sbom back when a delete succeeds
+    let doc: Value = actix_web::test::read_body_json(response).await;
+    assert_eq!(doc["id"], result.id.to_string().as_ref());
+
+    // If we try again, we should get a 404 since it was deleted.
+    let response = app
+        .call_service(
+            TestRequest::delete()
+                .uri(&format!("/api/v1/sbom/{}", result.id.clone()))
+                .to_request(),
+        )
+        .await;
+
     log::debug!("Code: {}", response.status());
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 

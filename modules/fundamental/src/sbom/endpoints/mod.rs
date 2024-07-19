@@ -9,7 +9,7 @@ use crate::{
     },
     Error,
 };
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{delete, get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
@@ -35,6 +35,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         .service(all)
         .service(all_related)
         .service(get)
+        .service(delete)
         .service(packages)
         .service(related)
         .service(upload)
@@ -49,6 +50,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         all,
         all_related,
         get,
+        delete,
         packages,
         related,
         upload,
@@ -189,6 +191,39 @@ pub async fn get(
     let id = Id::from_str(&id).map_err(Error::IdKey)?;
     match fetcher.fetch_sbom(id, ()).await? {
         Some(v) => Ok(HttpResponse::Ok().json(v)),
+        None => Ok(HttpResponse::NotFound().finish()),
+    }
+}
+
+#[utoipa::path(
+    tag = "sbom",
+    context_path = "/api",
+    params(
+        ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+    ),
+    responses(
+        (status = 200, description = "Matching SBOM", body = SbomDetails),
+        (status = 404, description = "Matching SBOM not found"),
+    ),
+)]
+#[delete("/v1/sbom/{id}")]
+pub async fn delete(
+    service: web::Data<SbomService>,
+    authorizer: web::Data<Authorizer>,
+    user: UserInformation,
+    id: web::Path<Id>,
+) -> actix_web::Result<impl Responder> {
+    authorizer.require(&user, Permission::DeleteSbom)?;
+
+    match service.fetch_sbom(id.clone(), ()).await? {
+        Some(v) => {
+            let rows_affected = service.delete_sbom(v.head.id, ()).await?;
+            match rows_affected {
+                0 => Ok(HttpResponse::NotFound().finish()),
+                1 => Ok(HttpResponse::Ok().json(v)),
+                _ => Ok(HttpResponse::InternalServerError().finish()),
+            }
+        }
         None => Ok(HttpResponse::NotFound().finish()),
     }
 }

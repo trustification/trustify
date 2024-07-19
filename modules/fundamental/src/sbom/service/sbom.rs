@@ -63,6 +63,21 @@ impl SbomService {
         )
     }
 
+    /// delete one sbom
+    pub async fn delete_sbom<TX: AsRef<Transactional>>(
+        &self,
+        id: Uuid,
+        tx: TX,
+    ) -> Result<u64, Error> {
+        let connection = self.db.connection(&tx);
+
+        let query = sbom::Entity::delete_by_id(id);
+
+        let result = query.exec(&connection).await?;
+
+        Ok(result.rows_affected)
+    }
+
     /// fetch all SBOMs
     pub async fn fetch_sboms<TX: AsRef<Transactional>>(
         &self,
@@ -829,6 +844,35 @@ mod test {
             )
             .await?;
         assert_eq!(1, fetched.total);
+
+        Ok(())
+    }
+
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test(tokio::test)]
+    async fn delete_sbom(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let sbom_v1 = ctx
+            .graph
+            .ingest_sbom(
+                Labels::default(),
+                &Digests::digest("RHSA-1"),
+                "http://redhat.com/test.json",
+                (),
+                Transactional::None,
+            )
+            .await?;
+
+        let service = SbomService::new(ctx.db.clone());
+
+        let affected = service.delete_sbom(sbom_v1.sbom.sbom_id, ()).await?;
+
+        log::debug!("{:#?}", affected);
+        assert_eq!(1, affected);
+
+        let affected = service.delete_sbom(sbom_v1.sbom.sbom_id, ()).await?;
+
+        log::debug!("{:#?}", affected);
+        assert_eq!(0, affected);
 
         Ok(())
     }
