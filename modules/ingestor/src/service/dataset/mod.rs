@@ -51,6 +51,9 @@ impl<'g> DatasetLoader<'g> {
             if !file.is_file() {
                 continue;
             }
+            if file.name() == ".DS_Store" || file.name().ends_with("/.DS_Store") {
+                continue;
+            }
 
             let Some(name) = file.enclosed_name() else {
                 continue;
