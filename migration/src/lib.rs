@@ -53,6 +53,7 @@ mod m0000440_alter_package_status_to_purl_status;
 mod m0000445_create_purl_status_cpe;
 mod m0000450_alter_cpe_uuidv5;
 mod m0000460_add_vulnerability_description_adv;
+mod m0000470_cascade_sbom_delete;
 
 pub struct Migrator;
 
@@ -112,6 +113,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000445_create_purl_status_cpe::Migration),
             Box::new(m0000450_alter_cpe_uuidv5::Migration),
             Box::new(m0000460_add_vulnerability_description_adv::Migration),
+            Box::new(m0000470_cascade_sbom_delete::Migration),
         ]
     }
 }
