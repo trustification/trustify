@@ -54,6 +54,7 @@ use trustify_module_storage::{service::dispatch::DispatchBackend, service::fs::F
 use trustify_module_ui::{endpoints::UiResources, UI};
 
 use utoipa::OpenApi;
+use utoipa_redoc::{Redoc, Servable};
 use utoipa_swagger_ui::SwaggerUi;
 
 /// Run the API server
@@ -295,6 +296,9 @@ fn configure(
 ) {
     let limit = ByteSize::gb(1).as_u64() as usize;
     let graph = Arc::new(Graph::new(db.clone()));
+
+    svc.app_data(web::PayloadConfig::default().limit(limit))
+        .service(Redoc::with_url("/redoc", openapi::openapi()));
 
     svc.app_data(web::PayloadConfig::default().limit(limit))
         .service(swagger_ui_with_auth(openapi::openapi(), swagger_oidc))

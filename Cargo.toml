@@ -1,21 +1,21 @@
 [workspace]
 resolver = "2"
 members = [
-  "common",
-  "common/auth",
-  "common/infrastructure",
-  "cvss",
-  "entity",
-  "migration",
-  "modules/importer",
-  "modules/ui",
-  "modules/fundamental",
-  "modules/ingestor",
-  "modules/storage",
-  "modules/graphql",
-  "server",
-  "trustd",
-  "test-context",
+    "common",
+    "common/auth",
+    "common/infrastructure",
+    "cvss",
+    "entity",
+    "migration",
+    "modules/importer",
+    "modules/ui",
+    "modules/fundamental",
+    "modules/ingestor",
+    "modules/storage",
+    "modules/graphql",
+    "server",
+    "trustd",
+    "test-context",
 ]
 
 [workspace.dependencies]
@@ -114,6 +114,7 @@ url = "2.5.0"
 urlencoding = "2"
 utoipa = "4"
 utoipa-swagger-ui = "7.1.0"
+utoipa-redoc = { version = "4.0.0", features = ["actix-web"] }
 uuid = "1.7.0"
 walkdir = "2.5"
 walker-common = "0.8.0"
