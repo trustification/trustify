@@ -51,23 +51,12 @@ impl ResponseError for Error {
             Self::Purl(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("InvalidPurlSyntax", err))
             }
-            Self::Actix(err) => {
-                HttpResponse::InternalServerError().json(ErrorInformation::new("System Actix", err))
-            }
             Self::BadRequest { msg, status } => {
                 HttpResponse::build(*status).json(ErrorInformation::new("Bad request", msg))
             }
-            Self::Any(err) => HttpResponse::InternalServerError()
-                .json(ErrorInformation::new("System unknown", err)),
             Error::Ingestor(inner) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Ingestor error", inner))
             }
-            Error::UnsupportedHashAlgorithm => HttpResponse::InternalServerError()
-                .json(ErrorInformation::new("Unsupported hash algorithm", "")),
-            Error::Storage(inner) => HttpResponse::InternalServerError()
-                .json(ErrorInformation::new("Unsupported hash algorithm", inner)),
-            Error::Database(err) => HttpResponse::InternalServerError()
-                .json(ErrorInformation::new("Database error", err)),
             Error::Query(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Query error", err))
             }
@@ -75,8 +64,15 @@ impl ResponseError for Error {
             Error::StorageKey(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Storage Key", err))
             }
-            Error::Data(msg) => HttpResponse::InternalServerError()
-                .json(ErrorInformation::new("Data-model corruption", msg)),
+
+            // All other cases are internal system errors that are not expected to occur.
+            // They are logged and a generic error response is returned to avoid leaking
+            // internal state to end users.
+            err => {
+                log::error!("{err}");
+                HttpResponse::InternalServerError()
+                    .json(ErrorInformation::new("Internal Server Error", ""))
+            }
         }
     }
 }
