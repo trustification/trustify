@@ -12,11 +12,14 @@ use utoipa::ToSchema;
 pub struct AdvisoryDetails {
     #[serde(flatten)]
     pub head: AdvisoryHead,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+
+    /// Vulnerabilities addressed within this advisory.
     pub vulnerabilities: Vec<AdvisoryVulnerabilitySummary>,
+
     /// Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub average_severity: Option<String>,
+
     /// Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub average_score: Option<f64>,

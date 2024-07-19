@@ -15,24 +15,42 @@ use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct AdvisoryHead {
+    /// The opaque UUID of the advisory.
     #[serde(with = "uuid::serde::urn")]
     pub uuid: Uuid,
+
+    /// The identifier of the advisory, as assigned by the issuing organization.
     pub identifier: String,
+
+    /// Hashes of the underlying original document as ingested.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub hashes: Vec<Id>,
+
+    /// The issuer of the advisory, if known. If no issuer is able to be
+    /// determined, this field will not be included in a response.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub issuer: Option<OrganizationSummary>,
+
+    /// The date (in RFC3339 format) of when the advisory was published, if any.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
     pub published: Option<OffsetDateTime>,
+
+    /// The date (in RFC3339 format) of when the advisory was last modified, if any.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
     pub modified: Option<OffsetDateTime>,
+
+    /// The date (in RFC3339 format) of when the advisory was withdrawn, if any.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
     pub withdrawn: Option<OffsetDateTime>,
+
+    /// The title of the advisory as assigned by the issuing organization.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
+
+    /// Informational labels attached by the system or users to this advisory.
     #[serde(default, skip_serializing_if = "Labels::is_empty")]
     pub labels: Labels,
 }
