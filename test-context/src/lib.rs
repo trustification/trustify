@@ -56,7 +56,7 @@ impl TrustifyContext {
     }
 
     pub async fn ingest_document(&self, path: &str) -> Result<IngestResult, anyhow::Error> {
-        let bytes = self.document_bytes(path).await?;
+        let bytes = document_bytes(path).await?;
         let format = Format::from_bytes(&bytes)?;
         let stream = ReaderStream::new(bytes.as_ref());
 
@@ -64,27 +64,6 @@ impl TrustifyContext {
             .ingest((), None, format, stream)
             .await
             .map_err(|e| e.into())
-    }
-
-    pub async fn document_bytes(&self, path: &str) -> Result<Bytes, anyhow::Error> {
-        let workspace_root = find_workspace_root()?;
-        let test_data = workspace_root.join("etc").join("test-data");
-        let path_buf = test_data.join(path);
-        let mut file = tokio::fs::File::open(path_buf).await?;
-        let mut bytes = Vec::new();
-        file.read_to_end(&mut bytes).await?;
-        if path.ends_with(".xz") {
-            bytes = liblzma::decode_all(&*bytes)?;
-        }
-        Ok(Bytes::copy_from_slice(&bytes))
-    }
-
-    pub async fn document_stream(
-        &self,
-        path: &str,
-    ) -> Result<impl Stream<Item = Result<Bytes, std::io::Error>>, anyhow::Error> {
-        let bytes = self.document_bytes(path).await?;
-        Ok(stream::once(async { Ok(bytes) }))
     }
 }
 
@@ -164,9 +143,32 @@ impl AsyncTestContext for TrustifyContext {
     }
 }
 
+pub async fn document_bytes(path: &str) -> Result<Bytes, anyhow::Error> {
+    let workspace_root = find_workspace_root()?;
+    let test_data = workspace_root.join("etc").join("test-data");
+    let path_buf = test_data.join(path);
+    let mut file = tokio::fs::File::open(path_buf).await?;
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes).await?;
+    if path.ends_with(".xz") {
+        bytes = liblzma::decode_all(&*bytes)?;
+    }
+    Ok(Bytes::copy_from_slice(&bytes))
+}
+
+pub async fn document_stream(
+    path: &str,
+) -> Result<impl Stream<Item = Result<Bytes, std::io::Error>>, anyhow::Error> {
+    let bytes = document_bytes(path).await?;
+    Ok(stream::once(async { Ok(bytes) }))
+}
+
 #[cfg(test)]
 mod test {
+    use crate::{document_bytes, document_stream};
+
     use super::TrustifyContext;
+    use futures::StreamExt;
     use test_context::test_context;
     use test_log::test;
 
@@ -182,5 +184,21 @@ mod test {
         assert!(!ingestion_result.document_id.is_empty());
 
         Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn test_document_bytes() {
+        let bytes = document_bytes("zookeeper-3.9.2-cyclonedx.json")
+            .await
+            .unwrap();
+        assert!(!bytes.is_empty());
+    }
+
+    #[test(tokio::test)]
+    async fn test_document_stream() {
+        let stream = document_stream("zookeeper-3.9.2-cyclonedx.json")
+            .await
+            .unwrap();
+        assert!(Box::pin(stream).next().await.is_some());
     }
 }

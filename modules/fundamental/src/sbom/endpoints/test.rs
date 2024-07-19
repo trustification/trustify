@@ -13,7 +13,7 @@ use trustify_auth::authorizer::Authorizer;
 use trustify_common::{id::Id, model::PaginatedResults};
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::model::IngestResult;
-use trustify_test_context::TrustifyContext;
+use trustify_test_context::{document_bytes, TrustifyContext};
 use uuid::Uuid;
 
 async fn query<S, B>(app: &S, id: &str, q: &str) -> PaginatedResults<SbomPackage>
@@ -80,10 +80,7 @@ where
 
     let request = TestRequest::post()
         .uri("/api/v1/sbom")
-        .set_payload(
-            ctx.document_bytes("quarkus-bom-2.13.8.Final-redhat-00004.json")
-                .await?,
-        )
+        .set_payload(document_bytes("quarkus-bom-2.13.8.Final-redhat-00004.json").await?)
         .to_request();
 
     let response = actix_web::test::call_service(&app, request).await;

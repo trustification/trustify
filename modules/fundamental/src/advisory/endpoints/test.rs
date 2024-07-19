@@ -30,7 +30,7 @@ use trustify_module_ingestor::{
     model::IngestResult,
 };
 use trustify_module_storage::service::fs::FileSystemBackend;
-use trustify_test_context::TrustifyContext;
+use trustify_test_context::{document_bytes, TrustifyContext};
 use uuid::Uuid;
 
 async fn query<S, B>(app: &S, q: &str) -> PaginatedResults<AdvisorySummary>
@@ -384,7 +384,8 @@ async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::
             .service(web::scope("/api").configure(|svc| configure(svc, db, storage)));
     }))
     .await;
-    let payload = include_str!("../../../../../etc/test-data/csaf/cve-2023-33201.json");
+
+    let payload = document_bytes("csaf/cve-2023-33201.json").await?;
 
     let uri = "/api/v1/advisory";
     let request = TestRequest::post()
@@ -410,7 +411,7 @@ async fn upload_osv_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         web::scope("/api").configure(|svc| crate::endpoints::configure(svc, db, storage)),
     ))
     .await;
-    let payload = include_str!("../../../../../etc/test-data/osv/RUSTSEC-2021-0079.json");
+    let payload = document_bytes("osv/RUSTSEC-2021-0079.json").await?;
 
     let uri = "/api/v1/advisory";
     let request = TestRequest::post()
@@ -436,7 +437,7 @@ async fn upload_cve_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         web::scope("/api").configure(|svc| crate::endpoints::configure(svc, db, storage)),
     ))
     .await;
-    let payload = include_str!("../../../../../etc/test-data/mitre/CVE-2024-27088.json");
+    let payload = document_bytes("mitre/CVE-2024-27088.json").await?;
 
     let uri = "/api/v1/advisory";
     let request = TestRequest::post()
@@ -493,7 +494,7 @@ async fn upload_with_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
             .service(web::scope("/api").configure(|svc| configure(svc, db, storage)));
     }))
     .await;
-    let payload = include_str!("../../../../../etc/test-data/csaf/cve-2023-33201.json");
+    let payload = document_bytes("csaf/cve-2023-33201.json").await?;
 
     let uri = "/api/v1/advisory?labels.foo=bar&labels.bar=baz";
     let request = TestRequest::post()
@@ -528,7 +529,7 @@ async fn upload_with_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-const DOC: &[u8] = include_bytes!("../../../../../etc/test-data/csaf/cve-2023-33201.json");
+const DOC: &str = "csaf/cve-2023-33201.json";
 
 /// This will upload [`DOC`], and then call the test function, providing the upload id of the document.
 async fn with_upload<F>(ctx: TrustifyContext, f: F) -> anyhow::Result<()>
@@ -548,7 +549,7 @@ where
 
     let request = TestRequest::post()
         .uri("/api/v1/advisory")
-        .set_payload(DOC)
+        .set_payload(document_bytes(DOC).await?)
         .to_request();
 
     let response = actix_web::test::call_service(&app, request).await;
@@ -571,7 +572,7 @@ where
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn download_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let digest: String = Sha256::digest(DOC).encode_hex();
+    let digest: String = Sha256::digest(document_bytes(DOC).await?).encode_hex();
 
     with_upload(ctx, move |_id, app| {
         Box::pin(async move {

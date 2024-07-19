@@ -169,7 +169,7 @@ mod test {
     use test_log::test;
     use trustify_common::db::Transactional;
     use trustify_common::hashing::Digests;
-    use trustify_test_context::TrustifyContext;
+    use trustify_test_context::{document_bytes, TrustifyContext};
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
@@ -177,8 +177,8 @@ mod test {
         let db = ctx.db;
         let graph = Graph::new(db);
 
-        let data = include_bytes!("../../../../../../etc/test-data/mitre/CVE-2024-28111.json");
-        let digests = Digests::digest(data);
+        let data = document_bytes("mitre/CVE-2024-28111.json").await?;
+        let digests = Digests::digest(&data);
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
         assert!(loaded_vulnerability.is_none());

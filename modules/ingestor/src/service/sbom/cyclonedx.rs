@@ -77,14 +77,14 @@ mod test {
     use test_context::test_context;
     use test_log::test;
     use trustify_module_storage::service::fs::FileSystemBackend;
-    use trustify_test_context::TrustifyContext;
+    use trustify_test_context::{document_bytes, TrustifyContext};
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn ingest_cyclonedx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         let db = ctx.db;
         let graph = Graph::new(db);
-        let data = include_bytes!("../../../../../etc/test-data/zookeeper-3.9.2-cyclonedx.json");
+        let data = document_bytes("zookeeper-3.9.2-cyclonedx.json").await?;
 
         let (storage, _tmp) = FileSystemBackend::for_test().await?;
 
@@ -94,8 +94,8 @@ mod test {
             .ingest(
                 ("source", "test"),
                 None,
-                Format::sbom_from_bytes(data)?,
-                stream::iter([Ok::<_, Infallible>(Bytes::from_static(data))]),
+                Format::sbom_from_bytes(&data)?,
+                stream::iter([Ok::<_, Infallible>(Bytes::copy_from_slice(&data))]),
             )
             .await
             .expect("must ingest");

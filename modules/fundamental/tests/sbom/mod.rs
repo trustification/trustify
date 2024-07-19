@@ -20,7 +20,7 @@ use trustify_module_ingestor::graph::{
     Graph,
 };
 use trustify_module_ingestor::service::Discard;
-use trustify_test_context::TrustifyContext;
+use trustify_test_context::{document_bytes, TrustifyContext};
 
 pub struct WithContext {
     pub sbom: SbomContext,
@@ -60,7 +60,7 @@ where
     let start = Instant::now();
     let sbom = info_span!("parse json")
         .in_scope(|| async {
-            let bytes = ctx.document_bytes(sbom).await?;
+            let bytes = document_bytes(sbom).await?;
             p(&bytes[..])
         })
         .await?;
