@@ -28,6 +28,7 @@ tokio = { workspace = true }
 url = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras"] }
 utoipa-swagger-ui = { workspace = true, features = ["actix-web"] }
+utoipa-redoc = { workspace = true }
 
 garage-door = { workspace = true, optional = true }
 
