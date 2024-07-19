@@ -150,19 +150,23 @@ fn masked<N: Mask>(mask: N, bytes: &[u8]) -> Result<Option<String>, Error> {
 mod test {
     use super::*;
     use test_log::test;
+    use trustify_test_context::document_bytes;
 
     #[test(tokio::test)]
     async fn detection() -> Result<(), anyhow::Error> {
-        let csaf = include_bytes!("../../../../etc/test-data/csaf/CVE-2023-20862.json");
-        assert!(matches!(Format::from_bytes(csaf), Ok(Format::CSAF)));
-        let osv = include_bytes!("../../../../etc/test-data/osv/RUSTSEC-2021-0079.json");
-        assert!(matches!(Format::from_bytes(osv), Ok(Format::OSV)));
-        let cve = include_bytes!("../../../../etc/test-data/mitre/CVE-2024-27088.json");
-        assert!(matches!(Format::from_bytes(cve), Ok(Format::CVE)));
-        let cyclone = include_bytes!("../../../../etc/test-data/zookeeper-3.9.2-cyclonedx.json");
-        assert!(matches!(Format::from_bytes(cyclone), Ok(Format::CycloneDX)));
-        let spdx = include_bytes!("../../../../etc/test-data/ubi9-9.2-755.1697625012.json");
-        assert!(matches!(Format::from_bytes(spdx), Ok(Format::SPDX)));
+        let csaf = document_bytes("csaf/CVE-2023-20862.json").await?;
+        assert!(matches!(Format::from_bytes(&csaf), Ok(Format::CSAF)));
+        let osv = document_bytes("osv/RUSTSEC-2021-0079.json").await?;
+        assert!(matches!(Format::from_bytes(&osv), Ok(Format::OSV)));
+        let cve = document_bytes("mitre/CVE-2024-27088.json").await?;
+        assert!(matches!(Format::from_bytes(&cve), Ok(Format::CVE)));
+        let cyclone = document_bytes("zookeeper-3.9.2-cyclonedx.json").await?;
+        assert!(matches!(
+            Format::from_bytes(&cyclone),
+            Ok(Format::CycloneDX)
+        ));
+        let spdx = document_bytes("ubi9-9.2-755.1697625012.json").await?;
+        assert!(matches!(Format::from_bytes(&spdx), Ok(Format::SPDX)));
         Ok(())
     }
 }

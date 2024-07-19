@@ -110,7 +110,7 @@ async fn test_parse_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 async fn ingest_spdx_broken_refs(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let db = &ctx.db;
     let graph = Graph::new(db.clone());
-    let data = ctx.document_bytes("spdx/broken-refs.json").await?;
+    let data = document_bytes("spdx/broken-refs.json").await?;
     let (storage, _tmp) = FileSystemBackend::for_test().await?;
     let ingestor = IngestorService::new(graph, storage);
     let sbom = SbomService::new(db.clone());

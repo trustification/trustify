@@ -184,7 +184,7 @@ mod test {
     use test_context::test_context;
     use test_log::test;
     use trustify_common::db::Transactional;
-    use trustify_test_context::TrustifyContext;
+    use trustify_test_context::{document_bytes, TrustifyContext};
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
@@ -192,8 +192,8 @@ mod test {
         let db = ctx.db;
         let graph = Graph::new(db);
 
-        let data = include_bytes!("../../../../../../etc/test-data/csaf/CVE-2023-20862.json");
-        let digests = Digests::digest(data);
+        let data = document_bytes("csaf/CVE-2023-20862.json").await?;
+        let digests = Digests::digest(&data);
 
         let loader = CsafLoader::new(&graph);
         loader
@@ -273,8 +273,8 @@ mod test {
         let graph = Graph::new(db);
         let loader = CsafLoader::new(&graph);
 
-        let data = include_bytes!("../../../../../../etc/test-data/csaf/rhsa-2024_3666.json");
-        let digests = Digests::digest(data);
+        let data = document_bytes("csaf/rhsa-2024_3666.json").await?;
+        let digests = Digests::digest(&data);
 
         loader.load(("source", "test"), &data[..], &digests).await?;
 

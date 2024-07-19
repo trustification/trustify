@@ -12,7 +12,7 @@ use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::fs::FileSystemBackend;
-use trustify_test_context::TrustifyContext;
+use trustify_test_context::{document_bytes, document_stream, TrustifyContext};
 
 /// We re-ingest two versions of the same quarkus SBOM. However, as the quarkus SBOM doesn't have
 /// anything in common other than the filename (which doesn't matter), these are considered two
@@ -33,8 +33,7 @@ async fn quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            ctx.document_stream("quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json")
-                .await?,
+            document_stream("quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json").await?,
         )
         .await?;
 
@@ -46,8 +45,7 @@ async fn quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            ctx.document_stream("quarkus/v2/quarkus-bom-2.13.8.Final-redhat-00004.json")
-                .await?,
+            document_stream("quarkus/v2/quarkus-bom-2.13.8.Final-redhat-00004.json").await?,
         )
         .await?;
 
@@ -124,7 +122,7 @@ async fn nhc(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            ctx.document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
+            document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
         )
         .await?;
 
@@ -139,7 +137,7 @@ async fn nhc(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            ctx.document_stream("nhc/v2/nhc-0.4.z.json.xz").await?,
+            document_stream("nhc/v2/nhc-0.4.z.json.xz").await?,
         )
         .await?;
 
@@ -201,7 +199,7 @@ async fn nhc_same(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            ctx.document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
+            document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
         )
         .await?;
 
@@ -217,7 +215,7 @@ async fn nhc_same(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            ctx.document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
+            document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
         )
         .await?;
 
@@ -281,7 +279,7 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            ctx.document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
+            document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
         )
         .await?;
 
@@ -300,7 +298,7 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             stream::once({
                 // re-serialize file (non-pretty)
                 let json: Value =
-                    serde_json::from_slice(&ctx.document_bytes("nhc/v1/nhc-0.4.z.json.xz").await?)?;
+                    serde_json::from_slice(&document_bytes("nhc/v1/nhc-0.4.z.json.xz").await?)?;
 
                 let result = serde_json::to_vec(&json).map(Bytes::from);
 
@@ -372,7 +370,7 @@ async fn syft_rerun(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            ctx.document_stream("syft-ubi-example/v1.json.xz").await?,
+            document_stream("syft-ubi-example/v1.json.xz").await?,
         )
         .await?;
 
@@ -388,7 +386,7 @@ async fn syft_rerun(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "test"),
             None,
             Format::SPDX,
-            ctx.document_stream("syft-ubi-example/v2.json.xz").await?,
+            document_stream("syft-ubi-example/v2.json.xz").await?,
         )
         .await?;
 

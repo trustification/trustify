@@ -12,7 +12,7 @@ use trustify_common::purl::Purl;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::fs::FileSystemBackend;
-use trustify_test_context::TrustifyContext;
+use trustify_test_context::{document_bytes, TrustifyContext};
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
@@ -587,7 +587,7 @@ async fn contextual_status(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let ingestor = IngestorService::new(Graph::new(db.clone()), storage);
 
     // ingest an advisory
-    let data = include_bytes!("../../../../../etc/test-data/csaf/rhsa-2024_3666.json");
+    let data = document_bytes("csaf/rhsa-2024_3666.json").await?;
     let data = ReaderStream::new(&data[..]);
 
     ingestor

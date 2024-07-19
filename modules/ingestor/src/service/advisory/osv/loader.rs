@@ -291,7 +291,7 @@ mod test {
     use crate::graph::Graph;
     use trustify_common::db::Transactional;
     use trustify_common::hashing::Digests;
-    use trustify_test_context::TrustifyContext;
+    use trustify_test_context::{document_bytes, TrustifyContext};
 
     use crate::service::advisory::osv::loader::OsvLoader;
 
@@ -301,8 +301,8 @@ mod test {
         let db = ctx.db;
         let graph = Graph::new(db);
 
-        let data = include_bytes!("../../../../../../etc/test-data/osv/RUSTSEC-2021-0079.json");
-        let digests = Digests::digest(data);
+        let data = document_bytes("osv/RUSTSEC-2021-0079.json").await?;
+        let digests = Digests::digest(&data);
 
         let loaded_vulnerability = graph
             .get_vulnerability("CVE-2021-32714", Transactional::None)
