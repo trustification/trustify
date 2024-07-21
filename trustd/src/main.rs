@@ -6,6 +6,7 @@ use std::process::{ExitCode, Termination};
 use tokio::task::{spawn_local, LocalSet};
 
 mod db;
+mod openapi;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(clap::Subcommand, Debug)]
@@ -14,6 +15,8 @@ pub enum Command {
     Api(trustify_server::Run),
     /// Manage the database
     Db(db::Run),
+    /// Access OpenAPI related information of the API server
+    Openapi(openapi::Run),
 }
 
 #[derive(clap::Parser, Debug)]
@@ -33,6 +36,7 @@ impl Trustd {
         match self.command {
             Some(Command::Api(run)) => run.run().await,
             Some(Command::Db(run)) => run.run().await,
+            Some(Command::Openapi(run)) => run.run().await,
             None => pm_mode().await,
         }
     }
