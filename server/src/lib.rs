@@ -3,7 +3,7 @@
 
 #[cfg(feature = "garage-door")]
 mod embedded_oidc;
-mod openapi;
+pub mod openapi;
 mod sample_data;
 
 pub use sample_data::sample_data;

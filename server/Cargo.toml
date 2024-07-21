@@ -26,7 +26,7 @@ rand = { workspace = true }
 reqwest = { workspace = true }
 tokio = { workspace = true }
 url = { workspace = true }
-utoipa = { workspace = true, features = ["actix_extras"] }
+utoipa = { workspace = true, features = ["actix_extras", "yaml"] }
 utoipa-swagger-ui = { workspace = true, features = ["actix-web"] }
 
 garage-door = { workspace = true, optional = true }
