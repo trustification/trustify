@@ -99,6 +99,12 @@ Connect to PSQL:
 env PGPASSWORD=eggs psql -U postgres -d trustify -h localhost -p 5432
 ```
 
+If you don't have the `psql` command available, you can also use the `podman-compose` command: 
+
+```shell
+podman-compose -f etc/deploy/compose/compose.yaml exec postgres psql -U postgres -d trustify
+```
+
 Point the app at an external db:
 
 ```shell
