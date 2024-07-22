@@ -262,3 +262,39 @@ async fn test_version_matches(ctx: TrustifyContext) -> Result<(), anyhow::Error>
 
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn test_version_matches_datelike(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    assert!(
+        version_matches(
+            &ctx.db,
+            "7.1.0-0.20231218164901.0660a66.el9",
+            VersionRange::Range(
+                Version::Inclusive("7.1.0-0.20231218164901.0660a66.el9"),
+                Version::Exclusive("8.1.0-0.20231218164901.0660a66.el9"),
+            )
+        )
+        .await?
+    );
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn test_version_matches_shalike(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    assert!(
+        !version_matches(
+            &ctx.db,
+            "sha256:cab90a3a2eb5bdff7a1420a6d89c64a8d32b1be7bd3ec311e483d2c3b9a47307",
+            VersionRange::Range(
+                Version::Inclusive("7.1.0-0.20231218164901.0660a66.el9"),
+                Version::Exclusive("8.1.0-0.20231218164901.0660a66.el9"),
+            )
+        )
+        .await?
+    );
+
+    Ok(())
+}
