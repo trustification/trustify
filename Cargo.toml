@@ -16,6 +16,7 @@ members = [
     "server",
     "trustd",
     "test-context",
+    "xtask",
 ]
 
 [workspace.dependencies]
