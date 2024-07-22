@@ -122,7 +122,7 @@ async fn read(
     request_body = ImporterConfiguration,
     params(
         ("name", Path, description = "The name of the importer"),
-        ("if-match", Header, description = "The revision to update"),
+        ("if-match"=String, Header, description = "The revision to update"),
     ),
     responses(
         (status = 201, description = "Created a new importer configuration"),
@@ -156,7 +156,7 @@ async fn update(
     request_body = bool,
     params(
         ("name", Path, description = "The name of the importer"),
-        ("if-match", Header, description = "The revision to update"),
+        ("if-match"=String, Header, description = "The revision to update"),
     ),
     responses(
         (status = 201, description = "Updated the enable state"),
@@ -193,7 +193,7 @@ async fn set_enabled(
     request_body = bool,
     params(
         ("name", Path, description = "The name of the importer"),
-        ("if-match", Header, description = "The revision to update"),
+        ("if-match"=String, Header, description = "The revision to update"),
     ),
     responses(
         (status = 201, description = "Updated the state"),
@@ -223,7 +223,7 @@ async fn force(
     tag = "importer",
     params(
         ("name", Path, description = "The name of the importer"),
-        ("if-match", Header, description = "The revision to delete"),
+        ("if-match"=String, Header, description = "The revision to delete"),
     ),
     responses(
         (status = 201, description = "Delete the importer configuration"),
