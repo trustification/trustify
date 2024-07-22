@@ -1,6 +1,5 @@
-use crate::product::endpoints::configure;
+use crate::test::{caller, CallService};
 use actix_web::test::TestRequest;
-use actix_web::{web, App};
 use jsonpath_rust::JsonPathQuery;
 use serde_json::{json, Value};
 use test_context::test_context;
@@ -14,13 +13,10 @@ use trustify_test_context::TrustifyContext;
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
+    let db = &ctx.db;
     let graph = Graph::new(db.clone());
 
-    let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db.clone()))),
-    )
-    .await;
+    let app = caller(&ctx).await?;
 
     graph
         .ingest_product(
@@ -46,7 +42,7 @@ async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let request = TestRequest::get().uri(uri).to_request();
 
-    let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: Value = app.call_and_read_body_json(request).await;
 
     let names = response.path("$.items[*].name").unwrap();
 
@@ -58,13 +54,10 @@ async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn one_product(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
+    let db = &ctx.db;
     let graph = Graph::new(db.clone());
 
-    let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db.clone()))),
-    )
-    .await;
+    let app = caller(&ctx).await?;
 
     graph
         .ingest_product(
@@ -76,7 +69,7 @@ async fn one_product(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let service = crate::product::service::ProductService::new(db);
+    let service = crate::product::service::ProductService::new(db.clone());
 
     let products = service
         .fetch_products(Query::default(), Paginated::default(), ())
@@ -91,7 +84,7 @@ async fn one_product(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let request = TestRequest::get().uri(&uri).to_request();
 
-    let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: Value = app.call_and_read_body_json(request).await;
 
     let name = response.clone().path("$.name").unwrap();
 

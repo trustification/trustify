@@ -126,6 +126,7 @@ pub async fn upload(
     let fmt = Format::from_bytes(&bytes)?;
     let payload = ReaderStream::new(&*bytes);
     let result = service.ingest(labels, issuer, fmt, payload).await?;
+    log::info!("Uploaded Advisory: {}", result.id);
     Ok(HttpResponse::Created().json(result))
 }
 

@@ -1,17 +1,9 @@
 use crate::{
-    advisory::{model::AdvisoryDetails, model::AdvisorySummary},
-    configure,
-    test::CallService,
+    advisory::model::{AdvisoryDetails, AdvisorySummary},
+    test::{caller, CallService},
 };
-use actix_http::{Request, StatusCode};
-use actix_web::{
-    body::MessageBody,
-    dev::{Service, ServiceResponse},
-    test::TestRequest,
-    web, App, Error,
-};
-use bytesize::ByteSize;
-use futures_util::future::LocalBoxFuture;
+use actix_http::StatusCode;
+use actix_web::test::TestRequest;
 use hex::ToHex;
 use jsonpath_rust::JsonPathQuery;
 use serde_json::{json, Value};
@@ -29,30 +21,13 @@ use trustify_module_ingestor::{
     graph::{advisory::AdvisoryInformation, Graph},
     model::IngestResult,
 };
-use trustify_module_storage::service::fs::FileSystemBackend;
 use trustify_test_context::{document_bytes, TrustifyContext};
 use uuid::Uuid;
-
-async fn query<S, B>(app: &S, q: &str) -> PaginatedResults<AdvisorySummary>
-where
-    S: Service<Request, Response = ServiceResponse<B>, Error = Error>,
-    B: MessageBody,
-{
-    let uri = format!("/api/v1/advisory?q={}", urlencoding::encode(q));
-    let req = TestRequest::get().uri(&uri).to_request();
-    actix_web::test::call_and_read_body_json(app, req).await
-}
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = actix_web::test::init_service(
-        App::new().service(
-            web::scope("/api")
-                .configure(|config| configure(config, ctx.db.clone(), ctx.storage.clone())),
-        ),
-    )
-    .await;
+    let app = caller(ctx).await?;
 
     let advisory = ctx
         .graph
@@ -111,8 +86,7 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let request = TestRequest::get().uri(uri).to_request();
 
-    let response: PaginatedResults<AdvisorySummary> =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: PaginatedResults<AdvisorySummary> = app.call_and_read_body_json(request).await;
 
     assert_eq!(2, response.items.len());
 
@@ -136,17 +110,10 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
+    let db = &ctx.db;
     let graph = Graph::new(db.clone());
-    let (storage, _) = FileSystemBackend::for_test().await?;
 
-    let app = actix_web::test::init_service(
-        App::new().service(
-            web::scope("/api")
-                .configure(|config| crate::endpoints::configure(config, db, storage.clone())),
-        ),
-    )
-    .await;
+    let app = caller(&ctx).await?;
 
     let advisory1 = graph
         .ingest_advisory(
@@ -204,7 +171,7 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let request = TestRequest::get().uri(&uri).to_request();
 
-    let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: Value = app.call_and_read_body_json(request).await;
 
     log::debug!("{:#?}", response);
 
@@ -228,7 +195,7 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let request = TestRequest::get().uri(&uri).to_request();
 
-    let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: Value = app.call_and_read_body_json(request).await;
 
     let vulns = response.path("$.vulnerabilities").unwrap();
 
@@ -240,17 +207,10 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn one_advisory_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
+    let db = &ctx.db;
     let graph = Graph::new(db.clone());
-    let (storage, _) = FileSystemBackend::for_test().await?;
 
-    let app = actix_web::test::init_service(
-        App::new().service(
-            web::scope("/api")
-                .configure(|config| crate::endpoints::configure(config, db, storage.clone())),
-        ),
-    )
-    .await;
+    let app = caller(&ctx).await?;
 
     graph
         .ingest_advisory(
@@ -310,7 +270,7 @@ async fn one_advisory_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error>
 
     let request = TestRequest::get().uri(&uri).to_request();
 
-    let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: Value = app.call_and_read_body_json(request).await;
 
     log::debug!("{:#?}", response);
 
@@ -336,15 +296,13 @@ async fn one_advisory_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error>
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn search_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    use actix_web::test::init_service;
+    async fn query(app: &impl CallService, q: &str) -> PaginatedResults<AdvisorySummary> {
+        let uri = format!("/api/v1/advisory?q={}", urlencoding::encode(q));
+        let req = TestRequest::get().uri(&uri).to_request();
+        app.call_and_read_body_json(req).await
+    }
 
-    let app = init_service(
-        App::new().service(
-            web::scope("/api")
-                .configure(|config| configure(config, ctx.db.clone(), ctx.storage.clone())),
-        ),
-    )
-    .await;
+    let app = caller(ctx).await?;
     let _response: PaginatedResults<AdvisorySummary>;
 
     // No results before ingestion
@@ -376,14 +334,7 @@ async fn search_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let (storage, _temp) = FileSystemBackend::for_test().await?;
-    let app = actix_web::test::init_service(App::new().configure(|svc| {
-        let limit = ByteSize::gb(1).as_u64() as usize;
-        svc.app_data(web::PayloadConfig::default().limit(limit))
-            .service(web::scope("/api").configure(|svc| configure(svc, db, storage)));
-    }))
-    .await;
+    let app = caller(&ctx).await?;
 
     let payload = document_bytes("csaf/cve-2023-33201.json").await?;
 
@@ -393,8 +344,7 @@ async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::
         .set_payload(payload)
         .to_request();
 
-    let response = actix_web::test::call_service(&app, request).await;
-    let result: IngestResult = actix_web::test::read_body_json(response).await;
+    let result: IngestResult = app.call_and_read_body_json(request).await;
     log::debug!("{result:?}");
     assert!(matches!(result.id, Id::Uuid(_)));
     assert_eq!(result.document_id, "CVE-2023-33201");
@@ -405,12 +355,7 @@ async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn upload_osv_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let (storage, _temp) = FileSystemBackend::for_test().await?;
-    let app = actix_web::test::init_service(App::new().service(
-        web::scope("/api").configure(|svc| crate::endpoints::configure(svc, db, storage)),
-    ))
-    .await;
+    let app = caller(&ctx).await?;
     let payload = document_bytes("osv/RUSTSEC-2021-0079.json").await?;
 
     let uri = "/api/v1/advisory";
@@ -419,9 +364,7 @@ async fn upload_osv_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .set_payload(payload)
         .to_request();
 
-    let response = actix_web::test::call_service(&app, request).await;
-    assert!(response.status().is_success());
-    let result: IngestResult = actix_web::test::read_body_json(response).await;
+    let result: IngestResult = app.call_and_read_body_json(request).await;
     assert!(matches!(result.id, Id::Uuid(_)));
     assert_eq!(result.document_id, "RUSTSEC-2021-0079");
 
@@ -431,12 +374,7 @@ async fn upload_osv_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn upload_cve_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let (storage, _temp) = FileSystemBackend::for_test().await?;
-    let app = actix_web::test::init_service(App::new().service(
-        web::scope("/api").configure(|svc| crate::endpoints::configure(svc, db, storage)),
-    ))
-    .await;
+    let app = caller(&ctx).await?;
     let payload = document_bytes("mitre/CVE-2024-27088.json").await?;
 
     let uri = "/api/v1/advisory";
@@ -445,9 +383,7 @@ async fn upload_cve_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .set_payload(payload)
         .to_request();
 
-    let response = actix_web::test::call_service(&app, request).await;
-    assert!(response.status().is_success());
-    let result: IngestResult = actix_web::test::read_body_json(response).await;
+    let result: IngestResult = app.call_and_read_body_json(request).await;
     assert!(matches!(result.id, Id::Uuid(_)));
     assert_eq!(result.document_id, "CVE-2024-27088");
 
@@ -457,21 +393,12 @@ async fn upload_cve_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn upload_unknown_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let (storage, _temp) = FileSystemBackend::for_test().await?;
-    let app = actix_web::test::init_service(App::new().configure(|svc| {
-        let limit = ByteSize::gb(1).as_u64() as usize;
-        svc.app_data(web::PayloadConfig::default().limit(limit))
-            .service(
-                web::scope("/api").configure(|svc| crate::endpoints::configure(svc, db, storage)),
-            );
-    }))
-    .await;
+    let app = caller(&ctx).await?;
 
     let uri = "/api/v1/advisory";
     let request = TestRequest::post().uri(uri).to_request();
 
-    let response = actix_web::test::call_service(&app, request).await;
+    let response = app.call_service(request).await;
     log::debug!("response: {response:?}");
 
     assert_eq!(
@@ -486,14 +413,7 @@ async fn upload_unknown_format(ctx: TrustifyContext) -> Result<(), anyhow::Error
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn upload_with_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let (storage, _temp) = FileSystemBackend::for_test().await?;
-    let app = actix_web::test::init_service(App::new().configure(|svc| {
-        let limit = ByteSize::gb(1).as_u64() as usize;
-        svc.app_data(web::PayloadConfig::default().limit(limit))
-            .service(web::scope("/api").configure(|svc| configure(svc, db, storage)));
-    }))
-    .await;
+    let app = caller(&ctx).await?;
     let payload = document_bytes("csaf/cve-2023-33201.json").await?;
 
     let uri = "/api/v1/advisory?labels.foo=bar&labels.bar=baz";
@@ -502,8 +422,7 @@ async fn upload_with_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .set_payload(payload)
         .to_request();
 
-    let response = actix_web::test::call_service(&app, request).await;
-    let result: IngestResult = actix_web::test::read_body_json(response).await;
+    let result: IngestResult = app.call_and_read_body_json(request).await;
     log::debug!("{result:?}");
     assert!(matches!(result.id, Id::Uuid(_)));
     assert_eq!(result.document_id, "CVE-2023-33201");
@@ -513,8 +432,7 @@ async fn upload_with_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let request = TestRequest::get()
         .uri(&format!("/api/v1/advisory/{}", result.id))
         .to_request();
-    let response = actix_web::test::call_service(&app, request).await;
-    let result: AdvisoryDetails = actix_web::test::read_body_json(response).await;
+    let result: AdvisoryDetails = app.call_and_read_body_json(request).await;
 
     assert_eq!(
         result.head.labels,
@@ -531,135 +449,68 @@ async fn upload_with_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
 const DOC: &str = "csaf/cve-2023-33201.json";
 
-/// This will upload [`DOC`], and then call the test function, providing the upload id of the document.
-async fn with_upload<F>(ctx: TrustifyContext, f: F) -> anyhow::Result<()>
-where
-    for<'a> F: FnOnce(IngestResult, &'a dyn CallService) -> LocalBoxFuture<'a, anyhow::Result<()>>,
-{
-    let db = ctx.db;
-    let (storage, _) = FileSystemBackend::for_test().await?;
-    let app = actix_web::test::init_service(
-        App::new()
-            .app_data(web::PayloadConfig::default().limit(1024 * 1024))
-            .service(web::scope("/api").configure(|svc| configure(svc, db, storage.clone()))),
-    )
-    .await;
-
-    // upload
-
-    let request = TestRequest::post()
-        .uri("/api/v1/advisory")
-        .set_payload(document_bytes(DOC).await?)
-        .to_request();
-
-    let response = actix_web::test::call_service(&app, request).await;
-
-    log::debug!("Code: {}", response.status());
-    assert!(response.status().is_success());
-    let result: IngestResult = actix_web::test::read_body_json(response).await;
-
-    log::debug!("ID: {result:?}");
-    assert!(matches!(result.id, Id::Uuid(_)));
-
-    f(result, &app).await?;
-
-    // download
-
-    Ok(())
-}
-
 /// Test downloading a document by its SHA256 digest
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn download_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let digest: String = Sha256::digest(document_bytes(DOC).await?).encode_hex();
+    let app = caller(&ctx).await?;
+    ctx.ingest_document(DOC).await?;
+    let uri = format!("/api/v1/advisory/sha256:{digest}/download");
+    let request = TestRequest::get().uri(&uri).to_request();
+    let doc: Value = app.call_and_read_body_json(request).await;
+    assert_eq!(doc["document"]["tracking"]["id"], "CVE-2023-33201");
 
-    with_upload(ctx, move |_id, app| {
-        Box::pin(async move {
-            let uri = format!("/api/v1/advisory/sha256:{digest}/download");
-            let request = TestRequest::get().uri(&uri).to_request();
-
-            let response = app.call_service(request).await;
-
-            assert!(response.status().is_success());
-            let doc: Value = actix_web::test::read_body_json(response).await;
-            assert_eq!(doc["document"]["tracking"]["id"], "CVE-2023-33201");
-
-            Ok(())
-        })
-    })
-    .await
+    Ok(())
 }
 
 /// Test downloading a document by its upload ID
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn download_advisory_by_id(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    with_upload(ctx, |result, app| {
-        Box::pin(async move {
-            let uri = format!("/api/v1/advisory/{}/download", result.id);
-            let request = TestRequest::get().uri(&uri).to_request();
+    let app = caller(&ctx).await?;
+    let result = ctx.ingest_document(DOC).await?;
+    let uri = format!("/api/v1/advisory/{}/download", result.id);
+    let request = TestRequest::get().uri(&uri).to_request();
+    let doc: Value = app.call_and_read_body_json(request).await;
+    assert_eq!(doc["document"]["tracking"]["id"], "CVE-2023-33201");
 
-            let response = app.call_service(request).await;
-
-            log::debug!("Code: {}", response.status());
-            assert!(response.status().is_success());
-            let doc: Value = actix_web::test::read_body_json(response).await;
-            assert_eq!(doc["document"]["tracking"]["id"], "CVE-2023-33201");
-
-            Ok(())
-        })
-    })
-    .await
+    Ok(())
 }
 
 /// Test setting labels
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn set_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    with_upload(ctx, |result, app| {
-        Box::pin(async move {
-            // update labels
+    let app = caller(&ctx).await?;
+    let result = ctx.ingest_document(DOC).await?;
+    let request = TestRequest::patch()
+        .uri(&format!("/api/v1/advisory/{}/label", result.id))
+        .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
+        .to_request();
+    let response = app.call_service(request).await;
+    log::debug!("Code: {}", response.status());
+    assert_eq!(response.status(), StatusCode::NO_CONTENT);
 
-            let request = TestRequest::patch()
-                .uri(&format!("/api/v1/advisory/{}/label", result.id))
-                .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
-                .to_request();
-
-            let response = app.call_service(request).await;
-
-            log::debug!("Code: {}", response.status());
-            assert_eq!(response.status(), StatusCode::NO_CONTENT);
-
-            Ok(())
-        })
-    })
-    .await
+    Ok(())
 }
 
 /// Test setting labels, for a document that does not exists
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn set_labels_not_found(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    with_upload(ctx, |_result, app| {
-        Box::pin(async move {
-            // update labels
+    let app = caller(&ctx).await?;
+    ctx.ingest_document(DOC).await?;
+    let request = TestRequest::patch()
+        .uri(&format!(
+            "/api/v1/advisory/{}/label",
+            Id::Uuid(Uuid::now_v7())
+        ))
+        .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
+        .to_request();
+    let response = app.call_service(request).await;
+    log::debug!("Code: {}", response.status());
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
-            let request = TestRequest::patch()
-                .uri(&format!(
-                    "/api/v1/advisory/{}/label",
-                    Id::Uuid(Uuid::now_v7())
-                ))
-                .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
-                .to_request();
-
-            let response = app.call_service(request).await;
-
-            log::debug!("Code: {}", response.status());
-            assert_eq!(response.status(), StatusCode::NOT_FOUND);
-
-            Ok(())
-        })
-    })
-    .await
+    Ok(())
 }

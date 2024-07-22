@@ -312,6 +312,7 @@ pub async fn upload(
     let payload = ReaderStream::new(&*bytes);
 
     let result = service.ingest(labels, None, fmt, payload).await?;
+    log::info!("Uploaded SBOM: {}", result.id);
     Ok(HttpResponse::Created().json(result))
 }
 

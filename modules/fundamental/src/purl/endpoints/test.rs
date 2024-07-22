@@ -1,12 +1,11 @@
-use crate::purl::endpoints::configure;
 use crate::purl::model::details::base_purl::BasePurlDetails;
 use crate::purl::model::details::purl::PurlDetails;
 use crate::purl::model::details::versioned_purl::VersionedPurlDetails;
 use crate::purl::model::summary::base_purl::{BasePurlSummary, PaginatedBasePurlSummary};
 use crate::purl::model::summary::purl::PaginatedPurlSummary;
 use crate::purl::model::summary::r#type::TypeSummary;
+use crate::test::{caller, CallService};
 use actix_web::test::TestRequest;
-use actix_web::{web, App};
 use serde_json::Value;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -75,20 +74,14 @@ async fn setup(db: &Database) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-
-    setup(&db).await?;
-
-    let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
-    )
-    .await;
+    setup(&ctx.db).await?;
+    let app = caller(&ctx).await?;
 
     let uri = "/api/v1/purl/type";
 
     let request = TestRequest::get().uri(uri).to_request();
 
-    let response: Vec<TypeSummary> = actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: Vec<TypeSummary> = app.call_and_read_body_json(request).await;
 
     assert_eq!(2, response.len());
 
@@ -109,21 +102,14 @@ async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn r#type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-
-    setup(&db).await?;
-
-    let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
-    )
-    .await;
+    setup(&ctx.db).await?;
+    let app = caller(&ctx).await?;
 
     let uri = "/api/v1/purl/type/maven";
 
     let request = TestRequest::get().uri(uri).to_request();
 
-    let response: PaginatedResults<BasePurlSummary> =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: PaginatedResults<BasePurlSummary> = app.call_and_read_body_json(request).await;
 
     assert_eq!(1, response.items.len());
 
@@ -134,8 +120,7 @@ async fn r#type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let request = TestRequest::get().uri(uri).to_request();
 
-    let response: PaginatedResults<BasePurlSummary> =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: PaginatedResults<BasePurlSummary> = app.call_and_read_body_json(request).await;
 
     assert_eq!(1, response.items.len());
 
@@ -148,20 +133,14 @@ async fn r#type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn type_package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-
-    setup(&db).await?;
-
-    let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
-    )
-    .await;
+    setup(&ctx.db).await?;
+    let app = caller(&ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j";
 
     let request = TestRequest::get().uri(uri).to_request();
 
-    let response: BasePurlDetails = actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: BasePurlDetails = app.call_and_read_body_json(request).await;
 
     assert_eq!(
         "pkg://maven/org.apache/log4j",
@@ -188,19 +167,12 @@ async fn type_package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn type_package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-
-    setup(&db).await?;
-
-    let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
-    )
-    .await;
+    setup(&ctx.db).await?;
+    let app = caller(&ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
-    let response: VersionedPurlDetails =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: VersionedPurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(2, response.purls.len());
     assert!(response
         .purls
@@ -213,8 +185,7 @@ async fn type_package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error>
 
     let uri = "/api/v1/purl/type/rpm/sendmail@4.4.4";
     let request = TestRequest::get().uri(uri).to_request();
-    let response: VersionedPurlDetails =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: VersionedPurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(0, response.purls.len());
 
     Ok(())
@@ -223,19 +194,12 @@ async fn type_package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error>
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-
-    setup(&db).await?;
-
-    let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
-    )
-    .await;
+    setup(&ctx.db).await?;
+    let app = caller(&ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
-    let response: VersionedPurlDetails =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: VersionedPurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(2, response.purls.len());
 
     let jdk17 = response
@@ -248,7 +212,7 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     let uri = format!("/api/v1/purl/{}", jdk17.uuid);
     let request = TestRequest::get().uri(&uri).to_request();
-    let response: PurlDetails = actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: PurlDetails = app.call_and_read_body_json(request).await;
 
     log::debug!("{:#?}", response);
 
@@ -260,25 +224,17 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-
-    setup(&db).await?;
-
-    let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
-    )
-    .await;
+    setup(&ctx.db).await?;
+    let app = caller(&ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
-    let log4j_123: VersionedPurlDetails =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let log4j_123: VersionedPurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(2, log4j_123.purls.len());
 
     let uri = format!("/api/v1/purl/version/{}", log4j_123.head.uuid);
     let request = TestRequest::get().uri(&uri).to_request();
-    let response: VersionedPurlDetails =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: VersionedPurlDetails = app.call_and_read_body_json(request).await;
 
     assert_eq!(log4j_123.head.uuid, response.head.uuid);
 
@@ -288,23 +244,17 @@ async fn version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn base(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-
-    setup(&db).await?;
-
-    let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
-    )
-    .await;
+    setup(&ctx.db).await?;
+    let app = caller(&ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j";
     let request = TestRequest::get().uri(uri).to_request();
-    let log4j: BasePurlDetails = actix_web::test::call_and_read_body_json(&app, request).await;
+    let log4j: BasePurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(2, log4j.versions.len());
 
     let uri = format!("/api/v1/purl/base/{}", log4j.head.uuid);
     let request = TestRequest::get().uri(&uri).to_request();
-    let response: BasePurlDetails = actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: BasePurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(log4j.head.uuid, response.head.uuid);
 
     Ok(())
@@ -313,19 +263,12 @@ async fn base(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn base_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-
-    setup(&db).await?;
-
-    let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
-    )
-    .await;
+    setup(&ctx.db).await?;
+    let app = caller(&ctx).await?;
 
     let uri = "/api/v1/purl/base?q=log4j";
     let request = TestRequest::get().uri(uri).to_request();
-    let response: PaginatedBasePurlSummary =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: PaginatedBasePurlSummary = app.call_and_read_body_json(request).await;
 
     assert_eq!(1, response.items.len());
 
@@ -335,19 +278,12 @@ async fn base_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-
-    setup(&db).await?;
-
-    let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
-    )
-    .await;
+    setup(&ctx.db).await?;
+    let app = caller(&ctx).await?;
 
     let uri = "/api/v1/purl?q=log4j";
     let request = TestRequest::get().uri(uri).to_request();
-    let response: PaginatedPurlSummary =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: PaginatedPurlSummary = app.call_and_read_body_json(request).await;
 
     assert_eq!(3, response.items.len());
 
@@ -357,19 +293,12 @@ async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn qualified_packages_filtering(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-
-    setup(&db).await?;
-
-    let app = actix_web::test::init_service(
-        App::new().service(web::scope("/api").configure(|config| configure(config, db))),
-    )
-    .await;
+    setup(&ctx.db).await?;
+    let app = caller(&ctx).await?;
 
     let uri = "/api/v1/purl?q=type=maven";
     let request = TestRequest::get().uri(uri).to_request();
-    let response: PaginatedPurlSummary =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: PaginatedPurlSummary = app.call_and_read_body_json(request).await;
 
     assert_eq!(3, response.items.len());
 
@@ -390,16 +319,11 @@ async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     ctx.ingest_documents(["osv/RUSTSEC-2021-0079.json", "cve/CVE-2021-32714.json"])
         .await?;
 
-    let app = actix_web::test::init_service(
-        App::new()
-            .service(web::scope("/api").configure(|config| configure(config, ctx.db.clone()))),
-    )
-    .await;
+    let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl?q=hyper";
     let request = TestRequest::get().uri(uri).to_request();
-    let response: PaginatedPurlSummary =
-        actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: PaginatedPurlSummary = app.call_and_read_body_json(request).await;
 
     assert_eq!(1, response.items.len());
 
@@ -408,7 +332,7 @@ async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     let uri = format!("/api/v1/purl/{uuid}");
 
     let request = TestRequest::get().uri(&uri).to_request();
-    let response: Value = actix_web::test::call_and_read_body_json(&app, request).await;
+    let response: Value = app.call_and_read_body_json(request).await;
 
     log::debug!("{}", serde_json::to_string_pretty(&response)?);
 
