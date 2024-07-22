@@ -288,7 +288,7 @@ impl InitData {
 
 fn configure(
     svc: &mut web::ServiceConfig,
-    db: trustify_common::db::Database,
+    db: db::Database,
     storage: impl Into<DispatchBackend>,
     swagger_oidc: Option<Arc<SwaggerUiOidc>>,
     auth: Option<Arc<Authenticator>>,
@@ -343,6 +343,7 @@ async fn index(ci: ConnectionInfo) -> Result<Json<Vec<url::Url>>, UrlGenerationE
     result.extend(build_url(&ci, "/"));
     result.extend(build_url(&ci, "/openapi.json"));
     result.extend(build_url(&ci, "/openapi/"));
+    result.extend(build_url(&ci, "/redoc/"));
 
     Ok(Json(result))
 }
@@ -375,15 +376,21 @@ mod test {
         )
         .await;
 
+        // main UI
+
         let req = TestRequest::get().uri("/").to_request();
         let body = call_and_read_body(&app, req).await;
         let text = std::str::from_utf8(&body)?;
         assert!(text.contains("<title>Trustification</title>"));
 
+        // redirect
+
         let req = TestRequest::get().uri("/anything/at/all").to_request();
         let body = call_and_read_body(&app, req).await;
         let text = std::str::from_utf8(&body)?;
         assert!(text.contains("<title>Trustification</title>"));
+
+        // swagger ui
 
         let req = TestRequest::get().uri("/openapi").to_request();
         let resp = call_service(&app, req).await;
@@ -396,10 +403,21 @@ mod test {
         let text = std::str::from_utf8(&body)?;
         assert!(text.contains("<title>Swagger UI</title>"));
 
+        // redoc UI
+
+        let req = TestRequest::get().uri("/redoc").to_request();
+        let body = call_and_read_body(&app, req).await;
+        let text = std::str::from_utf8(&body)?;
+        assert!(text.contains("<title>Redoc</title>"));
+
+        // GraphQL UI
+
         let req = TestRequest::get().uri("/graphql").to_request();
         let body = call_and_read_body(&app, req).await;
         let text = std::str::from_utf8(&body)?;
         assert!(text.contains("<title>GraphiQL IDE</title>"));
+
+        // API
 
         let req = TestRequest::get().uri("/api").to_request();
         let resp = call_service(&app, req).await;
