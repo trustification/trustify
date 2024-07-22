@@ -5,6 +5,7 @@ use trustify_common::model::Paginated;
 
 #[utoipa::path(
     tag = "purl",
+    operation_id = "listPurlTypes",
     context_path= "/api",
     params(
     ),
@@ -19,6 +20,7 @@ pub async fn all_purl_types(service: web::Data<PurlService>) -> actix_web::Resul
 
 #[utoipa::path(
     tag = "purl",
+    operation_id = "getPurlType",
     context_path= "/api",
     params(
         Query,
@@ -45,6 +47,7 @@ pub async fn get_purl_type(
 
 #[utoipa::path(
     tag = "purl",
+    operation_id = "getBasePurlOfType",
     context_path= "/api",
     params(
         ("type" = String, Path, description = "PURL identifier of a type"),
@@ -73,6 +76,7 @@ pub async fn get_base_purl_of_type(
 
 #[utoipa::path(
     tag = "purl",
+    operation_id = "getVersionedPurlOfType",
     context_path= "/api",
     params(
         ("type" = String, Path, description = "PURL identifier of a type"),

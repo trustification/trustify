@@ -10,6 +10,7 @@ use trustify_common::purl::Purl;
 
 #[utoipa::path(
     context_path= "/api",
+    operation_id = "getBasePurl",
     tag = "purl",
     params(
         ("key" = String, Path, description = "opaque identifier for a base PURL, or a URL-encoded pURL itself")
@@ -34,6 +35,7 @@ pub async fn get_base_purl(
 
 #[utoipa::path(
     context_path= "/api",
+    operation_id = "listBasePurls",
     tag = "purl",
     params(
         Query,

@@ -6,6 +6,7 @@ use trustify_entity::labels::Labels;
 /// Replace the labels of an advisory
 #[utoipa::path(
     tag = "advisory",
+    operation_id = "updateAdvisoryLabels",
     context_path = "/api",
     request_body = Labels,
     params(
@@ -33,6 +34,7 @@ pub async fn set(
 /// Modify existing labels of an advisory
 #[utoipa::path(
     tag = "advisory",
+    operation_id = "patchAdvisoryLabels",
     context_path = "/api",
     request_body = Labels,
     params(
