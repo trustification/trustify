@@ -17,10 +17,7 @@ use trustify_cvss::cvss3::{
     PrivilegesRequired, Scope, UserInteraction,
 };
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::{
-    graph::{advisory::AdvisoryInformation, Graph},
-    model::IngestResult,
-};
+use trustify_module_ingestor::{graph::advisory::AdvisoryInformation, model::IngestResult};
 use trustify_test_context::{document_bytes, TrustifyContext};
 use uuid::Uuid;
 
@@ -107,15 +104,13 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = &ctx.db;
-    let graph = Graph::new(db.clone());
+async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
 
-    let app = caller(&ctx).await?;
-
-    let advisory1 = graph
+    let advisory1 = ctx
+        .graph
         .ingest_advisory(
             "RHSA-1",
             ("source", "http://redhat.com/"),
@@ -131,7 +126,8 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let advisory2 = graph
+    let advisory2 = ctx
+        .graph
         .ingest_advisory(
             "RHSA-2",
             ("source", "http://redhat.com/"),
@@ -204,15 +200,12 @@ async fn one_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn one_advisory_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = &ctx.db;
-    let graph = Graph::new(db.clone());
+async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
 
-    let app = caller(&ctx).await?;
-
-    graph
+    ctx.graph
         .ingest_advisory(
             "RHSA-1",
             ("source", "http://redhat.com/"),
@@ -228,7 +221,8 @@ async fn one_advisory_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         )
         .await?;
 
-    let advisory = graph
+    let advisory = ctx
+        .graph
         .ingest_advisory(
             "RHSA-2",
             ("source", "http://redhat.com/"),
@@ -301,9 +295,7 @@ async fn search_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         let req = TestRequest::get().uri(&uri).to_request();
         app.call_and_read_body_json(req).await
     }
-
     let app = caller(ctx).await?;
-    let _response: PaginatedResults<AdvisorySummary>;
 
     // No results before ingestion
     let result = query(&app, "").await;
@@ -331,10 +323,10 @@ async fn search_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = caller(&ctx).await?;
+async fn upload_default_csaf_format(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
 
     let payload = document_bytes("csaf/cve-2023-33201.json").await?;
 
@@ -352,10 +344,10 @@ async fn upload_default_csaf_format(ctx: TrustifyContext) -> Result<(), anyhow::
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn upload_osv_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = caller(&ctx).await?;
+async fn upload_osv_format(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
     let payload = document_bytes("osv/RUSTSEC-2021-0079.json").await?;
 
     let uri = "/api/v1/advisory";
@@ -371,10 +363,10 @@ async fn upload_osv_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn upload_cve_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = caller(&ctx).await?;
+async fn upload_cve_format(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
     let payload = document_bytes("mitre/CVE-2024-27088.json").await?;
 
     let uri = "/api/v1/advisory";
@@ -390,10 +382,10 @@ async fn upload_cve_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn upload_unknown_format(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = caller(&ctx).await?;
+async fn upload_unknown_format(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
 
     let uri = "/api/v1/advisory";
     let request = TestRequest::post().uri(uri).to_request();
@@ -410,10 +402,10 @@ async fn upload_unknown_format(ctx: TrustifyContext) -> Result<(), anyhow::Error
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn upload_with_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = caller(&ctx).await?;
+async fn upload_with_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
     let payload = document_bytes("csaf/cve-2023-33201.json").await?;
 
     let uri = "/api/v1/advisory?labels.foo=bar&labels.bar=baz";
@@ -450,11 +442,11 @@ async fn upload_with_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 const DOC: &str = "csaf/cve-2023-33201.json";
 
 /// Test downloading a document by its SHA256 digest
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn download_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+async fn download_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let digest: String = Sha256::digest(document_bytes(DOC).await?).encode_hex();
-    let app = caller(&ctx).await?;
+    let app = caller(ctx).await?;
     ctx.ingest_document(DOC).await?;
     let uri = format!("/api/v1/advisory/sha256:{digest}/download");
     let request = TestRequest::get().uri(&uri).to_request();
@@ -465,10 +457,10 @@ async fn download_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 }
 
 /// Test downloading a document by its upload ID
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn download_advisory_by_id(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = caller(&ctx).await?;
+async fn download_advisory_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
     let result = ctx.ingest_document(DOC).await?;
     let uri = format!("/api/v1/advisory/{}/download", result.id);
     let request = TestRequest::get().uri(&uri).to_request();
@@ -479,10 +471,10 @@ async fn download_advisory_by_id(ctx: TrustifyContext) -> Result<(), anyhow::Err
 }
 
 /// Test setting labels
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn set_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = caller(&ctx).await?;
+async fn set_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
     let result = ctx.ingest_document(DOC).await?;
     let request = TestRequest::patch()
         .uri(&format!("/api/v1/advisory/{}/label", result.id))
@@ -496,10 +488,10 @@ async fn set_labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 }
 
 /// Test setting labels, for a document that does not exists
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn set_labels_not_found(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = caller(&ctx).await?;
+async fn set_labels_not_found(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
     ctx.ingest_document(DOC).await?;
     let request = TestRequest::patch()
         .uri(&format!(

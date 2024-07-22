@@ -686,16 +686,13 @@ mod test {
     use trustify_common::db::query::q;
     use trustify_common::hashing::Digests;
     use trustify_entity::labels::Labels;
-    use trustify_module_ingestor::graph::Graph;
     use trustify_test_context::TrustifyContext;
 
-    #[test_context(TrustifyContext, skip_teardown)]
+    #[test_context(TrustifyContext)]
     #[test(tokio::test)]
-    async fn all_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db.clone());
-
-        let sbom_v1 = system
+    async fn all_sboms(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let sbom_v1 = ctx
+            .graph
             .ingest_sbom(
                 Labels::default(),
                 &Digests::digest("RHSA-1"),
@@ -704,7 +701,8 @@ mod test {
                 Transactional::None,
             )
             .await?;
-        let sbom_v1_again = system
+        let sbom_v1_again = ctx
+            .graph
             .ingest_sbom(
                 Labels::default(),
                 &Digests::digest("RHSA-1"),
@@ -713,7 +711,8 @@ mod test {
                 Transactional::None,
             )
             .await?;
-        let sbom_v2 = system
+        let sbom_v2 = ctx
+            .graph
             .ingest_sbom(
                 Labels::default(),
                 &Digests::digest("RHSA-2"),
@@ -723,7 +722,8 @@ mod test {
             )
             .await?;
 
-        let _other_sbom = system
+        let _other_sbom = ctx
+            .graph
             .ingest_sbom(
                 Labels::default(),
                 &Digests::digest("RHSA-3"),
@@ -736,7 +736,7 @@ mod test {
         assert_eq!(sbom_v1.sbom.sbom_id, sbom_v1_again.sbom.sbom_id);
         assert_ne!(sbom_v1.sbom.sbom_id, sbom_v2.sbom.sbom_id);
 
-        let fetch = SbomService::new(db);
+        let fetch = SbomService::new(ctx.db.clone());
 
         let fetched = fetch
             .fetch_sboms(q("MySpAcE"), Paginated::default(), (), ())
@@ -748,13 +748,11 @@ mod test {
         Ok(())
     }
 
-    #[test_context(TrustifyContext, skip_teardown)]
+    #[test_context(TrustifyContext)]
     #[test(tokio::test)]
-    async fn labels(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db.clone());
-
-        let _sbom1 = system
+    async fn labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let _sbom1 = ctx
+            .graph
             .ingest_sbom(
                 Labels::new()
                     .add("source", "test")
@@ -767,7 +765,8 @@ mod test {
             )
             .await?;
 
-        let _sbom2 = system
+        let _sbom2 = ctx
+            .graph
             .ingest_sbom(
                 Labels::new()
                     .add("source", "test")
@@ -780,7 +779,8 @@ mod test {
             )
             .await?;
 
-        let _sbom3 = system
+        let _sbom3 = ctx
+            .graph
             .ingest_sbom(
                 Labels::new()
                     .add("source", "test")
@@ -793,7 +793,7 @@ mod test {
             )
             .await?;
 
-        let service = SbomService::new(db);
+        let service = SbomService::new(ctx.db.clone());
 
         let fetched = service
             .fetch_sboms(Query::default(), Paginated::default(), ("ci", "job1"), ())

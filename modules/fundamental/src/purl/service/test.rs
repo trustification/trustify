@@ -1,27 +1,21 @@
 use crate::purl::model::details::purl::StatusContext;
 use crate::purl::service::PurlService;
 use std::str::FromStr;
-use std::sync::Arc;
 use test_context::test_context;
 use test_log::test;
-use tokio_util::io::ReaderStream;
 use trustify_common::db::query::{q, Query};
 use trustify_common::db::Transactional;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
-use trustify_module_ingestor::graph::Graph;
-use trustify_module_ingestor::service::{Format, IngestorService};
-use trustify_module_storage::service::fs::FileSystemBackend;
-use trustify_test_context::{document_bytes, TrustifyContext};
+use trustify_test_context::TrustifyContext;
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-    let service = PurlService::new(db);
+async fn types(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
 
-    let log4j = graph
+    let log4j = ctx
+        .graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
         .await?;
 
@@ -40,10 +34,10 @@ async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    graph
+    ctx.graph
         .ingest_package(&Purl::from_str("pkg:maven/org.myspace/tom")?, ())
         .await?;
-    graph
+    ctx.graph
         .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
         .await?;
 
@@ -71,14 +65,13 @@ async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn packages_for_type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-    let service = PurlService::new(db);
+async fn packages_for_type(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
 
-    let log4j = graph
+    let log4j = ctx
+        .graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
         .await?;
 
@@ -94,10 +87,10 @@ async fn packages_for_type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.5")?, ())
         .await?;
 
-    graph
+    ctx.graph
         .ingest_package(&Purl::from_str("pkg:maven/org.myspace/tom")?, ())
         .await?;
-    graph
+    ctx.graph
         .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
         .await?;
 
@@ -120,14 +113,13 @@ async fn packages_for_type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn packages_for_type_with_filtering(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-    let service = PurlService::new(db);
+async fn packages_for_type_with_filtering(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
 
-    let log4j = graph
+    let log4j = ctx
+        .graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
         .await?;
 
@@ -143,10 +135,10 @@ async fn packages_for_type_with_filtering(ctx: TrustifyContext) -> Result<(), an
         .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.5")?, ())
         .await?;
 
-    graph
+    ctx.graph
         .ingest_package(&Purl::from_str("pkg:maven/org.myspace/tom")?, ())
         .await?;
-    graph
+    ctx.graph
         .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
         .await?;
 
@@ -164,14 +156,13 @@ async fn packages_for_type_with_filtering(ctx: TrustifyContext) -> Result<(), an
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-    let service = PurlService::new(db);
+async fn package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
 
-    let log4j = graph
+    let log4j = ctx
+        .graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
         .await?;
 
@@ -201,7 +192,8 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.5")?, ())
         .await?;
 
-    let tom = graph
+    let tom = ctx
+        .graph
         .ingest_package(&Purl::from_str("pkg:maven/org.myspace/tom")?, ())
         .await?;
 
@@ -211,11 +203,12 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     tom.ingest_package_version(&Purl::from_str("pkg:maven/org.myspace/tom@9.9.9")?, ())
         .await?;
 
-    graph
+    ctx.graph
         .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
         .await?;
 
-    let bind = graph
+    let bind = ctx
+        .graph
         .ingest_package(&Purl::from_str("pkg:rpm/bind")?, ())
         .await?;
 
@@ -235,14 +228,13 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-    let service = PurlService::new(db);
+async fn package_version(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
 
-    let log4j = graph
+    let log4j = ctx
+        .graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
         .await?;
 
@@ -316,14 +308,13 @@ async fn package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn package_version_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-    let service = PurlService::new(db);
+async fn package_version_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
 
-    let log4j = graph
+    let log4j = ctx
+        .graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
         .await?;
 
@@ -391,14 +382,13 @@ async fn package_version_by_uuid(ctx: TrustifyContext) -> Result<(), anyhow::Err
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-    let service = PurlService::new(db);
+async fn packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
 
-    let log4j = graph
+    let log4j = ctx
+        .graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
         .await?;
 
@@ -438,7 +428,8 @@ async fn packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let quarkus = graph
+    let quarkus = ctx
+        .graph
         .ingest_package(&Purl::from_str("pkg:maven/org.jboss/quarkus")?, ())
         .await?;
 
@@ -480,14 +471,13 @@ async fn packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-    let service = PurlService::new(db);
+async fn qualified_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
 
-    let log4j = graph
+    let log4j = ctx
+        .graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
         .await?;
 
@@ -527,7 +517,8 @@ async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let quarkus = graph
+    let quarkus = ctx
+        .graph
         .ingest_package(&Purl::from_str("pkg:maven/org.jboss/quarkus")?, ())
         .await?;
 
@@ -577,22 +568,12 @@ async fn statuses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn contextual_status(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let service = PurlService::new(db.clone());
-    let (storage, _tmp) = FileSystemBackend::for_test().await?;
+async fn contextual_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
 
-    let ingestor = IngestorService::new(Graph::new(db.clone()), storage);
-
-    // ingest an advisory
-    let data = document_bytes("csaf/rhsa-2024_3666.json").await?;
-    let data = ReaderStream::new(&data[..]);
-
-    ingestor
-        .ingest(("source", "test"), None, Format::CSAF, data)
-        .await?;
+    ctx.ingest_document("csaf/rhsa-2024_3666.json").await?;
 
     let results = service
         .purls(Query::default(), Paginated::default(), Transactional::None)

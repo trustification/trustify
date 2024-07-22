@@ -10,14 +10,12 @@ use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::purl::model::summary::purl::PurlSummary;
 use trustify_module_fundamental::purl::model::PurlHead;
 use trustify_module_fundamental::sbom::service::SbomService;
-use trustify_module_ingestor::graph::Graph;
 use trustify_test_context::TrustifyContext;
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(tokio::test)]
-async fn ingest_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let system = Graph::new(db);
+async fn ingest_sboms(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let system = &ctx.graph;
 
     let sbom_v1 = system
         .ingest_sbom(
@@ -63,13 +61,12 @@ async fn ingest_sboms(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn ingest_and_fetch_sboms_describing_purls(
-    ctx: TrustifyContext,
+    ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let system = Graph::new(db);
+    let system = &ctx.graph;
 
     let sbom_v1 = system
         .ingest_sbom(
@@ -134,13 +131,12 @@ async fn ingest_and_fetch_sboms_describing_purls(
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn ingest_and_locate_sboms_describing_cpes(
-    ctx: TrustifyContext,
+    ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let system = Graph::new(db);
+    let system = &ctx.graph;
 
     let sbom_v1 = system
         .ingest_sbom(
@@ -205,11 +201,10 @@ async fn ingest_and_locate_sboms_describing_cpes(
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(tokio::test)]
-async fn transitive_dependency_of(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let system = Graph::new(db);
+async fn transitive_dependency_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let system = &ctx.graph;
 
     let sbom1 = system
         .ingest_sbom(
@@ -277,14 +272,13 @@ async fn transitive_dependency_of(ctx: TrustifyContext) -> Result<(), anyhow::Er
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn ingest_package_relates_to_package_dependency_of(
-    ctx: TrustifyContext,
+    ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let system = Graph::new(db.clone());
-    let fetch = SbomService::new(db);
+    let system = &ctx.graph;
+    let fetch = SbomService::new(ctx.db.clone());
 
     let sbom1 = system
         .ingest_sbom(
@@ -373,11 +367,10 @@ async fn ingest_package_relates_to_package_dependency_of(
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(tokio::test)]
-async fn sbom_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let system = Graph::new(db);
+async fn sbom_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let system = &ctx.graph;
 
     log::debug!("{:?}", system);
 

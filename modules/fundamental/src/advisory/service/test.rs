@@ -1,6 +1,6 @@
 use super::*;
 use crate::advisory::model::AdvisoryHead;
-use std::{str::FromStr, sync::Arc};
+use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
@@ -9,22 +9,17 @@ use trustify_cvss::cvss3::{
     AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
     PrivilegesRequired, Scope, UserInteraction,
 };
-use trustify_module_ingestor::graph::{
-    advisory::{
-        advisory_vulnerability::{VersionInfo, VersionSpec},
-        AdvisoryInformation,
-    },
-    Graph,
+use trustify_module_ingestor::graph::advisory::{
+    advisory_vulnerability::{VersionInfo, VersionSpec},
+    AdvisoryInformation,
 };
 use trustify_test_context::TrustifyContext;
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-
-    let advisory = graph
+async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let advisory = ctx
+        .graph
         .ingest_advisory(
             "RHSA-1",
             ("source", "http://redhat.com/"),
@@ -60,7 +55,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    graph
+    ctx.graph
         .ingest_advisory(
             "RHSA-2",
             ("source", "http://redhat.com/"),
@@ -76,7 +71,7 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let fetch = AdvisoryService::new(db);
+    let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
         .fetch_advisories(q(""), Paginated::default(), ())
         .await?;
@@ -85,15 +80,13 @@ async fn all_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn all_advisories_filtered_by_average_score(
-    ctx: TrustifyContext,
+    ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-
-    let advisory = graph
+    let advisory = ctx
+        .graph
         .ingest_advisory(
             "RHSA-1",
             ("source", "http://redhat.com/"),
@@ -129,7 +122,7 @@ async fn all_advisories_filtered_by_average_score(
         )
         .await?;
 
-    graph
+    ctx.graph
         .ingest_advisory(
             "RHSA-2",
             ("source", "http://redhat.com/"),
@@ -145,7 +138,7 @@ async fn all_advisories_filtered_by_average_score(
         )
         .await?;
 
-    let fetch = AdvisoryService::new(db);
+    let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
         .fetch_advisories(q("average_score>8"), Paginated::default(), ())
         .await?;
@@ -154,15 +147,13 @@ async fn all_advisories_filtered_by_average_score(
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn all_advisories_filtered_by_average_severity(
-    ctx: TrustifyContext,
+    ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-
-    let advisory = graph
+    let advisory = ctx
+        .graph
         .ingest_advisory(
             "RHSA-1",
             ("source", "http://redhat.com/"),
@@ -198,7 +189,7 @@ async fn all_advisories_filtered_by_average_severity(
         )
         .await?;
 
-    graph
+    ctx.graph
         .ingest_advisory(
             "RHSA-2",
             ("source", "http://redhat.com/"),
@@ -214,7 +205,7 @@ async fn all_advisories_filtered_by_average_severity(
         )
         .await?;
 
-    let fetch = AdvisoryService::new(db);
+    let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
         .fetch_advisories(q("average_severity>=critical"), Paginated::default(), ())
         .await?;
@@ -225,15 +216,13 @@ async fn all_advisories_filtered_by_average_severity(
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-
+async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let digests = Digests::digest("RHSA-1");
 
-    let advisory = graph
+    let advisory = ctx
+        .graph
         .ingest_advisory(
             "RHSA-1",
             ("source", "http://redhat.com/"),
@@ -295,7 +284,7 @@ async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    graph
+    ctx.graph
         .ingest_advisory(
             "RHSA-2",
             ("source", "http://redhat.com/"),
@@ -311,7 +300,7 @@ async fn single_advisory(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let fetch = AdvisoryService::new(db);
+    let fetch = AdvisoryService::new(ctx.db.clone());
     let jenny256 = Id::sha256(&digests.sha256);
     let jenny384 = Id::sha384(&digests.sha384);
     let jenny512 = Id::sha512(&digests.sha512);

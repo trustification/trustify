@@ -1,9 +1,7 @@
 mod perf;
 
 use super::*;
-use std::convert::Infallible;
 use std::str::FromStr;
-use test_context::futures::stream;
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
@@ -14,9 +12,6 @@ use trustify_module_fundamental::purl::model::summary::purl::PurlSummary;
 use trustify_module_fundamental::purl::model::PurlHead;
 use trustify_module_fundamental::sbom::model::Which;
 use trustify_module_fundamental::sbom::service::SbomService;
-use trustify_module_ingestor::graph::Graph;
-use trustify_module_ingestor::service::{Format, IngestorService};
-use trustify_module_storage::service::fs::FileSystemBackend;
 use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext)]
@@ -108,20 +103,10 @@ async fn test_parse_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn ingest_spdx_broken_refs(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = &ctx.db;
-    let graph = Graph::new(db.clone());
-    let data = document_bytes("spdx/broken-refs.json").await?;
-    let (storage, _tmp) = FileSystemBackend::for_test().await?;
-    let ingestor = IngestorService::new(graph, storage);
-    let sbom = SbomService::new(db.clone());
+    let sbom = SbomService::new(ctx.db.clone());
 
-    let err = ingestor
-        .ingest(
-            ("source", "test"),
-            None,
-            Format::sbom_from_bytes(&data)?,
-            stream::iter([Ok::<_, Infallible>(data)]),
-        )
+    let err = ctx
+        .ingest_document("spdx/broken-refs.json")
         .await
         .expect_err("must not ingest");
 

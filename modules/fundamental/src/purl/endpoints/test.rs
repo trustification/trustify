@@ -8,18 +8,15 @@ use crate::test::{caller, CallService};
 use actix_web::test::TestRequest;
 use serde_json::Value;
 use std::str::FromStr;
-use std::sync::Arc;
 use test_context::test_context;
 use test_log::test;
-use trustify_common::db::{Database, Transactional};
+use trustify_common::db::Transactional;
 use trustify_common::model::PaginatedResults;
 use trustify_common::purl::Purl;
 use trustify_module_ingestor::graph::Graph;
 use trustify_test_context::TrustifyContext;
 
-async fn setup(db: &Database) -> Result<(), anyhow::Error> {
-    let graph = Arc::new(Graph::new(db.clone()));
-
+async fn setup(graph: &Graph) -> Result<(), anyhow::Error> {
     let log4j = graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
         .await?;
@@ -71,11 +68,11 @@ async fn setup(db: &Database) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.db).await?;
-    let app = caller(&ctx).await?;
+async fn types(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    setup(&ctx.graph).await?;
+    let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type";
 
@@ -99,11 +96,11 @@ async fn types(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn r#type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.db).await?;
-    let app = caller(&ctx).await?;
+async fn r#type(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    setup(&ctx.graph).await?;
+    let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type/maven";
 
@@ -130,11 +127,11 @@ async fn r#type(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn type_package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.db).await?;
-    let app = caller(&ctx).await?;
+async fn type_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    setup(&ctx.graph).await?;
+    let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j";
 
@@ -164,11 +161,11 @@ async fn type_package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn type_package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.db).await?;
-    let app = caller(&ctx).await?;
+async fn type_package_version(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    setup(&ctx.graph).await?;
+    let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
@@ -191,11 +188,11 @@ async fn type_package_version(ctx: TrustifyContext) -> Result<(), anyhow::Error>
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.db).await?;
-    let app = caller(&ctx).await?;
+async fn package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    setup(&ctx.graph).await?;
+    let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
@@ -221,11 +218,11 @@ async fn package(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.db).await?;
-    let app = caller(&ctx).await?;
+async fn version(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    setup(&ctx.graph).await?;
+    let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
@@ -241,11 +238,11 @@ async fn version(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn base(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.db).await?;
-    let app = caller(&ctx).await?;
+async fn base(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    setup(&ctx.graph).await?;
+    let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j";
     let request = TestRequest::get().uri(uri).to_request();
@@ -260,11 +257,11 @@ async fn base(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn base_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.db).await?;
-    let app = caller(&ctx).await?;
+async fn base_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    setup(&ctx.graph).await?;
+    let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/base?q=log4j";
     let request = TestRequest::get().uri(uri).to_request();
@@ -275,11 +272,11 @@ async fn base_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.db).await?;
-    let app = caller(&ctx).await?;
+async fn qualified_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    setup(&ctx.graph).await?;
+    let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl?q=log4j";
     let request = TestRequest::get().uri(uri).to_request();
@@ -290,11 +287,11 @@ async fn qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn qualified_packages_filtering(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.db).await?;
-    let app = caller(&ctx).await?;
+async fn qualified_packages_filtering(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    setup(&ctx.graph).await?;
+    let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl?q=type=maven";
     let request = TestRequest::get().uri(uri).to_request();
