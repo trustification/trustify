@@ -14,7 +14,7 @@ use actix_web::{
     error::UrlGenerationError,
     get, middleware, web,
     web::Json,
-    HttpRequest, Responder, Result,
+    HttpRequest, HttpResponse, Responder, Result,
 };
 use anyhow::Context;
 use bytesize::ByteSize;
@@ -54,6 +54,7 @@ use trustify_module_storage::{service::dispatch::DispatchBackend, service::fs::F
 use trustify_module_ui::{endpoints::UiResources, UI};
 
 use utoipa::OpenApi;
+use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::{Redoc, Servable};
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -294,15 +295,47 @@ fn configure(
     auth: Option<Arc<Authenticator>>,
     ui: Arc<UiResources>,
 ) {
-    let limit = ByteSize::gb(1).as_u64() as usize;
     let graph = Arc::new(Graph::new(db.clone()));
 
-    svc.app_data(web::PayloadConfig::default().limit(limit))
-        .service(Redoc::with_url("/redoc", openapi::openapi()));
+    // set global request limits
 
-    svc.app_data(web::PayloadConfig::default().limit(limit))
-        .service(swagger_ui_with_auth(openapi::openapi(), swagger_oidc))
+    let limit = ByteSize::gb(1).as_u64() as usize;
+    svc.app_data(web::PayloadConfig::default().limit(limit));
+
+    // register OpenAPI UIs
+
+    svc.service(Redoc::with_url("/redoc", openapi::openapi()))
+        .service(web::redirect("/redoc/", "/redoc"));
+
+    svc.service({
+        let mut openapi = openapi::openapi();
+        if let Some(oidc) = &swagger_oidc {
+            oidc.apply_to_schema(&mut openapi);
+        }
+        RapiDoc::with_openapi("/openapi.json", openapi).path("/rapidoc/")
+    })
+    .service(web::redirect("/rapidoc", "/rapidoc/"))
+    .route(
+        "/rapidoc/oauth-receiver.html",
+        web::get().to(|| async {
+            HttpResponse::Ok().content_type(mime::TEXT.as_str()).body(
+                r#"<!doctype html>
+<head>
+  <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
+</head>
+
+<body>
+  <oauth-receiver> </oauth-receiver>
+</body>"#,
+            )
+        }),
+    );
+
+    svc.service(swagger_ui_with_auth(openapi::openapi(), swagger_oidc))
         .service(web::redirect("/openapi", "/openapi/"));
+
+    // register GraphQL UIs
+
     svc.service(
         web::scope("/graphql")
             .wrap(middleware::NormalizePath::new(
@@ -344,6 +377,7 @@ async fn index(ci: ConnectionInfo) -> Result<Json<Vec<url::Url>>, UrlGenerationE
     result.extend(build_url(&ci, "/openapi.json"));
     result.extend(build_url(&ci, "/openapi/"));
     result.extend(build_url(&ci, "/redoc/"));
+    result.extend(build_url(&ci, "/rapidoc/"));
 
     Ok(Json(result))
 }
@@ -409,6 +443,13 @@ mod test {
         let body = call_and_read_body(&app, req).await;
         let text = std::str::from_utf8(&body)?;
         assert!(text.contains("<title>Redoc</title>"));
+
+        // rapidoc UI
+
+        let req = TestRequest::get().uri("/rapidoc/").to_request();
+        let body = call_and_read_body(&app, req).await;
+        let text = std::str::from_utf8(&body)?;
+        assert!(text.contains("<rapi-doc"));
 
         // GraphQL UI
 

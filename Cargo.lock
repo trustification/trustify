@@ -7110,6 +7110,7 @@ dependencies = [
  "garage-door",
  "hide",
  "log",
+ "mime",
  "rand",
  "reqwest",
  "test-context",
@@ -7128,6 +7129,7 @@ dependencies = [
  "url",
  "urlencoding",
  "utoipa",
+ "utoipa-rapidoc",
  "utoipa-redoc",
  "utoipa-swagger-ui",
 ]
@@ -7393,6 +7395,18 @@ dependencies = [
  "regex",
  "syn 2.0.71",
  "url",
+]
+
+[[package]]
+name = "utoipa-rapidoc"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a32488b691c135d58eb78efcf8258ebb3db1ec7447964c6a83bd5e1ab7a39d9"
+dependencies = [
+ "actix-web",
+ "serde",
+ "serde_json",
+ "utoipa",
 ]
 
 [[package]]
