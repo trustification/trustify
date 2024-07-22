@@ -6,6 +6,7 @@ use trustify_entity::labels::Labels;
 /// Modify existing labels of an SBOM
 #[utoipa::path(
     tag = "sbom",
+    operation_id = "patchSbomLabels",
     context_path = "/api",
     request_body = Labels,
     params(
@@ -36,6 +37,7 @@ pub async fn update(
 /// Replace the labels of an SBOM
 #[utoipa::path(
     tag = "sbom",
+    operation_id = "updateSbomLabels",
     context_path = "/api",
     request_body = Labels,
     params(

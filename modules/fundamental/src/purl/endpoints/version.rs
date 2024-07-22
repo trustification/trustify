@@ -8,6 +8,7 @@ use trustify_common::purl::Purl;
 
 #[utoipa::path(
     tag = "purl",
+    operation_id = "getVersionedPurl",
     context_path= "/api",
     params(
         ("key" = String, Path, description = "opaque ID identifier for a package version, or URL-ecnoded pURL itself")

@@ -51,6 +51,7 @@ pub struct ApiDoc;
 #[utoipa::path(
     context_path = "/api/v1/importer",
     tag = "importer",
+    operation_id = "listImporters",
     responses(
         (status = 200, description = "List importer configurations", body = [Importer])
     )
@@ -64,6 +65,7 @@ async fn list(service: web::Data<ImporterService>) -> Result<impl Responder, Err
 #[utoipa::path(
     context_path = "/api/v1/importer",
     tag = "importer",
+    operation_id = "createImporter",
     request_body = ImporterConfiguration,
     params(
         ("name", Path, description = "The name of the importer"),
@@ -87,6 +89,7 @@ async fn create(
 #[utoipa::path(
     context_path = "/api/v1/importer",
     tag = "importer",
+    operation_id = "getImporter",
     params(
         ("name", Path, description = "The name of the importer"),
     ),
@@ -119,6 +122,7 @@ async fn read(
 #[utoipa::path(
     context_path = "/api/v1/importer",
     tag = "importer",
+    operation_id = "updateImporter",
     request_body = ImporterConfiguration,
     params(
         ("name", Path, description = "The name of the importer"),
@@ -153,6 +157,7 @@ async fn update(
 #[utoipa::path(
     context_path = "/api/v1/importer",
     tag = "importer",
+    operation_id = "enableImporter",
     request_body = bool,
     params(
         ("name", Path, description = "The name of the importer"),
@@ -190,6 +195,7 @@ async fn set_enabled(
 #[utoipa::path(
     context_path = "/api/v1/importer",
     tag = "importer",
+    operation_id = "forceRunImporter",
     request_body = bool,
     params(
         ("name", Path, description = "The name of the importer"),
@@ -221,6 +227,7 @@ async fn force(
 #[utoipa::path(
     context_path = "/api/v1/importer",
     tag = "importer",
+    operation_id = "deleteImporter",
     params(
         ("name", Path, description = "The name of the importer"),
         ("if-match", Header, description = "The revision to delete"),
@@ -250,6 +257,7 @@ async fn delete(
 #[utoipa::path(
     context_path = "/api/v1/importer",
     tag = "importer",
+    operation_id = "getImporterReports",
     responses(
         (status = 200, description = "Retrieved importer reports", body = PaginatedImporterReport),
     )

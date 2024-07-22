@@ -48,6 +48,7 @@ pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "advisory",
+    operation_id = "listAdvisories",
     context_path = "/api",
     params(
         Query,
@@ -68,6 +69,7 @@ pub async fn all(
 
 #[utoipa::path(
     tag = "advisory",
+    operation_id = "getAdvisory",
     context_path = "/api",
     params(
         ("key" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
@@ -108,6 +110,7 @@ struct UploadParams {
 
 #[utoipa::path(
     tag = "advisory",
+    operation_id = "uploadAdvisory",
     context_path = "/api",
     request_body = Vec<u8>,
     params(UploadParams),
@@ -132,6 +135,7 @@ pub async fn upload(
 
 #[utoipa::path(
     tag = "advisory",
+    operation_id = "downloadAdvisory",
     context_path = "/api",
     params(
         ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),

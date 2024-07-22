@@ -70,6 +70,7 @@ pub struct ApiDoc;
 
 #[utoipa::path(
     context_path= "/api",
+    operation_id = "getPurl",
     tag = "purl",
     params(
         ("key" = String, Path, description = "opaque identifier for a fully-qualified PURL, or URL-encoded pURL itself")
@@ -94,6 +95,7 @@ pub async fn get(
 
 #[utoipa::path(
     context_path= "/api",
+    operation_id = "listPurl",
     tag = "purl",
     params(
         Query,

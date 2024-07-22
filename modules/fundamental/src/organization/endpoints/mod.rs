@@ -32,6 +32,7 @@ pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "organization",
+    operation_id = "listOrganizations",
     context_path = "/api",
     params(
         Query,
@@ -52,6 +53,7 @@ pub async fn all(
 
 #[utoipa::path(
     tag = "organization",
+    operation_id = "getOrganization",
     context_path = "/api",
     params(
         ("id", Path, description = "Opaque ID of the organization")

@@ -82,6 +82,7 @@ pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "sbom",
+    operation_id = "listSboms",
     context_path = "/api",
     params(
         Query,
@@ -122,6 +123,7 @@ struct AllRelatedQuery {
 /// other APIs, but not both.
 #[utoipa::path(
     tag = "sbom",
+    operation_id = "listRelatedSboms",
     context_path = "/api",
     params(
         Query,
@@ -165,6 +167,7 @@ pub async fn all_related(
 
 #[utoipa::path(
     tag = "sbom",
+    operation_id = "getSbom",
     context_path = "/api",
     params(
         ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
@@ -194,6 +197,7 @@ pub async fn get(
 #[utoipa::path(
     tag = "sbom",
     context_path = "/api",
+    operation_id = "listPackages",
     params(
         ("id", Path, description = "ID of the SBOM to get packages for"),
         Query,
@@ -236,6 +240,7 @@ struct RelatedQuery {
 /// Search for related packages in an SBOM
 #[utoipa::path(
     tag = "sbom",
+    operation_id = "listRelatedPackages",
     context_path = "/api",
     params(
         ("id", Path, description = "ID of SBOM to search packages in"),
@@ -290,6 +295,7 @@ struct UploadQuery {
 
 #[utoipa::path(
     tag = "sbom",
+    operation_id = "uploadSbom",
     context_path = "/api",
     request_body = Vec <u8>,
     params(
@@ -318,6 +324,7 @@ pub async fn upload(
 
 #[utoipa::path(
     tag = "sbom",
+    operation_id = "downloadSbom",
     context_path = "/api",
     params(
         ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
