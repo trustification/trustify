@@ -7,18 +7,14 @@ use test_log::test;
 use trustify_common::db::query::Query;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::product::ProductInformation;
-use trustify_module_ingestor::graph::Graph;
 use trustify_test_context::TrustifyContext;
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = &ctx.db;
-    let graph = Graph::new(db.clone());
+async fn all_products(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
 
-    let app = caller(&ctx).await?;
-
-    graph
+    ctx.graph
         .ingest_product(
             "Trusted Profile Analyzer",
             ProductInformation {
@@ -28,7 +24,7 @@ async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    graph
+    ctx.graph
         .ingest_product(
             "AMQ Broker",
             ProductInformation {
@@ -51,15 +47,12 @@ async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn one_product(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = &ctx.db;
-    let graph = Graph::new(db.clone());
+async fn one_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
 
-    let app = caller(&ctx).await?;
-
-    graph
+    ctx.graph
         .ingest_product(
             "Trusted Profile Analyzer",
             ProductInformation {
@@ -69,7 +62,7 @@ async fn one_product(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let service = crate::product::service::ProductService::new(db.clone());
+    let service = crate::product::service::ProductService::new(ctx.db.clone());
 
     let products = service
         .fetch_products(Query::default(), Paginated::default(), ())

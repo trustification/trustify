@@ -10,18 +10,14 @@ use trustify_common::db::Transactional;
 use trustify_common::hashing::Digests;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
-use trustify_module_ingestor::graph::Graph;
 use trustify_test_context::TrustifyContext;
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn all_organizations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = &ctx.db;
-    let graph = Graph::new(db.clone());
+async fn all_organizations(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
 
-    let app = caller(&ctx).await?;
-
-    graph
+    ctx.graph
         .ingest_advisory(
             "CAPT-1",
             ("source", "http://captpickles.com/"),
@@ -37,7 +33,7 @@ async fn all_organizations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    graph
+    ctx.graph
         .ingest_advisory(
             "EMPORIUM-1",
             ("source", "http://captpickles.com/"),
@@ -72,15 +68,13 @@ async fn all_organizations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn one_organization(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = &ctx.db;
-    let graph = Graph::new(db.clone());
+async fn one_organization(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
 
-    let app = caller(&ctx).await?;
-
-    let advisory = graph
+    let advisory = ctx
+        .graph
         .ingest_advisory(
             "CAPT-1",
             ("source", "http://captpickles.com/"),
@@ -100,7 +94,7 @@ async fn one_organization(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .link_to_vulnerability("CVE-123", None, Transactional::None)
         .await?;
 
-    let service = crate::organization::service::OrganizationService::new(db.clone());
+    let service = crate::organization::service::OrganizationService::new(ctx.db.clone());
 
     let orgs = service
         .fetch_organizations(Query::default(), Paginated::default(), ())

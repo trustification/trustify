@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::db::query::Query;
@@ -6,16 +5,13 @@ use trustify_common::db::Transactional;
 use trustify_common::hashing::Digests;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::product::ProductInformation;
-use trustify_module_ingestor::graph::Graph;
 use trustify_test_context::TrustifyContext;
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-
-    let sbom = graph
+async fn all_products(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let sbom = ctx
+        .graph
         .ingest_sbom(
             ("source", "http://redhat.com/test.json"),
             &Digests::digest("RHSA-1"),
@@ -25,7 +21,8 @@ async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let pr = graph
+    let pr = ctx
+        .graph
         .ingest_product(
             "Trusted Profile Analyzer",
             ProductInformation {
@@ -39,7 +36,7 @@ async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_product_version("1.0.0".to_string(), Some(sbom.sbom.sbom_id), ())
         .await?;
 
-    let service = crate::product::service::ProductService::new(db);
+    let service = crate::product::service::ProductService::new(ctx.db.clone());
 
     let prods = service
         .fetch_products(Query::default(), Paginated::default(), ())
@@ -57,13 +54,11 @@ async fn all_products(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn link_sbom_to_product(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-
-    let pr = graph
+async fn link_sbom_to_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let pr = ctx
+        .graph
         .ingest_product(
             "Trusted Profile Analyzer",
             ProductInformation {
@@ -77,7 +72,8 @@ async fn link_sbom_to_product(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         .ingest_product_version("1.0.0".to_string(), None, ())
         .await?;
 
-    let sbom = graph
+    let sbom = ctx
+        .graph
         .ingest_sbom(
             ("source", "http://redhat.com/test.json"),
             &Digests::digest("RHSA-1"),

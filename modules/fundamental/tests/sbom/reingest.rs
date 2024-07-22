@@ -9,10 +9,8 @@ use trustify_common::db::query::Query;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_module_fundamental::sbom::service::SbomService;
-use trustify_module_ingestor::graph::Graph;
-use trustify_module_ingestor::service::{Format, IngestorService};
-use trustify_module_storage::service::fs::FileSystemBackend;
-use trustify_test_context::{document_bytes, document_stream, TrustifyContext};
+use trustify_module_ingestor::service::Format;
+use trustify_test_context::{document_bytes, TrustifyContext};
 
 /// We re-ingest two versions of the same quarkus SBOM. However, as the quarkus SBOM doesn't have
 /// anything in common other than the filename (which doesn't matter), these are considered two
@@ -21,32 +19,18 @@ use trustify_test_context::{document_bytes, document_stream, TrustifyContext};
 #[instrument]
 #[test(tokio::test)]
 async fn quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = &ctx.db;
-    let graph = Graph::new(db.clone());
-    let (storage, _tmp) = FileSystemBackend::for_test().await?;
-    let sbom = SbomService::new(db.clone());
-    let ingest = IngestorService::new(graph, storage);
+    let sbom = SbomService::new(ctx.db.clone());
 
     // ingest the first version
-    let result1 = ingest
-        .ingest(
-            ("source", "test"),
-            None,
-            Format::SPDX,
-            document_stream("quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json").await?,
-        )
+    let result1 = ctx
+        .ingest_document("quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json")
         .await?;
 
     assert_eq!(result1.document_id, "https://access.redhat.com/security/data/sbom/beta/spdx/quarkus-bom-b52acd7c-3a3f-441e-aef0-bbdaa1ec8acf");
 
     // ingest the second version
-    let result2 = ingest
-        .ingest(
-            ("source", "test"),
-            None,
-            Format::SPDX,
-            document_stream("quarkus/v2/quarkus-bom-2.13.8.Final-redhat-00004.json").await?,
-        )
+    let result2 = ctx
+        .ingest_document("quarkus/v2/quarkus-bom-2.13.8.Final-redhat-00004.json")
         .await?;
 
     assert_eq!(
@@ -110,21 +94,10 @@ async fn quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[instrument]
 #[test(tokio::test)]
 async fn nhc(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = &ctx.db;
-    let graph = Graph::new(db.clone());
-    let (storage, _tmp) = FileSystemBackend::for_test().await?;
-    let sbom = SbomService::new(db.clone());
-    let ingest = IngestorService::new(graph, storage);
+    let sbom = SbomService::new(ctx.db.clone());
 
     // ingest the first version
-    let result1 = ingest
-        .ingest(
-            ("source", "test"),
-            None,
-            Format::SPDX,
-            document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
-        )
-        .await?;
+    let result1 = ctx.ingest_document("nhc/v1/nhc-0.4.z.json.xz").await?;
 
     assert_eq!(
         result1.document_id,
@@ -132,14 +105,7 @@ async fn nhc(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     );
 
     // ingest the second version
-    let result2 = ingest
-        .ingest(
-            ("source", "test"),
-            None,
-            Format::SPDX,
-            document_stream("nhc/v2/nhc-0.4.z.json.xz").await?,
-        )
-        .await?;
+    let result2 = ctx.ingest_document("nhc/v2/nhc-0.4.z.json.xz").await?;
 
     assert_eq!(
         result2.document_id,
@@ -186,22 +152,10 @@ async fn nhc(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[instrument]
 #[test(tokio::test)]
 async fn nhc_same(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = &ctx.db;
-    let graph = Graph::new(db.clone());
-    let (storage, _tmp) = FileSystemBackend::for_test().await?;
-    let sbom = SbomService::new(db.clone());
-    let ingest = IngestorService::new(graph, storage);
+    let sbom = SbomService::new(ctx.db.clone());
 
     // ingest the first version
-
-    let result1 = ingest
-        .ingest(
-            ("source", "test"),
-            None,
-            Format::SPDX,
-            document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
-        )
-        .await?;
+    let result1 = ctx.ingest_document("nhc/v1/nhc-0.4.z.json.xz").await?;
 
     assert_eq!(
         result1.document_id,
@@ -209,15 +163,7 @@ async fn nhc_same(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     );
 
     // ingest the same version again
-
-    let result2 = ingest
-        .ingest(
-            ("source", "test"),
-            None,
-            Format::SPDX,
-            document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
-        )
-        .await?;
+    let result2 = ctx.ingest_document("nhc/v1/nhc-0.4.z.json.xz").await?;
 
     assert_eq!(
         result2.document_id,
@@ -266,22 +212,10 @@ async fn nhc_same(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[instrument]
 #[test(tokio::test)]
 async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = &ctx.db;
-    let graph = Graph::new(db.clone());
-    let (storage, _tmp) = FileSystemBackend::for_test().await?;
-    let sbom = SbomService::new(db.clone());
-    let ingest = IngestorService::new(graph, storage);
+    let sbom = SbomService::new(ctx.db.clone());
 
     // ingest the first version
-
-    let result1 = ingest
-        .ingest(
-            ("source", "test"),
-            None,
-            Format::SPDX,
-            document_stream("nhc/v1/nhc-0.4.z.json.xz").await?,
-        )
-        .await?;
+    let result1 = ctx.ingest_document("nhc/v1/nhc-0.4.z.json.xz").await?;
 
     assert_eq!(
         result1.document_id,
@@ -289,8 +223,8 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     );
 
     // ingest the second version
-
-    let result2 = ingest
+    let result2 = ctx
+        .ingestor
         .ingest(
             ("source", "test"),
             None,
@@ -357,22 +291,10 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[instrument]
 #[test(tokio::test)]
 async fn syft_rerun(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = &ctx.db;
-    let graph = Graph::new(db.clone());
-    let (storage, _tmp) = FileSystemBackend::for_test().await?;
-    let sbom = SbomService::new(db.clone());
-    let ingest = IngestorService::new(graph, storage);
+    let sbom = SbomService::new(ctx.db.clone());
 
     // ingest the first version
-
-    let result1 = ingest
-        .ingest(
-            ("source", "test"),
-            None,
-            Format::SPDX,
-            document_stream("syft-ubi-example/v1.json.xz").await?,
-        )
-        .await?;
+    let result1 = ctx.ingest_document("syft-ubi-example/v1.json.xz").await?;
 
     assert_eq!(
         result1.document_id,
@@ -380,15 +302,7 @@ async fn syft_rerun(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     );
 
     // ingest the second version
-
-    let result2 = ingest
-        .ingest(
-            ("source", "test"),
-            None,
-            Format::SPDX,
-            document_stream("syft-ubi-example/v2.json.xz").await?,
-        )
-        .await?;
+    let result2 = ctx.ingest_document("syft-ubi-example/v2.json.xz").await?;
 
     assert_eq!(
         result2.document_id,

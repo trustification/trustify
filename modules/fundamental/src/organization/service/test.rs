@@ -1,21 +1,16 @@
 use actix_web::cookie::time::OffsetDateTime;
-use std::sync::Arc;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::db::query::Query;
 use trustify_common::hashing::Digests;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
-use trustify_module_ingestor::graph::Graph;
 use trustify_test_context::TrustifyContext;
 
-#[test_context(TrustifyContext, skip_teardown)]
+#[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn all_organizations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-    let db = ctx.db;
-    let graph = Arc::new(Graph::new(db.clone()));
-
-    graph
+async fn all_organizations(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ctx.graph
         .ingest_advisory(
             "CPIC-1",
             ("source", "http://captpickles.com/"),
@@ -31,7 +26,7 @@ async fn all_organizations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let service = crate::organization::service::OrganizationService::new(db);
+    let service = crate::organization::service::OrganizationService::new(ctx.db.clone());
 
     let orgs = service
         .fetch_organizations(Query::default(), Paginated::default(), ())
