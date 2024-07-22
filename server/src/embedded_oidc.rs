@@ -46,6 +46,10 @@ fn create(enabled: bool) -> anyhow::Result<Option<Server>> {
                     url: "http://localhost/openapi/oauth2-redirect.html".into(),
                     ignore_localhost_port: true,
                 },
+                RedirectUrl::Exact {
+                    url: "http://localhost/rapidoc/oauth-receiver.html".into(),
+                    ignore_localhost_port: true,
+                },
             ],
             default_scope: SCOPE.to_string(),
         });

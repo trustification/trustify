@@ -1,7 +1,7 @@
 use crate::devmode::{self, SWAGGER_UI_CLIENT_ID};
 use actix_web::dev::HttpServiceFactory;
 use openid::{Client, Discovered, Provider, StandardClaims};
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 use url::Url;
 use utoipa::openapi::{
     security::{AuthorizationCode, Flow, OAuth2, Scopes, SecurityScheme},
@@ -74,27 +74,31 @@ impl SwaggerUiOidc {
         Self::new(config).await
     }
 
-    pub fn apply(&self, swagger: SwaggerUi, openapi: &mut OpenApi) -> SwaggerUi {
+    pub fn apply_to_schema(&self, openapi: &mut OpenApi) {
         if let Some(components) = &mut openapi.components {
-            // the swagger UI expects the full "well known" endpoint
-            // let url = format!("{}/.well-known/openid-configuration", self.issuer_url);
-            //components.add_security_scheme("oidc", SecurityScheme::OpenIdConnect(OpenIdConnect::new(url)));
-
             // The swagger UI OIDC client still is weird, let's use OAuth2
 
-            components.add_security_scheme(
-                "oidc",
-                SecurityScheme::OAuth2(OAuth2::new([Flow::AuthorizationCode(
-                    AuthorizationCode::new(
-                        &self.auth_url,
-                        &self.token_url,
-                        Scopes::one("oidc", "OpenID Connect"),
-                    ),
-                )])),
-            );
+            let mut oauth2 = OAuth2::new([Flow::AuthorizationCode(AuthorizationCode::new(
+                &self.auth_url,
+                &self.token_url,
+                Scopes::one("openid", "OpenID Connect"),
+            ))]);
+
+            oauth2.extensions = Some({
+                let mut map = HashMap::new();
+                map.insert("x-client-id".into(), self.client_id.clone().into());
+                map.insert("x-default-scopes".into(), "openid".into());
+                map
+            });
+
+            components.add_security_scheme("oidc", SecurityScheme::OAuth2(oauth2));
         }
 
         openapi.security = Some(vec![SecurityRequirement::new::<_, _, String>("oidc", [])]);
+    }
+
+    pub fn apply_swaggerui(&self, swagger: SwaggerUi, openapi: &mut OpenApi) -> SwaggerUi {
+        self.apply_to_schema(openapi);
 
         swagger.oauth(
             oauth::Config::new()
@@ -121,7 +125,7 @@ pub fn swagger_ui_with_auth(
     let mut swagger = SwaggerUi::new("/openapi/{_:.*}").config(config);
 
     if let Some(swagger_ui_oidc) = &swagger_ui_oidc {
-        swagger = swagger_ui_oidc.apply(swagger, &mut openapi);
+        swagger = swagger_ui_oidc.apply_swaggerui(swagger, &mut openapi);
     }
 
     swagger.url("/openapi.json", openapi)
