@@ -47,3 +47,5 @@ jobs:
         run: cargo test -- --nocapture
         env:
           RUST_LOG: info,sqlx=error,sea_orm=error
+      - name: Validate Generated Openapi Spec
+        run: cargo xtask validate-openapi
