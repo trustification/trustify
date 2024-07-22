@@ -197,6 +197,7 @@ pub async fn get(
 
 #[utoipa::path(
     tag = "sbom",
+    operation_id = "deleteSbom",
     context_path = "/api",
     params(
         ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
@@ -211,10 +212,11 @@ pub async fn delete(
     service: web::Data<SbomService>,
     authorizer: web::Data<Authorizer>,
     user: UserInformation,
-    id: web::Path<Id>,
+    id: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::DeleteSbom)?;
 
+    let id = Id::from_str(&id).map_err(Error::IdKey)?;
     match service.fetch_sbom(id.clone(), ()).await? {
         Some(v) => {
             let rows_affected = service.delete_sbom(v.head.id, ()).await?;
