@@ -109,7 +109,7 @@ pub struct UiConfig {
     #[arg(id = "ui-issuer-url", long, env = "UI_ISSUER_URL", default_value_t = ISSUER_URL.to_string())]
     pub issuer_url: String,
     /// Client ID used by the UI
-    #[arg(id = "ui-client-id", long, env ="UI_CLIENT_ID", default_value_t = FRONTEND_CLIENT_ID.to_string())]
+    #[arg(id = "ui-client-id", long, env = "UI_CLIENT_ID", default_value_t = FRONTEND_CLIENT_ID.to_string())]
     pub client_id: String,
     /// Scopes to request
     #[arg(id = "ui-scope", long, env = "UI_SCOPE", default_value = "openid")]
