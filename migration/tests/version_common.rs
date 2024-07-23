@@ -2,17 +2,20 @@ use migration::sea_orm::Statement;
 use migration::ConnectionTrait;
 use trustify_common::db::Database;
 
+#[allow(unused)]
 pub enum VersionRange {
     Exact(&'static str),
     Range(Version, Version),
 }
 
+#[allow(unused)]
 pub enum Version {
     Inclusive(&'static str),
     Exclusive(&'static str),
     Unbounded,
 }
 
+#[allow(unused)]
 pub async fn version_matches(
     db: &Database,
     candidate: &str,
