@@ -1,10 +1,10 @@
+use crate::version_common::{version_matches, Version, VersionRange};
 use migration::sea_orm::Statement;
 use migration::ConnectionTrait;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::db::Database;
 use trustify_test_context::TrustifyContext;
-use crate::version_common::{Version, version_matches, VersionRange};
 
 #[path = "./version_common.rs"]
 mod version_common;
@@ -157,10 +157,6 @@ async fn comparison_helpers(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 
     Ok(())
 }
-
-
-
-
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
