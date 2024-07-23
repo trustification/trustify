@@ -17,7 +17,9 @@ impl Validate {
         } else if command_exists("docker") {
             "docker"
         } else {
-            return Err(anyhow!("Neither podman nor docker is installed"));
+            return Err(anyhow!(
+                "This task requires podman or docker to be installed."
+            ));
         };
 
         let out_dir = env::temp_dir();
