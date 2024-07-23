@@ -1,4 +1,5 @@
 use crate::test::{caller, CallService};
+use actix_http::StatusCode;
 use actix_web::test::TestRequest;
 use jsonpath_rust::JsonPathQuery;
 use serde_json::{json, Value};
@@ -82,6 +83,55 @@ async fn one_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let name = response.clone().path("$.name").unwrap();
 
     assert_eq!(name, json!(["Trusted Profile Analyzer"]));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn delete_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.graph
+        .ingest_product(
+            "Trusted Profile Analyzer",
+            ProductInformation {
+                vendor: Some("Red Hat".to_string()),
+            },
+            (),
+        )
+        .await?;
+
+    let service = crate::product::service::ProductService::new(ctx.db.clone());
+
+    let products = service
+        .fetch_products(Query::default(), Paginated::default(), ())
+        .await?;
+
+    assert_eq!(1, products.total);
+
+    let first_product = &products.items[0];
+    let product_id = first_product.head.id;
+
+    let uri = format!("/api/v1/product/{}", product_id);
+
+    let request = TestRequest::delete().uri(&uri).to_request();
+
+    let response = app.call_service(request).await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let products = service
+        .fetch_products(Query::default(), Paginated::default(), ())
+        .await?;
+
+    assert_eq!(0, products.total);
+
+    let request = TestRequest::delete().uri(&uri).to_request();
+
+    let response = app.call_service(request).await;
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
     Ok(())
 }

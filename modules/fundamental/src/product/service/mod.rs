@@ -59,6 +59,20 @@ impl ProductService {
             Ok(None)
         }
     }
+
+    pub async fn delete_product<TX: AsRef<Transactional> + Sync + Send>(
+        &self,
+        id: Uuid,
+        tx: TX,
+    ) -> Result<u64, Error> {
+        let connection = self.db.connection(&tx);
+
+        let query = product::Entity::delete_by_id(id);
+
+        let result = query.exec(&connection).await?;
+
+        Ok(result.rows_affected)
+    }
 }
 
 #[cfg(test)]

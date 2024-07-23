@@ -2,7 +2,7 @@
 mod test;
 
 use crate::product::service::ProductService;
-use actix_web::{get, web, HttpResponse, Responder};
+use actix_web::{delete, get, web, HttpResponse, Responder};
 use trustify_common::db::query::Query;
 use trustify_common::db::Database;
 use trustify_common::model::Paginated;
@@ -14,12 +14,13 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     config
         .app_data(web::Data::new(service))
         .service(all)
+        .service(delete)
         .service(get);
 }
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(all, get),
+    paths(all, delete, get),
     components(schemas(
         crate::product::model::ProductHead,
         crate::product::model::ProductVersionHead,
@@ -54,7 +55,7 @@ pub async fn all(
 
 #[utoipa::path(
     tag = "product",
-    operation_id = "getProducts",
+    operation_id = "getProduct",
     context_path = "/api",
     params(
         ("id", Path, description = "Opaque ID of the product")
@@ -74,5 +75,37 @@ pub async fn get(
         Ok(HttpResponse::Ok().json(fetched))
     } else {
         Ok(HttpResponse::NotFound().finish())
+    }
+}
+
+#[utoipa::path(
+    tag = "product",
+    operation_id = "deleteProduct",
+    context_path = "/api",
+    params(
+        ("id", Path, description = "Opaque ID of the product")
+    ),
+    responses(
+        (status = 200, description = "Matching product", body = ProductDetails),
+        (status = 404, description = "Matching product not found"),
+    ),
+)]
+#[delete("/v1/product/{id}")]
+pub async fn delete(
+    state: web::Data<ProductService>,
+    id: web::Path<Uuid>,
+) -> actix_web::Result<impl Responder> {
+    match state.fetch_product(*id, ()).await? {
+        Some(v) => {
+            let rows_affected = state.delete_product(v.head.id, ()).await?;
+            match rows_affected {
+                0 => Ok(HttpResponse::NotFound().finish()),
+                1 => Ok(HttpResponse::Ok().json(v)),
+                _ => Err(actix_web::error::ErrorInternalServerError(
+                    "Unexpected number of rows affected",
+                )),
+            }
+        }
+        None => Ok(HttpResponse::NotFound().finish()),
     }
 }
