@@ -2,6 +2,7 @@ mod label;
 #[cfg(test)]
 mod test;
 
+use crate::Error::Internal;
 use crate::{
     sbom::{
         model::{SbomPackageReference, Which},
@@ -223,7 +224,7 @@ pub async fn delete(
             match rows_affected {
                 0 => Ok(HttpResponse::NotFound().finish()),
                 1 => Ok(HttpResponse::Ok().json(v)),
-                _ => Ok(HttpResponse::InternalServerError().finish()),
+                _ => Err(Internal("Unexpected number of rows affected".into()).into()),
             }
         }
         None => Ok(HttpResponse::NotFound().finish()),
