@@ -33,6 +33,8 @@ pub enum Error {
     Storage(anyhow::Error),
     #[error("Invalid data model {0}")]
     Data(String),
+    #[error("Internal Server Error: {0}")]
+    Internal(String),
 }
 
 unsafe impl Send for Error {}

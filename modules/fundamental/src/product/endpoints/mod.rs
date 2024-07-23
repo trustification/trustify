@@ -2,6 +2,7 @@
 mod test;
 
 use crate::product::service::ProductService;
+use crate::Error::Internal;
 use actix_web::{delete, get, web, HttpResponse, Responder};
 use trustify_common::db::query::Query;
 use trustify_common::db::Database;
@@ -101,9 +102,7 @@ pub async fn delete(
             match rows_affected {
                 0 => Ok(HttpResponse::NotFound().finish()),
                 1 => Ok(HttpResponse::Ok().json(v)),
-                _ => Err(actix_web::error::ErrorInternalServerError(
-                    "Unexpected number of rows affected",
-                )),
+                _ => Err(Internal("Unexpected number of rows affected".into()).into()),
             }
         }
         None => Ok(HttpResponse::NotFound().finish()),
