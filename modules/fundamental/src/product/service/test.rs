@@ -111,3 +111,35 @@ async fn link_sbom_to_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error
 
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn delete_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let pr = ctx
+        .graph
+        .ingest_product(
+            "Trusted Profile Analyzer",
+            ProductInformation {
+                vendor: Some("Red Hat".to_string()),
+            },
+            (),
+        )
+        .await?;
+
+    let service = crate::product::service::ProductService::new(ctx.db.clone());
+
+    let prods = service
+        .fetch_products(Query::default(), Paginated::default(), ())
+        .await?;
+
+    assert_eq!(1, prods.total);
+    assert_eq!(1, prods.items.len());
+
+    let result = service.delete_product(pr.product.id, ()).await?;
+    assert_eq!(1, result);
+
+    let result = service.delete_product(pr.product.id, ()).await?;
+    assert_eq!(0, result);
+
+    Ok(())
+}
