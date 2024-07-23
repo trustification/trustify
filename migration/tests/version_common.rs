@@ -1,5 +1,5 @@
-use migration::ConnectionTrait;
 use migration::sea_orm::Statement;
+use migration::ConnectionTrait;
 use trustify_common::db::Database;
 
 pub enum VersionRange {
