@@ -4,7 +4,6 @@ as
 $$
 declare
 begin
-    raise notice '%', range_p;
     return case
         when range_p.version_scheme_id = 'semver'
             then semver_version_matches(version_p, range_p)
