@@ -101,6 +101,11 @@ where
         }
     }
 
+    pub fn branch(mut self, branch: Option<impl Into<String>>) -> Self {
+        self.walker = self.walker.branch(branch);
+        self
+    }
+
     pub fn path(mut self, path: Option<impl Into<String>>) -> Self {
         self.walker = self.walker.path(path);
         self

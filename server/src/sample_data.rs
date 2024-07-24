@@ -1,11 +1,12 @@
-use std::collections::HashSet;
-use std::time::Duration;
+use std::{collections::HashSet, time::Duration};
 use trustify_common::config::Database;
-use trustify_module_importer::model::{
-    CommonImporter, CsafImporter, CveImporter, ImporterConfiguration, OsvImporter, SbomImporter,
-    DEFAULT_SOURCE_CVEPROJECT,
+use trustify_module_importer::{
+    model::{
+        CommonImporter, CsafImporter, CveImporter, ImporterConfiguration, OsvImporter,
+        SbomImporter, DEFAULT_SOURCE_CVEPROJECT,
+    },
+    service::{Error, ImporterService},
 };
-use trustify_module_importer::service::{Error, ImporterService};
 use url::Url;
 
 async fn add(
@@ -27,6 +28,7 @@ async fn add_osv(
     name: &str,
     source: &str,
     base: Option<&str>,
+    branch: Option<&str>,
     description: &str,
 ) -> anyhow::Result<()> {
     add(
@@ -40,6 +42,7 @@ async fn add_osv(
                 labels: Default::default(),
             },
             source: source.to_string(),
+            branch: branch.map(ToString::to_string),
             path: base.map(|s| s.into()),
         }),
     )
@@ -136,6 +139,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         "osv-pypa",
         "https://github.com/pypa/advisory-database",
         Some("vulns"),
+        None,
         "Python Packaging Advisory Database",
     )
     .await?;
@@ -145,6 +149,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         "osv-psf",
         "https://github.com/psf/advisory-database",
         Some("advisories"),
+        None,
         "Python Software Foundation Advisory Database",
     )
     .await?;
@@ -154,6 +159,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         "osv-r",
         "https://github.com/RConsortium/r-advisory-database",
         Some("vulns"),
+        None,
         "RConsortium Advisory Database",
     )
     .await?;
@@ -163,7 +169,18 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         "osv-oss-fuzz",
         "https://github.com/google/oss-fuzz-vulns",
         Some("vulns"),
+        None,
         "OSS-Fuzz vulnerabilities",
+    )
+    .await?;
+
+    add_osv(
+        &importer,
+        "osv-rustsec",
+        "https://github.com/rustsec/advisory-db",
+        Some("crates"),
+        Some("osv"),
+        "RustSec Advisory Database",
     )
     .await?;
 
