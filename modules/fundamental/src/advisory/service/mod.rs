@@ -118,7 +118,7 @@ impl AdvisoryService {
 
         let averages: Vec<_> = items
             .iter()
-            .map(|e| (e.average_score, e.average_severity.clone()))
+            .map(|e| (e.average_score, e.average_severity))
             .collect();
 
         let entities: Vec<_> = items
