@@ -58,15 +58,19 @@ pub struct AdvisoryHead {
 impl AdvisoryHead {
     pub async fn from_advisory(
         entity: &advisory::Model,
-        issuer: Option<organization::Model>,
+        issuer: Option<Option<organization::Model>>,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
-        let issuer = if let Some(issuer) = issuer {
-            Some(OrganizationSummary::from_entity(&issuer, tx).await?)
-        } else if let Some(issuer) = entity.find_related(organization::Entity).one(tx).await? {
-            Some(OrganizationSummary::from_entity(&issuer, tx).await?)
-        } else {
-            None
+        let issuer = match &issuer {
+            Some(Some(issuer)) => Some(OrganizationSummary::from_entity(issuer, tx).await?),
+            Some(None) => None,
+            None => {
+                if let Some(issuer) = entity.find_related(organization::Entity).one(tx).await? {
+                    Some(OrganizationSummary::from_entity(&issuer, tx).await?)
+                } else {
+                    None
+                }
+            }
         };
 
         Ok(Self {

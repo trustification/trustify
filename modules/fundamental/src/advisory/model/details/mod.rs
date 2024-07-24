@@ -51,7 +51,7 @@ impl AdvisoryDetails {
             .await?;
 
         Ok(AdvisoryDetails {
-            head: AdvisoryHead::from_advisory(advisory, issuer, tx).await?,
+            head: AdvisoryHead::from_advisory(advisory, Some(issuer), tx).await?,
             vulnerabilities,
             average_severity: average_severity.map(|e| e.to_string()),
             average_score,
