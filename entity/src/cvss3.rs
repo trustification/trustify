@@ -325,7 +325,7 @@ impl From<cvss3::Availability> for Availability {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_severity")]
 pub enum Severity {
     #[sea_orm(string_value = "none")]

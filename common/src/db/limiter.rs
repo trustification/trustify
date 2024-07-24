@@ -1,3 +1,4 @@
+use crate::db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel};
 use sea_orm::{
     ConnectionTrait, DbErr, EntityTrait, FromQueryResult, Paginator, PaginatorTrait, QuerySelect,
     Select, SelectModel, SelectTwo, SelectTwoModel, Selector, SelectorTrait,
@@ -84,6 +85,13 @@ where
         offset: u64,
         limit: u64,
     ) -> Limiter<'db, C, SelectModel<M>, SelectModel<M>>;
+
+    fn try_limiting_as_multi_model<M: FromQueryResultMultiModel + Sync + Send>(
+        self,
+        db: &'db C,
+        offset: u64,
+        limit: u64,
+    ) -> Result<Limiter<'db, C, SelectModel<M>, SelectModel<M>>, DbErr>;
 }
 
 impl<'db, C, E> LimiterAsModelTrait<'db, C> for Select<E>
@@ -108,6 +116,25 @@ where
             paginator: self.clone().into_model::<M>().paginate(db, 1),
             selector,
         }
+    }
+
+    fn try_limiting_as_multi_model<M: FromQueryResultMultiModel + Sync + Send>(
+        self,
+        db: &'db C,
+        offset: u64,
+        limit: u64,
+    ) -> Result<Limiter<'db, C, SelectModel<M>, SelectModel<M>>, DbErr> {
+        let selector = self
+            .clone()
+            .limit(NonZeroU64::new(limit).map(|limit| limit.get()))
+            .offset(NonZeroU64::new(offset).map(|offset| offset.get()))
+            .try_into_multi_model::<M>()?;
+
+        Ok(Limiter {
+            db,
+            paginator: self.clone().into_model::<M>().paginate(db, 1),
+            selector,
+        })
     }
 }
 
