@@ -94,6 +94,7 @@ impl super::Server {
 
         let walker = OsvWalker::new(osv.source.clone())
             .continuation(continuation)
+            .branch(osv.branch)
             .path(osv.path)
             .callbacks(Context {
                 context,

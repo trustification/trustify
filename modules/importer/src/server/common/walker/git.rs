@@ -66,6 +66,9 @@ where
     /// The git source to clone from
     pub source: String,
 
+    /// The branch to check out
+    pub branch: Option<String>,
+
     /// A path inside the cloned repository to start searching for files
     pub path: Option<String>,
 
@@ -86,6 +89,7 @@ where
     pub fn new(source: impl Into<String>, handler: H) -> Self {
         Self {
             source: source.into(),
+            branch: None,
             path: None,
             continuation: Default::default(),
             working_dir: (),
@@ -102,6 +106,7 @@ where
     pub fn handler<U: Handler>(self, handler: U) -> GitWalker<U, T> {
         GitWalker {
             source: self.source,
+            branch: self.branch,
             path: self.path,
             continuation: self.continuation,
             working_dir: self.working_dir,
@@ -123,11 +128,17 @@ where
     ) -> GitWalker<H, U> {
         GitWalker {
             source: self.source,
+            branch: self.branch,
             path: self.path,
             continuation: self.continuation,
             working_dir,
             handler: self.handler,
         }
+    }
+
+    pub fn branch(mut self, branch: Option<impl Into<String>>) -> Self {
+        self.branch = branch.map(|s| s.into());
+        self
     }
 
     pub fn path(mut self, path: Option<impl Into<String>>) -> Self {
@@ -186,9 +197,13 @@ where
         // clone or open repository
 
         let result = info_span!("clone repository").in_scope(|| {
-            RepoBuilder::new()
-                .fetch_options(fo)
-                .clone(&self.source, path)
+            let mut builder = RepoBuilder::new();
+
+            if let Some(branch) = &self.branch {
+                builder.branch(branch);
+            }
+
+            builder.fetch_options(fo).clone(&self.source, path)
         });
 
         let repo = match result {

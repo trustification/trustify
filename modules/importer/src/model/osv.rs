@@ -6,8 +6,14 @@ pub struct OsvImporter {
     #[serde(flatten)]
     pub common: CommonImporter,
 
+    /// The URL to the git repository of the OSV data
     pub source: String,
 
+    /// An optional branch. Will use the default branch otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub branch: Option<String>,
+
+    /// An optional path to start searching for documents. Will use the root of the repository otherwise.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
 }
