@@ -57,6 +57,7 @@ mod m0000470_cascade_sbom_delete;
 mod m0000475_improve_version_comparison_fns;
 mod m0000480_create_rpmver_cmp_fns;
 mod m0000485_create_gitver_cmp_fns;
+mod m0000490_cascade_advisory_delete;
 
 pub struct Migrator;
 
@@ -120,6 +121,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000475_improve_version_comparison_fns::Migration),
             Box::new(m0000480_create_rpmver_cmp_fns::Migration),
             Box::new(m0000485_create_gitver_cmp_fns::Migration),
+            Box::new(m0000490_cascade_advisory_delete::Migration),
         ]
     }
 }

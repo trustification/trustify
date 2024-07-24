@@ -227,6 +227,21 @@ impl AdvisoryService {
         }
     }
 
+    /// delete one sbom
+    pub async fn delete_advisory<TX: AsRef<Transactional>>(
+        &self,
+        id: Uuid,
+        tx: TX,
+    ) -> Result<u64, Error> {
+        let connection = self.db.connection(&tx);
+
+        let query = advisory::Entity::delete_by_id(id);
+
+        let result = query.exec(&connection).await?;
+
+        Ok(result.rows_affected)
+    }
+
     /// Set the labels of an advisory
     ///
     /// Returns `Ok(Some(()))` if a document was found and updated. If no document was found, it will
