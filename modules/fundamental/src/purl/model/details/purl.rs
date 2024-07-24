@@ -134,7 +134,7 @@ impl PurlAdvisory {
                     let organization = advisory.find_related(organization::Entity).one(tx).await?;
 
                     results.push(Self {
-                        head: AdvisoryHead::from_advisory(advisory, organization, tx).await?,
+                        head: AdvisoryHead::from_advisory(advisory, Some(organization), tx).await?,
                         status: vec![qualified_package_status],
                     })
                 }

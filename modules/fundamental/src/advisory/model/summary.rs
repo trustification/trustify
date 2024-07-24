@@ -59,7 +59,7 @@ impl AdvisorySummary {
             let average_score = average_score.map(|score| Score::new(score).roundup());
 
             summaries.push(AdvisorySummary {
-                head: AdvisoryHead::from_advisory(advisory, issuer, tx).await?,
+                head: AdvisoryHead::from_advisory(advisory, Some(issuer), tx).await?,
                 average_severity: average_severity
                     .as_ref()
                     .map(|severity| severity.to_string()),
