@@ -2,8 +2,9 @@ mod label;
 #[cfg(test)]
 mod test;
 
+use crate::Error::Internal;
 use crate::{advisory::service::AdvisoryService, Error};
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{delete, get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use std::str::FromStr;
 use tokio_util::io::ReaderStream;
@@ -20,6 +21,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         .app_data(web::Data::new(advisory_service))
         .service(all)
         .service(get)
+        .service(delete)
         .service(upload)
         .service(download)
         .service(label::set)
@@ -89,6 +91,38 @@ pub async fn get(
 
     if let Some(fetched) = fetched {
         Ok(HttpResponse::Ok().json(fetched))
+    } else {
+        Ok(HttpResponse::NotFound().finish())
+    }
+}
+
+#[utoipa::path(
+    tag = "advisory",
+    operation_id = "deleteAdvisory",
+    context_path = "/api",
+    params(
+        ("key" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+    ),
+    responses(
+        (status = 200, description = "Matching advisory", body = AdvisoryDetails),
+        (status = 404, description = "Matching advisory not found"),
+    ),
+)]
+#[delete("/v1/advisory/{key}")]
+pub async fn delete(
+    state: web::Data<AdvisoryService>,
+    key: web::Path<String>,
+) -> actix_web::Result<impl Responder> {
+    let hash_key = Id::from_str(&key).map_err(Error::IdKey)?;
+    let fetched = state.fetch_advisory(hash_key, ()).await?;
+
+    if let Some(fetched) = fetched {
+        let rows_affected = state.delete_advisory(fetched.head.uuid, ()).await?;
+        match rows_affected {
+            0 => Ok(HttpResponse::NotFound().finish()),
+            1 => Ok(HttpResponse::Ok().json(fetched)),
+            _ => Err(Internal("Unexpected number of rows affected".into()).into()),
+        }
     } else {
         Ok(HttpResponse::NotFound().finish())
     }

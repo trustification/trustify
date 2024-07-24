@@ -318,3 +318,86 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let digests = Digests::digest("RHSA-1");
+
+    let advisory = ctx
+        .graph
+        .ingest_advisory(
+            "RHSA-1",
+            ("source", "http://redhat.com/"),
+            &digests,
+            AdvisoryInformation {
+                title: Some("RHSA-1".to_string()),
+                issuer: None,
+                published: Some(OffsetDateTime::now_utc()),
+                modified: None,
+                withdrawn: None,
+            },
+            (),
+        )
+        .await?;
+
+    let advisory_vuln = advisory
+        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .await?;
+    advisory_vuln
+        .ingest_cvss3_score(
+            Cvss3Base {
+                minor_version: 0,
+                av: AttackVector::Network,
+                ac: AttackComplexity::Low,
+                pr: PrivilegesRequired::None,
+                ui: UserInteraction::None,
+                s: Scope::Unchanged,
+                c: Confidentiality::None,
+                i: Integrity::High,
+                a: Availability::High,
+            },
+            (),
+        )
+        .await?;
+
+    advisory_vuln
+        .ingest_package_status(
+            None,
+            &Purl::from_str("pkg://maven/org.apache/log4j")?,
+            "fixed",
+            VersionInfo {
+                scheme: "semver".to_string(),
+                spec: VersionSpec::Exact("1.2.3".to_string()),
+            },
+            (),
+        )
+        .await?;
+
+    advisory_vuln
+        .ingest_package_status(
+            None,
+            &Purl::from_str("pkg://maven/org.apache/log4j")?,
+            "fixed",
+            VersionInfo {
+                scheme: "semver".to_string(),
+                spec: VersionSpec::Exact("1.2.3".to_string()),
+            },
+            (),
+        )
+        .await?;
+
+    let fetch = AdvisoryService::new(ctx.db.clone());
+    let jenny256 = Id::sha256(&digests.sha256);
+    let fetched = fetch.fetch_advisory(jenny256.clone(), ()).await?;
+
+    let fetched = fetched.expect("Advisory not found");
+
+    let affected = fetch.delete_advisory(fetched.head.uuid, ()).await?;
+    assert_eq!(affected, 1);
+
+    let affected = fetch.delete_advisory(fetched.head.uuid, ()).await?;
+    assert_eq!(affected, 0);
+
+    Ok(())
+}

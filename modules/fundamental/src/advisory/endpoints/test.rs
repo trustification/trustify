@@ -506,3 +506,48 @@ async fn set_labels_not_found(ctx: &TrustifyContext) -> Result<(), anyhow::Error
 
     Ok(())
 }
+
+/// Test deleing an advisory
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+    let doc = ctx.ingest_document(DOC).await?;
+
+    let advisory_list: PaginatedResults<AdvisorySummary> = app
+        .call_and_read_body_json(TestRequest::get().uri("/api/v1/advisory").to_request())
+        .await;
+    assert_eq!(advisory_list.total, 1);
+
+    // first delete should succeed
+    let response = app
+        .call_service(
+            TestRequest::delete()
+                .uri(&format!("/api/v1/advisory/{}", doc.id))
+                .to_request(),
+        )
+        .await;
+
+    log::debug!("Code: {}", response.status());
+    assert_eq!(response.status(), StatusCode::OK);
+
+    // check that the document is gone
+    let advisory_list: PaginatedResults<AdvisorySummary> = app
+        .call_and_read_body_json(TestRequest::get().uri("/api/v1/advisory").to_request())
+        .await;
+    assert_eq!(advisory_list.total, 0);
+
+    // second delete should fail
+    let response = app
+        .call_service(
+            TestRequest::delete()
+                .uri(&format!("/api/v1/advisory/{}", doc.id))
+                .to_request(),
+        )
+        .await;
+
+    log::debug!("Code: {}", response.status());
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    Ok(())
+}
