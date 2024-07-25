@@ -181,7 +181,7 @@ impl PurlStatus {
         };
 
         Ok(Self {
-            vulnerability: VulnerabilityHead::from_vulnerability_entity(vuln, tx).await?,
+            vulnerability: VulnerabilityHead::from_vulnerability_entity(vuln, None, tx).await?,
             status,
             context: cpe.map(StatusContext::Cpe),
         })
