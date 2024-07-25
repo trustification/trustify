@@ -99,7 +99,7 @@ Connect to PSQL:
 env PGPASSWORD=eggs psql -U postgres -d trustify -h localhost -p 5432
 ```
 
-If you don't have the `psql` command available, you can also use the `podman-compose` command: 
+If you don't have the `psql` command available, you can also use the `podman-compose` command:
 
 ```shell
 podman-compose -f etc/deploy/compose/compose.yaml exec postgres psql -U postgres -d trustify
@@ -127,6 +127,14 @@ Import data (also see: [modules/importer/README.md](modules/importer/README.md) 
 http POST localhost:8080/api/v1/importer/redhat-sbom sbom[source]=https://access.redhat.com/security/data/sbom/beta/ sbom[keys][]=https://access.redhat.com/security/data/97f5eac4.txt#77E79ABE93673533ED09EBE2DCE3823597F5EAC4 sbom[disabled]:=false sbom[onlyPatterns][]=quarkus sbom[period]=30s sbom[v3Signatures]:=true
 # CSAF's
 http POST localhost:8080/api/v1/importer/redhat-csaf csaf[source]=https://redhat.com/.well-known/csaf/provider-metadata.json csaf[disabled]:=false csaf[onlyPatterns][]="^cve-2023-" csaf[period]=30s csaf[v3Signatures]:=true
+```
+
+
+To import files from a local disk or a location that is not properly-formed csaf repository, use [csaf walker](https://github.com/ctron/csaf-walker) tool:
+
+```shell
+sbom scoop http://localhost:8080/api/v1/sbom /workspace/github.com/trustification/trustification/data/ds1/sbom/
+csaf scoop http://localhost:8080/api/v1/advisory /workspace/github.com/trustification/trustification/data/ds1/csaf/
 ```
 
 ### Authentication
