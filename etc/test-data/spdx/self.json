@@ -1,0 +1,23 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "2023-11-01T13:30:00Z",
+    "creators": [
+      "Trustify"
+    ],
+    "comment": "This is an example for an SBOM with looping refs. Based upon an existing SBOM.",
+    "licenseListVersion": "3.8"
+  },
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "uri:just-an-example",
+  "name": "loop",
+  "packages": [],
+  "relationships" : [
+    {
+      "spdxElementId" : "SPDXRef-DOCUMENT",
+      "relatedSpdxElement" : "SPDXRef-DOCUMENT",
+      "relationshipType" : "DESCRIBES"
+    }
+  ],
+  "spdxVersion": "SPDX-2.2"
+}

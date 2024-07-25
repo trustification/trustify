@@ -1,0 +1,45 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "2023-11-01T13:30:00Z",
+    "creators": [
+      "Trustify"
+    ],
+    "comment": "This is an example for an SBOM with looping refs. Based upon an existing SBOM.",
+    "licenseListVersion": "3.8"
+  },
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "uri:just-an-example",
+  "name": "loop",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-A",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "foo",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE_MANAGER",
+          "referenceLocator": "pkg:cargo/A@0.0.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseComments": "Licensing information is automatically generated and may be incomplete or incorrect.",
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "A",
+      "originator": "NOASSERTION",
+      "packageFileName": "NOASSERTION",
+      "supplier": "Organization: Red Hat",
+      "versionInfo": "1"
+    }
+  ],
+  "relationships" : [
+    {
+      "spdxElementId" : "SPDXRef-A",
+      "relatedSpdxElement" : "SPDXRef-A",
+      "relationshipType" : "DESCRIBES"
+    }
+  ],
+  "spdxVersion": "SPDX-2.2"
+}
