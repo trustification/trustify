@@ -5,6 +5,7 @@ use advisory_vulnerability::AdvisoryVulnerabilitySummary;
 use sea_orm::{ColumnTrait, EntityTrait, ModelTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
+use trustify_common::memo::Memo;
 use trustify_entity::{self as entity, cvss3::Severity};
 use utoipa::ToSchema;
 
@@ -51,7 +52,7 @@ impl AdvisoryDetails {
             .await?;
 
         Ok(AdvisoryDetails {
-            head: AdvisoryHead::from_advisory(advisory, Some(issuer), tx).await?,
+            head: AdvisoryHead::from_advisory(advisory, Memo::Provided(issuer), tx).await?,
             vulnerabilities,
             average_severity: average_severity.map(|e| e.to_string()),
             average_score,

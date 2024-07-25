@@ -10,6 +10,7 @@ use sea_orm::{
 use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use trustify_common::db::{ConnectionOrTransaction, VersionMatches};
+use trustify_common::memo::Memo;
 use trustify_common::purl::Purl;
 use trustify_entity::{
     advisory, base_purl, cpe, organization, purl_status, qualified_purl, status, version_range,
@@ -134,7 +135,12 @@ impl PurlAdvisory {
                     let organization = advisory.find_related(organization::Entity).one(tx).await?;
 
                     results.push(Self {
-                        head: AdvisoryHead::from_advisory(advisory, Some(organization), tx).await?,
+                        head: AdvisoryHead::from_advisory(
+                            advisory,
+                            Memo::Provided(organization),
+                            tx,
+                        )
+                        .await?,
                         status: vec![qualified_package_status],
                     })
                 }
@@ -181,7 +187,12 @@ impl PurlStatus {
         };
 
         Ok(Self {
-            vulnerability: VulnerabilityHead::from_vulnerability_entity(vuln, None, tx).await?,
+            vulnerability: VulnerabilityHead::from_vulnerability_entity(
+                vuln,
+                Memo::NotProvided,
+                tx,
+            )
+            .await?,
             status,
             context: cpe.map(StatusContext::Cpe),
         })

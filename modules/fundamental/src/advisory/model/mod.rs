@@ -9,6 +9,7 @@ use crate::{organization::model::OrganizationSummary, Error};
 use sea_orm::{prelude::Uuid, LoaderTrait, ModelTrait};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
+use trustify_common::memo::Memo;
 use trustify_common::{db::ConnectionOrTransaction, id::Id};
 use trustify_entity::{advisory, labels::Labels, organization};
 use utoipa::ToSchema;
@@ -58,13 +59,15 @@ pub struct AdvisoryHead {
 impl AdvisoryHead {
     pub async fn from_advisory(
         entity: &advisory::Model,
-        issuer: Option<Option<organization::Model>>,
+        issuer: Memo<organization::Model>,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
         let issuer = match &issuer {
-            Some(Some(issuer)) => Some(OrganizationSummary::from_entity(issuer, tx).await?),
-            Some(None) => None,
-            None => {
+            Memo::Provided(Some(issuer)) => {
+                Some(OrganizationSummary::from_entity(issuer, tx).await?)
+            }
+            Memo::Provided(None) => None,
+            Memo::NotProvided => {
                 if let Some(issuer) = entity.find_related(organization::Entity).one(tx).await? {
                     Some(OrganizationSummary::from_entity(&issuer, tx).await?)
                 } else {

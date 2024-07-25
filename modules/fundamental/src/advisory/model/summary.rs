@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use trustify_common::db::ConnectionOrTransaction;
+use trustify_common::memo::Memo;
 use trustify_common::paginated;
 use trustify_cvss::cvss3::score::Score;
 use trustify_entity::cvss3::Severity;
@@ -59,7 +60,7 @@ impl AdvisorySummary {
             let average_score = average_score.map(|score| Score::new(score).roundup());
 
             summaries.push(AdvisorySummary {
-                head: AdvisoryHead::from_advisory(advisory, Some(issuer), tx).await?,
+                head: AdvisoryHead::from_advisory(advisory, Memo::Provided(issuer), tx).await?,
                 average_severity: average_severity
                     .as_ref()
                     .map(|severity| severity.to_string()),
