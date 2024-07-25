@@ -14,7 +14,7 @@ use crate::{
 use parking_lot::Mutex;
 use sbom_walker::{
     retrieve::RetrievingVisitor,
-    source::{DispatchSource, FileSource, HttpOptions, HttpSource},
+    source::{HttpOptions, HttpSource},
     validation::ValidationVisitor,
     walker::Walker,
 };
@@ -34,22 +34,18 @@ impl super::Server {
     ) -> Result<RunOutput, ScannerError> {
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
-        let source: DispatchSource = match Url::parse(&importer.source) {
-            Ok(url) => {
-                let keys = importer
-                    .keys
-                    .into_iter()
-                    .map(|key| key.into())
-                    .collect::<Vec<_>>();
-                HttpSource::new(
-                    url,
-                    Fetcher::new(Default::default()).await?,
-                    HttpOptions::new().since(last_success).keys(keys),
-                )
-                .into()
-            }
-            Err(_) => FileSource::new(&importer.source, None)?.into(),
-        };
+        let url = Url::parse(&importer.source).map_err(|err| ScannerError::Critical(err.into()))?;
+
+        let keys = importer
+            .keys
+            .into_iter()
+            .map(|key| key.into())
+            .collect::<Vec<_>>();
+        let source = HttpSource::new(
+            url,
+            Fetcher::new(Default::default()).await?,
+            HttpOptions::new().since(last_success).keys(keys),
+        );
 
         // storage (called by validator)
 
