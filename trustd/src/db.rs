@@ -68,10 +68,14 @@ impl Run {
         let db_dir = work_dir.join("postgres");
         let data_dir = work_dir.join("data");
         create_dir_all(&data_dir)?;
-        let configuration = HashMap::from([(
-            "shared_preload_libraries".to_string(),
-            "pg_stat_statements".to_string(),
-        )]);
+        let configuration = HashMap::from([
+            (
+                "shared_preload_libraries".to_string(),
+                "pg_stat_statements".to_string(),
+            ),
+            ("random_page_cost".to_string(), "1.1".to_string()),
+            ("max_connections".to_string(), "500".to_string()),
+        ]);
         let settings = postgresql_embedded::Settings {
             version: VersionReq::parse("=16.3.0")?,
             username: self.database.username.clone(),
