@@ -160,7 +160,7 @@ impl InitData {
             // When running with the embedded OIDC server, re-use devmode. Running the embedded OIDC
             // without devmode doesn't make any sense. However, the pm-mode doesn't know about
             // devmode. Also, enabling devmode might trigger other logic.
-            auth_devmode = true;
+            auth_devmode = run.embedded_oidc;
             embedded_oidc::spawn(run.embedded_oidc).await?
         };
 
