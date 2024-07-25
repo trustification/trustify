@@ -1,3 +1,4 @@
+mod corner_cases;
 mod perf;
 
 use super::*;
