@@ -60,10 +60,7 @@ impl TrustifyContext {
         let format = Format::from_bytes(&bytes)?;
         let stream = ReaderStream::new(bytes.as_ref());
 
-        self.ingestor
-            .ingest((), None, format, stream)
-            .await
-            .map_err(|e| e.into())
+        Ok(self.ingestor.ingest((), None, format, stream).await?)
     }
 }
 
