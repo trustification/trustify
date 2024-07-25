@@ -2,13 +2,12 @@ mod label;
 #[cfg(test)]
 mod test;
 
-use crate::Error::Internal;
 use crate::{
     sbom::{
         model::{SbomPackageReference, Which},
         service::SbomService,
     },
-    Error,
+    Error::{self, Internal},
 };
 use actix_web::{delete, get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
@@ -311,7 +310,7 @@ pub async fn related(
             paginated,
             related.which,
             match &related.reference {
-                None => SbomPackageReference::Root,
+                None => SbomPackageReference::All,
                 Some(id) => SbomPackageReference::Package(id),
             },
             related.relationship,
