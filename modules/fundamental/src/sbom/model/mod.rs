@@ -53,8 +53,8 @@ pub struct SbomPackage {
 // TODO: think about a way to add CPE and PURLs too
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum SbomPackageReference<'a> {
-    /// Reference the root of an SBOM
-    Root,
+    /// Reference all packages of the SBOM.
+    All,
     /// Reference a package inside an SBOM, by its node id.
     Package(&'a str),
 }
@@ -67,7 +67,7 @@ impl<'a> From<&'a str> for SbomPackageReference<'a> {
 
 impl<'a> From<()> for SbomPackageReference<'a> {
     fn from(_value: ()) -> Self {
-        Self::Root
+        Self::All
     }
 }
 

@@ -287,7 +287,7 @@ impl SbomService {
             Default::default(),
             paginated,
             Which::Right,
-            SbomPackageReference::Root,
+            SbomPackageReference::All,
             Some(Relationship::DescribedBy),
             tx,
         )
@@ -390,7 +390,7 @@ impl SbomService {
         // filter for reference
 
         query = match reference.into() {
-            SbomPackageReference::Root => {
+            SbomPackageReference::All => {
                 // sbom - add join to sbom table
                 query.join(JoinType::Join, sbom_node::Relation::Sbom.def())
             }

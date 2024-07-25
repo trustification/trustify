@@ -47,7 +47,7 @@ async fn infinite_loop(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(packages.total, 1);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::Root, ())
+        .related_packages(id, None, SbomPackageReference::All, ())
         .await?;
 
     log::info!("Packages: {packages:#?}");
@@ -86,7 +86,7 @@ async fn double_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(packages.len(), 3);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::Root, ())
+        .related_packages(id, None, SbomPackageReference::All, ())
         .await?;
 
     log::info!("Packages: {packages:#?}");
@@ -125,7 +125,7 @@ async fn self_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(packages.len(), 0);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::Root, ())
+        .related_packages(id, None, SbomPackageReference::All, ())
         .await?;
 
     log::info!("Packages: {packages:#?}");
@@ -164,7 +164,7 @@ async fn self_ref_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(packages.len(), 1);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::Root, ())
+        .related_packages(id, None, SbomPackageReference::All, ())
         .await?;
 
     log::info!("Packages: {packages:#?}");
