@@ -1,9 +1,10 @@
 use super::SbomService;
-use crate::purl::model::summary::purl::PurlSummary;
-use crate::sbom::model::details::{SbomAdvisory, SbomDetails};
-use crate::sbom::model::SbomHead;
 use crate::{
-    sbom::model::{SbomPackage, SbomPackageReference, SbomPackageRelation, SbomSummary, Which},
+    purl::model::summary::purl::PurlSummary,
+    sbom::model::{
+        details::{SbomAdvisory, SbomDetails},
+        SbomHead, SbomPackage, SbomPackageReference, SbomPackageRelation, SbomSummary, Which,
+    },
     Error,
 };
 use futures_util::{stream, StreamExt, TryStreamExt};
@@ -14,16 +15,15 @@ use sea_orm::{
 use sea_query::{extension::postgres::PgExpr, Expr, Func, JoinType, SimpleExpr};
 use serde::Deserialize;
 use serde_json::Value;
-use std::fmt::Debug;
+use std::{collections::HashMap, fmt::Debug};
 use tracing::instrument;
-use trustify_common::db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel};
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::{
     cpe::Cpe,
     db::{
         limiter::{limit_selector, LimiterTrait},
+        multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
         query::{Filtering, IntoColumns, Query},
-        ArrayAgg, JsonBuildObject, ToJson, Transactional,
+        ArrayAgg, ConnectionOrTransaction, JsonBuildObject, ToJson, Transactional,
     },
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},
@@ -460,7 +460,19 @@ impl SbomService {
             )
             .await?;
 
-        Ok(result.items.into_iter().map(|r| r.package).collect())
+        // TODO: this will break when adding pagination, as we effectively only process a single page
+
+        // turn into a map, removing duplicates
+
+        let result: HashMap<_, _> = result
+            .items
+            .into_iter()
+            .map(|r| (r.package.id.clone(), r.package))
+            .collect();
+
+        // take the de-duplicated values and return them
+
+        Ok(result.into_values().collect())
     }
 }
 
