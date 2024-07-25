@@ -10,6 +10,7 @@ use std::collections::HashMap;
 use time::OffsetDateTime;
 use trustify_common::cpe::CpeCompare;
 use trustify_common::db::ConnectionOrTransaction;
+use trustify_common::memo::Memo;
 use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -83,7 +84,8 @@ impl SbomAdvisory {
                 advisories.insert(
                     each.advisory.id,
                     SbomAdvisory {
-                        head: AdvisoryHead::from_advisory(&each.advisory, None, tx).await?,
+                        head: AdvisoryHead::from_advisory(&each.advisory, Memo::NotProvided, tx)
+                            .await?,
                         status: vec![],
                     },
                 );
