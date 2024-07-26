@@ -109,17 +109,9 @@ impl Graph {
 
         let sbom_id = Uuid::now_v7();
 
-        let model = sbom_node::ActiveModel {
-            sbom_id: Set(sbom_id),
-            node_id: Set(node_id.clone()),
-            name: Set(name),
-        };
-
-        model.insert(&connection).await?;
-
         let model = sbom::ActiveModel {
             sbom_id: Set(sbom_id),
-            node_id: Set(node_id),
+            node_id: Set(node_id.clone()),
 
             document_id: Set(document_id.to_string()),
             sha256: Set(sha256),
@@ -132,7 +124,16 @@ impl Graph {
             labels: Set(labels.into()),
         };
 
-        Ok(SbomContext::new(self, model.insert(&connection).await?))
+        let node_model = sbom_node::ActiveModel {
+            sbom_id: Set(sbom_id),
+            node_id: Set(node_id),
+            name: Set(name),
+        };
+
+        let result = model.insert(&connection).await?;
+        node_model.insert(&connection).await?;
+
+        Ok(SbomContext::new(self, result))
     }
 
     /// Fetch a single SBOM located via internal `id`, external `location` (URL),
