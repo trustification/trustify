@@ -1467,8 +1467,7 @@ dependencies = [
 [[package]]
 name = "csaf"
 version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27cd52df4e45d45d30c254c75bcb1700e11722181b350f9fb4427a7beefcc1bc"
+source = "git+https://github.com/chirino/csaf-rs?rev=414896904bc5e5287fd88b1daef5c27f70503d01#414896904bc5e5287fd88b1daef5c27f70503d01"
 dependencies = [
  "chrono",
  "cpe",
@@ -7287,6 +7286,7 @@ dependencies = [
  "chrono",
  "cpe",
  "criterion",
+ "csaf",
  "cyclonedx-bom",
  "futures-util",
  "hex",
