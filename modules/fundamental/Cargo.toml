@@ -53,6 +53,7 @@ trustify-cvss = { workspace = true }
 trustify-test-context = { workspace = true }
 urlencoding = { workspace = true }
 criterion = { workspace = true, features = ["html_reports", "async_tokio"] }
+csaf = { workspace = true }
 
 [[bench]]
 name = "bench"
