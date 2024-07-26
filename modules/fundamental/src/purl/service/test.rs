@@ -1,10 +1,13 @@
+use crate::advisory::service::AdvisoryService;
 use crate::purl::model::details::purl::StatusContext;
 use crate::purl::service::PurlService;
+use crate::sbom::service::SbomService;
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::db::query::{q, Query};
 use trustify_common::db::Transactional;
+use trustify_common::id::Id;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_test_context::TrustifyContext;
@@ -614,5 +617,113 @@ async fn contextual_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             && status.vulnerability.identifier == "CVE-2024-23672"
     }));
 
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let purl_service = PurlService::new(ctx.db.clone());
+    assert_eq!(
+        0,
+        purl_service
+            .purls(Query::default(), Paginated::default(), Transactional::None)
+            .await?
+            .items
+            .len()
+    );
+
+    // ingest an sbom..
+    let quarkus_sbom = ctx
+        .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
+        .await?;
+
+    // it creates lots of purls
+    assert_eq!(
+        880,
+        purl_service
+            .purls(Query::default(), Paginated::default(), Transactional::None)
+            .await?
+            .items
+            .len()
+    );
+
+    // ingest another sbom..
+    let ubi9_sbom = ctx.ingest_document("ubi9-9.2-755.1697625012.json").await?;
+
+    // it now we have more purls
+    assert_eq!(
+        1490,
+        purl_service
+            .purls(Query::default(), Paginated::default(), Transactional::None)
+            .await?
+            .items
+            .len()
+    );
+
+    // delete the sbom...
+    async fn delete_sbom_and_advisories(
+        ctx: &TrustifyContext,
+        id: Id,
+    ) -> Result<(), anyhow::Error> {
+        let sbom_service = SbomService::new(ctx.db.clone());
+        let sbom = sbom_service.fetch_sbom(id, ()).await?.expect("fetch_sbom");
+        assert_eq!(
+            1,
+            sbom_service
+                .delete_sbom(sbom.head.id, Transactional::None)
+                .await?
+        );
+
+        // delete the advisories in the sbom...
+        let advisory_service = AdvisoryService::new(ctx.db.clone());
+        for a in sbom.advisories {
+            assert_eq!(
+                1,
+                advisory_service
+                    .delete_advisory(a.head.uuid, Transactional::None)
+                    .await?
+            );
+        }
+        Ok(())
+    }
+
+    // delete the ubi sbom....
+    delete_sbom_and_advisories(ctx, ubi9_sbom.id).await?;
+
+    // it should leave behind orphaned purls
+    let result = purl_service
+        .purls(Query::default(), Paginated::default(), Transactional::None)
+        .await?;
+    assert_eq!(1490, result.items.len());
+
+    // running the gc, should delete those orphaned purls
+    let deleted_records_count = purl_service.gc_purls(()).await?;
+    assert_eq!(792, deleted_records_count);
+
+    let result = purl_service
+        .purls(Query::default(), Paginated::default(), Transactional::None)
+        .await?;
+
+    assert_eq!(880, result.items.len());
+
+    // delete the quarkus sbom....
+    delete_sbom_and_advisories(ctx, quarkus_sbom.id).await?;
+
+    // it should leave behind orphaned purls
+    let result = purl_service
+        .purls(Query::default(), Paginated::default(), Transactional::None)
+        .await?;
+    assert_eq!(880, result.items.len());
+
+    // running the gc, should delete those orphaned purls
+    let deleted_records_count = purl_service.gc_purls(()).await?;
+    assert_eq!(1759, deleted_records_count);
+
+    let result = purl_service
+        .purls(Query::default(), Paginated::default(), Transactional::None)
+        .await?;
+
+    assert_eq!(0, result.items.len());
     Ok(())
 }

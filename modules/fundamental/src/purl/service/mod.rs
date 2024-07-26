@@ -8,8 +8,8 @@ use crate::{
     Error,
 };
 use sea_orm::{
-    prelude::Uuid, ColumnTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder, QuerySelect,
-    QueryTrait,
+    prelude::Uuid, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, QueryFilter,
+    QueryOrder, QuerySelect, QueryTrait,
 };
 use sea_query::{Condition, Order};
 use tracing::instrument;
@@ -351,6 +351,17 @@ impl PurlService {
             items: PurlSummary::from_entities(&limiter.fetch().await?, &connection).await?,
             total,
         })
+    }
+
+    #[instrument(skip(self, tx), err)]
+    pub async fn gc_purls<TX: AsRef<Transactional>>(&self, tx: TX) -> Result<u64, Error> {
+        let connection = self.db.connection(&tx);
+
+        let res = connection
+            .execute_unprepared(include_str!("gc_purls.sql"))
+            .await?;
+
+        Ok(res.rows_affected())
     }
 }
 
