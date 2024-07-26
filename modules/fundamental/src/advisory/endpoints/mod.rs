@@ -2,6 +2,7 @@ mod label;
 #[cfg(test)]
 mod test;
 
+use crate::purl::service::PurlService;
 use crate::Error::Internal;
 use crate::{advisory::service::AdvisoryService, Error};
 use actix_web::{delete, get, post, web, HttpResponse, Responder};
@@ -111,6 +112,7 @@ pub async fn get(
 #[delete("/v1/advisory/{key}")]
 pub async fn delete(
     state: web::Data<AdvisoryService>,
+    purl_service: web::Data<PurlService>,
     key: web::Path<String>,
 ) -> actix_web::Result<impl Responder> {
     let hash_key = Id::from_str(&key).map_err(Error::IdKey)?;
@@ -120,7 +122,10 @@ pub async fn delete(
         let rows_affected = state.delete_advisory(fetched.head.uuid, ()).await?;
         match rows_affected {
             0 => Ok(HttpResponse::NotFound().finish()),
-            1 => Ok(HttpResponse::Ok().json(fetched)),
+            1 => {
+                _ = purl_service.gc_purls(()).await; // ignore gc failure..
+                Ok(HttpResponse::Ok().json(fetched))
+            }
             _ => Err(Internal("Unexpected number of rows affected".into()).into()),
         }
     } else {

@@ -2,6 +2,7 @@ mod label;
 #[cfg(test)]
 mod test;
 
+use crate::purl::service::PurlService;
 use crate::{
     sbom::{
         model::{SbomPackageReference, Which},
@@ -210,6 +211,7 @@ pub async fn get(
 #[delete("/v1/sbom/{id}")]
 pub async fn delete(
     service: web::Data<SbomService>,
+    purl_service: web::Data<PurlService>,
     authorizer: web::Data<Authorizer>,
     user: UserInformation,
     id: web::Path<String>,
@@ -222,7 +224,10 @@ pub async fn delete(
             let rows_affected = service.delete_sbom(v.head.id, ()).await?;
             match rows_affected {
                 0 => Ok(HttpResponse::NotFound().finish()),
-                1 => Ok(HttpResponse::Ok().json(v)),
+                1 => {
+                    _ = purl_service.gc_purls(()).await; // ignore gc failure..
+                    Ok(HttpResponse::Ok().json(v))
+                }
                 _ => Err(Internal("Unexpected number of rows affected".into()).into()),
             }
         }
