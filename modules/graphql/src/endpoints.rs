@@ -16,13 +16,13 @@ async fn index_graphiql() -> Result<HttpResponse> {
 pub fn configure(svc: &mut web::ServiceConfig, db: Database, graph: Arc<Graph>) {
     let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
         .data::<Arc<Graph>>(graph)
-        .data::<Arc<Database>>(Arc::new(db.clone()))
+        .data::<Arc<Database>>(Arc::new(db))
         .finish();
 
     svc.service(
         web::resource("/")
             .guard(guard::Post())
-            .to(GraphQL::new(schema.clone())),
+            .to(GraphQL::new(schema)),
     );
 }
 

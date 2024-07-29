@@ -179,7 +179,7 @@ impl Checks {
                         name: name.clone(),
                         state: State::Down,
                         data: json!({
-                            "message": err.to_string(),
+                            "message": err,
                         }),
                     },
                 }

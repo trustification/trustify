@@ -238,7 +238,7 @@ where
     fn default() -> Self {
         Self {
             workers: 0,
-            bind_addr: default::bind_addr().to_string(),
+            bind_addr: default::bind_addr(),
             bind_port: BindPort::<E>::default(),
             request_limit: default::request_limit(),
             json_limit: default::json_limit(),

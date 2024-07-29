@@ -69,7 +69,7 @@ where
 
         Limiter {
             db,
-            paginator: self.clone().paginate(db, 1),
+            paginator: self.paginate(db, 1),
             selector,
         }
     }
@@ -113,7 +113,7 @@ where
 
         Limiter {
             db,
-            paginator: self.clone().into_model::<M>().paginate(db, 1),
+            paginator: self.into_model::<M>().paginate(db, 1),
             selector,
         }
     }
@@ -132,7 +132,7 @@ where
 
         Ok(Limiter {
             db,
-            paginator: self.clone().into_model::<M>().paginate(db, 1),
+            paginator: self.into_model::<M>().paginate(db, 1),
             selector,
         })
     }
@@ -188,7 +188,7 @@ where
 
         Limiter {
             db,
-            paginator: self.clone().paginate(db, 1),
+            paginator: self.paginate(db, 1),
             selector,
         }
     }
