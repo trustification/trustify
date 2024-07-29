@@ -11,7 +11,7 @@ pub fn configure(
 ) {
     let storage = storage.into();
 
-    let ingestor_service = IngestorService::new(Graph::new(db.clone()), storage.clone());
+    let ingestor_service = IngestorService::new(Graph::new(db.clone()), storage);
     config.app_data(web::Data::new(ingestor_service));
 
     crate::advisory::endpoints::configure(config, db.clone());
@@ -24,5 +24,5 @@ pub fn configure(
 
     crate::sbom::endpoints::configure(config, db.clone());
 
-    crate::vulnerability::endpoints::configure(config, db.clone());
+    crate::vulnerability::endpoints::configure(config, db);
 }
