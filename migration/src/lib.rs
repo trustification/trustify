@@ -59,6 +59,7 @@ mod m0000480_create_rpmver_cmp_fns;
 mod m0000485_create_gitver_cmp_fns;
 mod m0000490_cascade_advisory_delete;
 mod m0000500_fix_sbom_node_fks;
+mod m0000501_perf_indexes;
 
 pub struct Migrator;
 
@@ -124,6 +125,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000485_create_gitver_cmp_fns::Migration),
             Box::new(m0000490_cascade_advisory_delete::Migration),
             Box::new(m0000500_fix_sbom_node_fks::Migration),
+            Box::new(m0000501_perf_indexes::Migration),
         ]
     }
 }
