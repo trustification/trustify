@@ -4,6 +4,7 @@ use crate::purl::model::summary::purl::PurlSummary;
 use crate::sbom::model::{SbomHead, SbomPackage};
 use crate::sbom::service::sbom::QueryCatcher;
 use crate::Error;
+use async_graphql::SimpleObject;
 use cpe::uri::OwnedUri;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -149,10 +150,12 @@ impl SbomAdvisory {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema, SimpleObject)]
+#[graphql(concrete(name = "SbomStatus", params()))]
 pub struct SbomStatus {
     pub vulnerability_id: String,
     pub status: String,
+    #[graphql(skip)]
     pub context: Option<StatusContext>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub packages: Vec<SbomPackage>,

@@ -1,6 +1,7 @@
 pub mod details;
 
 use crate::purl::model::summary::purl::PurlSummary;
+use async_graphql::SimpleObject;
 use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
@@ -39,12 +40,14 @@ pub struct SbomSummary {
 
 paginated!(SbomSummary);
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, SimpleObject)]
+#[graphql(concrete(name = "SbomPackage", params()))]
 pub struct SbomPackage {
     pub id: String,
     pub name: String,
     pub version: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[graphql(skip)]
     pub purl: Vec<PurlSummary>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub cpe: Vec<String>,
