@@ -6910,6 +6910,7 @@ dependencies = [
  "actix-http",
  "actix-web",
  "anyhow",
+ "async-graphql",
  "bytes",
  "bytesize",
  "chrono",
