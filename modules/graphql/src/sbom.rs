@@ -1,4 +1,4 @@
-use async_graphql::*;
+use async_graphql::{Context, FieldError, FieldResult, Object};
 use std::sync::Arc;
 use trustify_common::db::Transactional;
 use trustify_entity::labels::Labels;
