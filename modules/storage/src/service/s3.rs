@@ -15,12 +15,12 @@ pub struct S3Backend {
 impl S3Backend {}
 
 impl S3Backend {
-    pub async fn new() -> Result<Self, S3Error> {
+    pub fn new() -> Result<Self, S3Error> {
         // TODO: not this
         let bucket = Bucket::new(
             "trustify-jcrossley",
             Region::UsEast1,
-            Credentials::default().unwrap(),
+            Credentials::default()?,
         )?;
         Ok(S3Backend { bucket })
     }

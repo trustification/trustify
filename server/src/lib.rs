@@ -202,24 +202,23 @@ impl InitData {
 
         context.health.readiness.register("database", check).await;
 
-        let storage = run
-            .storage
-            .fs_path
-            .as_ref()
-            .cloned()
-            .unwrap_or_else(|| PathBuf::from("./.trustify/storage"));
-        if run.devmode {
-            create_dir_all(&storage).context(format!(
-                "Failed to create filesystem storage directory: {:?}",
-                run.storage.fs_path
-            ))?;
-        }
-
         let storage = match run.storage.storage_strategy {
             StorageStrategy::Fs => {
+                let storage = run
+                    .storage
+                    .fs_path
+                    .as_ref()
+                    .cloned()
+                    .unwrap_or_else(|| PathBuf::from("./.trustify/storage"));
+                if run.devmode {
+                    create_dir_all(&storage).context(format!(
+                        "Failed to create filesystem storage directory: {:?}",
+                        run.storage.fs_path
+                    ))?;
+                }
                 DispatchBackend::Filesystem(FileSystemBackend::new(storage).await?)
             }
-            StorageStrategy::S3 => DispatchBackend::S3(S3Backend::new().await?),
+            StorageStrategy::S3 => DispatchBackend::S3(S3Backend::new()?),
         };
 
         let ui = UI {
