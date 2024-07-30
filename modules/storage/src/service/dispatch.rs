@@ -1,3 +1,5 @@
+use self::s3::S3Backend;
+
 use super::*;
 use bytes::Bytes;
 use futures::{Stream, TryStreamExt};
@@ -15,6 +17,7 @@ use futures::{Stream, TryStreamExt};
 #[derive(Clone, Debug)]
 pub enum DispatchBackend {
     Filesystem(FileSystemBackend),
+    S3(S3Backend),
 }
 
 impl StorageBackend for DispatchBackend {
@@ -27,6 +30,7 @@ impl StorageBackend for DispatchBackend {
     {
         match self {
             Self::Filesystem(backend) => backend.store(stream).await.map_err(Self::map_err),
+            Self::S3(backend) => backend.store(stream).await.map_err(Self::map_err),
         }
     }
 
@@ -39,6 +43,11 @@ impl StorageBackend for DispatchBackend {
     {
         match self {
             Self::Filesystem(backend) => backend
+                .retrieve(key)
+                .await
+                .map(|stream| stream.map(|stream| stream.map_err(anyhow::Error::from)))
+                .map_err(anyhow::Error::from),
+            Self::S3(backend) => backend
                 .retrieve(key)
                 .await
                 .map(|stream| stream.map(|stream| stream.map_err(anyhow::Error::from)))

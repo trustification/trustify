@@ -123,7 +123,7 @@ impl IngestorService {
 
         let storage = SyncAdapter::new(self.storage.clone());
         let reader = storage
-            .retrieve(result.key)
+            .retrieve(result.key())
             .await
             .map_err(Error::Storage)?
             .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?;

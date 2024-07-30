@@ -1,9 +1,11 @@
 pub mod dispatch;
 pub mod fs;
+pub mod s3;
 
 use crate::service::fs::FileSystemBackend;
 use bytes::{Bytes, BytesMut};
 use futures::{Stream, TryStreamExt};
+use hex::ToHex;
 use std::fmt::{Debug, Display, Formatter};
 use std::future::Future;
 use std::io::{Cursor, Read};
@@ -60,8 +62,13 @@ impl TryFrom<Vec<Id>> for StorageKey {
 
 #[derive(Clone, Debug)]
 pub struct StorageResult {
-    pub key: StorageKey,
     pub digests: Digests,
+}
+
+impl StorageResult {
+    pub fn key(&self) -> StorageKey {
+        StorageKey(self.digests.sha256.encode_hex())
+    }
 }
 
 pub trait StorageBackend {

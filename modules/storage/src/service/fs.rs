@@ -2,7 +2,6 @@ use crate::service::{StorageBackend, StorageKey, StorageResult, StoreError};
 use anyhow::Context;
 use bytes::Bytes;
 use futures::{Stream, StreamExt};
-use hex::ToHex;
 use std::{
     fmt::Debug,
     io::ErrorKind,
@@ -110,8 +109,10 @@ impl StorageBackend for FileSystemBackend {
 
         // finalize the digest
 
-        let digests = contexts.finish();
-        let key: String = digests.sha256.encode_hex();
+        let result = StorageResult {
+            digests: contexts.finish(),
+        };
+        let key: String = result.key().to_string();
 
         // create the target path
 
@@ -145,10 +146,7 @@ impl StorageBackend for FileSystemBackend {
 
         // done
 
-        Ok(StorageResult {
-            key: StorageKey(key),
-            digests,
-        })
+        Ok(result)
     }
 
     async fn retrieve(
@@ -211,7 +209,7 @@ mod test {
             .await
             .expect("store must succeed");
 
-        assert_eq!(digest.key.to_string(), DIGEST);
+        assert_eq!(digest.key().to_string(), DIGEST);
 
         let target = dir
             .path()

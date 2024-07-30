@@ -34,7 +34,7 @@ use trustify_auth::{
     swagger_ui::{swagger_ui_with_auth, SwaggerUiOidc, SwaggerUiOidcConfig},
 };
 use trustify_common::{
-    config::{Database, StorageConfig},
+    config::{Database, StorageConfig, StorageStrategy},
     db,
 };
 use trustify_infrastructure::{
@@ -50,7 +50,9 @@ use trustify_infrastructure::{
 use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
-use trustify_module_storage::{service::dispatch::DispatchBackend, service::fs::FileSystemBackend};
+use trustify_module_storage::service::{
+    dispatch::DispatchBackend, fs::FileSystemBackend, s3::S3Backend,
+};
 use trustify_module_ui::{endpoints::UiResources, UI};
 
 use utoipa::OpenApi;
@@ -213,7 +215,12 @@ impl InitData {
             ))?;
         }
 
-        let storage = DispatchBackend::Filesystem(FileSystemBackend::new(storage).await?);
+        let storage = match run.storage.storage_strategy {
+            StorageStrategy::Fs => {
+                DispatchBackend::Filesystem(FileSystemBackend::new(storage).await?)
+            }
+            StorageStrategy::S3 => DispatchBackend::S3(S3Backend::new().await?),
+        };
 
         let ui = UI {
             // TODO: where/how should we configure these details?
