@@ -1,10 +1,10 @@
 use crate::service::{StorageBackend, StorageKey, StorageResult, StoreError};
 use bytes::Bytes;
 use futures::{Stream, StreamExt, TryStreamExt};
-use s3::{creds::Credentials, error::S3Error, Bucket, Region};
+use s3::{creds::Credentials, error::S3Error, Bucket};
 use std::{fmt::Debug, io, pin::pin};
 use tokio_util::io::StreamReader;
-use trustify_common::hashing::Contexts;
+use trustify_common::{config::S3Config, hashing::Contexts};
 use uuid::Uuid;
 
 #[derive(Clone, Debug)]
@@ -12,15 +12,19 @@ pub struct S3Backend {
     bucket: Bucket,
 }
 
-impl S3Backend {}
-
-impl S3Backend {
-    pub fn new() -> Result<Self, S3Error> {
-        // TODO: not this
+impl TryFrom<S3Config> for S3Backend {
+    type Error = S3Error;
+    fn try_from(config: S3Config) -> Result<Self, Self::Error> {
         let bucket = Bucket::new(
-            "trustify-jcrossley",
-            Region::UsEast1,
-            Credentials::default()?,
+            &config.bucket.unwrap_or_default(),
+            config.region.unwrap_or_default().parse()?,
+            Credentials::new(
+                config.access_key.as_deref(),
+                config.secret_key.as_deref(),
+                None,
+                None,
+                None,
+            )?,
         )?;
         Ok(S3Backend { bucket })
     }
