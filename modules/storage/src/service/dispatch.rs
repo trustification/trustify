@@ -2,7 +2,7 @@ use self::s3::S3Backend;
 
 use super::*;
 use bytes::Bytes;
-use futures::{Stream, TryStreamExt};
+use futures::{Stream, StreamExt, TryStreamExt};
 
 /// A common backend, dispatching to the ones we support.
 ///
@@ -45,12 +45,12 @@ impl StorageBackend for DispatchBackend {
             Self::Filesystem(backend) => backend
                 .retrieve(key)
                 .await
-                .map(|stream| stream.map(|stream| stream.map_err(anyhow::Error::from)))
+                .map(|stream| stream.map(|stream| stream.map_err(anyhow::Error::from).boxed()))
                 .map_err(anyhow::Error::from),
             Self::S3(backend) => backend
                 .retrieve(key)
                 .await
-                .map(|stream| stream.map(|stream| stream.map_err(anyhow::Error::from)))
+                .map(|stream| stream.map(|stream| stream.map_err(anyhow::Error::from).boxed()))
                 .map_err(anyhow::Error::from),
         }
     }
