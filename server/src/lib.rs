@@ -295,7 +295,7 @@ fn configure(
     auth: Option<Arc<Authenticator>>,
     ui: Arc<UiResources>,
 ) {
-    let graph = Arc::new(Graph::new(db.clone()));
+    let graph = Graph::new(db.clone());
 
     // set global request limits
 
@@ -347,7 +347,7 @@ fn configure(
                 trustify_module_graphql::endpoints::configure_graphiql(svc);
             }),
     );
-    svc.app_data(web::Data::from(graph))
+    svc.app_data(graph)
         .service(web::scope("/api").wrap(new_auth(auth)).configure(|svc| {
             trustify_module_importer::endpoints::configure(svc, db.clone());
 

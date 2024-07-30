@@ -1,7 +1,6 @@
 use actix_web::{guard, web, HttpResponse, Result};
 use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
 use async_graphql_actix_web::GraphQL;
-use std::sync::Arc;
 use trustify_common::db::Database;
 use trustify_module_ingestor::graph::Graph;
 
@@ -13,10 +12,10 @@ async fn index_graphiql() -> Result<HttpResponse> {
         .body(GraphiQLSource::build().endpoint("/graphql").finish()))
 }
 
-pub fn configure(svc: &mut web::ServiceConfig, db: Database, graph: Arc<Graph>) {
+pub fn configure(svc: &mut web::ServiceConfig, db: Database, graph: Graph) {
     let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Arc<Graph>>(graph)
-        .data::<Arc<Database>>(Arc::new(db))
+        .data::<Graph>(graph)
+        .data::<Database>(db)
         .finish();
 
     svc.service(
