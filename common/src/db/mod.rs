@@ -52,15 +52,6 @@ impl AsRef<Transactional> for () {
     }
 }
 
-/*
-impl<'db> From<&'db DatabaseTransaction> for Transactional<'db> {
-    fn from(inner: &'db DatabaseTransaction) -> Self {
-        Self::Some(inner)
-    }
-}
-
- */
-
 #[derive(Clone)]
 pub enum ConnectionOrTransaction<'db> {
     Connection(&'db DatabaseConnection),
