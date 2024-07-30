@@ -15,7 +15,7 @@ pub struct S3Backend {
 impl S3Backend {}
 
 impl S3Backend {
-    pub fn new() -> Result<Self, S3Error> {
+    pub async fn new() -> Result<Self, S3Error> {
         // TODO: not this
         let bucket = Bucket::new(
             "trustify-jcrossley",
