@@ -85,6 +85,7 @@ regex = "1.10.3"
 reqwest = "0.12"
 ring = "0.17.8"
 rstest = "0.21"
+rust-s3 = "0.34"
 sbom-walker = { version = "0.8.6", default-features = false, features = ["crypto-openssl", "cyclonedx-bom", "spdx-rs"] }
 schemars = "0.8"
 sea-orm = "0.12"
