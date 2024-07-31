@@ -7282,6 +7282,7 @@ dependencies = [
  "bytes",
  "futures",
  "hex",
+ "log",
  "rust-s3",
  "serde_json",
  "sha2",

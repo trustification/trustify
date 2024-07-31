@@ -218,7 +218,9 @@ impl InitData {
                 }
                 DispatchBackend::Filesystem(FileSystemBackend::new(storage).await?)
             }
-            StorageStrategy::S3 => DispatchBackend::S3(run.storage.s3_config.try_into()?),
+            StorageStrategy::S3 => {
+                DispatchBackend::S3(S3Backend::new(run.storage.s3_config).await?)
+            }
         };
 
         let ui = UI {
