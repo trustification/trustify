@@ -86,7 +86,8 @@ impl Display for StorageStrategy {
 pub struct StorageConfig {
     #[arg(
         id = "storage-strategy",
-        long, env = "STORAGE_STRATEGY",
+        long,
+	env = "TRUSTD_STORAGE_STRATEGY",
 	requires_ifs([("s3", "bucket"), ("s3", "region"), ("s3", "access_key"), ("s3", "secret_key")]),
 	requires_if("fs", "storage-fs-path"),
         default_value_t = StorageStrategy::Fs,
@@ -96,7 +97,7 @@ pub struct StorageConfig {
     #[arg(
         id = "storage-fs-path",
         long,
-        env = "STORAGE_FS_PATH",
+        env = "TRUSTD_STORAGE_FS_PATH",
         default_value = "./.trustify/storage",
         conflicts_with = "s3"
     )]
