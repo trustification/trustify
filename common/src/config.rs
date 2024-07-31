@@ -83,12 +83,12 @@ impl Display for StorageStrategy {
 
 #[derive(clap::Args, Debug, Clone)]
 #[command(next_help_heading = "Storage")]
-#[group(id = "storage", multiple = false)]
 pub struct StorageConfig {
     #[arg(
         id = "storage-strategy",
-        long,
-        env = "STORAGE_STRATEGY",
+        long, env = "STORAGE_STRATEGY",
+	requires_ifs([("s3", "bucket"), ("s3", "region"), ("s3", "access_key"), ("s3", "secret_key")]),
+	requires_if("fs", "storage-fs-path"),
         default_value_t = StorageStrategy::Fs,
     )]
     pub storage_strategy: StorageStrategy,
@@ -98,8 +98,7 @@ pub struct StorageConfig {
         long,
         env = "STORAGE_FS_PATH",
         default_value = "./.trustify/storage",
-        required = false,
-        required_if_eq("storage-strategy", "fs")
+        conflicts_with = "s3"
     )]
     pub fs_path: Option<PathBuf>,
 
@@ -109,6 +108,7 @@ pub struct StorageConfig {
 
 #[derive(Clone, Debug, Default, clap::Args)]
 #[command(next_help_heading = "S3")]
+#[group(id = "s3", requires = "storage-strategy")]
 pub struct S3Config {
     /// S3 bucket name
     #[arg(env = "TRUSTD_S3_BUCKET", long = "s3-bucket")]
