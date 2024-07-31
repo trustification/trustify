@@ -33,7 +33,7 @@ pub const SSO_CLIENT_SECRET: &str = "R8A6KFeyxJsMDBhjfHbpZTIF0GWt43HP";
 /// This can be either the value of [`ISSUER_URL`], or it can be overridden using the environment
 /// variable `ISSUER_URL`.
 pub fn issuer_url() -> String {
-    std::env::var("ISSUER_URL").unwrap_or_else(|_| ISSUER_URL.to_string())
+    std::env::var("TRUSTD_ISSUER_URL").unwrap_or_else(|_| ISSUER_URL.to_string())
 }
 
 #[cfg(test)]

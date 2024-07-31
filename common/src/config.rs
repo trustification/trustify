@@ -10,11 +10,11 @@ const DB_PORT: u16 = 5432;
 const DB_MAX_CONN: u32 = 75;
 const DB_MIN_CONN: u32 = 25;
 
-const ENV_DB_NAME: &str = "DB_NAME";
-const ENV_DB_USER: &str = "DB_USER";
-const ENV_DB_PASS: &str = "DB_PASSWORD";
-const ENV_DB_HOST: &str = "DB_HOST";
-const ENV_DB_PORT: &str = "DB_PORT";
+const ENV_DB_NAME: &str = "TRUSTD_DB_NAME";
+const ENV_DB_USER: &str = "TRUSTD_DB_USER";
+const ENV_DB_PASS: &str = "TRUSTD_DB_PASSWORD";
+const ENV_DB_HOST: &str = "TRUSTD_DB_HOST";
+const ENV_DB_PORT: &str = "TRUSTD_DB_PORT";
 const ENV_DB_MAX_CONN: &str = "TRUSTD_MAX_CONN";
 const ENV_DB_MIN_CONN: &str = "TRUSTD_MIN_CONN";
 
