@@ -111,18 +111,18 @@ pub struct StorageConfig {
 #[command(next_help_heading = "S3")]
 pub struct S3Config {
     /// S3 bucket name
-    #[arg(env = "S3_BUCKET", long = "s3-bucket")]
+    #[arg(env = "TRUSTD_S3_BUCKET", long = "s3-bucket")]
     pub bucket: Option<String>,
 
     /// S3 region name
-    #[arg(env = "S3_REGION", long = "s3-region")]
+    #[arg(env = "TRUSTD_S3_REGION", long = "s3-region")]
     pub region: Option<String>,
 
     /// S3 access key
-    #[arg(env = "S3_ACCESS_KEY", long = "s3-access-key")]
+    #[arg(env = "TRUSTD_S3_ACCESS_KEY", long = "s3-access-key")]
     pub access_key: Option<String>,
 
     /// S3 secret key
-    #[arg(env = "S3_SECRET_KEY", long = "s3-secret-key")]
+    #[arg(env = "TRUSTD_S3_SECRET_KEY", long = "s3-secret-key")]
     pub secret_key: Option<String>,
 }
