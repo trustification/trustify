@@ -12,9 +12,8 @@ pub struct S3Backend {
     bucket: Bucket,
 }
 
-impl TryFrom<S3Config> for S3Backend {
-    type Error = S3Error;
-    fn try_from(config: S3Config) -> Result<Self, Self::Error> {
+impl S3Backend {
+    pub async fn new(config: S3Config) -> Result<Self, S3Error> {
         let bucket = Bucket::new(
             &config.bucket.unwrap_or_default(),
             config.region.unwrap_or_default().parse()?,
@@ -26,6 +25,12 @@ impl TryFrom<S3Config> for S3Backend {
                 None,
             )?,
         )?;
+        assert!(bucket.exists().await?, "S3 bucket not found");
+        log::info!(
+            "Using S3 bucket '{}' in '{}' for doc storage",
+            bucket.name,
+            bucket.region
+        );
         Ok(S3Backend { bucket })
     }
 }
