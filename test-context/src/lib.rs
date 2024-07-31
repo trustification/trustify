@@ -127,6 +127,8 @@ impl AsyncTestContext for TrustifyContext {
             host: "localhost".into(),
             name: "test".into(),
             port: postgresql.settings().port,
+            min_conn: 25,
+            max_conn: 75,
         };
         let db = common::db::Database::bootstrap(&config)
             .await

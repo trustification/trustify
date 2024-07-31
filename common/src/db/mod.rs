@@ -122,8 +122,8 @@ impl Database {
         log::debug!("connect to {}", url);
 
         let mut opt = ConnectOptions::new(url);
-        opt.max_connections(300);
-        opt.min_connections(75);
+        opt.max_connections(database.max_conn);
+        opt.min_connections(database.min_conn);
         opt.sqlx_logging_level(log::LevelFilter::Trace);
 
         let db = sea_orm::Database::connect(opt).await?;
