@@ -7,12 +7,16 @@ const DB_USER: &str = "postgres";
 const DB_PASS: &str = "trustify";
 const DB_HOST: &str = "localhost";
 const DB_PORT: u16 = 5432;
+const DB_MAX_CONN: u32 = 75;
+const DB_MIN_CONN: u32 = 25;
 
 const ENV_DB_NAME: &str = "DB_NAME";
 const ENV_DB_USER: &str = "DB_USER";
 const ENV_DB_PASS: &str = "DB_PASSWORD";
 const ENV_DB_HOST: &str = "DB_HOST";
 const ENV_DB_PORT: &str = "DB_PORT";
+const ENV_DB_MAX_CONN: &str = "TRUSTD_MAX_CONN";
+const ENV_DB_MIN_CONN: &str = "TRUSTD_MIN_CONN";
 
 #[derive(clap::Args, Debug, Clone)]
 #[command(next_help_heading = "Database")]
@@ -33,6 +37,10 @@ pub struct Database {
     pub port: u16,
     #[arg(id = "db-name", long, env = ENV_DB_NAME, default_value_t = DB_NAME.into())]
     pub name: String,
+    #[arg(id = "db-max-conn", long, env = ENV_DB_MAX_CONN, default_value_t = DB_MAX_CONN.into())]
+    pub max_conn: u32,
+    #[arg(id = "db-min-conn", long, env = ENV_DB_MIN_CONN, default_value_t = DB_MIN_CONN.into())]
+    pub min_conn: u32,
 }
 
 impl Database {
@@ -45,6 +53,14 @@ impl Database {
             port: match env::var(ENV_DB_PORT) {
                 Ok(s) => s.parse::<u16>()?,
                 _ => DB_PORT,
+            },
+            max_conn: match env::var(ENV_DB_MAX_CONN) {
+                Ok(s) => s.parse::<u32>()?,
+                _ => DB_MAX_CONN,
+            },
+            min_conn: match env::var(ENV_DB_MIN_CONN) {
+                Ok(s) => s.parse::<u32>()?,
+                _ => DB_MIN_CONN,
             },
         })
     }
