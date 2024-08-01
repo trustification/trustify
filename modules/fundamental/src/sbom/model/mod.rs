@@ -1,12 +1,14 @@
 pub mod details;
 
 use crate::purl::model::summary::purl::PurlSummary;
+use crate::Error;
 use async_graphql::SimpleObject;
 use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
+use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::{id::Id, paginated};
-use trustify_entity::{labels::Labels, relationship::Relationship};
+use trustify_entity::{labels::Labels, relationship::Relationship, sbom, sbom_node};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
@@ -21,6 +23,24 @@ pub struct SbomHead {
     pub labels: Labels,
 
     pub name: String,
+}
+
+impl SbomHead {
+    pub async fn from_entity(
+        sbom: &sbom::Model,
+        sbom_node: Option<sbom_node::Model>,
+        _tx: &ConnectionOrTransaction<'_>,
+    ) -> Result<Self, Error> {
+        Ok(Self {
+            id: sbom.sbom_id,
+            hashes: vec![],
+            document_id: sbom.document_id.clone(),
+            labels: sbom.labels.clone(),
+            name: sbom_node
+                .map(|node| node.name.clone())
+                .unwrap_or("".to_string()),
+        })
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
