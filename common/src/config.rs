@@ -15,8 +15,8 @@ const ENV_DB_USER: &str = "TRUSTD_DB_USER";
 const ENV_DB_PASS: &str = "TRUSTD_DB_PASSWORD";
 const ENV_DB_HOST: &str = "TRUSTD_DB_HOST";
 const ENV_DB_PORT: &str = "TRUSTD_DB_PORT";
-const ENV_DB_MAX_CONN: &str = "TRUSTD_MAX_CONN";
-const ENV_DB_MIN_CONN: &str = "TRUSTD_MIN_CONN";
+const ENV_DB_MAX_CONN: &str = "TRUSTD_DB_MAX_CONN";
+const ENV_DB_MIN_CONN: &str = "TRUSTD_DB_MIN_CONN";
 
 #[derive(clap::Args, Debug, Clone)]
 #[command(next_help_heading = "Database")]
