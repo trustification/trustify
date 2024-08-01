@@ -44,6 +44,22 @@ impl From<Model> for cvss3::Cvss3Base {
     }
 }
 
+impl From<&Model> for cvss3::Cvss3Base {
+    fn from(value: &Model) -> Self {
+        Self {
+            minor_version: value.minor_version as u8,
+            av: value.av.into(),
+            ac: value.ac.into(),
+            pr: value.pr.into(),
+            ui: value.ui.into(),
+            s: value.s.into(),
+            c: value.c.into(),
+            i: value.i.into(),
+            a: value.a.into(),
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
@@ -85,7 +101,7 @@ impl Related<advisory_vulnerability::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_av")]
 pub enum AttackVector {
     #[sea_orm(string_value = "n")]
@@ -120,7 +136,7 @@ impl From<cvss3::AttackVector> for AttackVector {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_ac")]
 pub enum AttackComplexity {
     #[sea_orm(string_value = "l")]
@@ -147,7 +163,7 @@ impl From<cvss3::AttackComplexity> for AttackComplexity {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_pr")]
 pub enum PrivilegesRequired {
     #[sea_orm(string_value = "n")]
@@ -178,7 +194,7 @@ impl From<cvss3::PrivilegesRequired> for PrivilegesRequired {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_ui")]
 pub enum UserInteraction {
     #[sea_orm(string_value = "n")]
@@ -205,7 +221,7 @@ impl From<cvss3::UserInteraction> for UserInteraction {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_s")]
 pub enum Scope {
     #[sea_orm(string_value = "u")]
@@ -232,7 +248,7 @@ impl From<cvss3::Scope> for Scope {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_c")]
 pub enum Confidentiality {
     #[sea_orm(string_value = "n")]
@@ -263,7 +279,7 @@ impl From<cvss3::Confidentiality> for Confidentiality {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_i")]
 pub enum Integrity {
     #[sea_orm(string_value = "n")]
@@ -294,7 +310,7 @@ impl From<cvss3::Integrity> for Integrity {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_a")]
 pub enum Availability {
     #[sea_orm(string_value = "n")]

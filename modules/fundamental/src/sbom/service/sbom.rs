@@ -677,15 +677,15 @@ pub struct QueryCatcher {
 impl FromQueryResult for QueryCatcher {
     fn from_query_result(res: &QueryResult, _pre: &str) -> Result<Self, DbErr> {
         Ok(Self {
-            advisory: Self::from_query_result_multi_model(res, advisory::Entity)?,
-            vulnerability: Self::from_query_result_multi_model(res, vulnerability::Entity)?,
-            base_purl: Self::from_query_result_multi_model(res, base_purl::Entity)?,
-            versioned_purl: Self::from_query_result_multi_model(res, versioned_purl::Entity)?,
-            qualified_purl: Self::from_query_result_multi_model(res, qualified_purl::Entity)?,
-            sbom_package: Self::from_query_result_multi_model(res, sbom_package::Entity)?,
-            sbom_node: Self::from_query_result_multi_model(res, sbom_node::Entity)?,
-            context_cpe: Self::from_query_result_multi_model_optional(res, cpe::Entity)?,
-            status: Self::from_query_result_multi_model(res, status::Entity)?,
+            advisory: Self::from_query_result_multi_model(res, "", advisory::Entity)?,
+            vulnerability: Self::from_query_result_multi_model(res, "", vulnerability::Entity)?,
+            base_purl: Self::from_query_result_multi_model(res, "", base_purl::Entity)?,
+            versioned_purl: Self::from_query_result_multi_model(res, "", versioned_purl::Entity)?,
+            qualified_purl: Self::from_query_result_multi_model(res, "", qualified_purl::Entity)?,
+            sbom_package: Self::from_query_result_multi_model(res, "", sbom_package::Entity)?,
+            sbom_node: Self::from_query_result_multi_model(res, "", sbom_node::Entity)?,
+            context_cpe: Self::from_query_result_multi_model_optional(res, "", cpe::Entity)?,
+            status: Self::from_query_result_multi_model(res, "", status::Entity)?,
         })
     }
 }
