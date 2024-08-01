@@ -7293,6 +7293,7 @@ dependencies = [
  "humantime",
  "jsonpath-rust",
  "log",
+ "packageurl",
  "sea-orm",
  "sea-query",
  "serde",
