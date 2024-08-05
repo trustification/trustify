@@ -1,8 +1,8 @@
 use crate::organization::model::OrganizationSummary;
 use crate::product::model::{ProductHead, ProductVersionHead};
 use crate::Error;
+use itertools::izip;
 use sea_orm::LoaderTrait;
-use sea_orm::ModelTrait;
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::paginated;
@@ -24,10 +24,10 @@ paginated!(ProductSummary);
 impl ProductSummary {
     pub async fn from_entity(
         product: &product::Model,
-        versions: &Vec<product_version::Model>,
+        org: Option<organization::Model>,
+        versions: &[product_version::Model],
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
-        let org = product.find_related(organization::Entity).one(tx).await?;
         let vendor = if let Some(org) = org {
             Some(OrganizationSummary::from_entity(&org, tx).await?)
         } else {
@@ -45,11 +45,12 @@ impl ProductSummary {
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
         let versions = products.load_many(product_version::Entity, tx).await?;
+        let orgs = products.load_one(organization::Entity, tx).await?;
 
         let mut summaries = Vec::new();
 
-        for (product, version) in products.iter().zip(versions.iter()) {
-            summaries.push(ProductSummary::from_entity(product, version, tx).await?);
+        for (product, org, version) in izip!(products, orgs, versions) {
+            summaries.push(ProductSummary::from_entity(product, org, &version, tx).await?);
         }
 
         Ok(summaries)

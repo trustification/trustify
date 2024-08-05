@@ -17,6 +17,7 @@ actix-web = { workspace = true }
 anyhow = { workspace = true }
 cpe = { workspace = true }
 futures-util = { workspace = true }
+itertools = { workspace = true }
 log = { workspace = true }
 sea-orm = { workspace = true }
 sea-query = { workspace = true }
