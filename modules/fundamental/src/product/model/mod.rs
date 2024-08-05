@@ -54,7 +54,7 @@ impl ProductVersionHead {
     }
 
     pub async fn from_entities(
-        product_versions: &Vec<product_version::Model>,
+        product_versions: &[product_version::Model],
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
         let mut heads = Vec::new();

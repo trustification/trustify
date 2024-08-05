@@ -7128,6 +7128,7 @@ dependencies = [
  "futures-util",
  "hex",
  "humantime",
+ "itertools 0.13.0",
  "jsonpath-rust",
  "log",
  "sea-orm",
