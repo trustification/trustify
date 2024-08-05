@@ -34,7 +34,7 @@ impl ProductDetails {
         };
         Ok(ProductDetails {
             head: ProductHead::from_entity(product, tx).await?,
-            versions: ProductVersionHead::from_entities(product_versions, tx).await?,
+            versions: ProductVersionHead::from_entities(&product_versions, tx).await?,
             vendor,
         })
     }
