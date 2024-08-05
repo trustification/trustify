@@ -1,0 +1,26 @@
+name: Multiple Architecture Image Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+      - "release-*"
+#    tags:
+#      - "v*"
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  image-build:
+    uses: trustification/release-tools/.github/workflows/build-push-images.yaml@main
+    with:
+      registry: "ghcr.io"
+      image_name: "${{ github.repository_owner }}/trustd"
+      containerfile: "./Dockerfile"
+      architectures: '[ "amd64" ]'
+    secrets:
+      registry_username: ${{ github.actor }}
+      registry_password: ${{ secrets.GITHUB_TOKEN }}
