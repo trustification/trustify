@@ -47,8 +47,14 @@ jobs:
         run: cargo test -- --nocapture
         env:
           RUST_LOG: info,sqlx=error,sea_orm=error
-      - name: Validate Generated Openapi Spec
-        run: cargo xtask validate-openapi
+      - name: Export and Validate Generated Openapi Spec
+        run: |
+          cargo xtask validate-openapi --export        
+          git diff --quiet
+          if [ $? -gt 0 ]; then
+              echo "::error::Uncommitted changes (run `cargo xtask validate-openapi --export` after making api changes)"
+              exit 1
+          fi
       - name: Ensure schemas are up-to-date
         run: |
           cargo xtask generate-schemas
