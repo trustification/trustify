@@ -24,11 +24,11 @@ use trustify_module_ingestor::{graph::Graph, service::IngestorService};
 use url::Url;
 use walker_common::fetcher::Fetcher;
 
-impl super::Server {
+impl super::ImportRunner {
     #[instrument(skip(self), ret)]
     pub async fn run_once_sbom(
         &self,
-        context: RunContext,
+        context: impl RunContext,
         importer: SbomImporter,
         last_success: Option<SystemTime>,
     ) -> Result<RunOutput, ScannerError> {

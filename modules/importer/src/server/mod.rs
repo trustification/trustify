@@ -6,10 +6,11 @@ pub mod osv;
 pub mod report;
 pub mod sbom;
 
+use crate::server::context::RunContext;
 use crate::{
     model::{Importer, ImporterConfiguration, State},
     server::{
-        context::RunContext,
+        context::ServiceRunContext,
         report::{Report, ScannerError},
     },
     service::ImporterService,
@@ -88,9 +89,15 @@ impl Server {
 
                 log::info!("Starting run: {}", importer.name);
 
-                let context = RunContext::new(service.clone(), importer.name.clone());
+                let context = ServiceRunContext::new(service.clone(), importer.name.clone());
 
-                let (last_error, report, continuation) = match self
+                let runner = ImportRunner {
+                    db: self.db.clone(),
+                    storage: self.storage.clone(),
+                    working_dir: self.working_dir.clone(),
+                };
+
+                let (last_error, report, continuation) = match runner
                     .run_once(
                         context,
                         importer.data.configuration,
@@ -128,46 +135,6 @@ impl Server {
                     .await?;
             }
         }
-    }
-
-    #[instrument(skip_all, fields(), err)]
-    async fn run_once(
-        &self,
-        context: RunContext,
-        configuration: ImporterConfiguration,
-        last_success: Option<OffsetDateTime>,
-        continuation: serde_json::Value,
-    ) -> Result<RunOutput, ScannerError> {
-        let last_success = last_success.map(|t| t.into());
-
-        match configuration {
-            ImporterConfiguration::Sbom(sbom) => {
-                self.run_once_sbom(context, sbom, last_success).await
-            }
-            ImporterConfiguration::Csaf(csaf) => {
-                self.run_once_csaf(context, csaf, last_success).await
-            }
-            ImporterConfiguration::Osv(osv) => self.run_once_osv(context, osv, continuation).await,
-            ImporterConfiguration::Cve(cve) => self.run_once_cve(context, cve, continuation).await,
-        }
-    }
-
-    async fn create_working_dir(
-        &self,
-        r#type: &str,
-        source: &str,
-    ) -> anyhow::Result<Option<PathBuf>> {
-        let Some(working_dir) = &self.working_dir else {
-            return Ok(None);
-        };
-
-        let result = working_dir
-            .join(r#type)
-            .join(urlencoding::encode(source).as_ref());
-
-        tokio::fs::create_dir_all(&result).await?;
-
-        Ok(Some(result))
     }
 
     /// Reset all jobs back into non-running state.
@@ -209,4 +176,52 @@ fn can_wait(importer: &Importer) -> bool {
     };
 
     (OffsetDateTime::now_utc() - last) < importer.data.configuration.period
+}
+
+pub struct ImportRunner {
+    pub db: Database,
+    pub storage: DispatchBackend,
+    pub working_dir: Option<PathBuf>,
+}
+
+impl ImportRunner {
+    #[instrument(skip_all, fields(), err)]
+    pub async fn run_once(
+        &self,
+        context: impl RunContext + 'static,
+        configuration: ImporterConfiguration,
+        last_success: Option<OffsetDateTime>,
+        continuation: serde_json::Value,
+    ) -> Result<RunOutput, ScannerError> {
+        let last_success = last_success.map(|t| t.into());
+
+        match configuration {
+            ImporterConfiguration::Sbom(sbom) => {
+                self.run_once_sbom(context, sbom, last_success).await
+            }
+            ImporterConfiguration::Csaf(csaf) => {
+                self.run_once_csaf(context, csaf, last_success).await
+            }
+            ImporterConfiguration::Osv(osv) => self.run_once_osv(context, osv, continuation).await,
+            ImporterConfiguration::Cve(cve) => self.run_once_cve(context, cve, continuation).await,
+        }
+    }
+
+    async fn create_working_dir(
+        &self,
+        r#type: &str,
+        source: &str,
+    ) -> anyhow::Result<Option<PathBuf>> {
+        let Some(working_dir) = &self.working_dir else {
+            return Ok(None);
+        };
+
+        let result = working_dir
+            .join(r#type)
+            .join(urlencoding::encode(source).as_ref());
+
+        tokio::fs::create_dir_all(&result).await?;
+
+        Ok(Some(result))
+    }
 }

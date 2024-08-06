@@ -22,15 +22,15 @@ use trustify_module_ingestor::{
     service::{Format, IngestorService},
 };
 
-struct Context {
-    context: RunContext,
+struct Context<C: RunContext + 'static> {
+    context: C,
     source: String,
     labels: Labels,
     report: Arc<Mutex<ReportBuilder>>,
     ingestor: IngestorService,
 }
 
-impl Context {
+impl<C: RunContext> Context<C> {
     fn store(&self, path: &Path, osv: Vulnerability) -> anyhow::Result<()> {
         let data = serde_json::to_vec(&osv)?;
 
@@ -55,7 +55,7 @@ impl Context {
     }
 }
 
-impl Callbacks<Vulnerability> for Context {
+impl<C: RunContext> Callbacks<Vulnerability> for Context<C> {
     fn loading_error(&mut self, path: PathBuf, message: String) {
         self.report
             .lock()
@@ -73,11 +73,11 @@ impl Callbacks<Vulnerability> for Context {
     }
 }
 
-impl super::Server {
+impl super::ImportRunner {
     #[instrument(skip(self), ret)]
     pub async fn run_once_osv(
         &self,
-        context: RunContext,
+        context: impl RunContext + 'static,
         osv: OsvImporter,
         continuation: serde_json::Value,
     ) -> Result<RunOutput, ScannerError> {

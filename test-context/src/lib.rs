@@ -1,7 +1,7 @@
 #![allow(clippy::expect_used)]
 
 use futures::{stream, Stream};
-use postgresql_embedded::{PostgreSQL, Settings, VersionReq};
+use postgresql_embedded::PostgreSQL;
 use std::env;
 use std::env::current_dir;
 use std::io::ErrorKind;
@@ -10,8 +10,9 @@ use test_context::AsyncTestContext;
 use tokio::io::AsyncReadExt;
 use tokio_util::bytes::Bytes;
 use tokio_util::io::ReaderStream;
-use tracing::{info_span, instrument, Instrument};
+use tracing::instrument;
 use trustify_common as common;
+use trustify_common::db;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::model::IngestResult;
 use trustify_module_ingestor::service::{Format, IngestorService};
@@ -97,42 +98,9 @@ impl AsyncTestContext for TrustifyContext {
             return TrustifyContext::new(db, None).await;
         }
 
-        let version = VersionReq::parse("=16.3.0").expect("valid psql version");
-        let settings = Settings {
-            version,
-            username: "postgres".to_string(),
-            password: "trustify".to_string(),
-            temporary: true,
-            ..Default::default()
-        };
-
-        let postgresql = async {
-            let mut postgresql = PostgreSQL::new(settings);
-            postgresql
-                .setup()
-                .await
-                .expect("Setting up the test database");
-            postgresql
-                .start()
-                .await
-                .expect("Starting the test database");
-            postgresql
-        }
-        .instrument(info_span!("start database"))
-        .await;
-
-        let config = common::config::Database {
-            username: "postgres".into(),
-            password: "trustify".into(),
-            host: "localhost".into(),
-            name: "test".into(),
-            port: postgresql.settings().port,
-            min_conn: 25,
-            max_conn: 75,
-        };
-        let db = common::db::Database::bootstrap(&config)
+        let (db, postgresql) = db::embedded::create()
             .await
-            .expect("Bootstrapping the test database");
+            .expect("Create an embedded database");
 
         TrustifyContext::new(db, postgresql).await
     }

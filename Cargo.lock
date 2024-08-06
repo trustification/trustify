@@ -8181,6 +8181,17 @@ version = "0.1.0-alpha.11"
 dependencies = [
  "anyhow",
  "clap",
+ "log",
+ "postgresql_commands",
+ "serde",
+ "serde_json",
+ "serde_yaml 0.8.26",
+ "tokio",
+ "tracing-subscriber",
+ "trustify-common",
+ "trustify-module-importer",
+ "trustify-module-ingestor",
+ "trustify-module-storage",
  "trustify-server",
 ]
 

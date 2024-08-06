@@ -1,3 +1,4 @@
+use crate::server::context::RunContext;
 use crate::server::{
     common::storage::StorageError,
     csaf::storage::StorageVisitor,
@@ -10,11 +11,11 @@ use csaf_walker::{
 use trustify_module_ingestor::service;
 use walker_common::utils::url::Urlify;
 
-pub struct CsafReportVisitor(pub ReportVisitor<StorageVisitor>);
+pub struct CsafReportVisitor<C: RunContext>(pub ReportVisitor<StorageVisitor<C>>);
 
-impl ValidatedVisitor for CsafReportVisitor {
-    type Error = <StorageVisitor as ValidatedVisitor>::Error;
-    type Context = <StorageVisitor as ValidatedVisitor>::Context;
+impl<C: RunContext> ValidatedVisitor for CsafReportVisitor<C> {
+    type Error = <StorageVisitor<C> as ValidatedVisitor>::Error;
+    type Context = <StorageVisitor<C> as ValidatedVisitor>::Context;
 
     async fn visit_context(
         &self,

@@ -1,17 +1,58 @@
 use crate::service::ImporterService;
+use std::fmt::Debug;
+use std::future::Future;
 use std::time::{Duration, Instant};
 use tokio::{runtime::Handle, sync::Mutex};
 use tracing::instrument;
 
 /// Context for an import run
 #[derive(Debug)]
-pub struct RunContext {
+pub struct ServiceRunContext {
     /// The name of the import job
     name: String,
     state: Mutex<CheckCancellation>,
 }
 
-impl RunContext {
+pub trait RunContext: Debug + Send {
+    /// Get the name of the import job
+    fn name(&self) -> &str;
+
+    /// Check if the run is canceled.
+    ///
+    /// This is a cooperative way to check if the job needs to be terminated.
+    fn is_canceled(&self) -> impl Future<Output = bool>;
+
+    /// A sync version of [`Self::is_canceled`].
+    ///
+    /// **NOTE:** Requires to be called from a Tokio context.
+    fn is_canceled_sync(&self) -> bool {
+        Handle::current().block_on(async { self.is_canceled().await })
+    }
+
+    fn check_canceled_sync<E, F>(&self, f: F) -> Result<(), E>
+    where
+        F: FnOnce() -> E,
+    {
+        match self.is_canceled_sync() {
+            true => Err(f()),
+            false => Ok(()),
+        }
+    }
+
+    fn check_canceled<E, F>(&self, f: F) -> impl Future<Output = Result<(), E>>
+    where
+        F: FnOnce() -> E,
+    {
+        async {
+            match self.is_canceled().await {
+                true => Err(f()),
+                false => Ok(()),
+            }
+        }
+    }
+}
+
+impl ServiceRunContext {
     pub fn new(service: ImporterService, name: String) -> Self {
         Self {
             name: name.clone(),
@@ -22,44 +63,15 @@ impl RunContext {
             )),
         }
     }
+}
 
-    /// Get the name of the import job
-    pub fn name(&self) -> &str {
+impl RunContext for ServiceRunContext {
+    fn name(&self) -> &str {
         &self.name
     }
 
-    /// Check if the run is canceled.
-    ///
-    /// This is a cooperative way to check if the job needs to be terminated.
-    pub async fn is_canceled(&self) -> bool {
+    async fn is_canceled(&self) -> bool {
         self.state.lock().await.check().await
-    }
-
-    /// A sync version of [`Self::is_canceled`].
-    ///
-    /// **NOTE:** Requires to be called from a Tokio context.
-    pub fn is_canceled_sync(&self) -> bool {
-        Handle::current().block_on(async { self.is_canceled().await })
-    }
-
-    pub fn check_canceled_sync<E, F>(&self, f: F) -> Result<(), E>
-    where
-        F: FnOnce() -> E,
-    {
-        match self.is_canceled_sync() {
-            true => Err(f()),
-            false => Ok(()),
-        }
-    }
-
-    pub async fn check_canceled<E, F>(&self, f: F) -> Result<(), E>
-    where
-        F: FnOnce() -> E,
-    {
-        match self.is_canceled().await {
-            true => Err(f()),
-            false => Ok(()),
-        }
     }
 }
 
