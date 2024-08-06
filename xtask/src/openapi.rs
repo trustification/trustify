@@ -8,7 +8,11 @@ use clap::Parser;
 use trustify_server::openapi::openapi;
 
 #[derive(Debug, Parser)]
-pub struct Validate {}
+pub struct Validate {
+    /// should the openapi.yaml be exported too?
+    #[arg(short, long, default_value = "false")]
+    export: bool,
+}
 
 impl Validate {
     pub fn run(self) -> anyhow::Result<()> {
@@ -25,12 +29,17 @@ impl Validate {
         let out_dir = env::temp_dir();
         let openapi_yaml = Path::new(&out_dir).join("openapi.yaml");
 
-        println!("Generating openapi.yaml at {:?}", openapi_yaml);
-
         let doc = openapi()
             .to_yaml()
             .map_err(|_| anyhow!("Failed to convert openapi spec to yaml"))?;
 
+        if self.export {
+            println!("Writing openapi.yaml to {:?}", "openapi_yaml");
+            fs::write("openapi.yaml", doc.clone())
+                .map_err(|_| anyhow!("Failed to write openapi spec"))?;
+        }
+
+        println!("Writing openapi.yaml to {:?}", openapi_yaml);
         fs::write(openapi_yaml, doc).map_err(|_| anyhow!("Failed to write openapi spec"))?;
 
         // run the openapi generator validator container
