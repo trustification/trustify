@@ -7352,7 +7352,12 @@ dependencies = [
  "async-graphql-actix-web",
  "clap",
  "log",
+ "serde_json",
+ "test-context",
+ "test-log",
  "thiserror",
+ "tokio",
+ "tokio-util",
  "trustify-auth",
  "trustify-common",
  "trustify-entity",
@@ -7361,6 +7366,7 @@ dependencies = [
  "trustify-module-importer",
  "trustify-module-ingestor",
  "trustify-module-ui",
+ "trustify-test-context",
  "uuid",
 ]
 

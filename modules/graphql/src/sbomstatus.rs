@@ -1,6 +1,5 @@
 use actix_web::web;
 use async_graphql::{Context, FieldResult, Object};
-use std::sync::Arc;
 use trustify_common::db::{Database, Transactional};
 use trustify_common::id::Id;
 use trustify_module_fundamental::sbom::model::details::SbomStatus;
@@ -13,8 +12,8 @@ pub struct SbomStatusQuery;
 #[Object]
 impl SbomStatusQuery {
     async fn cves_by_sbom<'a>(&self, ctx: &Context<'a>, id: Uuid) -> FieldResult<Vec<SbomStatus>> {
-        let db = ctx.data::<Arc<Database>>()?;
-        let service = SbomService::new((*(Arc::clone(db))).clone());
+        let db = ctx.data::<Database>()?;
+        let service = SbomService::new(db.clone());
         let sbom_service = web::Data::new(service);
 
         let sbom_details: Option<trustify_module_fundamental::sbom::model::details::SbomDetails> =

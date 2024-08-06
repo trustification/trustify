@@ -23,3 +23,11 @@ uuid = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 thiserror = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+test-context = { workspace = true }
+trustify-test-context = { workspace = true }
+test-log = { workspace = true, features = ["log", "trace"] }
+tokio = { workspace = true, features = ["full"] }
+tokio-util = { workspace = true }
