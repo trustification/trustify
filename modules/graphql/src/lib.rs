@@ -7,6 +7,9 @@ pub mod vulnerability;
 
 use async_graphql::MergedObject;
 
+#[cfg(test)]
+pub mod test;
+
 #[derive(MergedObject, Default)]
 pub struct RootQuery(
     advisory::AdvisoryQuery,
