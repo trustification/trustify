@@ -25,6 +25,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     components(schemas(
         crate::product::model::ProductHead,
         crate::product::model::ProductVersionHead,
+        crate::product::model::details::ProductVersionDetails,
         crate::product::model::summary::ProductSummary,
         crate::product::model::summary::PaginatedProductSummary,
         crate::product::model::details::ProductDetails,

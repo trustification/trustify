@@ -1876,7 +1876,7 @@ components:
           versions:
             type: array
             items:
-              $ref: '#/components/schemas/ProductVersionHead'
+              $ref: '#/components/schemas/ProductVersionDetails'
     ProductHead:
       type: object
       required:
@@ -1901,6 +1901,15 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/ProductVersionHead'
+    ProductVersionDetails:
+      allOf:
+      - $ref: '#/components/schemas/ProductVersionHead'
+      - type: object
+        properties:
+          sbom:
+            allOf:
+            - $ref: '#/components/schemas/SbomHead'
+            nullable: true
     ProductVersionHead:
       type: object
       required:
