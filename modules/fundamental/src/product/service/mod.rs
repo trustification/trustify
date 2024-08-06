@@ -48,12 +48,13 @@ impl ProductService {
         let connection = self.db.connection(&tx);
 
         if let Some(product) = product::Entity::find()
+            .find_also_related(trustify_entity::organization::Entity)
             .filter(product::Column::Id.eq(id))
             .one(&connection)
             .await?
         {
             Ok(Some(
-                ProductDetails::from_entity(&product, &connection).await?,
+                ProductDetails::from_entity(&product.0, product.1, &connection).await?,
             ))
         } else {
             Ok(None)
