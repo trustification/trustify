@@ -543,7 +543,7 @@ mod tests {
     use super::*;
     use chrono::{Local, TimeDelta};
     use sea_orm::{ColumnTypeTrait, QuerySelect, QueryTrait};
-    use sea_query::Func;
+    use sea_query::{Func, StringLen};
     use test_log::test;
 
     #[test(tokio::test)]
@@ -651,7 +651,7 @@ mod tests {
             "foo",
             &advisory::Entity
                 .columns()
-                .add_column("foo", ColumnType::String(None).def())
+                .add_column("foo", ColumnType::String(StringLen::None).def())
         )
         .is_ok());
 
@@ -660,7 +660,7 @@ mod tests {
             "bar",
             &advisory::Entity
                 .columns()
-                .add_column("foo", ColumnType::String(None).def())
+                .add_column("foo", ColumnType::String(StringLen::None).def())
         )
         .is_err());
 
