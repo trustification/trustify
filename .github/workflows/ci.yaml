@@ -49,3 +49,11 @@ jobs:
           RUST_LOG: info,sqlx=error,sea_orm=error
       - name: Validate Generated Openapi Spec
         run: cargo xtask validate-openapi
+      - name: Ensure schemas are up-to-date
+        run: |
+          cargo xtask generate-schemas
+          git diff --quiet
+          if [ $? -gt 0 ]; then
+              echo "::error::Uncommitted changes (run `cargo xtask generate-schemas` after making changes to the models)"
+              exit 1
+          fi

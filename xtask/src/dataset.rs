@@ -23,7 +23,7 @@ pub struct GenerateDump {
     input: Option<PathBuf>,
 }
 
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
 pub struct Instructions {
     import: Vec<ImporterConfiguration>,
 }
