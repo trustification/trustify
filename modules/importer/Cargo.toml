@@ -24,6 +24,7 @@ osv = { workspace = true, features = ["schema"] }
 parking_lot = { workspace = true }
 regex = { workspace = true }
 sbom-walker = { workspace = true }
+schemars = { workspace = true, features = ["url"] }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros", "debug-print"] }
 sea-query = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

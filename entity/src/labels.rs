@@ -14,6 +14,7 @@ use utoipa::ToSchema;
     ::serde::Serialize,
     ::serde::Deserialize,
     sea_orm::FromJsonQueryResult,
+    schemars::JsonSchema,
 )]
 pub struct Labels(pub HashMap<String, String>);
 

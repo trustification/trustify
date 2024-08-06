@@ -83,7 +83,16 @@ pub struct ImporterData {
     pub continuation: serde_json::Value,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+    ToSchema,
+    schemars::JsonSchema,
+)]
 #[serde(rename_all = "camelCase")]
 pub enum ImporterConfiguration {
     Sbom(SbomImporter),
@@ -116,7 +125,16 @@ impl DerefMut for ImporterConfiguration {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
+#[derive(
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+    ToSchema,
+    schemars::JsonSchema,
+)]
 #[serde(rename_all = "camelCase")]
 pub struct CommonImporter {
     /// A flag to disable the importer, without deleting it.
@@ -125,6 +143,7 @@ pub struct CommonImporter {
 
     /// The period the importer should be run.
     #[serde(with = "humantime_serde")]
+    #[schemars(with = "HumantimeSerde")]
     pub period: Duration,
 
     /// A description for users.
@@ -135,6 +154,10 @@ pub struct CommonImporter {
     #[serde(default, skip_serializing_if = "Labels::is_empty")]
     pub labels: Labels,
 }
+
+// Just here to create a schema for humantime_serde.
+#[derive(schemars::JsonSchema)]
+struct HumantimeSerde(#[allow(unused)] String);
 
 impl TryFrom<Model> for Importer {
     type Error = serde_json::Error;

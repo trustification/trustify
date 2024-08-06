@@ -6,6 +6,7 @@ use clap::{Parser, Subcommand};
 mod dataset;
 mod log;
 mod openapi;
+mod schema;
 
 #[derive(Debug, Parser)]
 pub struct Xtask {
@@ -18,6 +19,7 @@ impl Xtask {
         match self.command {
             Command::ValidateOpenapi(command) => command.run(),
             Command::GenerateDump(command) => command.run().await,
+            Command::GenerateSchemas(command) => command.run().await,
         }
     }
 }
@@ -28,6 +30,8 @@ pub enum Command {
     ValidateOpenapi(openapi::Validate),
     /// Generate a sample data database dump
     GenerateDump(dataset::GenerateDump),
+    /// Generate all schemas
+    GenerateSchemas(schema::GenerateSchema),
 }
 
 #[tokio::main]

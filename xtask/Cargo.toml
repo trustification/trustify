@@ -9,12 +9,14 @@ anyhow = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 log = { workspace = true }
 postgresql_commands = { workspace = true }
-serde= { workspace = true}
+schemars = { workspace = true }
+serde = { workspace = true }
 serde_json = { workspace = true }
 serde_yaml = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 tracing-subscriber = { workspace = true, features = ["env-filter", "tracing-log", "ansi"] }
 
+trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
 trustify-module-importer = { workspace = true }
 trustify-module-ingestor = { workspace = true }

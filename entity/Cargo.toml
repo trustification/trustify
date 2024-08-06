@@ -9,6 +9,7 @@ trustify-cvss = { workspace = true }
 
 async-graphql = { workspace = true, features = ["uuid", "time"] }
 cpe = { workspace = true }
+schemars = { workspace = true }
 sea-orm = { workspace = true, features = [
     "sqlx-postgres",
     "runtime-tokio-rustls",
