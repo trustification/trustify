@@ -1,6 +1,4 @@
-use crate::server::common::storage::StorageError;
-use crate::server::context::RunContext;
-use crate::server::report::ReportBuilder;
+use crate::server::{common::storage::StorageError, context::RunContext, report::ReportBuilder};
 use csaf_walker::validation::{
     ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError,
 };
@@ -11,15 +9,15 @@ use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use walker_common::utils::url::Urlify;
 
-pub struct StorageVisitor {
-    pub context: RunContext,
+pub struct StorageVisitor<C: RunContext> {
+    pub context: C,
     pub ingestor: IngestorService,
     /// the report to report our messages to
     pub report: Arc<Mutex<ReportBuilder>>,
     pub labels: Labels,
 }
 
-impl ValidatedVisitor for StorageVisitor {
+impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
     type Error = StorageError<ValidationError>;
     type Context = ();
 

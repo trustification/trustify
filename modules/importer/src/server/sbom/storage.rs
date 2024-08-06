@@ -1,6 +1,8 @@
-use crate::server::common::storage::StorageError;
-use crate::server::report::{Message, Phase};
-use crate::server::{context::RunContext, report::ReportBuilder};
+use crate::server::{
+    common::storage::StorageError,
+    context::RunContext,
+    report::{Message, Phase, ReportBuilder},
+};
 use parking_lot::Mutex;
 use sbom_walker::validation::{
     ValidatedSbom, ValidatedVisitor, ValidationContext, ValidationError,
@@ -11,8 +13,8 @@ use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use walker_common::{compression::decompress_opt, utils::url::Urlify};
 
-pub struct StorageVisitor {
-    pub context: RunContext,
+pub struct StorageVisitor<C: RunContext> {
+    pub context: C,
     pub source: String,
     pub labels: Labels,
     pub ingestor: IngestorService,
@@ -20,7 +22,7 @@ pub struct StorageVisitor {
     pub report: Arc<Mutex<ReportBuilder>>,
 }
 
-impl ValidatedVisitor for StorageVisitor {
+impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
     type Error = StorageError<ValidationError>;
     type Context = ();
 

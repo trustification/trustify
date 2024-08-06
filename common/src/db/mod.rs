@@ -4,6 +4,7 @@ pub mod chunk;
 pub mod limiter;
 pub mod query;
 
+pub mod embedded;
 pub mod multi_model;
 
 use anyhow::Context;
@@ -98,7 +99,10 @@ impl ConnectionTrait for ConnectionOrTransaction<'_> {
 
 #[derive(Clone, Debug)]
 pub struct Database {
+    /// the database connection
     db: DatabaseConnection,
+    /// the database name
+    name: String,
 }
 
 impl Database {
@@ -128,7 +132,10 @@ impl Database {
 
         let db = sea_orm::Database::connect(opt).await?;
 
-        Ok(Self { db })
+        Ok(Self {
+            db,
+            name: db_name.to_string(),
+        })
     }
 
     #[instrument]
@@ -192,6 +199,11 @@ impl Database {
             .await
             .context("failed to ping the database")?;
         Ok(())
+    }
+
+    /// Get the name of the database
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }
 
