@@ -351,7 +351,7 @@ fn configure(
             ))
             .wrap(new_auth(auth.clone()))
             .configure(|svc| {
-                trustify_module_graphql::endpoints::configure(svc, db.clone(), graph.clone());
+                trustify_module_graphql::endpoints::configure(svc, db.clone());
                 trustify_module_graphql::endpoints::configure_graphiql(svc);
             }),
     );
