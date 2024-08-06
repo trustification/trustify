@@ -31,7 +31,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(all, get, upload, download, label::set, label::update),
+    paths(all, get, delete, upload, download, label::set, label::update),
     components(schemas(
         crate::advisory::model::AdvisoryDetails,
         crate::advisory::model::AdvisoryHead,
