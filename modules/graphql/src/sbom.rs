@@ -1,5 +1,4 @@
 use async_graphql::{Context, FieldError, FieldResult, Object};
-use std::sync::Arc;
 use trustify_common::db::Transactional;
 use trustify_entity::labels::Labels;
 use trustify_entity::sbom::Model as Sbom;
@@ -12,7 +11,7 @@ pub struct SbomQuery;
 #[Object]
 impl SbomQuery {
     async fn get_sbom_by_id<'a>(&self, ctx: &Context<'a>, id: Uuid) -> FieldResult<Sbom> {
-        let graph = ctx.data::<Arc<Graph>>()?;
+        let graph = ctx.data::<Graph>()?;
         let sbom = graph.locate_sbom_by_id(id, Transactional::None).await;
 
         match sbom {
@@ -37,7 +36,7 @@ impl SbomQuery {
         ctx: &Context<'a>,
         labels: Labels,
     ) -> FieldResult<Vec<Sbom>> {
-        let graph = ctx.data::<Arc<Graph>>()?;
+        let graph = ctx.data::<Graph>()?;
         let sboms = match graph
             .locate_sboms_by_labels(labels, Transactional::None)
             .await
