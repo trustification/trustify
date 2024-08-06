@@ -50,5 +50,5 @@ begin
 
 end
 $$
-    language 'plpgsql';
+    language plpgsql immutable parallel safe;;
 
