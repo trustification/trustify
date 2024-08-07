@@ -39,6 +39,7 @@ impl AdvisoryQuery {
             _ => vec![],
         };
 
+        log::info!("advisories {:?}", advisories);
         advisories
             .into_iter()
             .map(|advisory| {
