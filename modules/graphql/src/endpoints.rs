@@ -3,7 +3,6 @@ use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Sche
 use async_graphql_actix_web::GraphQL;
 use std::sync::Arc;
 use trustify_common::db::Database;
-use trustify_module_ingestor::graph::Graph;
 
 use crate::RootQuery;
 
@@ -15,8 +14,9 @@ async fn index_graphiql() -> Result<HttpResponse> {
 
 pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
     let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Arc<Graph>>(Arc::new(Graph::new(db.clone())))
-        .data::<Arc<Database>>(Arc::new(db))
+        // .data::<Arc<Graph>>(Arc::new(Graph::new(db.clone())))
+        // .data::<Arc<Database>>(Arc::new(db))
+        .data::<Database>(db)
         .finish();
 
     svc.service(
