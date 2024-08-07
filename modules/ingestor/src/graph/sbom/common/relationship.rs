@@ -2,6 +2,7 @@ use anyhow::bail;
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use std::collections::HashSet;
+use tracing::instrument;
 use trustify_common::db::chunk::EntityChunkedIter;
 use trustify_entity::{package_relates_to_package, relationship::Relationship};
 use uuid::Uuid;
@@ -43,6 +44,7 @@ impl RelationshipCreator {
     /// This expects a source of references to check against. If creating a fresh set of nodes and
     /// relationships, these sources would most likely be the creators (like [`super::PackageCreator`]).
     /// If nodes already exist in the database, those nodes would need to be extracted and provided.
+    #[instrument(skip_all, err)]
     pub fn validate(&self, sources: References) -> Result<(), anyhow::Error> {
         for rel in &self.rels {
             if let Set(left) = &rel.left_node_id {
@@ -60,6 +62,7 @@ impl RelationshipCreator {
         Ok(())
     }
 
+    #[instrument(skip_all, fields(num=self.rels.len()), err)]
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
         for batch in &self.rels.into_iter().chunked() {
             package_relates_to_package::Entity::insert_many(batch)

@@ -1,6 +1,7 @@
 use crate::graph::sbom::ReferenceSource;
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
+use tracing::instrument;
 use trustify_common::db::chunk::EntityChunkedIter;
 use trustify_entity::{sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref};
 use uuid::Uuid;
@@ -79,6 +80,16 @@ impl PackageCreator {
         });
     }
 
+    #[instrument(
+        skip_all,
+        fields(
+            num_nodes=self.nodes.len(),
+            num_packages=self.packages.len(),
+            num_purl_refs=self.purl_refs.len(),
+            num_cpe_refs=self.cpe_refs.len(),
+        ),
+        err
+    )]
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
         for batch in &self.nodes.into_iter().chunked() {
             sbom_node::Entity::insert_many(batch)
