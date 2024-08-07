@@ -172,7 +172,7 @@ async fn get_organization_by_name(ctx: &TrustifyContext) -> Result<(), anyhow::E
             }))),
         )
         .await;
-    println!("Result {:?}", result);
+
     let data = result.data.into_json()?;
     let organization = &data["getOrganizationByName"];
 
