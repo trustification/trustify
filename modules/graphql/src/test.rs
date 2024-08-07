@@ -125,7 +125,7 @@ async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn get_advisory_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let results = ctx.ingest_documents(["cve/CVE-2024-29025.json"]).await?;
+    let results = ctx.ingest_document("cve/CVE-2024-29025.json").await?;
 
     let graph = ctx.graph.clone();
     let db = ctx.db.clone();
@@ -134,7 +134,7 @@ async fn get_advisory_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         .data::<Database>(db)
         .finish();
 
-    let id = results[0].id.clone();
+    let id = results.id.clone();
     let result = schema
         .execute(
             Request::new(GET_ADVISORY_BY_ID).variables(Variables::from_json(json!({
@@ -156,7 +156,7 @@ async fn get_advisory_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn get_organization_by_name(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let _results = ctx.ingest_documents(["cve/rhsa-2024-2705.json"]).await?;
+    ctx.ingest_document("cve/rhsa-2024-2705.json").await?;
 
     let graph = ctx.graph.clone();
     let db = ctx.db.clone();
@@ -187,9 +187,9 @@ async fn get_organization_by_name(ctx: &TrustifyContext) -> Result<(), anyhow::E
 #[test(tokio::test)]
 async fn get_sbom_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let results = ctx
-        .ingest_documents(["spdx/quarkus-bom-3.2.11.Final-redhat-00001.json"])
+        .ingest_document("spdx/quarkus-bom-3.2.11.Final-redhat-00001.json")
         .await?;
-    let sbom_id = results[0].id.clone();
+    let sbom_id = results.id.clone();
 
     let graph = ctx.graph.clone();
     let db = ctx.db.clone();
@@ -222,8 +222,7 @@ async fn get_sbom_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn get_sbom_by_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let _results = ctx
-        .ingest_documents(["spdx/quarkus-bom-3.2.11.Final-redhat-00001.json"])
+    ctx.ingest_document("spdx/quarkus-bom-3.2.11.Final-redhat-00001.json")
         .await?;
 
     let graph = ctx.graph.clone();
@@ -259,7 +258,7 @@ async fn get_sbom_by_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn get_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let _results = ctx.ingest_documents(["cve/rhsa-2024-2705.json"]).await?;
+    ctx.ingest_document("cve/rhsa-2024-2705.json").await?;
 
     let graph = ctx.graph.clone();
     let db = ctx.db.clone();
@@ -284,7 +283,7 @@ async fn get_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn get_vulnerability_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let _results = ctx.ingest_documents(["cve/CVE-2024-29025.json"]).await?;
+    ctx.ingest_document("cve/CVE-2024-29025.json").await?;
 
     let graph = ctx.graph.clone();
     let db = ctx.db.clone();
