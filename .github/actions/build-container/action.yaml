@@ -1,0 +1,49 @@
+name: Build container
+description: Build containers for trustify
+
+inputs:
+  image_name:
+    description: The name of the container image
+    required: true
+  image_tag:
+    description: The tag of the container image
+    required: true
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Install qemu dependency
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y qemu-user-static
+
+    - name: Build Image
+      id: build-image
+      uses: redhat-actions/buildah-build@v2
+      with:
+        image: ${{ inputs.image_name }}
+        tags: ${{ inputs.image_tag }}
+        envs: |
+          TAG=${{ inputs.image_tag }}
+        build-args: |
+          tag=${{ inputs.image_tag }}
+        platforms: linux/amd64, linux/arm64
+        containerfiles: |
+          .github/scripts/Containerfile
+
+    - name: Check images created
+      shell: bash
+      run: buildah images | grep '${{ inputs.image_name }}'
+
+    # We save the container image here. But when loading it, the multi-arch aspect of it will be gone.
+    - name: Save image
+      shell: bash
+      run: podman save --multi-image-archive ${{ inputs.image_name }}:${{ inputs.image_tag }} > image.tar
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: container
+        path: image.tar
+        if-no-files-found: error
