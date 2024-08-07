@@ -21,6 +21,10 @@ pub struct GenerateDump {
     /// The name of the input configuration. Uses a default configuration if missing.
     #[arg(short, long)]
     input: Option<PathBuf>,
+
+    /// An optional specified working directory
+    #[arg(short, long)]
+    working_dir: Option<PathBuf>,
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -71,7 +75,7 @@ impl GenerateDump {
         let importer = ImportRunner {
             db: db.clone(),
             storage: storage.into(),
-            working_dir: None,
+            working_dir: self.working_dir.clone(),
         };
 
         // ingest documents
