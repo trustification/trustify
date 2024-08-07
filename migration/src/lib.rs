@@ -61,6 +61,7 @@ mod m0000490_cascade_advisory_delete;
 mod m0000500_fix_sbom_node_fks;
 mod m0000501_perf_indexes;
 mod m0000510_create_maven_cmp_fns;
+mod m0000520_scale_indexes;
 
 pub struct Migrator;
 
@@ -128,6 +129,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000500_fix_sbom_node_fks::Migration),
             Box::new(m0000501_perf_indexes::Migration),
             Box::new(m0000510_create_maven_cmp_fns::Migration),
+            Box::new(m0000520_scale_indexes::Migration),
         ]
     }
 }
