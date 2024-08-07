@@ -1,5 +1,5 @@
 use async_graphql::{Context, FieldError, FieldResult, Object};
-use trustify_common::db::Transactional;
+use trustify_common::db::{self, Transactional};
 use trustify_entity::organization::Model as Organization;
 use trustify_module_ingestor::graph::Graph;
 
@@ -13,7 +13,8 @@ impl OrganizationQuery {
         ctx: &Context<'a>,
         name: String,
     ) -> FieldResult<Organization> {
-        let graph = ctx.data::<Graph>()?;
+        let db = ctx.data::<db::Database>()?;
+        let graph = Graph::new(db.clone());
         let organization = graph
             .get_organization_by_name(name, Transactional::None)
             .await;
