@@ -13,7 +13,6 @@ use utoipa::ToSchema;
 pub struct ProductSummary {
     #[serde(flatten)]
     pub head: ProductHead,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub versions: Vec<ProductVersionHead>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub vendor: Option<OrganizationSummary>,

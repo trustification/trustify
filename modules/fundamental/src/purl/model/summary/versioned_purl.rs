@@ -11,7 +11,6 @@ pub struct VersionedPurlSummary {
     #[serde(flatten)]
     pub head: VersionedPurlHead,
     pub base: BasePurlHead,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub purls: Vec<PurlHead>,
 }
 

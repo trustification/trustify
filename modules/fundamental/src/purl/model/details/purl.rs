@@ -24,7 +24,6 @@ pub struct PurlDetails {
     pub head: PurlHead,
     pub version: VersionedPurlHead,
     pub base: BasePurlHead,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub advisories: Vec<PurlAdvisory>,
 }
 

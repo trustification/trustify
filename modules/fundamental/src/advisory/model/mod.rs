@@ -24,7 +24,6 @@ pub struct AdvisoryHead {
     pub identifier: String,
 
     /// Hashes of the underlying original document as ingested.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub hashes: Vec<Id>,
 
     /// The issuer of the advisory, if known. If no issuer is able to be
@@ -38,7 +37,6 @@ pub struct AdvisoryHead {
     pub published: Option<OffsetDateTime>,
 
     /// The date (in RFC3339 format) of when the advisory was last modified, if any.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
     pub modified: Option<OffsetDateTime>,
 
@@ -52,7 +50,6 @@ pub struct AdvisoryHead {
     pub title: Option<String>,
 
     /// Informational labels attached by the system or users to this advisory.
-    #[serde(default, skip_serializing_if = "Labels::is_empty")]
     pub labels: Labels,
 }
 
