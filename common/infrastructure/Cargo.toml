@@ -32,6 +32,7 @@ tracing-subscriber = { workspace = true, features = ["env-filter", "ansi", "trac
 url = { workspace = true }
 
 trustify-auth = { workspace = true }
+trustify-common = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["full"] }

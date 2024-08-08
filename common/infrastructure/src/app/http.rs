@@ -14,65 +14,17 @@ use bytesize::ByteSize;
 use clap::{value_parser, Arg, ArgMatches, Args, Command, Error, FromArgMatches};
 use openssl::ssl::SslFiletype;
 use prometheus::Registry;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::net::{IpAddr, Ipv6Addr, SocketAddr, TcpListener};
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
 use trustify_auth::{authenticator::Authenticator, authorizer::Authorizer};
+use trustify_common::model::BinaryByteSize;
 
 const DEFAULT_ADDR: SocketAddr = SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 8080);
-
-#[derive(Copy, Clone, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, Default)]
-pub struct BinaryByteSize(pub ByteSize);
-
-impl From<ByteSize> for BinaryByteSize {
-    fn from(value: ByteSize) -> Self {
-        Self(value)
-    }
-}
-
-impl From<u64> for BinaryByteSize {
-    fn from(value: u64) -> Self {
-        Self(ByteSize(value))
-    }
-}
-
-impl From<usize> for BinaryByteSize {
-    fn from(value: usize) -> Self {
-        Self(ByteSize(value as u64))
-    }
-}
-
-impl Deref for BinaryByteSize {
-    type Target = ByteSize;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for BinaryByteSize {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl Display for BinaryByteSize {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0.to_string_as(true))
-    }
-}
-
-impl FromStr for BinaryByteSize {
-    type Err = <ByteSize as FromStr>::Err;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        ByteSize::from_str(s).map(BinaryByteSize)
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct BindPort<E: Endpoint> {

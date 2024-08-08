@@ -89,6 +89,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         ],
         v3_signatures: true,
         only_patterns: vec![],
+        size_limit: None,
     })).await?;
 
     add(

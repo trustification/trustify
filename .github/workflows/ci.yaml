@@ -49,7 +49,7 @@ jobs:
           RUST_LOG: info,sqlx=error,sea_orm=error
       - name: Export and Validate Generated Openapi Spec
         run: |
-          cargo xtask validate-openapi --export        
+          cargo xtask validate-openapi --export
           git diff --quiet
           if [ $? -gt 0 ]; then
               echo "::error::Uncommitted changes (run `cargo xtask validate-openapi --export` after making api changes)"

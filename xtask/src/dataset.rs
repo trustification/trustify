@@ -6,6 +6,7 @@ use serde_json::Value;
 use std::{io::BufReader, path::PathBuf};
 use tokio::io::AsyncWriteExt;
 use trustify_common::db;
+use trustify_common::model::BinaryByteSize;
 use trustify_module_importer::{
     model::{CommonImporter, CsafImporter, CveImporter, ImporterConfiguration, SbomImporter},
     server::{context::RunContext, ImportRunner},
@@ -25,6 +26,10 @@ pub struct GenerateDump {
     /// An optional specified working directory
     #[arg(short, long)]
     working_dir: Option<PathBuf>,
+
+    /// Files greater than this limit will be ignored.
+    #[arg(long)]
+    size_limit: Option<BinaryByteSize>,
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -52,6 +57,7 @@ impl GenerateDump {
                         keys: vec!["https://access.redhat.com/security/data/97f5eac4.txt#77E79ABE93673533ED09EBE2DCE3823597F5EAC4".parse()?],
                         v3_signatures: true,
                         only_patterns: vec![],
+                        size_limit: self.size_limit,
                     }),
                     ImporterConfiguration::Csaf(CsafImporter {
                         common: default_common("Red Hat VEX documents from 2024"),

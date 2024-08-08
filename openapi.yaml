@@ -1486,6 +1486,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/BasePurlHead'
       - type: object
+    BinaryByteSize:
+      type: string
     CommonImporter:
       type: object
       required:
@@ -2087,6 +2089,10 @@ components:
             type: array
             items:
               type: string
+          sizeLimit:
+            allOf:
+            - $ref: '#/components/schemas/BinaryByteSize'
+            nullable: true
           source:
             type: string
           v3Signatures:

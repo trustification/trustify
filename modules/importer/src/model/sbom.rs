@@ -1,4 +1,5 @@
 use super::*;
+use trustify_common::model::BinaryByteSize;
 
 #[derive(
     Clone,
@@ -24,6 +25,9 @@ pub struct SbomImporter {
     pub v3_signatures: bool,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub only_patterns: Vec<String>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size_limit: Option<BinaryByteSize>,
 }
 
 impl Deref for SbomImporter {
@@ -37,5 +41,51 @@ impl Deref for SbomImporter {
 impl DerefMut for SbomImporter {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.common
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn serde() {
+        let json = json!({
+            "disabled": false,
+            "period": "30s",
+            "source": "https://redhat.com",
+            "v3Signatures": false,
+            "sizeLimit": "1234 Mi",
+        });
+        let sbom: SbomImporter = serde_json::from_value(json.clone()).expect("must deserialize");
+
+        assert_eq!(
+            sbom,
+            SbomImporter {
+                common: CommonImporter {
+                    disabled: false,
+                    period: Duration::from_secs(30),
+                    description: None,
+                    labels: Default::default(),
+                },
+                source: "https://redhat.com".to_string(),
+                keys: vec![],
+                v3_signatures: false,
+                only_patterns: vec![],
+                size_limit: Some(bytesize::ByteSize::mib(1234).into()),
+            }
+        );
+
+        assert_eq!(
+            json!({
+                "disabled": false,
+                "period": "30s",
+                "source": "https://redhat.com",
+                "v3Signatures": false,
+                "sizeLimit": "1.2 GiB",
+            }),
+            serde_json::to_value(&sbom).expect("must serialize")
+        );
     }
 }

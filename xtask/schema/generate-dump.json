@@ -14,6 +14,12 @@
     }
   },
   "definitions": {
+    "BinaryByteSize": {
+      "$ref": "#/definitions/ByteSize"
+    },
+    "ByteSize": {
+      "type": "string"
+    },
     "CsafImporter": {
       "type": "object",
       "required": [
@@ -282,6 +288,16 @@
           "allOf": [
             {
               "$ref": "#/definitions/HumantimeSerde"
+            }
+          ]
+        },
+        "sizeLimit": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/BinaryByteSize"
+            },
+            {
+              "type": "null"
             }
           ]
         },

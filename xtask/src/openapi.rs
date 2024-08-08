@@ -1,10 +1,10 @@
-use std::path::Path;
-use std::process::Command;
-use std::{env, fs};
-
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use clap::Parser;
-
+use std::{
+    env, fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
 use trustify_server::openapi::openapi;
 
 #[derive(Debug, Parser)]
@@ -35,8 +35,7 @@ impl Validate {
 
         if self.export {
             println!("Writing openapi.yaml to {:?}", "openapi_yaml");
-            fs::write("openapi.yaml", doc.clone())
-                .map_err(|_| anyhow!("Failed to write openapi spec"))?;
+            write_openapi(None)?;
         }
 
         println!("Writing openapi.yaml to {:?}", openapi_yaml);
@@ -71,4 +70,19 @@ fn command_exists(cmd: &str) -> bool {
         Ok(output) => output.status.success(),
         Err(_) => false,
     }
+}
+
+pub fn write_openapi(base: Option<&Path>) -> anyhow::Result<()> {
+    let doc = openapi()
+        .to_yaml()
+        .context("Failed to convert openapi spec to yaml")?;
+
+    let mut path = PathBuf::from("openapi.yaml");
+    if let Some(base) = base {
+        path = base.join(path);
+    }
+
+    fs::write(path, doc).context("Failed to write openapi spec")?;
+
+    Ok(())
 }
