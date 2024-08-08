@@ -2,15 +2,15 @@ use super::SbomService;
 use crate::{
     purl::model::summary::purl::PurlSummary,
     sbom::model::{
-        details::{SbomAdvisory, SbomDetails},
-        SbomHead, SbomPackage, SbomPackageReference, SbomPackageRelation, SbomSummary, Which,
+        details::SbomDetails, SbomPackage, SbomPackageReference, SbomPackageRelation, SbomSummary,
+        Which,
     },
     Error,
 };
 use futures_util::{stream, StreamExt, TryStreamExt};
 use sea_orm::{
-    prelude::Uuid, ColumnTrait, DbErr, EntityTrait, FromQueryResult, IntoSimpleExpr, ModelTrait,
-    QueryFilter, QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns,
+    prelude::Uuid, ColumnTrait, DbErr, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
+    QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns,
 };
 use sea_query::{extension::postgres::PgExpr, Expr, Func, JoinType, SimpleExpr};
 use serde::Deserialize;
@@ -32,7 +32,7 @@ use trustify_entity::{
     advisory, base_purl,
     cpe::{self, CpeDto},
     labels::Labels,
-    package_relates_to_package, purl_status,
+    package_relates_to_package,
     qualified_purl::{self, Qualifiers},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
@@ -57,7 +57,7 @@ impl SbomService {
                 .one(&connection)
                 .await?
             {
-                Some(row) => self.build_details(row, &tx).await?,
+                Some(row) => SbomDetails::from_entity(row, self, &connection).await?,
                 None => None,
             },
         )
@@ -105,111 +105,13 @@ impl SbomService {
         let total = limiter.total().await?;
         let sboms = limiter.fetch().await?;
 
-        let tx = tx.as_ref();
         let items = stream::iter(sboms.into_iter())
-            .then(|row| async move { self.build_summary(row, &tx).await })
+            .then(|row| async { SbomSummary::from_entity(row, self, &connection).await })
             .try_filter_map(futures_util::future::ok)
             .try_collect()
             .await?;
 
         Ok(PaginatedResults { total, items })
-    }
-
-    /// turn an (sbom, sbom_node) row into an [`SbomSummary`], if possible
-    async fn build_summary(
-        &self,
-        (sbom, node): (sbom::Model, Option<sbom_node::Model>),
-        tx: impl AsRef<Transactional>,
-    ) -> Result<Option<SbomSummary>, Error> {
-        // TODO: consider improving the n-select issue here
-        let described_by = self
-            .describes_packages(sbom.sbom_id, Paginated::default(), tx)
-            .await?
-            .items;
-
-        Ok(match node {
-            Some(node) => Some(SbomSummary {
-                head: SbomHead {
-                    id: sbom.sbom_id,
-                    hashes: vec![Id::Sha256(sbom.sha256)],
-                    document_id: sbom.document_id,
-                    name: node.name,
-                    labels: sbom.labels,
-                },
-
-                published: sbom.published,
-                authors: sbom.authors,
-
-                described_by,
-            }),
-            None => None,
-        })
-    }
-
-    /// turn an (sbom, sbom_node) row into an [`SbomDetails`], if possible
-    async fn build_details(
-        &self,
-        (sbom, node): (sbom::Model, Option<sbom_node::Model>),
-        tx: impl AsRef<Transactional>,
-    ) -> Result<Option<SbomDetails>, Error> {
-        let connection = self.db.connection(&tx);
-
-        let described_by = self
-            .describes_packages(sbom.sbom_id, Paginated::default(), tx.as_ref())
-            .await?
-            .items;
-
-        let relevant_advisory_info = sbom
-            .find_related(sbom_package::Entity)
-            .join(JoinType::Join, sbom_package::Relation::Node.def())
-            .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
-            .join(
-                JoinType::LeftJoin,
-                sbom_package_purl_ref::Relation::Purl.def(),
-            )
-            .join(
-                JoinType::LeftJoin,
-                qualified_purl::Relation::VersionedPurl.def(),
-            )
-            .join(JoinType::LeftJoin, versioned_purl::Relation::BasePurl.def())
-            .join(JoinType::Join, base_purl::Relation::PurlStatus.def())
-            .join(JoinType::Join, purl_status::Relation::Status.def())
-            .join(
-                JoinType::LeftJoin,
-                purl_status::Relation::VersionRange.def(),
-            )
-            .join(JoinType::LeftJoin, purl_status::Relation::ContextCpe.def())
-            .join(JoinType::Join, purl_status::Relation::Advisory.def())
-            .join(JoinType::Join, purl_status::Relation::Vulnerability.def())
-            .select_only()
-            .try_into_multi_model::<QueryCatcher>()?
-            //.into_model::<QueryCatcher>()
-            .all(&connection)
-            .await?;
-
-        Ok(match node {
-            Some(node) => Some(SbomDetails {
-                head: SbomHead {
-                    id: sbom.sbom_id,
-                    hashes: vec![Id::Sha256(sbom.sha256)],
-                    document_id: sbom.document_id,
-                    name: node.name,
-                    labels: sbom.labels,
-                },
-
-                published: sbom.published,
-                authors: sbom.authors,
-
-                described_by: described_by.clone(),
-                advisories: SbomAdvisory::from_models(
-                    &described_by,
-                    &relevant_advisory_info,
-                    &connection,
-                )
-                .await?,
-            }),
-            None => None,
-        })
     }
 
     /// Fetch all packages from an SBOM.
@@ -321,9 +223,8 @@ impl SbomService {
 
         // collect results
 
-        let tx = tx.as_ref();
         let items = stream::iter(sboms.into_iter())
-            .then(|row| async move { self.build_summary(row, &tx).await })
+            .then(|row| async { SbomSummary::from_entity(row, self, &db).await })
             .try_filter_map(futures_util::future::ok)
             .try_collect()
             .await?;

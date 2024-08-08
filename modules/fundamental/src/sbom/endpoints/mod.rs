@@ -221,7 +221,7 @@ pub async fn delete(
     let id = Id::from_str(&id).map_err(Error::IdKey)?;
     match service.fetch_sbom(id.clone(), ()).await? {
         Some(v) => {
-            let rows_affected = service.delete_sbom(v.head.id, ()).await?;
+            let rows_affected = service.delete_sbom(v.summary.head.id, ()).await?;
             match rows_affected {
                 0 => Ok(HttpResponse::NotFound().finish()),
                 1 => {
@@ -391,7 +391,7 @@ pub async fn download(
     let stream = ingestor
         .storage()
         .clone()
-        .retrieve(sbom.head.hashes.try_into()?)
+        .retrieve(sbom.summary.head.hashes.try_into()?)
         .await
         .map_err(Error::Storage)?
         .map(|stream| stream.map_err(Error::Storage));
