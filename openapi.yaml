@@ -2069,30 +2069,13 @@ components:
               $ref: '#/components/schemas/SbomStatus'
     SbomDetails:
       allOf:
-      - $ref: '#/components/schemas/SbomHead'
+      - $ref: '#/components/schemas/SbomSummary'
       - type: object
-        required:
-        - published
-        - authors
-        - described_by
-        - advisories
         properties:
           advisories:
             type: array
             items:
               $ref: '#/components/schemas/SbomAdvisory'
-          authors:
-            type: array
-            items:
-              type: string
-          described_by:
-            type: array
-            items:
-              $ref: '#/components/schemas/SbomPackage'
-          published:
-            type: string
-            format: date-time
-            nullable: true
     SbomHead:
       type: object
       required:
@@ -2100,8 +2083,13 @@ components:
       - hashes
       - document_id
       - labels
+      - published
       - name
       properties:
+        authors:
+          type: array
+          items:
+            type: string
         document_id:
           type: string
         hashes:
@@ -2115,6 +2103,10 @@ components:
           $ref: '#/components/schemas/Labels'
         name:
           type: string
+        published:
+          type: string
+          format: date-time
+          nullable: true
     SbomImporter:
       allOf:
       - $ref: '#/components/schemas/CommonImporter'
@@ -2200,22 +2192,12 @@ components:
       - $ref: '#/components/schemas/SbomHead'
       - type: object
         required:
-        - published
-        - authors
         - described_by
         properties:
-          authors:
-            type: array
-            items:
-              type: string
           described_by:
             type: array
             items:
               $ref: '#/components/schemas/SbomPackage'
-          published:
-            type: string
-            format: date-time
-            nullable: true
     State:
       type: string
       enum:

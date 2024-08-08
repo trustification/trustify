@@ -56,17 +56,20 @@ async fn quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // both sboms have different names
 
-    assert_eq!(sbom1.head.name, "quarkus-bom");
-    assert_eq!(sbom2.head.name, "quarkus-bom-2.13.8.Final-redhat-00004");
-    assert_eq!(sbom1.described_by.len(), 1);
-    assert_eq!(sbom2.described_by.len(), 1);
+    assert_eq!(sbom1.summary.head.name, "quarkus-bom");
+    assert_eq!(
+        sbom2.summary.head.name,
+        "quarkus-bom-2.13.8.Final-redhat-00004"
+    );
+    assert_eq!(sbom1.summary.described_by.len(), 1);
+    assert_eq!(sbom2.summary.described_by.len(), 1);
 
     // clear the ID as that one will be different
 
-    sbom1.described_by[0].id = "".into();
-    sbom2.described_by[0].id = "".into();
+    sbom1.summary.described_by[0].id = "".into();
+    sbom2.summary.described_by[0].id = "".into();
 
-    assert_eq!(sbom1.described_by[0], sbom2.described_by[0]);
+    assert_eq!(sbom1.summary.described_by[0], sbom2.summary.described_by[0]);
 
     // but both sboms can be found by the same purl
 
@@ -130,17 +133,17 @@ async fn nhc(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // both sboms have the same name
 
-    assert_eq!(sbom1.head.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom2.head.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom1.described_by.len(), 1);
-    assert_eq!(sbom2.described_by.len(), 1);
+    assert_eq!(sbom1.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom2.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom1.summary.described_by.len(), 1);
+    assert_eq!(sbom2.summary.described_by.len(), 1);
 
     // clear the ID as that one will be different
 
-    sbom1.described_by[0].id = "".into();
-    sbom2.described_by[0].id = "".into();
+    sbom1.summary.described_by[0].id = "".into();
+    sbom2.summary.described_by[0].id = "".into();
 
-    assert_eq!(sbom1.described_by[0], sbom2.described_by[0]);
+    assert_eq!(sbom1.summary.described_by[0], sbom2.summary.described_by[0]);
 
     // done
 
@@ -190,17 +193,17 @@ async fn nhc_same(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // both sboms have the same name
 
-    assert_eq!(sbom1.head.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom2.head.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom1.described_by.len(), 1);
-    assert_eq!(sbom2.described_by.len(), 1);
+    assert_eq!(sbom1.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom2.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom1.summary.described_by.len(), 1);
+    assert_eq!(sbom2.summary.described_by.len(), 1);
 
     // clear the ID as that one will be different
 
-    sbom1.described_by[0].id = "".into();
-    sbom2.described_by[0].id = "".into();
+    sbom1.summary.described_by[0].id = "".into();
+    sbom2.summary.described_by[0].id = "".into();
 
-    assert_eq!(sbom1.described_by[0], sbom2.described_by[0]);
+    assert_eq!(sbom1.summary.described_by[0], sbom2.summary.described_by[0]);
 
     // done
 
@@ -266,17 +269,17 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // both sboms have the same name
 
-    assert_eq!(sbom1.head.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom2.head.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom1.described_by.len(), 1);
-    assert_eq!(sbom2.described_by.len(), 1);
+    assert_eq!(sbom1.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom2.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom1.summary.described_by.len(), 1);
+    assert_eq!(sbom2.summary.described_by.len(), 1);
 
     // clear the ID as that one will be different
 
-    sbom1.described_by[0].id = "".into();
-    sbom2.described_by[0].id = "".into();
+    sbom1.summary.described_by[0].id = "".into();
+    sbom2.summary.described_by[0].id = "".into();
 
-    assert_eq!(sbom1.described_by[0], sbom2.described_by[0]);
+    assert_eq!(sbom1.summary.described_by[0], sbom2.summary.described_by[0]);
 
     // done
 
@@ -329,17 +332,23 @@ async fn syft_rerun(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // both sboms have the same name
 
-    assert_eq!(sbom1.head.name, "registry.access.redhat.com/ubi9/ubi");
-    assert_eq!(sbom2.head.name, "registry.access.redhat.com/ubi9/ubi");
-    assert_eq!(sbom1.described_by.len(), 1);
-    assert_eq!(sbom2.described_by.len(), 1);
+    assert_eq!(
+        sbom1.summary.head.name,
+        "registry.access.redhat.com/ubi9/ubi"
+    );
+    assert_eq!(
+        sbom2.summary.head.name,
+        "registry.access.redhat.com/ubi9/ubi"
+    );
+    assert_eq!(sbom1.summary.described_by.len(), 1);
+    assert_eq!(sbom2.summary.described_by.len(), 1);
 
     // clear the ID as that one will be different
 
-    sbom1.described_by[0].id = "".into();
-    sbom2.described_by[0].id = "".into();
+    sbom1.summary.described_by[0].id = "".into();
+    sbom2.summary.described_by[0].id = "".into();
 
-    assert_eq!(sbom1.described_by[0], sbom2.described_by[0]);
+    assert_eq!(sbom1.summary.described_by[0], sbom2.summary.described_by[0]);
 
     // done
 

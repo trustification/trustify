@@ -1,29 +1,87 @@
 use crate::advisory::model::AdvisoryHead;
 use crate::purl::model::details::purl::StatusContext;
 use crate::purl::model::summary::purl::PurlSummary;
-use crate::sbom::model::{SbomHead, SbomPackage};
+use crate::sbom::model::SbomPackage;
 use crate::sbom::service::sbom::QueryCatcher;
+use crate::sbom::service::SbomService;
 use crate::Error;
 use async_graphql::SimpleObject;
 use cpe::uri::OwnedUri;
+use sea_orm::{JoinType, ModelTrait, QuerySelect, RelationTrait};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use time::OffsetDateTime;
 use trustify_common::cpe::CpeCompare;
-use trustify_common::db::ConnectionOrTransaction;
+use trustify_common::db::{multi_model::SelectIntoMultiModel, ConnectionOrTransaction};
 use trustify_common::memo::Memo;
+use trustify_entity::{
+    base_purl, purl_status,
+    qualified_purl::{self},
+    sbom::{self},
+    sbom_node, sbom_package, sbom_package_purl_ref, versioned_purl,
+};
 use utoipa::ToSchema;
+
+use super::SbomSummary;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SbomDetails {
     #[serde(flatten)]
-    pub head: SbomHead,
-    #[schema(required)]
-    #[serde(with = "time::serde::rfc3339::option")]
-    pub published: Option<OffsetDateTime>,
-    pub authors: Vec<String>,
-    pub described_by: Vec<SbomPackage>,
+    pub summary: SbomSummary,
+
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub advisories: Vec<SbomAdvisory>,
+}
+
+impl SbomDetails {
+    /// turn an (sbom, sbom_node) row into an [`SbomDetails`], if possible
+    pub async fn from_entity(
+        (sbom, node): (sbom::Model, Option<sbom_node::Model>),
+        service: &SbomService,
+        tx: &ConnectionOrTransaction<'_>,
+    ) -> Result<Option<SbomDetails>, Error> {
+        let relevant_advisory_info = sbom
+            .find_related(sbom_package::Entity)
+            .join(JoinType::Join, sbom_package::Relation::Node.def())
+            .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
+            .join(
+                JoinType::LeftJoin,
+                sbom_package_purl_ref::Relation::Purl.def(),
+            )
+            .join(
+                JoinType::LeftJoin,
+                qualified_purl::Relation::VersionedPurl.def(),
+            )
+            .join(JoinType::LeftJoin, versioned_purl::Relation::BasePurl.def())
+            .join(JoinType::Join, base_purl::Relation::PurlStatus.def())
+            .join(JoinType::Join, purl_status::Relation::Status.def())
+            .join(
+                JoinType::LeftJoin,
+                purl_status::Relation::VersionRange.def(),
+            )
+            .join(JoinType::LeftJoin, purl_status::Relation::ContextCpe.def())
+            .join(JoinType::Join, purl_status::Relation::Advisory.def())
+            .join(JoinType::Join, purl_status::Relation::Vulnerability.def())
+            .select_only()
+            .try_into_multi_model::<QueryCatcher>()?
+            //.into_model::<QueryCatcher>()
+            .all(tx)
+            .await?;
+
+        let summary = SbomSummary::from_entity((sbom, node), service, tx).await?;
+
+        Ok(match summary {
+            Some(summary) => Some(SbomDetails {
+                summary: summary.clone(),
+                advisories: SbomAdvisory::from_models(
+                    &summary.clone().described_by,
+                    &relevant_advisory_info,
+                    tx,
+                )
+                .await?,
+            }),
+            None => None,
+        })
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]

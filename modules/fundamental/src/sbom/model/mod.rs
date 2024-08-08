@@ -7,9 +7,12 @@ use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use trustify_common::db::ConnectionOrTransaction;
+use trustify_common::model::Paginated;
 use trustify_common::{id::Id, paginated};
 use trustify_entity::{labels::Labels, relationship::Relationship, sbom, sbom_node};
 use utoipa::ToSchema;
+
+use super::service::SbomService;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct SbomHead {
@@ -19,6 +22,13 @@ pub struct SbomHead {
 
     pub document_id: String,
     pub labels: Labels,
+
+    #[schema(required)]
+    #[serde(with = "time::serde::rfc3339::option")]
+    pub published: Option<OffsetDateTime>,
+
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub authors: Vec<String>,
 
     pub name: String,
 }
@@ -34,6 +44,8 @@ impl SbomHead {
             hashes: vec![],
             document_id: sbom.document_id.clone(),
             labels: sbom.labels.clone(),
+            published: sbom.published,
+            authors: sbom.authors.clone(),
             name: sbom_node
                 .map(|node| node.name.clone())
                 .unwrap_or("".to_string()),
@@ -45,13 +57,30 @@ impl SbomHead {
 pub struct SbomSummary {
     #[serde(flatten)]
     pub head: SbomHead,
-    #[schema(required)]
-    #[serde(with = "time::serde::rfc3339::option")]
-    pub published: Option<OffsetDateTime>,
-
-    pub authors: Vec<String>,
 
     pub described_by: Vec<SbomPackage>,
+}
+
+impl SbomSummary {
+    pub async fn from_entity(
+        (sbom, node): (sbom::Model, Option<sbom_node::Model>),
+        service: &SbomService,
+        tx: &ConnectionOrTransaction<'_>,
+    ) -> Result<Option<SbomSummary>, Error> {
+        // TODO: consider improving the n-select issue here
+        let described_by = service
+            .describes_packages(sbom.sbom_id, Paginated::default(), ())
+            .await?
+            .items;
+
+        Ok(match node {
+            Some(_) => Some(SbomSummary {
+                head: SbomHead::from_entity(&sbom, node, tx).await?,
+                described_by,
+            }),
+            None => None,
+        })
+    }
 }
 
 paginated!(SbomSummary);
