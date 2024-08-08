@@ -7375,6 +7375,7 @@ dependencies = [
  "cve",
  "git2",
  "hex",
+ "humantime",
  "humantime-serde",
  "log",
  "osv",

@@ -1,4 +1,10 @@
-use crate::{runner::context::RunContext, service::ImporterService};
+use crate::{
+    runner::{
+        context::RunContext,
+        progress::{Progress, TracingProgress},
+    },
+    service::ImporterService,
+};
 use std::{
     fmt::Debug,
     time::{Duration, Instant},
@@ -34,6 +40,13 @@ impl RunContext for ServiceRunContext {
 
     async fn is_canceled(&self) -> bool {
         self.state.lock().await.check().await
+    }
+
+    fn progress(&self, name: String) -> impl Progress + Send + 'static {
+        TracingProgress {
+            name,
+            period: Duration::from_secs(60),
+        }
     }
 }
 

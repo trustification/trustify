@@ -58,10 +58,11 @@ impl Handler for () {
     }
 }
 
-pub struct GitWalker<H, T>
+pub struct GitWalker<H, T, P>
 where
     T: WorkingDirectory + Send + 'static,
     H: Handler,
+    P: Progress,
 {
     /// The git source to clone from
     pub source: String,
@@ -80,9 +81,11 @@ where
 
     /// The handler
     pub handler: H,
+
+    pub progress: P,
 }
 
-impl<H> GitWalker<H, ()>
+impl<H> GitWalker<H, (), ()>
 where
     H: Handler,
 {
@@ -94,16 +97,18 @@ where
             continuation: Default::default(),
             working_dir: (),
             handler,
+            progress: (),
         }
     }
 }
 
-impl<H, T> GitWalker<H, T>
+impl<H, T, P> GitWalker<H, T, P>
 where
     H: Handler,
     T: WorkingDirectory + Send + 'static,
+    P: Progress + Send + 'static,
 {
-    pub fn handler<U: Handler>(self, handler: U) -> GitWalker<U, T> {
+    pub fn handler<U: Handler>(self, handler: U) -> GitWalker<U, T, P> {
         GitWalker {
             source: self.source,
             branch: self.branch,
@@ -111,6 +116,19 @@ where
             continuation: self.continuation,
             working_dir: self.working_dir,
             handler,
+            progress: self.progress,
+        }
+    }
+
+    pub fn progress<U: Progress>(self, progress: U) -> GitWalker<H, T, U> {
+        GitWalker {
+            source: self.source,
+            branch: self.branch,
+            path: self.path,
+            continuation: self.continuation,
+            working_dir: self.working_dir,
+            handler: self.handler,
+            progress,
         }
     }
 
@@ -125,7 +143,7 @@ where
     pub fn working_dir<U: WorkingDirectory + Send + 'static>(
         self,
         working_dir: U,
-    ) -> GitWalker<H, U> {
+    ) -> GitWalker<H, U, P> {
         GitWalker {
             source: self.source,
             branch: self.branch,
@@ -133,6 +151,7 @@ where
             continuation: self.continuation,
             working_dir,
             handler: self.handler,
+            progress: self.progress,
         }
     }
 
@@ -324,6 +343,8 @@ where
 
     #[instrument(skip(self, changes), err)]
     fn walk(&mut self, base: &Path, changes: &Option<HashSet<PathBuf>>) -> Result<(), Error> {
+        let mut collected = vec![];
+
         for entry in WalkDir::new(base)
             .into_iter()
             .filter_entry(|entry| !is_hidden(entry))
@@ -348,13 +369,24 @@ where
                 }
             }
 
+            let path = path.to_path_buf();
+            collected.push((entry, path));
+        }
+
+        let mut progress = self.progress.start(collected.len());
+
+        for (entry, path) in collected {
             self.handler
-                .process(entry.path(), path)
+                .process(entry.path(), &path)
                 .map_err(|err| match err {
                     HandlerError::Canceled => Error::Canceled,
                     HandlerError::Processing(err) => Error::Processing(anyhow!("{err}")),
                 })?;
+
+            progress.tick_sync();
         }
+
+        progress.finish_sync();
 
         Ok(())
     }
@@ -371,6 +403,7 @@ fn is_hidden(entry: &DirEntry) -> bool {
         .unwrap_or(false)
 }
 
+use crate::runner::progress::{Progress, ProgressInstance};
 #[cfg(test)]
 pub(crate) use test::git_reset;
 

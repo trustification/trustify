@@ -3,6 +3,7 @@ pub mod context;
 pub mod csaf;
 pub mod cve;
 pub mod osv;
+pub mod progress;
 pub mod report;
 pub mod sbom;
 
@@ -24,7 +25,7 @@ pub struct ImportRunner {
 }
 
 impl ImportRunner {
-    #[instrument(skip_all, fields(), err)]
+    #[instrument(skip_all, fields(last_success, continuation), err)]
     pub async fn run_once(
         &self,
         context: impl RunContext + 'static,

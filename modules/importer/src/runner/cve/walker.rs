@@ -1,9 +1,12 @@
-use crate::runner::common::{
-    processing_error::ProcessingError,
-    walker::{
-        CallbackError, Callbacks, Continuation, Error, GitWalker, Handler, HandlerError,
-        WorkingDirectory,
+use crate::runner::{
+    common::{
+        processing_error::ProcessingError,
+        walker::{
+            CallbackError, Callbacks, Continuation, Error, GitWalker, Handler, HandlerError,
+            WorkingDirectory,
+        },
     },
+    progress::Progress,
 };
 use cve::Cve;
 use std::{collections::HashSet, io::BufReader, path::Path};
@@ -98,32 +101,36 @@ where
     }
 }
 
-pub struct CveWalker<C, T>
+pub struct CveWalker<C, T, P>
 where
     C: Callbacks<Cve>,
     T: WorkingDirectory + Send + 'static,
+    P: Progress,
 {
-    walker: GitWalker<(), T>,
+    walker: GitWalker<(), T, ()>,
     callbacks: C,
+    progress: P,
     years: HashSet<u16>,
     start_year: Option<u16>,
 }
 
-impl CveWalker<(), ()> {
+impl CveWalker<(), (), ()> {
     pub fn new(source: impl Into<String>) -> Self {
         Self {
             walker: GitWalker::new(source, ()).path(Some("cves")),
             callbacks: (),
+            progress: (),
             years: Default::default(),
             start_year: None,
         }
     }
 }
 
-impl<C, T> CveWalker<C, T>
+impl<C, T, P> CveWalker<C, T, P>
 where
     C: Callbacks<Cve>,
     T: WorkingDirectory + Send + 'static,
+    P: Progress + Send + 'static,
 {
     /// Set the working directory.
     ///
@@ -131,10 +138,11 @@ where
     pub fn working_dir<U: WorkingDirectory + Send + 'static>(
         self,
         working_dir: U,
-    ) -> CveWalker<C, U> {
+    ) -> CveWalker<C, U, P> {
         CveWalker {
             walker: self.walker.working_dir(working_dir),
             callbacks: self.callbacks,
+            progress: self.progress,
             years: self.years,
             start_year: self.start_year,
         }
@@ -156,10 +164,21 @@ where
         self
     }
 
-    pub fn callbacks<U: Callbacks<Cve> + Send + 'static>(self, callbacks: U) -> CveWalker<U, T> {
+    pub fn callbacks<U: Callbacks<Cve> + Send + 'static>(self, callbacks: U) -> CveWalker<U, T, P> {
         CveWalker {
-            walker: self.walker.handler(()),
+            walker: self.walker,
             callbacks,
+            progress: self.progress,
+            years: self.years,
+            start_year: self.start_year,
+        }
+    }
+
+    pub fn progress<U: Progress + Send + 'static>(self, progress: U) -> CveWalker<C, T, U> {
+        CveWalker {
+            walker: self.walker,
+            callbacks: self.callbacks,
+            progress,
             years: self.years,
             start_year: self.start_year,
         }
@@ -174,6 +193,7 @@ where
                 years: self.years,
                 start_year: self.start_year,
             })
+            .progress(self.progress)
             .run()
             .await
     }

@@ -1,3 +1,4 @@
+use crate::runner::progress::Progress;
 use std::{fmt::Debug, future::Future};
 use tokio::runtime::Handle;
 
@@ -38,4 +39,6 @@ pub trait RunContext: Debug + Send {
             }
         }
     }
+
+    fn progress(&self, #[allow(unused)] name: String) -> impl Progress + Send + 'static {}
 }
