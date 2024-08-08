@@ -56,6 +56,7 @@ impl super::ImportRunner {
             labels: importer.common.labels,
             ingestor,
             report: report.clone(),
+            max_size: importer.size_limit.map(|size| size.as_u64()),
         };
 
         // wrap storage with report

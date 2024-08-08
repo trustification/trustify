@@ -31,6 +31,7 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
 #[openapi(
     paths(list, create, read, update, delete, get_reports, set_enabled, force),
     components(schemas(
+        trustify_common::model::BinaryByteSize,
         crate::model::CommonImporter,
         crate::model::CsafImporter,
         crate::model::CveImporter,

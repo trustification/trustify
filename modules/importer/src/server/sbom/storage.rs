@@ -1,3 +1,4 @@
+use crate::server::report::Severity;
 use crate::server::{
     common::storage::StorageError,
     context::RunContext,
@@ -16,6 +17,7 @@ use walker_common::{compression::decompress_opt, utils::url::Urlify};
 pub struct StorageVisitor<C: RunContext> {
     pub context: C,
     pub source: String,
+    pub max_size: Option<u64>,
     pub labels: Labels,
     pub ingestor: IngestorService,
     /// the report to report our messages to
@@ -39,6 +41,22 @@ impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
         result: Result<ValidatedSbom, ValidationError>,
     ) -> Result<(), Self::Error> {
         let doc = result?;
+        let file = doc.possibly_relative_url();
+
+        if let Some(max) = self.max_size {
+            let len = doc.data.len().try_into().unwrap_or(u64::MAX);
+            if len > max {
+                let msg =
+                    format!("Skipping document due to size restriction - this: {len}, max: {max}");
+                log::info!("{msg}");
+
+                self.report
+                    .lock()
+                    .add_message(Phase::Upload, file, Severity::Warning, msg);
+
+                return Ok(());
+            }
+        }
 
         let (data, _compressed) = match decompress_opt(&doc.data, doc.url.path())
             .transpose()
@@ -47,8 +65,6 @@ impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
             Some(data) => (data, true),
             None => (doc.data.clone(), false),
         };
-
-        let file = doc.possibly_relative_url();
 
         let fmt = Format::sbom_from_bytes(&data).map_err(|e| StorageError::Processing(e.into()))?;
 
