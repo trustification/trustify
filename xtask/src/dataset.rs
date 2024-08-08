@@ -30,6 +30,10 @@ pub struct GenerateDump {
     /// Files greater than this limit will be ignored.
     #[arg(long)]
     size_limit: Option<BinaryByteSize>,
+
+    /// Number of times to retry fetching a document.
+    #[arg(long)]
+    fetch_retries: Option<usize>,
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -58,12 +62,14 @@ impl GenerateDump {
                         v3_signatures: true,
                         only_patterns: vec![],
                         size_limit: self.size_limit,
+                        fetch_retries: self.fetch_retries,
                     }),
                     ImporterConfiguration::Csaf(CsafImporter {
                         common: default_common("Red Hat VEX documents from 2024"),
                         source: "redhat.com".to_string(),
                         v3_signatures: true,
                         only_patterns: vec!["^cve-2024-".into()],
+                        fetch_retries: self.fetch_retries,
                     })
                 ];
 

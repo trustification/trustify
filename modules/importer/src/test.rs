@@ -27,6 +27,7 @@ fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
         v3_signatures: false,
 
         size_limit: None,
+        fetch_retries: None,
     })
 }
 

@@ -22,7 +22,7 @@ use std::{sync::Arc, time::SystemTime};
 use tracing::instrument;
 use trustify_module_ingestor::{graph::Graph, service::IngestorService};
 use url::Url;
-use walker_common::fetcher::Fetcher;
+use walker_common::fetcher::{Fetcher, FetcherOptions};
 
 impl super::ImportRunner {
     #[instrument(skip(self), ret)]
@@ -43,7 +43,8 @@ impl super::ImportRunner {
             .collect::<Vec<_>>();
         let source = HttpSource::new(
             url,
-            Fetcher::new(Default::default()).await?,
+            Fetcher::new(FetcherOptions::new().retries(importer.fetch_retries.unwrap_or_default()))
+                .await?,
             HttpOptions::new().since(last_success).keys(keys),
         );
 
