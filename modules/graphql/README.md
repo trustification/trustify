@@ -18,8 +18,7 @@ Fetch all advisories :
 Fetch all vulnerabilities :
 `curl -s localhost:8080/graphql -H "Content-Type: application/json" -d '{ "query": "{ getVulnerabilities { id identifier published withdrawn }}" }' `
 
-## Fetch a vulnerability by identifier :
-
+Fetch a vulnerability by identifier :
 `curl -s localhost:8080/graphql -H "Content-Type: application/json" -d '{ "query": "{ getVulnerabilityById(identifier: \"CVE-2024-28111\") { id identifier published withdrawn }}" }' `
 
 ## Organization Queries
@@ -27,7 +26,7 @@ Fetch all vulnerabilities :
 Fetch an organization by name :
 `curl -s localhost:8080/graphql -H "Content-Type: application/json" -d '{ "query": "{ getOrganizationByName(name: \"org1\" ) { id name cpeKey website}}" }' `
 
-## SBOM Entity Queries
+## SBOM Queries
 
 Fetch all SBOMs by location :
 `query Sboms_by_location {sbomsByLocation(location: "1") {sbomId, location, sha256, authors}}`
