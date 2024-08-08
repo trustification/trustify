@@ -671,7 +671,7 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         assert_eq!(
             1,
             sbom_service
-                .delete_sbom(sbom.head.id, Transactional::None)
+                .delete_sbom(sbom.summary.head.id, Transactional::None)
                 .await?
         );
 
