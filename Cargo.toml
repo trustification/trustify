@@ -135,7 +135,7 @@ trustify-module-fundamental = { path = "modules/fundamental" }
 trustify-module-importer = { path = "modules/importer" }
 trustify-module-ui = { path = "modules/ui", default-features = false }
 trustify-server = { path = "server", default-features = false }
-trustify-ui = { git = "https://github.com/trustification/trustify-ui.git", tag = "static-main" }
+trustify-ui = { git = "https://github.com/trustification/trustify-ui.git", branch = "publish/main" }
 trustify-module-ingestor = { path = "modules/ingestor" }
 trustify-module-storage = { path = "modules/storage" }
 trustify-module-graphql = { path = "modules/graphql" }
