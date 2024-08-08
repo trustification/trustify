@@ -6,17 +6,13 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        let x = manager
+        manager
             .get_connection()
             .execute_unprepared(include_str!(
                 "m0000510_create_maven_cmp_fns/mavenver_cmp.sql"
             ))
             .await
-            .map(|_| ());
-
-        println!("{:#?}", x);
-
-        x?;
+            .map(|_| ())?;
 
         manager
             .get_connection()
