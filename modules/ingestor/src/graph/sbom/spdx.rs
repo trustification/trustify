@@ -263,7 +263,7 @@ pub fn fix_license(report: &dyn ReportSink, mut json: Value) -> (Value, bool) {
 
                     let message =
                         format!("Replacing faulty SPDX license expression with NOASSERTION: {err}");
-                    log::warn!("{message}");
+                    log::debug!("{message}");
                     report.error(message);
                 }
             }
