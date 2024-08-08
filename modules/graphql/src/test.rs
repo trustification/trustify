@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::RootQuery;
 use async_graphql::{EmptyMutation, EmptySubscription, Request, Schema, Variables};
@@ -23,11 +23,7 @@ const GET_ADVISORIES: &str = "
         getAdvisories {
             id
             name
-            vulnerabilities {
-                id
-                title
-                published
-            }
+           
         }
     }
 ";
@@ -94,7 +90,6 @@ const GET_VULNERABILITY_BY_ID: &str = "
     }
 ";
 
-#[ignore]
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
@@ -102,11 +97,9 @@ async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_documents(["cve/CVE-2021-32714.json", "cve/CVE-2024-29025.json"])
         .await?;
 
-    let graph = ctx.graph.clone();
-    let db = ctx.db.clone();
     let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Graph>(graph)
-        .data::<Database>(db)
+        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
+        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
         .finish();
 
     let result = schema.execute(Request::new(GET_ADVISORIES)).await;
@@ -114,10 +107,10 @@ async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let data = result.data.into_json()?;
     let advisories = &data["getAdvisories"];
 
-    assert_eq!(advisories[0]["identifier"], "CVE-2021-32714");
-    assert_eq!(advisories[1]["identifier"], "CVE-2024-29025");
+    assert_eq!(advisories[0]["name"], "CVE-2021-32714");
+    assert_eq!(advisories[1]["name"], "CVE-2024-29025");
 
-    log::debug!("{}", data);
+    log::debug!("{}", advisories);
 
     Ok(())
 }
@@ -127,11 +120,9 @@ async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 async fn get_advisory_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let results = ctx.ingest_document("cve/CVE-2024-29025.json").await?;
 
-    let graph = ctx.graph.clone();
-    let db = ctx.db.clone();
     let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Graph>(graph)
-        .data::<Database>(db)
+        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
+        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
         .finish();
 
     let id = results.id.clone();
@@ -158,11 +149,9 @@ async fn get_advisory_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 async fn get_organization_by_name(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingest_document("cve/rhsa-2024-2705.json").await?;
 
-    let graph = ctx.graph.clone();
-    let db = ctx.db.clone();
     let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Graph>(graph)
-        .data::<Database>(db)
+        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
+        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
         .finish();
 
     let result = schema
@@ -191,11 +180,9 @@ async fn get_sbom_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
     let sbom_id = results.id.clone();
 
-    let graph = ctx.graph.clone();
-    let db = ctx.db.clone();
     let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Graph>(graph)
-        .data::<Database>(db)
+        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
+        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
         .finish();
 
     let result = schema
@@ -225,11 +212,9 @@ async fn get_sbom_by_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     ctx.ingest_document("spdx/quarkus-bom-3.2.11.Final-redhat-00001.json")
         .await?;
 
-    let graph = ctx.graph.clone();
-    let db = ctx.db.clone();
     let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Graph>(graph)
-        .data::<Database>(db)
+        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
+        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
         .finish();
 
     let mut labels: HashMap<String, String> = HashMap::new();
@@ -260,11 +245,9 @@ async fn get_sbom_by_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 async fn get_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingest_document("cve/rhsa-2024-2705.json").await?;
 
-    let graph = ctx.graph.clone();
-    let db = ctx.db.clone();
     let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Graph>(graph)
-        .data::<Database>(db)
+        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
+        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
         .finish();
 
     let result = schema.execute(Request::new(GET_VULNERABILITIES)).await;
@@ -285,11 +268,9 @@ async fn get_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 async fn get_vulnerability_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingest_document("cve/CVE-2024-29025.json").await?;
 
-    let graph = ctx.graph.clone();
-    let db = ctx.db.clone();
     let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Graph>(graph)
-        .data::<Database>(db)
+        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
+        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
         .finish();
 
     let result = schema
@@ -323,11 +304,9 @@ async fn get_cves_by_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let sbom_id = results[1].id.clone();
 
-    let graph = ctx.graph.clone();
-    let db = ctx.db.clone();
     let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Graph>(graph)
-        .data::<Database>(db)
+        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
+        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
         .finish();
 
     let result = schema
