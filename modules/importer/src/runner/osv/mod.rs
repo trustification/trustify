@@ -90,6 +90,10 @@ impl super::ImportRunner {
 
         let working_dir = self.create_working_dir("osv", &osv.source).await?;
 
+        // progress reporting
+
+        let progress = context.progress(format!("Import OSV: {}", osv.source));
+
         // run the walker
 
         let walker = OsvWalker::new(osv.source.clone())
@@ -102,7 +106,8 @@ impl super::ImportRunner {
                 labels: osv.common.labels,
                 report: report.clone(),
                 ingestor,
-            });
+            })
+            .progress(progress);
 
         let continuation = match working_dir {
             Some(working_dir) => walker.working_dir(working_dir).run().await,

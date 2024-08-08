@@ -3,12 +3,16 @@ use anyhow::anyhow;
 use clap::Parser;
 use postgresql_commands::{pg_dump::PgDumpBuilder, CommandBuilder};
 use serde_json::Value;
-use std::{io::BufReader, path::PathBuf};
+use std::{io::BufReader, path::PathBuf, time::Duration};
 use tokio::io::AsyncWriteExt;
 use trustify_common::{db, model::BinaryByteSize};
 use trustify_module_importer::{
     model::{CommonImporter, CsafImporter, CveImporter, ImporterConfiguration, SbomImporter},
-    runner::{context::RunContext, ImportRunner},
+    runner::{
+        context::RunContext,
+        progress::{Progress, TracingProgress},
+        ImportRunner,
+    },
 };
 use trustify_module_storage::service::fs::FileSystemBackend;
 
@@ -186,5 +190,12 @@ impl RunContext for Context {
     async fn is_canceled(&self) -> bool {
         // for generating the dump, we don't cancel
         false
+    }
+
+    fn progress(&self, name: String) -> impl Progress + Send + 'static {
+        TracingProgress {
+            name: format!("{}: {name}", self.name),
+            period: Duration::from_secs(15),
+        }
     }
 }

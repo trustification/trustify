@@ -1,9 +1,12 @@
-use crate::runner::common::{
-    processing_error::ProcessingError,
-    walker::{
-        CallbackError, Callbacks, Continuation, Error, GitWalker, Handler, HandlerError,
-        WorkingDirectory,
+use crate::runner::{
+    common::{
+        processing_error::ProcessingError,
+        walker::{
+            CallbackError, Callbacks, Continuation, Error, GitWalker, Handler, HandlerError,
+            WorkingDirectory,
+        },
     },
+    progress::Progress,
 };
 use osv::schema::Vulnerability;
 use std::{io::BufReader, path::Path};
@@ -68,15 +71,16 @@ where
     }
 }
 
-pub struct OsvWalker<C, T>
+pub struct OsvWalker<C, T, P>
 where
     C: Callbacks<Vulnerability>,
     T: WorkingDirectory + Send + 'static,
+    P: Progress + Send + 'static,
 {
-    walker: GitWalker<OsvHandler<C>, T>,
+    walker: GitWalker<OsvHandler<C>, T, P>,
 }
 
-impl OsvWalker<(), ()> {
+impl OsvWalker<(), (), ()> {
     pub fn new(source: impl Into<String>) -> Self {
         Self {
             walker: GitWalker::new(source, OsvHandler(())),
@@ -84,10 +88,11 @@ impl OsvWalker<(), ()> {
     }
 }
 
-impl<C, T> OsvWalker<C, T>
+impl<C, T, P> OsvWalker<C, T, P>
 where
     C: Callbacks<Vulnerability>,
     T: WorkingDirectory + Send + 'static,
+    P: Progress + Send + 'static,
 {
     /// Set the working directory.
     ///
@@ -95,7 +100,7 @@ where
     pub fn working_dir<U: WorkingDirectory + Send + 'static>(
         self,
         working_dir: U,
-    ) -> OsvWalker<C, U> {
+    ) -> OsvWalker<C, U, P> {
         OsvWalker {
             walker: self.walker.working_dir(working_dir),
         }
@@ -120,9 +125,15 @@ where
     pub fn callbacks<U: Callbacks<Vulnerability> + Send + 'static>(
         self,
         callbacks: U,
-    ) -> OsvWalker<U, T> {
+    ) -> OsvWalker<U, T, P> {
         OsvWalker {
             walker: self.walker.handler(OsvHandler(callbacks)),
+        }
+    }
+
+    pub fn progress<U: Progress + Send + 'static>(self, progress: U) -> OsvWalker<C, T, U> {
+        OsvWalker {
+            walker: self.walker.progress(progress),
         }
     }
 

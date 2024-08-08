@@ -90,6 +90,10 @@ impl super::ImportRunner {
 
         let working_dir = self.create_working_dir("cve", &cve.source).await?;
 
+        // progress reporting
+
+        let progress = context.progress(format!("Import CVE: {}", cve.source));
+
         // run the walker
 
         let walker = CveWalker::new(cve.source.clone())
@@ -102,7 +106,8 @@ impl super::ImportRunner {
                 labels: cve.common.labels,
                 report: report.clone(),
                 ingestor,
-            });
+            })
+            .progress(progress);
 
         let continuation = match working_dir {
             Some(working_dir) => walker.working_dir(working_dir).run().await,
