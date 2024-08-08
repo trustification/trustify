@@ -36,11 +36,13 @@ impl AdvisoryQuery {
     async fn get_advisories<'a>(&self, ctx: &Context<'a>) -> FieldResult<Vec<Advisory>> {
         let db = ctx.data::<db::Database>()?;
         let graph = Graph::new(db.clone());
+
         let advisories = match graph.get_advisories(Transactional::None).await {
-            Ok(sbom) => sbom,
+            Ok(advisory) => advisory,
             _ => vec![],
         };
 
+        log::info!("advisories: {:?}", advisories);
         advisories
             .into_iter()
             .map(|advisory| {

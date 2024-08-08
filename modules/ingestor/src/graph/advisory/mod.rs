@@ -79,13 +79,13 @@ impl Graph {
             .map(|advisory| AdvisoryContext::new(self, advisory)))
     }
 
+    #[instrument(skip(self, tx), err)]
     pub async fn get_advisories<TX: AsRef<Transactional>>(
         &self,
         tx: TX,
     ) -> Result<Vec<AdvisoryContext>, Error> {
         Ok(advisory::Entity::find()
-            .filter(Condition::all())
-            .all(&self.db.connection(&tx))
+            .all(&self.connection(&tx))
             .await?
             .into_iter()
             .map(|advisory| AdvisoryContext::new(self, advisory))
