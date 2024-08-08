@@ -34,6 +34,7 @@ For `1.0.0` and beyond, this should work differently. Maybe even before. However
 In a nutshell, the steps are:
 
 * Ensure the cargo versions are aligned with the release tag that we create next
+* Re-generate the OpenAPI spec, as it contains the version
 * Tag the release
 * Push the tag
 
@@ -69,6 +70,12 @@ If the result looks good, execute the changes using:
 
 ```bash
 cargo release version alpha -x
+```
+
+Update the OpenAPI spec by regenerating it:
+
+```bash
+cargo xtask generate-schemas
 ```
 
 Commit the changes to git:

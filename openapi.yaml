@@ -4,7 +4,7 @@ info:
   description: Software Supply-Chain Security API
   license:
     name: ''
-  version: 0.1.0-alpha.12
+  version: 0.1.0-alpha.13
 paths:
   /api/v1/advisory:
     get:
