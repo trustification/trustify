@@ -1,21 +1,21 @@
 use crate::service::{StorageBackend, StorageKey, StorageResult, StoreError};
 use anyhow::Context;
 use bytes::Bytes;
-use futures::{Stream, StreamExt};
+use futures::Stream;
 use std::{
     fmt::Debug,
     io::ErrorKind,
-    io::SeekFrom,
     path::{Path, PathBuf},
     pin::pin,
 };
-use tempfile::{tempdir, tempfile, TempDir};
+use tempfile::{tempdir, TempDir};
 use tokio::{
     fs::{create_dir_all, File},
-    io::{AsyncSeekExt, AsyncWriteExt},
+    io::AsyncWriteExt,
 };
 use tokio_util::io::ReaderStream;
-use trustify_common::hashing::Contexts;
+
+use super::temp::TempFile;
 
 /// A filesystem backed store
 ///
@@ -86,33 +86,12 @@ impl StorageBackend for FileSystemBackend {
         E: Debug,
         S: Stream<Item = Result<Bytes, E>>,
     {
-        // create a new temp file
+        let stream = pin!(stream);
+        let mut file = TempFile::new(stream).await.map_err(StoreError::Backend)?;
+        let mut source = file.reader().await.map_err(StoreError::Backend)?;
 
-        let mut file = File::from(tempfile().map_err(StoreError::Backend)?);
-
-        // set up reader
-
-        let mut stream = pin!(stream);
-        let mut contexts = Contexts::new();
-
-        // process reader
-
-        while let Some(next) = stream
-            .next()
-            .await
-            .transpose()
-            .map_err(StoreError::Stream)?
-        {
-            contexts.update(&next);
-            file.write_all(&next).await.map_err(StoreError::Backend)?;
-        }
-
-        // finalize the digest
-
-        let result = StorageResult {
-            digests: contexts.finish(),
-        };
-        let key: String = result.key().to_string();
+        let result = file.result();
+        let key = result.key().to_string();
 
         // create the target path
 
@@ -121,16 +100,7 @@ impl StorageBackend for FileSystemBackend {
         let target = target.join(&key);
 
         let mut target = File::create(target).await.map_err(StoreError::Backend)?;
-
-        // reset the file pointer to the start
-
-        file.seek(SeekFrom::Start(0))
-            .await
-            .map_err(StoreError::Backend)?;
-
-        // copy the content to the target file
-
-        tokio::io::copy(&mut file, &mut target)
+        tokio::io::copy(&mut source, &mut target)
             .await
             .map_err(StoreError::Backend)?;
 
@@ -142,7 +112,7 @@ impl StorageBackend for FileSystemBackend {
 
         // the content is at the right place, close (destroy) the temp file
 
-        drop(file);
+        drop(source);
 
         // done
 
