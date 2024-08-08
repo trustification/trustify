@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use crate::RootQuery;
 use async_graphql::{EmptyMutation, EmptySubscription, Request, Schema, Variables};
@@ -54,16 +54,6 @@ const GET_ORGANIZATION_BY_NAME: &str = "
 const GET_SBOM_BY_ID: &str = "
     query SBOMyById($id: UUID!) {
         getSbomById(id: $id) {
-            sbomId
-            sha256
-            authors
-        }
-    }
-";
-
-const GET_SBOM_BY_LABELS: &str = "
-    query SBOMyById($labels: Labels!) {
-        getSbomById(id: $labels) {
             sbomId
             sha256
             authors
