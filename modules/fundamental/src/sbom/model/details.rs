@@ -21,11 +21,7 @@ pub struct SbomDetails {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[serde(with = "time::serde::rfc3339::option")]
     pub published: Option<OffsetDateTime>,
-
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub authors: Vec<String>,
-
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub described_by: Vec<SbomPackage>,
     pub advisories: Vec<SbomAdvisory>,
 }
@@ -34,7 +30,6 @@ pub struct SbomDetails {
 pub struct SbomAdvisory {
     #[serde(flatten)]
     pub head: AdvisoryHead,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub status: Vec<SbomStatus>,
 }
 
@@ -157,7 +152,6 @@ pub struct SbomStatus {
     pub status: String,
     #[graphql(skip)]
     pub context: Option<StatusContext>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub packages: Vec<SbomPackage>,
 }
 
