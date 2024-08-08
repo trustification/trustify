@@ -2,7 +2,7 @@ mod walker;
 
 use crate::{
     model::OsvImporter,
-    server::{
+    runner::{
         common::walker::{CallbackError, Callbacks},
         context::RunContext,
         osv::walker::OsvWalker,

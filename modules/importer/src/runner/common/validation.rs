@@ -1,4 +1,4 @@
-use crate::server::report::ScannerError;
+use crate::runner::report::ScannerError;
 use std::time::SystemTime;
 use time::{Date, Month, UtcOffset};
 use walker_common::validate::ValidationOptions;

@@ -1,4 +1,4 @@
-use crate::server::{common::storage::StorageError, context::RunContext, report::ReportBuilder};
+use crate::runner::{common::storage::StorageError, context::RunContext, report::ReportBuilder};
 use csaf_walker::validation::{
     ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError,
 };
