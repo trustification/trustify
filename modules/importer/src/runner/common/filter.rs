@@ -1,4 +1,4 @@
-use crate::server::report::ScannerError;
+use crate::runner::report::ScannerError;
 use regex::Regex;
 use std::str::FromStr;
 use walker_common::utils::url::Urlify;

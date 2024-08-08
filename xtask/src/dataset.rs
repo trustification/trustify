@@ -5,11 +5,10 @@ use postgresql_commands::{pg_dump::PgDumpBuilder, CommandBuilder};
 use serde_json::Value;
 use std::{io::BufReader, path::PathBuf};
 use tokio::io::AsyncWriteExt;
-use trustify_common::db;
-use trustify_common::model::BinaryByteSize;
+use trustify_common::{db, model::BinaryByteSize};
 use trustify_module_importer::{
     model::{CommonImporter, CsafImporter, CveImporter, ImporterConfiguration, SbomImporter},
-    server::{context::RunContext, ImportRunner},
+    runner::{context::RunContext, ImportRunner},
 };
 use trustify_module_storage::service::fs::FileSystemBackend;
 

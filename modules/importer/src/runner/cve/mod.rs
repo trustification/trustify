@@ -2,7 +2,7 @@ mod walker;
 
 use crate::{
     model::CveImporter,
-    server::{
+    runner::{
         common::walker::{CallbackError, Callbacks},
         context::RunContext,
         cve::walker::CveWalker,

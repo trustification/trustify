@@ -1,7 +1,7 @@
-use crate::server::report::Severity;
-use crate::server::{
+use crate::runner::{
     common::storage::StorageError,
     context::RunContext,
+    report::Severity,
     report::{Message, Phase, ReportBuilder},
 };
 use parking_lot::Mutex;

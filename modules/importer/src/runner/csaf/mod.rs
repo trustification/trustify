@@ -2,22 +2,23 @@ mod report;
 pub mod storage;
 
 use crate::{
-    model::SbomImporter,
-    server::{
+    model::CsafImporter,
+    runner::{
         common::{filter::Filter, validation},
         context::RunContext,
+        csaf::report::CsafReportVisitor,
         report::{ReportBuilder, ReportVisitor, ScannerError},
-        sbom::report::SbomReportVisitor,
         RunOutput,
     },
 };
-use parking_lot::Mutex;
-use sbom_walker::{
+use csaf_walker::{
+    metadata::MetadataRetriever,
     retrieve::RetrievingVisitor,
     source::{HttpOptions, HttpSource},
     validation::ValidationVisitor,
     walker::Walker,
 };
+use parking_lot::Mutex;
 use std::{sync::Arc, time::SystemTime};
 use tracing::instrument;
 use trustify_module_ingestor::{graph::Graph, service::IngestorService};
@@ -26,47 +27,44 @@ use walker_common::fetcher::{Fetcher, FetcherOptions};
 
 impl super::ImportRunner {
     #[instrument(skip(self), ret)]
-    pub async fn run_once_sbom(
+    pub async fn run_once_csaf(
         &self,
         context: impl RunContext,
-        importer: SbomImporter,
+        importer: CsafImporter,
         last_success: Option<SystemTime>,
     ) -> Result<RunOutput, ScannerError> {
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
-        let url = Url::parse(&importer.source).map_err(|err| ScannerError::Critical(err.into()))?;
-
-        let keys = importer
-            .keys
-            .into_iter()
-            .map(|key| key.into())
-            .collect::<Vec<_>>();
-        let source = HttpSource::new(
-            url,
+        let fetcher =
             Fetcher::new(FetcherOptions::new().retries(importer.fetch_retries.unwrap_or_default()))
-                .await?,
-            HttpOptions::new().since(last_success).keys(keys),
-        );
+                .await?;
+        let options = HttpOptions::new().since(last_success);
+
+        let source = match Url::parse(&importer.source) {
+            Ok(url) => HttpSource::new(url, fetcher, options),
+            Err(_) => HttpSource::new(
+                MetadataRetriever::new(importer.source.clone()),
+                fetcher,
+                options,
+            ),
+        };
 
         // storage (called by validator)
 
         let ingestor = IngestorService::new(Graph::new(self.db.clone()), self.storage.clone());
         let storage = storage::StorageVisitor {
             context,
-            source: importer.source,
-            labels: importer.common.labels,
             ingestor,
+            labels: importer.common.labels,
             report: report.clone(),
-            max_size: importer.size_limit.map(|size| size.as_u64()),
         };
 
         // wrap storage with report
 
-        let storage = SbomReportVisitor(ReportVisitor::new(report.clone(), storage));
+        let storage = CsafReportVisitor(ReportVisitor::new(report.clone(), storage));
 
         // validate (called by retriever)
 
-        //  because we might still have GPG v3 signatures
         let options = validation::options(importer.v3_signatures)?;
         let validation = ValidationVisitor::new(storage).with_options(options);
 

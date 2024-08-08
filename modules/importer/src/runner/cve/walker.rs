@@ -1,4 +1,4 @@
-use crate::server::common::{
+use crate::runner::common::{
     processing_error::ProcessingError,
     walker::{
         CallbackError, Callbacks, Continuation, Error, GitWalker, Handler, HandlerError,
@@ -182,7 +182,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{model::DEFAULT_SOURCE_CVEPROJECT, server::common::walker::git_reset};
+    use crate::{model::DEFAULT_SOURCE_CVEPROJECT, runner::common::walker::git_reset};
     use std::path::PathBuf;
 
     /// test CVE walker, runs for a long time

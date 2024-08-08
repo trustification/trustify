@@ -1,4 +1,4 @@
-use crate::server::common::walker::WorkingDirectory;
+use crate::runner::common::walker::WorkingDirectory;
 use anyhow::anyhow;
 use git2::{
     build::RepoBuilder, ErrorClass, ErrorCode, FetchOptions, RemoteCallbacks, Repository, ResetType,

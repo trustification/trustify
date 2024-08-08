@@ -1,4 +1,4 @@
-use crate::server::common::{
+use crate::runner::common::{
     processing_error::ProcessingError,
     walker::{
         CallbackError, Callbacks, Continuation, Error, GitWalker, Handler, HandlerError,
@@ -136,7 +136,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::server::common::walker::git_reset;
+    use crate::runner::common::walker::git_reset;
     use std::path::PathBuf;
 
     #[test_log::test(tokio::test)]
