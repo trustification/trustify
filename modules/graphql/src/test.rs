@@ -205,41 +205,6 @@ async fn get_sbom_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[ignore]
-#[test_context(TrustifyContext)]
-#[test(tokio::test)]
-async fn get_sbom_by_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    ctx.ingest_document("spdx/quarkus-bom-3.2.11.Final-redhat-00001.json")
-        .await?;
-
-    let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
-        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
-        .finish();
-
-    let mut labels: HashMap<String, String> = HashMap::new();
-    labels.insert(String::from("type"), String::from("spdx"));
-
-    let result = schema
-        .execute(
-            Request::new(GET_SBOM_BY_LABELS).variables(Variables::from_json(json!({
-               "labels": labels,
-            }))),
-        )
-        .await;
-
-    let data = result.data.into_json()?;
-    let sbom = &data["getSbomById"];
-    assert_eq!(
-        sbom["sha256"],
-        "8f080039c24decc9a066e08fc8f4b7208437536a0bc788d4c76c38c1e1add6e3"
-    );
-
-    log::debug!("{}", data);
-
-    Ok(())
-}
-
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn get_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
