@@ -23,7 +23,7 @@ use std::{sync::Arc, time::SystemTime};
 use tracing::instrument;
 use trustify_module_ingestor::{graph::Graph, service::IngestorService};
 use url::Url;
-use walker_common::fetcher::Fetcher;
+use walker_common::fetcher::{Fetcher, FetcherOptions};
 
 impl super::ImportRunner {
     #[instrument(skip(self), ret)]
@@ -35,7 +35,9 @@ impl super::ImportRunner {
     ) -> Result<RunOutput, ScannerError> {
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
-        let fetcher = Fetcher::new(Default::default()).await?;
+        let fetcher =
+            Fetcher::new(FetcherOptions::new().retries(importer.fetch_retries.unwrap_or_default()))
+                .await?;
         let options = HttpOptions::new().since(last_success);
 
         let source = match Url::parse(&importer.source) {

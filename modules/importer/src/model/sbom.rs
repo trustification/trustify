@@ -28,6 +28,9 @@ pub struct SbomImporter {
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub size_limit: Option<BinaryByteSize>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fetch_retries: Option<usize>,
 }
 
 impl Deref for SbomImporter {
@@ -74,6 +77,7 @@ mod test {
                 v3_signatures: false,
                 only_patterns: vec![],
                 size_limit: Some(bytesize::ByteSize::mib(1234).into()),
+                fetch_retries: None,
             }
         );
 

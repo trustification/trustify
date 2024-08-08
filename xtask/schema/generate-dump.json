@@ -39,6 +39,14 @@
           "default": false,
           "type": "boolean"
         },
+        "fetchRetries": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint",
+          "minimum": 0.0
+        },
         "labels": {
           "description": "Labels which will be applied to the ingested documents.",
           "allOf": [
@@ -261,6 +269,14 @@
           "description": "A flag to disable the importer, without deleting it.",
           "default": false,
           "type": "boolean"
+        },
+        "fetchRetries": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint",
+          "minimum": 0.0
         },
         "keys": {
           "type": "array",

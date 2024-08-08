@@ -21,6 +21,9 @@ pub struct CsafImporter {
     pub v3_signatures: bool,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub only_patterns: Vec<String>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fetch_retries: Option<usize>,
 }
 
 impl Deref for CsafImporter {

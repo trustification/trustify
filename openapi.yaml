@@ -1512,6 +1512,10 @@ components:
         required:
         - source
         properties:
+          fetchRetries:
+            type: integer
+            nullable: true
+            minimum: 0
           onlyPatterns:
             type: array
             items:
@@ -2080,6 +2084,10 @@ components:
         required:
         - source
         properties:
+          fetchRetries:
+            type: integer
+            nullable: true
+            minimum: 0
           keys:
             type: array
             items:
