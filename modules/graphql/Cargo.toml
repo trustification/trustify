@@ -16,13 +16,13 @@ trustify-module-fundamental = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 
 anyhow = { workspace = true }
+async-graphql = { workspace = true }
+async-graphql-actix-web = { workspace = true }
 actix-web = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 log = { workspace = true }
-uuid = { workspace = true }
-async-graphql = { workspace = true }
-async-graphql-actix-web = { workspace = true }
 thiserror = { workspace = true }
+uuid = { workspace = true }
 
 [dev-dependencies]
 serde_json = { workspace = true }
