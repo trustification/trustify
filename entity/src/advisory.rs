@@ -12,7 +12,6 @@ use trustify_common::{
 #[graphql(complex)]
 #[graphql(concrete(name = "Advisory", params()))]
 #[sea_orm(table_name = "advisory")]
-
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,

@@ -64,6 +64,9 @@ mod m0000510_create_maven_cmp_fns;
 mod m0000520_scale_indexes;
 mod m0000530_base_purl_index;
 mod m0000540_ingestion_indexes;
+mod m0000543_create_license;
+mod m0000545_create_purl_license_assertion;
+mod m0000550_create_cpe_license_assertion;
 
 pub struct Migrator;
 
@@ -134,6 +137,9 @@ impl MigratorTrait for Migrator {
             Box::new(m0000520_scale_indexes::Migration),
             Box::new(m0000530_base_purl_index::Migration),
             Box::new(m0000540_ingestion_indexes::Migration),
+            Box::new(m0000543_create_license::Migration),
+            Box::new(m0000545_create_purl_license_assertion::Migration),
+            Box::new(m0000550_create_cpe_license_assertion::Migration),
         ]
     }
 }

@@ -1,3 +1,4 @@
+use crate::graph::sbom::{LicenseCreator, LicenseInfo};
 use crate::{
     graph::{
         cpe::CpeCreator,
@@ -13,6 +14,7 @@ use crate::{
 use sbom_walker::report::{check, ReportSink};
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
+use std::collections::HashMap;
 use std::{io::Read, str::FromStr};
 use time::OffsetDateTime;
 use tracing::instrument;
@@ -100,17 +102,53 @@ impl SbomContext {
             }
         }
 
+        let mut licenses = LicenseCreator::new();
+
+        let license_refs = sbom_data
+            .other_licensing_information_detected
+            .iter()
+            .map(|e| (e.license_identifier.clone(), e.license_name.clone()))
+            .collect::<HashMap<_, _>>();
+
         let mut packages =
             PackageCreator::with_capacity(self.sbom.sbom_id, sbom_data.package_information.len());
 
         for package in &sbom_data.package_information {
+            let declared_license_info = package.declared_license.as_ref().map(|e| LicenseInfo {
+                license: e.to_string(),
+                refs: license_refs.clone(),
+            });
+
+            let concluded_license_info = package.concluded_license.as_ref().map(|e| LicenseInfo {
+                license: e.to_string(),
+                refs: license_refs.clone(),
+            });
+
             let mut refs = Vec::new();
+            let mut license_refs = Vec::new();
+
+            if let Some(declared_license) = declared_license_info {
+                if declared_license.license != "NOASSERTION" {
+                    licenses.add(&declared_license);
+                    license_refs.push(declared_license);
+                }
+            }
+
+            if let Some(concluded_license) = concluded_license_info {
+                if concluded_license.license != "NOASSERTION" {
+                    licenses.add(&concluded_license);
+                    license_refs.push(concluded_license);
+                }
+            }
 
             for r in &package.external_reference {
                 match &*r.reference_type {
                     "purl" => match Purl::from_str(&r.reference_locator) {
                         Ok(purl) => {
-                            refs.push(PackageReference::Purl(purl.qualifier_uuid()));
+                            refs.push(PackageReference::Purl {
+                                versioned_purl: purl.version_uuid(),
+                                qualified_purl: purl.qualifier_uuid(),
+                            });
                             purls.add(purl);
                         }
                         Err(err) => {
@@ -135,6 +173,7 @@ impl SbomContext {
                 package.package_name.clone(),
                 package.package_version.clone(),
                 refs,
+                license_refs,
             );
 
             if product_packages.contains(&package.package_spdx_identifier) {
@@ -171,6 +210,7 @@ impl SbomContext {
 
         // create all purls and CPEs
 
+        licenses.create(&db).await?;
         purls.create(&db).await?;
         cpes.create(&db).await?;
 
