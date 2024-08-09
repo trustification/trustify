@@ -154,7 +154,7 @@ impl PurlAdvisory {
 pub struct PurlStatus {
     pub vulnerability: VulnerabilityHead,
     pub status: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     pub context: Option<StatusContext>,
 }
 

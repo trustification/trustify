@@ -28,11 +28,11 @@ pub struct AdvisoryHead {
 
     /// The issuer of the advisory, if known. If no issuer is able to be
     /// determined, this field will not be included in a response.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     pub issuer: Option<OrganizationSummary>,
 
     /// The date (in RFC3339 format) of when the advisory was published, if any.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     #[serde(with = "time::serde::rfc3339::option")]
     pub published: Option<OffsetDateTime>,
 
@@ -41,12 +41,12 @@ pub struct AdvisoryHead {
     pub modified: Option<OffsetDateTime>,
 
     /// The date (in RFC3339 format) of when the advisory was withdrawn, if any.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     #[serde(with = "time::serde::rfc3339::option")]
     pub withdrawn: Option<OffsetDateTime>,
 
     /// The title of the advisory as assigned by the issuing organization.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     pub title: Option<String>,
 
     /// Informational labels attached by the system or users to this advisory.
