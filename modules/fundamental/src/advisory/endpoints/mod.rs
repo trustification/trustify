@@ -44,6 +44,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         trustify_common::purl::Purl,
         trustify_common::id::Id,
         trustify_entity::labels::Labels,
+        trustify_cvss::cvss3::severity::Severity,
     )),
     tags()
 )]

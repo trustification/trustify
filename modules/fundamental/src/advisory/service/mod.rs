@@ -219,8 +219,13 @@ impl AdvisoryService {
             let average_severity = advisory.average_severity;
 
             Ok(Some(
-                AdvisoryDetails::from_entity(&entity, average_score, average_severity, &connection)
-                    .await?,
+                AdvisoryDetails::from_entity(
+                    &entity,
+                    average_score,
+                    average_severity.map(|x| x.into()),
+                    &connection,
+                )
+                .await?,
             ))
         } else {
             Ok(None)

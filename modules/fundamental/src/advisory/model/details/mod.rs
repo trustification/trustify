@@ -6,7 +6,8 @@ use sea_orm::{ColumnTrait, EntityTrait, ModelTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::memo::Memo;
-use trustify_entity::{self as entity, cvss3::Severity};
+use trustify_cvss::cvss3::severity::Severity;
+use trustify_entity::{self as entity};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
@@ -19,7 +20,7 @@ pub struct AdvisoryDetails {
 
     /// Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
     #[schema(required)]
-    pub average_severity: Option<String>,
+    pub average_severity: Option<Severity>,
 
     /// Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
     #[schema(required)]
@@ -54,7 +55,7 @@ impl AdvisoryDetails {
         Ok(AdvisoryDetails {
             head: AdvisoryHead::from_advisory(advisory, Memo::Provided(issuer), tx).await?,
             vulnerabilities,
-            average_severity: average_severity.map(|e| e.to_string()),
+            average_severity,
             average_score,
         })
     }
