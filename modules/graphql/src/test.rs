@@ -61,6 +61,17 @@ const GET_SBOM_BY_ID: &str = "
     }
 ";
 
+const GET_SBOMS_BY_LABELS: &str = "
+    query SBOMyById($labels: String!) {
+        getSbomsByLabels(labels: $labels) {
+            sbomId
+            sha256
+            authors
+            labels
+        }
+    }
+";
+
 const GET_VULNERABILITIES: &str = "
     query V11y {
         getVulnerabilities {
@@ -187,6 +198,39 @@ async fn get_sbom_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let sbom = &data["getSbomById"];
     assert_eq!(
         sbom["sha256"],
+        "8f080039c24decc9a066e08fc8f4b7208437536a0bc788d4c76c38c1e1add6e3"
+    );
+
+    log::debug!("{}", data);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn get_sboms_by_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ctx.ingest_document("spdx/quarkus-bom-3.2.11.Final-redhat-00001.json")
+        .await?;
+
+    let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
+        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
+        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
+        .finish();
+
+    let labels = String::from("type:spdx");
+
+    let result = schema
+        .execute(
+            Request::new(GET_SBOMS_BY_LABELS).variables(Variables::from_json(json!({
+               "labels": labels,
+            }))),
+        )
+        .await;
+
+    let data = result.data.into_json()?;
+    let sbom = &data["getSbomsByLabels"];
+    assert_eq!(
+        sbom[0]["sha256"],
         "8f080039c24decc9a066e08fc8f4b7208437536a0bc788d4c76c38c1e1add6e3"
     );
 
