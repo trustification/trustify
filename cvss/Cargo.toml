@@ -7,6 +7,7 @@ license.workspace = true
 
 [dependencies]
 serde = { workspace = true, features = ["derive"] }
+utoipa = { workspace = true }
 
 [dev-dependencies]
 test-log = { workspace = true, features = ["log", "trace"] }
