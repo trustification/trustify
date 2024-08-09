@@ -48,6 +48,8 @@ impl Validate {
                 "--rm",
                 "-v",
                 ".:/src",
+                "--security-opt",
+                "label=disable",
                 "docker.io/openapitools/openapi-generator-cli:v7.7.0",
                 "validate",
                 "-i",
