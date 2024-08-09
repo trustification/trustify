@@ -389,3 +389,15 @@ impl From<cvss3::severity::Severity> for Severity {
         }
     }
 }
+
+impl From<Severity> for cvss3::severity::Severity {
+    fn from(value: Severity) -> Self {
+        match value {
+            Severity::None => Self::None,
+            Severity::Low => Self::Low,
+            Severity::Medium => Self::Medium,
+            Severity::High => Self::High,
+            Severity::Critical => Self::Critical,
+        }
+    }
+}

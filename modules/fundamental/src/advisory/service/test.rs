@@ -5,6 +5,7 @@ use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
 use trustify_common::{db::query::q, hashing::Digests, model::Paginated, purl::Purl};
+use trustify_cvss::cvss3::severity::Severity;
 use trustify_cvss::cvss3::{
     AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
     PrivilegesRequired, Scope, UserInteraction,
@@ -314,7 +315,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
                 ..
             })
-        if hashes.contains(&jenny256) && hashes.contains(&jenny384) && hashes.contains(&jenny512) && average_severity == "critical"));
+        if hashes.contains(&jenny256) && hashes.contains(&jenny384) && hashes.contains(&jenny512) && average_severity == Severity::Critical));
 
     Ok(())
 }
