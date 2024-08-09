@@ -14,7 +14,7 @@ pub struct SbomStatusQuery;
 #[Object]
 impl SbomStatusQuery {
     async fn cves_by_sbom<'a>(&self, ctx: &Context<'a>, id: Uuid) -> FieldResult<Vec<SbomStatus>> {
-        let db: &Arc<db::Database> = ctx.data::<Arc<db::Database>>()?;
+        let db = ctx.data::<Arc<db::Database>>()?;
         let service = SbomService::new((*(Arc::clone(db))).clone());
         let sbom_service = web::Data::new(service);
 
