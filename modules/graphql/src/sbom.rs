@@ -13,7 +13,7 @@ pub struct SbomQuery;
 #[Object]
 impl SbomQuery {
     async fn get_sbom_by_id<'a>(&self, ctx: &Context<'a>, id: Uuid) -> FieldResult<Sbom> {
-        let graph: &Arc<Graph> = ctx.data::<Arc<Graph>>()?;
+        let graph = ctx.data::<Arc<Graph>>()?;
         let sbom = graph.locate_sbom_by_id(id, Transactional::None).await;
 
         match sbom {
@@ -38,7 +38,7 @@ impl SbomQuery {
         ctx: &Context<'a>,
         labels: String,
     ) -> FieldResult<Vec<Sbom>> {
-        let graph: &Arc<Graph> = ctx.data::<Arc<Graph>>()?;
+        let graph = ctx.data::<Arc<Graph>>()?;
         let mut local_labels = Labels::new();
 
         let labs = labels.split(',');

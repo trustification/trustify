@@ -15,7 +15,7 @@ impl OrganizationQuery {
         ctx: &Context<'a>,
         name: String,
     ) -> FieldResult<Organization> {
-        let graph: &Arc<Graph> = ctx.data::<Arc<Graph>>()?;
+        let graph = ctx.data::<Arc<Graph>>()?;
         let organization = graph
             .get_organization_by_name(name, Transactional::None)
             .await;
