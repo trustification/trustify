@@ -12,7 +12,7 @@ pub struct AdvisoryQuery;
 #[Object]
 impl AdvisoryQuery {
     async fn get_advisory_by_id<'a>(&self, ctx: &Context<'a>, id: Uuid) -> FieldResult<Advisory> {
-        let graph: &Arc<Graph> = ctx.data::<Arc<Graph>>()?;
+        let graph = ctx.data::<Arc<Graph>>()?;
         let advisory = graph.get_advisory_by_id(id, Transactional::None).await;
 
         match advisory {
@@ -35,7 +35,7 @@ impl AdvisoryQuery {
     }
 
     async fn get_advisories<'a>(&self, ctx: &Context<'a>) -> FieldResult<Vec<Advisory>> {
-        let graph: &Arc<Graph> = ctx.data::<Arc<Graph>>()?;
+        let graph = ctx.data::<Arc<Graph>>()?;
 
         let advisories = match graph.get_advisories(Transactional::None).await {
             Ok(advisories) => advisories,
