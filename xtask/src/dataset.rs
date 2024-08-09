@@ -81,13 +81,23 @@ impl GenerateDump {
     pub async fn run(self) -> anyhow::Result<()> {
         init_log()?;
 
-        let (db, postgres) = db::embedded::create().await?;
-        let (storage, _tmp) = FileSystemBackend::for_test().await?;
+        let (db, postgres) = match &self.working_dir {
+            Some(wd) => db::embedded::create_in(wd.join("db")).await?,
+            None => db::embedded::create().await?,
+        };
+
+        let (storage, _tmp) = match &self.working_dir {
+            Some(wd) => (FileSystemBackend::new(wd.join("storage")).await?, None),
+            None => {
+                let (storage, tmp) = FileSystemBackend::for_test().await?;
+                (storage, Some(tmp))
+            }
+        };
 
         let importer = ImportRunner {
             db: db.clone(),
             storage: storage.into(),
-            working_dir: self.working_dir.clone(),
+            working_dir: self.working_dir.as_ref().map(|wd| wd.join("wd")),
         };
 
         // ingest documents

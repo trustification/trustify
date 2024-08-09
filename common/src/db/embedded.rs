@@ -1,19 +1,40 @@
 use crate::db::Database;
 use anyhow::Context;
 use postgresql_embedded::{PostgreSQL, Settings, VersionReq};
+use std::path::Path;
 use tracing::{info_span, Instrument};
 
-/// Create a new, embedded database instance
-pub async fn create() -> anyhow::Result<(Database, PostgreSQL)> {
+/// Create common default settings for the embedded database
+fn default_settings() -> anyhow::Result<Settings> {
     let version = VersionReq::parse("=16.3.0").context("valid psql version")?;
-    let settings = Settings {
+    Ok(Settings {
         version,
         username: "postgres".to_string(),
         password: "trustify".to_string(),
         temporary: true,
         ..Default::default()
-    };
+    })
+}
 
+/// Create a new, embedded database instance
+pub async fn create() -> anyhow::Result<(Database, PostgreSQL)> {
+    create_for(default_settings()?).await
+}
+
+/// Create a new, embedded database instance in a specific directory
+pub async fn create_in(base: impl AsRef<Path>) -> anyhow::Result<(Database, PostgreSQL)> {
+    let base = base.as_ref();
+
+    create_for(Settings {
+        data_dir: base.join("data"),
+        installation_dir: base.join("instance"),
+        ..default_settings()?
+    })
+    .await
+}
+
+/// Create a new, embedded database instance, using the provided settings
+async fn create_for(settings: Settings) -> anyhow::Result<(Database, PostgreSQL)> {
     let postgresql = async {
         let mut postgresql = PostgreSQL::new(settings);
         postgresql
