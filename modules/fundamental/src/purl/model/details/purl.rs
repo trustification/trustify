@@ -1,3 +1,4 @@
+use crate::sbom::model::SbomHead;
 use crate::{
     advisory::model::AdvisoryHead,
     purl::model::{BasePurlHead, PurlHead, VersionedPurlHead},
@@ -5,16 +6,20 @@ use crate::{
     Error,
 };
 use sea_orm::{
-    ColumnTrait, EntityTrait, LoaderTrait, ModelTrait, QueryFilter, QuerySelect, RelationTrait,
+    ColumnTrait, DbErr, EntityTrait, FromQueryResult, LoaderTrait, ModelTrait, QueryFilter,
+    QueryResult, QuerySelect, RelationTrait, Select,
 };
 use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::Entry;
+use std::collections::HashMap;
+use trustify_common::db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel};
 use trustify_common::db::{ConnectionOrTransaction, VersionMatches};
 use trustify_common::memo::Memo;
 use trustify_common::purl::Purl;
 use trustify_entity::{
-    advisory, base_purl, cpe, organization, purl_status, qualified_purl, status, version_range,
-    versioned_purl, vulnerability,
+    advisory, base_purl, cpe, license, organization, purl_license_assertion, purl_status,
+    qualified_purl, sbom, status, version_range, versioned_purl, vulnerability,
 };
 use utoipa::ToSchema;
 
@@ -25,6 +30,7 @@ pub struct PurlDetails {
     pub version: VersionedPurlHead,
     pub base: BasePurlHead,
     pub advisories: Vec<PurlAdvisory>,
+    pub licenses: Vec<PurlLicenseSummary>,
 }
 
 impl PurlDetails {
@@ -83,11 +89,30 @@ impl PurlDetails {
             .all(tx)
             .await?;
 
+        let licenses = purl_license_assertion::Entity::find()
+            .join(
+                JoinType::LeftJoin,
+                purl_license_assertion::Relation::VersionedPurl.def(),
+            )
+            .join(
+                JoinType::LeftJoin,
+                purl_license_assertion::Relation::License.def(),
+            )
+            .join(
+                JoinType::LeftJoin,
+                purl_license_assertion::Relation::Sbom.def(),
+            )
+            .filter(versioned_purl::Column::Id.eq(package_version.id))
+            .try_into_multi_model::<LicenseCatcher>()?
+            .all(tx)
+            .await?;
+
         Ok(PurlDetails {
             head: PurlHead::from_entity(&package, &package_version, qualified_package, tx).await?,
             version: VersionedPurlHead::from_entity(&package, &package_version, tx).await?,
             base: BasePurlHead::from_entity(&package, tx).await?,
             advisories: PurlAdvisory::from_entities(statuses, tx).await?,
+            licenses: PurlLicenseSummary::from_entities(&licenses, tx).await?,
         })
     }
 }
@@ -195,5 +220,63 @@ impl PurlStatus {
             status,
             context: cpe.map(StatusContext::Cpe),
         })
+    }
+}
+
+#[derive(Serialize, Clone, Deserialize, Debug, ToSchema)]
+pub struct PurlLicenseSummary {
+    pub sbom: SbomHead,
+    pub licenses: Vec<String>,
+}
+
+impl PurlLicenseSummary {
+    pub async fn from_entities(
+        entities: &[LicenseCatcher],
+        tx: &ConnectionOrTransaction<'_>,
+    ) -> Result<Vec<Self>, Error> {
+        let mut summaries = HashMap::new();
+
+        for row in entities {
+            let entry = summaries.entry(row.sbom.sbom_id);
+            if let Entry::Vacant(entry) = entry {
+                let summary = PurlLicenseSummary {
+                    sbom: SbomHead::from_entity(&row.sbom, None, tx).await?,
+                    licenses: vec![],
+                };
+
+                entry.insert(summary);
+            }
+        }
+
+        for row in entities {
+            if let Some(summary) = summaries.get_mut(&row.sbom.sbom_id) {
+                summary.licenses.push(row.license.text.clone());
+            }
+        }
+
+        Ok(summaries.values().cloned().collect())
+    }
+}
+
+#[derive(Debug)]
+pub struct LicenseCatcher {
+    sbom: sbom::Model,
+    license: license::Model,
+}
+
+impl FromQueryResult for LicenseCatcher {
+    fn from_query_result(res: &QueryResult, _pre: &str) -> Result<Self, DbErr> {
+        Ok(Self {
+            sbom: Self::from_query_result_multi_model(res, "", sbom::Entity)?,
+            license: Self::from_query_result_multi_model(res, "", license::Entity)?,
+        })
+    }
+}
+
+impl FromQueryResultMultiModel for LicenseCatcher {
+    fn try_into_multi_model<E: EntityTrait>(select: Select<E>) -> Result<Select<E>, DbErr> {
+        select
+            .try_model_columns(sbom::Entity)?
+            .try_model_columns(license::Entity)
     }
 }

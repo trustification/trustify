@@ -1,9 +1,12 @@
-use crate::graph::sbom::ReferenceSource;
+use crate::graph::sbom::{LicenseInfo, ReferenceSource};
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use tracing::instrument;
 use trustify_common::db::chunk::EntityChunkedIter;
-use trustify_entity::{sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref};
+use trustify_entity::{
+    cpe_license_assertion, purl_license_assertion, sbom_node, sbom_package, sbom_package_cpe_ref,
+    sbom_package_purl_ref,
+};
 use uuid::Uuid;
 
 // Creator of packages and relationships.
@@ -13,10 +16,15 @@ pub struct PackageCreator {
     packages: Vec<sbom_package::ActiveModel>,
     purl_refs: Vec<sbom_package_purl_ref::ActiveModel>,
     cpe_refs: Vec<sbom_package_cpe_ref::ActiveModel>,
+    purl_license_assertions: Vec<purl_license_assertion::ActiveModel>,
+    cpe_license_assertions: Vec<cpe_license_assertion::ActiveModel>,
 }
 
 pub enum PackageReference {
-    Purl(Uuid),
+    Purl {
+        versioned_purl: Uuid,
+        qualified_purl: Uuid,
+    },
     Cpe(Uuid),
 }
 
@@ -28,6 +36,8 @@ impl PackageCreator {
             packages: Vec::new(),
             purl_refs: Vec::new(),
             cpe_refs: Vec::new(),
+            purl_license_assertions: Vec::new(),
+            cpe_license_assertions: Vec::new(),
         }
     }
 
@@ -38,6 +48,8 @@ impl PackageCreator {
             packages: Vec::with_capacity(capacity_packages),
             purl_refs: Vec::with_capacity(capacity_packages),
             cpe_refs: Vec::new(), // most packages won't have a CPE, so we start with a low number
+            purl_license_assertions: Vec::new(),
+            cpe_license_assertions: Vec::new(),
         }
     }
 
@@ -47,6 +59,7 @@ impl PackageCreator {
         name: String,
         version: Option<String>,
         refs: impl IntoIterator<Item = PackageReference>,
+        license_refs: impl IntoIterator<Item = LicenseInfo> + Clone,
     ) {
         for r#ref in refs {
             match r#ref {
@@ -56,13 +69,34 @@ impl PackageCreator {
                         node_id: Set(node_id.clone()),
                         cpe_id: Set(cpe),
                     });
+                    for license in license_refs.clone() {
+                        self.cpe_license_assertions
+                            .push(cpe_license_assertion::ActiveModel {
+                                id: Default::default(),
+                                license_id: Set(license.uuid()),
+                                cpe_id: Set(cpe),
+                                sbom_id: Set(self.sbom_id),
+                            })
+                    }
                 }
-                PackageReference::Purl(purl) => {
+                PackageReference::Purl {
+                    qualified_purl,
+                    versioned_purl,
+                } => {
                     self.purl_refs.push(sbom_package_purl_ref::ActiveModel {
                         sbom_id: Set(self.sbom_id),
                         node_id: Set(node_id.clone()),
-                        qualified_purl_id: Set(purl),
+                        qualified_purl_id: Set(qualified_purl),
                     });
+                    for license in license_refs.clone() {
+                        self.purl_license_assertions
+                            .push(purl_license_assertion::ActiveModel {
+                                id: Default::default(),
+                                license_id: Set(license.uuid()),
+                                versioned_purl_id: Set(versioned_purl),
+                                sbom_id: Set(self.sbom_id),
+                            })
+                    }
                 }
             }
         }
@@ -141,6 +175,38 @@ impl PackageCreator {
                         sbom_package_cpe_ref::Column::SbomId,
                         sbom_package_cpe_ref::Column::NodeId,
                         sbom_package_cpe_ref::Column::CpeId,
+                    ])
+                    .do_nothing()
+                    .to_owned(),
+                )
+                .do_nothing()
+                .exec(db)
+                .await?;
+        }
+
+        for batch in &self.purl_license_assertions.into_iter().chunked() {
+            purl_license_assertion::Entity::insert_many(batch)
+                .on_conflict(
+                    OnConflict::columns([
+                        purl_license_assertion::Column::SbomId,
+                        purl_license_assertion::Column::LicenseId,
+                        purl_license_assertion::Column::VersionedPurlId,
+                    ])
+                    .do_nothing()
+                    .to_owned(),
+                )
+                .do_nothing()
+                .exec(db)
+                .await?;
+        }
+
+        for batch in &self.cpe_license_assertions.into_iter().chunked() {
+            cpe_license_assertion::Entity::insert_many(batch)
+                .on_conflict(
+                    OnConflict::columns([
+                        cpe_license_assertion::Column::SbomId,
+                        cpe_license_assertion::Column::LicenseId,
+                        cpe_license_assertion::Column::CpeId,
                     ])
                     .do_nothing()
                     .to_owned(),

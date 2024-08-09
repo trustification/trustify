@@ -28,6 +28,7 @@ use sea_query::{
 };
 use std::{
     fmt::{Debug, Formatter},
+    iter,
     str::FromStr,
 };
 use time::OffsetDateTime;
@@ -496,7 +497,11 @@ impl SbomContext {
             RelationshipReference::Root => (None, vec![], vec![]),
             RelationshipReference::Purl(purl) => {
                 creator.add(purl.clone());
-                (Some(purl.to_string()), vec![purl.qualifier_uuid()], vec![])
+                (
+                    Some(purl.to_string()),
+                    vec![(purl.version_uuid(), purl.qualifier_uuid())],
+                    vec![],
+                )
             }
             RelationshipReference::Cpe(cpe) => {
                 let cpe_ctx = self.graph.ingest_cpe22(cpe.clone(), &tx).await?;
@@ -507,7 +512,11 @@ impl SbomContext {
             RelationshipReference::Root => (None, vec![], vec![]),
             RelationshipReference::Purl(purl) => {
                 creator.add(purl.clone());
-                (Some(purl.to_string()), vec![purl.qualifier_uuid()], vec![])
+                (
+                    Some(purl.to_string()),
+                    vec![(purl.version_uuid(), purl.qualifier_uuid())],
+                    vec![],
+                )
             }
             RelationshipReference::Cpe(cpe) => {
                 let cpe_ctx = self.graph.ingest_cpe22(cpe.clone(), &tx).await?;
@@ -597,7 +606,7 @@ impl SbomContext {
         node_id: String,
         name: String,
         version: Option<String>,
-        purls: Vec<Uuid>,
+        purls: Vec<(Uuid, Uuid)>,
         cpes: Vec<Uuid>,
         tx: TX,
     ) -> Result<(), Error> {
@@ -605,9 +614,12 @@ impl SbomContext {
 
         let refs = purls
             .into_iter()
-            .map(PackageReference::Purl)
+            .map(|(versioned_purl, qualified_purl)| PackageReference::Purl {
+                versioned_purl,
+                qualified_purl,
+            })
             .chain(cpes.into_iter().map(PackageReference::Cpe));
-        creator.add(node_id, name, version, refs);
+        creator.add(node_id, name, version, refs, iter::empty());
 
         creator.create(&self.graph.db.connection(&tx)).await?;
 

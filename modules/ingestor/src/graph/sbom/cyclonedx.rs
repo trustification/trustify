@@ -1,11 +1,14 @@
+use crate::graph::sbom::{LicenseCreator, LicenseInfo};
 use crate::graph::{
     cpe::CpeCreator,
     product::ProductInformation,
     purl::creator::PurlCreator,
     sbom::{PackageCreator, PackageReference, RelationshipCreator, SbomContext, SbomInformation},
 };
+use cyclonedx_bom::models::license::{LicenseChoice, LicenseIdentifier};
 use cyclonedx_bom::prelude::{Bom, Component, Components};
 use sea_orm::ConnectionTrait;
+use std::collections::HashMap;
 use std::str::FromStr;
 use time::{format_description::well_known::Iso8601, OffsetDateTime};
 use tracing::instrument;
@@ -76,6 +79,7 @@ impl SbomContext {
     ) -> Result<(), anyhow::Error> {
         let db = &self.graph.db.connection(&tx);
 
+        let mut license_creator = LicenseCreator::new();
         let mut creator = Creator::new(self.sbom.sbom_id);
 
         if let Some(metadata) = &sbom.metadata {
@@ -109,6 +113,31 @@ impl SbomContext {
 
         creator.add_all(&sbom.components);
 
+        if let Some(components) = &sbom.components {
+            for component in &components.0 {
+                if let Some(licenses) = &component.licenses {
+                    for license in &licenses.0 {
+                        let license = match license {
+                            LicenseChoice::License(license) => LicenseInfo {
+                                license: match &license.license_identifier {
+                                    LicenseIdentifier::SpdxId(id) => id.to_string(),
+                                    LicenseIdentifier::Name(name) => name.to_string(),
+                                },
+                                refs: Default::default(),
+                            },
+                            LicenseChoice::Expression(spdx_expression) => LicenseInfo {
+                                license: spdx_expression.to_string(),
+                                refs: Default::default(),
+                            },
+                        };
+
+                        license_creator.add(&license);
+                        creator.add_license_relation(component, &license);
+                    }
+                }
+            }
+        }
+
         for left in sbom.dependencies.iter().flat_map(|e| &e.0) {
             for right in &left.dependencies {
                 creator.relate(
@@ -119,6 +148,7 @@ impl SbomContext {
             }
         }
 
+        license_creator.create(db).await?;
         creator.create(db).await?;
 
         Ok(())
@@ -131,6 +161,7 @@ struct Creator<'a> {
     sbom_id: Uuid,
     components: Vec<&'a Component>,
     relations: Vec<(String, Relationship, String)>,
+    license_relations: HashMap<String, Vec<LicenseInfo>>,
 }
 
 impl<'a> Creator<'a> {
@@ -139,6 +170,7 @@ impl<'a> Creator<'a> {
             sbom_id,
             components: Default::default(),
             relations: Default::default(),
+            license_relations: Default::default(),
         }
     }
 
@@ -151,6 +183,19 @@ impl<'a> Creator<'a> {
     pub fn add(&mut self, component: &'a Component) {
         self.components.push(component);
         self.add_all(&component.components)
+    }
+
+    pub fn add_license_relation(&mut self, component: &'a Component, license: &LicenseInfo) {
+        let node_id = component
+            .bom_ref
+            .as_ref()
+            .cloned()
+            .unwrap_or_else(|| component.name.to_string());
+
+        self.license_relations
+            .entry(node_id)
+            .or_default()
+            .push(license.clone());
     }
 
     pub fn extend<I>(&mut self, i: I)
@@ -184,7 +229,10 @@ impl<'a> Creator<'a> {
 
             if let Some(purl) = &comp.purl {
                 if let Ok(purl) = Purl::from_str(purl.as_ref()) {
-                    refs.push(PackageReference::Purl(purl.qualifier_uuid()));
+                    refs.push(PackageReference::Purl {
+                        versioned_purl: purl.version_uuid(),
+                        qualified_purl: purl.qualifier_uuid(),
+                    });
                     purls.add(purl);
                 }
             }
@@ -196,11 +244,18 @@ impl<'a> Creator<'a> {
                 }
             }
 
+            let license_refs = self
+                .license_relations
+                .get(&node_id)
+                .cloned()
+                .unwrap_or_default();
+
             packages.add(
                 node_id,
                 comp.name.to_string(),
                 comp.version.as_ref().map(|v| v.to_string()),
                 refs,
+                license_refs,
             );
         }
 

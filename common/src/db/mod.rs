@@ -59,6 +59,12 @@ pub enum ConnectionOrTransaction<'db> {
     Transaction(&'db DatabaseTransaction),
 }
 
+impl<'db> From<&'db DatabaseTransaction> for ConnectionOrTransaction<'db> {
+    fn from(value: &'db DatabaseTransaction) -> Self {
+        Self::Transaction(value)
+    }
+}
+
 #[async_trait::async_trait]
 impl ConnectionTrait for ConnectionOrTransaction<'_> {
     fn get_database_backend(&self) -> DbBackend {

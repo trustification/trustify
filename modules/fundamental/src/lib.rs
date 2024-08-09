@@ -1,4 +1,6 @@
 pub mod advisory;
+
+pub mod license;
 pub mod organization;
 
 pub mod product;
