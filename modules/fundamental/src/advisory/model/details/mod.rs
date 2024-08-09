@@ -18,11 +18,11 @@ pub struct AdvisoryDetails {
     pub vulnerabilities: Vec<AdvisoryVulnerabilitySummary>,
 
     /// Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     pub average_severity: Option<String>,
 
     /// Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     pub average_score: Option<f64>,
 }
 

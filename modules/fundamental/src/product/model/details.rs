@@ -15,9 +15,8 @@ use utoipa::ToSchema;
 pub struct ProductDetails {
     #[serde(flatten)]
     pub head: ProductHead,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub versions: Vec<ProductVersionDetails>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     pub vendor: Option<OrganizationSummary>,
 }
 
@@ -86,9 +85,8 @@ impl ProductVersionDetails {
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct SbomHead {
-    #[serde(default, skip_serializing_if = "Labels::is_empty")]
     pub labels: Labels,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     #[serde(with = "time::serde::rfc3339::option")]
     pub published: Option<OffsetDateTime>,
 }

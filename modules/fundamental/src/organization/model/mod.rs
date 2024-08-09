@@ -22,11 +22,11 @@ pub struct OrganizationHead {
     pub name: String,
 
     /// The `CPE` key of the organization, if known.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     pub cpe_key: Option<String>,
 
     /// The website of the organization, if known.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     pub website: Option<String>,
 }
 

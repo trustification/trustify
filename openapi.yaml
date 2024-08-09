@@ -1292,6 +1292,8 @@ components:
       - type: object
         required:
         - vulnerabilities
+        - average_severity
+        - average_score
         properties:
           average_score:
             type: number
@@ -1312,6 +1314,12 @@ components:
       required:
       - uuid
       - identifier
+      - hashes
+      - issuer
+      - published
+      - withdrawn
+      - title
+      - labels
       properties:
         hashes:
           type: array
@@ -1355,6 +1363,8 @@ components:
       - $ref: '#/components/schemas/AdvisoryHead'
       - type: object
         required:
+        - average_severity
+        - average_score
         - vulnerabilities
         properties:
           average_score:
@@ -1465,6 +1475,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/BasePurlHead'
       - type: object
+        required:
+        - versions
         properties:
           versions:
             type: array
@@ -1656,6 +1668,8 @@ components:
       required:
       - id
       - name
+      - cpe_key
+      - website
       properties:
         cpe_key:
           type: string
@@ -1868,6 +1882,9 @@ components:
       allOf:
       - $ref: '#/components/schemas/ProductHead'
       - type: object
+        required:
+        - versions
+        - vendor
         properties:
           vendor:
             allOf:
@@ -1892,6 +1909,9 @@ components:
       allOf:
       - $ref: '#/components/schemas/ProductHead'
       - type: object
+        required:
+        - versions
+        - vendor
         properties:
           vendor:
             allOf:
@@ -1946,6 +1966,7 @@ components:
         required:
         - version
         - base
+        - advisories
         properties:
           advisories:
             type: array
@@ -1972,6 +1993,7 @@ components:
       required:
       - vulnerability
       - status
+      - context
       properties:
         context:
           allOf:
@@ -2038,6 +2060,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/AdvisoryHead'
       - type: object
+        required:
+        - status
         properties:
           status:
             type: array
@@ -2048,6 +2072,9 @@ components:
       - $ref: '#/components/schemas/SbomHead'
       - type: object
         required:
+        - published
+        - authors
+        - described_by
         - advisories
         properties:
           advisories:
@@ -2070,7 +2097,9 @@ components:
       type: object
       required:
       - id
+      - hashes
       - document_id
+      - labels
       - name
       properties:
         document_id:
@@ -2119,6 +2148,8 @@ components:
       required:
       - id
       - name
+      - purl
+      - cpe
       properties:
         cpe:
           type: array
@@ -2150,6 +2181,7 @@ components:
       required:
       - vulnerability_id
       - status
+      - packages
       properties:
         context:
           allOf:
@@ -2167,6 +2199,10 @@ components:
       allOf:
       - $ref: '#/components/schemas/SbomHead'
       - type: object
+        required:
+        - published
+        - authors
+        - described_by
         properties:
           authors:
             type: array
@@ -2251,6 +2287,8 @@ components:
       - type: object
         required:
         - base
+        - purls
+        - advisories
         properties:
           advisories:
             type: array
@@ -2294,6 +2332,7 @@ components:
       - type: object
         required:
         - base
+        - purls
         properties:
           base:
             $ref: '#/components/schemas/BasePurlHead'
@@ -2305,6 +2344,9 @@ components:
       allOf:
       - $ref: '#/components/schemas/AdvisoryHead'
       - type: object
+        required:
+        - severity
+        - score
         properties:
           score:
             type: number
@@ -2318,6 +2360,7 @@ components:
       required:
       - base_purl
       - version
+      - context
       properties:
         base_purl:
           $ref: '#/components/schemas/BasePurlHead'
@@ -2357,6 +2400,8 @@ components:
       - $ref: '#/components/schemas/VulnerabilityHead'
       - type: object
         required:
+        - average_severity
+        - average_score
         - advisories
         properties:
           advisories:
@@ -2376,7 +2421,16 @@ components:
     VulnerabilityHead:
       type: object
       required:
+      - normative
       - identifier
+      - title
+      - description
+      - published
+      - modified
+      - withdrawn
+      - discovered
+      - released
+      - cwe
       properties:
         cwe:
           type: string
@@ -2427,6 +2481,10 @@ components:
       allOf:
       - $ref: '#/components/schemas/VulnerabilityHead'
       - type: object
+        required:
+        - average_severity
+        - average_score
+        - advisories
         properties:
           advisories:
             type: array

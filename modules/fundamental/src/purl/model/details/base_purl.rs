@@ -11,7 +11,6 @@ use utoipa::ToSchema;
 pub struct BasePurlDetails {
     #[serde(flatten)]
     pub head: BasePurlHead,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub versions: Vec<VersionedPurlSummary>,
 }
 

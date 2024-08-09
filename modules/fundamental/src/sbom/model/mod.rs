@@ -15,11 +15,9 @@ use utoipa::ToSchema;
 pub struct SbomHead {
     #[serde(with = "uuid::serde::urn")]
     pub id: Uuid,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub hashes: Vec<Id>,
 
     pub document_id: String,
-    #[serde(default, skip_serializing_if = "Labels::is_empty")]
     pub labels: Labels,
 
     pub name: String,
@@ -47,14 +45,12 @@ impl SbomHead {
 pub struct SbomSummary {
     #[serde(flatten)]
     pub head: SbomHead,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     #[serde(with = "time::serde::rfc3339::option")]
     pub published: Option<OffsetDateTime>,
 
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub authors: Vec<String>,
 
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub described_by: Vec<SbomPackage>,
 }
 
@@ -66,10 +62,8 @@ pub struct SbomPackage {
     pub id: String,
     pub name: String,
     pub version: Option<String>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     #[graphql(skip)]
     pub purl: Vec<PurlSummary>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub cpe: Vec<String>,
 }
 

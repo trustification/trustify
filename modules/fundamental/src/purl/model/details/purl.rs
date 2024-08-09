@@ -24,7 +24,6 @@ pub struct PurlDetails {
     pub head: PurlHead,
     pub version: VersionedPurlHead,
     pub base: BasePurlHead,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub advisories: Vec<PurlAdvisory>,
 }
 
@@ -155,7 +154,7 @@ impl PurlAdvisory {
 pub struct PurlStatus {
     pub vulnerability: VulnerabilityHead,
     pub status: String,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(required)]
     pub context: Option<StatusContext>,
 }
 
