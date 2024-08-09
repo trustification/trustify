@@ -84,8 +84,7 @@ impl Graph {
         tx: TX,
     ) -> Result<Vec<AdvisoryContext>, Error> {
         Ok(advisory::Entity::find()
-            .filter(Condition::all())
-            .all(&self.connection(&tx))
+            .all(&self.db.connection(&tx))
             .await?
             .into_iter()
             .map(|advisory| AdvisoryContext::new(self, advisory))
