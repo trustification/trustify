@@ -36,11 +36,24 @@ impl SbomQuery {
     async fn get_sboms_by_labels<'a>(
         &self,
         ctx: &Context<'a>,
-        labels: Labels,
+        labels: String,
     ) -> FieldResult<Vec<Sbom>> {
         let graph: &Arc<Graph> = ctx.data::<Arc<Graph>>()?;
+        let mut local_labels = Labels::new();
+
+        let labs = labels.split(',');
+        for item in labs {
+            let mut label = item.split(':');
+            let key = label.next().unwrap_or("");
+            let value = label.next().unwrap_or("");
+            local_labels.insert(
+                key.split_whitespace().collect(),
+                value.split_whitespace().collect(),
+            );
+        }
+
         let sboms = match graph
-            .locate_sboms_by_labels(labels, Transactional::None)
+            .locate_sboms_by_labels(local_labels, Transactional::None)
             .await
         {
             Ok(sbom) => sbom,
