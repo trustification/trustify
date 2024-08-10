@@ -1,12 +1,14 @@
 use crate::runner::common::walker::WorkingDirectory;
 use anyhow::anyhow;
 use git2::{
-    build::RepoBuilder, ErrorClass, ErrorCode, FetchOptions, RemoteCallbacks, Repository, ResetType,
+    build::RepoBuilder, Cred, ErrorClass, ErrorCode, FetchOptions, RemoteCallbacks, Repository,
+    ResetType,
 };
 use std::{
     borrow::Cow,
     collections::HashSet,
     convert::Infallible,
+    env,
     fmt::{Debug, Display},
     path::{Path, PathBuf},
 };
@@ -191,28 +193,6 @@ where
 
         log::info!("Cloning {} into {}", self.source, path.display());
 
-        let mut cb = RemoteCallbacks::new();
-        cb.transfer_progress(|progress| {
-            let received = progress.received_objects();
-            let total = progress.total_objects();
-            let bytes = progress.received_bytes();
-
-            log::trace!("Progress - objects: {received} of {total}, bytes: {bytes}");
-
-            true
-        });
-        cb.update_tips(|refname, a, b| {
-            if a.is_zero() {
-                log::debug!("[new]     {:20} {}", b, refname);
-            } else {
-                log::debug!("[updated] {:10}..{:10} {}", a, b, refname);
-            }
-            true
-        });
-
-        let mut fo = FetchOptions::new();
-        fo.remote_callbacks(cb);
-
         // clone or open repository
 
         let result = info_span!("clone repository").in_scope(|| {
@@ -222,6 +202,7 @@ where
                 builder.branch(branch);
             }
 
+            let fo = Self::create_fetch_options();
             builder.fetch_options(fo).clone(&self.source, path)
         });
 
@@ -234,7 +215,9 @@ where
                 info_span!("fetching updates").in_scope(|| {
                     log::debug!("Fetching updates");
                     let mut remote = repo.find_remote("origin")?;
-                    remote.fetch(&[] as &[&str], None, None)?;
+
+                    let mut fo = Self::create_fetch_options();
+                    remote.fetch(&[] as &[&str], Some(&mut fo), None)?;
                     remote.disconnect()?;
 
                     let head = repo.find_reference("FETCH_HEAD")?;
@@ -339,6 +322,44 @@ where
         // return result
 
         Ok(Continuation(Some(commit.to_string())))
+    }
+
+    fn create_fetch_options<'cb>() -> FetchOptions<'cb> {
+        let mut cb = RemoteCallbacks::new();
+        cb.transfer_progress(|progress| {
+            let received = progress.received_objects();
+            let total = progress.total_objects();
+            let bytes = progress.received_bytes();
+
+            log::trace!("Progress - objects: {received} of {total}, bytes: {bytes}");
+
+            true
+        });
+        cb.update_tips(|refname, a, b| {
+            if a.is_zero() {
+                log::debug!("[new]     {:20} {}", b, refname);
+            } else {
+                log::debug!("[updated] {:10}..{:10} {}", a, b, refname);
+            }
+            true
+        });
+
+        let home = env::var("HOME").ok();
+        if let Some(home) = home {
+            for key in &["id_rsa", "id_ed25519"] {
+                let key = Path::new(&home).join(".ssh").join(key);
+                if key.exists() {
+                    cb.credentials(move |_url, username_from_url, _allowed_types| {
+                        Cred::ssh_key(username_from_url.unwrap_or(""), None, &key, None)
+                    });
+                    break;
+                }
+            }
+        }
+
+        let mut fo = FetchOptions::new();
+        fo.remote_callbacks(cb);
+        fo
     }
 
     #[instrument(skip(self, changes), err)]

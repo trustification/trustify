@@ -1301,8 +1301,8 @@ components:
             description: Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
             nullable: true
           average_severity:
-            type: string
-            description: Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
+            allOf:
+            - $ref: '#/components/schemas/Severity'
             nullable: true
           vulnerabilities:
             type: array
@@ -1407,17 +1407,7 @@ components:
               The average (arithmetic mean) score this advisory assigns to
               the particular vulnerability.
           severity:
-            type: string
-            description: |-
-              The English-language word description of the severity of the given
-              vulnerability, as asserted by the advisory, using the CVSS bucketing
-              ranges.
-
-              Critical: 9.0–10.0
-              High: 7.0–8.9
-              Medium: 4.0–6.9
-              Low: 0.1–3.9
-              None: 0
+            $ref: '#/components/schemas/Severity'
     AdvisoryVulnerabilitySummary:
       allOf:
       - $ref: '#/components/schemas/AdvisoryVulnerabilityHead'
@@ -2198,6 +2188,22 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/SbomPackage'
+    Severity:
+      type: string
+      description: |-
+        Qualitative Severity Rating Scale
+
+        Described in CVSS v3.1 Specification: Section 5:
+        <https://www.first.org/cvss/specification-document#t17>
+
+        > For some purposes it is useful to have a textual representation of the
+        > numeric Base, Temporal and Environmental scores.
+      enum:
+      - none
+      - low
+      - medium
+      - high
+      - critical
     State:
       type: string
       enum:
@@ -2335,7 +2341,8 @@ components:
             format: double
             nullable: true
           severity:
-            type: string
+            allOf:
+            - $ref: '#/components/schemas/Severity'
             nullable: true
     VulnerabilityAdvisoryStatus:
       type: object
@@ -2397,8 +2404,8 @@ components:
             description: Average (arithmetic mean) score of the vulnerability aggregated from *all* related advisories.
             nullable: true
           average_severity:
-            type: string
-            description: Average (arithmetic mean) severity of the vulnerability aggregated from *all* related advisories.
+            allOf:
+            - $ref: '#/components/schemas/Severity'
             nullable: true
     VulnerabilityHead:
       type: object
@@ -2478,8 +2485,8 @@ components:
             description: Average (arithmetic mean) score of the vulnerability aggregated from *all* related advisories.
             nullable: true
           average_severity:
-            type: string
-            description: Average (arithmetic mean) severity of the vulnerability aggregated from *all* related advisories.
+            allOf:
+            - $ref: '#/components/schemas/Severity'
             nullable: true
     Which:
       type: string
