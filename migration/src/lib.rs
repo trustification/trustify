@@ -63,6 +63,7 @@ mod m0000501_perf_indexes;
 mod m0000510_create_maven_cmp_fns;
 mod m0000520_scale_indexes;
 mod m0000530_base_purl_index;
+mod m0000540_ingestion_indexes;
 
 pub struct Migrator;
 
@@ -132,6 +133,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000510_create_maven_cmp_fns::Migration),
             Box::new(m0000520_scale_indexes::Migration),
             Box::new(m0000530_base_purl_index::Migration),
+            Box::new(m0000540_ingestion_indexes::Migration),
         ]
     }
 }
