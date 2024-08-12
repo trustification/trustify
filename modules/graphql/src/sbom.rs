@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use async_graphql::{Context, FieldError, FieldResult, Object};
-use serde_json::json;
 use trustify_common::db::Transactional;
 use trustify_entity::labels::Labels;
 use trustify_entity::sbom::Model as Sbom;
