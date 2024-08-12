@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use async_graphql::{Context, FieldError, FieldResult, Object};
+use serde_json::json;
 use trustify_common::db::Transactional;
 use trustify_entity::labels::Labels;
 use trustify_entity::sbom::Model as Sbom;
@@ -39,16 +40,14 @@ impl SbomQuery {
         labels: String,
     ) -> FieldResult<Vec<Sbom>> {
         let graph = ctx.data::<Arc<Graph>>()?;
-        let mut local_labels = Labels::new();
 
+        let mut local_labels = Labels::new();
         let labs = labels.split(',');
         for item in labs {
             let mut label = item.split(':');
-            let key = label.next().unwrap_or("");
-            let value = label.next().unwrap_or("");
             local_labels.insert(
-                key.split_whitespace().collect(),
-                value.split_whitespace().collect(),
+                label.next().unwrap_or("").split_whitespace().collect(),
+                label.next().unwrap_or("").split_whitespace().collect(),
             );
         }
 
