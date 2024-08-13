@@ -28,7 +28,6 @@ pub struct SbomDetails {
     #[serde(flatten)]
     pub summary: SbomSummary,
 
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub advisories: Vec<SbomAdvisory>,
 }
 

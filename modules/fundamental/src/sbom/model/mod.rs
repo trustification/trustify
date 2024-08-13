@@ -27,7 +27,6 @@ pub struct SbomHead {
     #[serde(with = "time::serde::rfc3339::option")]
     pub published: Option<OffsetDateTime>,
 
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub authors: Vec<String>,
 
     pub name: String,
