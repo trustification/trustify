@@ -2061,6 +2061,8 @@ components:
       allOf:
       - $ref: '#/components/schemas/SbomSummary'
       - type: object
+        required:
+        - advisories
         properties:
           advisories:
             type: array
@@ -2074,6 +2076,7 @@ components:
       - document_id
       - labels
       - published
+      - authors
       - name
       properties:
         authors:
