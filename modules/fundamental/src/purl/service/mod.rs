@@ -22,7 +22,7 @@ use trustify_common::{
     },
     model::{Paginated, PaginatedResults},
 };
-use trustify_entity::qualified_purl::Qualifiers;
+
 use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 
 pub struct PurlService {
@@ -251,11 +251,11 @@ impl PurlService {
         let connection = self.db.connection(&tx);
         if let Some(version) = &purl.version {
             let mut query = qualified_purl::Entity::find()
+                .left_join(versioned_purl::Entity)
                 .left_join(base_purl::Entity)
                 .filter(base_purl::Column::Type.eq(&purl.ty))
                 .filter(base_purl::Column::Name.eq(&purl.name))
-                .filter(versioned_purl::Column::Version.eq(version))
-                .filter(qualified_purl::Column::Qualifiers.eq(Qualifiers(purl.qualifiers.clone())));
+                .filter(versioned_purl::Column::Version.eq(version));
 
             if let Some(ns) = &purl.namespace {
                 query = query.filter(base_purl::Column::Namespace.eq(ns));

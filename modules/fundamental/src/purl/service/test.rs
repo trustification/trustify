@@ -727,3 +727,33 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(0, result.items.len());
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
+
+    let log4j = ctx
+        .graph
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .await?;
+
+    let log4j_123 = log4j
+        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .await?;
+
+    log4j_123
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=11")?,
+            (),
+        )
+        .await?;
+
+    let results = service
+        .purl_by_purl(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .await?;
+
+    assert_eq!(results.unwrap().version.version, "1.2.3");
+
+    Ok(())
+}
