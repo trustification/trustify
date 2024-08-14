@@ -39,6 +39,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         crate::license::model::PaginatedLicenseSummary,
         crate::license::model::LicenseSummary,
         crate::license::model::PaginatedLicenseDetailsPurlSummary,
+        crate::license::model::LicenseDetailsPurlSummary,
     )),
     tags()
 )]
