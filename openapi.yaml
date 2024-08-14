@@ -1895,6 +1895,18 @@ components:
           format: uuid
         name:
           type: string
+    ProductSbomHead:
+      type: object
+      required:
+      - labels
+      - published
+      properties:
+        labels:
+          $ref: '#/components/schemas/Labels'
+        published:
+          type: string
+          format: date-time
+          nullable: true
     ProductSummary:
       allOf:
       - $ref: '#/components/schemas/ProductHead'
@@ -1918,7 +1930,7 @@ components:
         properties:
           sbom:
             allOf:
-            - $ref: '#/components/schemas/SbomHead'
+            - $ref: '#/components/schemas/ProductSbomHead'
             nullable: true
     ProductVersionHead:
       type: object

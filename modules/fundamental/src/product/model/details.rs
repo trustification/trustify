@@ -47,7 +47,7 @@ impl ProductDetails {
 pub struct ProductVersionDetails {
     #[serde(flatten)]
     pub head: ProductVersionHead,
-    pub sbom: Option<SbomHead>,
+    pub sbom: Option<ProductSbomHead>,
 }
 
 impl ProductVersionDetails {
@@ -57,7 +57,7 @@ impl ProductVersionDetails {
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
         let sbom = if let Some(sbom) = sbom {
-            Some(SbomHead::from_entity(&sbom, tx).await?)
+            Some(ProductSbomHead::from_entity(&sbom, tx).await?)
         } else {
             None
         };
@@ -84,19 +84,19 @@ impl ProductVersionDetails {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
-pub struct SbomHead {
+pub struct ProductSbomHead {
     pub labels: Labels,
     #[schema(required)]
     #[serde(with = "time::serde::rfc3339::option")]
     pub published: Option<OffsetDateTime>,
 }
 
-impl SbomHead {
+impl ProductSbomHead {
     pub async fn from_entity(
         sbom: &trustify_entity::sbom::Model,
         _tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
-        Ok(SbomHead {
+        Ok(ProductSbomHead {
             labels: sbom.labels.clone(),
             published: sbom.published,
         })
