@@ -67,7 +67,7 @@ async fn list_license_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 
     let uuid = lgpl.id;
 
-    let licensed_purls = service
+    let _licensed_purls = service
         .get_license_purls(uuid, Query::default(), Paginated::default())
         .await?;
 
