@@ -2,6 +2,7 @@ mod corner_cases;
 mod perf;
 
 use super::*;
+use serde_json::Value;
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
@@ -162,7 +163,8 @@ where
         ctx,
         sbom,
         |data| {
-            let (sbom, _) = parse_spdx(&Discard, data)?;
+            let json: Value = serde_json::from_reader(data)?;
+            let (sbom, _) = parse_spdx(&Discard, json)?;
             Ok(fix_spdx_rels(sbom))
         },
         |ctx, sbom, tx| {

@@ -7,8 +7,21 @@ use crate::{
         Error,
     },
 };
+use bytes::Bytes;
+use csaf::Csaf;
+use cve::Cve;
+use cyclonedx_bom::models::bom::Bom;
+use futures::Stream;
+use futures::TryStreamExt;
 use jsn::{mask::*, Format as JsnFormat, TokenReader};
-use std::io::Read;
+use osv::schema::Vulnerability;
+use serde_json::Value;
+use std::{
+    io::{self},
+    pin::pin,
+};
+use tokio_util::io::{StreamReader, SyncIoBridge};
+use tracing::info_span;
 use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
 
@@ -22,37 +35,48 @@ pub enum Format {
 }
 
 impl<'g> Format {
-    pub async fn load<R: Read>(
+    pub async fn load<S>(
         &self,
         graph: &'g Graph,
         labels: Labels,
         issuer: Option<String>,
         digests: &Digests,
-        reader: R,
-    ) -> Result<IngestResult, Error> {
+        stream: S,
+    ) -> Result<IngestResult, Error>
+    where
+        S: Stream<Item = Result<Bytes, anyhow::Error>> + Send + 'static,
+    {
         match self {
             Format::CSAF => {
                 // issuer is internal as publisher of the document.
                 let loader = CsafLoader::new(graph);
-                loader.load(labels, reader, digests).await
+                let csaf: Csaf = from_stream(stream).await?;
+                loader.load(labels, csaf, digests).await
             }
             Format::OSV => {
                 // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
                 let loader = OsvLoader::new(graph);
-                loader.load(labels, reader, digests, issuer).await
+                let osv: Vulnerability = from_stream(stream).await?;
+                loader.load(labels, osv, digests, issuer).await
             }
             Format::CVE => {
                 // issuer is always CVE Project
                 let loader = CveLoader::new(graph);
-                loader.load(labels, reader, digests).await
+                let cve: Cve = from_stream(stream).await?;
+                loader.load(labels, cve, digests).await
             }
             Format::SPDX => {
                 let loader = SpdxLoader::new(graph);
-                loader.load(labels, reader, digests).await
+                let v: Value = from_stream(stream).await?;
+                loader.load(labels, v, digests).await
             }
             Format::CycloneDX => {
                 let loader = CyclonedxLoader::new(graph);
-                loader.load(labels, reader, digests).await
+                let v: Value = from_stream(stream).await?;
+                let sbom = Bom::parse_json_value(v)
+                    .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
+
+                loader.load(labels, sbom, digests).await
             }
         }
     }
@@ -144,6 +168,20 @@ fn masked<N: Mask>(mask: N, bytes: &[u8]) -> Result<Option<String>, Error> {
                 .map_err(|e| Error::Generic(e.into()))
         })
         .transpose()
+}
+
+async fn from_stream<S, T>(stream: S) -> Result<T, Error>
+where
+    S: Stream<Item = Result<Bytes, anyhow::Error>> + Send + 'static,
+    T: serde::de::DeserializeOwned + Send + 'static,
+{
+    Ok(tokio::task::spawn_blocking(move || {
+        let stream = pin!(stream);
+        let stream = stream.map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}")));
+        let reader = SyncIoBridge::new(StreamReader::new(stream));
+        info_span!("parse document").in_scope(|| serde_json::from_reader(reader))
+    })
+    .await??)
 }
 
 #[cfg(test)]

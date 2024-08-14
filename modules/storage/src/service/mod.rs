@@ -4,12 +4,11 @@ pub mod s3;
 mod temp;
 
 use crate::service::fs::FileSystemBackend;
-use bytes::{Bytes, BytesMut};
-use futures::{Stream, TryStreamExt};
+use bytes::Bytes;
+use futures::Stream;
 use hex::ToHex;
 use std::fmt::{Debug, Display, Formatter};
 use std::future::Future;
-use std::io::{Cursor, Read};
 use trustify_common::hashing::Digests;
 use trustify_common::id::Id;
 
@@ -89,29 +88,4 @@ pub trait StorageBackend {
         self,
         key: StorageKey,
     ) -> impl Future<Output = Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error>>;
-}
-
-pub struct SyncAdapter<T: StorageBackend> {
-    delegate: T,
-}
-
-impl<T: StorageBackend> SyncAdapter<T> {
-    pub fn new(delegate: T) -> Self {
-        SyncAdapter { delegate }
-    }
-
-    /// Retrieve the content as a sync reader, the operation itself is async
-    ///
-    /// NOTE: The default implementation falls back to an in-memory buffer.
-    pub async fn retrieve(self, hash_key: StorageKey) -> Result<Option<impl Read>, T::Error>
-    where
-        Self: Sized,
-    {
-        Ok(match self.delegate.retrieve(hash_key).await? {
-            Some(stream) => Some(Cursor::new(
-                stream.try_collect::<BytesMut>().await?.freeze(),
-            )),
-            None => None,
-        })
-    }
 }

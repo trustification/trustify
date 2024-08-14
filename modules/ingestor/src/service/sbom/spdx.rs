@@ -7,7 +7,7 @@ use crate::{
     model::IngestResult,
     service::Error,
 };
-use std::io::Read;
+use serde_json::Value;
 use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
 
@@ -20,10 +20,10 @@ impl<'g> SpdxLoader<'g> {
         Self { graph }
     }
 
-    pub async fn load<R: Read>(
+    pub async fn load(
         &self,
         labels: Labels,
-        json: R,
+        json: Value,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
         let warnings = Warnings::default();

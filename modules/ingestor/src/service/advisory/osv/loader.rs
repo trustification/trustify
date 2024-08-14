@@ -10,7 +10,7 @@ use crate::{
 };
 use osv::schema::{Event, ReferenceType, SeverityType, Vulnerability};
 use sbom_walker::report::ReportSink;
-use std::{io::Read, str::FromStr, sync::OnceLock};
+use std::{str::FromStr, sync::OnceLock};
 use trustify_common::hashing::Digests;
 use trustify_common::id::Id;
 use trustify_common::{purl::Purl, time::ChronoExt};
@@ -26,16 +26,14 @@ impl<'g> OsvLoader<'g> {
         Self { graph }
     }
 
-    pub async fn load<R: Read>(
+    pub async fn load(
         &self,
         labels: impl Into<Labels>,
-        record: R,
+        osv: Vulnerability,
         digests: &Digests,
         issuer: Option<String>,
     ) -> Result<IngestResult, Error> {
         let warnings = Warnings::new();
-
-        let osv: Vulnerability = serde_json::from_reader(record)?;
 
         let labels = labels.into().add("type", "osv");
 
@@ -285,6 +283,7 @@ fn events_to_range(events: &[Event]) -> (Option<String>, Option<String>) {
 #[cfg(test)]
 mod test {
     use hex::ToHex;
+    use osv::schema::Vulnerability;
     use test_context::test_context;
     use test_log::test;
 
@@ -303,6 +302,7 @@ mod test {
 
         let data = document_bytes("osv/RUSTSEC-2021-0079.json").await?;
         let digests = Digests::digest(&data);
+        let osv: Vulnerability = serde_json::from_reader(&data[..])?;
 
         let loaded_vulnerability = graph
             .get_vulnerability("CVE-2021-32714", Transactional::None)
@@ -316,12 +316,7 @@ mod test {
 
         let loader = OsvLoader::new(&graph);
         loader
-            .load(
-                ("file", "RUSTSEC-2021-0079.json"),
-                &data[..],
-                &digests,
-                None,
-            )
+            .load(("file", "RUSTSEC-2021-0079.json"), osv, &digests, None)
             .await?;
 
         let loaded_vulnerability = graph

@@ -8,7 +8,6 @@ use crate::{
     service::Error,
 };
 use cve::{Cve, Timestamp};
-use std::io::Read;
 use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
 
@@ -29,13 +28,12 @@ impl<'g> CveLoader<'g> {
         Self { graph }
     }
 
-    pub async fn load<R: Read>(
+    pub async fn load(
         &self,
         labels: impl Into<Labels>,
-        record: R,
+        cve: Cve,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
-        let cve: Cve = serde_json::from_reader(record)?;
         let id = cve.id();
         let labels = labels.into().add("type", "cve");
 
@@ -179,6 +177,7 @@ mod test {
 
         let data = document_bytes("mitre/CVE-2024-28111.json").await?;
         let digests = Digests::digest(&data);
+        let cve: Cve = serde_json::from_reader(&data[..])?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
         assert!(loaded_vulnerability.is_none());
@@ -190,7 +189,7 @@ mod test {
 
         let loader = CveLoader::new(&graph);
         loader
-            .load(("file", "CVE-2024-28111.json"), &data[..], &digests)
+            .load(("file", "CVE-2024-28111.json"), cve, &digests)
             .await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;

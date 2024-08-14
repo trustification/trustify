@@ -39,6 +39,7 @@ spdx-expression = { workspace = true }
 spdx-rs = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true, features = ["serde-well-known"] }
+tokio = { workspace = true, features = ["full"] }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras"] }
@@ -52,4 +53,3 @@ rstest = {workspace = true }
 serde_yaml = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
-tokio = { workspace = true, features = ["full"] }

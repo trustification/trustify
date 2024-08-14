@@ -4,7 +4,6 @@ use crate::{
     service::Error,
 };
 use cyclonedx_bom::prelude::Bom;
-use std::io::Read;
 use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
 
@@ -17,15 +16,12 @@ impl<'g> CyclonedxLoader<'g> {
         Self { graph }
     }
 
-    pub async fn load<R: Read>(
+    pub async fn load(
         &self,
         labels: Labels,
-        document: R,
+        sbom: Bom,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
-        let sbom = Bom::parse_json_value(serde_json::from_reader(document)?)
-            .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
-
         let labels = labels.add("type", "cyclonedx");
 
         log::info!(

@@ -3,6 +3,7 @@ pub mod sbom;
 
 mod format;
 pub use format::Format;
+use tokio::task::JoinError;
 
 use crate::{graph::Graph, model::IngestResult};
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
@@ -17,7 +18,7 @@ use std::{fmt::Debug, time::Instant};
 use tracing::instrument;
 use trustify_common::{error::ErrorInformation, id::IdError};
 use trustify_entity::labels::Labels;
-use trustify_module_storage::service::{dispatch::DispatchBackend, StorageBackend, SyncAdapter};
+use trustify_module_storage::service::{dispatch::DispatchBackend, StorageBackend};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -35,6 +36,8 @@ pub enum Error {
     Generic(anyhow::Error),
     #[error("Invalid format: {0}")]
     UnsupportedFormat(String),
+    #[error("failed to await the task: {0}")]
+    Join(#[from] JoinError),
 }
 
 impl ResponseError for Error {
@@ -47,6 +50,11 @@ impl ResponseError for Error {
             }),
             Self::Storage(err) => HttpResponse::InternalServerError().json(ErrorInformation {
                 error: "Storage".into(),
+                message: err.to_string(),
+                details: None,
+            }),
+            Self::Join(err) => HttpResponse::InternalServerError().json(ErrorInformation {
+                error: "Join".into(),
                 message: err.to_string(),
                 details: None,
             }),
@@ -121,8 +129,9 @@ impl IngestorService {
             .await
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
 
-        let storage = SyncAdapter::new(self.storage.clone());
-        let reader = storage
+        let reader = self
+            .storage
+            .clone() // TODO: why?
             .retrieve(result.key())
             .await
             .map_err(Error::Storage)?
