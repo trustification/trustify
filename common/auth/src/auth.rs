@@ -90,3 +90,36 @@ impl AuthConfigArguments {
         }))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn auth_disabled_devmode_false() {
+        let args = AuthConfigArguments {
+            disabled: true,
+            config: None,
+            clients: SingleAuthenticatorClientConfig::default(),
+        };
+
+        let result = args.split(false).unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn auth_enabled_devmode_true() {
+        let args = AuthConfigArguments {
+            disabled: false,
+            config: None,
+            clients: SingleAuthenticatorClientConfig::default(),
+        };
+
+        let result = args.split(true).unwrap();
+        assert!(result.is_some());
+        let auth_client_configs = result.unwrap().0.clients;
+        assert!(!auth_client_configs.is_empty());
+        let client_config = auth_client_configs.first();
+        assert_eq!(client_config.unwrap().client_id, "frontend");
+    }
+}
