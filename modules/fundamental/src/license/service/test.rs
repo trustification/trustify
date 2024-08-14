@@ -71,10 +71,6 @@ async fn list_license_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         .get_license_purls(uuid, Query::default(), Paginated::default())
         .await?;
 
-    println!("{:#?}", licensed_purls);
-
-    println!("{:#?}", lgpl);
-
     Ok(())
 }
 
