@@ -60,6 +60,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         crate::purl::model::details::purl::PurlDetails,
         crate::purl::model::details::purl::PurlAdvisory,
         crate::purl::model::details::purl::PurlStatus,
+        crate::purl::model::details::purl::PurlLicenseSummary,
         crate::purl::model::summary::purl::PurlSummary,
         crate::purl::model::summary::purl::PaginatedPurlSummary,
         trustify_common::purl::Purl,

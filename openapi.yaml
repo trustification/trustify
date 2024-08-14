@@ -1815,6 +1815,16 @@ components:
       type: object
       additionalProperties:
         type: string
+    LicenseDetailsPurlSummary:
+      type: object
+      required:
+      - purl
+      - sbom
+      properties:
+        purl:
+          $ref: '#/components/schemas/VersionedPurlHead'
+        sbom:
+          $ref: '#/components/schemas/SbomHead'
     LicenseSummary:
       type: object
       required:
@@ -2249,6 +2259,18 @@ components:
           type: string
           format: uuid
           description: The ID of the qualified PURL
+    PurlLicenseSummary:
+      type: object
+      required:
+      - sbom
+      - licenses
+      properties:
+        licenses:
+          type: array
+          items:
+            type: string
+        sbom:
+          $ref: '#/components/schemas/SbomHead'
     PurlStatus:
       type: object
       required:
