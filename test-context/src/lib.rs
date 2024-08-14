@@ -1,6 +1,7 @@
 #![allow(clippy::expect_used)]
 
 use futures::{stream, Stream};
+use peak_alloc::PeakAlloc;
 use postgresql_embedded::PostgreSQL;
 use std::env;
 use std::env::current_dir;
@@ -24,8 +25,12 @@ pub struct TrustifyContext {
     pub graph: Graph,
     pub storage: FileSystemBackend,
     pub ingestor: IngestorService,
+    pub mem_limit_mb: f32,
     postgresql: Option<PostgreSQL>,
 }
+
+#[global_allocator]
+static PEAK_ALLOC: PeakAlloc = PeakAlloc;
 
 impl TrustifyContext {
     async fn new(db: common::db::Database, postgresql: impl Into<Option<PostgreSQL>>) -> Self {
@@ -42,6 +47,7 @@ impl TrustifyContext {
             storage,
             ingestor,
             postgresql: postgresql.into(),
+            mem_limit_mb: 500.0,
         }
     }
 
@@ -106,7 +112,11 @@ impl AsyncTestContext for TrustifyContext {
     }
 
     async fn teardown(self) {
-        // Perform any teardown you wish.
+        let peak_mem = PEAK_ALLOC.peak_usage_as_mb();
+        if peak_mem > self.mem_limit_mb {
+            log::error!("Too much RAM used: {peak_mem} MB");
+        }
+        PEAK_ALLOC.reset_peak_usage();
     }
 }
 
