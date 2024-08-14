@@ -15,6 +15,7 @@ anyhow = { workspace = true }
 futures = { workspace = true }
 liblzma = { workspace = true }
 log = { workspace = true }
+peak_alloc = { workspace = true }
 postgresql_embedded = { workspace = true }
 test-context = { workspace = true }
 tokio = { workspace = true }
