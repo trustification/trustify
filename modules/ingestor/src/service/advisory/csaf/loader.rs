@@ -7,7 +7,7 @@ use crate::{
         Graph,
     },
     model::IngestResult,
-    service::{advisory::csaf::PurlStatusCreator, Error, Warnings},
+    service::{advisory::csaf::StatusCreator, Error, Warnings},
 };
 use csaf::{
     vulnerability::{ProductStatus, Vulnerability},
@@ -158,7 +158,7 @@ impl<'g> CsafLoader<'g> {
         product_status: &ProductStatus,
         tx: TX,
     ) -> Result<(), Error> {
-        let mut creator = PurlStatusCreator::new(
+        let mut creator = StatusCreator::new(
             csaf,
             advisory_vulnerability.advisory_vulnerability.advisory_id,
             advisory_vulnerability
@@ -171,7 +171,7 @@ impl<'g> CsafLoader<'g> {
         creator.add_all(&product_status.known_not_affected, "not_affected");
         creator.add_all(&product_status.known_affected, "affected");
 
-        creator.create(&self.graph.connection(&tx)).await?;
+        creator.create(self.graph, tx).await?;
 
         Ok(())
     }
@@ -306,6 +306,50 @@ mod test {
         assert_eq!(
             score.to_string(),
             "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:H"
+        );
+
+        Ok(())
+    }
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test(tokio::test)]
+    async fn product_status(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = ctx.db;
+        let graph = Graph::new(db);
+        let loader = CsafLoader::new(&graph);
+
+        let (csaf, digests): (Csaf, _) = document("csaf/cve-2023-0044.json").await?;
+        loader.load(("source", "test"), csaf, &digests).await?;
+
+        let loaded_vulnerability = graph
+            .get_vulnerability("CVE-2023-0044", Transactional::None)
+            .await?;
+        assert!(loaded_vulnerability.is_some());
+
+        let loaded_advisory = graph
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
+            .await?;
+        assert!(loaded_advisory.is_some());
+
+        let loaded_advisory = loaded_advisory.unwrap();
+
+        assert!(loaded_advisory.advisory.issuer_id.is_some());
+
+        let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(()).await?;
+        assert_eq!(1, loaded_advisory_vulnerabilities.len());
+
+        let advisory_vuln = loaded_advisory
+            .get_vulnerability("CVE-2023-0044", ())
+            .await?;
+        assert!(advisory_vuln.is_some());
+
+        let advisory_vuln = advisory_vuln.unwrap();
+        let scores = advisory_vuln.cvss3_scores(()).await?;
+        assert_eq!(1, scores.len());
+
+        let score = scores[0];
+        assert_eq!(
+            score.to_string(),
+            "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:L"
         );
 
         Ok(())
