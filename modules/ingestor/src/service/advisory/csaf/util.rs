@@ -47,6 +47,7 @@ pub fn branch_purl(branch: &Branch) -> Option<&PackageUrl<'static>> {
     })
 }
 
+#[allow(dead_code)]
 pub fn branch_cpe(branch: &Branch) -> Option<&cpe::uri::OwnedUri> {
     branch.product.as_ref().and_then(|name| {
         name.product_identification_helper

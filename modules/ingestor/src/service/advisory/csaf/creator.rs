@@ -1,3 +1,7 @@
+use crate::graph::advisory::advisory_vulnerability::Version;
+use crate::graph::product::ProductInformation;
+use crate::graph::Graph;
+use crate::service::advisory::csaf::product_status::ProductStatus;
 use crate::service::advisory::csaf::util::ResolveProductIdCache;
 use crate::{
     graph::{
@@ -5,15 +9,16 @@ use crate::{
         cpe::CpeCreator,
         purl::creator::PurlCreator,
     },
-    service::{advisory::csaf::util::resolve_identifier, Error},
+    service::Error,
 };
 use csaf::{definitions::ProductIdT, Csaf};
 use sea_orm::{ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use sea_query::IntoCondition;
 use std::collections::{hash_map::Entry, HashMap, HashSet};
 use tracing::instrument;
+use trustify_common::db::Transactional;
 use trustify_common::{cpe::Cpe, db::chunk::EntityChunkedIter, purl::Purl};
-use trustify_entity::{purl_status, status, version_range};
+use trustify_entity::{product_status, purl_status, status, version_range};
 use uuid::Uuid;
 
 #[derive(Debug, Eq, Hash, PartialEq)]
@@ -25,14 +30,15 @@ struct PurlStatus {
 }
 
 #[derive(Debug)]
-pub struct PurlStatusCreator<'a> {
+pub struct StatusCreator<'a> {
     cache: ResolveProductIdCache<'a>,
     advisory_id: Uuid,
     vulnerability_id: String,
     entries: HashSet<PurlStatus>,
+    products: HashSet<ProductStatus>,
 }
 
-impl<'a> PurlStatusCreator<'a> {
+impl<'a> StatusCreator<'a> {
     pub fn new(csaf: &'a Csaf, advisory_id: Uuid, vulnerability_identifier: String) -> Self {
         let cache = ResolveProductIdCache::new(csaf);
         Self {
@@ -40,29 +46,42 @@ impl<'a> PurlStatusCreator<'a> {
             advisory_id,
             vulnerability_id: vulnerability_identifier,
             entries: HashSet::new(),
+            products: HashSet::new(),
         }
     }
 
     pub fn add_all(&mut self, ps: &Option<Vec<ProductIdT>>, status: &'static str) {
         for r in ps.iter().flatten() {
-            if let Some((cpe, Some(purl))) = resolve_identifier(&self.cache, r) {
-                let mut purl = Purl::from(purl.clone());
-                purl.qualifiers.clear();
+            let mut product = ProductStatus {
+                status,
+                ..Default::default()
+            };
+            let mut product_ids = vec![];
+            match self.cache.get_relationship(&r.0) {
+                Some(rel) => {
+                    let inner_id: &ProductIdT = &rel.product_reference;
+                    let context = &rel.relates_to_product_reference;
 
-                if let Some(version) = purl.version.clone() {
-                    let status = PurlStatus {
-                        cpe: cpe.cloned().map(|cpe| cpe.into()),
-                        purl,
-                        status,
-                        info: VersionInfo {
-                            scheme: "generic".to_string(),
-                            spec: VersionSpec::Exact(version),
-                        },
-                    };
-
-                    self.entries.insert(status);
+                    // Find all products
+                    product_ids.push(&context.0);
+                    // Find all components/packages within
+                    product_ids.push(&inner_id.0);
                 }
+                None => {
+                    // If there's no relationship, find only products
+                    product_ids.push(&r.0);
+                }
+            };
+            for product_id in product_ids {
+                product = self.cache.trace_product(product_id).iter().fold(
+                    product,
+                    |mut product, branch| {
+                        product.update_from_branch(branch);
+                        product
+                    },
+                );
             }
+            self.products.insert(product);
         }
     }
 
@@ -77,19 +96,114 @@ impl<'a> PurlStatusCreator<'a> {
             .ok_or_else(|| crate::graph::error::Error::InvalidStatus(status.to_string()))?)
     }
 
-    #[instrument(skip(self, connection), err)]
-    pub async fn create(self, connection: &impl ConnectionTrait) -> Result<(), Error> {
-        let mut checked = HashMap::new();
+    #[instrument(skip(self, tx), err)]
+    pub async fn create<TX: AsRef<Transactional>>(
+        &mut self,
+        graph: &Graph,
+        tx: TX,
+    ) -> Result<(), Error> {
+        let connection = &graph.connection(&tx);
 
+        let mut checked = HashMap::new();
+        let mut product_statuses = Vec::new();
         let mut purls = PurlCreator::new();
         let mut cpes = CpeCreator::new();
 
-        for ps in &self.entries {
+        for product in &self.products {
             // ensure a correct status, and get id
-            if let Entry::Vacant(entry) = checked.entry(ps.status) {
-                entry.insert(Self::check_status(ps.status, connection).await?);
+            if let Entry::Vacant(entry) = checked.entry(product.status) {
+                entry.insert(Self::check_status(product.status, connection).await?);
+            };
+
+            let status_id = checked.get(&product.status).ok_or_else(|| {
+                Error::Graph(crate::graph::error::Error::InvalidStatus(
+                    product.status.to_string(),
+                ))
+            })?;
+
+            // Ingest product
+            let pr = graph
+                .ingest_product(
+                    product.product.clone(),
+                    ProductInformation {
+                        vendor: product.vendor.clone(),
+                    },
+                    &tx,
+                )
+                .await?;
+
+            // Ingest product range
+            let product_version_range = match product.version {
+                Some(ref ver) => Some(
+                    pr.ingest_product_version_range(ver.clone(), None, &tx)
+                        .await?,
+                ),
+                None => None,
+            };
+
+            // If there are no components associated to this product
+            // Ingest product status
+            if product.packages.is_empty() {
+                if let Some(range) = &product_version_range {
+                    let base_product = product_status::ActiveModel {
+                        id: Default::default(),
+                        product_version_range_id: Set(range.id),
+                        advisory_id: Set(self.advisory_id),
+                        vulnerability_id: Set(self.vulnerability_id.clone()),
+                        base_purl_id: Set(None),
+                        context_cpe_id: Set(product.cpe.as_ref().map(Cpe::uuid)),
+                        status_id: Set(status_id.id),
+                    };
+                    if let Some(cpe) = &product.cpe {
+                        cpes.add(cpe.clone());
+                    }
+                    product_statuses.push(base_product);
+                }
             }
 
+            for purl in &product.packages {
+                let mut purl = purl.clone();
+                purl.qualifiers.clear();
+
+                // Ingest purl status
+                let info = match purl.version.clone() {
+                    Some(version) => VersionInfo {
+                        scheme: "generic".to_string(),
+                        spec: VersionSpec::Exact(version),
+                    },
+                    None => VersionInfo {
+                        spec: VersionSpec::Range(Version::Unbounded, Version::Unbounded),
+                        scheme: "semver".to_string(),
+                    },
+                };
+
+                let purl_status = PurlStatus {
+                    cpe: product.cpe.clone(),
+                    purl: purl.clone(),
+                    status: product.status,
+                    info,
+                };
+
+                self.entries.insert(purl_status);
+
+                // Ingest matching product status
+                if let Some(ver) = &product_version_range {
+                    let product_status = product_status::ActiveModel {
+                        id: Default::default(),
+                        product_version_range_id: Set(ver.id),
+                        advisory_id: Set(self.advisory_id),
+                        vulnerability_id: Set(self.vulnerability_id.clone()),
+                        base_purl_id: Set(Some(purl.package_uuid())),
+                        context_cpe_id: Set(product.cpe.as_ref().map(Cpe::uuid)),
+                        status_id: Set(status_id.id),
+                    };
+
+                    product_statuses.push(product_status);
+                }
+            }
+        }
+
+        for ps in &self.entries {
             // add to PURL creator
             purls.add(ps.purl.clone());
 
@@ -104,6 +218,12 @@ impl<'a> PurlStatusCreator<'a> {
         // round two, status is checked, purls exist
 
         self.create_status(connection, checked).await?;
+
+        for batch in &product_statuses.chunked() {
+            product_status::Entity::insert_many(batch)
+                .exec(connection)
+                .await?;
+        }
 
         // done
 

@@ -78,6 +78,9 @@ mod m0000605_create_source_document;
 mod m0000610_improve_version_cmp_fns;
 mod m0000620_parallel_unsafe_pg_fns;
 mod m0000625_alter_qualified_purl_purl_column;
+mod m0000630_create_product_version_range;
+mod m0000631_alter_product_cpe_key;
+mod m0000640_create_product_status;
 pub struct Migrator;
 
 #[async_trait::async_trait]
@@ -162,6 +165,9 @@ impl MigratorTrait for Migrator {
             Box::new(m0000610_improve_version_cmp_fns::Migration),
             Box::new(m0000620_parallel_unsafe_pg_fns::Migration),
             Box::new(m0000625_alter_qualified_purl_purl_column::Migration),
+            Box::new(m0000630_create_product_version_range::Migration),
+            Box::new(m0000631_alter_product_cpe_key::Migration),
+            Box::new(m0000640_create_product_status::Migration),
         ]
     }
 }

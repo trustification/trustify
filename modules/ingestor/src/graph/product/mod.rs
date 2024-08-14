@@ -13,7 +13,7 @@ use crate::graph::{error::Error, Graph};
 
 use self::product_version::ProductVersionContext;
 
-use super::organization::OrganizationContext;
+use super::{advisory::advisory_vulnerability::VersionInfo, organization::OrganizationContext};
 
 #[derive(Clone)]
 pub struct ProductContext<'g> {
@@ -63,6 +63,25 @@ impl<'g> ProductContext<'g> {
                 Ok(product_version)
             }
         }
+    }
+
+    pub async fn ingest_product_version_range<TX: AsRef<Transactional>>(
+        &self,
+        info: VersionInfo,
+        cpe_key: Option<String>,
+        tx: TX,
+    ) -> Result<entity::product_version_range::Model, Error> {
+        let version_range = info.into_active_model();
+        let version_range = version_range.insert(&self.graph.connection(&tx)).await?;
+
+        let model = entity::product_version_range::ActiveModel {
+            id: Default::default(),
+            product_id: Set(self.product.id),
+            version_range_id: Set(version_range.id),
+            cpe_key: Set(cpe_key),
+        };
+
+        Ok(model.insert(&self.graph.connection(&tx)).await?)
     }
 
     pub async fn get_vendor<TX: AsRef<Transactional>>(
