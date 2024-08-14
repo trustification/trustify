@@ -2385,7 +2385,7 @@ components:
           sboms:
             type: array
             items:
-              $ref: '#/components/schemas/SbomStatus'
+              $ref: '#/components/schemas/VulnerabilitySbomStatus'
             description: SBOMs claimed by this advisory to be addressed by this vulnerability.
     VulnerabilityDetails:
       allOf:
@@ -2469,6 +2469,21 @@ components:
           format: date-time
           description: The date (in RFC3339 format) of when the vulnerability was last withdrawn, if any.
           nullable: true
+    VulnerabilitySbomStatus:
+      allOf:
+      - $ref: '#/components/schemas/SbomHead'
+      - type: object
+        required:
+        - status
+        properties:
+          status:
+            type: array
+            items:
+              type: string
+            uniqueItems: true
+          version:
+            type: string
+            nullable: true
     VulnerabilitySummary:
       allOf:
       - $ref: '#/components/schemas/VulnerabilityHead'
