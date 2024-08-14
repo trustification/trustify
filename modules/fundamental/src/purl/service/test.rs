@@ -728,11 +728,7 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-#[test_context(TrustifyContext)]
-#[test(actix_web::test)]
-async fn purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
-
+async fn ingest_some_log4j_data(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let log4j = ctx
         .graph
         .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
@@ -748,12 +744,53 @@ async fn purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             (),
         )
         .await?;
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
+
+    ingest_some_log4j_data(ctx).await?;
 
     let results = service
         .purl_by_purl(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
         .await?;
 
     assert_eq!(results.unwrap().version.version, "1.2.3");
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn base_purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
+
+    ingest_some_log4j_data(ctx).await?;
+
+    let results = service
+        .base_purl_by_purl(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .await?;
+
+    assert!(!results.unwrap().versions.is_empty());
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn versioned_base_purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = PurlService::new(ctx.db.clone());
+
+    ingest_some_log4j_data(ctx).await?;
+
+    let results = service
+        .versioned_purl_by_purl(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .await?;
+
+    assert!(!results.unwrap().purls.is_empty());
 
     Ok(())
 }
