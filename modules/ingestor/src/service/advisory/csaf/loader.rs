@@ -14,9 +14,9 @@ use csaf::{
     Csaf,
 };
 use sbom_walker::report::ReportSink;
-use std::{io::Read, str::FromStr};
+use std::str::FromStr;
 use time::OffsetDateTime;
-use tracing::{info_span, instrument};
+use tracing::instrument;
 use trustify_common::{db::Transactional, hashing::Digests, id::Id};
 use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity::labels::Labels;
@@ -51,17 +51,14 @@ impl<'g> CsafLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, labels, document), err)]
-    pub async fn load<R: Read>(
+    #[instrument(skip(self, labels), err)]
+    pub async fn load(
         &self,
         labels: impl Into<Labels>,
-        document: R,
+        csaf: Csaf,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
         let warnings = Warnings::new();
-
-        let csaf: Csaf =
-            info_span!("parse document").in_scope(|| serde_json::from_reader(document))?;
 
         let tx = self.graph.transaction().await?;
 
@@ -194,10 +191,10 @@ mod test {
 
         let data = document_bytes("csaf/CVE-2023-20862.json").await?;
         let digests = Digests::digest(&data);
-
+        let csaf: Csaf = serde_json::from_reader(&data[..])?;
         let loader = CsafLoader::new(&graph);
         loader
-            .load(("file", "CVE-2023-20862.json"), &data[..], &digests)
+            .load(("file", "CVE-2023-20862.json"), csaf, &digests)
             .await?;
 
         let loaded_vulnerability = graph
@@ -275,8 +272,8 @@ mod test {
 
         let data = document_bytes("csaf/rhsa-2024_3666.json").await?;
         let digests = Digests::digest(&data);
-
-        loader.load(("source", "test"), &data[..], &digests).await?;
+        let csaf: Csaf = serde_json::from_reader(&data[..])?;
+        loader.load(("source", "test"), csaf, &digests).await?;
 
         let loaded_vulnerability = graph
             .get_vulnerability("CVE-2024-23672", Transactional::None)

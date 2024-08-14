@@ -15,7 +15,7 @@ use sbom_walker::report::{check, ReportSink};
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
 use std::collections::HashMap;
-use std::{io::Read, str::FromStr};
+use std::str::FromStr;
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, db::Transactional, purl::Purl};
@@ -316,11 +316,7 @@ pub fn fix_license(report: &dyn ReportSink, mut json: Value) -> (Value, bool) {
 /// Parse a SPDX document, possibly replacing invalid license expressions.
 ///
 /// Returns the parsed document and a flag indicating if license expressions got replaced.
-pub fn parse_spdx(
-    report: &dyn ReportSink,
-    data: impl Read,
-) -> Result<(SPDX, bool), serde_json::Error> {
-    let json = serde_json::from_reader::<_, Value>(data)?;
+pub fn parse_spdx(report: &dyn ReportSink, json: Value) -> Result<(SPDX, bool), serde_json::Error> {
     let (json, changed) = fix_license(report, json);
     Ok((serde_json::from_value(json)?, changed))
 }
