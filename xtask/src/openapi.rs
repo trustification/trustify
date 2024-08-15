@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Context};
 use clap::Parser;
+use std::env::current_dir;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -73,7 +74,7 @@ pub fn validate() -> anyhow::Result<()> {
             "run",
             "--rm",
             "-v",
-            ".:/src",
+            format!("{}:/src", current_dir()?.to_str().unwrap()).as_str(),
             "--security-opt",
             "label=disable",
             "docker.io/openapitools/openapi-generator-cli:v7.7.0",
