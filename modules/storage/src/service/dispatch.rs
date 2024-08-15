@@ -34,10 +34,10 @@ impl StorageBackend for DispatchBackend {
         }
     }
 
-    async fn retrieve(
-        self,
+    async fn retrieve<'a>(
+        &self,
         key: StorageKey,
-    ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error>
+    ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>> + 'a>, Self::Error>
     where
         Self: Sized,
     {

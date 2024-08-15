@@ -84,8 +84,10 @@ pub trait StorageBackend {
         S: Stream<Item = Result<Bytes, E>>;
 
     /// Retrieve the content as an async reader
-    fn retrieve(
-        self,
+    fn retrieve<'a>(
+        &self,
         key: StorageKey,
-    ) -> impl Future<Output = Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error>>;
+    ) -> impl Future<
+        Output = Result<Option<impl Stream<Item = Result<Bytes, Self::Error>> + 'a>, Self::Error>,
+    >;
 }
