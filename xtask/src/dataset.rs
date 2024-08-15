@@ -47,7 +47,7 @@ pub struct Instructions {
 impl GenerateDump {
     fn load_config(&self) -> anyhow::Result<Instructions> {
         match &self.input {
-            Some(input) => Ok(serde_yaml::from_reader(BufReader::new(
+            Some(input) => Ok(serde_yml::from_reader(BufReader::new(
                 std::fs::File::open(input)?,
             ))?),
             None => {

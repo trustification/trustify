@@ -1,3 +1,4 @@
+use crate::service::sbom::clearly_defined::ClearlyDefinedLoader;
 use crate::{
     graph::Graph,
     model::IngestResult,
@@ -32,6 +33,7 @@ pub enum Format {
     CVE,
     SPDX,
     CycloneDX,
+    ClearlyDefined,
 }
 
 impl<'g> Format {
@@ -50,33 +52,38 @@ impl<'g> Format {
             Format::CSAF => {
                 // issuer is internal as publisher of the document.
                 let loader = CsafLoader::new(graph);
-                let csaf: Csaf = from_stream(stream).await?;
+                let csaf: Csaf = json_from_stream(stream).await?;
                 loader.load(labels, csaf, digests).await
             }
             Format::OSV => {
                 // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
                 let loader = OsvLoader::new(graph);
-                let osv: Vulnerability = from_stream(stream).await?;
+                let osv: Vulnerability = json_from_stream(stream).await?;
                 loader.load(labels, osv, digests, issuer).await
             }
             Format::CVE => {
                 // issuer is always CVE Project
                 let loader = CveLoader::new(graph);
-                let cve: Cve = from_stream(stream).await?;
+                let cve: Cve = json_from_stream(stream).await?;
                 loader.load(labels, cve, digests).await
             }
             Format::SPDX => {
                 let loader = SpdxLoader::new(graph);
-                let v: Value = from_stream(stream).await?;
+                let v: Value = json_from_stream(stream).await?;
                 loader.load(labels, v, digests).await
             }
             Format::CycloneDX => {
                 let loader = CyclonedxLoader::new(graph);
-                let v: Value = from_stream(stream).await?;
+                let v: Value = json_from_stream(stream).await?;
                 let sbom = Bom::parse_json_value(v)
                     .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
                 loader.load(labels, sbom, digests).await
+            }
+            Format::ClearlyDefined => {
+                let loader = ClearlyDefinedLoader::new(graph);
+                let v: serde_yml::Value = yaml_from_stream(stream).await?;
+                loader.load(labels, v, digests).await
             }
         }
     }
@@ -112,6 +119,8 @@ impl<'g> Format {
             Ok(Format::SPDX)
         } else if Self::is_cyclonedx(bytes)? {
             Ok(Format::CycloneDX)
+        } else if Self::is_clearly_defined(bytes)? {
+            Ok(Format::ClearlyDefined)
         } else {
             Err(Error::UnsupportedFormat(
                 "Unable to detect SBOM format; only SPDX and CycloneDX are supported".into(),
@@ -136,23 +145,35 @@ impl<'g> Format {
     }
 
     pub fn is_spdx(bytes: &[u8]) -> Result<bool, Error> {
-        match masked(depth(1).and(key("spdxVersion")), bytes)? {
-            Some(x) if matches!(x.as_str(), "SPDX-2.2" | "SPDX-2.3") => Ok(true),
-            Some(x) => Err(Error::UnsupportedFormat(format!(
+        match masked(depth(1).and(key("spdxVersion")), bytes) {
+            Ok(Some(x)) if matches!(x.as_str(), "SPDX-2.2" | "SPDX-2.3") => Ok(true),
+            Ok(Some(x)) => Err(Error::UnsupportedFormat(format!(
                 "SPDX version {x} is unsupported; try 2.2 or 2.3"
             ))),
-            None => Ok(false),
+            Ok(None) | Err(_) => Ok(false),
         }
     }
 
     pub fn is_cyclonedx(bytes: &[u8]) -> Result<bool, Error> {
-        match masked(depth(1).and(key("specVersion")), bytes)? {
-            Some(x) if matches!(x.as_str(), "1.3" | "1.4" | "1.5") => Ok(true),
-            Some(x) => Err(Error::UnsupportedFormat(format!(
+        match masked(depth(1).and(key("specVersion")), bytes) {
+            Ok(Some(x)) if matches!(x.as_str(), "1.3" | "1.4" | "1.5") => Ok(true),
+            Ok(Some(x)) => Err(Error::UnsupportedFormat(format!(
                 "CycloneDX version {x} is unsupported; try 1.3, 1.4, or 1.5"
             ))),
-            None => Ok(false),
+            Ok(None) | Err(_) => Ok(false),
         }
+    }
+
+    pub fn is_clearly_defined(bytes: &[u8]) -> Result<bool, Error> {
+        // first just try to get some YAML.
+        if let Ok(candidate) = serde_yml::from_slice::<'_, serde_yml::Value>(bytes) {
+            // does it have a root `coordinates`?
+            if candidate.get("coordinates").is_some() {
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
     }
 }
 
@@ -170,7 +191,7 @@ fn masked<N: Mask>(mask: N, bytes: &[u8]) -> Result<Option<String>, Error> {
         .transpose()
 }
 
-async fn from_stream<S, T>(stream: S) -> Result<T, Error>
+async fn json_from_stream<S, T>(stream: S) -> Result<T, Error>
 where
     S: Stream<Item = Result<Bytes, anyhow::Error>> + Send + 'static,
     T: serde::de::DeserializeOwned + Send + 'static,
@@ -180,6 +201,20 @@ where
         let stream = stream.map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}")));
         let reader = SyncIoBridge::new(StreamReader::new(stream));
         info_span!("parse document").in_scope(|| serde_json::from_reader(reader))
+    })
+    .await??)
+}
+
+async fn yaml_from_stream<S, T>(stream: S) -> Result<T, Error>
+where
+    S: Stream<Item = Result<Bytes, anyhow::Error>> + Send + 'static,
+    T: serde::de::DeserializeOwned + Send + 'static,
+{
+    Ok(tokio::task::spawn_blocking(move || {
+        let stream = pin!(stream);
+        let stream = stream.map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}")));
+        let reader = SyncIoBridge::new(StreamReader::new(stream));
+        info_span!("parse document").in_scope(|| serde_yml::from_reader(reader))
     })
     .await??)
 }

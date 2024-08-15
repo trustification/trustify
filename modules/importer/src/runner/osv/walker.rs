@@ -48,7 +48,7 @@ where
 {
     fn process_file(&mut self, path: &Path, rel_path: &Path) -> Result<(), ProcessingError> {
         let osv: Vulnerability = match path.extension().map(|s| s.to_string_lossy()).as_deref() {
-            Some("yaml") => serde_yaml::from_reader(BufReader::new(std::fs::File::open(path)?))?,
+            Some("yaml") => serde_yml::from_reader(BufReader::new(std::fs::File::open(path)?))?,
             Some("json") => serde_json::from_reader(BufReader::new(std::fs::File::open(path)?))?,
             e => {
                 log::debug!("Skipping unknown extension: {e:?}");
