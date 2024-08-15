@@ -38,16 +38,19 @@ impl TrustifyContext {
             .await
             .expect("initializing the storage backend");
         let graph = Graph::new(db.clone());
-
         let ingestor = IngestorService::new(graph.clone(), storage.clone());
+        let mem_limit_mb = env::var("MEM_LIMIT_MB")
+            .unwrap_or("500".into())
+            .parse()
+            .expect("a numerical value");
 
         Self {
             db,
             graph,
             storage,
             ingestor,
+            mem_limit_mb,
             postgresql: postgresql.into(),
-            mem_limit_mb: 500.0,
         }
     }
 
