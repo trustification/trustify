@@ -6,6 +6,7 @@ use clap::{Parser, Subcommand};
 mod dataset;
 mod log;
 mod openapi;
+mod precommit;
 mod schema;
 
 #[derive(Debug, Parser)]
@@ -17,21 +18,24 @@ pub struct Xtask {
 impl Xtask {
     pub async fn run(self) -> anyhow::Result<()> {
         match self.command {
-            Command::ValidateOpenapi(command) => command.run(),
+            Command::Openapi(command) => command.run(),
             Command::GenerateDump(command) => command.run().await,
             Command::GenerateSchemas(command) => command.run().await,
+            Command::Precommit(command) => command.run().await,
         }
     }
 }
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
-    /// Validate the generated OpenAPI spec
-    ValidateOpenapi(openapi::Validate),
+    /// Used to generate and/or validate the openapi spec
+    Openapi(openapi::Openapi),
     /// Generate a sample data database dump
     GenerateDump(dataset::GenerateDump),
     /// Generate all schemas
     GenerateSchemas(schema::GenerateSchema),
+    /// Run precommit checks
+    Precommit(precommit::Precommit),
 }
 
 #[tokio::main]
