@@ -119,10 +119,10 @@ impl StorageBackend for FileSystemBackend {
         Ok(result)
     }
 
-    async fn retrieve(
-        self,
+    async fn retrieve<'a>(
+        &self,
         StorageKey(hash): StorageKey,
-    ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error> {
+    ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>> + 'a>, Self::Error> {
         let target = level_dir(&self.content, &hash, NUM_LEVELS);
         create_dir_all(&target).await?;
         let target = target.join(hash);

@@ -131,7 +131,6 @@ impl IngestorService {
 
         let reader = self
             .storage
-            .clone() // TODO: why?
             .retrieve(result.key())
             .await
             .map_err(Error::Storage)?

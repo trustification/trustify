@@ -57,10 +57,10 @@ impl StorageBackend for S3Backend {
         Ok(result)
     }
 
-    async fn retrieve(
-        self,
+    async fn retrieve<'a>(
+        &self,
         StorageKey(key): StorageKey,
-    ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>>>, Self::Error> {
+    ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>> + 'a>, Self::Error> {
         match self.bucket.get_object_stream(key).await {
             Ok(resp) => Ok(Some(resp.bytes)),
             Err(S3Error::HttpFailWithBody(404, _)) => Ok(None),
