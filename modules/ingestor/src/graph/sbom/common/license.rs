@@ -38,7 +38,7 @@ impl LicenseInfo {
                     .licenses()
                     .iter()
                     .filter(|e| !e.license_ref)
-                    .map(|e| e.identifier.trim_end_matches('+').to_string())
+                    .map(|e| e.identifier.to_string())
                     .collect::<Vec<_>>();
 
                 let spdx_license_exceptions = parsed
