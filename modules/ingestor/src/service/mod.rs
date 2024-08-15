@@ -27,6 +27,8 @@ pub enum Error {
     #[error(transparent)]
     Json(#[from] serde_json::Error),
     #[error(transparent)]
+    Yaml(#[from] serde_yml::Error),
+    #[error(transparent)]
     Graph(#[from] crate::graph::error::Error),
     #[error(transparent)]
     Db(#[from] DbErr),
@@ -45,6 +47,11 @@ impl ResponseError for Error {
         match self {
             Self::Json(err) => HttpResponse::BadRequest().json(ErrorInformation {
                 error: "JsonParse".into(),
+                message: err.to_string(),
+                details: None,
+            }),
+            Self::Yaml(err) => HttpResponse::BadRequest().json(ErrorInformation {
+                error: "YamlParse".into(),
                 message: err.to_string(),
                 details: None,
             }),

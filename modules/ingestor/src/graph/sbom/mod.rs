@@ -3,6 +3,8 @@
 pub mod cyclonedx;
 pub mod spdx;
 
+pub mod clearly_defined;
+
 mod common;
 pub use common::*;
 

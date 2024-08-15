@@ -72,7 +72,7 @@ impl AuthConfigArguments {
                     disabled,
                     authentication,
                     authorization,
-                } = serde_yaml::from_reader(std::fs::File::open(config)?)?;
+                } = serde_yml::from_reader(std::fs::File::open(config)?)?;
 
                 if disabled {
                     return Ok(None);

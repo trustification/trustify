@@ -34,6 +34,7 @@ sea-orm = { workspace = true }
 sea-query = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+serde_yml = { workspace = true }
 spdx = { workspace = true }
 spdx-expression = { workspace = true }
 spdx-rs = { workspace = true }
@@ -50,6 +51,6 @@ trustify-test-context = { workspace = true }
 
 rand = { workspace = true }
 rstest = {workspace = true }
-serde_yaml = { workspace = true }
+serde_yml = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
