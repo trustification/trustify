@@ -1,8 +1,10 @@
+mod clearly_defined;
 mod csaf;
 mod cve;
 mod osv;
 mod sbom;
 
+pub use clearly_defined::*;
 pub use csaf::*;
 pub use cve::*;
 pub use osv::*;
@@ -99,6 +101,7 @@ pub enum ImporterConfiguration {
     Csaf(CsafImporter),
     Osv(OsvImporter),
     Cve(CveImporter),
+    ClearlyDefined(ClearlyDefinedImporter),
 }
 
 impl Deref for ImporterConfiguration {
@@ -110,6 +113,7 @@ impl Deref for ImporterConfiguration {
             Self::Csaf(importer) => &importer.common,
             Self::Osv(importer) => &importer.common,
             Self::Cve(importer) => &importer.common,
+            Self::ClearlyDefined(importer) => &importer.common,
         }
     }
 }
@@ -121,6 +125,7 @@ impl DerefMut for ImporterConfiguration {
             Self::Csaf(importer) => &mut importer.common,
             Self::Osv(importer) => &mut importer.common,
             Self::Cve(importer) => &mut importer.common,
+            Self::ClearlyDefined(importer) => &mut importer.common,
         }
     }
 }

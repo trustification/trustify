@@ -1,9 +1,12 @@
 use std::{collections::HashSet, time::Duration};
 use trustify_common::config::Database;
+use trustify_module_importer::model::{
+    ClearlyDefinedPackageType, CveImporter, DEFAULT_SOURCE_CVEPROJECT,
+};
 use trustify_module_importer::{
     model::{
-        CommonImporter, CsafImporter, CveImporter, ImporterConfiguration, OsvImporter,
-        SbomImporter, DEFAULT_SOURCE_CVEPROJECT,
+        ClearlyDefinedImporter, CommonImporter, CsafImporter, ImporterConfiguration, OsvImporter,
+        SbomImporter, DEFAULT_SOURCE_CLEARLY_DEFINED,
     },
     service::{Error, ImporterService},
 };
@@ -73,6 +76,29 @@ async fn add_cve(
     .await
 }
 
+async fn add_clearly_defined(
+    importer: &ImporterService,
+    name: &str,
+    description: &str,
+) -> anyhow::Result<()> {
+    add(
+        importer,
+        name,
+        ImporterConfiguration::ClearlyDefined(ClearlyDefinedImporter {
+            common: CommonImporter {
+                disabled: true,
+                // once an hour is plenty
+                period: Duration::from_secs(60 * 60),
+                description: Some(description.into()),
+                labels: Default::default(),
+            },
+            source: DEFAULT_SOURCE_CLEARLY_DEFINED.into(),
+            types: ClearlyDefinedPackageType::all(),
+        }),
+    )
+    .await
+}
+
 pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()> {
     let importer = ImporterService::new(db);
 
@@ -135,6 +161,13 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         "cve-from-2024",
         Some(2024),
         "CVE List V5 (starting 2024)",
+    )
+    .await?;
+
+    add_clearly_defined(
+        &importer,
+        "clearly-defined",
+        "Community-curated ClearlyDefined licenses",
     )
     .await?;
 

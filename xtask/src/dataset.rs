@@ -6,8 +6,9 @@ use serde_json::Value;
 use std::{io::BufReader, path::PathBuf, time::Duration};
 use tokio::io::AsyncWriteExt;
 use trustify_common::{db, model::BinaryByteSize};
+use trustify_module_importer::model::CveImporter;
 use trustify_module_importer::{
-    model::{CommonImporter, CsafImporter, CveImporter, ImporterConfiguration, SbomImporter},
+    model::{CommonImporter, CsafImporter, ImporterConfiguration, SbomImporter},
     runner::{
         context::RunContext,
         progress::{Progress, TracingProgress},
