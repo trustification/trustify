@@ -20,6 +20,69 @@
     "ByteSize": {
       "type": "string"
     },
+    "ClearlyDefinedImporter": {
+      "type": "object",
+      "required": [
+        "period"
+      ],
+      "properties": {
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disabled": {
+          "description": "A flag to disable the importer, without deleting it.",
+          "default": false,
+          "type": "boolean"
+        },
+        "labels": {
+          "description": "Labels which will be applied to the ingested documents.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Labels"
+            }
+          ]
+        },
+        "period": {
+          "description": "The period the importer should be run.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumantimeSerde"
+            }
+          ]
+        },
+        "source": {
+          "default": "https://github.com/clearlydefined/curated-data",
+          "type": "string"
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ClearlyDefinedPackageType"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "ClearlyDefinedPackageType": {
+      "type": "string",
+      "enum": [
+        "composer",
+        "crate",
+        "deb",
+        "gem",
+        "git",
+        "go",
+        "maven",
+        "npm",
+        "nuget",
+        "pod",
+        "pypi"
+      ]
+    },
     "CsafImporter": {
       "type": "object",
       "required": [
@@ -184,6 +247,18 @@
           "properties": {
             "cve": {
               "$ref": "#/definitions/CveImporter"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "clearlyDefined"
+          ],
+          "properties": {
+            "clearlyDefined": {
+              "$ref": "#/definitions/ClearlyDefinedImporter"
             }
           },
           "additionalProperties": false
