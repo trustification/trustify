@@ -227,12 +227,14 @@ where
     T: serde::de::DeserializeOwned + Send + 'static,
 {
     tokio::task::spawn_blocking(move || {
-        let stream = pin!(stream);
-        let stream = stream.map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}")));
-        let reader = SyncIoBridge::new(StreamReader::new(stream));
-        info_span!("parse document").in_scope(|| match flavor {
-            StreamFlavor::Yaml => serde_yml::from_reader(reader).map_err(Error::Yaml),
-            StreamFlavor::Json => serde_json::from_reader(reader).map_err(Error::Json),
+        info_span!("parse document").in_scope(|| {
+            let stream = pin!(stream);
+            let stream = stream.map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}")));
+            let reader = SyncIoBridge::new(StreamReader::new(stream));
+            match flavor {
+                StreamFlavor::Yaml => serde_yml::from_reader(reader).map_err(Error::Yaml),
+                StreamFlavor::Json => serde_json::from_reader(reader).map_err(Error::Json),
+            }
         })
     })
     .await?
