@@ -91,7 +91,7 @@ impl Into<SbomInformation> for &Curation {
             node_id: self.document_id(),
             name: self.coordinates.base_purl().to_string(),
             published: None,
-            authors: vec!["ClearlyDefined".to_string()],
+            authors: vec!["ClearlyDefined: Community-Curated".to_string()],
         }
     }
 }

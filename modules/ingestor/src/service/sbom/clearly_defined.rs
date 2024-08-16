@@ -2,7 +2,6 @@ use crate::graph::sbom::clearly_defined::Curation;
 use crate::graph::Graph;
 use crate::model::IngestResult;
 use crate::service::Error;
-use serde_yml::Value;
 use trustify_common::hashing::Digests;
 use trustify_common::id::Id;
 use trustify_entity::labels::Labels;
@@ -19,11 +18,10 @@ impl<'g> ClearlyDefinedLoader<'g> {
     pub async fn load(
         &self,
         labels: Labels,
-        yaml: Value,
+        curation: Curation,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
         let tx = self.graph.transaction().await?;
-        let curation: Curation = serde_yml::from_value(yaml)?;
 
         let sbom = self
             .graph
@@ -33,6 +31,8 @@ impl<'g> ClearlyDefinedLoader<'g> {
         sbom.ingest_clearly_defined(curation, &tx)
             .await
             .map_err(Error::Generic)?;
+
+        tx.commit().await?;
 
         Ok(IngestResult {
             id: Id::Uuid(sbom.sbom.sbom_id),

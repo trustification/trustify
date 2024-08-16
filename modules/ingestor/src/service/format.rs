@@ -1,3 +1,4 @@
+use crate::graph::sbom::clearly_defined::Curation;
 use crate::service::sbom::clearly_defined::ClearlyDefinedLoader;
 use crate::{
     graph::Graph,
@@ -82,8 +83,8 @@ impl<'g> Format {
             }
             Format::ClearlyDefined => {
                 let loader = ClearlyDefinedLoader::new(graph);
-                let v: serde_yml::Value = yaml_from_stream(stream).await?;
-                loader.load(labels, v, digests).await
+                let curation: Curation = yaml_from_stream(stream).await?;
+                loader.load(labels, curation, digests).await
             }
         }
     }
@@ -129,19 +130,27 @@ impl<'g> Format {
     }
 
     pub fn is_csaf(bytes: &[u8]) -> Result<bool, Error> {
-        Ok(masked(
+        match masked(
             key("document").and(key("csaf_version")).and(depth(2)),
             bytes,
-        )?
-        .is_some())
+        ) {
+            Ok(Some(_)) => Ok(true),
+            _ => Ok(false),
+        }
     }
 
     pub fn is_cve(bytes: &[u8]) -> Result<bool, Error> {
-        Ok(masked(depth(1).and(key("dataType")), bytes)?.is_some())
+        match masked(depth(1).and(key("dataType")), bytes) {
+            Ok(Some(_)) => Ok(true),
+            _ => Ok(false),
+        }
     }
 
     pub fn is_osv(bytes: &[u8]) -> Result<bool, Error> {
-        Ok(masked(depth(1).and(key("id")), bytes)?.is_some())
+        match masked(depth(1).and(key("id")), bytes) {
+            Ok(Some(_)) => Ok(true),
+            _ => Ok(false),
+        }
     }
 
     pub fn is_spdx(bytes: &[u8]) -> Result<bool, Error> {
@@ -150,7 +159,7 @@ impl<'g> Format {
             Ok(Some(x)) => Err(Error::UnsupportedFormat(format!(
                 "SPDX version {x} is unsupported; try 2.2 or 2.3"
             ))),
-            Ok(None) | Err(_) => Ok(false),
+            _ => Ok(false),
         }
     }
 
@@ -160,7 +169,7 @@ impl<'g> Format {
             Ok(Some(x)) => Err(Error::UnsupportedFormat(format!(
                 "CycloneDX version {x} is unsupported; try 1.3, 1.4, or 1.5"
             ))),
-            Ok(None) | Err(_) => Ok(false),
+            _ => Ok(false),
         }
     }
 

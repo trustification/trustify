@@ -125,3 +125,50 @@ async fn get_spdx_license(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn verify_clearly_defined(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = LicenseService::new(ctx.db.clone());
+
+    ctx.ingest_document("clearly-defined/chrono.yaml").await?;
+
+    let sought_license = service
+        .list_licenses(q("Apache-2.0 OR MIT"), Paginated::default())
+        .await?;
+
+    assert_eq!(1, sought_license.items.len());
+
+    let sought_license = &sought_license.items[0];
+
+    let license_details = service
+        .get_license_purls(sought_license.id, Query::default(), Paginated::default())
+        .await?;
+
+    assert_eq!(7, license_details.items.len());
+
+    let mut seen_versions = Vec::new();
+
+    for each in license_details.items {
+        assert!(each
+            .sbom
+            .authors
+            .contains(&"ClearlyDefined: Community-Curated".to_string()));
+        assert!(each
+            .purl
+            .purl
+            .to_string()
+            .starts_with("pkg://crate/chrono@"));
+        seen_versions.push(each.purl.version);
+    }
+
+    assert!(seen_versions.contains(&"0.4.10".to_string()));
+    assert!(seen_versions.contains(&"0.4.11".to_string()));
+    assert!(seen_versions.contains(&"0.4.12".to_string()));
+    assert!(seen_versions.contains(&"0.4.13".to_string()));
+    assert!(seen_versions.contains(&"0.4.19".to_string()));
+    assert!(seen_versions.contains(&"0.4.7".to_string()));
+    assert!(seen_versions.contains(&"0.4.9".to_string()));
+
+    Ok(())
+}
