@@ -2,7 +2,7 @@ use crate::graph::purl::creator::PurlCreator;
 use crate::graph::sbom::{LicenseCreator, LicenseInfo, SbomContext, SbomInformation};
 use sea_orm::{EntityTrait, Set};
 use sea_query::OnConflict;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::instrument;
 use trustify_common::db::Transactional;
@@ -61,7 +61,7 @@ impl SbomContext {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Curation {
     pub coordinates: Coordinates,
     pub revisions: HashMap<String, Revision>,
@@ -96,7 +96,7 @@ impl Into<SbomInformation> for &Curation {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Coordinates {
     pub provider: String,
     pub name: String,
@@ -126,12 +126,12 @@ impl Coordinates {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Revision {
     pub licensed: Option<Licensed>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct Licensed {
     pub declared: String,
 }

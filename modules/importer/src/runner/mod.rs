@@ -1,3 +1,4 @@
+pub mod clearly_defined;
 pub mod common;
 pub mod context;
 pub mod csaf;
@@ -44,6 +45,10 @@ impl ImportRunner {
             }
             ImporterConfiguration::Osv(osv) => self.run_once_osv(context, osv, continuation).await,
             ImporterConfiguration::Cve(cve) => self.run_once_cve(context, cve, continuation).await,
+            ImporterConfiguration::ClearlyDefined(clearly_defined) => {
+                self.run_once_clearly_defined(context, clearly_defined, continuation)
+                    .await
+            }
         }
     }
 
