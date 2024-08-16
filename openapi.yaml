@@ -1667,6 +1667,32 @@ components:
       - type: object
     BinaryByteSize:
       type: string
+    ClearlyDefinedImporter:
+      allOf:
+      - $ref: '#/components/schemas/CommonImporter'
+      - type: object
+        properties:
+          source:
+            type: string
+          types:
+            type: array
+            items:
+              $ref: '#/components/schemas/ClearlyDefinedPackageType'
+            uniqueItems: true
+    ClearlyDefinedPackageType:
+      type: string
+      enum:
+      - composer
+      - crate
+      - deb
+      - gem
+      - git
+      - go
+      - maven
+      - npm
+      - nuget
+      - pod
+      - pypi
     CommonImporter:
       type: object
       required:
@@ -1761,6 +1787,12 @@ components:
         properties:
           cve:
             $ref: '#/components/schemas/CveImporter'
+      - type: object
+        required:
+        - clearlyDefined
+        properties:
+          clearlyDefined:
+            $ref: '#/components/schemas/ClearlyDefinedImporter'
     ImporterData:
       type: object
       required:
