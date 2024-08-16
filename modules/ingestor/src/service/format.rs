@@ -135,21 +135,21 @@ impl<'g> Format {
             bytes,
         ) {
             Ok(Some(_)) => Ok(true),
-            _ => Ok(false),
+            Err(_) | Ok(None) => Ok(false),
         }
     }
 
     pub fn is_cve(bytes: &[u8]) -> Result<bool, Error> {
         match masked(depth(1).and(key("dataType")), bytes) {
             Ok(Some(_)) => Ok(true),
-            _ => Ok(false),
+            Err(_) | Ok(None) => Ok(false),
         }
     }
 
     pub fn is_osv(bytes: &[u8]) -> Result<bool, Error> {
         match masked(depth(1).and(key("id")), bytes) {
             Ok(Some(_)) => Ok(true),
-            _ => Ok(false),
+            Err(_) | Ok(None) => Ok(false),
         }
     }
 
@@ -159,7 +159,7 @@ impl<'g> Format {
             Ok(Some(x)) => Err(Error::UnsupportedFormat(format!(
                 "SPDX version {x} is unsupported; try 2.2 or 2.3"
             ))),
-            _ => Ok(false),
+            Err(_) | Ok(None) => Ok(false),
         }
     }
 
@@ -169,7 +169,7 @@ impl<'g> Format {
             Ok(Some(x)) => Err(Error::UnsupportedFormat(format!(
                 "CycloneDX version {x} is unsupported; try 1.3, 1.4, or 1.5"
             ))),
-            _ => Ok(false),
+            Err(_) | Ok(None) => Ok(false),
         }
     }
 
@@ -205,13 +205,7 @@ where
     S: Stream<Item = Result<Bytes, anyhow::Error>> + Send + 'static,
     T: serde::de::DeserializeOwned + Send + 'static,
 {
-    Ok(tokio::task::spawn_blocking(move || {
-        let stream = pin!(stream);
-        let stream = stream.map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}")));
-        let reader = SyncIoBridge::new(StreamReader::new(stream));
-        info_span!("parse document").in_scope(|| serde_json::from_reader(reader))
-    })
-    .await??)
+    from_stream(stream, StreamFlavor::Json).await
 }
 
 async fn yaml_from_stream<S, T>(stream: S) -> Result<T, Error>
@@ -219,13 +213,33 @@ where
     S: Stream<Item = Result<Bytes, anyhow::Error>> + Send + 'static,
     T: serde::de::DeserializeOwned + Send + 'static,
 {
-    Ok(tokio::task::spawn_blocking(move || {
+    from_stream(stream, StreamFlavor::Yaml).await
+}
+
+enum StreamFlavor {
+    Json,
+    Yaml,
+}
+
+async fn from_stream<S, T>(stream: S, flavor: StreamFlavor) -> Result<T, Error>
+where
+    S: Stream<Item = Result<Bytes, anyhow::Error>> + Send + 'static,
+    T: serde::de::DeserializeOwned + Send + 'static,
+{
+    tokio::task::spawn_blocking(move || {
         let stream = pin!(stream);
         let stream = stream.map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}")));
         let reader = SyncIoBridge::new(StreamReader::new(stream));
-        info_span!("parse document").in_scope(|| serde_yml::from_reader(reader))
+        match flavor {
+            StreamFlavor::Json => info_span!("parse document")
+                .in_scope(|| serde_json::from_reader(reader))
+                .map_err(Error::Json),
+            StreamFlavor::Yaml => info_span!("parse document")
+                .in_scope(|| serde_yml::from_reader(reader))
+                .map_err(Error::Yaml),
+        }
     })
-    .await??)
+    .await?
 }
 
 #[cfg(test)]
