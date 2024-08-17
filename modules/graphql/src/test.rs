@@ -23,7 +23,6 @@ const GET_ADVISORIES: &str = "
         getAdvisories {
             id
             name
-           
         }
     }
 ";
@@ -47,7 +46,7 @@ const GET_ORGANIZATION_BY_NAME: &str = "
         getOrganizationByName(name: $name) {
             id
             name
-        }	
+        }
     }
 ";
 
@@ -91,6 +90,13 @@ const GET_VULNERABILITY_BY_ID: &str = "
     }
 ";
 
+fn make_schema(ctx: &TrustifyContext) -> Schema<RootQuery, EmptyMutation, EmptySubscription> {
+    Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
+        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
+        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
+        .finish()
+}
+
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
@@ -98,10 +104,7 @@ async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_documents(["cve/CVE-2021-32714.json", "cve/CVE-2024-29025.json"])
         .await?;
 
-    let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
-        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
-        .finish();
+    let schema = make_schema(ctx);
 
     let result = schema.execute(Request::new(GET_ADVISORIES)).await;
 
@@ -121,10 +124,7 @@ async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 async fn get_advisory_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let results = ctx.ingest_document("cve/CVE-2024-29025.json").await?;
 
-    let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
-        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
-        .finish();
+    let schema = make_schema(ctx);
 
     let id = results.id.clone();
     let result = schema
@@ -150,10 +150,7 @@ async fn get_advisory_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 async fn get_organization_by_name(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingest_document("cve/rhsa-2024-2705.json").await?;
 
-    let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
-        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
-        .finish();
+    let schema = make_schema(ctx);
 
     let result = schema
         .execute(
@@ -181,10 +178,7 @@ async fn get_sbom_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
     let sbom_id = results.id.clone();
 
-    let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
-        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
-        .finish();
+    let schema = make_schema(ctx);
 
     let result = schema
         .execute(
@@ -212,10 +206,7 @@ async fn get_sboms_by_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     ctx.ingest_document("spdx/quarkus-bom-3.2.11.Final-redhat-00001.json")
         .await?;
 
-    let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
-        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
-        .finish();
+    let schema = make_schema(ctx);
 
     let labels = String::from("type:spdx");
 
@@ -244,10 +235,7 @@ async fn get_sboms_by_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 async fn get_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingest_document("cve/rhsa-2024-2705.json").await?;
 
-    let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
-        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
-        .finish();
+    let schema = make_schema(ctx);
 
     let result = schema.execute(Request::new(GET_VULNERABILITIES)).await;
 
@@ -267,10 +255,7 @@ async fn get_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 async fn get_vulnerability_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingest_document("cve/CVE-2024-29025.json").await?;
 
-    let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
-        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
-        .finish();
+    let schema = make_schema(ctx);
 
     let result = schema
         .execute(
@@ -303,10 +288,7 @@ async fn get_cves_by_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let sbom_id = results[1].id.clone();
 
-    let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
-        .data::<Arc<Graph>>(Arc::new(Graph::new(ctx.db.clone())))
-        .data::<Arc<Database>>(Arc::new(ctx.db.clone()))
-        .finish();
+    let schema = make_schema(ctx);
 
     let result = schema
         .execute(

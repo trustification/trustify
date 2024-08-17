@@ -16,9 +16,7 @@ use trustify_module_ingestor::graph::advisory::{
 };
 use trustify_test_context::TrustifyContext;
 
-#[test_context(TrustifyContext)]
-#[test(actix_web::test)]
-async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn ingest_and_link_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let advisory = ctx
         .graph
         .ingest_advisory(
@@ -39,6 +37,7 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let advisory_vuln = advisory
         .link_to_vulnerability("CVE-123", None, Transactional::None)
         .await?;
+
     advisory_vuln
         .ingest_cvss3_score(
             Cvss3Base {
@@ -55,6 +54,13 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             (),
         )
         .await?;
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ingest_and_link_advisory(ctx).await?;
 
     ctx.graph
         .ingest_advisory(
@@ -86,42 +92,7 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 async fn all_advisories_filtered_by_average_score(
     ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
-    let advisory = ctx
-        .graph
-        .ingest_advisory(
-            "RHSA-1",
-            ("source", "http://redhat.com/"),
-            &Digests::digest("RHSA-1"),
-            AdvisoryInformation {
-                title: Some("RHSA-1".to_string()),
-                issuer: None,
-                published: Some(OffsetDateTime::now_utc()),
-                modified: None,
-                withdrawn: None,
-            },
-            (),
-        )
-        .await?;
-
-    let advisory_vuln = advisory
-        .link_to_vulnerability("CVE-123", None, Transactional::None)
-        .await?;
-    advisory_vuln
-        .ingest_cvss3_score(
-            Cvss3Base {
-                minor_version: 0,
-                av: AttackVector::Network,
-                ac: AttackComplexity::Low,
-                pr: PrivilegesRequired::None,
-                ui: UserInteraction::None,
-                s: Scope::Unchanged,
-                c: Confidentiality::None,
-                i: Integrity::High,
-                a: Availability::High,
-            },
-            (),
-        )
-        .await?;
+    ingest_and_link_advisory(ctx).await?;
 
     ctx.graph
         .ingest_advisory(
@@ -153,42 +124,7 @@ async fn all_advisories_filtered_by_average_score(
 async fn all_advisories_filtered_by_average_severity(
     ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
-    let advisory = ctx
-        .graph
-        .ingest_advisory(
-            "RHSA-1",
-            ("source", "http://redhat.com/"),
-            &Digests::digest("RHSA-1"),
-            AdvisoryInformation {
-                title: Some("RHSA-1".to_string()),
-                issuer: None,
-                published: Some(OffsetDateTime::now_utc()),
-                modified: None,
-                withdrawn: None,
-            },
-            (),
-        )
-        .await?;
-
-    let advisory_vuln = advisory
-        .link_to_vulnerability("CVE-123", None, Transactional::None)
-        .await?;
-    advisory_vuln
-        .ingest_cvss3_score(
-            Cvss3Base {
-                minor_version: 0,
-                av: AttackVector::Network,
-                ac: AttackComplexity::Low,
-                pr: PrivilegesRequired::None,
-                ui: UserInteraction::None,
-                s: Scope::Unchanged,
-                c: Confidentiality::None,
-                i: Integrity::High,
-                a: Availability::High,
-            },
-            (),
-        )
-        .await?;
+    ingest_and_link_advisory(ctx).await?;
 
     ctx.graph
         .ingest_advisory(

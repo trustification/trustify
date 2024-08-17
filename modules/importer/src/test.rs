@@ -31,6 +31,21 @@ fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
     })
 }
 
+fn mock_importer(result: &Importer, source: impl Into<String>) -> Importer {
+    Importer {
+        name: "foo".into(),
+        data: ImporterData {
+            configuration: mock_configuration(source),
+            state: State::Waiting,
+            last_change: result.data.last_change, // we can't predict timestamps
+            last_success: None,
+            last_error: None,
+            last_run: None,
+            continuation: serde_json::Value::Null,
+        },
+    }
+}
+
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
 async fn test_default(ctx: TrustifyContext) {
@@ -97,21 +112,7 @@ async fn test_default(ctx: TrustifyContext) {
     assert_eq!(resp.status(), StatusCode::OK);
 
     let result: Importer = actix::read_body_json(resp).await;
-    assert_eq!(
-        result,
-        Importer {
-            name: "foo".into(),
-            data: ImporterData {
-                configuration: mock_configuration("baz"),
-                state: State::Waiting,
-                last_change: result.data.last_change, // we can't predict timestamps
-                last_success: None,
-                last_error: None,
-                last_run: None,
-                continuation: serde_json::Value::Null,
-            }
-        }
-    );
+    assert_eq!(result, mock_importer(&result, "baz"));
 
     // delete it
 
@@ -176,21 +177,7 @@ async fn test_oplock(ctx: TrustifyContext) {
     let etag = etag.cloned().unwrap();
 
     let result: Importer = actix::read_body_json(resp).await;
-    assert_eq!(
-        result,
-        Importer {
-            name: "foo".into(),
-            data: ImporterData {
-                configuration: mock_configuration("baz"),
-                state: State::Waiting,
-                last_change: result.data.last_change, // we can't predict timestamps
-                last_success: None,
-                last_error: None,
-                last_run: None,
-                continuation: serde_json::Value::Null,
-            }
-        }
-    );
+    assert_eq!(result, mock_importer(&result, "baz"));
 
     // update it (with lock)
 
@@ -213,21 +200,7 @@ async fn test_oplock(ctx: TrustifyContext) {
     assert_eq!(resp.status(), StatusCode::OK);
 
     let result: Importer = actix::read_body_json(resp).await;
-    assert_eq!(
-        result,
-        Importer {
-            name: "foo".into(),
-            data: ImporterData {
-                configuration: mock_configuration("buz"),
-                state: State::Waiting,
-                last_change: result.data.last_change, // we can't predict timestamps
-                last_success: None,
-                last_error: None,
-                last_run: None,
-                continuation: serde_json::Value::Null,
-            }
-        }
-    );
+    assert_eq!(result, mock_importer(&result, "buz"));
 
     // update it (with broken lock)
 
@@ -267,21 +240,7 @@ async fn test_oplock(ctx: TrustifyContext) {
     assert_ne!(old_etag, etag);
 
     let result: Importer = actix::read_body_json(resp).await;
-    assert_eq!(
-        result,
-        Importer {
-            name: "foo".into(),
-            data: ImporterData {
-                configuration: mock_configuration("buz"),
-                state: State::Waiting,
-                last_change: result.data.last_change, // we can't predict timestamps
-                last_success: None,
-                last_error: None,
-                last_run: None,
-                continuation: serde_json::Value::Null,
-            }
-        }
-    );
+    assert_eq!(result, mock_importer(&result, "buz"));
 
     // delete it (wrong lock)
 
@@ -303,21 +262,7 @@ async fn test_oplock(ctx: TrustifyContext) {
     assert_eq!(resp.status(), StatusCode::OK);
 
     let result: Importer = actix::read_body_json(resp).await;
-    assert_eq!(
-        result,
-        Importer {
-            name: "foo".into(),
-            data: ImporterData {
-                configuration: mock_configuration("buz"),
-                state: State::Waiting,
-                last_change: result.data.last_change, // we can't predict timestamps
-                last_success: None,
-                last_error: None,
-                last_run: None,
-                continuation: serde_json::Value::Null,
-            }
-        }
-    );
+    assert_eq!(result, mock_importer(&result, "buz"));
 
     // delete it (correct lock)
 

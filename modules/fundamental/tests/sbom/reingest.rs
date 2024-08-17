@@ -8,9 +8,22 @@ use tracing::instrument;
 use trustify_common::db::query::Query;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
-use trustify_module_fundamental::sbom::service::SbomService;
+use trustify_module_fundamental::sbom::{model::details::SbomDetails, service::SbomService};
 use trustify_module_ingestor::service::Format;
 use trustify_test_context::{document_bytes, TrustifyContext};
+
+fn assert_sboms(sbom1: &SbomDetails, sbom2: &SbomDetails) {
+    assert_eq!(sbom1.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom2.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
+    assert_eq!(sbom1.summary.described_by.len(), 1);
+    assert_eq!(sbom2.summary.described_by.len(), 1);
+}
+
+fn assert_by_cleaning_id(sbom1: &mut SbomDetails, sbom2: &mut SbomDetails) {
+    sbom1.summary.described_by[0].id = "".into();
+    sbom2.summary.described_by[0].id = "".into();
+    assert_eq!(sbom1.summary.described_by[0], sbom2.summary.described_by[0]);
+}
 
 /// We re-ingest two versions of the same quarkus SBOM. However, as the quarkus SBOM doesn't have
 /// anything in common other than the filename (which doesn't matter), these are considered two
@@ -66,10 +79,7 @@ async fn quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // clear the ID as that one will be different
 
-    sbom1.summary.described_by[0].id = "".into();
-    sbom2.summary.described_by[0].id = "".into();
-
-    assert_eq!(sbom1.summary.described_by[0], sbom2.summary.described_by[0]);
+    assert_by_cleaning_id(&mut sbom1, &mut sbom2);
 
     // but both sboms can be found by the same purl
 
@@ -132,18 +142,11 @@ async fn nhc(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     log::info!("SBOM2: {sbom2:?}");
 
     // both sboms have the same name
-
-    assert_eq!(sbom1.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom2.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom1.summary.described_by.len(), 1);
-    assert_eq!(sbom2.summary.described_by.len(), 1);
+    assert_sboms(&sbom1, &sbom2);
 
     // clear the ID as that one will be different
 
-    sbom1.summary.described_by[0].id = "".into();
-    sbom2.summary.described_by[0].id = "".into();
-
-    assert_eq!(sbom1.summary.described_by[0], sbom2.summary.described_by[0]);
+    assert_by_cleaning_id(&mut sbom1, &mut sbom2);
 
     // done
 
@@ -193,17 +196,11 @@ async fn nhc_same(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // both sboms have the same name
 
-    assert_eq!(sbom1.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom2.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom1.summary.described_by.len(), 1);
-    assert_eq!(sbom2.summary.described_by.len(), 1);
+    assert_sboms(&sbom1, &sbom2);
 
     // clear the ID as that one will be different
 
-    sbom1.summary.described_by[0].id = "".into();
-    sbom2.summary.described_by[0].id = "".into();
-
-    assert_eq!(sbom1.summary.described_by[0], sbom2.summary.described_by[0]);
+    assert_by_cleaning_id(&mut sbom1, &mut sbom2);
 
     // done
 
@@ -269,17 +266,11 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // both sboms have the same name
 
-    assert_eq!(sbom1.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom2.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
-    assert_eq!(sbom1.summary.described_by.len(), 1);
-    assert_eq!(sbom2.summary.described_by.len(), 1);
+    assert_sboms(&sbom1, &sbom2);
 
     // clear the ID as that one will be different
 
-    sbom1.summary.described_by[0].id = "".into();
-    sbom2.summary.described_by[0].id = "".into();
-
-    assert_eq!(sbom1.summary.described_by[0], sbom2.summary.described_by[0]);
+    assert_by_cleaning_id(&mut sbom1, &mut sbom2);
 
     // done
 
@@ -345,10 +336,7 @@ async fn syft_rerun(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // clear the ID as that one will be different
 
-    sbom1.summary.described_by[0].id = "".into();
-    sbom2.summary.described_by[0].id = "".into();
-
-    assert_eq!(sbom1.summary.described_by[0], sbom2.summary.described_by[0]);
+    assert_by_cleaning_id(&mut sbom1, &mut sbom2);
 
     // done
 
