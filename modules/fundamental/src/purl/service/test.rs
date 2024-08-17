@@ -12,6 +12,17 @@ use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_test_context::TrustifyContext;
 
+async fn ingest_extra_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ctx.graph
+        .ingest_package(&Purl::from_str("pkg:maven/org.myspace/tom")?, ())
+        .await?;
+    ctx.graph
+        .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
+        .await?;
+
+    Ok(())
+}
+
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn types(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
@@ -37,12 +48,7 @@ async fn types(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    ctx.graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.myspace/tom")?, ())
-        .await?;
-    ctx.graph
-        .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
-        .await?;
+    ingest_extra_packages(ctx).await?;
 
     let types = service.purl_types(()).await?;
 
@@ -90,12 +96,7 @@ async fn packages_for_type(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.5")?, ())
         .await?;
 
-    ctx.graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.myspace/tom")?, ())
-        .await?;
-    ctx.graph
-        .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
-        .await?;
+    ingest_extra_packages(ctx).await?;
 
     let packages = service
         .base_purls_by_type("maven", Query::default(), Paginated::default(), ())
@@ -138,12 +139,7 @@ async fn packages_for_type_with_filtering(ctx: &TrustifyContext) -> Result<(), a
         .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.5")?, ())
         .await?;
 
-    ctx.graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.myspace/tom")?, ())
-        .await?;
-    ctx.graph
-        .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
-        .await?;
+    ingest_extra_packages(ctx).await?;
 
     let packages = service
         .base_purls_by_type("maven", q("myspace"), Paginated::default(), ())

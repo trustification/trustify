@@ -8,7 +8,21 @@ use trustify_common::{id::Id, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::sbom::model::SbomPackageReference;
 use trustify_module_fundamental::sbom::service::SbomService;
+use trustify_module_ingestor::graph::purl::qualified_package::QualifiedPackageContext;
+use trustify_module_ingestor::graph::sbom::SbomContext;
 use trustify_test_context::TrustifyContext;
+
+async fn related_packages_transitively(
+    sbom: &SbomContext,
+) -> Result<Vec<QualifiedPackageContext>, anyhow::Error> {
+    let purl = Purl::try_from("pkg:cargo/A@0.0.0").expect("must parse");
+
+    let result = sbom
+        .related_packages_transitively(Relationship::VARIANTS, &purl, ())
+        .await?;
+
+    Ok(result)
+}
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
@@ -33,10 +47,7 @@ async fn infinite_loop(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(packages.total, 3);
 
-    let purl = Purl::try_from("pkg:cargo/A@0.0.0").expect("must parse");
-    let packages = sbom
-        .related_packages_transitively(Relationship::VARIANTS, &purl, ())
-        .await?;
+    let packages = related_packages_transitively(&sbom).await?;
 
     assert_eq!(packages.len(), 3);
 
@@ -78,10 +89,7 @@ async fn double_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(packages.total, 3);
 
-    let purl = Purl::try_from("pkg:cargo/A@0.0.0").expect("must parse");
-    let packages = sbom
-        .related_packages_transitively(Relationship::VARIANTS, &purl, ())
-        .await?;
+    let packages = related_packages_transitively(&sbom).await?;
 
     assert_eq!(packages.len(), 3);
 
@@ -117,10 +125,7 @@ async fn self_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(packages.total, 0);
 
-    let purl = Purl::try_from("pkg:cargo/A@0.0.0").expect("must parse");
-    let packages = sbom
-        .related_packages_transitively(Relationship::VARIANTS, &purl, ())
-        .await?;
+    let packages = related_packages_transitively(&sbom).await?;
 
     assert_eq!(packages.len(), 0);
 
@@ -156,10 +161,7 @@ async fn self_ref_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(packages.total, 1);
 
-    let purl = Purl::try_from("pkg:cargo/A@0.0.0").expect("must parse");
-    let packages = sbom
-        .related_packages_transitively(Relationship::VARIANTS, &purl, ())
-        .await?;
+    let packages = related_packages_transitively(&sbom).await?;
 
     assert_eq!(packages.len(), 1);
 
