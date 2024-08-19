@@ -8,13 +8,14 @@ use crate::runner::{
     },
     progress::Progress,
 };
-use cve::Cve;
-use std::{collections::HashSet, io::BufReader, path::Path};
+use std::fs::File;
+use std::io::Read;
+use std::{collections::HashSet, path::Path};
 use tracing::instrument;
 
 struct CveHandler<C>
 where
-    C: Callbacks<Cve> + Send + 'static,
+    C: Callbacks<Vec<u8>> + Send + 'static,
 {
     callbacks: C,
     years: HashSet<u16>,
@@ -23,7 +24,7 @@ where
 
 impl<C> Handler for CveHandler<C>
 where
-    C: Callbacks<Cve> + Send + 'static,
+    C: Callbacks<Vec<u8>> + Send + 'static,
 {
     type Error = Error;
 
@@ -72,23 +73,20 @@ where
 
 impl<C> CveHandler<C>
 where
-    C: Callbacks<Cve> + Send + 'static,
+    C: Callbacks<Vec<u8>> + Send + 'static,
 {
     fn process_file(&mut self, path: &Path, rel_path: &Path) -> Result<(), ProcessingError> {
-        let cve: Cve = match path.extension().map(|s| s.to_string_lossy()).as_deref() {
-            Some("json") => serde_json::from_reader(BufReader::new(std::fs::File::open(path)?))?,
+        let cve = match path.extension().map(|s| s.to_string_lossy()).as_deref() {
+            Some("json") => {
+                let mut data = Vec::new();
+                File::open(path)?.read_to_end(&mut data)?;
+                data
+            }
             e => {
                 log::debug!("Skipping unknown extension: {e:?}");
                 return Ok(());
             }
         };
-
-        log::trace!(
-            "CVE ({}): {} ({:?})",
-            rel_path.display(),
-            cve.id(),
-            cve.common_metadata()
-        );
 
         self.callbacks
             .process(rel_path, cve)
@@ -103,7 +101,7 @@ where
 
 pub struct CveWalker<C, T, P>
 where
-    C: Callbacks<Cve>,
+    C: Callbacks<Vec<u8>>,
     T: WorkingDirectory + Send + 'static,
     P: Progress,
 {
@@ -128,7 +126,7 @@ impl CveWalker<(), (), ()> {
 
 impl<C, T, P> CveWalker<C, T, P>
 where
-    C: Callbacks<Cve>,
+    C: Callbacks<Vec<u8>>,
     T: WorkingDirectory + Send + 'static,
     P: Progress + Send + 'static,
 {
@@ -164,7 +162,10 @@ where
         self
     }
 
-    pub fn callbacks<U: Callbacks<Cve> + Send + 'static>(self, callbacks: U) -> CveWalker<U, T, P> {
+    pub fn callbacks<U: Callbacks<Vec<u8>> + Send + 'static>(
+        self,
+        callbacks: U,
+    ) -> CveWalker<U, T, P> {
         CveWalker {
             walker: self.walker,
             callbacks,
