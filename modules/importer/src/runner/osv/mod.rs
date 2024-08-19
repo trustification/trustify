@@ -10,7 +10,6 @@ use crate::{
         RunOutput,
     },
 };
-use osv::schema::Vulnerability;
 use parking_lot::Mutex;
 use std::{path::Path, path::PathBuf, sync::Arc};
 use tokio::runtime::Handle;
@@ -31,9 +30,7 @@ struct Context<C: RunContext + 'static> {
 }
 
 impl<C: RunContext> Context<C> {
-    fn store(&self, path: &Path, osv: Vulnerability) -> anyhow::Result<()> {
-        let data = serde_json::to_vec(&osv)?;
-
+    fn store(&self, path: &Path, data: Vec<u8>) -> anyhow::Result<()> {
         self.report.lock().tick();
 
         Handle::current().block_on(async {
@@ -55,14 +52,14 @@ impl<C: RunContext> Context<C> {
     }
 }
 
-impl<C: RunContext> Callbacks<Vulnerability> for Context<C> {
+impl<C: RunContext> Callbacks<Vec<u8>> for Context<C> {
     fn loading_error(&mut self, path: PathBuf, message: String) {
         self.report
             .lock()
             .add_error(Phase::Validation, path.to_string_lossy(), message);
     }
 
-    fn process(&mut self, path: &Path, osv: Vulnerability) -> Result<(), CallbackError> {
+    fn process(&mut self, path: &Path, osv: Vec<u8>) -> Result<(), CallbackError> {
         if let Err(err) = self.store(path, osv) {
             self.report
                 .lock()

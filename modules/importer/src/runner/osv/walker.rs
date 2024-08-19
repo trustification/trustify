@@ -8,17 +8,18 @@ use crate::runner::{
     },
     progress::Progress,
 };
-use osv::schema::Vulnerability;
-use std::{io::BufReader, path::Path};
+use std::fs::File;
+use std::io::Read;
+use std::path::Path;
 use tracing::instrument;
 
 struct OsvHandler<C>(C)
 where
-    C: Callbacks<Vulnerability> + Send + 'static;
+    C: Callbacks<Vec<u8>> + Send + 'static;
 
 impl<C> Handler for OsvHandler<C>
 where
-    C: Callbacks<Vulnerability> + Send + 'static,
+    C: Callbacks<Vec<u8>> + Send + 'static,
 {
     type Error = Error;
 
@@ -44,23 +45,20 @@ where
 
 impl<C> OsvHandler<C>
 where
-    C: Callbacks<Vulnerability> + Send + 'static,
+    C: Callbacks<Vec<u8>> + Send + 'static,
 {
     fn process_file(&mut self, path: &Path, rel_path: &Path) -> Result<(), ProcessingError> {
-        let osv: Vulnerability = match path.extension().map(|s| s.to_string_lossy()).as_deref() {
-            Some("yaml") => serde_yml::from_reader(BufReader::new(std::fs::File::open(path)?))?,
-            Some("json") => serde_json::from_reader(BufReader::new(std::fs::File::open(path)?))?,
+        let osv = match path.extension().map(|s| s.to_string_lossy()).as_deref() {
+            Some("yaml") | Some("json") => {
+                let mut data = Vec::new();
+                File::open(path)?.read_to_end(&mut data)?;
+                data
+            }
             e => {
                 log::debug!("Skipping unknown extension: {e:?}");
                 return Ok(());
             }
         };
-
-        log::trace!(
-            "OSV: {} ({})",
-            osv.id,
-            osv.summary.as_deref().unwrap_or("n/a")
-        );
 
         self.0.process(rel_path, osv).map_err(|err| match err {
             CallbackError::Processing(err) => ProcessingError::Critical(err),
@@ -73,7 +71,7 @@ where
 
 pub struct OsvWalker<C, T, P>
 where
-    C: Callbacks<Vulnerability>,
+    C: Callbacks<Vec<u8>>,
     T: WorkingDirectory + Send + 'static,
     P: Progress + Send + 'static,
 {
@@ -90,7 +88,7 @@ impl OsvWalker<(), (), ()> {
 
 impl<C, T, P> OsvWalker<C, T, P>
 where
-    C: Callbacks<Vulnerability>,
+    C: Callbacks<Vec<u8>>,
     T: WorkingDirectory + Send + 'static,
     P: Progress + Send + 'static,
 {
@@ -122,7 +120,7 @@ where
         self
     }
 
-    pub fn callbacks<U: Callbacks<Vulnerability> + Send + 'static>(
+    pub fn callbacks<U: Callbacks<Vec<u8>> + Send + 'static>(
         self,
         callbacks: U,
     ) -> OsvWalker<U, T, P> {
