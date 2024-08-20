@@ -72,13 +72,21 @@ impl<'g> CveLoader<'g> {
                     .map(Timestamp::assume_utc),
                 None,
                 &published.containers.cna.descriptions,
-                published
-                    .containers
-                    .cna
-                    .problem_types
-                    .iter()
-                    .flat_map(|pt| pt.descriptions.iter())
-                    .find_map(|d| d.cwe_id.as_ref()),
+                {
+                    let cwes = published
+                        .containers
+                        .cna
+                        .problem_types
+                        .iter()
+                        .flat_map(|pt| pt.descriptions.iter())
+                        .flat_map(|desc| desc.cwe_id.clone())
+                        .collect::<Vec<_>>();
+                    if cwes.is_empty() {
+                        None
+                    } else {
+                        Some(cwes)
+                    }
+                },
                 published
                     .containers
                     .cna
@@ -94,7 +102,7 @@ impl<'g> CveLoader<'g> {
             published,
             modified,
             withdrawn,
-            cwe: cwe.cloned(),
+            cwes: cwe.clone(),
         };
 
         let vulnerability = self
@@ -134,7 +142,7 @@ impl<'g> CveLoader<'g> {
                     description: english_description,
                     discovery_date: assigned,
                     release_date: published,
-                    cwe: cwe.cloned(),
+                    cwes: cwe.clone(),
                 }),
                 &tx,
             )

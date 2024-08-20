@@ -79,7 +79,7 @@ impl<'g> OsvLoader<'g> {
                         description: osv.details.clone(),
                         discovery_date: None,
                         release_date: None,
-                        cwe: None,
+                        cwes: None,
                     }),
                     &tx,
                 )
