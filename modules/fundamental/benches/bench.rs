@@ -30,7 +30,7 @@ pub(crate) mod trustify_benches {
     use trustify_common::db::Transactional;
     use trustify_entity::labels::Labels;
     use trustify_module_ingestor::service::Format;
-    use trustify_test_context::{document_bytes, TrustifyContext};
+    use trustify_test_context::{document, TrustifyContext};
 
     pub fn ingestion(c: &mut Criterion) {
         let (runtime, ctx) = setup_runtime_and_ctx();
@@ -72,8 +72,7 @@ pub(crate) mod trustify_benches {
         path: &str,
         rev: u64,
     ) -> Once<impl Future<Output = Result<Bytes, Error>> + Sized> {
-        let payload = document_bytes(path).await.expect("load ok");
-        let mut doc: Csaf = serde_json::from_slice(payload.as_ref()).expect("parse ok");
+        let (mut doc, _): (Csaf, _) = document(path).await.expect("load ok");
         doc.document.tracking.id = format!("{}-{}", doc.document.tracking.id, rev);
 
         fn rev_branches(branches: &mut Option<BranchesT>, rev: u64) {

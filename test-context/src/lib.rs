@@ -1,6 +1,6 @@
 #![allow(clippy::expect_used)]
 
-use futures::{stream, Stream};
+use futures::Stream;
 use peak_alloc::PeakAlloc;
 use postgresql_embedded::PostgreSQL;
 use std::env;
@@ -10,10 +10,11 @@ use std::path::PathBuf;
 use test_context::AsyncTestContext;
 use tokio::io::AsyncReadExt;
 use tokio_util::bytes::Bytes;
-use tokio_util::io::ReaderStream;
+use tokio_util::io::{ReaderStream, SyncIoBridge};
 use tracing::instrument;
 use trustify_common as common;
 use trustify_common::db;
+use trustify_common::hashing::{Digests, HashingRead};
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::model::IngestResult;
 use trustify_module_ingestor::service::{Format, IngestorService};
@@ -74,21 +75,6 @@ impl TrustifyContext {
     }
 }
 
-fn find_workspace_root() -> Result<PathBuf, anyhow::Error> {
-    let current_dir = current_dir()?;
-
-    let mut i = Some(current_dir.as_path());
-
-    while let Some(cur) = i {
-        if cur.join("rust-toolchain.toml").exists() {
-            return Ok(cur.to_path_buf());
-        }
-        i = cur.parent();
-    }
-
-    Err(std::io::Error::new(ErrorKind::NotFound, "damnit").into())
-}
-
 impl AsyncTestContext for TrustifyContext {
     #[instrument]
     #[allow(clippy::expect_used)]
@@ -123,31 +109,60 @@ impl AsyncTestContext for TrustifyContext {
     }
 }
 
-pub async fn document_bytes(path: &str) -> Result<Bytes, anyhow::Error> {
+fn find_workspace_root() -> Result<PathBuf, anyhow::Error> {
+    let current_dir = current_dir()?;
+    let mut i = Some(current_dir.as_path());
+    while let Some(cur) = i {
+        if cur.join("rust-toolchain.toml").exists() {
+            return Ok(cur.to_path_buf());
+        }
+        i = cur.parent();
+    }
+    Err(std::io::Error::new(ErrorKind::NotFound, "damnit").into())
+}
+
+fn absolute(path: &str) -> Result<PathBuf, anyhow::Error> {
     let workspace_root = find_workspace_root()?;
     let test_data = workspace_root.join("etc").join("test-data");
-    let path_buf = test_data.join(path);
-    let mut file = tokio::fs::File::open(path_buf).await?;
+    Ok(test_data.join(path))
+}
+
+pub async fn document_bytes(path: &str) -> Result<Bytes, anyhow::Error> {
+    let mut file = tokio::fs::File::open(absolute(path)?).await?;
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes).await?;
     if path.ends_with(".xz") {
         bytes = liblzma::decode_all(&*bytes)?;
     }
-    Ok(Bytes::copy_from_slice(&bytes))
+    Ok(bytes.into())
 }
 
 pub async fn document_stream(
     path: &str,
 ) -> Result<impl Stream<Item = Result<Bytes, std::io::Error>>, anyhow::Error> {
-    let bytes = document_bytes(path).await?;
-    Ok(stream::once(async { Ok(bytes) }))
+    let file = tokio::fs::File::open(absolute(path)?).await?;
+    Ok(ReaderStream::new(file))
+}
+
+pub async fn document<T>(path: &str) -> Result<(T, Digests), anyhow::Error>
+where
+    T: serde::de::DeserializeOwned + Send + 'static,
+{
+    let file = tokio::fs::File::open(absolute(path)?).await?;
+    let mut reader = HashingRead::new(SyncIoBridge::new(file));
+    let f = || match serde_json::from_reader(&mut reader) {
+        Ok(v) => match reader.finish() {
+            Ok(digests) => Ok((v, digests)),
+            Err(e) => Err(anyhow::Error::new(e)),
+        },
+        Err(e) => Err(anyhow::Error::new(e)),
+    };
+    tokio::task::spawn_blocking(f).await?
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{document_bytes, document_stream};
-
-    use super::TrustifyContext;
+    use super::*;
     use futures::StreamExt;
     use test_context::test_context;
     use test_log::test;
@@ -180,5 +195,20 @@ mod test {
             .await
             .unwrap();
         assert!(Box::pin(stream).next().await.is_some());
+    }
+
+    #[test(tokio::test)]
+    async fn test_document_struct() {
+        use hex::ToHex;
+        use osv::schema::Vulnerability;
+
+        let (osv, digests): (Vulnerability, _) =
+            document("osv/RUSTSEC-2021-0079.json").await.unwrap();
+
+        assert_eq!(osv.id, "RUSTSEC-2021-0079");
+        assert_eq!(
+            digests.sha256.encode_hex::<String>(),
+            "d113c2bd1ad6c3ac00a3a8d3f89d3f38de935f8ede0d174a55afe9911960cf51"
+        );
     }
 }

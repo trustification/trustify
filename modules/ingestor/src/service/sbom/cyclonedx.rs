@@ -67,32 +67,21 @@ impl<'g> CyclonedxLoader<'g> {
 mod test {
     use crate::graph::Graph;
     use crate::service::{Format, IngestorService};
-    use bytes::Bytes;
-    use futures::stream;
-    use std::convert::Infallible;
     use test_context::test_context;
     use test_log::test;
-    use trustify_module_storage::service::fs::FileSystemBackend;
-    use trustify_test_context::{document_bytes, TrustifyContext};
+    use trustify_test_context::{document_stream, TrustifyContext};
 
-    #[test_context(TrustifyContext, skip_teardown)]
+    #[test_context(TrustifyContext)]
     #[test(tokio::test)]
-    async fn ingest_cyclonedx(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let graph = Graph::new(db);
-        let data = document_bytes("zookeeper-3.9.2-cyclonedx.json").await?;
+    async fn ingest_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = &ctx.db;
+        let graph = Graph::new(db.clone());
+        let data = document_stream("zookeeper-3.9.2-cyclonedx.json").await?;
 
-        let (storage, _tmp) = FileSystemBackend::for_test().await?;
-
-        let ingestor = IngestorService::new(graph, storage);
+        let ingestor = IngestorService::new(graph, ctx.storage.clone());
 
         ingestor
-            .ingest(
-                ("source", "test"),
-                None,
-                Format::sbom_from_bytes(&data)?,
-                stream::iter([Ok::<_, Infallible>(Bytes::copy_from_slice(&data))]),
-            )
+            .ingest(("source", "test"), None, Format::CycloneDX, data)
             .await
             .expect("must ingest");
 
