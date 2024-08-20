@@ -13,7 +13,6 @@ use crate::{
 use parking_lot::Mutex;
 use std::{path::Path, path::PathBuf, sync::Arc};
 use tokio::runtime::Handle;
-use tokio_util::io::ReaderStream;
 use tracing::instrument;
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::{
@@ -43,7 +42,7 @@ impl<C: RunContext> Context<C> {
                         .extend(&self.labels.0),
                     None,
                     Format::ClearlyDefined,
-                    ReaderStream::new(&*data),
+                    &data,
                 )
                 .await
         })?;

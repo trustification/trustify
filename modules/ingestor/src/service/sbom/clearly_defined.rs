@@ -48,7 +48,7 @@ mod test {
     use crate::service::{Format, IngestorService};
     use test_context::test_context;
     use test_log::test;
-    use trustify_test_context::document_stream;
+    use trustify_test_context::document_bytes;
     use trustify_test_context::TrustifyContext;
 
     #[test_context(TrustifyContext)]
@@ -57,10 +57,10 @@ mod test {
         let graph = Graph::new(ctx.db.clone());
         let ingestor = IngestorService::new(graph, ctx.storage.clone());
 
-        let data = document_stream("clearly-defined/chrono.yaml").await?;
+        let data = document_bytes("clearly-defined/chrono.yaml").await?;
 
         ingestor
-            .ingest(("source", "test"), None, Format::ClearlyDefined, data)
+            .ingest(("source", "test"), None, Format::ClearlyDefined, &data)
             .await
             .expect("must ingest");
 

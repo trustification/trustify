@@ -1,7 +1,6 @@
 use bytes::Bytes;
 use serde_json::Value;
 use std::str::FromStr;
-use test_context::futures::stream;
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
@@ -225,20 +224,12 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // ingest the second version
     let result2 = ctx
         .ingestor
-        .ingest(
-            ("source", "test"),
-            None,
-            Format::SPDX,
-            stream::once({
-                // re-serialize file (non-pretty)
-                let json: Value =
-                    serde_json::from_slice(&document_bytes("nhc/v1/nhc-0.4.z.json.xz").await?)?;
-
-                let result = serde_json::to_vec(&json).map(Bytes::from);
-
-                async { result }
-            }),
-        )
+        .ingest(("source", "test"), None, Format::SPDX, {
+            // re-serialize file (non-pretty)
+            let json: Value =
+                serde_json::from_slice(&document_bytes("nhc/v1/nhc-0.4.z.json.xz").await?)?;
+            &serde_json::to_vec(&json).map(Bytes::from)?
+        })
         .await?;
 
     assert_eq!(

@@ -4,7 +4,6 @@ use csaf_walker::validation::{
 };
 use parking_lot::Mutex;
 use std::sync::Arc;
-use tokio_util::io::ReaderStream;
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use walker_common::utils::url::Urlify;
@@ -44,7 +43,7 @@ impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
                     .extend(&self.labels.0),
                 None, /* CSAF tracks issuer internally */
                 fmt,
-                ReaderStream::new(doc.data.as_ref()),
+                &doc.data,
             )
             .await
             .map_err(StorageError::Storage)?;
