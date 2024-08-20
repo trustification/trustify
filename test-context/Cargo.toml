@@ -17,6 +17,8 @@ liblzma = { workspace = true }
 log = { workspace = true }
 peak_alloc = { workspace = true }
 postgresql_embedded = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 test-context = { workspace = true }
 tokio = { workspace = true }
 tokio-stream = { workspace = true }
@@ -31,3 +33,5 @@ tracing = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 #time = { workspace = true, features = ["macros"] }
 #tokio = { workspace = true, features = ["full"] }
+osv = { workspace = true, features = ["schema"] }
+hex = { workspace = true }

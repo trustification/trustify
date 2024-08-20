@@ -181,17 +181,15 @@ mod test {
     use test_context::test_context;
     use test_log::test;
     use trustify_common::db::Transactional;
-    use trustify_test_context::{document_bytes, TrustifyContext};
+    use trustify_test_context::{document, TrustifyContext};
 
-    #[test_context(TrustifyContext, skip_teardown)]
+    #[test_context(TrustifyContext)]
     #[test(tokio::test)]
-    async fn loader(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let graph = Graph::new(db);
+    async fn loader(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = &ctx.db;
+        let graph = Graph::new(db.clone());
 
-        let data = document_bytes("csaf/CVE-2023-20862.json").await?;
-        let digests = Digests::digest(&data);
-        let csaf: Csaf = serde_json::from_reader(&data[..])?;
+        let (csaf, digests): (Csaf, _) = document("csaf/CVE-2023-20862.json").await?;
         let loader = CsafLoader::new(&graph);
         loader
             .load(("file", "CVE-2023-20862.json"), csaf, &digests)
@@ -270,9 +268,7 @@ mod test {
         let graph = Graph::new(db);
         let loader = CsafLoader::new(&graph);
 
-        let data = document_bytes("csaf/rhsa-2024_3666.json").await?;
-        let digests = Digests::digest(&data);
-        let csaf: Csaf = serde_json::from_reader(&data[..])?;
+        let (csaf, digests): (Csaf, _) = document("csaf/rhsa-2024_3666.json").await?;
         loader.load(("source", "test"), csaf, &digests).await?;
 
         let loaded_vulnerability = graph

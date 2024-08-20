@@ -289,20 +289,17 @@ mod test {
 
     use crate::graph::Graph;
     use trustify_common::db::Transactional;
-    use trustify_common::hashing::Digests;
-    use trustify_test_context::{document_bytes, TrustifyContext};
+    use trustify_test_context::{document, TrustifyContext};
 
     use crate::service::advisory::osv::loader::OsvLoader;
 
-    #[test_context(TrustifyContext, skip_teardown)]
+    #[test_context(TrustifyContext)]
     #[test(tokio::test)]
-    async fn loader(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let graph = Graph::new(db);
+    async fn loader(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = &ctx.db;
+        let graph = Graph::new(db.clone());
 
-        let data = document_bytes("osv/RUSTSEC-2021-0079.json").await?;
-        let digests = Digests::digest(&data);
-        let osv: Vulnerability = serde_json::from_reader(&data[..])?;
+        let (osv, digests): (Vulnerability, _) = document("osv/RUSTSEC-2021-0079.json").await?;
 
         let loaded_vulnerability = graph
             .get_vulnerability("CVE-2021-32714", Transactional::None)

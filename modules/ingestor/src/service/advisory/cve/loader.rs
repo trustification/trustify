@@ -174,18 +174,15 @@ mod test {
     use test_context::test_context;
     use test_log::test;
     use trustify_common::db::Transactional;
-    use trustify_common::hashing::Digests;
-    use trustify_test_context::{document_bytes, TrustifyContext};
+    use trustify_test_context::{document, TrustifyContext};
 
-    #[test_context(TrustifyContext, skip_teardown)]
+    #[test_context(TrustifyContext)]
     #[test(tokio::test)]
-    async fn cve_loader(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let graph = Graph::new(db);
+    async fn cve_loader(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = &ctx.db;
+        let graph = Graph::new(db.clone());
 
-        let data = document_bytes("mitre/CVE-2024-28111.json").await?;
-        let digests = Digests::digest(&data);
-        let cve: Cve = serde_json::from_reader(&data[..])?;
+        let (cve, digests): (Cve, _) = document("mitre/CVE-2024-28111.json").await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
         assert!(loaded_vulnerability.is_none());
