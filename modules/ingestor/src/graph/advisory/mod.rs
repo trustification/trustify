@@ -35,7 +35,7 @@ pub struct AdvisoryVulnerabilityInformation {
     pub description: Option<String>,
     pub discovery_date: Option<OffsetDateTime>,
     pub release_date: Option<OffsetDateTime>,
-    pub cwe: Option<String>,
+    pub cwes: Option<Vec<String>>,
 }
 
 impl AdvisoryInformation {
@@ -236,7 +236,7 @@ impl<'g> AdvisoryContext<'g> {
                 .and_then(|info| info.description.clone())),
             discovery_date: Set(information.as_ref().and_then(|info| info.discovery_date)),
             release_date: Set(information.as_ref().and_then(|info| info.release_date)),
-            cwe: Set(information.as_ref().and_then(|info| info.cwe.clone())),
+            cwes: Set(information.as_ref().and_then(|info| info.cwes.clone())),
         };
 
         // do an upsert, updating field on a conflict
@@ -252,7 +252,7 @@ impl<'g> AdvisoryContext<'g> {
                     entity::advisory_vulnerability::Column::Description,
                     entity::advisory_vulnerability::Column::DiscoveryDate,
                     entity::advisory_vulnerability::Column::ReleaseDate,
-                    entity::advisory_vulnerability::Column::Cwe,
+                    entity::advisory_vulnerability::Column::Cwes,
                 ])
                 .to_owned(),
             )

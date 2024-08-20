@@ -114,7 +114,7 @@ impl<'g> CsafLoader<'g> {
                         release_date: vulnerability.release_date.and_then(|date| {
                             OffsetDateTime::from_unix_timestamp(date.timestamp()).ok()
                         }),
-                        cwe: vulnerability.cwe.as_ref().map(|cwe| cwe.id.clone()),
+                        cwes: vulnerability.cwe.as_ref().map(|cwe| vec![cwe.id.clone()]),
                     }),
                     &tx,
                 )
