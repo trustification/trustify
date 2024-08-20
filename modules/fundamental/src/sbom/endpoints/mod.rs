@@ -14,7 +14,6 @@ use actix_web::{delete, get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
-use tokio_util::io::ReaderStream;
 use trustify_auth::{authenticator::user::UserInformation, authorizer::Authorizer, Permission};
 use trustify_common::{
     db::{query::Query, Database},
@@ -357,9 +356,7 @@ pub async fn upload(
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
     let fmt = Format::from_bytes(&bytes)?;
-    let payload = ReaderStream::new(&*bytes);
-
-    let result = service.ingest(labels, None, fmt, payload).await?;
+    let result = service.ingest(labels, None, fmt, &bytes).await?;
     log::info!("Uploaded SBOM: {}", result.id);
     Ok(HttpResponse::Created().json(result))
 }

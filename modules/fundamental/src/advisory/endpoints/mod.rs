@@ -8,7 +8,6 @@ use crate::{advisory::service::AdvisoryService, Error};
 use actix_web::{delete, get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use std::str::FromStr;
-use tokio_util::io::ReaderStream;
 use trustify_common::{db::query::Query, db::Database, id::Id, model::Paginated};
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
@@ -167,8 +166,7 @@ pub async fn upload(
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
     let fmt = Format::from_bytes(&bytes)?;
-    let payload = ReaderStream::new(&*bytes);
-    let result = service.ingest(labels, issuer, fmt, payload).await?;
+    let result = service.ingest(labels, issuer, fmt, &bytes).await?;
     log::info!("Uploaded Advisory: {}", result.id);
     Ok(HttpResponse::Created().json(result))
 }

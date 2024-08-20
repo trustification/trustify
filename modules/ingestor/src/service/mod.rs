@@ -4,12 +4,11 @@ pub mod sbom;
 mod format;
 pub use format::Format;
 use tokio::task::JoinError;
+use tokio_util::io::ReaderStream;
 
 use crate::{graph::Graph, model::IngestResult};
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
 use anyhow::anyhow;
-use bytes::Bytes;
-use futures::Stream;
 use parking_lot::Mutex;
 use sbom_walker::report::ReportSink;
 use sea_orm::error::DbErr;
@@ -116,20 +115,17 @@ impl IngestorService {
         &self.graph
     }
 
-    #[instrument(skip(self, stream), err)]
-    pub async fn ingest<S, E>(
+    #[instrument(skip(self, bytes), err)]
+    pub async fn ingest(
         &self,
         labels: impl Into<Labels> + Debug,
         issuer: Option<String>,
         fmt: Format,
-        stream: S,
-    ) -> Result<IngestResult, Error>
-    where
-        E: std::error::Error,
-        S: Stream<Item = Result<Bytes, E>>,
-    {
+        bytes: &[u8],
+    ) -> Result<IngestResult, Error> {
         let start = Instant::now();
 
+        let stream = ReaderStream::new(&*bytes);
         let result = self
             .storage
             .store(stream)

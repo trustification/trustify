@@ -9,7 +9,6 @@ use sbom_walker::validation::{
     ValidatedSbom, ValidatedVisitor, ValidationContext, ValidationError,
 };
 use std::sync::Arc;
-use tokio_util::io::ReaderStream;
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use walker_common::{compression::decompress_opt, utils::url::Urlify};
@@ -78,7 +77,7 @@ impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
                     .extend(&self.labels.0),
                 None,
                 fmt,
-                ReaderStream::new(data.as_ref()),
+                &data,
             )
             .await
             .map_err(StorageError::Storage)?;

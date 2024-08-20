@@ -69,9 +69,8 @@ impl TrustifyContext {
     pub async fn ingest_document(&self, path: &str) -> Result<IngestResult, anyhow::Error> {
         let bytes = document_bytes(path).await?;
         let format = Format::from_bytes(&bytes)?;
-        let stream = ReaderStream::new(bytes.as_ref());
 
-        Ok(self.ingestor.ingest((), None, format, stream).await?)
+        Ok(self.ingestor.ingest((), None, format, &bytes).await?)
     }
 }
 

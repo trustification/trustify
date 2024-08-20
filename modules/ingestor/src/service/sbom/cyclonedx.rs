@@ -69,19 +69,19 @@ mod test {
     use crate::service::{Format, IngestorService};
     use test_context::test_context;
     use test_log::test;
-    use trustify_test_context::{document_stream, TrustifyContext};
+    use trustify_test_context::{document_bytes, TrustifyContext};
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
     async fn ingest_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         let db = &ctx.db;
         let graph = Graph::new(db.clone());
-        let data = document_stream("zookeeper-3.9.2-cyclonedx.json").await?;
+        let data = document_bytes("zookeeper-3.9.2-cyclonedx.json").await?;
 
         let ingestor = IngestorService::new(graph, ctx.storage.clone());
 
         ingestor
-            .ingest(("source", "test"), None, Format::CycloneDX, data)
+            .ingest(("source", "test"), None, Format::CycloneDX, &data)
             .await
             .expect("must ingest");
 
