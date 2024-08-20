@@ -209,6 +209,7 @@ impl From<PackageUrl<'_>> for Purl {
 #[cfg(test)]
 mod tests {
     use crate::purl::Purl;
+    use std::str::FromStr;
     use test_log::test;
 
     #[test(tokio::test)]
@@ -234,6 +235,98 @@ mod tests {
         Ok(assert_eq!(
             json,
             r#""pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar""#
+        ))
+    }
+
+    #[test(tokio::test)]
+    async fn purl_oci() -> Result<(), anyhow::Error> {
+        let purl: Purl = serde_json::from_str(
+            r#"
+            "pkg:oci/ose-cluster-network-operator@sha256:0170ba5eebd557fd9f477d915bb7e0d4c1ad6cd4c1852d4b1ceed7a2817dd5d2?repository_url=registry.redhat.io/openshift4/ose-cluster-network-operator&tag=v4.11.0-202403090037.p0.g33da9fb.assembly.stream.el8"
+            "#,
+        )
+            .unwrap();
+
+        assert_eq!("oci", purl.ty);
+        assert_eq!(None, purl.namespace);
+        assert_eq!(
+            Some(
+                "sha256:0170ba5eebd557fd9f477d915bb7e0d4c1ad6cd4c1852d4b1ceed7a2817dd5d2"
+                    .to_string()
+            ),
+            purl.version
+        );
+        assert_eq!(
+            purl.qualifiers.get("repository_url"),
+            Some(&"registry.redhat.io/openshift4/ose-cluster-network-operator".to_string())
+        );
+        assert_eq!(
+            purl.qualifiers.get("tag"),
+            Some(&"v4.11.0-202403090037.p0.g33da9fb.assembly.stream.el8".to_string())
+        );
+
+        let purl: Purl = "pkg:oci/ose-cluster-network-operator@sha256:0170ba5eebd557fd9f477d915bb7e0d4c1ad6cd4c1852d4b1ceed7a2817dd5d2?repository_url=registry.redhat.io/openshift4/ose-cluster-network-operator&tag=v4.11.0-202403090037.p0.g33da9fb.assembly.stream.el8".try_into()?;
+        let json = serde_json::to_string(&purl).unwrap();
+
+        Ok(assert_eq!(
+            json,
+            r#""pkg://oci/ose-cluster-network-operator@sha256:0170ba5eebd557fd9f477d915bb7e0d4c1ad6cd4c1852d4b1ceed7a2817dd5d2?repository_url=registry.redhat.io/openshift4/ose-cluster-network-operator&tag=v4.11.0-202403090037.p0.g33da9fb.assembly.stream.el8""#
+        ))
+    }
+
+    #[test(tokio::test)]
+    async fn purl_rpm() -> Result<(), anyhow::Error> {
+        let purl: Purl = serde_json::from_str(
+            r#"
+            "pkg:rpm/redhat/filesystem@3.8-6.el8?arch=aarch64"
+            "#,
+        )
+        .unwrap();
+
+        assert_eq!("rpm", purl.ty);
+        assert_eq!(Some("redhat".to_string()), purl.namespace);
+        assert_eq!(Some("3.8-6.el8".to_string()), purl.version);
+        assert_eq!(purl.qualifiers.get("arch"), Some(&"aarch64".to_string()));
+
+        let purl: Purl = "pkg:rpm/redhat/filesystem@3.8-6.el8?arch=aarch64".try_into()?;
+        let json = serde_json::to_string(&purl).unwrap();
+
+        Ok(assert_eq!(
+            json,
+            r#""pkg://rpm/redhat/filesystem@3.8-6.el8?arch=aarch64""#
+        ))
+    }
+
+    #[test(tokio::test)]
+    async fn purl_rpm_deux() -> Result<(), anyhow::Error> {
+        let purl: Purl = serde_json::from_str(
+            r#"
+            "pkg:rpm/redhat/subscription-manager-rhsm-certificates@1.28.29.1-1.el8_6?arch=s390x"
+            "#,
+        )
+        .unwrap();
+
+        assert_eq!("rpm", purl.ty);
+        assert_eq!(Some("redhat".to_string()), purl.namespace);
+        assert_eq!(Some("1.28.29.1-1.el8_6".to_string()), purl.version);
+        assert_eq!(purl.qualifiers.get("arch"), Some(&"s390x".to_string()));
+
+        let otherpurl: Purl = Purl::from_str(
+            "pkg:rpm/redhat/subscription-manager-rhsm-certificates@1.28.29.1-1.el8_6?arch=s390x",
+        )?;
+        assert_eq!("rpm", otherpurl.ty);
+        assert_eq!(Some("redhat".to_string()), otherpurl.namespace);
+        assert_eq!(Some("1.28.29.1-1.el8_6".to_string()), otherpurl.version);
+        assert_eq!(otherpurl.qualifiers.get("arch"), Some(&"s390x".to_string()));
+
+        let purl: Purl =
+            "pkg:rpm/redhat/subscription-manager-rhsm-certificates@1.28.29.1-1.el8_6?arch=s390x"
+                .try_into()?;
+        let json = serde_json::to_string(&purl).unwrap();
+
+        Ok(assert_eq!(
+            json,
+            r#""pkg://rpm/redhat/subscription-manager-rhsm-certificates@1.28.29.1-1.el8_6?arch=s390x""#
         ))
     }
 }
