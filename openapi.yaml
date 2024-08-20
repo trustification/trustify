@@ -2766,12 +2766,13 @@ components:
       - withdrawn
       - discovered
       - released
-      - cwe
+      - cwes
       properties:
-        cwe:
-          type: string
+        cwes:
+          type: array
+          items:
+            type: string
           description: Associated CWE, if any.
-          nullable: true
         description:
           type: string
           description: The description of the vulnerability, if known.
