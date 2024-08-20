@@ -148,7 +148,7 @@ async fn get_advisory_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn get_organization_by_name(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    ctx.ingest_document("cve/rhsa-2024-2705.json").await?;
+    ctx.ingest_document("csaf/rhsa-2024-2705.json").await?;
 
     let schema = make_schema(ctx);
 
@@ -233,7 +233,7 @@ async fn get_sboms_by_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn get_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    ctx.ingest_document("cve/rhsa-2024-2705.json").await?;
+    ctx.ingest_document("csaf/rhsa-2024-2705.json").await?;
 
     let schema = make_schema(ctx);
 
@@ -280,7 +280,7 @@ async fn get_vulnerability_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Er
 async fn get_cves_by_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let results = ctx
         .ingest_documents([
-            "cve/rhsa-2024-2705.json",
+            "csaf/rhsa-2024-2705.json",
             "spdx/quarkus-bom-3.2.11.Final-redhat-00001.json",
             "spdx/quarkus-bom-3.2.12.Final-redhat-00002.json",
         ])
