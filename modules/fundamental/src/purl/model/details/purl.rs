@@ -146,7 +146,7 @@ impl PurlAdvisory {
                 published: None,
                 modified: None,
                 withdrawn: None,
-                cwe: None,
+                cwes: None,
             });
 
             if let Some(advisory) = advisory {
