@@ -275,9 +275,10 @@ paths:
       - name: if-match
         in: header
         description: The revision to update
-        required: true
+        required: false
         schema:
           type: string
+          nullable: true
       requestBody:
         content:
           application/json:
@@ -306,9 +307,10 @@ paths:
       - name: if-match
         in: header
         description: The revision to delete
-        required: true
+        required: false
         schema:
           type: string
+          nullable: true
       responses:
         '201':
           description: Delete the importer configuration
@@ -328,9 +330,10 @@ paths:
       - name: if-match
         in: header
         description: The revision to update
-        required: true
+        required: false
         schema:
           type: string
+          nullable: true
       requestBody:
         content:
           text/plain:
@@ -360,9 +363,10 @@ paths:
       - name: if-match
         in: header
         description: The revision to update
-        required: true
+        required: false
         schema:
           type: string
+          nullable: true
       requestBody:
         content:
           text/plain:
@@ -381,7 +385,7 @@ paths:
       tags:
       - importer
       summary: Get reports for an importer
-      operationId: getImporterReports
+      operationId: listImporterReports
       parameters:
       - name: name
         in: path
