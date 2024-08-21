@@ -5,7 +5,7 @@ use csaf_walker::validation::{
 use parking_lot::Mutex;
 use std::sync::Arc;
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::{Format, IngestorService};
+use trustify_module_ingestor::service::IngestorService;
 use walker_common::utils::url::Urlify;
 
 pub struct StorageVisitor<C: RunContext> {
@@ -32,7 +32,6 @@ impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
         let doc = result?;
         let location = doc.context.url().to_string();
         let file = doc.possibly_relative_url();
-        let fmt = Format::from_bytes(&doc.data).map_err(|e| StorageError::Processing(e.into()))?;
 
         self.ingestor
             .ingest(
@@ -42,7 +41,6 @@ impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
                     .add("file", file)
                     .extend(&self.labels.0),
                 None, /* CSAF tracks issuer internally */
-                fmt,
                 &doc.data,
             )
             .await

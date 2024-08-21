@@ -120,12 +120,12 @@ impl IngestorService {
         &self,
         labels: impl Into<Labels> + Debug,
         issuer: Option<String>,
-        fmt: Format,
         bytes: &[u8],
     ) -> Result<IngestResult, Error> {
         let start = Instant::now();
+        let fmt = Format::from_bytes(bytes)?;
+        let stream = ReaderStream::new(bytes);
 
-        let stream = ReaderStream::new(&*bytes);
         let result = self
             .storage
             .store(stream)
