@@ -4,8 +4,6 @@ use criterion::{criterion_group, criterion_main, Criterion};
 
 #[allow(clippy::expect_used, clippy::unwrap_used)]
 pub(crate) mod trustify_benches {
-    use std::future::Future;
-    use std::io;
     use std::io::Error;
     use std::ops::Add;
     use std::str::FromStr;
@@ -20,8 +18,6 @@ pub(crate) mod trustify_benches {
     use csaf::product_tree::ProductTree;
     use csaf::vulnerability::Vulnerability;
     use csaf::Csaf;
-    use futures_util::stream;
-    use futures_util::stream::Once;
     use packageurl::PackageUrl;
     use sea_orm::ConnectionTrait;
     use test_context::AsyncTestContext;
@@ -29,7 +25,6 @@ pub(crate) mod trustify_benches {
 
     use trustify_common::db::Transactional;
     use trustify_entity::labels::Labels;
-    use trustify_module_ingestor::service::Format;
     use trustify_test_context::{document, TrustifyContext};
 
     pub fn ingestion(c: &mut Criterion) {
@@ -44,18 +39,14 @@ pub(crate) mod trustify_benches {
                     let mut duration = Duration::default();
                     for i in 0..count {
                         log::info!("inserting document {}...", i);
-                        let stream =
-                            document_stream_generated_from("csaf/cve-2023-33201.json", i).await;
+                        let data = document_generated_from("csaf/cve-2023-33201.json", i)
+                            .await
+                            .expect("data ok");
 
                         let start = Instant::now();
                         black_box(
                             ctx.ingestor
-                                .ingest::<_, io::Error>(
-                                    Labels::default(),
-                                    None,
-                                    Format::CSAF,
-                                    stream,
-                                )
+                                .ingest(Labels::default(), None, &data)
                                 .await
                                 .expect("ingest ok"),
                         );
@@ -68,10 +59,7 @@ pub(crate) mod trustify_benches {
         });
     }
 
-    async fn document_stream_generated_from(
-        path: &str,
-        rev: u64,
-    ) -> Once<impl Future<Output = Result<Bytes, Error>> + Sized> {
+    async fn document_generated_from(path: &str, rev: u64) -> Result<Bytes, Error> {
         let (mut doc, _): (Csaf, _) = document(path).await.expect("load ok");
         doc.document.tracking.id = format!("{}-{}", doc.document.tracking.id, rev);
 
@@ -142,7 +130,7 @@ pub(crate) mod trustify_benches {
         }
 
         let data = serde_json::to_vec_pretty(&doc).expect("serialize ok");
-        stream::once(async { Ok(Bytes::from(data)) })
+        Ok(Bytes::from(data))
     }
 
     fn setup_runtime_and_ctx() -> (Runtime, Arc<TrustifyContext>) {
