@@ -10,7 +10,7 @@ use sbom_walker::validation::{
 };
 use std::sync::Arc;
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::{Format, IngestorService};
+use trustify_module_ingestor::service::IngestorService;
 use walker_common::{compression::decompress_opt, utils::url::Urlify};
 
 pub struct StorageVisitor<C: RunContext> {
@@ -65,8 +65,6 @@ impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
             None => (doc.data.clone(), false),
         };
 
-        let fmt = Format::sbom_from_bytes(&data).map_err(|e| StorageError::Processing(e.into()))?;
-
         let result = self
             .ingestor
             .ingest(
@@ -76,7 +74,6 @@ impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
                     .add("file", &file)
                     .extend(&self.labels.0),
                 None,
-                fmt,
                 &data,
             )
             .await

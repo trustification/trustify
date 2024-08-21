@@ -15,10 +15,7 @@ use std::{path::Path, path::PathBuf, sync::Arc};
 use tokio::runtime::Handle;
 use tracing::instrument;
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::{
-    graph::Graph,
-    service::{Format, IngestorService},
-};
+use trustify_module_ingestor::{graph::Graph, service::IngestorService};
 
 struct Context<C: RunContext + 'static> {
     context: C,
@@ -41,7 +38,6 @@ impl<C: RunContext> Context<C> {
                         .add("file", path.to_string_lossy())
                         .extend(&self.labels.0),
                     None,
-                    Format::ClearlyDefined,
                     &data,
                 )
                 .await
