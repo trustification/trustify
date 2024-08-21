@@ -24,6 +24,8 @@ pub enum Error {
     #[error(transparent)]
     HashKey(#[from] IdError),
     #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
     Json(#[from] serde_json::Error),
     #[error(transparent)]
     Yaml(#[from] serde_yml::Error),
@@ -44,6 +46,11 @@ pub enum Error {
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse<BoxBody> {
         match self {
+            Self::Io(err) => HttpResponse::BadRequest().json(ErrorInformation {
+                error: "Io".into(),
+                message: err.to_string(),
+                details: None,
+            }),
             Self::Json(err) => HttpResponse::BadRequest().json(ErrorInformation {
                 error: "JsonParse".into(),
                 message: err.to_string(),
@@ -132,7 +139,7 @@ impl IngestorService {
             .await
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
 
-        let reader = self
+        let stream = self
             .storage
             .retrieve(result.key())
             .await
@@ -140,7 +147,7 @@ impl IngestorService {
             .ok_or_else(|| Error::Storage(anyhow!("file went missing during upload")))?;
 
         let result = fmt
-            .load(&self.graph, labels.into(), issuer, &result.digests, reader)
+            .load(&self.graph, labels.into(), issuer, &result.digests, stream)
             .await?;
 
         let duration = Instant::now() - start;
