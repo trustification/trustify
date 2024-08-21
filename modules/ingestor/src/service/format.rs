@@ -22,8 +22,8 @@ use std::{
     io::{self},
     pin::pin,
 };
-use tokio_util::io::{StreamReader, SyncIoBridge};
-use tracing::info_span;
+use tokio::io::AsyncReadExt;
+use tokio_util::io::StreamReader;
 use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
 
@@ -49,33 +49,39 @@ impl<'g> Format {
     where
         S: Stream<Item = Result<Bytes, anyhow::Error>> + Send + 'static,
     {
+        let mut buffer = Vec::new();
+        let mut s = pin!(StreamReader::new(
+            stream.map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}"))),
+        ));
+        s.read_to_end(&mut buffer).await?;
+
         match self {
             Format::CSAF => {
                 // issuer is internal as publisher of the document.
                 let loader = CsafLoader::new(graph);
-                let csaf: Csaf = json_from_stream(stream).await?;
+                let csaf: Csaf = serde_json::from_reader(&*buffer)?;
                 loader.load(labels, csaf, digests).await
             }
             Format::OSV => {
                 // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
                 let loader = OsvLoader::new(graph);
-                let osv: Vulnerability = json_from_stream(stream).await?;
+                let osv: Vulnerability = serde_json::from_reader(&*buffer)?;
                 loader.load(labels, osv, digests, issuer).await
             }
             Format::CVE => {
                 // issuer is always CVE Project
                 let loader = CveLoader::new(graph);
-                let cve: Cve = json_from_stream(stream).await?;
+                let cve: Cve = serde_json::from_reader(&*buffer)?;
                 loader.load(labels, cve, digests).await
             }
             Format::SPDX => {
                 let loader = SpdxLoader::new(graph);
-                let v: Value = json_from_stream(stream).await?;
+                let v: Value = serde_json::from_reader(&*buffer)?;
                 loader.load(labels, v, digests).await
             }
             Format::CycloneDX => {
                 let loader = CyclonedxLoader::new(graph);
-                let v: Value = json_from_stream(stream).await?;
+                let v: Value = serde_json::from_reader(&*buffer)?;
                 let sbom = Bom::parse_json_value(v)
                     .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
@@ -83,7 +89,7 @@ impl<'g> Format {
             }
             Format::ClearlyDefined => {
                 let loader = ClearlyDefinedLoader::new(graph);
-                let curation: Curation = yaml_from_stream(stream).await?;
+                let curation: Curation = serde_yml::from_reader(&*buffer)?;
                 loader.load(labels, curation, digests).await
             }
         }
@@ -198,46 +204,6 @@ fn masked<N: Mask>(mask: N, bytes: &[u8]) -> Result<Option<String>, Error> {
                 .map_err(|e| Error::Generic(e.into()))
         })
         .transpose()
-}
-
-async fn json_from_stream<S, T>(stream: S) -> Result<T, Error>
-where
-    S: Stream<Item = Result<Bytes, anyhow::Error>> + Send + 'static,
-    T: serde::de::DeserializeOwned + Send + 'static,
-{
-    from_stream(stream, StreamFlavor::Json).await
-}
-
-async fn yaml_from_stream<S, T>(stream: S) -> Result<T, Error>
-where
-    S: Stream<Item = Result<Bytes, anyhow::Error>> + Send + 'static,
-    T: serde::de::DeserializeOwned + Send + 'static,
-{
-    from_stream(stream, StreamFlavor::Yaml).await
-}
-
-enum StreamFlavor {
-    Json,
-    Yaml,
-}
-
-async fn from_stream<S, T>(stream: S, flavor: StreamFlavor) -> Result<T, Error>
-where
-    S: Stream<Item = Result<Bytes, anyhow::Error>> + Send + 'static,
-    T: serde::de::DeserializeOwned + Send + 'static,
-{
-    tokio::task::spawn_blocking(move || {
-        info_span!("parse document").in_scope(|| {
-            let stream = pin!(stream);
-            let stream = stream.map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}")));
-            let reader = SyncIoBridge::new(StreamReader::new(stream));
-            match flavor {
-                StreamFlavor::Yaml => serde_yml::from_reader(reader).map_err(Error::Yaml),
-                StreamFlavor::Json => serde_json::from_reader(reader).map_err(Error::Json),
-            }
-        })
-    })
-    .await?
 }
 
 #[cfg(test)]
