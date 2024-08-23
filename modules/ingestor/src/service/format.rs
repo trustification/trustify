@@ -59,29 +59,29 @@ impl<'g> Format {
             Format::CSAF => {
                 // issuer is internal as publisher of the document.
                 let loader = CsafLoader::new(graph);
-                let csaf: Csaf = serde_json::from_reader(&*buffer)?;
+                let csaf: Csaf = serde_json::from_slice(&buffer)?;
                 loader.load(labels, csaf, digests).await
             }
             Format::OSV => {
                 // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
                 let loader = OsvLoader::new(graph);
-                let osv: Vulnerability = serde_json::from_reader(&*buffer)?;
+                let osv: Vulnerability = serde_json::from_slice(&buffer)?;
                 loader.load(labels, osv, digests, issuer).await
             }
             Format::CVE => {
                 // issuer is always CVE Project
                 let loader = CveLoader::new(graph);
-                let cve: Cve = serde_json::from_reader(&*buffer)?;
+                let cve: Cve = serde_json::from_slice(&buffer)?;
                 loader.load(labels, cve, digests).await
             }
             Format::SPDX => {
                 let loader = SpdxLoader::new(graph);
-                let v: Value = serde_json::from_reader(&*buffer)?;
+                let v: Value = serde_json::from_slice(&buffer)?;
                 loader.load(labels, v, digests).await
             }
             Format::CycloneDX => {
                 let loader = CyclonedxLoader::new(graph);
-                let v: Value = serde_json::from_reader(&*buffer)?;
+                let v: Value = serde_json::from_slice(&buffer)?;
                 let sbom = Bom::parse_json_value(v)
                     .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
@@ -89,7 +89,7 @@ impl<'g> Format {
             }
             Format::ClearlyDefined => {
                 let loader = ClearlyDefinedLoader::new(graph);
-                let curation: Curation = serde_yml::from_reader(&*buffer)?;
+                let curation: Curation = serde_yml::from_slice(&buffer)?;
                 loader.load(labels, curation, digests).await
             }
         }
