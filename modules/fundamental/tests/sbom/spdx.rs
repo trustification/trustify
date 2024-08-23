@@ -163,7 +163,7 @@ where
         ctx,
         sbom,
         |data| {
-            let json: Value = serde_json::from_reader(data)?;
+            let json: Value = serde_json::from_slice(data)?;
             let (sbom, _) = parse_spdx(&Discard, json)?;
             Ok(fix_spdx_rels(sbom))
         },
