@@ -1,4 +1,5 @@
 use sea_orm::{DeriveActiveEnum, EnumIter};
+use std::fmt;
 
 #[derive(
     Debug,
@@ -45,4 +46,12 @@ pub enum Relationship {
     DevToolOf,
     #[sea_orm(num_value = 13)]
     DescribedBy,
+    #[sea_orm(num_value = 14)]
+    PackageOf,
+}
+
+impl fmt::Display for Relationship {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
