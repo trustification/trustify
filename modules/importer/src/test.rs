@@ -41,6 +41,7 @@ fn mock_importer(result: &Importer, source: impl Into<String>) -> Importer {
             last_success: None,
             last_error: None,
             last_run: None,
+            progress: None,
             continuation: serde_json::Value::Null,
         },
     }
@@ -87,6 +88,7 @@ async fn test_default(ctx: TrustifyContext) {
                 last_success: None,
                 last_run: None,
                 last_error: None,
+                progress: None,
                 continuation: serde_json::Value::Null,
             }
         }]

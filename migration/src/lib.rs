@@ -69,6 +69,7 @@ mod m0000545_create_purl_license_assertion;
 mod m0000550_create_cpe_license_assertion;
 mod m0000560_alter_vulnerability_cwe_column;
 mod m0000565_alter_advisory_vulnerability_cwe_column;
+mod m0000570_add_import_progress;
 
 pub struct Migrator;
 
@@ -144,6 +145,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000550_create_cpe_license_assertion::Migration),
             Box::new(m0000560_alter_vulnerability_cwe_column::Migration),
             Box::new(m0000565_alter_advisory_vulnerability_cwe_column::Migration),
+            Box::new(m0000570_add_import_progress::Migration),
         ]
     }
 }

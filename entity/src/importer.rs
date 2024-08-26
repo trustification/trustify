@@ -14,6 +14,9 @@ pub struct Model {
     pub last_run: Option<time::OffsetDateTime>,
     pub last_error: Option<String>,
 
+    pub progress_current: Option<i32>,
+    pub progress_total: Option<i32>,
+
     /// an importer specific continuation token
     pub continuation: Option<serde_json::Value>,
 

@@ -1,13 +1,15 @@
-use crate::model::ClearlyDefinedPackageType;
-use crate::runner::{
-    common::{
-        processing_error::ProcessingError,
-        walker::{
-            CallbackError, Callbacks, Continuation, Error, GitWalker, Handler, HandlerError,
-            WorkingDirectory,
+use crate::{
+    model::ClearlyDefinedPackageType,
+    runner::{
+        common::{
+            processing_error::ProcessingError,
+            walker::{
+                CallbackError, Callbacks, Continuation, Error, GitWalker, Handler, HandlerError,
+                WorkingDirectory,
+            },
         },
+        progress::Progress,
     },
-    progress::Progress,
 };
 use std::collections::HashSet;
 use std::io::Read;

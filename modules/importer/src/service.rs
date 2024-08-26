@@ -4,7 +4,7 @@ use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait,
     QueryFilter, QueryOrder, TransactionTrait,
 };
-use sea_query::{Alias, Expr, SimpleExpr};
+use sea_query::{Alias, Expr, Nullable, SimpleExpr};
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{
@@ -92,6 +92,9 @@ impl ImporterService {
             last_success: Set(None),
             last_run: Set(None),
             last_error: Set(None),
+
+            progress_current: Set(None),
+            progress_total: Set(None),
 
             continuation: Set(None),
 
@@ -219,6 +222,8 @@ impl ImporterService {
                 importer::Column::State,
                 Expr::value(importer::State::Waiting),
             ),
+            (importer::Column::ProgressCurrent, Expr::value(i32::null())),
+            (importer::Column::ProgressTotal, Expr::value(i32::null())),
             (importer::Column::LastChange, Expr::value(now)),
             (importer::Column::Continuation, Expr::value(continuation)),
         ];
@@ -302,10 +307,32 @@ impl ImporterService {
                     importer::Column::LastRun,
                     Expr::value(None::<OffsetDateTime>),
                 ),
+                (importer::Column::ProgressCurrent, Expr::value(i32::null())),
+                (importer::Column::ProgressTotal, Expr::value(i32::null())),
                 (
                     importer::Column::Continuation,
                     Expr::value(None::<serde_json::Value>),
                 ),
+            ],
+        )
+        .await
+    }
+
+    #[instrument(skip(self))]
+    pub async fn update_progress(
+        &self,
+        name: &str,
+        expected_revision: Option<&str>,
+        current: u32,
+        total: u32,
+    ) -> Result<(), Error> {
+        self.update(
+            &self.db,
+            name,
+            expected_revision,
+            vec![
+                (importer::Column::ProgressCurrent, Expr::value(current)),
+                (importer::Column::ProgressTotal, Expr::value(total)),
             ],
         )
         .await

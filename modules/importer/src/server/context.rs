@@ -1,8 +1,9 @@
 use crate::{
     runner::{
         context::RunContext,
-        progress::{Progress, TracingProgress},
+        progress::{Progress, ProgressInstance},
     },
+    server::progress::ServiceProgress,
     service::ImporterService,
 };
 use std::{
@@ -18,6 +19,7 @@ pub struct ServiceRunContext {
     /// The name of the import job
     name: String,
     state: Mutex<CheckCancellation>,
+    service: ImporterService,
 }
 
 impl ServiceRunContext {
@@ -25,10 +27,11 @@ impl ServiceRunContext {
         Self {
             name: name.clone(),
             state: Mutex::new(CheckCancellation::new(
-                service,
+                service.clone(),
                 name,
                 Duration::from_secs(60),
             )),
+            service,
         }
     }
 }
@@ -42,10 +45,10 @@ impl RunContext for ServiceRunContext {
         self.state.lock().await.check().await
     }
 
-    fn progress(&self, name: String) -> impl Progress + Send + 'static {
-        TracingProgress {
-            name,
-            period: Duration::from_secs(60),
+    fn progress(&self, _message: String) -> impl Progress + Send + 'static {
+        ServiceProgress {
+            name: self.name.clone(),
+            service: self.service.clone(),
         }
     }
 }
@@ -94,5 +97,41 @@ impl CheckCancellation {
         Ok(importer
             .map(|importer| importer.value.data.configuration.disabled)
             .unwrap_or(true))
+    }
+}
+
+pub struct WalkerProgress<P>(pub P)
+where
+    P: Progress;
+
+impl<P> walker_common::progress::Progress for WalkerProgress<P>
+where
+    P: Progress,
+{
+    type Instance = WalkerProgressInstance<P>;
+
+    fn start(&self, work: usize) -> Self::Instance {
+        WalkerProgressInstance(self.0.start(work))
+    }
+}
+
+pub struct WalkerProgressInstance<P>(P::Instance)
+where
+    P: Progress;
+
+impl<P> walker_common::progress::ProgressBar for WalkerProgressInstance<P>
+where
+    P: Progress,
+{
+    async fn increment(&mut self, work: usize) {
+        ProgressInstance::increment(&mut self.0, work).await;
+    }
+
+    async fn finish(self) {
+        ProgressInstance::finish(self.0).await;
+    }
+
+    async fn set_message(&mut self, _msg: String) {
+        // we don't support that
     }
 }

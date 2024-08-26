@@ -1,6 +1,7 @@
 mod report;
 pub mod storage;
 
+use crate::server::context::WalkerProgress;
 use crate::{
     model::CsafImporter,
     runner::{
@@ -33,6 +34,12 @@ impl super::ImportRunner {
         importer: CsafImporter,
         last_success: Option<SystemTime>,
     ) -> Result<RunOutput, ScannerError> {
+        // progress reporting
+
+        let progress = context.progress(format!("Import CSF: {}", importer.source));
+
+        // report
+
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
         let fetcher =
@@ -78,8 +85,8 @@ impl super::ImportRunner {
 
         // walker
 
-        // FIXME: track progress
         Walker::new(source)
+            .with_progress(WalkerProgress(progress))
             .walk(filter)
             .await
             // if the walker fails, we record the outcome as part of the report, but skip any

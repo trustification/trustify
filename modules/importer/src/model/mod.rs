@@ -10,8 +10,10 @@ pub use cve::*;
 pub use osv::*;
 pub use sbom::*;
 
-use std::ops::{Deref, DerefMut};
-use std::time::Duration;
+use std::{
+    ops::{Deref, DerefMut},
+    time::Duration,
+};
 use time::OffsetDateTime;
 use trustify_common::{model::Revisioned, paginated, revisioned};
 use trustify_entity::{
@@ -22,7 +24,7 @@ use trustify_entity::{
 use url::Url;
 use utoipa::ToSchema;
 
-#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct Importer {
     pub name: String,
     #[serde(flatten)]
@@ -54,7 +56,7 @@ impl From<State> for importer::State {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ImporterData {
     pub configuration: ImporterConfiguration,
@@ -80,9 +82,30 @@ pub struct ImporterData {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub last_error: Option<String>,
 
+    /// The current progress, if available.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub progress: Option<Progress>,
+
     /// The continuation token of the importer.
     #[serde(default, skip_serializing_if = "serde_json::Value::is_null")]
     pub continuation: serde_json::Value,
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize, ToSchema)]
+pub struct Progress {
+    /// The current processed items.
+    pub current: u32,
+    /// The total number of items to be processed.
+    pub total: u32,
+    /// Progress in percent (0..=1)
+    pub percent: f32,
+    /// The average processing rate (per second).
+    pub rate: f32,
+    /// The estimated remaining time in seconds.
+    pub estimated_seconds_remaining: u64,
+    /// The estimated time of completion.
+    #[serde(with = "time::serde::rfc3339")]
+    pub estimated_completion: OffsetDateTime,
 }
 
 #[derive(
@@ -176,6 +199,8 @@ impl TryFrom<Model> for Importer {
             last_success,
             last_run,
             last_error,
+            progress_current,
+            progress_total,
             continuation,
             revision: _,
         }: Model,
@@ -188,6 +213,12 @@ impl TryFrom<Model> for Importer {
                 last_success,
                 last_run,
                 last_error,
+                progress: into_progress(
+                    last_change,
+                    OffsetDateTime::now_utc(),
+                    progress_current,
+                    progress_total,
+                ),
                 continuation: continuation.unwrap_or_default(),
                 configuration: serde_json::from_value(configuration)?,
             },
@@ -200,33 +231,11 @@ revisioned!(Importer);
 impl TryFrom<Model> for RevisionedImporter {
     type Error = serde_json::Error;
 
-    fn try_from(
-        Model {
-            name,
-            configuration,
-            state,
-            last_change,
-            last_success,
-            last_run,
-            last_error,
-            continuation,
-            revision,
-        }: Model,
-    ) -> Result<Self, Self::Error> {
+    fn try_from(value: Model) -> Result<Self, Self::Error> {
+        let revision = value.revision.to_string();
         Ok(Self(Revisioned {
-            value: Importer {
-                name,
-                data: ImporterData {
-                    state: state.into(),
-                    last_change,
-                    last_success,
-                    last_run,
-                    last_error,
-                    continuation: continuation.unwrap_or_default(),
-                    configuration: serde_json::from_value(configuration)?,
-                },
-            },
-            revision: revision.to_string(),
+            value: value.try_into()?,
+            revision,
         }))
     }
 }
@@ -263,5 +272,75 @@ impl From<importer_report::Model> for ImporterReport {
             error,
             report,
         }
+    }
+}
+
+/// Create the progress information from the progress state
+fn into_progress(
+    start: OffsetDateTime,
+    now: OffsetDateTime,
+    current: Option<i32>,
+    total: Option<i32>,
+) -> Option<Progress> {
+    // elapsed time in seconds
+    let elapsed = (now - start).as_seconds_f32();
+
+    // current and total progress information
+    let current = current? as u32;
+    let total = total? as u32;
+
+    if current > total || total == 0 {
+        return None;
+    }
+
+    // calculate rate and ETA
+    let total_f = total as f32;
+    let rate = current as f32 / elapsed;
+    let remaining = (total - current) as f32;
+    let estimated_seconds_remaining = (remaining / rate) as u64;
+
+    // return result
+    Some(Progress {
+        current,
+        total,
+        percent: current as f32 / total_f,
+        rate,
+        estimated_seconds_remaining,
+        estimated_completion: now + Duration::from_secs(estimated_seconds_remaining),
+    })
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use time::macros::datetime;
+
+    #[test]
+    fn progress() {
+        let start = datetime!(2024-01-01 00:00:00 UTC);
+        let now = datetime!(2024-01-01 00:00:10 UTC);
+        assert_eq!(
+            into_progress(start, now, Some(15), Some(100)),
+            Some(Progress {
+                current: 15,
+                total: 100,
+                percent: 0.15,
+                rate: 1.5,
+                estimated_seconds_remaining: 56,
+                estimated_completion: datetime!(2024-01-01 00:01:06 UTC),
+            })
+        )
+    }
+
+    #[test]
+    fn progress_none() {
+        let start = datetime!(2024-01-01 00:00:00 UTC);
+        let now = datetime!(2024-01-01 00:00:10 UTC);
+        assert_eq!(into_progress(start, now, None, None), None);
+        assert_eq!(into_progress(start, now, Some(1), None), None);
+        assert_eq!(into_progress(start, now, None, Some(1)), None);
+
+        assert_eq!(into_progress(start, now, Some(10), Some(1)), None);
+        assert_eq!(into_progress(start, now, Some(0), Some(0)), None);
     }
 }
