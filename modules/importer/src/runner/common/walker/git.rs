@@ -203,7 +203,7 @@ where
             }
 
             let mut fo = Self::create_fetch_options();
-            fo.depth(1);
+            fo.depth(2);
             builder.fetch_options(fo).clone(&self.source, path)
         });
 
