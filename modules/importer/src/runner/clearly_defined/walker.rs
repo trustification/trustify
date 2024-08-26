@@ -191,7 +191,10 @@ mod test {
 
     #[test_log::test(tokio::test)]
     async fn test_walker() {
-        let path = PathBuf::from("target/test.data/test_clearly_defined_walker.git");
+        let path = PathBuf::from(format!(
+            "{}target/test.data/test_clearly_defined_walker.git",
+            env!("CARGO_WORKSPACE_ROOT")
+        ));
 
         let cont = Continuation::default();
 

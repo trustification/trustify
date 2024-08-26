@@ -4,8 +4,7 @@ use futures::Stream;
 use peak_alloc::PeakAlloc;
 use postgresql_embedded::PostgreSQL;
 use std::env;
-use std::env::current_dir;
-use std::io::{ErrorKind, Read, Seek};
+use std::io::{Read, Seek};
 use std::path::PathBuf;
 use test_context::AsyncTestContext;
 use tokio::io::AsyncReadExt;
@@ -119,21 +118,9 @@ impl AsyncTestContext for TrustifyContext {
     }
 }
 
-fn find_workspace_root() -> Result<PathBuf, anyhow::Error> {
-    let current_dir = current_dir()?;
-    let mut i = Some(current_dir.as_path());
-    while let Some(cur) = i {
-        if cur.join("rust-toolchain.toml").exists() {
-            return Ok(cur.to_path_buf());
-        }
-        i = cur.parent();
-    }
-    Err(std::io::Error::new(ErrorKind::NotFound, "damnit").into())
-}
-
 fn absolute(path: &str) -> Result<PathBuf, anyhow::Error> {
-    let workspace_root = find_workspace_root()?;
-    let test_data = workspace_root.join("etc").join("test-data");
+    let workspace_root: PathBuf = env!("CARGO_WORKSPACE_ROOT").into();
+    let test_data = workspace_root.join("etc/test-data");
     Ok(test_data.join(path))
 }
 
