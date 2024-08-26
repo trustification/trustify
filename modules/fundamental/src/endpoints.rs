@@ -26,5 +26,7 @@ pub fn configure(
 
     crate::sbom::endpoints::configure(config, db.clone());
 
-    crate::vulnerability::endpoints::configure(config, db);
+    crate::vulnerability::endpoints::configure(config, db.clone());
+
+    crate::weakness::endpoints::configure(config, db.clone());
 }

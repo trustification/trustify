@@ -15,6 +15,7 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     doc.merge(crate::product::endpoints::ApiDoc::openapi());
     doc.merge(crate::sbom::endpoints::ApiDoc::openapi());
     doc.merge(crate::vulnerability::endpoints::ApiDoc::openapi());
+    doc.merge(crate::weakness::endpoints::ApiDoc::openapi());
 
     if let Some(components) = doc.components.as_mut() {
         let mut obj = Object::with_type(SchemaType::String);

@@ -8,7 +8,6 @@ mod m0000040_create_vulnerability;
 mod m0000050_create_vulnerability_description;
 mod m0000060_create_advisory;
 mod m0000070_create_cvss3;
-mod m0000070_create_cwe;
 mod m0000080_create_cvss4;
 pub mod m0000090_create_advisory_vulnerability;
 mod m0000100_create_package;
@@ -70,6 +69,7 @@ mod m0000550_create_cpe_license_assertion;
 mod m0000560_alter_vulnerability_cwe_column;
 mod m0000565_alter_advisory_vulnerability_cwe_column;
 mod m0000570_add_import_progress;
+mod m0000575_create_weakness;
 
 pub struct Migrator;
 
@@ -146,6 +146,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000560_alter_vulnerability_cwe_column::Migration),
             Box::new(m0000565_alter_advisory_vulnerability_cwe_column::Migration),
             Box::new(m0000570_add_import_progress::Migration),
+            Box::new(m0000575_create_weakness::Migration),
         ]
     }
 }
