@@ -202,7 +202,8 @@ where
                 builder.branch(branch);
             }
 
-            let fo = Self::create_fetch_options();
+            let mut fo = Self::create_fetch_options();
+            fo.depth(1);
             builder.fetch_options(fo).clone(&self.source, path)
         });
 
@@ -213,7 +214,7 @@ where
                 let repo = info_span!("open repository").in_scope(|| Repository::open(path))?;
 
                 info_span!("fetching updates").in_scope(|| {
-                    log::debug!("Fetching updates");
+                    log::info!("Fetching updates");
                     let mut remote = repo.find_remote("origin")?;
 
                     let mut fo = Self::create_fetch_options();
@@ -241,7 +242,7 @@ where
             }
         };
 
-        log::debug!("Repository cloned or updated");
+        log::info!("Repository cloned or updated");
 
         // discover files between "then" and now
 
