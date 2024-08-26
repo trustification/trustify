@@ -30,3 +30,4 @@ pub mod version_scheme;
 pub mod versioned_purl;
 pub mod vulnerability;
 pub mod vulnerability_description;
+pub mod weakness;

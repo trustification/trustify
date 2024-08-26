@@ -29,6 +29,7 @@ osv = { workspace = true, features = ["schema"] }
 packageurl = { workspace = true }
 parking_lot = { workspace = true }
 ring = { workspace = true }
+roxmltree = { workspace = true }
 sbom-walker = { workspace = true }
 sea-orm = { workspace = true }
 sea-query = { workspace = true }
@@ -38,6 +39,7 @@ serde_yml = { workspace = true }
 spdx = { workspace = true }
 spdx-expression = { workspace = true }
 spdx-rs = { workspace = true }
+strum = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true, features = ["serde-well-known"] }
 tokio = { workspace = true, features = ["full"] }
@@ -48,9 +50,9 @@ uuid = { workspace = true, features = ["v7"] }
 
 [dev-dependencies]
 trustify-test-context = { workspace = true }
-
+zip = { workspace = true }
 rand = { workspace = true }
-rstest = {workspace = true }
+rstest = { workspace = true }
 serde_yml = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }

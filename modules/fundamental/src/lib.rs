@@ -8,6 +8,8 @@ pub mod purl;
 pub mod sbom;
 pub mod vulnerability;
 
+pub mod weakness;
+
 pub mod openapi;
 pub use openapi::openapi;
 

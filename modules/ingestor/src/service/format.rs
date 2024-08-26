@@ -1,5 +1,6 @@
 use crate::graph::sbom::clearly_defined::Curation;
 use crate::service::sbom::clearly_defined::ClearlyDefinedLoader;
+use crate::service::weakness::CweCatalogLoader;
 use crate::{
     graph::Graph,
     model::IngestResult,
@@ -17,7 +18,9 @@ use futures::Stream;
 use futures::TryStreamExt;
 use jsn::{mask::*, Format as JsnFormat, TokenReader};
 use osv::schema::Vulnerability;
+use roxmltree::Document;
 use serde_json::Value;
+use std::str::from_utf8;
 use std::{
     io::{self},
     pin::pin,
@@ -36,7 +39,7 @@ pub enum Format {
     SPDX,
     CycloneDX,
     ClearlyDefined,
-
+    CweCatalog,
     // These should be resolved to one of the above before loading
     Advisory,
     SBOM,
@@ -98,6 +101,10 @@ impl<'g> Format {
                 let curation: Curation = serde_yml::from_slice(&buffer)?;
                 loader.load(labels, curation, digests).await
             }
+            Format::CweCatalog => {
+                let loader = CweCatalogLoader::new(graph);
+                loader.load_bytes(labels, &buffer, digests).await
+            }
             f => Err(Error::UnsupportedFormat(format!(
                 "Must resolve {f:?} to an actual format"
             ))),
@@ -108,9 +115,10 @@ impl<'g> Format {
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         match Self::advisory_from_bytes(bytes) {
             Err(Error::UnsupportedFormat(ea)) => match Self::sbom_from_bytes(bytes) {
-                Err(Error::UnsupportedFormat(es)) => {
-                    Err(Error::UnsupportedFormat(format!("{ea}\n{es}")))
-                }
+                Err(Error::UnsupportedFormat(es)) => match Self::is_cwe_catalog(bytes) {
+                    Ok(_) => Ok(Self::CweCatalog),
+                    Err(_) => Err(Error::UnsupportedFormat(format!("{ea}\n{es}"))),
+                },
                 x => x,
             },
             x => x,
@@ -195,6 +203,19 @@ impl<'g> Format {
             // does it have a root `coordinates`?
             if candidate.get("coordinates").is_some() {
                 return Ok(true);
+            }
+        }
+
+        Ok(false)
+    }
+
+    pub fn is_cwe_catalog(bytes: &[u8]) -> Result<bool, Error> {
+        if let Ok(utf8) = from_utf8(bytes) {
+            if let Ok(candidate) = Document::parse(utf8) {
+                let root = candidate.root();
+                if let Some(catalog) = root.first_element_child() {
+                    return Ok(catalog.has_tag_name("Weakness_Catalog"));
+                }
             }
         }
 

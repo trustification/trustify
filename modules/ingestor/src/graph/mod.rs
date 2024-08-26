@@ -14,7 +14,7 @@ use trustify_common::db::{ConnectionOrTransaction, Transactional};
 
 #[derive(Debug, Clone)]
 pub struct Graph {
-    db: trustify_common::db::Database,
+    pub(crate) db: trustify_common::db::Database,
 }
 
 #[derive(Debug, thiserror::Error)]

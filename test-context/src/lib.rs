@@ -5,7 +5,7 @@ use peak_alloc::PeakAlloc;
 use postgresql_embedded::PostgreSQL;
 use std::env;
 use std::env::current_dir;
-use std::io::ErrorKind;
+use std::io::{ErrorKind, Read, Seek};
 use std::path::PathBuf;
 use test_context::AsyncTestContext;
 use tokio::io::AsyncReadExt;
@@ -68,6 +68,16 @@ impl TrustifyContext {
 
     pub async fn ingest_document(&self, path: &str) -> Result<IngestResult, anyhow::Error> {
         let bytes = document_bytes(path).await?;
+        Ok(self
+            .ingestor
+            .ingest(&bytes, Format::Unknown, ("source", "TrustifyContext"), None)
+            .await?)
+    }
+
+    pub async fn ingest_read<R: Read>(&self, mut read: R) -> Result<IngestResult, anyhow::Error> {
+        let mut bytes = Vec::new();
+        read.read_to_end(&mut bytes)?;
+
         Ok(self
             .ingestor
             .ingest(&bytes, Format::Unknown, ("source", "TrustifyContext"), None)
@@ -142,6 +152,10 @@ pub async fn document_stream(
 ) -> Result<impl Stream<Item = Result<Bytes, std::io::Error>>, anyhow::Error> {
     let file = tokio::fs::File::open(absolute(path)?).await?;
     Ok(ReaderStream::new(file))
+}
+
+pub async fn document_read(path: &str) -> Result<impl Read + Seek, anyhow::Error> {
+    Ok(std::fs::File::open(absolute(path)?)?)
 }
 
 pub async fn document<T>(path: &str) -> Result<(T, Digests), anyhow::Error>

@@ -1,6 +1,8 @@
 pub mod advisory;
 pub mod sbom;
 
+pub mod weakness;
+
 mod format;
 pub use format::Format;
 use tokio::task::JoinError;
@@ -26,7 +28,11 @@ pub enum Error {
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]
+    Utf8(#[from] std::str::Utf8Error),
+    #[error(transparent)]
     Json(#[from] serde_json::Error),
+    #[error(transparent)]
+    Xml(#[from] roxmltree::Error),
     #[error(transparent)]
     Yaml(#[from] serde_yml::Error),
     #[error(transparent)]
@@ -46,11 +52,6 @@ pub enum Error {
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse<BoxBody> {
         match self {
-            Self::Io(err) => HttpResponse::BadRequest().json(ErrorInformation {
-                error: "Io".into(),
-                message: err.to_string(),
-                details: None,
-            }),
             Self::Json(err) => HttpResponse::BadRequest().json(ErrorInformation {
                 error: "JsonParse".into(),
                 message: err.to_string(),
@@ -58,6 +59,21 @@ impl ResponseError for Error {
             }),
             Self::Yaml(err) => HttpResponse::BadRequest().json(ErrorInformation {
                 error: "YamlParse".into(),
+                message: err.to_string(),
+                details: None,
+            }),
+            Self::Xml(err) => HttpResponse::BadRequest().json(ErrorInformation {
+                error: "XmlParse".into(),
+                message: err.to_string(),
+                details: None,
+            }),
+            Self::Io(err) => HttpResponse::BadRequest().json(ErrorInformation {
+                error: "I/O".into(),
+                message: err.to_string(),
+                details: None,
+            }),
+            Self::Utf8(err) => HttpResponse::BadRequest().json(ErrorInformation {
+                error: "UTF-8".into(),
                 message: err.to_string(),
                 details: None,
             }),
