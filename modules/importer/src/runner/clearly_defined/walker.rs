@@ -189,8 +189,6 @@ mod test {
     use crate::{model::DEFAULT_SOURCE_CLEARLY_DEFINED, runner::common::walker::git_reset};
     use std::path::PathBuf;
 
-    /// test CVE walker, runs for a long time
-    #[ignore]
     #[test_log::test(tokio::test)]
     async fn test_walker() {
         let path = PathBuf::from("target/test.data/test_clearly_defined_walker.git");
@@ -204,7 +202,7 @@ mod test {
 
         let _cont = walker.run().await.expect("should not fail");
 
-        let cont = git_reset(&path, "HEAD~2").expect("must not fail");
+        let cont = git_reset(&path, "HEAD~1").expect("must not fail");
 
         let walker = ClearlyDefinedWalker::new(DEFAULT_SOURCE_CLEARLY_DEFINED)
             .continuation(cont)
