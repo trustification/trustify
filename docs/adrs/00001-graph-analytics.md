@@ -54,8 +54,8 @@ Expose a set of REST API endpoints
 
 **Retrieve a component(s) root component**
 HTTP GET api/v1/analysis/root-component?q={}
-HTTP GET api/v1/analysis/root-component/{name}
-HTTP GET api/v1/analysis/root-component/{purl}
+HTTP GET api/v1/analysis/root-component/{component-name}
+HTTP GET api/v1/analysis/root-component/{component-purl}
 
 all of which return a paginated list:
 
@@ -75,9 +75,9 @@ all of which return a paginated list:
 ```
 
 **Retrieve a component(s) products**
-HTTP GET api/v1/analysis/product?q={}
-HTTP GET api/v1/analysis/product/{name}
-HTTP GET api/v1/analysis/product/{purl}
+HTTP GET api/v1/analysis/root-component-product?q={}
+HTTP GET api/v1/analysis/root-component-product/{component-name}
+HTTP GET api/v1/analysis/root-component-product/{component-purl}
 
 all of which return a paginated list:
 
