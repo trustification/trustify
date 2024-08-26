@@ -22,6 +22,8 @@ cpe = { workspace = true }
 futures-util = { workspace = true }
 itertools = { workspace = true }
 log = { workspace = true }
+petgraph = { workspace = true }
+regex = { workspace = true }
 sea-orm = { workspace = true }
 sea-query = { workspace = true }
 serde = { workspace = true }
@@ -63,3 +65,5 @@ packageurl = { workspace = true }
 name = "bench"
 path = "benches/bench.rs"
 harness = false
+
+

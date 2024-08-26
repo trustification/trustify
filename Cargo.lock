@@ -4499,6 +4499,8 @@ checksum = "b4c5cc86750666a3ed20bdaf5ca2a0344f9c67674cae0515bec2da16fbaa47db"
 dependencies = [
  "fixedbitset",
  "indexmap 2.3.0",
+ "serde",
+ "serde_derive",
 ]
 
 [[package]]
@@ -7309,6 +7311,7 @@ dependencies = [
  "tokio-util",
  "trustify-common",
  "trustify-cvss",
+ "trustify-entity",
  "trustify-test-context",
 ]
 
@@ -7334,6 +7337,8 @@ dependencies = [
  "jsonpath-rust",
  "log",
  "packageurl",
+ "petgraph",
+ "regex",
  "sea-orm",
  "sea-query",
  "serde",
