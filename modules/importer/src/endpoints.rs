@@ -43,6 +43,7 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
         crate::model::ImporterReport,
         crate::model::OsvImporter,
         crate::model::PaginatedImporterReport,
+        crate::model::Progress,
         crate::model::RevisionedImporter,
         crate::model::SbomImporter,
         crate::model::State,

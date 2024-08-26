@@ -40,5 +40,5 @@ pub trait RunContext: Debug + Send {
         }
     }
 
-    fn progress(&self, #[allow(unused)] name: String) -> impl Progress + Send + 'static {}
+    fn progress(&self, #[allow(unused)] message: String) -> impl Progress + Send + 'static {}
 }

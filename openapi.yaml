@@ -1826,6 +1826,10 @@ components:
           format: date-time
           description: The last successful run
           nullable: true
+        progress:
+          allOf:
+          - $ref: '#/components/schemas/Progress'
+          nullable: true
         state:
           $ref: '#/components/schemas/State'
     ImporterReport:
@@ -2247,6 +2251,43 @@ components:
           nullable: true
         version:
           type: string
+    Progress:
+      type: object
+      required:
+      - current
+      - total
+      - percent
+      - rate
+      - estimated_seconds_remaining
+      - estimated_completion
+      properties:
+        current:
+          type: integer
+          format: int32
+          description: The current processed items.
+          minimum: 0
+        estimated_completion:
+          type: string
+          format: date-time
+          description: The estimated time of completion.
+        estimated_seconds_remaining:
+          type: integer
+          format: int64
+          description: The estimated remaining time in seconds.
+          minimum: 0
+        percent:
+          type: number
+          format: float
+          description: Progress in percent (0..=1)
+        rate:
+          type: number
+          format: float
+          description: The average processing rate (per second).
+        total:
+          type: integer
+          format: int32
+          description: The total number of items to be processed.
+          minimum: 0
     Purl:
       type: string
       format: uri

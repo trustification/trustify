@@ -1,9 +1,7 @@
-use crate::graph::sbom::clearly_defined::Curation;
-use crate::graph::Graph;
-use crate::model::IngestResult;
-use crate::service::Error;
-use trustify_common::hashing::Digests;
-use trustify_common::id::Id;
+use crate::{
+    graph::sbom::clearly_defined::Curation, graph::Graph, model::IngestResult, service::Error,
+};
+use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
 
 pub struct ClearlyDefinedLoader<'g> {

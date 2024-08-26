@@ -1,4 +1,5 @@
 pub mod context;
+pub(crate) mod progress;
 
 use crate::{
     model::{Importer, State},
