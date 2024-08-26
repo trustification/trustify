@@ -151,7 +151,10 @@ mod test {
     #[test_log::test(tokio::test)]
     async fn test_walker() {
         const SOURCE: &str = "https://github.com/RConsortium/r-advisory-database";
-        let path = PathBuf::from("target/test.data/test_walker.git");
+        let path = PathBuf::from(format!(
+            "{}target/test.data/test_walker.git",
+            env!("CARGO_WORKSPACE_ROOT")
+        ));
 
         let cont = Continuation::default();
 
@@ -176,7 +179,10 @@ mod test {
     #[test_log::test(tokio::test)]
     async fn test_walker_fail_escape() {
         const SOURCE: &str = "https://github.com/RConsortium/r-advisory-database";
-        let path = PathBuf::from("target/test.data/test_walker_fail_escape.git");
+        let path = PathBuf::from(format!(
+            "{}target/test.data/test_walker_fail_escape.git",
+            env!("CARGO_WORKSPACE_ROOT")
+        ));
 
         let cont = Continuation::default();
 
