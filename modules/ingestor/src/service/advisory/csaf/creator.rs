@@ -1,3 +1,4 @@
+use crate::service::advisory::csaf::util::ResolveProductIdCache;
 use crate::{
     graph::{
         advisory::advisory_vulnerability::{VersionInfo, VersionSpec},
@@ -24,24 +25,27 @@ struct PurlStatus {
 }
 
 #[derive(Debug)]
-pub struct PurlStatusCreator {
+pub struct PurlStatusCreator<'a> {
+    cache: ResolveProductIdCache<'a>,
     advisory_id: Uuid,
     vulnerability_id: String,
     entries: HashSet<PurlStatus>,
 }
 
-impl PurlStatusCreator {
-    pub fn new(advisory_id: Uuid, vulnerability_identifier: String) -> Self {
+impl<'a> PurlStatusCreator<'a> {
+    pub fn new(csaf: &'a Csaf, advisory_id: Uuid, vulnerability_identifier: String) -> Self {
+        let cache = ResolveProductIdCache::new(csaf);
         Self {
+            cache,
             advisory_id,
             vulnerability_id: vulnerability_identifier,
             entries: HashSet::new(),
         }
     }
 
-    pub fn add_all(&mut self, csaf: &Csaf, ps: &Option<Vec<ProductIdT>>, status: &'static str) {
+    pub fn add_all(&mut self, ps: &Option<Vec<ProductIdT>>, status: &'static str) {
         for r in ps.iter().flatten() {
-            if let Some((cpe, Some(purl))) = resolve_identifier(csaf, r) {
+            if let Some((cpe, Some(purl))) = resolve_identifier(&self.cache, r) {
                 let mut purl = Purl::from(purl.clone());
                 purl.qualifiers.clear();
 
@@ -99,6 +103,19 @@ impl PurlStatusCreator {
 
         // round two, status is checked, purls exist
 
+        self.create_status(connection, checked).await?;
+
+        // done
+
+        Ok(())
+    }
+
+    #[instrument(skip(self, connection), err)]
+    async fn create_status(
+        &self,
+        connection: &impl ConnectionTrait,
+        checked: HashMap<&str, status::Model>,
+    ) -> Result<(), Error> {
         let mut version_ranges = Vec::new();
         let mut package_statuses = Vec::new();
 
@@ -162,8 +179,6 @@ impl PurlStatusCreator {
                 .exec(connection)
                 .await?;
         }
-
-        // done
 
         Ok(())
     }
