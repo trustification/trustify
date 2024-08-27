@@ -8,6 +8,7 @@ use trustify_common::db::query::Query;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_module_fundamental::sbom::{model::details::SbomDetails, service::SbomService};
+use trustify_module_ingestor::service::Format;
 use trustify_test_context::{document_bytes, TrustifyContext};
 
 fn assert_sboms(sbom1: &SbomDetails, sbom2: &SbomDetails) {
@@ -223,12 +224,17 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // ingest the second version
     let result2 = ctx
         .ingestor
-        .ingest(("source", "test"), None, {
-            // re-serialize file (non-pretty)
-            let json: Value =
-                serde_json::from_slice(&document_bytes("nhc/v1/nhc-0.4.z.json.xz").await?)?;
-            &serde_json::to_vec(&json).map(Bytes::from)?
-        })
+        .ingest(
+            {
+                // re-serialize file (non-pretty)
+                let json: Value =
+                    serde_json::from_slice(&document_bytes("nhc/v1/nhc-0.4.z.json.xz").await?)?;
+                &serde_json::to_vec(&json).map(Bytes::from)?
+            },
+            Format::SBOM,
+            ("source", "test"),
+            None,
+        )
         .await?;
 
     assert_eq!(

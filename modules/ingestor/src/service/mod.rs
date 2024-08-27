@@ -125,12 +125,22 @@ impl IngestorService {
     #[instrument(skip(self, bytes), err)]
     pub async fn ingest(
         &self,
+        bytes: &[u8],
+        format: Format,
         labels: impl Into<Labels> + Debug,
         issuer: Option<String>,
-        bytes: &[u8],
     ) -> Result<IngestResult, Error> {
         let start = Instant::now();
-        let fmt = Format::from_bytes(bytes)?;
+
+        // We want to resolve the format first to avoid storing a
+        // document that we can't subsequently retrieve and load into
+        // the database.
+        let fmt = match format {
+            Format::Advisory => Format::advisory_from_bytes(bytes)?,
+            Format::SBOM => Format::sbom_from_bytes(bytes)?,
+            Format::Unknown => Format::from_bytes(bytes)?,
+            v => v,
+        };
         let stream = ReaderStream::new(bytes);
 
         let result = self

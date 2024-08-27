@@ -23,7 +23,7 @@ use trustify_common::{
     purl::Purl,
 };
 use trustify_entity::{labels::Labels, relationship::Relationship};
-use trustify_module_ingestor::service::IngestorService;
+use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::OpenApi;
 
@@ -355,7 +355,7 @@ pub async fn upload(
     web::Query(UploadQuery { labels }): web::Query<UploadQuery>,
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
-    let result = service.ingest(labels, None, &bytes).await?;
+    let result = service.ingest(&bytes, Format::SBOM, labels, None).await?;
     log::info!("Uploaded SBOM: {}", result.id);
     Ok(HttpResponse::Created().json(result))
 }
