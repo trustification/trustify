@@ -98,51 +98,54 @@ impl<'g> CsafLoader<'g> {
         report: &dyn ReportSink,
         tx: TX,
     ) -> Result<(), Error> {
-        if let Some(cve_id) = &vulnerability.cve {
-            self.graph.ingest_vulnerability(cve_id, (), &tx).await?;
+        let Some(cve_id) = &vulnerability.cve else {
+            return Ok(());
+        };
 
-            let advisory_vulnerability = advisory
-                .link_to_vulnerability(
-                    cve_id,
-                    Some(AdvisoryVulnerabilityInformation {
-                        title: vulnerability.title.clone(),
-                        summary: None,
-                        description: None,
-                        discovery_date: vulnerability.discovery_date.and_then(|date| {
-                            OffsetDateTime::from_unix_timestamp(date.timestamp()).ok()
-                        }),
-                        release_date: vulnerability.release_date.and_then(|date| {
-                            OffsetDateTime::from_unix_timestamp(date.timestamp()).ok()
-                        }),
-                        cwes: vulnerability.cwe.as_ref().map(|cwe| vec![cwe.id.clone()]),
+        self.graph.ingest_vulnerability(cve_id, (), &tx).await?;
+
+        let advisory_vulnerability = advisory
+            .link_to_vulnerability(
+                cve_id,
+                Some(AdvisoryVulnerabilityInformation {
+                    title: vulnerability.title.clone(),
+                    summary: None,
+                    description: None,
+                    discovery_date: vulnerability.discovery_date.and_then(|date| {
+                        OffsetDateTime::from_unix_timestamp(date.timestamp()).ok()
                     }),
-                    &tx,
-                )
+                    release_date: vulnerability.release_date.and_then(|date| {
+                        OffsetDateTime::from_unix_timestamp(date.timestamp()).ok()
+                    }),
+                    cwes: vulnerability.cwe.as_ref().map(|cwe| vec![cwe.id.clone()]),
+                }),
+                &tx,
+            )
+            .await?;
+
+        if let Some(product_status) = &vulnerability.product_status {
+            self.ingest_product_statuses(csaf, &advisory_vulnerability, product_status, &tx)
                 .await?;
+        }
 
-            if let Some(product_status) = &vulnerability.product_status {
-                self.ingest_product_statuses(csaf, &advisory_vulnerability, product_status, &tx)
-                    .await?;
-            }
-
-            for score in vulnerability.scores.iter().flatten() {
-                if let Some(v3) = &score.cvss_v3 {
-                    match Cvss3Base::from_str(&v3.to_string()) {
-                        Ok(cvss3) => {
-                            log::debug!("{cvss3:?}");
-                            advisory_vulnerability
-                                .ingest_cvss3_score(cvss3, &tx)
-                                .await?;
-                        }
-                        Err(err) => {
-                            let msg = format!("Unable to parse CVSS3: {:#?}", err);
-                            log::info!("{msg}");
-                            report.error(msg);
-                        }
+        for score in vulnerability.scores.iter().flatten() {
+            if let Some(v3) = &score.cvss_v3 {
+                match Cvss3Base::from_str(&v3.to_string()) {
+                    Ok(cvss3) => {
+                        log::debug!("{cvss3:?}");
+                        advisory_vulnerability
+                            .ingest_cvss3_score(cvss3, &tx)
+                            .await?;
+                    }
+                    Err(err) => {
+                        let msg = format!("Unable to parse CVSS3: {:#?}", err);
+                        log::info!("{msg}");
+                        report.error(msg);
                     }
                 }
             }
         }
+
         Ok(())
     }
 
@@ -155,6 +158,7 @@ impl<'g> CsafLoader<'g> {
         tx: TX,
     ) -> Result<(), Error> {
         let mut creator = PurlStatusCreator::new(
+            csaf,
             advisory_vulnerability.advisory_vulnerability.advisory_id,
             advisory_vulnerability
                 .advisory_vulnerability
@@ -162,9 +166,9 @@ impl<'g> CsafLoader<'g> {
                 .clone(),
         );
 
-        creator.add_all(csaf, &product_status.fixed, "fixed");
-        creator.add_all(csaf, &product_status.known_not_affected, "not_affected");
-        creator.add_all(csaf, &product_status.known_affected, "affected");
+        creator.add_all(&product_status.fixed, "fixed");
+        creator.add_all(&product_status.known_not_affected, "not_affected");
+        creator.add_all(&product_status.known_affected, "affected");
 
         creator.create(&self.graph.connection(&tx)).await?;
 
