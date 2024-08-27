@@ -1,1 +1,2 @@
+mod performance;
 mod reingest;
