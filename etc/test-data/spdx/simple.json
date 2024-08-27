@@ -22,6 +22,11 @@
           "referenceCategory": "PACKAGE_MANAGER",
           "referenceLocator": "pkg:rpm/redhat/A@0.0.0",
           "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:/app:redhat:simple:1::el9",
+          "referenceType": "cpe22Type"
         }
       ],
       "filesAnalyzed": false,
@@ -64,6 +69,11 @@
           "referenceCategory": "PACKAGE_MANAGER",
           "referenceLocator": "pkg:rpm/redhat/AA@0.0.0",
           "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:/a:redhat:simple:1::el9",
+          "referenceType": "cpe22Type"
         }
       ],
       "filesAnalyzed": false,
@@ -148,6 +158,11 @@
           "referenceCategory": "PACKAGE_MANAGER",
           "referenceLocator": "pkg:rpm/redhat/EE@0.0.0",
           "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:/a:redhat:simple:1::el9",
+          "referenceType": "cpe22Type"
         }
       ],
       "filesAnalyzed": false,
@@ -163,19 +178,9 @@
   ],
   "relationships" : [
     {
-      "spdxElementId" : "SPDXRef-A",
-      "relatedSpdxElement" : "SPDXRef-A",
-      "relationshipType" : "DESCRIBES"
-    },
-    {
       "spdxElementId" : "SPDXRef-B",
       "relatedSpdxElement" : "SPDXRef-A",
       "relationshipType" : "CONTAINED_BY"
-    },
-    {
-      "spdxElementId" : "SPDXRef-AA",
-      "relatedSpdxElement" : "SPDXRef-AA",
-      "relationshipType" : "DESCRIBES"
     },
     {
       "spdxElementId" : "SPDXRef-BB",
@@ -191,6 +196,11 @@
       "spdxElementId" : "SPDXRef-DD",
       "relatedSpdxElement" : "SPDXRef-BB",
       "relationshipType" : "CONTAINED_BY"
+    },
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-A",
+      "relationshipType": "DESCRIBES"
     }
   ],
   "spdxVersion": "SPDX-2.2"

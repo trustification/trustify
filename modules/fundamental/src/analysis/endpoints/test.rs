@@ -19,6 +19,7 @@ async fn test_simple_retrieve_analysis_endpoint(
     let uri = "/api/v1/analysis/root-component?q=B";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
+
     if response["items"][0]["component"] == "pkg://rpm/redhat/BB@0.0.0"
         || response["items"][1]["component"] == "pkg://rpm/redhat/BB@0.0.0"
     {
@@ -36,7 +37,7 @@ async fn test_simple_retrieve_analysis_endpoint(
         "pkg://rpm/redhat/BB@0.0.0"
     );
     assert_eq!(
-        response["items"][0]["ancestors"][1]["purl"],
+        response["items"][0]["ancestors"][0]["purl"],
         "pkg://rpm/redhat/AA@0.0.0"
     );
     Ok(assert_eq!(&response["total"], 1))
@@ -61,7 +62,7 @@ async fn test_simple_retrieve_by_name_analysis_endpoint(
         "pkg://rpm/redhat/B@0.0.0"
     );
     assert_eq!(
-        response["items"][0]["ancestors"][1]["purl"],
+        response["items"][0]["ancestors"][0]["purl"],
         "pkg://rpm/redhat/A@0.0.0"
     );
     Ok(assert_eq!(&response["total"], 1))
@@ -86,7 +87,7 @@ async fn test_simple_retrieve_by_purl_analysis_endpoint(
         "pkg://rpm/redhat/B@0.0.0"
     );
     assert_eq!(
-        response["items"][0]["ancestors"][1]["purl"],
+        response["items"][0]["ancestors"][0]["purl"],
         "pkg://rpm/redhat/A@0.0.0"
     );
     Ok(assert_eq!(&response["total"], 1))
@@ -110,14 +111,17 @@ async fn test_quarkus_retrieve_analysis_endpoint(
 
     let response: Value = app.call_and_read_body_json(request).await;
 
-    println!("{:?}", &response["items"]);
     assert_eq!(
         response["items"][0]["component"],
         "pkg://maven/net.spy/spymemcached@2.12.1?type=jar"
     );
     assert_eq!(
-        response["items"][0]["ancestors"][0]["purl"],
-        "pkg://maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?type=pom&repository_url=https://maven.repository.redhat.com/ga/"
+        response["items"][0]["ancestors"][1]["purl"],
+        "pkg://maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?type=pom&repository_url=https://maven.repository.redhat.com/ga/"
+    );
+    assert_eq!(
+        response["items"][0]["ancestors"][1]["document_id"],
+        "https://access.redhat.com/security/data/sbom/spdx/quarkus-bom-3.2.12.Final-redhat-00002"
     );
 
     Ok(assert_eq!(&response["total"], 1))

@@ -23,6 +23,9 @@ pub struct PackageNode {
     purl: String,
     name: String,
     published: String,
+    document_id: String,
+    product_name: String,
+    product_version: String,
 }
 impl fmt::Display for PackageNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -48,47 +51,63 @@ pub struct AnalysisService {
     db: Database,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn add_node(
     g: &mut Graph<PackageNode, Relationship, petgraph::Directed>,
     nodes: &mut HashMap<String, NodeIndex>,
-    component_purl: String,
-    component_name: String,
-    sbom_published: String,
+    component_purl: &String,
+    component_name: &String,
+    sbom_published: &String,
+    document_id: &String,
+    product_name: &String,
+    product_version: &String,
 ) -> NodeIndex {
-    match nodes.get(&component_purl) {
+    match nodes.get(&component_purl.to_string()) {
         Some(&i) => i,
         None => {
             let i = g.add_node(PackageNode {
                 purl: component_purl.to_string(),
                 name: component_name.to_string(),
                 published: sbom_published.to_string(),
+                document_id: document_id.to_string(),
+                product_name: product_name.to_string(),
+                product_version: product_version.to_string(),
             });
-            nodes.insert(component_purl, i);
+            nodes.insert(component_purl.to_string(), i);
             i
         }
     }
 }
 
 pub fn regex_purl_find(nodes: &HashMap<String, NodeIndex>, search_value: &str) -> Vec<NodeIndex> {
-    let pattern = Regex::new(search_value).unwrap(); // TODO: needs sanitisation
-    let mut node_indexes = Vec::new();
-    for (key, value) in nodes.iter() {
-        if pattern.is_match(key) {
-            node_indexes.push(*value);
-        }
-    }
-    node_indexes
+    // Sanitize the search value to prevent regex injection attacks
+    let sanitized_search_value = regex::escape(search_value);
+
+    let pattern = match Regex::new(&sanitized_search_value) {
+        Ok(pattern) => pattern,
+        Err(_) => return Vec::new(), // Return an empty vector if the regex pattern is invalid
+    };
+
+    nodes
+        .iter()
+        .filter(|(key, _)| pattern.is_match(key))
+        .map(|(_, value)| *value)
+        .collect()
 }
 
 pub fn exact_name_find(nodes: &HashMap<String, NodeIndex>, search_value: &str) -> Vec<NodeIndex> {
-    let mut node_indexes = Vec::new();
-    for (key, value) in nodes.iter() {
-        let purl_name = Purl::from_str(key).unwrap().name;
-        if search_value.eq(purl_name.as_str()) {
-            node_indexes.push(*value);
-        }
-    }
-    node_indexes
+    nodes
+        .iter()
+        .filter_map(|(key, &value)| {
+            Purl::from_str(key).ok().and_then(|purl| {
+                if purl.name == search_value {
+                    Some(value)
+                } else {
+                    None
+                }
+            })
+        })
+        .collect()
 }
 
 pub fn ancestor_nodes(
@@ -98,7 +117,9 @@ pub fn ancestor_nodes(
 ) -> Vec<NodeIndex> {
     // we need order
     let mut ancestor_nodes: Vec<NodeIndex> = Vec::new();
-    ancestor_nodes.push(node);
+    if node != original_node {
+        ancestor_nodes.push(node);
+    }
     fn dfs(
         graph: &petgraph::Graph<PackageNode, Relationship, petgraph::Directed>,
         node: NodeIndex,
@@ -124,6 +145,7 @@ impl AnalysisService {
         Self { db }
     }
 
+    #[allow(clippy::match_single_binding)]
     #[instrument(skip(self, tx), err)]
     pub async fn retrieve_root_components<TX: AsRef<Transactional>>(
         &self,
@@ -133,51 +155,69 @@ impl AnalysisService {
     ) -> Result<PaginatedResults<AdvisoryGraphSummary>, Error> {
         let connection = self.db.connection(&tx);
         let mut g: Graph<PackageNode, Relationship, petgraph::Directed> = Graph::new();
+        log::info!("step 1");
 
         // TODO: convert this to 'sea_orm dialect'
         let sql = format!(
             r#"SELECT sbom.document_id, sbom.sbom_id, sbom.published::text,
             get_purl(t1.qualified_purl_id) as left_qualified_purl,
             package_relates_to_package.relationship,
-            get_purl(t2.qualified_purl_id) as right_qualified_purl
+            get_purl(t2.qualified_purl_id) as right_qualified_purl,
+            product.name as product_name,
+            product_version.version as product_version
             FROM sbom
+            LEFT JOIN product_version ON sbom.sbom_id = product_version.sbom_id
+            LEFT JOIN product ON product_version.product_id = product.id
             LEFT JOIN package_relates_to_package ON sbom.sbom_id = package_relates_to_package.sbom_id
             LEFT JOIN sbom_package_purl_ref t1 ON t1.sbom_id = sbom.sbom_id AND t1.node_id = package_relates_to_package.left_node_id
             LEFT JOIN sbom_package_purl_ref t2 ON t2.sbom_id = sbom.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
             WHERE package_relates_to_package.relationship IN (0,8,14)
-                AND sbom.sbom_id IN (SELECT DISTINCT ON (document_id) sbom_id FROM sbom order by document_id, published DESC)
-                AND sbom.sbom_id IN (select distinct sbom_id from sbom_node where name ILIKE '%{}%');
+                AND sbom.sbom_id IN (SELECT DISTINCT ON (document_id) sbom_id FROM sbom WHERE sbom.sbom_id IN (select distinct sbom_id from sbom_node where name ILIKE '%{}%')
+                order by document_id, published DESC);
              "#,
             query.q.as_str()
         );
 
-        let results = connection
+        let relationship_results = connection
             .query_all(Statement::from_string(
                 connection.get_database_backend(),
                 sql,
             ))
             .await?;
 
+        log::info!("step 2:{}", relationship_results.len());
+
         // keep track of nodes / indices for efficient searching
         let mut nodes: HashMap<String, NodeIndex> = HashMap::new();
 
         // load package relationships into graph
-        for row in results {
+        for row in relationship_results {
             let sbom_published = row
                 .try_get("", "published")
+                .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
+            let document_id = row
+                .try_get("", "document_id")
+                .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
+            let product_name = row
+                .try_get("", "product_name")
+                .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
+            let product_version = row
+                .try_get("", "product_version")
                 .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
 
             let left_purl_string: String = row
                 .try_get("", "left_qualified_purl")
                 .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
             let left_purl: Purl = Purl::from_str(left_purl_string.as_str())?;
-            let left_name: String = left_purl.name;
             let p1 = add_node(
                 &mut g,
                 &mut nodes,
-                left_purl_string.to_string(),
-                left_name.to_string(),
-                sbom_published.to_string(),
+                &left_purl_string,
+                &left_purl.name,
+                &sbom_published,
+                &document_id,
+                &product_name,
+                &product_version,
             );
 
             let relationship: Relationship = row.try_get("", "relationship")?;
@@ -185,46 +225,46 @@ impl AnalysisService {
                 .try_get("", "right_qualified_purl")
                 .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
             let right_purl: Purl = Purl::from_str(right_purl_string.as_str())?;
-            let right_name: String = right_purl.name;
             let p2 = add_node(
                 &mut g,
                 &mut nodes,
-                right_purl_string.to_string(),
-                right_name.to_string(),
-                sbom_published.to_string(),
+                &right_purl_string,
+                &right_purl.name,
+                &sbom_published,
+                &document_id,
+                &product_name,
+                &product_version,
             );
 
             g.add_edge(p1, p2, relationship);
         }
 
+        log::info!("step 3: {}", g.node_count());
+
         let mut components: Vec<AdvisoryGraphSummary> = Vec::new();
-        for find_match in regex_purl_find(&nodes, query.q.as_str()) {
-            let mut root_components: Vec<PackageNode> = Vec::new();
 
-            match find_match {
-                node_index => {
-                    let find_match_package_node = g.node_weight(node_index).unwrap();
-                    let mut ancestor_nodes: Vec<NodeIndex> =
-                        ancestor_nodes(&g, node_index, node_index)
-                            .into_iter()
-                            .collect();
-                    ancestor_nodes.sort();
-                    for ancestor_node in ancestor_nodes {
-                        let node_value = g.node_weight(ancestor_node).unwrap();
-                        root_components.push(PackageNode {
-                            purl: node_value.purl.to_string(),
-                            name: node_value.name.to_string(),
-                            published: node_value.published.to_string(),
-                        });
-                    }
+        for node_index in regex_purl_find(&nodes, query.q.as_str()) {
+            if let Some(find_match_package_node) = g.node_weight(node_index) {
+                let mut ancestor_nodes: Vec<NodeIndex> = ancestor_nodes(&g, node_index, node_index)
+                    .into_iter()
+                    .collect();
 
-                    components.push(AdvisoryGraphSummary::new(
-                        find_match_package_node.purl.to_string(),
-                        root_components,
-                    ));
-                }
+                ancestor_nodes.sort();
+
+                let mut root_components: Vec<PackageNode> = ancestor_nodes
+                    .iter()
+                    .filter_map(|&ancestor_node| g.node_weight(ancestor_node).cloned())
+                    .collect();
+
+                root_components.sort_by(|a, b| a.published.cmp(&b.published));
+
+                components.push(AdvisoryGraphSummary::new(
+                    find_match_package_node.purl.to_string(),
+                    root_components,
+                ));
             }
         }
+        log::info!("step 4");
 
         // TODO: limiter ?
         let total: u64 = components.len() as u64;
@@ -234,6 +274,7 @@ impl AnalysisService {
         })
     }
 
+    #[allow(clippy::match_single_binding)]
     #[instrument(skip(self, tx), err)]
     pub async fn retrieve_root_components_by_name<TX: AsRef<Transactional>>(
         &self,
@@ -247,16 +288,20 @@ impl AnalysisService {
         // TODO: convert this to 'sea_orm dialect'
         let sql = format!(
             r#"SELECT sbom.document_id, sbom.sbom_id, sbom.published::text,
-            get_purl(t1.qualified_purl_id) as left_qualified_purl,
-            package_relates_to_package.relationship,
-            get_purl(t2.qualified_purl_id) as right_qualified_purl
-            FROM sbom
-            LEFT JOIN package_relates_to_package ON sbom.sbom_id = package_relates_to_package.sbom_id
-            LEFT JOIN sbom_package_purl_ref t1 ON t1.sbom_id = sbom.sbom_id AND t1.node_id = package_relates_to_package.left_node_id
-            LEFT JOIN sbom_package_purl_ref t2 ON t2.sbom_id = sbom.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
-            WHERE package_relates_to_package.relationship IN (0,8,14)
-                AND sbom.sbom_id IN (SELECT DISTINCT ON (document_id) sbom_id FROM sbom order by document_id, published DESC)
-                AND sbom.sbom_id IN (select distinct sbom_id from sbom_node where name = '{}');
+             get_purl(t1.qualified_purl_id) as left_qualified_purl,
+             package_relates_to_package.relationship,
+             get_purl(t2.qualified_purl_id) as right_qualified_purl,
+             product.name as product_name,
+             product_version.version as product_version
+             FROM sbom
+             LEFT JOIN product_version ON sbom.sbom_id = product_version.sbom_id
+             LEFT JOIN product ON product_version.product_id = product.id
+             LEFT JOIN package_relates_to_package ON sbom.sbom_id = package_relates_to_package.sbom_id
+             LEFT JOIN sbom_package_purl_ref t1 ON t1.sbom_id = sbom.sbom_id AND t1.node_id = package_relates_to_package.left_node_id
+             LEFT JOIN sbom_package_purl_ref t2 ON t2.sbom_id = sbom.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
+             WHERE package_relates_to_package.relationship IN (0,8,14)
+             AND sbom.sbom_id IN (SELECT DISTINCT ON (document_id) sbom_id FROM sbom where sbom.sbom_id IN (select
+  distinct sbom_id from sbom_node where name = '{}') order by document_id, published DESC);
              "#,
             component_name.as_str()
         );
@@ -276,18 +321,29 @@ impl AnalysisService {
             let sbom_published = row
                 .try_get("", "published")
                 .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
+            let document_id = row
+                .try_get("", "document_id")
+                .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
+            let product_name = row
+                .try_get("", "product_name")
+                .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
+            let product_version = row
+                .try_get("", "product_version")
+                .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
 
             let left_purl_string: String = row
                 .try_get("", "left_qualified_purl")
                 .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
             let left_purl: Purl = Purl::from_str(left_purl_string.as_str())?;
-            let left_name: String = left_purl.name;
             let p1 = add_node(
                 &mut g,
                 &mut nodes,
-                left_purl_string.to_string(),
-                left_name.to_string(),
-                sbom_published.to_string(),
+                &left_purl_string,
+                &left_purl.name,
+                &sbom_published,
+                &document_id,
+                &product_name,
+                &product_version,
             );
 
             let relationship: Relationship = row.try_get("", "relationship")?;
@@ -296,44 +352,41 @@ impl AnalysisService {
                 .try_get("", "right_qualified_purl")
                 .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
             let right_purl: Purl = Purl::from_str(right_purl_string.as_str())?;
-            let right_name: String = right_purl.name;
             let p2 = add_node(
                 &mut g,
                 &mut nodes,
-                right_purl_string.to_string(),
-                right_name.to_string(),
-                sbom_published.to_string(),
+                &right_purl_string,
+                &right_purl.name,
+                &sbom_published,
+                &document_id,
+                &product_name,
+                &product_version,
             );
 
             g.add_edge(p1, p2, relationship);
         }
 
         let mut components: Vec<AdvisoryGraphSummary> = Vec::new();
-        for find_match in exact_name_find(&nodes, component_name.as_str()) {
-            let mut root_components: Vec<PackageNode> = Vec::new();
 
-            match find_match {
-                node_index => {
-                    let find_match_package_node = g.node_weight(node_index).unwrap();
-                    let mut ancestor_nodes: Vec<NodeIndex> =
-                        ancestor_nodes(&g, node_index, node_index)
-                            .into_iter()
-                            .collect();
-                    ancestor_nodes.sort();
-                    for ancestor_node in ancestor_nodes {
-                        let node_value = g.node_weight(ancestor_node).unwrap();
-                        root_components.push(PackageNode {
-                            purl: node_value.purl.to_string(),
-                            name: node_value.name.to_string(),
-                            published: node_value.published.to_string(),
-                        });
-                    }
+        for node_index in exact_name_find(&nodes, component_name.as_str()) {
+            if let Some(find_match_package_node) = g.node_weight(node_index) {
+                let mut ancestor_nodes: Vec<NodeIndex> = ancestor_nodes(&g, node_index, node_index)
+                    .into_iter()
+                    .collect();
 
-                    components.push(AdvisoryGraphSummary::new(
-                        find_match_package_node.purl.to_string(),
-                        root_components,
-                    ));
-                }
+                ancestor_nodes.sort();
+
+                let mut root_components: Vec<PackageNode> = ancestor_nodes
+                    .iter()
+                    .filter_map(|&ancestor_node| g.node_weight(ancestor_node).cloned())
+                    .collect();
+
+                root_components.sort_by(|a, b| a.published.cmp(&b.published));
+
+                components.push(AdvisoryGraphSummary::new(
+                    find_match_package_node.purl.to_string(),
+                    root_components,
+                ));
             }
         }
 
@@ -345,6 +398,7 @@ impl AnalysisService {
         })
     }
 
+    #[allow(clippy::match_single_binding)]
     #[instrument(skip(self, tx), err)]
     pub async fn retrieve_root_components_by_purl<TX: AsRef<Transactional>>(
         &self,
@@ -360,14 +414,18 @@ impl AnalysisService {
             r#"SELECT sbom.document_id, sbom.sbom_id, sbom.published::text,
             get_purl(t1.qualified_purl_id) as left_qualified_purl,
             package_relates_to_package.relationship,
-            get_purl(t2.qualified_purl_id) as right_qualified_purl
+            get_purl(t2.qualified_purl_id) as right_qualified_purl,
+            product.name as product_name,
+            product_version.version as product_version
             FROM sbom
+            LEFT JOIN product_version ON sbom.sbom_id = product_version.sbom_id
+            LEFT JOIN product ON product_version.product_id = product.id
             LEFT JOIN package_relates_to_package ON sbom.sbom_id = package_relates_to_package.sbom_id
             LEFT JOIN sbom_package_purl_ref t1 ON t1.sbom_id = sbom.sbom_id AND t1.node_id = package_relates_to_package.left_node_id
             LEFT JOIN sbom_package_purl_ref t2 ON t2.sbom_id = sbom.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
             WHERE package_relates_to_package.relationship IN (0,8,14)
-                AND sbom.sbom_id IN (SELECT DISTINCT ON (document_id) sbom_id FROM sbom order by document_id, published DESC)
-                AND sbom.sbom_id IN (select distinct sbom_id from sbom_node where name = '{}');
+                AND sbom.sbom_id IN (SELECT DISTINCT ON (document_id) sbom_id FROM sbom where sbom.sbom_id IN (select distinct sbom_id from sbom_node where name = '{}')
+                order by document_id, published DESC);
              "#,
             component_purl.name
         );
@@ -387,18 +445,29 @@ impl AnalysisService {
             let sbom_published = row
                 .try_get("", "published")
                 .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
+            let document_id = row
+                .try_get("", "document_id")
+                .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
+            let product_name = row
+                .try_get("", "product_name")
+                .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
+            let product_version = row
+                .try_get("", "product_version")
+                .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
 
             let left_purl_string: String = row
                 .try_get("", "left_qualified_purl")
                 .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
             let left_purl: Purl = Purl::from_str(left_purl_string.as_str())?;
-            let left_name: String = left_purl.name;
             let p1 = add_node(
                 &mut g,
                 &mut nodes,
-                left_purl_string.to_string(),
-                left_name.to_string(),
-                sbom_published.to_string(),
+                &left_purl_string,
+                &left_purl.name,
+                &sbom_published,
+                &document_id,
+                &product_name,
+                &product_version,
             );
 
             let relationship: Relationship = row.try_get("", "relationship")?;
@@ -407,44 +476,41 @@ impl AnalysisService {
                 .try_get("", "right_qualified_purl")
                 .unwrap_or("NOVALUE".to_string()); // TODO: this is not right
             let right_purl: Purl = Purl::from_str(right_purl_string.as_str())?;
-            let right_name: String = right_purl.name;
             let p2 = add_node(
                 &mut g,
                 &mut nodes,
-                right_purl_string.to_string(),
-                right_name.to_string(),
-                sbom_published.to_string(),
+                &right_purl_string,
+                &right_purl.name,
+                &sbom_published,
+                &document_id,
+                &product_name,
+                &product_version,
             );
 
             g.add_edge(p1, p2, relationship);
         }
 
         let mut components: Vec<AdvisoryGraphSummary> = Vec::new();
-        for find_match in regex_purl_find(&nodes, component_purl.to_string().as_str()) {
-            let mut root_components: Vec<PackageNode> = Vec::new();
 
-            match find_match {
-                node_index => {
-                    let find_match_package_node = g.node_weight(node_index).unwrap();
-                    let mut ancestor_nodes: Vec<NodeIndex> =
-                        ancestor_nodes(&g, node_index, node_index)
-                            .into_iter()
-                            .collect();
-                    ancestor_nodes.sort();
-                    for ancestor_node in ancestor_nodes {
-                        let node_value = g.node_weight(ancestor_node).unwrap();
-                        root_components.push(PackageNode {
-                            purl: node_value.purl.to_string(),
-                            name: node_value.name.to_string(),
-                            published: node_value.published.to_string(),
-                        });
-                    }
+        for node_index in regex_purl_find(&nodes, component_purl.to_string().as_str()) {
+            if let Some(find_match_package_node) = g.node_weight(node_index) {
+                let mut ancestor_nodes: Vec<NodeIndex> = ancestor_nodes(&g, node_index, node_index)
+                    .into_iter()
+                    .collect();
 
-                    components.push(AdvisoryGraphSummary::new(
-                        find_match_package_node.purl.to_string(),
-                        root_components,
-                    ));
-                }
+                ancestor_nodes.sort();
+
+                let mut root_components: Vec<PackageNode> = ancestor_nodes
+                    .iter()
+                    .filter_map(|&ancestor_node| g.node_weight(ancestor_node).cloned())
+                    .collect();
+
+                root_components.sort_by(|a, b| a.published.cmp(&b.published));
+
+                components.push(AdvisoryGraphSummary::new(
+                    find_match_package_node.purl.to_string(),
+                    root_components,
+                ));
             }
         }
 

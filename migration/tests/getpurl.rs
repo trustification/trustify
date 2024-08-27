@@ -1,17 +1,10 @@
-use migration::sea_orm::prelude::Uuid;
-use migration::sea_orm::{
-    entity, EntityTrait, ModelTrait, QuerySelect, Related, RelationTrait, Statement,
-};
-use migration::{ConnectionTrait, JoinType};
-use std::ops::Index;
+use migration::sea_orm::{EntityTrait, Statement};
+use migration::ConnectionTrait;
 use std::str::FromStr;
-use test_context::futures::StreamExt;
 use test_context::test_context;
 use test_log::test;
-use trustify_common::db::query::Filtering;
 use trustify_common::db::Database;
 use trustify_common::purl::Purl;
-use trustify_entity::{base_purl, sbom_package_purl_ref, versioned_purl};
 use trustify_test_context::TrustifyContext;
 
 async fn getpurl(
@@ -39,7 +32,7 @@ async fn getpurl(
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn test_getpurl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let results = ctx.ingest_documents(["spdx/simple.json"]).await?;
+    ctx.ingest_documents(["spdx/simple.json"]).await?;
 
     let sbom_package_purl_refs = trustify_entity::sbom_package_purl_ref::Entity::find()
         .all(&ctx.db)
@@ -52,7 +45,11 @@ async fn test_getpurl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ))
         .one(&ctx.db)
         .await?;
-        let sbom_node_name = sbom_node.unwrap().name;
+
+        let sbom_node_name = match sbom_node {
+            Some(node) => node.name,
+            None => return Err(anyhow::anyhow!("expected sbom node name in test")),
+        };
 
         match getpurl(&ctx.db, sbom_package_purl_ref.qualified_purl_id.to_string()).await {
             Ok(Some(purl)) => {
@@ -60,7 +57,7 @@ async fn test_getpurl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 assert!(parse_purl.name == sbom_node_name);
             }
             Ok(None) => panic!("getpurl() test should match"),
-            Err(e) => panic!("error testing getpurl() pg function."),
+            Err(e) => panic!("error testing getpurl() pg function. {}", e),
         }
     }
 
