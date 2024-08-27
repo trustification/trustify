@@ -43,7 +43,7 @@ impl<'g> ClearlyDefinedLoader<'g> {
 #[cfg(test)]
 mod test {
     use crate::graph::Graph;
-    use crate::service::IngestorService;
+    use crate::service::{Format, IngestorService};
     use test_context::test_context;
     use test_log::test;
     use trustify_test_context::document_bytes;
@@ -58,7 +58,7 @@ mod test {
         let data = document_bytes("clearly-defined/chrono.yaml").await?;
 
         ingestor
-            .ingest(("source", "test"), None, &data)
+            .ingest(&data, Format::ClearlyDefined, ("source", "test"), None)
             .await
             .expect("must ingest");
 

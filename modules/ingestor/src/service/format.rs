@@ -35,6 +35,11 @@ pub enum Format {
     SPDX,
     CycloneDX,
     ClearlyDefined,
+
+    // These should be resolved to one of the above before loading
+    Advisory,
+    SBOM,
+    Unknown,
 }
 
 impl<'g> Format {
@@ -92,6 +97,9 @@ impl<'g> Format {
                 let curation: Curation = serde_yml::from_slice(&buffer)?;
                 loader.load(labels, curation, digests).await
             }
+            f => Err(Error::UnsupportedFormat(format!(
+                "Must resolve {f:?} to an actual format"
+            ))),
         }
     }
 

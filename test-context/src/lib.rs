@@ -17,7 +17,7 @@ use trustify_common::db;
 use trustify_common::hashing::{Digests, HashingRead};
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::model::IngestResult;
-use trustify_module_ingestor::service::IngestorService;
+use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::fs::FileSystemBackend;
 
 #[allow(dead_code)]
@@ -68,7 +68,10 @@ impl TrustifyContext {
 
     pub async fn ingest_document(&self, path: &str) -> Result<IngestResult, anyhow::Error> {
         let bytes = document_bytes(path).await?;
-        Ok(self.ingestor.ingest((), None, &bytes).await?)
+        Ok(self
+            .ingestor
+            .ingest(&bytes, Format::Unknown, ("source", "TrustifyContext"), None)
+            .await?)
     }
 }
 

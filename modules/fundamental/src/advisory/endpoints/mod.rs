@@ -10,7 +10,7 @@ use futures_util::TryStreamExt;
 use std::str::FromStr;
 use trustify_common::{db::query::Query, db::Database, id::Id, model::Paginated};
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::IngestorService;
+use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::{IntoParams, OpenApi};
 
@@ -165,7 +165,9 @@ pub async fn upload(
     web::Query(UploadParams { issuer, labels }): web::Query<UploadParams>,
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
-    let result = service.ingest(labels, issuer, &bytes).await?;
+    let result = service
+        .ingest(&bytes, Format::Advisory, labels, issuer)
+        .await?;
     log::info!("Uploaded Advisory: {}", result.id);
     Ok(HttpResponse::Created().json(result))
 }

@@ -63,8 +63,8 @@ impl<'g> SpdxLoader<'g> {
 
 #[cfg(test)]
 mod test {
-    use crate::graph::Graph;
     use crate::service::IngestorService;
+    use crate::{graph::Graph, service::Format};
     use test_context::test_context;
     use test_log::test;
     use trustify_test_context::{document_bytes, TrustifyContext};
@@ -78,7 +78,7 @@ mod test {
         let ingestor = IngestorService::new(graph, ctx.storage.clone());
 
         ingestor
-            .ingest(("source", "test"), None, &data)
+            .ingest(&data, Format::SPDX, ("source", "test"), None)
             .await
             .expect("must ingest");
 
