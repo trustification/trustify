@@ -24,6 +24,7 @@ use std::{
 };
 use tokio::io::AsyncReadExt;
 use tokio_util::io::StreamReader;
+use tracing::instrument;
 use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
 
@@ -95,6 +96,7 @@ impl<'g> Format {
         }
     }
 
+    #[instrument(skip_all, err)]
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         match Self::advisory_from_bytes(bytes) {
             Err(Error::UnsupportedFormat(ea)) => match Self::sbom_from_bytes(bytes) {
