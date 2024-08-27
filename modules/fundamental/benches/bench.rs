@@ -25,6 +25,7 @@ pub(crate) mod trustify_benches {
 
     use trustify_common::db::Transactional;
     use trustify_entity::labels::Labels;
+    use trustify_module_ingestor::service::Format;
     use trustify_test_context::{document, TrustifyContext};
 
     pub fn ingestion(c: &mut Criterion) {
@@ -46,7 +47,7 @@ pub(crate) mod trustify_benches {
                         let start = Instant::now();
                         black_box(
                             ctx.ingestor
-                                .ingest(Labels::default(), None, &data)
+                                .ingest(&data, Format::Advisory, Labels::default(), None)
                                 .await
                                 .expect("ingest ok"),
                         );
