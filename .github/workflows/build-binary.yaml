@@ -118,7 +118,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cargo binstall cross -y
+          cargo binstall cross -y --force
 
       - run: mkdir -p upload
 
@@ -162,7 +162,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cargo binstall -y cargo-cyclonedx
+          cargo binstall -y cargo-cyclonedx --force
 
       - name: Create SBOM
         shell: bash
