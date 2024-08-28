@@ -72,10 +72,10 @@ If the result looks good, execute the changes using:
 cargo release version alpha -x
 ```
 
-Update the OpenAPI spec by regenerating it:
+Update the OpenAPI spec, which includes the version, by regenerating it:
 
 ```bash
-cargo xtask generate-schemas
+cargo xtask precommit
 ```
 
 Commit the changes to git:
