@@ -21,13 +21,6 @@ This roughly translates to:
 Product security engineers often do not know the fully qualified component name and will need to 'glob' search on some string to 
 ensure they retrieve all related components.
 
-For example,
-
-![Simple sbom](sbom-simple-example.png)
-
-has 3 root components (A,AA,EE) ... querying from the context of any other node should resolve to the appropriate root component.
-
-
 **_I (user) want to know which 'products' contains a component ?_**
 
 This roughly translates to:
@@ -36,6 +29,7 @@ This roughly translates to:
 2) Resolve each component(s) ancestors
 3) The top most ancestor will be its root component
 4) Determine product relationship of the root component(s)
+
 
 ### Requirements
 
@@ -80,7 +74,27 @@ all of which return a paginated list:
 }
 ```
 
-where ancestors contain purl, name, published and document_id which answers our questions.
+**Retrieve a component(s) products**
+HTTP GET api/v1/analysis/root-component-product?q={}
+HTTP GET api/v1/analysis/root-component-product/{component-name}
+HTTP GET api/v1/analysis/root-component-product/{component-purl}
+
+all of which return a paginated list:
+
+```
+{"total" : 2,
+"items" : [
+{
+"component":"",
+"products":[]
+},
+{
+"component":"",
+"products":[]
+} ...
+]
+}
+```
 
 ## Alternative approaches
 
@@ -97,11 +111,7 @@ Using a graph database would also dramatically improve any kind of maintenance t
 ## Consequences
 
 We assume sbom data correctly enumerates dependency relationships - no attempt is made to 'fix up' (either at ingestion or query time)
-with respect to generated read only graph. 
-
-We assume equivalent Sbom SPDXID, across documents, imply equivalent pURL (aka component).
-
-We assume products do not 'span' across multiple SBOM documents but that may not always be the case in the future.
+with respect to generated read only graph.
 
 Employing a read only graph avoids the challenges of having to maintain such a graph with inserts or updates (without a graph 
 datastore this is always slow...).
@@ -110,9 +120,9 @@ We are mostly interested in answering these questions in the current context whi
 relationships as defined in latest version of SBOMs. Answering this question in a historical context is out of scope (possible 
 but much more complicated).
 
-Loading and interrogating an 'in memory' graph has resource implications - it might be that this analytics process, at scale, will
+Loading and interrogating an in memory graph will have resource implications - it might be that this analytics process, at scale, will
 need processing to be isolated (for example, as separate pod(s) in openshift). We might also have to consider connection specific
-postgres configuration (and/or connect to a dedicated read only postgres replica).
+postgres configuration (and/or connect to read only postgres replica).
 
-Performance is limited by the fact we bespoke build a graph for each query ... we could optimise this approach by having 
-a graph always available (loaded with latest version SBOM relationships). 
+Performance is limited by the fact we bespoke build a graph for each query ... it is likely we could optimise this approach by having 
+a graph constantly loaded (with latest version SBOM relationships). 
