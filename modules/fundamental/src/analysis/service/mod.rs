@@ -159,21 +159,41 @@ impl AnalysisService {
 
         // TODO: convert this to 'sea_orm dialect'
         let sql = format!(
-            r#"SELECT sbom.document_id, sbom.sbom_id, sbom.published::text,
-            get_purl(t1.qualified_purl_id) as left_qualified_purl,
-            package_relates_to_package.relationship,
-            get_purl(t2.qualified_purl_id) as right_qualified_purl,
-            product.name as product_name,
-            product_version.version as product_version
-            FROM sbom
-            LEFT JOIN product_version ON sbom.sbom_id = product_version.sbom_id
-            LEFT JOIN product ON product_version.product_id = product.id
-            LEFT JOIN package_relates_to_package ON sbom.sbom_id = package_relates_to_package.sbom_id
-            LEFT JOIN sbom_package_purl_ref t1 ON t1.sbom_id = sbom.sbom_id AND t1.node_id = package_relates_to_package.left_node_id
-            LEFT JOIN sbom_package_purl_ref t2 ON t2.sbom_id = sbom.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
-            WHERE package_relates_to_package.relationship IN (0,8,14)
-                AND sbom.sbom_id IN (SELECT DISTINCT ON (document_id) sbom_id FROM sbom WHERE sbom.sbom_id IN (select distinct sbom_id from sbom_node where name ILIKE '%{}%')
-                order by document_id, published DESC);
+            r#"
+                WITH filtered_sbom AS (
+                    SELECT DISTINCT ON (document_id) sbom_id
+                    FROM sbom
+                    WHERE sbom_id IN (
+                        SELECT DISTINCT sbom_id
+                        FROM sbom_node
+                        WHERE name ILIKE '%{}%'
+                    )
+                    ORDER BY document_id, published DESC
+                )
+                SELECT
+                    sbom.document_id,
+                    sbom.sbom_id,
+                    sbom.published::text,
+                    get_purl(t1.qualified_purl_id) AS left_qualified_purl,
+                    package_relates_to_package.relationship,
+                    get_purl(t2.qualified_purl_id) AS right_qualified_purl,
+                    product.name AS product_name,
+                    product_version.version AS product_version
+                FROM
+                    sbom
+                LEFT JOIN
+                    product_version ON sbom.sbom_id = product_version.sbom_id
+                LEFT JOIN
+                    product ON product_version.product_id = product.id
+                LEFT JOIN
+                    package_relates_to_package ON sbom.sbom_id = package_relates_to_package.sbom_id
+                LEFT JOIN
+                    sbom_package_purl_ref t1 ON sbom.sbom_id = t1.sbom_id AND t1.node_id = package_relates_to_package.left_node_id
+                LEFT JOIN
+                    sbom_package_purl_ref t2 ON sbom.sbom_id = t2.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
+                WHERE
+                    package_relates_to_package.relationship IN (0, 8, 14)
+                    AND sbom.sbom_id IN (SELECT sbom_id FROM filtered_sbom);
              "#,
             query.q.as_str()
         );
@@ -266,10 +286,18 @@ impl AnalysisService {
         }
         log::info!("step 4");
 
-        // TODO: limiter ?
-        let total: u64 = components.len() as u64;
+        let offset = paginated.offset as usize;
+        let limit = paginated.limit as usize;
+        let total = components.len() as u64;
+        let end = std::cmp::min(offset + limit, total as usize);
+        let sub_vec: Vec<AdvisoryGraphSummary> = components
+            .iter()
+            .skip(offset)
+            .take(end - offset)
+            .cloned() // Clone the items to create a Vec
+            .collect();
         Ok(PaginatedResults {
-            items: components,
+            items: sub_vec,
             total,
         })
     }
@@ -287,21 +315,40 @@ impl AnalysisService {
 
         // TODO: convert this to 'sea_orm dialect'
         let sql = format!(
-            r#"SELECT sbom.document_id, sbom.sbom_id, sbom.published::text,
-             get_purl(t1.qualified_purl_id) as left_qualified_purl,
-             package_relates_to_package.relationship,
-             get_purl(t2.qualified_purl_id) as right_qualified_purl,
-             product.name as product_name,
-             product_version.version as product_version
-             FROM sbom
-             LEFT JOIN product_version ON sbom.sbom_id = product_version.sbom_id
-             LEFT JOIN product ON product_version.product_id = product.id
-             LEFT JOIN package_relates_to_package ON sbom.sbom_id = package_relates_to_package.sbom_id
-             LEFT JOIN sbom_package_purl_ref t1 ON t1.sbom_id = sbom.sbom_id AND t1.node_id = package_relates_to_package.left_node_id
-             LEFT JOIN sbom_package_purl_ref t2 ON t2.sbom_id = sbom.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
-             WHERE package_relates_to_package.relationship IN (0,8,14)
-             AND sbom.sbom_id IN (SELECT DISTINCT ON (document_id) sbom_id FROM sbom where sbom.sbom_id IN (select
-  distinct sbom_id from sbom_node where name = '{}') order by document_id, published DESC);
+            r#"WITH filtered_sbom AS (
+                    SELECT DISTINCT ON (document_id) sbom_id
+                    FROM sbom
+                    WHERE sbom_id IN (
+                        SELECT DISTINCT sbom_id
+                        FROM sbom_node
+                        WHERE name = '{}'
+                    )
+                    ORDER BY document_id, published DESC
+                )
+                SELECT
+                    sbom.document_id,
+                    sbom.sbom_id,
+                    sbom.published::text,
+                    get_purl(t1.qualified_purl_id) AS left_qualified_purl,
+                    package_relates_to_package.relationship,
+                    get_purl(t2.qualified_purl_id) AS right_qualified_purl,
+                    product.name AS product_name,
+                    product_version.version AS product_version
+                FROM
+                    sbom
+                LEFT JOIN
+                    product_version ON sbom.sbom_id = product_version.sbom_id
+                LEFT JOIN
+                    product ON product_version.product_id = product.id
+                LEFT JOIN
+                    package_relates_to_package ON sbom.sbom_id = package_relates_to_package.sbom_id
+                LEFT JOIN
+                    sbom_package_purl_ref t1 ON sbom.sbom_id = t1.sbom_id AND t1.node_id = package_relates_to_package.left_node_id
+                LEFT JOIN
+                    sbom_package_purl_ref t2 ON sbom.sbom_id = t2.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
+                WHERE
+                    package_relates_to_package.relationship IN (0, 8, 14)
+                    AND sbom.sbom_id IN (SELECT sbom_id FROM filtered_sbom);
              "#,
             component_name.as_str()
         );
@@ -390,10 +437,18 @@ impl AnalysisService {
             }
         }
 
-        // TODO: limiter ?
-        let total: u64 = components.len() as u64;
+        let offset = paginated.offset as usize;
+        let limit = paginated.limit as usize;
+        let total = components.len() as u64;
+        let end = std::cmp::min(offset + limit, total as usize);
+        let sub_vec: Vec<AdvisoryGraphSummary> = components
+            .iter()
+            .skip(offset)
+            .take(end - offset)
+            .cloned() // Clone the items to create a Vec
+            .collect();
         Ok(PaginatedResults {
-            items: components,
+            items: sub_vec,
             total,
         })
     }
@@ -411,21 +466,40 @@ impl AnalysisService {
 
         // TODO: convert this to 'sea_orm dialect'
         let sql = format!(
-            r#"SELECT sbom.document_id, sbom.sbom_id, sbom.published::text,
-            get_purl(t1.qualified_purl_id) as left_qualified_purl,
-            package_relates_to_package.relationship,
-            get_purl(t2.qualified_purl_id) as right_qualified_purl,
-            product.name as product_name,
-            product_version.version as product_version
-            FROM sbom
-            LEFT JOIN product_version ON sbom.sbom_id = product_version.sbom_id
-            LEFT JOIN product ON product_version.product_id = product.id
-            LEFT JOIN package_relates_to_package ON sbom.sbom_id = package_relates_to_package.sbom_id
-            LEFT JOIN sbom_package_purl_ref t1 ON t1.sbom_id = sbom.sbom_id AND t1.node_id = package_relates_to_package.left_node_id
-            LEFT JOIN sbom_package_purl_ref t2 ON t2.sbom_id = sbom.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
-            WHERE package_relates_to_package.relationship IN (0,8,14)
-                AND sbom.sbom_id IN (SELECT DISTINCT ON (document_id) sbom_id FROM sbom where sbom.sbom_id IN (select distinct sbom_id from sbom_node where name = '{}')
-                order by document_id, published DESC);
+            r#"WITH filtered_sbom AS (
+                    SELECT DISTINCT ON (document_id) sbom_id
+                    FROM sbom
+                    WHERE sbom_id IN (
+                        SELECT DISTINCT sbom_id
+                        FROM sbom_node
+                        WHERE name = '{}'
+                    )
+                    ORDER BY document_id, published DESC
+                )
+                SELECT
+                    sbom.document_id,
+                    sbom.sbom_id,
+                    sbom.published::text,
+                    get_purl(t1.qualified_purl_id) AS left_qualified_purl,
+                    package_relates_to_package.relationship,
+                    get_purl(t2.qualified_purl_id) AS right_qualified_purl,
+                    product.name AS product_name,
+                    product_version.version AS product_version
+                FROM
+                    sbom
+                LEFT JOIN
+                    product_version ON sbom.sbom_id = product_version.sbom_id
+                LEFT JOIN
+                    product ON product_version.product_id = product.id
+                LEFT JOIN
+                    package_relates_to_package ON sbom.sbom_id = package_relates_to_package.sbom_id
+                LEFT JOIN
+                    sbom_package_purl_ref t1 ON sbom.sbom_id = t1.sbom_id AND t1.node_id = package_relates_to_package.left_node_id
+                LEFT JOIN
+                    sbom_package_purl_ref t2 ON sbom.sbom_id = t2.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
+                WHERE
+                    package_relates_to_package.relationship IN (0, 8, 14)
+                    AND sbom.sbom_id IN (SELECT sbom_id FROM filtered_sbom);
              "#,
             component_purl.name
         );
@@ -514,10 +588,18 @@ impl AnalysisService {
             }
         }
 
-        // TODO: limiter ?
-        let total: u64 = components.len() as u64;
+        let offset = paginated.offset as usize;
+        let limit = paginated.limit as usize;
+        let total = components.len() as u64;
+        let end = std::cmp::min(offset + limit, total as usize);
+        let sub_vec: Vec<AdvisoryGraphSummary> = components
+            .iter()
+            .skip(offset)
+            .take(end - offset)
+            .cloned() // Clone the items to create a Vec
+            .collect();
         Ok(PaginatedResults {
-            items: components,
+            items: sub_vec,
             total,
         })
     }
