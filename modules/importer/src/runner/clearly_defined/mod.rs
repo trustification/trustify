@@ -59,7 +59,6 @@ impl<C: RunContext> Callbacks<Vec<u8>> for Context<C> {
     }
 
     fn process(&mut self, path: &Path, curation: Vec<u8>) -> Result<(), CallbackError> {
-        println!("INNER");
         if let Err(err) = self.store(path, curation) {
             self.report
                 .lock()

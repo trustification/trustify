@@ -1815,6 +1815,13 @@ components:
               format: int32
               minimum: 0
             uniqueItems: true
+    CweImporter:
+      allOf:
+      - $ref: '#/components/schemas/CommonImporter'
+      - type: object
+        properties:
+          source:
+            type: string
     Id:
       type: string
       description: A hash/digest prefixed with its type.
@@ -1860,6 +1867,12 @@ components:
         properties:
           clearlyDefined:
             $ref: '#/components/schemas/ClearlyDefinedImporter'
+      - type: object
+        required:
+        - cwe
+        properties:
+          cwe:
+            $ref: '#/components/schemas/CweImporter'
     ImporterData:
       type: object
       required:

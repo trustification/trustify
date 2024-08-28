@@ -26,6 +26,7 @@ log = { workspace = true }
 osv = { workspace = true, features = ["schema"] }
 parking_lot = { workspace = true }
 regex = { workspace = true }
+reqwest = { workspace = true }
 sbom-walker = { workspace = true }
 schemars = { workspace = true, features = ["url"] }
 sea-orm = { workspace = true, features = ["sea-query-binder", "sqlx-postgres", "runtime-tokio-rustls", "macros", "debug-print"] }
@@ -46,6 +47,7 @@ utoipa = { workspace = true, features = ["actix_extras", "time", "url"] }
 uuid = { workspace = true, features = ["v4"] }
 walkdir = { workspace = true }
 walker-common = { workspace = true }
+zip = { workspace = true }
 
 [dev-dependencies]
 bytesize = { workspace = true }

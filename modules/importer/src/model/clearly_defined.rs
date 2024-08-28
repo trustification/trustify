@@ -45,7 +45,7 @@ impl ClearlyDefinedPackageType {
             ClearlyDefinedPackageType::Gem => "gem",
             ClearlyDefinedPackageType::Git => "git",
             ClearlyDefinedPackageType::Go => "go",
-            ClearlyDefinedPackageType::Maven => "manve",
+            ClearlyDefinedPackageType::Maven => "maven",
             ClearlyDefinedPackageType::Npm => "npm",
             ClearlyDefinedPackageType::NuGet => "nuget",
             ClearlyDefinedPackageType::Pod => "pod",

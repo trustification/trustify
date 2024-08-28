@@ -4,7 +4,6 @@ mod git;
 pub use dir::*;
 pub use git::*;
 use std::path::{Path, PathBuf};
-
 pub enum CallbackError {
     /// Operation should be canceled
     Canceled,

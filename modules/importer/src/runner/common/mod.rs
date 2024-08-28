@@ -1,5 +1,33 @@
+use tokio::task::JoinError;
+
 pub mod filter;
 pub mod processing_error;
 pub mod storage;
 pub mod validation;
 pub mod walker;
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("failed to await the task: {0}")]
+    Join(#[from] JoinError),
+    #[error("failed to create the working directory: {0}")]
+    WorkingDir(#[source] Box<dyn std::error::Error + Send + Sync>),
+    #[error(transparent)]
+    Git(#[from] git2::Error),
+    #[error("failed to walk files: {0}")]
+    Walk(#[from] walkdir::Error),
+    #[error("critical processing error: {0}")]
+    Processing(#[source] anyhow::Error),
+    #[error("{0} is not a relative subdirectory of the repository")]
+    Path(String),
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    Http(#[from] reqwest::Error),
+    #[error(transparent)]
+    HttpHeader(#[from] reqwest::header::ToStrError),
+    #[error(transparent)]
+    Zip(#[from] zip::result::ZipError),
+    #[error("operation canceled")]
+    Canceled,
+}

@@ -1,8 +1,9 @@
+use crate::runner::common::Error;
 use crate::runner::{
     common::{
         processing_error::ProcessingError,
         walker::{
-            CallbackError, Callbacks, Continuation, Error, GitWalker, Handler, HandlerError,
+            CallbackError, Callbacks, Continuation, GitWalker, Handler, HandlerError,
             WorkingDirectory,
         },
     },
