@@ -205,7 +205,7 @@ mod test {
 
         let _cont = walker.run().await.expect("should not fail");
 
-        let cont = git_reset(&path, "HEAD~1").expect("must not fail");
+        let cont = git_reset(&path, "HEAD~2").expect("must not fail");
 
         let walker = ClearlyDefinedWalker::new(DEFAULT_SOURCE_CLEARLY_DEFINED)
             .continuation(cont)

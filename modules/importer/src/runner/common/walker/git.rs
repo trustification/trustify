@@ -203,7 +203,13 @@ where
             }
 
             let mut fo = Self::create_fetch_options();
-            fo.depth(2);
+            if self.continuation.0.is_none() {
+                if cfg!(test) {
+                    fo.depth(3);
+                } else {
+                    fo.depth(1);
+                }
+            }
             builder.fetch_options(fo).clone(&self.source, path)
         });
 
