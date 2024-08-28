@@ -19,10 +19,10 @@
 | `HTTP_SERVER_TLS_ENABLED`         | Enable TLS   | `false`       |
 | `HTTP_SERVER_TLS_KEY_FILE`         | Path to the TLS key file in PEM format   |       |
 | `HTTP_SERVER_WORKERS`         | Number of worker threads, defaults to zero, which falls back to the number of cores   | `0`       |
-| `OIDC_PROVIDER_CLIENT_ID`         |    |       |
-| `OIDC_PROVIDER_CLIENT_SECRET`         |    |        |
-| `OIDC_PROVIDER_ISSUER_URL`         |    |        |
-| `OIDC_PROVIDER_REFRESH_BEFORE`         |    | `30s`       |
+| `OIDC_PROVIDER_CLIENT_ID`         | OIDC client ID used for retrieving access tokens   |       |
+| `OIDC_PROVIDER_CLIENT_SECRET`         | Secret matching the OIDC client ID   |        |
+| `OIDC_PROVIDER_ISSUER_URL`         | OIDC issuer to request access tokens from   |        |
+| `OIDC_PROVIDER_REFRESH_BEFORE`         | Duration an access token must still be valid before requesting a new one   | `30s`       |
 | `OIDC_PROVIDER_TLS_INSECURE`         | Insecure TLS when contacting the OIDC issuer    | `false`        |
 | `TRUSTD_DB_HOST`         | Database address     | `localhost`         |
 | `TRUSTD_DB_MAX_CONN`         | Database max connections    | `75`        |
