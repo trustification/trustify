@@ -9,6 +9,7 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     let mut doc = ApiDoc::openapi();
 
     doc.merge(crate::advisory::endpoints::ApiDoc::openapi());
+    doc.merge(crate::ai::endpoints::ApiDoc::openapi());
     doc.merge(crate::license::endpoints::ApiDoc::openapi());
     doc.merge(crate::organization::endpoints::ApiDoc::openapi());
     doc.merge(crate::purl::endpoints::ApiDoc::openapi());

@@ -7,19 +7,27 @@ license.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
+async-trait = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
+env_logger = { workspace = true }
+langchain-rust = { workspace = true, features = ["ollama"] }
 log = { workspace = true }
+nu-ansi-term = { workspace = true }
 postgresql_commands = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_yml = { workspace = true }
+test-context = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 tracing-subscriber = { workspace = true, features = ["env-filter", "tracing-log", "ansi"] }
+reedline = { workspace = true }
 
 trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
+trustify-module-fundamental = { workspace = true }
 trustify-module-importer = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }
 trustify-server = { workspace = true }
+trustify-test-context = { workspace = true }

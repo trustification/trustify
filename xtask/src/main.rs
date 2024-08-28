@@ -3,6 +3,7 @@
 
 use clap::{Parser, Subcommand};
 
+mod ai;
 mod dataset;
 mod log;
 mod openapi;
@@ -22,6 +23,7 @@ impl Xtask {
             Command::GenerateDump(command) => command.run().await,
             Command::GenerateSchemas(command) => command.run().await,
             Command::Precommit(command) => command.run().await,
+            Command::Ai(command) => command.run().await,
         }
     }
 }
@@ -36,9 +38,12 @@ pub enum Command {
     GenerateSchemas(schema::GenerateSchema),
     /// Run precommit checks
     Precommit(precommit::Precommit),
+    /// Run ai tool
+    Ai(ai::Ai),
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    env_logger::init();
     Xtask::parse().run().await
 }

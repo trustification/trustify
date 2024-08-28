@@ -1,5 +1,6 @@
-use actix_http::StatusCode;
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
+use langchain_rust::agent::AgentError;
+use langchain_rust::chain::ChainError;
 use sea_orm::DbErr;
 use trustify_common::{decompress, error::ErrorInformation, id::IdError, purl::PurlErr};
 use trustify_module_storage::service::StorageKeyError;
@@ -18,8 +19,10 @@ pub enum Error {
     Ingestor(#[from] trustify_module_ingestor::service::Error),
     #[error(transparent)]
     Purl(#[from] PurlErr),
-    #[error("Invalid request {msg}")]
-    BadRequest { msg: String, status: StatusCode },
+    #[error("Bad request: {0}")]
+    BadRequest(String),
+    #[error("Not found: {0}")]
+    NotFound(String),
     #[error(transparent)]
     Any(#[from] anyhow::Error),
     #[error("Unsupported hash algorithm")]
@@ -34,6 +37,10 @@ pub enum Error {
     Compression(#[from] decompress::Error),
     #[error(transparent)]
     Join(#[from] tokio::task::JoinError),
+    #[error(transparent)]
+    AgentError(AgentError),
+    #[error(transparent)]
+    ChainError(ChainError),
 }
 
 impl From<DbErr> for Error {
@@ -48,8 +55,11 @@ impl ResponseError for Error {
             Self::Purl(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("InvalidPurlSyntax", err))
             }
-            Self::BadRequest { msg, status } => {
-                HttpResponse::build(*status).json(ErrorInformation::new("Bad request", msg))
+            Self::BadRequest(msg) => {
+                HttpResponse::BadRequest().json(ErrorInformation::new("Bad request", msg))
+            }
+            Self::NotFound(msg) => {
+                HttpResponse::NotFound().json(ErrorInformation::new("Not Found", msg))
             }
             Error::Ingestor(inner) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Ingestor error", inner))

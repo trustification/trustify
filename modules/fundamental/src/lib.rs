@@ -1,5 +1,6 @@
 pub mod advisory;
 
+pub mod ai;
 pub mod license;
 pub mod organization;
 pub mod product;
