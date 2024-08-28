@@ -21,7 +21,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(all, delete, get, delete),
+    paths(all, delete, get),
     components(schemas(
         crate::product::model::ProductHead,
         crate::product::model::ProductVersionHead,
