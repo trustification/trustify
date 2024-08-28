@@ -1,7 +1,8 @@
 use std::{collections::HashSet, time::Duration};
 use trustify_common::config::Database;
 use trustify_module_importer::model::{
-    ClearlyDefinedPackageType, CveImporter, DEFAULT_SOURCE_CVEPROJECT,
+    ClearlyDefinedPackageType, CveImporter, CweImporter, DEFAULT_SOURCE_CVEPROJECT,
+    DEFAULT_SOURCE_CWE_CATALOG,
 };
 use trustify_module_importer::{
     model::{
@@ -99,6 +100,24 @@ async fn add_clearly_defined(
     .await
 }
 
+async fn add_cwe(importer: &ImporterService, name: &str, description: &str) -> anyhow::Result<()> {
+    add(
+        importer,
+        name,
+        ImporterConfiguration::Cwe(CweImporter {
+            common: CommonImporter {
+                disabled: true,
+                // once a day is plenty
+                period: Duration::from_secs(60 * 60 * 24),
+                description: Some(description.into()),
+                labels: Default::default(),
+            },
+            source: DEFAULT_SOURCE_CWE_CATALOG.into(),
+        }),
+    )
+    .await
+}
+
 pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()> {
     let importer = ImporterService::new(db);
 
@@ -154,6 +173,8 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         }),
     )
     .await?;
+
+    add_cwe(&importer, "cwe", "Common Weakness Enumeration").await?;
 
     add_cve(&importer, "cve", None, "CVE List V5").await?;
     add_cve(

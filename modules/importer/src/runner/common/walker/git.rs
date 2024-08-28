@@ -12,27 +12,8 @@ use std::{
     fmt::{Debug, Display},
     path::{Path, PathBuf},
 };
-use tokio::task::JoinError;
 use tracing::{info_span, instrument};
 use walkdir::{DirEntry, WalkDir};
-
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("failed to await the task: {0}")]
-    Join(#[from] JoinError),
-    #[error("failed to create the working directory: {0}")]
-    WorkingDir(#[source] Box<dyn std::error::Error + Send + Sync>),
-    #[error(transparent)]
-    Git(#[from] git2::Error),
-    #[error("failed to walk files: {0}")]
-    Walk(#[from] walkdir::Error),
-    #[error("critical processing error: {0}")]
-    Processing(#[source] anyhow::Error),
-    #[error("{0} is not a relative subdirectory of the repository")]
-    Path(String),
-    #[error("operation canceled")]
-    Canceled,
-}
 
 #[derive(Debug, thiserror::Error)]
 pub enum HandlerError<T> {
@@ -431,6 +412,7 @@ fn is_hidden(entry: &DirEntry) -> bool {
         .unwrap_or(false)
 }
 
+use crate::runner::common::Error;
 use crate::runner::progress::{Progress, ProgressInstance};
 #[cfg(test)]
 pub(crate) use test::git_reset;

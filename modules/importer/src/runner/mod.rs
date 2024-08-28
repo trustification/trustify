@@ -3,6 +3,7 @@ pub mod common;
 pub mod context;
 pub mod csaf;
 pub mod cve;
+pub mod cwe;
 pub mod osv;
 pub mod progress;
 pub mod report;
@@ -48,6 +49,9 @@ impl ImportRunner {
             ImporterConfiguration::ClearlyDefined(clearly_defined) => {
                 self.run_once_clearly_defined(context, clearly_defined, continuation)
                     .await
+            }
+            ImporterConfiguration::Cwe(cwe) => {
+                self.run_once_cwe_catalog(context, cwe, continuation).await
             }
         }
     }

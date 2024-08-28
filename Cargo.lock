@@ -7426,6 +7426,7 @@ dependencies = [
  "osv",
  "parking_lot 0.12.3",
  "regex",
+ "reqwest",
  "sbom-walker",
  "schemars",
  "sea-orm",
@@ -7455,6 +7456,7 @@ dependencies = [
  "uuid",
  "walkdir",
  "walker-common",
+ "zip 2.2.0",
 ]
 
 [[package]]

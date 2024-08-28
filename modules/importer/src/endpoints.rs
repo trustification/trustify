@@ -37,6 +37,7 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
         crate::model::CommonImporter,
         crate::model::CsafImporter,
         crate::model::CveImporter,
+        crate::model::CweImporter,
         crate::model::Importer,
         crate::model::ImporterConfiguration,
         crate::model::ImporterData,
