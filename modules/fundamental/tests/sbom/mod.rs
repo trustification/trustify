@@ -22,6 +22,7 @@ use trustify_module_ingestor::graph::{
 use trustify_module_ingestor::service::Discard;
 use trustify_test_context::{document_bytes, TrustifyContext};
 
+#[allow(dead_code)]
 pub struct WithContext {
     pub sbom: SbomContext,
     pub db: Database,

@@ -227,7 +227,11 @@ impl DerefMut for Database {
     }
 }
 
-#[crate::db::async_trait::async_trait]
+/// Implementation of the connection trait for our database struct.
+///
+/// **NOTE**: We lack the implementations for the `mock` feature. However, the mock feature would
+/// require us to have the `Database` struct to be non-clone, which we don't support anyway.
+#[async_trait::async_trait]
 impl ConnectionTrait for Database {
     fn get_database_backend(&self) -> DbBackend {
         self.db.get_database_backend()
@@ -251,11 +255,6 @@ impl ConnectionTrait for Database {
 
     fn support_returning(&self) -> bool {
         self.db.support_returning()
-    }
-
-    #[cfg(feature = "mock")]
-    fn is_mock_connection(&self) -> bool {
-        self.db.is_mock_connection()
     }
 }
 
