@@ -218,6 +218,28 @@ paths:
                 format: binary
         '404':
           description: The document could not be found
+  /api/v1/ai/completions:
+    post:
+      tags:
+      - ai
+      operationId: completions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatState'
+        required: true
+      responses:
+        '200':
+          description: The resulting completion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatState'
+        '400':
+          description: The request was invalid
+        '404':
+          description: The AI service is not enabled
   /api/v1/analysis/dep:
     get:
       tags:
@@ -2058,6 +2080,28 @@ components:
       - type: object
     BinaryByteSize:
       type: string
+    ChatMessage:
+      type: object
+      required:
+      - message_type
+      - content
+      properties:
+        content:
+          type: string
+        internal_state:
+          type: string
+          nullable: true
+        message_type:
+          $ref: '#/components/schemas/MessageType'
+    ChatState:
+      type: object
+      required:
+      - messages
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
     ClearlyDefinedImporter:
       allOf:
       - $ref: '#/components/schemas/CommonImporter'
@@ -2384,6 +2428,13 @@ components:
           type: array
           items:
             type: string
+    MessageType:
+      type: string
+      enum:
+      - human
+      - system
+      - ai
+      - tool
     OrganizationDetails:
       allOf:
       - $ref: '#/components/schemas/OrganizationHead'

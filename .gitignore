@@ -4,10 +4,11 @@
 /data
 .trustify
 /download/
+.envrc
 
 *.cdx.json
 
 /flamegraph*.svg
 /perf.data*
 /dump.sql
-
+.ai_history.txt
