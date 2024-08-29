@@ -4,6 +4,7 @@ use actix_web::{
     dev::{Service, ServiceResponse},
     web, App, Error,
 };
+use bytes::Bytes;
 use sea_orm::prelude::async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use trustify_auth::authorizer::Authorizer;
@@ -13,6 +14,7 @@ use trustify_test_context::TrustifyContext;
 #[async_trait(?Send)]
 pub trait CallService {
     async fn call_service(&self, s: Request) -> ServiceResponse;
+    async fn call_and_read_body(&self, r: Request) -> Bytes;
     async fn call_and_read_body_json<T: DeserializeOwned>(&self, r: Request) -> T;
 }
 
@@ -23,6 +25,9 @@ where
 {
     async fn call_service(&self, r: Request) -> ServiceResponse {
         actix_web::test::call_service(self, r).await
+    }
+    async fn call_and_read_body(&self, r: Request) -> Bytes {
+        actix_web::test::call_and_read_body(self, r).await
     }
     async fn call_and_read_body_json<T: DeserializeOwned>(&self, r: Request) -> T {
         actix_web::test::call_and_read_body_json(self, r).await

@@ -1,5 +1,5 @@
 use crate::{
-    sbom::model::SbomPackage,
+    sbom::model::{details::SbomDetails, SbomPackage},
     test::{caller, CallService},
 };
 use actix_http::StatusCode;
@@ -137,6 +137,45 @@ async fn delete_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     log::debug!("Code: {}", response.status());
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    Ok(())
+}
+
+/// Test fetching an sbom
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn download_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    const FILE: &str = "quarkus-bom-2.13.8.Final-redhat-00004.json";
+    let app = caller(ctx).await?;
+    let bytes = document_bytes(FILE).await?;
+    let result = ctx.ingest_document(FILE).await?;
+    let id = result.id.to_string();
+
+    let req = TestRequest::get()
+        .uri(&format!("/api/v1/sbom/{id}"))
+        .to_request();
+
+    let sbom = app.call_and_read_body_json::<SbomDetails>(req).await;
+    assert_eq!(Id::Uuid(sbom.summary.head.id), result.id);
+
+    let hashes = sbom.summary.head.hashes;
+    assert!(!hashes.is_empty());
+
+    // Verify we can download by all hashes
+    for hash in hashes {
+        let req = TestRequest::get()
+            .uri(&format!("/api/v1/sbom/{hash}/download"))
+            .to_request();
+        let body = app.call_and_read_body(req).await;
+        assert_eq!(bytes, body);
+    }
+
+    // Verify we can download by uuid
+    let req = TestRequest::get()
+        .uri(&format!("/api/v1/sbom/{id}/download"))
+        .to_request();
+    let body = app.call_and_read_body(req).await;
+    assert_eq!(bytes, body);
 
     Ok(())
 }
