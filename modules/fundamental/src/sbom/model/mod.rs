@@ -40,7 +40,11 @@ impl SbomHead {
     ) -> Result<Self, Error> {
         Ok(Self {
             id: sbom.sbom_id,
-            hashes: vec![],
+            hashes: Id::build_vec(
+                sbom.sha256.clone(),
+                sbom.sha384.clone(),
+                sbom.sha512.clone(),
+            ),
             document_id: sbom.document_id.clone(),
             labels: sbom.labels.clone(),
             published: sbom.published,
