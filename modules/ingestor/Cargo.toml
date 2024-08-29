@@ -28,6 +28,7 @@ log = { workspace = true }
 osv = { workspace = true, features = ["schema"] }
 packageurl = { workspace = true }
 parking_lot = { workspace = true }
+quick-xml = { workspace = true }
 ring = { workspace = true }
 roxmltree = { workspace = true }
 sbom-walker = { workspace = true }
