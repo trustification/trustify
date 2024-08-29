@@ -58,7 +58,6 @@ use trustify_module_ui::{endpoints::UiResources, UI};
 use utoipa::OpenApi;
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::{Redoc, Servable};
-use utoipa_swagger_ui::SwaggerUi;
 
 /// Run the API server
 #[derive(clap::Args, Debug)]
@@ -312,19 +311,16 @@ fn configure(
 
     // register OpenAPI UIs
 
-    svc.service(Redoc::with_url("/redoc", openapi::openapi()))
-        .service(web::redirect("/redoc/", "/redoc"));
-
     svc.service({
         let mut openapi = openapi::openapi();
         if let Some(oidc) = &swagger_oidc {
             oidc.apply_to_schema(&mut openapi);
         }
-        RapiDoc::with_openapi("/openapi.json", openapi).path("/rapidoc/")
+        RapiDoc::with_openapi("/openapi.json", openapi).path("/openapi/")
     })
-    .service(web::redirect("/rapidoc", "/rapidoc/"))
+    .service(web::redirect("/openapi", "/openapi/"))
     .route(
-        "/rapidoc/oauth-receiver.html",
+        "/openapi/oauth-receiver.html",
         web::get().to(|| async {
             HttpResponse::Ok().content_type(mime::TEXT.as_str()).body(
                 r#"<!doctype html>
@@ -340,7 +336,7 @@ fn configure(
     );
 
     svc.service(swagger_ui_with_auth(openapi::openapi(), swagger_oidc))
-        .service(web::redirect("/openapi", "/openapi/"));
+        .service(web::redirect("/swagger-ui", "/swagger-ui/"));
 
     // register GraphQL UIs
 
@@ -432,32 +428,25 @@ mod test {
         let text = std::str::from_utf8(&body)?;
         assert!(text.contains("<title>Trustification</title>"));
 
-        // swagger ui
-
-        let req = TestRequest::get().uri("/openapi").to_request();
-        let resp = call_service(&app, req).await;
-        assert_eq!(resp.status(), StatusCode::TEMPORARY_REDIRECT);
-        let loc = resp.headers().get(header::LOCATION);
-        assert!(loc.is_some_and(|x| x.eq("/openapi/")));
+        // rapidoc UI
 
         let req = TestRequest::get().uri("/openapi/").to_request();
         let body = call_and_read_body(&app, req).await;
         let text = std::str::from_utf8(&body)?;
-        assert!(text.contains("<title>Swagger UI</title>"));
-
-        // redoc UI
-
-        let req = TestRequest::get().uri("/redoc").to_request();
-        let body = call_and_read_body(&app, req).await;
-        let text = std::str::from_utf8(&body)?;
-        assert!(text.contains("<title>Redoc</title>"));
-
-        // rapidoc UI
-
-        let req = TestRequest::get().uri("/rapidoc/").to_request();
-        let body = call_and_read_body(&app, req).await;
-        let text = std::str::from_utf8(&body)?;
         assert!(text.contains("<rapi-doc"));
+
+        // swagger ui
+
+        let req = TestRequest::get().uri("/swagger-ui").to_request();
+        let resp = call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::TEMPORARY_REDIRECT);
+        let loc = resp.headers().get(header::LOCATION);
+        assert!(loc.is_some_and(|x| x.eq("/swagger-ui/")));
+
+        let req = TestRequest::get().uri("/swagger-ui/").to_request();
+        let body = call_and_read_body(&app, req).await;
+        let text = std::str::from_utf8(&body)?;
+        assert!(text.contains("<title>Swagger UI</title>"));
 
         // GraphQL UI
 
