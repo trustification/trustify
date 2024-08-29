@@ -217,8 +217,8 @@ impl<'g> Format {
         let mut buf = Vec::new();
         loop {
             // read events until we find the first tag, or an error
-            if let Ok(event) = reader.read_event_into(&mut buf) {
-                if let Event::Start(event) = event {
+            match reader.read_event_into(&mut buf) {
+                Ok(Event::Start(event)) => {
                     // first tag will have some attributes, let's see if it matches our
                     // expected schema.
                     let attrs = event.attributes();
@@ -239,10 +239,12 @@ impl<'g> Format {
                     // First tag was apparently not the droids we were looking for.
                     return Ok(false);
                 }
-            } else {
-                return Ok(false);
+                Err(_) => return Ok(false),
+                _ => {
+                    // not an error or a start tag, keep on looping
+                    buf.clear()
+                }
             }
-            buf.clear();
         }
     }
 }
