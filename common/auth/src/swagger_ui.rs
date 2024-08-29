@@ -122,7 +122,7 @@ pub fn swagger_ui_with_auth(
         .use_base_layout()
         .request_snippets_enabled(true);
 
-    let mut swagger = SwaggerUi::new("/openapi/{_:.*}").config(config);
+    let mut swagger = SwaggerUi::new("/swagger-ui/{_:.*}").config(config);
 
     if let Some(swagger_ui_oidc) = &swagger_ui_oidc {
         swagger = swagger_ui_oidc.apply_swaggerui(swagger, &mut openapi);
