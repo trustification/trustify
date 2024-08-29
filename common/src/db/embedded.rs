@@ -56,8 +56,7 @@ async fn create_for(settings: Settings) -> anyhow::Result<(Database, PostgreSQL)
         host: "localhost".into(),
         name: "test".into(),
         port: postgresql.settings().port,
-        min_conn: 25,
-        max_conn: 75,
+        ..crate::config::Database::from_env()?
     };
     let db = Database::bootstrap(&config)
         .await
