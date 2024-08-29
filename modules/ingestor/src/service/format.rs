@@ -18,9 +18,10 @@ use futures::Stream;
 use futures::TryStreamExt;
 use jsn::{mask::*, Format as JsnFormat, TokenReader};
 use osv::schema::Vulnerability;
-use roxmltree::Document;
+use quick_xml::events::Event;
+use quick_xml::Reader;
 use serde_json::Value;
-use std::str::from_utf8;
+use std::io::Cursor;
 use std::{
     io::{self},
     pin::pin,
@@ -210,16 +211,39 @@ impl<'g> Format {
     }
 
     pub fn is_cwe_catalog(bytes: &[u8]) -> Result<bool, Error> {
-        if let Ok(utf8) = from_utf8(bytes) {
-            if let Ok(candidate) = Document::parse(utf8) {
-                let root = candidate.root();
-                if let Some(catalog) = root.first_element_child() {
-                    return Ok(catalog.has_tag_name("Weakness_Catalog"));
-                }
-            }
-        }
+        let xml = Cursor::new(bytes);
+        let mut reader = Reader::from_reader(xml);
 
-        Ok(false)
+        let mut buf = Vec::new();
+        loop {
+            // read events until we find the first tag, or an error
+            if let Ok(event) = reader.read_event_into(&mut buf) {
+                if let Event::Start(event) = event {
+                    // first tag will have some attributes, let's see if it matches our
+                    // expected schema.
+                    let attrs = event.attributes();
+                    for attr in attrs.into_iter().flatten() {
+                        if attr.key.local_name().into_inner() == b"schemaLocation" {
+                            // The attribute value is weird, and possibly wrong with a
+                            // strange prefix URL that does not resolve before the actual
+                            // xsd url, hence using `ends_with(...)` to match.
+                            if attr
+                                .value
+                                .ends_with(b"http://cwe.mitre.org/data/xsd/cwe_schema_v7.2.xsd")
+                            {
+                                // It's a CWE catalog, yay.
+                                return Ok(true);
+                            }
+                        }
+                    }
+                    // First tag was apparently not the droids we were looking for.
+                    return Ok(false);
+                }
+            } else {
+                return Ok(false);
+            }
+            buf.clear();
+        }
     }
 }
 
@@ -240,24 +264,39 @@ fn masked<N: Mask>(mask: N, bytes: &[u8]) -> Result<Option<String>, Error> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::io::Read;
     use test_log::test;
     use trustify_test_context::document_bytes;
+    use trustify_test_context::document_read;
+    use zip::ZipArchive;
 
     #[test(tokio::test)]
     async fn detection() -> Result<(), anyhow::Error> {
         let csaf = document_bytes("csaf/CVE-2023-20862.json").await?;
         assert!(matches!(Format::from_bytes(&csaf), Ok(Format::CSAF)));
+
         let osv = document_bytes("osv/RUSTSEC-2021-0079.json").await?;
         assert!(matches!(Format::from_bytes(&osv), Ok(Format::OSV)));
+
         let cve = document_bytes("mitre/CVE-2024-27088.json").await?;
         assert!(matches!(Format::from_bytes(&cve), Ok(Format::CVE)));
+
         let cyclone = document_bytes("zookeeper-3.9.2-cyclonedx.json").await?;
         assert!(matches!(
             Format::from_bytes(&cyclone),
             Ok(Format::CycloneDX)
         ));
+
         let spdx = document_bytes("ubi9-9.2-755.1697625012.json").await?;
         assert!(matches!(Format::from_bytes(&spdx), Ok(Format::SPDX)));
+
+        let cwe = document_read("cwec_latest.xml.zip").await?;
+        let mut cwe = ZipArchive::new(cwe)?;
+        let mut cwe = cwe.by_index(0)?;
+        let mut xml = Vec::new();
+        cwe.read_to_end(&mut xml)?;
+        assert!(matches!(Format::from_bytes(&xml), Ok(Format::CweCatalog)));
+
         Ok(())
     }
 }
