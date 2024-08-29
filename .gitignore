@@ -3,6 +3,7 @@
 .DS_Store
 /data
 .trustify
+/download/
 
 *.cdx.json
 
