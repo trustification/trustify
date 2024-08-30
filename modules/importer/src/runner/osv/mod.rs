@@ -3,9 +3,8 @@ mod walker;
 use crate::{
     model::OsvImporter,
     runner::{
-        common::walker::{CallbackError, Callbacks},
+        common::walker::{CallbackError, Callbacks, GitWalker},
         context::RunContext,
-        osv::walker::OsvWalker,
         report::{Phase, ReportBuilder, ScannerError},
         RunOutput,
     },
@@ -19,6 +18,7 @@ use trustify_module_ingestor::{
     graph::Graph,
     service::{Format, IngestorService},
 };
+use walker::OsvHandler;
 
 struct Context<C: RunContext + 'static> {
     context: C,
@@ -92,18 +92,20 @@ impl super::ImportRunner {
 
         // run the walker
 
-        let walker = OsvWalker::new(osv.source.clone())
-            .continuation(continuation)
-            .branch(osv.branch)
-            .path(osv.path)
-            .callbacks(Context {
+        let walker = GitWalker::new(
+            osv.source.clone(),
+            OsvHandler(Context {
                 context,
                 source: osv.source,
                 labels: osv.common.labels,
                 report: report.clone(),
                 ingestor,
-            })
-            .progress(progress);
+            }),
+        )
+        .continuation(continuation)
+        .branch(osv.branch)
+        .path(osv.path)
+        .progress(progress);
 
         let continuation = match working_dir {
             Some(working_dir) => walker.working_dir(working_dir).run().await,
