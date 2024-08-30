@@ -1,4 +1,4 @@
-mod walker;
+mod handler;
 
 use crate::{
     model::OsvImporter,
@@ -9,6 +9,7 @@ use crate::{
         RunOutput,
     },
 };
+use handler::OsvHandler;
 use parking_lot::Mutex;
 use std::{path::Path, path::PathBuf, sync::Arc};
 use tokio::runtime::Handle;
@@ -18,7 +19,6 @@ use trustify_module_ingestor::{
     graph::Graph,
     service::{Format, IngestorService},
 };
-use walker::OsvHandler;
 
 struct Context<C: RunContext + 'static> {
     context: C,
