@@ -1,16 +1,12 @@
-use crate::graph::Graph;
-use crate::model::IngestResult;
-use crate::service::Error;
+use crate::{graph::Graph, model::IngestResult, service::Error};
 use hex::ToHex;
 use roxmltree::{Document, Node};
 use sea_orm::{EntityTrait, Iterable, Set, TransactionTrait};
 use sea_query::OnConflict;
 use std::str::from_utf8;
-use trustify_common::db::chunk::EntityChunkedIter;
-use trustify_common::hashing::Digests;
-use trustify_common::id::Id;
-use trustify_entity::labels::Labels;
-use trustify_entity::weakness;
+use tracing::instrument;
+use trustify_common::{db::chunk::EntityChunkedIter, hashing::Digests, id::Id};
+use trustify_entity::{labels::Labels, weakness};
 
 pub struct CweCatalogLoader<'d> {
     graph: &'d Graph,
@@ -21,6 +17,7 @@ impl<'d> CweCatalogLoader<'d> {
         Self { graph }
     }
 
+    #[instrument(skip(self, buffer), ret)]
     pub async fn load_bytes(
         &self,
         labels: Labels,
@@ -34,6 +31,7 @@ impl<'d> CweCatalogLoader<'d> {
         self.load(labels, &document, digests).await
     }
 
+    #[instrument(skip(self, doc), ret)]
     pub async fn load<'x>(
         &self,
         _labels: Labels,

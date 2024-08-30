@@ -1,19 +1,19 @@
-use crate::graph::advisory::advisory_vulnerability::{Version, VersionInfo, VersionSpec};
-use crate::model::IngestResult;
-use crate::service::Warnings;
 use crate::{
     graph::{
-        advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation},
+        advisory::{
+            advisory_vulnerability::{Version, VersionInfo, VersionSpec},
+            AdvisoryInformation, AdvisoryVulnerabilityInformation,
+        },
         Graph,
     },
-    service::{advisory::osv::translate, Error},
+    model::IngestResult,
+    service::{advisory::osv::translate, Error, Warnings},
 };
 use osv::schema::{Event, ReferenceType, SeverityType, Vulnerability};
 use sbom_walker::report::ReportSink;
-use std::{str::FromStr, sync::OnceLock};
-use trustify_common::hashing::Digests;
-use trustify_common::id::Id;
-use trustify_common::{purl::Purl, time::ChronoExt};
+use std::{fmt::Debug, str::FromStr, sync::OnceLock};
+use tracing::instrument;
+use trustify_common::{hashing::Digests, id::Id, purl::Purl, time::ChronoExt};
 use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity::labels::Labels;
 
@@ -26,9 +26,10 @@ impl<'g> OsvLoader<'g> {
         Self { graph }
     }
 
+    #[instrument(skip(self, osv), err)]
     pub async fn load(
         &self,
-        labels: impl Into<Labels>,
+        labels: impl Into<Labels> + Debug,
         osv: Vulnerability,
         digests: &Digests,
         issuer: Option<String>,

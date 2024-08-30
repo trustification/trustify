@@ -1,13 +1,13 @@
-use crate::service::Warnings;
 use crate::{
     graph::{
         sbom::spdx::{self, parse_spdx},
         Graph,
     },
     model::IngestResult,
-    service::Error,
+    service::{Error, Warnings},
 };
 use serde_json::Value;
+use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
 
@@ -20,6 +20,7 @@ impl<'g> SpdxLoader<'g> {
         Self { graph }
     }
 
+    #[instrument(skip(self, json), ret)]
     pub async fn load(
         &self,
         labels: Labels,

@@ -14,6 +14,7 @@ use csaf::{
     Csaf,
 };
 use sbom_walker::report::ReportSink;
+use std::fmt::Debug;
 use std::str::FromStr;
 use time::OffsetDateTime;
 use tracing::instrument;
@@ -51,10 +52,10 @@ impl<'g> CsafLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, csaf, labels), err)]
+    #[instrument(skip(self, csaf), err)]
     pub async fn load(
         &self,
-        labels: impl Into<Labels>,
+        labels: impl Into<Labels> + Debug,
         csaf: Csaf,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {

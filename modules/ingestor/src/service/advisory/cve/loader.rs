@@ -8,6 +8,8 @@ use crate::{
     service::Error,
 };
 use cve::{Cve, Timestamp};
+use std::fmt::Debug;
+use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
 
@@ -28,9 +30,10 @@ impl<'g> CveLoader<'g> {
         Self { graph }
     }
 
+    #[instrument(skip(self, cve), err)]
     pub async fn load(
         &self,
-        labels: impl Into<Labels>,
+        labels: impl Into<Labels> + Debug,
         cve: Cve,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {

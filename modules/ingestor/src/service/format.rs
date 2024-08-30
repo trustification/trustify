@@ -1,12 +1,12 @@
-use crate::graph::sbom::clearly_defined::Curation;
-use crate::service::sbom::clearly_defined::ClearlyDefinedLoader;
-use crate::service::weakness::CweCatalogLoader;
 use crate::{
-    graph::Graph,
+    graph::{sbom::clearly_defined::Curation, Graph},
     model::IngestResult,
     service::{
         advisory::{csaf::loader::CsafLoader, cve::loader::CveLoader, osv::loader::OsvLoader},
-        sbom::{cyclonedx::CyclonedxLoader, spdx::SpdxLoader},
+        sbom::{
+            clearly_defined::ClearlyDefinedLoader, cyclonedx::CyclonedxLoader, spdx::SpdxLoader,
+        },
+        weakness::CweCatalogLoader,
         Error,
     },
 };
@@ -14,15 +14,13 @@ use bytes::Bytes;
 use csaf::Csaf;
 use cve::Cve;
 use cyclonedx_bom::models::bom::Bom;
-use futures::Stream;
-use futures::TryStreamExt;
+use futures::{Stream, TryStreamExt};
 use jsn::{mask::*, Format as JsnFormat, TokenReader};
 use osv::schema::Vulnerability;
-use quick_xml::events::Event;
-use quick_xml::Reader;
+use quick_xml::{events::Event, Reader};
 use serde_json::Value;
-use std::io::Cursor;
 use std::{
+    io::Cursor,
     io::{self},
     pin::pin,
 };
@@ -48,6 +46,7 @@ pub enum Format {
 }
 
 impl<'g> Format {
+    #[instrument(skip(self, graph, stream), ret)]
     pub async fn load<S>(
         &self,
         graph: &'g Graph,
@@ -112,7 +111,7 @@ impl<'g> Format {
         }
     }
 
-    #[instrument(skip_all, err)]
+    #[instrument(skip_all, ret)]
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         match Self::advisory_from_bytes(bytes) {
             Err(Error::UnsupportedFormat(ea)) => match Self::sbom_from_bytes(bytes) {
@@ -126,6 +125,7 @@ impl<'g> Format {
         }
     }
 
+    #[instrument(skip_all, ret)]
     pub fn advisory_from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         if Self::is_csaf(bytes)? {
             Ok(Format::CSAF)
@@ -140,6 +140,7 @@ impl<'g> Format {
         }
     }
 
+    #[instrument(skip_all, ret)]
     pub fn sbom_from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         if Self::is_spdx(bytes)? {
             Ok(Format::SPDX)
