@@ -66,6 +66,9 @@ where
     pub handler: H,
 
     pub progress: P,
+
+    /// Fetch depth, <=0 means get everything
+    pub depth: i32,
 }
 
 impl<H> GitWalker<H, (), ()>
@@ -81,6 +84,7 @@ where
             working_dir: (),
             handler,
             progress: (),
+            depth: 1, // shallow clone, by default
         }
     }
 }
@@ -100,6 +104,7 @@ where
             working_dir: self.working_dir,
             handler,
             progress: self.progress,
+            depth: self.depth,
         }
     }
 
@@ -112,6 +117,7 @@ where
             working_dir: self.working_dir,
             handler: self.handler,
             progress,
+            depth: self.depth,
         }
     }
 
@@ -135,6 +141,7 @@ where
             working_dir,
             handler: self.handler,
             progress: self.progress,
+            depth: self.depth,
         }
     }
 
@@ -145,6 +152,11 @@ where
 
     pub fn path(mut self, path: Option<impl Into<String>>) -> Self {
         self.path = path.map(|s| s.into());
+        self
+    }
+
+    pub fn depth(mut self, depth: i32) -> Self {
+        self.depth = depth;
         self
     }
 
@@ -185,11 +197,7 @@ where
 
             let mut fo = Self::create_fetch_options();
             if self.continuation.0.is_none() {
-                if cfg!(test) {
-                    fo.depth(3);
-                } else {
-                    fo.depth(1);
-                }
+                fo.depth(self.depth);
             }
             builder.fetch_options(fo).clone(&self.source, path)
         });
