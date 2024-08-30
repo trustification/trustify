@@ -93,17 +93,21 @@ mod test {
     use std::path::PathBuf;
 
     #[test_log::test(tokio::test)]
-    async fn test_clearly_defined_walker() {
+    async fn test_clearly_defined_walker() -> Result<(), anyhow::Error> {
         let path = PathBuf::from(format!(
             "{}target/test.data/test_clearly_defined_walker.git",
             env!("CARGO_WORKSPACE_ROOT")
         ));
+        if path.exists() {
+            std::fs::remove_dir_all(path.clone())?;
+        }
 
         let cont = Continuation::default();
 
         let walker = GitWalker::new(DEFAULT_SOURCE_CLEARLY_DEFINED, ())
             .continuation(cont)
-            .working_dir(path.clone());
+            .working_dir(path.clone())
+            .depth(3);
 
         let _cont = walker.run().await.expect("should not fail");
 
@@ -114,5 +118,7 @@ mod test {
             .working_dir(path);
 
         walker.run().await.expect("should not fail");
+
+        Ok(())
     }
 }

@@ -69,19 +69,23 @@ mod test {
     use std::path::PathBuf;
 
     #[test_log::test(tokio::test)]
-    async fn test_osv_walker() {
+    async fn test_osv_walker() -> Result<(), anyhow::Error> {
         const SOURCE: &str = "https://github.com/RConsortium/r-advisory-database";
         let path = PathBuf::from(format!(
             "{}target/test.data/test_walker.git",
             env!("CARGO_WORKSPACE_ROOT")
         ));
+        if path.exists() {
+            std::fs::remove_dir_all(path.clone())?;
+        }
 
         let cont = Continuation::default();
 
         let walker = GitWalker::new(SOURCE, ())
             .path(Some("vulns"))
             .continuation(cont)
-            .working_dir(path.clone());
+            .working_dir(path.clone())
+            .depth(3);
 
         let _cont = walker.run().await.expect("should not fail");
 
@@ -93,6 +97,8 @@ mod test {
             .working_dir(path);
 
         walker.run().await.expect("should not fail");
+
+        Ok(())
     }
 
     /// ensure that using `path`, we can't escape the repo directory

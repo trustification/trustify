@@ -102,19 +102,22 @@ mod test {
     use std::path::PathBuf;
 
     /// test CVE walker, runs for a long time
-    #[ignore]
     #[test_log::test(tokio::test)]
-    async fn test_cve_walker() {
+    async fn test_cve_walker() -> Result<(), anyhow::Error> {
         let path = PathBuf::from(format!(
             "{}target/test.data/test_cve_walker.git",
             env!("CARGO_WORKSPACE_ROOT")
         ));
+        if path.exists() {
+            std::fs::remove_dir_all(path.clone())?;
+        }
 
         let cont = Continuation::default();
 
         let walker = GitWalker::new(DEFAULT_SOURCE_CVEPROJECT, ())
             .continuation(cont)
-            .working_dir(path.clone());
+            .working_dir(path.clone())
+            .depth(3);
 
         let _cont = walker.run().await.expect("should not fail");
 
@@ -125,5 +128,7 @@ mod test {
             .working_dir(path);
 
         walker.run().await.expect("should not fail");
+
+        Ok(())
     }
 }
