@@ -11,9 +11,6 @@ use futures::{Stream, StreamExt, TryStreamExt};
 /// to propagate the specific type up to the root level. However, that would also mean that actix
 /// handlers would be required to know about that full type to extract it as application
 /// data.
-///
-/// NOTE: Right now we only have one type (filesystem), but the goal is to have an additional one
-/// soon (e.g. S3)
 #[derive(Clone, Debug)]
 pub enum DispatchBackend {
     Filesystem(FileSystemBackend),
