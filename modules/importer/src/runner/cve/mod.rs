@@ -3,9 +3,8 @@ mod walker;
 use crate::{
     model::CveImporter,
     runner::{
-        common::walker::{CallbackError, Callbacks},
+        common::walker::{CallbackError, Callbacks, GitWalker},
         context::RunContext,
-        cve::walker::CveWalker,
         report::{Phase, ReportBuilder, ScannerError},
         RunOutput,
     },
@@ -19,6 +18,7 @@ use trustify_module_ingestor::{
     graph::Graph,
     service::{Format, IngestorService},
 };
+use walker::CveHandler;
 
 struct Context<C: RunContext + 'static> {
     context: C,
@@ -92,18 +92,22 @@ impl super::ImportRunner {
 
         // run the walker
 
-        let walker = CveWalker::new(cve.source.clone())
-            .continuation(continuation)
-            .years(cve.years)
-            .start_year(cve.start_year)
-            .callbacks(Context {
-                context,
-                source: cve.source,
-                labels: cve.common.labels,
-                report: report.clone(),
-                ingestor,
-            })
-            .progress(progress);
+        let walker = GitWalker::new(
+            cve.source.clone(),
+            CveHandler {
+                callbacks: Context {
+                    context,
+                    source: cve.source,
+                    labels: cve.common.labels,
+                    report: report.clone(),
+                    ingestor,
+                },
+                years: cve.years,
+                start_year: cve.start_year,
+            },
+        )
+        .continuation(continuation)
+        .progress(progress);
 
         let continuation = match working_dir {
             Some(working_dir) => walker.working_dir(working_dir).run().await,

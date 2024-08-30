@@ -3,8 +3,7 @@ mod walker;
 use crate::{
     model::ClearlyDefinedImporter,
     runner::{
-        clearly_defined::walker::ClearlyDefinedWalker,
-        common::walker::{CallbackError, Callbacks},
+        common::walker::{CallbackError, Callbacks, GitWalker},
         context::RunContext,
         report::{Phase, ReportBuilder, ScannerError},
         RunOutput,
@@ -19,6 +18,7 @@ use trustify_module_ingestor::{
     graph::Graph,
     service::{Format, IngestorService},
 };
+use walker::ClearlyDefinedHandler;
 
 struct Context<C: RunContext + 'static> {
     context: C,
@@ -97,17 +97,21 @@ impl super::ImportRunner {
 
         // run the walker
 
-        let walker = ClearlyDefinedWalker::new(clearly_defined.source.clone())
-            .types(clearly_defined.types)
-            .continuation(continuation)
-            .callbacks(Context {
-                context,
-                source: clearly_defined.source,
-                labels: clearly_defined.common.labels,
-                report: report.clone(),
-                ingestor,
-            })
-            .progress(progress);
+        let walker = GitWalker::new(
+            clearly_defined.source.clone(),
+            ClearlyDefinedHandler {
+                callbacks: Context {
+                    context,
+                    source: clearly_defined.source,
+                    labels: clearly_defined.common.labels,
+                    report: report.clone(),
+                    ingestor,
+                },
+                types: clearly_defined.types,
+            },
+        )
+        .continuation(continuation)
+        .progress(progress);
 
         let continuation = match working_dir {
             Some(working_dir) => walker.working_dir(working_dir).run().await,

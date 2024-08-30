@@ -1,28 +1,21 @@
 use crate::runner::common::Error;
 use crate::{
     model::ClearlyDefinedPackageType,
-    runner::{
-        common::{
-            processing_error::ProcessingError,
-            walker::{
-                CallbackError, Callbacks, Continuation, GitWalker, Handler, HandlerError,
-                WorkingDirectory,
-            },
-        },
-        progress::Progress,
+    runner::common::{
+        processing_error::ProcessingError,
+        walker::{CallbackError, Callbacks, Handler, HandlerError},
     },
 };
 use std::collections::HashSet;
 use std::io::Read;
 use std::path::Path;
-use tracing::instrument;
 
-struct ClearlyDefinedHandler<C>
+pub struct ClearlyDefinedHandler<C>
 where
     C: Callbacks<Vec<u8>> + Send + 'static,
 {
-    callbacks: C,
-    types: HashSet<ClearlyDefinedPackageType>,
+    pub callbacks: C,
+    pub types: HashSet<ClearlyDefinedPackageType>,
 }
 
 impl<C> Handler for ClearlyDefinedHandler<C>
@@ -91,107 +84,16 @@ where
     }
 }
 
-pub struct ClearlyDefinedWalker<C, T, P>
-where
-    C: Callbacks<Vec<u8>>,
-    T: WorkingDirectory + Send + 'static,
-    P: Progress,
-{
-    walker: GitWalker<(), T, ()>,
-    types: HashSet<ClearlyDefinedPackageType>,
-    callbacks: C,
-    progress: P,
-}
-
-impl ClearlyDefinedWalker<(), (), ()> {
-    pub fn new(source: impl Into<String>) -> Self {
-        Self {
-            walker: GitWalker::new(source, ()).path(Some("curations")),
-            types: HashSet::default(),
-            callbacks: (),
-            progress: (),
-        }
-    }
-
-    pub fn types(mut self, types: HashSet<ClearlyDefinedPackageType>) -> Self {
-        self.types = types;
-        self
-    }
-}
-
-impl<C, T, P> ClearlyDefinedWalker<C, T, P>
-where
-    C: Callbacks<Vec<u8>>,
-    T: WorkingDirectory + Send + 'static,
-    P: Progress + Send + 'static,
-{
-    /// Set the working directory.
-    ///
-    /// Also see: [`GitWalker::working_dir`].
-    pub fn working_dir<U: WorkingDirectory + Send + 'static>(
-        self,
-        working_dir: U,
-    ) -> ClearlyDefinedWalker<C, U, P> {
-        ClearlyDefinedWalker {
-            walker: self.walker.working_dir(working_dir),
-            types: self.types,
-            callbacks: self.callbacks,
-            progress: self.progress,
-        }
-    }
-
-    /// Set a continuation token from a previous run.
-    pub fn continuation(mut self, continuation: Continuation) -> Self {
-        self.walker = self.walker.continuation(continuation);
-        self
-    }
-
-    pub fn callbacks<U: Callbacks<Vec<u8>> + Send + 'static>(
-        self,
-        callbacks: U,
-    ) -> ClearlyDefinedWalker<U, T, P> {
-        ClearlyDefinedWalker {
-            walker: self.walker,
-            types: self.types,
-            callbacks,
-            progress: self.progress,
-        }
-    }
-
-    pub fn progress<U: Progress + Send + 'static>(
-        self,
-        progress: U,
-    ) -> ClearlyDefinedWalker<C, T, U> {
-        ClearlyDefinedWalker {
-            walker: self.walker,
-            types: self.types,
-            callbacks: self.callbacks,
-            progress,
-        }
-    }
-
-    /// Run the walker
-    #[instrument(skip(self), ret)]
-    pub async fn run(self) -> Result<Continuation, Error> {
-        self.walker
-            .handler(ClearlyDefinedHandler {
-                callbacks: self.callbacks,
-                types: self.types,
-            })
-            .progress(self.progress)
-            .run()
-            .await
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::{model::DEFAULT_SOURCE_CLEARLY_DEFINED, runner::common::walker::git_reset};
+    use crate::{
+        model::DEFAULT_SOURCE_CLEARLY_DEFINED,
+        runner::common::walker::{git_reset, Continuation, GitWalker},
+    };
     use std::path::PathBuf;
 
     #[test_log::test(tokio::test)]
-    async fn test_walker() {
+    async fn test_clearly_defined_walker() {
         let path = PathBuf::from(format!(
             "{}target/test.data/test_clearly_defined_walker.git",
             env!("CARGO_WORKSPACE_ROOT")
@@ -199,8 +101,7 @@ mod test {
 
         let cont = Continuation::default();
 
-        let walker = ClearlyDefinedWalker::new(DEFAULT_SOURCE_CLEARLY_DEFINED)
-            .types(HashSet::from([ClearlyDefinedPackageType::Crate]))
+        let walker = GitWalker::new(DEFAULT_SOURCE_CLEARLY_DEFINED, ())
             .continuation(cont)
             .working_dir(path.clone());
 
@@ -208,7 +109,7 @@ mod test {
 
         let cont = git_reset(&path, "HEAD~2").expect("must not fail");
 
-        let walker = ClearlyDefinedWalker::new(DEFAULT_SOURCE_CLEARLY_DEFINED)
+        let walker = GitWalker::new(DEFAULT_SOURCE_CLEARLY_DEFINED, ())
             .continuation(cont)
             .working_dir(path);
 

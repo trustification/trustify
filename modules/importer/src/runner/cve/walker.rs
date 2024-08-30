@@ -1,26 +1,19 @@
 use crate::runner::common::Error;
-use crate::runner::{
-    common::{
-        processing_error::ProcessingError,
-        walker::{
-            CallbackError, Callbacks, Continuation, GitWalker, Handler, HandlerError,
-            WorkingDirectory,
-        },
-    },
-    progress::Progress,
+use crate::runner::common::{
+    processing_error::ProcessingError,
+    walker::{CallbackError, Callbacks, Handler, HandlerError},
 };
 use std::fs::File;
 use std::io::Read;
 use std::{collections::HashSet, path::Path};
-use tracing::instrument;
 
-struct CveHandler<C>
+pub struct CveHandler<C>
 where
     C: Callbacks<Vec<u8>> + Send + 'static,
 {
-    callbacks: C,
-    years: HashSet<u16>,
-    start_year: Option<u16>,
+    pub callbacks: C,
+    pub years: HashSet<u16>,
+    pub start_year: Option<u16>,
 }
 
 impl<C> Handler for CveHandler<C>
@@ -100,117 +93,18 @@ where
     }
 }
 
-pub struct CveWalker<C, T, P>
-where
-    C: Callbacks<Vec<u8>>,
-    T: WorkingDirectory + Send + 'static,
-    P: Progress,
-{
-    walker: GitWalker<(), T, ()>,
-    callbacks: C,
-    progress: P,
-    years: HashSet<u16>,
-    start_year: Option<u16>,
-}
-
-impl CveWalker<(), (), ()> {
-    pub fn new(source: impl Into<String>) -> Self {
-        Self {
-            walker: GitWalker::new(source, ()).path(Some("cves")),
-            callbacks: (),
-            progress: (),
-            years: Default::default(),
-            start_year: None,
-        }
-    }
-}
-
-impl<C, T, P> CveWalker<C, T, P>
-where
-    C: Callbacks<Vec<u8>>,
-    T: WorkingDirectory + Send + 'static,
-    P: Progress + Send + 'static,
-{
-    /// Set the working directory.
-    ///
-    /// Also see: [`GitWalker::working_dir`].
-    pub fn working_dir<U: WorkingDirectory + Send + 'static>(
-        self,
-        working_dir: U,
-    ) -> CveWalker<C, U, P> {
-        CveWalker {
-            walker: self.walker.working_dir(working_dir),
-            callbacks: self.callbacks,
-            progress: self.progress,
-            years: self.years,
-            start_year: self.start_year,
-        }
-    }
-
-    /// Set a continuation token from a previous run.
-    pub fn continuation(mut self, continuation: Continuation) -> Self {
-        self.walker = self.walker.continuation(continuation);
-        self
-    }
-
-    pub fn years(mut self, years: HashSet<u16>) -> Self {
-        self.years = years;
-        self
-    }
-
-    pub fn start_year(mut self, start_year: Option<u16>) -> Self {
-        self.start_year = start_year;
-        self
-    }
-
-    pub fn callbacks<U: Callbacks<Vec<u8>> + Send + 'static>(
-        self,
-        callbacks: U,
-    ) -> CveWalker<U, T, P> {
-        CveWalker {
-            walker: self.walker,
-            callbacks,
-            progress: self.progress,
-            years: self.years,
-            start_year: self.start_year,
-        }
-    }
-
-    pub fn progress<U: Progress + Send + 'static>(self, progress: U) -> CveWalker<C, T, U> {
-        CveWalker {
-            walker: self.walker,
-            callbacks: self.callbacks,
-            progress,
-            years: self.years,
-            start_year: self.start_year,
-        }
-    }
-
-    /// Run the walker
-    #[instrument(skip(self), ret)]
-    pub async fn run(self) -> Result<Continuation, Error> {
-        self.walker
-            .handler(CveHandler {
-                callbacks: self.callbacks,
-                years: self.years,
-                start_year: self.start_year,
-            })
-            .progress(self.progress)
-            .run()
-            .await
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::{model::DEFAULT_SOURCE_CVEPROJECT, runner::common::walker::git_reset};
+    use crate::{
+        model::DEFAULT_SOURCE_CVEPROJECT,
+        runner::common::walker::{git_reset, Continuation, GitWalker},
+    };
     use std::path::PathBuf;
 
     /// test CVE walker, runs for a long time
     #[ignore]
     #[test_log::test(tokio::test)]
-    async fn test_walker() {
+    async fn test_cve_walker() {
         let path = PathBuf::from(format!(
             "{}target/test.data/test_cve_walker.git",
             env!("CARGO_WORKSPACE_ROOT")
@@ -218,7 +112,7 @@ mod test {
 
         let cont = Continuation::default();
 
-        let walker = CveWalker::new(DEFAULT_SOURCE_CVEPROJECT)
+        let walker = GitWalker::new(DEFAULT_SOURCE_CVEPROJECT, ())
             .continuation(cont)
             .working_dir(path.clone());
 
@@ -226,7 +120,7 @@ mod test {
 
         let cont = git_reset(&path, "HEAD~2").expect("must not fail");
 
-        let walker = CveWalker::new(DEFAULT_SOURCE_CVEPROJECT)
+        let walker = GitWalker::new(DEFAULT_SOURCE_CVEPROJECT, ())
             .continuation(cont)
             .working_dir(path);
 
