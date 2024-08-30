@@ -19,12 +19,9 @@ use actix_web::{
 use anyhow::Context;
 use bytesize::ByteSize;
 use futures::{FutureExt, StreamExt};
-use std::fmt::Display;
-use std::fs::create_dir_all;
-use std::path::PathBuf;
-use std::process::ExitCode;
-use std::sync::Arc;
-use std::time::Duration;
+use std::{
+    fmt::Display, fs::create_dir_all, path::PathBuf, process::ExitCode, sync::Arc, time::Duration,
+};
 use tokio::task::JoinHandle;
 use trustify_auth::{
     auth::AuthConfigArguments,
@@ -54,7 +51,6 @@ use trustify_module_storage::service::{
     dispatch::DispatchBackend, fs::FileSystemBackend, s3::S3Backend,
 };
 use trustify_module_ui::{endpoints::UiResources, UI};
-
 use utoipa::OpenApi;
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::{Redoc, Servable};
@@ -116,6 +112,9 @@ pub struct UiConfig {
     /// Scopes to request
     #[arg(id = "ui-scope", long, env = "UI_SCOPE", default_value = "openid")]
     pub scope: String,
+    /// The write-key for the analytics system.
+    #[arg(id = "analytics-write-key", long, env = "UI_ANALYTICS_WRITE_KEY")]
+    pub analytics_write_key: Option<String>,
 }
 
 const SERVICE_ID: &str = "trustify";
@@ -223,14 +222,13 @@ impl InitData {
         };
 
         let ui = UI {
-            // TODO: where/how should we configure these details?
             version: env!("CARGO_PKG_VERSION").to_string(),
             auth_required: authenticator.is_some().to_string(),
             oidc_server_url: run.ui.issuer_url,
             oidc_client_id: run.ui.client_id,
             oidc_scope: run.ui.scope,
-            analytics_enabled: String::from("false"),
-            analytics_write_key: String::from(""),
+            analytics_enabled: run.ui.analytics_write_key.is_some().to_string(),
+            analytics_write_key: run.ui.analytics_write_key.unwrap_or_default(),
         };
 
         Ok(InitData {
