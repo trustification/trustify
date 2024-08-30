@@ -1,6 +1,7 @@
 use crate::{
     graph::sbom::clearly_defined::Curation, graph::Graph, model::IngestResult, service::Error,
 };
+use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
 
@@ -13,6 +14,7 @@ impl<'g> ClearlyDefinedLoader<'g> {
         Self { graph }
     }
 
+    #[instrument(skip(self, curation), ret)]
     pub async fn load(
         &self,
         labels: Labels,

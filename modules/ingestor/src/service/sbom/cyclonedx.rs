@@ -1,9 +1,10 @@
-use crate::model::IngestResult;
 use crate::{
     graph::{sbom::cyclonedx, Graph},
+    model::IngestResult,
     service::Error,
 };
 use cyclonedx_bom::prelude::Bom;
+use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
 
@@ -16,6 +17,7 @@ impl<'g> CyclonedxLoader<'g> {
         Self { graph }
     }
 
+    #[instrument(skip(self, sbom), ret)]
     pub async fn load(
         &self,
         labels: Labels,
