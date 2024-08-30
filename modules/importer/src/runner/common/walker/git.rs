@@ -422,14 +422,12 @@ fn is_hidden(entry: &DirEntry) -> bool {
 
 use crate::runner::common::Error;
 use crate::runner::progress::{Progress, ProgressInstance};
-#[cfg(test)]
-pub(crate) use test::git_reset;
 
 #[cfg(test)]
 mod test {
-    use super::Continuation;
+    use super::{Continuation, GitWalker};
     use git2::{Repository, ResetType};
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
 
     /// reset a git repository to the spec and return the commit as continuation
     pub(crate) fn git_reset(path: &Path, spec: &str) -> anyhow::Result<Continuation> {
@@ -441,5 +439,60 @@ mod test {
         let commit = r#ref.peel_to_commit()?.id().to_string();
 
         Ok(Continuation(Some(commit)))
+    }
+
+    #[test_log::test(tokio::test)]
+    async fn test_walker() -> Result<(), anyhow::Error> {
+        const SOURCE: &str = "https://github.com/RConsortium/r-advisory-database";
+        let path = PathBuf::from(format!(
+            "{}target/test.data/test_walker.git",
+            env!("CARGO_WORKSPACE_ROOT")
+        ));
+        if path.exists() {
+            std::fs::remove_dir_all(path.clone())?;
+        }
+
+        let cont = Continuation::default();
+
+        let walker = GitWalker::new(SOURCE, ())
+            .path(Some("vulns"))
+            .continuation(cont)
+            .working_dir(path.clone())
+            .depth(3);
+
+        let _cont = walker.run().await.expect("should not fail");
+
+        let cont = git_reset(&path, "HEAD~2").expect("must not fail");
+
+        let walker = GitWalker::new(SOURCE, ())
+            .path(Some("vulns"))
+            .continuation(cont)
+            .working_dir(path);
+
+        walker.run().await.expect("should not fail");
+
+        Ok(())
+    }
+
+    /// ensure that using `path`, we can't escape the repo directory
+    #[test_log::test(tokio::test)]
+    async fn test_walker_fail_escape() {
+        const SOURCE: &str = "https://github.com/RConsortium/r-advisory-database";
+        let path = PathBuf::from(format!(
+            "{}target/test.data/test_walker_fail_escape.git",
+            env!("CARGO_WORKSPACE_ROOT")
+        ));
+
+        let cont = Continuation::default();
+
+        let walker = GitWalker::new(SOURCE, ())
+            .path(Some("/etc"))
+            .continuation(cont)
+            .working_dir(path.clone());
+
+        let r = walker.run().await;
+
+        // must fail as we try to escape the repository root
+        assert!(r.is_err());
     }
 }
