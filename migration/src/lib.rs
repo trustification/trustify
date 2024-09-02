@@ -70,6 +70,7 @@ mod m0000560_alter_vulnerability_cwe_column;
 mod m0000565_alter_advisory_vulnerability_cwe_column;
 mod m0000570_add_import_progress;
 mod m0000575_create_weakness;
+mod m0000580_mark_fns;
 
 pub struct Migrator;
 
@@ -147,6 +148,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000565_alter_advisory_vulnerability_cwe_column::Migration),
             Box::new(m0000570_add_import_progress::Migration),
             Box::new(m0000575_create_weakness::Migration),
+            Box::new(m0000580_mark_fns::Migration),
         ]
     }
 }
