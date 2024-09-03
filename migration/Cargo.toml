@@ -17,6 +17,7 @@ serde_json = { workspace = true }
 
 [dev-dependencies]
 trustify-common = { workspace = true }
+trustify-entity = { workspace = true }
 trustify-test-context = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }

@@ -13,6 +13,7 @@ members = [
     "modules/ingestor",
     "modules/storage",
     "modules/graphql",
+    "modules/analysis",
     "server",
     "trustd",
     "test-context",
@@ -88,6 +89,7 @@ packageurl = "0.3.0"
 parking_lot = "0.12"
 peak_alloc = "0.2.0"
 pem = "3"
+petgraph = {  version = "0.6.5", features = ["serde-1"] }
 prometheus = "0.13.3"
 quick-xml = "0.36.1"
 rand = "0.8.5"
@@ -152,6 +154,7 @@ trustify-module-ingestor = { path = "modules/ingestor" }
 trustify-module-storage = { path = "modules/storage" }
 trustify-module-graphql = { path = "modules/graphql" }
 trustify-test-context = { path = "test-context" }
+trustify-module-analysis = { path = "modules/analysis" }
 
 # These dependencies are active during both the build time and the run time. So they are normal dependencies
 # as well as build-dependencies. However, we can't control feature flags for build dependencies the way we do
@@ -180,3 +183,4 @@ postgresql_commands = { version = "0.16.3", default-features = false, features =
 #cpe = { git = "https://github.com/ctron/cpe-rs", rev = "c3c05e637f6eff7dd4933c2f56d070ee2ddfb44b" }
 # required due to https://github.com/voteblake/csaf-rs/pull/29
 csaf = { git = "https://github.com/chirino/csaf-rs", rev = "414896904bc5e5287fd88b1daef5c27f70503d01" }
+

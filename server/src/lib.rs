@@ -366,6 +366,7 @@ fn configure(
         .service(web::scope("/api").wrap(new_auth(auth)).configure(|svc| {
             trustify_module_importer::endpoints::configure(svc, db.clone());
             trustify_module_fundamental::endpoints::configure(svc, db.clone(), storage);
+            trustify_module_analysis::endpoints::configure(svc, db.clone());
         }))
         .configure(|svc| {
             // I think the UI must come last due to

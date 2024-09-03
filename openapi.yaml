@@ -199,6 +199,146 @@ paths:
                 format: binary
         '404':
           description: The document could not be found
+  /api/v1/analysis/dep:
+    get:
+      tags:
+      - analysis
+      operationId: searchComponentDeps
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: offset
+        in: query
+        description: |-
+          The first item to return, skipping all that come before it.
+
+          NOTE: The order of items is defined by the API being called.
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: limit
+        in: query
+        description: |-
+          The maximum number of entries to return.
+
+          Zero means: no limit
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      responses:
+        '200':
+          description: Search component(s) and return their deps.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepSummary'
+  /api/v1/analysis/dep/{key}:
+    get:
+      tags:
+      - analysis
+      operationId: getComponentDeps
+      parameters:
+      - name: key
+        in: path
+        description: provide component name or URL-encoded pURL itself
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Retrieve component(s) dep components by name or pURL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DepSummary'
+  /api/v1/analysis/root-component:
+    get:
+      tags:
+      - analysis
+      operationId: searchComponentRootComponents
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: offset
+        in: query
+        description: |-
+          The first item to return, skipping all that come before it.
+
+          NOTE: The order of items is defined by the API being called.
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: limit
+        in: query
+        description: |-
+          The maximum number of entries to return.
+
+          Zero means: no limit
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      responses:
+        '200':
+          description: Search component(s) and return their root components.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AncestorSummary'
+  /api/v1/analysis/root-component/{key}:
+    get:
+      tags:
+      - analysis
+      operationId: getComponentRootComponents
+      parameters:
+      - name: key
+        in: path
+        description: provide component name or URL-encoded pURL itself
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Retrieve component(s) root components by name or pURL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AncestorSummary'
+  /api/v1/analysis/status:
+    get:
+      tags:
+      - analysis
+      operationId: status
+      responses:
+        '200':
+          description: Analysis status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisStatus'
   /api/v1/importer:
     get:
       tags:
@@ -1723,6 +1863,67 @@ components:
               All CVSS3 scores from the advisory for the given vulnerability.
               May include several, varying by minor version of the CVSS3 vector.
       description: Summary of information from this advisory regarding a single specific vulnerability.
+    AnalysisStatus:
+      type: object
+      required:
+      - sbom_count
+      - graph_count
+      properties:
+        graph_count:
+          type: integer
+          format: int32
+        sbom_count:
+          type: integer
+          format: int32
+    AncNode:
+      type: object
+      required:
+      - sbom_id
+      - node_id
+      - purl
+      - name
+      properties:
+        name:
+          type: string
+        node_id:
+          type: string
+        purl:
+          type: string
+        sbom_id:
+          type: string
+    AncestorSummary:
+      type: object
+      required:
+      - sbom_id
+      - node_id
+      - purl
+      - name
+      - published
+      - document_id
+      - product_name
+      - product_version
+      - ancestors
+      properties:
+        ancestors:
+          type: array
+          items:
+            $ref: '#/components/schemas/AncNode'
+        document_id:
+          type: string
+        name:
+          type: string
+        node_id:
+          type: string
+        product_name:
+          type: string
+        product_version:
+          type: string
+        published:
+          type: string
+        purl:
+          type: string
+        sbom_id:
+          type: string
     Assertion:
       oneOf:
       - type: object
@@ -1878,6 +2079,60 @@ components:
         properties:
           source:
             type: string
+    DepNode:
+      type: object
+      required:
+      - sbom_id
+      - node_id
+      - purl
+      - name
+      - deps
+      properties:
+        deps:
+          type: array
+          items:
+            $ref: '#/components/schemas/DepNode'
+        name:
+          type: string
+        node_id:
+          type: string
+        purl:
+          type: string
+        sbom_id:
+          type: string
+    DepSummary:
+      type: object
+      required:
+      - sbom_id
+      - node_id
+      - purl
+      - name
+      - published
+      - document_id
+      - product_name
+      - product_version
+      - deps
+      properties:
+        deps:
+          type: array
+          items:
+            $ref: '#/components/schemas/DepNode'
+        document_id:
+          type: string
+        name:
+          type: string
+        node_id:
+          type: string
+        product_name:
+          type: string
+        product_version:
+          type: string
+        published:
+          type: string
+        purl:
+          type: string
+        sbom_id:
+          type: string
     Id:
       type: string
       description: A hash/digest prefixed with its type.
@@ -2083,6 +2338,34 @@ components:
           source:
             type: string
             description: The URL to the git repository of the OSV data
+    PackageNode:
+      type: object
+      required:
+      - sbom_id
+      - node_id
+      - purl
+      - name
+      - published
+      - document_id
+      - product_name
+      - product_version
+      properties:
+        document_id:
+          type: string
+        name:
+          type: string
+        node_id:
+          type: string
+        product_name:
+          type: string
+        product_version:
+          type: string
+        published:
+          type: string
+        purl:
+          type: string
+        sbom_id:
+          type: string
     PaginatedAdvisorySummary:
       type: object
       description: Paginated returned items
@@ -2546,6 +2829,7 @@ components:
       - build_tool_of
       - dev_tool_of
       - described_by
+      - package_of
     RevisionedImporter:
       type: object
       description: |-

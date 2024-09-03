@@ -2,7 +2,6 @@ pub mod advisory;
 
 pub mod license;
 pub mod organization;
-
 pub mod product;
 pub mod purl;
 pub mod sbom;

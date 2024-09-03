@@ -15,6 +15,7 @@ trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }
 trustify-module-ui = { workspace = true }
 trustify-module-graphql = { workspace = true }
+trustify-module-analysis = { workspace = true }
 
 actix-web = { workspace = true }
 anyhow = { workspace = true }
