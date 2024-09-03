@@ -40,6 +40,24 @@ http GET localhost:8080/api/v1/importer/redhat-csaf/report
 http GET localhost:8080/api/v1/importer/redhat-sbom/report
 ```
 
+## Update an importer configuration
+
+```shell
+http PUT localhost:8080/api/v1/importer/redhat-csaf csaf[source]=https://redhat.com/.well-known/csaf/provider-metadata.json csaf[disabled]:=false csaf[period]=30s csaf[v3Signatures]:=true csaf[fetchRetries]:=50
+```
+
+Or, updating the existing configuration (requires `jq`). To preview the changes:
+
+```shell
+http GET localhost:8080/api/v1/importer/redhat-csaf/report | jq .configuration | jq .csaf.fetchRetries=50
+```
+
+To execute:
+
+```shell
+http GET localhost:8080/api/v1/importer/redhat-csaf | jq .configuration | jq .csaf.fetchRetries=50 | http PUT localhost:8080/api/v1/importer/redhat-csaf
+```
+
 ## Delete an importer
 
 ```shell
