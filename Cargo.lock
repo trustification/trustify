@@ -3306,6 +3306,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "json-merge-patch"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c27689fdd28d613b5183f923d6ee7fe61171954fec7c9b0bc1331f41fe0c18a4"
+dependencies = [
+ "serde_json",
+]
+
+[[package]]
 name = "jsonpath-rust"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7469,6 +7478,7 @@ dependencies = [
  "hex",
  "humantime",
  "humantime-serde",
+ "json-merge-patch",
  "log",
  "osv",
  "parking_lot 0.12.3",

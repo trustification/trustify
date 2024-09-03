@@ -58,6 +58,12 @@ To execute:
 http GET localhost:8080/api/v1/importer/redhat-csaf | jq .configuration | jq .csaf.fetchRetries=50 | http PUT localhost:8080/api/v1/importer/redhat-csaf
 ```
 
+## Patch an importer configuration
+
+```shell
+http PATCH localhost:8080/api/v1/importer/redhat-csaf "Content-Type:application/merge-patch+json" csaf[fetchRetries]:=50
+```
+
 ## Delete an importer
 
 ```shell
