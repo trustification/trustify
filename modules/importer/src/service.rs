@@ -5,6 +5,7 @@ use sea_orm::{
     QueryFilter, QueryOrder, TransactionTrait,
 };
 use sea_query::{Alias, Expr, Nullable, SimpleExpr};
+use std::fmt::{Debug, Display};
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{
@@ -29,6 +30,26 @@ pub enum Error {
     Json(#[from] serde_json::Error),
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum PatchError<T>
+where
+    T: Debug + Display,
+{
+    #[error("failed to apply changes")]
+    Transform(T),
+    #[error(transparent)]
+    Common(Error),
+}
+
+impl<T> From<Error> for PatchError<T>
+where
+    T: Debug + Display,
+{
+    fn from(value: Error) -> Self {
+        Self::Common(value)
+    }
+}
+
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse<BoxBody> {
         match self {
@@ -50,6 +71,22 @@ impl ResponseError for Error {
             _ => HttpResponse::InternalServerError().json(ErrorInformation {
                 error: "Internal".into(),
                 message: self.to_string(),
+                details: None,
+            }),
+        }
+    }
+}
+
+impl<T> ResponseError for PatchError<T>
+where
+    T: Debug + Display,
+{
+    fn error_response(&self) -> HttpResponse<BoxBody> {
+        match self {
+            PatchError::Common(err) => err.error_response(),
+            PatchError::Transform(err) => HttpResponse::BadRequest().json(ErrorInformation {
+                error: "PatchTransform".into(),
+                message: err.to_string(),
                 details: None,
             }),
         }
@@ -118,44 +155,55 @@ impl ImporterService {
             .map(|r| r.0))
     }
 
-    pub async fn patch_configuration<F>(
+    /// Load a configuration, transform, and store it back (aka patch).
+    ///
+    /// The function loads the configuration, and then applies the provided transform function.
+    ///
+    /// If the revision of the loaded configuration does not match, an error is reported. Also,
+    /// if the final update doesn't match the loaded revision, an error is reported.
+    pub async fn patch_configuration<F, E>(
         &self,
         name: &str,
         expected_revision: Option<&str>,
         f: F,
-    ) -> Result<(), Error>
+    ) -> Result<(), PatchError<E>>
     where
-        F: FnOnce(ImporterConfiguration) -> ImporterConfiguration,
+        E: Debug + Display,
+        F: FnOnce(ImporterConfiguration) -> Result<ImporterConfiguration, E>,
     {
         // fetch the current state
         let Some(current) = self.read(name).await? else {
             // not found -> don't update
-            return Err(Error::NotFound(name.into()));
+            return Err(Error::NotFound(name.into()).into());
         };
 
         if let Some(expected) = expected_revision {
             if expected != current.revision {
                 // we expected something, but found something else -> abort
-                return Err(Error::MidAirCollision);
+                return Err(Error::MidAirCollision.into());
             }
         }
 
         // apply mutation
 
-        let configuration = f(current.value.data.configuration);
+        let configuration = f(current.value.data.configuration).map_err(PatchError::Transform)?;
 
         // store
 
-        self.update(
-            &self.db,
-            name,
-            Some(&current.revision),
-            vec![(
-                importer::Column::Configuration,
-                Expr::value(serde_json::to_value(configuration)?),
-            )],
-        )
-        .await
+        Ok(self
+            .update(
+                &self.db,
+                name,
+                Some(&current.revision),
+                vec![(
+                    importer::Column::Configuration,
+                    Expr::value(
+                        serde_json::to_value(configuration)
+                            .map_err(|err| PatchError::Common(err.into()))?,
+                    ),
+                )],
+            )
+            .await?)
     }
 
     pub async fn update_configuration(

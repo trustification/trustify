@@ -22,6 +22,7 @@ git2 = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }
 humantime-serde = { workspace = true }
+json-merge-patch = { workspace = true }
 log = { workspace = true }
 osv = { workspace = true, features = ["schema"] }
 parking_lot = { workspace = true }

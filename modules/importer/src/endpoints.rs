@@ -1,10 +1,12 @@
-use super::service::{Error, ImporterService};
+use super::service::{Error, ImporterService, PatchError};
 use crate::model::ImporterConfiguration;
 use actix_web::{
     delete, get,
+    guard::{self, Guard, GuardContext},
     http::header::{self, ETag, EntityTag, IfMatch},
-    post, put, web, HttpResponse, Responder,
+    patch, post, put, web, HttpResponse, Responder,
 };
+use std::convert::Infallible;
 use trustify_common::{
     db::Database,
     model::{Paginated, Revisioned},
@@ -20,6 +22,7 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
             .service(create)
             .service(read)
             .service(update)
+            .service(patch_json_merge)
             .service(delete)
             .service(get_reports)
             .service(set_enabled)
@@ -134,7 +137,7 @@ async fn read(
         ("if-match"=Option<String>, Header, description = "The revision to update"),
     ),
     responses(
-        (status = 201, description = "Created a new importer configuration"),
+        (status = 201, description = "Updated the importer configuration"),
         (status = 409, description = "An importer with that name does not exist"),
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
@@ -162,6 +165,48 @@ async fn update(
 #[utoipa::path(
     context_path = "/api/v1/importer",
     tag = "importer",
+    operation_id = "patchImporter",
+    request_body(
+        content = serde_json::Value,
+        content_type = guards::JSON_MERGE_CONTENT_TYPE,
+    ),
+    params(
+        ("name", Path, description = "The name of the importer"),
+        ("if-match"=Option<String>, Header, description = "The revision to update"),
+    ),
+    responses(
+        (status = 201, description = "Created a new importer configuration"),
+        (status = 409, description = "An importer with that name does not exist"),
+        (status = 412, description = "The provided if-match header did not match the stored revision"),
+    )
+)]
+#[patch("/{name}", guard = "guards::json_merge")]
+/// Update an existing importer configuration
+async fn patch_json_merge(
+    service: web::Data<ImporterService>,
+    name: web::Path<String>,
+    web::Header(if_match): web::Header<IfMatch>,
+    web::Json(patch): web::Json<serde_json::Value>,
+) -> Result<impl Responder, PatchError<serde_json::Error>> {
+    let revision = match &if_match {
+        IfMatch::Any => None,
+        IfMatch::Items(items) => items.first().map(|etag| etag.tag()),
+    };
+
+    service
+        .patch_configuration(&name, revision, |config| {
+            let mut json = serde_json::to_value(&config)?;
+            json_merge_patch::json_merge_patch(&mut json, &patch);
+            serde_json::from_value(json)
+        })
+        .await?;
+
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[utoipa::path(
+    context_path = "/api/v1/importer",
+    tag = "importer",
     operation_id = "enableImporter",
     request_body = bool,
     params(
@@ -181,7 +226,7 @@ async fn set_enabled(
     name: web::Path<String>,
     web::Header(if_match): web::Header<IfMatch>,
     web::Json(state): web::Json<bool>,
-) -> Result<impl Responder, Error> {
+) -> Result<impl Responder, PatchError<Infallible>> {
     let revision = match &if_match {
         IfMatch::Any => None,
         IfMatch::Items(items) => items.first().map(|etag| etag.tag()),
@@ -190,7 +235,7 @@ async fn set_enabled(
     service
         .patch_configuration(&name, revision, |mut configuration| {
             configuration.disabled = !state;
-            configuration
+            Ok(configuration)
         })
         .await?;
 
@@ -275,4 +320,14 @@ async fn get_reports(
     web::Query(paginated): web::Query<Paginated>,
 ) -> Result<impl Responder, Error> {
     Ok(web::Json(service.get_reports(&name, paginated).await?))
+}
+
+mod guards {
+    use super::*;
+
+    pub const JSON_MERGE_CONTENT_TYPE: &str = "application/merge-patch+json";
+
+    pub fn json_merge(ctx: &GuardContext) -> bool {
+        guard::Header("content-type", JSON_MERGE_CONTENT_TYPE).check(ctx)
+    }
 }

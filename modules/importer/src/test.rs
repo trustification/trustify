@@ -7,6 +7,7 @@ use actix_web::{
     http::{header, StatusCode},
     test as actix, web, App,
 };
+use serde_json::json;
 use std::time::Duration;
 use test_context::test_context;
 use test_log::test;
@@ -280,6 +281,89 @@ async fn test_oplock(ctx: TrustifyContext) {
 
     let req = actix::TestRequest::get()
         .uri("/api/v1/importer/foo")
+        .to_request();
+
+    let resp = actix::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(actix_web::test)]
+async fn test_patch(ctx: TrustifyContext) {
+    let db = ctx.db;
+    let app = actix::init_service(
+        App::new()
+            .service(web::scope("/api").configure(|svc| super::endpoints::configure(svc, db))),
+    )
+    .await;
+
+    // create one
+
+    let req = actix::TestRequest::post()
+        .uri("/api/v1/importer/foo")
+        .set_json(mock_configuration("bar"))
+        .to_request();
+
+    let resp = actix::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::CREATED);
+
+    // get it
+
+    let req = actix::TestRequest::get()
+        .uri("/api/v1/importer/foo")
+        .to_request();
+
+    let resp = actix::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let result: Importer = actix::read_body_json(resp).await;
+    assert_eq!(result, mock_importer(&result, "bar"));
+
+    // patch it
+
+    let req = actix::TestRequest::patch()
+        .uri("/api/v1/importer/foo")
+        .set_json(json!({
+            "sbom": {
+                "source": "baz",
+            },
+        }))
+        .insert_header(("content-type", "application/merge-patch+json"))
+        .to_request();
+
+    let resp = actix::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::NO_CONTENT);
+
+    // get it (again)
+
+    let req = actix::TestRequest::get()
+        .uri("/api/v1/importer/foo")
+        .to_request();
+
+    let resp = actix::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    let result: Importer = actix::read_body_json(resp).await;
+    assert_eq!(result, mock_importer(&result, "baz"));
+
+    // delete it
+
+    let req = actix::TestRequest::delete()
+        .uri("/api/v1/importer/foo")
+        .to_request();
+
+    let resp = actix::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::NO_CONTENT);
+
+    // try again
+
+    let req = actix::TestRequest::patch()
+        .uri("/api/v1/importer/foo")
+        .set_json(json!({
+            "sbom": {
+                "source": "bar",
+            },
+        }))
         .to_request();
 
     let resp = actix::call_service(&app, req).await;
