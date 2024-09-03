@@ -75,6 +75,9 @@ impl<H> GitWalker<H, (), ()>
 where
     H: Handler,
 {
+    /// Create a new GitWalker for a given repo and handler. By
+    /// default, a "shallow clone" (depth=1) of the repo will be
+    /// walked.
     pub fn new(source: impl Into<String>, handler: H) -> Self {
         Self {
             source: source.into(),
