@@ -4532,6 +4532,8 @@ checksum = "b4c5cc86750666a3ed20bdaf5ca2a0344f9c67674cae0515bec2da16fbaa47db"
 dependencies = [
  "fixedbitset",
  "indexmap 2.5.0",
+ "serde",
+ "serde_derive",
 ]
 
 [[package]]
@@ -7559,7 +7561,51 @@ dependencies = [
  "tokio-util",
  "trustify-common",
  "trustify-cvss",
+ "trustify-entity",
  "trustify-test-context",
+]
+
+[[package]]
+name = "trustify-module-analysis"
+version = "0.1.0-alpha.15"
+dependencies = [
+ "actix-http",
+ "actix-web",
+ "anyhow",
+ "bytes",
+ "bytesize",
+ "chrono",
+ "criterion",
+ "csaf",
+ "cyclonedx-bom",
+ "hex",
+ "humantime",
+ "itertools 0.13.0",
+ "jsonpath-rust",
+ "log",
+ "packageurl",
+ "parking_lot 0.12.3",
+ "petgraph",
+ "sea-orm",
+ "sea-query",
+ "serde",
+ "serde_json",
+ "sha2",
+ "strum 0.26.3",
+ "test-context",
+ "test-log",
+ "thiserror",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "trustify-auth",
+ "trustify-common",
+ "trustify-entity",
+ "trustify-infrastructure",
+ "trustify-test-context",
+ "urlencoding",
+ "utoipa",
+ "zip 2.2.0",
 ]
 
 [[package]]
@@ -7740,6 +7786,7 @@ dependencies = [
  "trustify-common",
  "trustify-cvss",
  "trustify-entity",
+ "trustify-module-analysis",
  "trustify-module-storage",
  "trustify-test-context",
  "utoipa",
@@ -7805,6 +7852,7 @@ dependencies = [
  "trustify-auth",
  "trustify-common",
  "trustify-infrastructure",
+ "trustify-module-analysis",
  "trustify-module-fundamental",
  "trustify-module-graphql",
  "trustify-module-importer",
@@ -7861,6 +7909,7 @@ dependencies = [
  "tokio",
  "trustify-common",
  "trustify-infrastructure",
+ "trustify-module-analysis",
  "trustify-module-importer",
  "trustify-server",
  "url",

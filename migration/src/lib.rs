@@ -71,6 +71,8 @@ mod m0000565_alter_advisory_vulnerability_cwe_column;
 mod m0000570_add_import_progress;
 mod m0000575_create_weakness;
 mod m0000580_mark_fns;
+mod m0000590_get_purl_fns;
+mod m0000595_analysis_api_index;
 
 pub struct Migrator;
 
@@ -149,6 +151,8 @@ impl MigratorTrait for Migrator {
             Box::new(m0000570_add_import_progress::Migration),
             Box::new(m0000575_create_weakness::Migration),
             Box::new(m0000580_mark_fns::Migration),
+            Box::new(m0000590_get_purl_fns::Migration),
+            Box::new(m0000595_analysis_api_index::Migration),
         ]
     }
 }
