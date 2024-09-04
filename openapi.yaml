@@ -287,7 +287,7 @@ paths:
         required: true
       responses:
         '201':
-          description: Created a new importer configuration
+          description: Updated the importer configuration
         '409':
           description: An importer with that name does not exist
         '412':
@@ -314,6 +314,37 @@ paths:
       responses:
         '201':
           description: Delete the importer configuration
+    patch:
+      tags:
+      - importer
+      summary: Update an existing importer configuration
+      operationId: patchImporter
+      parameters:
+      - name: name
+        in: path
+        description: The name of the importer
+        required: true
+        schema:
+          type: string
+      - name: if-match
+        in: header
+        description: The revision to update
+        required: false
+        schema:
+          type: string
+          nullable: true
+      requestBody:
+        content:
+          application/merge-patch+json:
+            schema: {}
+        required: true
+      responses:
+        '201':
+          description: Created a new importer configuration
+        '409':
+          description: An importer with that name does not exist
+        '412':
+          description: The provided if-match header did not match the stored revision
   /api/v1/importer/{name}/enabled:
     put:
       tags:
