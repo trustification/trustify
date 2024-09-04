@@ -320,7 +320,7 @@ fn configure(
     .route(
         "/openapi/oauth-receiver.html",
         web::get().to(|| async {
-            HttpResponse::Ok().content_type(mime::TEXT.as_str()).body(
+            HttpResponse::Ok().content_type(mime::TEXT_HTML).body(
                 r#"<!doctype html>
 <head>
   <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
