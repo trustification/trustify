@@ -43,6 +43,7 @@ pub struct ApiDoc;
     ),
 )]
 #[get("/v1/organization")]
+/// List organizations
 pub async fn all(
     state: web::Data<OrganizationService>,
     web::Query(search): web::Query<Query>,
@@ -64,6 +65,7 @@ pub async fn all(
     ),
 )]
 #[get("/v1/organization/{id}")]
+/// Retrieve organization details
 pub async fn get(
     state: web::Data<OrganizationService>,
     id: web::Path<Uuid>,

@@ -40,6 +40,7 @@ pub struct ApiDoc;
     ),
 )]
 #[get("/v1/weakness")]
+/// List weaknesses
 pub async fn list_weaknesses(
     state: web::Data<WeaknessService>,
     web::Query(search): web::Query<Query>,
@@ -57,6 +58,7 @@ pub async fn list_weaknesses(
     ),
 )]
 #[get("/v1/weakness/{id}")]
+/// Retrieve weakness details
 pub async fn get_weakness(
     state: web::Data<WeaknessService>,
     id: web::Path<String>,

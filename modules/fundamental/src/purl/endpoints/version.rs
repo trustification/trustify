@@ -7,7 +7,7 @@ use trustify_common::id::IdError;
 use trustify_common::purl::Purl;
 
 #[utoipa::path(
-    tag = "purl",
+    tag = "versioned purl",
     operation_id = "getVersionedPurl",
     context_path= "/api",
     params(
@@ -18,6 +18,7 @@ use trustify_common::purl::Purl;
     ),
 )]
 #[get("/v1/purl/version/{key}")]
+/// Retrieve details of a versioned, non-qualified pURL
 pub async fn get_versioned_purl(
     service: web::Data<PurlService>,
     key: web::Path<String>,

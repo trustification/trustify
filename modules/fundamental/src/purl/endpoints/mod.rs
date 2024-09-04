@@ -81,6 +81,7 @@ pub struct ApiDoc;
     ),
 )]
 #[get("/v1/purl/{key}")]
+/// Retrieve details of a fully-qualified pURL
 pub async fn get(
     service: web::Data<PurlService>,
     key: web::Path<String>,
@@ -107,6 +108,7 @@ pub async fn get(
     ),
 )]
 #[get("/v1/purl")]
+/// List fully-qualified pURLs
 pub async fn all(
     service: web::Data<PurlService>,
     web::Query(search): web::Query<Query>,
