@@ -8,7 +8,7 @@ use trustify_common::config::S3Config;
 
 #[derive(Clone, Debug)]
 pub struct S3Backend {
-    bucket: Bucket,
+    bucket: Box<Bucket>,
 }
 
 impl S3Backend {
