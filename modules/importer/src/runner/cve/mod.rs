@@ -106,6 +106,7 @@ impl super::ImportRunner {
                 start_year: cve.start_year,
             },
         )
+        .path(Some("cves"))
         .continuation(continuation)
         .progress(progress);
 
