@@ -64,6 +64,10 @@ pub struct Run {
     #[arg(long, env)]
     pub sample_data: bool,
 
+    /// Allows enabling the GraphQL endpoint
+    #[arg(long, env = "TRUSTD_WITH_GRAPHQL", default_value_t = false)]
+    pub with_graphql: bool,
+
     /// Enable the embedded OIDC server (WARNING: this is insecure and should only be used for demos)
     #[cfg(feature = "garage-door")]
     #[arg(long, env)]
@@ -131,6 +135,7 @@ struct InitData {
     embedded_oidc: Option<embedded_oidc::EmbeddedOidc>,
     ui: UI,
     working_dir: Option<PathBuf>,
+    with_graphql: bool,
 }
 
 impl Run {
@@ -243,6 +248,7 @@ impl InitData {
             embedded_oidc,
             ui,
             working_dir: run.working_dir,
+            with_graphql: run.with_graphql,
         })
     }
 
@@ -265,6 +271,7 @@ impl InitData {
                         self.swagger_oidc.clone(),
                         self.authenticator.clone(),
                         ui.clone(),
+                        self.with_graphql,
                     );
                 })
         };
@@ -299,6 +306,7 @@ fn configure(
     swagger_oidc: Option<Arc<SwaggerUiOidc>>,
     auth: Option<Arc<Authenticator>>,
     ui: Arc<UiResources>,
+    with_graphql: bool,
 ) {
     let graph = Graph::new(db.clone());
 
@@ -336,23 +344,27 @@ fn configure(
     svc.service(swagger_ui_with_auth(openapi::openapi(), swagger_oidc))
         .service(web::redirect("/swagger-ui", "/swagger-ui/"));
 
-    // register GraphQL UIs
+    // register GraphQL API and UI
 
-    svc.service(
-        web::scope("/graphql")
-            .wrap(middleware::NormalizePath::new(
-                middleware::TrailingSlash::Always,
-            ))
-            .wrap(new_auth(auth.clone()))
-            .configure(|svc| {
-                trustify_module_graphql::endpoints::configure(svc, db.clone());
-                trustify_module_graphql::endpoints::configure_graphiql(svc);
-            }),
-    );
+    if with_graphql {
+        svc.service(
+            web::scope("/graphql")
+                .wrap(middleware::NormalizePath::new(
+                    middleware::TrailingSlash::Always,
+                ))
+                .wrap(new_auth(auth.clone()))
+                .configure(|svc| {
+                    trustify_module_graphql::endpoints::configure(svc, db.clone());
+                    trustify_module_graphql::endpoints::configure_graphiql(svc);
+                }),
+        );
+    }
+
+    // register REST API & UI
+
     svc.app_data(graph)
         .service(web::scope("/api").wrap(new_auth(auth)).configure(|svc| {
             trustify_module_importer::endpoints::configure(svc, db.clone());
-
             trustify_module_fundamental::endpoints::configure(svc, db.clone(), storage);
         }))
         .configure(|svc| {
@@ -369,19 +381,6 @@ fn build_url(ci: &ConnectionInfo, path: impl Display) -> Option<url::Url> {
         host = ci.host()
     ))
     .ok()
-}
-
-#[get("/")]
-async fn index(ci: ConnectionInfo) -> Result<Json<Vec<url::Url>>, UrlGenerationError> {
-    let mut result = vec![];
-
-    result.extend(build_url(&ci, "/"));
-    result.extend(build_url(&ci, "/openapi.json"));
-    result.extend(build_url(&ci, "/openapi/"));
-    result.extend(build_url(&ci, "/redoc/"));
-    result.extend(build_url(&ci, "/rapidoc/"));
-
-    Ok(Json(result))
 }
 
 #[cfg(test)]
@@ -408,7 +407,7 @@ mod test {
         let (storage, _) = FileSystemBackend::for_test().await?;
         let ui = Arc::new(UiResources::new(&UI::default())?);
         let app = actix_web::test::init_service(
-            App::new().configure(|svc| super::configure(svc, db, storage, None, None, ui)),
+            App::new().configure(|svc| super::configure(svc, db, storage, None, None, ui, true)),
         )
         .await;
 
