@@ -51,13 +51,13 @@ jobs:
         run: |
           cargo xtask openapi
           if ! git diff --quiet; then
-              echo "::error::Uncommitted changes (run `cargo xtask openapi` after making api changes)"
+              echo "::error::Uncommitted changes (run 'cargo xtask openapi' after making api changes)"
               exit 1
           fi
       - name: Ensure schemas are up-to-date
         run: |
           cargo xtask generate-schemas
           if ! git diff --quiet; then
-              echo "::error::Uncommitted changes (run `cargo xtask generate-schemas` after making changes to the models)"
+              echo "::error::Uncommitted changes (run 'cargo xtask generate-schemas' after making changes to the models)"
               exit 1
           fi
