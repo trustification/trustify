@@ -32,9 +32,18 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(list, create, read, update, delete, get_reports, set_enabled, force),
+    paths(
+        create,
+        delete,
+        force,
+        get_reports,
+        list,
+        patch_json_merge,
+        read,
+        set_enabled,
+        update,
+    ),
     components(schemas(
-        trustify_common::model::BinaryByteSize,
         crate::model::ClearlyDefinedImporter,
         crate::model::ClearlyDefinedPackageType,
         crate::model::CommonImporter,
@@ -51,6 +60,7 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
         crate::model::RevisionedImporter,
         crate::model::SbomImporter,
         crate::model::State,
+        trustify_common::model::BinaryByteSize,
     )),
     tags()
 )]
