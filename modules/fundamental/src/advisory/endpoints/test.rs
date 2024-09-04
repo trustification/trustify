@@ -106,6 +106,89 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+async fn find_advisories_by_document_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    let advisory = ctx
+        .graph
+        .ingest_advisory(
+            "RHSA-1",
+            ("source", "https://redhat.com/"),
+            &Digests::digest("RHSA-1"),
+            AdvisoryInformation {
+                title: Some("RHSA-1".to_string()),
+                issuer: None,
+                published: Some(OffsetDateTime::now_utc()),
+                modified: None,
+                withdrawn: None,
+            },
+            (),
+        )
+        .await?;
+
+    let advisory_vuln = advisory
+        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .await?;
+    advisory_vuln
+        .ingest_cvss3_score(
+            Cvss3Base {
+                minor_version: 0,
+                av: AttackVector::Network,
+                ac: AttackComplexity::Low,
+                pr: PrivilegesRequired::None,
+                ui: UserInteraction::None,
+                s: Scope::Unchanged,
+                c: Confidentiality::None,
+                i: Integrity::None,
+                a: Availability::None,
+            },
+            (),
+        )
+        .await?;
+
+    ctx.graph
+        .ingest_advisory(
+            "RHSA-2",
+            ("source", "https://redhat.com/"),
+            &Digests::digest("RHSA-2"),
+            AdvisoryInformation {
+                title: Some("RHSA-2".to_string()),
+                issuer: None,
+                published: Some(OffsetDateTime::now_utc()),
+                modified: None,
+                withdrawn: None,
+            },
+            (),
+        )
+        .await?;
+
+    let uri = "/api/v1/advisory/RHSA-1/by-document-id";
+
+    let request = TestRequest::get().uri(uri).to_request();
+
+    let response: PaginatedResults<AdvisorySummary> = app.call_and_read_body_json(request).await;
+
+    assert_eq!(1, response.items.len());
+
+    let rhsa_1 = &response
+        .items
+        .iter()
+        .find(|e| e.head.identifier == "RHSA-1");
+
+    assert!(rhsa_1.is_some());
+
+    let rhsa_1 = rhsa_1.unwrap();
+
+    assert!(rhsa_1
+        .vulnerabilities
+        .iter()
+        .any(|e| e.head.identifier == "CVE-123"));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
 async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
 

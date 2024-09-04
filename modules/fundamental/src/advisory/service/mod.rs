@@ -3,16 +3,17 @@ use crate::{
     Error,
 };
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTypeTrait, DatabaseBackend, EntityTrait,
-    FromQueryResult, IntoActiveModel, IntoIdentity, QuerySelect, QueryTrait, TransactionTrait,
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, ColumnTypeTrait, ConnectionTrait,
+    DatabaseBackend, EntityTrait, FromQueryResult, IntoActiveModel, IntoIdentity, QueryFilter,
+    QueryOrder, QuerySelect, QueryTrait, Select, SelectModel, TransactionTrait,
 };
 use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, SimpleExpr};
 use time::OffsetDateTime;
 use trustify_common::{
     db::{
-        limiter::LimiterAsModelTrait,
+        limiter::{Limiter, LimiterAsModelTrait},
         query::{Columns, Filtering, Query},
-        Database, Transactional,
+        ConnectionOrTransaction, Database, Transactional,
     },
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},
@@ -33,6 +34,7 @@ impl AdvisoryService {
         Self { db }
     }
 
+    /// Fetch all advisories, with an optional search query
     pub async fn fetch_advisories<TX: AsRef<Transactional> + Sync + Send>(
         &self,
         search: Query,
@@ -41,51 +43,9 @@ impl AdvisoryService {
     ) -> Result<PaginatedResults<AdvisorySummary>, Error> {
         let connection = self.db.connection(&tx);
 
-        // To be able to ORDER or WHERE using a synthetic column, we must first
-        // SELECT col, extra_col FROM (SELECT col, random as extra_col FROM...)
-        // which involves mucking about inside the Select<E> to re-target from
-        // the original underlying table it expects the entity to live in.
-        let inner_query = advisory::Entity::find()
-            .left_join(cvss3::Entity)
-            .expr_as_(
-                SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
-                    cvss3::Column::Score.into_column_ref(),
-                ))),
-                "average_score",
-            )
-            .expr_as_(
-                SimpleExpr::FunctionCall(Func::cust("cvss3_severity".into_identity()).arg(
-                    SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
-                        cvss3::Column::Score.into_column_ref(),
-                    ))),
-                )),
-                "average_severity",
-            )
-            .group_by(advisory::Column::Id);
+        let query = Self::build_advisories_query();
 
-        let mut outer_query = advisory::Entity::find();
-
-        // Alias the inner query as exactly the table the entity is expecting
-        // so that column aliases link up correctly.
-        QueryTrait::query(&mut outer_query)
-            .from_clear()
-            .from_subquery(inner_query.into_query(), "advisory".into_identity());
-
-        // And then proceed as usual.
-        let limiter = outer_query
-            .column_as(
-                SimpleExpr::Column(ColumnRef::Column(
-                    "average_score".into_identity().into_iden(),
-                )),
-                "average_score",
-            )
-            .column_as(
-                SimpleExpr::Column(ColumnRef::Column(
-                    "average_severity".into_identity().into_iden(),
-                ))
-                .cast_as("TEXT".into_identity()),
-                "average_severity",
-            )
+        let limiter = query
             .filtering_with(
                 search,
                 Columns::from_entity::<advisory::Entity>()
@@ -112,8 +72,68 @@ impl AdvisoryService {
             )?
             .limiting_as::<AdvisoryCatcher>(&connection, paginated.offset, paginated.limit);
 
-        let total = limiter.total().await?;
+        self.build_from_catcher(limiter, &connection).await
+    }
 
+    /// Build the default query for returning advisories targeting the [`AdvisoryCatcher`] type.
+    fn build_advisories_query() -> Select<advisory::Entity> {
+        // To be able to ORDER or WHERE using a synthetic column, we must first
+        // SELECT col, extra_col FROM (SELECT col, random as extra_col FROM...)
+        // which involves mucking about inside the Select<E> to re-target from
+        // the original underlying table it expects the entity to live in.
+
+        let inner = advisory::Entity::find()
+            .left_join(cvss3::Entity)
+            .expr_as(
+                SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
+                    cvss3::Column::Score.into_column_ref(),
+                ))),
+                "average_score",
+            )
+            .expr_as(
+                SimpleExpr::FunctionCall(Func::cust("cvss3_severity".into_identity()).arg(
+                    SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
+                        cvss3::Column::Score.into_column_ref(),
+                    ))),
+                )),
+                "average_severity",
+            )
+            .group_by(advisory::Column::Id);
+
+        let mut outer_query = advisory::Entity::find();
+
+        // Alias the inner query as exactly the table the entity is expecting
+        // so that column aliases link up correctly.
+        QueryTrait::query(&mut outer_query)
+            .from_clear()
+            .from_subquery(inner.into_query(), "advisory".into_identity());
+
+        outer_query
+            .column_as(
+                SimpleExpr::Column(ColumnRef::Column(
+                    "average_score".into_identity().into_iden(),
+                )),
+                "average_score",
+            )
+            .column_as(
+                SimpleExpr::Column(ColumnRef::Column(
+                    "average_severity".into_identity().into_iden(),
+                ))
+                .cast_as("TEXT".into_identity()),
+                "average_severity",
+            )
+    }
+
+    /// Build a result from a limiter based on a query targeting the [`AdvisoryCatcher`] result.
+    async fn build_from_catcher<'db, C>(
+        &self,
+        limiter: Limiter<'db, C, SelectModel<AdvisoryCatcher>, SelectModel<AdvisoryCatcher>>,
+        connection: &ConnectionOrTransaction<'db>,
+    ) -> Result<PaginatedResults<AdvisorySummary>, Error>
+    where
+        C: ConnectionTrait,
+    {
+        let total = limiter.total().await?;
         let items = limiter.fetch().await?;
 
         let averages: Vec<_> = items
@@ -140,10 +160,31 @@ impl AdvisoryService {
 
         Ok(PaginatedResults {
             total,
-            items: AdvisorySummary::from_entities(&entities, &averages, &connection).await?,
+            items: AdvisorySummary::from_entities(&entities, &averages, connection).await?,
         })
     }
 
+    /// Fetch all documents claiming a certain document ID.
+    pub async fn fetch_advisories_by_document_id<TX: AsRef<Transactional> + Sync + Send>(
+        &self,
+        id: &str,
+        paginated: Paginated,
+        tx: TX,
+    ) -> Result<PaginatedResults<AdvisorySummary>, Error> {
+        let connection = self.db.connection(&tx);
+
+        let query = Self::build_advisories_query()
+            .filter(advisory::Column::Identifier.eq(id))
+            .order_by_desc(advisory::Column::Published)
+            .order_by_desc(advisory::Column::Modified);
+
+        let limiter =
+            query.limiting_as::<AdvisoryCatcher>(&connection, paginated.offset, paginated.limit);
+
+        self.build_from_catcher(limiter, &connection).await
+    }
+
+    /// Fetch a single advisory by its unique ID (primary key)
     pub async fn fetch_advisory<TX: AsRef<Transactional> + Sync + Send>(
         &self,
         id: Id,
@@ -151,50 +192,9 @@ impl AdvisoryService {
     ) -> Result<Option<AdvisoryDetails>, Error> {
         let connection = self.db.connection(&tx);
 
-        // To be able to ORDER or WHERE using a synthetic column, we must first
-        // SELECT col, extra_col FROM (SELECT col, random as extra_col FROM...)
-        // which involves mucking about inside the Select<E> to re-target from
-        // the original underlying table it expects the entity to live in.
-        let inner_query = advisory::Entity::find()
-            .left_join(cvss3::Entity)
-            .expr_as_(
-                SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
-                    cvss3::Column::Score.into_column_ref(),
-                ))),
-                "average_score",
-            )
-            .expr_as_(
-                SimpleExpr::FunctionCall(Func::cust("cvss3_severity".into_identity()).arg(
-                    SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
-                        cvss3::Column::Score.into_column_ref(),
-                    ))),
-                )),
-                "average_severity",
-            )
-            .group_by(advisory::Column::Id);
+        let query = Self::build_advisories_query();
 
-        let mut outer_query = advisory::Entity::find();
-
-        // Alias the inner query as exactly the table the entity is expecting
-        // so that column aliases link up correctly.
-        QueryTrait::query(&mut outer_query)
-            .from_clear()
-            .from_subquery(inner_query.into_query(), "advisory".into_identity());
-
-        let results = outer_query
-            .column_as(
-                SimpleExpr::Column(ColumnRef::Column(
-                    "average_score".into_identity().into_iden(),
-                )),
-                "average_score",
-            )
-            .column_as(
-                SimpleExpr::Column(ColumnRef::Column(
-                    "average_severity".into_identity().into_iden(),
-                ))
-                .cast_as("TEXT".into_identity()),
-                "average_severity",
-            )
+        let results = query
             .try_filter(id)?
             .into_model::<AdvisoryCatcher>()
             .one(&connection)

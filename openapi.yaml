@@ -46,7 +46,7 @@ paths:
           minimum: 0
       responses:
         '200':
-          description: Matching vulnerabilities
+          description: Matching advisories
           content:
             application/json:
               schema:
@@ -85,6 +85,29 @@ paths:
           description: Upload a file
         '400':
           description: The file could not be parsed as an advisory
+  /api/v1/advisory/{id}/by-document-id:
+    get:
+      tags:
+      - advisory
+      summary: Retrieve all documents claiming to have the requested ID.
+      description: |-
+        Ideally document IDs should be unique, but it might be that multiple documents claim the ID
+        anyway. This endpoint returns all of them.
+      operationId: findAdvisoryByDocumentId
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the document
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Matching advisory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdvisorySummary'
   /api/v1/advisory/{id}/label:
     put:
       tags:

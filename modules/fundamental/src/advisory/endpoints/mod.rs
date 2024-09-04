@@ -2,9 +2,9 @@ mod label;
 #[cfg(test)]
 mod test;
 
-use crate::purl::service::PurlService;
-use crate::Error::Internal;
-use crate::{advisory::service::AdvisoryService, Error};
+use crate::{
+    advisory::service::AdvisoryService, purl::service::PurlService, Error, Error::Internal,
+};
 use actix_web::{delete, get, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use std::str::FromStr;
@@ -20,6 +20,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     config
         .app_data(web::Data::new(advisory_service))
         .service(all)
+        .service(find_by_document_id)
         .service(get)
         .service(delete)
         .service(upload)
@@ -30,7 +31,16 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(all, get, delete, upload, download, label::set, label::update),
+    paths(
+        all,
+        delete,
+        download,
+        find_by_document_id,
+        get,
+        label::set,
+        label::update,
+        upload,
+    ),
     components(schemas(
         crate::advisory::model::AdvisoryDetails,
         crate::advisory::model::AdvisoryHead,
@@ -40,10 +50,10 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         crate::advisory::model::PaginatedAdvisorySummary,
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
-        trustify_common::purl::Purl,
         trustify_common::id::Id,
-        trustify_entity::labels::Labels,
+        trustify_common::purl::Purl,
         trustify_cvss::cvss3::severity::Severity,
+        trustify_entity::labels::Labels,
     )),
     tags()
 )]
@@ -58,7 +68,7 @@ pub struct ApiDoc;
         Paginated,
     ),
     responses(
-        (status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
+        (status = 200, description = "Matching advisories", body = PaginatedAdvisorySummary),
     ),
 )]
 #[get("/v1/advisory")]
@@ -68,6 +78,34 @@ pub async fn all(
     web::Query(paginated): web::Query<Paginated>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(state.fetch_advisories(search, paginated, ()).await?))
+}
+
+#[utoipa::path(
+    tag = "advisory",
+    operation_id = "findAdvisoryByDocumentId",
+    context_path = "/api",
+    params(
+        ("id" = string, Path, description = "The ID of the document"),
+    ),
+    responses(
+        (status = 200, description = "Matching advisory", body = PaginatedAdvisorySummary),
+    ),
+)]
+#[get("/v1/advisory/{id}/by-document-id")]
+/// Retrieve all documents claiming to have the requested ID.
+///
+/// Ideally document IDs should be unique, but it might be that multiple documents claim the ID
+/// anyway. This endpoint returns all of them.
+pub async fn find_by_document_id(
+    state: web::Data<AdvisoryService>,
+    id: web::Path<String>,
+    web::Query(paginated): web::Query<Paginated>,
+) -> actix_web::Result<impl Responder> {
+    Ok(HttpResponse::Ok().json(
+        state
+            .fetch_advisories_by_document_id(&id, paginated, ())
+            .await?,
+    ))
 }
 
 #[utoipa::path(
