@@ -10,6 +10,7 @@ paths:
     get:
       tags:
       - advisory
+      summary: List advisories
       operationId: listAdvisories
       parameters:
       - name: q
@@ -136,6 +137,7 @@ paths:
     get:
       tags:
       - advisory
+      summary: Get an advisory
       operationId: getAdvisory
       parameters:
       - name: key
@@ -156,6 +158,7 @@ paths:
     delete:
       tags:
       - advisory
+      summary: Delete an advisory
       operationId: deleteAdvisory
       parameters:
       - name: key
@@ -177,6 +180,7 @@ paths:
     get:
       tags:
       - advisory
+      summary: Download an advisory document
       operationId: downloadAdvisory
       parameters:
       - name: key
@@ -434,6 +438,7 @@ paths:
     get:
       tags:
       - license
+      summary: List licenses
       operationId: listLicenses
       parameters:
       - name: q
@@ -478,7 +483,8 @@ paths:
   /api/v1/license/spdx/license:
     get:
       tags:
-      - license
+      - spdx license
+      summary: List SPDX licenses
       operationId: listSpdxLicenses
       parameters:
       - name: q
@@ -523,7 +529,8 @@ paths:
   /api/v1/license/spdx/license/{id}:
     get:
       tags:
-      - license
+      - spdx license
+      summary: Get SPDX license details
       operationId: getSpdxLicense
       parameters:
       - name: id
@@ -542,6 +549,7 @@ paths:
     get:
       tags:
       - license
+      summary: Retrieve license details
       operationId: getLicenses
       parameters:
       - name: uuid
@@ -561,6 +569,7 @@ paths:
     get:
       tags:
       - license
+      summary: Retrieve pURLs covered by a license
       operationId: getLicensePurls
       parameters:
       - name: q
@@ -611,6 +620,7 @@ paths:
     get:
       tags:
       - organization
+      summary: List organizations
       operationId: listOrganizations
       parameters:
       - name: q
@@ -656,6 +666,7 @@ paths:
     get:
       tags:
       - organization
+      summary: Retrieve organization details
       operationId: getOrganization
       parameters:
       - name: id
@@ -766,6 +777,7 @@ paths:
     get:
       tags:
       - purl
+      summary: List fully-qualified pURLs
       operationId: listPurl
       parameters:
       - name: q
@@ -810,7 +822,8 @@ paths:
   /api/v1/purl/base:
     get:
       tags:
-      - purl
+      - base purl
+      summary: List base versionless pURLs
       operationId: listBasePurls
       parameters:
       - name: q
@@ -855,7 +868,8 @@ paths:
   /api/v1/purl/base/{key}:
     get:
       tags:
-      - purl
+      - base purl
+      summary: Retrieve details about a base versionless pURL
       operationId: getBasePurl
       parameters:
       - name: key
@@ -874,7 +888,8 @@ paths:
   /api/v1/purl/type:
     get:
       tags:
-      - purl
+      - purl type
+      summary: List known pURL types
       operationId: listPurlTypes
       responses:
         '200':
@@ -888,7 +903,8 @@ paths:
   /api/v1/purl/type/{type}:
     get:
       tags:
-      - purl
+      - purl type
+      summary: Retrieve details about a pURL type
       operationId: getPurlType
       parameters:
       - name: q
@@ -939,7 +955,8 @@ paths:
   /api/v1/purl/type/{type}/{namespace_and_name}:
     get:
       tags:
-      - purl
+      - purl type
+      summary: Retrieve base pURL details of a type
       operationId: getBasePurlOfType
       parameters:
       - name: type
@@ -965,6 +982,7 @@ paths:
     get:
       tags:
       - purl
+      summary: Retrieve versioned pURL details of a type
       operationId: getVersionedPurlOfType
       parameters:
       - name: type
@@ -995,7 +1013,8 @@ paths:
   /api/v1/purl/version/{key}:
     get:
       tags:
-      - purl
+      - versioned purl
+      summary: Retrieve details of a versioned, non-qualified pURL
       operationId: getVersionedPurl
       parameters:
       - name: key
@@ -1015,6 +1034,7 @@ paths:
     get:
       tags:
       - purl
+      summary: Retrieve details of a fully-qualified pURL
       operationId: getPurl
       parameters:
       - name: key
@@ -1414,6 +1434,7 @@ paths:
     get:
       tags:
       - vulnerability
+      summary: List vulnerabilities
       operationId: listVulnerabilities
       parameters:
       - name: q
@@ -1459,6 +1480,7 @@ paths:
     get:
       tags:
       - vulnerability
+      summary: Retrieve vulnerability details
       operationId: getVulnerability
       parameters:
       - name: id
@@ -1479,6 +1501,7 @@ paths:
     delete:
       tags:
       - vulnerability
+      summary: Delete vulnerability
       operationId: deleteVulnerability
       parameters:
       - name: id
@@ -1500,6 +1523,7 @@ paths:
     get:
       tags:
       - weakness
+      summary: List weaknesses
       operationId: listWeaknesses
       parameters:
       - name: q
@@ -1545,6 +1569,7 @@ paths:
     get:
       tags:
       - weakness
+      summary: Retrieve weakness details
       operationId: getWeakness
       parameters:
       - name: id
