@@ -104,13 +104,13 @@ impl ImporterService {
     }
 
     pub async fn list(&self) -> Result<Vec<Importer>, Error> {
-        let result = importer::Entity::find()
+        let mut result: Vec<_> = importer::Entity::find()
             .all(&self.db)
             .await?
             .into_iter()
             .map(Importer::try_from)
             .collect::<Result<_, _>>()?;
-
+        result.sort_unstable_by_key(|i| (i.data.configuration.disabled, i.name.clone()));
         Ok(result)
     }
 
