@@ -11,7 +11,7 @@ use trustify_common::purl::Purl;
 #[utoipa::path(
     context_path= "/api",
     operation_id = "getBasePurl",
-    tag = "purl",
+    tag = "base purl",
     params(
         ("key" = String, Path, description = "opaque identifier for a base PURL, or a URL-encoded pURL itself")
     ),
@@ -20,6 +20,7 @@ use trustify_common::purl::Purl;
     ),
 )]
 #[get("/v1/purl/base/{key}")]
+/// Retrieve details about a base versionless pURL
 pub async fn get_base_purl(
     service: web::Data<PurlService>,
     key: web::Path<String>,
@@ -36,7 +37,7 @@ pub async fn get_base_purl(
 #[utoipa::path(
     context_path= "/api",
     operation_id = "listBasePurls",
-    tag = "purl",
+    tag = "base purl",
     params(
         Query,
         Paginated,
@@ -46,6 +47,7 @@ pub async fn get_base_purl(
     ),
 )]
 #[get("/v1/purl/base")]
+/// List base versionless pURLs
 pub async fn all_base_purls(
     service: web::Data<PurlService>,
     web::Query(search): web::Query<Query>,

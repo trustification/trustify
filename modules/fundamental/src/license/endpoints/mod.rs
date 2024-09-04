@@ -58,6 +58,7 @@ pub struct ApiDoc;
     ),
 )]
 #[get("/v1/license")]
+/// List licenses
 pub async fn list_licenses(
     state: web::Data<LicenseService>,
     web::Query(search): web::Query<Query>,
@@ -75,6 +76,7 @@ pub async fn list_licenses(
     ),
 )]
 #[get("/v1/license/{uuid}")]
+/// Retrieve license details
 pub async fn get_license(
     state: web::Data<LicenseService>,
     uuid: web::Path<Uuid>,
@@ -95,6 +97,7 @@ pub async fn get_license(
     ),
 )]
 #[get("/v1/license/{uuid}/purl")]
+/// Retrieve pURLs covered by a license
 pub async fn get_license_purls(
     state: web::Data<LicenseService>,
     uuid: web::Path<String>,

@@ -4,7 +4,7 @@ use trustify_common::db::query::Query;
 use trustify_common::model::Paginated;
 
 #[utoipa::path(
-    tag = "purl",
+    tag = "purl type",
     operation_id = "listPurlTypes",
     context_path= "/api",
     params(
@@ -14,12 +14,13 @@ use trustify_common::model::Paginated;
     ),
 )]
 #[get("/v1/purl/type")]
+/// List known pURL types
 pub async fn all_purl_types(service: web::Data<PurlService>) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(service.purl_types(()).await?))
 }
 
 #[utoipa::path(
-    tag = "purl",
+    tag = "purl type",
     operation_id = "getPurlType",
     context_path= "/api",
     params(
@@ -32,6 +33,7 @@ pub async fn all_purl_types(service: web::Data<PurlService>) -> actix_web::Resul
     ),
 )]
 #[get("/v1/purl/type/{type}")]
+/// Retrieve details about a pURL type
 pub async fn get_purl_type(
     service: web::Data<PurlService>,
     r#type: web::Path<String>,
@@ -46,7 +48,7 @@ pub async fn get_purl_type(
 }
 
 #[utoipa::path(
-    tag = "purl",
+    tag = "purl type",
     operation_id = "getBasePurlOfType",
     context_path= "/api",
     params(
@@ -59,6 +61,7 @@ pub async fn get_purl_type(
     ),
 )]
 #[get("/v1/purl/type/{type}/{namespace_and_name:[^@]+}")]
+/// Retrieve base pURL details of a type
 pub async fn get_base_purl_of_type(
     service: web::Data<PurlService>,
     path: web::Path<(String, String)>,
@@ -88,6 +91,7 @@ pub async fn get_base_purl_of_type(
     ),
 )]
 #[get("/v1/purl/type/{type}/{namespace_and_name:[^@]+}@{version}")]
+/// Retrieve versioned pURL details of a type
 pub async fn get_versioned_purl_of_type(
     service: web::Data<PurlService>,
     path: web::Path<(String, String, String)>,

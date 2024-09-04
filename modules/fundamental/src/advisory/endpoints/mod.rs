@@ -62,6 +62,7 @@ pub struct ApiDoc;
     ),
 )]
 #[get("/v1/advisory")]
+/// List advisories
 pub async fn all(
     state: web::Data<AdvisoryService>,
     web::Query(search): web::Query<Query>,
@@ -83,6 +84,7 @@ pub async fn all(
     ),
 )]
 #[get("/v1/advisory/{key}")]
+/// Get an advisory
 pub async fn get(
     state: web::Data<AdvisoryService>,
     key: web::Path<String>,
@@ -110,6 +112,7 @@ pub async fn get(
     ),
 )]
 #[delete("/v1/advisory/{key}")]
+/// Delete an advisory
 pub async fn delete(
     state: web::Data<AdvisoryService>,
     purl_service: web::Data<PurlService>,
@@ -185,6 +188,7 @@ pub async fn upload(
     )
 )]
 #[get("/v1/advisory/{key}/download")]
+/// Download an advisory document
 pub async fn download(
     ingestor: web::Data<IngestorService>,
     advisory: web::Data<AdvisoryService>,

@@ -4,7 +4,7 @@ use trustify_common::db::query::Query;
 use trustify_common::model::Paginated;
 
 #[utoipa::path(
-    tag = "license",
+    tag = "spdx license",
     operation_id = "listSpdxLicenses",
     context_path = "/api",
     params(
@@ -16,6 +16,7 @@ use trustify_common::model::Paginated;
     ),
 )]
 #[get("/v1/license/spdx/license")]
+/// List SPDX licenses
 pub async fn list_spdx_licenses(
     state: web::Data<LicenseService>,
     web::Query(search): web::Query<Query>,
@@ -27,7 +28,7 @@ pub async fn list_spdx_licenses(
 }
 
 #[utoipa::path(
-    tag = "license",
+    tag = "spdx license",
     operation_id = "getSpdxLicense",
     context_path = "/api",
     responses(
@@ -35,6 +36,7 @@ pub async fn list_spdx_licenses(
     ),
 )]
 #[get("/v1/license/spdx/license/{id}")]
+/// Get SPDX license details
 pub async fn get_spdx_license(
     state: web::Data<LicenseService>,
     id: web::Path<String>,
