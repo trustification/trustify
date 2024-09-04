@@ -110,6 +110,7 @@ impl super::ImportRunner {
                 types: clearly_defined.types,
             },
         )
+        .path(Some("curations"))
         .continuation(continuation)
         .progress(progress);
 
