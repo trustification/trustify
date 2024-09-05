@@ -41,3 +41,11 @@
 | `UI_CLIENT_ID`         | Client ID used by the UI    | `frontend`       |
 | `UI_ISSUER_URL`         | Issuer URL used by the UI    | `http://localhost:8090/realms/trustify`        |
 | `UI_SCOPE`         | Scopes to request    | `openid`        |
+
+## Development 
+
+| Environment Variable | Description                    | Default Value |
+|----------------------|--------------------------------|---------------|
+| `EXTERNAL_TEST_DB`       | Run tests against external test database if set |           |
+| `EXTERNAL_TEST_DB_BOOTSTRAP`       | Run tests against external test database if set |           |
+| `MEM_LIMIT_MB`       | Set memory limit for tests that use TrustifyContext, shows the memory usage when the test reaches the limit  | `500 MiB`          |
