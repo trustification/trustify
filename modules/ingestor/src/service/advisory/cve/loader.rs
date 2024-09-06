@@ -9,7 +9,7 @@ use crate::{
     model::IngestResult,
     service::Error,
 };
-use cve::common::{Status, VersionRange};
+use cve::common::{Description, Status, VersionRange};
 use cve::{Cve, Timestamp};
 use std::fmt::Debug;
 use tracing::instrument;
@@ -27,6 +27,8 @@ use trustify_entity::labels::Labels;
 pub struct CveLoader<'g> {
     graph: &'g Graph,
 }
+
+const DESCRIPTION_EN: &str = "en";
 
 impl<'g> CveLoader<'g> {
     pub fn new(graph: &'g Graph) -> Self {
@@ -71,7 +73,17 @@ impl<'g> CveLoader<'g> {
                 None,
             ),
             Cve::Published(published) => (
-                published.containers.cna.title.as_ref(),
+                published
+                    .containers
+                    .cna
+                    .title
+                    .as_deref()
+                    .or_else(|| {
+                        Self::find_best_description_for_title(
+                            &published.containers.cna.descriptions,
+                        )
+                    })
+                    .map(ToString::to_string),
                 published
                     .containers
                     .cna
@@ -106,7 +118,7 @@ impl<'g> CveLoader<'g> {
         };
 
         let information = VulnerabilityInformation {
-            title: title.cloned(),
+            title: title.clone(),
             published,
             modified,
             withdrawn,
@@ -118,18 +130,10 @@ impl<'g> CveLoader<'g> {
             .ingest_vulnerability(id, information, &tx)
             .await?;
 
-        let mut english_description = None;
-        let mut entries = Vec::<(&str, &str)>::new();
-
-        for description in descriptions {
-            entries.push((&description.language, &description.value));
-            if description.language == "en" {
-                english_description = Some(description.value.clone());
-            }
-        }
+        let (entries, english_description) = Self::build_descriptions(descriptions);
 
         let information = AdvisoryInformation {
-            title: title.cloned(),
+            title: title.clone(),
             issuer: org_name.cloned(),
             published,
             modified,
@@ -146,9 +150,9 @@ impl<'g> CveLoader<'g> {
             .link_to_vulnerability(
                 id,
                 Some(AdvisoryVulnerabilityInformation {
-                    title: title.cloned(),
+                    title,
                     summary: None,
-                    description: english_description,
+                    description: english_description.map(|s| s.to_string()),
                     discovery_date: assigned,
                     release_date: published,
                     cwes: cwe.clone(),
@@ -225,6 +229,30 @@ impl<'g> CveLoader<'g> {
             document_id: id.to_string(),
             warnings: vec![],
         })
+    }
+
+    /// Build descriptions,
+    fn build_descriptions(descriptions: &[Description]) -> (Vec<(&str, &str)>, Option<&str>) {
+        let mut english_description = None;
+        let mut entries = Vec::<(&str, &str)>::new();
+
+        for description in descriptions {
+            entries.push((&description.language, &description.value));
+            if description.language == DESCRIPTION_EN {
+                english_description = Some(&*description.value);
+            }
+        }
+
+        (entries, english_description)
+    }
+
+    /// Quicker version to find the best description as an alternative when not having a title.
+    fn find_best_description_for_title(descriptions: &[Description]) -> Option<&str> {
+        // Currently, we simply choose the first english description.
+        descriptions
+            .iter()
+            .find(|desc| desc.language == DESCRIPTION_EN)
+            .map(|desc| &*desc.value)
     }
 }
 
