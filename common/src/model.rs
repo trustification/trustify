@@ -1,6 +1,7 @@
 mod bytesize;
 
 pub use bytesize::*;
+use std::cmp::min;
 
 use crate::db::limiter::Limiter;
 use sea_orm::{ConnectionTrait, DbErr, SelectorTrait};
@@ -73,6 +74,32 @@ pub struct Paginated {
     pub limit: u64,
 }
 
+impl Paginated {
+    pub fn paginate_array<T: Clone>(&self, vec: &[T]) -> PaginatedResults<T> {
+        // trying to start past the end of the vec
+        if self.offset as usize > vec.len() {
+            return PaginatedResults {
+                items: vec![],
+                total: vec.len() as u64,
+            };
+        }
+
+        if self.limit == 0 {
+            return PaginatedResults {
+                items: Vec::from(&vec[self.offset as usize..]),
+                total: vec.len() as u64,
+            };
+        }
+
+        let end = min(self.offset as usize + self.limit as usize, vec.len());
+
+        PaginatedResults {
+            items: Vec::from(&vec[self.offset as usize..end]),
+            total: vec.len() as u64,
+        }
+    }
+}
+
 mod default {
     pub(super) const fn limit() -> u64 {
         25
@@ -131,4 +158,50 @@ macro_rules! paginated {
             }
         });
     };
+}
+
+#[cfg(test)]
+mod test {
+    use crate::model::Paginated;
+
+    #[test_log::test(test)]
+    fn paginated_vec() {
+        let data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+        let paginated = Paginated {
+            offset: 0,
+            limit: 0,
+        }
+        .paginate_array(&data);
+
+        assert_eq!(10, paginated.total);
+        assert_eq!(10, paginated.items.len());
+
+        let paginated = Paginated {
+            offset: 0,
+            limit: 5,
+        }
+        .paginate_array(&data);
+
+        assert_eq!(10, paginated.total);
+        assert_eq!(5, paginated.items.len());
+
+        let paginated = Paginated {
+            offset: 5,
+            limit: 0,
+        }
+        .paginate_array(&data);
+
+        assert_eq!(10, paginated.total);
+        assert_eq!(5, paginated.items.len());
+
+        let paginated = Paginated {
+            offset: 12,
+            limit: 0,
+        }
+        .paginate_array(&data);
+
+        assert_eq!(10, paginated.total);
+        assert_eq!(0, paginated.items.len());
+    }
 }
