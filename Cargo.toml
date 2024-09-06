@@ -49,7 +49,7 @@ criterion = "0.5.1"
 chrono = { version = "0.4.35", default-features = false }
 clap = "4"
 concat-idents = "1"
-cpe = "0.1.3"
+cpe = "0.1.5"
 csaf = { version = "0.5.0", default-features = false }
 csaf-walker = { version = "0.9.0", default-features = false }
 cve = "0.3.1"
@@ -177,6 +177,6 @@ postgresql_commands = { version = "0.16.3", default-features = false, features =
 #oxide-auth = { git = "https://github.com/ctron/oxide-auth", rev = "cd0c79c48a702ea6bb0b05e95e9eddcba8f6c77f" }
 
 # required due to https://github.com/KenDJohnson/cpe-rs/pull/15
-cpe = { git = "https://github.com/ctron/cpe-rs", rev = "c3c05e637f6eff7dd4933c2f56d070ee2ddfb44b" }
+#cpe = { git = "https://github.com/ctron/cpe-rs", rev = "c3c05e637f6eff7dd4933c2f56d070ee2ddfb44b" }
 # required due to https://github.com/voteblake/csaf-rs/pull/29
 csaf = { git = "https://github.com/chirino/csaf-rs", rev = "414896904bc5e5287fd88b1daef5c27f70503d01" }
