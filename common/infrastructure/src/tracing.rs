@@ -3,7 +3,9 @@ use opentelemetry::{propagation::Injector, Context, KeyValue};
 use opentelemetry_sdk::Resource;
 use reqwest::RequestBuilder;
 use std::sync::Once;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{
+    field::MakeExt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter,
+};
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq)]
 pub enum Tracing {
@@ -156,6 +158,7 @@ fn init_no_tracing() {
         .with(filter)
         .with(
             tracing_subscriber::fmt::layer()
+                .map_fmt_fields(|f| f.debug_alt())
                 .with_ansi(true)
                 .with_level(true)
                 .compact(),
