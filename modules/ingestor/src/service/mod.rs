@@ -177,7 +177,7 @@ impl IngestorService {
             .await?;
 
         let duration = Instant::now() - start;
-        log::info!(
+        log::debug!(
             "Ingested: {} ({}): took {}",
             result.id,
             result.document_id,

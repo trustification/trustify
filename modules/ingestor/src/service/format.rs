@@ -46,7 +46,7 @@ pub enum Format {
 }
 
 impl<'g> Format {
-    #[instrument(skip(self, graph, stream), ret)]
+    #[instrument(skip(self, graph, stream))]
     pub async fn load<S>(
         &self,
         graph: &'g Graph,
