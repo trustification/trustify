@@ -65,11 +65,20 @@ impl TrustifyContext {
         Ok(results)
     }
 
+    /// Same as [`self.ingest_document_as`], but with a format of [`Format::Unknown`].
     pub async fn ingest_document(&self, path: &str) -> Result<IngestResult, anyhow::Error> {
+        self.ingest_document_as(path, Format::Unknown).await
+    }
+
+    pub async fn ingest_document_as(
+        &self,
+        path: &str,
+        format: Format,
+    ) -> Result<IngestResult, anyhow::Error> {
         let bytes = document_bytes(path).await?;
         Ok(self
             .ingestor
-            .ingest(&bytes, Format::Unknown, ("source", "TrustifyContext"), None)
+            .ingest(&bytes, format, ("source", "TrustifyContext"), None)
             .await?)
     }
 

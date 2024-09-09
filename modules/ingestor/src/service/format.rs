@@ -30,7 +30,7 @@ use tracing::instrument;
 use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum Format {
     OSV,
     CSAF,
@@ -74,7 +74,13 @@ impl<'g> Format {
             Format::OSV => {
                 // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
                 let loader = OsvLoader::new(graph);
-                let osv: Vulnerability = serde_json::from_slice(&buffer)?;
+                let osv: Vulnerability = serde_json::from_slice(&buffer)
+                    .map_err(Error::from)
+                    .or_else(|_| {
+                        serde_yml::from_slice::<Nested>(&buffer)
+                            .map(|osv| osv.0)
+                            .map_err(Error::from)
+                    })?;
                 loader.load(labels, osv, digests, issuer).await
             }
             Format::CVE => {
@@ -173,10 +179,19 @@ impl<'g> Format {
     }
 
     pub fn is_osv(bytes: &[u8]) -> Result<bool, Error> {
+        Ok(Self::is_osv_json(bytes)? || Self::is_osv_yaml(bytes)?)
+    }
+
+    pub fn is_osv_json(bytes: &[u8]) -> Result<bool, Error> {
         match masked(depth(1).and(key("id")), bytes) {
             Ok(Some(_)) => Ok(true),
             Err(_) | Ok(None) => Ok(false),
         }
+    }
+
+    pub fn is_osv_yaml(bytes: &[u8]) -> Result<bool, Error> {
+        // TODO: find a way to detect format with streaming
+        Ok(serde_yml::from_slice::<Nested>(bytes).is_ok())
     }
 
     pub fn is_spdx(bytes: &[u8]) -> Result<bool, Error> {
@@ -264,6 +279,9 @@ fn masked<N: Mask>(mask: N, bytes: &[u8]) -> Result<Option<String>, Error> {
         .transpose()
 }
 
+#[derive(serde::Deserialize)]
+struct Nested(#[serde(with = "serde_yml::with::singleton_map_recursive")] Vulnerability);
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -279,6 +297,9 @@ mod test {
         assert!(matches!(Format::from_bytes(&csaf), Ok(Format::CSAF)));
 
         let osv = document_bytes("osv/RUSTSEC-2021-0079.json").await?;
+        assert!(matches!(Format::from_bytes(&osv), Ok(Format::OSV)));
+
+        let osv = document_bytes("osv/RSEC-2023-6.yaml").await?;
         assert!(matches!(Format::from_bytes(&osv), Ok(Format::OSV)));
 
         let cve = document_bytes("mitre/CVE-2024-27088.json").await?;
