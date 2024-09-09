@@ -21,17 +21,10 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 test-context = { workspace = true }
 tokio = { workspace = true }
-tokio-stream = { workspace = true }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
-#chrono = { workspace = true }
-#rand = { workspace = true }
-#rstest = { workspace = true }
-#serde_json = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
-#time = { workspace = true, features = ["macros"] }
-#tokio = { workspace = true, features = ["full"] }
 osv = { workspace = true, features = ["schema"] }
 hex = { workspace = true }

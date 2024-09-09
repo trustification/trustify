@@ -7469,8 +7469,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx 0.7.4",
- "tempfile",
- "test-context",
  "test-log",
  "thiserror",
  "time",
@@ -7552,7 +7550,6 @@ dependencies = [
  "anyhow",
  "sea-orm-migration",
  "serde_json",
- "spdx",
  "test-context",
  "test-log",
  "tokio",
@@ -7584,7 +7581,6 @@ dependencies = [
  "jsonpath-rust",
  "log",
  "packageurl",
- "roxmltree",
  "sea-orm",
  "sea-query",
  "serde",
@@ -7604,7 +7600,6 @@ dependencies = [
  "trustify-common",
  "trustify-cvss",
  "trustify-entity",
- "trustify-infrastructure",
  "trustify-module-ingestor",
  "trustify-module-storage",
  "trustify-test-context",
@@ -7627,7 +7622,6 @@ dependencies = [
  "serde_json",
  "test-context",
  "test-log",
- "thiserror",
  "tokio",
  "tokio-util",
  "trustify-auth",
@@ -7653,7 +7647,6 @@ dependencies = [
  "csaf-walker",
  "cve",
  "git2",
- "hex",
  "humantime",
  "humantime-serde",
  "json-merge-patch",
@@ -7669,7 +7662,6 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yml",
- "sha2",
  "tempfile",
  "test-context",
  "test-log",
@@ -7701,7 +7693,6 @@ dependencies = [
  "actix-web",
  "anyhow",
  "bytes",
- "bytesize",
  "cpe",
  "csaf",
  "cve",
@@ -7717,7 +7708,6 @@ dependencies = [
  "parking_lot 0.12.3",
  "quick-xml 0.36.1",
  "rand",
- "ring",
  "roxmltree",
  "rstest",
  "sbom-walker",
@@ -7729,7 +7719,6 @@ dependencies = [
  "spdx",
  "spdx-expression",
  "spdx-rs",
- "strum 0.26.3",
  "test-context",
  "test-log",
  "thiserror",
@@ -7742,7 +7731,6 @@ dependencies = [
  "trustify-entity",
  "trustify-module-storage",
  "trustify-test-context",
- "utoipa",
  "uuid",
  "zip 2.2.0",
 ]
@@ -7751,7 +7739,6 @@ dependencies = [
 name = "trustify-module-storage"
 version = "0.1.0-alpha.15"
 dependencies = [
- "actix-web",
  "anyhow",
  "bytes",
  "futures",
@@ -7767,8 +7754,6 @@ dependencies = [
  "tokio",
  "tokio-util",
  "trustify-common",
- "utoipa",
- "uuid",
 ]
 
 [[package]]
@@ -7785,20 +7770,15 @@ dependencies = [
 name = "trustify-server"
 version = "0.1.0-alpha.15"
 dependencies = [
- "actix-cors",
  "actix-web",
  "anyhow",
- "async-graphql",
- "async-graphql-actix-web",
  "bytesize",
  "clap",
  "futures",
  "garage-door",
- "hide",
  "log",
  "mime",
  "rand",
- "reqwest",
  "test-context",
  "test-log",
  "tokio",
@@ -7817,7 +7797,6 @@ dependencies = [
  "utoipa",
  "utoipa-rapidoc",
  "utoipa-redoc",
- "utoipa-swagger-ui",
 ]
 
 [[package]]
@@ -7837,7 +7816,6 @@ dependencies = [
  "test-context",
  "test-log",
  "tokio",
- "tokio-stream",
  "tokio-util",
  "tracing",
  "trustify-common",
@@ -7863,7 +7841,6 @@ dependencies = [
  "trustify-infrastructure",
  "trustify-module-importer",
  "trustify-server",
- "url",
 ]
 
 [[package]]

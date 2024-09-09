@@ -16,26 +16,20 @@ trustify-module-storage = { workspace = true }
 trustify-module-ui = { workspace = true }
 trustify-module-graphql = { workspace = true }
 
-actix-cors = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
-async-graphql = { workspace = true }
-async-graphql-actix-web = { workspace = true }
 bytesize = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true }
 garage-door = { workspace = true, optional = true }
-hide = { workspace = true, features = ["serde", "schemars"] }
 log = { workspace = true }
 mime = { workspace =  true }
 rand = { workspace = true }
-reqwest = { workspace = true }
 tokio = { workspace = true }
 url = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras", "yaml"] }
 utoipa-rapidoc = { workspace = true }
 utoipa-redoc = { workspace = true }
-utoipa-swagger-ui = { workspace = true, features = ["actix-web"] }
 
 [dev-dependencies]
 urlencoding = { workspace = true }
