@@ -20,8 +20,6 @@ clap = { workspace = true, features = ["derive", "env"] }
 log = { workspace = true }
 postgresql_embedded = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-url = { workspace = true }
-
 openssl = { workspace = true }
 libz-sys = { workspace = true }
 liblzma = { workspace = true }

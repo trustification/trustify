@@ -21,7 +21,6 @@ async-graphql-actix-web = { workspace = true }
 actix-web = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 log = { workspace = true }
-thiserror = { workspace = true }
 uuid = { workspace = true }
 
 [dev-dependencies]

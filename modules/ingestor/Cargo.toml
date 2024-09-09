@@ -14,7 +14,6 @@ trustify-module-storage = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 bytes = { workspace = true }
-bytesize = { workspace = true }
 cpe = { workspace = true }
 csaf = { workspace = true }
 cve = { workspace = true }
@@ -29,7 +28,6 @@ osv = { workspace = true, features = ["schema"] }
 packageurl = { workspace = true }
 parking_lot = { workspace = true }
 quick-xml = { workspace = true }
-ring = { workspace = true }
 roxmltree = { workspace = true }
 sbom-walker = { workspace = true }
 sea-orm = { workspace = true }
@@ -40,13 +38,11 @@ serde_yml = { workspace = true }
 spdx = { workspace = true }
 spdx-expression = { workspace = true }
 spdx-rs = { workspace = true }
-strum = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true, features = ["serde-well-known"] }
 tokio = { workspace = true, features = ["full"] }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
-utoipa = { workspace = true, features = ["actix_extras"] }
 uuid = { workspace = true, features = ["v7"] }
 
 [dev-dependencies]
