@@ -1,15 +1,10 @@
-// use std::sync::Arc;
-
-use std::sync::Arc;
-
+use crate::RootQuery;
 use actix_web::{guard, web, HttpResponse, Result};
 use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
 use async_graphql_actix_web::GraphQL;
+use std::sync::Arc;
 use trustify_common::db::Database;
 use trustify_module_ingestor::graph::Graph;
-// use trustify_module_ingestor::graph::Graph;
-
-use crate::RootQuery;
 
 async fn index_graphiql() -> Result<HttpResponse> {
     Ok(HttpResponse::Ok()
