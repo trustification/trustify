@@ -329,4 +329,21 @@ mod tests {
             r#""pkg://rpm/redhat/subscription-manager-rhsm-certificates@1.28.29.1-1.el8_6?arch=s390x""#
         ))
     }
+
+    #[test(tokio::test)]
+    async fn purl_cmp() -> Result<(), anyhow::Error> {
+        let purl1: Purl = serde_json::from_str(
+            r#"
+            "pkg:rpm/redhat/filesystem@3.8-6.el8?arch=aarch64&tags=test1"
+            "#,
+        )
+        .unwrap();
+        let purl2: Purl = serde_json::from_str(
+            r#"
+            "pkg:rpm/redhat/filesystem@3.8-6.el8?tags=test1&arch=aarch64"
+            "#,
+        )
+        .unwrap();
+        Ok(assert_eq!(purl1, purl2))
+    }
 }
