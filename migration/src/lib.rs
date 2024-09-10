@@ -73,6 +73,7 @@ mod m0000575_create_weakness;
 mod m0000580_mark_fns;
 mod m0000590_get_purl_fns;
 mod m0000595_analysis_api_index;
+mod m0000600_remove_raise_notice_fns;
 
 pub struct Migrator;
 
@@ -153,6 +154,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000580_mark_fns::Migration),
             Box::new(m0000590_get_purl_fns::Migration),
             Box::new(m0000595_analysis_api_index::Migration),
+            Box::new(m0000600_remove_raise_notice_fns::Migration),
         ]
     }
 }
