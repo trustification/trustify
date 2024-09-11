@@ -1,4 +1,4 @@
-$schema: ../xtask/schema/generate-dump.json
+$schema: ../../xtask/schema/generate-dump.json
 import:
   - osv:
       period: 1s

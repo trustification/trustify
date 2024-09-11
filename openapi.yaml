@@ -339,6 +339,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AnalysisStatus'
+  /api/v1/dataset:
+    post:
+      tags:
+      - advisory
+      summary: Upload a new dataset
+      operationId: uploadDataset
+      parameters:
+      - name: labels
+        in: query
+        description: |-
+          Optional labels.
+
+          Only use keys with a prefix of `labels.`
+        required: true
+        schema:
+          $ref: '#/components/schemas/Labels'
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        '201':
+          description: Uploaded the dataset
+        '400':
+          description: The file could not be parsed as an dataset
   /api/v1/importer:
     get:
       tags:
@@ -2079,6 +2107,20 @@ components:
         properties:
           source:
             type: string
+    DatasetIngestResult:
+      type: object
+      required:
+      - warnings
+      - files
+      properties:
+        files:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/IngestResult'
+        warnings:
+          type: array
+          items:
+            type: string
     DepNode:
       type: object
       required:
@@ -2238,6 +2280,23 @@ components:
         importer:
           type: string
         report: {}
+    IngestResult:
+      type: object
+      description: The result of the ingestion process
+      required:
+      - id
+      - document_id
+      properties:
+        document_id:
+          type: string
+          description: The ID declared by the document
+        id:
+          $ref: '#/components/schemas/Id'
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Warnings that occurred during the import process
     Labels:
       type: object
       additionalProperties:

@@ -10,27 +10,20 @@ use crate::{
         Error,
     },
 };
-use bytes::Bytes;
 use csaf::Csaf;
 use cve::Cve;
 use cyclonedx_bom::models::bom::Bom;
-use futures::{Stream, TryStreamExt};
 use jsn::{mask::*, Format as JsnFormat, TokenReader};
 use osv::schema::Vulnerability;
 use quick_xml::{events::Event, Reader};
 use serde_json::Value;
-use std::{
-    io::Cursor,
-    io::{self},
-    pin::pin,
-};
-use tokio::io::AsyncReadExt;
-use tokio_util::io::StreamReader;
+use std::io::Cursor;
 use tracing::instrument;
 use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, strum::EnumString)]
+#[strum(serialize_all = "camelCase")]
 pub enum Format {
     OSV,
     CSAF,
@@ -46,38 +39,29 @@ pub enum Format {
 }
 
 impl<'g> Format {
-    #[instrument(skip(self, graph, stream))]
-    pub async fn load<S>(
+    #[instrument(skip(self, graph, buffer))]
+    pub async fn load(
         &self,
         graph: &'g Graph,
         labels: Labels,
         issuer: Option<String>,
         digests: &Digests,
-        stream: S,
-    ) -> Result<IngestResult, Error>
-    where
-        S: Stream<Item = Result<Bytes, anyhow::Error>> + Send + 'static,
-    {
-        let mut buffer = Vec::new();
-        let mut s = pin!(StreamReader::new(
-            stream.map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}"))),
-        ));
-        s.read_to_end(&mut buffer).await?;
-
+        buffer: &[u8],
+    ) -> Result<IngestResult, Error> {
         match self {
             Format::CSAF => {
                 // issuer is internal as publisher of the document.
                 let loader = CsafLoader::new(graph);
-                let csaf: Csaf = serde_json::from_slice(&buffer)?;
+                let csaf: Csaf = serde_json::from_slice(buffer)?;
                 loader.load(labels, csaf, digests).await
             }
             Format::OSV => {
                 // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
                 let loader = OsvLoader::new(graph);
-                let osv: Vulnerability = serde_json::from_slice(&buffer)
+                let osv: Vulnerability = serde_json::from_slice(buffer)
                     .map_err(Error::from)
                     .or_else(|_| {
-                        serde_yml::from_slice::<Nested>(&buffer)
+                        serde_yml::from_slice::<Nested>(buffer)
                             .map(|osv| osv.0)
                             .map_err(Error::from)
                     })?;
@@ -86,17 +70,17 @@ impl<'g> Format {
             Format::CVE => {
                 // issuer is always CVE Project
                 let loader = CveLoader::new(graph);
-                let cve: Cve = serde_json::from_slice(&buffer)?;
+                let cve: Cve = serde_json::from_slice(buffer)?;
                 loader.load(labels, cve, digests).await
             }
             Format::SPDX => {
                 let loader = SpdxLoader::new(graph);
-                let v: Value = serde_json::from_slice(&buffer)?;
+                let v: Value = serde_json::from_slice(buffer)?;
                 loader.load(labels, v, digests).await
             }
             Format::CycloneDX => {
                 let loader = CyclonedxLoader::new(graph);
-                let v: Value = serde_json::from_slice(&buffer)?;
+                let v: Value = serde_json::from_slice(buffer)?;
                 let sbom = Bom::parse_json_value(v)
                     .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
@@ -104,12 +88,12 @@ impl<'g> Format {
             }
             Format::ClearlyDefined => {
                 let loader = ClearlyDefinedLoader::new(graph);
-                let curation: Curation = serde_yml::from_slice(&buffer)?;
+                let curation: Curation = serde_yml::from_slice(buffer)?;
                 loader.load(labels, curation, digests).await
             }
             Format::CweCatalog => {
                 let loader = CweCatalogLoader::new(graph);
-                loader.load_bytes(labels, &buffer, digests).await
+                loader.load_bytes(labels, buffer, digests).await
             }
             f => Err(Error::UnsupportedFormat(format!(
                 "Must resolve {f:?} to an actual format"

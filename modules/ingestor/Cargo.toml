@@ -39,12 +39,15 @@ serde_yml = { workspace = true }
 spdx = { workspace = true }
 spdx-expression = { workspace = true }
 spdx-rs = { workspace = true }
+strum = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true, features = ["serde-well-known"] }
 tokio = { workspace = true, features = ["full"] }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
+utoipa = { workspace = true }
 uuid = { workspace = true, features = ["v7"] }
+zip = { workspace = true }
 
 [dev-dependencies]
 trustify-test-context = { workspace = true }

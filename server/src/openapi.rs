@@ -13,6 +13,7 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     doc.info.version = env!("CARGO_PKG_VERSION").to_string();
 
     doc.merge(trustify_module_importer::endpoints::ApiDoc::openapi());
+    doc.merge(trustify_module_ingestor::endpoints::ApiDoc::openapi());
     doc.merge(trustify_module_fundamental::openapi());
     doc.merge(trustify_module_analysis::endpoints::ApiDoc::openapi());
     doc
