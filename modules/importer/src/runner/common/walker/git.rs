@@ -75,6 +75,9 @@ impl<H> GitWalker<H, (), ()>
 where
     H: Handler,
 {
+    /// Create a new GitWalker for a given repo and handler. By
+    /// default, a "shallow clone" (depth=1) of the repo will be
+    /// walked.
     pub fn new(source: impl Into<String>, handler: H) -> Self {
         Self {
             source: source.into(),
@@ -84,7 +87,7 @@ where
             working_dir: (),
             handler,
             progress: (),
-            depth: 0,
+            depth: 1, // shallow clone, by default
         }
     }
 }
@@ -195,7 +198,10 @@ where
                 builder.branch(branch);
             }
 
-            let fo = self.create_fetch_options();
+            let mut fo = Self::create_fetch_options();
+            if self.continuation.0.is_none() {
+                fo.depth(self.depth);
+            }
             builder.fetch_options(fo).clone(&self.source, path)
         });
 
@@ -209,7 +215,7 @@ where
                     log::info!("Fetching updates");
                     let mut remote = repo.find_remote("origin")?;
 
-                    let mut fo = self.create_fetch_options();
+                    let mut fo = Self::create_fetch_options();
                     remote.fetch(&[] as &[&str], Some(&mut fo), None)?;
                     remote.disconnect()?;
 
@@ -317,7 +323,7 @@ where
         Ok(Continuation(Some(commit.to_string())))
     }
 
-    fn create_fetch_options<'cb>(&self) -> FetchOptions<'cb> {
+    fn create_fetch_options<'cb>() -> FetchOptions<'cb> {
         let mut cb = RemoteCallbacks::new();
         cb.transfer_progress(|progress| {
             let received = progress.received_objects();
@@ -352,7 +358,7 @@ where
 
         let mut fo = FetchOptions::new();
         fo.remote_callbacks(cb);
-        fo.depth(self.depth);
+        fo.depth(i32::MAX);
         fo
     }
 
