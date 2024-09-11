@@ -177,22 +177,26 @@ impl IngestorService {
             .load(&self.graph, labels.into(), issuer, &result.digests, stream)
             .await?;
 
-        // TODO: there maybe better ways to do this
-        let analysis_service = AnalysisService::new(self.graph.db.clone());
-        match analysis_service
-            .load_graphs(vec![result.id.value()], ())
-            .await
-        {
-            Ok(_) => log::debug!(
-                "Analysis graph for sbom: {} loaded successfully.",
-                result.id.value()
-            ),
-            Err(e) => log::warn!(
-                "Error loading sbom {} into analysis graph : {}",
-                result.id.value(),
-                e
-            ),
-        }
+        match fmt {
+            Format::SPDX | Format::CycloneDX => {
+                let analysis_service = AnalysisService::new(self.graph.db.clone());
+                match analysis_service
+                    .load_graphs(vec![result.id.value()], ())
+                    .await
+                {
+                    Ok(_) => log::debug!(
+                        "Analysis graph for sbom: {} loaded successfully.",
+                        result.id.value()
+                    ),
+                    Err(e) => log::warn!(
+                        "Error loading sbom {} into analysis graph : {}",
+                        result.id.value(),
+                        e
+                    ),
+                }
+            }
+            _ => {}
+        };
 
         let duration = Instant::now() - start;
         log::debug!(
