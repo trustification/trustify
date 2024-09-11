@@ -7451,6 +7451,7 @@ dependencies = [
  "clap",
  "concat-idents",
  "cpe",
+ "futures",
  "hex",
  "human-date-parser",
  "itertools 0.13.0",

@@ -1,11 +1,12 @@
-mod func;
-
+pub mod cache;
 pub mod chunk;
+pub mod embedded;
 pub mod limiter;
+pub mod multi_model;
 pub mod query;
 
-pub mod embedded;
-pub mod multi_model;
+mod func;
+pub use func::*;
 
 use anyhow::Context;
 use migration::{Migrator, MigratorTrait};
@@ -16,8 +17,6 @@ use sea_orm::{
 use sqlx::error::ErrorKind;
 use std::ops::{Deref, DerefMut};
 use tracing::instrument;
-
-pub use func::*;
 
 pub enum Transactional {
     None,
