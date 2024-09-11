@@ -1,7 +1,7 @@
 use trustify_common::id::Id;
 
 /// The result of the ingestion process
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
 pub struct IngestResult {
     /// The internal ID of the document
     pub id: Id,

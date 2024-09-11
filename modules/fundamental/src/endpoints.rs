@@ -9,8 +9,6 @@ pub fn configure(
     db: Database,
     storage: impl Into<DispatchBackend>,
 ) {
-    let storage = storage.into();
-
     let ingestor_service = IngestorService::new(Graph::new(db.clone()), storage);
     config.app_data(web::Data::new(ingestor_service));
 

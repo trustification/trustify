@@ -7765,6 +7765,7 @@ dependencies = [
  "spdx",
  "spdx-expression",
  "spdx-rs",
+ "strum 0.26.3",
  "test-context",
  "test-log",
  "thiserror",
@@ -7778,6 +7779,7 @@ dependencies = [
  "trustify-module-analysis",
  "trustify-module-storage",
  "trustify-test-context",
+ "utoipa",
  "uuid",
  "zip 2.2.0",
 ]

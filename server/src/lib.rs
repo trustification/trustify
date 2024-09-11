@@ -302,7 +302,7 @@ impl InitData {
 fn configure(
     svc: &mut web::ServiceConfig,
     db: db::Database,
-    storage: impl Into<DispatchBackend>,
+    storage: impl Into<DispatchBackend> + Clone,
     swagger_oidc: Option<Arc<SwaggerUiOidc>>,
     auth: Option<Arc<Authenticator>>,
     ui: Arc<UiResources>,
@@ -365,6 +365,7 @@ fn configure(
     svc.app_data(graph)
         .service(web::scope("/api").wrap(new_auth(auth)).configure(|svc| {
             trustify_module_importer::endpoints::configure(svc, db.clone());
+            trustify_module_ingestor::endpoints::configure(svc, db.clone(), storage.clone());
             trustify_module_fundamental::endpoints::configure(svc, db.clone(), storage);
             trustify_module_analysis::endpoints::configure(svc, db.clone());
         }))
