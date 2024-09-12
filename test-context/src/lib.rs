@@ -120,7 +120,9 @@ impl AsyncTestContext for TrustifyContext {
 
     async fn teardown(self) {
         let peak_mem = PEAK_ALLOC.peak_usage_as_mb();
-        if peak_mem > self.mem_limit_mb {
+        let args: Vec<String> = env::args().collect();
+        // Prints the error message when running the tests with threads=1
+        if args.iter().any(|arg| arg == "--test-threads=1") && peak_mem > self.mem_limit_mb {
             log::error!("Too much RAM used: {peak_mem} MB");
         }
         PEAK_ALLOC.reset_peak_usage();
