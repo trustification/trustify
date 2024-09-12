@@ -12,6 +12,7 @@ use trustify_entity::{product, product_version};
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct ProductHead {
     #[serde(with = "uuid::serde::urn")]
+    #[schema(value_type=String)]
     pub id: Uuid,
     pub name: String,
 }
@@ -31,6 +32,7 @@ impl ProductHead {
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct ProductVersionHead {
     #[serde(with = "uuid::serde::urn")]
+    #[schema(value_type=String)]
     pub id: Uuid,
     pub version: String,
     #[serde(
@@ -38,6 +40,7 @@ pub struct ProductVersionHead {
         skip_serializing_if = "Option::is_none",
         with = "trustify_common::uuid::serde::urn"
     )]
+    #[schema(value_type=String)]
     pub sbom_id: Option<Uuid>,
 }
 

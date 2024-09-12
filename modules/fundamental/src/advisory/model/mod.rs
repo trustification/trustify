@@ -18,6 +18,7 @@ use utoipa::ToSchema;
 pub struct AdvisoryHead {
     /// The opaque UUID of the advisory.
     #[serde(with = "uuid::serde::urn")]
+    #[schema(value_type=String)]
     pub uuid: Uuid,
 
     /// The identifier of the advisory, as assigned by the issuing organization.
