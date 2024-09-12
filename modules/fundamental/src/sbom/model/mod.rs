@@ -1,25 +1,27 @@
 pub mod details;
 
+use super::service::SbomService;
 use crate::purl::model::summary::purl::PurlSummary;
+use crate::source_document::model::SourceDocument;
 use crate::Error;
 use async_graphql::SimpleObject;
 use sea_orm::prelude::Uuid;
+use sea_orm::ModelTrait;
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::model::Paginated;
-use trustify_common::{id::Id, paginated};
-use trustify_entity::{labels::Labels, relationship::Relationship, sbom, sbom_node};
+use trustify_common::paginated;
+use trustify_entity::{
+    labels::Labels, relationship::Relationship, sbom, sbom_node, source_document,
+};
 use utoipa::ToSchema;
-
-use super::service::SbomService;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct SbomHead {
     #[serde(with = "uuid::serde::urn")]
     #[schema(value_type=String)]
     pub id: Uuid,
-    pub hashes: Vec<Id>,
 
     pub document_id: String,
     pub labels: Labels,
@@ -41,11 +43,6 @@ impl SbomHead {
     ) -> Result<Self, Error> {
         Ok(Self {
             id: sbom.sbom_id,
-            hashes: Id::build_vec(
-                sbom.sha256.clone(),
-                sbom.sha384.clone(),
-                sbom.sha512.clone(),
-            ),
             document_id: sbom.document_id.clone(),
             labels: sbom.labels.clone(),
             published: sbom.published,
@@ -62,6 +59,8 @@ pub struct SbomSummary {
     #[serde(flatten)]
     pub head: SbomHead,
 
+    pub source_document: Option<SourceDocument>,
+
     pub described_by: Vec<SbomPackage>,
 }
 
@@ -77,9 +76,16 @@ impl SbomSummary {
             .await?
             .items;
 
+        let source_document = sbom.find_related(source_document::Entity).one(tx).await?;
+
         Ok(match node {
             Some(_) => Some(SbomSummary {
                 head: SbomHead::from_entity(&sbom, node, tx).await?,
+                source_document: if let Some(doc) = &source_document {
+                    Some(SourceDocument::from_entity(doc, tx).await?)
+                } else {
+                    None
+                },
                 described_by,
             }),
             None => None,

@@ -12,13 +12,12 @@ pub struct Model {
     pub sbom_id: Uuid,
     pub node_id: String,
 
-    pub sha256: String,
-    pub sha384: Option<String>,
-    pub sha512: Option<String>,
     pub document_id: String,
 
     pub published: Option<OffsetDateTime>,
     pub authors: Vec<String>,
+
+    pub source_document_id: Option<Uuid>,
 
     #[graphql(derived(owned, into = "HashMap<String,String>", with = "Labels::from"))]
     pub labels: Labels,
@@ -26,6 +25,12 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(
+        belongs_to = "super::source_document::Entity"
+        from = "Column::SourceDocumentId"
+        to = "super::source_document::Column::Id")]
+    SourceDocument,
+
     #[sea_orm(has_many = "super::sbom_package::Entity")]
     Packages,
     #[sea_orm(has_many = "super::sbom_file::Entity")]
@@ -80,6 +85,12 @@ impl Linked for SbomNodeLink {
     }
 }
 
+impl Related<super::source_document::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::SourceDocument.def()
+    }
+}
+
 impl Related<super::sbom_package::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Packages.def()
@@ -116,9 +127,15 @@ impl TryFilterForId for Entity {
     fn try_filter(id: Id) -> Result<Condition, IdError> {
         Ok(match id {
             Id::Uuid(uuid) => Column::SbomId.eq(uuid).into_condition(),
-            Id::Sha256(hash) => Column::Sha256.eq(hash).into_condition(),
-            Id::Sha384(hash) => Column::Sha384.eq(hash).into_condition(),
-            Id::Sha512(hash) => Column::Sha512.eq(hash).into_condition(),
+            Id::Sha256(hash) => super::source_document::Column::Sha256
+                .eq(hash)
+                .into_condition(),
+            Id::Sha384(hash) => super::source_document::Column::Sha384
+                .eq(hash)
+                .into_condition(),
+            Id::Sha512(hash) => super::source_document::Column::Sha512
+                .eq(hash)
+                .into_condition(),
             n => return Err(IdError::UnsupportedAlgorithm(n.prefix().to_string())),
         })
     }

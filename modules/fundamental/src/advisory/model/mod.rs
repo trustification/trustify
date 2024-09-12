@@ -9,8 +9,8 @@ use crate::{organization::model::OrganizationSummary, Error};
 use sea_orm::{prelude::Uuid, LoaderTrait, ModelTrait};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
+use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::memo::Memo;
-use trustify_common::{db::ConnectionOrTransaction, id::Id};
 use trustify_entity::{advisory, labels::Labels, organization};
 use utoipa::ToSchema;
 
@@ -23,9 +23,6 @@ pub struct AdvisoryHead {
 
     /// The identifier of the advisory, as assigned by the issuing organization.
     pub identifier: String,
-
-    /// Hashes of the underlying original document as ingested.
-    pub hashes: Vec<Id>,
 
     /// The issuer of the advisory, if known. If no issuer is able to be
     /// determined, this field will not be included in a response.
@@ -56,7 +53,7 @@ pub struct AdvisoryHead {
 
 impl AdvisoryHead {
     pub async fn from_advisory(
-        entity: &advisory::Model,
+        advisory: &advisory::Model,
         issuer: Memo<organization::Model>,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
@@ -66,7 +63,7 @@ impl AdvisoryHead {
             }
             Memo::Provided(None) => None,
             Memo::NotProvided => {
-                if let Some(issuer) = entity.find_related(organization::Entity).one(tx).await? {
+                if let Some(issuer) = advisory.find_related(organization::Entity).one(tx).await? {
                     Some(OrganizationSummary::from_entity(&issuer, tx).await?)
                 } else {
                     None
@@ -75,19 +72,14 @@ impl AdvisoryHead {
         };
 
         Ok(Self {
-            uuid: entity.id,
-            identifier: entity.identifier.clone(),
-            hashes: Id::build_vec(
-                entity.sha256.clone(),
-                entity.sha384.clone(),
-                entity.sha512.clone(),
-            ),
+            uuid: advisory.id,
+            identifier: advisory.identifier.clone(),
             issuer,
-            published: entity.published,
-            modified: entity.modified,
-            withdrawn: entity.withdrawn,
-            title: entity.title.clone(),
-            labels: entity.labels.clone(),
+            published: advisory.published,
+            modified: advisory.modified,
+            withdrawn: advisory.withdrawn,
+            title: advisory.title.clone(),
+            labels: advisory.labels.clone(),
         })
     }
 
@@ -109,11 +101,6 @@ impl AdvisoryHead {
             heads.push(Self {
                 uuid: advisory.id,
                 identifier: advisory.identifier.clone(),
-                hashes: Id::build_vec(
-                    advisory.sha256.clone(),
-                    advisory.sha384.clone(),
-                    advisory.sha512.clone(),
-                ),
                 issuer,
                 published: advisory.published,
                 modified: advisory.modified,

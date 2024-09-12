@@ -43,6 +43,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         crate::advisory::model::AdvisoryVulnerabilityHead,
         crate::advisory::model::AdvisoryVulnerabilitySummary,
         crate::advisory::model::PaginatedAdvisorySummary,
+        crate::source_document::model::SourceDocument,
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
         trustify_common::purl::Purl,
@@ -209,23 +210,21 @@ pub async fn download(
         return Ok(HttpResponse::NotFound().finish());
     };
 
-    log::debug!("Found document - hashes: {:?}", advisory.head.hashes);
+    if let Some(doc) = &advisory.source_document {
+        let stream = ingestor
+            .get_ref()
+            .storage()
+            .clone()
+            .retrieve(doc.try_into()?)
+            .await
+            .map_err(Error::Storage)?
+            .map(|stream| stream.map_err(Error::Storage));
 
-    let stream = ingestor
-        .storage()
-        .retrieve(advisory.head.hashes.try_into()?)
-        .await
-        .map_err(Error::Storage)?
-        .map(|stream| stream.map_err(Error::Storage));
-
-    Ok(match stream {
-        Some(s) => HttpResponse::Ok().streaming(s),
-        None => {
-            tracing::warn!(
-                uuid = ?advisory.head.uuid,
-                "Found the document, but not its content"
-            );
-            HttpResponse::NotFound().finish()
-        }
-    })
+        Ok(match stream {
+            Some(s) => HttpResponse::Ok().streaming(s),
+            None => HttpResponse::NotFound().finish(),
+        })
+    } else {
+        Ok(HttpResponse::NotFound().finish())
+    }
 }

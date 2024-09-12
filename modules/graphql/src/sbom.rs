@@ -21,12 +21,10 @@ impl SbomQuery {
                 sbom_id: sbom_context.sbom.sbom_id,
                 node_id: sbom_context.sbom.node_id,
                 labels: sbom_context.sbom.labels,
-                sha256: sbom_context.sbom.sha256,
-                sha384: sbom_context.sbom.sha384,
-                sha512: sbom_context.sbom.sha512,
                 document_id: sbom_context.sbom.document_id,
                 published: sbom_context.sbom.published,
                 authors: sbom_context.sbom.authors,
+                source_document_id: sbom_context.sbom.source_document_id,
             }),
             Ok(None) => Err(FieldError::new("SBOM not found")),
             Err(err) => Err(FieldError::from(err)),
@@ -65,12 +63,10 @@ impl SbomQuery {
                     sbom_id: sbom.sbom.sbom_id,
                     node_id: sbom.sbom.node_id,
                     labels: sbom.sbom.labels,
-                    sha256: sbom.sbom.sha256,
-                    sha384: sbom.sbom.sha384,
-                    sha512: sbom.sbom.sha512,
                     document_id: sbom.sbom.document_id,
                     published: sbom.sbom.published,
                     authors: sbom.sbom.authors,
+                    source_document_id: sbom.sbom.source_document_id,
                 })
             })
             .collect()

@@ -5,17 +5,17 @@ use crate::graph::error::Error;
 use crate::graph::Graph;
 use hex::ToHex;
 use sea_orm::ActiveValue::Set;
-use sea_orm::ColumnTrait;
 use sea_orm::{ActiveModelTrait, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter};
-use sea_query::{Condition, OnConflict};
+use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
+use sea_query::{Condition, JoinType, OnConflict};
 use std::fmt::{Debug, Formatter};
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::db::Transactional;
 use trustify_common::hashing::Digests;
 use trustify_entity as entity;
-use trustify_entity::advisory;
 use trustify_entity::labels::Labels;
+use trustify_entity::{advisory, source_document};
 use uuid::Uuid;
 
 pub mod advisory_vulnerability;
@@ -69,11 +69,20 @@ impl Graph {
     #[instrument(skip(self, tx), err)]
     pub async fn get_advisory_by_digest<TX: AsRef<Transactional>>(
         &self,
-        sha256: &str,
+        digest: &str,
         tx: TX,
     ) -> Result<Option<AdvisoryContext>, Error> {
         Ok(entity::advisory::Entity::find()
-            .filter(Condition::all().add(entity::advisory::Column::Sha256.eq(sha256.to_string())))
+            .join(
+                JoinType::Join,
+                entity::advisory::Relation::SourceDocument.def(),
+            )
+            .filter(
+                Condition::any()
+                    .add(entity::source_document::Column::Sha256.eq(digest.to_string()))
+                    .add(entity::source_document::Column::Sha384.eq(digest.to_string()))
+                    .add(entity::source_document::Column::Sha512.eq(digest.to_string())),
+            )
             .one(&self.connection(&tx))
             .await?
             .map(|advisory| AdvisoryContext::new(self, advisory)))
@@ -115,18 +124,25 @@ impl Graph {
             None
         };
 
+        let doc_model = source_document::ActiveModel {
+            id: Default::default(),
+            sha256: Set(sha256),
+            sha384: Set(digests.sha384.encode_hex()),
+            sha512: Set(digests.sha512.encode_hex()),
+        };
+
+        let doc = doc_model.insert(&self.connection(&tx)).await?;
+
         let model = advisory::ActiveModel {
             id: Default::default(),
             identifier: Set(identifier),
             issuer_id: Set(organization.map(|org| org.organization.id)),
-            sha256: Set(sha256),
-            sha384: Set(Some(digests.sha384.encode_hex())),
-            sha512: Set(Some(digests.sha512.encode_hex())),
             title: Set(information.title),
             published: Set(information.published),
             modified: Set(information.modified),
             withdrawn: Default::default(),
             labels: Set(labels),
+            source_document_id: Set(Some(doc.id)),
         };
 
         Ok(AdvisoryContext::new(

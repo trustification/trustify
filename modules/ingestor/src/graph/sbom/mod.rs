@@ -40,7 +40,7 @@ use trustify_common::{
 };
 use trustify_entity::{
     self as entity, labels::Labels, package_relates_to_package, relationship::Relationship, sbom,
-    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
+    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, source_document,
 };
 
 #[derive(Clone, Default)]
@@ -76,11 +76,20 @@ impl Graph {
     #[instrument(skip(tx))]
     pub async fn get_sbom_by_digest<TX: AsRef<Transactional>>(
         &self,
-        sha256: &str,
+        digest: &str,
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         Ok(entity::sbom::Entity::find()
-            .filter(Condition::all().add(sbom::Column::Sha256.eq(sha256.to_string())))
+            .join(
+                JoinType::LeftJoin,
+                entity::sbom::Relation::SourceDocument.def(),
+            )
+            .filter(
+                Condition::any()
+                    .add(source_document::Column::Sha256.eq(digest.to_string()))
+                    .add(source_document::Column::Sha384.eq(digest.to_string()))
+                    .add(source_document::Column::Sha512.eq(digest.to_string())),
+            )
             .one(&self.connection(&tx))
             .await?
             .map(|sbom| SbomContext::new(self, sbom)))
@@ -112,18 +121,25 @@ impl Graph {
 
         let sbom_id = Uuid::now_v7();
 
+        let doc_model = source_document::ActiveModel {
+            id: Default::default(),
+            sha256: Set(sha256),
+            sha384: Set(digests.sha384.encode_hex()),
+            sha512: Set(digests.sha512.encode_hex()),
+        };
+
+        let doc = doc_model.insert(&connection).await?;
+
         let model = sbom::ActiveModel {
             sbom_id: Set(sbom_id),
             node_id: Set(node_id.clone()),
 
             document_id: Set(document_id.to_string()),
-            sha256: Set(sha256),
-            sha384: Set(Some(digests.sha384.encode_hex())),
-            sha512: Set(Some(digests.sha512.encode_hex())),
 
             published: Set(published),
             authors: Set(authors),
 
+            source_document_id: Set(Some(doc.id)),
             labels: Set(labels.into()),
         };
 
@@ -233,7 +249,9 @@ impl Graph {
         tx: TX,
     ) -> Result<Option<SbomContext>, Error> {
         self.locate_one_sbom(
-            sbom::Entity::find().filter(sbom::Column::Sha256.eq(sha256.to_string())),
+            sbom::Entity::find()
+                .join(JoinType::Join, sbom::Relation::SourceDocument.def())
+                .filter(source_document::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
         .await
@@ -245,7 +263,9 @@ impl Graph {
         tx: TX,
     ) -> Result<Vec<SbomContext>, Error> {
         self.locate_many_sboms(
-            entity::sbom::Entity::find().filter(sbom::Column::Sha256.eq(sha256.to_string())),
+            sbom::Entity::find()
+                .join(JoinType::Join, sbom::Relation::SourceDocument.def())
+                .filter(source_document::Column::Sha256.eq(sha256.to_string())),
             tx,
         )
         .await

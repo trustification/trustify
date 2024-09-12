@@ -54,7 +54,7 @@ const GET_SBOM_BY_ID: &str = "
     query SBOMyById($id: UUID!) {
         getSbomById(id: $id) {
             sbomId
-            sha256
+            sourceDocumentId
             authors
         }
     }
@@ -64,7 +64,7 @@ const GET_SBOMS_BY_LABELS: &str = "
     query SBOMyById($labels: String!) {
         getSbomsByLabels(labels: $labels) {
             sbomId
-            sha256
+            sourceDocumentId
             authors
             labels
         }
@@ -190,10 +190,14 @@ async fn get_sbom_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let data = result.data.into_json()?;
     let sbom = &data["getSbomById"];
-    assert_eq!(
-        sbom["sha256"],
-        "8f080039c24decc9a066e08fc8f4b7208437536a0bc788d4c76c38c1e1add6e3"
-    );
+    let source_document_id = &sbom["sourceDocumentId"];
+
+    //assert_eq!(
+    //sbom["sha256"],
+    //"8f080039c24decc9a066e08fc8f4b7208437536a0bc788d4c76c38c1e1add6e3"
+    //);
+
+    assert!(!source_document_id.as_str().unwrap().is_empty());
 
     log::debug!("{}", data);
 
@@ -220,10 +224,14 @@ async fn get_sboms_by_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     let data = result.data.into_json()?;
     let sbom = &data["getSbomsByLabels"];
-    assert_eq!(
-        sbom[0]["sha256"],
-        "8f080039c24decc9a066e08fc8f4b7208437536a0bc788d4c76c38c1e1add6e3"
-    );
+    let source_document_id = &sbom[0]["sourceDocumentId"];
+
+    //assert_eq!(
+    //sbom[0]["sha256"],
+    //"8f080039c24decc9a066e08fc8f4b7208437536a0bc788d4c76c38c1e1add6e3"
+    //);
+
+    assert!(!source_document_id.as_str().unwrap().is_empty());
 
     log::debug!("{}", data);
 

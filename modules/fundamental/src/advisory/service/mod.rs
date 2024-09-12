@@ -3,11 +3,12 @@ use crate::{
     Error,
 };
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTypeTrait, DatabaseBackend, EntityTrait,
-    FromQueryResult, IntoActiveModel, IntoIdentity, QuerySelect, QueryTrait, TransactionTrait,
+    ActiveModelTrait, ActiveValue::Set, ColumnTypeTrait, DatabaseBackend, DbErr, EntityTrait,
+    FromQueryResult, IntoActiveModel, IntoIdentity, QueryResult, QuerySelect, QueryTrait,
+    RelationTrait, Select, TransactionTrait,
 };
-use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, SimpleExpr};
-use time::OffsetDateTime;
+use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, JoinType, SimpleExpr};
+use trustify_common::db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel};
 use trustify_common::{
     db::{
         limiter::LimiterAsModelTrait,
@@ -21,6 +22,7 @@ use trustify_entity::{
     advisory,
     cvss3::{self, Severity},
     labels::Labels,
+    organization, source_document,
 };
 use uuid::Uuid;
 
@@ -73,6 +75,8 @@ impl AdvisoryService {
 
         // And then proceed as usual.
         let limiter = outer_query
+            .left_join(source_document::Entity)
+            .join(JoinType::LeftJoin, advisory::Relation::Issuer.def())
             .column_as(
                 SimpleExpr::Column(ColumnRef::Column(
                     "average_score".into_identity().into_iden(),
@@ -110,37 +114,19 @@ impl AdvisoryService {
                         _ => None,
                     }),
             )?
-            .limiting_as::<AdvisoryCatcher>(&connection, paginated.offset, paginated.limit);
+            .try_limiting_as_multi_model::<AdvisoryCatcher>(
+                &connection,
+                paginated.offset,
+                paginated.limit,
+            )?;
 
         let total = limiter.total().await?;
 
         let items = limiter.fetch().await?;
 
-        let averages: Vec<_> = items
-            .iter()
-            .map(|e| (e.average_score, e.average_severity))
-            .collect();
-
-        let entities: Vec<_> = items
-            .into_iter()
-            .map(|e| advisory::Model {
-                id: e.id,
-                identifier: e.identifier,
-                issuer_id: e.issuer_id,
-                labels: e.labels,
-                sha256: e.sha256,
-                sha384: e.sha384,
-                sha512: e.sha512,
-                published: e.published,
-                modified: e.modified,
-                withdrawn: e.withdrawn,
-                title: e.title,
-            })
-            .collect();
-
         Ok(PaginatedResults {
             total,
-            items: AdvisorySummary::from_entities(&entities, &averages, &connection).await?,
+            items: AdvisorySummary::from_entities(&items, &connection).await?,
         })
     }
 
@@ -182,6 +168,8 @@ impl AdvisoryService {
             .from_subquery(inner_query.into_query(), "advisory".into_identity());
 
         let results = outer_query
+            .left_join(source_document::Entity)
+            .join(JoinType::LeftJoin, advisory::Relation::Issuer.def())
             .column_as(
                 SimpleExpr::Column(ColumnRef::Column(
                     "average_score".into_identity().into_iden(),
@@ -196,36 +184,13 @@ impl AdvisoryService {
                 "average_severity",
             )
             .try_filter(id)?
-            .into_model::<AdvisoryCatcher>()
+            .try_into_multi_model::<AdvisoryCatcher>()?
             .one(&connection)
             .await?;
 
-        if let Some(advisory) = results {
-            let entity = advisory::Model {
-                id: advisory.id,
-                identifier: advisory.identifier,
-                issuer_id: advisory.issuer_id,
-                labels: advisory.labels,
-                sha256: advisory.sha256,
-                sha384: advisory.sha384,
-                sha512: advisory.sha512,
-                published: advisory.published,
-                modified: advisory.modified,
-                withdrawn: advisory.withdrawn,
-                title: advisory.title,
-            };
-
-            let average_score = advisory.average_score;
-            let average_severity = advisory.average_severity;
-
+        if let Some(catcher) = results {
             Ok(Some(
-                AdvisoryDetails::from_entity(
-                    &entity,
-                    average_score,
-                    average_severity.map(|x| x.into()),
-                    &connection,
-                )
-                .await?,
+                AdvisoryDetails::from_entity(&catcher, &connection).await?,
             ))
         } else {
             Ok(None)
@@ -319,22 +284,38 @@ impl AdvisoryService {
     }
 }
 
-#[derive(FromQueryResult, Debug)]
-struct AdvisoryCatcher {
-    pub id: Uuid,
-    pub identifier: String,
-    pub issuer_id: Option<Uuid>,
-    pub labels: Labels,
-    pub sha256: String,
-    pub sha384: Option<String>,
-    pub sha512: Option<String>,
-    pub published: Option<OffsetDateTime>,
-    pub modified: Option<OffsetDateTime>,
-    pub withdrawn: Option<OffsetDateTime>,
-    pub title: Option<String>,
-    // all of advisory, plus some.
+#[derive(Debug)]
+pub struct AdvisoryCatcher {
+    pub source_document: Option<source_document::Model>,
+    pub advisory: advisory::Model,
+    pub issuer: Option<organization::Model>,
     pub average_score: Option<f64>,
     pub average_severity: Option<Severity>,
+}
+
+impl FromQueryResult for AdvisoryCatcher {
+    fn from_query_result(res: &QueryResult, _pre: &str) -> Result<Self, DbErr> {
+        Ok(Self {
+            source_document: Self::from_query_result_multi_model_optional(
+                res,
+                "",
+                source_document::Entity,
+            )?,
+            advisory: Self::from_query_result_multi_model(res, "", advisory::Entity)?,
+            issuer: Self::from_query_result_multi_model_optional(res, "", organization::Entity)?,
+            average_score: res.try_get("", "average_score")?,
+            average_severity: res.try_get("", "average_severity")?,
+        })
+    }
+}
+
+impl FromQueryResultMultiModel for AdvisoryCatcher {
+    fn try_into_multi_model<E: EntityTrait>(select: Select<E>) -> Result<Select<E>, DbErr> {
+        select
+            .try_model_columns(advisory::Entity)?
+            .try_model_columns(organization::Entity)?
+            .try_model_columns(source_document::Entity)
+    }
 }
 
 #[cfg(test)]

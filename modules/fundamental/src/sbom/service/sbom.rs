@@ -48,7 +48,9 @@ impl SbomService {
     ) -> Result<Option<(sbom::Model, Option<sbom_node::Model>)>, Error> {
         let connection = self.db.connection(&tx);
 
-        let select = sbom::Entity::find().try_filter(id)?;
+        let select = sbom::Entity::find()
+            .join(JoinType::LeftJoin, sbom::Relation::SourceDocument.def())
+            .try_filter(id)?;
 
         Ok(select
             .find_also_linked(SbomNodeLink)
