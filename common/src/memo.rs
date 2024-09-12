@@ -4,6 +4,7 @@ pub enum Memo<T> {
     NotProvided,
     Provided(Option<T>),
 }
+
 impl<T: Debug> Debug for Memo<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {

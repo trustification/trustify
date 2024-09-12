@@ -74,6 +74,7 @@ mod m0000580_mark_fns;
 mod m0000590_get_purl_fns;
 mod m0000595_analysis_api_index;
 mod m0000600_remove_raise_notice_fns;
+mod m0000605_create_source_document;
 
 pub struct Migrator;
 
@@ -155,6 +156,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000590_get_purl_fns::Migration),
             Box::new(m0000595_analysis_api_index::Migration),
             Box::new(m0000600_remove_raise_notice_fns::Migration),
+            Box::new(m0000605_create_source_document::Migration),
         ]
     }
 }

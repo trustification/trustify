@@ -1,4 +1,4 @@
-use sea_orm::{ColumnTrait, EntityTrait, LoaderTrait, QueryFilter, QuerySelect};
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -6,16 +6,20 @@ use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::memo::Memo;
 use trustify_common::paginated;
 use trustify_cvss::cvss3::score::Score;
-use trustify_entity::cvss3::Severity;
-use trustify_entity::{advisory, advisory_vulnerability, organization, vulnerability};
+use trustify_entity::{advisory_vulnerability, vulnerability};
 
 use crate::advisory::model::{AdvisoryHead, AdvisoryVulnerabilityHead};
+use crate::advisory::service::AdvisoryCatcher;
+use crate::source_document::model::SourceDocument;
 use crate::Error;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct AdvisorySummary {
     #[serde(flatten)]
     pub head: AdvisoryHead,
+
+    /// Information pertaning to the underlying source document, if any.
+    pub source_document: Option<SourceDocument>,
 
     /// Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
     #[schema(required)]
@@ -33,35 +37,42 @@ paginated!(AdvisorySummary);
 
 impl AdvisorySummary {
     pub async fn from_entities(
-        entities: &[advisory::Model],
-        averages: &[(Option<f64>, Option<Severity>)],
+        entities: &[AdvisoryCatcher],
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
-        let issuers = entities.load_one(organization::Entity, tx).await?;
+        let mut summaries = Vec::with_capacity(entities.len());
 
-        let mut summaries = Vec::with_capacity(issuers.len());
-
-        for ((advisory, issuer), (average_score, average_severity)) in
-            entities.iter().zip(issuers.into_iter()).zip(averages)
-        {
+        for each in entities {
             let vulnerabilities = vulnerability::Entity::find()
                 .right_join(advisory_vulnerability::Entity)
                 .column_as(
                     advisory_vulnerability::Column::VulnerabilityId,
                     vulnerability::Column::Id,
                 )
-                .filter(advisory_vulnerability::Column::AdvisoryId.eq(advisory.id))
+                .filter(advisory_vulnerability::Column::AdvisoryId.eq(each.advisory.id))
                 .all(tx)
                 .await?;
 
             let vulnerabilities =
-                AdvisoryVulnerabilityHead::from_entities(advisory, &vulnerabilities, tx).await?;
+                AdvisoryVulnerabilityHead::from_entities(&each.advisory, &vulnerabilities, tx)
+                    .await?;
 
-            let average_score = average_score.map(|score| Score::new(score).roundup());
+            let average_score = each.average_score.map(|score| Score::new(score).roundup());
 
             summaries.push(AdvisorySummary {
-                head: AdvisoryHead::from_advisory(advisory, Memo::Provided(issuer), tx).await?,
-                average_severity: average_severity
+                head: AdvisoryHead::from_advisory(
+                    &each.advisory,
+                    Memo::Provided(each.issuer.clone()),
+                    tx,
+                )
+                .await?,
+                source_document: if let Some(doc) = &each.source_document {
+                    Some(SourceDocument::from_entity(doc, tx).await?)
+                } else {
+                    None
+                },
+                average_severity: each
+                    .average_severity
                     .as_ref()
                     .map(|severity| severity.to_string()),
                 average_score: average_score.map(|score| score.value()),

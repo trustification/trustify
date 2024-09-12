@@ -1793,6 +1793,10 @@ components:
             allOf:
             - $ref: '#/components/schemas/Severity'
             nullable: true
+          source_document:
+            allOf:
+            - $ref: '#/components/schemas/SourceDocument'
+            nullable: true
           vulnerabilities:
             type: array
             items:
@@ -1803,18 +1807,12 @@ components:
       required:
       - uuid
       - identifier
-      - hashes
       - issuer
       - published
       - withdrawn
       - title
       - labels
       properties:
-        hashes:
-          type: array
-          items:
-            $ref: '#/components/schemas/Id'
-          description: Hashes of the underlying original document as ingested.
         identifier:
           type: string
           description: The identifier of the advisory, as assigned by the issuing organization.
@@ -1863,6 +1861,10 @@ components:
           average_severity:
             type: string
             description: Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
+            nullable: true
+          source_document:
+            allOf:
+            - $ref: '#/components/schemas/SourceDocument'
             nullable: true
           vulnerabilities:
             type: array
@@ -2949,7 +2951,6 @@ components:
       type: object
       required:
       - id
-      - hashes
       - document_id
       - labels
       - published
@@ -2962,10 +2963,6 @@ components:
             type: string
         document_id:
           type: string
-        hashes:
-          type: array
-          items:
-            $ref: '#/components/schemas/Id'
         id:
           type: string
         labels:
@@ -3067,6 +3064,10 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/SbomPackage'
+          source_document:
+            allOf:
+            - $ref: '#/components/schemas/SourceDocument'
+            nullable: true
     Severity:
       type: string
       description: |-
@@ -3083,6 +3084,23 @@ components:
       - medium
       - high
       - critical
+    SourceDocument:
+      type: object
+      required:
+      - id
+      - sha256
+      - sha384
+      - sha512
+      properties:
+        id:
+          type: string
+          format: uuid
+        sha256:
+          type: string
+        sha384:
+          type: string
+        sha512:
+          type: string
     SpdxLicenseDetails:
       allOf:
       - $ref: '#/components/schemas/SpdxLicenseSummary'

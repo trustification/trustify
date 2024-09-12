@@ -169,8 +169,6 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let response: Value = app.call_and_read_body_json(request).await;
 
-    log::debug!("{:#?}", response);
-
     assert_eq!(
         response.clone().path("$.issuer.name").unwrap(),
         json!(["Red Hat Product Security"])

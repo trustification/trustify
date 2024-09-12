@@ -46,7 +46,7 @@ jobs:
       - name: Test
         run: cargo test -- --nocapture
         env:
-          RUST_LOG: info,sqlx=error,sea_orm=error
+          RUST_LOG: warn,sqlx=error,sea_orm=error
       - name: Export and Validate Generated Openapi Spec
         run: |
           cargo xtask openapi

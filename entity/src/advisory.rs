@@ -18,14 +18,12 @@ pub struct Model {
     #[graphql(name = "name")]
     pub identifier: String,
     pub issuer_id: Option<Uuid>,
-    pub sha256: String,
-    pub sha384: Option<String>,
-    pub sha512: Option<String>,
     pub published: Option<OffsetDateTime>,
     pub modified: Option<OffsetDateTime>,
     pub withdrawn: Option<OffsetDateTime>,
     pub title: Option<String>,
     pub labels: Labels,
+    pub source_document_id: Option<Uuid>,
 }
 
 #[ComplexObject]
@@ -55,6 +53,12 @@ impl Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
+        belongs_to = "super::source_document::Entity"
+        from = "Column::SourceDocumentId"
+        to = "super::source_document::Column::Id")]
+    SourceDocument,
+
+    #[sea_orm(
         belongs_to = "super::organization::Entity"
         from = "Column::IssuerId"
         to = "super::organization::Column::Id")]
@@ -65,6 +69,12 @@ pub enum Relation {
 
     #[sea_orm(has_many = "super::advisory_vulnerability::Entity")]
     AdvisoryVulnerability,
+}
+
+impl Related<super::source_document::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::SourceDocument.def()
+    }
 }
 
 impl Related<organization::Entity> for Entity {
@@ -101,9 +111,15 @@ impl TryFilterForId for Entity {
     fn try_filter(id: Id) -> Result<Condition, IdError> {
         Ok(match id {
             Id::Uuid(uuid) => Column::Id.eq(uuid).into_condition(),
-            Id::Sha256(hash) => Column::Sha256.eq(hash).into_condition(),
-            Id::Sha384(hash) => Column::Sha384.eq(hash).into_condition(),
-            Id::Sha512(hash) => Column::Sha512.eq(hash).into_condition(),
+            Id::Sha256(hash) => super::source_document::Column::Sha256
+                .eq(hash)
+                .into_condition(),
+            Id::Sha384(hash) => super::source_document::Column::Sha384
+                .eq(hash)
+                .into_condition(),
+            Id::Sha512(hash) => super::source_document::Column::Sha512
+                .eq(hash)
+                .into_condition(),
             n => return Err(IdError::UnsupportedAlgorithm(n.prefix().to_string())),
         })
     }

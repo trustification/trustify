@@ -1,8 +1,10 @@
 pub mod advisory_vulnerability;
 
+use crate::advisory::service::AdvisoryCatcher;
+use crate::source_document::model::SourceDocument;
 use crate::{advisory::model::AdvisoryHead, Error};
 use advisory_vulnerability::AdvisoryVulnerabilitySummary;
-use sea_orm::{ColumnTrait, EntityTrait, ModelTrait, QueryFilter, QuerySelect};
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::memo::Memo;
@@ -14,6 +16,8 @@ use utoipa::ToSchema;
 pub struct AdvisoryDetails {
     #[serde(flatten)]
     pub head: AdvisoryHead,
+
+    pub source_document: Option<SourceDocument>,
 
     /// Vulnerabilities addressed within this advisory.
     pub vulnerabilities: Vec<AdvisoryVulnerabilitySummary>,
@@ -29,9 +33,7 @@ pub struct AdvisoryDetails {
 
 impl AdvisoryDetails {
     pub async fn from_entity(
-        advisory: &entity::advisory::Model,
-        average_score: Option<f64>,
-        average_severity: Option<Severity>,
+        advisory: &AdvisoryCatcher,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
         let vulnerabilities = entity::vulnerability::Entity::find()
@@ -40,23 +42,29 @@ impl AdvisoryDetails {
                 entity::advisory_vulnerability::Column::VulnerabilityId,
                 entity::vulnerability::Column::Id,
             )
-            .filter(entity::advisory_vulnerability::Column::AdvisoryId.eq(advisory.id))
+            .filter(entity::advisory_vulnerability::Column::AdvisoryId.eq(advisory.advisory.id))
             .all(tx)
             .await?;
 
         let vulnerabilities =
-            AdvisoryVulnerabilitySummary::from_entities(advisory, &vulnerabilities, tx).await?;
-
-        let issuer = advisory
-            .find_related(entity::organization::Entity)
-            .one(tx)
-            .await?;
+            AdvisoryVulnerabilitySummary::from_entities(&advisory.advisory, &vulnerabilities, tx)
+                .await?;
 
         Ok(AdvisoryDetails {
-            head: AdvisoryHead::from_advisory(advisory, Memo::Provided(issuer), tx).await?,
+            head: AdvisoryHead::from_advisory(
+                &advisory.advisory,
+                Memo::Provided(advisory.issuer.clone()),
+                tx,
+            )
+            .await?,
+            source_document: if let Some(doc) = &advisory.source_document {
+                Some(SourceDocument::from_entity(doc, tx).await?)
+            } else {
+                None
+            },
             vulnerabilities,
-            average_severity,
-            average_score,
+            average_severity: advisory.average_severity.map(|sev| sev.into()),
+            average_score: advisory.average_score,
         })
     }
 }

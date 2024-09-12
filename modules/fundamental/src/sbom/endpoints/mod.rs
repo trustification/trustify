@@ -74,6 +74,8 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         crate::sbom::model::details::SbomAdvisory,
         crate::sbom::model::details::SbomDetails,
         crate::sbom::model::details::SbomStatus,
+        crate::purl::model::details::purl::StatusContext,
+        crate::source_document::model::SourceDocument,
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
         trustify_common::id::Id,
@@ -418,16 +420,22 @@ pub async fn download(
         return Ok(HttpResponse::NotFound().finish());
     };
 
-    let stream = ingestor
-        .storage()
-        .clone()
-        .retrieve(sbom.head.hashes.try_into()?)
-        .await
-        .map_err(Error::Storage)?
-        .map(|stream| stream.map_err(Error::Storage));
+    if let Some(doc) = &sbom.source_document {
+        let storage_key = doc.try_into()?;
 
-    Ok(match stream {
-        Some(s) => HttpResponse::Ok().streaming(s),
-        None => HttpResponse::NotFound().finish(),
-    })
+        let stream = ingestor
+            .storage()
+            .clone()
+            .retrieve(storage_key)
+            .await
+            .map_err(Error::Storage)?
+            .map(|stream| stream.map_err(Error::Storage));
+
+        Ok(match stream {
+            Some(s) => HttpResponse::Ok().streaming(s),
+            None => HttpResponse::NotFound().finish(),
+        })
+    } else {
+        Ok(HttpResponse::NotFound().finish())
+    }
 }

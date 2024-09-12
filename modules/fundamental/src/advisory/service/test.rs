@@ -1,5 +1,6 @@
 use super::*;
 use crate::advisory::model::AdvisoryHead;
+use crate::source_document::model::SourceDocument;
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
@@ -246,12 +247,18 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(matches!(
             fetched,
             Some(AdvisoryDetails {
-                head: AdvisoryHead { hashes, .. },
+                head: AdvisoryHead { .. },
+            source_document: Some(SourceDocument {
+                sha256,
+                sha384,
+                sha512,
+                ..
+            }),
             average_severity: Some(average_severity),
 
                 ..
             })
-        if hashes.contains(&jenny256) && hashes.contains(&jenny384) && hashes.contains(&jenny512) && average_severity == Severity::Critical));
+        if sha256 == jenny256.to_string() && sha384 == jenny384.to_string() && sha512 == jenny512.to_string() && average_severity == Severity::Critical));
 
     Ok(())
 }
