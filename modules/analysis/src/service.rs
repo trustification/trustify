@@ -200,7 +200,7 @@ pub async fn load_graphs(
                             };
 
                             if left_purl_string == "NOVALUE" {
-                                log::warn!("sbom:{} has packages with no pURL.", document_id);
+                                log::debug!("sbom:{} has packages with no pURL.", document_id);
                                 continue;
                             }
 
@@ -231,7 +231,7 @@ pub async fn load_graphs(
                             };
 
                             if right_purl_string == "NOVALUE" {
-                                log::warn!("sbom:{} has packages with no pURL.", document_id);
+                                log::debug!("sbom:{} has packages with no pURL.", document_id);
                                 continue;
                             }
                             let p2 = match nodes.get(&right_purl_string) {
