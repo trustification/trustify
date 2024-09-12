@@ -12,6 +12,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct LicenseSummary {
     #[serde(with = "uuid::serde::urn")]
+    #[schema(value_type=String)]
     pub id: Uuid,
     pub license: String,
     pub spdx_licenses: Vec<String>,

@@ -1819,7 +1819,6 @@ components:
           nullable: true
         uuid:
           type: string
-          format: uuid
           description: The opaque UUID of the advisory.
         withdrawn:
           type: string
@@ -2322,7 +2321,6 @@ components:
       properties:
         id:
           type: string
-          format: uuid
         license:
           type: string
         purls:
@@ -2687,7 +2685,6 @@ components:
       properties:
         id:
           type: string
-          format: uuid
         name:
           type: string
     ProductSbomHead:
@@ -2735,11 +2732,8 @@ components:
       properties:
         id:
           type: string
-          format: uuid
         sbom_id:
           type: string
-          format: uuid
-          nullable: true
         version:
           type: string
     Progress:
@@ -2953,7 +2947,6 @@ components:
             $ref: '#/components/schemas/Id'
         id:
           type: string
-          format: uuid
         labels:
           $ref: '#/components/schemas/Labels'
         name:

@@ -17,6 +17,7 @@ use super::service::SbomService;
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct SbomHead {
     #[serde(with = "uuid::serde::urn")]
+    #[schema(value_type=String)]
     pub id: Uuid,
     pub hashes: Vec<Id>,
 
