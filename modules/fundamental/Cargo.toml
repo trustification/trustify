@@ -34,6 +34,7 @@ tokio-util = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras", "uuid"] }
 uuid = { workspace = true }
+walker-common = { workspace = true, features = ["liblzma"] }
 
 [dev-dependencies]
 actix-http = { workspace = true }

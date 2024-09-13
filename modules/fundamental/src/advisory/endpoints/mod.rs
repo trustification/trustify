@@ -2,13 +2,18 @@ mod label;
 #[cfg(test)]
 mod test;
 
-use crate::purl::service::PurlService;
-use crate::Error::Internal;
-use crate::{advisory::service::AdvisoryService, Error};
-use actix_web::{delete, get, post, web, HttpResponse, Responder};
+use crate::{
+    advisory::service::AdvisoryService, purl::service::PurlService, Error, Error::Internal,
+};
+use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use std::str::FromStr;
-use trustify_common::{db::query::Query, db::Database, id::Id, model::Paginated};
+use trustify_common::{
+    db::{query::Query, Database},
+    decompress::decompress_async,
+    id::Id,
+    model::Paginated,
+};
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
@@ -166,8 +171,10 @@ struct UploadParams {
 pub async fn upload(
     service: web::Data<IngestorService>,
     web::Query(UploadParams { issuer, labels }): web::Query<UploadParams>,
+    content_type: Option<web::Header<header::ContentType>>,
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
+    let bytes = decompress_async(bytes, content_type.map(|ct| ct.0)).await??;
     let result = service
         .ingest(&bytes, Format::Advisory, labels, issuer)
         .await?;

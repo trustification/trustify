@@ -1509,9 +1509,9 @@ dependencies = [
 
 [[package]]
 name = "csaf-walker"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d52460a6162a177cf54d57dc91fe4e6ff9a6b7eb4a523d8d556b7e3975728064"
+checksum = "e57ebadc747c8a558e2991ea9c48bd506797f57542db60c744f46920d1bc8bf9"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3953,7 +3953,7 @@ version = "5.0.0-alpha.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "098af5a5110b4deacf3200682963713b143ae9d28762b739bdb7b98429dfaf68"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.21.7",
  "chrono",
  "getrandom",
  "http 1.1.0",
@@ -5662,9 +5662,9 @@ dependencies = [
 
 [[package]]
 name = "sbom-walker"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fd021076229ac2641a1a372ef2144987b67723ce32eed9eb7689d9a0708a0a7"
+checksum = "2b3a2da8bf741cebcd842ccae6f79987faa2d36de3405ef5eef3c4dadc118c5f"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5972,7 +5972,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13261ee216b44d932ef93b2d4a75d45199bef77864bcc5b77ecfc7bc0ecb02d6"
 dependencies = [
  "anyhow",
- "base64 0.22.1",
+ "base64 0.21.7",
  "buffered-reader",
  "chrono",
  "dyn-clone",
@@ -7430,7 +7430,9 @@ dependencies = [
 name = "trustify-common"
 version = "0.1.0-alpha.16"
 dependencies = [
+ "actix-web",
  "anyhow",
+ "bytes",
  "bytesize",
  "chrono",
  "clap",
@@ -7456,14 +7458,17 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx 0.7.4",
+ "test-context",
  "test-log",
  "thiserror",
  "time",
  "tokio",
  "tracing",
  "trustify-migration",
+ "trustify-test-context",
  "utoipa",
  "uuid",
+ "walker-common",
 ]
 
 [[package]]
@@ -7637,6 +7642,7 @@ dependencies = [
  "urlencoding",
  "utoipa",
  "uuid",
+ "walker-common",
  "zip 2.2.0",
 ]
 
@@ -8262,9 +8268,9 @@ dependencies = [
 
 [[package]]
 name = "walker-common"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36cf16d9d73439da9e00bc1f43cf5688bdfa19a8fbb843b02e186ceb1cef6d72"
+checksum = "00a210041bd21789df7c35951fcdc8a97f3514e17b018c334c87c5ce77bb2a65"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -8282,6 +8288,7 @@ dependencies = [
  "indicatif",
  "indicatif-log-bridge",
  "lazy_static",
+ "liblzma",
  "log",
  "openid 0.14.0",
  "pem",
