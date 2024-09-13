@@ -2,10 +2,10 @@ pub mod advisory;
 pub mod config;
 pub mod cpe;
 pub mod db;
+pub mod decompress;
 pub mod error;
 pub mod hashing;
 pub mod id;
-
 pub mod memo;
 pub mod model;
 pub mod package;

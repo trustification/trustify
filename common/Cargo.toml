@@ -8,7 +8,9 @@ license.workspace = true
 [dependencies]
 trustify-migration = { workspace = true }
 
+actix-web = { workspace = true }
 anyhow = { workspace = true }
+bytes = { workspace = true }
 bytesize = { workspace = true, features = ["serde"] }
 chrono = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
@@ -34,15 +36,20 @@ serde_json = { workspace = true }
 sqlx = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true }
+tokio = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true, features = ["url"] }
 uuid = { workspace = true, features = ["v5", "serde"] }
+walker-common = { workspace = true, features = ["bzip2", "liblzma"]}
 
 [dev-dependencies]
 chrono = { workspace = true }
 rand = { workspace = true }
 rstest = { workspace = true }
 serde_json = { workspace = true }
+test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 time = { workspace = true, features = ["macros"] }
 tokio = { workspace = true, features = ["full"] }
+
+trustify-test-context = { workspace = true }

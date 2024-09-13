@@ -7,7 +7,6 @@ use std::env;
 use std::io::{Read, Seek};
 use std::path::PathBuf;
 use test_context::AsyncTestContext;
-use tokio::io::AsyncReadExt;
 use tokio_util::bytes::Bytes;
 use tokio_util::io::{ReaderStream, SyncIoBridge};
 use tracing::instrument;
@@ -135,13 +134,18 @@ fn absolute(path: &str) -> Result<PathBuf, anyhow::Error> {
     Ok(test_data.join(path))
 }
 
+/// Load a test document and decompress it, if necessary.
 pub async fn document_bytes(path: &str) -> Result<Bytes, anyhow::Error> {
-    let mut file = tokio::fs::File::open(absolute(path)?).await?;
-    let mut bytes = Vec::new();
-    file.read_to_end(&mut bytes).await?;
+    let mut bytes = document_bytes_raw(path).await?;
     if path.ends_with(".xz") {
-        bytes = liblzma::decode_all(&*bytes)?;
+        bytes = liblzma::decode_all(&*bytes)?.into();
     }
+    Ok(bytes)
+}
+
+/// Load a test document as-is, no decompression.
+pub async fn document_bytes_raw(path: &str) -> Result<Bytes, anyhow::Error> {
+    let bytes = tokio::fs::read(absolute(path)?).await?;
     Ok(bytes.into())
 }
 

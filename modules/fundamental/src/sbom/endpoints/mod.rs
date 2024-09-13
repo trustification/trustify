@@ -2,21 +2,22 @@ mod label;
 #[cfg(test)]
 mod test;
 
-use crate::purl::service::PurlService;
 use crate::{
+    purl::service::PurlService,
     sbom::{
         model::{SbomPackageReference, Which},
         service::SbomService,
     },
     Error::{self, Internal},
 };
-use actix_web::{delete, get, post, web, HttpResponse, Responder};
+use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder};
 use futures_util::TryStreamExt;
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
 use trustify_auth::{authenticator::user::UserInformation, authorizer::Authorizer, Permission};
 use trustify_common::{
     db::{query::Query, Database},
+    decompress::decompress_async,
     error::ErrorInformation,
     id::Id,
     model::Paginated,
@@ -353,8 +354,10 @@ struct UploadQuery {
 pub async fn upload(
     service: web::Data<IngestorService>,
     web::Query(UploadQuery { labels }): web::Query<UploadQuery>,
+    content_type: Option<web::Header<header::ContentType>>,
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
+    let bytes = decompress_async(bytes, content_type.map(|ct| ct.0)).await??;
     let result = service.ingest(&bytes, Format::SBOM, labels, None).await?;
     log::info!("Uploaded SBOM: {}", result.id);
     Ok(HttpResponse::Created().json(result))
