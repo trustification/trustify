@@ -21,8 +21,6 @@ pub enum Error {
     Ingestor(#[from] trustify_module_ingestor::service::Error),
     #[error(transparent)]
     Purl(#[from] PurlErr),
-    #[error(transparent)]
-    Actix(#[from] actix_web::Error),
     #[error("Invalid request {msg}")]
     BadRequest { msg: String, status: StatusCode },
     #[error(transparent)]
@@ -36,10 +34,6 @@ pub enum Error {
     #[error("Internal Server Error: {0}")]
     Internal(String),
 }
-
-unsafe impl Send for Error {}
-
-unsafe impl Sync for Error {}
 
 impl From<DbErr> for Error {
     fn from(value: DbErr) -> Self {
