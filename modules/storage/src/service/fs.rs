@@ -127,6 +127,8 @@ impl StorageBackend for FileSystemBackend {
         create_dir_all(&target).await?;
         let target = target.join(hash);
 
+        log::debug!("Opening file: {}", target.display());
+
         let file = match File::open(&target).await {
             Ok(file) => Some(file),
             Err(err) if err.kind() == ErrorKind::NotFound => None,

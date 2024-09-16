@@ -7642,6 +7642,7 @@ dependencies = [
  "urlencoding",
  "utoipa",
  "uuid",
+ "walkdir",
  "walker-common",
  "zip 2.2.0",
 ]

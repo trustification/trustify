@@ -219,7 +219,7 @@ impl IngestorService {
         bytes: &[u8],
         labels: impl Into<Labels> + Debug,
     ) -> Result<DatasetIngestResult, Error> {
-        let loader = DatasetLoader::new(self.graph());
+        let loader = DatasetLoader::new(self.graph(), self.storage());
         loader.load(labels.into(), bytes).await
     }
 }

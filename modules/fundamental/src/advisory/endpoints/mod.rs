@@ -209,10 +209,10 @@ pub async fn download(
         return Ok(HttpResponse::NotFound().finish());
     };
 
+    log::debug!("Found document - hashes: {:?}", advisory.head.hashes);
+
     let stream = ingestor
-        .get_ref()
         .storage()
-        .clone()
         .retrieve(advisory.head.hashes.try_into()?)
         .await
         .map_err(Error::Storage)?
@@ -220,6 +220,12 @@ pub async fn download(
 
     Ok(match stream {
         Some(s) => HttpResponse::Ok().streaming(s),
-        None => HttpResponse::NotFound().finish(),
+        None => {
+            tracing::warn!(
+                uuid = ?advisory.head.uuid,
+                "Found the document, but not its content"
+            );
+            HttpResponse::NotFound().finish()
+        }
     })
 }
