@@ -1,5 +1,5 @@
 use crate::{
-    sbom::model::{details::SbomDetails, SbomPackage},
+    sbom::model::{SbomPackage, SbomSummary},
     test::{caller, CallService},
 };
 use actix_http::StatusCode;
@@ -155,10 +155,10 @@ async fn download_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .uri(&format!("/api/v1/sbom/{id}"))
         .to_request();
 
-    let sbom = app.call_and_read_body_json::<SbomDetails>(req).await;
-    assert_eq!(Id::Uuid(sbom.summary.head.id), result.id);
+    let sbom = app.call_and_read_body_json::<SbomSummary>(req).await;
+    assert_eq!(Id::Uuid(sbom.head.id), result.id);
 
-    let hashes = sbom.summary.head.hashes;
+    let hashes = sbom.head.hashes;
     assert!(!hashes.is_empty());
 
     // Verify we can download by all hashes

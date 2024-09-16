@@ -41,26 +41,46 @@ use trustify_entity::{
 };
 
 impl SbomService {
-    /// fetch one sbom
-    pub async fn fetch_sbom<TX: AsRef<Transactional>>(
+    async fn fetch_sbom<TX: AsRef<Transactional>>(
         &self,
         id: Id,
         tx: TX,
-    ) -> Result<Option<SbomDetails>, Error> {
+    ) -> Result<Option<(sbom::Model, Option<sbom_node::Model>)>, Error> {
         let connection = self.db.connection(&tx);
 
         let select = sbom::Entity::find().try_filter(id)?;
 
-        Ok(
-            match select
-                .find_also_linked(SbomNodeLink)
-                .one(&connection)
-                .await?
-            {
-                Some(row) => SbomDetails::from_entity(row, self, &connection).await?,
-                None => None,
-            },
-        )
+        Ok(select
+            .find_also_linked(SbomNodeLink)
+            .one(&connection)
+            .await?)
+    }
+
+    /// fetch one sbom
+    pub async fn fetch_sbom_details<TX: AsRef<Transactional>>(
+        &self,
+        id: Id,
+
+        tx: TX,
+    ) -> Result<Option<SbomDetails>, Error> {
+        Ok(match self.fetch_sbom(id, &tx).await? {
+            Some(row) => SbomDetails::from_entity(row, self, &self.db.connection(&tx)).await?,
+            None => None,
+        })
+    }
+
+    /// fetch the summary of one sbom
+    pub async fn fetch_sbom_summary<TX: AsRef<Transactional>>(
+        &self,
+        id: Id,
+        tx: TX,
+    ) -> Result<Option<SbomSummary>, Error> {
+        let connection = self.db.connection(&tx);
+
+        Ok(match self.fetch_sbom(id, &tx).await? {
+            Some(row) => SbomSummary::from_entity(row, self, &connection).await?,
+            None => None,
+        })
     }
 
     /// delete one sbom

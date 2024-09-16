@@ -20,7 +20,9 @@ async fn sbom_details_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     let id_3_2_12 = results[3].id.clone();
 
-    let details = service.fetch_sbom(id_3_2_12, Transactional::None).await?;
+    let details = service
+        .fetch_sbom_details(id_3_2_12, Transactional::None)
+        .await?;
 
     assert!(details.is_some());
 

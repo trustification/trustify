@@ -55,13 +55,13 @@ async fn quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_ne!(result1.id, result2.id);
 
     let mut sbom1 = sbom
-        .fetch_sbom(result1.id, ())
+        .fetch_sbom_details(result1.id, ())
         .await?
         .expect("v1 must be found");
     log::info!("SBOM1: {sbom1:?}");
 
     let mut sbom2 = sbom
-        .fetch_sbom(result2.id, ())
+        .fetch_sbom_details(result2.id, ())
         .await?
         .expect("v2 must be found");
     log::info!("SBOM2: {sbom2:?}");
@@ -129,13 +129,13 @@ async fn nhc(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_ne!(result1.id, result2.id);
 
     let mut sbom1 = sbom
-        .fetch_sbom(result1.id, ())
+        .fetch_sbom_details(result1.id, ())
         .await?
         .expect("v1 must be found");
     log::info!("SBOM1: {sbom1:?}");
 
     let mut sbom2 = sbom
-        .fetch_sbom(result2.id, ())
+        .fetch_sbom_details(result2.id, ())
         .await?
         .expect("v2 must be found");
     log::info!("SBOM2: {sbom2:?}");
@@ -182,13 +182,13 @@ async fn nhc_same(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(result1.id, result2.id);
 
     let mut sbom1 = sbom
-        .fetch_sbom(result1.id, ())
+        .fetch_sbom_details(result1.id, ())
         .await?
         .expect("v1 must be found");
     log::info!("SBOM1: {sbom1:?}");
 
     let mut sbom2 = sbom
-        .fetch_sbom(result2.id, ())
+        .fetch_sbom_details(result2.id, ())
         .await?
         .expect("v2 must be found");
     log::info!("SBOM2: {sbom2:?}");
@@ -249,13 +249,13 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_ne!(result1.id, result2.id);
 
     let mut sbom1 = sbom
-        .fetch_sbom(result1.id, ())
+        .fetch_sbom_details(result1.id, ())
         .await?
         .expect("v1 must be found");
     log::info!("SBOM1: {sbom1:?}");
 
     let mut sbom2 = sbom
-        .fetch_sbom(result2.id, ())
+        .fetch_sbom_details(result2.id, ())
         .await?
         .expect("v2 must be found");
     log::info!("SBOM2: {sbom2:?}");
@@ -306,13 +306,13 @@ async fn syft_rerun(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_ne!(result1.id, result2.id);
 
     let mut sbom1 = sbom
-        .fetch_sbom(result1.id, ())
+        .fetch_sbom_details(result1.id, ())
         .await?
         .expect("v1 must be found");
     log::info!("SBOM1: {sbom1:?}");
 
     let mut sbom2 = sbom
-        .fetch_sbom(result2.id, ())
+        .fetch_sbom_details(result2.id, ())
         .await?
         .expect("v2 must be found");
     log::info!("SBOM2: {sbom2:?}");

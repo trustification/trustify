@@ -1,15 +1,20 @@
-use crate::advisory::service::AdvisoryService;
-use crate::purl::model::details::purl::StatusContext;
-use crate::purl::service::PurlService;
-use crate::sbom::service::SbomService;
+use crate::{
+    advisory::service::AdvisoryService,
+    purl::{model::details::purl::StatusContext, service::PurlService},
+    sbom::service::SbomService,
+};
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
-use trustify_common::db::query::{q, Query};
-use trustify_common::db::Transactional;
-use trustify_common::id::Id;
-use trustify_common::model::Paginated;
-use trustify_common::purl::Purl;
+use trustify_common::{
+    db::{
+        query::{q, Query},
+        Transactional,
+    },
+    id::Id,
+    model::Paginated,
+    purl::Purl,
+};
 use trustify_test_context::TrustifyContext;
 
 async fn ingest_extra_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
@@ -663,7 +668,10 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         id: Id,
     ) -> Result<(), anyhow::Error> {
         let sbom_service = SbomService::new(ctx.db.clone());
-        let sbom = sbom_service.fetch_sbom(id, ()).await?.expect("fetch_sbom");
+        let sbom = sbom_service
+            .fetch_sbom_details(id, ())
+            .await?
+            .expect("fetch_sbom");
         assert_eq!(
             1,
             sbom_service
