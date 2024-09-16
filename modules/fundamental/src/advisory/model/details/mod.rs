@@ -17,6 +17,7 @@ pub struct AdvisoryDetails {
     #[serde(flatten)]
     pub head: AdvisoryHead,
 
+    #[serde(flatten)]
     pub source_document: Option<SourceDocument>,
 
     /// Vulnerabilities addressed within this advisory.

@@ -59,6 +59,7 @@ pub struct SbomSummary {
     #[serde(flatten)]
     pub head: SbomHead,
 
+    #[serde(flatten)]
     pub source_document: Option<SourceDocument>,
 
     pub described_by: Vec<SbomPackage>,

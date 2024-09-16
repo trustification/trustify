@@ -19,6 +19,7 @@ pub struct AdvisorySummary {
     pub head: AdvisoryHead,
 
     /// Information pertaning to the underlying source document, if any.
+    #[serde(flatten)]
     pub source_document: Option<SourceDocument>,
 
     /// Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
