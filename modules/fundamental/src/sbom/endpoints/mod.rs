@@ -36,6 +36,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         .service(all)
         .service(all_related)
         .service(get)
+        .service(get_sbom_advisories)
         .service(delete)
         .service(packages)
         .service(related)
@@ -51,6 +52,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         all,
         all_related,
         get,
+        get_sbom_advisories,
         delete,
         packages,
         related,
@@ -60,22 +62,22 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         label::update,
     ),
     components(schemas(
+        crate::purl::model::details::purl::StatusContext,
         crate::sbom::model::PaginatedSbomPackage,
         crate::sbom::model::PaginatedSbomPackageRelation,
         crate::sbom::model::PaginatedSbomSummary,
+        crate::sbom::model::SbomHead,
         crate::sbom::model::SbomPackage,
         crate::sbom::model::SbomPackageRelation,
         crate::sbom::model::SbomSummary,
-        crate::sbom::model::details::SbomDetails,
-        crate::sbom::model::details::SbomAdvisory,
-        crate::sbom::model::details::SbomStatus,
-        crate::sbom::model::SbomHead,
         crate::sbom::model::Which,
-        crate::purl::model::details::purl::StatusContext,
+        crate::sbom::model::details::SbomAdvisory,
+        crate::sbom::model::details::SbomDetails,
+        crate::sbom::model::details::SbomStatus,
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
-        trustify_common::purl::Purl,
         trustify_common::id::Id,
+        trustify_common::purl::Purl,
         trustify_entity::labels::Labels,
         trustify_entity::relationship::Relationship,
     )),
@@ -176,7 +178,7 @@ pub async fn all_related(
         ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
-        (status = 200, description = "Matching SBOM", body = SbomDetails),
+        (status = 200, description = "Matching SBOM", body = SbomSummary),
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
@@ -190,8 +192,37 @@ pub async fn get(
     authorizer.require(&user, Permission::ReadSbom)?;
 
     let id = Id::from_str(&id).map_err(Error::IdKey)?;
-    match fetcher.fetch_sbom(id, ()).await? {
+    match fetcher.fetch_sbom_summary(id, ()).await? {
         Some(v) => Ok(HttpResponse::Ok().json(v)),
+        None => Ok(HttpResponse::NotFound().finish()),
+    }
+}
+
+#[utoipa::path(
+    tag = "sbom",
+    operation_id = "getSbomAdvisories",
+    context_path = "/api",
+    params(
+        ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+    ),
+    responses(
+        (status = 200, description = "Matching SBOM", body = SbomDetails),
+        (status = 404, description = "Matching SBOM not found"),
+    ),
+)]
+#[get("/v1/sbom/{id}/advisory")]
+pub async fn get_sbom_advisories(
+    fetcher: web::Data<SbomService>,
+    authorizer: web::Data<Authorizer>,
+    user: UserInformation,
+    id: web::Path<String>,
+) -> actix_web::Result<impl Responder> {
+    authorizer.require(&user, Permission::ReadSbom)?;
+    authorizer.require(&user, Permission::ReadVex)?;
+
+    let id = Id::from_str(&id).map_err(Error::IdKey)?;
+    match fetcher.fetch_sbom_details(id, ()).await? {
+        Some(v) => Ok(HttpResponse::Ok().json(v.advisories)),
         None => Ok(HttpResponse::NotFound().finish()),
     }
 }
@@ -219,9 +250,9 @@ pub async fn delete(
     authorizer.require(&user, Permission::DeleteSbom)?;
 
     let id = Id::from_str(&id).map_err(Error::IdKey)?;
-    match service.fetch_sbom(id.clone(), ()).await? {
+    match service.fetch_sbom_summary(id.clone(), ()).await? {
         Some(v) => {
-            let rows_affected = service.delete_sbom(v.summary.head.id, ()).await?;
+            let rows_affected = service.delete_sbom(v.head.id, ()).await?;
             match rows_affected {
                 0 => Ok(HttpResponse::NotFound().finish()),
                 1 => {
@@ -383,14 +414,14 @@ pub async fn download(
 ) -> Result<impl Responder, Error> {
     let id = Id::from_str(&key).map_err(Error::IdKey)?;
 
-    let Some(sbom) = sbom.fetch_sbom(id, ()).await? else {
+    let Some(sbom) = sbom.fetch_sbom_summary(id, ()).await? else {
         return Ok(HttpResponse::NotFound().finish());
     };
 
     let stream = ingestor
         .storage()
         .clone()
-        .retrieve(sbom.summary.head.hashes.try_into()?)
+        .retrieve(sbom.head.hashes.try_into()?)
         .await
         .map_err(Error::Storage)?
         .map(|stream| stream.map_err(Error::Storage));

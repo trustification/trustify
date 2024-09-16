@@ -1,18 +1,17 @@
-use crate::advisory::model::AdvisoryHead;
-use crate::purl::model::details::purl::StatusContext;
-use crate::purl::model::summary::purl::PurlSummary;
-use crate::sbom::model::SbomPackage;
-use crate::sbom::service::sbom::QueryCatcher;
-use crate::sbom::service::SbomService;
-use crate::Error;
+use super::SbomSummary;
+use crate::{
+    advisory::model::AdvisoryHead,
+    purl::{model::details::purl::StatusContext, model::summary::purl::PurlSummary},
+    sbom::{model::SbomPackage, service::sbom::QueryCatcher, service::SbomService},
+    Error,
+};
 use async_graphql::SimpleObject;
 use cpe::uri::OwnedUri;
 use sea_orm::{JoinType, ModelTrait, QuerySelect, RelationTrait};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use trustify_common::cpe::CpeCompare;
-use trustify_common::db::{multi_model::SelectIntoMultiModel, ConnectionOrTransaction};
-use trustify_common::memo::Memo;
+use trustify_common::db::multi_model::SelectIntoMultiModel;
+use trustify_common::{cpe::CpeCompare, db::ConnectionOrTransaction, memo::Memo};
 use trustify_entity::{
     base_purl, purl_status,
     qualified_purl::{self},
@@ -20,8 +19,6 @@ use trustify_entity::{
     sbom_node, sbom_package, sbom_package_purl_ref, versioned_purl,
 };
 use utoipa::ToSchema;
-
-use super::SbomSummary;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct SbomDetails {
@@ -62,7 +59,6 @@ impl SbomDetails {
             .join(JoinType::Join, purl_status::Relation::Vulnerability.def())
             .select_only()
             .try_into_multi_model::<QueryCatcher>()?
-            //.into_model::<QueryCatcher>()
             .all(tx)
             .await?;
 
