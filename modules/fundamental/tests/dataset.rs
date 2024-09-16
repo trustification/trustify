@@ -78,9 +78,7 @@ async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
 
     let storage_key = (&source_doc).try_into()?;
 
-    let stream = storage
-        .retrieve(storage_key)
-        .await?;
+    let stream = storage.retrieve(storage_key).await?;
     assert!(stream.is_some());
     let mut stream = stream.unwrap();
     let mut content = BytesMut::new();
