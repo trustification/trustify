@@ -1778,6 +1778,9 @@ components:
     AdvisoryDetails:
       allOf:
       - $ref: '#/components/schemas/AdvisoryHead'
+      - allOf:
+        - $ref: '#/components/schemas/SourceDocument'
+        nullable: true
       - type: object
         required:
         - vulnerabilities
@@ -1792,10 +1795,6 @@ components:
           average_severity:
             allOf:
             - $ref: '#/components/schemas/Severity'
-            nullable: true
-          source_document:
-            allOf:
-            - $ref: '#/components/schemas/SourceDocument'
             nullable: true
           vulnerabilities:
             type: array
@@ -1847,6 +1846,9 @@ components:
     AdvisorySummary:
       allOf:
       - $ref: '#/components/schemas/AdvisoryHead'
+      - allOf:
+        - $ref: '#/components/schemas/SourceDocument'
+        nullable: true
       - type: object
         required:
         - average_severity
@@ -1861,10 +1863,6 @@ components:
           average_severity:
             type: string
             description: Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
-            nullable: true
-          source_document:
-            allOf:
-            - $ref: '#/components/schemas/SourceDocument'
             nullable: true
           vulnerabilities:
             type: array
@@ -3056,6 +3054,9 @@ components:
     SbomSummary:
       allOf:
       - $ref: '#/components/schemas/SbomHead'
+      - allOf:
+        - $ref: '#/components/schemas/SourceDocument'
+        nullable: true
       - type: object
         required:
         - described_by
@@ -3064,10 +3065,6 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/SbomPackage'
-          source_document:
-            allOf:
-            - $ref: '#/components/schemas/SourceDocument'
-            nullable: true
     Severity:
       type: string
       description: |-
@@ -3087,14 +3084,10 @@ components:
     SourceDocument:
       type: object
       required:
-      - id
       - sha256
       - sha384
       - sha512
       properties:
-        id:
-          type: string
-          format: uuid
         sha256:
           type: string
         sha384:
