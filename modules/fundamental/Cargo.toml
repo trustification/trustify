@@ -58,6 +58,7 @@ urlencoding = { workspace = true }
 criterion = { workspace = true, features = ["html_reports", "async_tokio"] }
 csaf = { workspace = true }
 packageurl = { workspace = true }
+walkdir = { workspace =  true }
 zip = { workspace = true }
 
 [[bench]]

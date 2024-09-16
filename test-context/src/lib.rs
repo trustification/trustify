@@ -5,7 +5,7 @@ use peak_alloc::PeakAlloc;
 use postgresql_embedded::PostgreSQL;
 use std::env;
 use std::io::{Read, Seek};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use test_context::AsyncTestContext;
 use tokio_util::bytes::Bytes;
 use tokio_util::io::{ReaderStream, SyncIoBridge};
@@ -90,6 +90,10 @@ impl TrustifyContext {
             .ingest(&bytes, Format::Unknown, ("source", "TrustifyContext"), None)
             .await?)
     }
+
+    pub fn absolute_path(&self, path: impl AsRef<Path>) -> anyhow::Result<PathBuf> {
+        absolute(path)
+    }
 }
 
 impl AsyncTestContext for TrustifyContext {
@@ -128,7 +132,7 @@ impl AsyncTestContext for TrustifyContext {
     }
 }
 
-fn absolute(path: &str) -> Result<PathBuf, anyhow::Error> {
+fn absolute(path: impl AsRef<Path>) -> Result<PathBuf, anyhow::Error> {
     let workspace_root: PathBuf = env!("CARGO_WORKSPACE_ROOT").into();
     let test_data = workspace_root.join("etc/test-data");
     Ok(test_data.join(path))

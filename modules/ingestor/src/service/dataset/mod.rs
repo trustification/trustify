@@ -5,6 +5,7 @@ use crate::{
     model::IngestResult,
     service::{Error, Format, Warnings},
 };
+use anyhow::anyhow;
 use bytes::Bytes;
 use sbom_walker::common::compression::decompress;
 use std::{
@@ -13,17 +14,20 @@ use std::{
     str::FromStr,
 };
 use tokio::runtime::Handle;
+use tokio_util::io::ReaderStream;
 use tracing::instrument;
 use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
+use trustify_module_storage::{service::dispatch::DispatchBackend, service::StorageBackend};
 
 pub struct DatasetLoader<'g> {
     graph: &'g Graph,
+    storage: &'g DispatchBackend,
 }
 
 impl<'g> DatasetLoader<'g> {
-    pub fn new(graph: &'g Graph) -> Self {
-        Self { graph }
+    pub fn new(graph: &'g Graph, storage: &'g DispatchBackend) -> Self {
+        Self { graph, storage }
     }
 
     #[instrument(skip(self, buffer), ret)]
@@ -73,6 +77,11 @@ impl<'g> DatasetLoader<'g> {
                             .await??;
 
                         let labels = labels.clone().add("datasetFile", &full_name);
+
+                        self.storage
+                            .store(ReaderStream::new(&*data))
+                            .await
+                            .map_err(|err| Error::Storage(anyhow!("{err}")))?;
 
                         // We need to box it, to work around async recursion limits
                         let result = Box::pin({
