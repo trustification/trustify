@@ -12,11 +12,15 @@ declare
     left_pre text;
     left_build text;
 
+    left_cardinality integer;
+
     right_major bigint;
     right_minor bigint;
     right_patch bigint;
     right_pre text;
     right_build text;
+
+    right_cardinality integer;
 
     left_numeric bool;
     right_numeric bool;
@@ -64,9 +68,12 @@ begin
         return -1;
     end if;
 
-    if cardinality(left_parts) > cardinality(right_parts) then
+    left_cardinality := greatest(cardinality(left_parts), 3);
+    right_cardinality := greatest(cardinality(right_parts), 3);
+
+    if left_cardinality > right_cardinality then
         return +1;
-    elsif cardinality(left_parts) < cardinality(right_parts) then
+    elsif left_cardinality < right_cardinality then
         return -1;
     end if;
 
