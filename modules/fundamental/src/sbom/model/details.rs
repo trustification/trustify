@@ -7,16 +7,18 @@ use crate::{
 };
 use async_graphql::SimpleObject;
 use cpe::uri::OwnedUri;
-use sea_orm::{JoinType, ModelTrait, QuerySelect, RelationTrait};
+use sea_orm::{JoinType, ModelTrait, QueryFilter, QuerySelect, RelationTrait};
+use sea_query::{Asterisk, Expr, Func, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use trustify_common::db::multi_model::SelectIntoMultiModel;
+use trustify_common::db::VersionMatches;
 use trustify_common::{cpe::CpeCompare, db::ConnectionOrTransaction, memo::Memo};
 use trustify_entity::{
     base_purl, purl_status,
     qualified_purl::{self},
     sbom::{self},
-    sbom_node, sbom_package, sbom_package_purl_ref, versioned_purl,
+    sbom_node, sbom_package, sbom_package_purl_ref, version_range, versioned_purl,
 };
 use utoipa::ToSchema;
 
@@ -47,6 +49,14 @@ impl SbomDetails {
                 JoinType::LeftJoin,
                 qualified_purl::Relation::VersionedPurl.def(),
             )
+            .filter(SimpleExpr::FunctionCall(
+                Func::cust(VersionMatches)
+                    .arg(Expr::col((
+                        versioned_purl::Entity,
+                        versioned_purl::Column::Version,
+                    )))
+                    .arg(Expr::col((version_range::Entity, Asterisk))),
+            ))
             .join(JoinType::LeftJoin, versioned_purl::Relation::BasePurl.def())
             .join(JoinType::Join, base_purl::Relation::PurlStatus.def())
             .join(JoinType::Join, purl_status::Relation::Status.def())
