@@ -1,3 +1,4 @@
+use crate::version_common::{version_matches, Version, VersionRange};
 use migration::sea_orm::Statement;
 use migration::ConnectionTrait;
 use test_context::test_context;
@@ -69,6 +70,95 @@ async fn test_mavenver_cmp(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(Some(-1), mavenver_cmp(&ctx.db, "1.8-1", "1.8.0-3").await?);
     assert_eq!(Some(1), mavenver_cmp(&ctx.db, "1.8-3", "1.8.0-1").await?);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(tokio::test)]
+async fn test_version_matches(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+
+    assert!(version_matches(&db, "1.0.2", VersionRange::Exact("1.0.2"), "maven").await?);
+    assert!(!version_matches(&db, "1.0.2", VersionRange::Exact("1.0.0"), "maven").await?);
+
+    assert!(
+        version_matches(
+            &db,
+            "1.0.2",
+            VersionRange::Range(Version::Unbounded, Version::Inclusive("1.0.2")),
+            "maven"
+        )
+        .await?
+    );
+
+    assert!(
+        !version_matches(
+            &db,
+            "1.0.2",
+            VersionRange::Range(Version::Unbounded, Version::Exclusive("1.0.2")),
+            "maven"
+        )
+        .await?
+    );
+
+    assert!(
+        version_matches(
+            &db,
+            "1.0.2-beta.2",
+            VersionRange::Range(Version::Unbounded, Version::Exclusive("1.0.2")),
+            "maven"
+        )
+        .await?
+    );
+
+    assert!(
+        version_matches(
+            &db,
+            "1.0.2",
+            VersionRange::Range(Version::Inclusive("1.0.2"), Version::Exclusive("1.0.5")),
+            "maven"
+        )
+        .await?
+    );
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(tokio::test)]
+async fn test_version_matches_commons_compress(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+
+    assert!(
+        !version_matches(
+            &db,
+            "1.26",
+            VersionRange::Range(Version::Inclusive("1.21"), Version::Exclusive("1.26")),
+            "maven"
+        )
+        .await?
+    );
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(tokio::test)]
+async fn test_version_matches_commons_compress_but_as_semver_because_the_cve_says_its_semver(
+    ctx: TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+
+    assert!(
+        !version_matches(
+            &db,
+            "1.26",
+            VersionRange::Range(Version::Inclusive("1.21"), Version::Exclusive("1.26")),
+            "semver"
+        )
+        .await?
+    );
 
     Ok(())
 }

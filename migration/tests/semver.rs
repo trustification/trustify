@@ -163,14 +163,15 @@ async fn comparison_helpers(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 async fn test_version_matches(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let db = ctx.db;
 
-    assert!(version_matches(&db, "1.0.2", VersionRange::Exact("1.0.2")).await?);
-    assert!(!version_matches(&db, "1.0.2", VersionRange::Exact("1.0.0")).await?);
+    assert!(version_matches(&db, "1.0.2", VersionRange::Exact("1.0.2"), "semver").await?);
+    assert!(!version_matches(&db, "1.0.2", VersionRange::Exact("1.0.0"), "semver").await?);
 
     assert!(
         version_matches(
             &db,
             "1.0.2",
-            VersionRange::Range(Version::Unbounded, Version::Inclusive("1.0.2"))
+            VersionRange::Range(Version::Unbounded, Version::Inclusive("1.0.2")),
+            "semver"
         )
         .await?
     );
@@ -179,7 +180,8 @@ async fn test_version_matches(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         !version_matches(
             &db,
             "1.0.2",
-            VersionRange::Range(Version::Unbounded, Version::Exclusive("1.0.2"))
+            VersionRange::Range(Version::Unbounded, Version::Exclusive("1.0.2")),
+            "semver"
         )
         .await?
     );
@@ -188,7 +190,8 @@ async fn test_version_matches(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         version_matches(
             &db,
             "1.0.2-beta.2",
-            VersionRange::Range(Version::Unbounded, Version::Exclusive("1.0.2"))
+            VersionRange::Range(Version::Unbounded, Version::Exclusive("1.0.2")),
+            "semver"
         )
         .await?
     );
@@ -197,7 +200,8 @@ async fn test_version_matches(ctx: TrustifyContext) -> Result<(), anyhow::Error>
         version_matches(
             &db,
             "1.0.2",
-            VersionRange::Range(Version::Inclusive("1.0.2"), Version::Exclusive("1.0.5"))
+            VersionRange::Range(Version::Inclusive("1.0.2"), Version::Exclusive("1.0.5")),
+            "semver"
         )
         .await?
     );
@@ -215,7 +219,8 @@ async fn test_version_matches_datelike(ctx: &TrustifyContext) -> Result<(), anyh
             VersionRange::Range(
                 Version::Inclusive("7.1.0-0.20231218164901.0660a66.el9"),
                 Version::Exclusive("8.1.0-0.20231218164901.0660a66.el9"),
-            )
+            ),
+            "semver"
         )
         .await?
     );
@@ -233,7 +238,8 @@ async fn test_version_matches_shalike(ctx: &TrustifyContext) -> Result<(), anyho
             VersionRange::Range(
                 Version::Inclusive("7.1.0-0.20231218164901.0660a66.el9"),
                 Version::Exclusive("8.1.0-0.20231218164901.0660a66.el9"),
-            )
+            ),
+            "semver"
         )
         .await?
     );

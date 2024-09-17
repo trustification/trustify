@@ -20,6 +20,7 @@ pub async fn version_matches(
     db: &Database,
     candidate: &str,
     range: VersionRange,
+    version_scheme: &str,
 ) -> Result<bool, anyhow::Error> {
     let (low, low_inclusive, high, high_inclusive) = match range {
         VersionRange::Exact(version) => (
@@ -54,7 +55,7 @@ pub async fn version_matches(
             format!(
                 r#"
         SELECT * FROM version_matches('{candidate}',
-            (null, 'semver', {low}, {low_inclusive}, {high}, {high_inclusive})::version_range
+            (null, '{version_scheme}', {low}, {low_inclusive}, {high}, {high_inclusive})::version_range
         );
                 "#,
             ),
