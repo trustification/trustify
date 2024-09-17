@@ -200,3 +200,61 @@ async fn test_version_matches_rht_suffixen_as_semver_wrongly(
 
     Ok(())
 }
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(tokio::test)]
+async fn test_version_matches_netty_codec(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+
+    assert!(
+        version_matches(
+            &db,
+            "4.1.108.Final-redhat-0001",
+            VersionRange::Exact("4.1.108.Final-redhat-0001"),
+            "maven"
+        )
+        .await?
+    );
+
+    assert!(
+        version_matches(
+            &db,
+            "4.1.108.Final-redhat-0001",
+            VersionRange::Range(Version::Inclusive("4.1.108"), Version::Exclusive("4.2")),
+            "maven"
+        )
+        .await?
+    );
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(tokio::test)]
+async fn test_version_matches_netty_codec_semver(
+    ctx: TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+
+    assert!(
+        version_matches(
+            &db,
+            "4.1.108.Final-redhat-0001",
+            VersionRange::Exact("4.1.108.Final-redhat-0001"),
+            "semver"
+        )
+        .await?
+    );
+
+    assert!(
+        version_matches(
+            &db,
+            "4.1.108.Final-redhat-0001",
+            VersionRange::Range(Version::Inclusive("4.1.108"), Version::Exclusive("4.2")),
+            "semver"
+        )
+        .await?
+    );
+
+    Ok(())
+}
