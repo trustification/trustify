@@ -12,19 +12,22 @@ use trustify_cvss::cvss3::{
 };
 use trustify_module_ingestor::graph::advisory::{
     advisory_vulnerability::{VersionInfo, VersionSpec},
-    AdvisoryInformation,
+    AdvisoryContext, AdvisoryInformation,
 };
+
 use trustify_test_context::TrustifyContext;
 
-async fn ingest_and_link_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let advisory = ctx
-        .graph
+async fn ingest_sample_advisory<'a>(
+    ctx: &'a TrustifyContext,
+    title: &'a str,
+) -> Result<AdvisoryContext<'a>, trustify_module_ingestor::graph::error::Error> {
+    ctx.graph
         .ingest_advisory(
-            "RHSA-1",
+            title,
             ("source", "http://redhat.com/"),
-            &Digests::digest("RHSA-1"),
+            &Digests::digest(title),
             AdvisoryInformation {
-                title: Some("RHSA-1".to_string()),
+                title: Some(title.to_string()),
                 issuer: None,
                 published: Some(OffsetDateTime::now_utc()),
                 modified: None,
@@ -32,7 +35,11 @@ async fn ingest_and_link_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::E
             },
             (),
         )
-        .await?;
+        .await
+}
+
+async fn ingest_and_link_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let advisory = ingest_sample_advisory(ctx, "RHSA-1").await?;
 
     let advisory_vuln = advisory
         .link_to_vulnerability("CVE-123", None, Transactional::None)
@@ -62,21 +69,7 @@ async fn ingest_and_link_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::E
 async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ingest_and_link_advisory(ctx).await?;
 
-    ctx.graph
-        .ingest_advisory(
-            "RHSA-2",
-            ("source", "http://redhat.com/"),
-            &Digests::digest("RHSA-2"),
-            AdvisoryInformation {
-                title: Some("RHSA-2".to_string()),
-                issuer: None,
-                published: Some(OffsetDateTime::now_utc()),
-                modified: None,
-                withdrawn: None,
-            },
-            (),
-        )
-        .await?;
+    ingest_sample_advisory(ctx, "RHSA-2").await?;
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
@@ -94,21 +87,7 @@ async fn all_advisories_filtered_by_average_score(
 ) -> Result<(), anyhow::Error> {
     ingest_and_link_advisory(ctx).await?;
 
-    ctx.graph
-        .ingest_advisory(
-            "RHSA-2",
-            ("source", "http://redhat.com/"),
-            &Digests::digest("RHSA-2"),
-            AdvisoryInformation {
-                title: Some("RHSA-2".to_string()),
-                issuer: None,
-                published: Some(OffsetDateTime::now_utc()),
-                modified: None,
-                withdrawn: None,
-            },
-            (),
-        )
-        .await?;
+    ingest_sample_advisory(ctx, "RHSA-2").await?;
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
@@ -126,21 +105,7 @@ async fn all_advisories_filtered_by_average_severity(
 ) -> Result<(), anyhow::Error> {
     ingest_and_link_advisory(ctx).await?;
 
-    ctx.graph
-        .ingest_advisory(
-            "RHSA-2",
-            ("source", "http://redhat.com/"),
-            &Digests::digest("RHSA-2"),
-            AdvisoryInformation {
-                title: Some("RHSA-2".to_string()),
-                issuer: None,
-                published: Some(OffsetDateTime::now_utc()),
-                modified: None,
-                withdrawn: None,
-            },
-            (),
-        )
-        .await?;
+    ingest_sample_advisory(ctx, "RHSA-2").await?;
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
@@ -158,24 +123,9 @@ async fn all_advisories_filtered_by_average_severity(
 async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let digests = Digests::digest("RHSA-1");
 
-    let advisory = ctx
-        .graph
-        .ingest_advisory(
-            "RHSA-1",
-            ("source", "http://redhat.com/"),
-            &digests,
-            AdvisoryInformation {
-                title: Some("RHSA-1".to_string()),
-                issuer: None,
-                published: Some(OffsetDateTime::now_utc()),
-                modified: None,
-                withdrawn: None,
-            },
-            (),
-        )
-        .await?;
+    let advisory = ingest_sample_advisory(ctx, "RHSA-1").await?;
 
-    let advisory_vuln = advisory
+    let advisory_vuln: trustify_module_ingestor::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext<'_> = advisory
         .link_to_vulnerability("CVE-123", None, Transactional::None)
         .await?;
     advisory_vuln
@@ -221,21 +171,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    ctx.graph
-        .ingest_advisory(
-            "RHSA-2",
-            ("source", "http://redhat.com/"),
-            &Digests::digest("RHSA-2"),
-            AdvisoryInformation {
-                title: Some("RHSA-2".to_string()),
-                issuer: None,
-                published: Some(OffsetDateTime::now_utc()),
-                modified: None,
-                withdrawn: None,
-            },
-            (),
-        )
-        .await?;
+    ingest_sample_advisory(ctx, "RHSA-2").await?;
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let jenny256 = Id::sha256(&digests.sha256);
@@ -261,22 +197,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let digests = Digests::digest("RHSA-1");
 
-    let advisory = ctx
-        .graph
-        .ingest_advisory(
-            "RHSA-1",
-            ("source", "http://redhat.com/"),
-            &digests,
-            AdvisoryInformation {
-                title: Some("RHSA-1".to_string()),
-                issuer: None,
-                published: Some(OffsetDateTime::now_utc()),
-                modified: None,
-                withdrawn: None,
-            },
-            (),
-        )
-        .await?;
+    let advisory = ingest_sample_advisory(ctx, "RHSA-1").await?;
 
     let advisory_vuln = advisory
         .link_to_vulnerability("CVE-123", None, Transactional::None)
