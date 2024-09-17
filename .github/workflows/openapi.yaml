@@ -1,0 +1,42 @@
+name: openapi
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - openapi.yaml
+
+jobs:
+  trustify-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: trustify
+      - name: Checkout trustify-ui
+        uses: actions/checkout@v4
+        with:
+          repository: trustification/trustify-ui
+          path: trustify-ui
+      - name: Update trustify-ui
+        run: |
+          rm ./trustify-ui/client/openapi/trustd.yaml
+          cp ./trustify/openapi.yaml ./trustify-ui/client/openapi/trustd.yaml
+          
+          cd ./trustify-ui
+          git diff
+      - name: Create Pull Request - trustify-ui
+        uses: peter-evans/create-pull-request@v5
+        id: ui-pr
+        with:
+          token: ${{ secrets.GH_PAT }}
+          path: ./trustify-ui
+          commit-message: "update client/openapi/trustd.yaml"
+          signoff: true
+          branch-suffix: short-commit-hash
+          title: "update client/openapi/trustd.yaml"
+          body: "Update trustify openapi definition"
+      - name: PR Notifications
+        run: |
+          echo "::notice:: Trustify UI Pull Request URL - ${{ steps.ui-pr.outputs.pull-request-url }}"
