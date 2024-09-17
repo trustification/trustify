@@ -1,12 +1,12 @@
 use crate::license::model::{
     LicenseDetailsPurlSummary, LicenseSummary, SpdxLicenseDetails, SpdxLicenseSummary,
 };
-use crate::test::{caller, CallService};
+use crate::test::caller;
 use actix_web::test::TestRequest;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::model::PaginatedResults;
-use trustify_test_context::TrustifyContext;
+use trustify_test_context::{call::CallService, TrustifyContext};
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]

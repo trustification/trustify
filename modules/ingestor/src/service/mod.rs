@@ -51,6 +51,8 @@ pub enum Error {
     Join(#[from] JoinError),
     #[error(transparent)]
     Zip(#[from] zip::result::ZipError),
+    #[error("payload too large")]
+    PayloadTooLarge,
 }
 
 impl ResponseError for Error {
@@ -119,6 +121,11 @@ impl ResponseError for Error {
             Self::Zip(inner) => HttpResponse::BadRequest().json(ErrorInformation {
                 error: "ZipError".into(),
                 message: inner.to_string(),
+                details: None,
+            }),
+            Self::PayloadTooLarge => HttpResponse::PayloadTooLarge().json(ErrorInformation {
+                error: "PayloadTooLarge".into(),
+                message: self.to_string(),
                 details: None,
             }),
         }
@@ -218,8 +225,9 @@ impl IngestorService {
         &self,
         bytes: &[u8],
         labels: impl Into<Labels> + Debug,
+        limit: usize,
     ) -> Result<DatasetIngestResult, Error> {
-        let loader = DatasetLoader::new(self.graph(), self.storage());
+        let loader = DatasetLoader::new(self.graph(), self.storage(), limit);
         loader.load(labels.into(), bytes).await
     }
 }

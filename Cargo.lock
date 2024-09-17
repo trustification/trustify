@@ -7716,6 +7716,7 @@ dependencies = [
 name = "trustify-module-ingestor"
 version = "0.1.0-alpha.17"
 dependencies = [
+ "actix-http",
  "actix-web",
  "anyhow",
  "bytes",
@@ -7752,6 +7753,7 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+ "trustify-auth",
  "trustify-common",
  "trustify-cvss",
  "trustify-entity",
@@ -7832,7 +7834,10 @@ dependencies = [
 name = "trustify-test-context"
 version = "0.1.0-alpha.17"
 dependencies = [
+ "actix-http",
+ "actix-web",
  "anyhow",
+ "bytes",
  "futures",
  "hex",
  "liblzma",
@@ -7848,6 +7853,7 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+ "trustify-auth",
  "trustify-common",
  "trustify-migration",
  "trustify-module-ingestor",

@@ -1,3 +1,4 @@
+mod config;
 mod label;
 #[cfg(test)]
 mod test;
@@ -6,6 +7,7 @@ use crate::{
     advisory::service::AdvisoryService, purl::service::PurlService, Error, Error::Internal,
 };
 use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder};
+use config::Config;
 use futures_util::TryStreamExt;
 use std::str::FromStr;
 use trustify_common::{
@@ -19,11 +21,12 @@ use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::{IntoParams, OpenApi};
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database) {
+pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: usize) {
     let advisory_service = AdvisoryService::new(db);
 
     config
         .app_data(web::Data::new(advisory_service))
+        .app_data(web::Data::new(Config { upload_limit }))
         .service(all)
         .service(get)
         .service(delete)
@@ -171,11 +174,12 @@ struct UploadParams {
 /// Upload a new advisory
 pub async fn upload(
     service: web::Data<IngestorService>,
+    config: web::Data<Config>,
     web::Query(UploadParams { issuer, labels }): web::Query<UploadParams>,
     content_type: Option<web::Header<header::ContentType>>,
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
-    let bytes = decompress_async(bytes, content_type.map(|ct| ct.0)).await??;
+    let bytes = decompress_async(bytes, content_type.map(|ct| ct.0), config.upload_limit).await??;
     let result = service
         .ingest(&bytes, Format::Advisory, labels, issuer)
         .await?;

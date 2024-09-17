@@ -65,6 +65,9 @@ impl ResponseError for Error {
                 HttpResponse::UnsupportedMediaType()
                     .json(ErrorInformation::new("UnsupportedCompression", self))
             }
+            Error::Compression(decompress::Error::PayloadTooLarge) => {
+                HttpResponse::PayloadTooLarge().json(ErrorInformation::new("PayloadTooLarge", self))
+            }
             Error::Compression(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("CompressionError", err))
             }

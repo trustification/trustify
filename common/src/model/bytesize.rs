@@ -63,6 +63,12 @@ impl From<usize> for BinaryByteSize {
     }
 }
 
+impl From<BinaryByteSize> for usize {
+    fn from(value: BinaryByteSize) -> Self {
+        value.0 .0 as usize
+    }
+}
+
 impl Deref for BinaryByteSize {
     type Target = ByteSize;
 

@@ -3,10 +3,11 @@
 
 #[cfg(feature = "garage-door")]
 mod embedded_oidc;
-pub mod openapi;
 mod sample_data;
 
 pub use sample_data::sample_data;
+
+pub mod openapi;
 
 use actix_web::{
     body::MessageBody,
@@ -33,6 +34,7 @@ use trustify_auth::{
 use trustify_common::{
     config::{Database, StorageConfig, StorageStrategy},
     db,
+    model::BinaryByteSize,
 };
 use trustify_infrastructure::{
     app::{
@@ -77,6 +79,30 @@ pub struct Run {
     #[arg(long, env)]
     pub working_dir: Option<PathBuf>,
 
+    /// The size limit of SBOMs, uncompressed.
+    #[arg(
+        long,
+        env = "TRUSTD_SBOM_UPLOAD_LIMIT",
+        default_value_t = default::sbom_upload_limit()
+    )]
+    pub sbom_upload_limit: BinaryByteSize,
+
+    /// The size limit of advisories, uncompressed.
+    #[arg(
+        long,
+        env = "TRUSTD_ADVISORY_UPLOAD_LIMIT",
+        default_value_t = default::advisory_upload_limit()
+    )]
+    pub advisory_upload_limit: BinaryByteSize,
+
+    /// The size limit of documents in a dataset, uncompressed.
+    #[arg(
+        long,
+        env = "TRUSTD_DATASET_ENTRY_LIMIT",
+        default_value_t = default::dataset_entry_limit()
+    )]
+    pub dataset_entry_limit: BinaryByteSize,
+
     // flattened commands must go last
     //
     /// Database configuration
@@ -101,6 +127,23 @@ pub struct Run {
 
     #[command(flatten)]
     pub ui: UiConfig,
+}
+
+mod default {
+    use bytesize::ByteSize;
+    use trustify_common::model::BinaryByteSize;
+
+    pub const fn sbom_upload_limit() -> BinaryByteSize {
+        BinaryByteSize(ByteSize::gib(1))
+    }
+
+    pub const fn advisory_upload_limit() -> BinaryByteSize {
+        BinaryByteSize(ByteSize::mib(128))
+    }
+
+    pub const fn dataset_entry_limit() -> BinaryByteSize {
+        BinaryByteSize(ByteSize::gib(1))
+    }
 }
 
 #[derive(clap::Args, Debug, Clone)]
@@ -136,6 +179,14 @@ struct InitData {
     ui: UI,
     working_dir: Option<PathBuf>,
     with_graphql: bool,
+    config: ModuleConfig,
+}
+
+/// Groups all module configurations.
+#[derive(Clone, Default)]
+struct ModuleConfig {
+    fundamental: trustify_module_fundamental::endpoints::Config,
+    ingestor: trustify_module_ingestor::endpoints::Config,
 }
 
 impl Run {
@@ -236,10 +287,21 @@ impl InitData {
             analytics_write_key: run.ui.analytics_write_key.unwrap_or_default(),
         };
 
+        let config = ModuleConfig {
+            fundamental: trustify_module_fundamental::endpoints::Config {
+                sbom_upload_limit: run.sbom_upload_limit.into(),
+                advisory_upload_limit: run.advisory_upload_limit.into(),
+            },
+            ingestor: trustify_module_ingestor::endpoints::Config {
+                dataset_entry_limit: run.dataset_entry_limit.into(),
+            },
+        };
+
         Ok(InitData {
             authenticator,
             authorizer,
             db,
+            config,
             http: run.http,
             tracing: run.infra.tracing,
             swagger_oidc,
@@ -266,12 +328,15 @@ impl InitData {
                 .configure(move |svc| {
                     configure(
                         svc,
-                        self.db.clone(),
-                        self.storage.clone(),
-                        self.swagger_oidc.clone(),
-                        self.authenticator.clone(),
-                        ui.clone(),
-                        self.with_graphql,
+                        Config {
+                            config: self.config.clone(),
+                            db: self.db.clone(),
+                            storage: self.storage.clone(),
+                            swagger_oidc: self.swagger_oidc.clone(),
+                            auth: self.authenticator.clone(),
+                            ui: ui.clone(),
+                            with_graphql: self.with_graphql,
+                        },
                     );
                 })
         };
@@ -299,15 +364,30 @@ impl InitData {
     }
 }
 
-fn configure(
-    svc: &mut web::ServiceConfig,
+struct Config {
+    config: ModuleConfig,
     db: db::Database,
-    storage: impl Into<DispatchBackend> + Clone,
+    storage: DispatchBackend,
     swagger_oidc: Option<Arc<SwaggerUiOidc>>,
     auth: Option<Arc<Authenticator>>,
     ui: Arc<UiResources>,
     with_graphql: bool,
-) {
+}
+
+fn configure(svc: &mut web::ServiceConfig, config: Config) {
+    let Config {
+        config: ModuleConfig {
+            ingestor,
+            fundamental,
+        },
+        db,
+        storage,
+        swagger_oidc,
+        auth,
+        ui,
+        with_graphql,
+    } = config;
+
     let graph = Graph::new(db.clone());
 
     // set global request limits
@@ -365,8 +445,18 @@ fn configure(
     svc.app_data(graph)
         .service(web::scope("/api").wrap(new_auth(auth)).configure(|svc| {
             trustify_module_importer::endpoints::configure(svc, db.clone());
-            trustify_module_ingestor::endpoints::configure(svc, db.clone(), storage.clone());
-            trustify_module_fundamental::endpoints::configure(svc, db.clone(), storage);
+            trustify_module_ingestor::endpoints::configure(
+                svc,
+                ingestor,
+                db.clone(),
+                storage.clone(),
+            );
+            trustify_module_fundamental::endpoints::configure(
+                svc,
+                fundamental,
+                db.clone(),
+                storage,
+            );
             trustify_module_analysis::endpoints::configure(svc, db.clone());
         }))
         .configure(|svc| {
@@ -387,8 +477,8 @@ fn build_url(ci: &ConnectionInfo, path: impl Display) -> Option<url::Url> {
 
 #[cfg(test)]
 mod test {
-    use std::sync::Arc;
-
+    use super::*;
+    use crate::Config;
     use actix_web::{
         body::{to_bytes, to_bytes_limited},
         http::{header, StatusCode},
@@ -396,9 +486,12 @@ mod test {
         web::{self, Bytes},
         App,
     };
+    use std::sync::Arc;
     use test_context::test_context;
     use test_log::test;
-    use trustify_module_storage::service::fs::FileSystemBackend;
+    use trustify_module_storage::{
+        service::dispatch::DispatchBackend, service::fs::FileSystemBackend,
+    };
     use trustify_module_ui::{endpoints::UiResources, UI};
     use trustify_test_context::TrustifyContext;
 
@@ -408,9 +501,20 @@ mod test {
         let db = ctx.db;
         let (storage, _) = FileSystemBackend::for_test().await?;
         let ui = Arc::new(UiResources::new(&UI::default())?);
-        let app = actix_web::test::init_service(
-            App::new().configure(|svc| super::configure(svc, db, storage, None, None, ui, true)),
-        )
+        let app = actix_web::test::init_service(App::new().configure(|svc| {
+            configure(
+                svc,
+                Config {
+                    config: ModuleConfig::default(),
+                    db,
+                    storage: DispatchBackend::Filesystem(storage),
+                    swagger_oidc: None,
+                    auth: None,
+                    ui,
+                    with_graphql: true,
+                },
+            )
+        }))
         .await;
 
         // main UI

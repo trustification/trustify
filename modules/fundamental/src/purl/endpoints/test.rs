@@ -4,7 +4,7 @@ use crate::purl::model::details::versioned_purl::VersionedPurlDetails;
 use crate::purl::model::summary::base_purl::{BasePurlSummary, PaginatedBasePurlSummary};
 use crate::purl::model::summary::purl::PaginatedPurlSummary;
 use crate::purl::model::summary::r#type::TypeSummary;
-use crate::test::{caller, CallService};
+use crate::test::caller;
 use actix_web::test::TestRequest;
 use serde_json::Value;
 use std::str::FromStr;
@@ -14,7 +14,7 @@ use trustify_common::db::Transactional;
 use trustify_common::model::PaginatedResults;
 use trustify_common::purl::Purl;
 use trustify_module_ingestor::graph::Graph;
-use trustify_test_context::TrustifyContext;
+use trustify_test_context::{call::CallService, TrustifyContext};
 
 async fn setup(graph: &Graph) -> Result<(), anyhow::Error> {
     let log4j = graph

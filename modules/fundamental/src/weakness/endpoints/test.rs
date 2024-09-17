@@ -1,11 +1,10 @@
 use crate::test::caller;
-use crate::test::CallService;
 use crate::weakness::model::{WeaknessDetails, WeaknessSummary};
 use actix_web::test::TestRequest;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::model::PaginatedResults;
-use trustify_test_context::{document_read, TrustifyContext};
+use trustify_test_context::{call::CallService, document_read, TrustifyContext};
 use zip::ZipArchive;
 
 #[test_context(TrustifyContext)]

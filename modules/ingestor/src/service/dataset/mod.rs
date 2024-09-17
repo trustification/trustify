@@ -7,7 +7,8 @@ use crate::{
 };
 use anyhow::anyhow;
 use bytes::Bytes;
-use sbom_walker::common::compression::decompress;
+use sbom_walker::common::compression;
+use sbom_walker::common::compression::{DecompressionOptions, Detector};
 use std::{
     collections::BTreeMap,
     io::{Cursor, Read},
@@ -23,11 +24,16 @@ use trustify_module_storage::{service::dispatch::DispatchBackend, service::Stora
 pub struct DatasetLoader<'g> {
     graph: &'g Graph,
     storage: &'g DispatchBackend,
+    limit: usize,
 }
 
 impl<'g> DatasetLoader<'g> {
-    pub fn new(graph: &'g Graph, storage: &'g DispatchBackend) -> Self {
-        Self { graph, storage }
+    pub fn new(graph: &'g Graph, storage: &'g DispatchBackend, limit: usize) -> Self {
+        Self {
+            graph,
+            storage,
+            limit,
+        }
     }
 
     #[instrument(skip(self, buffer), ret)]
@@ -70,9 +76,23 @@ impl<'g> DatasetLoader<'g> {
                         file.read_to_end(&mut data)?;
 
                         let file_name = file_name.to_string();
+                        let opts = DecompressionOptions::new().limit(self.limit);
                         let data = Handle::current()
                             .spawn_blocking(move || {
-                                decompress(Bytes::from(data), &file_name).map_err(Error::Generic)
+                                let detector = Detector {
+                                    file_name: Some(&file_name),
+                                    ..Detector::default()
+                                };
+                                detector
+                                    .decompress_with(Bytes::from(data), &opts)
+                                    .map_err(|err| match err {
+                                        compression::Error::Io(err)
+                                            if err.kind() == std::io::ErrorKind::WriteZero =>
+                                        {
+                                            Error::PayloadTooLarge
+                                        }
+                                        _ => Error::Generic(anyhow!("{err}")),
+                                    })
                             })
                             .await??;
 

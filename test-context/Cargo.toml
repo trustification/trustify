@@ -6,12 +6,16 @@ publish.workspace = true
 license.workspace = true
 
 [dependencies]
+trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
 trustify-migration = { workspace = true }
 trustify-module-ingestor = { workspace = true }
 trustify-module-storage = { workspace = true }
 
+actix-http = { workspace = true }
+actix-web = { workspace = true }
 anyhow = { workspace = true }
+bytes = { workspace = true }
 futures = { workspace = true }
 liblzma = { workspace = true }
 log = { workspace = true }

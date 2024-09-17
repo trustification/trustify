@@ -1,5 +1,6 @@
 #![allow(clippy::expect_used)]
 
+pub mod call;
 pub mod spdx;
 
 use futures::Stream;
@@ -144,7 +145,7 @@ fn absolute(path: impl AsRef<Path>) -> Result<PathBuf, anyhow::Error> {
 /// Load a test document and decompress it, if necessary.
 pub async fn document_bytes(path: &str) -> Result<Bytes, anyhow::Error> {
     let bytes = document_bytes_raw(path).await?;
-    let bytes = decompress_async(bytes, None).await??;
+    let bytes = decompress_async(bytes, None, 0).await??;
     Ok(bytes)
 }
 
