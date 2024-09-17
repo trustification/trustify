@@ -8,11 +8,23 @@ use trustify_entity::labels::Labels;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use utoipa::{IntoParams, OpenApi};
 
+#[derive(Clone, Debug, Eq, PartialEq, Default)]
+pub struct Config {
+    /// Limit of a single content entry (after decompression).
+    pub dataset_entry_limit: usize,
+}
+
 /// mount the "ingestor" module
-pub fn configure(svc: &mut web::ServiceConfig, db: Database, storage: impl Into<DispatchBackend>) {
+pub fn configure(
+    svc: &mut web::ServiceConfig,
+    config: Config,
+    db: Database,
+    storage: impl Into<DispatchBackend>,
+) {
     let ingestor_service = IngestorService::new(Graph::new(db.clone()), storage);
 
     svc.app_data(web::Data::new(ingestor_service))
+        .app_data(web::Data::new(config))
         .service(web::scope("/v1/dataset").service(upload));
 }
 
@@ -53,9 +65,12 @@ pub struct ApiDoc;
 /// Upload a new dataset
 pub async fn upload(
     service: web::Data<IngestorService>,
+    config: web::Data<Config>,
     web::Query(UploadParams { labels }): web::Query<UploadParams>,
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
-    let result = service.ingest_dataset(&bytes, labels).await?;
+    let result = service
+        .ingest_dataset(&bytes, labels, config.dataset_entry_limit)
+        .await?;
     Ok(HttpResponse::Created().json(result))
 }

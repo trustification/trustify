@@ -2,7 +2,7 @@ use actix_web::http::header;
 use anyhow::anyhow;
 use bytes::Bytes;
 use tokio::{runtime::Handle, task::JoinError};
-use walker_common::compression::{Compression, Detector};
+use walker_common::compression::{Compression, DecompressionOptions, Detector};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -12,6 +12,8 @@ pub enum Error {
     Detector(anyhow::Error),
     #[error(transparent)]
     Io(#[from] std::io::Error),
+    #[error("payload too large")]
+    PayloadTooLarge,
 }
 
 /// Take some bytes, and an optional content-type header and decompress, if required.
@@ -25,7 +27,11 @@ pub enum Error {
 /// **NOTE:** Depending on the size of the payload, this method might take some time. In an async
 /// context, it might be necessary to run this as a blocking function, or use [`decompress_async`]
 /// instead.
-pub fn decompress(bytes: Bytes, content_type: Option<header::ContentType>) -> Result<Bytes, Error> {
+pub fn decompress(
+    bytes: Bytes,
+    content_type: Option<header::ContentType>,
+    limit: usize,
+) -> Result<Bytes, Error> {
     let content_type = content_type.as_ref().map(|ct| ct.as_ref());
 
     // check what the user has declared
@@ -56,16 +62,22 @@ pub fn decompress(bytes: Bytes, content_type: Option<header::ContentType>) -> Re
 
     // decompress (or not)
 
-    Ok(compression.decompress(bytes)?)
+    compression
+        .decompress_with(bytes, &DecompressionOptions::default().limit(limit))
+        .map_err(|err| match err.kind() {
+            std::io::ErrorKind::WriteZero => Error::PayloadTooLarge,
+            _ => Error::from(err),
+        })
 }
 
 /// An async version of [`decompress`].
 pub async fn decompress_async(
     bytes: Bytes,
     content_type: Option<header::ContentType>,
+    limit: usize,
 ) -> Result<Result<Bytes, Error>, JoinError> {
     Handle::current()
-        .spawn_blocking(|| decompress(bytes, content_type))
+        .spawn_blocking(move || decompress(bytes, content_type, limit))
         .await
 }
 
@@ -81,6 +93,7 @@ mod test {
         let bytes = decompress_async(
             document_bytes_raw("ubi9-9.2-755.1697625012.json").await?,
             None,
+            0,
         )
         .await??;
 
@@ -98,6 +111,7 @@ mod test {
         let bytes = decompress_async(
             document_bytes_raw("openshift-container-storage-4.8.z.json.xz").await?,
             None,
+            0,
         )
         .await??;
 
@@ -115,6 +129,7 @@ mod test {
         let bytes = decompress_async(
             document_bytes_raw("openshift-container-storage-4.8.z.json.xz").await?,
             Some(ContentType::json()),
+            0,
         )
         .await??;
 
@@ -136,6 +151,7 @@ mod test {
         let result = decompress_async(
             document_bytes_raw("openshift-container-storage-4.8.z.json.xz").await?,
             Some(ContentType("application/json+bzip2".parse().unwrap())),
+            0,
         )
         .await?;
 
@@ -153,6 +169,7 @@ mod test {
         let bytes = decompress_async(
             document_bytes_raw("openshift-container-storage-4.8.z.json.xz").await?,
             Some(ContentType("application/json+xz".parse().unwrap())),
+            0,
         )
         .await??;
 

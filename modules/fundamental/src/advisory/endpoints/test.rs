@@ -1,6 +1,6 @@
 use crate::{
     advisory::model::{AdvisoryDetails, AdvisorySummary},
-    test::{caller, CallService},
+    test::caller,
 };
 use actix_http::StatusCode;
 use actix_web::test::TestRequest;
@@ -18,7 +18,7 @@ use trustify_cvss::cvss3::{
 };
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::{graph::advisory::AdvisoryInformation, model::IngestResult};
-use trustify_test_context::{document_bytes, TrustifyContext};
+use trustify_test_context::{call::CallService, document_bytes, TrustifyContext};
 use uuid::Uuid;
 
 #[test_context(TrustifyContext)]

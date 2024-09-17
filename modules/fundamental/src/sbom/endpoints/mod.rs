@@ -1,3 +1,4 @@
+mod config;
 mod label;
 #[cfg(test)]
 mod test;
@@ -11,6 +12,7 @@ use crate::{
     Error::{self, Internal},
 };
 use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder};
+use config::Config;
 use futures_util::TryStreamExt;
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
@@ -28,11 +30,12 @@ use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::OpenApi;
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database) {
+pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: usize) {
     let sbom_service = SbomService::new(db);
 
     config
         .app_data(web::Data::new(sbom_service))
+        .app_data(web::Data::new(Config { upload_limit }))
         .service(all)
         .service(all_related)
         .service(get)
@@ -386,11 +389,12 @@ struct UploadQuery {
 /// Upload a new SBOM
 pub async fn upload(
     service: web::Data<IngestorService>,
+    config: web::Data<Config>,
     web::Query(UploadQuery { labels }): web::Query<UploadQuery>,
     content_type: Option<web::Header<header::ContentType>>,
     bytes: web::Bytes,
 ) -> Result<impl Responder, Error> {
-    let bytes = decompress_async(bytes, content_type.map(|ct| ct.0)).await??;
+    let bytes = decompress_async(bytes, content_type.map(|ct| ct.0), config.upload_limit).await??;
     let result = service.ingest(&bytes, Format::SBOM, labels, None).await?;
     log::info!("Uploaded SBOM: {}", result.id);
     Ok(HttpResponse::Created().json(result))

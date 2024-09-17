@@ -1,4 +1,4 @@
-use crate::test::{caller, CallService};
+use crate::test::caller;
 use actix_web::cookie::time::OffsetDateTime;
 use actix_web::test::TestRequest;
 use jsonpath_rust::JsonPathQuery;
@@ -10,7 +10,7 @@ use trustify_common::db::Transactional;
 use trustify_common::hashing::Digests;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
-use trustify_test_context::TrustifyContext;
+use trustify_test_context::{call::CallService, TrustifyContext};
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]

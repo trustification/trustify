@@ -49,11 +49,13 @@ uuid = { workspace = true, features = ["v7"] }
 zip = { workspace = true }
 
 [dev-dependencies]
+trustify-auth = { workspace = true }
 trustify-test-context = { workspace = true }
 
-zip = { workspace = true }
+actix-http = { workspace = true }
 rand = { workspace = true }
 rstest = { workspace = true }
 serde_yml = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
+zip = { workspace = true }

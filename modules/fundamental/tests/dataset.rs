@@ -47,7 +47,7 @@ async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
 
     // ingest
 
-    let result = ctx.ingestor.ingest_dataset(&data, ()).await?;
+    let result = ctx.ingestor.ingest_dataset(&data, (), 0).await?;
 
     let ingest_time = start.elapsed();
 
