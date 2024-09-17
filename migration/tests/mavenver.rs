@@ -162,3 +162,41 @@ async fn test_version_matches_commons_compress_but_as_semver_because_the_cve_say
 
     Ok(())
 }
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(tokio::test)]
+async fn test_version_matches_rht_suffixen(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+
+    assert!(
+        !version_matches(
+            &db,
+            "1.26.0.redhat-00001",
+            VersionRange::Range(Version::Inclusive("1.21"), Version::Exclusive("1.26")),
+            "maven"
+        )
+        .await?
+    );
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext, skip_teardown)]
+#[test(tokio::test)]
+async fn test_version_matches_rht_suffixen_as_semver_wrongly(
+    ctx: TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let db = ctx.db;
+
+    assert!(
+        !version_matches(
+            &db,
+            "1.26.0.redhat-00001",
+            VersionRange::Range(Version::Inclusive("1.21"), Version::Exclusive("1.26")),
+            "semver"
+        )
+        .await?
+    );
+
+    Ok(())
+}
