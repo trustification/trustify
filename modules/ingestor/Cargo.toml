@@ -19,7 +19,6 @@ cpe = { workspace = true }
 csaf = { workspace = true }
 cve = { workspace = true }
 cyclonedx-bom = { workspace = true }
-futures = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }
 jsn = { workspace = true }

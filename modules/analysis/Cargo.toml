@@ -9,22 +9,18 @@ license.workspace = true
 trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
 trustify-entity = { workspace = true }
-trustify-infrastructure = { workspace = true }
 
 actix-http = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
-itertools = { workspace = true }
 log = { workspace = true }
 petgraph = { workspace = true }
 parking_lot= { workspace = true }
 sea-orm = { workspace = true }
 sea-query = { workspace = true }
 serde = { workspace = true }
-strum = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-tokio-util = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras", "uuid"] }
 

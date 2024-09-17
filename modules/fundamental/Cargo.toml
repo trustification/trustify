@@ -26,15 +26,12 @@ sea-query = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 spdx = { workspace = true, features = ["text"] }
-strum = { workspace = true }
 thiserror = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-tokio-util = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras", "uuid"] }
 uuid = { workspace = true }
-walker-common = { workspace = true, features = ["liblzma"] }
 
 [dev-dependencies]
 actix-http = { workspace = true }
@@ -49,6 +46,7 @@ log = { workspace = true }
 serde_json = { workspace = true }
 spdx-rs = { workspace = true }
 sha2 = { workspace = true }
+strum = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 tokio-util = { workspace = true }
