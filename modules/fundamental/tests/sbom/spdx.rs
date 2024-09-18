@@ -7,14 +7,13 @@ use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
-use trustify_common::db::Transactional;
-use trustify_common::purl::Purl;
+use trustify_common::{db::Transactional, purl::Purl};
 use trustify_entity::relationship::Relationship;
-use trustify_module_fundamental::purl::model::summary::purl::PurlSummary;
-use trustify_module_fundamental::purl::model::PurlHead;
-use trustify_module_fundamental::sbom::model::Which;
-use trustify_module_fundamental::sbom::service::SbomService;
-use trustify_test_context::TrustifyContext;
+use trustify_module_fundamental::{
+    purl::model::{summary::purl::PurlSummary, PurlHead},
+    sbom::{model::Which, service::SbomService},
+};
+use trustify_test_context::{spdx::fix_spdx_rels, TrustifyContext};
 
 #[test_context(TrustifyContext)]
 #[instrument]
@@ -125,32 +124,6 @@ async fn ingest_spdx_broken_refs(ctx: &TrustifyContext) -> Result<(), anyhow::Er
     assert_eq!(result.total, 0);
 
     Ok(())
-}
-
-/// remove all relationships having broken references
-fn fix_spdx_rels(mut spdx: SPDX) -> SPDX {
-    let mut ids = spdx
-        .package_information
-        .iter()
-        .map(|p| &p.package_spdx_identifier)
-        .collect::<HashSet<_>>();
-
-    ids.insert(&spdx.document_creation_information.spdx_identifier);
-
-    spdx.relationships.retain(|rel| {
-        let r = ids.contains(&rel.spdx_element_id) && ids.contains(&rel.related_spdx_element);
-        if !r {
-            log::warn!(
-                "Dropping - left: {}, rel: {:?}, right: {}",
-                rel.spdx_element_id,
-                rel.relationship_type,
-                rel.related_spdx_element
-            );
-        }
-        r
-    });
-
-    spdx
 }
 
 #[instrument(skip(ctx, f))]

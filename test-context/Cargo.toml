@@ -19,6 +19,7 @@ peak_alloc = { workspace = true }
 postgresql_embedded = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+spdx-rs = { workspace = true }
 test-context = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }

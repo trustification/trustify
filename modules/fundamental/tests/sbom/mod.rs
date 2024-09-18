@@ -6,20 +6,20 @@ mod reingest;
 mod spdx;
 
 use cyclonedx_bom::prelude::Bom;
-use spdx_rs::models::SPDX;
-use std::collections::HashSet;
-use std::future::Future;
-use std::pin::Pin;
-use std::time::Instant;
+use std::{future::Future, pin::Pin, time::Instant};
 use tracing::{info_span, instrument, Instrument};
-use trustify_common::db::{Database, Transactional};
-use trustify_common::hashing::Digests;
-use trustify_module_fundamental::sbom::service::SbomService;
-use trustify_module_ingestor::graph::{
-    sbom::{self, spdx::parse_spdx, SbomContext, SbomInformation},
-    Graph,
+use trustify_common::{
+    db::{Database, Transactional},
+    hashing::Digests,
 };
-use trustify_module_ingestor::service::Discard;
+use trustify_module_fundamental::sbom::service::SbomService;
+use trustify_module_ingestor::{
+    graph::{
+        sbom::{self, spdx::parse_spdx, SbomContext, SbomInformation},
+        Graph,
+    },
+    service::Discard,
+};
 use trustify_test_context::{document_bytes, TrustifyContext};
 
 #[allow(dead_code)]

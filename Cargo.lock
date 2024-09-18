@@ -7843,6 +7843,7 @@ dependencies = [
  "postgresql_embedded",
  "serde",
  "serde_json",
+ "spdx-rs",
  "test-context",
  "test-log",
  "tokio",
