@@ -199,7 +199,7 @@ async fn csaf_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-/// Ingest x CSAF documents in parallel
+/// Ingest x * y PURLs in parallel
 #[test_context(TrustifyContext)]
 #[instrument]
 #[test(tokio::test(flavor = "multi_thread", worker_threads = 4))]
