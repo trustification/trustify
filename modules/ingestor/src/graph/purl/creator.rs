@@ -1,7 +1,7 @@
 use crate::graph::error::Error;
 use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait};
 use sea_query::OnConflict;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use tracing::instrument;
 use trustify_common::{db::chunk::EntityChunkedIter, purl::Purl};
 use trustify_entity::{
@@ -36,9 +36,9 @@ impl PurlCreator {
 
         // insert all packages
 
-        let mut packages = HashMap::new();
-        let mut versions = HashMap::new();
-        let mut qualifieds = HashMap::new();
+        let mut packages = BTreeMap::new();
+        let mut versions = BTreeMap::new();
+        let mut qualifieds = BTreeMap::new();
 
         for purl in self.purls {
             let (package, version, qualified) = purl.uuids();
