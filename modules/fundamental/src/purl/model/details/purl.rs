@@ -9,10 +9,11 @@ use sea_orm::{
     ColumnTrait, DbErr, EntityTrait, FromQueryResult, LoaderTrait, ModelTrait, QueryFilter,
     QueryResult, QuerySelect, RelationTrait, Select,
 };
-use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
+use sea_query::{Asterisk, ColumnRef, Expr, Func, IdenList, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use strum::IntoEnumIterator;
 use trustify_common::db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel};
 use trustify_common::db::{ConnectionOrTransaction, VersionMatches};
 use trustify_common::memo::Memo;
@@ -63,23 +64,13 @@ impl PurlDetails {
         };
 
         let statuses = purl_status::Entity::find()
-            .columns([
-                version_range::Column::Id,
-                version_range::Column::LowVersion,
-                version_range::Column::LowInclusive,
-                version_range::Column::HighVersion,
-                version_range::Column::HighInclusive,
-            ])
-            .left_join(base_purl::Entity)
-            .join(
-                JoinType::LeftJoin,
-                base_purl::Relation::VersionedPurls.def(),
-            )
-            .left_join(version_range::Entity)
             .filter(purl_status::Column::BasePurlId.eq(package.id))
+            .left_join(version_range::Entity)
+            .columns(version_range::Column::iter())
+            .left_join(base_purl::Entity)
             .filter(SimpleExpr::FunctionCall(
                 Func::cust(VersionMatches)
-                    .arg(Expr::col(versioned_purl::Column::Version))
+                    .arg(Expr::value(package_version.version.clone()))
                     .arg(Expr::col((version_range::Entity, Asterisk))),
             ))
             .distinct_on([ColumnRef::TableColumn(
