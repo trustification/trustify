@@ -49,21 +49,7 @@ async fn quarkus_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // now test
 
-    assert_eq!(result.len(), NUM);
-
-    // expect zero failures
-
-    let ok = result
-        .iter()
-        .filter(|r| match r {
-            Ok(_) => true,
-            Err(err) => {
-                log::warn!("failed: {err}");
-                false
-            }
-        })
-        .count();
-    assert_eq!(ok, NUM);
+    assert_all_ok::<NUM>(result);
 
     // done
 
@@ -134,9 +120,15 @@ async fn quarkus_parallel_2(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 
     // now test
 
-    assert_eq!(result.len(), NUM);
+    assert_all_ok::<NUM>(result);
 
-    // expect zero failures
+    // done
+
+    Ok(())
+}
+
+fn assert_all_ok<const NUM: usize>(result: Vec<Result<(), anyhow::Error>>) {
+    assert_eq!(result.len(), NUM);
 
     let ok = result
         .iter()
@@ -149,8 +141,4 @@ async fn quarkus_parallel_2(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         })
         .count();
     assert_eq!(ok, NUM);
-
-    // done
-
-    Ok(())
 }
