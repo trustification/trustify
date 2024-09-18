@@ -9,7 +9,7 @@ use sea_orm::{
     ColumnTrait, DbErr, EntityTrait, FromQueryResult, LoaderTrait, ModelTrait, QueryFilter,
     QueryResult, QuerySelect, RelationTrait, Select,
 };
-use sea_query::{Asterisk, ColumnRef, Expr, Func, IdenList, IntoIden, JoinType, SimpleExpr};
+use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
