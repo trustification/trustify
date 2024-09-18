@@ -1,5 +1,7 @@
 #![allow(clippy::expect_used)]
 
+pub mod spdx;
+
 use futures::Stream;
 use peak_alloc::PeakAlloc;
 use postgresql_embedded::PostgreSQL;
@@ -153,6 +155,7 @@ pub async fn document_bytes_raw(path: &str) -> Result<Bytes, anyhow::Error> {
     Ok(bytes.into())
 }
 
+/// Get a stream for a document from the test-data directory
 pub async fn document_stream(
     path: &str,
 ) -> Result<impl Stream<Item = Result<Bytes, std::io::Error>>, anyhow::Error> {
@@ -160,6 +163,7 @@ pub async fn document_stream(
     Ok(ReaderStream::new(file))
 }
 
+/// Read a document from the test-data directory
 pub async fn document_read(path: &str) -> Result<impl Read + Seek, anyhow::Error> {
     Ok(std::fs::File::open(absolute(path)?)?)
 }

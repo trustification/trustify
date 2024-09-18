@@ -39,14 +39,17 @@ actix-http = { workspace = true }
 bytes = { workspace = true }
 bytesize = { workspace = true }
 chrono = { workspace = true }
+criterion = { workspace = true, features = ["html_reports", "async_tokio"] }
+csaf = { workspace = true }
 cyclonedx-bom = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }
 jsonpath-rust = { workspace = true }
 log = { workspace = true }
+packageurl = { workspace = true }
 serde_json = { workspace = true }
-spdx-rs = { workspace = true }
 sha2 = { workspace = true }
+spdx-rs = { workspace = true }
 strum = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
@@ -54,9 +57,6 @@ tokio-util = { workspace = true }
 trustify-cvss = { workspace = true }
 trustify-test-context = { workspace = true }
 urlencoding = { workspace = true }
-criterion = { workspace = true, features = ["html_reports", "async_tokio"] }
-csaf = { workspace = true }
-packageurl = { workspace = true }
 walkdir = { workspace =  true }
 zip = { workspace = true }
 
