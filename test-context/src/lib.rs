@@ -14,6 +14,7 @@ use tokio_util::io::{ReaderStream, SyncIoBridge};
 use tracing::instrument;
 use trustify_common as common;
 use trustify_common::db;
+use trustify_common::decompress::decompress_async;
 use trustify_common::hashing::{Digests, HashingRead};
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::model::IngestResult;
@@ -142,10 +143,8 @@ fn absolute(path: impl AsRef<Path>) -> Result<PathBuf, anyhow::Error> {
 
 /// Load a test document and decompress it, if necessary.
 pub async fn document_bytes(path: &str) -> Result<Bytes, anyhow::Error> {
-    let mut bytes = document_bytes_raw(path).await?;
-    if path.ends_with(".xz") {
-        bytes = liblzma::decode_all(&*bytes)?.into();
-    }
+    let bytes = document_bytes_raw(path).await?;
+    let bytes = decompress_async(bytes, None).await??;
     Ok(bytes)
 }
 
@@ -163,7 +162,7 @@ pub async fn document_stream(
     Ok(ReaderStream::new(file))
 }
 
-/// Read a document from the test-data directory
+/// Read a document from the test-data directory. Does not decompress.
 pub async fn document_read(path: &str) -> Result<impl Read + Seek, anyhow::Error> {
     Ok(std::fs::File::open(absolute(path)?)?)
 }
