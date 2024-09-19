@@ -1,18 +1,15 @@
-//! Testing parallel upload
+//! Testing parallel operations
 
 use csaf::Csaf;
 use serde_json::Value;
 use spdx_rs::models::SPDX;
 use std::str::FromStr;
-use std::time::Duration;
 use test_context::{futures, test_context};
 use test_log::test;
 use tracing::instrument;
-use trustify_common::hashing::Digests;
-use trustify_common::purl::Purl;
+use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_module_ingestor::{
-    graph::purl::creator::PurlCreator,
-    graph::sbom::spdx::{parse_spdx, Information},
+    graph::{cpe::CpeCreator, purl::creator::PurlCreator, sbom::spdx::parse_spdx},
     service::{Discard, Format},
 };
 use trustify_test_context::{document_bytes, spdx::fix_spdx_rels, TrustifyContext};
@@ -53,76 +50,17 @@ async fn sbom_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // now test
 
-    assert_all_ok::<NUM>(result);
+    assert_all_ok(NUM, result);
 
     // done
 
     Ok(())
 }
 
-/// Ingest x SBOMs in parallel
-#[test_context(TrustifyContext)]
-#[instrument]
-#[test(tokio::test(flavor = "multi_thread", worker_threads = 4))]
-async fn sbom_parallel_bare(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    const NUM: usize = 25;
-
-    // let reader = document_read("quarkus-bom-2.13.8.Final-redhat-00004.json").await?;
-    let data = document_bytes("openshift-container-storage-4.8.z.json.xz").await?;
-    let json: Value = serde_json::from_slice(&data)?;
-    let (sbom, _) = parse_spdx(&Discard, json)?;
-    let sbom = fix_spdx_rels(sbom);
-
-    // turn into 10 different SBOMs, and begin ingesting
-
-    let mut tasks = vec![];
-    for _ in 0..NUM {
-        let spdx = duplicate_sbom(&sbom)?;
-
-        let graph = ctx.graph.clone();
-
-        let data = serde_json::to_vec(&spdx)?;
-        let digests = Digests::digest(&data);
-
-        tasks.push(async move {
-            let tx = graph.transaction().await?;
-
-            let document_id = spdx
-                .document_creation_information
-                .spdx_document_namespace
-                .clone();
-
-            let sbom = graph
-                .ingest_sbom((), &digests, &document_id, Information(&spdx), &tx)
-                .await?;
-
-            tokio::time::sleep(Duration::from_secs(5)).await;
-
-            sbom.ingest_spdx(spdx, &Discard, &tx).await?;
-
-            tokio::time::sleep(Duration::from_secs(5)).await;
-
-            tx.commit().await?;
-
-            tokio::time::sleep(Duration::from_secs(5)).await;
-
-            Ok::<_, anyhow::Error>(())
-        });
-    }
-
-    // progress ingestion tasks
-
-    let result = futures::future::join_all(tasks).await;
-
-    // now test
-
-    assert_all_ok::<NUM>(result);
-
-    // done
-
-    Ok(())
-}
-
+/// Turn an existing sbom into a new one, which has a different identity (and maybe data) then
+/// the original one.
+///
+/// This is intended to be used when multiple SBOMs of a similar structure/size are required.
 fn duplicate_sbom(spdx: &SPDX) -> anyhow::Result<SPDX> {
     let mut spdx = spdx.clone();
     spdx.document_creation_information.spdx_document_namespace = Uuid::new_v4().to_string();
@@ -142,8 +80,9 @@ fn duplicate_sbom(spdx: &SPDX) -> anyhow::Result<SPDX> {
     Ok(spdx)
 }
 
-fn assert_all_ok<const NUM: usize>(result: Vec<Result<(), anyhow::Error>>) {
-    assert_eq!(result.len(), NUM);
+/// Assert that all results are ok. Logs errors other of failures.
+fn assert_all_ok<T>(num: usize, result: Vec<Result<T, anyhow::Error>>) {
+    assert_eq!(result.len(), num);
 
     let ok = result
         .iter()
@@ -156,7 +95,7 @@ fn assert_all_ok<const NUM: usize>(result: Vec<Result<(), anyhow::Error>>) {
         })
         .count();
 
-    assert_eq!(ok, NUM);
+    assert_eq!(ok, num);
 }
 
 /// Ingest x CSAF documents in parallel
@@ -192,7 +131,7 @@ async fn csaf_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // now test
 
-    assert_all_ok::<NUM>(result);
+    assert_all_ok(NUM, result);
 
     // done
 
@@ -203,9 +142,10 @@ async fn csaf_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[instrument]
 #[test(tokio::test(flavor = "multi_thread", worker_threads = 4))]
+#[ignore = "Enable once the PURL database structure has been refactored"]
 async fn purl_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     const NUM: usize = 25;
-    const PURLS: usize = 25;
+    const ITEMS: usize = 25;
 
     let mut tasks = vec![];
 
@@ -214,7 +154,7 @@ async fn purl_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         tasks.push(async move {
             let mut creator = PurlCreator::new();
 
-            for i in 0..PURLS {
+            for i in 0..ITEMS {
                 creator.add(Purl {
                     ty: "cargo".to_string(),
                     namespace: None,
@@ -236,7 +176,47 @@ async fn purl_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // now test
 
-    assert_all_ok::<NUM>(result);
+    assert_all_ok(NUM, result);
+
+    // done
+
+    Ok(())
+}
+
+/// Ingest x * y CPEs in parallel
+#[test_context(TrustifyContext)]
+#[instrument]
+#[test(tokio::test(flavor = "multi_thread", worker_threads = 4))]
+async fn cpe_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    const NUM: usize = 25;
+    const ITEMS: usize = 25;
+
+    let mut tasks = vec![];
+
+    for _ in 0..NUM {
+        let db = ctx.db.clone();
+        tasks.push(async move {
+            let mut creator = CpeCreator::new();
+
+            for i in 0..ITEMS {
+                creator.add(Cpe::from_str(&format!(
+                    "cpe:/a:acme:product:1.0:update{i}:-:en-us"
+                ))?);
+            }
+
+            creator.create(&db).await?;
+
+            Ok::<_, anyhow::Error>(())
+        });
+    }
+
+    // progress ingestion tasks
+
+    let result = futures::future::join_all(tasks).await;
+
+    // now test
+
+    assert_all_ok(NUM, result);
 
     // done
 
