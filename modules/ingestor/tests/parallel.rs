@@ -3,13 +3,17 @@
 use csaf::Csaf;
 use serde_json::Value;
 use spdx_rs::models::SPDX;
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 use test_context::{futures, test_context};
 use test_log::test;
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_module_ingestor::{
-    graph::{cpe::CpeCreator, purl::creator::PurlCreator, sbom::spdx::parse_spdx},
+    graph::{
+        cpe::CpeCreator,
+        purl::creator::PurlCreator,
+        sbom::{spdx::parse_spdx, LicenseCreator, LicenseInfo},
+    },
     service::{Discard, Format},
 };
 use trustify_test_context::{document_bytes, spdx::fix_spdx_rels, TrustifyContext};
@@ -143,7 +147,7 @@ async fn csaf_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[instrument]
 #[test(tokio::test(flavor = "multi_thread", worker_threads = 4))]
 #[ignore = "Enable once the PURL database structure has been refactored"]
-async fn purl_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn purl_creator(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     const NUM: usize = 25;
     const ITEMS: usize = 25;
 
@@ -187,7 +191,7 @@ async fn purl_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[instrument]
 #[test(tokio::test(flavor = "multi_thread", worker_threads = 4))]
-async fn cpe_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn cpe_creator(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     const NUM: usize = 25;
     const ITEMS: usize = 25;
 
@@ -202,6 +206,55 @@ async fn cpe_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 creator.add(Cpe::from_str(&format!(
                     "cpe:/a:acme:product:1.0:update{i}:-:en-us"
                 ))?);
+            }
+
+            creator.create(&db).await?;
+
+            Ok::<_, anyhow::Error>(())
+        });
+    }
+
+    // progress ingestion tasks
+
+    let result = futures::future::join_all(tasks).await;
+
+    // now test
+
+    assert_all_ok(NUM, result);
+
+    // done
+
+    Ok(())
+}
+
+/// Ingest x * y licenses in parallel
+#[test_context(TrustifyContext)]
+#[instrument]
+#[test(tokio::test(flavor = "multi_thread", worker_threads = 4))]
+async fn license_creator(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    const NUM: usize = 25;
+    const ITEMS: usize = 100;
+
+    let mut tasks = vec![];
+
+    for _ in 0..NUM {
+        let db = ctx.db.clone();
+        tasks.push(async move {
+            let mut creator = LicenseCreator::new();
+
+            for i in 0..ITEMS {
+                creator.add(&LicenseInfo {
+                    license: format!("FOO-{i}"),
+                    refs: {
+                        let mut refs = HashMap::new();
+                        refs.insert(format!("FOO-{i}"), "License Text {i}".to_string());
+                        refs
+                    },
+                });
+                creator.add(&LicenseInfo {
+                    license: format!("BAR-{i}"),
+                    refs: Default::default(),
+                });
             }
 
             creator.create(&db).await?;

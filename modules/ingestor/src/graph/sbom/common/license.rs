@@ -1,19 +1,17 @@
-use sea_orm::ActiveValue::Set;
-use sea_orm::{ConnectionTrait, DbErr, EntityTrait};
+use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
-use std::collections::HashMap;
-use trustify_entity::license;
-use uuid::Uuid;
-
 use spdx_expression::SpdxExpression;
+use std::collections::{BTreeMap, HashMap};
 use tracing::instrument;
 use trustify_common::db::chunk::EntityChunkedIter;
+use trustify_entity::license;
+use uuid::Uuid;
 
 const NAMESPACE: Uuid = Uuid::from_bytes([
     0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0x41, 0x18, 0xa1, 0x38, 0xb8, 0x9f, 0x19, 0x35, 0xe0, 0xa7,
 ]);
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct LicenseInfo {
     pub license: String,
     pub refs: HashMap<String, String>,
@@ -24,7 +22,9 @@ impl LicenseInfo {
         let mut text = self.license.clone();
 
         for (user_ref, user_license) in &self.refs {
-            text = text.replace(user_ref, user_license);
+            if &text == user_ref {
+                text = user_license.clone();
+            }
         }
 
         // UUID based upon a hash of the lowercase de-ref'd license.
@@ -55,7 +55,11 @@ impl LicenseInfo {
 
 #[derive(Default, Debug)]
 pub struct LicenseCreator {
-    licenses: HashMap<Uuid, license::ActiveModel>,
+    /// The licenses to create.
+    ///
+    /// Uses a [`BTreeMap`] to ensure we have a stable insertion order, avoiding deadlocks on the
+    /// database.
+    licenses: BTreeMap<Uuid, license::ActiveModel>,
 }
 
 impl LicenseCreator {
@@ -108,5 +112,48 @@ impl LicenseCreator {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::graph::sbom::LicenseInfo;
+    use std::collections::HashMap;
+
+    #[test]
+    fn stable_uuid() {
+        // create a new license, ensure a new random state of the hashmap
+        let license = || LicenseInfo {
+            license: "LicenseRef-1-2-3".to_string(),
+            refs: {
+                let mut refs = HashMap::new();
+                refs.insert("LicenseRef".to_string(), "CyberNeko License".to_string());
+                refs.insert(
+                    "LicenseRef-1".to_string(),
+                    "CyberNeko License 1".to_string(),
+                );
+                refs.insert(
+                    "LicenseRef-1-2".to_string(),
+                    "CyberNeko License 1-2".to_string(),
+                );
+                refs.insert(
+                    "LicenseRef-1-2-3".to_string(),
+                    "CyberNeko License 1-2-3".to_string(),
+                );
+                refs
+            },
+        };
+
+        // the original one we compare to
+        let original = license();
+
+        for _ in 0..10 {
+            // a new one, containing the same information
+            let new = license();
+            // should be equal
+            assert_eq!(original, new);
+            // and generate the same UUID
+            assert_eq!(original.uuid(), new.uuid());
+        }
     }
 }
