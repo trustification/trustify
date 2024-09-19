@@ -2,7 +2,7 @@ use crate::graph::{error::Error, Graph};
 use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, QueryFilter};
 use sea_query::{OnConflict, SelectStatement};
 use std::{
-    collections::HashMap,
+    collections::BTreeMap,
     fmt::{Debug, Formatter},
 };
 use tracing::instrument;
@@ -85,7 +85,10 @@ impl Debug for CpeContext {
 
 #[derive(Default, Debug)]
 pub struct CpeCreator {
-    cpes: HashMap<Uuid, cpe::ActiveModel>,
+    /// CPEs to insert.
+    ///
+    /// Uses a [`BTreeMap`] to ensure order, avoiding deadlocks on the database
+    cpes: BTreeMap<Uuid, cpe::ActiveModel>,
 }
 
 impl CpeCreator {
