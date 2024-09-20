@@ -42,71 +42,86 @@ To make it clearer what got released and what is part of the next release, it ma
 pushing the release tag. This will also make step 1 easier for the *next* release, as that's already been taken care of.
 
 The following instructions walk you through the process on the example of releasing `0.0.0-alpha.1`, which you need
-to replace with the actual release.
+to replace with the actual release. Note that during release process we should avoid merging any other PRs to main branch.
 
-### Tag
 
-On an up-to-date main branch, create a (local) tag for the next version:
+### 1. Prepare Branch 
 
-```bash
-git tag v0.0.0-alpha.1
+Switch to main branch and make sure your local checkout is up-to-date.
+```shell
+> git switch main
+> git fetch --all
+> git rebase upstream/main
 ```
 
-### Bump version on main
-
-Check out a new branch for preparing the release: 
-
-```bash
-git checkout -b next-release
+Checkout branch to prepare release from.
+```shell
+> git checkout -b 0.0.0-alpha.1-prepare
 ```
 
-Uptick the version:
+_Note - This is not a release branch!_
 
-```bash
-cargo release version alpha
+### 2. Create Pull Request
+
+Dry run to check that we can safely bump release.
+```shell
+> cargo release version 0.0.0-alpha.1
 ```
 
-If the result looks good, execute the changes using:
-
-```bash
-cargo release version alpha -x
+If all looks good bump release.
+```shell
+> cargo release version 0.0.0-alpha.1 -x
 ```
 
-Update the OpenAPI spec, which includes the version, by regenerating it:
-
-```bash
-cargo xtask precommit
+Ensure Cargo dependencies are up-to-date.
+```shell
+> cargo update
 ```
 
-Commit the changes to git:
-
-```bash
-git commit -a -m "chore: next development version"
+Normal lint check and ensure openapi up-to-date.
+```shell
+> cargo xtask precommit
 ```
 
-### Create and merge the PR
-
-Create a PR as usual for `main`. Have the CI check it and get a +1. Either use the auto-merge button, or merge it
-manually when it's ready.
-
-### Revisit the tag (optional)
-
-You might want to revisit the tag. If between creating your local tag and the merge of the "uptick PR" any important
-changes got merged, you might consider picking them up into the release too. You can update the local tag using:
-
-```bash
-git tag v0.0.0-alpha.1 --force
+Commit (and sign) changes.
+```shell
+> git commit -S -a -m"chore: prepare release 0.0.0-alpha.1"
 ```
 
-### Trigger the release
-
-Once you think it's ready, push the release tag to upstream:
-
-```bash
-git push upstream v0.0.0-alpha.1
+Push commit.
+```shell
+> git push upstream 0.0.0-alpha.1-prepare
 ```
 
-Monitor the outcome! 🎂
+### 3. Raise PR, pass CI, review and merge
+
+Goto [github](https://github.com/trustification/trustify/pulls) and raise PR.
+
+PR should pass CI. 
+
+Get a friend to review.
+
+On succesful review go ahead and merge!
+
+### 4. Create release
+
+Switch to main branch and make sure your local checkout is up-to-date.
+```shell
+> git switch main
+> git fetch --all
+> git rebase upstream/main
+```
+
+Create (signed) tag. 
+```shell
+> git tag -S v0.0.0-alpha.1
+```
+
+Push tag which triggers github release workflow. 
+```shell
+> git push upstream v0.0.0-alpha.1
+```
+Congratulations, the release is now building - [monitor](https://github.com/trustification/trustify/actions) the outcome! 🎂
 
 ## If things go wrong
 
@@ -126,9 +141,4 @@ To test, you can push a release tag to your personal fork of the repository. By 
 workflow in your personal repository, and create a release there. If that's ok for your fork, you can push and force
 push tags as you like, to fix and test the release process.
 
-## Alternative approaches
 
-It is possible to just push the tag without waiting for the "next version" PR to be merged. The downside is that it
-might happen that something gets merged for the version that is just being released. In this case, it might look
-that this change should be part of the release, but in fact is not. The git log will tell you that, but it might look
-confusing.
