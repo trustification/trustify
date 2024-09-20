@@ -36,7 +36,7 @@ impl<'g> DatasetLoader<'g> {
         }
     }
 
-    #[instrument(skip(self, buffer), ret)]
+    #[instrument(skip(self, buffer), err(level=tracing::Level::INFO))]
     pub async fn load(&self, labels: Labels, buffer: &[u8]) -> Result<DatasetIngestResult, Error> {
         let warnings = Warnings::default();
         let mut results = BTreeMap::new();

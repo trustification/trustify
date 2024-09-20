@@ -135,7 +135,7 @@ impl From<()> for ProductInformation {
 }
 
 impl Graph {
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn ingest_product<TX: AsRef<Transactional>>(
         &self,
         name: impl Into<String> + Debug,
@@ -179,7 +179,7 @@ impl Graph {
         }
     }
 
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn get_products(
         &self,
         tx: impl AsRef<Transactional>,

@@ -25,7 +25,7 @@ impl PurlCreator {
         self.purls.insert(purl);
     }
 
-    #[instrument(skip_all, fields(num = self.purls.len()), err)]
+    #[instrument(skip_all, fields(num = self.purls.len()), err(level=tracing::Level::INFO))]
     pub async fn create<'g, C>(self, db: &C) -> Result<(), Error>
     where
         C: ConnectionTrait,

@@ -55,7 +55,7 @@ struct Server {
 }
 
 impl Server {
-    #[instrument(skip_all, err)]
+    #[instrument(skip_all, ret)]
     async fn run(&self) -> anyhow::Result<()> {
         let service = ImporterService::new(self.db.clone());
 

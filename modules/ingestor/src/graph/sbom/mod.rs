@@ -95,7 +95,7 @@ impl Graph {
             .map(|sbom| SbomContext::new(self, sbom)))
     }
 
-    #[instrument(skip(tx, info), err)]
+    #[instrument(skip(tx, info), err(level=tracing::Level::INFO))]
     pub async fn ingest_sbom<TX: AsRef<Transactional>>(
         &self,
         labels: impl Into<Labels> + Debug,
@@ -306,7 +306,7 @@ impl Graph {
         }
     }
 
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     async fn locate_sboms_by_purl<TX: AsRef<Transactional>>(
         &self,
         purl: &Purl,
@@ -322,7 +322,7 @@ impl Graph {
         }
     }
 
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     async fn locate_sbom_by_cpe22<TX: AsRef<Transactional>>(
         &self,
         cpe: &Cpe,

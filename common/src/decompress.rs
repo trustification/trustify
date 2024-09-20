@@ -2,6 +2,7 @@ use actix_web::http::header;
 use anyhow::anyhow;
 use bytes::Bytes;
 use tokio::{runtime::Handle, task::JoinError};
+use tracing::instrument;
 use walker_common::compression::{Compression, DecompressionOptions, Detector};
 
 #[derive(Debug, thiserror::Error)]
@@ -27,6 +28,7 @@ pub enum Error {
 /// **NOTE:** Depending on the size of the payload, this method might take some time. In an async
 /// context, it might be necessary to run this as a blocking function, or use [`decompress_async`]
 /// instead.
+#[instrument(skip(bytes), fields(bytes_len=bytes.len()), err(level=tracing::Level::INFO))]
 pub fn decompress(
     bytes: Bytes,
     content_type: Option<header::ContentType>,
@@ -71,6 +73,7 @@ pub fn decompress(
 }
 
 /// An async version of [`decompress`].
+#[instrument(skip(bytes), fields(bytes_len=bytes.len()), err(level=tracing::Level::INFO))]
 pub async fn decompress_async(
     bytes: Bytes,
     content_type: Option<header::ContentType>,

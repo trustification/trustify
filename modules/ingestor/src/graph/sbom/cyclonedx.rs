@@ -71,7 +71,7 @@ impl<'a> From<Information<'a>> for SbomInformation {
 }
 
 impl SbomContext {
-    #[instrument(skip(tx, sbom), err)]
+    #[instrument(skip(tx, sbom), ret)]
     pub async fn ingest_cyclonedx<TX: AsRef<Transactional>>(
         &self,
         sbom: Bom,

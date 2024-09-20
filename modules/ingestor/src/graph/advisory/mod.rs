@@ -66,7 +66,7 @@ impl Graph {
             .map(|advisory| AdvisoryContext::new(self, advisory)))
     }
 
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn get_advisory_by_digest<TX: AsRef<Transactional>>(
         &self,
         digest: &str,
@@ -100,7 +100,7 @@ impl Graph {
             .collect())
     }
 
-    #[instrument(skip(self, labels, information, tx), err)]
+    #[instrument(skip(self, labels, information, tx), err(level=tracing::Level::INFO))]
     pub async fn ingest_advisory<TX: AsRef<Transactional>>(
         &self,
         identifier: impl Into<String> + Debug,
@@ -220,7 +220,7 @@ impl<'g> AdvisoryContext<'g> {
         self.advisory.withdrawn
     }
 
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn get_vulnerability<TX: AsRef<Transactional>>(
         &self,
         identifier: &str,

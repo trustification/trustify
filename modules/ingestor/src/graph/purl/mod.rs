@@ -25,7 +25,7 @@ impl Graph {
     ///
     /// The `pkg` parameter does not necessarily require the presence of qualifiers, but
     /// is assumed to be *complete*.
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn ingest_qualified_package<TX: AsRef<Transactional>>(
         &self,
         purl: &Purl,
@@ -118,7 +118,7 @@ impl Graph {
         }
     }
 
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn get_qualified_packages_by_query<TX: AsRef<Transactional>>(
         &self,
         query: SelectStatement,
