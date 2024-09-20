@@ -173,7 +173,9 @@ impl SbomService {
                     .add_columns(sbom_package_cpe_ref::Entity)
                     .add_columns(sbom_package_purl_ref::Entity),
             )?
-            .order_by_asc(sbom_package::Column::NodeId); // default order
+            // default order
+            .order_by_asc(sbom_node::Column::Name)
+            .order_by_asc(sbom_package::Column::Version);
 
         // limit and execute
 
