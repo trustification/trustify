@@ -76,6 +76,7 @@ mod m0000595_analysis_api_index;
 mod m0000600_remove_raise_notice_fns;
 mod m0000605_create_source_document;
 mod m0000610_improve_version_cmp_fns;
+mod m0000620_parallel_unsafe_pg_fns;
 pub struct Migrator;
 
 #[async_trait::async_trait]
@@ -158,6 +159,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000600_remove_raise_notice_fns::Migration),
             Box::new(m0000605_create_source_document::Migration),
             Box::new(m0000610_improve_version_cmp_fns::Migration),
+            Box::new(m0000620_parallel_unsafe_pg_fns::Migration),
         ]
     }
 }
