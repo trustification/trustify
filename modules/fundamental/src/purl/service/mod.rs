@@ -279,7 +279,7 @@ impl PurlService {
         }
     }
 
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn purl_by_uuid<TX: AsRef<Transactional>>(
         &self,
         purl_uuid: &Uuid,

@@ -1,11 +1,12 @@
 mod func;
 
 pub mod chunk;
+pub mod embedded;
 pub mod limiter;
+pub mod multi_model;
 pub mod query;
 
-pub mod embedded;
-pub mod multi_model;
+pub use func::*;
 
 use anyhow::Context;
 use migration::{Migrator, MigratorTrait};
@@ -17,8 +18,6 @@ use sqlx::error::ErrorKind;
 use std::ops::{Deref, DerefMut};
 use tracing::instrument;
 
-pub use func::*;
-
 pub enum Transactional {
     None,
     Some(DatabaseTransaction),
@@ -28,7 +27,7 @@ impl Transactional {
     /// Commit the database transaction.
     ///
     /// If there's no underlying database transaction, then this becomes a no-op.
-    #[instrument(skip_all, fields(transactional=matches!(self, Transactional::Some(_))))]
+    #[instrument(skip_all, fields(transactional=matches!(self, Transactional::Some(_))), ret)]
     pub async fn commit(self) -> Result<(), DbErr> {
         match self {
             Transactional::None => {}
@@ -122,6 +121,7 @@ impl Database {
         }
     }
 
+    #[instrument(err)]
     pub async fn new(database: &crate::config::Database) -> Result<Self, anyhow::Error> {
         let username = &database.username;
         let password = &database.password;
@@ -144,7 +144,7 @@ impl Database {
         })
     }
 
-    #[instrument]
+    #[instrument(skip(self), err)]
     pub async fn migrate(&self) -> Result<(), anyhow::Error> {
         log::debug!("applying migrations");
         Migrator::up(&self.db, None).await?;
@@ -153,7 +153,7 @@ impl Database {
         Ok(())
     }
 
-    #[instrument]
+    #[instrument(skip(self), err)]
     pub async fn refresh(&self) -> Result<(), anyhow::Error> {
         log::warn!("refreshing database schema...");
         Migrator::refresh(&self.db).await?;
@@ -162,7 +162,7 @@ impl Database {
         Ok(())
     }
 
-    #[instrument]
+    #[instrument(err)]
     pub async fn bootstrap(database: &crate::config::Database) -> Result<Self, anyhow::Error> {
         let url = format!(
             "postgres://{}:{}@{}:{}/postgres",
@@ -192,6 +192,7 @@ impl Database {
         Ok(db)
     }
 
+    #[instrument(skip(self), err)]
     pub async fn close(self) -> anyhow::Result<()> {
         Ok(self.db.close().await?)
     }
@@ -199,6 +200,7 @@ impl Database {
     /// Ping the database.
     ///
     /// Intended to be used for health checks.
+    #[instrument(skip(self), err)]
     pub async fn ping(&self) -> anyhow::Result<()> {
         self.db
             .ping()

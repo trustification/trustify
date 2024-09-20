@@ -35,7 +35,7 @@ impl<'g> CveLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, cve), err)]
+    #[instrument(skip(self, cve), ret)]
     pub async fn load(
         &self,
         labels: impl Into<Labels> + Debug,

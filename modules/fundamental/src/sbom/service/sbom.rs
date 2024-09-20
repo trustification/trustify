@@ -142,7 +142,7 @@ impl SbomService {
     ///
     /// If you need to find packages based on their relationship, even in the relationship to
     /// SBOM itself, use [`Self::fetch_related_packages`].
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn fetch_sbom_packages<TX: AsRef<Transactional>>(
         &self,
         sbom_id: Uuid,
@@ -203,7 +203,7 @@ impl SbomService {
     }
 
     /// Get all packages describing the SBOM.
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn describes_packages<TX: AsRef<Transactional>>(
         &self,
         sbom_id: Uuid,
@@ -223,7 +223,7 @@ impl SbomService {
         .map(|r| r.map(|rel| rel.package))
     }
 
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn find_related_sboms(
         &self,
         qualified_package_id: Uuid,
@@ -260,7 +260,7 @@ impl SbomService {
 
     /// Fetch all related packages in the context of an SBOM.
     #[allow(clippy::too_many_arguments)]
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn fetch_related_packages<TX: AsRef<Transactional>>(
         &self,
         sbom_id: Uuid,

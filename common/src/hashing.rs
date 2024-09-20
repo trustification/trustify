@@ -1,5 +1,6 @@
 use ring::digest::{Context, Digest, SHA256, SHA384, SHA512};
 use std::io::Read;
+use tracing::instrument;
 
 pub struct HashingRead<R: Read> {
     inner: R,
@@ -58,6 +59,7 @@ pub struct Digests {
 }
 
 impl Digests {
+    #[instrument(skip_all, fields(len=data.as_ref().len()))]
     pub fn digest(data: impl AsRef<[u8]>) -> Self {
         let mut contexts = Contexts::new();
         contexts.update(data.as_ref());

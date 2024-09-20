@@ -88,7 +88,7 @@ impl CheckCancellation {
         self.canceled
     }
 
-    #[instrument(err)]
+    #[instrument(ret)]
     async fn perform_check(&self) -> anyhow::Result<bool> {
         let importer = self.service.read(&self.importer_name).await?;
 

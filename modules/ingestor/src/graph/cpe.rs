@@ -44,7 +44,7 @@ impl Graph {
             .collect())
     }
 
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn ingest_cpe22<C, TX>(&self, cpe: C, tx: TX) -> Result<CpeContext, Error>
     where
         C: Into<Cpe> + Debug,
@@ -100,7 +100,7 @@ impl CpeCreator {
         self.cpes.insert(cpe.uuid(), cpe.into());
     }
 
-    #[instrument(skip(self, db), fields(num=self.cpes.len()), err)]
+    #[instrument(skip(self, db), fields(num=self.cpes.len()), ret)]
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
         for batch in &self.cpes.into_values().chunked() {
             cpe::Entity::insert_many(batch)

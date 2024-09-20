@@ -26,7 +26,7 @@ impl<'g> OsvLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, osv), err)]
+    #[instrument(skip(self, osv), ret)]
     pub async fn load(
         &self,
         labels: impl Into<Labels> + Debug,

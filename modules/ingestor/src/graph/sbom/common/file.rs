@@ -43,7 +43,7 @@ impl FileCreator {
         });
     }
 
-    #[instrument(skip_all, fields(num=self.nodes.len()), err)]
+    #[instrument(skip_all, fields(num=self.nodes.len()), ret)]
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
         for batch in &self.nodes.into_iter().chunked() {
             sbom_node::Entity::insert_many(batch)

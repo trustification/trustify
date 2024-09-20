@@ -42,7 +42,7 @@ impl<'g> OrganizationContext<'g> {
 }
 
 impl Graph {
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn get_organizations(
         &self,
         tx: impl AsRef<Transactional>,
@@ -55,7 +55,7 @@ impl Graph {
             .collect())
     }
 
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn get_organization_by_name<TX: AsRef<Transactional>>(
         &self,
         name: impl Into<String> + Debug,
@@ -68,7 +68,7 @@ impl Graph {
             .map(|organization| OrganizationContext::new(self, organization)))
     }
 
-    #[instrument(skip(self, tx), err)]
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn ingest_organization<TX: AsRef<Transactional>>(
         &self,
         name: impl Into<String> + Debug,

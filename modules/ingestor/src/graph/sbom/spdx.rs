@@ -49,7 +49,7 @@ impl<'a> From<Information<'a>> for SbomInformation {
 }
 
 impl SbomContext {
-    #[instrument(skip(tx, sbom_data, warnings), err)]
+    #[instrument(skip(tx, sbom_data, warnings), ret)]
     pub async fn ingest_spdx<TX: AsRef<Transactional>>(
         &self,
         sbom_data: SPDX,

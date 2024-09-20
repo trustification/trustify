@@ -52,7 +52,7 @@ impl<'g> CsafLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, csaf), err)]
+    #[instrument(skip(self, csaf), ret)]
     pub async fn load(
         &self,
         labels: impl Into<Labels> + Debug,
