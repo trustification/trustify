@@ -161,6 +161,7 @@ fn init_no_tracing() {
                 .map_fmt_fields(|f| f.debug_alt())
                 .with_ansi(true)
                 .with_level(true)
+                .with_thread_ids(true)
                 .compact(),
         )
         .try_init();
