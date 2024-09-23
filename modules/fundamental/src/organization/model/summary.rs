@@ -6,7 +6,7 @@ use trustify_common::paginated;
 use trustify_entity::organization;
 use utoipa::ToSchema;
 
-#[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, ToSchema, PartialEq, Eq)]
 pub struct OrganizationSummary {
     #[serde(flatten)]
     pub head: OrganizationHead,

@@ -13,7 +13,7 @@ use trustify_entity::organization;
 
 /// An organization who may issue advisories, product SBOMs, or
 /// otherwise be involved in supply-chain evidence.
-#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema, PartialEq, Eq)]
 pub struct OrganizationHead {
     /// The opaque UUID of the organization.
     pub id: Uuid,
