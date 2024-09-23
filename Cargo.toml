@@ -110,6 +110,7 @@ schemars = "0.8"
 sea-orm = "~1.0" # See https://www.sea-ql.org/blog/2024-08-04-sea-orm-1.0/#release-planning
 sea-orm-migration = "~1.0"
 sea-query = "0.31.0"
+semver = "1"
 serde = "1.0.183"
 serde_json = "1.0.114"
 serde_yml = "0.0.12"
