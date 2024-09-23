@@ -7549,6 +7549,7 @@ dependencies = [
  "trustify-cvss",
  "trustify-entity",
  "trustify-test-context",
+ "uuid",
 ]
 
 [[package]]

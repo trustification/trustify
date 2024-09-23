@@ -11,15 +11,17 @@ path = "src/lib.rs"
 
 [dependencies]
 sea-orm-migration = { workspace = true, features = ["runtime-tokio-rustls", "sqlx-postgres", "with-uuid"] }
+serde_json = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 trustify-cvss = { workspace = true }
-serde_json = { workspace = true }
+uuid = { workspace = true, features = ["v5"] }
 
 [dev-dependencies]
 trustify-common = { workspace = true }
 trustify-entity = { workspace = true }
 trustify-test-context = { workspace = true }
+
+anyhow = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 tokio-util = { workspace = true }
-anyhow = { workspace = true }
