@@ -14,7 +14,7 @@ use trustify_common::memo::Memo;
 use trustify_entity::{advisory, labels::Labels, organization};
 use utoipa::ToSchema;
 
-#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema, PartialEq, Eq)]
 pub struct AdvisoryHead {
     /// The opaque UUID of the advisory.
     #[serde(with = "uuid::serde::urn")]

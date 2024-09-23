@@ -108,7 +108,7 @@ impl PurlDetails {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq)]
 pub struct PurlAdvisory {
     #[serde(flatten)]
     pub head: AdvisoryHead,
@@ -166,7 +166,7 @@ impl PurlAdvisory {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq)]
 pub struct PurlStatus {
     pub vulnerability: VulnerabilityHead,
     pub status: String,
@@ -174,7 +174,7 @@ pub struct PurlStatus {
     pub context: Option<StatusContext>,
 }
 
-#[derive(Serialize, Clone, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Clone, Deserialize, Debug, ToSchema, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum StatusContext {
     Purl(Purl),
