@@ -1,1 +1,2 @@
+mod advisory;
 mod sbom;
