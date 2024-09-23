@@ -19,6 +19,7 @@ trustify-module-analysis = { workspace = true }
 
 actix-web = { workspace = true }
 anyhow = { workspace = true }
+build-info = { workspace = true }
 bytesize = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 futures = { workspace = true }
@@ -26,6 +27,7 @@ garage-door = { workspace = true, optional = true }
 log = { workspace = true }
 mime = { workspace =  true }
 rand = { workspace = true }
+serde = { workspace = true }
 tokio = { workspace = true }
 url = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras", "yaml"] }
@@ -38,3 +40,5 @@ test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 trustify-test-context = { workspace = true }
 
+[build-dependencies]
+build-info-build = { workspace = true }

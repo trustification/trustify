@@ -6,6 +6,25 @@ info:
     name: Apache-2.0
   version: 0.1.0-alpha.18
 paths:
+  /.well-known/trustify:
+    get:
+      tags:
+      - crate
+      operationId: info
+      responses:
+        '200':
+          description: Get information
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - version
+                properties:
+                  build:
+                    type: object
+                  version:
+                    type: string
   /api/v1/advisory:
     get:
       tags:
@@ -2300,6 +2319,15 @@ components:
         importer:
           type: string
         report: {}
+    Info:
+      type: object
+      required:
+      - version
+      properties:
+        build:
+          type: object
+        version:
+          type: string
     IngestResult:
       type: object
       description: The result of the ingestion process

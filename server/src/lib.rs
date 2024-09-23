@@ -3,6 +3,7 @@
 
 #[cfg(feature = "garage-door")]
 mod embedded_oidc;
+mod endpoints;
 mod sample_data;
 
 pub use sample_data::sample_data;
@@ -443,6 +444,9 @@ fn configure(svc: &mut web::ServiceConfig, config: Config) {
     // register REST API & UI
 
     svc.app_data(graph)
+        .configure(|svc| {
+            endpoints::configure(svc, auth.clone());
+        })
         .service(web::scope("/api").wrap(new_auth(auth)).configure(|svc| {
             trustify_module_importer::endpoints::configure(svc, db.clone());
             trustify_module_ingestor::endpoints::configure(

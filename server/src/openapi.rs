@@ -12,6 +12,7 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     doc.info.description = Some("Software Supply-Chain Security API".to_string());
     doc.info.version = env!("CARGO_PKG_VERSION").to_string();
 
+    doc.merge(crate::endpoints::ApiDoc::openapi());
     doc.merge(trustify_module_importer::endpoints::ApiDoc::openapi());
     doc.merge(trustify_module_ingestor::endpoints::ApiDoc::openapi());
     doc.merge(trustify_module_fundamental::openapi());
