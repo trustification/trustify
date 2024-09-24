@@ -7,7 +7,8 @@ A few ideas around logging and tracing.
 A quick summary:
 
 * Don't panic, don't println (see below for exceptions).
-* Log messages and tracing should be relevant to operating personell and developers, not end users. Ops will either run
+* [Log messages](https://crates.io/crates/log) and [tracing](https://crates.io/crates/tracing) should be relevant to
+  operating personell and developers, not end users. Ops will either run
   with a level of `warn` or `info` when sending to a tracing solution (like Jaeger).
 * Errors and warnings, which are relevant to the end user, must be sent back using the same channel (API call, UI, …)
   not the logging system
@@ -105,8 +106,32 @@ fn example() -> Result<LargeStruct, Error> {}
 
 An application should not panic during normal runtime. Also, all output should use logging or tracing.
 
-There is one exception to this rule (aside from tests): the start of the application. During the logging/tracing system
+There are exceptions to this rule (aside from tests): the start of the application. During the logging/tracing system
 configuration, it might be ok to use println. And if the application cannot be started up, failing with a panic might
 be ok too.
 
-However, it should be an exception.
+The same is true for simple command line applications, which are expected to perform a task, and then finish. Either
+successful, or with an error (returned as exit code). For example, the migrations. They can run and fail, even with
+a panic.
+
+### Rationale
+
+The main reason for all of this is: panics cannot be treated as graceful as `Result::Err`. Panics might abort the
+application right away, or leave a "bad state", when being caught and handled. On the other hand, `Result::Err` does not
+have any of those limitations and side effects. If it is ok for the application to just exit (with an error message),
+at the moment a panic is triggered, then it is ok to use it. If you intend to handle the error, then using panic is not
+the right choice.
+
+However, those should be exceptions, not the rule.
+
+### Watch out
+
+**NOTE**: There are functions in Rust that might panic. Most notably the (plain) `unwrap` calls. Typically, you will
+find a note in the `rustdoc` description of such functions. For example, the `Option::unwrap` function:
+
+![Screenshot of rustdoc for Option::unwrap](drawings/log_tracing_1.png)
+
+However, not all function variants might expose the same behavior. Just because its name starts with `unwrap` it doesn't
+mean it will panic. For example, the `Option::unwrap_or` function:
+
+![Screenshot of rustdoc for Option::unwrap_or](drawings/log_tracing_2.png)
