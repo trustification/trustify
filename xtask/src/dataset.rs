@@ -1,4 +1,3 @@
-use crate::log::init_log;
 use anyhow::anyhow;
 use clap::Parser;
 use postgresql_commands::{pg_dump::PgDumpBuilder, CommandBuilder};
@@ -82,8 +81,6 @@ impl GenerateDump {
     }
 
     pub async fn run(self) -> anyhow::Result<()> {
-        init_log()?;
-
         let (db, postgres) = match &self.working_dir {
             Some(wd) => db::embedded::create_in(wd.join("db")).await?,
             None => db::embedded::create().await?,

@@ -1,6 +1,7 @@
 #![allow(clippy::unwrap_used)]
 #![recursion_limit = "256"]
 
+use crate::log::init_log;
 use clap::{Parser, Subcommand};
 
 mod ai;
@@ -44,6 +45,6 @@ pub enum Command {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    env_logger::init();
+    init_log()?;
     Xtask::parse().run().await
 }
