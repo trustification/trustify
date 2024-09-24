@@ -9,7 +9,6 @@ license.workspace = true
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
-env_logger = { workspace = true }
 langchain-rust = { workspace = true, features = ["ollama"] }
 log = { workspace = true }
 nu-ansi-term = { workspace = true }
