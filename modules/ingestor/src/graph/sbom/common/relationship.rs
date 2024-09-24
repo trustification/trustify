@@ -30,7 +30,29 @@ impl RelationshipCreator {
         }
     }
 
+    /// Record a relationship.
+    ///
+    /// To store those relationships, it is required to call [`Self::create`].
+    ///
+    /// It is possible to record invalid relationship targets, which might fail the actual creation
+    /// process later on. It is possible to validate relationships using [`Self::validate`].
     pub fn relate(&mut self, left: String, rel: Relationship, right: String) {
+        // The idea of `NOASSERTION` is to state that there is a relationship, but the element it
+        // relates to is unknown.
+        //
+        // The idea of `NONE` is to state there it is known that there is no relationship to that
+        // element.
+        //
+        // At the moment, both those pieces of information don't add value to our system and
+        // only cause complexity when storing. So we simply drop it.
+
+        // TODO: If, in the future, we want to have this information, this should be removed.
+
+        if let ("NONE" | "NOASSERTION", _) | (_, "NONE" | "NOASSERTION") = (&*left, &*right) {
+            // either side is NONE or NOASSERTION, which we don't ingest at the moment.
+            return;
+        }
+
         self.rels.push(package_relates_to_package::ActiveModel {
             sbom_id: Set(self.sbom_id),
             left_node_id: Set(left),

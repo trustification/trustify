@@ -1,12 +1,11 @@
-use crate::graph::sbom::{LicenseCreator, LicenseInfo};
 use crate::{
     graph::{
         cpe::CpeCreator,
         product::ProductInformation,
         purl::creator::PurlCreator,
         sbom::{
-            FileCreator, PackageCreator, PackageReference, References, RelationshipCreator,
-            SbomContext, SbomInformation,
+            FileCreator, LicenseCreator, LicenseInfo, PackageCreator, PackageReference, References,
+            RelationshipCreator, SbomContext, SbomInformation,
         },
     },
     service::Error,
