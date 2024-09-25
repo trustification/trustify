@@ -41,6 +41,7 @@ impl PurlCreator {
         let mut qualifieds = BTreeMap::new();
 
         for purl in self.purls {
+            let cp = purl.clone().into();
             let (package, version, qualified) = purl.uuids();
             packages
                 .entry(package)
@@ -65,6 +66,7 @@ impl PurlCreator {
                     id: Set(qualified),
                     versioned_purl_id: Set(version),
                     qualifiers: Set(Qualifiers(purl.qualifiers)),
+                    purl: Set(cp),
                 });
         }
 

@@ -17,6 +17,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::{collections::HashMap, fmt::Debug};
 use tracing::instrument;
+
 use trustify_common::{
     cpe::Cpe,
     db::{
@@ -28,6 +29,7 @@ use trustify_common::{
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},
 };
+use trustify_entity::qualified_purl::CanonicalPurl;
 use trustify_entity::{
     advisory, base_purl,
     cpe::{self, CpeDto},
@@ -494,6 +496,18 @@ async fn package_from_row(
 
     for purl in row.purls {
         if let Ok(dto) = serde_json::from_value::<PurlDto>(purl) {
+            let cp = CanonicalPurl {
+                ty: dto.clone().r#type,
+                namespace: dto.clone().namespace,
+                name: dto.clone().name,
+                version: if dto.version.is_empty() {
+                    None
+                } else {
+                    Some(dto.clone().version)
+                },
+                qualifiers: dto.clone().qualifiers.0,
+            };
+
             purls.push(
                 PurlSummary::from_entity(
                     &base_purl::Model {
@@ -511,6 +525,7 @@ async fn package_from_row(
                         id: dto.qualified_purl_id,
                         versioned_purl_id: dto.versioned_purl_id,
                         qualifiers: dto.qualifiers,
+                        purl: cp,
                     },
                     tx,
                 )
