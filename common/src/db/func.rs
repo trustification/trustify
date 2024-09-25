@@ -1,4 +1,6 @@
 use migration::Iden;
+use sea_orm::{ConnectionTrait, DbErr, ExecResult};
+use sea_query::{Func, SelectStatement};
 use std::fmt::Write;
 
 /// PostgreSQL's `array_agg` function.
@@ -50,5 +52,24 @@ pub struct VersionMatches;
 impl Iden for VersionMatches {
     fn unquoted(&self, s: &mut dyn Write) {
         write!(s, "version_matches").unwrap()
+    }
+}
+
+/// The function updating the deprecated state of a consistent set of advisories.
+pub struct UpdateDeprecatedAdvisory;
+
+impl Iden for UpdateDeprecatedAdvisory {
+    fn unquoted(&self, s: &mut dyn Write) {
+        write!(s, "update_deprecated_advisory").unwrap()
+    }
+}
+
+impl UpdateDeprecatedAdvisory {
+    pub async fn execute(db: &impl ConnectionTrait, identifier: &str) -> Result<ExecResult, DbErr> {
+        let stmt = db
+            .get_database_backend()
+            .build(SelectStatement::new().expr(Func::cust(Self).arg(identifier)));
+
+        db.execute(stmt).await
     }
 }

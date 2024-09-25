@@ -13,7 +13,6 @@ use sea_orm::{
 };
 use sea_query::{Condition, Expr, Order, SimpleExpr};
 use tracing::instrument;
-use trustify_common::purl::{Purl, PurlErr};
 use trustify_common::{
     db::{
         limiter::LimiterTrait,
@@ -21,9 +20,10 @@ use trustify_common::{
         Database, Transactional,
     },
     model::{Paginated, PaginatedResults},
+    purl::{Purl, PurlErr},
 };
-
 use trustify_entity::{base_purl, qualified_purl, versioned_purl};
+use trustify_module_ingestor::common::Deprecation;
 
 pub struct PurlService {
     db: Database,
@@ -246,6 +246,7 @@ impl PurlService {
     pub async fn purl_by_purl<TX: AsRef<Transactional>>(
         &self,
         purl: &Purl,
+        deprecation: Deprecation,
         tx: TX,
     ) -> Result<Option<PurlDetails>, Error> {
         let connection = self.db.connection(&tx);
@@ -267,7 +268,7 @@ impl PurlService {
 
             if let Some(purl) = purl {
                 Ok(Some(
-                    PurlDetails::from_entity(None, None, &purl, &connection).await?,
+                    PurlDetails::from_entity(None, None, &purl, deprecation, &connection).await?,
                 ))
             } else {
                 Ok(None)
@@ -283,6 +284,7 @@ impl PurlService {
     pub async fn purl_by_uuid<TX: AsRef<Transactional>>(
         &self,
         purl_uuid: &Uuid,
+        deprecation: Deprecation,
         tx: TX,
     ) -> Result<Option<PurlDetails>, Error> {
         let connection = self.db.connection(&tx);
@@ -292,7 +294,8 @@ impl PurlService {
             .await?
         {
             Ok(Some(
-                PurlDetails::from_entity(None, None, &qualified_package, &connection).await?,
+                PurlDetails::from_entity(None, None, &qualified_package, deprecation, &connection)
+                    .await?,
             ))
         } else {
             Ok(None)

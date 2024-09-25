@@ -17,6 +17,8 @@ pub struct Model {
     pub id: Uuid,
     #[graphql(name = "name")]
     pub identifier: String,
+    pub version: Option<String>,
+    pub deprecated: bool,
     pub issuer_id: Option<Uuid>,
     pub published: Option<OffsetDateTime>,
     pub modified: Option<OffsetDateTime>,

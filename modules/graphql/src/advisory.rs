@@ -19,6 +19,8 @@ impl AdvisoryQuery {
             Ok(Some(advisory)) => Ok(Advisory {
                 id: advisory.advisory.id,
                 identifier: advisory.advisory.identifier,
+                deprecated: advisory.advisory.deprecated,
+                version: advisory.advisory.version,
                 issuer_id: advisory.advisory.issuer_id,
                 labels: advisory.advisory.labels,
                 published: advisory.advisory.published,
@@ -35,7 +37,10 @@ impl AdvisoryQuery {
     async fn get_advisories<'a>(&self, ctx: &Context<'a>) -> FieldResult<Vec<Advisory>> {
         let graph = ctx.data::<Arc<Graph>>()?;
 
-        let advisories = match graph.get_advisories(Transactional::None).await {
+        let advisories = match graph
+            .get_advisories(Default::default(), Transactional::None)
+            .await
+        {
             Ok(advisories) => advisories,
             _ => vec![],
         };
@@ -46,6 +51,8 @@ impl AdvisoryQuery {
                 Ok(Advisory {
                     id: advisory.advisory.id,
                     identifier: advisory.advisory.identifier,
+                    deprecated: advisory.advisory.deprecated,
+                    version: advisory.advisory.version,
                     issuer_id: advisory.advisory.issuer_id,
                     labels: advisory.advisory.labels,
                     published: advisory.advisory.published,

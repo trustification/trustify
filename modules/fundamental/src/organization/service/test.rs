@@ -17,6 +17,7 @@ async fn all_organizations(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             &Digests::digest("CPIC-1"),
             AdvisoryInformation {
                 title: Some("CAPT-1".to_string()),
+                version: None,
                 issuer: Some("Capt Pickles Industrial Conglomerate".to_string()),
                 published: Some(OffsetDateTime::now_utc()),
                 modified: None,

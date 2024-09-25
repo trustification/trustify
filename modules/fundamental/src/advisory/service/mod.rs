@@ -3,15 +3,16 @@ use crate::{
     Error,
 };
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTypeTrait, DatabaseBackend, DbErr, EntityTrait,
-    FromQueryResult, IntoActiveModel, IntoIdentity, QueryResult, QuerySelect, QueryTrait,
-    RelationTrait, Select, TransactionTrait,
+    ActiveModelTrait, ActiveValue::Set, ColumnTypeTrait, ConnectionTrait, DatabaseBackend, DbErr,
+    EntityTrait, FromQueryResult, IntoActiveModel, IntoIdentity, QueryResult, QuerySelect,
+    QueryTrait, RelationTrait, Select, Statement, TransactionTrait,
 };
 use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, JoinType, SimpleExpr};
-use trustify_common::db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel};
+use trustify_common::db::UpdateDeprecatedAdvisory;
 use trustify_common::{
     db::{
         limiter::LimiterAsModelTrait,
+        multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
         query::{Columns, Filtering, Query},
         Database, Transactional,
     },
@@ -24,6 +25,7 @@ use trustify_entity::{
     labels::Labels,
     organization, source_document,
 };
+use trustify_module_ingestor::common::{Deprecation, DeprecationExt};
 use uuid::Uuid;
 
 pub struct AdvisoryService {
@@ -39,6 +41,7 @@ impl AdvisoryService {
         &self,
         search: Query,
         paginated: Paginated,
+        deprecation: Deprecation,
         tx: TX,
     ) -> Result<PaginatedResults<AdvisorySummary>, Error> {
         let connection = self.db.connection(&tx);
@@ -48,6 +51,7 @@ impl AdvisoryService {
         // which involves mucking about inside the Select<E> to re-target from
         // the original underlying table it expects the entity to live in.
         let inner_query = advisory::Entity::find()
+            .with_deprecation(deprecation)
             .left_join(cvss3::Entity)
             .expr_as_(
                 SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
@@ -205,11 +209,21 @@ impl AdvisoryService {
     ) -> Result<u64, Error> {
         let connection = self.db.connection(&tx);
 
-        let query = advisory::Entity::delete_by_id(id);
+        let stmt = Statement::from_sql_and_values(
+            connection.get_database_backend(),
+            r#"DELETE FROM advisory WHERE id=$1 RETURNING identifier"#,
+            [id.into()],
+        );
 
-        let result = query.exec(&connection).await?;
+        let result = connection.query_all(stmt).await?;
+        let rows_affected = result.len();
 
-        Ok(result.rows_affected)
+        for row in result {
+            let identifier = row.try_get_by_index::<String>(0)?;
+            UpdateDeprecatedAdvisory::execute(&connection, &identifier).await?;
+        }
+
+        Ok(rows_affected as u64)
     }
 
     /// Set the labels of an advisory

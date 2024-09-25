@@ -29,6 +29,7 @@ pub async fn ingest_sample_advisory<'a>(
             &Digests::digest(title),
             AdvisoryInformation {
                 title: Some(title.to_string()),
+                version: None,
                 issuer: None,
                 published: Some(OffsetDateTime::now_utc()),
                 modified: None,
@@ -74,7 +75,7 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
-        .fetch_advisories(q(""), Paginated::default(), ())
+        .fetch_advisories(q(""), Paginated::default(), Default::default(), ())
         .await?;
 
     assert_eq!(fetched.total, 2);
@@ -92,7 +93,12 @@ async fn all_advisories_filtered_by_average_score(
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
-        .fetch_advisories(q("average_score>8"), Paginated::default(), ())
+        .fetch_advisories(
+            q("average_score>8"),
+            Paginated::default(),
+            Default::default(),
+            (),
+        )
         .await?;
 
     assert_eq!(fetched.total, 1);
@@ -110,7 +116,12 @@ async fn all_advisories_filtered_by_average_severity(
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
-        .fetch_advisories(q("average_severity>=critical"), Paginated::default(), ())
+        .fetch_advisories(
+            q("average_severity>=critical"),
+            Paginated::default(),
+            Default::default(),
+            (),
+        )
         .await?;
 
     log::debug!("{:#?}", fetched);

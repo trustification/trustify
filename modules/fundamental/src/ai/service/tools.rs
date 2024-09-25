@@ -1,20 +1,16 @@
-use std::error::Error;
-
-use crate::advisory::service::AdvisoryService;
-use crate::product::service::ProductService;
-use crate::purl::service::PurlService;
-use crate::sbom::service::SbomService;
-use crate::vulnerability::service::VulnerabilityService;
+use crate::{
+    advisory::service::AdvisoryService, product::service::ProductService,
+    purl::service::PurlService, sbom::service::SbomService,
+    vulnerability::service::VulnerabilityService,
+};
 use anyhow::anyhow;
 use async_trait::async_trait;
 use itertools::Itertools;
 use langchain_rust::tools::Tool;
 use serde_json::Value;
-use std::fmt::Write;
-use std::str::FromStr;
-use trustify_common::db::query::Query;
-use trustify_common::id::Id;
-use trustify_common::purl::Purl;
+use std::{error::Error, fmt::Write, str::FromStr};
+use trustify_common::{db::query::Query, id::Id, purl::Purl};
+use trustify_module_ingestor::common::Deprecation;
 use uuid::Uuid;
 
 pub struct ToolLogger<T: Tool>(pub T);
@@ -149,7 +145,10 @@ When the input is a partial name, the tool will provide a list of possible match
         // is it a CVE ID?
         let mut result = "".to_string();
 
-        let vuln = match service.fetch_vulnerability(input.as_str(), ()).await? {
+        let vuln = match service
+            .fetch_vulnerability(input.as_str(), Deprecation::Ignore, ())
+            .await?
+        {
             Some(v) => v,
             None => {
                 // search for possible matches
@@ -160,6 +159,7 @@ When the input is a partial name, the tool will provide a list of possible match
                             ..Default::default()
                         },
                         Default::default(),
+                        Deprecation::Ignore,
                         (),
                     )
                     .await?;
@@ -183,7 +183,11 @@ When the input is a partial name, the tool will provide a list of possible match
 
                 // let's show the details for the one that matched.
                 if let Some(v) = service
-                    .fetch_vulnerability(results.items[0].head.identifier.as_str(), ())
+                    .fetch_vulnerability(
+                        results.items[0].head.identifier.as_str(),
+                        Deprecation::Ignore,
+                        (),
+                    )
                     .await?
                 {
                     v
@@ -263,6 +267,7 @@ When the input is a partial name, the tool will provide a list of possible match
                     ..Default::default()
                 },
                 Default::default(),
+                Deprecation::Ignore,
                 (),
             )
             .await?;
@@ -357,14 +362,14 @@ The input should be the name of the package, it's Identifier uri or internal UUI
         // Try lookup as a PURL
         let mut purl_details = match Purl::try_from(input.clone()) {
             Err(_) => None,
-            Ok(purl) => service.purl_by_purl(&purl, ()).await?,
+            Ok(purl) => service.purl_by_purl(&purl, Deprecation::Ignore, ()).await?,
         };
 
         // Try lookup as a UUID
         if purl_details.is_none() {
             purl_details = match Uuid::parse_str(input.as_str()) {
                 Err(_) => None,
-                Ok(uuid) => service.purl_by_uuid(&uuid, ()).await?,
+                Ok(uuid) => service.purl_by_uuid(&uuid, Deprecation::Ignore, ()).await?,
             };
         }
 
@@ -386,7 +391,7 @@ The input should be the name of the package, it's Identifier uri or internal UUI
                 0 => None,
                 1 => {
                     service
-                        .purl_by_uuid(&results.items[0].head.uuid, ())
+                        .purl_by_uuid(&results.items[0].head.uuid, Deprecation::Ignore, ())
                         .await?
                 }
                 _ => {

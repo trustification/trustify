@@ -81,6 +81,8 @@ mod m0000625_alter_qualified_purl_purl_column;
 mod m0000630_create_product_version_range;
 mod m0000631_alter_product_cpe_key;
 mod m0000640_create_product_status;
+mod m0000650_alter_advisory_tracking;
+
 pub struct Migrator;
 
 #[async_trait::async_trait]
@@ -168,6 +170,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000630_create_product_version_range::Migration),
             Box::new(m0000631_alter_product_cpe_key::Migration),
             Box::new(m0000640_create_product_status::Migration),
+            Box::new(m0000650_alter_advisory_tracking::Migration),
         ]
     }
 }

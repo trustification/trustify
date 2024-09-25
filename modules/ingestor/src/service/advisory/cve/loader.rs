@@ -134,6 +134,8 @@ impl<'g> CveLoader<'g> {
 
         let information = AdvisoryInformation {
             title: title.clone(),
+            // TODO: check if we have some kind of version information
+            version: None,
             issuer: org_name.cloned(),
             published,
             modified,

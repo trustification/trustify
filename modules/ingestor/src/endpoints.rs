@@ -43,6 +43,7 @@ struct UploadParams {
 #[openapi(
     paths(upload),
     components(schemas(
+        crate::common::Deprecation,
         crate::model::IngestResult,
         crate::service::dataset::DatasetIngestResult,
     )),

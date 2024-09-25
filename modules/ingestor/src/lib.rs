@@ -1,3 +1,4 @@
+pub mod common;
 pub mod db;
 pub mod endpoints;
 pub mod graph;

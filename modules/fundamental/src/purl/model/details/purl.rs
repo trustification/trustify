@@ -22,6 +22,7 @@ use trustify_entity::{
     advisory, base_purl, cpe, license, organization, purl_license_assertion, purl_status,
     qualified_purl, sbom, status, version_range, versioned_purl, vulnerability,
 };
+use trustify_module_ingestor::common::{Deprecation, DeprecationForExt};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
@@ -39,8 +40,11 @@ impl PurlDetails {
         package: Option<base_purl::Model>,
         package_version: Option<versioned_purl::Model>,
         qualified_package: &qualified_purl::Model,
+        deprecation: Deprecation,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
+        // TODO: apply deprecation filter
+
         let package_version = if let Some(package_version) = package_version {
             package_version
         } else {
@@ -77,6 +81,7 @@ impl PurlDetails {
                 purl_status::Entity.into_iden(),
                 purl_status::Column::Id.into_iden(),
             )])
+            .with_deprecation_related(deprecation)
             .all(tx)
             .await?;
 
