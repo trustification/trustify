@@ -8,10 +8,10 @@ use crate::{
     Error,
 };
 use sea_orm::{
-    prelude::Uuid, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, QueryFilter,
-    QueryOrder, QuerySelect, QueryTrait,
+    prelude::Uuid, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, IntoSimpleExpr,
+    QueryFilter, QueryOrder, QuerySelect, QueryTrait,
 };
-use sea_query::{Condition, Order};
+use sea_query::{Condition, Expr, Order, SimpleExpr};
 use tracing::instrument;
 use trustify_common::purl::{Purl, PurlErr};
 use trustify_common::{
@@ -330,6 +330,16 @@ impl PurlService {
     ) -> Result<PaginatedResults<PurlSummary>, Error> {
         let connection = self.db.connection(&tx);
 
+        // TODO: this would be the condition used to select from jsonb name key
+        let _unused_condition = Expr::cust_with_exprs(
+            "$1->>'name' ~~* $2",
+            [
+                qualified_purl::Column::Purl.into_simple_expr(),
+                SimpleExpr::Value(format!("%{}%", query.q).into()),
+            ],
+        );
+
+        // TODO: we need to figure out how we bring in querying keys of jsonb column in query.rs
         let limiter = qualified_purl::Entity::find()
             .left_join(versioned_purl::Entity)
             .filter(

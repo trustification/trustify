@@ -38,12 +38,13 @@ impl<'g> PackageVersionContext<'g> {
         if let Some(found) = self.get_qualified_package(purl, &tx).await? {
             return Ok(found);
         }
-
+        let cp = purl.clone().into();
         // No appropriate qualified package, create one.
         let qualified_package = entity::qualified_purl::ActiveModel {
             id: Set(purl.qualifier_uuid()),
             versioned_purl_id: Set(self.package_version.id),
             qualifiers: Set(Qualifiers(purl.qualifiers.clone())),
+            purl: Set(cp),
         };
 
         let qualified_package = qualified_package
