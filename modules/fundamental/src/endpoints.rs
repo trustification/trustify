@@ -3,6 +3,7 @@ use trustify_common::db::Database;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::service::IngestorService;
 use trustify_module_storage::service::dispatch::DispatchBackend;
+use utoipa::{IntoParams, ToSchema};
 
 #[derive(Clone, Debug, Eq, PartialEq, Default)]
 pub struct Config {
@@ -28,4 +29,11 @@ pub fn configure(
     crate::sbom::endpoints::configure(svc, db.clone(), config.sbom_upload_limit);
     crate::vulnerability::endpoints::configure(svc, db.clone());
     crate::weakness::endpoints::configure(svc, db.clone());
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Default, ToSchema, serde::Deserialize, IntoParams)]
+pub struct Deprecation {
+    #[serde(default)]
+    #[param(inline)]
+    pub deprecated: trustify_module_ingestor::common::Deprecation,
 }

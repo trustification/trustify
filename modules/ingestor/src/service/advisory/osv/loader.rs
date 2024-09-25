@@ -52,6 +52,8 @@ impl<'g> OsvLoader<'g> {
 
         let information = AdvisoryInformation {
             title: osv.summary.clone(),
+            // TODO: check if we have some kind of version information
+            version: None,
             issuer,
             published: Some(osv.published.into_time()),
             modified: Some(osv.modified.into_time()),

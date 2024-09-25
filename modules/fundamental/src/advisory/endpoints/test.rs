@@ -34,6 +34,7 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
+                version: None,
                 issuer: None,
                 published: Some(OffsetDateTime::now_utc()),
                 modified: None,
@@ -70,6 +71,7 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
+                version: None,
                 issuer: None,
                 published: Some(OffsetDateTime::now_utc()),
                 modified: None,
@@ -117,6 +119,7 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
+                version: None,
                 issuer: Some("Red Hat Product Security".to_string()),
                 published: Some(OffsetDateTime::now_utc()),
                 modified: None,
@@ -134,6 +137,7 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             &Digests::digest("RHSA-2"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
+                version: None,
                 issuer: Some("Red Hat Product Security".to_string()),
                 published: Some(OffsetDateTime::now_utc()),
                 modified: None,
@@ -210,6 +214,7 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-1".to_string()),
+                version: None,
                 issuer: Some("Red Hat Product Security".to_string()),
                 published: Some(OffsetDateTime::now_utc()),
                 modified: None,
@@ -227,6 +232,7 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
                 title: Some("RHSA-2".to_string()),
+                version: None,
                 issuer: Some("Red Hat Product Security".to_string()),
                 published: Some(OffsetDateTime::now_utc()),
                 modified: None,

@@ -24,6 +24,7 @@ async fn all_organizations(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             &Digests::digest("CAPT-1"),
             AdvisoryInformation {
                 title: Some("CAPT-1".to_string()),
+                version: None,
                 issuer: Some("Capt Pickles Industrial Conglomerate".to_string()),
                 published: Some(OffsetDateTime::now_utc()),
                 modified: None,
@@ -40,6 +41,7 @@ async fn all_organizations(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             &Digests::digest("EMPORIUM-1"),
             AdvisoryInformation {
                 title: Some("EMPORIUM-1".to_string()),
+                version: None,
                 issuer: Some("Capt Pickles Boutique Emporium".to_string()),
                 published: Some(OffsetDateTime::now_utc()),
                 modified: None,
@@ -81,6 +83,7 @@ async fn one_organization(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             &Digests::digest("CAPT-1"),
             AdvisoryInformation {
                 title: Some("Pickles can experience a buffer overflow".to_string()),
+                version: None,
                 issuer: Some("Capt Pickles Industrial Conglomerate".to_string()),
                 published: Some(OffsetDateTime::now_utc()),
                 modified: None,

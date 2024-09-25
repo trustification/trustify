@@ -35,6 +35,14 @@ impl Id {
         result.extend(sha512.map(Id::Sha512));
         result
     }
+
+    /// Get the value of the [`Id::Uuid`] variant, or return `None` if it is another variant.
+    pub fn try_as_uid(&self) -> Option<Uuid> {
+        match &self {
+            Self::Uuid(uuid) => Some(*uuid),
+            _ => None,
+        }
+    }
 }
 
 /// Create a filter for an ID

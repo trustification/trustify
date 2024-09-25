@@ -4,7 +4,10 @@ mod label;
 mod test;
 
 use crate::{
-    advisory::service::AdvisoryService, purl::service::PurlService, Error, Error::Internal,
+    advisory::service::AdvisoryService,
+    endpoints::Deprecation,
+    purl::service::PurlService,
+    Error::{self, Internal},
 };
 use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder};
 use config::Config;
@@ -49,10 +52,10 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: us
         crate::source_document::model::SourceDocument,
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
-        trustify_common::purl::Purl,
         trustify_common::id::Id,
-        trustify_entity::labels::Labels,
+        trustify_common::purl::Purl,
         trustify_cvss::cvss3::severity::Severity,
+        trustify_entity::labels::Labels,
     )),
     tags()
 )]
@@ -65,6 +68,7 @@ pub struct ApiDoc;
     params(
         Query,
         Paginated,
+        Deprecation,
     ),
     responses(
         (status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
@@ -76,8 +80,13 @@ pub async fn all(
     state: web::Data<AdvisoryService>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
+    web::Query(Deprecation { deprecated }): web::Query<Deprecation>,
 ) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(state.fetch_advisories(search, paginated, ()).await?))
+    Ok(HttpResponse::Ok().json(
+        state
+            .fetch_advisories(search, paginated, deprecated, ())
+            .await?,
+    ))
 }
 
 #[utoipa::path(

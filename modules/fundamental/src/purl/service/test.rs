@@ -567,7 +567,9 @@ async fn statuses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let uuid = results.items[0].head.uuid;
 
-    let _results = service.purl_by_uuid(&uuid, Transactional::None).await?;
+    let _results = service
+        .purl_by_uuid(&uuid, Default::default(), Transactional::None)
+        .await?;
 
     Ok(())
 }
@@ -594,7 +596,9 @@ async fn contextual_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let uuid = tomcat_jsp.head.uuid;
 
-    let tomcat_jsp = service.purl_by_uuid(&uuid, Transactional::None).await?;
+    let tomcat_jsp = service
+        .purl_by_uuid(&uuid, Default::default(), Transactional::None)
+        .await?;
 
     assert!(tomcat_jsp.is_some());
 
@@ -759,7 +763,11 @@ async fn purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ingest_some_log4j_data(ctx).await?;
 
     let results = service
-        .purl_by_purl(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .purl_by_purl(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            Default::default(),
+            (),
+        )
         .await?;
 
     assert_eq!(results.unwrap().version.version, "1.2.3");
@@ -809,6 +817,7 @@ async fn license_information(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     let result = service
         .purl_by_purl(
             &Purl::try_from("pkg:rpm/redhat/libsepol@3.5-1.el9?arch=s390x")?,
+            Default::default(),
             Transactional::None,
         )
         .await?;

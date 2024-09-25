@@ -64,6 +64,14 @@ paths:
           type: integer
           format: int64
           minimum: 0
+      - name: deprecated
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - Ignore
+          - Consider
       responses:
         '200':
           description: Matching vulnerabilities
@@ -1246,6 +1254,14 @@ paths:
       summary: Retrieve details of a fully-qualified pURL
       operationId: getPurl
       parameters:
+      - name: deprecated
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - Ignore
+          - Consider
       - name: key
         in: path
         description: opaque identifier for a fully-qualified PURL, or URL-encoded pURL itself
@@ -2264,6 +2280,11 @@ components:
           type: string
         sbom_id:
           type: string
+    Deprecation:
+      type: string
+      enum:
+      - Ignore
+      - Consider
     Id:
       type: string
       description: A hash/digest prefixed with its type.

@@ -1,21 +1,24 @@
 //! Support for advisories.
 
-use crate::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext;
-use crate::graph::error::Error;
-use crate::graph::Graph;
+use crate::{
+    common::{Deprecation, DeprecationExt},
+    graph::{advisory::advisory_vulnerability::AdvisoryVulnerabilityContext, error::Error, Graph},
+};
 use hex::ToHex;
-use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, EntityTrait, IntoActiveModel, ModelTrait, QueryFilter};
-use sea_orm::{ColumnTrait, QuerySelect, RelationTrait};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, IntoActiveModel, ModelTrait,
+    QueryFilter, QuerySelect, RelationTrait,
+};
 use sea_query::{Condition, JoinType, OnConflict};
+use semver::Version;
 use std::fmt::{Debug, Formatter};
 use time::OffsetDateTime;
 use tracing::instrument;
-use trustify_common::db::Transactional;
-use trustify_common::hashing::Digests;
-use trustify_entity as entity;
-use trustify_entity::labels::Labels;
-use trustify_entity::{advisory, source_document};
+use trustify_common::{
+    db::{Transactional, UpdateDeprecatedAdvisory},
+    hashing::Digests,
+};
+use trustify_entity::{self as entity, advisory, labels::Labels, source_document};
 use uuid::Uuid;
 
 pub mod advisory_vulnerability;
@@ -27,6 +30,7 @@ pub struct AdvisoryInformation {
     pub published: Option<OffsetDateTime>,
     pub modified: Option<OffsetDateTime>,
     pub withdrawn: Option<OffsetDateTime>,
+    pub version: Option<Version>,
 }
 
 pub struct AdvisoryVulnerabilityInformation {
@@ -45,6 +49,7 @@ impl AdvisoryInformation {
             || self.published.is_some()
             || self.modified.is_some()
             || self.withdrawn.is_some()
+            || self.version.is_some()
     }
 }
 
@@ -72,16 +77,13 @@ impl Graph {
         digest: &str,
         tx: TX,
     ) -> Result<Option<AdvisoryContext>, Error> {
-        Ok(entity::advisory::Entity::find()
-            .join(
-                JoinType::Join,
-                entity::advisory::Relation::SourceDocument.def(),
-            )
+        Ok(advisory::Entity::find()
+            .join(JoinType::Join, advisory::Relation::SourceDocument.def())
             .filter(
                 Condition::any()
-                    .add(entity::source_document::Column::Sha256.eq(digest.to_string()))
-                    .add(entity::source_document::Column::Sha384.eq(digest.to_string()))
-                    .add(entity::source_document::Column::Sha512.eq(digest.to_string())),
+                    .add(source_document::Column::Sha256.eq(digest.to_string()))
+                    .add(source_document::Column::Sha384.eq(digest.to_string()))
+                    .add(source_document::Column::Sha512.eq(digest.to_string())),
             )
             .one(&self.connection(&tx))
             .await?
@@ -90,9 +92,11 @@ impl Graph {
 
     pub async fn get_advisories<TX: AsRef<Transactional>>(
         &self,
+        deprecation: Deprecation,
         tx: TX,
     ) -> Result<Vec<AdvisoryContext>, Error> {
         Ok(advisory::Entity::find()
+            .with_deprecation(deprecation)
             .all(&self.db.connection(&tx))
             .await?
             .into_iter()
@@ -112,13 +116,21 @@ impl Graph {
         let identifier = identifier.into();
         let labels = labels.into();
         let sha256 = digests.sha256.encode_hex::<String>();
-        let information = information.into();
+        let AdvisoryInformation {
+            title,
+            issuer,
+            published,
+            modified,
+            withdrawn,
+            version,
+        } = information.into();
 
         if let Some(found) = self.get_advisory_by_digest(&sha256, &tx).await? {
+            // we already have the exact same document.
             return Ok(found);
         }
 
-        let organization = if let Some(issuer) = information.issuer {
+        let organization = if let Some(issuer) = issuer {
             Some(self.ingest_organization(issuer, (), &tx).await?)
         } else {
             None
@@ -133,22 +145,34 @@ impl Graph {
 
         let doc = doc_model.insert(&self.connection(&tx)).await?;
 
+        // insert
+
         let model = advisory::ActiveModel {
             id: Default::default(),
             identifier: Set(identifier),
+            // we create it as not deprecated (false), as we update all documents in the next step.
+            deprecated: Set(false),
+            version: Set(version.map(|version| version.to_string())),
             issuer_id: Set(organization.map(|org| org.organization.id)),
-            title: Set(information.title),
-            published: Set(information.published),
-            modified: Set(information.modified),
-            withdrawn: Default::default(),
+            title: Set(title),
+            published: Set(published),
+            modified: Set(modified),
+            withdrawn: Set(withdrawn),
             labels: Set(labels),
             source_document_id: Set(Some(doc.id)),
         };
 
-        Ok(AdvisoryContext::new(
-            self,
-            model.insert(&self.connection(&tx)).await?,
-        ))
+        let db = self.connection(&tx);
+
+        let result = model.insert(&db).await?;
+
+        // update deprecation marker
+
+        UpdateDeprecatedAdvisory::execute(&db, &result.identifier).await?;
+
+        // done
+
+        Ok(AdvisoryContext::new(self, result))
     }
 }
 
@@ -177,7 +201,7 @@ impl<'g> AdvisoryContext<'g> {
 
     pub async fn set_published_at<TX: AsRef<Transactional>>(
         &self,
-        published_at: time::OffsetDateTime,
+        published_at: OffsetDateTime,
         tx: TX,
     ) -> Result<(), Error> {
         let mut entity = self.advisory.clone().into_active_model();
@@ -186,13 +210,13 @@ impl<'g> AdvisoryContext<'g> {
         Ok(())
     }
 
-    pub fn published_at(&self) -> Option<time::OffsetDateTime> {
+    pub fn published_at(&self) -> Option<OffsetDateTime> {
         self.advisory.published
     }
 
     pub async fn set_modified_at<TX: AsRef<Transactional>>(
         &self,
-        modified_at: time::OffsetDateTime,
+        modified_at: OffsetDateTime,
         tx: TX,
     ) -> Result<(), Error> {
         let mut entity = self.advisory.clone().into_active_model();
@@ -201,13 +225,13 @@ impl<'g> AdvisoryContext<'g> {
         Ok(())
     }
 
-    pub fn modified_at(&self) -> Option<time::OffsetDateTime> {
+    pub fn modified_at(&self) -> Option<OffsetDateTime> {
         self.advisory.modified
     }
 
     pub async fn set_withdrawn_at<TX: AsRef<Transactional>>(
         &self,
-        withdrawn_at: time::OffsetDateTime,
+        withdrawn_at: OffsetDateTime,
         tx: TX,
     ) -> Result<(), Error> {
         let mut entity = self.advisory.clone().into_active_model();
@@ -216,7 +240,7 @@ impl<'g> AdvisoryContext<'g> {
         Ok(())
     }
 
-    pub fn withdrawn_at(&self) -> Option<time::OffsetDateTime> {
+    pub fn withdrawn_at(&self) -> Option<OffsetDateTime> {
         self.advisory.withdrawn
     }
 
@@ -295,9 +319,13 @@ impl<'g> AdvisoryContext<'g> {
 
 #[cfg(test)]
 mod test {
+    use crate::common::Deprecation;
+    use crate::graph::advisory::AdvisoryInformation;
     use crate::graph::Graph;
     use test_context::test_context;
     use test_log::test;
+    use time::macros::datetime;
+    use time::OffsetDateTime;
     use trustify_common::db::Transactional;
     use trustify_common::hashing::Digests;
     use trustify_entity::labels::Labels;
@@ -374,6 +402,80 @@ mod test {
         let vulns = advisory.vulnerabilities(()).await?;
 
         assert_eq!(vulns.len(), 2);
+
+        Ok(())
+    }
+
+    #[test_context(TrustifyContext, skip_teardown)]
+    #[test(tokio::test)]
+    async fn deprecation(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+        struct Info(OffsetDateTime);
+
+        impl From<Info> for AdvisoryInformation {
+            fn from(value: Info) -> Self {
+                AdvisoryInformation {
+                    title: None,
+                    issuer: None,
+                    published: None,
+                    modified: Some(value.0),
+                    withdrawn: None,
+                    version: None,
+                }
+            }
+        }
+
+        let db = ctx.db;
+        let system = Graph::new(db);
+
+        let a1 = system
+            .ingest_advisory(
+                "RHSA",
+                (),
+                &Digests::digest("RHSA-1"),
+                Info(datetime!(2024-01-02 00:00:00 UTC)),
+                Transactional::None,
+            )
+            .await?
+            .advisory
+            .id;
+
+        let a2 = system
+            .ingest_advisory(
+                "RHSA",
+                (),
+                &Digests::digest("RHSA-2"),
+                Info(datetime!(2024-01-03 00:00:00 UTC)),
+                Transactional::None,
+            )
+            .await?
+            .advisory
+            .id;
+
+        let a3 = system
+            .ingest_advisory(
+                "RHSA",
+                (),
+                &Digests::digest("RHSA-3"),
+                Info(datetime!(2024-01-01 00:00:00 UTC)),
+                Transactional::None,
+            )
+            .await?
+            .advisory
+            .id;
+
+        let mut advs = system.get_advisories(Deprecation::Consider, ()).await?;
+        advs.sort_unstable_by(|a, b| a.advisory.modified.cmp(&b.advisory.modified));
+        let deps = advs
+            .iter()
+            .map(|adv| (adv.advisory.id, adv.advisory.deprecated))
+            .collect::<Vec<_>>();
+
+        // a3 must come first, it was ingested last, but its timestamp is the earliest one. Also,
+        // it must be deprecated, despite being ingested last.
+        // a1 is ingested first but deprecated when ingesting a2.
+        // a2 is the "most recent" one, and most not be deprecated.
+
+        assert_eq!(deps, vec![(a3, true), (a1, true), (a2, false)]);
 
         Ok(())
     }

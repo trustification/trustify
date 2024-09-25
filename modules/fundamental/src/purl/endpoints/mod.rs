@@ -1,3 +1,4 @@
+use crate::endpoints::Deprecation;
 use crate::purl::service::PurlService;
 use crate::Error;
 use actix_web::{get, web, HttpResponse, Responder};
@@ -74,6 +75,7 @@ pub struct ApiDoc;
     operation_id = "getPurl",
     tag = "purl",
     params(
+        Deprecation,
         ("key" = String, Path, description = "opaque identifier for a fully-qualified PURL, or URL-encoded pURL itself")
     ),
     responses(
@@ -85,13 +87,14 @@ pub struct ApiDoc;
 pub async fn get(
     service: web::Data<PurlService>,
     key: web::Path<String>,
+    web::Query(Deprecation { deprecated }): web::Query<Deprecation>,
 ) -> actix_web::Result<impl Responder> {
     if key.starts_with("pkg") {
         let purl = Purl::from_str(&key).map_err(Error::Purl)?;
-        Ok(HttpResponse::Ok().json(service.purl_by_purl(&purl, ()).await?))
+        Ok(HttpResponse::Ok().json(service.purl_by_purl(&purl, deprecated, ()).await?))
     } else {
         let id = Uuid::from_str(&key).map_err(|e| Error::IdKey(IdError::InvalidUuid(e)))?;
-        Ok(HttpResponse::Ok().json(service.purl_by_uuid(&id, ()).await?))
+        Ok(HttpResponse::Ok().json(service.purl_by_uuid(&id, deprecated, ()).await?))
     }
 }
 
