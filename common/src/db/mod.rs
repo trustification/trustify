@@ -115,7 +115,7 @@ impl Database {
     pub fn connection<'db, TX: AsRef<Transactional>>(
         &'db self,
         tx: &'db TX,
-    ) -> ConnectionOrTransaction {
+    ) -> ConnectionOrTransaction<'db> {
         match tx.as_ref() {
             Transactional::None => ConnectionOrTransaction::Connection(&self.db),
             Transactional::Some(tx) => ConnectionOrTransaction::Transaction(tx),
