@@ -6,7 +6,7 @@ use trustify_common::db::{Database, Transactional};
 
 use crate::ai::model::{ChatMessage, ChatState, LLMInfo, MessageType};
 
-use crate::ai::service::tools::{CVEInfo, ProductInfo, ToolLogger};
+use crate::ai::service::tools::{AdvisoryInfo, CVEInfo, ProductInfo, ToolLogger};
 use crate::product::service::ProductService;
 use crate::vulnerability::service::VulnerabilityService;
 
@@ -26,6 +26,7 @@ use langchain_rust::{
 
 use std::env;
 
+use crate::advisory::service::AdvisoryService;
 use langchain_rust::schemas::{BaseMemory, Message};
 use std::fmt::Write;
 use std::sync::Arc;
@@ -112,6 +113,7 @@ impl AiService {
         let tools: Vec<Arc<dyn Tool>> = vec![
             Arc::new(ToolLogger(ProductInfo(ProductService::new(db.clone())))),
             Arc::new(ToolLogger(CVEInfo(VulnerabilityService::new(db.clone())))),
+            Arc::new(ToolLogger(AdvisoryInfo(AdvisoryService::new(db.clone())))),
         ];
 
         Self {

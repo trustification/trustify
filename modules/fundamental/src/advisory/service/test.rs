@@ -18,7 +18,7 @@ use trustify_module_ingestor::graph::advisory::{
 
 use trustify_test_context::TrustifyContext;
 
-async fn ingest_sample_advisory<'a>(
+pub async fn ingest_sample_advisory<'a>(
     ctx: &'a TrustifyContext,
     title: &'a str,
 ) -> Result<AdvisoryContext<'a>, trustify_module_ingestor::graph::error::Error> {
@@ -39,7 +39,7 @@ async fn ingest_sample_advisory<'a>(
         .await
 }
 
-async fn ingest_and_link_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+pub async fn ingest_and_link_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let advisory = ingest_sample_advisory(ctx, "RHSA-1").await?;
 
     let advisory_vuln = advisory

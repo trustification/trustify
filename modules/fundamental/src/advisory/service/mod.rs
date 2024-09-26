@@ -319,4 +319,4 @@ impl FromQueryResultMultiModel for AdvisoryCatcher {
 }
 
 #[cfg(test)]
-mod test;
+pub mod test;
