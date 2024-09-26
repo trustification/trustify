@@ -127,8 +127,9 @@ impl Tool for CVEInfo {
     }
 
     async fn run(&self, input: Value) -> Result<String, Box<dyn Error>> {
-        let service = &self.0;
+        let service = self.0.clone();
 
+        _ = service.fetch_vulnerability("test", ()).await;
         let query = Query {
             q: input
                 .as_str()
