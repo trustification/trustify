@@ -12,6 +12,7 @@ Vulnerability are identified by their CVE Identifier.  Examples:
 
 Packages may have multiple versions.
 Packages are identified by their name and version.  Example: openssl 1.0.1
+Packages are assigned an internal UUID that should never be shared with the user.
 
 Products are made up of multiple packages.
 A product uses an SBOM (Software Bill of Materials) to define the packages that are part of the product.

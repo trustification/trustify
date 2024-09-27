@@ -8519,6 +8519,7 @@ dependencies = [
  "langchain-rust",
  "log",
  "packageurl",
+ "regex",
  "sea-orm",
  "sea-query",
  "serde",

@@ -1,11 +1,13 @@
 use crate::advisory::service::AdvisoryService;
 use crate::ai::model::ChatState;
-use crate::ai::service::tools::{AdvisoryInfo, CVEInfo, ProductInfo};
+use crate::ai::service::tools::{AdvisoryInfo, CVEInfo, PackageInfo, ProductInfo};
 use crate::ai::service::AiService;
 use crate::product::service::ProductService;
+use crate::purl::service::PurlService;
 use crate::vulnerability::service::VulnerabilityService;
 use langchain_rust::tools::Tool;
 use serde_json::Value;
+use std::error::Error;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::db::Transactional;
@@ -71,9 +73,8 @@ async fn completions(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 async fn cve_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ingest_fixtures(ctx).await?;
     let tool = CVEInfo(VulnerabilityService::new(ctx.db.clone()));
-    let result = tool.run(Value::String("CVE-2021-32714".to_string())).await;
-    assert!(result.is_ok(), "result: {:?}", result);
-    assert!(result.unwrap().contains(r#"
+    let result = cleanup_tool_result(tool.run(Value::String("CVE-2021-32714".to_string())).await);
+    assert!(result.contains(r#"
 Identifier: CVE-2021-32714
 Title: Integer Overflow in Chunked Transfer-Encoding
 Description: hyper is an HTTP library for Rust. In versions prior to 0.14.10, hyper's HTTP server and client code had a flaw that could trigger an integer overflow when decoding chunk sizes that are too big. This allows possible data loss, or if combined with an upstream HTTP proxy that allows chunk sizes larger than hyper does, can result in "request smuggling" or "desync attacks." The vulnerability is patched in version 0.14.10. Two possible workarounds exist. One may reject requests manually that contain a `Transfer-Encoding` header or ensure any upstream proxy rejects `Transfer-Encoding` chunk sizes greater than what fits in 64-bit unsigned integers.
@@ -87,25 +88,37 @@ Affected Packages:
     Ok(())
 }
 
+fn cleanup_tool_result(s: Result<String, Box<dyn Error>>) -> String {
+    let re = regex::Regex::new(r"UUID: \b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}\b").unwrap();
+    let s = s.unwrap().trim().to_string();
+    re.replace_all(&s, "UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
+        .to_string()
+}
+
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn product_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ingest_fixtures(ctx).await?;
     let tool = ProductInfo(ProductService::new(ctx.db.clone()));
-    let result = tool
-        .run(Value::String("Trusted Profile Analyzer".to_string()))
-        .await;
-    assert!(result.is_ok(), "result: {:?}", result);
-    assert!(result.unwrap().contains(
-        r#"
+    let result = cleanup_tool_result(
+        tool.run(Value::String("Trusted Profile Analyzer".to_string()))
+            .await,
+    );
+    assert!(
+        result.contains(
+            r#"
 Found one matching product:
   * Name: Trusted Profile Analyzer
+    UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
     Vendor: Red Hat
     Versions:
       * 37.17.9
 "#
-        .trim()
-    ));
+            .trim()
+        ),
+        "expecting:\n{}",
+        result
+    );
 
     Ok(())
 }
@@ -117,7 +130,7 @@ async fn advisory_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     crate::advisory::service::test::ingest_sample_advisory(ctx, "RHSA-2").await?;
 
     let tool = AdvisoryInfo(AdvisoryService::new(ctx.db.clone()));
-    let result = tool.run(Value::String("RHSA-1".to_string())).await.unwrap();
+    let result = cleanup_tool_result(tool.run(Value::String("RHSA-1".to_string())).await);
     assert!(
         result.contains(
             r#"
@@ -127,6 +140,57 @@ Score: 9.1
 Severity: critical
 Vulnerabilities:
  * Identifier: CVE-123
+"#
+            .trim()
+        ),
+        "expecting:\n{}",
+        result
+    );
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn package_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ctx.ingest_document("ubi9-9.2-755.1697625012.json").await?;
+
+    let tool = PackageInfo(PurlService::new(ctx.db.clone()));
+    let result = cleanup_tool_result(
+        tool.run(Value::String(
+            "pkg:rpm/redhat/libsepol@3.5-1.el9?arch=s390x".to_string(),
+        ))
+        .await,
+    );
+    assert!(
+        result.contains(
+            r#"
+There is one package that matches:
+Identifier: pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le
+UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+Licenses:
+ * Name: LGPLV2+
+"#
+            .trim()
+        ),
+        "expecting:\n{}",
+        result
+    );
+
+    let result = cleanup_tool_result(
+        tool.run(Value::String(
+            "1ca731c3-9596-534c-98eb-8dcc6ff7fef9".to_string(),
+        ))
+        .await,
+    );
+    assert!(
+        result.contains(
+            r#"
+There is one package that matches:
+Identifier: pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le
+UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+Licenses:
+ * Name: LGPLV2+
 "#
             .trim()
         ),
