@@ -61,9 +61,12 @@ impl Tool for ProductInfo {
     fn description(&self) -> String {
         String::from(
             r##"
-            This tool can be used to get information about a product.
-            The input should be the name of the product to search for.
-            "##,
+This tool can be used to get information about a product.
+The input should be the name of the product to search for.
+When the input is a full name, the tool will provide information about the product.
+When the input is a partial name, the tool will provide a list of possible matches.
+"##
+            .trim(),
         )
     }
 
@@ -120,9 +123,12 @@ impl Tool for CVEInfo {
     fn description(&self) -> String {
         String::from(
             r##"
-            This tool can be used to get information about a Vulnerability.
-            The input should be the name of the Vulnerability to search for.
-            "##,
+This tool can be used to get information about a Vulnerability.
+The input should be the partial name of the Vulnerability to search for.
+When the input is a full CVE ID, the tool will provide information about the vulnerability.
+When the input is a partial name, the tool will provide a list of possible matches.
+"##
+            .trim(),
         )
     }
 
@@ -135,6 +141,8 @@ impl Tool for CVEInfo {
             .to_string();
 
         // is it a CVE ID?
+        let mut result = "".to_string();
+
         let vuln = match service.fetch_vulnerability(input.as_str(), ()).await? {
             Some(v) => v,
             None => {
@@ -142,7 +150,7 @@ impl Tool for CVEInfo {
                 let results = service
                     .fetch_vulnerabilities(
                         Query {
-                            q: input,
+                            q: input.clone(),
                             ..Default::default()
                         },
                         Default::default(),
@@ -150,13 +158,14 @@ impl Tool for CVEInfo {
                     )
                     .await?;
 
-                if results.items.is_empty() {
-                    return Err(anyhow!("I don't know").into());
+                match results.items.len() {
+                    0 => return Err(anyhow!("I don't know").into()),
+                    1 => writeln!(result, "There is one advisory that matches:")?,
+                    _ => writeln!(result, "There are multiple advisories that match:")?,
                 }
 
                 // let the caller know what the possible matches are
                 if results.items.len() > 1 {
-                    let mut result = "There are multiple vulnerabilities that match:".to_string();
                     for item in results.items {
                         writeln!(result, "* Identifier: {}", item.head.identifier)?;
                         if let Some(v) = item.head.title {
@@ -166,7 +175,7 @@ impl Tool for CVEInfo {
                     return Ok(result);
                 }
 
-                // let's show the details
+                // let's show the details for the one that matched.
                 if let Some(v) = service
                     .fetch_vulnerability(results.items[0].head.identifier.as_str(), ())
                     .await?
@@ -178,7 +187,12 @@ impl Tool for CVEInfo {
             }
         };
 
-        let mut result = "".to_string();
+        writeln!(result, "But it had a different identifier.  Please inform the user that that you are providing information on vulnerability: {}\n", vuln.head.identifier)?;
+
+        if vuln.head.identifier != input {
+            writeln!(result, "Identifier: {}", vuln.head.identifier)?;
+        }
+
         writeln!(result, "Identifier: {}", vuln.head.identifier)?;
         if let Some(v) = vuln.head.title {
             writeln!(result, "Title: {}", v)?;
@@ -218,9 +232,12 @@ impl Tool for crate::ai::service::tools::AdvisoryInfo {
     fn description(&self) -> String {
         String::from(
             r##"
-            This tool can be used to get information about an Advisory.
-            The input should be the name of the Advisory to search for.
-            "##,
+This tool can be used to get information about an Advisory.
+The input should be the name of the Advisory to search for.
+When the input is a full name, the tool will provide information about the Advisory.
+When the input is a partial name, the tool will provide a list of possible matches.
+"##
+            .trim(),
         )
     }
 
