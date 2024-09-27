@@ -337,9 +337,7 @@ impl Tool for PackageInfo {
         String::from(
             r##"
 This tool can be used to get information about a Package.
-The input should be the name of the Package to search for.
-When the input is a full name, the tool will provide information about the Package.
-When the input is a partial name, the tool will provide a list of possible matches.
+The input should be the name of the package, it's Identifier uri or internal UUID.
 "##
             .trim(),
         )
@@ -391,8 +389,12 @@ When the input is a partial name, the tool will provide a list of possible match
                 _ => {
                     let mut result = "There are multiple packages that match:\n".to_string();
                     for item in results.items {
-                        writeln!(result, "* Identifier: {}", item.head.purl)?;
+                        writeln!(result, " * Identifier: {}", item.head.purl)?;
                         writeln!(result, "   UUID: {}", item.head.uuid)?;
+                        writeln!(result, "   Name: {}", item.head.purl.name)?;
+                        if let Some(v) = &item.head.purl.version {
+                            writeln!(result, "   Version: {}", v)?;
+                        }
                     }
                     return Ok(result);
                 }
@@ -407,6 +409,10 @@ When the input is a partial name, the tool will provide a list of possible match
         let mut result = "There is one package that matches:\n".to_string();
         writeln!(result, "Identifier: {}", item.head.purl)?;
         writeln!(result, "UUID: {}", item.head.uuid)?;
+        writeln!(result, "Name: {}", item.head.purl.name)?;
+        if let Some(v) = &item.head.purl.version {
+            _ = writeln!(result, "Version: {}", v);
+        }
 
         if !item.advisories.is_empty() {
             writeln!(result, "Advisories:")?;
