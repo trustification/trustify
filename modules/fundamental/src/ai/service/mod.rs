@@ -6,7 +6,9 @@ use trustify_common::db::{Database, Transactional};
 
 use crate::ai::model::{ChatMessage, ChatState, LLMInfo, MessageType};
 
-use crate::ai::service::tools::{AdvisoryInfo, CVEInfo, PackageInfo, ProductInfo, ToolLogger};
+use crate::ai::service::tools::{
+    AdvisoryInfo, CVEInfo, PackageInfo, ProductInfo, SbomInfo, ToolLogger,
+};
 use crate::product::service::ProductService;
 use crate::vulnerability::service::VulnerabilityService;
 
@@ -28,6 +30,7 @@ use std::env;
 
 use crate::advisory::service::AdvisoryService;
 use crate::purl::service::PurlService;
+use crate::sbom::service::SbomService;
 use langchain_rust::schemas::{BaseMemory, Message};
 use std::fmt::Write;
 use std::sync::Arc;
@@ -116,6 +119,7 @@ impl AiService {
             Arc::new(ToolLogger(CVEInfo(VulnerabilityService::new(db.clone())))),
             Arc::new(ToolLogger(AdvisoryInfo(AdvisoryService::new(db.clone())))),
             Arc::new(ToolLogger(PackageInfo(PurlService::new(db.clone())))),
+            Arc::new(ToolLogger(SbomInfo(SbomService::new(db.clone())))),
         ];
 
         Self {
