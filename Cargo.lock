@@ -9682,6 +9682,7 @@ dependencies = [
  "nu-ansi-term 0.46.0",
  "postgresql_commands",
  "reedline",
+ "reqwest 0.12.7",
  "schemars",
  "serde",
  "serde_json",
