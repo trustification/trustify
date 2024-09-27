@@ -3,12 +3,15 @@ use std::error::Error;
 use crate::advisory::service::AdvisoryService;
 use crate::product::service::ProductService;
 use crate::purl::service::PurlService;
+use crate::sbom::service::SbomService;
 use crate::vulnerability::service::VulnerabilityService;
 use anyhow::anyhow;
 use async_trait::async_trait;
+use itertools::Itertools;
 use langchain_rust::tools::Tool;
 use serde_json::Value;
 use std::fmt::Write;
+use std::str::FromStr;
 use trustify_common::db::query::Query;
 use trustify_common::id::Id;
 use trustify_common::purl::Purl;
@@ -447,6 +450,121 @@ The input should be the name of the package, it's Identifier uri or internal UUI
                 license.licenses.iter().for_each(|license| {
                     _ = writeln!(result, " * Name: {}", license);
                 })
+            });
+        }
+        Ok(result)
+    }
+}
+
+pub struct SbomInfo(pub SbomService);
+
+#[async_trait]
+impl Tool for SbomInfo {
+    fn name(&self) -> String {
+        String::from("SbomInfo")
+    }
+
+    fn description(&self) -> String {
+        String::from(
+            r##"
+This tool can be used to get information about an SBOM.
+The input should be the SBOM Identifier.
+"##
+            .trim(),
+        )
+    }
+
+    async fn run(&self, input: Value) -> Result<String, Box<dyn Error>> {
+        let service = &self.0;
+
+        let input = input
+            .as_str()
+            .ok_or("Input should be a string")?
+            .to_string();
+
+        // Try lookup as a UUID
+        let mut sbom_details = match Id::from_str(input.as_str()) {
+            Err(_) => None,
+            Ok(id) => service.fetch_sbom_details(id, ()).await?,
+        };
+
+        // Fallback to search
+        if sbom_details.is_none() {
+            // try to search for possible matches
+            let results = service
+                .fetch_sboms(
+                    Query {
+                        q: input,
+                        ..Default::default()
+                    },
+                    Default::default(),
+                    (),
+                    (),
+                )
+                .await?;
+
+            sbom_details = match results.items.len() {
+                0 => None,
+                1 => {
+                    service
+                        .fetch_sbom_details(Id::Uuid(results.items[0].head.id), ())
+                        .await?
+                }
+                _ => {
+                    let mut result = "There are multiple SBOMs that match:\n".to_string();
+                    for item in results.items {
+                        writeln!(result, " * UUID: {}", item.head.id)?;
+                        if let Some(v) = &item.source_document {
+                            writeln!(result, "   SHA256: {}", v.sha256)?;
+                        }
+                        writeln!(result, "   Name: {}", item.head.name)?;
+                        if let Some(v) = &item.head.published {
+                            writeln!(result, "   Published: {}", v)?;
+                        }
+                    }
+                    return Ok(result);
+                }
+            };
+        }
+
+        let item = match sbom_details {
+            Some(v) => v,
+            None => return Err(anyhow!("I don't know").into()),
+        };
+
+        let mut result = "There is one SBOM that matches:\n".to_string();
+
+        writeln!(result, " * UUID: {}", item.summary.head.id)?;
+        if let Some(v) = &item.summary.source_document {
+            writeln!(result, "   SHA256: {}", v.sha256)?;
+        }
+        writeln!(result, "   Name: {}", item.summary.head.name)?;
+        if let Some(v) = &item.summary.head.published {
+            writeln!(result, "   Published: {}", v)?;
+        }
+        if !item.summary.head.authors.is_empty() {
+            writeln!(result, "   Authors:")?;
+            item.summary.head.authors.iter().for_each(|author| {
+                _ = writeln!(result, "    * {}", author);
+            });
+        }
+        if !item.summary.head.labels.is_empty() {
+            writeln!(result, "   Labels:")?;
+            let mut labels = item.summary.head.labels.iter().collect_vec();
+            labels.sort_by(|a, b| a.0.cmp(b.0));
+            labels.iter().for_each(|(key, value)| {
+                _ = writeln!(result, "    * {}: {}", key, value);
+            });
+        }
+
+        if !item.advisories.is_empty() {
+            writeln!(result, "   Advisories:")?;
+            item.advisories.iter().for_each(|advisory| {
+                _ = writeln!(result, "    * UUID: {}", advisory.head.uuid);
+                _ = writeln!(result, "      Identifier: {}", advisory.head.identifier);
+                if let Some(v) = &advisory.head.issuer {
+                    _ = writeln!(result, "      Issuer: {}", v.head.name);
+                }
             });
         }
         Ok(result)
