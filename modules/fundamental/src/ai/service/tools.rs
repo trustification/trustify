@@ -2,6 +2,7 @@ use std::error::Error;
 
 use crate::advisory::service::AdvisoryService;
 use crate::product::service::ProductService;
+use crate::purl::service::PurlService;
 use crate::vulnerability::service::VulnerabilityService;
 use anyhow::anyhow;
 use async_trait::async_trait;
@@ -10,6 +11,8 @@ use serde_json::Value;
 use std::fmt::Write;
 use trustify_common::db::query::Query;
 use trustify_common::id::Id;
+use trustify_common::purl::Purl;
+use uuid::Uuid;
 
 pub struct ToolLogger<T: Tool>(pub T);
 
@@ -97,7 +100,7 @@ When the input is a partial name, the tool will provide a list of possible match
 
         for product in results.items {
             writeln!(result, "  * Name: {}", product.head.name)?;
-            writeln!(result, "  * UUID: {}", product.head.id)?;
+            writeln!(result, "    UUID: {}", product.head.id)?;
             if let Some(v) = product.vendor {
                 writeln!(result, "    Vendor: {}", v.head.name)?;
             }
@@ -224,7 +227,7 @@ When the input is a partial name, the tool will provide a list of possible match
 pub struct AdvisoryInfo(pub AdvisoryService);
 
 #[async_trait]
-impl Tool for crate::ai::service::tools::AdvisoryInfo {
+impl Tool for AdvisoryInfo {
     fn name(&self) -> String {
         String::from("AdvisoryInfo")
     }
@@ -318,6 +321,128 @@ When the input is a partial name, the tool will provide a list of possible match
                 _ = writeln!(result, "   Released: {}", v);
             }
         });
+        Ok(result)
+    }
+}
+
+pub struct PackageInfo(pub PurlService);
+
+#[async_trait]
+impl Tool for PackageInfo {
+    fn name(&self) -> String {
+        String::from("PackageInfo")
+    }
+
+    fn description(&self) -> String {
+        String::from(
+            r##"
+This tool can be used to get information about a Package.
+The input should be the name of the Package to search for.
+When the input is a full name, the tool will provide information about the Package.
+When the input is a partial name, the tool will provide a list of possible matches.
+"##
+            .trim(),
+        )
+    }
+
+    async fn run(&self, input: Value) -> Result<String, Box<dyn Error>> {
+        let service = &self.0;
+
+        let input = input
+            .as_str()
+            .ok_or("Input should be a string")?
+            .to_string();
+
+        // Try lookup as a PURL
+        let mut purl_details = match Purl::try_from(input.clone()) {
+            Err(_) => None,
+            Ok(purl) => service.purl_by_purl(&purl, ()).await?,
+        };
+
+        // Try lookup as a UUID
+        if purl_details.is_none() {
+            purl_details = match Uuid::parse_str(input.as_str()) {
+                Err(_) => None,
+                Ok(uuid) => service.purl_by_uuid(&uuid, ()).await?,
+            };
+        }
+
+        // Fallback to search
+        if purl_details.is_none() {
+            // try to search for possible matches
+            let results = service
+                .purls(
+                    Query {
+                        q: input,
+                        ..Default::default()
+                    },
+                    Default::default(),
+                    (),
+                )
+                .await?;
+
+            purl_details = match results.items.len() {
+                0 => None,
+                1 => {
+                    service
+                        .purl_by_uuid(&results.items[0].head.uuid, ())
+                        .await?
+                }
+                _ => {
+                    let mut result = "There are multiple packages that match:\n".to_string();
+                    for item in results.items {
+                        writeln!(result, "* Identifier: {}", item.head.purl)?;
+                        writeln!(result, "   UUID: {}", item.head.uuid)?;
+                    }
+                    return Ok(result);
+                }
+            };
+        }
+
+        let item = match purl_details {
+            Some(v) => v,
+            None => return Err(anyhow!("I don't know").into()),
+        };
+
+        let mut result = "There is one package that matches:\n".to_string();
+        writeln!(result, "Identifier: {}", item.head.purl)?;
+        writeln!(result, "UUID: {}", item.head.uuid)?;
+
+        if !item.advisories.is_empty() {
+            writeln!(result, "Advisories:")?;
+            item.advisories.iter().for_each(|advisory| {
+                _ = writeln!(result, " * UUID: {}", advisory.head.uuid);
+                _ = writeln!(result, "   Identifier: {}", advisory.head.identifier);
+                if let Some(v) = &advisory.head.issuer {
+                    _ = writeln!(result, "   Issuer: {}", v.head.name);
+                }
+                if !advisory.status.is_empty() {
+                    _ = writeln!(result, "   Vulnerabilities:");
+                    advisory.status.iter().for_each(|status| {
+                        _ = writeln!(
+                            result,
+                            "    * Identifier: {}",
+                            status.vulnerability.identifier
+                        );
+                        if let Some(v) = &status.vulnerability.title {
+                            _ = writeln!(result, "      Title: {}", v);
+                        }
+                        _ = writeln!(result, "      Status: {}", status.status);
+                        // if let Some(v) = &status.context {
+                        //     _ = writeln!(result, "      StatusContext: {}", v);
+                        // }
+                    });
+                }
+            });
+        }
+        if !item.licenses.is_empty() {
+            writeln!(result, "Licenses:")?;
+            item.licenses.iter().for_each(|license| {
+                license.licenses.iter().for_each(|license| {
+                    _ = writeln!(result, " * Name: {}", license);
+                })
+            });
+        }
         Ok(result)
     }
 }

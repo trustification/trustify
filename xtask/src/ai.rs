@@ -39,10 +39,7 @@ Enter your question or type:
         )
     );
 
-    // println!(
-    //     "Using Model: {}, at endpoint: {}",
-    //     llm_info.model, llm_info.api_base
-    // );
+    println!("Using Trustify endpoint: {}", url);
 
     let mut chat_state = ChatState::new();
     loop {
