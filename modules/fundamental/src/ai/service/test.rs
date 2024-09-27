@@ -154,6 +154,8 @@ Vulnerabilities:
 #[test(actix_web::test)]
 async fn package_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingest_document("ubi9-9.2-755.1697625012.json").await?;
+    ctx.ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
+        .await?;
 
     let tool = PackageInfo(PurlService::new(ctx.db.clone()));
     let result = cleanup_tool_result(
@@ -168,6 +170,8 @@ async fn package_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 There is one package that matches:
 Identifier: pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le
 UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+Name: libsepol
+Version: 3.5-1.el9
 Licenses:
  * Name: LGPLV2+
 "#
@@ -189,10 +193,87 @@ Licenses:
 There is one package that matches:
 Identifier: pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le
 UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+Name: libsepol
+Version: 3.5-1.el9
 Licenses:
  * Name: LGPLV2+
 "#
             .trim()
+        ),
+        "expecting:\n{}",
+        result
+    );
+
+    let result = cleanup_tool_result(
+        tool.run(Value::String(
+            "pkg:maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar".to_string(),
+        ))
+            .await,
+    );
+    assert!(
+        result.contains(
+            r#"
+There is one package that matches:
+Identifier: pkg://maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar
+UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+Name: commons-logging-jboss-logging
+Version: 1.0.0.Final-redhat-1
+Licenses:
+ * Name: APACHE-2.0
+"#
+                .trim()
+        ),
+        "expecting:\n{}",
+        result
+    );
+
+    let result = cleanup_tool_result(
+        tool.run(Value::String("commons-logging-jboss-logging".to_string()))
+            .await,
+    );
+    assert!(
+        result.contains(
+            r#"
+There is one package that matches:
+Identifier: pkg://maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar
+UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+Name: commons-logging-jboss-logging
+Version: 1.0.0.Final-redhat-1
+Licenses:
+ * Name: APACHE-2.0
+"#
+                .trim()
+        ),
+        "expecting:\n{}",
+        result
+    );
+
+    let result = cleanup_tool_result(
+        tool.run(Value::String("quarkus-resteasy-reactive-json".to_string()))
+            .await,
+    );
+    assert!(
+        result.contains(
+            r#"
+There are multiple packages that match:
+ * Identifier: pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar
+   UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+   Name: quarkus-resteasy-reactive-jsonb-common
+   Version: 2.13.8.Final-redhat-00004
+ * Identifier: pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar
+   UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+   Name: quarkus-resteasy-reactive-jsonb
+   Version: 2.13.8.Final-redhat-00004
+ * Identifier: pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar
+   UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+   Name: quarkus-resteasy-reactive-jsonb-common-deployment
+   Version: 2.13.8.Final-redhat-00004
+ * Identifier: pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar
+   UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+   Name: quarkus-resteasy-reactive-jsonb-deployment
+   Version: 2.13.8.Final-redhat-00004
+"#
+                .trim()
         ),
         "expecting:\n{}",
         result

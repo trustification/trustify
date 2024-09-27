@@ -10,8 +10,10 @@ Vulnerabilities may affect multiple packages.
 Vulnerability are identified by their CVE Identifier.  Examples:
 * CVE-2014-0160
 
-Packages may have multiple versions.
-Packages are identified by their name and version.  Example: openssl 1.0.1
+Packages have a name and version.
+Packages are Identified by a uri.  Examples:
+* pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le
+* pkg:maven/org.apache.maven.wagon/wagon-provider-api@3.5.1?type=jar
 Packages are assigned an internal UUID that should never be shared with the user.
 
 Products are made up of multiple packages.
