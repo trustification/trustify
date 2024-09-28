@@ -501,7 +501,7 @@ async fn package_from_row(
                 namespace: dto.clone().namespace,
                 name: dto.clone().name,
                 version: if dto.version.is_empty() {
-                    None
+                    Some("".to_string())
                 } else {
                     Some(dto.clone().version)
                 },
