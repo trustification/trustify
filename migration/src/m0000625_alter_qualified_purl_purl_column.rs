@@ -30,12 +30,21 @@ impl MigrationTrait for Migration {
             .await?;
 
         //data migration
-        let _data_migration_result = manager
+        manager
             .get_connection()
             .execute_unprepared(include_str!(
-                "m0000630_alter_qualified_purl_purl_column/data-migration-up.sql"
+                "m0000625_alter_qualified_purl_purl_column/data-migration-up.sql"
             ))
             .await?;
+
+        // install new get_purl pg func
+        manager
+            .get_connection()
+            .execute_unprepared(include_str!(
+                "m0000625_alter_qualified_purl_purl_column/get_purl.sql"
+            ))
+            .await
+            .map(|_| ())?;
 
         Ok(())
     }
@@ -79,7 +88,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // Drop the column in the down migration
+        // Drop column
         manager
             .alter_table(
                 Table::alter()
@@ -89,13 +98,20 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
+        // fallback to old get_purl pg func
+        manager
+            .get_connection()
+            .execute_unprepared(include_str!("m0000590_get_purl_fns/get_purl.sql"))
+            .await
+            .map(|_| ())?;
+
         Ok(())
     }
 }
 
 #[allow(clippy::enum_variant_names)]
 #[derive(DeriveIden)]
-pub enum Indexes {
+enum Indexes {
     QualifiedPurlNameJsonGistIdx,
     QualifiedPurlVersionJsonGistIdx,
     QualifiedPurlNamespaceJsonGistIdx,
