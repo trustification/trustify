@@ -1,3 +1,2 @@
-pub mod loader;
-
 pub mod divination;
+pub mod loader;

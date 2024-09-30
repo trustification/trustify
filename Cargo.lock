@@ -8530,6 +8530,7 @@ dependencies = [
  "cpe",
  "criterion",
  "csaf",
+ "cve",
  "cyclonedx-bom",
  "futures-util",
  "hex",
