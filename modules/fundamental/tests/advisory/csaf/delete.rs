@@ -116,7 +116,10 @@ async fn delete_check_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
         .sort_unstable_by(|a, b| a.head.modified.cmp(&b.head.modified));
     let adv1 = &purl.advisories[0];
 
-    assert_eq!(adv1.head.identifier, "CVE-2023-33201");
+    assert_eq!(
+        adv1.head.identifier,
+        "https://www.redhat.com/#CVE-2023-33201"
+    );
 
     // now check the details
 

@@ -131,7 +131,10 @@ async fn change_ps_list_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
     assert_eq!(purl.advisories.len(), 1);
     let adv = &purl.advisories[0];
 
-    assert_eq!(adv.head.identifier, "CVE-2023-33201");
+    assert_eq!(
+        adv.head.identifier,
+        "https://www.redhat.com/#CVE-2023-33201"
+    );
 
     // now check the details
 
@@ -224,8 +227,14 @@ async fn change_ps_list_vulns_all(ctx: &TrustifyContext) -> anyhow::Result<()> {
     let adv1 = &purl.advisories[0];
     let adv2 = &purl.advisories[1];
 
-    assert_eq!(adv1.head.identifier, "CVE-2023-33201");
-    assert_eq!(adv2.head.identifier, "CVE-2023-33201");
+    assert_eq!(
+        adv1.head.identifier,
+        "https://www.redhat.com/#CVE-2023-33201"
+    );
+    assert_eq!(
+        adv2.head.identifier,
+        "https://www.redhat.com/#CVE-2023-33201"
+    );
 
     // now check the details
 

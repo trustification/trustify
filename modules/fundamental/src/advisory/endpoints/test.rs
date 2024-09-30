@@ -343,7 +343,7 @@ async fn upload_default_csaf_format(ctx: &TrustifyContext) -> Result<(), anyhow:
     let result: IngestResult = app.call_and_read_body_json(request).await;
     log::debug!("{result:?}");
     assert!(matches!(result.id, Id::Uuid(_)));
-    assert_eq!(result.document_id, "CVE-2023-33201");
+    assert_eq!(result.document_id, "https://www.redhat.com/#CVE-2023-33201");
 
     Ok(())
 }
@@ -421,7 +421,7 @@ async fn upload_with_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     let result: IngestResult = app.call_and_read_body_json(request).await;
     log::debug!("{result:?}");
     assert!(matches!(result.id, Id::Uuid(_)));
-    assert_eq!(result.document_id, "CVE-2023-33201");
+    assert_eq!(result.document_id, "https://www.redhat.com/#CVE-2023-33201");
 
     // now check the labels
 

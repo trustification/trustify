@@ -148,3 +148,23 @@ impl<'a> ResolveProductIdCache<'a> {
         self.product_id_to_relationship.get(product_id).copied()
     }
 }
+
+pub fn gen_identifier(csaf: &Csaf) -> String {
+    // From the spec:
+    // > The combination of `/document/publisher/namespace` and `/document/tracking/id` identifies a CSAF document globally unique.
+
+    let mut file_name = String::with_capacity(csaf.document.tracking.id.len());
+
+    let mut in_sequence = false;
+    for c in csaf.document.tracking.id.chars() {
+        if c.is_ascii_alphanumeric() || c == '+' || c == '-' {
+            file_name.push(c);
+            in_sequence = false;
+        } else if !in_sequence {
+            file_name.push('_');
+            in_sequence = true;
+        }
+    }
+
+    format!("{}#{file_name}", csaf.document.publisher.namespace)
+}
