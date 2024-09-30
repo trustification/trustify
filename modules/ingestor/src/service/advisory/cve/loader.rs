@@ -1,17 +1,21 @@
-use crate::graph::advisory::advisory_vulnerability::{Version, VersionInfo, VersionSpec};
-use crate::service::advisory::cve::divination::divine_purl;
 use crate::{
     graph::{
-        advisory::{AdvisoryInformation, AdvisoryVulnerabilityInformation},
+        advisory::{
+            advisory_vulnerability::{Version, VersionInfo, VersionSpec},
+            AdvisoryInformation, AdvisoryVulnerabilityInformation,
+        },
         vulnerability::VulnerabilityInformation,
         Graph,
     },
     model::IngestResult,
-    service::Error,
+    service::{advisory::cve::divination::divine_purl, Error},
 };
-use cve::common::{Description, Status, VersionRange};
-use cve::{Cve, Timestamp};
+use cve::{
+    common::{Description, Product, Status, VersionRange},
+    Cve, Timestamp,
+};
 use std::fmt::Debug;
+use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
@@ -47,82 +51,25 @@ impl<'g> CveLoader<'g> {
 
         let tx = self.graph.transaction().await?;
 
-        let published = cve
-            .common_metadata()
-            .date_published
-            .map(Timestamp::assume_utc);
-        let modified = cve
-            .common_metadata()
-            .date_updated
-            .map(Timestamp::assume_utc);
+        let VulnerabilityDetails {
+            org_name,
+            descriptions,
+            assigned,
+            affected,
+            information,
+        } = Self::extract_vuln_info(&cve);
 
-        let (title, assigned, withdrawn, descriptions, cwe, org_name, affected) = match &cve {
-            Cve::Rejected(rejected) => (
-                None,
-                None,
-                rejected.metadata.date_rejected.map(Timestamp::assume_utc),
-                &rejected.containers.cna.rejected_reasons,
-                None,
-                rejected
-                    .containers
-                    .cna
-                    .common
-                    .provider_metadata
-                    .short_name
-                    .as_ref(),
-                None,
-            ),
-            Cve::Published(published) => (
-                published
-                    .containers
-                    .cna
-                    .title
-                    .as_deref()
-                    .or_else(|| {
-                        Self::find_best_description_for_title(
-                            &published.containers.cna.descriptions,
-                        )
-                    })
-                    .map(ToString::to_string),
-                published
-                    .containers
-                    .cna
-                    .date_assigned
-                    .map(Timestamp::assume_utc),
-                None,
-                &published.containers.cna.descriptions,
-                {
-                    let cwes = published
-                        .containers
-                        .cna
-                        .problem_types
-                        .iter()
-                        .flat_map(|pt| pt.descriptions.iter())
-                        .flat_map(|desc| desc.cwe_id.clone())
-                        .collect::<Vec<_>>();
-                    if cwes.is_empty() {
-                        None
-                    } else {
-                        Some(cwes)
-                    }
-                },
-                published
-                    .containers
-                    .cna
-                    .common
-                    .provider_metadata
-                    .short_name
-                    .as_ref(),
-                Some(&published.containers.cna.affected),
-            ),
-        };
-
-        let information = VulnerabilityInformation {
-            title: title.clone(),
-            published,
-            modified,
-            withdrawn,
-            cwes: cwe.clone(),
+        let cwes = information.cwes.clone();
+        let release_date = information.published;
+        let title = information.title.clone();
+        let advisory_info = AdvisoryInformation {
+            title: information.title.clone(),
+            // TODO: check if we have some kind of version information
+            version: None,
+            issuer: org_name.map(ToString::to_string),
+            published: information.published,
+            modified: information.modified,
+            withdrawn: information.withdrawn,
         };
 
         let vulnerability = self
@@ -132,19 +79,9 @@ impl<'g> CveLoader<'g> {
 
         let (entries, english_description) = Self::build_descriptions(descriptions);
 
-        let information = AdvisoryInformation {
-            title: title.clone(),
-            // TODO: check if we have some kind of version information
-            version: None,
-            issuer: org_name.cloned(),
-            published,
-            modified,
-            withdrawn,
-        };
-
         let advisory = self
             .graph
-            .ingest_advisory(id, labels, digests, information, &tx)
+            .ingest_advisory(id, labels, digests, advisory_info, &tx)
             .await?;
 
         // Link the advisory to the backing vulnerability
@@ -154,10 +91,10 @@ impl<'g> CveLoader<'g> {
                 Some(AdvisoryVulnerabilityInformation {
                     title,
                     summary: None,
-                    description: english_description.map(|s| s.to_string()),
+                    description: english_description.map(ToString::to_string),
                     discovery_date: assigned,
-                    release_date: published,
-                    cwes: cwe.clone(),
+                    release_date,
+                    cwes,
                 }),
                 &tx,
             )
@@ -256,6 +193,100 @@ impl<'g> CveLoader<'g> {
             .find(|desc| desc.language == DESCRIPTION_EN)
             .map(|desc| &*desc.value)
     }
+
+    fn extract_vuln_info(cve: &Cve) -> VulnerabilityDetails {
+        let published = cve
+            .common_metadata()
+            .date_published
+            .map(Timestamp::assume_utc);
+        let modified = cve
+            .common_metadata()
+            .date_updated
+            .map(Timestamp::assume_utc);
+
+        let (title, assigned, withdrawn, descriptions, cwe, org_name, affected) = match &cve {
+            Cve::Rejected(rejected) => (
+                None,
+                None,
+                rejected.metadata.date_rejected.map(Timestamp::assume_utc),
+                &rejected.containers.cna.rejected_reasons,
+                None,
+                rejected
+                    .containers
+                    .cna
+                    .common
+                    .provider_metadata
+                    .short_name
+                    .as_deref(),
+                None,
+            ),
+            Cve::Published(published) => (
+                published
+                    .containers
+                    .cna
+                    .title
+                    .as_deref()
+                    .or_else(|| {
+                        Self::find_best_description_for_title(
+                            &published.containers.cna.descriptions,
+                        )
+                    })
+                    .map(ToString::to_string),
+                published
+                    .containers
+                    .cna
+                    .date_assigned
+                    .map(Timestamp::assume_utc),
+                None,
+                &published.containers.cna.descriptions,
+                {
+                    let cwes = published
+                        .containers
+                        .cna
+                        .problem_types
+                        .iter()
+                        .flat_map(|pt| pt.descriptions.iter())
+                        .flat_map(|desc| desc.cwe_id.clone())
+                        .collect::<Vec<_>>();
+                    if cwes.is_empty() {
+                        None
+                    } else {
+                        Some(cwes)
+                    }
+                },
+                published
+                    .containers
+                    .cna
+                    .common
+                    .provider_metadata
+                    .short_name
+                    .as_deref(),
+                Some(&published.containers.cna.affected),
+            ),
+        };
+
+        VulnerabilityDetails {
+            org_name,
+            descriptions,
+            assigned,
+            affected,
+            information: VulnerabilityInformation {
+                title: title.clone(),
+                published,
+                modified,
+                withdrawn,
+                cwes: cwe.clone(),
+            },
+        }
+    }
+}
+
+struct VulnerabilityDetails<'a> {
+    pub org_name: Option<&'a str>,
+    pub descriptions: &'a Vec<Description>,
+    pub assigned: Option<OffsetDateTime>,
+    pub affected: Option<&'a Vec<Product>>,
+    pub information: VulnerabilityInformation,
 }
 
 #[cfg(test)]

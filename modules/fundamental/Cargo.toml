@@ -44,6 +44,7 @@ bytesize = { workspace = true }
 chrono = { workspace = true }
 criterion = { workspace = true, features = ["html_reports", "async_tokio"] }
 csaf = { workspace = true }
+cve = { workspace = true }
 cyclonedx-bom = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }
