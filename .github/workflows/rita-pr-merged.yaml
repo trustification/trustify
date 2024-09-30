@@ -15,7 +15,7 @@ env:
 jobs:
   notify_channel:
     runs-on: ubuntu-22.04
-    if: github.event.pull_request.merged == true
+    if: ${{ github.event.pull_request.merged && secrets.MATRIX_BOT_PASSWORD }}
     steps:
       - name: Send message
         run: |
