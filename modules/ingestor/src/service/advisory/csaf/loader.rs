@@ -1,3 +1,4 @@
+use crate::service::advisory::csaf::util::gen_identifier;
 use crate::{
     graph::{
         advisory::{
@@ -88,7 +89,7 @@ impl<'g> CsafLoader<'g> {
 
         let tx = self.graph.transaction().await?;
 
-        let advisory_id = csaf.document.tracking.id.clone();
+        let advisory_id = gen_identifier(&csaf);
         let labels = labels.into().add("type", "csaf");
 
         let advisory = self
