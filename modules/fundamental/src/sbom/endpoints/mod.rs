@@ -211,7 +211,7 @@ pub async fn get(
         ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
-        (status = 200, description = "Matching SBOM", body = SbomDetails),
+        (status = 200, description = "Matching SBOM", body = Vec<SbomAdvisory>),
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
@@ -240,7 +240,7 @@ pub async fn get_sbom_advisories(
         ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
-        (status = 200, description = "Matching SBOM", body = SbomDetails),
+        (status = 200, description = "Matching SBOM", body = SbomSummary),
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
@@ -381,7 +381,7 @@ struct UploadQuery {
         ("location" = String, Query, description = "Source the document came from"),
     ),
     responses(
-        (status = 201, description = "Upload an SBOM"),
+        (status = 201, description = "Upload an SBOM", body = IngestResult),
         (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
