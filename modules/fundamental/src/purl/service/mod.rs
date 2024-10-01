@@ -146,12 +146,12 @@ impl PurlService {
 
     pub async fn base_purl_by_uuid<TX: AsRef<Transactional>>(
         &self,
-        package_version_uuid: &Uuid,
+        base_purl_uuid: &Uuid,
         tx: TX,
     ) -> Result<Option<BasePurlDetails>, Error> {
         let connection = self.db.connection(&tx);
 
-        if let Some(package) = base_purl::Entity::find_by_id(*package_version_uuid)
+        if let Some(package) = base_purl::Entity::find_by_id(*base_purl_uuid)
             .one(&connection)
             .await?
         {
