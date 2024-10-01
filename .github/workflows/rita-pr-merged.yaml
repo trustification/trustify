@@ -15,7 +15,7 @@ env:
 jobs:
   notify_channel:
     runs-on: ubuntu-22.04
-    if: github.event.pull_request.merged == true
+    if: env.PASSWORD && github.event.pull_request.merged
     steps:
       - name: Send message
         run: |
