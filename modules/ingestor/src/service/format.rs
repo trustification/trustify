@@ -60,11 +60,7 @@ impl<'g> Format {
                 let loader = OsvLoader::new(graph);
                 let osv: Vulnerability = serde_json::from_slice(buffer)
                     .map_err(Error::from)
-                    .or_else(|_| {
-                        serde_yml::from_slice::<Nested>(buffer)
-                            .map(|osv| osv.0)
-                            .map_err(Error::from)
-                    })?;
+                    .or_else(|_| super::advisory::osv::from_yaml(buffer).map_err(Error::from))?;
                 loader.load(labels, osv, digests, issuer).await
             }
             Format::CVE => {
@@ -175,7 +171,7 @@ impl<'g> Format {
 
     pub fn is_osv_yaml(bytes: &[u8]) -> Result<bool, Error> {
         // TODO: find a way to detect format with streaming
-        Ok(serde_yml::from_slice::<Nested>(bytes).is_ok())
+        Ok(super::advisory::osv::from_yaml(bytes).is_ok())
     }
 
     pub fn is_spdx(bytes: &[u8]) -> Result<bool, Error> {
@@ -262,9 +258,6 @@ fn masked<N: Mask>(mask: N, bytes: &[u8]) -> Result<Option<String>, Error> {
         })
         .transpose()
 }
-
-#[derive(serde::Deserialize)]
-struct Nested(#[serde(with = "serde_yml::with::singleton_map_recursive")] Vulnerability);
 
 #[cfg(test)]
 mod test {
