@@ -43,8 +43,6 @@ impl PurlDetails {
         deprecation: Deprecation,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
-        // TODO: apply deprecation filter
-
         let package_version = if let Some(package_version) = package_version {
             package_version
         } else {
