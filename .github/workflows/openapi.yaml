@@ -19,7 +19,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
       - name: Checkout trustify-ui
         uses: actions/checkout@v4
         with:
@@ -31,7 +30,7 @@ jobs:
           cp ./trustify/openapi.yaml ./trustify-ui/client/openapi/trustd.yaml
           
           cd ./trustify-ui
-          npm install 
+          npm ci --ignore-scripts 
           npm run generate
           git diff
 
