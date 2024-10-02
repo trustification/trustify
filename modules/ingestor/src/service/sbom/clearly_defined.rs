@@ -145,7 +145,7 @@ mod test {
         let purl = purl.unwrap();
 
         assert_eq!("npm", purl.ty);
-        assert_eq!(Some("tacobell".to_string()), purl.namespace);
+        assert_eq!(Some("@tacobell".to_string()), purl.namespace);
         assert_eq!("taco", purl.name);
         assert_eq!(Some("1.2.3".to_string()), purl.version);
     }
