@@ -2201,6 +2201,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ChatMessage'
+    ClearlyDefinedCurationImporter:
+      allOf:
+      - $ref: '#/components/schemas/CommonImporter'
+      - type: object
+        properties:
+          source:
+            type: string
+          types:
+            type: array
+            items:
+              $ref: '#/components/schemas/ClearlyDefinedPackageType'
+            uniqueItems: true
     ClearlyDefinedImporter:
       allOf:
       - $ref: '#/components/schemas/CommonImporter'
@@ -2407,6 +2419,12 @@ components:
         properties:
           clearlyDefined:
             $ref: '#/components/schemas/ClearlyDefinedImporter'
+      - type: object
+        required:
+        - clearlyDefinedCuration
+        properties:
+          clearlyDefinedCuration:
+            $ref: '#/components/schemas/ClearlyDefinedCurationImporter'
       - type: object
         required:
         - cwe
