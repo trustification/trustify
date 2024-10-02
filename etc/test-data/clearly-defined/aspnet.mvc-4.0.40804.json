@@ -1,0 +1,76 @@
+{
+  "_id": "nuget/nuget/-/microsoft.aspnet.mvc/4.0.40804",
+  "described": {
+    "releaseDate": "2014-10-14",
+    "urls": {
+      "registry": "https://nuget.org/packages/Microsoft.AspNet.Mvc",
+      "version": "https://nuget.org/packages/Microsoft.AspNet.Mvc/4.0.40804",
+      "download": "https://nuget.org/api/v2/package/Microsoft.AspNet.Mvc/4.0.40804"
+    },
+    "hashes": {
+      "sha1": "2d8577f4cad5cc60b45f3c93969737b66bddd4ce",
+      "sha256": "c4271f0fda4ab7ac33b0d7fd51880c9e927833b2b8c72e6a00eb065720df1d73"
+    },
+    "files": 9,
+    "tools": [
+      "clearlydefined/1.4.2",
+      "reuse/3.2.2",
+      "licensee/9.14.0",
+      "scancode/30.3.0"
+    ],
+    "toolScore": {
+      "total": 30,
+      "date": 30,
+      "source": 0
+    },
+    "score": {
+      "total": 30,
+      "date": 30,
+      "source": 0
+    }
+  },
+  "licensed": {
+    "declared": "OTHER",
+    "toolScore": {
+      "total": 45,
+      "declared": 30,
+      "discovered": 0,
+      "consistency": 0,
+      "spdx": 15,
+      "texts": 0
+    },
+    "facets": {
+      "core": {
+        "attribution": {
+          "unknown": 8,
+          "parties": [
+            "(c) 2008 VeriSign, Inc."
+          ]
+        },
+        "discovered": {
+          "unknown": 8,
+          "expressions": [
+            "NOASSERTION"
+          ]
+        },
+        "files": 9
+      }
+    },
+    "score": {
+      "total": 45,
+      "declared": 30,
+      "discovered": 0,
+      "consistency": 0,
+      "spdx": 15,
+      "texts": 0
+    }
+  },
+  "_meta": {
+    "schemaVersion": "1.6.1",
+    "updated": "2024-09-26T19:39:48.997Z"
+  },
+  "scores": {
+    "effective": 37,
+    "tool": 37
+  }
+}

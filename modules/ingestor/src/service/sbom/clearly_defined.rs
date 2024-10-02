@@ -41,14 +41,32 @@ impl<'g> ClearlyDefinedLoader<'g> {
             });
         }
 
+        println!("{:#?}", item);
+
         let id_path = JsonPath::from_str("$._id")?;
-        let license_path = JsonPath::from_str("$.license.declared")?;
+        let license_path = JsonPath::from_str("$.licensed.declared")?;
 
         let document_id = id_path.find(&item);
         let license = license_path.find(&item);
 
-        let document_id = document_id.as_str();
-        let license = license.as_str();
+        let document_id = document_id.as_array();
+        let license = license.as_array();
+
+        let document_id = document_id.and_then(|inner| {
+            if !inner.is_empty() {
+                inner.first().and_then(|inner| inner.as_str())
+            } else {
+                None
+            }
+        });
+
+        let license = license.and_then(|inner| {
+            if !inner.is_empty() {
+                inner.first().and_then(|inner| inner.as_str())
+            } else {
+                None
+            }
+        });
 
         if let Some(document_id) = document_id {
             let tx = self.graph.transaction().await?;
@@ -116,7 +134,13 @@ fn coordinates_to_purl(coords: &str) -> Result<Purl, Error> {
 
 #[cfg(test)]
 mod test {
+    use crate::graph::Graph;
     use crate::service::sbom::clearly_defined::coordinates_to_purl;
+    use crate::service::{Format, IngestorService};
+    use test_context::test_context;
+    use test_log::test;
+    use trustify_test_context::document_bytes;
+    use trustify_test_context::TrustifyContext;
 
     #[test]
     fn coords_conversion_no_namespace() {
@@ -148,5 +172,21 @@ mod test {
         assert_eq!(Some("@tacobell".to_string()), purl.namespace);
         assert_eq!("taco", purl.name);
         assert_eq!(Some("1.2.3".to_string()), purl.version);
+    }
+
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn ingest_clearly_defined(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let graph = Graph::new(ctx.db.clone());
+        let ingestor = IngestorService::new(graph, ctx.storage.clone());
+
+        let data = document_bytes("clearly-defined/aspnet.mvc-4.0.40804.json").await?;
+
+        ingestor
+            .ingest(&data, Format::ClearlyDefined, ("source", "test"), None)
+            .await
+            .expect("must ingest");
+
+        Ok(())
     }
 }
