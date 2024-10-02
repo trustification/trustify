@@ -82,6 +82,7 @@ mod m0000630_create_product_version_range;
 mod m0000631_alter_product_cpe_key;
 mod m0000640_create_product_status;
 mod m0000650_alter_advisory_tracking;
+mod m0000660_purl_id_indexes;
 
 pub struct Migrator;
 
@@ -171,6 +172,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000631_alter_product_cpe_key::Migration),
             Box::new(m0000640_create_product_status::Migration),
             Box::new(m0000650_alter_advisory_tracking::Migration),
+            Box::new(m0000660_purl_id_indexes::Migration),
         ]
     }
 }
