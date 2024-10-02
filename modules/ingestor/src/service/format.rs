@@ -1,10 +1,12 @@
+use crate::service::sbom::clearly_defined::ClearlyDefinedLoader;
 use crate::{
     graph::{sbom::clearly_defined::Curation, Graph},
     model::IngestResult,
     service::{
         advisory::{csaf::loader::CsafLoader, cve::loader::CveLoader, osv::loader::OsvLoader},
         sbom::{
-            clearly_defined::ClearlyDefinedLoader, cyclonedx::CyclonedxLoader, spdx::SpdxLoader,
+            clearly_defined_curation::ClearlyDefinedCurationLoader, cyclonedx::CyclonedxLoader,
+            spdx::SpdxLoader,
         },
         weakness::CweCatalogLoader,
         Error,
@@ -30,6 +32,7 @@ pub enum Format {
     CVE,
     SPDX,
     CycloneDX,
+    ClearlyDefinedCuration,
     ClearlyDefined,
     CweCatalog,
     // These should be resolved to one of the above before loading
@@ -84,6 +87,11 @@ impl<'g> Format {
             }
             Format::ClearlyDefined => {
                 let loader = ClearlyDefinedLoader::new(graph);
+                let item: Value = serde_json::from_slice(buffer)?;
+                loader.load(labels, item, digests).await
+            }
+            Format::ClearlyDefinedCuration => {
+                let loader = ClearlyDefinedCurationLoader::new(graph);
                 let curation: Curation = serde_yml::from_slice(buffer)?;
                 loader.load(labels, curation, digests).await
             }
@@ -133,7 +141,7 @@ impl<'g> Format {
         } else if Self::is_cyclonedx(bytes)? {
             Ok(Format::CycloneDX)
         } else if Self::is_clearly_defined(bytes)? {
-            Ok(Format::ClearlyDefined)
+            Ok(Format::ClearlyDefinedCuration)
         } else {
             Err(Error::UnsupportedFormat(
                 "Unable to detect SBOM format; only SPDX and CycloneDX are supported".into(),

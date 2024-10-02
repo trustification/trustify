@@ -34,6 +34,8 @@ pub enum Error {
     #[error(transparent)]
     Json(#[from] serde_json::Error),
     #[error(transparent)]
+    JsonPath(#[from] jsonpath_rust::parser::JsonPathParserError),
+    #[error(transparent)]
     Xml(#[from] roxmltree::Error),
     #[error(transparent)]
     Yaml(#[from] serde_yml::Error),
@@ -60,6 +62,11 @@ impl ResponseError for Error {
         match self {
             Self::Json(err) => HttpResponse::BadRequest().json(ErrorInformation {
                 error: "JsonParse".into(),
+                message: err.to_string(),
+                details: None,
+            }),
+            Self::JsonPath(err) => HttpResponse::BadRequest().json(ErrorInformation {
+                error: "JsonPath".into(),
                 message: err.to_string(),
                 details: None,
             }),
@@ -152,6 +159,10 @@ impl IngestorService {
 
     pub fn graph(&self) -> &Graph {
         &self.graph
+    }
+
+    pub fn db(&self) -> trustify_common::db::Database {
+        self.graph.db.clone()
     }
 
     #[instrument(skip(self, bytes), err)]

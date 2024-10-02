@@ -1,13 +1,13 @@
 use std::{collections::HashSet, time::Duration};
 use trustify_common::config::Database;
 use trustify_module_importer::model::{
-    ClearlyDefinedPackageType, CveImporter, CweImporter, DEFAULT_SOURCE_CVEPROJECT,
-    DEFAULT_SOURCE_CWE_CATALOG,
+    ClearlyDefinedImporter, ClearlyDefinedPackageType, CveImporter, CweImporter,
+    DEFAULT_SOURCE_CLEARLY_DEFINED_CURATION, DEFAULT_SOURCE_CVEPROJECT, DEFAULT_SOURCE_CWE_CATALOG,
 };
 use trustify_module_importer::{
     model::{
-        ClearlyDefinedImporter, CommonImporter, CsafImporter, ImporterConfiguration, OsvImporter,
-        SbomImporter, DEFAULT_SOURCE_CLEARLY_DEFINED,
+        ClearlyDefinedCurationImporter, CommonImporter, CsafImporter, ImporterConfiguration,
+        OsvImporter, SbomImporter, DEFAULT_SOURCE_CLEARLY_DEFINED,
     },
     service::{Error, ImporterService},
 };
@@ -72,6 +72,29 @@ async fn add_cve(
             source: DEFAULT_SOURCE_CVEPROJECT.into(),
             years: HashSet::default(),
             start_year,
+        }),
+    )
+    .await
+}
+
+async fn add_clearly_defined_curations(
+    importer: &ImporterService,
+    name: &str,
+    description: &str,
+) -> anyhow::Result<()> {
+    add(
+        importer,
+        name,
+        ImporterConfiguration::ClearlyDefinedCuration(ClearlyDefinedCurationImporter {
+            common: CommonImporter {
+                disabled: true,
+                // once an hour is plenty
+                period: Duration::from_secs(60 * 60),
+                description: Some(description.into()),
+                labels: Default::default(),
+            },
+            source: DEFAULT_SOURCE_CLEARLY_DEFINED_CURATION.into(),
+            types: ClearlyDefinedPackageType::all(),
         }),
     )
     .await
@@ -185,12 +208,14 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
     )
     .await?;
 
-    add_clearly_defined(
+    add_clearly_defined_curations(
         &importer,
-        "clearly-defined",
+        "clearly-defined-curations",
         "Community-curated ClearlyDefined licenses",
     )
     .await?;
+
+    add_clearly_defined(&importer, "clearly-defined", "ClearlyDefined Definitions").await?;
 
     add_osv(
         &importer,

@@ -80,7 +80,8 @@ pub struct ClearlyDefinedImporter {
     pub types: HashSet<ClearlyDefinedPackageType>,
 }
 
-pub const DEFAULT_SOURCE_CLEARLY_DEFINED: &str = "https://github.com/clearlydefined/curated-data";
+pub const DEFAULT_SOURCE_CLEARLY_DEFINED: &str =
+    "https://clearlydefinedprod.blob.core.windows.net/changes-notifications";
 
 mod default {
     pub fn source() -> String {

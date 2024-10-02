@@ -11,7 +11,7 @@ use trustify_entity::purl_license_assertion;
 
 impl SbomContext {
     #[instrument(skip(tx, curation), err)]
-    pub async fn ingest_clearly_defined<TX: AsRef<Transactional>>(
+    pub async fn ingest_clearly_defined_curation<TX: AsRef<Transactional>>(
         &self,
         curation: Curation,
         tx: TX,
@@ -71,6 +71,7 @@ impl Curation {
     pub fn document_id(&self) -> String {
         self.coordinates.document_id()
     }
+
     pub fn iter(&self) -> impl Iterator<Item = (Purl, String)> + '_ {
         self.revisions.iter().flat_map(|(version, details)| {
             if let Some(licensed) = &details.licensed {
