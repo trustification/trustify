@@ -32,7 +32,6 @@ use crate::advisory::service::AdvisoryService;
 use crate::purl::service::PurlService;
 use crate::sbom::service::SbomService;
 use langchain_rust::schemas::{BaseMemory, Message};
-use std::fmt::Write;
 use std::sync::Arc;
 
 pub const PREFIX: &str = include_str!("prefix.txt");
@@ -155,18 +154,18 @@ impl AiService {
             .map_err(Error::AgentError)?;
 
         let mut memory = SimpleMemory::new();
-        let mut prompt = "".to_string();
+        let mut new_messages = 0;
+
         for chat_message in &request.messages {
             match &chat_message.internal_state {
                 None => {
-                    if !prompt.is_empty() {
-                        _ = prompt.write_str("\n");
-                    }
-                    _ = prompt.write_str(&chat_message.content);
+                    let m = Message::new_human_message(chat_message.content.clone());
+                    memory.add_message(m);
+                    new_messages += 1;
                 }
 
                 Some(internal_state) => {
-                    if !prompt.is_empty() {
+                    if new_messages != 0 {
                         return Err(Error::BadRequest(
                             "message with internal_state found after messages without".to_string(),
                         ));
@@ -174,11 +173,11 @@ impl AiService {
                     match STANDARD.decode(internal_state) {
                         Ok(decoded) => {
                             // todo: implement data encryption to avoid client side tampering
-                            let message: Message = serde_json::from_slice(decoded.as_slice())
-                                .map_err(|_| {
+                            let m: Message =
+                                serde_json::from_slice(decoded.as_slice()).map_err(|_| {
                                     Error::BadRequest("internal_state failed to decode".to_string())
                                 })?;
-                            memory.add_message(message);
+                            memory.add_message(m);
                         }
                         Err(_) => {
                             return Err(Error::BadRequest("invalid internal_state".to_string()))
@@ -193,7 +192,7 @@ impl AiService {
 
         let _answer = executor
             .invoke(prompt_args! {
-                "input" => prompt,
+                "input" => new_messages,
             })
             .await
             .map_err(Error::ChainError)?;
@@ -215,7 +214,7 @@ impl AiService {
                 }
                 Err(e) => return Err(Error::Internal(e.to_string())),
             };
-            response.messages.push(ChatMessage {
+            let ch = ChatMessage {
                 content: message.content.clone(),
                 message_type: match message.message_type.clone() {
                     langchain_rust::schemas::MessageType::HumanMessage => MessageType::Human,
@@ -224,7 +223,8 @@ impl AiService {
                     langchain_rust::schemas::MessageType::ToolMessage => MessageType::Tool,
                 },
                 internal_state: Some(internal_state),
-            });
+            };
+            response.messages.push(ch);
         }
 
         Ok(response)

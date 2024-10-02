@@ -3788,9 +3788,8 @@ dependencies = [
 
 [[package]]
 name = "langchain-rust"
-version = "4.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee0a7587b3283552de832dd60572873589607bfc739b7151626545c3d6e9dec6"
+version = "4.4.3"
+source = "git+https://github.com/chirino/langchain-rust?branch=remove-extraneous-agent-msg#358471ccdfa8e39c65de2a3058ffe19f93c6bb78"
 dependencies = [
  "async-openai",
  "async-recursion",
