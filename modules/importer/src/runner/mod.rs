@@ -1,3 +1,5 @@
+pub mod clearly_defined_curation;
+
 pub mod clearly_defined;
 pub mod common;
 pub mod context;
@@ -48,6 +50,10 @@ impl ImportRunner {
             ImporterConfiguration::Cve(cve) => self.run_once_cve(context, cve, continuation).await,
             ImporterConfiguration::ClearlyDefined(clearly_defined) => {
                 self.run_once_clearly_defined(context, clearly_defined, continuation)
+                    .await
+            }
+            ImporterConfiguration::ClearlyDefinedCuration(clearly_defined) => {
+                self.run_once_clearly_defined_curation(context, clearly_defined, continuation)
                     .await
             }
             ImporterConfiguration::Cwe(cwe) => {

@@ -39,8 +39,9 @@ use trustify_common::{
     cpe::Cpe, db::Transactional, hashing::Digests, purl::Purl, sbom::SbomLocator,
 };
 use trustify_entity::{
-    self as entity, labels::Labels, package_relates_to_package, relationship::Relationship, sbom,
-    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, source_document,
+    self as entity, labels::Labels, license, package_relates_to_package, purl_license_assertion,
+    relationship::Relationship, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
+    sbom_package_purl_ref, source_document,
 };
 
 #[derive(Clone, Default)]
@@ -415,6 +416,63 @@ impl SbomContext {
             graph: graph.clone(),
             sbom,
         }
+    }
+
+    pub async fn ingest_purl_license_assertion<TX: AsRef<Transactional>>(
+        &self,
+        purl: &Purl,
+        license: &str,
+        tx: TX,
+    ) -> Result<(), Error> {
+        let connection = self.graph.connection(&tx);
+        let purl = self.graph.ingest_qualified_package(purl, &tx).await?;
+
+        let license_info = LicenseInfo {
+            license: license.to_string(),
+            refs: Default::default(),
+        };
+
+        let (spdx_licenses, spdx_exceptions) = license_info.spdx_info();
+
+        let license = license::ActiveModel {
+            id: Set(license_info.uuid()),
+            text: Set(license_info.license.clone()),
+            spdx_licenses: if spdx_licenses.is_empty() {
+                Set(None)
+            } else {
+                Set(Some(spdx_licenses))
+            },
+            spdx_license_exceptions: if spdx_exceptions.is_empty() {
+                Set(None)
+            } else {
+                Set(Some(spdx_exceptions))
+            },
+        }
+        .insert(&connection)
+        .await?;
+
+        let assertion = purl_license_assertion::Entity::find()
+            .filter(purl_license_assertion::Column::LicenseId.eq(license.id))
+            .filter(
+                purl_license_assertion::Column::VersionedPurlId
+                    .eq(purl.package_version.package_version.id),
+            )
+            .filter(purl_license_assertion::Column::SbomId.eq(self.sbom.sbom_id))
+            .one(&connection)
+            .await?;
+
+        if assertion.is_none() {
+            purl_license_assertion::ActiveModel {
+                id: Default::default(),
+                license_id: Set(license.id),
+                versioned_purl_id: Set(purl.package_version.package_version.id),
+                sbom_id: Set(self.sbom.sbom_id),
+            }
+            .insert(&connection)
+            .await?;
+        }
+
+        Ok(())
     }
 
     /// Get the packages which describe an SBOM

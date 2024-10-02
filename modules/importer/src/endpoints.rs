@@ -44,7 +44,7 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
         update,
     ),
     components(schemas(
-        crate::model::ClearlyDefinedImporter,
+        crate::model::ClearlyDefinedCurationImporter,
         crate::model::ClearlyDefinedPackageType,
         crate::model::CommonImporter,
         crate::model::CsafImporter,

@@ -1,3 +1,5 @@
+mod clearly_defined_curation;
+
 mod clearly_defined;
 mod csaf;
 mod cve;
@@ -6,6 +8,7 @@ mod osv;
 mod sbom;
 
 pub use clearly_defined::*;
+pub use clearly_defined_curation::*;
 pub use csaf::*;
 pub use cve::*;
 pub use cwe::*;
@@ -127,6 +130,7 @@ pub enum ImporterConfiguration {
     Osv(OsvImporter),
     Cve(CveImporter),
     ClearlyDefined(ClearlyDefinedImporter),
+    ClearlyDefinedCuration(ClearlyDefinedCurationImporter),
     Cwe(CweImporter),
 }
 
@@ -140,6 +144,7 @@ impl Deref for ImporterConfiguration {
             Self::Osv(importer) => &importer.common,
             Self::Cve(importer) => &importer.common,
             Self::ClearlyDefined(importer) => &importer.common,
+            Self::ClearlyDefinedCuration(importer) => &importer.common,
             Self::Cwe(importer) => &importer.common,
         }
     }
@@ -153,6 +158,7 @@ impl DerefMut for ImporterConfiguration {
             Self::Osv(importer) => &mut importer.common,
             Self::Cve(importer) => &mut importer.common,
             Self::ClearlyDefined(importer) => &mut importer.common,
+            Self::ClearlyDefinedCuration(importer) => &mut importer.common,
             Self::Cwe(importer) => &mut importer.common,
         }
     }

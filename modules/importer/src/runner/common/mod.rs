@@ -1,4 +1,5 @@
 use tokio::task::JoinError;
+use trustify_common::id::IdError;
 
 pub mod filter;
 pub mod processing_error;
@@ -23,11 +24,17 @@ pub enum Error {
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]
+    Json(#[from] serde_json::Error),
+    #[error(transparent)]
     Http(#[from] reqwest::Error),
     #[error(transparent)]
     HttpHeader(#[from] reqwest::header::ToStrError),
     #[error(transparent)]
+    Utf8(#[from] std::str::Utf8Error),
+    #[error(transparent)]
     Zip(#[from] zip::result::ZipError),
+    #[error(transparent)]
+    Id(#[from] IdError),
     #[error("operation canceled")]
     Canceled,
 }
