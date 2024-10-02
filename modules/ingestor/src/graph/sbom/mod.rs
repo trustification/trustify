@@ -434,22 +434,30 @@ impl SbomContext {
 
         let (spdx_licenses, spdx_exceptions) = license_info.spdx_info();
 
-        let license = license::ActiveModel {
-            id: Set(license_info.uuid()),
-            text: Set(license_info.license.clone()),
-            spdx_licenses: if spdx_licenses.is_empty() {
-                Set(None)
-            } else {
-                Set(Some(spdx_licenses))
-            },
-            spdx_license_exceptions: if spdx_exceptions.is_empty() {
-                Set(None)
-            } else {
-                Set(Some(spdx_exceptions))
-            },
-        }
-        .insert(&connection)
-        .await?;
+        let license = license::Entity::find_by_id(license_info.uuid())
+            .one(&connection)
+            .await?;
+
+        let license = if let Some(license) = license {
+            license
+        } else {
+            license::ActiveModel {
+                id: Set(license_info.uuid()),
+                text: Set(license_info.license.clone()),
+                spdx_licenses: if spdx_licenses.is_empty() {
+                    Set(None)
+                } else {
+                    Set(Some(spdx_licenses))
+                },
+                spdx_license_exceptions: if spdx_exceptions.is_empty() {
+                    Set(None)
+                } else {
+                    Set(Some(spdx_exceptions))
+                },
+            }
+            .insert(&connection)
+            .await?
+        };
 
         let assertion = purl_license_assertion::Entity::find()
             .filter(purl_license_assertion::Column::LicenseId.eq(license.id))
