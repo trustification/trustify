@@ -75,7 +75,7 @@ itertools = "0.13"
 jsn = "0.14"
 json-merge-patch = "0.0.1"
 jsonpath-rust = "0.7.0"
-langchain-rust = { version = "4.4.1", features = ["ollama"] }
+langchain-rust = { version = "4.4.3" }
 lenient_semver = "0.4.2"
 liblzma = "0.3"
 libz-sys = "*"
@@ -94,7 +94,7 @@ packageurl = "0.3.0"
 parking_lot = "0.12"
 peak_alloc = "0.2.0"
 pem = "3"
-petgraph = {  version = "0.6.5", features = ["serde-1"] }
+petgraph = { version = "0.6.5", features = ["serde-1"] }
 prometheus = "0.13.3"
 quick-xml = "0.36.1"
 rand = "0.8.5"
@@ -194,3 +194,5 @@ csaf = { git = "https://github.com/chirino/csaf-rs", rev = "414896904bc5e5287fd8
 # to pickup up fix: https://github.com/64bit/async-openai/pull/263 and https://github.com/64bit/async-openai/pull/267
 # needed to work against groq.com API
 async-openai = { git = "https://github.com/chirino/async-openai", branch = "optional-fields" }
+# to pickup fix https://github.com/Abraxas-365/langchain-rust/pull/236
+langchain-rust = { git = "https://github.com/chirino/langchain-rust", branch = "remove-extraneous-agent-msg" }
