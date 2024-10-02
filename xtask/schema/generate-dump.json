@@ -20,7 +20,7 @@
     "ByteSize": {
       "type": "string"
     },
-    "ClearlyDefinedImporter": {
+    "ClearlyDefinedCurationImporter": {
       "type": "object",
       "required": [
         "period"
@@ -56,6 +56,53 @@
         },
         "source": {
           "default": "https://github.com/clearlydefined/curated-data",
+          "type": "string"
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ClearlyDefinedPackageType"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "ClearlyDefinedImporter": {
+      "type": "object",
+      "required": [
+        "period"
+      ],
+      "properties": {
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disabled": {
+          "description": "A flag to disable the importer, without deleting it.",
+          "default": false,
+          "type": "boolean"
+        },
+        "labels": {
+          "description": "Labels which will be applied to the ingested documents.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Labels"
+            }
+          ]
+        },
+        "period": {
+          "description": "The period the importer should be run.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumantimeSerde"
+            }
+          ]
+        },
+        "source": {
+          "default": "https://clearlydefinedprod.blob.core.windows.net/changes-notifications",
           "type": "string"
         },
         "types": {
@@ -299,6 +346,18 @@
           "properties": {
             "clearlyDefined": {
               "$ref": "#/definitions/ClearlyDefinedImporter"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "clearlyDefinedCuration"
+          ],
+          "properties": {
+            "clearlyDefinedCuration": {
+              "$ref": "#/definitions/ClearlyDefinedCurationImporter"
             }
           },
           "additionalProperties": false
