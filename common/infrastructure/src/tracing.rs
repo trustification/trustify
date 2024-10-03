@@ -1,5 +1,5 @@
 use core::fmt;
-use opentelemetry::{propagation::Injector, Context, KeyValue};
+use opentelemetry::{propagation::Injector, trace::TracerProvider, Context, KeyValue};
 use opentelemetry_sdk::Resource;
 use reqwest::RequestBuilder;
 use std::sync::Once;
@@ -112,11 +112,12 @@ fn init_otlp(name: &str) {
     opentelemetry::global::set_text_map_propagator(
         opentelemetry_sdk::propagation::TraceContextPropagator::new(),
     );
-    let pipeline = opentelemetry_otlp::new_pipeline()
+
+    #[allow(clippy::expect_used)]
+    let provider = opentelemetry_otlp::new_pipeline()
         .tracing()
-        .with_exporter(opentelemetry_otlp::new_exporter().tonic())
         .with_trace_config(
-            opentelemetry_sdk::trace::config()
+            opentelemetry_sdk::trace::Config::default()
                 .with_resource(Resource::new(vec![KeyValue::new(
                     "service.name",
                     name.to_string(),
@@ -124,21 +125,19 @@ fn init_otlp(name: &str) {
                 .with_sampler(opentelemetry_sdk::trace::Sampler::ParentBased(Box::new(
                     sampler(),
                 ))),
-        );
-
-    println!("Using Jaeger tracing.");
-    println!("{:#?}", pipeline);
-
-    #[allow(clippy::expect_used)]
-    let tracer = pipeline
+        )
+        .with_exporter(opentelemetry_otlp::new_exporter().tonic())
         .install_batch(opentelemetry_sdk::runtime::Tokio)
         .expect("unable to setup tracing pipeline");
+
+    println!("Using Jaeger tracing.");
+    println!("{:#?}", provider);
 
     let formatting_layer = tracing_subscriber::fmt::Layer::default();
 
     if let Err(e) = tracing_subscriber::Registry::default()
         .with(tracing_subscriber::EnvFilter::from_default_env())
-        .with(tracing_opentelemetry::layer().with_tracer(tracer))
+        .with(tracing_opentelemetry::layer().with_tracer(provider.tracer(name.to_string())))
         .with(formatting_layer)
         .try_init()
     {
