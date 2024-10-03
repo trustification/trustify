@@ -50,10 +50,16 @@ pub async fn ingest_fixtures(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 }
 
 fn cleanup_tool_result(s: Result<String, Box<dyn Error>>) -> String {
+    sanitize_uuid(s.unwrap().trim().to_string())
+}
+
+pub fn sanitize_uuid(value: String) -> String {
     let re = regex::Regex::new(r#""uuid": "\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}\b""#).unwrap();
-    let s = s.unwrap().trim().to_string();
-    re.replace_all(&s, r#""uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx""#)
-        .to_string()
+    re.replace_all(
+        value.as_str(),
+        r#""uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx""#,
+    )
+    .to_string()
 }
 
 async fn assert_tool_contains(
@@ -75,7 +81,7 @@ async fn assert_tool_contains(
 #[test(actix_web::test)]
 async fn completions(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let service = AiService::new(ctx.db.clone());
-    if !service.enabled() {
+    if !service.completions_enabled() {
         return Ok(()); // skip test
     }
 
@@ -327,5 +333,5 @@ async fn sbom_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 }
 "#,
     )
-    .await
+        .await
 }

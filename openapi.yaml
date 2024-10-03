@@ -248,6 +248,64 @@ paths:
           description: The request was invalid
         '404':
           description: The AI service is not enabled
+  /api/v1/ai/flags:
+    get:
+      tags:
+      - ai
+      operationId: aiFlags
+      responses:
+        '200':
+          description: The resulting Flags
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiFlags'
+        '404':
+          description: The AI service is not enabled
+  /api/v1/ai/tools:
+    get:
+      tags:
+      - ai
+      operationId: aiTools
+      responses:
+        '200':
+          description: The resulting list of tools
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AiTool'
+        '404':
+          description: The AI service is not enabled
+  /api/v1/ai/tools/{name}:
+    post:
+      tags:
+      - ai
+      operationId: aiToolCall
+      parameters:
+      - name: name
+        in: path
+        description: Name of the tool to call
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+        required: true
+      responses:
+        '200':
+          description: The result of the tool call
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: The tool request was invalid
+        '404':
+          description: The tool was not found
   /api/v1/analysis/dep:
     get:
       tags:
@@ -1974,6 +2032,25 @@ components:
               All CVSS3 scores from the advisory for the given vulnerability.
               May include several, varying by minor version of the CVSS3 vector.
       description: Summary of information from this advisory regarding a single specific vulnerability.
+    AiFlags:
+      type: object
+      required:
+      - completions
+      properties:
+        completions:
+          type: boolean
+    AiTool:
+      type: object
+      required:
+      - name
+      - description
+      - parameters
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        parameters: {}
     AnalysisStatus:
       type: object
       required:

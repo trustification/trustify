@@ -61,3 +61,15 @@ impl ChatState {
         });
     }
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+pub struct AiFlags {
+    pub completions: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+pub struct AiTool {
+    pub name: String,
+    pub description: String,
+    pub parameters: serde_json::Value,
+}
