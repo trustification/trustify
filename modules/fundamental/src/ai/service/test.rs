@@ -50,9 +50,9 @@ pub async fn ingest_fixtures(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 }
 
 fn cleanup_tool_result(s: Result<String, Box<dyn Error>>) -> String {
-    let re = regex::Regex::new(r"UUID: \b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}\b").unwrap();
+    let re = regex::Regex::new(r#""uuid": "\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}\b""#).unwrap();
     let s = s.unwrap().trim().to_string();
-    re.replace_all(&s, "UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
+    re.replace_all(&s, r#""uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx""#)
         .to_string()
 }
 
@@ -62,7 +62,12 @@ async fn assert_tool_contains(
     expected: &str,
 ) -> Result<(), anyhow::Error> {
     let actual = cleanup_tool_result(tool.run(Value::String(input.to_string())).await);
-    assert!(actual.contains(expected.trim()), "actual:\n{}", actual);
+    assert!(
+        actual.contains(expected.trim()),
+        "actual:\n{}\nexpected:\n{}\n",
+        actual,
+        expected
+    );
     Ok(())
 }
 
@@ -96,14 +101,19 @@ async fn cve_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         tool.clone(),
         "CVE-2021-32714",
         r#"
-Identifier: CVE-2021-32714
-Title: Integer Overflow in Chunked Transfer-Encoding
-Description: hyper is an HTTP library for Rust. In versions prior to 0.14.10, hyper's HTTP server and client code had a flaw that could trigger an integer overflow when decoding chunk sizes that are too big. This allows possible data loss, or if combined with an upstream HTTP proxy that allows chunk sizes larger than hyper does, can result in "request smuggling" or "desync attacks." The vulnerability is patched in version 0.14.10. Two possible workarounds exist. One may reject requests manually that contain a `Transfer-Encoding` header or ensure any upstream proxy rejects `Transfer-Encoding` chunk sizes greater than what fits in 64-bit unsigned integers.
-Severity: 9.1
-Score: 9.1
-Affected Packages:
-  * Name: pkg://cargo/hyper
-    Version: [0.0.0-0,0.14.10)
+{
+  "title": "Integer Overflow in Chunked Transfer-Encoding",
+  "description": "hyper is an HTTP library for Rust. In versions prior to 0.14.10, hyper's HTTP server and client code had a flaw that could trigger an integer overflow when decoding chunk sizes that are too big. This allows possible data loss, or if combined with an upstream HTTP proxy that allows chunk sizes larger than hyper does, can result in \"request smuggling\" or \"desync attacks.\" The vulnerability is patched in version 0.14.10. Two possible workarounds exist. One may reject requests manually that contain a `Transfer-Encoding` header or ensure any upstream proxy rejects `Transfer-Encoding` chunk sizes greater than what fits in 64-bit unsigned integers.",
+  "severity": 9.1,
+  "score": 9.1,
+  "released": null,
+  "affected_packages": [
+    {
+      "name": "pkg://cargo/hyper",
+      "version": "[0.0.0-0,0.14.10)"
+    }
+  ]
+}
 "#).await
 }
 
@@ -116,12 +126,19 @@ async fn product_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         tool.clone(),
         "Trusted Profile Analyzer",
         r#"
-Found one matching product:
-  * Name: Trusted Profile Analyzer
-    UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    Vendor: Red Hat
-    Versions:
-      * 37.17.9
+{
+  "items": [
+    {
+      "name": "Trusted Profile Analyzer",
+      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "vendor": "Red Hat",
+      "versions": [
+        "37.17.9"
+      ]
+    }
+  ],
+  "total": 1
+}
 "#,
     )
     .await
@@ -139,12 +156,22 @@ async fn advisory_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         tool.clone(),
         "RHSA-1",
         r#"
-Identifier: RHSA-1
-Title: RHSA-1
-Score: 9.1
-Severity: critical
-Vulnerabilities:
- * Identifier: CVE-123
+{
+  "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "identifier": "RHSA-1",
+  "issuer": null,
+  "title": "RHSA-1",
+  "score": 9.1,
+  "severity": "critical",
+  "vulnerabilities": [
+    {
+      "identifier": "CVE-123",
+      "title": null,
+      "description": null,
+      "released": null
+    }
+  ]
+}
 "#,
     )
     .await
@@ -163,13 +190,16 @@ async fn package_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         tool.clone(),
         "pkg:rpm/redhat/libsepol@3.5-1.el9?arch=s390x",
         r#"
-There is one package that matches:
-Identifier: pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le
-UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-Name: libsepol
-Version: 3.5-1.el9
-Licenses:
- * Name: LGPLV2+
+{
+  "identifier": "pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le",
+  "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "name": "libsepol",
+  "version": "3.5-1.el9",
+  "advisories": [],
+  "licenses": [
+    "LGPLV2+"
+  ]
+}
 "#,
     )
     .await?;
@@ -178,13 +208,16 @@ Licenses:
         tool.clone(),
         "1ca731c3-9596-534c-98eb-8dcc6ff7fef9",
         r#"
-There is one package that matches:
-Identifier: pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le
-UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-Name: libsepol
-Version: 3.5-1.el9
-Licenses:
- * Name: LGPLV2+
+{
+  "identifier": "pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le",
+  "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "name": "libsepol",
+  "version": "3.5-1.el9",
+  "advisories": [],
+  "licenses": [
+    "LGPLV2+"
+  ]
+}
 "#,
     )
     .await?;
@@ -193,49 +226,69 @@ Licenses:
         tool.clone(),
         "pkg:maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
         r#"
-There is one package that matches:
-Identifier: pkg://maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar
-UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-Name: commons-logging-jboss-logging
-Version: 1.0.0.Final-redhat-1
-Licenses:
- * Name: APACHE-2.0
+{
+  "identifier": "pkg://maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+  "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "name": "commons-logging-jboss-logging",
+  "version": "1.0.0.Final-redhat-1",
+  "advisories": [],
+  "licenses": [
+    "APACHE-2.0"
+  ]
+}
 "#).await?;
 
     assert_tool_contains(
         tool.clone(),
         "commons-logging-jboss-logging",
         r#"
-There is one package that matches:
-Identifier: pkg://maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar
-UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-Name: commons-logging-jboss-logging
-Version: 1.0.0.Final-redhat-1
-Licenses:
- * Name: APACHE-2.0
+{
+  "identifier": "pkg://maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+  "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "name": "commons-logging-jboss-logging",
+  "version": "1.0.0.Final-redhat-1",
+  "advisories": [],
+  "licenses": [
+    "APACHE-2.0"
+  ]
+}
 "#).await?;
 
     assert_tool_contains(
         tool.clone(),
         "quarkus-resteasy-reactive-json",
         r#"
-There are multiple packages that match:
- * Identifier: pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar
-   UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-   Name: quarkus-resteasy-reactive-jsonb-common
-   Version: 2.13.8.Final-redhat-00004
- * Identifier: pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar
-   UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-   Name: quarkus-resteasy-reactive-jsonb
-   Version: 2.13.8.Final-redhat-00004
- * Identifier: pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar
-   UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-   Name: quarkus-resteasy-reactive-jsonb-common-deployment
-   Version: 2.13.8.Final-redhat-00004
- * Identifier: pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar
-   UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-   Name: quarkus-resteasy-reactive-jsonb-deployment
-   Version: 2.13.8.Final-redhat-00004
+There are multiple that match:
+
+{
+  "items": [
+    {
+      "identifier": "pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "name": "quarkus-resteasy-reactive-jsonb-common",
+      "version": "2.13.8.Final-redhat-00004"
+    },
+    {
+      "identifier": "pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "name": "quarkus-resteasy-reactive-jsonb",
+      "version": "2.13.8.Final-redhat-00004"
+    },
+    {
+      "identifier": "pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "name": "quarkus-resteasy-reactive-jsonb-common-deployment",
+      "version": "2.13.8.Final-redhat-00004"
+    },
+    {
+      "identifier": "pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "name": "quarkus-resteasy-reactive-jsonb-deployment",
+      "version": "2.13.8.Final-redhat-00004"
+    }
+  ],
+  "total": 4
+}
 "#).await
 }
 
@@ -252,16 +305,26 @@ async fn sbom_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         tool.clone(),
         "quarkus",
         r#"
-There is one SBOM that matches:
- * UUID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-   SHA256: sha256:5a370574a991aa42f7ecc5b7d88754b258f81c230a73bea247c0a6fcc6f608ab
-   Name: quarkus-bom
-   Published: 2023-11-13 0:10:00.0 +00:00:00
-   Authors:
-    * Organization: Red Hat Product Security (secalert@redhat.com)
-   Labels:
-    * source: TrustifyContext
-    * type: spdx
+{
+  "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "source_document_sha256": "sha256:5a370574a991aa42f7ecc5b7d88754b258f81c230a73bea247c0a6fcc6f608ab",
+  "name": "quarkus-bom",
+  "published": "2023-11-13T00:10:00Z",
+  "authors": [
+    "Organization: Red Hat Product Security (secalert@redhat.com)"
+  ],
+  "labels": [
+    [
+      "source",
+      "TrustifyContext"
+    ],
+    [
+      "type",
+      "spdx"
+    ]
+  ],
+  "advisories": []
+}
 "#,
     )
     .await

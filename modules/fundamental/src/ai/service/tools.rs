@@ -7,11 +7,38 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 use itertools::Itertools;
 use langchain_rust::tools::Tool;
+use serde::Serialize;
 use serde_json::Value;
 use std::{error::Error, fmt::Write, str::FromStr};
+use time::OffsetDateTime;
+use trustify_common::model::PaginatedResults;
 use trustify_common::{db::query::Query, id::Id, purl::Purl};
 use trustify_module_ingestor::common::Deprecation;
 use uuid::Uuid;
+
+fn to_json<T>(value: &T) -> Result<String, Box<dyn Error>>
+where
+    T: Serialize,
+{
+    #[cfg(test)]
+    {
+        serde_json::to_string_pretty(&value).map_err(|e| e.into())
+    }
+    #[cfg(not(test))]
+    {
+        serde_json::to_string(&value).map_err(|e| e.into())
+    }
+}
+
+fn paginated_to_json<A, T>(p: PaginatedResults<A>, f: fn(&A) -> T) -> Result<String, Box<dyn Error>>
+where
+    T: Serialize,
+{
+    to_json(&PaginatedResults {
+        items: p.items.iter().map(f).collect(),
+        total: p.total,
+    })
+}
 
 pub struct ToolLogger<T: Tool>(pub T);
 
@@ -90,27 +117,23 @@ When the input is a partial name, the tool will provide a list of possible match
             )
             .await?;
 
-        let mut result = match results.items.len() {
-            0 => return Err(anyhow!("I don't know").into()),
-            1 => "Found one matching product:\n",
-            _ => "There are multiple products that match:\n",
+        if results.items.is_empty() {
+            return Err(anyhow!("I don't know").into());
         }
-        .to_string();
 
-        for product in results.items {
-            writeln!(result, "  * Name: {}", product.head.name)?;
-            writeln!(result, "    UUID: {}", product.head.id)?;
-            if let Some(v) = product.vendor {
-                writeln!(result, "    Vendor: {}", v.head.name)?;
-            }
-            if !product.versions.is_empty() {
-                writeln!(result, "    Versions:")?;
-                for version in product.versions {
-                    writeln!(result, "      * {}", version.version)?;
-                }
-            }
+        #[derive(Serialize)]
+        struct Product {
+            name: String,
+            uuid: Uuid,
+            vendor: Option<String>,
+            versions: Vec<String>,
         }
-        Ok(result)
+        paginated_to_json(results, |item| Product {
+            name: item.head.name.clone(),
+            uuid: item.head.id,
+            vendor: item.vendor.clone().map(|v| v.head.name),
+            versions: item.versions.iter().map(|v| v.version.clone()).collect(),
+        })
     }
 }
 
@@ -142,10 +165,7 @@ When the input is a partial name, the tool will provide a list of possible match
             .ok_or("Input should be a string")?
             .to_string();
 
-        // is it a CVE ID?
-        let mut result = "".to_string();
-
-        let vuln = match service
+        let item = match service
             .fetch_vulnerability(input.as_str(), Deprecation::Ignore, ())
             .await?
         {
@@ -164,21 +184,23 @@ When the input is a partial name, the tool will provide a list of possible match
                     )
                     .await?;
 
-                match results.items.len() {
-                    0 => return Err(anyhow!("I don't know").into()),
-                    1 => writeln!(result, "There is one advisory that matches:")?,
-                    _ => writeln!(result, "There are multiple advisories that match:")?,
+                if results.items.is_empty() {
+                    return Err(anyhow!("I don't know").into());
                 }
 
                 // let the caller know what the possible matches are
                 if results.items.len() > 1 {
-                    for item in results.items {
-                        writeln!(result, "* Identifier: {}", item.head.identifier)?;
-                        if let Some(v) = item.head.title {
-                            writeln!(result, "  Title: {}", v)?;
-                        }
+                    #[derive(Serialize)]
+                    struct Item {
+                        identifier: String,
+                        name: Option<String>,
                     }
-                    return Ok(result);
+
+                    let json = paginated_to_json(results, |item| Item {
+                        identifier: item.head.identifier.clone(),
+                        name: item.head.title.clone(),
+                    })?;
+                    return Ok(format!("There are multiple that match:\n\n{}", json));
                 }
 
                 // let's show the details for the one that matched.
@@ -197,36 +219,50 @@ When the input is a partial name, the tool will provide a list of possible match
             }
         };
 
-        writeln!(result, "But it had a different identifier.  Please inform the user that that you are providing information on vulnerability: {}\n", vuln.head.identifier)?;
-
-        if vuln.head.identifier != input {
-            writeln!(result, "Identifier: {}", vuln.head.identifier)?;
+        #[derive(Serialize)]
+        struct Item {
+            title: Option<String>,
+            description: Option<String>,
+            severity: Option<f64>,
+            score: Option<f64>,
+            #[serde(with = "time::serde::rfc3339::option")]
+            released: Option<OffsetDateTime>,
+            affected_packages: Vec<Package>,
+        }
+        #[derive(Serialize)]
+        struct Package {
+            name: Purl,
+            version: String,
         }
 
-        writeln!(result, "Identifier: {}", vuln.head.identifier)?;
-        if let Some(v) = vuln.head.title {
-            writeln!(result, "Title: {}", v)?;
-        }
-        if let Some(v) = vuln.head.description {
-            writeln!(result, "Description: {}", v)?;
-        }
-        if let Some(v) = vuln.average_score {
-            writeln!(result, "Severity: {}", v)?;
-            writeln!(result, "Score: {}", v)?;
-        }
-        if let Some(v) = vuln.head.released {
-            writeln!(result, "Released: {}", v)?;
-        }
+        let affected_packages = item
+            .advisories
+            .iter()
+            .flat_map(|v| {
+                v.purls
+                    .get("affected")
+                    .into_iter()
+                    .flatten()
+                    .map(|v| Package {
+                        name: v.base_purl.purl.clone(),
+                        version: v.version.clone(),
+                    })
+            })
+            .collect();
+        let json = to_json(&Item {
+            title: item.head.title.clone(),
+            description: item.head.description.clone(),
+            severity: item.average_score,
+            score: item.average_score,
+            released: item.head.released,
+            affected_packages,
+        })?;
 
-        writeln!(result, "Affected Packages:")?;
-        vuln.advisories.iter().for_each(|advisory| {
-            if let Some(v) = advisory.purls.get("affected") {
-                v.iter().for_each(|advisory| {
-                    _ = writeln!(result, "  * Name: {}", advisory.base_purl.purl);
-                    _ = writeln!(result, "    Version: {}", advisory.version);
-                });
-            }
-        });
+        let mut result = "".to_string();
+        if item.head.identifier != input {
+            writeln!(result, "There is one match, but it had a different identifier.  Inform the user that that you are providing information on: {}\n", item.head.identifier)?;
+        }
+        writeln!(result, "{}", json)?;
         Ok(result)
     }
 }
@@ -272,22 +308,23 @@ When the input is a partial name, the tool will provide a list of possible match
             )
             .await?;
 
-        let mut result = match results.items.len() {
-            0 => return Err(anyhow!("I don't know").into()),
-            1 => "There is one advisory that matches:\n",
-            _ => "There are multiple advisories that match:\n",
+        if results.items.is_empty() {
+            return Err(anyhow!("I don't know").into());
         }
-        .to_string();
 
         // let the caller know what the possible matches are
         if results.items.len() > 1 {
-            for item in results.items {
-                writeln!(result, "* Identifier: {}", item.head.identifier)?;
-                if let Some(v) = item.head.title {
-                    writeln!(result, "  Title: {}", v)?;
-                }
+            #[derive(Serialize)]
+            struct Item {
+                identifier: String,
+                title: Option<String>,
             }
-            return Ok(result);
+
+            let json = paginated_to_json(results, |item| Item {
+                identifier: item.head.identifier.clone(),
+                title: item.head.title.clone(),
+            })?;
+            return Ok(format!("There are multiple that match:\n\n{}", json));
         }
 
         // let's show the details
@@ -299,37 +336,46 @@ When the input is a partial name, the tool will provide a list of possible match
             None => return Err(anyhow!("I don't know").into()),
         };
 
-        let mut result = "".to_string();
-        writeln!(result, "UUID: {}", item.head.uuid)?;
-        writeln!(result, "Identifier: {}", item.head.identifier)?;
-        if let Some(v) = item.head.issuer {
-            writeln!(result, "Issuer: {}", v.head.name)?;
+        #[derive(Serialize)]
+        struct Item {
+            uuid: Uuid,
+            identifier: String,
+            issuer: Option<String>,
+            title: Option<String>,
+            score: Option<f64>,
+            severity: Option<String>,
+            vulnerabilities: Vec<Vulnerability>,
         }
-        if let Some(v) = item.head.title {
-            writeln!(result, "Title: {}", v)?;
-        }
-        if let Some(v) = item.average_score {
-            writeln!(result, "Score: {}", v)?;
-        }
-        if let Some(v) = item.average_severity {
-            writeln!(result, "Severity: {}", v)?;
+        #[derive(Serialize)]
+        struct Vulnerability {
+            identifier: String,
+            title: Option<String>,
+            description: Option<String>,
+            #[serde(with = "time::serde::rfc3339::option")]
+            released: Option<OffsetDateTime>,
         }
 
-        writeln!(result, "Vulnerabilities:")?;
-        item.vulnerabilities.iter().for_each(|v| {
-            let vuln = &v.head;
-            _ = writeln!(result, " * Identifier: {}", vuln.head.identifier);
-            if let Some(v) = &vuln.head.title {
-                _ = writeln!(result, "   Title: {}", v);
-            }
-            if let Some(v) = &vuln.head.description {
-                _ = writeln!(result, "   Description: {}", v);
-            }
-            if let Some(v) = &vuln.head.released {
-                _ = writeln!(result, "   Released: {}", v);
-            }
-        });
-        Ok(result)
+        let vulnerabilities = item
+            .vulnerabilities
+            .iter()
+            .map(|v| Vulnerability {
+                identifier: v.head.head.identifier.clone(),
+                title: v.head.head.title.clone(),
+                description: v.head.head.description.clone(),
+                released: v.head.head.released,
+            })
+            .collect();
+
+        to_json(&Item {
+            uuid: item.head.uuid,
+
+            identifier: item.head.identifier.clone(),
+            issuer: item.head.issuer.clone().map(|v| v.head.name),
+            title: item.head.title.clone(),
+            score: item.average_score,
+            severity: item.average_severity.map(|v| v.to_string()),
+            vulnerabilities,
+        })
     }
 }
 
@@ -395,16 +441,21 @@ The input should be the name of the package, it's Identifier uri or internal UUI
                         .await?
                 }
                 _ => {
-                    let mut result = "There are multiple packages that match:\n".to_string();
-                    for item in results.items {
-                        writeln!(result, " * Identifier: {}", item.head.purl)?;
-                        writeln!(result, "   UUID: {}", item.head.uuid)?;
-                        writeln!(result, "   Name: {}", item.head.purl.name)?;
-                        if let Some(v) = &item.head.purl.version {
-                            writeln!(result, "   Version: {}", v)?;
-                        }
+                    #[derive(Serialize)]
+                    struct Item {
+                        identifier: Purl,
+                        uuid: Uuid,
+                        name: String,
+                        version: Option<String>,
                     }
-                    return Ok(result);
+
+                    let json = paginated_to_json(results, |item| Item {
+                        identifier: item.head.purl.clone(),
+                        uuid: item.head.uuid,
+                        name: item.head.purl.name.clone(),
+                        version: item.head.purl.version.clone(),
+                    })?;
+                    return Ok(format!("There are multiple that match:\n\n{}", json));
                 }
             };
         }
@@ -414,50 +465,63 @@ The input should be the name of the package, it's Identifier uri or internal UUI
             None => return Err(anyhow!("I don't know").into()),
         };
 
-        let mut result = "There is one package that matches:\n".to_string();
-        writeln!(result, "Identifier: {}", item.head.purl)?;
-        writeln!(result, "UUID: {}", item.head.uuid)?;
-        writeln!(result, "Name: {}", item.head.purl.name)?;
-        if let Some(v) = &item.head.purl.version {
-            _ = writeln!(result, "Version: {}", v);
+        #[derive(Serialize)]
+        struct Item {
+            identifier: Purl,
+            uuid: Uuid,
+            name: String,
+            version: Option<String>,
+            advisories: Vec<Advisory>,
+            licenses: Vec<String>,
         }
 
-        if !item.advisories.is_empty() {
-            writeln!(result, "Advisories:")?;
-            item.advisories.iter().for_each(|advisory| {
-                _ = writeln!(result, " * UUID: {}", advisory.head.uuid);
-                _ = writeln!(result, "   Identifier: {}", advisory.head.identifier);
-                if let Some(v) = &advisory.head.issuer {
-                    _ = writeln!(result, "   Issuer: {}", v.head.name);
-                }
-                if !advisory.status.is_empty() {
-                    _ = writeln!(result, "   Vulnerabilities:");
-                    advisory.status.iter().for_each(|status| {
-                        _ = writeln!(
-                            result,
-                            "    * Identifier: {}",
-                            status.vulnerability.identifier
-                        );
-                        if let Some(v) = &status.vulnerability.title {
-                            _ = writeln!(result, "      Title: {}", v);
-                        }
-                        _ = writeln!(result, "      Status: {}", status.status);
-                        // if let Some(v) = &status.context {
-                        //     _ = writeln!(result, "      StatusContext: {}", v);
-                        // }
-                    });
-                }
-            });
+        #[derive(Serialize)]
+        struct Advisory {
+            uuid: Uuid,
+            identifier: String,
+            issuer: Option<String>,
+            vulnerabilities: Vec<Vulnerability>,
         }
-        if !item.licenses.is_empty() {
-            writeln!(result, "Licenses:")?;
-            item.licenses.iter().for_each(|license| {
-                license.licenses.iter().for_each(|license| {
-                    _ = writeln!(result, " * Name: {}", license);
+
+        #[derive(Serialize)]
+        struct Vulnerability {
+            identifier: String,
+            title: Option<String>,
+            status: String,
+        }
+
+        to_json(&Item {
+            identifier: item.head.purl.clone(),
+            uuid: item.head.uuid,
+            name: item.head.purl.name.clone(),
+            version: item.head.purl.version.clone(),
+
+            advisories: item
+                .advisories
+                .iter()
+                .map(|advisory| Advisory {
+                    uuid: advisory.head.uuid,
+                    identifier: advisory.head.identifier.clone(),
+                    issuer: advisory.head.issuer.clone().map(|v| v.head.name.clone()),
+                    vulnerabilities: advisory
+                        .status
+                        .iter()
+                        .map(|status| Vulnerability {
+                            identifier: status.vulnerability.identifier.clone(),
+                            title: status.vulnerability.title.clone(),
+                            status: status.status.clone(),
+                        })
+                        .collect(),
                 })
-            });
-        }
-        Ok(result)
+                .collect(),
+
+            licenses: item
+                .licenses
+                .iter()
+                .flat_map(|v| v.licenses.iter())
+                .cloned()
+                .collect(),
+        })
     }
 }
 
@@ -516,18 +580,26 @@ The input should be the SBOM Identifier.
                         .await?
                 }
                 _ => {
-                    let mut result = "There are multiple SBOMs that match:\n".to_string();
-                    for item in results.items {
-                        writeln!(result, " * UUID: {}", item.head.id)?;
-                        if let Some(v) = &item.source_document {
-                            writeln!(result, "   SHA256: {}", v.sha256)?;
-                        }
-                        writeln!(result, "   Name: {}", item.head.name)?;
-                        if let Some(v) = &item.head.published {
-                            writeln!(result, "   Published: {}", v)?;
-                        }
+                    #[derive(Serialize)]
+                    struct Item {
+                        uuid: Uuid,
+                        source_document_sha256: String,
+                        name: String,
+                        #[serde(with = "time::serde::rfc3339::option")]
+                        published: Option<OffsetDateTime>,
                     }
-                    return Ok(result);
+
+                    let json = paginated_to_json(results, |item| Item {
+                        uuid: item.head.id,
+                        source_document_sha256: item
+                            .source_document
+                            .as_ref()
+                            .map(|v| v.sha256.clone())
+                            .unwrap_or_default(),
+                        name: item.head.name.clone(),
+                        published: item.head.published,
+                    })?;
+                    return Ok(format!("There are multiple that match:\n\n{}", json));
                 }
             };
         }
@@ -537,41 +609,52 @@ The input should be the SBOM Identifier.
             None => return Err(anyhow!("I don't know").into()),
         };
 
-        let mut result = "There is one SBOM that matches:\n".to_string();
-
-        writeln!(result, " * UUID: {}", item.summary.head.id)?;
-        if let Some(v) = &item.summary.source_document {
-            writeln!(result, "   SHA256: {}", v.sha256)?;
-        }
-        writeln!(result, "   Name: {}", item.summary.head.name)?;
-        if let Some(v) = &item.summary.head.published {
-            writeln!(result, "   Published: {}", v)?;
-        }
-        if !item.summary.head.authors.is_empty() {
-            writeln!(result, "   Authors:")?;
-            item.summary.head.authors.iter().for_each(|author| {
-                _ = writeln!(result, "    * {}", author);
-            });
-        }
-        if !item.summary.head.labels.is_empty() {
-            writeln!(result, "   Labels:")?;
-            let mut labels = item.summary.head.labels.iter().collect_vec();
-            labels.sort_by(|a, b| a.0.cmp(b.0));
-            labels.iter().for_each(|(key, value)| {
-                _ = writeln!(result, "    * {}: {}", key, value);
-            });
+        #[derive(Serialize)]
+        struct Item {
+            uuid: Uuid,
+            source_document_sha256: String,
+            name: String,
+            #[serde(with = "time::serde::rfc3339::option")]
+            published: Option<OffsetDateTime>,
+            authors: Vec<String>,
+            labels: Vec<(String, String)>,
+            advisories: Vec<Advisory>,
         }
 
-        if !item.advisories.is_empty() {
-            writeln!(result, "   Advisories:")?;
-            item.advisories.iter().for_each(|advisory| {
-                _ = writeln!(result, "    * UUID: {}", advisory.head.uuid);
-                _ = writeln!(result, "      Identifier: {}", advisory.head.identifier);
-                if let Some(v) = &advisory.head.issuer {
-                    _ = writeln!(result, "      Issuer: {}", v.head.name);
-                }
-            });
+        #[derive(Serialize)]
+        struct Advisory {
+            uuid: Uuid,
+            identifier: String,
+            issuer: Option<String>,
         }
-        Ok(result)
+
+        let mut labels = item.summary.head.labels.iter().collect_vec();
+        labels.sort_by(|a, b| a.0.cmp(b.0));
+
+        to_json(&Item {
+            uuid: item.summary.head.id,
+            source_document_sha256: item
+                .summary
+                .source_document
+                .as_ref()
+                .map(|v| v.sha256.clone())
+                .unwrap_or_default(),
+            name: item.summary.head.name.clone(),
+            published: item.summary.head.published,
+            authors: item.summary.head.authors.clone(),
+            labels: labels
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect(),
+            advisories: item
+                .advisories
+                .iter()
+                .map(|advisory| Advisory {
+                    uuid: advisory.head.uuid,
+                    identifier: advisory.head.identifier.clone(),
+                    issuer: advisory.head.issuer.clone().map(|v| v.head.name.clone()),
+                })
+                .collect(),
+        })
     }
 }
