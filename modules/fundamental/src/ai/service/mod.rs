@@ -85,6 +85,14 @@ impl AiService {
     /// ```
     ///
     pub fn new(db: Database) -> Self {
+        let tools: Vec<Arc<dyn Tool>> = vec![
+            Arc::new(ToolLogger(ProductInfo(ProductService::new(db.clone())))),
+            Arc::new(ToolLogger(CVEInfo(VulnerabilityService::new(db.clone())))),
+            Arc::new(ToolLogger(AdvisoryInfo(AdvisoryService::new(db.clone())))),
+            Arc::new(ToolLogger(PackageInfo(PurlService::new(db.clone())))),
+            Arc::new(ToolLogger(SbomInfo(SbomService::new(db.clone())))),
+        ];
+
         let api_key = env::var("OPENAI_API_KEY");
         let api_key = match api_key {
             Ok(api_key) => api_key,
@@ -92,7 +100,7 @@ impl AiService {
                 return Self {
                     llm: None,
                     llm_info: None,
-                    tools: vec![],
+                    tools,
                 };
             }
         };
@@ -113,14 +121,6 @@ impl AiService {
             .with_model(model.clone())
             .with_options(CallOptions::default().with_seed(2000));
 
-        let tools: Vec<Arc<dyn Tool>> = vec![
-            Arc::new(ToolLogger(ProductInfo(ProductService::new(db.clone())))),
-            Arc::new(ToolLogger(CVEInfo(VulnerabilityService::new(db.clone())))),
-            Arc::new(ToolLogger(AdvisoryInfo(AdvisoryService::new(db.clone())))),
-            Arc::new(ToolLogger(PackageInfo(PurlService::new(db.clone())))),
-            Arc::new(ToolLogger(SbomInfo(SbomService::new(db.clone())))),
-        ];
-
         Self {
             llm: Some(llm),
             llm_info: Some(LLMInfo { api_base, model }),
@@ -128,7 +128,7 @@ impl AiService {
         }
     }
 
-    pub fn enabled(&self) -> bool {
+    pub fn completions_enabled(&self) -> bool {
         self.llm.is_some()
     }
 
