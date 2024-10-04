@@ -84,12 +84,89 @@ async fn tools(ctx: &TrustifyContext) -> anyhow::Result<()> {
     assert_eq!(
         result,
         json!([
-            {"name":"ProductInfo","description":"This tool can be used to get information about a product.\nThe input should be the name of the product to search for.\nWhen the input is a full name, the tool will provide information about the product.\nWhen the input is a partial name, the tool will provide a list of possible matches.","parameters":{"type":"object","properties":{"input":{"type":"string","description":"This tool can be used to get information about a product.\nThe input should be the name of the product to search for.\nWhen the input is a full name, the tool will provide information about the product.\nWhen the input is a partial name, the tool will provide a list of possible matches."}},"required":["input"]}},
-            {"name":"CVEInfo","description":"This tool can be used to get information about a Vulnerability.\nThe input should be the partial name of the Vulnerability to search for.\nWhen the input is a full CVE ID, the tool will provide information about the vulnerability.\nWhen the input is a partial name, the tool will provide a list of possible matches.","parameters":{"type":"object","properties":{"input":{"type":"string","description":"This tool can be used to get information about a Vulnerability.\nThe input should be the partial name of the Vulnerability to search for.\nWhen the input is a full CVE ID, the tool will provide information about the vulnerability.\nWhen the input is a partial name, the tool will provide a list of possible matches."}},"required":["input"]}},
-            {"name":"AdvisoryInfo","description":"This tool can be used to get information about an Advisory.\nThe input should be the name of the Advisory to search for.\nWhen the input is a full name, the tool will provide information about the Advisory.\nWhen the input is a partial name, the tool will provide a list of possible matches.","parameters":{"type":"object","properties":{"input":{"type":"string","description":"This tool can be used to get information about an Advisory.\nThe input should be the name of the Advisory to search for.\nWhen the input is a full name, the tool will provide information about the Advisory.\nWhen the input is a partial name, the tool will provide a list of possible matches."}},"required":["input"]}},
-            {"name":"PackageInfo","description":"This tool can be used to get information about a Package.\nThe input should be the name of the package, it's Identifier uri or internal UUID.","parameters":{"type":"object","properties":{"input":{"type":"string","description":"This tool can be used to get information about a Package.\nThe input should be the name of the package, it's Identifier uri or internal UUID."}},"required":["input"]}},
-            {"name":"SbomInfo","description":"This tool can be used to get information about an SBOM.\nThe input should be the SBOM Identifier.","parameters":{"type":"object","properties":{"input":{"type":"string","description":"This tool can be used to get information about an SBOM.\nThe input should be the SBOM Identifier."}},"required":["input"]}}
-        ])
+          {
+            "name": "product-info",
+            "description": "This tool can be used to get information about a product.\nThe input should be the name of the product to search for.\nWhen the input is a full name, the tool will provide information about the product.\nWhen the input is a partial name, the tool will provide a list of possible matches.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "input": {
+                  "type": "string",
+                  "description": "This tool can be used to get information about a product.\nThe input should be the name of the product to search for.\nWhen the input is a full name, the tool will provide information about the product.\nWhen the input is a partial name, the tool will provide a list of possible matches."
+                }
+              },
+              "required": [
+                "input"
+              ]
+            }
+          },
+          {
+            "name": "cve-info",
+            "description": "This tool can be used to get information about a Vulnerability.\nThe input should be the partial name of the Vulnerability to search for.\nWhen the input is a full CVE ID, the tool will provide information about the vulnerability.\nWhen the input is a partial name, the tool will provide a list of possible matches.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "input": {
+                  "type": "string",
+                  "description": "This tool can be used to get information about a Vulnerability.\nThe input should be the partial name of the Vulnerability to search for.\nWhen the input is a full CVE ID, the tool will provide information about the vulnerability.\nWhen the input is a partial name, the tool will provide a list of possible matches."
+                }
+              },
+              "required": [
+                "input"
+              ]
+            }
+          },
+          {
+            "name": "advisory-info",
+            "description": "This tool can be used to get information about an Advisory.\nThe input should be the name of the Advisory to search for.\nWhen the input is a full name, the tool will provide information about the Advisory.\nWhen the input is a partial name, the tool will provide a list of possible matches.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "input": {
+                  "type": "string",
+                  "description": "This tool can be used to get information about an Advisory.\nThe input should be the name of the Advisory to search for.\nWhen the input is a full name, the tool will provide information about the Advisory.\nWhen the input is a partial name, the tool will provide a list of possible matches."
+                }
+              },
+              "required": [
+                "input"
+              ]
+            }
+          },
+          {
+            "name": "package-info",
+            "description": "This tool can be used to get information about a Package.\nThe input should be the name of the package, it's Identifier uri or internal UUID.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "input": {
+                  "type": "string",
+                  "description": "This tool can be used to get information about a Package.\nThe input should be the name of the package, it's Identifier uri or internal UUID."
+                }
+              },
+              "required": [
+                "input"
+              ]
+            }
+          },
+          {
+            "name": "sbom-info",
+            "description": "This tool can be used to get information about an SBOM.\nThe input should be the SBOM Identifier.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "input": {
+                  "type": "string",
+                  "description": "This tool can be used to get information about an SBOM.\nThe input should be the SBOM Identifier."
+                }
+              },
+              "required": [
+                "input"
+              ]
+            }
+          }
+        ]),
+        "result:\n{}",
+        serde_json::to_string_pretty(&result)?
     );
 
     Ok(())
@@ -109,7 +186,15 @@ async fn tools_call(ctx: &TrustifyContext) -> anyhow::Result<()> {
     let app = caller(ctx).await?;
 
     let request = TestRequest::post()
-        .uri("/api/v1/ai/tools/ProductInfo")
+        .uri("/api/v1/ai/tools/unknown")
+        .set_json(json!("bad tool call"))
+        .to_request();
+
+    let response = app.call_service(request).await;
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    let request = TestRequest::post()
+        .uri("/api/v1/ai/tools/product-info")
         .set_json(json!("Trusted Profile Analyzer"))
         .to_request();
 
