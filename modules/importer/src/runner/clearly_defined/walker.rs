@@ -18,6 +18,7 @@ pub struct ClearlyDefinedWalker<P: Progress + Send + 'static> {
     progress_instance: Option<P::Instance>,
     report: Arc<Mutex<ReportBuilder>>,
     coordinates_seen_this_run: HashSet<String>,
+    client: reqwest::Client,
 }
 
 impl<P: Progress + Send + 'static> ClearlyDefinedWalker<P> {
@@ -35,6 +36,7 @@ impl<P: Progress + Send + 'static> ClearlyDefinedWalker<P> {
             progress_instance: None,
             report,
             coordinates_seen_this_run: Default::default(),
+            client: Default::default(),
         }
     }
 
@@ -44,7 +46,10 @@ impl<P: Progress + Send + 'static> ClearlyDefinedWalker<P> {
     }
 
     pub async fn run(mut self) -> Result<ClearlyDefinedItemContinuation, Error> {
-        let changes = reqwest::get(self.changes_index_url()).await?;
+        let changes = self
+            .client
+            .execute(self.client.get(self.changes_index_url()).build()?)
+            .await?;
 
         let changes = changes.bytes().await?;
 
@@ -76,7 +81,11 @@ impl<P: Progress + Send + 'static> ClearlyDefinedWalker<P> {
     pub async fn load_changes(&mut self, date: &str) -> Result<(), Error> {
         let changes_url = self.changes_url(date);
 
-        let changeset = reqwest::get(changes_url).await?;
+        let changeset = self
+            .client
+            .execute(self.client.get(changes_url).build()?)
+            .await?;
+
         let changeset = changeset.bytes().await?;
 
         for line in changeset.lines().map_while(Result::ok) {
@@ -93,7 +102,7 @@ impl<P: Progress + Send + 'static> ClearlyDefinedWalker<P> {
 
         let url = self.coordinate_url(coordinate);
 
-        let item = reqwest::get(url).await?;
+        let item = self.client.execute(self.client.get(url).build()?).await?;
 
         let content = item.bytes().await?;
         let mut body = Vec::new();
