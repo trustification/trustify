@@ -1,22 +1,14 @@
 pub mod tools;
 
-use crate::Error;
-
-use trustify_common::db::{Database, Transactional};
-
 use crate::ai::model::{ChatMessage, ChatState, LLMInfo, MessageType};
 
-use crate::ai::service::tools::{
-    AdvisoryInfo, CVEInfo, PackageInfo, ProductInfo, SbomInfo, ToolLogger,
-};
-use crate::product::service::ProductService;
-use crate::vulnerability::service::VulnerabilityService;
-
+use crate::Error;
 use base64::engine::general_purpose::STANDARD;
 use base64::engine::Engine as _;
 use langchain_rust::chain::options::ChainCallOptions;
 use langchain_rust::chain::Chain;
 use langchain_rust::language_models::options::CallOptions;
+use langchain_rust::schemas::{BaseMemory, Message};
 use langchain_rust::tools::OpenAIConfig;
 use langchain_rust::{
     agent::{AgentExecutor, OpenAiToolAgentBuilder},
@@ -25,14 +17,9 @@ use langchain_rust::{
     prompt_args,
     tools::Tool,
 };
-
 use std::env;
-
-use crate::advisory::service::AdvisoryService;
-use crate::purl::service::PurlService;
-use crate::sbom::service::SbomService;
-use langchain_rust::schemas::{BaseMemory, Message};
 use std::sync::Arc;
+use trustify_common::db::{Database, Transactional};
 
 pub const PREFIX: &str = include_str!("prefix.txt");
 
@@ -85,13 +72,7 @@ impl AiService {
     /// ```
     ///
     pub fn new(db: Database) -> Self {
-        let tools: Vec<Arc<dyn Tool>> = vec![
-            Arc::new(ToolLogger(ProductInfo(ProductService::new(db.clone())))),
-            Arc::new(ToolLogger(CVEInfo(VulnerabilityService::new(db.clone())))),
-            Arc::new(ToolLogger(AdvisoryInfo(AdvisoryService::new(db.clone())))),
-            Arc::new(ToolLogger(PackageInfo(PurlService::new(db.clone())))),
-            Arc::new(ToolLogger(SbomInfo(SbomService::new(db.clone())))),
-        ];
+        let tools = tools::new(db.clone());
 
         let api_key = env::var("OPENAI_API_KEY");
         let api_key = match api_key {
