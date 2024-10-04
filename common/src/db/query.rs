@@ -93,6 +93,7 @@ pub trait Filtering<T: EntityTrait> {
 impl<T: EntityTrait> Filtering<T> for Select<T> {
     fn filtering_with<C: IntoColumns>(self, search: Query, context: C) -> Result<Self, Error> {
         let Query { q, sort, .. } = &search;
+        log::debug!("filtering with: q='{q}' sort='{sort}'");
         let columns = context.columns();
 
         let mut result = if q.is_empty() {

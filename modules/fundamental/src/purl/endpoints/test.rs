@@ -293,7 +293,7 @@ async fn qualified_packages_filtering(ctx: &TrustifyContext) -> Result<(), anyho
     setup(&ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/purl?q=type=maven";
+    let uri = "/api/v1/purl?q=type%3Dmaven";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PaginatedPurlSummary = app.call_and_read_body_json(request).await;
 
