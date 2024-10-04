@@ -1467,7 +1467,7 @@ paths:
           nullable: true
       - name: id
         in: query
-        description: Find by a ID of a package
+        description: Find by an ID of a package
         required: false
         schema:
           type: string
