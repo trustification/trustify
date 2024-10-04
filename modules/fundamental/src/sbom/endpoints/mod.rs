@@ -11,11 +11,15 @@ use crate::{
     },
     Error::{self, Internal},
 };
-use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder};
+use actix_http::body::BoxBody;
+use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder, ResponseError};
 use config::Config;
 use futures_util::TryStreamExt;
 use sea_orm::prelude::Uuid;
-use std::str::FromStr;
+use std::{
+    fmt::{Display, Formatter},
+    str::FromStr,
+};
 use trustify_auth::{authenticator::user::UserInformation, authorizer::Authorizer, Permission};
 use trustify_common::{
     db::{query::Query, Database},
@@ -38,6 +42,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: us
         .app_data(web::Data::new(Config { upload_limit }))
         .service(all)
         .service(all_related)
+        .service(count_related)
         .service(get)
         .service(get_sbom_advisories)
         .service(delete)
@@ -117,14 +122,54 @@ pub async fn all(
     Ok(HttpResponse::Ok().json(result))
 }
 
-#[derive(Clone, Debug, serde::Deserialize, utoipa::IntoParams)]
+#[derive(Clone, Debug, serde::Deserialize, utoipa::IntoParams, utoipa::ToSchema)]
 struct AllRelatedQuery {
     /// Find by PURL
     #[serde(default)]
     pub purl: Option<Purl>,
-    /// Find by a ID of a package
+    /// Find by an ID of a package
     #[serde(default)]
     pub id: Option<Uuid>,
+}
+
+#[derive(Debug)]
+pub struct AllRelatedQueryParseError(AllRelatedQuery);
+
+impl Display for AllRelatedQueryParseError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Requires either `purl` or `id` (got - purl: {:?}, id: {:?})",
+            self.0.purl, self.0.id
+        )
+    }
+}
+
+impl ResponseError for AllRelatedQueryParseError {
+    fn error_response(&self) -> HttpResponse<BoxBody> {
+        HttpResponse::BadRequest().json(ErrorInformation {
+            error: "IdOrPurl".into(),
+            message: "Requires either `purl` or `id`".to_string(),
+            details: Some(format!(
+                "Received - PURL: {:?}, ID: {:?}",
+                self.0.purl, self.0.id
+            )),
+        })
+    }
+}
+
+impl TryFrom<AllRelatedQuery> for Uuid {
+    type Error = AllRelatedQueryParseError;
+
+    fn try_from(value: AllRelatedQuery) -> Result<Self, Self::Error> {
+        Ok(match (&value.purl, &value.id) {
+            (Some(purl), None) => purl.qualifier_uuid(),
+            (None, Some(id)) => *id,
+            _ => {
+                return Err(AllRelatedQueryParseError(value));
+            }
+        })
+    }
 }
 
 /// Find all SBOMs containing the provided package.
@@ -155,22 +200,43 @@ pub async fn all_related(
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadSbom)?;
 
-    let id = match (&all_related.purl, &all_related.id) {
-        (Some(purl), None) => purl.qualifier_uuid(),
-        (None, Some(id)) => *id,
-        _ => {
-            return Ok(HttpResponse::BadRequest().json(ErrorInformation {
-                error: "IdOrPurl".into(),
-                message: "Requires either `purl` or `id`".to_string(),
-                details: Some(format!(
-                    "Received - PURL: {:?}, ID: {:?}",
-                    all_related.purl, all_related.id
-                )),
-            }));
-        }
-    };
+    let id = all_related.try_into()?;
 
     let result = sbom.find_related_sboms(id, paginated, search, ()).await?;
+
+    Ok(HttpResponse::Ok().json(result))
+}
+
+/// Count all SBOMs containing the provided packages.
+///
+/// The packages can be provided either via a PURL or using the ID of a package as returned by
+/// other APIs, but not both.
+#[utoipa::path(
+    tag = "sbom",
+    operation_id = "countRelatedSboms",
+    context_path = "/api",
+    params(
+        AllRelatedQuery,
+    ),
+    responses(
+        (status = 200, description = "Number of matching SBOMs per package", body = Vec<i64>),
+    ),
+)]
+#[get("/v1/sbom/count-by-package")]
+pub async fn count_related(
+    sbom: web::Data<SbomService>,
+    web::Json(ids): web::Json<Vec<AllRelatedQuery>>,
+    authorizer: web::Data<Authorizer>,
+    user: UserInformation,
+) -> actix_web::Result<impl Responder> {
+    authorizer.require(&user, Permission::ReadSbom)?;
+
+    let ids = ids
+        .into_iter()
+        .map(Uuid::try_from)
+        .collect::<Result<Vec<_>, _>>()?;
+
+    let result = sbom.count_related_sboms(ids, ()).await?;
 
     Ok(HttpResponse::Ok().json(result))
 }
@@ -261,7 +327,7 @@ pub async fn delete(
             match rows_affected {
                 0 => Ok(HttpResponse::NotFound().finish()),
                 1 => {
-                    _ = purl_service.gc_purls(()).await; // ignore gc failure..
+                    let _ = purl_service.gc_purls(()).await; // ignore gc failure..
                     Ok(HttpResponse::Ok().json(v))
                 }
                 _ => Err(Internal("Unexpected number of rows affected".into()).into()),

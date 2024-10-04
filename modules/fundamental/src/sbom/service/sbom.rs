@@ -224,6 +224,44 @@ impl SbomService {
     }
 
     #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
+    pub async fn count_related_sboms(
+        &self,
+        qualified_package_ids: Vec<Uuid>,
+        tx: impl AsRef<Transactional>,
+    ) -> Result<Vec<i64>, Error> {
+        let db = self.db.connection(&tx);
+
+        let query = sbom::Entity::find()
+            .join(JoinType::Join, sbom::Relation::Packages.def())
+            .join(JoinType::Join, sbom_package::Relation::Purl.def())
+            .filter(
+                sbom_package_purl_ref::Column::QualifiedPurlId.is_in(qualified_package_ids.clone()),
+            )
+            .group_by(sbom_package_purl_ref::Column::QualifiedPurlId)
+            .select_only()
+            .column(sbom_package_purl_ref::Column::QualifiedPurlId)
+            .column_as(sbom_package::Column::SbomId.count(), "count")
+            .into_tuple::<(Uuid, i64)>()
+            .all(&db)
+            .await?;
+
+        // turn result into a map
+
+        let counts_map = query.into_iter().collect::<HashMap<_, _>>();
+
+        // now use the inbound order and retrieve results in that order
+
+        let result: Vec<i64> = qualified_package_ids
+            .into_iter()
+            .map(|id| counts_map.get(&id).copied().unwrap_or_default())
+            .collect();
+
+        // return result
+
+        Ok(result)
+    }
+
+    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
     pub async fn find_related_sboms(
         &self,
         qualified_package_id: Uuid,
