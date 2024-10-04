@@ -399,6 +399,7 @@ dependencies = [
  "cfg-if",
  "getrandom",
  "once_cell",
+ "serde",
  "version_check",
  "zerocopy",
 ]
@@ -1183,6 +1184,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "bytecount"
+version = "0.6.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ce89b21cab1437276d2650d57e971f9d548a2d9037cc231abdc0562b97498ce"
+
+[[package]]
 name = "byteorder"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1865,6 +1872,31 @@ dependencies = [
 
 [[package]]
 name = "cyclonedx-bom"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4a114dd99ed051f1481d8d35acd455f77469f026b783fe08074763fdf1701506"
+dependencies = [
+ "base64 0.21.7",
+ "cyclonedx-bom-macros",
+ "fluent-uri 0.1.4",
+ "indexmap 2.6.0",
+ "jsonschema",
+ "once_cell",
+ "ordered-float 4.3.0",
+ "packageurl",
+ "regex",
+ "serde",
+ "serde_json",
+ "spdx",
+ "strum 0.26.3",
+ "thiserror",
+ "time",
+ "uuid",
+ "xml-rs",
+]
+
+[[package]]
+name = "cyclonedx-bom"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fa4bc2b1186cf894ec0192863b5d6e6164de1a39ab66d2a281a4157b4ea45138"
@@ -2354,6 +2386,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4f2c92ceda6ceec50f43169f9ee8424fe2db276791afde7b2cd8bc084cb376ab"
 dependencies = [
  "log",
+ "regex",
 ]
 
 [[package]]
@@ -2365,6 +2398,7 @@ dependencies = [
  "anstream",
  "anstyle",
  "env_filter",
+ "humantime",
  "log",
 ]
 
@@ -2431,6 +2465,16 @@ dependencies = [
  "futures-core",
  "nom",
  "pin-project-lite",
+]
+
+[[package]]
+name = "fancy-regex"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b95f7c0680e4142284cf8b22c14a476e87d61b004a3a0861872b32ef7ead40a2"
+dependencies = [
+ "bit-set",
+ "regex",
 ]
 
 [[package]]
@@ -2580,6 +2624,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e13624c2627564efccf4934284bdd98cbaa14e79b0b5a141218e507b3a823456"
 dependencies = [
  "percent-encoding",
+]
+
+[[package]]
+name = "fraction"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3027ae1df8d41b4bed2241c8fdad4acc1e7af60c8e17743534b545e77182d678"
+dependencies = [
+ "lazy_static",
+ "num",
 ]
 
 [[package]]
@@ -3674,6 +3728,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 
 [[package]]
+name = "iso8601"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "924e5d73ea28f59011fec52a0d12185d496a9b075d360657aed2a5707f701153"
+dependencies = [
+ "nom",
+]
+
+[[package]]
 name = "itertools"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3763,6 +3826,34 @@ dependencies = [
  "regex",
  "serde_json",
  "thiserror",
+]
+
+[[package]]
+name = "jsonschema"
+version = "0.17.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a071f4f7efc9a9118dfb627a0a94ef247986e1ab8606a4c806ae2b3aa3b6978"
+dependencies = [
+ "ahash 0.8.11",
+ "anyhow",
+ "base64 0.21.7",
+ "bytecount",
+ "fancy-regex 0.11.0",
+ "fraction",
+ "getrandom",
+ "iso8601",
+ "itoa",
+ "memchr",
+ "num-cmp",
+ "once_cell",
+ "parking_lot 0.12.3",
+ "percent-encoding",
+ "regex",
+ "serde",
+ "serde_json",
+ "time",
+ "url",
+ "uuid",
 ]
 
 [[package]]
@@ -4398,6 +4489,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "num"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35bd024e8b2ff75562e5f34e7f4905839deb4b22955ef5e73d2fea1b9813cb23"
+dependencies = [
+ "num-bigint",
+ "num-complex",
+ "num-integer",
+ "num-iter",
+ "num-rational",
+ "num-traits",
+]
+
+[[package]]
 name = "num-bigint"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4422,6 +4527,21 @@ dependencies = [
  "rand",
  "smallvec",
  "zeroize",
+]
+
+[[package]]
+name = "num-cmp"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63335b2e2c34fae2fb0aa2cecfd9f0832a1e24b3b32ecec612c3426d46dc8aaa"
+
+[[package]]
+name = "num-complex"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73f88a1307638156682bada9d7604135552957b7818057dcef22705b4d509495"
+dependencies = [
+ "num-traits",
 ]
 
 [[package]]
@@ -4456,6 +4576,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1429034a0490724d0075ebb2bc9e875d6503c3cf69e235a8941aa757d83ef5bf"
 dependencies = [
  "autocfg",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
+name = "num-rational"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f83d14da390562dca69fc84082e73e548e1ad308d24accdedd2720017cb37824"
+dependencies = [
+ "num-bigint",
  "num-integer",
  "num-traits",
 ]
@@ -6418,7 +6549,7 @@ dependencies = [
  "bytes",
  "chrono",
  "csv",
- "cyclonedx-bom",
+ "cyclonedx-bom 0.7.0",
  "digest",
  "filetime",
  "fluent-uri 0.2.0",
@@ -6438,6 +6569,27 @@ dependencies = [
  "tokio",
  "url",
  "walker-common",
+]
+
+[[package]]
+name = "sbomsleuth"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9bdf732fb14c2e4914aaa154b909968c3beabb4dccd005e09dfab8e06a9617a"
+dependencies = [
+ "anyhow",
+ "colored",
+ "cyclonedx-bom 0.6.2",
+ "env_logger",
+ "log",
+ "reqwest 0.12.8",
+ "sbom-walker",
+ "serde",
+ "serde_json",
+ "spdx-rs",
+ "tokio",
+ "walker-common",
+ "walker-extras",
 ]
 
 [[package]]
@@ -7955,7 +8107,7 @@ dependencies = [
  "anyhow",
  "base64 0.21.7",
  "bstr",
- "fancy-regex",
+ "fancy-regex 0.12.0",
  "lazy_static",
  "parking_lot 0.12.3",
  "rustc-hash 1.1.0",
@@ -8490,7 +8642,7 @@ dependencies = [
  "chrono",
  "criterion",
  "csaf",
- "cyclonedx-bom",
+ "cyclonedx-bom 0.7.0",
  "hex",
  "humantime",
  "jsonpath-rust",
@@ -8535,7 +8687,7 @@ dependencies = [
  "criterion",
  "csaf",
  "cve",
- "cyclonedx-bom",
+ "cyclonedx-bom 0.7.0",
  "futures-util",
  "hex",
  "humantime",
@@ -8660,7 +8812,7 @@ dependencies = [
  "cpe",
  "csaf",
  "cve",
- "cyclonedx-bom",
+ "cyclonedx-bom 0.7.0",
  "hex",
  "humantime",
  "jsn",
@@ -8675,6 +8827,7 @@ dependencies = [
  "roxmltree",
  "rstest",
  "sbom-walker",
+ "sbomsleuth",
  "sea-orm",
  "sea-query",
  "semver",
@@ -9221,6 +9374,7 @@ dependencies = [
  "bytes",
  "bzip2",
  "chrono",
+ "clap",
  "csv",
  "digest",
  "filetime",
@@ -9248,6 +9402,26 @@ dependencies = [
  "url",
  "walkdir",
  "xattr",
+]
+
+[[package]]
+name = "walker-extras"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "451ae6af73f431c5c002d8961ad9b28eaf8411f983b32cf3eceb67022cf8b15f"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bytes",
+ "clap",
+ "csaf-walker",
+ "humantime",
+ "log",
+ "reqwest 0.12.8",
+ "sbom-walker",
+ "thiserror",
+ "tokio",
+ "walker-common",
 ]
 
 [[package]]

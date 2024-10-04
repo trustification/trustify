@@ -21,6 +21,7 @@ use crate::{
 use cpe::uri::OwnedUri;
 use entity::{product, product_version};
 use hex::ToHex;
+use sbomsleuth::report::Report;
 use sea_orm::{
     prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, ModelTrait, QueryFilter,
     QuerySelect, QueryTrait, RelationTrait, Select, SelectColumns, Set,
@@ -28,6 +29,7 @@ use sea_orm::{
 use sea_query::{
     extension::postgres::PgExpr, Alias, Condition, Expr, Func, JoinType, Query, SimpleExpr,
 };
+use serde_json::json;
 use std::{
     fmt::{Debug, Formatter},
     iter,
@@ -97,6 +99,70 @@ impl Graph {
     }
 
     #[instrument(skip(tx, info), err(level=tracing::Level::INFO))]
+    pub async fn ingest_sbom_with_report<TX: AsRef<Transactional>>(
+        &self,
+        report: &Report,
+        labels: impl Into<Labels> + Debug,
+        digests: &Digests,
+        document_id: &str,
+        info: impl Into<SbomInformation>,
+        tx: TX,
+    ) -> Result<SbomContext, Error> {
+        let sha256 = digests.sha256.encode_hex::<String>();
+
+        if let Some(found) = self.get_sbom_by_digest(&sha256, &tx).await? {
+            return Ok(found);
+        }
+
+        let SbomInformation {
+            node_id,
+            name,
+            published,
+            authors,
+        } = info.into();
+
+        let connection = self.db.connection(&tx);
+
+        let sbom_id = Uuid::now_v7();
+
+        let meta_string = serde_json::to_string(report)?;
+        let meta_value: serde_json::Value = meta_string.parse()?;
+        let doc_model = source_document::ActiveModel {
+            id: Default::default(),
+            sha256: Set(sha256),
+            sha384: Set(digests.sha384.encode_hex()),
+            sha512: Set(digests.sha512.encode_hex()),
+            meta: Set(meta_value),
+        };
+
+        let doc = doc_model.insert(&connection).await?;
+
+        let model = sbom::ActiveModel {
+            sbom_id: Set(sbom_id),
+            node_id: Set(node_id.clone()),
+
+            document_id: Set(document_id.to_string()),
+
+            published: Set(published),
+            authors: Set(authors),
+
+            source_document_id: Set(Some(doc.id)),
+            labels: Set(labels.into()),
+        };
+
+        let node_model = sbom_node::ActiveModel {
+            sbom_id: Set(sbom_id),
+            node_id: Set(node_id),
+            name: Set(name),
+        };
+
+        let result = model.insert(&connection).await?;
+        node_model.insert(&connection).await?;
+
+        Ok(SbomContext::new(self, result))
+    }
+
+    #[instrument(skip(tx, info), err(level=tracing::Level::INFO))]
     pub async fn ingest_sbom<TX: AsRef<Transactional>>(
         &self,
         labels: impl Into<Labels> + Debug,
@@ -127,6 +193,7 @@ impl Graph {
             sha256: Set(sha256),
             sha384: Set(digests.sha384.encode_hex()),
             sha512: Set(digests.sha512.encode_hex()),
+            meta: Set(json!({})), // Set to an empty JSON object
         };
 
         let doc = doc_model.insert(&connection).await?;

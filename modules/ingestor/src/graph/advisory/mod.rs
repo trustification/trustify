@@ -11,6 +11,7 @@ use sea_orm::{
 };
 use sea_query::{Condition, JoinType, OnConflict};
 use semver::Version;
+use serde_json::json;
 use std::fmt::{Debug, Formatter};
 use time::OffsetDateTime;
 use tracing::instrument;
@@ -141,6 +142,7 @@ impl Graph {
             sha256: Set(sha256),
             sha384: Set(digests.sha384.encode_hex()),
             sha512: Set(digests.sha512.encode_hex()),
+            meta: Set(json!({})), // no sbom to report on
         };
 
         let doc = doc_model.insert(&self.connection(&tx)).await?;
