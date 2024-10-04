@@ -162,8 +162,7 @@ impl<'a> StatusCreator<'a> {
             }
 
             for purl in &product.packages {
-                let mut purl = purl.clone();
-                purl.qualifiers.clear();
+                let purl = purl.clone();
 
                 // Ingest purl status
                 let info = match purl.version.clone() {
