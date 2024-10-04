@@ -4,7 +4,7 @@ info:
   description: Software Supply-Chain Security API
   license:
     name: Apache-2.0
-  version: 0.1.0-alpha.18
+  version: 0.1.0-alpha.19
 paths:
   /.well-known/trustify:
     get:
