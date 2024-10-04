@@ -113,13 +113,10 @@ async fn change_ps_list_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
     );
     assert_eq!(purl.version.version, "1.76.0-4.redhat_00001.1.el9eap");
 
-    // FIXME(#879): I'd expect the qualifiers to be present, but they aren't.
-    /*
     assert_eq!(
         purl.qualifiers.clone().into_iter().collect::<Vec<_>>(),
         vec![("arch".to_string(), "noarch".to_string())]
     );
-    */
 
     // get vuln by purl
 
@@ -204,13 +201,10 @@ async fn change_ps_list_vulns_all(ctx: &TrustifyContext) -> anyhow::Result<()> {
     );
     assert_eq!(purl.version.version, "1.76.0-4.redhat_00001.1.el9eap");
 
-    // FIXME(#879): I'd expect the qualifiers to be present, but they aren't.
-    /*
     assert_eq!(
         purl.qualifiers.clone().into_iter().collect::<Vec<_>>(),
         vec![("arch".to_string(), "noarch".to_string())]
     );
-    */
 
     // get vuln by purl
 
