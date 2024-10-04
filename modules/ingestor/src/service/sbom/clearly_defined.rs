@@ -41,8 +41,6 @@ impl<'g> ClearlyDefinedLoader<'g> {
             });
         }
 
-        println!("{:#?}", item);
-
         let id_path = JsonPath::from_str("$._id")?;
         let license_path = JsonPath::from_str("$.licensed.declared")?;
 
