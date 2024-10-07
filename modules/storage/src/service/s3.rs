@@ -1,10 +1,11 @@
-use crate::service::temp::TempFile;
-use crate::service::{StorageBackend, StorageKey, StorageResult, StoreError};
+use crate::{
+    config::S3Config,
+    service::{temp::TempFile, StorageBackend, StorageKey, StorageResult, StoreError},
+};
 use bytes::Bytes;
 use futures::Stream;
 use s3::{creds::Credentials, error::S3Error, Bucket};
 use std::{fmt::Debug, pin::pin};
-use trustify_common::config::S3Config;
 
 #[derive(Clone, Debug)]
 pub struct S3Backend {

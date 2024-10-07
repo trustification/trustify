@@ -38,6 +38,7 @@ actix-web-opentelemetry = "0.19"
 actix-web-prom = "0.8.0"
 actix-web-static-files = "4.0.1"
 anyhow = "1.0.72"
+async-compression = "0.4.13"
 async-graphql = "7.0.5"
 async-graphql-actix-web = "7.0.5"
 async-std = "1"
@@ -90,7 +91,6 @@ opentelemetry = "0.24"
 # Note: This uses OTEL 0.24 https://crates.io/crates/opentelemetry-otlp/0.17.0/dependencies
 opentelemetry-otlp = "0.17"
 opentelemetry_sdk = "0.24"
-
 osv = { version = "0.2.0", default-features = false }
 packageurl = "0.3.0"
 parking_lot = "0.12"

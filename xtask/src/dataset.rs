@@ -14,6 +14,7 @@ use trustify_module_importer::{
     },
 };
 use trustify_module_storage::service::fs::FileSystemBackend;
+use trustify_module_storage::service::Compression;
 
 #[derive(Debug, Parser)]
 pub struct GenerateDump {
@@ -87,7 +88,10 @@ impl GenerateDump {
         };
 
         let (storage, _tmp) = match &self.working_dir {
-            Some(wd) => (FileSystemBackend::new(wd.join("storage")).await?, None),
+            Some(wd) => (
+                FileSystemBackend::new(wd.join("storage"), Compression::Zstd).await?,
+                None,
+            ),
             None => {
                 let (storage, tmp) = FileSystemBackend::for_test().await?;
                 (storage, Some(tmp))

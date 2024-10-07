@@ -1,4 +1,7 @@
-use crate::service::{StorageBackend, StorageKey, StorageResult, StoreError};
+use super::temp::TempFile;
+use crate::service::{
+    compression::Compression, StorageBackend, StorageKey, StorageResult, StoreError,
+};
 use anyhow::Context;
 use bytes::Bytes;
 use futures::Stream;
@@ -8,14 +11,13 @@ use std::{
     path::{Path, PathBuf},
     pin::pin,
 };
+use strum::IntoEnumIterator;
 use tempfile::{tempdir, TempDir};
 use tokio::{
     fs::{create_dir_all, File},
-    io::AsyncWriteExt,
+    io::{AsyncWriteExt, BufReader},
 };
 use tokio_util::io::ReaderStream;
-
-use super::temp::TempFile;
 
 /// A filesystem backed store
 ///
@@ -42,12 +44,16 @@ use super::temp::TempFile;
 #[derive(Clone, Debug)]
 pub struct FileSystemBackend {
     content: PathBuf,
+    /// The compression algorithm to create new files with
+    write_compression: Compression,
+    /// The compression algorithm to detect files for
+    read_compressions: Vec<Compression>,
 }
 
 const NUM_LEVELS: usize = 2;
 
 impl FileSystemBackend {
-    pub async fn new(base: impl Into<PathBuf>) -> anyhow::Result<Self> {
+    pub async fn new(base: impl Into<PathBuf>, compression: Compression) -> anyhow::Result<Self> {
         let base = base.into();
         let content = base.join("content");
 
@@ -67,14 +73,26 @@ impl FileSystemBackend {
                 )
             })?;
 
-        Ok(Self { content })
+        // For the read compressions, we put the write format first, as the assumption is, that it
+        // is the one being used, and so we try it first. Afterward, all others.
+
+        let mut read_compressions = vec![compression];
+        read_compressions.extend(Compression::iter().filter(|c| c != &compression));
+
+        Ok(Self {
+            content,
+            write_compression: compression,
+            read_compressions,
+        })
     }
 
     /// Create a new storage for testing
     pub async fn for_test() -> anyhow::Result<(Self, TempDir)> {
         let dir = tempdir()?;
 
-        Self::new(dir.path()).await.map(|result| (result, dir))
+        Self::new(dir.path(), Compression::None)
+            .await
+            .map(|result| (result, dir))
     }
 }
 
@@ -88,7 +106,7 @@ impl StorageBackend for FileSystemBackend {
     {
         let stream = pin!(stream);
         let mut file = TempFile::new(stream).await.map_err(StoreError::Backend)?;
-        let mut source = file.reader().await.map_err(StoreError::Backend)?;
+        let mut source = BufReader::new(file.reader().await.map_err(StoreError::Backend)?);
 
         let result = file.result();
         let key = result.key().to_string();
@@ -97,10 +115,12 @@ impl StorageBackend for FileSystemBackend {
 
         let target = level_dir(&self.content, &key, NUM_LEVELS);
         create_dir_all(&target).await.map_err(StoreError::Backend)?;
-        let target = target.join(&key);
+        let mut target = target.join(&key);
+        target.set_extension(self.write_compression.extension());
 
         let mut target = File::create(target).await.map_err(StoreError::Backend)?;
-        tokio::io::copy(&mut source, &mut target)
+        self.write_compression
+            .write(&mut source, &mut target)
             .await
             .map_err(StoreError::Backend)?;
 
@@ -123,19 +143,24 @@ impl StorageBackend for FileSystemBackend {
         &self,
         StorageKey(hash): StorageKey,
     ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>> + 'a>, Self::Error> {
-        let target = level_dir(&self.content, &hash, NUM_LEVELS);
-        create_dir_all(&target).await?;
-        let target = target.join(hash);
+        // try all compression types, return the first one we find
+        for compression in &self.read_compressions {
+            let target = level_dir(&self.content, &hash, NUM_LEVELS);
+            let mut target = target.join(&hash);
+            target.set_extension(compression.extension());
 
-        log::debug!("Opening file: {}", target.display());
+            log::debug!("Opening file: {}", target.display());
 
-        let file = match File::open(&target).await {
-            Ok(file) => Some(file),
-            Err(err) if err.kind() == ErrorKind::NotFound => None,
-            Err(err) => return Err(err),
-        };
+            let file = match File::open(&target).await {
+                Ok(file) => Some(file),
+                Err(err) if err.kind() == ErrorKind::NotFound => continue,
+                Err(err) => return Err(err),
+            };
 
-        Ok(file.map(ReaderStream::new))
+            return Ok(file.map(|r| ReaderStream::new(compression.reader(r))));
+        }
+
+        Ok(None)
     }
 }
 
@@ -160,13 +185,17 @@ fn level_dir(base: impl AsRef<Path>, hash: &str, levels: usize) -> PathBuf {
 #[cfg(test)]
 mod test {
     use super::*;
+    use bytes::BytesMut;
+    use futures::StreamExt;
+    use rstest::rstest;
     use sha2::{Digest, Sha256};
     use tempfile::tempdir;
     use test_log::test;
+    use trustify_common::id::Id;
 
     #[test]
     fn test_level_dir() {
-        assert_eq!(level_dir("/", "1234567890", 2), Path::new("/12/34"));
+        assert_eq!(level_dir("/", "1234567890", 2,), Path::new("/12/34"));
     }
 
     #[test(tokio::test)]
@@ -174,7 +203,9 @@ mod test {
         const DIGEST: &str = "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e";
 
         let dir = tempdir().unwrap();
-        let backend = FileSystemBackend::new(dir.path()).await.unwrap();
+        let backend = FileSystemBackend::new(dir.path(), Compression::None)
+            .await
+            .unwrap();
 
         let digest = backend
             .store(ReaderStream::new(&b"Hello World"[..]))
@@ -193,6 +224,99 @@ mod test {
         assert!(target.exists());
         let data = std::fs::read(target).unwrap();
         assert_eq!(hex::encode(Sha256::digest(data)), DIGEST);
+
+        drop(backend);
+    }
+
+    #[test(tokio::test)]
+    #[rstest]
+    #[case(Compression::None)]
+    #[case(Compression::Zstd)]
+    async fn test_store_and_read(#[case] compression: Compression) {
+        const DIGEST: &str = "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e";
+
+        let dir = tempdir().unwrap();
+        let backend = FileSystemBackend::new(dir.path(), compression)
+            .await
+            .unwrap();
+
+        let digest = backend
+            .store(ReaderStream::new(&b"Hello World"[..]))
+            .await
+            .expect("store must succeed");
+
+        assert_eq!(digest.key().to_string(), DIGEST);
+
+        let mut stream = backend
+            .retrieve(digest.key())
+            .await
+            .expect("retrieve must succeed")
+            .expect("must be found");
+
+        let mut content = BytesMut::new();
+        while let Some(data) = stream.next().await {
+            content.extend(&data.expect("read must succeed"));
+        }
+
+        assert_eq!(content.as_ref(), b"Hello World");
+
+        drop(backend);
+    }
+
+    /// This test should ensure that we can also read compression algorithm other than the
+    /// configured write format.
+    #[test(tokio::test)]
+    async fn test_store_and_read_dff() {
+        const DIGEST: &str = "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e";
+
+        let dir = tempdir().unwrap();
+        let backend = FileSystemBackend::new(dir.path(), Compression::Zstd)
+            .await
+            .unwrap();
+
+        let digest = backend
+            .store(ReaderStream::new(&b"Hello World"[..]))
+            .await
+            .expect("store must succeed");
+
+        assert_eq!(digest.key().to_string(), DIGEST);
+
+        let backend = FileSystemBackend::new(dir.path(), Compression::None)
+            .await
+            .unwrap();
+
+        let mut stream = backend
+            .retrieve(digest.key())
+            .await
+            .expect("retrieve must succeed")
+            .expect("must be found");
+
+        let mut content = BytesMut::new();
+        while let Some(data) = stream.next().await {
+            content.extend(&data.expect("read must succeed"));
+        }
+
+        assert_eq!(content.as_ref(), b"Hello World");
+
+        drop(backend);
+    }
+
+    /// Ensure retrieving the information that the file does not exist works.
+    #[test(tokio::test)]
+    async fn test_read_not_found() {
+        const DIGEST: &str = "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e";
+
+        let dir = tempdir().unwrap();
+        let backend = FileSystemBackend::new(dir.path(), Compression::None)
+            .await
+            .unwrap();
+
+        let stream = backend
+            .retrieve(StorageKey::try_from(Id::Sha256(DIGEST.to_string())).unwrap())
+            .await
+            .expect("retrieve must succeed");
+
+        assert!(stream.is_none());
 
         drop(backend);
     }

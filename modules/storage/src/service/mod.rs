@@ -1,7 +1,11 @@
 pub mod dispatch;
 pub mod fs;
 pub mod s3;
+
+mod compression;
 mod temp;
+
+pub use compression::Compression;
 
 use crate::service::fs::FileSystemBackend;
 use bytes::Bytes;
