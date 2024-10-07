@@ -3,7 +3,8 @@ use test_context::test_context;
 use test_log::test;
 use trustify_common::purl::Purl;
 use trustify_module_fundamental::{
-    purl::service::PurlService, vulnerability::service::VulnerabilityService,
+    purl::{model::details::purl::PurlStatus, service::PurlService},
+    vulnerability::{model::VulnerabilityHead, service::VulnerabilityService},
 };
 use trustify_module_ingestor::common::Deprecation;
 use trustify_test_context::TrustifyContext;
@@ -72,7 +73,7 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let service = PurlService::new(ctx.db.clone());
     let purls = service
-        .base_purls(Default::default(), Default::default(), ())
+        .purls(Default::default(), Default::default(), ())
         .await?;
 
     println!("PURLs: {purls:#?}");
@@ -80,7 +81,9 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
     let purl = purls
         .items
         .iter()
-        .find(|purl| purl.head.purl.name == "commonmark")
+        .find(|purl| {
+            purl.head.purl.name == "commonmark" || purl.head.purl.version.as_deref() == Some("1.0")
+        })
         .expect("must find one");
 
     assert_eq!(
@@ -89,12 +92,69 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
             ty: "cran".to_string(),
             namespace: None,
             name: "commonmark".to_string(),
-            version: None,
+            version: Some("1.0".to_string()),
             qualifiers: Default::default(),
         }
     );
 
-    // TODO: check status via purl version ranges
+    // get vuln by purl
+
+    let mut purl = service
+        .purl_by_uuid(&purl.head.uuid, Deprecation::Consider, ())
+        .await?
+        .expect("must find something");
+
+    // must be 2, as we consider deprecated ones too
+
+    assert_eq!(purl.advisories.len(), 2);
+    purl.advisories
+        .sort_unstable_by(|a, b| a.head.modified.cmp(&b.head.modified));
+    let adv1 = &purl.advisories[0];
+    let adv2 = &purl.advisories[1];
+
+    assert_eq!(adv1.head.identifier, "RSEC-2023-6");
+    assert_eq!(adv2.head.identifier, "RSEC-2023-6");
+
+    // now check the details
+
+    assert_eq!(
+        adv1.status,
+        vec![PurlStatus {
+            vulnerability: VulnerabilityHead {
+                normative: true,
+                identifier: "CVE-2020-5238".to_string(),
+                title: None,
+                description: None,
+                published: None,
+                modified: None,
+                withdrawn: None,
+                discovered: None,
+                released: None,
+                cwes: vec![],
+            },
+            status: "affected".to_string(),
+            context: None,
+        }]
+    );
+    assert_eq!(
+        adv2.status,
+        vec![PurlStatus {
+            vulnerability: VulnerabilityHead {
+                normative: true,
+                identifier: "CVE-2020-5238".to_string(),
+                title: None,
+                description: None,
+                published: None,
+                modified: None,
+                withdrawn: None,
+                discovered: None,
+                released: None,
+                cwes: vec![],
+            },
+            status: "affected".to_string(),
+            context: None,
+        }]
+    );
 
     // done
 
