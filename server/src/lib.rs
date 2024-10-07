@@ -32,11 +32,7 @@ use trustify_auth::{
     devmode::{FRONTEND_CLIENT_ID, ISSUER_URL, PUBLIC_CLIENT_IDS},
     swagger_ui::{swagger_ui_with_auth, SwaggerUiOidc, SwaggerUiOidcConfig},
 };
-use trustify_common::{
-    config::{Database, StorageConfig, StorageStrategy},
-    db,
-    model::BinaryByteSize,
-};
+use trustify_common::{config::Database, db, model::BinaryByteSize};
 use trustify_infrastructure::{
     app::{
         http::{HttpServerBuilder, HttpServerConfig},
@@ -50,8 +46,9 @@ use trustify_infrastructure::{
 use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
-use trustify_module_storage::service::{
-    dispatch::DispatchBackend, fs::FileSystemBackend, s3::S3Backend,
+use trustify_module_storage::{
+    config::{StorageConfig, StorageStrategy},
+    service::{dispatch::DispatchBackend, fs::FileSystemBackend, s3::S3Backend},
 };
 use trustify_module_ui::{endpoints::UiResources, UI};
 use utoipa::OpenApi;
@@ -271,7 +268,9 @@ impl InitData {
                         run.storage.fs_path
                     ))?;
                 }
-                DispatchBackend::Filesystem(FileSystemBackend::new(storage).await?)
+                DispatchBackend::Filesystem(
+                    FileSystemBackend::new(storage, run.storage.compression).await?,
+                )
             }
             StorageStrategy::S3 => {
                 DispatchBackend::S3(S3Backend::new(run.storage.s3_config).await?)

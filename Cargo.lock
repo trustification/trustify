@@ -574,6 +574,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-compression"
+version = "0.4.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7e614738943d3f68c628ae3dbce7c3daffb196665f82f8c8ea6b65de73c79429"
+dependencies = [
+ "futures-core",
+ "memchr",
+ "pin-project-lite",
+ "tokio",
+ "zstd",
+ "zstd-safe",
+]
+
+[[package]]
 name = "async-convert"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8709,13 +8723,17 @@ name = "trustify-module-storage"
 version = "0.1.0-alpha.19"
 dependencies = [
  "anyhow",
+ "async-compression",
  "bytes",
+ "clap",
  "futures",
  "hex",
  "log",
+ "rstest",
  "rust-s3",
  "serde_json",
  "sha2",
+ "strum 0.26.3",
  "tempfile",
  "test-context",
  "test-log",
