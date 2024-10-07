@@ -4,6 +4,7 @@ use crate::{
             advisory_vulnerability::{Version, VersionInfo, VersionSpec},
             AdvisoryInformation, AdvisoryVulnerabilityInformation,
         },
+        purl::creator::PurlCreator,
         Graph,
     },
     model::IngestResult,
@@ -52,7 +53,7 @@ impl<'g> OsvLoader<'g> {
 
         let information = AdvisoryInformation {
             title: osv.summary.clone(),
-            // TODO: check if we have some kind of version information
+            // TODO(#899): check if we have some kind of version information
             version: None,
             issuer,
             published: Some(osv.published.into_time()),
@@ -69,6 +70,8 @@ impl<'g> OsvLoader<'g> {
                 .set_withdrawn_at(withdrawn.into_time(), &tx)
                 .await?;
         }
+
+        let mut purl_creator = PurlCreator::new();
 
         for cve_id in cve_ids {
             self.graph.ingest_vulnerability(&cve_id, (), &tx).await?;
@@ -104,96 +107,88 @@ impl<'g> OsvLoader<'g> {
             }
 
             for affected in &osv.affected {
-                if let Some(package) = &affected.package {
-                    let mut purls = vec![];
+                // we only process it when we have a package
 
-                    purls.extend(translate::to_purl(package).map(Purl::from));
+                let Some(package) = &affected.package else {
+                    tracing::debug!(
+                        osv = osv.id,
+                        "OSV document did not contain an 'affected' section",
+                    );
+                    continue;
+                };
 
-                    if let Some(purl) = &package.purl {
-                        purls.extend(Purl::from_str(purl).ok());
+                // extract PURLs
+
+                let mut purls = vec![];
+                purls.extend(translate::to_purl(package).map(Purl::from));
+                if let Some(purl) = &package.purl {
+                    purls.extend(Purl::from_str(purl).ok());
+                }
+
+                for purl in purls {
+                    // iterate through the known versions, apply the version, and create them
+                    for version in affected.versions.iter().flatten() {
+                        let mut purl = purl.clone();
+                        purl.version = Some(version.clone());
+                        purl_creator.add(purl);
                     }
 
-                    for purl in purls {
-                        for range in affected.ranges.iter().flatten() {
-                            let parsed_range = events_to_range(&range.events);
-                            match &parsed_range {
-                                (Some(start), None) => {
-                                    advisory_vuln
-                                        .ingest_package_status(
-                                            None,
-                                            &purl,
-                                            "affected",
-                                            VersionInfo {
-                                                // TODO detect better version scheme
-                                                scheme: "semver".to_string(),
-                                                spec: VersionSpec::Range(
-                                                    Version::Inclusive(start.clone()),
-                                                    Version::Unbounded,
-                                                ),
-                                            },
-                                            &tx,
-                                        )
-                                        .await?
-                                }
-                                (None, Some(end)) => {
-                                    advisory_vuln
-                                        .ingest_package_status(
-                                            None,
-                                            &purl,
-                                            "affected",
-                                            VersionInfo {
-                                                // TODO detect better version scheme
-                                                scheme: "semver".to_string(),
-                                                spec: VersionSpec::Range(
-                                                    Version::Unbounded,
-                                                    Version::Exclusive(end.clone()),
-                                                ),
-                                            },
-                                            &tx,
-                                        )
-                                        .await?
-                                }
-                                (Some(start), Some(end)) => {
-                                    advisory_vuln
-                                        .ingest_package_status(
-                                            None,
-                                            &purl,
-                                            "affected",
-                                            VersionInfo {
-                                                // TODO detect better version scheme
-                                                scheme: "semver".to_string(),
-                                                spec: VersionSpec::Range(
-                                                    Version::Inclusive(start.clone()),
-                                                    Version::Exclusive(end.clone()),
-                                                ),
-                                            },
-                                            &tx,
-                                        )
-                                        .await?
-                                }
-                                _ => { /* what? */ }
-                            }
+                    for range in affected.ranges.iter().flatten() {
+                        let parsed_range = events_to_range(&range.events);
 
-                            if let (_, Some(fixed)) = &parsed_range {
-                                advisory_vuln
-                                    .ingest_package_status(
-                                        None,
-                                        &purl,
-                                        "fixed",
-                                        VersionInfo {
-                                            // TODO detect better version scheme
-                                            scheme: "semver".to_string(),
-                                            spec: VersionSpec::Exact(fixed.clone()),
-                                        },
-                                        &tx,
-                                    )
-                                    .await?
-                            }
+                        let spec = match &parsed_range {
+                            (Some(start), None) => Some(VersionSpec::Range(
+                                Version::Inclusive(start.clone()),
+                                Version::Unbounded,
+                            )),
+                            (None, Some(end)) => Some(VersionSpec::Range(
+                                Version::Unbounded,
+                                Version::Exclusive(end.clone()),
+                            )),
+                            (Some(start), Some(end)) => Some(VersionSpec::Range(
+                                Version::Inclusive(start.clone()),
+                                Version::Exclusive(end.clone()),
+                            )),
+                            (None, None) => None,
+                        };
+
+                        if let Some(spec) = spec {
+                            advisory_vuln
+                                .ingest_package_status(
+                                    None,
+                                    &purl,
+                                    "affected",
+                                    VersionInfo {
+                                        // TODO(#900): detect better version scheme
+                                        scheme: "semver".to_string(),
+                                        spec,
+                                    },
+                                    &tx,
+                                )
+                                .await?;
+                        }
+
+                        if let (_, Some(fixed)) = &parsed_range {
+                            advisory_vuln
+                                .ingest_package_status(
+                                    None,
+                                    &purl,
+                                    "fixed",
+                                    VersionInfo {
+                                        // TODO(#900) detect better version scheme
+                                        scheme: "semver".to_string(),
+                                        spec: VersionSpec::Exact(fixed.clone()),
+                                    },
+                                    &tx,
+                                )
+                                .await?
                         }
                     }
                 }
             }
         }
+
+        purl_creator.create(&self.graph.connection(&tx)).await?;
 
         tx.commit().await?;
 
