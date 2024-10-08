@@ -1,9 +1,7 @@
-use anyhow::anyhow;
 use clap::Parser;
-use postgresql_commands::{pg_dump::PgDumpBuilder, CommandBuilder};
+use postgresql_commands::{pg_dump::PgDumpBuilder, CommandBuilder, CommandExecutor};
 use serde_json::Value;
 use std::{io::BufReader, path::PathBuf, time::Duration};
-use tokio::io::AsyncWriteExt;
 use trustify_common::{db, model::BinaryByteSize};
 use trustify_module_importer::{
     model::{CommonImporter, CsafImporter, CveImporter, ImporterConfiguration, SbomImporter},
@@ -110,26 +108,17 @@ impl GenerateDump {
 
         // create dump
 
-        let output = PgDumpBuilder::new()
-            .username(&postgres.settings().username)
-            .pg_password(&postgres.settings().password)
-            .host(&postgres.settings().host)
-            .port(postgres.settings().port)
+        let settings = postgres.settings();
+        let mut pg_dump = PgDumpBuilder::from(settings)
             .dbname(db.name())
             .file(&self.output)
-            .build_tokio()
-            .output()
-            .await?;
+            .build();
+        let (stdout, stderr) = pg_dump.execute()?;
 
-        if !output.status.success() {
-            log::error!("Failed to run pg_dump:");
-            tokio::io::stderr().write_all(&output.stdout).await?;
-            tokio::io::stderr().write_all(&output.stderr).await?;
-            Err(anyhow!("Failed to run pg_dump"))
-        } else {
-            log::info!("Dumped to: {}", self.output.display());
-            Ok(())
-        }
+        log::debug!("stdout: {stdout}");
+        log::debug!("stderr: {stderr}");
+        log::info!("Dumped to: {}", self.output.display());
+        Ok(())
     }
 
     async fn ingest(&self, runner: ImportRunner) -> anyhow::Result<()> {
