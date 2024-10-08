@@ -1,7 +1,9 @@
 use crate::{
     graph::{
         advisory::{
-            advisory_vulnerability::{Version, VersionInfo, VersionSpec},
+            advisory_vulnerability::{
+                AdvisoryVulnerabilityContext, Version, VersionInfo, VersionSpec,
+            },
             AdvisoryInformation, AdvisoryVulnerabilityInformation,
         },
         purl::creator::PurlCreator,
@@ -10,11 +12,11 @@ use crate::{
     model::IngestResult,
     service::{advisory::osv::translate, Error, Warnings},
 };
-use osv::schema::{Event, ReferenceType, SeverityType, Vulnerability};
+use osv::schema::{Event, Range, RangeType, ReferenceType, SeverityType, Vulnerability};
 use sbom_walker::report::ReportSink;
 use std::{fmt::Debug, str::FromStr, sync::OnceLock};
 use tracing::instrument;
-use trustify_common::{hashing::Digests, id::Id, purl::Purl, time::ChronoExt};
+use trustify_common::{db::Transactional, hashing::Digests, id::Id, purl::Purl, time::ChronoExt};
 use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity::labels::Labels;
 
@@ -134,54 +136,36 @@ impl<'g> OsvLoader<'g> {
                     }
 
                     for range in affected.ranges.iter().flatten() {
-                        let parsed_range = events_to_range(&range.events);
+                        match range.range_type {
+                            RangeType::Semver => {
+                                create_package_status_semver(&advisory_vuln, &purl, range, &tx)
+                                    .await?;
+                            }
+                            _ => {
+                                for event in &range.events {
+                                    let result = match event {
+                                        Event::Introduced(version) => Some((version, "affected")),
+                                        Event::LastAffected(version) => Some((version, "affected")),
+                                        Event::Fixed(version) => Some((version, "fixed")),
+                                        _ => None,
+                                    };
 
-                        let spec = match &parsed_range {
-                            (Some(start), None) => Some(VersionSpec::Range(
-                                Version::Inclusive(start.clone()),
-                                Version::Unbounded,
-                            )),
-                            (None, Some(end)) => Some(VersionSpec::Range(
-                                Version::Unbounded,
-                                Version::Exclusive(end.clone()),
-                            )),
-                            (Some(start), Some(end)) => Some(VersionSpec::Range(
-                                Version::Inclusive(start.clone()),
-                                Version::Exclusive(end.clone()),
-                            )),
-                            (None, None) => None,
-                        };
-
-                        if let Some(spec) = spec {
-                            advisory_vuln
-                                .ingest_package_status(
-                                    None,
-                                    &purl,
-                                    "affected",
-                                    VersionInfo {
-                                        // TODO(#900): detect better version scheme
-                                        scheme: "semver".to_string(),
-                                        spec,
-                                    },
-                                    &tx,
-                                )
-                                .await?;
-                        }
-
-                        if let (_, Some(fixed)) = &parsed_range {
-                            advisory_vuln
-                                .ingest_package_status(
-                                    None,
-                                    &purl,
-                                    "fixed",
-                                    VersionInfo {
-                                        // TODO(#900) detect better version scheme
-                                        scheme: "semver".to_string(),
-                                        spec: VersionSpec::Exact(fixed.clone()),
-                                    },
-                                    &tx,
-                                )
-                                .await?
+                                    if let Some((version, status)) = result {
+                                        advisory_vuln
+                                            .ingest_package_status(
+                                                None,
+                                                &purl,
+                                                status,
+                                                VersionInfo {
+                                                    scheme: "semver".to_string(),
+                                                    spec: VersionSpec::Exact(version.clone()),
+                                                },
+                                                &tx,
+                                            )
+                                            .await?;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -198,6 +182,64 @@ impl<'g> OsvLoader<'g> {
             warnings: warnings.into(),
         })
     }
+}
+
+/// create a package status from a semver range
+async fn create_package_status_semver(
+    advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
+    purl: &Purl,
+    range: &Range,
+    tx: impl AsRef<Transactional>,
+) -> Result<(), Error> {
+    let parsed_range = events_to_range(&range.events);
+
+    let spec = match &parsed_range {
+        (Some(start), None) => Some(VersionSpec::Range(
+            Version::Inclusive(start.clone()),
+            Version::Unbounded,
+        )),
+        (None, Some(end)) => Some(VersionSpec::Range(
+            Version::Unbounded,
+            Version::Exclusive(end.clone()),
+        )),
+        (Some(start), Some(end)) => Some(VersionSpec::Range(
+            Version::Inclusive(start.clone()),
+            Version::Exclusive(end.clone()),
+        )),
+        (None, None) => None,
+    };
+
+    if let Some(spec) = spec {
+        advisory_vuln
+            .ingest_package_status(
+                None,
+                purl,
+                "affected",
+                VersionInfo {
+                    scheme: "semver".to_string(),
+                    spec,
+                },
+                &tx,
+            )
+            .await?;
+    }
+
+    if let (_, Some(fixed)) = &parsed_range {
+        advisory_vuln
+            .ingest_package_status(
+                None,
+                purl,
+                "fixed",
+                VersionInfo {
+                    scheme: "semver".to_string(),
+                    spec: VersionSpec::Exact(fixed.clone()),
+                },
+                &tx,
+            )
+            .await?
+    }
+
+    Ok(())
 }
 
 fn detect_organization(osv: &Vulnerability) -> Option<String> {
