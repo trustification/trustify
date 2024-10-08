@@ -8560,6 +8560,7 @@ dependencies = [
  "osv",
  "packageurl",
  "regex",
+ "roxmltree",
  "sea-orm",
  "sea-query",
  "semver",
