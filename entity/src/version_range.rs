@@ -1,3 +1,4 @@
+use crate::version_scheme::VersionScheme;
 use sea_orm::entity::prelude::*;
 use sea_orm::sea_query::{Asterisk, Func, IntoCondition, SimpleExpr};
 use trustify_common::db::VersionMatches;
@@ -8,7 +9,7 @@ pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
     // The ID of the version scheme, which is a human-friend string key like `semver`.
-    pub version_scheme_id: String,
+    pub version_scheme_id: VersionScheme,
     pub low_version: Option<String>,
     pub low_inclusive: Option<bool>,
     pub high_version: Option<String>,
