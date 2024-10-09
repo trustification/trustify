@@ -1,4 +1,4 @@
-name: container-latest
+name: latest-release
 
 # Build "latest" container, run e2e tests against it, and deploy it to
 # https://trustify-latest-staging.apps.cluster.trustification.rocks/
@@ -9,7 +9,7 @@ on:
       - main
   workflow_dispatch:
 
-concurrency: container-latest
+concurrency: latest-release
 
 env:
   IMAGE_NAME: trustd
