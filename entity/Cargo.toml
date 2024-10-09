@@ -21,11 +21,16 @@ sea-orm = { workspace = true, features = [
 ] }
 serde = { workspace = true }
 serde_json = { workspace = true }
-strum = { workspace = true, features = ["derive"]}
+strum = { workspace = true, features = ["derive"] }
 time = { workspace = true }
 utoipa = { workspace = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }
 log = { workspace = true }
+rstest = { workspace = true }
+test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
+tokio = { workspace = true, features = ["full"] }
+
+trustify-test-context = { workspace = true }

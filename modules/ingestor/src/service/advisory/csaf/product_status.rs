@@ -1,10 +1,9 @@
-use csaf::definitions::{Branch, BranchCategory, FullProductName};
-use trustify_common::purl::Purl;
-
+use super::util::branch_purl;
 use crate::graph::advisory::advisory_vulnerability::{Version, VersionInfo, VersionSpec};
 use cpe::cpe::Cpe;
-
-use super::util::branch_purl;
+use csaf::definitions::{Branch, BranchCategory, FullProductName};
+use trustify_common::purl::Purl;
+use trustify_entity::version_scheme::VersionScheme;
 
 #[derive(Clone, Default, Debug, Eq, Hash, PartialEq)]
 pub struct ProductStatus {
@@ -94,18 +93,18 @@ impl ProductStatus {
                                         Version::Inclusive(semver.to_string()),
                                         Version::Unbounded,
                                     ),
-                                    scheme: "semver".to_string(),
+                                    scheme: VersionScheme::Semver,
                                 },
                                 Err(_) => VersionInfo {
                                     spec: VersionSpec::Exact(version),
-                                    scheme: "generic".to_string(),
+                                    scheme: VersionScheme::Generic,
                                 },
                             }
                         } else {
                             // Treat * value as unbounded version
                             VersionInfo {
                                 spec: VersionSpec::Range(Version::Unbounded, Version::Unbounded),
-                                scheme: "semver".to_string(),
+                                scheme: VersionScheme::Semver,
                             }
                         }
                     })
@@ -114,7 +113,7 @@ impl ProductStatus {
                             // If we have purl, use an exact version
                             purl.version().map(|version| VersionInfo {
                                 spec: VersionSpec::Exact(version.to_string()),
-                                scheme: "semver".to_string(),
+                                scheme: VersionScheme::Semver,
                             })
                         })
                     })

@@ -1,23 +1,27 @@
-use crate::graph::advisory::advisory_vulnerability::Version;
-use crate::graph::product::ProductInformation;
-use crate::graph::Graph;
-use crate::service::advisory::csaf::product_status::ProductStatus;
-use crate::service::advisory::csaf::util::ResolveProductIdCache;
 use crate::{
     graph::{
-        advisory::advisory_vulnerability::{VersionInfo, VersionSpec},
+        advisory::advisory_vulnerability::{Version, VersionInfo, VersionSpec},
         cpe::CpeCreator,
+        product::ProductInformation,
         purl::creator::PurlCreator,
+        Graph,
     },
-    service::Error,
+    service::{
+        advisory::csaf::product_status::ProductStatus, advisory::csaf::util::ResolveProductIdCache,
+        Error,
+    },
 };
 use csaf::{definitions::ProductIdT, Csaf};
 use sea_orm::{ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use sea_query::IntoCondition;
 use std::collections::{hash_map::Entry, HashMap, HashSet};
 use tracing::instrument;
-use trustify_common::db::Transactional;
-use trustify_common::{cpe::Cpe, db::chunk::EntityChunkedIter, purl::Purl};
+use trustify_common::{
+    cpe::Cpe,
+    db::{chunk::EntityChunkedIter, Transactional},
+    purl::Purl,
+};
+use trustify_entity::version_scheme::VersionScheme;
 use trustify_entity::{product_status, purl_status, status, version_range};
 use uuid::Uuid;
 
@@ -168,12 +172,12 @@ impl<'a> StatusCreator<'a> {
                 // Ingest purl status
                 let info = match purl.version.clone() {
                     Some(version) => VersionInfo {
-                        scheme: "generic".to_string(),
+                        scheme: VersionScheme::Generic,
                         spec: VersionSpec::Exact(version),
                     },
                     None => VersionInfo {
                         spec: VersionSpec::Range(Version::Unbounded, Version::Unbounded),
-                        scheme: "semver".to_string(),
+                        scheme: VersionScheme::Semver,
                     },
                 };
 

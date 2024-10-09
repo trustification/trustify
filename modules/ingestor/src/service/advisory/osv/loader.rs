@@ -10,15 +10,18 @@ use crate::{
         Graph,
     },
     model::IngestResult,
-    service::{advisory::osv::translate, Error, Warnings},
+    service::{
+        advisory::osv::{prefix::get_well_known_prefixes, translate},
+        Error, Warnings,
+    },
 };
 use osv::schema::{Event, Range, RangeType, ReferenceType, SeverityType, Vulnerability};
 use sbom_walker::report::ReportSink;
-use std::{fmt::Debug, str::FromStr, sync::OnceLock};
+use std::{fmt::Debug, str::FromStr};
 use tracing::instrument;
 use trustify_common::{db::Transactional, hashing::Digests, id::Id, purl::Purl, time::ChronoExt};
 use trustify_cvss::cvss3::Cvss3Base;
-use trustify_entity::labels::Labels;
+use trustify_entity::{labels::Labels, version_scheme::VersionScheme};
 
 pub struct OsvLoader<'g> {
     graph: &'g Graph,
@@ -142,29 +145,14 @@ impl<'g> OsvLoader<'g> {
                                     .await?;
                             }
                             _ => {
-                                for event in &range.events {
-                                    let result = match event {
-                                        Event::Introduced(version) => Some((version, "affected")),
-                                        Event::LastAffected(version) => Some((version, "affected")),
-                                        Event::Fixed(version) => Some((version, "fixed")),
-                                        _ => None,
-                                    };
-
-                                    if let Some((version, status)) = result {
-                                        advisory_vuln
-                                            .ingest_package_status(
-                                                None,
-                                                &purl,
-                                                status,
-                                                VersionInfo {
-                                                    scheme: "semver".to_string(),
-                                                    spec: VersionSpec::Exact(version.clone()),
-                                                },
-                                                &tx,
-                                            )
-                                            .await?;
-                                    }
-                                }
+                                create_package_status_versions(
+                                    &advisory_vuln,
+                                    &purl,
+                                    range,
+                                    affected.versions.iter().flatten(),
+                                    &tx,
+                                )
+                                .await?
                             }
                         }
                     }
@@ -182,6 +170,128 @@ impl<'g> OsvLoader<'g> {
             warnings: warnings.into(),
         })
     }
+}
+
+/// create package statues based on listed versions
+async fn create_package_status_versions(
+    advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
+    purl: &Purl,
+    range: &Range,
+    versions: impl IntoIterator<Item = &String>,
+    tx: impl AsRef<Transactional>,
+) -> Result<(), Error> {
+    // the list of versions, sorted by the range type
+    let versions = versions.into_iter().cloned().collect::<Vec<_>>();
+
+    let mut start = None;
+    for event in &range.events {
+        match event {
+            Event::Introduced(version) => {
+                start = Some(version);
+            }
+            Event::Fixed(version) | Event::LastAffected(version) => {
+                if let Some(start) = start.take() {
+                    ingest_range_from(
+                        advisory_vuln,
+                        purl,
+                        "affected",
+                        start,
+                        Some(version),
+                        &versions,
+                        &tx,
+                    )
+                    .await?;
+                }
+
+                ingest_exact(advisory_vuln, purl, "fixed", version, &tx).await?;
+            }
+            Event::Limit(_) => {}
+            // for non_exhaustive
+            _ => {}
+        }
+    }
+
+    if let Some(start) = start {
+        ingest_range_from(advisory_vuln, purl, "affected", start, None, &versions, &tx).await?;
+    }
+
+    Ok(())
+}
+
+/// Ingest all from a start to an end
+async fn ingest_range_from(
+    advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
+    purl: &Purl,
+    status: &str,
+    start: &str,
+    // exclusive end
+    end: Option<&str>,
+    versions: &[impl AsRef<str>],
+    tx: impl AsRef<Transactional>,
+) -> Result<(), Error> {
+    let versions = match_versions(versions, start, end);
+
+    for version in versions {
+        ingest_exact(advisory_vuln, purl, status, version, &tx).await?;
+    }
+
+    Ok(())
+}
+
+/// Extract a list of versions according to OSV
+///
+/// The idea for ECOSYSTEM and GIT is that the user provides an explicit list of versions, in the
+/// right order. So we search through this list, by start and end events. Translating this into
+/// exact version matches.
+///
+/// See: <https://ossf.github.io/osv-schema/#affectedrangestype-field>
+fn match_versions<'v>(
+    versions: &'v [impl AsRef<str>],
+    start: &str,
+    end: Option<&str>,
+) -> Vec<&'v str> {
+    let mut matches = None;
+
+    for version in versions {
+        let version = version.as_ref();
+        match (&mut matches, end) {
+            (None, _) if version == start => {
+                matches = Some(vec![version]);
+            }
+            (None, _) => {}
+            (Some(_), Some(end)) if end == version => {
+                // reached the exclusive env
+                break;
+            }
+            (Some(matches), _) => {
+                matches.push(version);
+            }
+        }
+    }
+
+    matches.unwrap_or_default()
+}
+
+/// Ingest an exact version
+async fn ingest_exact(
+    advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
+    purl: &Purl,
+    status: &str,
+    version: &str,
+    tx: impl AsRef<Transactional>,
+) -> Result<(), Error> {
+    Ok(advisory_vuln
+        .ingest_package_status(
+            None,
+            purl,
+            status,
+            VersionInfo {
+                scheme: VersionScheme::Generic,
+                spec: VersionSpec::Exact(version.to_string()),
+            },
+            &tx,
+        )
+        .await?)
 }
 
 /// create a package status from a semver range
@@ -216,7 +326,7 @@ async fn create_package_status_semver(
                 purl,
                 "affected",
                 VersionInfo {
-                    scheme: "semver".to_string(),
+                    scheme: VersionScheme::Semver,
                     spec,
                 },
                 &tx,
@@ -231,7 +341,7 @@ async fn create_package_status_semver(
                 purl,
                 "fixed",
                 VersionInfo {
-                    scheme: "semver".to_string(),
+                    scheme: VersionScheme::Semver,
                     spec: VersionSpec::Exact(fixed.clone()),
                 },
                 &tx,
@@ -255,50 +365,6 @@ fn detect_organization(osv: &Vulnerability) -> Option<String> {
     }
     None
 }
-
-struct PrefixMatcher {
-    prefixes: Vec<PrefixMapping>,
-}
-
-impl PrefixMatcher {
-    fn new() -> Self {
-        Self { prefixes: vec![] }
-    }
-
-    fn add(&mut self, prefix: impl Into<String>, name: impl Into<String>) {
-        self.prefixes.push(PrefixMapping {
-            prefix: prefix.into(),
-            name: name.into(),
-        })
-    }
-
-    fn detect(&self, input: &str) -> Option<String> {
-        self.prefixes
-            .iter()
-            .find(|each| input.starts_with(&each.prefix))
-            .map(|inner| inner.name.clone())
-    }
-}
-
-struct PrefixMapping {
-    prefix: String,
-    name: String,
-}
-
-fn get_well_known_prefixes() -> &'static PrefixMatcher {
-    WELL_KNOWN_PREFIXES.get_or_init(|| {
-        let mut matcher = PrefixMatcher::new();
-
-        matcher.add(
-            "https://rustsec.org/advisories/RUSTSEC",
-            "Rust Security Advisory Database",
-        );
-
-        matcher
-    })
-}
-
-static WELL_KNOWN_PREFIXES: OnceLock<PrefixMatcher> = OnceLock::new();
 
 fn events_to_range(events: &[Event]) -> (Option<String>, Option<String>) {
     let start = events.iter().find_map(|e| {
@@ -324,6 +390,7 @@ fn events_to_range(events: &[Event]) -> (Option<String>, Option<String>) {
 mod test {
     use hex::ToHex;
     use osv::schema::Vulnerability;
+    use rstest::rstest;
     use test_context::test_context;
     use test_log::test;
 
@@ -332,6 +399,8 @@ mod test {
     use trustify_test_context::{document, TrustifyContext};
 
     use crate::service::advisory::osv::loader::OsvLoader;
+
+    use super::*;
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
@@ -395,5 +464,16 @@ mod test {
             .is_none());
 
         Ok(())
+    }
+
+    #[rstest]
+    #[case("b", Some("d"), vec!["b", "c"])]
+    #[case("e", None, vec!["e", "f", "g"])]
+    #[case("x", None, vec![])]
+    #[case("e", Some("a"), vec!["e", "f", "g"])]
+    #[test_log::test]
+    fn test_matches(#[case] start: &str, #[case] end: Option<&str>, #[case] result: Vec<&str>) {
+        const INPUT: &[&str] = &["a", "b", "c", "d", "e", "f", "g"];
+        assert_eq!(match_versions(INPUT, start, end), result);
     }
 }
