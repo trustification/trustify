@@ -1793,7 +1793,7 @@ dependencies = [
  "cssparser-macros",
  "dtoa-short",
  "itoa",
- "phf 0.11.2",
+ "phf 0.10.1",
  "smallvec",
 ]
 
@@ -4526,7 +4526,7 @@ version = "5.0.0-rc.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "23d385da3c602d29036d2f70beed71c36604df7570be17fed4c5b839616785bf"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.21.7",
  "chrono",
  "getrandom",
  "http 1.1.0",
@@ -5119,7 +5119,9 @@ version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fabbf1ead8a5bcbc20f5f8b939ee3f5b0f6f281b6ad3468b84656b658b455259"
 dependencies = [
+ "phf_macros",
  "phf_shared 0.10.0",
+ "proc-macro-hack",
 ]
 
 [[package]]
@@ -5128,7 +5130,6 @@ version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ade2d8b8f33c7333b51bcf0428d37e217e9f32192ae4772156f65063b8ce03dc"
 dependencies = [
- "phf_macros",
  "phf_shared 0.11.2",
 ]
 
@@ -5174,15 +5175,16 @@ dependencies = [
 
 [[package]]
 name = "phf_macros"
-version = "0.11.2"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3444646e286606587e49f3bcf1679b8cef1dc2c5ecc29ddacaffc305180d464b"
+checksum = "58fdf3184dd560f160dd73922bea2d5cd6e8f064bf4b13110abd81b03697b4e0"
 dependencies = [
- "phf_generator 0.11.2",
- "phf_shared 0.11.2",
+ "phf_generator 0.10.0",
+ "phf_shared 0.10.0",
+ "proc-macro-hack",
  "proc-macro2",
  "quote",
- "syn 2.0.79",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -5457,6 +5459,12 @@ dependencies = [
  "quote",
  "syn 2.0.79",
 ]
+
+[[package]]
+name = "proc-macro-hack"
+version = "0.5.20+deprecated"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc375e1527247fe1a97d8b7156678dfe7c1af2fc075c9a4db3690ecd2a148068"
 
 [[package]]
 name = "proc-macro2"
@@ -6781,7 +6789,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13261ee216b44d932ef93b2d4a75d45199bef77864bcc5b77ecfc7bc0ecb02d6"
 dependencies = [
  "anyhow",
- "base64 0.22.1",
+ "base64 0.21.7",
  "buffered-reader",
  "chrono",
  "dyn-clone",
@@ -8843,7 +8851,7 @@ dependencies = [
 [[package]]
 name = "trustify-ui"
 version = "0.1.0"
-source = "git+https://github.com/trustification/trustify-ui.git?branch=publish/main#e895b0acb18755ebb98776b5aaf2b63b82ca8e5e"
+source = "git+https://github.com/trustification/trustify-ui.git?branch=publish/main#edb24501e45d6d4b7ace2b41faa63542a0fc12be"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -9457,7 +9465,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
