@@ -18,7 +18,7 @@ use std::fmt::Debug;
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
-use trustify_entity::labels::Labels;
+use trustify_entity::{labels::Labels, version_scheme::VersionScheme};
 
 /// Loader capable of parsing a CVE Record JSON file
 /// and manipulating the Graph to integrate it into
@@ -142,7 +142,11 @@ impl<'g> CveLoader<'g> {
                                     Status::Unknown => "unknown",
                                 },
                                 VersionInfo {
-                                    scheme: version_type.unwrap_or("generic".to_string()),
+                                    scheme: version_type
+                                        .and_then(|version_type| {
+                                            try_from_cve_version_scheme(&version_type).ok()
+                                        })
+                                        .unwrap_or(VersionScheme::Generic),
                                     spec: version_spec,
                                 },
                                 &tx,
@@ -279,6 +283,17 @@ impl<'g> CveLoader<'g> {
             },
         }
     }
+}
+
+fn try_from_cve_version_scheme(scheme: &str) -> Result<VersionScheme, ()> {
+    Ok(match scheme {
+        "semver" => VersionScheme::Semver,
+        "maven" => VersionScheme::Maven,
+        "rpm" => VersionScheme::Rpm,
+        "python" => VersionScheme::Python,
+        "git" | "custom" => VersionScheme::Generic,
+        _ => return Err(()),
+    })
 }
 
 struct VulnerabilityDetails<'a> {

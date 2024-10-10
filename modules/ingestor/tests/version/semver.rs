@@ -1,13 +1,12 @@
-use crate::version_common::{version_matches, Version, VersionRange};
-use migration::sea_orm::Statement;
-use migration::ConnectionTrait;
+use crate::version::common::{version_matches, Version, VersionRange};
+use sea_orm::{ConnectionTrait, Statement};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::db::Database;
 use trustify_test_context::TrustifyContext;
 
-#[path = "./version_common.rs"]
-mod version_common;
+#[path = "common.rs"]
+mod common;
 
 async fn semver_cmp(db: &Database, left: &str, right: &str) -> Result<Option<i32>, anyhow::Error> {
     let result = db

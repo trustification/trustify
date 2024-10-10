@@ -11,6 +11,7 @@ use trustify_cvss::cvss3::{
     AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
     PrivilegesRequired, Scope, UserInteraction,
 };
+use trustify_entity::version_scheme::VersionScheme;
 use trustify_module_ingestor::graph::advisory::{
     advisory_vulnerability::{VersionInfo, VersionSpec},
     AdvisoryContext, AdvisoryInformation,
@@ -163,7 +164,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             &Purl::from_str("pkg://maven/org.apache/log4j")?,
             "fixed",
             VersionInfo {
-                scheme: "semver".to_string(),
+                scheme: VersionScheme::Maven,
                 spec: VersionSpec::Exact("1.2.3".to_string()),
             },
             (),
@@ -176,7 +177,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             &Purl::from_str("pkg://maven/org.apache/log4j")?,
             "fixed",
             VersionInfo {
-                scheme: "semver".to_string(),
+                scheme: VersionScheme::Maven,
                 spec: VersionSpec::Exact("1.2.3".to_string()),
             },
             (),
@@ -243,7 +244,7 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             &Purl::from_str("pkg://maven/org.apache/log4j")?,
             "fixed",
             VersionInfo {
-                scheme: "semver".to_string(),
+                scheme: VersionScheme::Maven,
                 spec: VersionSpec::Exact("1.2.3".to_string()),
             },
             (),
@@ -256,7 +257,7 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             &Purl::from_str("pkg://maven/org.apache/log4j")?,
             "fixed",
             VersionInfo {
-                scheme: "semver".to_string(),
+                scheme: VersionScheme::Maven,
                 spec: VersionSpec::Exact("1.2.3".to_string()),
             },
             (),

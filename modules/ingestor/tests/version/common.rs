@@ -1,26 +1,53 @@
-use migration::sea_orm::Statement;
-use migration::ConnectionTrait;
-use trustify_common::db::Database;
+#![allow(unused)]
+// clippy complains about this module being imported multiple times. However, that seems to be some
+// artifact from the way the group integration tests.
+#![allow(clippy::duplicate_mod)]
 
-#[allow(unused)]
+use sea_orm::{ConnectionTrait, Statement};
+use std::fmt::{Debug, Display};
+use std::ops::{Bound, Range, RangeBounds};
+use test_context::test_context;
+use tracing::instrument;
+use trustify_common::db::Database;
+use trustify_test_context::TrustifyContext;
+
+#[derive(Debug)]
 pub enum VersionRange {
     Exact(&'static str),
     Range(Version, Version),
 }
 
-#[allow(unused)]
+impl VersionRange {
+    pub fn range(range: impl RangeBounds<&'static str>) -> Self {
+        let start = range.start_bound().map(|s| *s).into();
+        let end = range.end_bound().map(|s| *s).into();
+        Self::Range(start, end)
+    }
+}
+
+impl From<Bound<&'static str>> for Version {
+    fn from(value: Bound<&'static str>) -> Self {
+        match value {
+            Bound::Unbounded => Version::Unbounded,
+            Bound::Included(version) => Version::Inclusive(version),
+            Bound::Excluded(version) => Version::Exclusive(version),
+        }
+    }
+}
+
+#[derive(Debug)]
 pub enum Version {
     Inclusive(&'static str),
     Exclusive(&'static str),
     Unbounded,
 }
 
-#[allow(unused)]
+#[instrument(skip(db), ret)]
 pub async fn version_matches(
     db: &Database,
     candidate: &str,
     range: VersionRange,
-    version_scheme: &str,
+    version_scheme: impl Display + Debug,
 ) -> Result<bool, anyhow::Error> {
     let (low, low_inclusive, high, high_inclusive) = match range {
         VersionRange::Exact(version) => (
