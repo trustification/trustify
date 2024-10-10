@@ -12,6 +12,7 @@ trustify-entity = { workspace = true }
 trustify-module-storage = { workspace = true }
 trustify-module-analysis = { workspace = true }
 
+
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 bytes = { workspace = true }
@@ -30,6 +31,7 @@ packageurl = { workspace = true }
 parking_lot = { workspace = true }
 quick-xml = { workspace = true }
 roxmltree = { workspace = true }
+sbomsleuth = { workspace = true }
 sbom-walker = { workspace = true }
 sea-orm = { workspace = true }
 sea-query = { workspace = true }

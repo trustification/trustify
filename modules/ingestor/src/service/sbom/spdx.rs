@@ -6,6 +6,8 @@ use crate::{
     model::IngestResult,
     service::{Error, Warnings},
 };
+use sbomsleuth::license::Licenses;
+use sbomsleuth::report::Report;
 use serde_json::Value;
 use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
@@ -31,6 +33,28 @@ impl<'g> SpdxLoader<'g> {
 
         let (spdx, _) = parse_spdx(&warnings, json)?;
 
+        let license_instance = Licenses::default();
+        let licenses_result = license_instance.run_with_spdx(spdx.clone()).await;
+        let licenses = match licenses_result {
+            Ok(licenses) => licenses,
+            Err(e) => {
+                log::warn!("Failed to generate spdx license report, {}", e.as_str());
+                Licenses::default()
+            }
+        };
+        let report_instance = sbomsleuth::report::Report {
+            licenses,
+            ..Default::default()
+        };
+        let report_result = report_instance.run_with_spdx(spdx.clone());
+        let report = match report_result {
+            Ok(report) => report,
+            Err(e) => {
+                log::warn!("Failed to generate spdx quality report, {}", e.as_str());
+                Report::default()
+            }
+        };
+
         log::info!(
             "Storing: {}",
             spdx.document_creation_information.document_name
@@ -47,7 +71,14 @@ impl<'g> SpdxLoader<'g> {
 
         let sbom = self
             .graph
-            .ingest_sbom(labels, digests, &document_id, spdx::Information(&spdx), &tx)
+            .ingest_sbom_with_report(
+                &report,
+                labels,
+                digests,
+                &document_id,
+                spdx::Information(&spdx),
+                &tx,
+            )
             .await?;
 
         sbom.ingest_spdx(spdx, &warnings, &tx).await?;
