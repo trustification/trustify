@@ -76,8 +76,6 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
         .purls(Default::default(), Default::default(), ())
         .await?;
 
-    println!("PURLs: {purls:#?}");
-
     let purl = purls
         .items
         .iter()
