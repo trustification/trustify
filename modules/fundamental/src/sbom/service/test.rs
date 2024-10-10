@@ -3,6 +3,7 @@ use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::db::Transactional;
+use trustify_common::id::Id;
 use trustify_common::purl::Purl;
 use trustify_test_context::TrustifyContext;
 
@@ -31,6 +32,12 @@ async fn sbom_details_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     let details = details.unwrap();
 
     log::debug!("{}", serde_json::to_string_pretty(&details)?);
+
+    let details = service
+        .fetch_sbom_details(Id::Uuid(details.summary.head.id), Transactional::None)
+        .await?;
+
+    assert!(details.is_some());
 
     Ok(())
 }

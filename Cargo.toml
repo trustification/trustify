@@ -43,6 +43,7 @@ async-graphql = "7.0.5"
 async-graphql-actix-web = "7.0.5"
 async-std = "1"
 async-trait = "0.1.74"
+async-openai = "0.25.0"
 base64 = "0.22"
 biscuit = "0.7"
 build-info = "0.0.39"
@@ -76,7 +77,7 @@ itertools = "0.13"
 jsn = "0.14"
 json-merge-patch = "0.0.1"
 jsonpath-rust = "0.7.0"
-langchain-rust = { version = "4.4.3" }
+langchain-rust = { version = "4.6.0" }
 lenient_semver = "0.4.2"
 liblzma = "0.3"
 libz-sys = "*"
@@ -195,8 +196,6 @@ postgresql_commands = { version = "0.16.3", default-features = false, features =
 # required due to https://github.com/voteblake/csaf-rs/pull/29
 csaf = { git = "https://github.com/chirino/csaf-rs", rev = "414896904bc5e5287fd88b1daef5c27f70503d01" }
 
-# to pickup up fix: https://github.com/64bit/async-openai/pull/263 and https://github.com/64bit/async-openai/pull/267
-# needed to work against groq.com API
-async-openai = { git = "https://github.com/chirino/async-openai", branch = "optional-fields" }
-# to pickup fix https://github.com/Abraxas-365/langchain-rust/pull/236
-langchain-rust = { git = "https://github.com/chirino/langchain-rust", branch = "remove-extraneous-agent-msg" }
+# to pickup fix: https://github.com/Abraxas-365/langchain-rust/pull/246
+#       and fix: https://github.com/Abraxas-365/langchain-rust/pull/250
+langchain-rust = { git = "https://github.com/chirino/langchain-rust", branch = "main" }

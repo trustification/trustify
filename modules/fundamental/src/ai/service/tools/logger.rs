@@ -20,14 +20,14 @@ impl<T: Tool> Tool for ToolLogger<T> {
     }
 
     async fn call(&self, input: &str) -> Result<String, Box<dyn Error>> {
-        log::info!("  tool call: {}, input: {}", self.name(), input);
+        log::info!("tool call: {}, input: {}", self.name(), input);
         let result = self.0.call(input).await;
         match &result {
             Ok(result) => {
-                log::info!("     ok: {}", result);
+                log::info!("   result: {}", result);
             }
             Err(err) => {
-                log::info!("     err: {}", err);
+                log::info!("      err: {}", err);
             }
         }
         result

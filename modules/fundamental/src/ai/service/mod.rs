@@ -130,23 +130,27 @@ impl AiService {
         let agent = OpenAiToolAgentBuilder::new()
             .prefix(PREFIX)
             .tools(&self.tools)
-            .options(ChainCallOptions::new().with_max_tokens(1000))
+            .options(
+                ChainCallOptions::new()
+                    .with_max_tokens(1000)
+                    .with_temperature(0.0)
+                    .with_seed(1000),
+            )
             .build(llm)
             .map_err(Error::AgentError)?;
 
         let mut memory = SimpleMemory::new();
-        let mut new_messages = 0;
+        let mut new_user_messages = Vec::new();
 
         for chat_message in &request.messages {
             match &chat_message.internal_state {
                 None => {
-                    let m = Message::new_human_message(chat_message.content.clone());
-                    memory.add_message(m);
-                    new_messages += 1;
+                    new_user_messages
+                        .push(Message::new_human_message(chat_message.content.clone()));
                 }
 
                 Some(internal_state) => {
-                    if new_messages != 0 {
+                    if !new_user_messages.is_empty() {
                         return Err(Error::BadRequest(
                             "message with internal_state found after messages without".to_string(),
                         ));
@@ -168,25 +172,38 @@ impl AiService {
             }
         }
 
+        let mut history = memory.messages();
+        for message in &new_user_messages {
+            history.push(message.clone());
+        }
+
+        let last_message = new_user_messages
+            .pop()
+            .ok_or(Error::BadRequest("no new user messages".to_string()))?;
+        for message in new_user_messages {
+            memory.add_message(message);
+        }
+
         let memory: Arc<tokio::sync::Mutex<dyn BaseMemory>> = memory.into();
         let executor = AgentExecutor::from_agent(agent).with_memory(memory.clone());
 
-        let _answer = executor
+        let answer = executor
             .invoke(prompt_args! {
-                "input" => new_messages,
+                "input" => last_message.content.clone(),
             })
             .await
             .map_err(Error::ChainError)?;
+        history.push(Message::new_ai_message(answer.clone()));
 
         let mut response = ChatState {
             messages: Vec::new(),
         };
 
         let memory = memory.lock().await;
-        for message in memory.messages() {
+        for mut message in memory.messages() {
             if message.message_type == langchain_rust::schemas::MessageType::ToolMessage {
-                // skip tool messages for now...
-                continue;
+                // hide tool results from the user
+                message.content = "".to_string();
             }
             let internal_state = match serde_json::to_vec(&message) {
                 Ok(serialized) => {

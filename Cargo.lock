@@ -694,8 +694,9 @@ dependencies = [
 
 [[package]]
 name = "async-openai"
-version = "0.24.0"
-source = "git+https://github.com/chirino/async-openai?branch=optional-fields#7b9fe4b17c9f1985a296a313adf9e641a5812163"
+version = "0.24.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6db3286b4f52b6556ac5208fb575d035eca61a2bf40d7e75d1db2733ffc599f"
 dependencies = [
  "async-convert",
  "backoff",
@@ -3801,8 +3802,8 @@ dependencies = [
 
 [[package]]
 name = "langchain-rust"
-version = "4.4.3"
-source = "git+https://github.com/chirino/langchain-rust?branch=remove-extraneous-agent-msg#358471ccdfa8e39c65de2a3058ffe19f93c6bb78"
+version = "4.6.0"
+source = "git+https://github.com/chirino/langchain-rust?branch=main#96c615bd6db4284d17eb24f8e730304f8a6e2563"
 dependencies = [
  "async-openai",
  "async-recursion",
