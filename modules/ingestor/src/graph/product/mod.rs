@@ -4,12 +4,12 @@ use entity::organization;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, ModelTrait, QueryFilter, Set};
 use std::fmt::Debug;
 use tracing::instrument;
-use trustify_common::db::Transactional;
+use trustify_common::{cpe::Cpe, db::Transactional};
 use trustify_entity as entity;
 use trustify_entity::product;
 use uuid::Uuid;
 
-use crate::graph::{error::Error, Graph};
+use crate::graph::{error::Error, organization::OrganizationInformation, Graph};
 
 use self::product_version::ProductVersionContext;
 
@@ -120,11 +120,12 @@ impl<'g> ProductContext<'g> {
 #[derive(Clone, Default, Debug)]
 pub struct ProductInformation {
     pub vendor: Option<String>,
+    pub cpe: Option<Cpe>,
 }
 
 impl ProductInformation {
     pub fn has_data(&self) -> bool {
-        self.vendor.is_some()
+        self.vendor.is_some() || self.cpe.is_some()
     }
 }
 
@@ -144,39 +145,48 @@ impl Graph {
     ) -> Result<ProductContext, Error> {
         let name = name.into();
         let information = information.into();
+        let cpe_key = information
+            .cpe
+            .clone()
+            .map(|cpe| cpe.product().as_ref().to_string());
 
-        if let Some(vendor) = information.vendor {
+        let entity = if let Some(vendor) = information.vendor {
             if let Some(found) = self
                 .get_product_by_organization(vendor.clone(), &name, &tx)
                 .await?
             {
-                Ok(found)
+                return Ok(found);
             } else {
-                let org = self.ingest_organization(vendor, (), &tx).await?;
+                let organization_cpe_key = information
+                    .cpe
+                    .clone()
+                    .map(|cpe| cpe.vendor().as_ref().to_string());
+                let org = OrganizationInformation {
+                    cpe_key: organization_cpe_key,
+                    website: None,
+                };
+                let org = self.ingest_organization(vendor, org, &tx).await?;
 
-                let entity = product::ActiveModel {
+                product::ActiveModel {
                     id: Default::default(),
                     name: Set(name),
+                    cpe_key: Set(cpe_key),
                     vendor_id: Set(Some(org.organization.id)),
-                };
-
-                Ok(ProductContext::new(
-                    self,
-                    entity.insert(&self.connection(&tx)).await?,
-                ))
+                }
             }
         } else {
-            let entity = product::ActiveModel {
+            product::ActiveModel {
                 id: Default::default(),
                 name: Set(name),
                 vendor_id: Set(None),
-            };
+                cpe_key: Set(cpe_key),
+            }
+        };
 
-            Ok(ProductContext::new(
-                self,
-                entity.insert(&self.connection(&tx)).await?,
-            ))
-        }
+        Ok(ProductContext::new(
+            self,
+            entity.insert(&self.connection(&tx)).await?,
+        ))
     }
 
     #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]

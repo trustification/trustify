@@ -20,6 +20,7 @@ async fn all_products(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             "Trusted Profile Analyzer",
             ProductInformation {
                 vendor: Some("Red Hat".to_string()),
+                cpe: None,
             },
             (),
         )
@@ -30,6 +31,7 @@ async fn all_products(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             "AMQ Broker",
             ProductInformation {
                 vendor: Some("Red Hat".to_string()),
+                cpe: None,
             },
             (),
         )
@@ -58,6 +60,7 @@ async fn one_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             "Trusted Profile Analyzer",
             ProductInformation {
                 vendor: Some("Red Hat".to_string()),
+                cpe: None,
             },
             (),
         )
@@ -97,6 +100,7 @@ async fn delete_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             "Trusted Profile Analyzer",
             ProductInformation {
                 vendor: Some("Red Hat".to_string()),
+                cpe: None,
             },
             (),
         )

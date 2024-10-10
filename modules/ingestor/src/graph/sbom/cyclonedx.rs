@@ -84,12 +84,18 @@ impl SbomContext {
 
         if let Some(metadata) = &sbom.metadata {
             if let Some(component) = &metadata.component {
+                let product_cpe = component
+                    .cpe
+                    .as_ref()
+                    .map(|cpe| Cpe::from_str(cpe.as_ref()))
+                    .transpose()?;
                 let pr = self
                     .graph
                     .ingest_product(
                         component.name.clone(),
                         ProductInformation {
                             vendor: component.publisher.clone().map(|p| p.to_string()),
+                            cpe: product_cpe,
                         },
                         &tx,
                     )
