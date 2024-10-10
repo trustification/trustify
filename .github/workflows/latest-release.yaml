@@ -1,0 +1,102 @@
+name: latest-release
+
+# Build "latest" container, run e2e tests against it, and deploy it to
+# https://trustify-latest-staging.apps.cluster.trustification.rocks/
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency: latest-release
+
+env:
+  IMAGE_NAME: trustd
+  IMAGE_TAG: latest
+  OPENSHIFT_NAMESPACE: trustify-latest
+  OPENSHIFT_SERVER: https://api.cluster.trustification.rocks:6443
+  APP_NAME: staging
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-binary.yaml
+    with:
+      version: latest
+
+  publish:
+    needs: [ build ]
+    runs-on: ubuntu-22.04
+
+    outputs:
+      image: ${{ steps.push.outputs.registry-path }}
+
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      attestations: write
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: ${{ github.workspace }}/download
+
+      - name: Display downloaded content
+        run: ls -R ${{ github.workspace }}/download
+
+      # Build the container
+
+      - uses: ./.github/actions/build-container
+        with:
+          image_name: ${{ env.IMAGE_NAME }}
+          image_tag: ${{ env.IMAGE_TAG }}
+
+      # Push to ghcr.io
+
+      - name: Push to ghcr.io
+        id: push
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.IMAGE_TAG }}
+          registry: ghcr.io/${{ github.repository_owner }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+  e2e-test:
+    needs: publish
+    uses: trustification/trustify-ci/.github/workflows/global-ci.yml@main
+    with:
+      server_image: ${{ needs.publish.outputs.image }}
+      run_api_tests: true
+      run_ui_tests: true
+
+  deploy:
+    if: ${{ github.repository == 'trustification/trustify' }}
+    runs-on: ubuntu-22.04
+    needs:
+      - publish
+      - e2e-test
+
+    steps:
+
+      - name: Log in and set context
+        uses: redhat-actions/oc-login@v1
+        with:
+          openshift_server_url: ${{ env.OPENSHIFT_SERVER }}
+          openshift_token: ${{ secrets.OPENSHIFT_TOKEN }}
+
+      - name: Install trustify
+        uses: trustification/trustify-operator/.github/actions/install-trustify@main
+        env:
+          SERVER_IMAGE: ${{ needs.publish.outputs.image }}
+        with:
+          operator-bundle-image: ghcr.io/trustification/trustify-operator-bundle:latest
+          trustify-cr: '{"kind":"Trustify","apiVersion":"org.trustify/v1alpha1","metadata":{"name":"${{ env.APP_NAME }}"},"spec":{"serverImage":"${{ env.SERVER_IMAGE }}"}}'
+          namespace: ${{ env.OPENSHIFT_NAMESPACE }}
+          app-name: ${{ env.APP_NAME }}
