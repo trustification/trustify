@@ -191,7 +191,25 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let jenny384 = Id::sha384(&digests.sha384);
     let jenny512 = Id::sha512(&digests.sha512);
     let fetched = fetch.fetch_advisory(jenny256.clone(), ()).await?;
+    let id = Id::Uuid(fetched.as_ref().unwrap().head.uuid);
 
+    assert!(matches!(
+            fetched,
+            Some(AdvisoryDetails {
+                head: AdvisoryHead { .. },
+            source_document: Some(SourceDocument {
+                sha256,
+                sha384,
+                sha512,
+                ..
+            }),
+            average_severity: Some(average_severity),
+
+                ..
+            })
+        if sha256 == jenny256.to_string() && sha384 == jenny384.to_string() && sha512 == jenny512.to_string() && average_severity == Severity::Critical));
+
+    let fetched = fetch.fetch_advisory(id, ()).await?;
     assert!(matches!(
             fetched,
             Some(AdvisoryDetails {

@@ -41,11 +41,20 @@ pub async fn ingest_fixtures(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     Ok(())
 }
 
-pub fn sanitize_uuid(value: String) -> String {
+pub fn sanitize_uuid_field(value: String) -> String {
     let re = regex::Regex::new(r#""uuid": "\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}\b""#).unwrap();
     re.replace_all(
         value.as_str(),
         r#""uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx""#,
+    )
+    .to_string()
+}
+
+pub fn sanitize_uuid_urn(value: String) -> String {
+    let re = regex::Regex::new(r#"urn:uuid:\b[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}\b"#).unwrap();
+    re.replace_all(
+        value.as_str(),
+        r#"urn:uuid:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"#,
     )
     .to_string()
 }

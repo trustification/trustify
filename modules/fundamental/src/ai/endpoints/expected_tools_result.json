@@ -1,0 +1,66 @@
+[
+  {
+    "name": "cve-info",
+    "description": "This tool can be used to get information about a Vulnerability.\nA Vulnerability is known as a CVE.\n\nVulnerabilities are security issues that may affect software packages.\nVulnerabilities may affect multiple packages.\n\nVulnerability are identified by their CVE Identifier.  Examples:\n* CVE-2014-0160\n\nThe input should be the partial name of the Vulnerability to search for.\nWhen the input is a full CVE ID, the tool will provide information about the vulnerability.\nWhen the input is a partial name, the tool will provide a list of possible matches.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "This tool can be used to get information about a Vulnerability.\nA Vulnerability is known as a CVE.\n\nVulnerabilities are security issues that may affect software packages.\nVulnerabilities may affect multiple packages.\n\nVulnerability are identified by their CVE Identifier.  Examples:\n* CVE-2014-0160\n\nThe input should be the partial name of the Vulnerability to search for.\nWhen the input is a full CVE ID, the tool will provide information about the vulnerability.\nWhen the input is a partial name, the tool will provide a list of possible matches."
+        }
+      },
+      "required": [
+        "input"
+      ]
+    }
+  },
+  {
+    "name": "advisory-info",
+    "description": "This tool can be used to get information about an Advisory.\n\nAdvisories are notifications that a vulnerability affects a product or SBOM.\nAdvisories are issued by a vendor or security organization.\nUnless there is a specific advisory for a CVE, the CVE may or may not affect the product.\n\nAdvisories have a UUID that uniquely identifies the advisory.  Example:\n* 2fd0d1b7-a908-4d63-9310-d57a7f77c6df\n\nThe input should be the UUID of the Advisory.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "This tool can be used to get information about an Advisory.\n\nAdvisories are notifications that a vulnerability affects a product or SBOM.\nAdvisories are issued by a vendor or security organization.\nUnless there is a specific advisory for a CVE, the CVE may or may not affect the product.\n\nAdvisories have a UUID that uniquely identifies the advisory.  Example:\n* 2fd0d1b7-a908-4d63-9310-d57a7f77c6df\n\nThe input should be the UUID of the Advisory."
+        }
+      },
+      "required": [
+        "input"
+      ]
+    }
+  },
+  {
+    "name": "package-info",
+    "description": "This tool provides information about a Package, which has a name and version. Packages are identified by a URI or a UUID. Examples of URIs:\n\n* pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le\n* pkg:maven/org.apache.maven.wagon/wagon-provider-api@3.5.1?type=jar\n\nExample of a UUID: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df.\n\nInput: The package name, its Identifier URI, or UUID.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "This tool provides information about a Package, which has a name and version. Packages are identified by a URI or a UUID. Examples of URIs:\n\n* pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le\n* pkg:maven/org.apache.maven.wagon/wagon-provider-api@3.5.1?type=jar\n\nExample of a UUID: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df.\n\nInput: The package name, its Identifier URI, or UUID."
+        }
+      },
+      "required": [
+        "input"
+      ]
+    }
+  },
+  {
+    "name": "sbom-info",
+    "description": "This tool retrieves information about a Software Bill of Materials (SBOM). SBOMs are identified by SHA-256, SHA-384, SHA-512 hashes, or UUID URIs. Examples:\n\nsha256:315f7c672f6e4948ffcc6d5a2b30f269c767d6d7d6f41d82ae716b5a46e5a68e\nurn:uuid:2fd0d1b7-a908-4d63-9310-d57a7f77c6df\n\nThe tool provides a list of advisories/CVEs affecting the SBOM.\n\nInput: An SBOM identifier or a product name. A full SBOM name typically combines the product name and version (e.g., \"product-version\"). If a user specifies both, use the product name to find the best matching SBOM. For example, \"quarkus 3.2.11\" might correspond to \"quarkus-bom-3.2.11.Final-redhat-00001\".\n\nThe link field contains a URL for more information about the item.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "This tool retrieves information about a Software Bill of Materials (SBOM). SBOMs are identified by SHA-256, SHA-384, SHA-512 hashes, or UUID URIs. Examples:\n\nsha256:315f7c672f6e4948ffcc6d5a2b30f269c767d6d7d6f41d82ae716b5a46e5a68e\nurn:uuid:2fd0d1b7-a908-4d63-9310-d57a7f77c6df\n\nThe tool provides a list of advisories/CVEs affecting the SBOM.\n\nInput: An SBOM identifier or a product name. A full SBOM name typically combines the product name and version (e.g., \"product-version\"). If a user specifies both, use the product name to find the best matching SBOM. For example, \"quarkus 3.2.11\" might correspond to \"quarkus-bom-3.2.11.Final-redhat-00001\".\n\nThe link field contains a URL for more information about the item."
+        }
+      },
+      "required": [
+        "input"
+      ]
+    }
+  }
+]

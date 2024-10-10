@@ -1,6 +1,5 @@
 use crate::ai::service::tools;
 use crate::vulnerability::service::VulnerabilityService;
-use anyhow::anyhow;
 use async_trait::async_trait;
 use langchain_rust::tools::Tool;
 use serde::Serialize;
@@ -24,6 +23,14 @@ impl Tool for CVEInfo {
         String::from(
             r##"
 This tool can be used to get information about a Vulnerability.
+A Vulnerability is known as a CVE.
+
+Vulnerabilities are security issues that may affect software packages.
+Vulnerabilities may affect multiple packages.
+
+Vulnerability are identified by their CVE Identifier.  Examples:
+* CVE-2014-0160
+
 The input should be the partial name of the Vulnerability to search for.
 When the input is a full CVE ID, the tool will provide information about the vulnerability.
 When the input is a partial name, the tool will provide a list of possible matches.
@@ -60,7 +67,7 @@ When the input is a partial name, the tool will provide a list of possible match
                     .await?;
 
                 if results.items.is_empty() {
-                    return Err(anyhow!("I don't know").into());
+                    return Ok(format!("Vulnerability '{input}' not found"));
                 }
 
                 // let the caller know what the possible matches are
@@ -89,13 +96,14 @@ When the input is a partial name, the tool will provide a list of possible match
                 {
                     v
                 } else {
-                    return Err(anyhow!("I don't know").into());
+                    return Ok(format!("Vulnerability '{input}' not found"));
                 }
             }
         };
 
         #[derive(Serialize)]
         struct Item {
+            identifier: String,
             title: Option<String>,
             description: Option<String>,
             severity: Option<f64>,
@@ -125,6 +133,7 @@ When the input is a partial name, the tool will provide a list of possible match
             })
             .collect();
         let json = tools::to_json(&Item {
+            identifier: item.head.identifier.clone(),
             title: item.head.title.clone(),
             description: item.head.description.clone(),
             severity: item.average_score,
@@ -162,6 +171,7 @@ mod tests {
             "CVE-2021-32714",
             r#"
 {
+  "identifier": "CVE-2021-32714",
   "title": "Integer Overflow in Chunked Transfer-Encoding",
   "description": "hyper is an HTTP library for Rust. In versions prior to 0.14.10, hyper's HTTP server and client code had a flaw that could trigger an integer overflow when decoding chunk sizes that are too big. This allows possible data loss, or if combined with an upstream HTTP proxy that allows chunk sizes larger than hyper does, can result in \"request smuggling\" or \"desync attacks.\" The vulnerability is patched in version 0.14.10. Two possible workarounds exist. One may reject requests manually that contain a `Transfer-Encoding` header or ensure any upstream proxy rejects `Transfer-Encoding` chunk sizes greater than what fits in 64-bit unsigned integers.",
   "severity": 9.1,

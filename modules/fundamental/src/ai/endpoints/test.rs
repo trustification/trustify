@@ -1,5 +1,5 @@
 use crate::ai::model::ChatState;
-use crate::ai::service::test::{ingest_fixtures, sanitize_uuid};
+use crate::ai::service::test::{ingest_fixtures, sanitize_uuid_field, sanitize_uuid_urn};
 use crate::ai::service::AiService;
 use crate::test::caller;
 use actix_http::StatusCode;
@@ -81,90 +81,11 @@ async fn tools(ctx: &TrustifyContext) -> anyhow::Result<()> {
     let result: serde_json::Value = actix_web::test::read_body_json(response).await;
     log::info!("result: {:?}", result);
 
+    let expected: serde_json::Value =
+        serde_json::from_str(include_str!("expected_tools_result.json"))?;
     assert_eq!(
         result,
-        json!([
-          {
-            "name": "product-info",
-            "description": "This tool can be used to get information about a product.\nThe input should be the name of the product to search for.\nWhen the input is a full name, the tool will provide information about the product.\nWhen the input is a partial name, the tool will provide a list of possible matches.",
-            "parameters": {
-              "type": "object",
-              "properties": {
-                "input": {
-                  "type": "string",
-                  "description": "This tool can be used to get information about a product.\nThe input should be the name of the product to search for.\nWhen the input is a full name, the tool will provide information about the product.\nWhen the input is a partial name, the tool will provide a list of possible matches."
-                }
-              },
-              "required": [
-                "input"
-              ]
-            }
-          },
-          {
-            "name": "cve-info",
-            "description": "This tool can be used to get information about a Vulnerability.\nThe input should be the partial name of the Vulnerability to search for.\nWhen the input is a full CVE ID, the tool will provide information about the vulnerability.\nWhen the input is a partial name, the tool will provide a list of possible matches.",
-            "parameters": {
-              "type": "object",
-              "properties": {
-                "input": {
-                  "type": "string",
-                  "description": "This tool can be used to get information about a Vulnerability.\nThe input should be the partial name of the Vulnerability to search for.\nWhen the input is a full CVE ID, the tool will provide information about the vulnerability.\nWhen the input is a partial name, the tool will provide a list of possible matches."
-                }
-              },
-              "required": [
-                "input"
-              ]
-            }
-          },
-          {
-            "name": "advisory-info",
-            "description": "This tool can be used to get information about an Advisory.\nThe input should be the name of the Advisory to search for.\nWhen the input is a full name, the tool will provide information about the Advisory.\nWhen the input is a partial name, the tool will provide a list of possible matches.",
-            "parameters": {
-              "type": "object",
-              "properties": {
-                "input": {
-                  "type": "string",
-                  "description": "This tool can be used to get information about an Advisory.\nThe input should be the name of the Advisory to search for.\nWhen the input is a full name, the tool will provide information about the Advisory.\nWhen the input is a partial name, the tool will provide a list of possible matches."
-                }
-              },
-              "required": [
-                "input"
-              ]
-            }
-          },
-          {
-            "name": "package-info",
-            "description": "This tool can be used to get information about a Package.\nThe input should be the name of the package, it's Identifier uri or internal UUID.",
-            "parameters": {
-              "type": "object",
-              "properties": {
-                "input": {
-                  "type": "string",
-                  "description": "This tool can be used to get information about a Package.\nThe input should be the name of the package, it's Identifier uri or internal UUID."
-                }
-              },
-              "required": [
-                "input"
-              ]
-            }
-          },
-          {
-            "name": "sbom-info",
-            "description": "This tool can be used to get information about an SBOM.\nThe input should be the SBOM Identifier.",
-            "parameters": {
-              "type": "object",
-              "properties": {
-                "input": {
-                  "type": "string",
-                  "description": "This tool can be used to get information about an SBOM.\nThe input should be the SBOM Identifier."
-                }
-              },
-              "required": [
-                "input"
-              ]
-            }
-          }
-        ]),
+        expected,
         "result:\n{}",
         serde_json::to_string_pretty(&result)?
     );
@@ -181,7 +102,8 @@ async fn read_text(response: ServiceResponse) -> anyhow::Result<String> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn tools_call(ctx: &TrustifyContext) -> anyhow::Result<()> {
-    ingest_fixtures(ctx).await?;
+    ctx.ingest_document("quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json")
+        .await?;
 
     let app = caller(ctx).await?;
 
@@ -194,35 +116,43 @@ async fn tools_call(ctx: &TrustifyContext) -> anyhow::Result<()> {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
     let request = TestRequest::post()
-        .uri("/api/v1/ai/tools/product-info")
-        .set_json(json!("Trusted Profile Analyzer"))
+        .uri("/api/v1/ai/tools/sbom-info")
+        .set_json(json!("quarkus"))
         .to_request();
 
     let response = app.call_service(request).await;
     log::debug!("Code: {}", response.status());
     assert_eq!(response.status(), StatusCode::OK);
 
-    let result = sanitize_uuid(read_text(response).await?);
+    let result = sanitize_uuid_urn(sanitize_uuid_field(read_text(response).await?));
     log::info!("result: {:?}", result);
 
     assert_eq!(
         result.trim(),
         r#"
 {
-  "items": [
-    {
-      "name": "Trusted Profile Analyzer",
-      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      "vendor": "Red Hat",
-      "versions": [
-        "37.17.9"
-      ]
-    }
+  "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "source_document_sha256": "sha256:5a370574a991aa42f7ecc5b7d88754b258f81c230a73bea247c0a6fcc6f608ab",
+  "name": "quarkus-bom",
+  "published": "2023-11-13T00:10:00Z",
+  "authors": [
+    "Organization: Red Hat Product Security (secalert@redhat.com)"
   ],
-  "total": 1
+  "labels": [
+    [
+      "source",
+      "TrustifyContext"
+    ],
+    [
+      "type",
+      "spdx"
+    ]
+  ],
+  "advisories": [],
+  "link": "http://localhost:3000/sboms/urn:uuid:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 }
 "#
-        .trim()
+            .trim()
     );
 
     Ok(())
