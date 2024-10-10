@@ -127,6 +127,7 @@ impl<'a> StatusCreator<'a> {
                     product.product.clone(),
                     ProductInformation {
                         vendor: product.vendor.clone(),
+                        cpe: product.cpe.clone(),
                     },
                     &tx,
                 )

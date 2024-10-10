@@ -160,7 +160,7 @@ mod tests {
     #[test(actix_web::test)]
     async fn sbom_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ctx.ingest_document("ubi9-9.2-755.1697625012.json").await?;
-        ctx.ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
+        ctx.ingest_document("quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json")
             .await?;
 
         let tool = Rc::new(SbomInfo(SbomService::new(ctx.db.clone())));

@@ -22,7 +22,7 @@ use trustify_test_context::{spdx::fix_spdx_rels, TrustifyContext};
 async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     test_with_spdx(
         ctx,
-        "quarkus-bom-2.13.8.Final-redhat-00004.json",
+        "quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json",
         |WithContext { service, sbom, .. }| async move {
             let described = service
                 .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)

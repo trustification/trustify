@@ -26,6 +26,7 @@ pub async fn ingest_fixtures(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
             "Trusted Profile Analyzer",
             ProductInformation {
                 vendor: Some("Red Hat".to_string()),
+                cpe: None,
             },
             (),
         )

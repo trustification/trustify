@@ -1,5 +1,7 @@
+use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
+use trustify_common::cpe::Cpe;
 use trustify_common::db::query::Query;
 use trustify_common::db::Transactional;
 use trustify_common::hashing::Digests;
@@ -27,6 +29,7 @@ async fn all_products(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             "Trusted Profile Analyzer",
             ProductInformation {
                 vendor: Some("Red Hat".to_string()),
+                cpe: None,
             },
             (),
         )
@@ -63,6 +66,7 @@ async fn link_sbom_to_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error
             "Trusted Profile Analyzer",
             ProductInformation {
                 vendor: Some("Red Hat".to_string()),
+                cpe: Some(Cpe::from_str("cpe:/a:redhat:tpa:2.0.0")?),
             },
             (),
         )
@@ -98,6 +102,10 @@ async fn link_sbom_to_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     assert_eq!("Trusted Profile Analyzer", product.product.product.name);
     assert_eq!("1.0.0", product.product_version.version);
     assert_eq!(
+        "tpa",
+        product.product.product.cpe_key.clone().expect("no cpe")
+    );
+    assert_eq!(
         sbom.sbom.sbom_id,
         product.product_version.sbom_id.expect("No sbom")
     );
@@ -108,6 +116,7 @@ async fn link_sbom_to_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error
         .await?
         .expect("no organization");
     assert_eq!("Red Hat", org.organization.name);
+    assert_eq!("redhat", org.organization.cpe_key.expect("no cpe"));
 
     Ok(())
 }
@@ -121,6 +130,7 @@ async fn delete_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             "Trusted Profile Analyzer",
             ProductInformation {
                 vendor: Some("Red Hat".to_string()),
+                cpe: None,
             },
             (),
         )

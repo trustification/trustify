@@ -140,6 +140,8 @@ impl SbomContext {
                 }
             }
 
+            let mut product_cpe = None;
+
             for r in &package.external_reference {
                 match &*r.reference_type {
                     "purl" => match Purl::from_str(&r.reference_locator) {
@@ -157,7 +159,12 @@ impl SbomContext {
                     "cpe22Type" => match Cpe::from_str(&r.reference_locator) {
                         Ok(cpe) => {
                             refs.push(PackageReference::Cpe(cpe.uuid()));
-                            cpes.add(cpe);
+                            cpes.add(cpe.clone());
+                            // TODO: Product can have multiple CPE references
+                            // possibly leading to multiple cpe keys.
+                            // We need to investigate how to improve the design
+                            // to support these use cases.
+                            product_cpe = product_cpe.or(Some(cpe));
                         }
                         Err(err) => {
                             log::info!("Failed to parse CPE ({}): {err}", r.reference_locator);
@@ -182,6 +189,7 @@ impl SbomContext {
                         package.package_name.clone(),
                         ProductInformation {
                             vendor: package.package_supplier.clone(),
+                            cpe: product_cpe,
                         },
                         &tx,
                     )
