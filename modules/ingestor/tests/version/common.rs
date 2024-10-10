@@ -1,4 +1,7 @@
 #![allow(unused)]
+// clippy complains about this module being imported multiple times. However, that seems to be some
+// artifact from the way the group integration tests.
+#![allow(clippy::duplicate_mod)]
 
 use sea_orm::{ConnectionTrait, Statement};
 use std::fmt::{Debug, Display};
