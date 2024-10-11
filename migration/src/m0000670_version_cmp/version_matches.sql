@@ -4,6 +4,8 @@ as
 $$
 declare
 begin
+    -- for an authoritative list of support schemes, see the enum
+    -- `trustify_entity::version_scheme::VersionScheme`
     return case
         when range_p.version_scheme_id = 'git'
             -- Git is git, and hard.

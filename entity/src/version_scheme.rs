@@ -9,6 +9,7 @@ use sea_orm::entity::prelude::*;
 #[strum(serialize_all = "camelCase")]
 pub enum VersionScheme {
     Generic,
+    Git,
     Semver,
     Rpm,
     Python,
