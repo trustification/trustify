@@ -13,6 +13,7 @@ use std::sync::OnceLock;
 use time::format_description::well_known::Rfc3339;
 use time::macros::format_description;
 use time::{Date, OffsetDateTime};
+use uuid::Uuid;
 
 /////////////////////////////////////////////////////////////////////////
 // Public interface
@@ -473,6 +474,7 @@ impl Arg {
             return Ok(Arg::Null);
         }
         Ok(match ct {
+            ColumnType::Uuid => Arg::Value(Value::from(s.parse::<Uuid>().map_err(err)?)),
             ColumnType::Integer => Arg::Value(Value::from(s.parse::<i32>().map_err(err)?)),
             ColumnType::Decimal(_) | ColumnType::Float | ColumnType::Double => {
                 Arg::Value(Value::from(s.parse::<f64>().map_err(err)?))
