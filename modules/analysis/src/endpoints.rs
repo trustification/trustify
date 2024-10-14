@@ -407,4 +407,57 @@ mod test {
         );
         Ok(assert_eq!(&response["total"], 2))
     }
+
+    #[test_context(TrustifyContext)]
+    #[test(actix_web::test)]
+    async fn test_retrieve_query_params_endpoint(
+        ctx: &TrustifyContext,
+    ) -> Result<(), anyhow::Error> {
+        let app = caller(ctx).await?;
+        ctx.ingest_documents(["spdx/simple.json"]).await?;
+
+        // filter on node_id
+        let uri = "/api/v1/analysis/dep?q=node_id%3DSPDXRef-A";
+        let request: Request = TestRequest::get().uri(uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        assert_eq!(response["items"][0]["name"], "A");
+        assert_eq!(&response["total"], 1);
+
+        // filter on node_id
+        let uri = "/api/v1/analysis/root-component?q=node_id%3DSPDXRef-B";
+        let request: Request = TestRequest::get().uri(uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        assert_eq!(response["items"][0]["name"], "B");
+        assert_eq!(&response["total"], 1);
+
+        // filter on node_id & name
+        let uri = "/api/v1/analysis/root-component?q=node_id%3DSPDXRef-B%26name%3DB";
+        let request: Request = TestRequest::get().uri(uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        assert_eq!(response["items"][0]["name"], "B");
+        assert_eq!(&response["total"], 1);
+
+        // filter on sbom_id (which has urn:uuid: prefix)
+        let sbom_id = response["items"][0]["sbom_id"].as_str().unwrap();
+        let uri = format!(
+            "/api/v1/analysis/root-component?q=sbom_id=urn:uuid:{}",
+            sbom_id
+        );
+        let request: Request = TestRequest::get().uri(uri.clone().as_str()).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        assert_eq!(&response["total"], 7);
+
+        // negative test
+        let uri = "/api/v1/analysis/root-component?q=sbom_id=urn:uuid:99999999-9999-9999-9999-999999999999";
+        let request: Request = TestRequest::get().uri(uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        assert_eq!(&response["total"], 0);
+
+        // negative test
+        let uri = "/api/v1/analysis/root-component?q=node_id%3DSPDXRef-B%26name%3DA";
+        let request: Request = TestRequest::get().uri(uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+
+        Ok(assert_eq!(&response["total"], 0))
+    }
 }

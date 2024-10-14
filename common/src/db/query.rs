@@ -810,16 +810,16 @@ mod tests {
             r#"(("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%')) AND "advisory"."location" = 'bar'"#
         );
         assert_eq!(
-            where_clause(r"m\&m's&location=f\&oo&id=13")?,
-            r#"(("advisory"."location" ILIKE E'%m&m\'s%') OR ("advisory"."title" ILIKE E'%m&m\'s%')) AND "advisory"."location" = 'f&oo' AND "advisory"."id" = 13"#
+            where_clause(r"m\&m's&location=f\&oo&id=0e840505-e29b-41d4-a716-665544004400")?,
+            r#"(("advisory"."location" ILIKE E'%m&m\'s%') OR ("advisory"."title" ILIKE E'%m&m\'s%')) AND "advisory"."location" = 'f&oo' AND "advisory"."id" = '0e840505-e29b-41d4-a716-665544004400'"#
         );
         assert_eq!(
             where_clause("a|b|c")?,
             r#"("advisory"."location" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%') OR ("advisory"."location" ILIKE '%c%') OR ("advisory"."title" ILIKE '%c%')"#
         );
         assert_eq!(
-            where_clause("a|b&id=1")?,
-            r#"(("advisory"."location" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%')) AND "advisory"."id" = 1"#
+            where_clause("a|b&id=0e840505-e29b-41d4-a716-665544004400")?,
+            r#"(("advisory"."location" ILIKE '%a%') OR ("advisory"."title" ILIKE '%a%') OR ("advisory"."location" ILIKE '%b%') OR ("advisory"."title" ILIKE '%b%')) AND "advisory"."id" = '0e840505-e29b-41d4-a716-665544004400'"#
         );
         assert_eq!(
             where_clause("a&b")?,
@@ -924,7 +924,11 @@ mod tests {
                 )
                 .unwrap()
                 .build(sea_orm::DatabaseBackend::Postgres)
-                .to_string()[45..]
+                .to_string()
+                .split("WHERE")
+                .last()
+                .expect("problem splitting string")
+                .trim()
                 .to_string();
             assert_eq!(stmt, expected);
         };
@@ -955,7 +959,11 @@ mod tests {
             .column(advisory::Column::Id)
             .filtering(q(query))?
             .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string()[45..]
+            .to_string()
+            .split("WHERE")
+            .last()
+            .expect("problem splitting string")
+            .trim()
             .to_string())
     }
 
@@ -967,7 +975,7 @@ mod tests {
         #[sea_orm(table_name = "advisory")]
         pub struct Model {
             #[sea_orm(primary_key)]
-            pub id: i32,
+            pub id: Uuid,
             pub location: String,
             pub title: String,
             pub published: Option<OffsetDateTime>,

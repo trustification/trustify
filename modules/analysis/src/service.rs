@@ -19,6 +19,7 @@ use petgraph::visit::{NodeIndexable, VisitMap, Visitable};
 use petgraph::Direction;
 use sea_query::Order;
 use std::str::FromStr;
+use trustify_common::db::query::Filtering;
 use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::purl::Purl;
 use trustify_entity::relationship::Relationship;
@@ -273,6 +274,23 @@ pub async fn load_graphs(
     }
 }
 
+fn convert_query_to_hashmap(query: &Query) -> HashMap<String, String> {
+    if query.q.contains('=') {
+        query
+            .q
+            .split('&')
+            .filter_map(|pair| {
+                pair.split_once('=').map(|(key, value)| {
+                    let value = value.strip_prefix("urn:uuid:").unwrap_or(value);
+                    (key.to_owned(), value.to_owned())
+                })
+            })
+            .collect()
+    } else {
+        HashMap::from([("re_name".to_owned(), query.q.clone())])
+    }
+}
+
 impl AnalysisService {
     pub fn new(db: Database) -> Self {
         GraphMap::get_instance();
@@ -340,8 +358,9 @@ impl AnalysisService {
     ) -> Result<PaginatedResults<AncestorSummary>, Error> {
         let connection = self.db.connection(&tx);
 
+        let graph_query_map = convert_query_to_hashmap(&query);
         let search_sbom_node_name_subquery = sbom_node::Entity::find()
-            .filter(sbom_node::Column::Name.like(format!("%{}%", query.q.as_str())))
+            .filtering(query)?
             .select_only()
             .column(sbom_node::Column::SbomId)
             .distinct()
@@ -363,15 +382,31 @@ impl AnalysisService {
         let graph_manager = GraphMap::get_instance();
         {
             // RwLock for reading hashmap<graph>
-            let graph_read_gaurd = graph_manager.read();
+            let graph_read_guard = graph_manager.read();
             for distinct_sbom_id in &distinct_sbom_ids {
-                if let Some(graph) = graph_read_gaurd.get(distinct_sbom_id.to_string().as_str()) {
+                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
                     // Iterate over matching node indices and process them directly
                     graph
                         .node_indices()
                         .filter(|&i| {
                             if let Some(node) = graph.node_weight(i) {
-                                node.name.contains(&query.q.to_string())
+                                if let Some(re_name) = graph_query_map.get("re_name") {
+                                    // if no specific url params supplied then use contains search
+                                    node.name.contains(re_name)
+                                } else {
+                                    // if any specific url params supplied then match equals
+                                    let matches_sbom_id = graph_query_map
+                                        .get("sbom_id")
+                                        .map_or(true, |sbom_id| node.sbom_id.eq(sbom_id));
+                                    let matches_node_id = graph_query_map
+                                        .get("node_id")
+                                        .map_or(true, |node_id| node.node_id.eq(node_id));
+                                    let matches_name =
+                                        graph_query_map.get("name").map_or(true, |name| {
+                                            !name.is_empty() && node.name.eq(name)
+                                        });
+                                    matches_sbom_id && matches_node_id && matches_name
+                                }
                             } else {
                                 false // Return false if the node does not exist
                             }
@@ -433,9 +468,9 @@ impl AnalysisService {
         let graph_manager = GraphMap::get_instance();
         {
             // RwLock for reading hashmap<graph>
-            let graph_read_gaurd = graph_manager.read();
+            let graph_read_guard = graph_manager.read();
             for distinct_sbom_id in &distinct_sbom_ids {
-                if let Some(graph) = graph_read_gaurd.get(distinct_sbom_id.to_string().as_str()) {
+                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
                     // Iterate over matching node indices and process them directly
                     graph
                         .node_indices()
@@ -503,9 +538,9 @@ impl AnalysisService {
         let graph_manager = GraphMap::get_instance();
         {
             // RwLock for reading hashmap<graph>
-            let graph_read_gaurd = graph_manager.read();
+            let graph_read_guard = graph_manager.read();
             for distinct_sbom_id in &distinct_sbom_ids {
-                if let Some(graph) = graph_read_gaurd.get(distinct_sbom_id.to_string().as_str()) {
+                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
                     // Iterate over matching node indices and process them directly
                     graph
                         .node_indices()
@@ -564,8 +599,9 @@ impl AnalysisService {
     ) -> Result<PaginatedResults<DepSummary>, Error> {
         let connection = self.db.connection(&tx);
 
+        let graph_query_map = convert_query_to_hashmap(&query);
         let search_sbom_node_name_subquery = sbom_node::Entity::find()
-            .filter(sbom_node::Column::Name.like(format!("%{}%", query.q.as_str())))
+            .filtering(query)?
             .select_only()
             .column(sbom_node::Column::SbomId)
             .distinct()
@@ -587,15 +623,31 @@ impl AnalysisService {
         let graph_manager = GraphMap::get_instance();
         {
             // RwLock for reading hashmap<graph>
-            let graph_read_gaurd = graph_manager.read();
+            let graph_read_guard = graph_manager.read();
             for distinct_sbom_id in &distinct_sbom_ids {
-                if let Some(graph) = graph_read_gaurd.get(distinct_sbom_id.to_string().as_str()) {
+                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
                     // Iterate over matching node indices and process them directly
                     graph
                         .node_indices()
                         .filter(|&i| {
                             if let Some(node) = graph.node_weight(i) {
-                                node.name.contains(&query.q.to_string())
+                                if let Some(re_name) = graph_query_map.get("re_name") {
+                                    // if no specific url params supplied then use contains search
+                                    node.name.contains(re_name)
+                                } else {
+                                    // if any specific url params supplied then match equals
+                                    let matches_sbom_id = graph_query_map
+                                        .get("sbom_id")
+                                        .map_or(true, |sbom_id| node.sbom_id.eq(sbom_id));
+                                    let matches_node_id = graph_query_map
+                                        .get("node_id")
+                                        .map_or(true, |node_id| node.node_id.eq(node_id));
+                                    let matches_name =
+                                        graph_query_map.get("name").map_or(true, |name| {
+                                            !name.is_empty() && node.name.eq(name)
+                                        });
+                                    matches_sbom_id && matches_node_id && matches_name
+                                }
                             } else {
                                 false // Return false if the node does not exist
                             }
@@ -656,9 +708,9 @@ impl AnalysisService {
         let graph_manager = GraphMap::get_instance();
         {
             // RwLock for reading hashmap<graph>
-            let graph_read_gaurd = graph_manager.read();
+            let graph_read_guard = graph_manager.read();
             for distinct_sbom_id in &distinct_sbom_ids {
-                if let Some(graph) = graph_read_gaurd.get(distinct_sbom_id.to_string().as_str()) {
+                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
                     // Iterate over matching node indices and process them directly
                     graph
                         .node_indices()
@@ -726,9 +778,9 @@ impl AnalysisService {
         let graph_manager = GraphMap::get_instance();
         {
             // RwLock for reading hashmap<graph>
-            let graph_read_gaurd = graph_manager.read();
+            let graph_read_guard = graph_manager.read();
             for distinct_sbom_id in &distinct_sbom_ids {
-                if let Some(graph) = graph_read_gaurd.get(distinct_sbom_id.to_string().as_str()) {
+                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
                     // Iterate over matching node indices and process them directly
                     graph
                         .node_indices()
