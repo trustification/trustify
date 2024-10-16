@@ -1,6 +1,6 @@
 use crate::advisory::service::AdvisoryService;
 use crate::ai::service::tools;
-use anyhow::anyhow;
+use crate::ai::service::tools::input_description;
 use async_trait::async_trait;
 use langchain_rust::tools::Tool;
 use serde::Serialize;
@@ -20,13 +20,20 @@ impl Tool for AdvisoryInfo {
         String::from("advisory-info")
     }
 
+    fn parameters(&self) -> Value {
+        input_description("UUID of the Advisory. Example: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df")
+    }
+
     fn description(&self) -> String {
         String::from(
             r##"
 This tool can be used to get information about an Advisory.
-The input should be the name of the Advisory to search for.
-When the input is a full name, the tool will provide information about the Advisory.
-When the input is a partial name, the tool will provide a list of possible matches.
+
+Advisories are notifications that a vulnerability affects a product or SBOM.
+Advisories are issued by a vendor or security organization.
+Unless there is a specific advisory for a CVE, the CVE may or may not affect the product.
+
+Advisories have a UUID that uniquely identifies the advisory.
 "##
             .trim(),
         )
@@ -40,45 +47,51 @@ When the input is a partial name, the tool will provide a list of possible match
             .ok_or("Input should be a string")?
             .to_string();
 
-        // search for possible matches
-        let results = service
-            .fetch_advisories(
-                Query {
-                    q: input,
-                    ..Default::default()
-                },
-                Default::default(),
-                Deprecation::Ignore,
-                (),
-            )
-            .await?;
+        let item = match Uuid::parse_str(input.as_str()).ok() {
+            Some(x) => service.fetch_advisory(Id::Uuid(x), ()).await?,
+            None => {
+                // search for possible matches
+                let results = service
+                    .fetch_advisories(
+                        Query {
+                            q: input.clone(),
+                            ..Default::default()
+                        },
+                        Default::default(),
+                        Deprecation::Ignore,
+                        (),
+                    )
+                    .await?;
 
-        if results.items.is_empty() {
-            return Err(anyhow!("I don't know").into());
-        }
+                if results.items.is_empty() {
+                    return Ok(format!("Advisory '{input}' not found"));
+                }
 
-        // let the caller know what the possible matches are
-        if results.items.len() > 1 {
-            #[derive(Serialize)]
-            struct Item {
-                identifier: String,
-                title: Option<String>,
+                // let the caller know what the possible matches are
+                if results.items.len() > 1 {
+                    #[derive(Serialize)]
+                    struct Item {
+                        identifier: String,
+                        title: Option<String>,
+                    }
+
+                    let json = tools::paginated_to_json(results, |item| Item {
+                        identifier: item.head.identifier.clone(),
+                        title: item.head.title.clone(),
+                    })?;
+                    return Ok(format!("There are multiple that match:\n\n{}", json));
+                }
+
+                // let's show the details
+                service
+                    .fetch_advisory(Id::Uuid(results.items[0].head.uuid), ())
+                    .await?
             }
+        };
 
-            let json = tools::paginated_to_json(results, |item| Item {
-                identifier: item.head.identifier.clone(),
-                title: item.head.title.clone(),
-            })?;
-            return Ok(format!("There are multiple that match:\n\n{}", json));
-        }
-
-        // let's show the details
-        let item = match service
-            .fetch_advisory(Id::Uuid(results.items[0].head.uuid), ())
-            .await?
-        {
+        let item = match item {
             Some(v) => v,
-            None => return Err(anyhow!("I don't know").into()),
+            None => return Ok(format!("Advisory '{input}' not found")),
         };
 
         #[derive(Serialize)]

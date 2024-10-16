@@ -1,6 +1,6 @@
 use crate::ai::service::tools;
 use crate::purl::service::PurlService;
-use anyhow::anyhow;
+use crate::sbom::service::SbomService;
 use async_trait::async_trait;
 use langchain_rust::tools::Tool;
 use serde::Serialize;
@@ -11,7 +11,7 @@ use trustify_common::purl::Purl;
 use trustify_module_ingestor::common::Deprecation;
 use uuid::Uuid;
 
-pub struct PackageInfo(pub PurlService);
+pub struct PackageInfo(pub (PurlService, SbomService));
 
 #[async_trait]
 impl Tool for PackageInfo {
@@ -22,15 +22,21 @@ impl Tool for PackageInfo {
     fn description(&self) -> String {
         String::from(
             r##"
-This tool can be used to get information about a Package.
-The input should be the name of the package, it's Identifier uri or internal UUID.
+This tool provides information about a Package, which has a name and version. Packages are identified by a URI or a UUID. Examples of URIs:
+
+* pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le
+* pkg:maven/org.apache.maven.wagon/wagon-provider-api@3.5.1?type=jar
+
+Example of a UUID: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df.
+
+Input: The package name, its Identifier URI, or UUID.
 "##
-            .trim(),
+                .trim(),
         )
     }
 
     async fn run(&self, input: Value) -> Result<String, Box<dyn Error>> {
-        let service = &self.0;
+        let (service, sbom_service) = &self.0;
 
         let input = input
             .as_str()
@@ -57,7 +63,7 @@ The input should be the name of the package, it's Identifier uri or internal UUI
             let results = service
                 .purls(
                     Query {
-                        q: input,
+                        q: input.clone(),
                         ..Default::default()
                     },
                     Default::default(),
@@ -94,8 +100,12 @@ The input should be the name of the package, it's Identifier uri or internal UUI
 
         let item = match purl_details {
             Some(v) => v,
-            None => return Err(anyhow!("I don't know").into()),
+            None => return Ok(format!("Package '{input}' not found")),
         };
+
+        let sboms = sbom_service
+            .find_related_sboms(item.head.uuid, Default::default(), Default::default(), ())
+            .await?;
 
         #[derive(Serialize)]
         struct Item {
@@ -105,6 +115,13 @@ The input should be the name of the package, it's Identifier uri or internal UUI
             version: Option<String>,
             advisories: Vec<Advisory>,
             licenses: Vec<String>,
+            sboms: Vec<Sbom>,
+        }
+
+        #[derive(Serialize)]
+        struct Sbom {
+            uuid: Uuid,
+            name: String,
         }
 
         #[derive(Serialize)]
@@ -127,6 +144,14 @@ The input should be the name of the package, it's Identifier uri or internal UUI
             uuid: item.head.uuid,
             name: item.head.purl.name.clone(),
             version: item.head.purl.version.clone(),
+            sboms: sboms
+                .items
+                .iter()
+                .map(|sbom| Sbom {
+                    uuid: sbom.head.id,
+                    name: sbom.head.name.clone(),
+                })
+                .collect(),
 
             advisories: item
                 .advisories
@@ -173,7 +198,10 @@ mod tests {
         ctx.ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
             .await?;
 
-        let tool = Rc::new(PackageInfo(PurlService::new(ctx.db.clone())));
+        let tool = Rc::new(PackageInfo((
+            PurlService::new(ctx.db.clone()),
+            SbomService::new(ctx.db.clone()),
+        )));
 
         assert_tool_contains(
             tool.clone(),
@@ -187,6 +215,12 @@ mod tests {
   "advisories": [],
   "licenses": [
     "LGPLV2+"
+  ],
+  "sboms": [
+    {
+      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "name": "ubi9-container"
+    }
   ]
 }
 "#,
@@ -205,6 +239,12 @@ mod tests {
   "advisories": [],
   "licenses": [
     "LGPLV2+"
+  ],
+  "sboms": [
+    {
+      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "name": "ubi9-container"
+    }
   ]
 }
 "#,
@@ -223,6 +263,12 @@ mod tests {
   "advisories": [],
   "licenses": [
     "APACHE-2.0"
+  ],
+  "sboms": [
+    {
+      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "name": "quarkus-bom"
+    }
   ]
 }
 "#).await?;
@@ -239,6 +285,12 @@ mod tests {
   "advisories": [],
   "licenses": [
     "APACHE-2.0"
+  ],
+  "sboms": [
+    {
+      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "name": "quarkus-bom"
+    }
   ]
 }
 "#).await?;
