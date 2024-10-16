@@ -1,5 +1,6 @@
 use crate::advisory::service::AdvisoryService;
 use crate::ai::service::tools;
+use crate::ai::service::tools::input_description;
 use async_trait::async_trait;
 use langchain_rust::tools::Tool;
 use serde::Serialize;
@@ -19,6 +20,10 @@ impl Tool for AdvisoryInfo {
         String::from("advisory-info")
     }
 
+    fn parameters(&self) -> Value {
+        input_description("UUID of the Advisory. Example: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df")
+    }
+
     fn description(&self) -> String {
         String::from(
             r##"
@@ -28,10 +33,7 @@ Advisories are notifications that a vulnerability affects a product or SBOM.
 Advisories are issued by a vendor or security organization.
 Unless there is a specific advisory for a CVE, the CVE may or may not affect the product.
 
-Advisories have a UUID that uniquely identifies the advisory.  Example:
-* 2fd0d1b7-a908-4d63-9310-d57a7f77c6df
-
-The input should be the UUID of the Advisory.
+Advisories have a UUID that uniquely identifies the advisory.
 "##
             .trim(),
         )

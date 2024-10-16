@@ -1,6 +1,7 @@
 use crate::ai::service::tools;
 use crate::sbom::service::SbomService;
 
+use crate::ai::service::tools::input_description;
 use async_trait::async_trait;
 use itertools::Itertools;
 use langchain_rust::tools::Tool;
@@ -21,6 +22,17 @@ impl Tool for SbomInfo {
         String::from("sbom-info")
     }
 
+    fn parameters(&self) -> Value {
+        input_description(
+            r#"
+An SBOM identifier or a product name.
+A full SBOM name typically combines the product name and version (e.g., "product-version").
+If a user specifies both, use the product name get a list of best matching SBOMs.
+For example, input "quarkus" instead of "quarkus 3.2.11".
+"#,
+        )
+    }
+
     fn description(&self) -> String {
         String::from(
             r##"
@@ -30,10 +42,6 @@ sha256:315f7c672f6e4948ffcc6d5a2b30f269c767d6d7d6f41d82ae716b5a46e5a68e
 urn:uuid:2fd0d1b7-a908-4d63-9310-d57a7f77c6df
 
 The tool provides a list of advisories/CVEs affecting the SBOM.
-
-Input: An SBOM identifier or a product name. A full SBOM name typically combines the product name and version (e.g., "product-version"). If a user specifies both, use the product name to find the best matching SBOM. For example, "quarkus 3.2.11" might correspond to "quarkus-bom-3.2.11.Final-redhat-00001".
-
-The link field contains a URL for more information about the item.
 "##
                 .trim(),
         )

@@ -1,4 +1,5 @@
 use crate::ai::service::tools;
+use crate::ai::service::tools::input_description;
 use crate::vulnerability::service::VulnerabilityService;
 use async_trait::async_trait;
 use langchain_rust::tools::Tool;
@@ -19,21 +20,26 @@ impl Tool for CVEInfo {
         String::from("cve-info")
     }
 
+    fn parameters(&self) -> Value {
+        input_description(
+            r#"
+The input should be the partial or full name of the Vulnerability to search for.  Example:
+* CVE-2014-0160
+
+        "#,
+        )
+    }
+
     fn description(&self) -> String {
         String::from(
             r##"
 This tool can be used to get information about a Vulnerability.
-A Vulnerability is known as a CVE.
+A Vulnerability is also known as a CVE.
 
 Vulnerabilities are security issues that may affect software packages.
 Vulnerabilities may affect multiple packages.
 
-Vulnerability are identified by their CVE Identifier.  Examples:
-* CVE-2014-0160
-
-The input should be the partial name of the Vulnerability to search for.
-When the input is a full CVE ID, the tool will provide information about the vulnerability.
-When the input is a partial name, the tool will provide a list of possible matches.
+Vulnerability are identified by their CVE Identifier.
 "##
             .trim(),
         )
