@@ -9,6 +9,7 @@ use crate::sbom::service::SbomService;
 use crate::vulnerability::service::VulnerabilityService;
 use langchain_rust::tools::Tool;
 use serde::Serialize;
+use serde_json::{json, Value};
 use std::error::Error;
 use std::sync::Arc;
 use trustify_common::db::Database;
@@ -59,6 +60,19 @@ where
     to_json(&PaginatedResults {
         items: p.items.iter().map(f).collect(),
         total: p.total,
+    })
+}
+
+fn input_description(description: &str) -> Value {
+    json!({
+        "type": "object",
+            "properties": {
+            "input": {
+                "type": "string",
+                "description": description,
+            }
+        },
+        "required": ["input"]
     })
 }
 

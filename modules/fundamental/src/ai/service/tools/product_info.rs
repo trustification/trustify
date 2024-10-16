@@ -1,4 +1,5 @@
 use crate::ai::service::tools;
+use crate::ai::service::tools::input_description;
 use crate::product::service::ProductService;
 use async_trait::async_trait;
 use langchain_rust::tools::Tool;
@@ -16,6 +17,10 @@ impl Tool for ProductInfo {
         String::from("product-info")
     }
 
+    fn parameters(&self) -> Value {
+        input_description("The name of the product to search for.")
+    }
+
     fn description(&self) -> String {
         String::from(
             r##"
@@ -27,9 +32,7 @@ Products are names of Software Products.  Examples:
 * Red Hat Enterprise Linux
 * RHEL
 * Quay
-* OpenShift
 
-The input should be the name of the product to search for.
 "##
             .trim(),
         )
