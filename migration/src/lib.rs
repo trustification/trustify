@@ -84,6 +84,7 @@ mod m0000640_create_product_status;
 mod m0000650_alter_advisory_tracking;
 mod m0000660_purl_id_indexes;
 mod m0000670_version_cmp;
+mod m0000680_fix_update_deprecated_advisory;
 
 pub struct Migrator;
 
@@ -175,6 +176,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000650_alter_advisory_tracking::Migration),
             Box::new(m0000660_purl_id_indexes::Migration),
             Box::new(m0000670_version_cmp::Migration),
+            Box::new(m0000680_fix_update_deprecated_advisory::Migration),
         ]
     }
 }
