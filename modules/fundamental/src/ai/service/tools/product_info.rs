@@ -1,6 +1,6 @@
 use crate::ai::service::tools;
+use crate::ai::service::tools::input_description;
 use crate::product::service::ProductService;
-use anyhow::anyhow;
 use async_trait::async_trait;
 use langchain_rust::tools::Tool;
 use serde::Serialize;
@@ -17,13 +17,22 @@ impl Tool for ProductInfo {
         String::from("product-info")
     }
 
+    fn parameters(&self) -> Value {
+        input_description("The name of the product to search for.")
+    }
+
     fn description(&self) -> String {
         String::from(
             r##"
 This tool can be used to get information about a product.
-The input should be the name of the product to search for.
-When the input is a full name, the tool will provide information about the product.
-When the input is a partial name, the tool will provide a list of possible matches.
+
+Products have multiple versions.  Each version is defined by a SBOM.
+Products have a UUID that uniquely identifies the product.  Example: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df
+Products are names of Software Products.  Examples:
+* Red Hat Enterprise Linux
+* RHEL
+* Quay
+
 "##
             .trim(),
         )
@@ -39,7 +48,7 @@ When the input is a partial name, the tool will provide a list of possible match
         let results = service
             .fetch_products(
                 Query {
-                    q: input,
+                    q: input.clone(),
                     ..Default::default()
                 },
                 Default::default(),
@@ -48,7 +57,7 @@ When the input is a partial name, the tool will provide a list of possible match
             .await?;
 
         if results.items.is_empty() {
-            return Err(anyhow!("I don't know").into());
+            return Ok(format!("Product '{input}' not found"));
         }
 
         #[derive(Serialize)]

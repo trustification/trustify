@@ -1,6 +1,7 @@
 use crate::ai::service::tools;
 use crate::sbom::service::SbomService;
-use anyhow::anyhow;
+
+use crate::ai::service::tools::input_description;
 use async_trait::async_trait;
 use itertools::Itertools;
 use langchain_rust::tools::Tool;
@@ -21,13 +22,28 @@ impl Tool for SbomInfo {
         String::from("sbom-info")
     }
 
+    fn parameters(&self) -> Value {
+        input_description(
+            r#"
+An SBOM identifier or a product name.
+A full SBOM name typically combines the product name and version (e.g., "product-version").
+If a user specifies both, use the product name get a list of best matching SBOMs.
+For example, input "quarkus" instead of "quarkus 3.2.11".
+"#,
+        )
+    }
+
     fn description(&self) -> String {
         String::from(
             r##"
-This tool can be used to get information about an SBOM.
-The input should be the SBOM Identifier.
+This tool retrieves information about a Software Bill of Materials (SBOM). SBOMs are identified by SHA-256, SHA-384, SHA-512 hashes, or UUID URIs. Examples:
+
+sha256:315f7c672f6e4948ffcc6d5a2b30f269c767d6d7d6f41d82ae716b5a46e5a68e
+urn:uuid:2fd0d1b7-a908-4d63-9310-d57a7f77c6df
+
+The tool provides a list of advisories/CVEs affecting the SBOM.
 "##
-            .trim(),
+                .trim(),
         )
     }
 
@@ -39,11 +55,23 @@ The input should be the SBOM Identifier.
             .ok_or("Input should be a string")?
             .to_string();
 
-        // Try lookup as a UUID
         let mut sbom_details = match Id::from_str(input.as_str()) {
             Err(_) => None,
-            Ok(id) => service.fetch_sbom_details(id, ()).await?,
+            Ok(id) => {
+                log::info!("Fetching SBOM details by Id: {}", id);
+                service.fetch_sbom_details(id, ()).await?
+            }
         };
+
+        if sbom_details.is_none() {
+            sbom_details = match Uuid::from_str(input.as_str()) {
+                Err(_) => None,
+                Ok(id) => {
+                    log::info!("Fetching SBOM details by UUID: {}", id);
+                    service.fetch_sbom_details(Id::Uuid(id), ()).await?
+                }
+            };
+        }
 
         // Fallback to search
         if sbom_details.is_none() {
@@ -51,7 +79,7 @@ The input should be the SBOM Identifier.
             let results = service
                 .fetch_sboms(
                     Query {
-                        q: input,
+                        q: input.clone(),
                         ..Default::default()
                     },
                     Default::default(),
@@ -75,6 +103,7 @@ The input should be the SBOM Identifier.
                         name: String,
                         #[serde(with = "time::serde::rfc3339::option")]
                         published: Option<OffsetDateTime>,
+                        link: String,
                     }
 
                     let json = tools::paginated_to_json(results, |item| Item {
@@ -86,6 +115,7 @@ The input should be the SBOM Identifier.
                             .unwrap_or_default(),
                         name: item.head.name.clone(),
                         published: item.head.published,
+                        link: format!("http://localhost:3000/sboms/urn:uuid:{}", item.head.id),
                     })?;
                     return Ok(format!("There are multiple that match:\n\n{}", json));
                 }
@@ -94,7 +124,7 @@ The input should be the SBOM Identifier.
 
         let item = match sbom_details {
             Some(v) => v,
-            None => return Err(anyhow!("I don't know").into()),
+            None => return Ok(format!("SBOM '{input}' not found")),
         };
 
         #[derive(Serialize)]
@@ -107,6 +137,7 @@ The input should be the SBOM Identifier.
             authors: Vec<String>,
             labels: Vec<(String, String)>,
             advisories: Vec<Advisory>,
+            link: String,
         }
 
         #[derive(Serialize)]
@@ -114,12 +145,24 @@ The input should be the SBOM Identifier.
             uuid: Uuid,
             identifier: String,
             issuer: Option<String>,
+            link: String,
+            vulnerabilities: Vec<Vulnerability>,
+        }
+
+        #[derive(Serialize)]
+        struct Vulnerability {
+            identifier: String,
+            link: String,
         }
 
         let mut labels = item.summary.head.labels.iter().collect_vec();
         labels.sort_by(|a, b| a.0.cmp(b.0));
 
         tools::to_json(&Item {
+            link: format!(
+                "http://localhost:3000/sboms/urn:uuid:{}",
+                item.summary.head.id
+            ),
             uuid: item.summary.head.id,
             source_document_sha256: item
                 .summary
@@ -141,6 +184,21 @@ The input should be the SBOM Identifier.
                     uuid: advisory.head.uuid,
                     identifier: advisory.head.identifier.clone(),
                     issuer: advisory.head.issuer.clone().map(|v| v.head.name.clone()),
+                    link: format!(
+                        "http://localhost:3000/advisory/urn:uuid:{}",
+                        advisory.head.uuid
+                    ),
+                    vulnerabilities: advisory
+                        .status
+                        .iter()
+                        .map(|v| Vulnerability {
+                            identifier: v.vulnerability_id.clone(),
+                            link: format!(
+                                "http://localhost:3000/vulnerability/{}",
+                                v.vulnerability_id
+                            ),
+                        })
+                        .collect(),
                 })
                 .collect(),
         })
@@ -187,7 +245,8 @@ mod tests {
       "spdx"
     ]
   ],
-  "advisories": []
+  "advisories": [],
+  "link": "http://localhost:3000/sboms/urn:uuid:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 }
 "#,
         )

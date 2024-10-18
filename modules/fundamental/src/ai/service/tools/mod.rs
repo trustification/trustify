@@ -3,14 +3,13 @@ use crate::ai::service::tools::advisory_info::AdvisoryInfo;
 use crate::ai::service::tools::cve_info::CVEInfo;
 use crate::ai::service::tools::logger::ToolLogger;
 use crate::ai::service::tools::package_info::PackageInfo;
-use crate::ai::service::tools::product_info::ProductInfo;
 use crate::ai::service::tools::sbom_info::SbomInfo;
-use crate::product::service::ProductService;
 use crate::purl::service::PurlService;
 use crate::sbom::service::SbomService;
 use crate::vulnerability::service::VulnerabilityService;
 use langchain_rust::tools::Tool;
 use serde::Serialize;
+use serde_json::{json, Value};
 use std::error::Error;
 use std::sync::Arc;
 use trustify_common::db::Database;
@@ -25,10 +24,13 @@ pub mod sbom_info;
 
 pub fn new(db: Database) -> Vec<Arc<dyn Tool>> {
     vec![
-        Arc::new(ToolLogger(ProductInfo(ProductService::new(db.clone())))),
+        // Arc::new(ToolLogger(ProductInfo(ProductService::new(db.clone())))),
         Arc::new(ToolLogger(CVEInfo(VulnerabilityService::new(db.clone())))),
         Arc::new(ToolLogger(AdvisoryInfo(AdvisoryService::new(db.clone())))),
-        Arc::new(ToolLogger(PackageInfo(PurlService::new(db.clone())))),
+        Arc::new(ToolLogger(PackageInfo((
+            PurlService::new(db.clone()),
+            SbomService::new(db.clone()),
+        )))),
         Arc::new(ToolLogger(SbomInfo(SbomService::new(db.clone())))),
     ]
 }
@@ -61,16 +63,29 @@ where
     })
 }
 
+fn input_description(description: &str) -> Value {
+    json!({
+        "type": "object",
+            "properties": {
+            "input": {
+                "type": "string",
+                "description": description,
+            }
+        },
+        "required": ["input"]
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ai::service::test::sanitize_uuid;
+    use crate::ai::service::test::{sanitize_uuid_field, sanitize_uuid_urn};
     use langchain_rust::tools::Tool;
     use serde_json::Value;
     use std::rc::Rc;
 
     pub fn cleanup_tool_result(s: Result<String, Box<dyn Error>>) -> String {
-        sanitize_uuid(s.unwrap().trim().to_string())
+        sanitize_uuid_urn(sanitize_uuid_field(s.unwrap().trim().to_string()))
     }
 
     pub async fn assert_tool_contains(
