@@ -7,7 +7,7 @@ use sea_orm::{
     Iterable, Order, QueryFilter, QueryOrder, Select, Value,
 };
 use sea_query::{BinOper, ColumnRef, Expr, IntoColumnRef, Keyword, SimpleExpr};
-use std::fmt::Display;
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use std::sync::OnceLock;
 use time::format_description::well_known::Rfc3339;
@@ -76,6 +76,45 @@ impl Query {
             sort: s.into(),
         }
     }
+
+    fn parse(&self) -> Vec<Constraint> {
+        // regex for filters: {field}{op}{value}
+        const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
+        static LOCK: OnceLock<Regex> = OnceLock::new();
+        #[allow(clippy::unwrap_used)]
+        let regex = LOCK.get_or_init(|| (Regex::new(RE).unwrap()));
+
+        fn encode(s: &str) -> String {
+            s.replace(r"\&", "\x07").replace(r"\|", "\x08")
+        }
+        fn decode(s: &str) -> String {
+            s.replace('\x07', "&")
+                .replace('\x08', "|")
+                .replace(r"\\", "\x08")
+                .replace('\\', "")
+                .replace('\x08', r"\")
+        }
+        encode(&self.q)
+            .split_terminator('&')
+            .map(|s| {
+                if let Some(capture) = regex.captures(s) {
+                    // We have a filter: {field}{op}{value}
+                    let field = Some(capture["field"].into());
+                    #[allow(clippy::unwrap_used)] // regex ensures we won't panic
+                    let op = Some(Operator::from_str(&capture["op"]).unwrap());
+                    let value = capture["value"].split('|').map(decode).collect();
+                    Constraint { field, op, value }
+                } else {
+                    // We have a full-text search query
+                    Constraint {
+                        field: None,
+                        op: None,
+                        value: s.split('|').map(decode).collect(),
+                    }
+                }
+            })
+            .collect()
+    }
 }
 
 pub trait Filtering<T: EntityTrait> {
@@ -100,7 +139,7 @@ impl<T: EntityTrait> Filtering<T> for Select<T> {
         let mut result = if q.is_empty() {
             self
         } else {
-            self.filter(Filter::parse(q, &columns)?)
+            self.filter(Filter::parse(&search, &columns)?)
         };
 
         if !sort.is_empty() {
@@ -133,6 +172,8 @@ pub struct Query {
 pub enum Error {
     #[error("query syntax error: {0}")]
     SearchSyntax(String),
+    #[error("internal logic error")]
+    IllegalState,
 }
 
 pub trait IntoColumns {
@@ -247,77 +288,18 @@ struct Filter {
 }
 
 impl Filter {
-    fn parse(s: &str, columns: &Columns) -> Result<Self, Error> {
-        const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
-        static LOCK: OnceLock<Regex> = OnceLock::new();
-        #[allow(clippy::unwrap_used)]
-        let filter = LOCK.get_or_init(|| (Regex::new(RE).unwrap()));
-
-        let encoded = encode(s);
-        if encoded.contains('&') {
-            // We have a collection of filters and/or queries
+    fn parse(query: &Query, columns: &Columns) -> Result<Self, Error> {
+        let constraints = query.parse();
+        if constraints.len() == 1 {
+            constraints[0].filter(columns)
+        } else {
+            let filters = constraints
+                .iter()
+                .map(|constraint| constraint.filter(columns))
+                .collect::<Result<Vec<_>, _>>()?;
             Ok(Filter {
                 operator: Operator::And,
-                operands: Operand::Composite(
-                    encoded
-                        .split('&')
-                        .map(|s| Filter::parse(s, columns))
-                        .collect::<Result<Vec<_>, _>>()?,
-                ),
-            })
-        } else if let Some(caps) = filter.captures(&encoded) {
-            // We have a filter: {field}{op}{value}
-            let field = &caps["field"];
-            let (col_ref, col_def) = columns.for_field(field).ok_or(Error::SearchSyntax(
-                format!("Invalid field name for filter: '{field}'"),
-            ))?;
-            let op = &caps["op"];
-            let operator = Operator::from_str(op)?;
-            Ok(Filter {
-                operator: match operator {
-                    Operator::NotLike | Operator::NotEqual => Operator::And,
-                    _ => Operator::Or,
-                },
-                operands: Operand::Composite(
-                    caps["value"]
-                        .split('|')
-                        .map(decode)
-                        .map(|s| Arg::parse(&s, col_def.get_column_type()).map(|v| (s, v)))
-                        .collect::<Result<Vec<_>, _>>()?
-                        .into_iter()
-                        .flat_map(|(s, v)| match columns.translate(field, op, &s) {
-                            Some(x) => Filter::parse(&x, columns),
-                            None => Ok(Filter {
-                                operands: Operand::Simple(col_ref.clone(), v),
-                                operator,
-                            }),
-                        })
-                        .collect(),
-                ),
-            })
-        } else {
-            // We have a full-text search query
-            Ok(Filter {
-                operator: Operator::Or,
-                operands: Operand::Composite(
-                    encoded
-                        .split('|')
-                        .flat_map(|s| {
-                            columns.iter().filter_map(|(col_ref, col_def)| {
-                                match col_def.get_column_type() {
-                                    ColumnType::String(_) | ColumnType::Text => Some(Filter {
-                                        operands: Operand::Simple(
-                                            col_ref.clone(),
-                                            Arg::Value(Value::String(Some(decode(s).into()))),
-                                        ),
-                                        operator: Operator::Like,
-                                    }),
-                                    _ => None,
-                                }
-                            })
-                        })
-                        .collect(),
-                ),
+                operands: Operand::Composite(filters),
             })
         }
     }
@@ -422,29 +404,6 @@ impl From<Filter> for ConditionExpression {
 }
 
 /////////////////////////////////////////////////////////////////////////
-// FromStr impls
-/////////////////////////////////////////////////////////////////////////
-
-impl FromStr for Operator {
-    type Err = Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "=" => Ok(Operator::Equal),
-            "!=" => Ok(Operator::NotEqual),
-            "~" => Ok(Operator::Like),
-            "!~" => Ok(Operator::NotLike),
-            ">" => Ok(Operator::GreaterThan),
-            ">=" => Ok(Operator::GreaterThanOrEqual),
-            "<" => Ok(Operator::LessThan),
-            "<=" => Ok(Operator::LessThanOrEqual),
-            "|" => Ok(Operator::Or),
-            "&" => Ok(Operator::And),
-            _ => Err(Error::SearchSyntax(format!("Invalid operator: '{s}'"))),
-        }
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////
 // Internal helpers
 /////////////////////////////////////////////////////////////////////////
 
@@ -511,6 +470,84 @@ enum Operand {
     Composite(Vec<Filter>),
 }
 
+#[derive(Debug)]
+struct Constraint {
+    field: Option<String>,
+    op: Option<Operator>,
+    value: Vec<String>,
+}
+
+impl Constraint {
+    fn filter(&self, columns: &Columns) -> Result<Filter, Error> {
+        match (&self.field, &self.op) {
+            // We have a filter of the form, {field}{op}{value}
+            (Some(_), Some(_)) => self.field_operation(columns),
+            // We have a full-text search query
+            (None, _) => self.full_text_search(columns),
+            _ => Err(Error::SearchSyntax(format!("Invalid query: '{self:?}'"))),
+        }
+    }
+    fn field_operation(&self, columns: &Columns) -> Result<Filter, Error> {
+        let Some(ref field) = self.field else {
+            return Err(Error::IllegalState);
+        };
+        let Some(operator) = self.op else {
+            return Err(Error::IllegalState);
+        };
+        let (col_ref, col_def) = columns.for_field(field).ok_or(Error::SearchSyntax(format!(
+            "Invalid field name for filter: '{field}'"
+        )))?;
+        Ok(Filter {
+            operator: match operator {
+                Operator::NotLike | Operator::NotEqual => Operator::And,
+                _ => Operator::Or,
+            },
+            operands: Operand::Composite(
+                self.value
+                    .iter()
+                    .map(|s| Arg::parse(s, col_def.get_column_type()).map(|v| (s, v)))
+                    .collect::<Result<Vec<_>, _>>()?
+                    .into_iter()
+                    .flat_map(
+                        |(s, v)| match columns.translate(field, &operator.to_string(), s) {
+                            Some(x) => Filter::parse(&q(&x), columns),
+                            None => Ok(Filter {
+                                operands: Operand::Simple(col_ref.clone(), v),
+                                operator,
+                            }),
+                        },
+                    )
+                    .collect(),
+            ),
+        })
+    }
+    fn full_text_search(&self, columns: &Columns) -> Result<Filter, Error> {
+        Ok(Filter {
+            operator: Operator::Or,
+            operands: Operand::Composite(
+                self.value
+                    .iter()
+                    .flat_map(|s| {
+                        // Create a LIKE filter for all the string-ish columns
+                        columns.iter().filter_map(|(col_ref, col_def)| {
+                            match col_def.get_column_type() {
+                                ColumnType::String(_) | ColumnType::Text => Some(Filter {
+                                    operands: Operand::Simple(
+                                        col_ref.clone(),
+                                        Arg::Value(Value::String(Some(s.clone().into()))),
+                                    ),
+                                    operator: Operator::Like,
+                                }),
+                                _ => None,
+                            }
+                        })
+                    })
+                    .collect(),
+            ),
+        })
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum Operator {
     Equal,
@@ -525,16 +562,41 @@ enum Operator {
     Or,
 }
 
-fn encode(s: &str) -> String {
-    s.replace(r"\&", "\x07").replace(r"\|", "\x08")
+impl Display for Operator {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        use Operator::*;
+        match self {
+            Equal => write!(f, "="),
+            NotEqual => write!(f, "!="),
+            Like => write!(f, "~"),
+            NotLike => write!(f, "!~"),
+            GreaterThan => write!(f, ">"),
+            GreaterThanOrEqual => write!(f, ">="),
+            LessThan => write!(f, "<"),
+            LessThanOrEqual => write!(f, "<="),
+            And => write!(f, "&"),
+            Or => write!(f, "!"),
+        }
+    }
 }
-
-fn decode(s: &str) -> String {
-    s.replace('\x07', "&")
-        .replace('\x08', "|")
-        .replace(r"\\", "\x08")
-        .replace('\\', "")
-        .replace('\x08', r"\")
+impl FromStr for Operator {
+    type Err = Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use Operator::*;
+        match s {
+            "=" => Ok(Equal),
+            "!=" => Ok(NotEqual),
+            "~" => Ok(Like),
+            "!~" => Ok(NotLike),
+            ">" => Ok(GreaterThan),
+            ">=" => Ok(GreaterThanOrEqual),
+            "<" => Ok(LessThan),
+            "<=" => Ok(LessThanOrEqual),
+            "|" => Ok(Or),
+            "&" => Ok(And),
+            _ => Err(Error::SearchSyntax(format!("Invalid operator: '{s}'"))),
+        }
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -568,7 +630,7 @@ mod tests {
     #[test(tokio::test)]
     async fn filters() -> Result<(), anyhow::Error> {
         let columns = advisory::Entity.columns();
-        let test = |s: &str, expected: Operator| match Filter::parse(s, &columns) {
+        let test = |s: &str, expected: Operator| match Filter::parse(&q(s), &columns) {
             Ok(Filter {
                 operands: Operand::Composite(v),
                 ..
@@ -591,7 +653,7 @@ mod tests {
 
         // If a query matches the '{field}{op}{value}' regex, then the
         // first operand must resolve to a field on the Entity
-        assert!(Filter::parse("foo=bar", &columns).is_err());
+        assert!(Filter::parse(&q("foo=bar"), &columns).is_err());
 
         // There aren't many bad queries since random text is
         // considered a "full-text search" in which an OR clause is
@@ -608,7 +670,7 @@ mod tests {
             let columns = advisory::Entity
                 .columns()
                 .add_column("len", ColumnType::Integer.def());
-            match Filter::parse(s, &columns) {
+            match Filter::parse(&q(s), &columns) {
                 Ok(Filter {
                     operands: Operand::Composite(v),
                     ..
