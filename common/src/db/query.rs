@@ -88,14 +88,18 @@ impl Query {
                 .get(f.as_str())
                 .map(|s| s.to_string())
                 .is_some_and(|f| match o {
-                    Equal => vs.iter().any(|v| f.eq(v)),
-                    NotEqual => vs.iter().all(|v| !f.eq(v)),
+                    Equal => vs.iter().any(|v| f == *v),
+                    NotEqual => vs.iter().all(|v| f != *v),
                     Like => vs.iter().any(|v| f.contains(v)),
                     NotLike => vs.iter().all(|v| !f.contains(v)),
-                    GreaterThan => todo!(),
-                    GreaterThanOrEqual => todo!(),
-                    LessThan => todo!(),
-                    LessThanOrEqual => todo!(),
+
+                    // TODO: Figure out how/when to handle these as
+                    // numbers, maybe the values of the context s/b
+                    // some sort of FieldType enum?
+                    GreaterThan => vs.iter().all(|v| f > *v),
+                    GreaterThanOrEqual => vs.iter().all(|v| f >= *v),
+                    LessThan => vs.iter().all(|v| f < *v),
+                    LessThanOrEqual => vs.iter().all(|v| f <= *v),
                     _ => false,
                 }),
             Constraint {
