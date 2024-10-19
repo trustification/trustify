@@ -439,10 +439,7 @@ mod test {
 
         // filter on sbom_id (which has urn:uuid: prefix)
         let sbom_id = response["items"][0]["sbom_id"].as_str().unwrap();
-        let uri = format!(
-            "/api/v1/analysis/root-component?q=sbom_id=urn:uuid:{}",
-            sbom_id
-        );
+        let uri = format!("/api/v1/analysis/root-component?q=sbom_id={}", sbom_id);
         let request: Request = TestRequest::get().uri(uri.clone().as_str()).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
         assert_eq!(&response["total"], 7);
