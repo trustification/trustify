@@ -274,23 +274,6 @@ pub async fn load_graphs(
     }
 }
 
-fn convert_query_to_hashmap(query: &Query) -> HashMap<String, String> {
-    if query.q.contains('=') {
-        query
-            .q
-            .split('&')
-            .filter_map(|pair| {
-                pair.split_once('=').map(|(key, value)| {
-                    let value = value.strip_prefix("urn:uuid:").unwrap_or(value);
-                    (key.to_owned(), value.to_owned())
-                })
-            })
-            .collect()
-    } else {
-        HashMap::from([("re_name".to_owned(), query.q.clone())])
-    }
-}
-
 impl AnalysisService {
     pub fn new(db: Database) -> Self {
         GraphMap::get_instance();
@@ -358,9 +341,8 @@ impl AnalysisService {
     ) -> Result<PaginatedResults<AncestorSummary>, Error> {
         let connection = self.db.connection(&tx);
 
-        let graph_query_map = convert_query_to_hashmap(&query);
         let search_sbom_node_name_subquery = sbom_node::Entity::find()
-            .filtering(query)?
+            .filtering(query.clone())?
             .select_only()
             .column(sbom_node::Column::SbomId)
             .distinct()
@@ -389,27 +371,13 @@ impl AnalysisService {
                     graph
                         .node_indices()
                         .filter(|&i| {
-                            if let Some(node) = graph.node_weight(i) {
-                                if let Some(re_name) = graph_query_map.get("re_name") {
-                                    // if no specific url params supplied then use contains search
-                                    node.name.contains(re_name)
-                                } else {
-                                    // if any specific url params supplied then match equals
-                                    let matches_sbom_id = graph_query_map
-                                        .get("sbom_id")
-                                        .map_or(true, |sbom_id| node.sbom_id.eq(sbom_id));
-                                    let matches_node_id = graph_query_map
-                                        .get("node_id")
-                                        .map_or(true, |node_id| node.node_id.eq(node_id));
-                                    let matches_name =
-                                        graph_query_map.get("name").map_or(true, |name| {
-                                            !name.is_empty() && node.name.eq(name)
-                                        });
-                                    matches_sbom_id && matches_node_id && matches_name
-                                }
-                            } else {
-                                false // Return false if the node does not exist
-                            }
+                            graph.node_weight(i).is_some_and(|node| {
+                                query.apply(HashMap::from([
+                                    ("sbom_id", &node.sbom_id),
+                                    ("node_id", &node.node_id),
+                                    ("name", &node.name),
+                                ]))
+                            })
                         })
                         .for_each(|node_index| {
                             if let Some(find_match_package_node) = graph.node_weight(node_index) {
@@ -599,9 +567,8 @@ impl AnalysisService {
     ) -> Result<PaginatedResults<DepSummary>, Error> {
         let connection = self.db.connection(&tx);
 
-        let graph_query_map = convert_query_to_hashmap(&query);
         let search_sbom_node_name_subquery = sbom_node::Entity::find()
-            .filtering(query)?
+            .filtering(query.clone())?
             .select_only()
             .column(sbom_node::Column::SbomId)
             .distinct()
@@ -630,27 +597,13 @@ impl AnalysisService {
                     graph
                         .node_indices()
                         .filter(|&i| {
-                            if let Some(node) = graph.node_weight(i) {
-                                if let Some(re_name) = graph_query_map.get("re_name") {
-                                    // if no specific url params supplied then use contains search
-                                    node.name.contains(re_name)
-                                } else {
-                                    // if any specific url params supplied then match equals
-                                    let matches_sbom_id = graph_query_map
-                                        .get("sbom_id")
-                                        .map_or(true, |sbom_id| node.sbom_id.eq(sbom_id));
-                                    let matches_node_id = graph_query_map
-                                        .get("node_id")
-                                        .map_or(true, |node_id| node.node_id.eq(node_id));
-                                    let matches_name =
-                                        graph_query_map.get("name").map_or(true, |name| {
-                                            !name.is_empty() && node.name.eq(name)
-                                        });
-                                    matches_sbom_id && matches_node_id && matches_name
-                                }
-                            } else {
-                                false // Return false if the node does not exist
-                            }
+                            graph.node_weight(i).is_some_and(|node| {
+                                query.apply(HashMap::from([
+                                    ("sbom_id", &node.sbom_id),
+                                    ("node_id", &node.node_id),
+                                    ("name", &node.name),
+                                ]))
+                            })
                         })
                         .for_each(|node_index| {
                             if let Some(find_match_package_node) = graph.node_weight(node_index) {

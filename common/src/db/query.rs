@@ -7,6 +7,7 @@ use sea_orm::{
     Iterable, Order, QueryFilter, QueryOrder, Select, Value,
 };
 use sea_query::{BinOper, ColumnRef, Expr, IntoColumnRef, Keyword, SimpleExpr};
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use std::sync::OnceLock;
@@ -71,6 +72,42 @@ impl Query {
             q: self.q,
             sort: s.into(),
         }
+    }
+
+    /// Apply the query to a HashMap of Strings, returning true if any
+    /// values in the context match any components of the query,
+    /// either a filter or a full-text search
+    pub fn apply(&self, context: HashMap<&'static str, impl Display>) -> bool {
+        use Operator::*;
+        self.parse().iter().all(|c| match c {
+            Constraint {
+                field: Some(f),
+                op: Some(o),
+                value: vs,
+            } => context
+                .get(f.as_str())
+                .map(|s| s.to_string())
+                .is_some_and(|f| match o {
+                    Equal => vs.iter().any(|v| f.eq(v)),
+                    NotEqual => vs.iter().all(|v| !f.eq(v)),
+                    Like => vs.iter().any(|v| f.contains(v)),
+                    NotLike => vs.iter().all(|v| !f.contains(v)),
+                    GreaterThan => todo!(),
+                    GreaterThanOrEqual => todo!(),
+                    LessThan => todo!(),
+                    LessThanOrEqual => todo!(),
+                    _ => false,
+                }),
+            Constraint {
+                field: None,
+                value: vs,
+                ..
+            } => context
+                .values()
+                .map(|s| s.to_string())
+                .any(|s| vs.iter().any(|v| s.contains(v))),
+            _ => false,
+        })
     }
 
     fn parse(&self) -> Vec<Constraint> {
@@ -170,7 +207,13 @@ impl<T: EntityTrait> Filtering<T> for Select<T> {
 }
 
 #[derive(
-    Default, Debug, serde::Deserialize, serde::Serialize, utoipa::ToSchema, utoipa::IntoParams,
+    Clone,
+    Default,
+    Debug,
+    serde::Deserialize,
+    serde::Serialize,
+    utoipa::ToSchema,
+    utoipa::IntoParams,
 )]
 #[serde(rename_all = "camelCase")]
 pub struct Query {
