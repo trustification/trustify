@@ -6,7 +6,10 @@ use sea_orm::{
 use std::collections::HashMap;
 use tracing::instrument;
 use trustify_common::{
-    db::{query::Query, Database, Transactional},
+    db::{
+        query::{Query, Value},
+        Database, Transactional,
+    },
     model::{Paginated, PaginatedResults},
 };
 
@@ -373,9 +376,9 @@ impl AnalysisService {
                         .filter(|&i| {
                             graph.node_weight(i).is_some_and(|node| {
                                 query.apply(HashMap::from([
-                                    ("sbom_id", &node.sbom_id),
-                                    ("node_id", &node.node_id),
-                                    ("name", &node.name),
+                                    ("sbom_id", Value::String(&node.sbom_id)),
+                                    ("node_id", Value::String(&node.node_id)),
+                                    ("name", Value::String(&node.name)),
                                 ]))
                             })
                         })
@@ -599,9 +602,9 @@ impl AnalysisService {
                         .filter(|&i| {
                             graph.node_weight(i).is_some_and(|node| {
                                 query.apply(HashMap::from([
-                                    ("sbom_id", &node.sbom_id),
-                                    ("node_id", &node.node_id),
-                                    ("name", &node.name),
+                                    ("sbom_id", Value::String(&node.sbom_id)),
+                                    ("node_id", Value::String(&node.node_id)),
+                                    ("name", Value::String(&node.name)),
                                 ]))
                             })
                         })
