@@ -79,32 +79,35 @@ impl Query {
     /// returning true if the context is successfully matched by the
     /// query, by either a filter or a full-text search of all the
     /// values of type Value::String.
-    pub fn apply(&self, context: HashMap<&'static str, Value>) -> bool {
+    pub fn apply(&self, context: &HashMap<&'static str, Value>) -> bool {
         use Operator::*;
-        self.parse().iter().all(|c| match c {
-            Constraint {
-                field: Some(f),
-                op: Some(o),
-                value: vs,
-            } => context.get(f.as_str()).is_some_and(|field| match o {
-                Equal => vs.iter().any(|v| field.eq(v)),
-                NotEqual => vs.iter().all(|v| field.ne(v)),
-                Like => vs.iter().any(|v| field.contains(v)),
-                NotLike => vs.iter().all(|v| !field.contains(v)),
-                GreaterThan => vs.iter().all(|v| field.gt(v)),
-                GreaterThanOrEqual => vs.iter().all(|v| field.ge(v)),
-                LessThan => vs.iter().all(|v| field.lt(v)),
-                LessThanOrEqual => vs.iter().all(|v| field.le(v)),
+        self.parse().iter().all(|c| {
+            log::debug!("{c:?}");
+            match c {
+                Constraint {
+                    field: Some(f),
+                    op: Some(o),
+                    value: vs,
+                } => context.get(f.as_str()).is_some_and(|field| match o {
+                    Equal => vs.iter().any(|v| field.eq(v)),
+                    NotEqual => vs.iter().all(|v| field.ne(v)),
+                    Like => vs.iter().any(|v| field.contains(v)),
+                    NotLike => vs.iter().all(|v| !field.contains(v)),
+                    GreaterThan => vs.iter().all(|v| field.gt(v)),
+                    GreaterThanOrEqual => vs.iter().all(|v| field.ge(v)),
+                    LessThan => vs.iter().all(|v| field.lt(v)),
+                    LessThanOrEqual => vs.iter().all(|v| field.le(v)),
+                    _ => false,
+                }),
+                Constraint {
+                    field: None,
+                    value: vs,
+                    ..
+                } => context
+                    .values()
+                    .any(|field| vs.iter().any(|v| field.contains(v))),
                 _ => false,
-            }),
-            Constraint {
-                field: None,
-                value: vs,
-                ..
-            } => context
-                .values()
-                .any(|field| vs.iter().any(|v| field.contains(v))),
-            _ => false,
+            }
         })
     }
 
@@ -235,7 +238,7 @@ pub enum Value<'a> {
     String(&'a str),
     Int(i32),
     Float(f64),
-    Date(OffsetDateTime),
+    Date(&'a OffsetDateTime),
 }
 
 impl Value<'_> {
@@ -259,10 +262,7 @@ impl PartialEq<String> for Value<'_> {
                 Ok(i) => v.eq(&i),
                 _ => false,
             },
-            Self::Date(v) => match OffsetDateTime::parse(rhs, &Rfc3339) {
-                Ok(i) => v.eq(&i),
-                _ => false,
-            },
+            Self::Date(_) => false, // impractical, given the granularity
         }
     }
 }
@@ -279,8 +279,14 @@ impl PartialOrd<String> for Value<'_> {
                 Ok(i) => v.partial_cmp(&i),
                 _ => None,
             },
-            Self::Date(v) => match OffsetDateTime::parse(rhs, &Rfc3339) {
-                Ok(i) => v.partial_cmp(&i),
+            Self::Date(v) => match from_human_time(&v.to_string()) {
+                Ok(ParseResult::DateTime(field)) => {
+                    if let Ok(ParseResult::DateTime(other)) = from_human_time(rhs) {
+                        field.partial_cmp(&other)
+                    } else {
+                        None
+                    }
+                }
                 _ => None,
             },
         }
@@ -1124,6 +1130,22 @@ mod tests {
         Ok(())
     }
 
+    #[test(tokio::test)]
+    async fn apply_to_context() -> Result<(), anyhow::Error> {
+        let now = time::OffsetDateTime::now_utc();
+        let context = HashMap::from([
+            ("id", Value::String("foo")),
+            ("count", Value::Int(42)),
+            ("score", Value::Float(6.66)),
+            ("published", Value::Date(&now)),
+        ]);
+        assert!(q("oo|aa|bb&count<100&count>10&id=foo").apply(&context));
+        assert!(q("score=6.66").apply(&context));
+        assert!(q("count>=42&count<=42").apply(&context));
+        assert!(q("published>2 days ago&published<in 1 week").apply(&context));
+
+        Ok(())
+    }
     /////////////////////////////////////////////////////////////////////////
     // Test helpers
     /////////////////////////////////////////////////////////////////////////
