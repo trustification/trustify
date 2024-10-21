@@ -4,9 +4,10 @@ use sea_orm::entity::ColumnDef;
 use sea_orm::sea_query::{extension::postgres::PgExpr, ConditionExpression, IntoCondition};
 use sea_orm::{
     sea_query, ColumnTrait, ColumnType, Condition, EntityTrait, IntoIdentity, IntoSimpleExpr,
-    Iterable, Order, QueryFilter, QueryOrder, Select, Value,
+    Iterable, Order, QueryFilter, QueryOrder, Select, Value as SeaValue,
 };
 use sea_query::{BinOper, ColumnRef, Expr, IntoColumnRef, Keyword, SimpleExpr};
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
@@ -74,42 +75,35 @@ impl Query {
         }
     }
 
-    /// Apply the query to a HashMap of Strings, returning true if any
-    /// values in the context match any components of the query,
-    /// either a filter or a full-text search
-    pub fn apply(&self, context: HashMap<&'static str, impl Display>) -> bool {
+    /// Apply the query to a mapping of field names to values,
+    /// returning true if the context is successfully matched by the
+    /// query, by either a filter or a full-text search of all the
+    /// values of type Value::String.
+    pub fn apply(&self, context: HashMap<&'static str, Value>) -> bool {
         use Operator::*;
         self.parse().iter().all(|c| match c {
             Constraint {
                 field: Some(f),
                 op: Some(o),
                 value: vs,
-            } => context
-                .get(f.as_str())
-                .map(|s| s.to_string())
-                .is_some_and(|f| match o {
-                    Equal => vs.iter().any(|v| f == *v),
-                    NotEqual => vs.iter().all(|v| f != *v),
-                    Like => vs.iter().any(|v| f.contains(v)),
-                    NotLike => vs.iter().all(|v| !f.contains(v)),
-
-                    // TODO: Figure out how/when to handle these as
-                    // numbers, maybe the values of the context s/b
-                    // some sort of FieldType enum?
-                    GreaterThan => vs.iter().all(|v| f > *v),
-                    GreaterThanOrEqual => vs.iter().all(|v| f >= *v),
-                    LessThan => vs.iter().all(|v| f < *v),
-                    LessThanOrEqual => vs.iter().all(|v| f <= *v),
-                    _ => false,
-                }),
+            } => context.get(f.as_str()).is_some_and(|field| match o {
+                Equal => vs.iter().any(|v| field.eq(v)),
+                NotEqual => vs.iter().all(|v| field.ne(v)),
+                Like => vs.iter().any(|v| field.contains(v)),
+                NotLike => vs.iter().all(|v| !field.contains(v)),
+                GreaterThan => vs.iter().all(|v| field.gt(v)),
+                GreaterThanOrEqual => vs.iter().all(|v| field.ge(v)),
+                LessThan => vs.iter().all(|v| field.lt(v)),
+                LessThanOrEqual => vs.iter().all(|v| field.le(v)),
+                _ => false,
+            }),
             Constraint {
                 field: None,
                 value: vs,
                 ..
             } => context
                 .values()
-                .map(|s| s.to_string())
-                .any(|s| vs.iter().any(|v| s.contains(v))),
+                .any(|field| vs.iter().any(|v| field.contains(v))),
             _ => false,
         })
     }
@@ -231,6 +225,66 @@ pub struct Query {
 pub enum Error {
     #[error("query syntax error: {0}")]
     SearchSyntax(String),
+}
+
+/////////////////////////////////////////////////////////////////////////
+// Value
+/////////////////////////////////////////////////////////////////////////
+
+pub enum Value<'a> {
+    String(&'a str),
+    Int(i32),
+    Float(f64),
+    Date(OffsetDateTime),
+}
+
+impl Value<'_> {
+    pub fn contains(&self, pat: &str) -> bool {
+        match self {
+            Self::String(s) => s.contains(pat),
+            _ => false,
+        }
+    }
+}
+
+impl PartialEq<String> for Value<'_> {
+    fn eq(&self, rhs: &String) -> bool {
+        match self {
+            Self::String(s) => s.eq(rhs),
+            Self::Int(v) => match rhs.parse::<i32>() {
+                Ok(i) => v.eq(&i),
+                _ => false,
+            },
+            Self::Float(v) => match rhs.parse::<f64>() {
+                Ok(i) => v.eq(&i),
+                _ => false,
+            },
+            Self::Date(v) => match OffsetDateTime::parse(rhs, &Rfc3339) {
+                Ok(i) => v.eq(&i),
+                _ => false,
+            },
+        }
+    }
+}
+
+impl PartialOrd<String> for Value<'_> {
+    fn partial_cmp(&self, rhs: &String) -> Option<Ordering> {
+        match self {
+            Self::String(s) => s.partial_cmp(&rhs.as_str()),
+            Self::Int(v) => match rhs.parse::<i32>() {
+                Ok(i) => v.partial_cmp(&i),
+                _ => None,
+            },
+            Self::Float(v) => match rhs.parse::<f64>() {
+                Ok(i) => v.partial_cmp(&i),
+                _ => None,
+            },
+            Self::Date(v) => match OffsetDateTime::parse(rhs, &Rfc3339) {
+                Ok(i) => v.partial_cmp(&i),
+                _ => None,
+            },
+        }
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -399,7 +453,7 @@ impl TryFrom<(&Vec<String>, &Columns)> for Filter {
                                 ColumnType::String(_) | ColumnType::Text => Some(Filter {
                                     operands: Operand::Simple(
                                         col_ref.clone(),
-                                        Arg::Value(Value::String(Some(s.clone().into()))),
+                                        Arg::Value(SeaValue::String(Some(s.clone().into()))),
                                     ),
                                     operator: Operator::Like,
                                 }),
@@ -517,7 +571,7 @@ impl Sort {
 
 #[derive(Debug)]
 enum Arg {
-    Value(Value),
+    Value(SeaValue),
     SimpleExpr(SimpleExpr),
     Null,
 }
@@ -541,33 +595,33 @@ impl Arg {
             return Ok(Arg::Null);
         }
         Ok(match ct {
-            ColumnType::Uuid => Arg::Value(Value::from(s.parse::<Uuid>().map_err(err)?)),
-            ColumnType::Integer => Arg::Value(Value::from(s.parse::<i32>().map_err(err)?)),
+            ColumnType::Uuid => Arg::Value(SeaValue::from(s.parse::<Uuid>().map_err(err)?)),
+            ColumnType::Integer => Arg::Value(SeaValue::from(s.parse::<i32>().map_err(err)?)),
             ColumnType::Decimal(_) | ColumnType::Float | ColumnType::Double => {
-                Arg::Value(Value::from(s.parse::<f64>().map_err(err)?))
+                Arg::Value(SeaValue::from(s.parse::<f64>().map_err(err)?))
             }
             ColumnType::Enum { name, .. } => Arg::SimpleExpr(SimpleExpr::AsEnum(
                 name.clone(),
-                Box::new(SimpleExpr::Value(Value::String(Some(Box::new(
+                Box::new(SimpleExpr::Value(SeaValue::String(Some(Box::new(
                     s.to_owned(),
                 ))))),
             )),
             ColumnType::TimestampWithTimeZone => {
                 if let Ok(odt) = OffsetDateTime::parse(s, &Rfc3339) {
-                    Arg::Value(Value::from(odt))
+                    Arg::Value(SeaValue::from(odt))
                 } else if let Ok(d) = Date::parse(s, &format_description!("[year]-[month]-[day]")) {
-                    Arg::Value(Value::from(d))
+                    Arg::Value(SeaValue::from(d))
                 } else if let Ok(human) = from_human_time(s) {
                     match human {
-                        ParseResult::DateTime(dt) => Arg::Value(Value::from(dt)),
-                        ParseResult::Date(d) => Arg::Value(Value::from(d)),
-                        ParseResult::Time(t) => Arg::Value(Value::from(t)),
+                        ParseResult::DateTime(dt) => Arg::Value(SeaValue::from(dt)),
+                        ParseResult::Date(d) => Arg::Value(SeaValue::from(d)),
+                        ParseResult::Time(t) => Arg::Value(SeaValue::from(t)),
                     }
                 } else {
-                    Arg::Value(Value::from(s))
+                    Arg::Value(SeaValue::from(s))
                 }
             }
-            _ => Arg::Value(Value::from(s)),
+            _ => Arg::Value(SeaValue::from(s)),
         })
     }
 }
