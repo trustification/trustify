@@ -375,7 +375,7 @@ impl AnalysisService {
                         .node_indices()
                         .filter(|&i| {
                             graph.node_weight(i).is_some_and(|node| {
-                                query.apply(HashMap::from([
+                                query.apply(&HashMap::from([
                                     ("sbom_id", Value::String(&node.sbom_id)),
                                     ("node_id", Value::String(&node.node_id)),
                                     ("name", Value::String(&node.name)),
@@ -601,7 +601,7 @@ impl AnalysisService {
                         .node_indices()
                         .filter(|&i| {
                             graph.node_weight(i).is_some_and(|node| {
-                                query.apply(HashMap::from([
+                                query.apply(&HashMap::from([
                                     ("sbom_id", Value::String(&node.sbom_id)),
                                     ("node_id", Value::String(&node.node_id)),
                                     ("name", Value::String(&node.name)),
