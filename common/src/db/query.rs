@@ -1,3 +1,4 @@
+use chrono::{Local, NaiveDateTime};
 use human_date_parser::{from_human_time, ParseResult};
 use regex::Regex;
 use sea_orm::entity::ColumnDef;
@@ -105,6 +106,7 @@ impl Query {
                     ..
                 } => context
                     .values()
+                    .filter(|v| matches!(v, Value::String(_)))
                     .any(|field| vs.iter().any(|v| field.contains(v))),
                 _ => false,
             }
@@ -245,6 +247,7 @@ impl Value<'_> {
     pub fn contains(&self, pat: &str) -> bool {
         match self {
             Self::String(s) => s.contains(pat),
+            Self::Date(d) => d.to_string().contains(pat),
             _ => false,
         }
     }
@@ -262,7 +265,25 @@ impl PartialEq<String> for Value<'_> {
                 Ok(i) => v.eq(&i),
                 _ => false,
             },
-            Self::Date(_) => false, // impractical, given the granularity
+            Self::Date(v) => match from_human_time(&v.to_string()) {
+                Ok(ParseResult::DateTime(field)) => match from_human_time(rhs) {
+                    Ok(ParseResult::DateTime(other)) => field.eq(&other),
+                    Ok(ParseResult::Date(d)) => {
+                        let other = NaiveDateTime::new(d, field.time())
+                            .and_local_timezone(Local)
+                            .unwrap();
+                        field.eq(&other)
+                    }
+                    Ok(ParseResult::Time(t)) => {
+                        let other = NaiveDateTime::new(field.date_naive(), t)
+                            .and_local_timezone(Local)
+                            .unwrap();
+                        field.eq(&other)
+                    }
+                    _ => false,
+                },
+                _ => false,
+            },
         }
     }
 }
@@ -280,13 +301,22 @@ impl PartialOrd<String> for Value<'_> {
                 _ => None,
             },
             Self::Date(v) => match from_human_time(&v.to_string()) {
-                Ok(ParseResult::DateTime(field)) => {
-                    if let Ok(ParseResult::DateTime(other)) = from_human_time(rhs) {
+                Ok(ParseResult::DateTime(field)) => match from_human_time(rhs) {
+                    Ok(ParseResult::DateTime(other)) => field.partial_cmp(&other),
+                    Ok(ParseResult::Date(d)) => {
+                        let other = NaiveDateTime::new(d, field.time())
+                            .and_local_timezone(Local)
+                            .unwrap();
                         field.partial_cmp(&other)
-                    } else {
-                        None
                     }
-                }
+                    Ok(ParseResult::Time(t)) => {
+                        let other = NaiveDateTime::new(field.date_naive(), t)
+                            .and_local_timezone(Local)
+                            .unwrap();
+                        field.partial_cmp(&other)
+                    }
+                    _ => None,
+                },
                 _ => None,
             },
         }
@@ -1132,20 +1162,37 @@ mod tests {
 
     #[test(tokio::test)]
     async fn apply_to_context() -> Result<(), anyhow::Error> {
+        use time::format_description::well_known::Rfc2822;
         let now = time::OffsetDateTime::now_utc();
+        let then = OffsetDateTime::parse("Sat, 12 Jun 1993 13:25:19 GMT", &Rfc2822)?;
         let context = HashMap::from([
             ("id", Value::String("foo")),
             ("count", Value::Int(42)),
             ("score", Value::Float(6.66)),
+            ("detected", Value::Date(&then)),
             ("published", Value::Date(&now)),
         ]);
         assert!(q("oo|aa|bb&count<100&count>10&id=foo").apply(&context));
         assert!(q("score=6.66").apply(&context));
         assert!(q("count>=42&count<=42").apply(&context));
-        assert!(q("published>2 days ago&published<in 1 week").apply(&context));
+        assert!(q("published>2 days ago&published<next week").apply(&context));
+
+        assert!(q("detected=1993-06-12").apply(&context));
+        assert!(q("detected>13:20:00").apply(&context));
+        assert!(q("detected~1993").apply(&context));
+        assert!(!q("1993").apply(&context));
+
+        assert!(q(&format!("published={}", now)).apply(&context));
+        assert!(q(&format!("published={}", now.date())).apply(&context));
+        assert!(q(&format!("published={}", now.time())).apply(&context));
+        assert!(q(&format!("published>=today {}", now.time())).apply(&context));
+        assert!(q(&format!("published>={}", now)).apply(&context));
+        assert!(q(&format!("published<={}", now.date())).apply(&context));
+        assert!(q(&format!("published~{}", now.time())).apply(&context));
 
         Ok(())
     }
+
     /////////////////////////////////////////////////////////////////////////
     // Test helpers
     /////////////////////////////////////////////////////////////////////////
