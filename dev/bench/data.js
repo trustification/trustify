@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1729254976724,
+  "lastUpdate": 1729603233302,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -144,6 +144,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 23,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "494acd5dcbb19ec8e5b54b300c7a717002484dd5",
+          "message": "Add tests for the various types and support human dates\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-10-22T12:52:50Z",
+          "tree_id": "947d297beb5200355cb8d8d4e8615649df16b74e",
+          "url": "https://github.com/trustification/trustify/commit/494acd5dcbb19ec8e5b54b300c7a717002484dd5"
+        },
+        "date": 1729603232728,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
             "unit": "s"
           }
         ]
