@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1729603233302,
+  "lastUpdate": 1729614486767,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -168,6 +168,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/494acd5dcbb19ec8e5b54b300c7a717002484dd5"
         },
         "date": 1729603232728,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": false,
+          "id": "611ef1f91f413d627a017a87fa15a2b147716a20",
+          "message": "Flesh out the eq/ord impls for dates more intuitively\n\nRelates to #934\n\nWe resolve dates or times relative to the missing complement in the\nfields OffsetDateTime value, essentially allowing one to easily filter\non naive dates and times.\n\nWe also enable the LIKE operator for Dates, such that `published~2021`\nwould work, for example.\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-10-22T15:56:10Z",
+          "tree_id": "b67d75680f1c1377a648f488f4304e4047e07342",
+          "url": "https://github.com/trustification/trustify/commit/611ef1f91f413d627a017a87fa15a2b147716a20"
+        },
+        "date": 1729614485738,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
