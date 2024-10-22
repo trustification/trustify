@@ -134,7 +134,7 @@ pub async fn get_relationships(
         LEFT JOIN
             sbom_package_purl_ref t2 ON sbom.sbom_id = t2.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
         WHERE
-            package_relates_to_package.relationship IN (0, 8, 14)
+            package_relates_to_package.relationship IN (0, 1, 8, 14)
             AND sbom.sbom_id = '{}';
         "#,
         distinct_sbom_id
