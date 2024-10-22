@@ -1,0 +1,66 @@
+[
+  {
+    "name": "cve-info",
+    "description": "This tool can be used to get information about a Vulnerability.\nA Vulnerability is also known as a CVE.\n\nVulnerabilities are security issues that may affect software packages.\nVulnerabilities may affect multiple packages.\n\nVulnerability are identified by their CVE Identifier.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "\nThe input should be the partial or full name of the Vulnerability to search for.  Example:\n* CVE-2014-0160\n\n        "
+        }
+      },
+      "required": [
+        "input"
+      ]
+    }
+  },
+  {
+    "name": "advisory-info",
+    "description": "This tool can be used to get information about an Advisory.\n\nAdvisories are notifications that a vulnerability affects a product or SBOM.\nAdvisories are issued by a vendor or security organization.\nUnless there is a specific advisory for a CVE, the CVE may or may not affect the product.\n\nAdvisories have a UUID that uniquely identifies the advisory.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "UUID of the Advisory. Example: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df"
+        }
+      },
+      "required": [
+        "input"
+      ]
+    }
+  },
+  {
+    "name": "package-info",
+    "description": "This tool provides information about a Package, which has a name and version. Packages are identified by a URI or a UUID. Examples of URIs:\n\n* pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le\n* pkg:maven/org.apache.maven.wagon/wagon-provider-api@3.5.1?type=jar\n\nExample of a UUID: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df.\n\nInput: The package name, its Identifier URI, or UUID.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "This tool provides information about a Package, which has a name and version. Packages are identified by a URI or a UUID. Examples of URIs:\n\n* pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le\n* pkg:maven/org.apache.maven.wagon/wagon-provider-api@3.5.1?type=jar\n\nExample of a UUID: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df.\n\nInput: The package name, its Identifier URI, or UUID."
+        }
+      },
+      "required": [
+        "input"
+      ]
+    }
+  },
+  {
+    "name": "sbom-info",
+    "description": "This tool retrieves information about a Software Bill of Materials (SBOM). SBOMs are identified by SHA-256, SHA-384, SHA-512 hashes, or UUID URIs. Examples:\n\nsha256:315f7c672f6e4948ffcc6d5a2b30f269c767d6d7d6f41d82ae716b5a46e5a68e\nurn:uuid:2fd0d1b7-a908-4d63-9310-d57a7f77c6df\n\nThe tool provides a list of advisories/CVEs affecting the SBOM.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "description": "\nAn SBOM identifier or a product name.\nA full SBOM name typically combines the product name and version (e.g., \"product-version\").\nIf a user specifies both, use the product name get a list of best matching SBOMs.\nFor example, input \"quarkus\" instead of \"quarkus 3.2.11\".\n"
+        }
+      },
+      "required": [
+        "input"
+      ]
+    }
+  }
+]
