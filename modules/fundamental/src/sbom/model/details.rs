@@ -7,20 +7,26 @@ use crate::{
 };
 use async_graphql::SimpleObject;
 use cpe::uri::OwnedUri;
-use sea_orm::{JoinType, ModelTrait, QueryFilter, QuerySelect, RelationTrait};
+use sea_orm::{
+    DbErr, EntityTrait, FromQueryResult, JoinType, ModelTrait, QueryFilter, QueryOrder,
+    QueryResult, QuerySelect, RelationTrait, Select,
+};
 use sea_query::{Asterisk, Expr, Func, SimpleExpr};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{hash_map::Entry, HashMap};
 use trustify_common::{
     cpe::CpeCompare,
-    db::{multi_model::SelectIntoMultiModel, ConnectionOrTransaction, VersionMatches},
+    db::{
+        multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
+        ConnectionOrTransaction, VersionMatches,
+    },
     memo::Memo,
 };
 use trustify_entity::{
-    base_purl, purl_status,
+    advisory, base_purl, product, product_status, product_version, purl_status,
     qualified_purl::{self},
     sbom::{self},
-    sbom_node, sbom_package, sbom_package_purl_ref, version_range, versioned_purl,
+    sbom_node, sbom_package, sbom_package_purl_ref, status, version_range, versioned_purl,
 };
 use utoipa::ToSchema;
 
@@ -74,6 +80,35 @@ impl SbomDetails {
             .all(tx)
             .await?;
 
+        let product_advisory_info = sbom
+            .find_related(product_version::Entity)
+            .join(JoinType::LeftJoin, product_version::Relation::Product.def())
+            .join(JoinType::LeftJoin, product::Relation::Cpe.def())
+            .join(
+                JoinType::Join,
+                trustify_entity::cpe::Relation::ProductStatus.def(),
+            )
+            .join(JoinType::Join, product_status::Relation::Status.def())
+            .join(JoinType::Join, product_status::Relation::Advisory.def())
+            .distinct_on([
+                (product_status::Entity, product_status::Column::ContextCpeId),
+                (product_status::Entity, product_status::Column::StatusId),
+                (product_status::Entity, product_status::Column::Component),
+                (
+                    product_status::Entity,
+                    product_status::Column::VulnerabilityId,
+                ),
+            ])
+            .order_by_asc(product_status::Column::ContextCpeId)
+            .order_by_asc(product_status::Column::StatusId)
+            .order_by_asc(product_status::Column::Component)
+            .order_by_asc(product_status::Column::VulnerabilityId);
+
+        let product_advisory_statuses = product_advisory_info
+            .try_into_multi_model::<ProductStatusCatcher>()?
+            .all(tx)
+            .await?;
+
         let summary = SbomSummary::from_entity((sbom, node), service, tx).await?;
 
         Ok(match summary {
@@ -82,6 +117,7 @@ impl SbomDetails {
                 advisories: SbomAdvisory::from_models(
                     &summary.clone().described_by,
                     &relevant_advisory_info,
+                    &product_advisory_statuses,
                     tx,
                 )
                 .await?,
@@ -102,6 +138,7 @@ impl SbomAdvisory {
     pub async fn from_models(
         described_by: &[SbomPackage],
         statuses: &[QueryCatcher],
+        product_statuses: &[ProductStatusCatcher],
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
         let mut advisories = HashMap::new();
@@ -206,6 +243,40 @@ impl SbomAdvisory {
             });
         }
 
+        for product in product_statuses {
+            let advisory_cpe: Option<OwnedUri> = (&product.cpe).try_into().ok();
+
+            let mut packages = vec![];
+            if let Some(component) = &product.product_status.component {
+                let package = SbomPackage {
+                    name: component.to_string(),
+                    ..Default::default()
+                };
+                packages.push(package);
+            }
+
+            let status = SbomStatus {
+                vulnerability_id: product.product_status.vulnerability_id.clone(),
+                status: product.status.slug.clone(),
+                context: advisory_cpe
+                    .as_ref()
+                    .map(|e| StatusContext::Cpe(e.to_string())),
+                packages, // TODO find packages based on component
+            };
+
+            match advisories.entry(product.advisory.id) {
+                Entry::Occupied(entry) => entry.into_mut().status.push(status.clone()),
+                Entry::Vacant(entry) => {
+                    let advisory = SbomAdvisory {
+                        head: AdvisoryHead::from_advisory(&product.advisory, Memo::NotProvided, tx)
+                            .await?,
+                        status: vec![status.clone()],
+                    };
+                    entry.insert(advisory.clone());
+                }
+            }
+        }
+
         Ok(advisories.values().cloned().collect::<Vec<_>>())
     }
 }
@@ -221,3 +292,37 @@ pub struct SbomStatus {
 }
 
 impl SbomStatus {}
+
+#[derive(Debug)]
+#[allow(dead_code)] //TODO sbom field is not used at the moment, but we will probably need it for graph search
+pub struct ProductStatusCatcher {
+    advisory: advisory::Model,
+    product_status: product_status::Model,
+    cpe: trustify_entity::cpe::Model,
+    status: status::Model,
+    sbom: Option<sbom::Model>,
+}
+
+impl FromQueryResult for ProductStatusCatcher {
+    fn from_query_result(res: &QueryResult, _pre: &str) -> Result<Self, DbErr> {
+        Ok(Self {
+            advisory: Self::from_query_result_multi_model(res, "", advisory::Entity)?,
+            product_status: Self::from_query_result_multi_model(res, "", product_status::Entity)?,
+            cpe: Self::from_query_result_multi_model(res, "", trustify_entity::cpe::Entity)?,
+            status: Self::from_query_result_multi_model(res, "", status::Entity)?,
+            sbom: Self::from_query_result_multi_model_optional(res, "", sbom::Entity)?,
+        })
+    }
+}
+
+impl FromQueryResultMultiModel for ProductStatusCatcher {
+    fn try_into_multi_model<E: EntityTrait>(select: Select<E>) -> Result<Select<E>, DbErr> {
+        select
+            .try_model_columns(advisory::Entity)?
+            .try_model_columns(product_status::Entity)?
+            .try_model_columns(trustify_entity::cpe::Entity)?
+            .try_model_columns(status::Entity)?
+            .try_model_columns(product_version::Entity)?
+            .try_model_columns(sbom::Entity)
+    }
+}

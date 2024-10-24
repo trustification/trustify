@@ -146,22 +146,33 @@ impl<'a> StatusCreator<'a> {
                 None => None,
             };
 
-            // If there are no components associated to this product
-            // Ingest product status
-            if product.packages.is_empty() {
-                if let Some(range) = &product_version_range {
+            if let Some(range) = &product_version_range {
+                let components = if product.components.is_empty() {
+                    // If there are no components associated to this product, ingest just a product status
+                    vec![None]
+                } else {
+                    product
+                        .components
+                        .iter()
+                        .map(|c| Some(c.to_string()))
+                        .collect()
+                };
+
+                for component in components {
                     let base_product = product_status::ActiveModel {
                         id: Default::default(),
                         product_version_range_id: Set(range.id),
                         advisory_id: Set(self.advisory_id),
                         vulnerability_id: Set(self.vulnerability_id.clone()),
-                        base_purl_id: Set(None),
+                        component: Set(component),
                         context_cpe_id: Set(product.cpe.as_ref().map(Cpe::uuid)),
                         status_id: Set(status_id.id),
                     };
+
                     if let Some(cpe) = &product.cpe {
                         cpes.add(cpe.clone());
                     }
+
                     product_statuses.push(base_product);
                 }
             }
@@ -187,21 +198,6 @@ impl<'a> StatusCreator<'a> {
                 };
 
                 self.entries.insert(purl_status);
-
-                // Ingest matching product status
-                if let Some(ver) = &product_version_range {
-                    let product_status = product_status::ActiveModel {
-                        id: Default::default(),
-                        product_version_range_id: Set(ver.id),
-                        advisory_id: Set(self.advisory_id),
-                        vulnerability_id: Set(self.vulnerability_id.clone()),
-                        base_purl_id: Set(Some(purl.package_uuid())),
-                        context_cpe_id: Set(product.cpe.as_ref().map(Cpe::uuid)),
-                        status_id: Set(status_id.id),
-                    };
-
-                    product_statuses.push(product_status);
-                }
             }
         }
 

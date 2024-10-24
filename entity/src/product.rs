@@ -21,6 +21,11 @@ pub enum Relation {
     Vendor,
     #[sea_orm(has_many = "super::product_version::Entity")]
     ProductVersion,
+    #[sea_orm(
+        has_many = "super::cpe::Entity"
+        from = "Column::CpeKey"
+        to = "super::cpe::Column::Product")]
+    Cpe,
 }
 
 impl Related<organization::Entity> for Entity {
@@ -32,6 +37,12 @@ impl Related<organization::Entity> for Entity {
 impl Related<super::product_version::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::ProductVersion.def()
+    }
+}
+
+impl Related<super::cpe::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Cpe.def()
     }
 }
 
