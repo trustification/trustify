@@ -22,6 +22,7 @@ base64 = { workspace = true }
 cpe = { workspace = true }
 futures-util = { workspace = true }
 itertools = { workspace = true }
+lenient_semver = { workspace = true }
 langchain-rust = { workspace = true }
 log = { workspace = true }
 sea-orm = { workspace = true }

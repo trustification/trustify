@@ -98,7 +98,7 @@ impl SbomSummary {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, SimpleObject)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, SimpleObject, Default)]
 #[graphql(concrete(name = "SbomPackage", params()))]
 pub struct SbomPackage {
     pub id: String,

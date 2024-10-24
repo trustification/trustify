@@ -8,7 +8,7 @@ pub struct Model {
     pub advisory_id: Uuid,
     pub vulnerability_id: String,
     pub status_id: Uuid,
-    pub base_purl_id: Option<Uuid>,
+    pub component: Option<String>,
     pub product_version_range_id: Uuid,
     pub context_cpe_id: Option<Uuid>,
 }
@@ -20,12 +20,6 @@ pub enum Relation {
         to = "super::product_version_range::Column::Id"
     )]
     ProductVersionRange,
-
-    #[sea_orm(belongs_to = "super::base_purl::Entity",
-        from = "Column::BasePurlId"
-        to = "super::base_purl::Column::Id"
-    )]
-    BasePurl,
 
     #[sea_orm(belongs_to = "super::vulnerability::Entity",
         from = "Column::VulnerabilityId"
@@ -61,12 +55,6 @@ pub enum Relation {
 impl Related<super::product_version_range::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::ProductVersionRange.def()
-    }
-}
-
-impl Related<super::base_purl::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::BasePurl.def()
     }
 }
 

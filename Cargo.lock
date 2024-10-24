@@ -8521,6 +8521,7 @@ dependencies = [
  "itertools 0.13.0",
  "jsonpath-rust",
  "langchain-rust",
+ "lenient_semver",
  "log",
  "osv",
  "packageurl",

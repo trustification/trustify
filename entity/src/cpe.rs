@@ -28,11 +28,35 @@ pub enum Relation {
         to = "super::sbom_package_cpe_ref::Column::CpeId"
     )]
     SbomPackage,
+    #[sea_orm(
+        belongs_to = "super::product::Entity",
+        from = "Column::Product",
+        to = "super::product::Column::CpeKey"
+    )]
+    Product,
+    #[sea_orm(
+        belongs_to = "super::product_status::Entity",
+        from = "Column::Id",
+        to = "super::product_status::Column::ContextCpeId"
+    )]
+    ProductStatus,
 }
 
 impl Related<super::sbom_package_cpe_ref::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::SbomPackage.def()
+    }
+}
+
+impl Related<super::product::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Product.def()
+    }
+}
+
+impl Related<super::product_status::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::ProductStatus.def()
     }
 }
 
