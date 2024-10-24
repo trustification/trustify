@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1729778581670,
+  "lastUpdate": 1729795953518,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -226,6 +226,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/ab45c4b63a95f9a57bb956e0341f490a8712da96"
         },
         "date": 1729778581059,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "33404443b04a7778d39bd20ace82757d2d44e104",
+          "message": "enhance testing around cyclonedx ingestion",
+          "timestamp": "2024-10-24T18:33:08Z",
+          "tree_id": "c9b423b739c8758951a62d2a5623e9d1d3c2fc6e",
+          "url": "https://github.com/trustification/trustify/commit/33404443b04a7778d39bd20ace82757d2d44e104"
+        },
+        "date": 1729795952912,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
