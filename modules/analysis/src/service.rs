@@ -17,6 +17,7 @@ use crate::model::{
     AnalysisStatus, AncNode, AncestorSummary, DepNode, DepSummary, GraphMap, PackageNode,
 };
 use crate::Error;
+use petgraph::algo::is_cyclic_directed;
 use petgraph::graph::{Graph, NodeIndex};
 use petgraph::visit::{NodeIndexable, VisitMap, Visitable};
 use petgraph::Direction;
@@ -134,7 +135,7 @@ pub async fn get_relationships(
         LEFT JOIN
             sbom_package_purl_ref t2 ON sbom.sbom_id = t2.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
         WHERE
-            package_relates_to_package.relationship IN (0, 8, 14)
+            package_relates_to_package.relationship IN (0, 1, 8, 14)
             AND sbom.sbom_id = '{}';
         "#,
         distinct_sbom_id
@@ -370,36 +371,48 @@ impl AnalysisService {
             let graph_read_guard = graph_manager.read();
             for distinct_sbom_id in &distinct_sbom_ids {
                 if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                    // Iterate over matching node indices and process them directly
-                    graph
-                        .node_indices()
-                        .filter(|&i| {
-                            graph.node_weight(i).is_some_and(|node| {
-                                query.apply(&HashMap::from([
-                                    ("sbom_id", Value::String(&node.sbom_id)),
-                                    ("node_id", Value::String(&node.node_id)),
-                                    ("name", Value::String(&node.name)),
-                                ]))
+                    if !is_cyclic_directed(graph) {
+                        // Iterate over matching node indices and process them directly
+                        graph
+                            .node_indices()
+                            .filter(|&i| {
+                                graph.node_weight(i).is_some_and(|node| {
+                                    query.apply(&HashMap::from([
+                                        ("sbom_id", Value::String(&node.sbom_id)),
+                                        ("node_id", Value::String(&node.node_id)),
+                                        ("name", Value::String(&node.name)),
+                                    ]))
+                                })
                             })
-                        })
-                        .for_each(|node_index| {
-                            if let Some(find_match_package_node) = graph.node_weight(node_index) {
-                                log::debug!("matched!");
-                                components.push(AncestorSummary {
-                                    sbom_id: find_match_package_node.sbom_id.to_string(),
-                                    node_id: find_match_package_node.node_id.to_string(),
-                                    purl: find_match_package_node.purl.to_string(),
-                                    name: find_match_package_node.name.to_string(),
-                                    published: find_match_package_node.published.to_string(),
-                                    document_id: find_match_package_node.document_id.to_string(),
-                                    product_name: find_match_package_node.product_name.to_string(),
-                                    product_version: find_match_package_node
-                                        .product_version
-                                        .to_string(),
-                                    ancestors: ancestor_nodes(graph, node_index),
-                                });
-                            }
-                        });
+                            .for_each(|node_index| {
+                                if let Some(find_match_package_node) = graph.node_weight(node_index)
+                                {
+                                    log::debug!("matched!");
+                                    components.push(AncestorSummary {
+                                        sbom_id: find_match_package_node.sbom_id.to_string(),
+                                        node_id: find_match_package_node.node_id.to_string(),
+                                        purl: find_match_package_node.purl.to_string(),
+                                        name: find_match_package_node.name.to_string(),
+                                        published: find_match_package_node.published.to_string(),
+                                        document_id: find_match_package_node
+                                            .document_id
+                                            .to_string(),
+                                        product_name: find_match_package_node
+                                            .product_name
+                                            .to_string(),
+                                        product_version: find_match_package_node
+                                            .product_version
+                                            .to_string(),
+                                        ancestors: ancestor_nodes(graph, node_index),
+                                    });
+                                }
+                            });
+                    } else {
+                        log::warn!(
+                            "analysis graph of sbom {} has circular references!",
+                            distinct_sbom_id
+                        );
+                    }
                 }
             }
         }
@@ -442,34 +455,46 @@ impl AnalysisService {
             let graph_read_guard = graph_manager.read();
             for distinct_sbom_id in &distinct_sbom_ids {
                 if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                    // Iterate over matching node indices and process them directly
-                    graph
-                        .node_indices()
-                        .filter(|&i| {
-                            if let Some(node) = graph.node_weight(i) {
-                                node.name.eq(&component_name.to_string()) // Use eq for exact match
-                            } else {
-                                false // Return false if the node does not exist
-                            }
-                        })
-                        .for_each(|node_index| {
-                            if let Some(find_match_package_node) = graph.node_weight(node_index) {
-                                log::debug!("matched!");
-                                components.push(AncestorSummary {
-                                    sbom_id: find_match_package_node.sbom_id.to_string(),
-                                    node_id: find_match_package_node.node_id.to_string(),
-                                    purl: find_match_package_node.purl.to_string(),
-                                    name: find_match_package_node.name.to_string(),
-                                    published: find_match_package_node.published.to_string(),
-                                    document_id: find_match_package_node.document_id.to_string(),
-                                    product_name: find_match_package_node.product_name.to_string(),
-                                    product_version: find_match_package_node
-                                        .product_version
-                                        .to_string(),
-                                    ancestors: ancestor_nodes(graph, node_index),
-                                });
-                            }
-                        });
+                    if !is_cyclic_directed(graph) {
+                        // Iterate over matching node indices and process them directly
+                        graph
+                            .node_indices()
+                            .filter(|&i| {
+                                if let Some(node) = graph.node_weight(i) {
+                                    node.name.eq(&component_name.to_string()) // Use eq for exact match
+                                } else {
+                                    false // Return false if the node does not exist
+                                }
+                            })
+                            .for_each(|node_index| {
+                                if let Some(find_match_package_node) = graph.node_weight(node_index)
+                                {
+                                    log::debug!("matched!");
+                                    components.push(AncestorSummary {
+                                        sbom_id: find_match_package_node.sbom_id.to_string(),
+                                        node_id: find_match_package_node.node_id.to_string(),
+                                        purl: find_match_package_node.purl.to_string(),
+                                        name: find_match_package_node.name.to_string(),
+                                        published: find_match_package_node.published.to_string(),
+                                        document_id: find_match_package_node
+                                            .document_id
+                                            .to_string(),
+                                        product_name: find_match_package_node
+                                            .product_name
+                                            .to_string(),
+                                        product_version: find_match_package_node
+                                            .product_version
+                                            .to_string(),
+                                        ancestors: ancestor_nodes(graph, node_index),
+                                    });
+                                }
+                            });
+                    } else {
+                        log::warn!(
+                            "analysis graph of sbom {} has circular references!",
+                            distinct_sbom_id
+                        );
+                    }
                 }
             }
         }
@@ -512,43 +537,55 @@ impl AnalysisService {
             let graph_read_guard = graph_manager.read();
             for distinct_sbom_id in &distinct_sbom_ids {
                 if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                    // Iterate over matching node indices and process them directly
-                    graph
-                        .node_indices()
-                        .filter(|&i| {
-                            if let Some(node) = graph.node_weight(i) {
-                                match Purl::from_str(&node.purl).map_err(Error::Purl) {
-                                    Ok(purl) => purl == component_purl,
-                                    Err(err) => {
-                                        log::warn!(
-                                            "Error retrieving purl from analysis graph {}",
-                                            err
-                                        );
-                                        false
+                    if !is_cyclic_directed(graph) {
+                        // Iterate over matching node indices and process them directly
+                        graph
+                            .node_indices()
+                            .filter(|&i| {
+                                if let Some(node) = graph.node_weight(i) {
+                                    match Purl::from_str(&node.purl).map_err(Error::Purl) {
+                                        Ok(purl) => purl == component_purl,
+                                        Err(err) => {
+                                            log::warn!(
+                                                "Error retrieving purl from analysis graph {}",
+                                                err
+                                            );
+                                            false
+                                        }
                                     }
+                                } else {
+                                    false // Return false if the node does not exist
                                 }
-                            } else {
-                                false // Return false if the node does not exist
-                            }
-                        })
-                        .for_each(|node_index| {
-                            if let Some(find_match_package_node) = graph.node_weight(node_index) {
-                                log::debug!("matched!");
-                                components.push(AncestorSummary {
-                                    sbom_id: find_match_package_node.sbom_id.to_string(),
-                                    node_id: find_match_package_node.node_id.to_string(),
-                                    purl: find_match_package_node.purl.to_string(),
-                                    name: find_match_package_node.name.to_string(),
-                                    published: find_match_package_node.published.to_string(),
-                                    document_id: find_match_package_node.document_id.to_string(),
-                                    product_name: find_match_package_node.product_name.to_string(),
-                                    product_version: find_match_package_node
-                                        .product_version
-                                        .to_string(),
-                                    ancestors: ancestor_nodes(graph, node_index),
-                                });
-                            }
-                        });
+                            })
+                            .for_each(|node_index| {
+                                if let Some(find_match_package_node) = graph.node_weight(node_index)
+                                {
+                                    log::debug!("matched!");
+                                    components.push(AncestorSummary {
+                                        sbom_id: find_match_package_node.sbom_id.to_string(),
+                                        node_id: find_match_package_node.node_id.to_string(),
+                                        purl: find_match_package_node.purl.to_string(),
+                                        name: find_match_package_node.name.to_string(),
+                                        published: find_match_package_node.published.to_string(),
+                                        document_id: find_match_package_node
+                                            .document_id
+                                            .to_string(),
+                                        product_name: find_match_package_node
+                                            .product_name
+                                            .to_string(),
+                                        product_version: find_match_package_node
+                                            .product_version
+                                            .to_string(),
+                                        ancestors: ancestor_nodes(graph, node_index),
+                                    });
+                                }
+                            });
+                    } else {
+                        log::warn!(
+                            "analysis graph of sbom {} has circular references!",
+                            distinct_sbom_id
+                        );
+                    }
                 }
             }
         }
@@ -596,36 +633,48 @@ impl AnalysisService {
             let graph_read_guard = graph_manager.read();
             for distinct_sbom_id in &distinct_sbom_ids {
                 if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                    // Iterate over matching node indices and process them directly
-                    graph
-                        .node_indices()
-                        .filter(|&i| {
-                            graph.node_weight(i).is_some_and(|node| {
-                                query.apply(&HashMap::from([
-                                    ("sbom_id", Value::String(&node.sbom_id)),
-                                    ("node_id", Value::String(&node.node_id)),
-                                    ("name", Value::String(&node.name)),
-                                ]))
+                    if !is_cyclic_directed(graph) {
+                        // Iterate over matching node indices and process them directly
+                        graph
+                            .node_indices()
+                            .filter(|&i| {
+                                graph.node_weight(i).is_some_and(|node| {
+                                    query.apply(&HashMap::from([
+                                        ("sbom_id", Value::String(&node.sbom_id)),
+                                        ("node_id", Value::String(&node.node_id)),
+                                        ("name", Value::String(&node.name)),
+                                    ]))
+                                })
                             })
-                        })
-                        .for_each(|node_index| {
-                            if let Some(find_match_package_node) = graph.node_weight(node_index) {
-                                log::debug!("matched!");
-                                components.push(DepSummary {
-                                    sbom_id: find_match_package_node.sbom_id.to_string(),
-                                    node_id: find_match_package_node.node_id.to_string(),
-                                    purl: find_match_package_node.purl.to_string(),
-                                    name: find_match_package_node.name.to_string(),
-                                    published: find_match_package_node.published.to_string(),
-                                    document_id: find_match_package_node.document_id.to_string(),
-                                    product_name: find_match_package_node.product_name.to_string(),
-                                    product_version: find_match_package_node
-                                        .product_version
-                                        .to_string(),
-                                    deps: dep_nodes(graph, node_index),
-                                });
-                            }
-                        });
+                            .for_each(|node_index| {
+                                if let Some(find_match_package_node) = graph.node_weight(node_index)
+                                {
+                                    log::debug!("matched!");
+                                    components.push(DepSummary {
+                                        sbom_id: find_match_package_node.sbom_id.to_string(),
+                                        node_id: find_match_package_node.node_id.to_string(),
+                                        purl: find_match_package_node.purl.to_string(),
+                                        name: find_match_package_node.name.to_string(),
+                                        published: find_match_package_node.published.to_string(),
+                                        document_id: find_match_package_node
+                                            .document_id
+                                            .to_string(),
+                                        product_name: find_match_package_node
+                                            .product_name
+                                            .to_string(),
+                                        product_version: find_match_package_node
+                                            .product_version
+                                            .to_string(),
+                                        deps: dep_nodes(graph, node_index),
+                                    });
+                                }
+                            });
+                    } else {
+                        log::warn!(
+                            "analysis graph of sbom {} has circular references!",
+                            distinct_sbom_id
+                        );
+                    }
                 }
             }
         }
@@ -667,35 +716,47 @@ impl AnalysisService {
             let graph_read_guard = graph_manager.read();
             for distinct_sbom_id in &distinct_sbom_ids {
                 if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                    // Iterate over matching node indices and process them directly
-                    graph
-                        .node_indices()
-                        .filter(|&i| {
-                            if let Some(node) = graph.node_weight(i) {
-                                node.name.eq(&component_name.to_string())
-                            // Use eq for exact match
-                            } else {
-                                false // Return false if the node does not exist
-                            }
-                        })
-                        .for_each(|node_index| {
-                            if let Some(find_match_package_node) = graph.node_weight(node_index) {
-                                log::debug!("matched!");
-                                components.push(DepSummary {
-                                    sbom_id: find_match_package_node.sbom_id.to_string(),
-                                    node_id: find_match_package_node.node_id.to_string(),
-                                    purl: find_match_package_node.purl.to_string(),
-                                    name: find_match_package_node.name.to_string(),
-                                    published: find_match_package_node.published.to_string(),
-                                    document_id: find_match_package_node.document_id.to_string(),
-                                    product_name: find_match_package_node.product_name.to_string(),
-                                    product_version: find_match_package_node
-                                        .product_version
-                                        .to_string(),
-                                    deps: dep_nodes(graph, node_index),
-                                });
-                            }
-                        });
+                    if !is_cyclic_directed(graph) {
+                        // Iterate over matching node indices and process them directly
+                        graph
+                            .node_indices()
+                            .filter(|&i| {
+                                if let Some(node) = graph.node_weight(i) {
+                                    node.name.eq(&component_name.to_string())
+                                // Use eq for exact match
+                                } else {
+                                    false // Return false if the node does not exist
+                                }
+                            })
+                            .for_each(|node_index| {
+                                if let Some(find_match_package_node) = graph.node_weight(node_index)
+                                {
+                                    log::debug!("matched!");
+                                    components.push(DepSummary {
+                                        sbom_id: find_match_package_node.sbom_id.to_string(),
+                                        node_id: find_match_package_node.node_id.to_string(),
+                                        purl: find_match_package_node.purl.to_string(),
+                                        name: find_match_package_node.name.to_string(),
+                                        published: find_match_package_node.published.to_string(),
+                                        document_id: find_match_package_node
+                                            .document_id
+                                            .to_string(),
+                                        product_name: find_match_package_node
+                                            .product_name
+                                            .to_string(),
+                                        product_version: find_match_package_node
+                                            .product_version
+                                            .to_string(),
+                                        deps: dep_nodes(graph, node_index),
+                                    });
+                                }
+                            });
+                    } else {
+                        log::warn!(
+                            "analysis graph of sbom {} has circular references!",
+                            distinct_sbom_id
+                        );
+                    }
                 }
             }
         }
@@ -737,43 +798,55 @@ impl AnalysisService {
             let graph_read_guard = graph_manager.read();
             for distinct_sbom_id in &distinct_sbom_ids {
                 if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                    // Iterate over matching node indices and process them directly
-                    graph
-                        .node_indices()
-                        .filter(|&i| {
-                            if let Some(node) = graph.node_weight(i) {
-                                match Purl::from_str(&node.purl).map_err(Error::Purl) {
-                                    Ok(purl) => purl == component_purl,
-                                    Err(err) => {
-                                        log::warn!(
-                                            "Error retrieving purl from analysis graph {}",
-                                            err
-                                        );
-                                        false
+                    if !is_cyclic_directed(graph) {
+                        // Iterate over matching node indices and process them directly
+                        graph
+                            .node_indices()
+                            .filter(|&i| {
+                                if let Some(node) = graph.node_weight(i) {
+                                    match Purl::from_str(&node.purl).map_err(Error::Purl) {
+                                        Ok(purl) => purl == component_purl,
+                                        Err(err) => {
+                                            log::warn!(
+                                                "Error retrieving purl from analysis graph {}",
+                                                err
+                                            );
+                                            false
+                                        }
                                     }
+                                } else {
+                                    false // Return false if the node does not exist
                                 }
-                            } else {
-                                false // Return false if the node does not exist
-                            }
-                        })
-                        .for_each(|node_index| {
-                            if let Some(find_match_package_node) = graph.node_weight(node_index) {
-                                log::debug!("matched!");
-                                components.push(DepSummary {
-                                    sbom_id: find_match_package_node.sbom_id.to_string(),
-                                    node_id: find_match_package_node.node_id.to_string(),
-                                    purl: find_match_package_node.purl.to_string(),
-                                    name: find_match_package_node.name.to_string(),
-                                    published: find_match_package_node.published.to_string(),
-                                    document_id: find_match_package_node.document_id.to_string(),
-                                    product_name: find_match_package_node.product_name.to_string(),
-                                    product_version: find_match_package_node
-                                        .product_version
-                                        .to_string(),
-                                    deps: dep_nodes(graph, node_index),
-                                });
-                            }
-                        });
+                            })
+                            .for_each(|node_index| {
+                                if let Some(find_match_package_node) = graph.node_weight(node_index)
+                                {
+                                    log::debug!("matched!");
+                                    components.push(DepSummary {
+                                        sbom_id: find_match_package_node.sbom_id.to_string(),
+                                        node_id: find_match_package_node.node_id.to_string(),
+                                        purl: find_match_package_node.purl.to_string(),
+                                        name: find_match_package_node.name.to_string(),
+                                        published: find_match_package_node.published.to_string(),
+                                        document_id: find_match_package_node
+                                            .document_id
+                                            .to_string(),
+                                        product_name: find_match_package_node
+                                            .product_name
+                                            .to_string(),
+                                        product_version: find_match_package_node
+                                            .product_version
+                                            .to_string(),
+                                        deps: dep_nodes(graph, node_index),
+                                    });
+                                }
+                            });
+                    } else {
+                        log::warn!(
+                            "analysis graph of sbom {} has circular references!",
+                            distinct_sbom_id
+                        );
+                    }
                 }
             }
         }
@@ -825,6 +898,52 @@ mod test {
                 .unwrap()
                 .node_id,
             "SPDXRef-AA".to_string()
+        );
+        assert_eq!(analysis_graph.total, 1);
+
+        let analysis_graph = service
+            .retrieve_root_components(Query::q("EE"), Paginated::default(), ())
+            .await
+            .unwrap();
+        Ok(assert_eq!(analysis_graph.total, 0)) //TODO: it maybe implied that a node with no relationship is a root ?
+    }
+
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn test_simple_analysis_cyclonedx_service(
+        ctx: &TrustifyContext,
+    ) -> Result<(), anyhow::Error> {
+        ctx.ingest_documents(["cyclonedx/simple.json", "cyclonedx/simple.json"])
+            .await?; //double ingestion intended
+
+        let service = AnalysisService::new(ctx.db.clone());
+
+        let analysis_graph = service
+            .retrieve_root_components(Query::q("DD"), Paginated::default(), ())
+            .await
+            .unwrap();
+
+        assert_eq!(
+            analysis_graph
+                .items
+                .last()
+                .unwrap()
+                .ancestors
+                .last()
+                .unwrap()
+                .purl,
+            "pkg://rpm/redhat/AA@0.0.0?arch=src".to_string()
+        );
+        assert_eq!(
+            analysis_graph
+                .items
+                .last()
+                .unwrap()
+                .ancestors
+                .last()
+                .unwrap()
+                .node_id,
+            "AA".to_string()
         );
         assert_eq!(analysis_graph.total, 1);
 
@@ -1003,6 +1122,29 @@ mod test {
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
+    async fn test_simple_deps_cyclonedx_service(
+        ctx: &TrustifyContext,
+    ) -> Result<(), anyhow::Error> {
+        ctx.ingest_documents(["cyclonedx/simple.json"]).await?;
+
+        let service = AnalysisService::new(ctx.db.clone());
+
+        let analysis_graph = service
+            .retrieve_deps(Query::q("AA"), Paginated::default(), ())
+            .await
+            .unwrap();
+
+        assert_eq!(analysis_graph.total, 1);
+
+        let analysis_graph = service
+            .retrieve_root_components(Query::q("EE"), Paginated::default(), ())
+            .await
+            .unwrap();
+        Ok(assert_eq!(analysis_graph.total, 0)) //TODO: should this not match with no root_components ?
+    }
+
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
     async fn test_simple_by_name_deps_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
@@ -1060,5 +1202,38 @@ mod test {
             .unwrap();
 
         Ok(assert_eq!(analysis_graph.total, 2))
+    }
+
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn test_circular_deps_cyclonedx_service(
+        ctx: &TrustifyContext,
+    ) -> Result<(), anyhow::Error> {
+        ctx.ingest_documents(["cyclonedx/cyclonedx-circular.json"])
+            .await?;
+
+        let service = AnalysisService::new(ctx.db.clone());
+
+        let analysis_graph = service
+            .retrieve_deps_by_name("junit-bom".to_string(), Paginated::default(), ())
+            .await
+            .unwrap();
+
+        Ok(assert_eq!(analysis_graph.total, 0))
+    }
+
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn test_circular_deps_spdx_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        ctx.ingest_documents(["spdx/loop.json"]).await?;
+
+        let service = AnalysisService::new(ctx.db.clone());
+
+        let analysis_graph = service
+            .retrieve_deps_by_name("A".to_string(), Paginated::default(), ())
+            .await
+            .unwrap();
+
+        Ok(assert_eq!(analysis_graph.total, 0))
     }
 }
