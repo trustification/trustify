@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1729614486767,
+  "lastUpdate": 1729778581670,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -197,6 +197,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/611ef1f91f413d627a017a87fa15a2b147716a20"
         },
         "date": 1729614485738,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": false,
+          "id": "ab45c4b63a95f9a57bb956e0341f490a8712da96",
+          "message": "refactor: break up Query behavior for better clarity\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-10-24T13:42:01Z",
+          "tree_id": "6c44e5424d8e758070d9026bbe6594742c018036",
+          "url": "https://github.com/trustification/trustify/commit/ab45c4b63a95f9a57bb956e0341f490a8712da96"
+        },
+        "date": 1729778581059,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
