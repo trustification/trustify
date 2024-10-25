@@ -1,6 +1,5 @@
-use super::temp::TempFile;
 use crate::service::{
-    compression::Compression, StorageBackend, StorageKey, StorageResult, StoreError,
+    compression::Compression, temp::TempFile, StorageBackend, StorageKey, StorageResult, StoreError,
 };
 use anyhow::Context;
 use bytes::Bytes;
@@ -15,7 +14,7 @@ use strum::IntoEnumIterator;
 use tempfile::{tempdir, TempDir};
 use tokio::{
     fs::{create_dir_all, File},
-    io::{AsyncWriteExt, BufReader},
+    io::AsyncWriteExt,
 };
 use tokio_util::io::ReaderStream;
 
@@ -106,7 +105,7 @@ impl StorageBackend for FileSystemBackend {
     {
         let stream = pin!(stream);
         let mut file = TempFile::new(stream).await.map_err(StoreError::Backend)?;
-        let mut source = BufReader::new(file.reader().await.map_err(StoreError::Backend)?);
+        let mut source = file.reader().await.map_err(StoreError::Backend)?;
 
         let result = file.result();
         let key = result.key().to_string();

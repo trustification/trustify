@@ -272,9 +272,9 @@ impl InitData {
                     FileSystemBackend::new(storage, run.storage.compression).await?,
                 )
             }
-            StorageStrategy::S3 => {
-                DispatchBackend::S3(S3Backend::new(run.storage.s3_config).await?)
-            }
+            StorageStrategy::S3 => DispatchBackend::S3(
+                S3Backend::new(run.storage.s3_config, run.storage.compression).await?,
+            ),
         };
 
         let ui = UI {

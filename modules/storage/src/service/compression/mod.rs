@@ -2,6 +2,7 @@ use async_compression::tokio::bufread;
 use async_compression::tokio::write::ZstdEncoder;
 use std::fmt::{Display, Formatter};
 use std::pin::Pin;
+use std::str::FromStr;
 use std::task::{Context, Poll};
 use tokio::io;
 use tokio::io::{AsyncBufRead, AsyncRead, AsyncWrite, BufReader, ReadBuf};
@@ -22,11 +23,39 @@ impl Display for Compression {
     }
 }
 
+impl FromStr for Compression {
+    type Err = std::fmt::Error;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "zstd" => Ok(Compression::Zstd),
+            "none" => Ok(Compression::None),
+            _ => Err(std::fmt::Error {}),
+        }
+    }
+}
+
 impl Compression {
     pub fn extension(&self) -> &'static str {
         match self {
             Self::None => "",
             Self::Zstd => "zstd",
+        }
+    }
+
+    pub fn content_encoding(&self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::Zstd => "zstd",
+        }
+    }
+
+    pub async fn compress<R>(&self, r: R) -> Box<dyn AsyncRead + Unpin>
+    where
+        R: AsyncBufRead + Unpin + 'static,
+    {
+        match self {
+            Self::None => Box::new(r),
+            Self::Zstd => Box::new(bufread::ZstdEncoder::new(r)),
         }
     }
 

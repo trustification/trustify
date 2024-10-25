@@ -8731,6 +8731,7 @@ dependencies = [
  "clap",
  "futures",
  "hex",
+ "http 0.2.12",
  "log",
  "rstest",
  "rust-s3",
