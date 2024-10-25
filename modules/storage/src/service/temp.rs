@@ -8,7 +8,7 @@ use std::{
 use tempfile::tempfile;
 use tokio::{
     fs::File,
-    io::{AsyncRead, AsyncSeekExt, AsyncWriteExt},
+    io::{AsyncBufRead, AsyncSeekExt, AsyncWriteExt, BufReader},
 };
 use trustify_common::hashing::{Contexts, Digests};
 
@@ -47,9 +47,9 @@ impl TempFile {
     }
 
     /// Return a clone of the temp file after resetting its position
-    pub async fn reader(&mut self) -> Result<impl AsyncRead, Error> {
+    pub async fn reader(&mut self) -> Result<impl AsyncBufRead, Error> {
         self.file.seek(SeekFrom::Start(0)).await?;
-        self.file.try_clone().await
+        Ok(BufReader::new(self.file.try_clone().await?))
     }
 
     /// Passing self should ensure self.file is dropped and hence

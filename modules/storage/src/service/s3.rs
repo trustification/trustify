@@ -1,19 +1,25 @@
 use crate::{
     config::S3Config,
-    service::{temp::TempFile, StorageBackend, StorageKey, StorageResult, StoreError},
+    service::{
+        compression::Compression, temp::TempFile, StorageBackend, StorageKey, StorageResult,
+        StoreError,
+    },
 };
 use bytes::Bytes;
-use futures::Stream;
+use futures::{Stream, TryStreamExt};
+use http::{header::CONTENT_ENCODING, HeaderMap, HeaderValue};
 use s3::{creds::Credentials, error::S3Error, Bucket};
-use std::{fmt::Debug, pin::pin};
+use std::{fmt::Debug, io, pin::pin, str::FromStr};
+use tokio_util::io::{ReaderStream, StreamReader};
 
 #[derive(Clone, Debug)]
 pub struct S3Backend {
-    bucket: Box<Bucket>,
+    bucket: Bucket,
+    compression: Compression,
 }
 
 impl S3Backend {
-    pub async fn new(config: S3Config) -> Result<Self, S3Error> {
+    pub async fn new(config: S3Config, compression: Compression) -> Result<Self, S3Error> {
         let bucket = Bucket::new(
             &config.bucket.unwrap_or_default(),
             config.region.unwrap_or_default().parse()?,
@@ -24,14 +30,21 @@ impl S3Backend {
                 None,
                 None,
             )?,
-        )?;
+        )?
+        .with_extra_headers(HeaderMap::from_iter([(
+            CONTENT_ENCODING,
+            HeaderValue::from_str(&compression.to_string())?,
+        )]))?;
         assert!(bucket.exists().await?, "S3 bucket not found");
         log::info!(
             "Using S3 bucket '{}' in '{}' for doc storage",
             bucket.name,
             bucket.region
         );
-        Ok(S3Backend { bucket })
+        Ok(S3Backend {
+            bucket,
+            compression,
+        })
     }
 }
 
@@ -47,11 +60,18 @@ impl StorageBackend for S3Backend {
 
         let stream = pin!(stream);
         let mut file = TempFile::new(stream).await.map_err(errhdlr)?;
-        let mut source = file.reader().await.map_err(errhdlr)?;
+        let mut source = self
+            .compression
+            .compress(file.reader().await.map_err(errhdlr)?)
+            .await;
         let result = file.result();
 
         self.bucket
-            .put_object_stream(&mut source, result.key().to_string())
+            .put_object_stream_with_content_type(
+                &mut source,
+                result.key().to_string(),
+                "application/json",
+            )
             .await
             .map_err(StoreError::Backend)?;
 
@@ -62,8 +82,21 @@ impl StorageBackend for S3Backend {
         &self,
         StorageKey(key): StorageKey,
     ) -> Result<Option<impl Stream<Item = Result<Bytes, Self::Error>> + 'a>, Self::Error> {
-        match self.bucket.get_object_stream(key).await {
-            Ok(resp) => Ok(Some(resp.bytes)),
+        let (head, _status) = self.bucket.head_object(&key).await?;
+        let encoding = head
+            .content_encoding
+            .unwrap_or(Compression::None.to_string());
+        let compression = Compression::from_str(&encoding).map_err(S3Error::FmtError)?;
+        match self.bucket.get_object_stream(&key).await {
+            Ok(resp) => {
+                let reader = StreamReader::new(resp.bytes.map_err(|e| match e {
+                    S3Error::Io(e) => e,
+                    _ => io::Error::new(io::ErrorKind::Other, e),
+                }));
+                Ok(Some(
+                    ReaderStream::new(compression.reader(reader)).map_err(S3Error::Io),
+                ))
+            }
             Err(S3Error::HttpFailWithBody(404, _)) => Ok(None),
             Err(e) => Err(e),
         }
