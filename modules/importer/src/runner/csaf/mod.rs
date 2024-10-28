@@ -1,7 +1,6 @@
 mod report;
 pub mod storage;
 
-use crate::server::context::WalkerProgress;
 use crate::{
     model::CsafImporter,
     runner::{
@@ -11,6 +10,7 @@ use crate::{
         report::{ReportBuilder, ReportVisitor, ScannerError},
         RunOutput,
     },
+    server::context::WalkerProgress,
 };
 use csaf_walker::{
     metadata::MetadataRetriever,
