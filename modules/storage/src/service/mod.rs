@@ -24,6 +24,12 @@ pub enum StoreError<S: Debug, B: Debug> {
     Backend(#[source] B),
 }
 
+impl<E: Debug> From<std::io::Error> for StoreError<E, std::io::Error> {
+    fn from(e: std::io::Error) -> Self {
+        StoreError::Backend(e)
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct StorageKey(String);
 

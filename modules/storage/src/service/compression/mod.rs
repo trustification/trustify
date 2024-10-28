@@ -2,12 +2,13 @@ use async_compression::tokio::bufread;
 use async_compression::tokio::write::ZstdEncoder;
 use std::fmt::{Display, Formatter};
 use std::pin::Pin;
-use std::str::FromStr;
 use std::task::{Context, Poll};
 use tokio::io;
 use tokio::io::{AsyncBufRead, AsyncRead, AsyncWrite, BufReader, ReadBuf};
 
-#[derive(Copy, Clone, Eq, PartialEq, Default, Debug, strum::EnumIter, clap::ValueEnum)]
+#[derive(
+    Copy, Clone, Eq, PartialEq, Default, Debug, strum::EnumIter, strum::EnumString, clap::ValueEnum,
+)]
 pub enum Compression {
     #[default]
     None,
@@ -19,17 +20,6 @@ impl Display for Compression {
         match self {
             Compression::None => f.write_str("none"),
             Compression::Zstd => f.write_str("zstd"),
-        }
-    }
-}
-
-impl FromStr for Compression {
-    type Err = std::fmt::Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "zstd" => Ok(Compression::Zstd),
-            "none" => Ok(Compression::None),
-            _ => Err(std::fmt::Error {}),
         }
     }
 }
