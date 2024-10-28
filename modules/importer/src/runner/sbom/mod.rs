@@ -1,7 +1,6 @@
 mod report;
 pub mod storage;
 
-use crate::server::context::WalkerProgress;
 use crate::{
     model::SbomImporter,
     runner::{
@@ -11,6 +10,7 @@ use crate::{
         sbom::report::SbomReportVisitor,
         RunOutput,
     },
+    server::context::WalkerProgress,
 };
 use parking_lot::Mutex;
 use sbom_walker::{
