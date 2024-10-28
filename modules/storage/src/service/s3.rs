@@ -65,11 +65,7 @@ impl StorageBackend for S3Backend {
         let result = file.result();
 
         self.bucket
-            .put_object_stream_with_content_type(
-                &mut source,
-                result.key().to_string(),
-                "application/json",
-            )
+            .put_object_stream(&mut source, result.key().to_string())
             .await
             .map_err(Error::S3)?;
 
