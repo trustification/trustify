@@ -36,24 +36,27 @@ impl super::ImportRunner {
     ) -> Result<RunOutput, ScannerError> {
         // progress reporting
 
-        let progress = context.progress(format!("Import CSF: {}", importer.source));
+        let progress = context.progress(format!("Import CSAF: {}", importer.source));
 
         // report
+
+        let CsafImporter {
+            common,
+            source,
+            v3_signatures,
+            only_patterns,
+            fetch_retries,
+        } = importer;
 
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
         let fetcher =
-            Fetcher::new(FetcherOptions::new().retries(importer.fetch_retries.unwrap_or_default()))
-                .await?;
+            Fetcher::new(FetcherOptions::new().retries(fetch_retries.unwrap_or_default())).await?;
         let options = HttpOptions::new().since(last_success);
 
-        let source = match Url::parse(&importer.source) {
+        let source = match Url::parse(&source) {
             Ok(url) => HttpSource::new(url, fetcher, options),
-            Err(_) => HttpSource::new(
-                MetadataRetriever::new(importer.source.clone()),
-                fetcher,
-                options,
-            ),
+            Err(_) => HttpSource::new(MetadataRetriever::new(source.clone()), fetcher, options),
         };
 
         // storage (called by validator)
@@ -62,7 +65,7 @@ impl super::ImportRunner {
         let storage = storage::StorageVisitor {
             context,
             ingestor,
-            labels: importer.common.labels,
+            labels: common.labels,
             report: report.clone(),
         };
 
@@ -72,7 +75,7 @@ impl super::ImportRunner {
 
         // validate (called by retriever)
 
-        let options = validation::options(importer.v3_signatures)?;
+        let options = validation::options(v3_signatures)?;
         let validation = ValidationVisitor::new(storage).with_options(options);
 
         // retriever (called by filter)
@@ -81,7 +84,7 @@ impl super::ImportRunner {
 
         // filter
 
-        let filter = Filter::from_config(visitor, importer.only_patterns)?;
+        let filter = Filter::from_config(visitor, only_patterns)?;
 
         // walker
 

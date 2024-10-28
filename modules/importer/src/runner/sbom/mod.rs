@@ -1,6 +1,7 @@
 mod report;
 pub mod storage;
 
+use crate::server::context::WalkerProgress;
 use crate::{
     model::SbomImporter,
     runner::{
@@ -32,19 +33,30 @@ impl super::ImportRunner {
         importer: SbomImporter,
         last_success: Option<SystemTime>,
     ) -> Result<RunOutput, ScannerError> {
+        // progress
+
+        let progress = context.progress(format!("Import SBOM: {}", importer.source));
+
+        // report
+
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
 
-        let url = Url::parse(&importer.source).map_err(|err| ScannerError::Critical(err.into()))?;
+        let SbomImporter {
+            common,
+            source,
+            keys,
+            v3_signatures,
+            only_patterns,
+            size_limit,
+            fetch_retries,
+        } = importer;
 
-        let keys = importer
-            .keys
-            .into_iter()
-            .map(|key| key.into())
-            .collect::<Vec<_>>();
-        let source = HttpSource::new(
+        let url = Url::parse(&source).map_err(|err| ScannerError::Critical(err.into()))?;
+
+        let keys = keys.into_iter().map(|key| key.into()).collect::<Vec<_>>();
+        let http_source = HttpSource::new(
             url,
-            Fetcher::new(FetcherOptions::new().retries(importer.fetch_retries.unwrap_or_default()))
-                .await?,
+            Fetcher::new(FetcherOptions::new().retries(fetch_retries.unwrap_or_default())).await?,
             HttpOptions::new().since(last_success).keys(keys),
         );
 
@@ -53,11 +65,11 @@ impl super::ImportRunner {
         let ingestor = IngestorService::new(Graph::new(self.db.clone()), self.storage.clone());
         let storage = storage::StorageVisitor {
             context,
-            source: importer.source,
-            labels: importer.common.labels,
+            source,
+            labels: common.labels,
             ingestor,
             report: report.clone(),
-            max_size: importer.size_limit.map(|size| size.as_u64()),
+            max_size: size_limit.map(|size| size.as_u64()),
         };
 
         // wrap storage with report
@@ -67,21 +79,21 @@ impl super::ImportRunner {
         // validate (called by retriever)
 
         //  because we might still have GPG v3 signatures
-        let options = validation::options(importer.v3_signatures)?;
+        let options = validation::options(v3_signatures)?;
         let validation = ValidationVisitor::new(storage).with_options(options);
 
         // retriever (called by filter)
 
-        let visitor = RetrievingVisitor::new(source.clone(), validation);
+        let visitor = RetrievingVisitor::new(http_source.clone(), validation);
 
         // filter
 
-        let filter = Filter::from_config(visitor, importer.only_patterns)?;
+        let filter = Filter::from_config(visitor, only_patterns)?;
 
         // walker
 
-        // FIXME: track progress
-        Walker::new(source)
+        Walker::new(http_source)
+            .with_progress(WalkerProgress(progress))
             .walk(filter)
             .await
             // if the walker fails, we record the outcome as part of the report, but skip any
