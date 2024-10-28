@@ -49,20 +49,18 @@ impl S3Backend {
 }
 
 impl StorageBackend for S3Backend {
-    type Error = S3Error;
+    type Error = Error;
 
     async fn store<E, S>(&self, stream: S) -> Result<StorageResult, StoreError<E, Self::Error>>
     where
         E: Debug,
         S: Stream<Item = Result<Bytes, E>>,
     {
-        let errhdlr = |e| StoreError::Backend(S3Error::Io(e));
-
         let stream = pin!(stream);
-        let mut file = TempFile::new(stream).await.map_err(errhdlr)?;
+        let mut file = TempFile::new(stream).await.map_err(Error::Io)?;
         let mut source = self
             .compression
-            .compress(file.reader().await.map_err(errhdlr)?)
+            .compress(file.reader().await.map_err(Error::Io)?)
             .await;
         let result = file.result();
 
@@ -73,7 +71,7 @@ impl StorageBackend for S3Backend {
                 "application/json",
             )
             .await
-            .map_err(StoreError::Backend)?;
+            .map_err(Error::S3)?;
 
         Ok(result)
     }
@@ -86,7 +84,7 @@ impl StorageBackend for S3Backend {
         let encoding = head
             .content_encoding
             .unwrap_or(Compression::None.to_string());
-        let compression = Compression::from_str(&encoding).map_err(S3Error::FmtError)?;
+        let compression = Compression::from_str(&encoding)?;
         match self.bucket.get_object_stream(&key).await {
             Ok(resp) => {
                 let reader = StreamReader::new(resp.bytes.map_err(|e| match e {
@@ -94,11 +92,27 @@ impl StorageBackend for S3Backend {
                     _ => io::Error::new(io::ErrorKind::Other, e),
                 }));
                 Ok(Some(
-                    ReaderStream::new(compression.reader(reader)).map_err(S3Error::Io),
+                    ReaderStream::new(compression.reader(reader)).map_err(Error::Io),
                 ))
             }
             Err(S3Error::HttpFailWithBody(404, _)) => Ok(None),
-            Err(e) => Err(e),
+            Err(e) => Err(e.into()),
         }
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("{0}")]
+    S3(#[from] S3Error),
+    #[error("{0}")]
+    Io(#[from] io::Error),
+    #[error("{0}")]
+    Parse(#[from] strum::ParseError),
+}
+
+impl<E: Debug> From<Error> for StoreError<E, Error> {
+    fn from(e: Error) -> Self {
+        StoreError::Backend(e)
     }
 }
