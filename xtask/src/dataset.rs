@@ -64,6 +64,7 @@ impl GenerateDump {
                         only_patterns: vec![],
                         size_limit: self.size_limit,
                         fetch_retries: self.fetch_retries,
+                        ignore_missing: false,
                     }),
                     ImporterConfiguration::Csaf(CsafImporter {
                         common: default_common("Red Hat VEX documents from 2024"),
@@ -71,6 +72,7 @@ impl GenerateDump {
                         v3_signatures: true,
                         only_patterns: vec!["^cve-2024-".into()],
                         fetch_retries: self.fetch_retries,
+                        ignore_missing: false,
                     })
                 ];
 

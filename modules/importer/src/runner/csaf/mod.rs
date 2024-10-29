@@ -20,6 +20,8 @@ use csaf_walker::{
     walker::Walker,
 };
 use parking_lot::Mutex;
+use reqwest::StatusCode;
+use std::collections::HashSet;
 use std::{sync::Arc, time::SystemTime};
 use tracing::instrument;
 use trustify_module_ingestor::{graph::Graph, service::IngestorService};
@@ -46,6 +48,7 @@ impl super::ImportRunner {
             v3_signatures,
             only_patterns,
             fetch_retries,
+            ignore_missing,
         } = importer;
 
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
@@ -71,7 +74,13 @@ impl super::ImportRunner {
 
         // wrap storage with report
 
-        let storage = CsafReportVisitor(ReportVisitor::new(report.clone(), storage));
+        let storage = CsafReportVisitor {
+            next: ReportVisitor::new(report.clone(), storage),
+            ignore_errors: match ignore_missing {
+                true => HashSet::from_iter([StatusCode::NOT_FOUND]),
+                false => HashSet::new(),
+            },
+        };
 
         // validate (called by retriever)
 

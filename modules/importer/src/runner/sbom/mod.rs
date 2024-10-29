@@ -13,12 +13,14 @@ use crate::{
     server::context::WalkerProgress,
 };
 use parking_lot::Mutex;
+use reqwest::StatusCode;
 use sbom_walker::{
     retrieve::RetrievingVisitor,
     source::{HttpOptions, HttpSource},
     validation::ValidationVisitor,
     walker::Walker,
 };
+use std::collections::HashSet;
 use std::{sync::Arc, time::SystemTime};
 use tracing::instrument;
 use trustify_module_ingestor::{graph::Graph, service::IngestorService};
@@ -49,6 +51,7 @@ impl super::ImportRunner {
             only_patterns,
             size_limit,
             fetch_retries,
+            ignore_missing,
         } = importer;
 
         let url = Url::parse(&source).map_err(|err| ScannerError::Critical(err.into()))?;
@@ -74,7 +77,13 @@ impl super::ImportRunner {
 
         // wrap storage with report
 
-        let storage = SbomReportVisitor(ReportVisitor::new(report.clone(), storage));
+        let storage = SbomReportVisitor {
+            next: ReportVisitor::new(report.clone(), storage),
+            ignore_errors: match ignore_missing {
+                true => HashSet::from_iter([StatusCode::NOT_FOUND]),
+                false => HashSet::new(),
+            },
+        };
 
         // validate (called by retriever)
 

@@ -5,13 +5,15 @@ use crate::runner::{
     report::{Message, Phase, ReportBuilder},
 };
 use parking_lot::Mutex;
-use sbom_walker::validation::{
-    ValidatedSbom, ValidatedVisitor, ValidationContext, ValidationError,
+use sbom_walker::{
+    source::HttpSource,
+    validation::{ValidatedSbom, ValidatedVisitor, ValidationContext},
 };
 use std::sync::Arc;
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
-use walker_common::{compression::decompress_opt, utils::url::Urlify};
+use walker_common::utils::url::Urlify;
+use walker_common::{compression::decompress_opt, validate::ValidationError};
 
 pub struct StorageVisitor<C: RunContext> {
     pub context: C,
@@ -23,8 +25,8 @@ pub struct StorageVisitor<C: RunContext> {
     pub report: Arc<Mutex<ReportBuilder>>,
 }
 
-impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
-    type Error = StorageError<ValidationError>;
+impl<C: RunContext> ValidatedVisitor<HttpSource> for StorageVisitor<C> {
+    type Error = StorageError<ValidationError<HttpSource>>;
     type Context = ();
 
     async fn visit_context(
@@ -37,7 +39,7 @@ impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
     async fn visit_sbom(
         &self,
         _context: &Self::Context,
-        result: Result<ValidatedSbom, ValidationError>,
+        result: Result<ValidatedSbom, ValidationError<HttpSource>>,
     ) -> Result<(), Self::Error> {
         let doc = result?;
         let file = doc.possibly_relative_url();

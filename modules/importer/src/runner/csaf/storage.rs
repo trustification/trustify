@@ -1,6 +1,7 @@
 use crate::runner::{common::storage::StorageError, context::RunContext, report::ReportBuilder};
-use csaf_walker::validation::{
-    ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError,
+use csaf_walker::{
+    source::Source,
+    validation::{ValidatedAdvisory, ValidatedVisitor, ValidationContext, ValidationError},
 };
 use parking_lot::Mutex;
 use std::sync::Arc;
@@ -16,8 +17,8 @@ pub struct StorageVisitor<C: RunContext> {
     pub labels: Labels,
 }
 
-impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
-    type Error = StorageError<ValidationError>;
+impl<C: RunContext, S: Source> ValidatedVisitor<S> for StorageVisitor<C> {
+    type Error = StorageError<ValidationError<S>>;
     type Context = ();
 
     async fn visit_context(&self, _: &ValidationContext<'_>) -> Result<Self::Context, Self::Error> {
@@ -27,7 +28,7 @@ impl<C: RunContext> ValidatedVisitor for StorageVisitor<C> {
     async fn visit_advisory(
         &self,
         _context: &Self::Context,
-        result: Result<ValidatedAdvisory, ValidationError>,
+        result: Result<ValidatedAdvisory, ValidationError<S>>,
     ) -> Result<(), Self::Error> {
         let doc = result?;
         let location = doc.context.url().to_string();

@@ -1,4 +1,5 @@
 use super::*;
+use trustify_common::serde::is_default;
 
 #[derive(
     Clone,
@@ -24,6 +25,9 @@ pub struct CsafImporter {
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fetch_retries: Option<usize>,
+
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub ignore_missing: bool,
 }
 
 impl Deref for CsafImporter {

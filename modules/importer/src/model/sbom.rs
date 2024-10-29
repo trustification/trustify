@@ -1,5 +1,5 @@
 use super::*;
-use trustify_common::model::BinaryByteSize;
+use trustify_common::{model::BinaryByteSize, serde::is_default};
 
 #[derive(
     Clone,
@@ -31,6 +31,9 @@ pub struct SbomImporter {
 
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fetch_retries: Option<usize>,
+
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub ignore_missing: bool,
 }
 
 impl Deref for SbomImporter {
@@ -78,6 +81,7 @@ mod test {
                 only_patterns: vec![],
                 size_limit: Some(bytesize::ByteSize::mib(1234).into()),
                 fetch_retries: None,
+                ignore_missing: false,
             }
         );
 

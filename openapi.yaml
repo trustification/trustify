@@ -2318,6 +2318,8 @@ components:
             - integer
             - 'null'
             minimum: 0
+          ignoreMissing:
+            type: boolean
           onlyPatterns:
             type: array
             items:
@@ -3271,6 +3273,8 @@ components:
             - integer
             - 'null'
             minimum: 0
+          ignoreMissing:
+            type: boolean
           keys:
             type: array
             items:

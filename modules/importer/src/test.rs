@@ -30,6 +30,7 @@ fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
 
         size_limit: None,
         fetch_retries: None,
+        ignore_missing: false,
     })
 }
 
