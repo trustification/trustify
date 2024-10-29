@@ -4,52 +4,65 @@ use crate::runner::{
     report::{Phase, ReportVisitor},
     sbom::storage::StorageVisitor,
 };
+use reqwest::StatusCode;
 use sbom_walker::{
-    retrieve::RetrievalError,
-    validation::{ValidatedSbom, ValidatedVisitor, ValidationContext, ValidationError},
+    source::{HttpSource, HttpSourceError},
+    validation::{ValidatedSbom, ValidatedVisitor, ValidationContext},
 };
+use std::collections::HashSet;
 use trustify_module_ingestor::service;
-use walker_common::utils::url::Urlify;
+use walker_common::{
+    fetcher, retrieve::RetrievalError, utils::url::Urlify, validate::ValidationError,
+};
 
-pub struct SbomReportVisitor<C: RunContext>(pub ReportVisitor<StorageVisitor<C>>);
+pub struct SbomReportVisitor<C: RunContext> {
+    pub next: ReportVisitor<StorageVisitor<C>>,
+    pub ignore_errors: HashSet<StatusCode>,
+}
 
-impl<C: RunContext> ValidatedVisitor for SbomReportVisitor<C> {
-    type Error = <StorageVisitor<C> as ValidatedVisitor>::Error;
-    type Context = <StorageVisitor<C> as ValidatedVisitor>::Context;
+impl<C: RunContext> ValidatedVisitor<HttpSource> for SbomReportVisitor<C> {
+    type Error = <StorageVisitor<C> as ValidatedVisitor<HttpSource>>::Error;
+    type Context = <StorageVisitor<C> as ValidatedVisitor<HttpSource>>::Context;
 
     async fn visit_context(
         &self,
         context: &ValidationContext<'_>,
     ) -> Result<Self::Context, Self::Error> {
-        self.0.next.visit_context(context).await
+        self.next.next.visit_context(context).await
     }
 
     async fn visit_sbom(
         &self,
         context: &Self::Context,
-        result: Result<ValidatedSbom, ValidationError>,
+        result: Result<ValidatedSbom, ValidationError<HttpSource>>,
     ) -> Result<(), Self::Error> {
         let file = result.url().to_string();
 
-        self.0.report.lock().tick();
+        self.next.report.lock().tick();
 
-        let result = self.0.next.visit_sbom(context, result).await;
+        let result = self.next.next.visit_sbom(context, result).await;
 
         if let Err(err) = &result {
             match err {
-                StorageError::Validation(ValidationError::Retrieval(
-                    RetrievalError::InvalidResponse { code, .. },
-                )) => {
-                    self.0.report.lock().add_error(
+                StorageError::Validation(ValidationError::Retrieval(err)) => {
+                    self.next.report.lock().add_error(
                         Phase::Retrieval,
                         file,
-                        format!("retrieval of document failed: {code}"),
+                        format!("retrieval of document failed: {err}"),
                     );
 
-                    if code.is_client_error() {
-                        // If it's a client error, there's no need to re-try. We simply claim
-                        // success after we logged it.
-                        return Ok(());
+                    // handle client error as non-retry error
+
+                    if let RetrievalError::Source {
+                        err: HttpSourceError::Fetcher(fetcher::Error::Request(err)),
+                        discovered: _,
+                    } = err
+                    {
+                        if let Some(status) = err.status() {
+                            if self.ignore_errors.contains(&status) {
+                                return Ok(());
+                            }
+                        }
                     }
                 }
                 StorageError::Validation(ValidationError::DigestMismatch {
@@ -57,7 +70,7 @@ impl<C: RunContext> ValidatedVisitor for SbomReportVisitor<C> {
                     actual,
                     ..
                 }) => {
-                    self.0.report.lock().add_error(
+                    self.next.report.lock().add_error(
                         Phase::Validation,
                         file,
                         format!("digest mismatch - expected: {expected}, actual: {actual}"),
@@ -68,7 +81,7 @@ impl<C: RunContext> ValidatedVisitor for SbomReportVisitor<C> {
                     return Ok(());
                 }
                 StorageError::Validation(ValidationError::Signature { error, .. }) => {
-                    self.0.report.lock().add_error(
+                    self.next.report.lock().add_error(
                         Phase::Validation,
                         file,
                         format!("unable to verify signature: {error}"),
@@ -79,7 +92,7 @@ impl<C: RunContext> ValidatedVisitor for SbomReportVisitor<C> {
                     return Ok(());
                 }
                 StorageError::Processing(err) => {
-                    self.0.report.lock().add_error(
+                    self.next.report.lock().add_error(
                         Phase::Upload,
                         file,
                         format!("processing failed: {err}"),
@@ -90,7 +103,7 @@ impl<C: RunContext> ValidatedVisitor for SbomReportVisitor<C> {
                     return Ok(());
                 }
                 StorageError::Storage(err) => {
-                    self.0.report.lock().add_error(
+                    self.next.report.lock().add_error(
                         Phase::Upload,
                         file,
                         format!("upload failed: {err}"),

@@ -1739,9 +1739,9 @@ dependencies = [
 
 [[package]]
 name = "csaf-walker"
-version = "0.9.3"
+version = "0.10.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5af10591ad4a6b6a56f14753f0d3341ac5e12b3c1fa171c8f554b1af87ce995f"
+checksum = "0cde0dba0cac57fef9d7842e815404a1b13125e47920cef4f2d79eb508959924"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1752,7 +1752,7 @@ dependencies = [
  "csv",
  "digest",
  "filetime",
- "fluent-uri 0.2.0",
+ "fluent-uri 0.3.2",
  "futures",
  "hickory-resolver",
  "html-escape",
@@ -2538,9 +2538,9 @@ dependencies = [
 
 [[package]]
 name = "fluent-uri"
-version = "0.2.0"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5d77395429e0ce700a8378be6625660a4aa00ca5dc5cd1527193ebd0946cc9b3"
+checksum = "1918b65d96df47d3591bed19c5cca17e3fa5d0707318e4b5ef2eae01764df7e5"
 dependencies = [
  "borrow-or-share",
  "ref-cast",
@@ -6378,9 +6378,9 @@ dependencies = [
 
 [[package]]
 name = "sbom-walker"
-version = "0.9.3"
+version = "0.10.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74d230a1fc4bb9fea74333adbad2d466fd85927f8acec6a5234d9c4e96d838b8"
+checksum = "a4bb03045c0f81c22061f69f7701521dce1f64eaf3d1e79d06daf2be3ee0cf08"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6390,7 +6390,7 @@ dependencies = [
  "cyclonedx-bom",
  "digest",
  "filetime",
- "fluent-uri 0.2.0",
+ "fluent-uri 0.3.2",
  "futures",
  "http 1.1.0",
  "humantime",
@@ -9207,9 +9207,9 @@ dependencies = [
 
 [[package]]
 name = "walker-common"
-version = "0.9.3"
+version = "0.10.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a874683afa5b5b913bcecbf74d4d3692f7a77849093c3645616d2d980f9989d"
+checksum = "992cd6ccc9f26d93d83005b5d74365b1ef38451770924a1f03170649f93a7622"
 dependencies = [
  "anyhow",
  "async-trait",

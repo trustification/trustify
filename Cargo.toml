@@ -57,7 +57,7 @@ clap = "4"
 concat-idents = "1"
 cpe = "0.1.5"
 csaf = { version = "0.5.0", default-features = false }
-csaf-walker = { version = "0.9.0", default-features = false }
+csaf-walker = { version = "0.10.0-alpha.1", default-features = false }
 cve = "0.3.1"
 cyclonedx-bom = "0.7.0"
 env_logger = "0.11.0"
@@ -108,7 +108,7 @@ ring = "0.17.8"
 roxmltree = "0.20.0"
 rstest = "0.23.0"
 rust-s3 = "0.35"
-sbom-walker = { version = "0.9.0", default-features = false, features = ["crypto-openssl", "cyclonedx-bom", "spdx-rs"] }
+sbom-walker = { version = "0.10.0-alpha.1", default-features = false, features = ["crypto-openssl", "cyclonedx-bom", "spdx-rs"] }
 schemars = "0.8"
 sea-orm = { version = "~1.0", features = ["debug-print"] } # See https://www.sea-ql.org/blog/2024-08-04-sea-orm-1.0/#release-planning
 sea-orm-migration = "~1.0"
@@ -147,8 +147,8 @@ utoipa-redoc = { version = "5.0.0", features = ["actix-web"] }
 utoipa-swagger-ui = "8.0.3"
 uuid = "1.7.0"
 walkdir = "2.5"
-walker-common = "0.9.3"
-walker-extras = "0.9.0"
+walker-common = "0.10.0-alpha.1"
+walker-extras = "0.10.0-alpha.1"
 zip = "2.2.0"
 
 trustify-auth = { path = "common/auth", features = ["actix", "swagger"] }

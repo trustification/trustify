@@ -159,6 +159,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         only_patterns: vec![],
         size_limit: None,
         fetch_retries: Some(50),
+        ignore_missing: false,
     })).await?;
 
     add(
@@ -175,6 +176,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
             v3_signatures: true,
             only_patterns: vec![],
             fetch_retries: Some(50),
+            ignore_missing: false,
         }),
     )
     .await?;
@@ -193,6 +195,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
             v3_signatures: true,
             only_patterns: vec!["^cve-2024-".into()],
             fetch_retries: Some(50),
+            ignore_missing: false,
         }),
     )
     .await?;
