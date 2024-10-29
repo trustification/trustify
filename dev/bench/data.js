@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1729795953518,
+  "lastUpdate": 1730191077260,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -255,6 +255,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/33404443b04a7778d39bd20ace82757d2d44e104"
         },
         "date": 1729795952912,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "fe35933b50732ae67a2d74c0d41ce6ae84eb7e58",
+          "message": "Revert the content type, which we don't use anyway\n\nFor the purposes of storing opaque docs, the only header we care about\nis content-encoding. For us, the default content-type of\n\"application/octet-stream\" is fine.\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-10-29T08:17:04Z",
+          "tree_id": "a6bf3b3a8ad8e76289d7a618ae6369a77a51837c",
+          "url": "https://github.com/trustification/trustify/commit/fe35933b50732ae67a2d74c0d41ce6ae84eb7e58"
+        },
+        "date": 1730191076074,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
