@@ -1,9 +1,13 @@
 use async_graphql::scalar;
-use std::collections::HashMap;
-use std::ops::{Deref, DerefMut};
-use utoipa::openapi::schema::AdditionalProperties;
-use utoipa::openapi::{Object, ObjectBuilder, RefOr, Schema, SchemaType};
-use utoipa::ToSchema;
+use std::{
+    borrow::Cow,
+    collections::HashMap,
+    ops::{Deref, DerefMut},
+};
+use utoipa::{
+    openapi::{schema::AdditionalProperties, Object, ObjectBuilder, RefOr, Schema, Type},
+    PartialSchema, ToSchema,
+};
 
 #[derive(
     Clone,
@@ -18,15 +22,19 @@ use utoipa::ToSchema;
 )]
 pub struct Labels(pub HashMap<String, String>);
 
-impl<'s> ToSchema<'s> for Labels {
-    fn schema() -> (&'s str, RefOr<Schema>) {
-        let props = AdditionalProperties::RefOr(Object::with_type(SchemaType::String).into());
-        let object: Schema = ObjectBuilder::new()
+impl ToSchema for Labels {
+    fn name() -> Cow<'static, str> {
+        "Labels".into()
+    }
+}
+
+impl PartialSchema for Labels {
+    fn schema() -> RefOr<Schema> {
+        let props = AdditionalProperties::RefOr(Object::with_type(Type::String).into());
+        ObjectBuilder::new()
             .additional_properties(Some(props))
             .build()
-            .into();
-
-        ("Labels", object.into())
+            .into()
     }
 }
 

@@ -1,9 +1,11 @@
 use parking_lot::RwLock;
 use petgraph::Graph;
 use serde::Serialize;
-use std::collections::HashMap;
-use std::fmt;
-use std::sync::{Arc, OnceLock};
+use std::{
+    collections::HashMap,
+    fmt,
+    sync::{Arc, OnceLock},
+};
 use trustify_entity::relationship::Relationship;
 use utoipa::ToSchema;
 
@@ -12,7 +14,8 @@ pub struct AnalysisStatus {
     pub sbom_count: i32,
     pub graph_count: i32,
 }
-impl fmt::Display for crate::model::AnalysisStatus {
+
+impl fmt::Display for AnalysisStatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "graph_count {}", self.graph_count)
     }
@@ -42,7 +45,8 @@ pub struct AncNode {
     pub purl: String,
     pub name: String,
 }
-impl fmt::Display for crate::model::AncNode {
+
+impl fmt::Display for AncNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.purl)
     }
@@ -67,9 +71,10 @@ pub struct DepNode {
     pub node_id: String,
     pub purl: String,
     pub name: String,
+    #[schema(no_recursion)]
     pub deps: Vec<DepNode>,
 }
-impl fmt::Display for crate::model::DepNode {
+impl fmt::Display for DepNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.purl)
     }

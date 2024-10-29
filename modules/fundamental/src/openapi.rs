@@ -1,5 +1,7 @@
-use utoipa::openapi::{Object, RefOr, Schema, SchemaType};
-use utoipa::OpenApi;
+use utoipa::{
+    openapi::{Object, RefOr, Schema, Type},
+    OpenApi,
+};
 
 #[derive(OpenApi)]
 #[openapi(paths(), components(), tags())]
@@ -19,7 +21,7 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     doc.merge(crate::weakness::endpoints::ApiDoc::openapi());
 
     if let Some(components) = doc.components.as_mut() {
-        let mut obj = Object::with_type(SchemaType::String);
+        let mut obj = Object::with_type(Type::String);
         obj.description = Some("a UUID".to_string());
         components
             .schemas

@@ -6,7 +6,10 @@ mod test;
 use crate::{
     purl::service::PurlService,
     sbom::{
-        model::{SbomPackageReference, Which},
+        model::{
+            details::SbomAdvisory, PaginatedSbomPackage, PaginatedSbomPackageRelation,
+            PaginatedSbomSummary, SbomPackageReference, SbomSummary, Which,
+        },
         service::SbomService,
     },
     Error::{self, Internal},
@@ -30,7 +33,10 @@ use trustify_common::{
     purl::Purl,
 };
 use trustify_entity::{labels::Labels, relationship::Relationship};
-use trustify_module_ingestor::service::{Format, IngestorService};
+use trustify_module_ingestor::{
+    model::IngestResult,
+    service::{Format, IngestorService},
+};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::OpenApi;
 
@@ -246,7 +252,7 @@ pub async fn count_related(
     operation_id = "getSbom",
     context_path = "/api",
     params(
-        ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("id" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
         (status = 200, description = "Matching SBOM", body = SbomSummary),
@@ -274,7 +280,7 @@ pub async fn get(
     operation_id = "getSbomAdvisories",
     context_path = "/api",
     params(
-        ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("id" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
         (status = 200, description = "Matching SBOM", body = Vec<SbomAdvisory>),
@@ -303,7 +309,7 @@ pub async fn get_sbom_advisories(
     operation_id = "deleteSbom",
     context_path = "/api",
     params(
-        ("id" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("id" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
         (status = 200, description = "Matching SBOM", body = SbomSummary),

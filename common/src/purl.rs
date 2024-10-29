@@ -1,13 +1,19 @@
-use std::collections::BTreeMap;
-use std::fmt::{Debug, Display, Formatter};
-use std::hash::Hash;
-use std::str::FromStr;
-
 use packageurl::PackageUrl;
-use serde::de::{Error, Visitor};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use utoipa::openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, SchemaType};
-use utoipa::ToSchema;
+use serde::{
+    de::{Error, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
+use std::borrow::Cow;
+use std::{
+    collections::BTreeMap,
+    fmt::{Debug, Display, Formatter},
+    hash::Hash,
+    str::FromStr,
+};
+use utoipa::{
+    openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, Type},
+    PartialSchema, ToSchema,
+};
 use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
@@ -27,15 +33,18 @@ pub struct Purl {
     pub qualifiers: BTreeMap<String, String>,
 }
 
-impl<'s> ToSchema<'s> for Purl {
-    fn schema() -> (&'s str, RefOr<Schema>) {
-        (
-            "Purl",
-            ObjectBuilder::new()
-                .schema_type(SchemaType::String)
-                .format(Some(SchemaFormat::KnownFormat(KnownFormat::Uri)))
-                .into(),
-        )
+impl ToSchema for Purl {
+    fn name() -> Cow<'static, str> {
+        "Purl".into()
+    }
+}
+
+impl PartialSchema for Purl {
+    fn schema() -> RefOr<Schema> {
+        ObjectBuilder::new()
+            .schema_type(Type::String)
+            .format(Some(SchemaFormat::KnownFormat(KnownFormat::Uri)))
+            .into()
     }
 }
 

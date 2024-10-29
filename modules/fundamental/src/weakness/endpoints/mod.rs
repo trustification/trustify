@@ -1,8 +1,12 @@
-use crate::weakness::service::WeaknessService;
+use crate::{
+    license::model::{LicenseSummary, PaginatedLicenseSummary},
+    weakness::service::WeaknessService,
+};
 use actix_web::{get, web, HttpResponse, Responder};
-use trustify_common::db::query::Query;
-use trustify_common::db::Database;
-use trustify_common::model::Paginated;
+use trustify_common::{
+    db::{query::Query, Database},
+    model::Paginated,
+};
 use utoipa::OpenApi;
 
 pub fn configure(config: &mut web::ServiceConfig, db: Database) {

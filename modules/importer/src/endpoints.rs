@@ -1,5 +1,5 @@
 use super::service::{Error, ImporterService, PatchError};
-use crate::model::ImporterConfiguration;
+use crate::model::{Importer, ImporterConfiguration, PaginatedImporterReport, RevisionedImporter};
 use actix_web::{
     delete, get,
     guard::{self, Guard, GuardContext},

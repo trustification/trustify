@@ -1,12 +1,18 @@
-use crate::license::endpoints::spdx::{get_spdx_license, list_spdx_licenses};
-use crate::license::service::LicenseService;
-use crate::Error;
+use crate::{
+    license::{
+        endpoints::spdx::{get_spdx_license, list_spdx_licenses},
+        model::{LicenseSummary, PaginatedLicenseSummary},
+        service::LicenseService,
+    },
+    Error,
+};
 use actix_web::{get, web, HttpResponse, Responder};
 use std::str::FromStr;
-use trustify_common::db::query::Query;
-use trustify_common::db::Database;
-use trustify_common::id::IdError;
-use trustify_common::model::Paginated;
+use trustify_common::{
+    db::{query::Query, Database},
+    id::IdError,
+    model::Paginated,
+};
 use utoipa::OpenApi;
 use uuid::Uuid;
 

@@ -1,12 +1,16 @@
-use crate::purl::service::PurlService;
-use crate::Error;
+use crate::{
+    purl::{
+        model::{
+            details::base_purl::BasePurlDetails, summary::base_purl::PaginatedBasePurlSummary,
+        },
+        service::PurlService,
+    },
+    Error,
+};
 use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
-use trustify_common::db::query::Query;
-use trustify_common::id::IdError;
-use trustify_common::model::Paginated;
-use trustify_common::purl::Purl;
+use trustify_common::{db::query::Query, id::IdError, model::Paginated, purl::Purl};
 
 #[utoipa::path(
     context_path= "/api",

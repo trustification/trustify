@@ -1,11 +1,15 @@
 #[cfg(test)]
 mod test;
 
-use crate::organization::service::OrganizationService;
+use crate::organization::{
+    model::{OrganizationDetails, PaginatedOrganizationSummary},
+    service::OrganizationService,
+};
 use actix_web::{get, web, HttpResponse, Responder};
-use trustify_common::db::query::Query;
-use trustify_common::db::Database;
-use trustify_common::model::Paginated;
+use trustify_common::{
+    db::{query::Query, Database},
+    model::Paginated,
+};
 use utoipa::OpenApi;
 use uuid::Uuid;
 

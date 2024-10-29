@@ -32,8 +32,14 @@ macro_rules! revisioned {
             #[derive(Clone, std::fmt::Debug, serde::Deserialize, serde::Serialize)]
             pub struct RevisionedType(pub trustify_common::model::Revisioned<$n>);
 
-            impl<'s> utoipa::ToSchema<'s> for RevisionedType {
-                fn schema() -> (&'s str, utoipa::openapi::RefOr<utoipa::openapi::schema::Schema>) {
+            impl utoipa::ToSchema for RevisionedType {
+                fn name() -> std::borrow::Cow<'static, str> {
+                    concat!("Revisioned", stringify!($n)).into()
+                }
+            }
+
+            impl utoipa::PartialSchema for RevisionedType {
+                fn schema() -> utoipa::openapi::RefOr<utoipa::openapi::schema::Schema> {
                     /// A struct wrapping an item with a revision.
                     ///
                     /// If the revision should not be part of the payload, but e.g. an HTTP header (like `ETag`), this
@@ -49,8 +55,7 @@ macro_rules! revisioned {
                         pub revision: String,
                     }
 
-                    let (_, schema) = __SchemaType::schema();
-                    (concat!("Revisioned", stringify!($n)), schema)
+                    __SchemaType::schema()
                 }
             }
         });
