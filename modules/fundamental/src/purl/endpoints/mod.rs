@@ -1,14 +1,15 @@
-use crate::endpoints::Deprecation;
-use crate::purl::service::PurlService;
-use crate::Error;
+use crate::{
+    endpoints::Deprecation,
+    purl::{
+        model::{details::purl::PurlDetails, summary::purl::PaginatedPurlSummary},
+        service::PurlService,
+    },
+    Error,
+};
 use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
-use trustify_common::db::query::Query;
-use trustify_common::db::Database;
-use trustify_common::id::IdError;
-use trustify_common::model::Paginated;
-use trustify_common::purl::Purl;
+use trustify_common::{db::query::Query, db::Database, id::IdError, model::Paginated, purl::Purl};
 use utoipa::OpenApi;
 
 mod base;

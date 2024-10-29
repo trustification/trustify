@@ -1,7 +1,9 @@
-use crate::license::service::LicenseService;
+use crate::license::{
+    model::{PaginatedSpdxLicenseSummary, SpdxLicenseDetails},
+    service::LicenseService,
+};
 use actix_web::{get, web, HttpResponse, Responder};
-use trustify_common::db::query::Query;
-use trustify_common::model::Paginated;
+use trustify_common::{db::query::Query, model::Paginated};
 
 #[utoipa::path(
     tag = "spdx license",

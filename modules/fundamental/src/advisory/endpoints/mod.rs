@@ -4,7 +4,10 @@ mod label;
 mod test;
 
 use crate::{
-    advisory::service::AdvisoryService,
+    advisory::{
+        model::{AdvisoryDetails, PaginatedAdvisorySummary},
+        service::AdvisoryService,
+    },
     endpoints::Deprecation,
     purl::service::PurlService,
     Error::{self, Internal},
@@ -94,7 +97,7 @@ pub async fn all(
     operation_id = "getAdvisory",
     context_path = "/api",
     params(
-        ("key" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
         (status = 200, description = "Matching advisory", body = AdvisoryDetails),
@@ -122,7 +125,7 @@ pub async fn get(
     operation_id = "deleteAdvisory",
     context_path = "/api",
     params(
-        ("key" = string, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
     responses(
         (status = 200, description = "Matching advisory", body = AdvisoryDetails),

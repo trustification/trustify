@@ -1,11 +1,11 @@
 use super::service::AnalysisService;
-use crate::Error;
+use crate::{
+    model::{AnalysisStatus, AncestorSummary, DepSummary},
+    Error,
+};
 use actix_web::{get, web, HttpResponse, Responder};
 use std::str::FromStr;
-use trustify_common::db::query::Query;
-use trustify_common::db::Database;
-use trustify_common::model::Paginated;
-use trustify_common::purl::Purl;
+use trustify_common::{db::query::Query, db::Database, model::Paginated, purl::Purl};
 use utoipa::OpenApi;
 
 pub fn configure(config: &mut web::ServiceConfig, db: Database) {
@@ -19,6 +19,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         .service(search_component_deps)
         .service(get_component_deps);
 }
+
 #[derive(OpenApi)]
 #[openapi(
     paths(

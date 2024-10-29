@@ -1,9 +1,10 @@
 use crate::devmode::{self, SWAGGER_UI_CLIENT_ID};
 use actix_web::dev::HttpServiceFactory;
 use openid::{Client, Discovered, Provider, StandardClaims};
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 use url::Url;
 use utoipa::openapi::{
+    extensions::Extensions,
     security::{AuthorizationCode, Flow, OAuth2, Scopes, SecurityScheme},
     OpenApi, SecurityRequirement,
 };
@@ -85,10 +86,10 @@ impl SwaggerUiOidc {
             ))]);
 
             oauth2.extensions = Some({
-                let mut map = HashMap::new();
-                map.insert("x-client-id".into(), self.client_id.clone().into());
-                map.insert("x-default-scopes".into(), "openid".into());
-                map
+                Extensions::builder()
+                    .add("x-client-id", self.client_id.clone())
+                    .add("x-default-scopes", "openid")
+                    .build()
             });
 
             components.add_security_scheme("oidc", SecurityScheme::OAuth2(oauth2));

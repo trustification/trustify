@@ -9,12 +9,13 @@ use serde::{
 };
 use serde_json::Value;
 use std::{
+    borrow::Cow,
     fmt::{Display, Formatter},
     str::FromStr,
 };
 use utoipa::{
-    openapi::{Object, RefOr, Schema, SchemaType},
-    ToSchema,
+    openapi::{Object, RefOr, Schema, Type},
+    PartialSchema, ToSchema,
 };
 use uuid::Uuid;
 
@@ -112,15 +113,21 @@ impl Id {
     }
 }
 
-impl<'__s> ToSchema<'__s> for Id {
-    fn schema() -> (&'__s str, RefOr<Schema>) {
-        let mut obj = Object::with_type(SchemaType::String);
+impl ToSchema for Id {
+    fn name() -> Cow<'static, str> {
+        "Id".into()
+    }
+}
+
+impl PartialSchema for Id {
+    fn schema() -> RefOr<Schema> {
+        let mut obj = Object::with_type(Type::String);
         obj.description = Some("A hash/digest prefixed with its type.".to_string());
         obj.example = Some(Value::String(
             "sha256:dc60aeb735c16a71b6fc56e84ddb8193e3a6d1ef0b7e958d77e78fc039a5d04e".to_string(),
         ));
 
-        ("Id", RefOr::T(Schema::Object(obj)))
+        RefOr::T(Schema::Object(obj))
     }
 }
 

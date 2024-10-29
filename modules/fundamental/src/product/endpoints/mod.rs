@@ -1,12 +1,15 @@
 #[cfg(test)]
 mod test;
 
-use crate::product::service::ProductService;
-use crate::Error::Internal;
+use crate::{
+    product::{
+        model::{details::ProductDetails, summary::PaginatedProductSummary},
+        service::ProductService,
+    },
+    Error::Internal,
+};
 use actix_web::{delete, get, web, HttpResponse, Responder};
-use trustify_common::db::query::Query;
-use trustify_common::db::Database;
-use trustify_common::model::Paginated;
+use trustify_common::{db::query::Query, db::Database, model::Paginated};
 use utoipa::OpenApi;
 use uuid::Uuid;
 

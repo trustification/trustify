@@ -1,7 +1,12 @@
-use crate::purl::service::PurlService;
+use crate::purl::{
+    model::{
+        details::{base_purl::BasePurlDetails, versioned_purl::VersionedPurlDetails},
+        summary::{base_purl::PaginatedBasePurlSummary, r#type::TypeSummary},
+    },
+    service::PurlService,
+};
 use actix_web::{get, web, HttpResponse, Responder};
-use trustify_common::db::query::Query;
-use trustify_common::model::Paginated;
+use trustify_common::{db::query::Query, model::Paginated};
 
 #[utoipa::path(
     tag = "purl type",
