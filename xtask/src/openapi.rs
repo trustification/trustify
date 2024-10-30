@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
 };
-use trustify_server::openapi::openapi;
+use trustify_server::openapi::create_openapi;
 
 #[derive(Debug, Parser, Default)]
 pub struct Openapi {
@@ -20,9 +20,9 @@ pub struct Openapi {
 }
 
 impl Openapi {
-    pub fn run(self) -> anyhow::Result<()> {
+    pub async fn run(self) -> anyhow::Result<()> {
         if !self.no_generate {
-            generate_openapi(None)?;
+            generate_openapi(None).await?;
         }
 
         if !self.no_validate {
@@ -40,16 +40,25 @@ fn command_exists(cmd: &str) -> bool {
     }
 }
 
-pub fn generate_openapi(base: Option<&Path>) -> anyhow::Result<()> {
+pub async fn generate_openapi(base: Option<&Path>) -> anyhow::Result<()> {
     let mut path = PathBuf::from("openapi.yaml");
     if let Some(base) = base {
         path = base.join(path);
     }
 
-    println!("Writing openapi to {:?}", &path);
-    let doc = openapi()
+    // create spec from actual server
+
+    println!("Building openapi");
+
+    let doc = create_openapi()
+        .await?
         .to_yaml()
         .context("Failed to convert openapi spec to yaml")?;
+
+    // write
+
+    println!("Writing openapi to {:?}", &path);
+
     fs::write(path, doc).context("Failed to write openapi spec")?;
 
     Ok(())

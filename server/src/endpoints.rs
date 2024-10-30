@@ -36,7 +36,6 @@ struct Info<'a> {
 build_info::build_info!(fn build_info);
 
 #[utoipa::path(
-    context_path = "/.well-known/trustify",
     responses(
         (status = 200, description = "Get information", body = inline(Info)),
     ),

@@ -20,7 +20,7 @@ pub struct Xtask {
 impl Xtask {
     pub async fn run(self) -> anyhow::Result<()> {
         match self.command {
-            Command::Openapi(command) => command.run(),
+            Command::Openapi(command) => command.run().await,
             Command::GenerateDump(command) => command.run().await,
             Command::GenerateSchemas(command) => command.run().await,
             Command::Precommit(command) => command.run().await,

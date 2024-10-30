@@ -6,7 +6,6 @@ use crate::{
 use actix_web::{get, web, HttpResponse, Responder};
 use std::str::FromStr;
 use trustify_common::{db::query::Query, db::Database, model::Paginated, purl::Purl};
-use utoipa::OpenApi;
 
 pub const CONTEXT_PATH: &str = "/v1/analysis";
 
@@ -23,19 +22,6 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
             .service(get_component_deps),
     );
 }
-
-#[derive(OpenApi)]
-#[openapi(
-    paths(
-        analysis_status,
-        search_component_root_components,
-        get_component_root_components,
-        search_component_deps,
-        get_component_deps,
-    ),
-    tags()
-)]
-pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "analysis",

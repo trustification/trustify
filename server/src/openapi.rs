@@ -1,31 +1,34 @@
+use crate::{configure, default_openapi_info, Config, ModuleConfig};
+use actix_web::App;
+use trustify_common::{config::Database, db};
+use trustify_module_storage::service::{dispatch::DispatchBackend, fs::FileSystemBackend};
 use utoipa::{
     openapi::security::{OpenIdConnect, SecurityScheme},
     Modify, OpenApi,
 };
+use utoipa_actix_web::AppExt;
 
-#[derive(OpenApi)]
-#[openapi(
-    info(
-        title = "Trustify",
-        description = "Software Supply-Chain Security API",
-        license(
-            name = "Apache License, Version 2.0",
-            identifier = "Apache-2.0",
-        )
-    ),
-    nest(
-        (path = trustify_module_analysis::endpoints::CONTEXT_PATH, api = trustify_module_analysis::endpoints::ApiDoc),
-        (path = trustify_module_importer::endpoints::CONTEXT_PATH, api = trustify_module_importer::endpoints::ApiDoc),
-        (path = trustify_module_ingestor::endpoints::CONTEXT_PATH, api = trustify_module_ingestor::endpoints::ApiDoc),
-    ),
-)]
-pub struct ApiDoc;
+pub async fn create_openapi() -> anyhow::Result<utoipa::openapi::OpenApi> {
+    let (db, postgresql) = db::embedded::create().await?;
+    let (storage, _temp) = FileSystemBackend::for_test().await?;
 
-pub fn openapi() -> utoipa::openapi::OpenApi {
-    let mut doc = ApiDoc::openapi();
+    let (_, mut openapi) = App::new()
+        .into_utoipa_app()
+        .configure(|svc| {
+            configure(
+                svc,
+                Config {
+                    config: ModuleConfig::default(),
+                    db,
+                    storage: storage.into(),
+                    auth: None,
+                    with_graphql: true,
+                },
+            );
+        })
+        .split_for_parts();
 
-    doc.merge(crate::endpoints::ApiDoc::openapi());
-    doc.merge(trustify_module_fundamental::ApiDoc::openapi());
+    openapi.info = default_openapi_info();
 
-    doc
+    Ok(openapi)
 }

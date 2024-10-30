@@ -9,7 +9,6 @@ info:
 paths:
   /.well-known/trustify:
     get:
-      tags: []
       operationId: info
       responses:
         '200':
@@ -1490,6 +1489,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResults_SbomSummary'
+  /api/v1/sbom/count-by-package:
+    get:
+      tags:
+      - sbom
+      summary: Count all SBOMs containing the provided packages.
+      description: |-
+        The packages can be provided either via a PURL or using the ID of a package as returned by
+        other APIs, but not both.
+      operationId: countRelatedSboms
+      parameters:
+      - name: purl
+        in: path
+        description: Find by PURL
+        required: true
+        schema:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/Purl'
+      - name: id
+        in: path
+        description: Find by an ID of a package
+        required: true
+        schema:
+          type:
+          - string
+          - 'null'
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AllRelatedQuery'
+        required: true
+      responses:
+        '200':
+          description: Number of matching SBOMs per package
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+                  format: int64
   /api/v1/sbom/{id}:
     get:
       tags:
@@ -1681,7 +1725,10 @@ paths:
         description: Which side the reference should be on
         required: false
         schema:
-          $ref: '#/components/schemas/Which'
+          type: string
+          enum:
+          - left
+          - right
       - name: relationship
         in: query
         description: Optional relationship filter
@@ -2074,6 +2121,20 @@ components:
         name:
           type: string
         parameters: {}
+    AllRelatedQuery:
+      type: object
+      properties:
+        id:
+          type:
+          - string
+          - 'null'
+          format: uuid
+          description: Find by an ID of a package
+        purl:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/Purl'
+            description: Find by PURL
     AnalysisStatus:
       type: object
       required:
@@ -3655,9 +3716,3 @@ components:
             - type: 'null'
             - $ref: '#/components/schemas/Severity'
               description: Average (arithmetic mean) severity of the vulnerability aggregated from *all* related advisories.
-    Which:
-      type: string
-      enum:
-      - left
-      - right
-tags: []

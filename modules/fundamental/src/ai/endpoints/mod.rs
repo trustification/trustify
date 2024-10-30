@@ -8,7 +8,6 @@ use actix_http::header;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use itertools::Itertools;
 use trustify_common::db::Database;
-use utoipa::OpenApi;
 
 pub const CONTEXT_PATH: &str = "/v1/ai";
 
@@ -23,10 +22,6 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
             .service(tool_call),
     );
 }
-
-#[derive(OpenApi)]
-#[openapi(paths(completions, flags, tools, tool_call), tags())]
-pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "ai",

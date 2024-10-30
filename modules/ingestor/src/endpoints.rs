@@ -6,7 +6,7 @@ use actix_web::{post, web, HttpResponse, Responder};
 use trustify_common::{db::Database, model::BinaryData};
 use trustify_entity::labels::Labels;
 use trustify_module_storage::service::dispatch::DispatchBackend;
-use utoipa::{IntoParams, OpenApi};
+use utoipa::IntoParams;
 
 pub const CONTEXT_PATH: &str = "/v1/ingestor";
 
@@ -23,10 +23,6 @@ pub fn configure(
         .app_data(web::Data::new(config))
         .service(utoipa_actix_web::scope(CONTEXT_PATH).service(upload_dataset));
 }
-
-#[derive(OpenApi)]
-#[openapi(paths(upload_dataset), tags())]
-pub struct ApiDoc;
 
 #[derive(Clone, Debug, Eq, PartialEq, Default)]
 pub struct Config {

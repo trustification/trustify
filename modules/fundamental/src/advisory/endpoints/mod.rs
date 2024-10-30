@@ -25,7 +25,7 @@ use trustify_common::{
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
-use utoipa::{IntoParams, OpenApi};
+use utoipa::IntoParams;
 
 pub const CONTEXT_PATH: &str = "/v1/advisory";
 
@@ -51,13 +51,6 @@ pub fn configure(
             .service(label::update),
     );
 }
-
-#[derive(OpenApi)]
-#[openapi(
-    paths(all, get, delete, upload, download, label::set, label::update),
-    tags()
-)]
-pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "advisory",
