@@ -47,6 +47,7 @@ tokio = { workspace = true, features = ["full"] }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
 utoipa = { workspace = true }
+utoipa-actix-web = { workspace = true }
 uuid = { workspace = true, features = ["v7"] }
 zip = { workspace = true }
 

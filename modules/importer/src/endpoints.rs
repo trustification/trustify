@@ -16,10 +16,10 @@ use utoipa::OpenApi;
 pub const CONTEXT_PATH: &str = "/v1/importer";
 
 /// mount the "importer" module
-pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
+pub fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     svc.app_data(web::Data::new(ImporterService::new(db)));
     svc.service(
-        web::scope(CONTEXT_PATH)
+        utoipa_actix_web::scope(CONTEXT_PATH)
             .service(list)
             .service(create)
             .service(read)

@@ -12,7 +12,7 @@ pub struct Config {
 }
 
 pub fn configure(
-    svc: &mut web::ServiceConfig,
+    svc: &mut utoipa_actix_web::service_config::ServiceConfig,
     config: Config,
     db: Database,
     storage: impl Into<DispatchBackend>,

@@ -9,6 +9,7 @@ use sea_orm::prelude::async_trait::async_trait;
 use serde::de::DeserializeOwned;
 use trustify_auth::authorizer::Authorizer;
 use trustify_test_context::TrustifyContext;
+use utoipa_actix_web::AppExt;
 
 /// A trait wrapping an `impl Service` in a way that we can pass it as a reference.
 #[async_trait(?Send)]
@@ -37,9 +38,13 @@ where
 pub async fn caller(ctx: &TrustifyContext) -> anyhow::Result<impl CallService> {
     Ok(actix_web::test::init_service(
         App::new()
+            .into_utoipa_app()
             .app_data(web::PayloadConfig::default().limit(5 * 1024 * 1024))
             .app_data(web::Data::new(Authorizer::new(None)))
-            .service(web::scope("/api").configure(|svc| configure(svc, ctx.db.clone()))),
+            .service(
+                utoipa_actix_web::scope("/api").configure(|svc| configure(svc, ctx.db.clone())),
+            )
+            .into_app(),
     )
     .await)
 }

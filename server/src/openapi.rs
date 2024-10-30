@@ -9,6 +9,7 @@ use utoipa::{
         title = "Trustify",
         description = "Software Supply-Chain Security API",
         license(
+            name = "Apache License, Version 2.0",
             identifier = "Apache-2.0",
         )
     ),
@@ -17,9 +18,6 @@ use utoipa::{
         (path = trustify_module_importer::endpoints::CONTEXT_PATH, api = trustify_module_importer::endpoints::ApiDoc),
         (path = trustify_module_ingestor::endpoints::CONTEXT_PATH, api = trustify_module_ingestor::endpoints::ApiDoc),
     ),
-    paths(),
-    components(),
-    tags()
 )]
 pub struct ApiDoc;
 

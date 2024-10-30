@@ -13,12 +13,12 @@ use trustify_common::{
 use utoipa::OpenApi;
 use uuid::Uuid;
 
-pub const CONTEXT_PATH: &str = "/api/v1/organization";
+pub const CONTEXT_PATH: &str = "/v1/organization";
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database) {
+pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let service = OrganizationService::new(db);
     config.service(
-        web::scope(CONTEXT_PATH)
+        utoipa_actix_web::scope(CONTEXT_PATH)
             .app_data(web::Data::new(service))
             .service(all)
             .service(get),

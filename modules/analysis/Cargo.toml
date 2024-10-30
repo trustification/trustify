@@ -23,6 +23,7 @@ thiserror = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 tracing = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras", "uuid"] }
+utoipa-actix-web = { workspace = true }
 
 [dev-dependencies]
 actix-http = { workspace = true }

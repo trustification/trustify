@@ -19,13 +19,13 @@ mod base;
 mod r#type;
 mod version;
 
-pub const CONTEXT_PATH: &str = "/api/v1/purl";
+pub const CONTEXT_PATH: &str = "/v1/purl";
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database) {
+pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let purl_service = PurlService::new(db);
 
     config.service(
-        web::scope(CONTEXT_PATH)
+        utoipa_actix_web::scope(CONTEXT_PATH)
             .app_data(web::Data::new(purl_service))
             .service(r#type::all_purl_types)
             .service(r#type::get_purl_type)

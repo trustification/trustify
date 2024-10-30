@@ -10,4 +10,4 @@ actix-web = { workspace = true }
 actix-web-static-files = { workspace = true }
 anyhow = { workspace = true }
 trustify-ui = { workspace = true }
-
+utoipa = { workspace = true }

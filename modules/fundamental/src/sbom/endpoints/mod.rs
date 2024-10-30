@@ -29,7 +29,7 @@ use trustify_common::{
     decompress::decompress_async,
     error::ErrorInformation,
     id::Id,
-    model::{Paginated, PaginatedResults},
+    model::{BinaryData, Paginated, PaginatedResults},
     purl::Purl,
 };
 use trustify_entity::{labels::Labels, relationship::Relationship};
@@ -40,14 +40,20 @@ use trustify_module_ingestor::{
 use trustify_module_storage::service::StorageBackend;
 use utoipa::OpenApi;
 
-pub const CONTEXT_PATH: &str = "/api/v1/sbom";
+pub const CONTEXT_PATH: &str = "/v1/sbom";
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: usize) {
-    let sbom_service = SbomService::new(db);
+pub fn configure(
+    config: &mut utoipa_actix_web::service_config::ServiceConfig,
+    db: Database,
+    upload_limit: usize,
+) {
+    let sbom_service = SbomService::new(db.clone());
+    let purl_service = PurlService::new(db);
 
     config.service(
-        web::scope(CONTEXT_PATH)
+        utoipa_actix_web::scope(CONTEXT_PATH)
             .app_data(web::Data::new(sbom_service))
+            .app_data(web::Data::new(purl_service))
             .app_data(web::Data::new(Config { upload_limit }))
             .service(all)
             .service(all_related)
@@ -453,7 +459,7 @@ pub async fn upload(
         ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
     ),
     responses(
-        (status = 200, description = "Download a an SBOM", body = Vec<u8>),
+        (status = 200, description = "Download a an SBOM", body = inline(BinaryData)),
         (status = 404, description = "The document could not be found"),
     )
 )]

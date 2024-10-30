@@ -6,13 +6,13 @@ use trustify_common::{
 };
 use utoipa::OpenApi;
 
-pub const CONTEXT_PATH: &str = "/api/v1/weakness";
+pub const CONTEXT_PATH: &str = "/v1/weakness";
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database) {
+pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let weakness_service = WeaknessService::new(db);
 
     config.service(
-        web::scope(CONTEXT_PATH)
+        utoipa_actix_web::scope(CONTEXT_PATH)
             .app_data(web::Data::new(weakness_service))
             .service(list_weaknesses)
             .service(get_weakness),

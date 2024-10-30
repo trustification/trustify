@@ -4,6 +4,7 @@ pub use bytesize::*;
 use crate::db::limiter::Limiter;
 use sea_orm::{ConnectionTrait, DbErr, SelectorTrait};
 use std::cmp::min;
+use std::marker::PhantomData;
 use utoipa::{IntoParams, ToSchema};
 
 /// A struct wrapping an item with a revision.
@@ -104,6 +105,10 @@ impl<R> PaginatedResults<R> {
         }
     }
 }
+
+#[derive(ToSchema)]
+#[schema(value_type = String, format = Binary)]
+pub struct BinaryData(PhantomData<Vec<u8>>);
 
 #[cfg(test)]
 mod test {

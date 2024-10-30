@@ -8414,6 +8414,7 @@ dependencies = [
  "futures",
  "http 1.1.0",
  "log",
+ "mime",
  "openssl",
  "opentelemetry",
  "opentelemetry-otlp",
@@ -8429,6 +8430,9 @@ dependencies = [
  "trustify-auth",
  "trustify-common",
  "url",
+ "utoipa",
+ "utoipa-actix-web",
+ "utoipa-rapidoc",
 ]
 
 [[package]]
@@ -8486,6 +8490,7 @@ dependencies = [
  "trustify-test-context",
  "urlencoding",
  "utoipa",
+ "utoipa-actix-web",
  "zip",
 ]
 
@@ -8544,6 +8549,7 @@ dependencies = [
  "trustify-test-context",
  "urlencoding",
  "utoipa",
+ "utoipa-actix-web",
  "uuid",
  "walkdir",
  "zip",
@@ -8568,6 +8574,7 @@ dependencies = [
  "trustify-module-fundamental",
  "trustify-module-ingestor",
  "trustify-test-context",
+ "utoipa-actix-web",
  "uuid",
 ]
 
@@ -8615,6 +8622,7 @@ dependencies = [
  "url",
  "urlencoding",
  "utoipa",
+ "utoipa-actix-web",
  "uuid",
  "walkdir",
  "walker-common",
@@ -8672,6 +8680,7 @@ dependencies = [
  "trustify-module-storage",
  "trustify-test-context",
  "utoipa",
+ "utoipa-actix-web",
  "uuid",
  "zip",
 ]
@@ -8710,6 +8719,7 @@ dependencies = [
  "actix-web-static-files",
  "anyhow",
  "trustify-ui",
+ "utoipa",
 ]
 
 [[package]]
@@ -8745,6 +8755,7 @@ dependencies = [
  "url",
  "urlencoding",
  "utoipa",
+ "utoipa-actix-web",
  "utoipa-rapidoc",
  "utoipa-redoc",
 ]
@@ -9011,6 +9022,17 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "utoipa-gen",
+]
+
+[[package]]
+name = "utoipa-actix-web"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22550ca9e62330a32d8bf2ee690b335d98f0e234170659451cdb240752c5abdf"
+dependencies = [
+ "actix-service",
+ "actix-web",
+ "utoipa",
 ]
 
 [[package]]

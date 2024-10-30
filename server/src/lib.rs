@@ -51,6 +51,7 @@ use trustify_module_storage::{
     service::{dispatch::DispatchBackend, fs::FileSystemBackend, s3::S3Backend},
 };
 use trustify_module_ui::{endpoints::UiResources, UI};
+use utoipa::openapi::{Info, License};
 use utoipa::OpenApi;
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::{Redoc, Servable};
@@ -325,6 +326,17 @@ impl InitData {
                 .tracing(self.tracing)
                 .metrics(metrics.registry().clone(), SERVICE_ID)
                 .authorizer(self.authorizer)
+                .swagger_ui_oidc(self.swagger_oidc.clone())
+                .openapi_info({
+                    let mut info = Info::new("Trustify", env!("CARGO_PKG_VERSION"));
+                    info.description = Some("Software Supply-Chain Security API".into());
+                    info.license = {
+                        let mut license = License::new("Apache License, Version 2.0");
+                        license.identifier = Some("Apache-2.0".into());
+                        Some(license)
+                    };
+                    info
+                })
                 .configure(move |svc| {
                     configure(
                         svc,
@@ -332,13 +344,13 @@ impl InitData {
                             config: self.config.clone(),
                             db: self.db.clone(),
                             storage: self.storage.clone(),
-                            swagger_oidc: self.swagger_oidc.clone(),
                             auth: self.authenticator.clone(),
-                            ui: ui.clone(),
+
                             with_graphql: self.with_graphql,
                         },
                     );
                 })
+                .post_configure(move |svc| post_configure(svc, PostConfig { ui: ui.clone() }))
         };
         let http = async { http.run().await }.boxed_local();
 
@@ -368,13 +380,11 @@ struct Config {
     config: ModuleConfig,
     db: db::Database,
     storage: DispatchBackend,
-    swagger_oidc: Option<Arc<SwaggerUiOidc>>,
     auth: Option<Arc<Authenticator>>,
-    ui: Arc<UiResources>,
     with_graphql: bool,
 }
 
-fn configure(svc: &mut web::ServiceConfig, config: Config) {
+fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, config: Config) {
     let Config {
         config: ModuleConfig {
             ingestor,
@@ -382,9 +392,8 @@ fn configure(svc: &mut web::ServiceConfig, config: Config) {
         },
         db,
         storage,
-        swagger_oidc,
         auth,
-        ui,
+
         with_graphql,
     } = config;
 
@@ -395,44 +404,17 @@ fn configure(svc: &mut web::ServiceConfig, config: Config) {
     let limit = ByteSize::gb(1).as_u64() as usize;
     svc.app_data(web::PayloadConfig::default().limit(limit));
 
-    // register OpenAPI UIs
-
-    svc.service({
-        let mut openapi = openapi::openapi();
-        if let Some(oidc) = &swagger_oidc {
-            oidc.apply_to_schema(&mut openapi);
-        }
-        RapiDoc::with_openapi("/openapi.json", openapi).path("/openapi/")
-    })
-    .service(web::redirect("/openapi", "/openapi/"))
-    .route(
-        "/openapi/oauth-receiver.html",
-        web::get().to(|| async {
-            HttpResponse::Ok().content_type(mime::TEXT_HTML).body(
-                r#"<!doctype html>
-<head>
-  <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
-</head>
-
-<body>
-  <oauth-receiver> </oauth-receiver>
-</body>"#,
-            )
-        }),
-    );
-
-    svc.service(swagger_ui_with_auth(openapi::openapi(), swagger_oidc))
-        .service(web::redirect("/swagger-ui", "/swagger-ui/"));
-
     // register GraphQL API and UI
 
     if with_graphql {
         svc.service(
-            web::scope("/graphql")
-                .wrap(middleware::NormalizePath::new(
-                    middleware::TrailingSlash::Always,
-                ))
-                .wrap(new_auth(auth.clone()))
+            utoipa_actix_web::scope("/graphql")
+                .map(|svc| {
+                    svc.wrap(middleware::NormalizePath::new(
+                        middleware::TrailingSlash::Always,
+                    ))
+                    .wrap(new_auth(auth.clone()))
+                })
                 .configure(|svc| {
                     trustify_module_graphql::endpoints::configure(svc, db.clone());
                     trustify_module_graphql::endpoints::configure_graphiql(svc);
@@ -446,27 +428,42 @@ fn configure(svc: &mut web::ServiceConfig, config: Config) {
         .configure(|svc| {
             endpoints::configure(svc, auth.clone());
         })
-        .service(web::scope("/api").wrap(new_auth(auth)).configure(|svc| {
-            trustify_module_importer::endpoints::configure(svc, db.clone());
-            trustify_module_ingestor::endpoints::configure(
-                svc,
-                ingestor,
-                db.clone(),
-                storage.clone(),
-            );
-            trustify_module_fundamental::endpoints::configure(
-                svc,
-                fundamental,
-                db.clone(),
-                storage,
-            );
-            trustify_module_analysis::endpoints::configure(svc, db.clone());
-        }))
-        .configure(|svc| {
-            // I think the UI must come last due to
-            // its use of `resolve_not_found_to`
-            trustify_module_ui::endpoints::configure(svc, &ui);
-        });
+        .service(
+            utoipa_actix_web::scope("/api")
+                .map(|svc| svc.wrap(new_auth(auth)))
+                .configure(|svc| {
+                    trustify_module_importer::endpoints::configure(svc, db.clone());
+                    trustify_module_ingestor::endpoints::configure(
+                        svc,
+                        ingestor,
+                        db.clone(),
+                        storage.clone(),
+                    );
+                    trustify_module_fundamental::endpoints::configure(
+                        svc,
+                        fundamental,
+                        db.clone(),
+                        storage,
+                    );
+                    trustify_module_analysis::endpoints::configure(svc, db.clone());
+                }),
+        );
+}
+
+struct PostConfig {
+    ui: Arc<UiResources>,
+}
+
+fn post_configure(svc: &mut web::ServiceConfig, config: PostConfig) {
+    let PostConfig { ui } = config;
+
+    // register UI
+
+    svc.configure(|svc| {
+        // I think the UI must come last due to
+        // its use of `resolve_not_found_to`
+        trustify_module_ui::endpoints::configure(svc, &ui);
+    });
 }
 
 fn build_url(ci: &ConnectionInfo, path: impl Display) -> Option<url::Url> {
@@ -492,11 +489,13 @@ mod test {
     use std::sync::Arc;
     use test_context::test_context;
     use test_log::test;
+    use trustify_infrastructure::app::http::ApplyOpenApi;
     use trustify_module_storage::{
         service::dispatch::DispatchBackend, service::fs::FileSystemBackend,
     };
     use trustify_module_ui::{endpoints::UiResources, UI};
     use trustify_test_context::TrustifyContext;
+    use utoipa_actix_web::AppExt;
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(actix_web::test)]
@@ -504,20 +503,24 @@ mod test {
         let db = ctx.db;
         let (storage, _) = FileSystemBackend::for_test().await?;
         let ui = Arc::new(UiResources::new(&UI::default())?);
-        let app = actix_web::test::init_service(App::new().configure(|svc| {
-            configure(
-                svc,
-                Config {
-                    config: ModuleConfig::default(),
-                    db,
-                    storage: DispatchBackend::Filesystem(storage),
-                    swagger_oidc: None,
-                    auth: None,
-                    ui,
-                    with_graphql: true,
-                },
-            )
-        }))
+        let app = actix_web::test::init_service(
+            App::new()
+                .into_utoipa_app()
+                .configure(|svc| {
+                    configure(
+                        svc,
+                        Config {
+                            config: ModuleConfig::default(),
+                            db,
+                            storage: DispatchBackend::Filesystem(storage),
+                            auth: None,
+                            with_graphql: true,
+                        },
+                    );
+                })
+                .apply_openapi(None, None)
+                .configure(|svc| post_configure(svc, PostConfig { ui })),
+        )
         .await;
 
         // main UI

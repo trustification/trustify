@@ -1,7 +1,7 @@
 use actix_web::{
     get,
     http::header::AUTHORIZATION,
-    web::{self, ServiceConfig},
+    web::{self},
     HttpRequest, HttpResponse,
 };
 use build_info::BuildInfo;
@@ -9,9 +9,10 @@ use std::sync::Arc;
 use trustify_auth::authenticator::{user::UserInformation, Authenticator};
 use trustify_infrastructure::app::new_auth;
 use utoipa::OpenApi;
+use utoipa_actix_web::service_config::ServiceConfig;
 
 pub fn configure(svc: &mut ServiceConfig, auth: Option<Arc<Authenticator>>) {
-    let mut scope = web::scope("/.well-known/trustify");
+    let mut scope = utoipa_actix_web::scope("/.well-known/trustify");
 
     if let Some(auth) = auth {
         scope = scope.app_data(web::Data::from(auth));

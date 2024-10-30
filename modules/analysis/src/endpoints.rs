@@ -8,13 +8,13 @@ use std::str::FromStr;
 use trustify_common::{db::query::Query, db::Database, model::Paginated, purl::Purl};
 use utoipa::OpenApi;
 
-pub const CONTEXT_PATH: &str = "/api/v1/analysis";
+pub const CONTEXT_PATH: &str = "/v1/analysis";
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database) {
+pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let analysis = AnalysisService::new(db);
 
     config.service(
-        web::scope(CONTEXT_PATH)
+        utoipa_actix_web::scope(CONTEXT_PATH)
             .app_data(web::Data::new(analysis))
             .service(search_component_root_components)
             .service(get_component_root_components)

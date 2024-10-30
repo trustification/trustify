@@ -1,7 +1,7 @@
 use bytesize::ByteSize;
 use serde::{Serialize, Serializer};
-use std::borrow::Cow;
 use std::{
+    borrow::Cow,
     fmt::{Display, Formatter},
     ops::{Deref, DerefMut},
     str::FromStr,

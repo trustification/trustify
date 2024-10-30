@@ -7,7 +7,6 @@ use trustify_entity::labels::Labels;
 #[utoipa::path(
     tag = "advisory",
     operation_id = "updateAdvisoryLabels",
-    context_path = "/api",
     request_body = Labels,
     params(
         ("id" = Id, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
@@ -17,7 +16,7 @@ use trustify_entity::labels::Labels;
         (status = 404, description = "The advisory could not be found"),
     ),
 )]
-#[put("/v1/advisory/{id}/label")]
+#[put("/{id}/label")]
 pub async fn set(
     advisory: web::Data<AdvisoryService>,
     id: web::Path<Id>,
@@ -35,7 +34,6 @@ pub async fn set(
 #[utoipa::path(
     tag = "advisory",
     operation_id = "patchAdvisoryLabels",
-    context_path = "/api",
     request_body = Labels,
     params(
         ("id" = Id, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
@@ -45,7 +43,7 @@ pub async fn set(
         (status = 404, description = "The advisory could not be found"),
     ),
 )]
-#[patch("/v1/advisory/{id}/label")]
+#[patch("/{id}/label")]
 pub async fn update(
     advisory: web::Data<AdvisoryService>,
     id: web::Path<Id>,

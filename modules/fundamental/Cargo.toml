@@ -34,7 +34,8 @@ thiserror = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 tracing = { workspace = true }
-utoipa = { workspace = true, features = ["actix_extras", "uuid"] }
+utoipa = { workspace = true, features = ["actix_extras", "uuid", "time"] }
+utoipa-actix-web = { workspace = true }
 uuid = { workspace = true }
 
 [dev-dependencies]

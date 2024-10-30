@@ -18,13 +18,13 @@ use uuid::Uuid;
 
 pub mod spdx;
 
-pub const CONTEXT_PATH: &str = "/api/v1/license";
+pub const CONTEXT_PATH: &str = "/v1/license";
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database) {
+pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let license_service = LicenseService::new(db);
 
     config.service(
-        web::scope(CONTEXT_PATH)
+        utoipa_actix_web::scope(CONTEXT_PATH)
             .app_data(web::Data::new(license_service))
             .service(list_spdx_licenses)
             .service(get_spdx_license)
