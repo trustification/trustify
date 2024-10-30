@@ -446,6 +446,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AnalysisStatus'
+  /api/v1/dataset:
+    post:
+      tags:
+      - dataset
+      summary: Upload a new dataset
+      operationId: uploadDataset
+      parameters:
+      - name: labels
+        in: query
+        description: |-
+          Optional labels.
+
+          Only use keys with a prefix of `labels.`
+        required: true
+        schema:
+          $ref: '#/components/schemas/Labels'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        '201':
+          description: Uploaded the dataset
+        '400':
+          description: The file could not be parsed as an dataset
   /api/v1/importer:
     get:
       tags:
@@ -686,34 +714,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResults_ImporterReport'
-  /api/v1/ingestor/dataset:
-    post:
-      tags:
-      - dataset
-      summary: Upload a new dataset
-      operationId: uploadDataset
-      parameters:
-      - name: labels
-        in: query
-        description: |-
-          Optional labels.
-
-          Only use keys with a prefix of `labels.`
-        required: true
-        schema:
-          $ref: '#/components/schemas/Labels'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: string
-              format: binary
-        required: true
-      responses:
-        '201':
-          description: Uploaded the dataset
-        '400':
-          description: The file could not be parsed as an dataset
   /api/v1/license:
     get:
       tags:

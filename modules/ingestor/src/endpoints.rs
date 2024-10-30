@@ -8,8 +8,6 @@ use trustify_entity::labels::Labels;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use utoipa::IntoParams;
 
-pub const CONTEXT_PATH: &str = "/v1/ingestor";
-
 /// mount the "ingestor" module
 pub fn configure(
     svc: &mut utoipa_actix_web::service_config::ServiceConfig,
@@ -21,7 +19,7 @@ pub fn configure(
 
     svc.app_data(web::Data::new(ingestor_service))
         .app_data(web::Data::new(config))
-        .service(utoipa_actix_web::scope(CONTEXT_PATH).service(upload_dataset));
+        .service(upload_dataset);
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Default)]
@@ -51,7 +49,7 @@ struct UploadParams {
         (status = 400, description = "The file could not be parsed as an dataset"),
     )
 )]
-#[post("/dataset")]
+#[post("/v1/dataset")]
 /// Upload a new dataset
 pub async fn upload_dataset(
     service: web::Data<IngestorService>,

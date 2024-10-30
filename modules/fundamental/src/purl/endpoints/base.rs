@@ -19,7 +19,7 @@ use trustify_common::{db::query::Query, id::IdError, model::Paginated, purl::Pur
         (status = 200, description = "Details for the versionless base PURL", body = BasePurlDetails),
     ),
 )]
-#[get("/base/{key}")]
+#[get("/v1/purl/base/{key}")]
 /// Retrieve details about a base versionless pURL
 pub async fn get_base_purl(
     service: web::Data<PurlService>,
@@ -45,7 +45,7 @@ pub async fn get_base_purl(
         (status = 200, description = "All relevant matching versionless base PURL", body = PaginatedResults<BasePurlSummary>),
     ),
 )]
-#[get("/base")]
+#[get("/v1/purl/base")]
 /// List base versionless pURLs
 pub async fn all_base_purls(
     service: web::Data<PurlService>,

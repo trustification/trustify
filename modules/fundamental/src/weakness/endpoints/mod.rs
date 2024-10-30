@@ -5,17 +5,13 @@ use trustify_common::{
     model::{Paginated, PaginatedResults},
 };
 
-pub const CONTEXT_PATH: &str = "/v1/weakness";
-
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let weakness_service = WeaknessService::new(db);
 
-    config.service(
-        utoipa_actix_web::scope(CONTEXT_PATH)
-            .app_data(web::Data::new(weakness_service))
-            .service(list_weaknesses)
-            .service(get_weakness),
-    );
+    config
+        .app_data(web::Data::new(weakness_service))
+        .service(list_weaknesses)
+        .service(get_weakness);
 }
 
 #[utoipa::path(
@@ -29,7 +25,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 200, description = "Matching weaknesses", body = PaginatedResults<LicenseSummary>),
     ),
 )]
-#[get("")]
+#[get("/v1/weakness")]
 /// List weaknesses
 pub async fn list_weaknesses(
     state: web::Data<WeaknessService>,
@@ -46,7 +42,7 @@ pub async fn list_weaknesses(
         (status = 200, description = "The weakness", body = LicenseSummary),
     ),
 )]
-#[get("/{id}")]
+#[get("/v1/weakness/{id}")]
 /// Retrieve weakness details
 pub async fn get_weakness(
     state: web::Data<WeaknessService>,

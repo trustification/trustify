@@ -12,23 +12,18 @@ use trustify_common::{
     model::{Paginated, PaginatedResults, Revisioned},
 };
 
-pub const CONTEXT_PATH: &str = "/v1/importer";
-
 /// mount the "importer" module
 pub fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
-    svc.app_data(web::Data::new(ImporterService::new(db)));
-    svc.service(
-        utoipa_actix_web::scope(CONTEXT_PATH)
-            .service(list)
-            .service(create)
-            .service(read)
-            .service(update)
-            .service(patch_json_merge)
-            .service(delete)
-            .service(get_reports)
-            .service(set_enabled)
-            .service(force),
-    );
+    svc.app_data(web::Data::new(ImporterService::new(db)))
+        .service(list)
+        .service(create)
+        .service(read)
+        .service(update)
+        .service(patch_json_merge)
+        .service(delete)
+        .service(get_reports)
+        .service(set_enabled)
+        .service(force);
 }
 
 #[utoipa::path(
@@ -38,7 +33,7 @@ pub fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, db: 
         (status = 200, description = "List importer configurations", body = [Importer])
     )
 )]
-#[get("")]
+#[get("/v1/importer")]
 /// List importer configurations
 async fn list(service: web::Data<ImporterService>) -> Result<impl Responder, Error> {
     Ok(web::Json(service.list().await?))
@@ -56,7 +51,7 @@ async fn list(service: web::Data<ImporterService>) -> Result<impl Responder, Err
         (status = 409, description = "An importer with that name already exists")
     )
 )]
-#[post("/{name}")]
+#[post("/v1/importer/{name}")]
 /// Create a new importer configuration
 async fn create(
     service: web::Data<ImporterService>,
@@ -83,7 +78,7 @@ async fn create(
         (status = 404, description = "An importer with that name could not be found")
     )
 )]
-#[get("/{name}")]
+#[get("/v1/importer/{name}")]
 /// Get an importer configuration
 async fn read(
     service: web::Data<ImporterService>,
@@ -113,7 +108,7 @@ async fn read(
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
-#[put("/{name}")]
+#[put("/v1/importer/{name}")]
 /// Update an existing importer configuration
 async fn update(
     service: web::Data<ImporterService>,
@@ -150,7 +145,7 @@ async fn update(
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
-#[patch("/{name}", guard = "guards::json_merge")]
+#[patch("/v1/importer/{name}", guard = "guards::json_merge")]
 /// Update an existing importer configuration
 async fn patch_json_merge(
     service: web::Data<ImporterService>,
@@ -188,7 +183,7 @@ async fn patch_json_merge(
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
-#[put("/{name}/enabled")]
+#[put("/v1/importer/{name}/enabled")]
 /// Update an existing importer configuration
 async fn set_enabled(
     service: web::Data<ImporterService>,
@@ -225,7 +220,7 @@ async fn set_enabled(
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
-#[post("/{name}/force")]
+#[post("/v1/importer/{name}/force")]
 /// Force an importer to run as soon as possible
 async fn force(
     service: web::Data<ImporterService>,
@@ -253,7 +248,7 @@ async fn force(
         (status = 201, description = "Delete the importer configuration"),
     )
 )]
-#[delete("/{name}")]
+#[delete("/v1/importer/{name}")]
 /// Delete an importer configuration
 async fn delete(
     service: web::Data<ImporterService>,
@@ -278,7 +273,7 @@ async fn delete(
         (status = 200, description = "Retrieved importer reports", body = PaginatedResults<ImporterReport>),
     )
 )]
-#[get("/{name}/report")]
+#[get("/v1/importer/{name}/report")]
 /// Get reports for an importer
 async fn get_reports(
     service: web::Data<ImporterService>,

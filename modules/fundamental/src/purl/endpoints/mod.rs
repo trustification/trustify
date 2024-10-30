@@ -18,24 +18,20 @@ mod base;
 mod r#type;
 mod version;
 
-pub const CONTEXT_PATH: &str = "/v1/purl";
-
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let purl_service = PurlService::new(db);
 
-    config.service(
-        utoipa_actix_web::scope(CONTEXT_PATH)
-            .app_data(web::Data::new(purl_service))
-            .service(r#type::all_purl_types)
-            .service(r#type::get_purl_type)
-            .service(r#type::get_base_purl_of_type)
-            .service(r#type::get_versioned_purl_of_type)
-            .service(base::get_base_purl)
-            .service(base::all_base_purls)
-            .service(version::get_versioned_purl)
-            .service(get)
-            .service(all),
-    );
+    config
+        .app_data(web::Data::new(purl_service))
+        .service(r#type::all_purl_types)
+        .service(r#type::get_purl_type)
+        .service(r#type::get_base_purl_of_type)
+        .service(r#type::get_versioned_purl_of_type)
+        .service(base::get_base_purl)
+        .service(base::all_base_purls)
+        .service(version::get_versioned_purl)
+        .service(get)
+        .service(all);
 }
 
 #[utoipa::path(
@@ -49,7 +45,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 200, description = "Details for the qualified PURL", body = PurlDetails),
     ),
 )]
-#[get("/{key}")]
+#[get("/v1/purl/{key}")]
 /// Retrieve details of a fully-qualified pURL
 pub async fn get(
     service: web::Data<PurlService>,
@@ -76,7 +72,7 @@ pub async fn get(
         (status = 200, description = "All relevant matching qualified PURLs", body = PaginatedResults<PurlSummary>),
     ),
 )]
-#[get("")]
+#[get("/v1/purl")]
 /// List fully-qualified pURLs
 pub async fn all(
     service: web::Data<PurlService>,

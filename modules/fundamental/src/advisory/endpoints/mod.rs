@@ -27,8 +27,6 @@ use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::IntoParams;
 
-pub const CONTEXT_PATH: &str = "/v1/advisory";
-
 pub fn configure(
     config: &mut utoipa_actix_web::service_config::ServiceConfig,
     db: Database,
@@ -37,19 +35,17 @@ pub fn configure(
     let advisory_service = AdvisoryService::new(db.clone());
     let purl_service = PurlService::new(db);
 
-    config.service(
-        utoipa_actix_web::scope(CONTEXT_PATH)
-            .app_data(web::Data::new(advisory_service))
-            .app_data(web::Data::new(purl_service))
-            .app_data(web::Data::new(Config { upload_limit }))
-            .service(all)
-            .service(get)
-            .service(delete)
-            .service(upload)
-            .service(download)
-            .service(label::set)
-            .service(label::update),
-    );
+    config
+        .app_data(web::Data::new(advisory_service))
+        .app_data(web::Data::new(purl_service))
+        .app_data(web::Data::new(Config { upload_limit }))
+        .service(all)
+        .service(get)
+        .service(delete)
+        .service(upload)
+        .service(download)
+        .service(label::set)
+        .service(label::update);
 }
 
 #[utoipa::path(
@@ -64,7 +60,7 @@ pub fn configure(
         (status = 200, description = "Matching vulnerabilities", body = PaginatedResults<AdvisorySummary>),
     ),
 )]
-#[get("")]
+#[get("/v1/advisory")]
 /// List advisories
 pub async fn all(
     state: web::Data<AdvisoryService>,
@@ -90,7 +86,7 @@ pub async fn all(
         (status = 404, description = "Matching advisory not found"),
     ),
 )]
-#[get("/{key}")]
+#[get("/v1/advisory/{key}")]
 /// Get an advisory
 pub async fn get(
     state: web::Data<AdvisoryService>,
@@ -117,7 +113,7 @@ pub async fn get(
         (status = 404, description = "Matching advisory not found"),
     ),
 )]
-#[delete("/{key}")]
+#[delete("/v1/advisory/{key}")]
 /// Delete an advisory
 pub async fn delete(
     state: web::Data<AdvisoryService>,
@@ -166,7 +162,7 @@ struct UploadParams {
         (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
-#[post("")]
+#[post("/v1/advisory")]
 /// Upload a new advisory
 pub async fn upload(
     service: web::Data<IngestorService>,
@@ -194,7 +190,7 @@ pub async fn upload(
         (status = 404, description = "The document could not be found"),
     )
 )]
-#[get("/{key}/download")]
+#[get("/v1/advisory/{key}/download")]
 /// Download an advisory document
 pub async fn download(
     ingestor: web::Data<IngestorService>,

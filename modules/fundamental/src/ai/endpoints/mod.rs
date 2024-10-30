@@ -9,18 +9,14 @@ use actix_web::{get, post, web, HttpResponse, Responder};
 use itertools::Itertools;
 use trustify_common::db::Database;
 
-pub const CONTEXT_PATH: &str = "/v1/ai";
-
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let service = AiService::new(db.clone());
-    config.service(
-        utoipa_actix_web::scope(CONTEXT_PATH)
-            .app_data(web::Data::new(service))
-            .service(completions)
-            .service(flags)
-            .service(tools)
-            .service(tool_call),
-    );
+    config
+        .app_data(web::Data::new(service))
+        .service(completions)
+        .service(flags)
+        .service(tools)
+        .service(tool_call);
 }
 
 #[utoipa::path(
@@ -33,7 +29,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 404, description = "The AI service is not enabled")
     )
 )]
-#[post("/completions")]
+#[post("/v1/ai/completions")]
 pub async fn completions(
     service: web::Data<AiService>,
     request: web::Json<ChatState>,
@@ -50,7 +46,7 @@ pub async fn completions(
         (status = 404, description = "The AI service is not enabled")
     )
 )]
-#[get("/flags")]
+#[get("/v1/ai/flags")]
 // Gets the flags for the AI service
 pub async fn flags(service: web::Data<AiService>) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(AiFlags {
@@ -66,7 +62,7 @@ pub async fn flags(service: web::Data<AiService>) -> actix_web::Result<impl Resp
         (status = 404, description = "The AI service is not enabled")
     )
 )]
-#[get("/tools")]
+#[get("/v1/ai/tools")]
 // Gets the list of tools that are available to assist AI services.
 pub async fn tools(service: web::Data<AiService>) -> actix_web::Result<impl Responder> {
     let tools = &service
@@ -94,7 +90,7 @@ pub async fn tools(service: web::Data<AiService>) -> actix_web::Result<impl Resp
         (status = 404, description = "The tool was not found")
     )
 )]
-#[post("/tools/{name}")]
+#[post("/v1/ai/tools/{name}")]
 pub async fn tool_call(
     service: web::Data<AiService>,
     name: web::Path<String>,

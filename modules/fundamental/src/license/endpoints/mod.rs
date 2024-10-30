@@ -17,20 +17,16 @@ use uuid::Uuid;
 
 pub mod spdx;
 
-pub const CONTEXT_PATH: &str = "/v1/license";
-
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let license_service = LicenseService::new(db);
 
-    config.service(
-        utoipa_actix_web::scope(CONTEXT_PATH)
-            .app_data(web::Data::new(license_service))
-            .service(list_spdx_licenses)
-            .service(get_spdx_license)
-            .service(list_licenses)
-            .service(get_license)
-            .service(get_license_purls),
-    );
+    config
+        .app_data(web::Data::new(license_service))
+        .service(list_spdx_licenses)
+        .service(get_spdx_license)
+        .service(list_licenses)
+        .service(get_license)
+        .service(get_license_purls);
 }
 
 #[utoipa::path(
@@ -44,7 +40,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 200, description = "Matching licenses", body = PaginatedResults<LicenseSummary>),
     ),
 )]
-#[get("")]
+#[get("/v1/license")]
 /// List licenses
 pub async fn list_licenses(
     state: web::Data<LicenseService>,
@@ -61,7 +57,7 @@ pub async fn list_licenses(
         (status = 200, description = "The license", body = LicenseSummary),
     ),
 )]
-#[get("/{uuid}")]
+#[get("/v1/license/{uuid}")]
 /// Retrieve license details
 pub async fn get_license(
     state: web::Data<LicenseService>,
@@ -81,7 +77,7 @@ pub async fn get_license(
         (status = 200, description = "The versioned pURLs allowing the license", body = LicenseSummary),
     ),
 )]
-#[get("/{uuid}/purl")]
+#[get("/v1/license/{uuid}/purl")]
 /// Retrieve pURLs covered by a license
 pub async fn get_license_purls(
     state: web::Data<LicenseService>,

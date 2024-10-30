@@ -15,17 +15,13 @@ use trustify_common::{
 };
 use uuid::Uuid;
 
-pub const CONTEXT_PATH: &str = "/v1/product";
-
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let service = ProductService::new(db);
-    config.service(
-        utoipa_actix_web::scope(CONTEXT_PATH)
-            .app_data(web::Data::new(service))
-            .service(all)
-            .service(delete)
-            .service(get),
-    );
+    config
+        .app_data(web::Data::new(service))
+        .service(all)
+        .service(delete)
+        .service(get);
 }
 
 #[utoipa::path(
@@ -39,7 +35,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 200, description = "Matching products", body = PaginatedResults<ProductSummary>),
     ),
 )]
-#[get("")]
+#[get("/v1/product")]
 pub async fn all(
     state: web::Data<ProductService>,
     web::Query(search): web::Query<Query>,
@@ -59,7 +55,7 @@ pub async fn all(
         (status = 404, description = "Matching product not found"),
     ),
 )]
-#[get("/{id}")]
+#[get("/v1/product/{id}")]
 pub async fn get(
     state: web::Data<ProductService>,
     id: web::Path<Uuid>,
@@ -83,7 +79,7 @@ pub async fn get(
         (status = 404, description = "Matching product not found"),
     ),
 )]
-#[delete("/{id}")]
+#[delete("/v1/product/{id}")]
 pub async fn delete(
     state: web::Data<ProductService>,
     id: web::Path<Uuid>,

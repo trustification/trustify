@@ -16,7 +16,7 @@ use trustify_entity::labels::Labels;
         (status = 404, description = "The SBOM could not be found"),
     ),
 )]
-#[patch("/{id}/label")]
+#[patch("/v1/sbom/{id}/label")]
 pub async fn update(
     sbom: web::Data<SbomService>,
     id: web::Path<Id>,
@@ -46,7 +46,7 @@ pub async fn update(
         (status = 404, description = "The SBOM could not be found"),
     ),
 )]
-#[put("/{id}/label")]
+#[put("/v1/sbom/{id}/label")]
 pub async fn set(
     sbom: web::Data<SbomService>,
     id: web::Path<Id>,
