@@ -1,5 +1,5 @@
 use super::service::{Error, ImporterService, PatchError};
-use crate::model::{Importer, ImporterConfiguration, PaginatedImporterReport, RevisionedImporter};
+use crate::model::{Importer, ImporterConfiguration, ImporterReport};
 use actix_web::{
     delete, get,
     guard::{self, Guard, GuardContext},
@@ -9,7 +9,7 @@ use actix_web::{
 use std::convert::Infallible;
 use trustify_common::{
     db::Database,
-    model::{Paginated, Revisioned},
+    model::{Paginated, PaginatedResults, Revisioned},
 };
 use utoipa::OpenApi;
 
@@ -50,15 +50,12 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
         crate::model::CommonImporter,
         crate::model::CsafImporter,
         crate::model::CveImporter,
-        crate::model::CweImporter,
         crate::model::Importer,
         crate::model::ImporterConfiguration,
         crate::model::ImporterData,
         crate::model::ImporterReport,
         crate::model::OsvImporter,
-        crate::model::PaginatedImporterReport,
         crate::model::Progress,
-        crate::model::RevisionedImporter,
         crate::model::SbomImporter,
         crate::model::State,
         trustify_common::model::BinaryByteSize,
@@ -114,7 +111,7 @@ async fn create(
     ),
     responses(
         (status = 200, description = "Retrieved importer configuration",
-            body = RevisionedImporter,
+            body = Revisioned<Importer>,
             headers(
                 ("etag" = String, description = "Revision ID")
             )
@@ -320,7 +317,7 @@ async fn delete(
     tag = "importer",
     operation_id = "listImporterReports",
     responses(
-        (status = 200, description = "Retrieved importer reports", body = PaginatedImporterReport),
+        (status = 200, description = "Retrieved importer reports", body = PaginatedResults<ImporterReport>),
     )
 )]
 #[get("/{name}/report")]

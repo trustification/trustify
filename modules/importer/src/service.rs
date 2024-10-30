@@ -1,4 +1,4 @@
-use crate::model::{Importer, ImporterConfiguration, ImporterReport, RevisionedImporter};
+use crate::model::{Importer, ImporterConfiguration, ImporterReport};
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait,
@@ -149,10 +149,7 @@ impl ImporterService {
     pub async fn read(&self, name: &str) -> Result<Option<Revisioned<Importer>>, Error> {
         let result = importer::Entity::find_by_id(name).one(&self.db).await?;
 
-        Ok(result
-            .map(RevisionedImporter::try_from)
-            .transpose()?
-            .map(|r| r.0))
+        Ok(result.map(Importer::from_revisioned).transpose()?)
     }
 
     /// Load a configuration, transform, and store it back (aka patch).

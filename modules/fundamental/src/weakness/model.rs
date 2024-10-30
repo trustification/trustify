@@ -1,7 +1,6 @@
 use crate::Error;
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
-use trustify_common::paginated;
 use trustify_entity::weakness;
 use utoipa::ToSchema;
 
@@ -16,8 +15,6 @@ pub struct WeaknessSummary {
     #[serde(flatten)]
     pub head: WeaknessHead,
 }
-
-paginated!(WeaknessSummary);
 
 impl WeaknessSummary {
     pub async fn from_entities(

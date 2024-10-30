@@ -1,13 +1,14 @@
 use crate::{
     license::{
         endpoints::spdx::{get_spdx_license, list_spdx_licenses},
-        model::{LicenseSummary, PaginatedLicenseSummary},
+        model::LicenseSummary,
         service::LicenseService,
     },
     Error,
 };
 use actix_web::{get, web, HttpResponse, Responder};
 use std::str::FromStr;
+use trustify_common::model::PaginatedResults;
 use trustify_common::{
     db::{query::Query, Database},
     id::IdError,
@@ -39,12 +40,9 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         get_license_purls,
     ),
     components(schemas(
-        crate::license::model::PaginatedSpdxLicenseSummary,
         crate::license::model::SpdxLicenseSummary,
         crate::license::model::SpdxLicenseDetails,
-        crate::license::model::PaginatedLicenseSummary,
         crate::license::model::LicenseSummary,
-        crate::license::model::PaginatedLicenseDetailsPurlSummary,
         crate::license::model::LicenseDetailsPurlSummary,
     )),
     tags()
@@ -60,7 +58,7 @@ pub struct ApiDoc;
         Paginated,
     ),
     responses(
-        (status = 200, description = "Matching licenses", body = PaginatedLicenseSummary),
+        (status = 200, description = "Matching licenses", body = PaginatedResults<LicenseSummary>),
     ),
 )]
 #[get("/v1/license")]

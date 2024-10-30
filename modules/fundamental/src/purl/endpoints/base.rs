@@ -1,15 +1,12 @@
+use crate::purl::model::summary::base_purl::BasePurlSummary;
 use crate::{
-    purl::{
-        model::{
-            details::base_purl::BasePurlDetails, summary::base_purl::PaginatedBasePurlSummary,
-        },
-        service::PurlService,
-    },
+    purl::{model::details::base_purl::BasePurlDetails, service::PurlService},
     Error,
 };
 use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
+use trustify_common::model::PaginatedResults;
 use trustify_common::{db::query::Query, id::IdError, model::Paginated, purl::Purl};
 
 #[utoipa::path(
@@ -47,7 +44,7 @@ pub async fn get_base_purl(
         Paginated,
     ),
     responses(
-        (status = 200, description = "All relevant matching versionless base PURL", body = PaginatedBasePurlSummary),
+        (status = 200, description = "All relevant matching versionless base PURL", body = PaginatedResults<BasePurlSummary>),
     ),
 )]
 #[get("/v1/purl/base")]

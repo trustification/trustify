@@ -1,11 +1,8 @@
-use crate::{
-    license::model::{LicenseSummary, PaginatedLicenseSummary},
-    weakness::service::WeaknessService,
-};
+use crate::{license::model::LicenseSummary, weakness::service::WeaknessService};
 use actix_web::{get, web, HttpResponse, Responder};
 use trustify_common::{
     db::{query::Query, Database},
-    model::Paginated,
+    model::{Paginated, PaginatedResults},
 };
 use utoipa::OpenApi;
 
@@ -22,7 +19,6 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 #[openapi(
     paths(list_weaknesses, get_weakness,),
     components(schemas(
-        crate::weakness::model::PaginatedWeaknessSummary,
         crate::weakness::model::WeaknessSummary,
         crate::weakness::model::WeaknessDetails,
         crate::weakness::model::WeaknessHead,
@@ -40,7 +36,7 @@ pub struct ApiDoc;
         Paginated,
     ),
     responses(
-        (status = 200, description = "Matching weaknesses", body = PaginatedLicenseSummary),
+        (status = 200, description = "Matching weaknesses", body = PaginatedResults<LicenseSummary>),
     ),
 )]
 #[get("/v1/weakness")]

@@ -4,7 +4,6 @@ use sea_orm::{LoaderTrait, ModelTrait};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use trustify_common::db::ConnectionOrTransaction;
-use trustify_common::paginated;
 use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 use utoipa::ToSchema;
 
@@ -72,5 +71,3 @@ impl PurlSummary {
         })
     }
 }
-
-paginated!(PurlSummary);

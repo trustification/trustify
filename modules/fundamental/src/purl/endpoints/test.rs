@@ -1,8 +1,8 @@
 use crate::purl::model::details::base_purl::BasePurlDetails;
 use crate::purl::model::details::purl::PurlDetails;
 use crate::purl::model::details::versioned_purl::VersionedPurlDetails;
-use crate::purl::model::summary::base_purl::{BasePurlSummary, PaginatedBasePurlSummary};
-use crate::purl::model::summary::purl::PaginatedPurlSummary;
+use crate::purl::model::summary::base_purl::BasePurlSummary;
+use crate::purl::model::summary::purl::PurlSummary;
 use crate::purl::model::summary::r#type::TypeSummary;
 use crate::test::caller;
 use actix_web::test::TestRequest;
@@ -265,7 +265,7 @@ async fn base_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let uri = "/api/v1/purl/base?q=log4j";
     let request = TestRequest::get().uri(uri).to_request();
-    let response: PaginatedBasePurlSummary = app.call_and_read_body_json(request).await;
+    let response: PaginatedResults<BasePurlSummary> = app.call_and_read_body_json(request).await;
 
     assert_eq!(1, response.items.len());
 
@@ -280,7 +280,7 @@ async fn qualified_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 
     let uri = "/api/v1/purl?q=log4j";
     let request = TestRequest::get().uri(uri).to_request();
-    let response: PaginatedPurlSummary = app.call_and_read_body_json(request).await;
+    let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
 
     assert_eq!(3, response.items.len());
 
@@ -295,7 +295,7 @@ async fn qualified_packages_filtering(ctx: &TrustifyContext) -> Result<(), anyho
 
     let uri = "/api/v1/purl?q=type%3Dmaven";
     let request = TestRequest::get().uri(uri).to_request();
-    let response: PaginatedPurlSummary = app.call_and_read_body_json(request).await;
+    let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
 
     assert_eq!(3, response.items.len());
 
@@ -320,7 +320,7 @@ async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     let uri = "/api/v1/purl?q=hyper";
     let request = TestRequest::get().uri(uri).to_request();
-    let response: PaginatedPurlSummary = app.call_and_read_body_json(request).await;
+    let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
 
     assert_eq!(1, response.items.len());
 

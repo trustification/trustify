@@ -2,7 +2,7 @@
 mod test;
 
 use crate::organization::{
-    model::{OrganizationDetails, PaginatedOrganizationSummary},
+    model::{OrganizationDetails, OrganizationSummary},
     service::OrganizationService,
 };
 use actix_web::{get, web, HttpResponse, Responder};
@@ -28,7 +28,6 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         crate::organization::model::OrganizationHead,
         crate::organization::model::OrganizationSummary,
         crate::organization::model::OrganizationDetails,
-        crate::organization::model::PaginatedOrganizationSummary,
     )),
     tags()
 )]
@@ -43,7 +42,7 @@ pub struct ApiDoc;
         Paginated,
     ),
     responses(
-        (status = 200, description = "Matching organizations", body = PaginatedOrganizationSummary),
+        (status = 200, description = "Matching organizations", body = OrganizationSummary),
     ),
 )]
 #[get("/v1/organization")]
