@@ -21,7 +21,7 @@ pub fn configure(svc: &mut ServiceConfig, auth: Option<Arc<Authenticator>>) {
 }
 
 #[derive(OpenApi)]
-#[openapi(paths(info), components(schemas(crate::endpoints::Info)), tags())]
+#[openapi(paths(info), tags())]
 pub struct ApiDoc;
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, utoipa::ToSchema)]

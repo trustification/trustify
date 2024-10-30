@@ -21,17 +21,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 }
 
 #[derive(OpenApi)]
-#[openapi(
-    paths(completions, flags, tools, tool_call),
-    components(schemas(
-        crate::ai::model::ChatState,
-        crate::ai::model::ChatMessage,
-        crate::ai::model::MessageType,
-        crate::ai::model::AiFlags,
-        crate::ai::model::AiTool,
-    )),
-    tags()
-)]
+#[openapi(paths(completions, flags, tools, tool_call), tags())]
 pub struct ApiDoc;
 
 #[utoipa::path(

@@ -29,14 +29,6 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         search_component_deps,
         get_component_deps,
     ),
-    components(schemas(
-        crate::model::PackageNode,
-        crate::model::AnalysisStatus,
-        crate::model::AncestorSummary,
-        crate::model::AncNode,
-        crate::model::DepSummary,
-        crate::model::DepNode,
-    )),
     tags()
 )]
 pub struct ApiDoc;

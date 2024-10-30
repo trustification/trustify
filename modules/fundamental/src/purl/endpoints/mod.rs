@@ -48,26 +48,6 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         get,
         all,
     ),
-    components(schemas(
-        crate::purl::model::TypeHead,
-        crate::purl::model::PurlHead,
-        crate::purl::model::VersionedPurlHead,
-        crate::purl::model::BasePurlHead,
-        crate::purl::model::summary::r#type::TypeSummary,
-        crate::purl::model::summary::r#type::TypeCounts,
-        crate::purl::model::summary::base_purl::BasePurlSummary,
-        crate::purl::model::details::base_purl::BasePurlDetails,
-        crate::purl::model::summary::versioned_purl::VersionedPurlSummary,
-        crate::purl::model::details::versioned_purl::VersionedPurlDetails,
-        crate::purl::model::details::versioned_purl::VersionedPurlAdvisory,
-        crate::purl::model::details::versioned_purl::VersionedPurlStatus,
-        crate::purl::model::details::purl::PurlDetails,
-        crate::purl::model::details::purl::PurlAdvisory,
-        crate::purl::model::details::purl::PurlStatus,
-        crate::purl::model::details::purl::PurlLicenseSummary,
-        crate::purl::model::summary::purl::PurlSummary,
-        trustify_common::purl::Purl,
-    )),
     tags()
 )]
 pub struct ApiDoc;

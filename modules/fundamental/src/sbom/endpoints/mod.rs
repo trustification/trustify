@@ -75,25 +75,6 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: us
         label::set,
         label::update,
     ),
-    components(schemas(
-        crate::purl::model::details::purl::StatusContext,
-        crate::sbom::model::SbomHead,
-        crate::sbom::model::SbomPackage,
-        crate::sbom::model::SbomPackageRelation,
-        crate::sbom::model::SbomSummary,
-        crate::sbom::model::Which,
-        crate::sbom::model::details::SbomAdvisory,
-        crate::sbom::model::details::SbomDetails,
-        crate::sbom::model::details::SbomStatus,
-        crate::purl::model::details::purl::StatusContext,
-        crate::source_document::model::SourceDocument,
-        trustify_common::advisory::AdvisoryVulnerabilityAssertions,
-        trustify_common::advisory::Assertion,
-        trustify_common::id::Id,
-        trustify_common::purl::Purl,
-        trustify_entity::labels::Labels,
-        trustify_entity::relationship::Relationship,
-    )),
     tags()
 )]
 pub struct ApiDoc;

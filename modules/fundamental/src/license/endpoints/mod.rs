@@ -39,12 +39,6 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         get_license,
         get_license_purls,
     ),
-    components(schemas(
-        crate::license::model::SpdxLicenseSummary,
-        crate::license::model::SpdxLicenseDetails,
-        crate::license::model::LicenseSummary,
-        crate::license::model::LicenseDetailsPurlSummary,
-    )),
     tags()
 )]
 pub struct ApiDoc;
