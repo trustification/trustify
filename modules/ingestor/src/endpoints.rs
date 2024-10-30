@@ -40,15 +40,7 @@ struct UploadParams {
 }
 
 #[derive(OpenApi)]
-#[openapi(
-    paths(upload),
-    components(schemas(
-        crate::common::Deprecation,
-        crate::model::IngestResult,
-        crate::service::dataset::DatasetIngestResult,
-    )),
-    tags()
-)]
+#[openapi(paths(upload), tags())]
 pub struct ApiDoc;
 
 #[utoipa::path(

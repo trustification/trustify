@@ -16,15 +16,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 }
 
 #[derive(OpenApi)]
-#[openapi(
-    paths(list_weaknesses, get_weakness,),
-    components(schemas(
-        crate::weakness::model::WeaknessSummary,
-        crate::weakness::model::WeaknessDetails,
-        crate::weakness::model::WeaknessHead,
-    )),
-    tags()
-)]
+#[openapi(paths(list_weaknesses, get_weakness,), tags())]
 pub struct ApiDoc;
 
 #[utoipa::path(

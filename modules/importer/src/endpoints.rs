@@ -43,23 +43,6 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
         set_enabled,
         update,
     ),
-    components(schemas(
-        crate::model::ClearlyDefinedCurationImporter,
-        crate::model::ClearlyDefinedImporter,
-        crate::model::ClearlyDefinedPackageType,
-        crate::model::CommonImporter,
-        crate::model::CsafImporter,
-        crate::model::CveImporter,
-        crate::model::Importer,
-        crate::model::ImporterConfiguration,
-        crate::model::ImporterData,
-        crate::model::ImporterReport,
-        crate::model::OsvImporter,
-        crate::model::Progress,
-        crate::model::SbomImporter,
-        crate::model::State,
-        trustify_common::model::BinaryByteSize,
-    )),
     tags()
 )]
 pub struct ApiDoc;

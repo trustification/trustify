@@ -43,20 +43,6 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: us
 #[derive(OpenApi)]
 #[openapi(
     paths(all, get, delete, upload, download, label::set, label::update),
-    components(schemas(
-        crate::advisory::model::AdvisoryDetails,
-        crate::advisory::model::AdvisoryHead,
-        crate::advisory::model::AdvisorySummary,
-        crate::advisory::model::AdvisoryVulnerabilityHead,
-        crate::advisory::model::AdvisoryVulnerabilitySummary,
-        crate::source_document::model::SourceDocument,
-        trustify_common::advisory::AdvisoryVulnerabilityAssertions,
-        trustify_common::advisory::Assertion,
-        trustify_common::id::Id,
-        trustify_common::purl::Purl,
-        trustify_cvss::cvss3::severity::Severity,
-        trustify_entity::labels::Labels,
-    )),
     tags()
 )]
 pub struct ApiDoc;

@@ -22,15 +22,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 }
 
 #[derive(OpenApi)]
-#[openapi(
-    paths(all, get),
-    components(schemas(
-        crate::organization::model::OrganizationHead,
-        crate::organization::model::OrganizationSummary,
-        crate::organization::model::OrganizationDetails,
-    )),
-    tags()
-)]
+#[openapi(paths(all, get), tags())]
 pub struct ApiDoc;
 
 #[utoipa::path(
