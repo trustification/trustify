@@ -2,7 +2,6 @@ use crate::organization::model::OrganizationHead;
 use crate::Error;
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
-use trustify_common::paginated;
 use trustify_entity::organization;
 use utoipa::ToSchema;
 
@@ -11,8 +10,6 @@ pub struct OrganizationSummary {
     #[serde(flatten)]
     pub head: OrganizationHead,
 }
-
-paginated!(OrganizationSummary);
 
 impl OrganizationSummary {
     pub async fn from_entity(

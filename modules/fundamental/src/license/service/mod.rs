@@ -1,20 +1,25 @@
-use crate::license::model::{
-    LicenseDetailsPurlSummary, LicenseSummary, PaginatedLicenseDetailsPurlSummary,
-    PaginatedLicenseSummary, PaginatedSpdxLicenseSummary, SpdxLicenseDetails, SpdxLicenseSummary,
+use crate::{
+    license::model::{
+        LicenseDetailsPurlSummary, LicenseSummary, SpdxLicenseDetails, SpdxLicenseSummary,
+    },
+    purl::model::VersionedPurlHead,
+    sbom::model::SbomHead,
+    Error,
 };
-use crate::purl::model::VersionedPurlHead;
-use crate::sbom::model::SbomHead;
-use crate::Error;
 use sea_orm::{
     ColumnTrait, DbErr, EntityTrait, FromQueryResult, ModelTrait, PaginatorTrait, QueryFilter,
     QueryResult, QuerySelect, RelationTrait, Select, TransactionTrait,
 };
 use sea_query::JoinType;
-use trustify_common::db::limiter::{LimiterAsModelTrait, LimiterTrait};
-use trustify_common::db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel};
-use trustify_common::db::query::{Filtering, Query};
-use trustify_common::db::{ConnectionOrTransaction, Database};
-use trustify_common::model::Paginated;
+use trustify_common::{
+    db::{
+        limiter::{LimiterAsModelTrait, LimiterTrait},
+        multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
+        query::{Filtering, Query},
+        ConnectionOrTransaction, Database,
+    },
+    model::{Paginated, PaginatedResults},
+};
 use trustify_entity::{base_purl, license, purl_license_assertion, sbom, versioned_purl};
 use uuid::Uuid;
 
@@ -31,7 +36,7 @@ impl LicenseService {
         &self,
         search: Query,
         paginated: Paginated,
-    ) -> Result<PaginatedLicenseSummary, Error> {
+    ) -> Result<PaginatedResults<LicenseSummary>, Error> {
         let tx = self.db.begin().await?;
         let tx = (&tx).into();
 
@@ -43,7 +48,7 @@ impl LicenseService {
 
         let total = limiter.total().await?;
 
-        Ok(PaginatedLicenseSummary {
+        Ok(PaginatedResults {
             items: LicenseSummary::from_entities(&limiter.fetch().await?, &tx).await?,
             total,
         })
@@ -71,7 +76,7 @@ impl LicenseService {
         id: Uuid,
         query: Query,
         pagination: Paginated,
-    ) -> Result<PaginatedLicenseDetailsPurlSummary, Error> {
+    ) -> Result<PaginatedResults<LicenseDetailsPurlSummary>, Error> {
         #[derive(Debug)]
         struct PurlLicenseCatcher {
             base_purl: base_purl::Model,
@@ -136,14 +141,14 @@ impl LicenseService {
             })
         }
 
-        Ok(PaginatedLicenseDetailsPurlSummary { items, total })
+        Ok(PaginatedResults { items, total })
     }
 
     pub async fn list_spdx_licenses(
         &self,
         search: Query,
         paginated: Paginated,
-    ) -> Result<PaginatedSpdxLicenseSummary, Error> {
+    ) -> Result<PaginatedResults<SpdxLicenseSummary>, Error> {
         let all_matching = spdx::identifiers::LICENSES
             .iter()
             .filter(|(identifier, name, _)| {
@@ -154,7 +159,7 @@ impl LicenseService {
             .collect::<Vec<_>>();
 
         if all_matching.len() < paginated.offset as usize {
-            return Ok(PaginatedSpdxLicenseSummary {
+            return Ok(PaginatedResults {
                 items: vec![],
                 total: all_matching.len() as u64,
             });
@@ -163,12 +168,12 @@ impl LicenseService {
         let matching = &all_matching[paginated.offset as usize..];
 
         if paginated.limit > 0 && matching.len() > paginated.limit as usize {
-            Ok(PaginatedSpdxLicenseSummary {
+            Ok(PaginatedResults {
                 items: SpdxLicenseSummary::from_details(&matching[..paginated.limit as usize]),
                 total: all_matching.len() as u64,
             })
         } else {
-            Ok(PaginatedSpdxLicenseSummary {
+            Ok(PaginatedResults {
                 items: SpdxLicenseSummary::from_details(matching),
                 total: all_matching.len() as u64,
             })

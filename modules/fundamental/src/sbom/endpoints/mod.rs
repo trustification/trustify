@@ -7,8 +7,8 @@ use crate::{
     purl::service::PurlService,
     sbom::{
         model::{
-            details::SbomAdvisory, PaginatedSbomPackage, PaginatedSbomPackageRelation,
-            PaginatedSbomSummary, SbomPackageReference, SbomSummary, Which,
+            details::SbomAdvisory, SbomPackage, SbomPackageReference, SbomPackageRelation,
+            SbomSummary, Which,
         },
         service::SbomService,
     },
@@ -29,7 +29,7 @@ use trustify_common::{
     decompress::decompress_async,
     error::ErrorInformation,
     id::Id,
-    model::Paginated,
+    model::{Paginated, PaginatedResults},
     purl::Purl,
 };
 use trustify_entity::{labels::Labels, relationship::Relationship};
@@ -77,9 +77,6 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: us
     ),
     components(schemas(
         crate::purl::model::details::purl::StatusContext,
-        crate::sbom::model::PaginatedSbomPackage,
-        crate::sbom::model::PaginatedSbomPackageRelation,
-        crate::sbom::model::PaginatedSbomSummary,
         crate::sbom::model::SbomHead,
         crate::sbom::model::SbomPackage,
         crate::sbom::model::SbomPackageRelation,
@@ -110,7 +107,7 @@ pub struct ApiDoc;
         Paginated,
     ),
     responses(
-        (status = 200, description = "Matching SBOMs", body = PaginatedSbomSummary),
+        (status = 200, description = "Matching SBOMs", body = PaginatedResults<SbomSummary>),
     ),
 )]
 #[get("/v1/sbom")]
@@ -192,7 +189,7 @@ impl TryFrom<AllRelatedQuery> for Uuid {
         AllRelatedQuery,
     ),
     responses(
-        (status = 200, description = "Matching SBOMs", body = PaginatedSbomSummary),
+        (status = 200, description = "Matching SBOMs", body = PaginatedResults<SbomSummary>),
     ),
 )]
 #[get("/v1/sbom/by-package")]
@@ -354,7 +351,7 @@ pub async fn delete(
         Paginated,
     ),
     responses(
-        (status = 200, description = "Packages", body = PaginatedSbomPackage),
+        (status = 200, description = "Packages", body = PaginatedResults<SbomPackage>),
     ),
 )]
 #[get("/v1/sbom/{id}/packages")]
@@ -399,7 +396,7 @@ struct RelatedQuery {
         Paginated,
     ),
     responses(
-        (status = 200, description = "Packages", body = PaginatedSbomPackageRelation),
+        (status = 200, description = "Packages", body = PaginatedResults<SbomPackageRelation>),
     ),
 )]
 #[get("/v1/sbom/{id}/related")]

@@ -1,12 +1,9 @@
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
-
-use trustify_common::db::ConnectionOrTransaction;
-use trustify_common::memo::Memo;
-use trustify_common::paginated;
+use trustify_common::{db::ConnectionOrTransaction, memo::Memo};
 use trustify_cvss::cvss3::score::Score;
 use trustify_entity::{advisory_vulnerability, vulnerability};
+use utoipa::ToSchema;
 
 use crate::advisory::model::{AdvisoryHead, AdvisoryVulnerabilityHead};
 use crate::advisory::service::AdvisoryCatcher;
@@ -33,8 +30,6 @@ pub struct AdvisorySummary {
     /// Vulnerabilities addressed within this advisory.
     pub vulnerabilities: Vec<AdvisoryVulnerabilityHead>,
 }
-
-paginated!(AdvisorySummary);
 
 impl AdvisorySummary {
     pub async fn from_entities(

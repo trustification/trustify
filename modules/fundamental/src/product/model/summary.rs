@@ -5,7 +5,6 @@ use itertools::izip;
 use sea_orm::LoaderTrait;
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
-use trustify_common::paginated;
 use trustify_entity::{organization, product, product_version};
 use utoipa::ToSchema;
 
@@ -17,8 +16,6 @@ pub struct ProductSummary {
     #[schema(required)]
     pub vendor: Option<OrganizationSummary>,
 }
-
-paginated!(ProductSummary);
 
 impl ProductSummary {
     pub async fn from_entity(

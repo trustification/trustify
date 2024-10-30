@@ -3,11 +3,9 @@ mod label;
 #[cfg(test)]
 mod test;
 
+use crate::advisory::model::AdvisorySummary;
 use crate::{
-    advisory::{
-        model::{AdvisoryDetails, PaginatedAdvisorySummary},
-        service::AdvisoryService,
-    },
+    advisory::{model::AdvisoryDetails, service::AdvisoryService},
     endpoints::Deprecation,
     purl::service::PurlService,
     Error::{self, Internal},
@@ -20,7 +18,7 @@ use trustify_common::{
     db::{query::Query, Database},
     decompress::decompress_async,
     id::Id,
-    model::Paginated,
+    model::{Paginated, PaginatedResults},
 };
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
@@ -51,7 +49,6 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: us
         crate::advisory::model::AdvisorySummary,
         crate::advisory::model::AdvisoryVulnerabilityHead,
         crate::advisory::model::AdvisoryVulnerabilitySummary,
-        crate::advisory::model::PaginatedAdvisorySummary,
         crate::source_document::model::SourceDocument,
         trustify_common::advisory::AdvisoryVulnerabilityAssertions,
         trustify_common::advisory::Assertion,
@@ -74,7 +71,7 @@ pub struct ApiDoc;
         Deprecation,
     ),
     responses(
-        (status = 200, description = "Matching vulnerabilities", body = PaginatedAdvisorySummary),
+        (status = 200, description = "Matching vulnerabilities", body = PaginatedResults<AdvisorySummary>),
     ),
 )]
 #[get("/v1/advisory")]

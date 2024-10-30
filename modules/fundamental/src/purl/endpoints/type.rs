@@ -1,12 +1,12 @@
 use crate::purl::{
     model::{
         details::{base_purl::BasePurlDetails, versioned_purl::VersionedPurlDetails},
-        summary::{base_purl::PaginatedBasePurlSummary, r#type::TypeSummary},
+        summary::{base_purl::BasePurlSummary, r#type::TypeSummary},
     },
     service::PurlService,
 };
 use actix_web::{get, web, HttpResponse, Responder};
-use trustify_common::{db::query::Query, model::Paginated};
+use trustify_common::{db::query::Query, model::Paginated, model::PaginatedResults};
 
 #[utoipa::path(
     tag = "purl type",
@@ -34,7 +34,7 @@ pub async fn all_purl_types(service: web::Data<PurlService>) -> actix_web::Resul
         ("type" = String, Path, description = "PURL identifier of a type")
     ),
     responses(
-        (status = 200, description = "Information regarding PURLs within an type", body = PaginatedBasePurlSummary),
+        (status = 200, description = "Information regarding PURLs within an type", body = PaginatedResults<BasePurlSummary>),
     ),
 )]
 #[get("/v1/purl/type/{type}")]

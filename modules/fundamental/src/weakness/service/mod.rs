@@ -1,10 +1,16 @@
-use crate::weakness::model::{PaginatedWeaknessSummary, WeaknessDetails, WeaknessSummary};
-use crate::Error;
+use crate::{
+    weakness::model::{WeaknessDetails, WeaknessSummary},
+    Error,
+};
 use sea_orm::{EntityTrait, TransactionTrait};
-use trustify_common::db::limiter::LimiterTrait;
-use trustify_common::db::query::{Filtering, Query};
-use trustify_common::db::Database;
-use trustify_common::model::Paginated;
+use trustify_common::{
+    db::{
+        limiter::LimiterTrait,
+        query::{Filtering, Query},
+        Database,
+    },
+    model::{Paginated, PaginatedResults},
+};
 use trustify_entity::weakness;
 
 pub struct WeaknessService {
@@ -20,7 +26,7 @@ impl WeaknessService {
         &self,
         query: Query,
         paginated: Paginated,
-    ) -> Result<PaginatedWeaknessSummary, Error> {
+    ) -> Result<PaginatedResults<WeaknessSummary>, Error> {
         let tx = self.db.begin().await?;
         let tx = (&tx).into();
 
@@ -33,7 +39,7 @@ impl WeaknessService {
         let total = limiter.total().await?;
         let items = limiter.fetch().await?;
 
-        Ok(PaginatedWeaknessSummary {
+        Ok(PaginatedResults {
             items: WeaknessSummary::from_entities(&items, &tx).await?,
             total,
         })

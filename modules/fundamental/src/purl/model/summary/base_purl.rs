@@ -2,7 +2,6 @@ use crate::purl::model::BasePurlHead;
 use crate::Error;
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
-use trustify_common::paginated;
 use trustify_entity::base_purl;
 use utoipa::ToSchema;
 
@@ -28,5 +27,3 @@ impl BasePurlSummary {
         Ok(summaries)
     }
 }
-
-paginated!(BasePurlSummary);

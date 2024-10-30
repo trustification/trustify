@@ -20,7 +20,7 @@ use std::{
     time::Duration,
 };
 use time::OffsetDateTime;
-use trustify_common::{model::Revisioned, paginated, revisioned};
+use trustify_common::model::Revisioned;
 use trustify_entity::{
     importer::{self, Model},
     importer_report,
@@ -34,6 +34,16 @@ pub struct Importer {
     pub name: String,
     #[serde(flatten)]
     pub data: ImporterData,
+}
+
+impl Importer {
+    pub fn from_revisioned(value: Model) -> Result<Revisioned<Importer>, serde_json::Error> {
+        let revision = value.revision.to_string();
+        Ok(Revisioned {
+            value: value.try_into()?,
+            revision,
+        })
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
@@ -237,20 +247,6 @@ impl TryFrom<Model> for Importer {
     }
 }
 
-revisioned!(Importer);
-
-impl TryFrom<Model> for RevisionedImporter {
-    type Error = serde_json::Error;
-
-    fn try_from(value: Model) -> Result<Self, Self::Error> {
-        let revision = value.revision.to_string();
-        Ok(Self(Revisioned {
-            value: value.try_into()?,
-            revision,
-        }))
-    }
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ImporterReport {
@@ -264,8 +260,6 @@ pub struct ImporterReport {
     pub error: Option<String>,
     pub report: serde_json::Value,
 }
-
-paginated!(ImporterReport);
 
 impl From<importer_report::Model> for ImporterReport {
     fn from(value: importer_report::Model) -> Self {

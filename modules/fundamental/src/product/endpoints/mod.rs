@@ -3,13 +3,16 @@ mod test;
 
 use crate::{
     product::{
-        model::{details::ProductDetails, summary::PaginatedProductSummary},
+        model::{details::ProductDetails, summary::ProductSummary},
         service::ProductService,
     },
     Error::Internal,
 };
 use actix_web::{delete, get, web, HttpResponse, Responder};
-use trustify_common::{db::query::Query, db::Database, model::Paginated};
+use trustify_common::{
+    db::{query::Query, Database},
+    model::{Paginated, PaginatedResults},
+};
 use utoipa::OpenApi;
 use uuid::Uuid;
 
@@ -31,7 +34,6 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
         crate::product::model::details::ProductVersionDetails,
         crate::product::model::details::ProductSbomHead,
         crate::product::model::summary::ProductSummary,
-        crate::product::model::summary::PaginatedProductSummary,
         crate::product::model::details::ProductDetails,
     )),
     tags()
@@ -47,7 +49,7 @@ pub struct ApiDoc;
         Paginated,
     ),
     responses(
-        (status = 200, description = "Matching products", body = PaginatedProductSummary),
+        (status = 200, description = "Matching products", body = PaginatedResults<ProductSummary>),
     ),
 )]
 #[get("/v1/product")]

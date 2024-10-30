@@ -1,9 +1,11 @@
 use crate::license::{
-    model::{PaginatedSpdxLicenseSummary, SpdxLicenseDetails},
-    service::LicenseService,
+    model::SpdxLicenseDetails, model::SpdxLicenseSummary, service::LicenseService,
 };
 use actix_web::{get, web, HttpResponse, Responder};
-use trustify_common::{db::query::Query, model::Paginated};
+use trustify_common::{
+    db::query::Query,
+    model::{Paginated, PaginatedResults},
+};
 
 #[utoipa::path(
     tag = "spdx license",
@@ -14,7 +16,7 @@ use trustify_common::{db::query::Query, model::Paginated};
         Paginated,
     ),
     responses(
-        (status = 200, description = "Matching licenses", body = PaginatedSpdxLicenseSummary),
+        (status = 200, description = "Matching licenses", body = PaginatedResults<SpdxLicenseSummary>),
     ),
 )]
 #[get("/v1/license/spdx/license")]

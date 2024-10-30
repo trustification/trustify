@@ -11,7 +11,6 @@ use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::model::Paginated;
-use trustify_common::paginated;
 use trustify_entity::{
     labels::Labels, relationship::Relationship, sbom, sbom_node, source_document,
 };
@@ -94,8 +93,6 @@ impl SbomSummary {
     }
 }
 
-paginated!(SbomSummary);
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, SimpleObject)]
 #[graphql(concrete(name = "SbomPackage", params()))]
 pub struct SbomPackage {
@@ -134,15 +131,11 @@ impl<'a> From<&'a SbomPackage> for SbomPackageReference<'a> {
     }
 }
 
-paginated!(SbomPackage);
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema)]
 pub struct SbomPackageRelation {
     pub relationship: Relationship,
     pub package: SbomPackage,
 }
-
-paginated!(SbomPackageRelation);
 
 #[derive(Clone, Eq, PartialEq, Default, Debug, serde::Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]

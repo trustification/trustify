@@ -1,10 +1,7 @@
-use crate::purl::model::VersionedPurlHead;
-use crate::sbom::model::SbomHead;
-use crate::Error;
+use crate::{purl::model::VersionedPurlHead, sbom::model::SbomHead, Error};
 use sea_orm::{ModelTrait, PaginatorTrait};
 use serde::{Deserialize, Serialize};
 use trustify_common::db::ConnectionOrTransaction;
-use trustify_common::paginated;
 use trustify_entity::{license, purl_license_assertion};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -19,8 +16,6 @@ pub struct LicenseSummary {
     pub spdx_license_exceptions: Vec<String>,
     pub purls: u64,
 }
-
-paginated!(LicenseSummary);
 
 impl LicenseSummary {
     pub async fn from_entity(
@@ -65,8 +60,6 @@ pub struct LicenseDetailsPurlSummary {
     pub sbom: SbomHead,
 }
 
-paginated!(LicenseDetailsPurlSummary);
-
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct SpdxLicenseSummary {
     pub id: String,
@@ -83,8 +76,6 @@ impl SpdxLicenseSummary {
             .collect()
     }
 }
-
-paginated!(SpdxLicenseSummary);
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct SpdxLicenseDetails {
