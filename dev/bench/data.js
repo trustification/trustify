@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730191077260,
+  "lastUpdate": 1730277456300,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -284,6 +284,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/fe35933b50732ae67a2d74c0d41ce6ae84eb7e58"
         },
         "date": 1730191076074,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "223c1812370f92d3221c0bd1a0d96ba0d649dfa9",
+          "message": "Enable sea_orm's debug logging\n\nFixes #894\n\nTook me too long to figure out that we need to enable a sea_orm\nfeature. Once done, you can see sea_orm statements in tests after\nsetting the `RUST_LOG` env var:\n\n`RUST_LOG=sea_orm=debug`\n\nOr more specifically,\n\n`RUST_LOG=none,sea_orm::driver::sqlx_postgres=debug`\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-10-30T07:56:58Z",
+          "tree_id": "7242cde98b9b97befaaa5a595be0ada8808e4b43",
+          "url": "https://github.com/trustification/trustify/commit/223c1812370f92d3221c0bd1a0d96ba0d649dfa9"
+        },
+        "date": 1730277454961,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
