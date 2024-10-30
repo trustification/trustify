@@ -7,20 +7,16 @@ use actix_web::{get, web, HttpResponse, Responder};
 use std::str::FromStr;
 use trustify_common::{db::query::Query, db::Database, model::Paginated, purl::Purl};
 
-pub const CONTEXT_PATH: &str = "/v1/analysis";
-
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let analysis = AnalysisService::new(db);
 
-    config.service(
-        utoipa_actix_web::scope(CONTEXT_PATH)
-            .app_data(web::Data::new(analysis))
-            .service(search_component_root_components)
-            .service(get_component_root_components)
-            .service(analysis_status)
-            .service(search_component_deps)
-            .service(get_component_deps),
-    );
+    config
+        .app_data(web::Data::new(analysis))
+        .service(search_component_root_components)
+        .service(get_component_root_components)
+        .service(analysis_status)
+        .service(search_component_deps)
+        .service(get_component_deps);
 }
 
 #[utoipa::path(
@@ -30,7 +26,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 200, description = "Analysis status.", body = AnalysisStatus),
     ),
 )]
-#[get("/status")]
+#[get("/v1/analysis/status")]
 pub async fn analysis_status(
     service: web::Data<AnalysisService>,
 ) -> actix_web::Result<impl Responder> {
@@ -48,7 +44,7 @@ pub async fn analysis_status(
         (status = 200, description = "Search component(s) and return their root components.", body = AncestorSummary),
     ),
 )]
-#[get("/root-component")]
+#[get("/v1/analysis/root-component")]
 pub async fn search_component_root_components(
     service: web::Data<AnalysisService>,
     web::Query(search): web::Query<Query>,
@@ -71,7 +67,7 @@ pub async fn search_component_root_components(
         (status = 200, description = "Retrieve component(s) root components by name or pURL.", body = AncestorSummary),
     ),
 )]
-#[get("/root-component/{key}")]
+#[get("/v1/analysis/root-component/{key}")]
 pub async fn get_component_root_components(
     service: web::Data<AnalysisService>,
     key: web::Path<String>,
@@ -104,7 +100,7 @@ pub async fn get_component_root_components(
         (status = 200, description = "Search component(s) and return their deps.", body = DepSummary),
     ),
 )]
-#[get("/dep")]
+#[get("/v1/analysis/dep")]
 pub async fn search_component_deps(
     service: web::Data<AnalysisService>,
     web::Query(search): web::Query<Query>,
@@ -123,7 +119,7 @@ pub async fn search_component_deps(
         (status = 200, description = "Retrieve component(s) dep components by name or pURL.", body = DepSummary),
     ),
 )]
-#[get("/dep/{key}")]
+#[get("/v1/analysis/dep/{key}")]
 pub async fn get_component_deps(
     service: web::Data<AnalysisService>,
     key: web::Path<String>,

@@ -30,7 +30,7 @@ async fn upload_bomb_dataset(ctx: &TrustifyContext) -> anyhow::Result<()> {
     dataset.finish()?;
 
     let request = TestRequest::post()
-        .uri("/api/v1/ingestor/dataset")
+        .uri("/api/v1/dataset")
         .set_payload(data)
         .to_request();
 

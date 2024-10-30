@@ -39,8 +39,6 @@ use trustify_module_ingestor::{
 };
 use trustify_module_storage::service::StorageBackend;
 
-pub const CONTEXT_PATH: &str = "/v1/sbom";
-
 pub fn configure(
     config: &mut utoipa_actix_web::service_config::ServiceConfig,
     db: Database,
@@ -49,24 +47,22 @@ pub fn configure(
     let sbom_service = SbomService::new(db.clone());
     let purl_service = PurlService::new(db);
 
-    config.service(
-        utoipa_actix_web::scope(CONTEXT_PATH)
-            .app_data(web::Data::new(sbom_service))
-            .app_data(web::Data::new(purl_service))
-            .app_data(web::Data::new(Config { upload_limit }))
-            .service(all)
-            .service(all_related)
-            .service(count_related)
-            .service(get)
-            .service(get_sbom_advisories)
-            .service(delete)
-            .service(packages)
-            .service(related)
-            .service(upload)
-            .service(download)
-            .service(label::set)
-            .service(label::update),
-    );
+    config
+        .app_data(web::Data::new(sbom_service))
+        .app_data(web::Data::new(purl_service))
+        .app_data(web::Data::new(Config { upload_limit }))
+        .service(all)
+        .service(all_related)
+        .service(count_related)
+        .service(get)
+        .service(get_sbom_advisories)
+        .service(delete)
+        .service(packages)
+        .service(related)
+        .service(upload)
+        .service(download)
+        .service(label::set)
+        .service(label::update);
 }
 
 #[utoipa::path(
@@ -80,7 +76,7 @@ pub fn configure(
         (status = 200, description = "Matching SBOMs", body = PaginatedResults<SbomSummary>),
     ),
 )]
-#[get("")]
+#[get("/v1/sbom")]
 pub async fn all(
     fetch: web::Data<SbomService>,
     web::Query(search): web::Query<Query>,
@@ -161,7 +157,7 @@ impl TryFrom<AllRelatedQuery> for Uuid {
         (status = 200, description = "Matching SBOMs", body = PaginatedResults<SbomSummary>),
     ),
 )]
-#[get("/by-package")]
+#[get("/v1/sbom/by-package")]
 pub async fn all_related(
     sbom: web::Data<SbomService>,
     web::Query(search): web::Query<Query>,
@@ -193,7 +189,7 @@ pub async fn all_related(
         (status = 200, description = "Number of matching SBOMs per package", body = Vec<i64>),
     ),
 )]
-#[get("/count-by-package")]
+#[get("/v1/sbom/count-by-package")]
 pub async fn count_related(
     sbom: web::Data<SbomService>,
     web::Json(ids): web::Json<Vec<AllRelatedQuery>>,
@@ -223,7 +219,7 @@ pub async fn count_related(
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
-#[get("/{id}")]
+#[get("/v1/sbom/{id}")]
 pub async fn get(
     fetcher: web::Data<SbomService>,
     authorizer: web::Data<Authorizer>,
@@ -250,7 +246,7 @@ pub async fn get(
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
-#[get("/{id}/advisory")]
+#[get("/v1/sbom/{id}/advisory")]
 pub async fn get_sbom_advisories(
     fetcher: web::Data<SbomService>,
     authorizer: web::Data<Authorizer>,
@@ -278,7 +274,7 @@ pub async fn get_sbom_advisories(
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
-#[delete("/{id}")]
+#[delete("/v1/sbom/{id}")]
 pub async fn delete(
     service: web::Data<SbomService>,
     purl_service: web::Data<PurlService>,
@@ -318,7 +314,7 @@ pub async fn delete(
         (status = 200, description = "Packages", body = PaginatedResults<SbomPackage>),
     ),
 )]
-#[get("/{id}/packages")]
+#[get("/v1/sbom/{id}/packages")]
 pub async fn packages(
     fetch: web::Data<SbomService>,
     id: web::Path<Uuid>,
@@ -363,7 +359,7 @@ struct RelatedQuery {
         (status = 200, description = "Packages", body = PaginatedResults<SbomPackageRelation>),
     ),
 )]
-#[get("/{id}/related")]
+#[get("/v1/sbom/{id}/related")]
 pub async fn related(
     fetch: web::Data<SbomService>,
     id: web::Path<Uuid>,
@@ -417,7 +413,7 @@ struct UploadQuery {
         (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
-#[post("")]
+#[post("/v1/sbom")]
 /// Upload a new SBOM
 pub async fn upload(
     service: web::Data<IngestorService>,
@@ -443,7 +439,7 @@ pub async fn upload(
         (status = 404, description = "The document could not be found"),
     )
 )]
-#[get("/{key}/download")]
+#[get("/v1/sbom/{key}/download")]
 pub async fn download(
     ingestor: web::Data<IngestorService>,
     sbom: web::Data<SbomService>,

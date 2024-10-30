@@ -12,16 +12,12 @@ use trustify_common::{
 };
 use uuid::Uuid;
 
-pub const CONTEXT_PATH: &str = "/v1/organization";
-
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let service = OrganizationService::new(db);
-    config.service(
-        utoipa_actix_web::scope(CONTEXT_PATH)
-            .app_data(web::Data::new(service))
-            .service(all)
-            .service(get),
-    );
+    config
+        .app_data(web::Data::new(service))
+        .service(all)
+        .service(get);
 }
 
 #[utoipa::path(
@@ -35,7 +31,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 200, description = "Matching organizations", body = OrganizationSummary),
     ),
 )]
-#[get("")]
+#[get("/v1/organization")]
 /// List organizations
 pub async fn all(
     state: web::Data<OrganizationService>,
@@ -56,7 +52,7 @@ pub async fn all(
         (status = 404, description = "Matching organization not found"),
     ),
 )]
-#[get("/{id}")]
+#[get("/v1/organization/{id}")]
 /// Retrieve organization details
 pub async fn get(
     state: web::Data<OrganizationService>,
