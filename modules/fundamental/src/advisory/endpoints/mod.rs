@@ -25,19 +25,23 @@ use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::{IntoParams, OpenApi};
 
+pub const CONTEXT_PATH: &str = "/api/v1/advisory";
+
 pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: usize) {
     let advisory_service = AdvisoryService::new(db);
 
-    config
-        .app_data(web::Data::new(advisory_service))
-        .app_data(web::Data::new(Config { upload_limit }))
-        .service(all)
-        .service(get)
-        .service(delete)
-        .service(upload)
-        .service(download)
-        .service(label::set)
-        .service(label::update);
+    config.service(
+        web::scope(CONTEXT_PATH)
+            .app_data(web::Data::new(advisory_service))
+            .app_data(web::Data::new(Config { upload_limit }))
+            .service(all)
+            .service(get)
+            .service(delete)
+            .service(upload)
+            .service(download)
+            .service(label::set)
+            .service(label::update),
+    );
 }
 
 #[derive(OpenApi)]
@@ -50,7 +54,6 @@ pub struct ApiDoc;
 #[utoipa::path(
     tag = "advisory",
     operation_id = "listAdvisories",
-    context_path = "/api",
     params(
         Query,
         Paginated,
@@ -60,7 +63,7 @@ pub struct ApiDoc;
         (status = 200, description = "Matching vulnerabilities", body = PaginatedResults<AdvisorySummary>),
     ),
 )]
-#[get("/v1/advisory")]
+#[get("/")]
 /// List advisories
 pub async fn all(
     state: web::Data<AdvisoryService>,
@@ -78,7 +81,6 @@ pub async fn all(
 #[utoipa::path(
     tag = "advisory",
     operation_id = "getAdvisory",
-    context_path = "/api",
     params(
         ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
@@ -87,7 +89,7 @@ pub async fn all(
         (status = 404, description = "Matching advisory not found"),
     ),
 )]
-#[get("/v1/advisory/{key}")]
+#[get("/{key}")]
 /// Get an advisory
 pub async fn get(
     state: web::Data<AdvisoryService>,
@@ -106,7 +108,6 @@ pub async fn get(
 #[utoipa::path(
     tag = "advisory",
     operation_id = "deleteAdvisory",
-    context_path = "/api",
     params(
         ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
@@ -115,7 +116,7 @@ pub async fn get(
         (status = 404, description = "Matching advisory not found"),
     ),
 )]
-#[delete("/v1/advisory/{key}")]
+#[delete("/{key}")]
 /// Delete an advisory
 pub async fn delete(
     state: web::Data<AdvisoryService>,
@@ -157,7 +158,6 @@ struct UploadParams {
 #[utoipa::path(
     tag = "advisory",
     operation_id = "uploadAdvisory",
-    context_path = "/api",
     request_body = Vec<u8>,
     params(UploadParams),
     responses(
@@ -165,7 +165,7 @@ struct UploadParams {
         (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
-#[post("/v1/advisory")]
+#[post("/")]
 /// Upload a new advisory
 pub async fn upload(
     service: web::Data<IngestorService>,
@@ -185,7 +185,6 @@ pub async fn upload(
 #[utoipa::path(
     tag = "advisory",
     operation_id = "downloadAdvisory",
-    context_path = "/api",
     params(
         ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
     ),
@@ -194,7 +193,7 @@ pub async fn upload(
         (status = 404, description = "The document could not be found"),
     )
 )]
-#[get("/v1/advisory/{key}/download")]
+#[get("/{key}/download")]
 /// Download an advisory document
 pub async fn download(
     ingestor: web::Data<IngestorService>,

@@ -19,20 +19,24 @@ mod base;
 mod r#type;
 mod version;
 
+pub const CONTEXT_PATH: &str = "/api/v1/purl";
+
 pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let purl_service = PurlService::new(db);
 
-    config
-        .app_data(web::Data::new(purl_service))
-        .service(r#type::all_purl_types)
-        .service(r#type::get_purl_type)
-        .service(r#type::get_base_purl_of_type)
-        .service(r#type::get_versioned_purl_of_type)
-        .service(base::get_base_purl)
-        .service(base::all_base_purls)
-        .service(version::get_versioned_purl)
-        .service(get)
-        .service(all);
+    config.service(
+        web::scope(CONTEXT_PATH)
+            .app_data(web::Data::new(purl_service))
+            .service(r#type::all_purl_types)
+            .service(r#type::get_purl_type)
+            .service(r#type::get_base_purl_of_type)
+            .service(r#type::get_versioned_purl_of_type)
+            .service(base::get_base_purl)
+            .service(base::all_base_purls)
+            .service(version::get_versioned_purl)
+            .service(get)
+            .service(all),
+    );
 }
 
 #[derive(OpenApi)]
@@ -53,7 +57,6 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 pub struct ApiDoc;
 
 #[utoipa::path(
-    context_path= "/api",
     operation_id = "getPurl",
     tag = "purl",
     params(
@@ -64,7 +67,7 @@ pub struct ApiDoc;
         (status = 200, description = "Details for the qualified PURL", body = PurlDetails),
     ),
 )]
-#[get("/v1/purl/{key}")]
+#[get("/{key}")]
 /// Retrieve details of a fully-qualified pURL
 pub async fn get(
     service: web::Data<PurlService>,
@@ -81,7 +84,6 @@ pub async fn get(
 }
 
 #[utoipa::path(
-    context_path= "/api",
     operation_id = "listPurl",
     tag = "purl",
     params(
@@ -92,7 +94,7 @@ pub async fn get(
         (status = 200, description = "All relevant matching qualified PURLs", body = PaginatedResults<PurlSummary>),
     ),
 )]
-#[get("/v1/purl")]
+#[get("")]
 /// List fully-qualified pURLs
 pub async fn all(
     service: web::Data<PurlService>,

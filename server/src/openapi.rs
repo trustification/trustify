@@ -8,6 +8,9 @@ use utoipa::{
     info(
         title = "Trustify",
         description = "Software Supply-Chain Security API",
+        license(
+            identifier = "Apache-2.0",
+        )
     ),
     nest(
         (path = trustify_module_analysis::endpoints::CONTEXT_PATH, api = trustify_module_analysis::endpoints::ApiDoc),
@@ -24,7 +27,7 @@ pub fn openapi() -> utoipa::openapi::OpenApi {
     let mut doc = ApiDoc::openapi();
 
     doc.merge(crate::endpoints::ApiDoc::openapi());
-    doc.merge(trustify_module_fundamental::openapi());
+    doc.merge(trustify_module_fundamental::ApiDoc::openapi());
 
     doc
 }

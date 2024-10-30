@@ -10,14 +10,18 @@ use itertools::Itertools;
 use trustify_common::db::Database;
 use utoipa::OpenApi;
 
+pub const CONTEXT_PATH: &str = "/api/v1/ai";
+
 pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let service = AiService::new(db.clone());
-    config
-        .app_data(web::Data::new(service))
-        .service(completions)
-        .service(flags)
-        .service(tools)
-        .service(tool_call);
+    config.service(
+        web::scope(CONTEXT_PATH)
+            .app_data(web::Data::new(service))
+            .service(completions)
+            .service(flags)
+            .service(tools)
+            .service(tool_call),
+    );
 }
 
 #[derive(OpenApi)]
@@ -27,7 +31,6 @@ pub struct ApiDoc;
 #[utoipa::path(
     tag = "ai",
     operation_id = "completions",
-    context_path = "/api",
     request_body = ChatState,
     responses(
         (status = 200, description = "The resulting completion", body = ChatState),
@@ -35,7 +38,7 @@ pub struct ApiDoc;
         (status = 404, description = "The AI service is not enabled")
     )
 )]
-#[post("/v1/ai/completions")]
+#[post("/completions")]
 pub async fn completions(
     service: web::Data<AiService>,
     request: web::Json<ChatState>,
@@ -47,13 +50,12 @@ pub async fn completions(
 #[utoipa::path(
     tag = "ai",
     operation_id = "aiFlags",
-    context_path = "/api",
     responses(
         (status = 200, description = "The resulting Flags", body = AiFlags),
         (status = 404, description = "The AI service is not enabled")
     )
 )]
-#[get("/v1/ai/flags")]
+#[get("/flags")]
 // Gets the flags for the AI service
 pub async fn flags(service: web::Data<AiService>) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(AiFlags {
@@ -64,13 +66,12 @@ pub async fn flags(service: web::Data<AiService>) -> actix_web::Result<impl Resp
 #[utoipa::path(
     tag = "ai",
     operation_id = "aiTools",
-    context_path = "/api",
     responses(
         (status = 200, description = "The resulting list of tools", body = Vec<AiTool>),
         (status = 404, description = "The AI service is not enabled")
     )
 )]
-#[get("/v1/ai/tools")]
+#[get("/tools")]
 // Gets the list of tools that are available to assist AI services.
 pub async fn tools(service: web::Data<AiService>) -> actix_web::Result<impl Responder> {
     let tools = &service
@@ -88,7 +89,6 @@ pub async fn tools(service: web::Data<AiService>) -> actix_web::Result<impl Resp
 #[utoipa::path(
     tag = "ai",
     operation_id = "aiToolCall",
-    context_path = "/api",
     request_body = serde_json::Value,
     params(
         ("name", Path, description = "Name of the tool to call")
@@ -99,7 +99,7 @@ pub async fn tools(service: web::Data<AiService>) -> actix_web::Result<impl Resp
         (status = 404, description = "The tool was not found")
     )
 )]
-#[post("/v1/ai/tools/{name}")]
+#[post("/tools/{name}")]
 pub async fn tool_call(
     service: web::Data<AiService>,
     name: web::Path<String>,

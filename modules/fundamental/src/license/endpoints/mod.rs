@@ -8,26 +8,30 @@ use crate::{
 };
 use actix_web::{get, web, HttpResponse, Responder};
 use std::str::FromStr;
-use trustify_common::model::PaginatedResults;
 use trustify_common::{
     db::{query::Query, Database},
     id::IdError,
-    model::Paginated,
+    model::{Paginated, PaginatedResults},
 };
 use utoipa::OpenApi;
 use uuid::Uuid;
 
 pub mod spdx;
+
+pub const CONTEXT_PATH: &str = "/api/v1/license";
+
 pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let license_service = LicenseService::new(db);
 
-    config
-        .app_data(web::Data::new(license_service))
-        .service(list_spdx_licenses)
-        .service(get_spdx_license)
-        .service(list_licenses)
-        .service(get_license)
-        .service(get_license_purls);
+    config.service(
+        web::scope(CONTEXT_PATH)
+            .app_data(web::Data::new(license_service))
+            .service(list_spdx_licenses)
+            .service(get_spdx_license)
+            .service(list_licenses)
+            .service(get_license)
+            .service(get_license_purls),
+    );
 }
 
 #[derive(OpenApi)]
@@ -46,7 +50,6 @@ pub struct ApiDoc;
 #[utoipa::path(
     tag = "license",
     operation_id = "listLicenses",
-    context_path = "/api",
     params(
         Query,
         Paginated,
@@ -55,7 +58,7 @@ pub struct ApiDoc;
         (status = 200, description = "Matching licenses", body = PaginatedResults<LicenseSummary>),
     ),
 )]
-#[get("/v1/license")]
+#[get("")]
 /// List licenses
 pub async fn list_licenses(
     state: web::Data<LicenseService>,
@@ -68,12 +71,11 @@ pub async fn list_licenses(
 #[utoipa::path(
     tag = "license",
     operation_id = "getLicenses",
-    context_path = "/api",
     responses(
         (status = 200, description = "The license", body = LicenseSummary),
     ),
 )]
-#[get("/v1/license/{uuid}")]
+#[get("/{uuid}")]
 /// Retrieve license details
 pub async fn get_license(
     state: web::Data<LicenseService>,
@@ -85,7 +87,6 @@ pub async fn get_license(
 #[utoipa::path(
     tag = "license",
     operation_id = "getLicensePurls",
-    context_path = "/api",
     params(
         Query,
         Paginated,
@@ -94,7 +95,7 @@ pub async fn get_license(
         (status = 200, description = "The versioned pURLs allowing the license", body = LicenseSummary),
     ),
 )]
-#[get("/v1/license/{uuid}/purl")]
+#[get("/{uuid}/purl")]
 /// Retrieve pURLs covered by a license
 pub async fn get_license_purls(
     state: web::Data<LicenseService>,

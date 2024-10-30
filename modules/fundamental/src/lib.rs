@@ -14,7 +14,7 @@ pub mod weakness;
 
 pub use endpoints::{configure, Config};
 pub use error::Error;
-pub use openapi::openapi;
+pub use openapi::ApiDoc;
 
 #[cfg(test)]
 pub mod test;
