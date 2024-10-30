@@ -1,21 +1,30 @@
-use utoipa::openapi::security::{OpenIdConnect, SecurityScheme};
-use utoipa::{Modify, OpenApi};
+use utoipa::{
+    openapi::security::{OpenIdConnect, SecurityScheme},
+    Modify, OpenApi,
+};
 
 #[derive(OpenApi)]
-#[openapi(paths(), components(), tags())]
+#[openapi(
+    info(
+        title = "Trustify",
+        description = "Software Supply-Chain Security API",
+    ),
+    nest(
+        (path = trustify_module_analysis::endpoints::CONTEXT_PATH, api = trustify_module_analysis::endpoints::ApiDoc),
+        (path = trustify_module_importer::endpoints::CONTEXT_PATH, api = trustify_module_importer::endpoints::ApiDoc),
+        (path = trustify_module_ingestor::endpoints::CONTEXT_PATH, api = trustify_module_ingestor::endpoints::ApiDoc),
+    ),
+    paths(),
+    components(),
+    tags()
+)]
 pub struct ApiDoc;
 
 pub fn openapi() -> utoipa::openapi::OpenApi {
     let mut doc = ApiDoc::openapi();
 
-    doc.info.title = "Trustify".to_string();
-    doc.info.description = Some("Software Supply-Chain Security API".to_string());
-    doc.info.version = env!("CARGO_PKG_VERSION").to_string();
-
     doc.merge(crate::endpoints::ApiDoc::openapi());
-    doc.merge(trustify_module_importer::endpoints::ApiDoc::openapi());
-    doc.merge(trustify_module_ingestor::endpoints::ApiDoc::openapi());
     doc.merge(trustify_module_fundamental::openapi());
-    doc.merge(trustify_module_analysis::endpoints::ApiDoc::openapi());
+
     doc
 }

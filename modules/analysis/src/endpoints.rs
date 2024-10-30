@@ -8,16 +8,20 @@ use std::str::FromStr;
 use trustify_common::{db::query::Query, db::Database, model::Paginated, purl::Purl};
 use utoipa::OpenApi;
 
+pub const CONTEXT_PATH: &str = "/api/v1/analysis";
+
 pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let analysis = AnalysisService::new(db);
 
-    config
-        .app_data(web::Data::new(analysis))
-        .service(search_component_root_components)
-        .service(get_component_root_components)
-        .service(analysis_status)
-        .service(search_component_deps)
-        .service(get_component_deps);
+    config.service(
+        web::scope(CONTEXT_PATH)
+            .app_data(web::Data::new(analysis))
+            .service(search_component_root_components)
+            .service(get_component_root_components)
+            .service(analysis_status)
+            .service(search_component_deps)
+            .service(get_component_deps),
+    );
 }
 
 #[derive(OpenApi)]
@@ -34,14 +38,13 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database) {
 pub struct ApiDoc;
 
 #[utoipa::path(
-    context_path = "/api",
     tag = "analysis",
     operation_id = "status",
     responses(
         (status = 200, description = "Analysis status.", body = AnalysisStatus),
     ),
 )]
-#[get("/v1/analysis/status")]
+#[get("/status")]
 pub async fn analysis_status(
     service: web::Data<AnalysisService>,
 ) -> actix_web::Result<impl Responder> {
@@ -49,7 +52,6 @@ pub async fn analysis_status(
 }
 
 #[utoipa::path(
-    context_path = "/api",
     tag = "analysis",
     operation_id = "searchComponentRootComponents",
     params(
@@ -60,7 +62,7 @@ pub async fn analysis_status(
         (status = 200, description = "Search component(s) and return their root components.", body = AncestorSummary),
     ),
 )]
-#[get("/v1/analysis/root-component")]
+#[get("/root-component")]
 pub async fn search_component_root_components(
     service: web::Data<AnalysisService>,
     web::Query(search): web::Query<Query>,
@@ -74,7 +76,6 @@ pub async fn search_component_root_components(
 }
 
 #[utoipa::path(
-    context_path= "/api",
     tag = "analysis",
     operation_id = "getComponentRootComponents",
     params(
@@ -84,7 +85,7 @@ pub async fn search_component_root_components(
         (status = 200, description = "Retrieve component(s) root components by name or pURL.", body = AncestorSummary),
     ),
 )]
-#[get("/v1/analysis/root-component/{key}")]
+#[get("/root-component/{key}")]
 pub async fn get_component_root_components(
     service: web::Data<AnalysisService>,
     key: web::Path<String>,
@@ -107,7 +108,6 @@ pub async fn get_component_root_components(
 }
 
 #[utoipa::path(
-    context_path = "/api",
     tag = "analysis",
     operation_id = "searchComponentDeps",
     params(
@@ -118,7 +118,7 @@ pub async fn get_component_root_components(
         (status = 200, description = "Search component(s) and return their deps.", body = DepSummary),
     ),
 )]
-#[get("/v1/analysis/dep")]
+#[get("/dep")]
 pub async fn search_component_deps(
     service: web::Data<AnalysisService>,
     web::Query(search): web::Query<Query>,
@@ -128,7 +128,6 @@ pub async fn search_component_deps(
 }
 
 #[utoipa::path(
-    context_path= "/api",
     tag = "analysis",
     operation_id = "getComponentDeps",
     params(
@@ -138,7 +137,7 @@ pub async fn search_component_deps(
         (status = 200, description = "Retrieve component(s) dep components by name or pURL.", body = DepSummary),
     ),
 )]
-#[get("/v1/analysis/dep/{key}")]
+#[get("/dep/{key}")]
 pub async fn get_component_deps(
     service: web::Data<AnalysisService>,
     key: web::Path<String>,

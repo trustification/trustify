@@ -13,11 +13,13 @@ use trustify_common::{
 };
 use utoipa::OpenApi;
 
+pub const CONTEXT_PATH: &str = "/v1/importer";
+
 /// mount the "importer" module
 pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
     svc.app_data(web::Data::new(ImporterService::new(db)));
     svc.service(
-        web::scope("/v1/importer")
+        web::scope(CONTEXT_PATH)
             .service(list)
             .service(create)
             .service(read)
@@ -48,7 +50,6 @@ pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
 pub struct ApiDoc;
 
 #[utoipa::path(
-    context_path = "/api/v1/importer",
     tag = "importer",
     operation_id = "listImporters",
     responses(
@@ -62,7 +63,6 @@ async fn list(service: web::Data<ImporterService>) -> Result<impl Responder, Err
 }
 
 #[utoipa::path(
-    context_path = "/api/v1/importer",
     tag = "importer",
     operation_id = "createImporter",
     request_body = ImporterConfiguration,
@@ -86,7 +86,6 @@ async fn create(
 }
 
 #[utoipa::path(
-    context_path = "/api/v1/importer",
     tag = "importer",
     operation_id = "getImporter",
     params(
@@ -119,7 +118,6 @@ async fn read(
 }
 
 #[utoipa::path(
-    context_path = "/api/v1/importer",
     tag = "importer",
     operation_id = "updateImporter",
     request_body = ImporterConfiguration,
@@ -154,7 +152,6 @@ async fn update(
 }
 
 #[utoipa::path(
-    context_path = "/api/v1/importer",
     tag = "importer",
     operation_id = "patchImporter",
     request_body(
@@ -196,7 +193,6 @@ async fn patch_json_merge(
 }
 
 #[utoipa::path(
-    context_path = "/api/v1/importer",
     tag = "importer",
     operation_id = "enableImporter",
     request_body = bool,
@@ -234,7 +230,6 @@ async fn set_enabled(
 }
 
 #[utoipa::path(
-    context_path = "/api/v1/importer",
     tag = "importer",
     operation_id = "forceRunImporter",
     request_body = bool,
@@ -266,7 +261,6 @@ async fn force(
 }
 
 #[utoipa::path(
-    context_path = "/api/v1/importer",
     tag = "importer",
     operation_id = "deleteImporter",
     params(
@@ -296,7 +290,6 @@ async fn delete(
 }
 
 #[utoipa::path(
-    context_path = "/api/v1/importer",
     tag = "importer",
     operation_id = "listImporterReports",
     responses(
