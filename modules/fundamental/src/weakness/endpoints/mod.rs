@@ -6,13 +6,17 @@ use trustify_common::{
 };
 use utoipa::OpenApi;
 
+pub const CONTEXT_PATH: &str = "/api/v1/weakness";
+
 pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let weakness_service = WeaknessService::new(db);
 
-    config
-        .app_data(web::Data::new(weakness_service))
-        .service(list_weaknesses)
-        .service(get_weakness);
+    config.service(
+        web::scope(CONTEXT_PATH)
+            .app_data(web::Data::new(weakness_service))
+            .service(list_weaknesses)
+            .service(get_weakness),
+    );
 }
 
 #[derive(OpenApi)]
@@ -22,7 +26,6 @@ pub struct ApiDoc;
 #[utoipa::path(
     tag = "weakness",
     operation_id = "listWeaknesses",
-    context_path = "/api",
     params(
         Query,
         Paginated,
@@ -31,7 +34,7 @@ pub struct ApiDoc;
         (status = 200, description = "Matching weaknesses", body = PaginatedResults<LicenseSummary>),
     ),
 )]
-#[get("/v1/weakness")]
+#[get("")]
 /// List weaknesses
 pub async fn list_weaknesses(
     state: web::Data<WeaknessService>,
@@ -44,12 +47,11 @@ pub async fn list_weaknesses(
 #[utoipa::path(
     tag = "weakness",
     operation_id = "getWeakness",
-    context_path = "/api",
     responses(
         (status = 200, description = "The weakness", body = LicenseSummary),
     ),
 )]
-#[get("/v1/weakness/{id}")]
+#[get("/{id}")]
 /// Retrieve weakness details
 pub async fn get_weakness(
     state: web::Data<WeaknessService>,

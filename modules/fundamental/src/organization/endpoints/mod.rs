@@ -13,12 +13,16 @@ use trustify_common::{
 use utoipa::OpenApi;
 use uuid::Uuid;
 
+pub const CONTEXT_PATH: &str = "/api/v1/organization";
+
 pub fn configure(config: &mut web::ServiceConfig, db: Database) {
     let service = OrganizationService::new(db);
-    config
-        .app_data(web::Data::new(service))
-        .service(all)
-        .service(get);
+    config.service(
+        web::scope(CONTEXT_PATH)
+            .app_data(web::Data::new(service))
+            .service(all)
+            .service(get),
+    );
 }
 
 #[derive(OpenApi)]
@@ -28,7 +32,6 @@ pub struct ApiDoc;
 #[utoipa::path(
     tag = "organization",
     operation_id = "listOrganizations",
-    context_path = "/api",
     params(
         Query,
         Paginated,
@@ -37,7 +40,7 @@ pub struct ApiDoc;
         (status = 200, description = "Matching organizations", body = OrganizationSummary),
     ),
 )]
-#[get("/v1/organization")]
+#[get("")]
 /// List organizations
 pub async fn all(
     state: web::Data<OrganizationService>,
@@ -50,7 +53,6 @@ pub async fn all(
 #[utoipa::path(
     tag = "organization",
     operation_id = "getOrganization",
-    context_path = "/api",
     params(
         ("id", Path, description = "Opaque ID of the organization")
     ),
@@ -59,7 +61,7 @@ pub async fn all(
         (status = 404, description = "Matching organization not found"),
     ),
 )]
-#[get("/v1/organization/{id}")]
+#[get("/{id}")]
 /// Retrieve organization details
 pub async fn get(
     state: web::Data<OrganizationService>,

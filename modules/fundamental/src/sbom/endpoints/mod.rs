@@ -40,24 +40,28 @@ use trustify_module_ingestor::{
 use trustify_module_storage::service::StorageBackend;
 use utoipa::OpenApi;
 
+pub const CONTEXT_PATH: &str = "/api/v1/sbom";
+
 pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: usize) {
     let sbom_service = SbomService::new(db);
 
-    config
-        .app_data(web::Data::new(sbom_service))
-        .app_data(web::Data::new(Config { upload_limit }))
-        .service(all)
-        .service(all_related)
-        .service(count_related)
-        .service(get)
-        .service(get_sbom_advisories)
-        .service(delete)
-        .service(packages)
-        .service(related)
-        .service(upload)
-        .service(download)
-        .service(label::set)
-        .service(label::update);
+    config.service(
+        web::scope(CONTEXT_PATH)
+            .app_data(web::Data::new(sbom_service))
+            .app_data(web::Data::new(Config { upload_limit }))
+            .service(all)
+            .service(all_related)
+            .service(count_related)
+            .service(get)
+            .service(get_sbom_advisories)
+            .service(delete)
+            .service(packages)
+            .service(related)
+            .service(upload)
+            .service(download)
+            .service(label::set)
+            .service(label::update),
+    );
 }
 
 #[derive(OpenApi)]
@@ -75,6 +79,7 @@ pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: us
         label::set,
         label::update,
     ),
+    components(schemas(crate::sbom::model::Which)),
     tags()
 )]
 pub struct ApiDoc;
@@ -82,7 +87,6 @@ pub struct ApiDoc;
 #[utoipa::path(
     tag = "sbom",
     operation_id = "listSboms",
-    context_path = "/api",
     params(
         Query,
         Paginated,
@@ -91,7 +95,7 @@ pub struct ApiDoc;
         (status = 200, description = "Matching SBOMs", body = PaginatedResults<SbomSummary>),
     ),
 )]
-#[get("/v1/sbom")]
+#[get("")]
 pub async fn all(
     fetch: web::Data<SbomService>,
     web::Query(search): web::Query<Query>,
@@ -163,7 +167,6 @@ impl TryFrom<AllRelatedQuery> for Uuid {
 #[utoipa::path(
     tag = "sbom",
     operation_id = "listRelatedSboms",
-    context_path = "/api",
     params(
         Query,
         Paginated,
@@ -173,7 +176,7 @@ impl TryFrom<AllRelatedQuery> for Uuid {
         (status = 200, description = "Matching SBOMs", body = PaginatedResults<SbomSummary>),
     ),
 )]
-#[get("/v1/sbom/by-package")]
+#[get("/by-package")]
 pub async fn all_related(
     sbom: web::Data<SbomService>,
     web::Query(search): web::Query<Query>,
@@ -198,7 +201,6 @@ pub async fn all_related(
 #[utoipa::path(
     tag = "sbom",
     operation_id = "countRelatedSboms",
-    context_path = "/api",
     params(
         AllRelatedQuery,
     ),
@@ -206,7 +208,7 @@ pub async fn all_related(
         (status = 200, description = "Number of matching SBOMs per package", body = Vec<i64>),
     ),
 )]
-#[get("/v1/sbom/count-by-package")]
+#[get("/count-by-package")]
 pub async fn count_related(
     sbom: web::Data<SbomService>,
     web::Json(ids): web::Json<Vec<AllRelatedQuery>>,
@@ -228,7 +230,6 @@ pub async fn count_related(
 #[utoipa::path(
     tag = "sbom",
     operation_id = "getSbom",
-    context_path = "/api",
     params(
         ("id" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
@@ -237,7 +238,7 @@ pub async fn count_related(
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
-#[get("/v1/sbom/{id}")]
+#[get("/{id}")]
 pub async fn get(
     fetcher: web::Data<SbomService>,
     authorizer: web::Data<Authorizer>,
@@ -256,7 +257,6 @@ pub async fn get(
 #[utoipa::path(
     tag = "sbom",
     operation_id = "getSbomAdvisories",
-    context_path = "/api",
     params(
         ("id" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
@@ -265,7 +265,7 @@ pub async fn get(
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
-#[get("/v1/sbom/{id}/advisory")]
+#[get("/{id}/advisory")]
 pub async fn get_sbom_advisories(
     fetcher: web::Data<SbomService>,
     authorizer: web::Data<Authorizer>,
@@ -285,7 +285,6 @@ pub async fn get_sbom_advisories(
 #[utoipa::path(
     tag = "sbom",
     operation_id = "deleteSbom",
-    context_path = "/api",
     params(
         ("id" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
@@ -294,7 +293,7 @@ pub async fn get_sbom_advisories(
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
-#[delete("/v1/sbom/{id}")]
+#[delete("/{id}")]
 pub async fn delete(
     service: web::Data<SbomService>,
     purl_service: web::Data<PurlService>,
@@ -324,7 +323,6 @@ pub async fn delete(
 /// Search for packages of an SBOM
 #[utoipa::path(
     tag = "sbom",
-    context_path = "/api",
     operation_id = "listPackages",
     params(
         ("id", Path, description = "ID of the SBOM to get packages for"),
@@ -335,7 +333,7 @@ pub async fn delete(
         (status = 200, description = "Packages", body = PaginatedResults<SbomPackage>),
     ),
 )]
-#[get("/v1/sbom/{id}/packages")]
+#[get("/{id}/packages")]
 pub async fn packages(
     fetch: web::Data<SbomService>,
     id: web::Path<Uuid>,
@@ -369,7 +367,6 @@ struct RelatedQuery {
 #[utoipa::path(
     tag = "sbom",
     operation_id = "listRelatedPackages",
-    context_path = "/api",
     params(
         ("id", Path, description = "ID of SBOM to search packages in"),
         RelatedQuery,
@@ -380,7 +377,7 @@ struct RelatedQuery {
         (status = 200, description = "Packages", body = PaginatedResults<SbomPackageRelation>),
     ),
 )]
-#[get("/v1/sbom/{id}/related")]
+#[get("/{id}/related")]
 pub async fn related(
     fetch: web::Data<SbomService>,
     id: web::Path<Uuid>,
@@ -424,7 +421,6 @@ struct UploadQuery {
 #[utoipa::path(
     tag = "sbom",
     operation_id = "uploadSbom",
-    context_path = "/api",
     request_body = Vec <u8>,
     params(
         UploadQuery,
@@ -435,7 +431,7 @@ struct UploadQuery {
         (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
-#[post("/v1/sbom")]
+#[post("")]
 /// Upload a new SBOM
 pub async fn upload(
     service: web::Data<IngestorService>,
@@ -453,7 +449,6 @@ pub async fn upload(
 #[utoipa::path(
     tag = "sbom",
     operation_id = "downloadSbom",
-    context_path = "/api",
     params(
         ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
     ),
@@ -462,7 +457,7 @@ pub async fn upload(
         (status = 404, description = "The document could not be found"),
     )
 )]
-#[get("/v1/sbom/{key}/download")]
+#[get("/{key}/download")]
 pub async fn download(
     ingestor: web::Data<IngestorService>,
     sbom: web::Data<SbomService>,
