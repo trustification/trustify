@@ -3,8 +3,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 use anyhow::{anyhow, Error, Result};
-
-use trustify_server::openapi::openapi;
+use trustify_server::openapi::create_openapi;
 
 #[derive(clap::Args, Debug)]
 pub struct Run {
@@ -39,11 +38,14 @@ impl Export {
             Some(name) => {
                 let name = name.to_string_lossy();
                 if name.is_empty() {
-                    Err(anyhow!("Invalid file name"))
-                } else if name.ends_with(".yml") || name.ends_with(".yaml") {
-                    openapi().to_yaml().map_err(Error::new)
+                    return Err(anyhow!("Invalid file name"));
+                }
+
+                let api = create_openapi().await?;
+                if name.ends_with(".yml") || name.ends_with(".yaml") {
+                    api.to_yaml().map_err(Error::new)
                 } else {
-                    openapi().to_pretty_json().map_err(Error::new)
+                    api.to_pretty_json().map_err(Error::new)
                 }
             }
             None => Err(anyhow!("Invalid file name")),

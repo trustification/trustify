@@ -24,7 +24,7 @@ use trustify_module_storage::service::fs::FileSystemBackend;
 
 #[allow(dead_code)]
 pub struct TrustifyContext {
-    pub db: common::db::Database,
+    pub db: db::Database,
     pub graph: Graph,
     pub storage: FileSystemBackend,
     pub ingestor: IngestorService,
@@ -36,7 +36,7 @@ pub struct TrustifyContext {
 static PEAK_ALLOC: PeakAlloc = PeakAlloc;
 
 impl TrustifyContext {
-    async fn new(db: common::db::Database, postgresql: impl Into<Option<PostgreSQL>>) -> Self {
+    async fn new(db: db::Database, postgresql: impl Into<Option<PostgreSQL>>) -> Self {
         let (storage, _) = FileSystemBackend::for_test()
             .await
             .expect("initializing the storage backend");

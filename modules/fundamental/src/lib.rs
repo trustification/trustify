@@ -3,7 +3,6 @@ pub mod ai;
 pub mod endpoints;
 pub mod error;
 pub mod license;
-pub mod openapi;
 pub mod organization;
 pub mod product;
 pub mod purl;
@@ -14,7 +13,6 @@ pub mod weakness;
 
 pub use endpoints::{configure, Config};
 pub use error::Error;
-pub use openapi::ApiDoc;
 
 #[cfg(test)]
 pub mod test;

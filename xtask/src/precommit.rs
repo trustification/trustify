@@ -16,7 +16,7 @@ impl Precommit {
         .run()
         .await?;
 
-        Openapi::default().run()?;
+        Openapi::default().run().await?;
 
         println!("Running: cargo clippy");
         if !Command::new("cargo")

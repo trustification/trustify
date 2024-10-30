@@ -13,7 +13,6 @@ use trustify_common::{
     id::IdError,
     model::{Paginated, PaginatedResults},
 };
-use utoipa::OpenApi;
 use uuid::Uuid;
 
 pub mod spdx;
@@ -33,19 +32,6 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
             .service(get_license_purls),
     );
 }
-
-#[derive(OpenApi)]
-#[openapi(
-    paths(
-        spdx::list_spdx_licenses,
-        spdx::get_spdx_license,
-        list_licenses,
-        get_license,
-        get_license_purls,
-    ),
-    tags()
-)]
-pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "license",

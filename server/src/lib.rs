@@ -327,16 +327,7 @@ impl InitData {
                 .metrics(metrics.registry().clone(), SERVICE_ID)
                 .authorizer(self.authorizer)
                 .swagger_ui_oidc(self.swagger_oidc.clone())
-                .openapi_info({
-                    let mut info = Info::new("Trustify", env!("CARGO_PKG_VERSION"));
-                    info.description = Some("Software Supply-Chain Security API".into());
-                    info.license = {
-                        let mut license = License::new("Apache License, Version 2.0");
-                        license.identifier = Some("Apache-2.0".into());
-                        Some(license)
-                    };
-                    info
-                })
+                .openapi_info(default_openapi_info())
                 .configure(move |svc| {
                     configure(
                         svc,
@@ -374,6 +365,17 @@ impl InitData {
 
         result
     }
+}
+
+pub fn default_openapi_info() -> Info {
+    let mut info = Info::new("Trustify", env!("CARGO_PKG_VERSION"));
+    info.description = Some("Software Supply-Chain Security API".into());
+    info.license = {
+        let mut license = License::new("Apache License, Version 2.0");
+        license.identifier = Some("Apache-2.0".into());
+        Some(license)
+    };
+    info
 }
 
 struct Config {

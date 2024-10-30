@@ -13,7 +13,6 @@ use trustify_common::{
     db::query::Query, db::Database, id::IdError, model::Paginated, model::PaginatedResults,
     purl::Purl,
 };
-use utoipa::OpenApi;
 
 mod base;
 mod r#type;
@@ -38,23 +37,6 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
             .service(all),
     );
 }
-
-#[derive(OpenApi)]
-#[openapi(
-    paths(
-        r#type::all_purl_types,
-        r#type::get_purl_type,
-        r#type::get_base_purl_of_type,
-        r#type::get_versioned_purl_of_type,
-        base::all_base_purls,
-        base::get_base_purl,
-        version::get_versioned_purl,
-        get,
-        all,
-    ),
-    tags()
-)]
-pub struct ApiDoc;
 
 #[utoipa::path(
     operation_id = "getPurl",

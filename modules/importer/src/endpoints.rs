@@ -11,7 +11,6 @@ use trustify_common::{
     db::Database,
     model::{Paginated, PaginatedResults, Revisioned},
 };
-use utoipa::OpenApi;
 
 pub const CONTEXT_PATH: &str = "/v1/importer";
 
@@ -31,23 +30,6 @@ pub fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, db: 
             .service(force),
     );
 }
-
-#[derive(OpenApi)]
-#[openapi(
-    paths(
-        create,
-        delete,
-        force,
-        get_reports,
-        list,
-        patch_json_merge,
-        read,
-        set_enabled,
-        update,
-    ),
-    tags()
-)]
-pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "importer",

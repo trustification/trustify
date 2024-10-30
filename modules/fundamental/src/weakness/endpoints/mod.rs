@@ -4,7 +4,6 @@ use trustify_common::{
     db::{query::Query, Database},
     model::{Paginated, PaginatedResults},
 };
-use utoipa::OpenApi;
 
 pub const CONTEXT_PATH: &str = "/v1/weakness";
 
@@ -18,10 +17,6 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
             .service(get_weakness),
     );
 }
-
-#[derive(OpenApi)]
-#[openapi(paths(list_weaknesses, get_weakness,), tags())]
-pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "weakness",

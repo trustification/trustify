@@ -13,7 +13,6 @@ use trustify_common::{
     db::{query::Query, Database},
     model::{Paginated, PaginatedResults},
 };
-use utoipa::OpenApi;
 use uuid::Uuid;
 
 pub const CONTEXT_PATH: &str = "/v1/product";
@@ -28,10 +27,6 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
             .service(get),
     );
 }
-
-#[derive(OpenApi)]
-#[openapi(paths(all, delete, get), tags())]
-pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "product",

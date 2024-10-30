@@ -38,7 +38,6 @@ use trustify_module_ingestor::{
     service::{Format, IngestorService},
 };
 use trustify_module_storage::service::StorageBackend;
-use utoipa::OpenApi;
 
 pub const CONTEXT_PATH: &str = "/v1/sbom";
 
@@ -69,26 +68,6 @@ pub fn configure(
             .service(label::update),
     );
 }
-
-#[derive(OpenApi)]
-#[openapi(
-    paths(
-        all,
-        all_related,
-        get,
-        get_sbom_advisories,
-        delete,
-        packages,
-        related,
-        upload,
-        download,
-        label::set,
-        label::update,
-    ),
-    components(schemas(crate::sbom::model::Which)),
-    tags()
-)]
-pub struct ApiDoc;
 
 #[utoipa::path(
     tag = "sbom",
@@ -363,6 +342,7 @@ struct RelatedQuery {
     pub reference: Option<String>,
     /// Which side the reference should be on
     #[serde(default)]
+    #[param(inline)]
     pub which: Which,
     /// Optional relationship filter
     #[serde(default)]
