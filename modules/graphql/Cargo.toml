@@ -15,6 +15,7 @@ async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 actix-web = { workspace = true }
 uuid = { workspace = true }
+utoipa-actix-web = { workspace = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }
@@ -25,3 +26,4 @@ trustify-test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 tokio = { workspace = true, features = ["full"] }
 tokio-util = { workspace = true }
+

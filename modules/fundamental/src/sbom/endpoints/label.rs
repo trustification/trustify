@@ -7,7 +7,6 @@ use trustify_entity::labels::Labels;
 #[utoipa::path(
     tag = "sbom",
     operation_id = "patchSbomLabels",
-    context_path = "/api",
     request_body = Labels,
     params(
         ("id" = Id, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
@@ -17,7 +16,7 @@ use trustify_entity::labels::Labels;
         (status = 404, description = "The SBOM could not be found"),
     ),
 )]
-#[patch("/v1/sbom/{id}/label")]
+#[patch("/{id}/label")]
 pub async fn update(
     sbom: web::Data<SbomService>,
     id: web::Path<Id>,
@@ -38,7 +37,6 @@ pub async fn update(
 #[utoipa::path(
     tag = "sbom",
     operation_id = "updateSbomLabels",
-    context_path = "/api",
     request_body = Labels,
     params(
         ("id" = Id, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
@@ -48,7 +46,7 @@ pub async fn update(
         (status = 404, description = "The SBOM could not be found"),
     ),
 )]
-#[put("/v1/sbom/{id}/label")]
+#[put("/{id}/label")]
 pub async fn set(
     sbom: web::Data<SbomService>,
     id: web::Path<Id>,

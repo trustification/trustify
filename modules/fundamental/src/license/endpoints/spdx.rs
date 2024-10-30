@@ -10,7 +10,6 @@ use trustify_common::{
 #[utoipa::path(
     tag = "spdx license",
     operation_id = "listSpdxLicenses",
-    context_path = "/api",
     params(
         Query,
         Paginated,
@@ -19,7 +18,7 @@ use trustify_common::{
         (status = 200, description = "Matching licenses", body = PaginatedResults<SpdxLicenseSummary>),
     ),
 )]
-#[get("/v1/license/spdx/license")]
+#[get("/spdx/license")]
 /// List SPDX licenses
 pub async fn list_spdx_licenses(
     state: web::Data<LicenseService>,
@@ -34,12 +33,11 @@ pub async fn list_spdx_licenses(
 #[utoipa::path(
     tag = "spdx license",
     operation_id = "getSpdxLicense",
-    context_path = "/api",
     responses(
         (status = 200, description = "SPDX license details", body = SpdxLicenseDetails),
     ),
 )]
-#[get("/v1/license/spdx/license/{id}")]
+#[get("/spdx/license/{id}")]
 /// Get SPDX license details
 pub async fn get_spdx_license(
     state: web::Data<LicenseService>,

@@ -12,19 +12,18 @@ async fn index_graphiql() -> Result<HttpResponse> {
         .body(GraphiQLSource::build().endpoint("/graphql").finish()))
 }
 
-pub fn configure(svc: &mut web::ServiceConfig, db: Database) {
+pub fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let schema = Schema::build(RootQuery::default(), EmptyMutation, EmptySubscription)
         .data::<Arc<Graph>>(Arc::new(Graph::new(db.clone())))
         .data::<Arc<Database>>(Arc::new(db.clone()))
         .finish();
 
-    svc.service(
-        web::resource("/")
-            .guard(guard::Post())
-            .to(GraphQL::new(schema)),
+    svc.route(
+        "/",
+        web::route().guard(guard::Post()).to(GraphQL::new(schema)),
     );
 }
 
-pub fn configure_graphiql(svc: &mut web::ServiceConfig) {
-    svc.service(web::resource("/").guard(guard::Get()).to(index_graphiql));
+pub fn configure_graphiql(svc: &mut utoipa_actix_web::service_config::ServiceConfig) {
+    svc.route("/", web::route().guard(guard::Get()).to(index_graphiql));
 }

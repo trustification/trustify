@@ -3,16 +3,16 @@ use crate::{
     service::{Error, IngestorService},
 };
 use actix_web::{post, web, HttpResponse, Responder};
-use trustify_common::db::Database;
+use trustify_common::{db::Database, model::BinaryData};
 use trustify_entity::labels::Labels;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use utoipa::{IntoParams, OpenApi};
 
-pub const CONTEXT_PATH: &str = "/api/v1/ingestor";
+pub const CONTEXT_PATH: &str = "/v1/ingestor";
 
 /// mount the "ingestor" module
 pub fn configure(
-    svc: &mut web::ServiceConfig,
+    svc: &mut utoipa_actix_web::service_config::ServiceConfig,
     config: Config,
     db: Database,
     storage: impl Into<DispatchBackend>,
@@ -21,7 +21,7 @@ pub fn configure(
 
     svc.app_data(web::Data::new(ingestor_service))
         .app_data(web::Data::new(config))
-        .service(web::scope(CONTEXT_PATH).service(upload_dataset));
+        .service(utoipa_actix_web::scope(CONTEXT_PATH).service(upload_dataset));
 }
 
 #[derive(OpenApi)]
@@ -48,7 +48,7 @@ struct UploadParams {
 #[utoipa::path(
     tag = "dataset",
     operation_id = "uploadDataset",
-    request_body = Vec<u8>,
+    request_body = inline(BinaryData),
     params(UploadParams),
     responses(
         (status = 201, description = "Uploaded the dataset"),

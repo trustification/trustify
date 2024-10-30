@@ -43,6 +43,7 @@ tracing = { workspace = true }
 url = { workspace = true, features = ["serde"] }
 urlencoding = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras", "time", "url"] }
+utoipa-actix-web = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 walkdir = { workspace = true }
 walker-common = { workspace = true }

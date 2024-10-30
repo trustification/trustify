@@ -3,9 +3,11 @@ mod label;
 #[cfg(test)]
 mod test;
 
-use crate::advisory::model::AdvisorySummary;
 use crate::{
-    advisory::{model::AdvisoryDetails, service::AdvisoryService},
+    advisory::{
+        model::{AdvisoryDetails, AdvisorySummary},
+        service::AdvisoryService,
+    },
     endpoints::Deprecation,
     purl::service::PurlService,
     Error::{self, Internal},
@@ -18,21 +20,27 @@ use trustify_common::{
     db::{query::Query, Database},
     decompress::decompress_async,
     id::Id,
-    model::{Paginated, PaginatedResults},
+    model::{BinaryData, Paginated, PaginatedResults},
 };
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::{IntoParams, OpenApi};
 
-pub const CONTEXT_PATH: &str = "/api/v1/advisory";
+pub const CONTEXT_PATH: &str = "/v1/advisory";
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database, upload_limit: usize) {
-    let advisory_service = AdvisoryService::new(db);
+pub fn configure(
+    config: &mut utoipa_actix_web::service_config::ServiceConfig,
+    db: Database,
+    upload_limit: usize,
+) {
+    let advisory_service = AdvisoryService::new(db.clone());
+    let purl_service = PurlService::new(db);
 
     config.service(
-        web::scope(CONTEXT_PATH)
+        utoipa_actix_web::scope(CONTEXT_PATH)
             .app_data(web::Data::new(advisory_service))
+            .app_data(web::Data::new(purl_service))
             .app_data(web::Data::new(Config { upload_limit }))
             .service(all)
             .service(get)
@@ -63,7 +71,7 @@ pub struct ApiDoc;
         (status = 200, description = "Matching vulnerabilities", body = PaginatedResults<AdvisorySummary>),
     ),
 )]
-#[get("/")]
+#[get("")]
 /// List advisories
 pub async fn all(
     state: web::Data<AdvisoryService>,
@@ -158,14 +166,14 @@ struct UploadParams {
 #[utoipa::path(
     tag = "advisory",
     operation_id = "uploadAdvisory",
-    request_body = Vec<u8>,
+    request_body = inline(BinaryData),
     params(UploadParams),
     responses(
         (status = 201, description = "Upload a file"),
         (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
-#[post("/")]
+#[post("")]
 /// Upload a new advisory
 pub async fn upload(
     service: web::Data<IngestorService>,
@@ -189,7 +197,7 @@ pub async fn upload(
         ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
     ),
     responses(
-        (status = 200, description = "Download a an advisory", body = Vec<u8>),
+        (status = 200, description = "Download a an advisory", body = inline(BinaryData)),
         (status = 404, description = "The document could not be found"),
     )
 )]

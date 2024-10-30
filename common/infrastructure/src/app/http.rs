@@ -3,9 +3,10 @@ use crate::endpoint::Endpoint;
 use crate::tracing::Tracing;
 use actix_cors::Cors;
 use actix_tls::{accept::openssl::reexports::SslAcceptor, connect::openssl::reexports::SslMethod};
+use actix_web::dev::{ServiceFactory, ServiceRequest};
 use actix_web::{
-    web::{self, JsonConfig, ServiceConfig},
-    HttpServer,
+    web::{self, JsonConfig},
+    App, HttpResponse, HttpServer,
 };
 use actix_web_opentelemetry::RequestTracing;
 use actix_web_prom::{PrometheusMetrics, PrometheusMetricsBuilder};
@@ -21,8 +22,12 @@ use std::ops::Deref;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::Arc;
+use trustify_auth::swagger_ui::{swagger_ui_with_auth, SwaggerUiOidc};
 use trustify_auth::{authenticator::Authenticator, authorizer::Authorizer};
 use trustify_common::model::BinaryByteSize;
+use utoipa::openapi::Info;
+use utoipa_actix_web::AppExt;
+use utoipa_rapidoc::RapiDoc;
 
 const DEFAULT_ADDR: SocketAddr = SocketAddr::new(IpAddr::V6(Ipv6Addr::LOCALHOST), 8080);
 
@@ -250,10 +255,15 @@ where
     }
 }
 
-pub type ConfiguratorFn = dyn Fn(&mut ServiceConfig) + Send + Sync;
+pub type ConfiguratorFn =
+    dyn Fn(&mut utoipa_actix_web::service_config::ServiceConfig) + Send + Sync;
+
+pub type PostConfiguratorFn = dyn Fn(&mut web::ServiceConfig) + Send + Sync;
 
 pub struct HttpServerBuilder {
     configurator: Option<Arc<ConfiguratorFn>>,
+    post_configurator: Option<Arc<PostConfiguratorFn>>,
+
     bind: Bind,
     tls: Option<TlsConfiguration>,
 
@@ -261,11 +271,14 @@ pub struct HttpServerBuilder {
     cors_factory: Option<Arc<dyn Fn() -> Cors + Send + Sync>>,
     authenticator: Option<Arc<Authenticator>>,
     authorizer: Option<Authorizer>,
+    swagger_ui_oidc: Option<Arc<SwaggerUiOidc>>,
 
     workers: usize,
     json_limit: Option<usize>,
     request_limit: Option<usize>,
     tracing: Tracing,
+
+    openapi_info: Option<Info>,
 }
 
 pub struct TlsConfiguration {
@@ -290,16 +303,19 @@ impl HttpServerBuilder {
     pub fn new() -> Self {
         Self {
             configurator: None,
+            post_configurator: None,
             bind: Bind::Address(DEFAULT_ADDR),
             tls: None,
             metrics_factory: None,
             cors_factory: Some(Arc::new(Cors::permissive)),
             authenticator: None,
             authorizer: None,
+            swagger_ui_oidc: None,
             workers: 0,
             json_limit: None,
             request_limit: None,
             tracing: Tracing::default(),
+            openapi_info: None,
         }
     }
 
@@ -329,16 +345,34 @@ impl HttpServerBuilder {
         self
     }
 
+    pub fn swagger_ui_oidc(mut self, swagger_ui_oidc: Option<Arc<SwaggerUiOidc>>) -> Self {
+        self.swagger_ui_oidc = swagger_ui_oidc;
+        self
+    }
+
     pub fn tracing(mut self, tracing: Tracing) -> Self {
         self.tracing = tracing;
         self
     }
 
+    pub fn openapi_info(mut self, openapi_info: Info) -> Self {
+        self.openapi_info = Some(openapi_info);
+        self
+    }
+
     pub fn configure<F>(mut self, configurator: F) -> Self
     where
-        F: Fn(&mut ServiceConfig) + Send + Sync + 'static,
+        F: Fn(&mut utoipa_actix_web::service_config::ServiceConfig) + Send + Sync + 'static,
     {
         self.configurator = Some(Arc::new(configurator));
+        self
+    }
+
+    pub fn post_configure<F>(mut self, post_configurator: F) -> Self
+    where
+        F: Fn(&mut web::ServiceConfig) + Send + Sync + 'static,
+    {
+        self.post_configurator = Some(Arc::new(post_configurator));
         self
     }
 
@@ -362,8 +396,7 @@ impl HttpServerBuilder {
             + 'static,
     {
         self.metrics_factory = Some(Arc::new(move || {
-            (metrics_factory)()
-                .map_err(|err| anyhow!("Failed to create prometheus registry: {err}"))
+            metrics_factory().map_err(|err| anyhow!("Failed to create prometheus registry: {err}"))
         }));
         self
     }
@@ -402,7 +435,7 @@ impl HttpServerBuilder {
         let metrics = self
             .metrics_factory
             .as_ref()
-            .map(|factory| (factory)())
+            .map(|factory| factory())
             .transpose()?;
 
         if let Some(limit) = self.request_limit {
@@ -413,9 +446,7 @@ impl HttpServerBuilder {
         }
 
         let mut http = HttpServer::new(move || {
-            let config = self.configurator.clone();
-
-            let cors = self.cors_factory.as_ref().map(|factory| (factory)());
+            let cors = self.cors_factory.as_ref().map(|factory| factory());
 
             let mut json = JsonConfig::default();
             if let Some(limit) = self.json_limit {
@@ -444,7 +475,9 @@ impl HttpServerBuilder {
                     .unwrap_or_else(|| Authorizer::new(None)),
                 logger,
                 tracing_logger,
-            });
+            })
+            .app_data(json)
+            .into_utoipa_app();
 
             // configure payload limit
 
@@ -452,9 +485,21 @@ impl HttpServerBuilder {
                 app = app.app_data(web::PayloadConfig::new(limit));
             }
 
-            app.app_data(json).configure(|svc| {
-                if let Some(config) = config {
+            // configure application
+
+            let app = app.configure(|svc| {
+                if let Some(config) = &self.configurator {
                     config(svc);
+                }
+            });
+
+            let app = app.apply_openapi(self.openapi_info.clone(), self.swagger_ui_oidc.clone());
+
+            // apply post-configuration, required mostly for "catch call" handlers
+
+            app.configure(|svc| {
+                if let Some(post_config) = &self.post_configurator {
+                    post_config(svc);
                 }
             })
         });
@@ -499,6 +544,60 @@ impl HttpServerBuilder {
         }
 
         Ok(http.run().await?)
+    }
+}
+
+pub trait ApplyOpenApi<T> {
+    /// Turn a [`UtoipaApp`] into a [`App`] by applying the API spec
+    fn apply_openapi(
+        self,
+        openapi_info: Option<Info>,
+        swagger_ui_oidc: Option<Arc<SwaggerUiOidc>>,
+    ) -> App<T>;
+}
+
+impl<T> ApplyOpenApi<T> for utoipa_actix_web::UtoipaApp<T>
+where
+    T: ServiceFactory<ServiceRequest, Config = (), Error = actix_web::Error, InitError = ()>,
+{
+    fn apply_openapi(
+        self,
+        openapi_info: Option<Info>,
+        swagger_ui_oidc: Option<Arc<SwaggerUiOidc>>,
+    ) -> App<T> {
+        let (app, mut openapi) = self.split_for_parts();
+        if let Some(info) = openapi_info {
+            openapi.info = info;
+        }
+
+        // register OpenAPI UIs
+
+        let app = app
+            .service({
+                if let Some(oidc) = &swagger_ui_oidc {
+                    oidc.apply_to_schema(&mut openapi);
+                }
+                RapiDoc::with_openapi("/openapi.json", openapi.clone()).path("/openapi/")
+            })
+            .service(web::redirect("/openapi", "/openapi/"))
+            .route(
+                "/openapi/oauth-receiver.html",
+                web::get().to(|| async {
+                    HttpResponse::Ok().content_type(mime::TEXT_HTML).body(
+                        r#"<!doctype html>
+<head>
+  <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
+</head>
+
+<body>
+  <oauth-receiver> </oauth-receiver>
+</body>"#,
+                    )
+                }),
+            );
+
+        app.service(swagger_ui_with_auth(openapi, swagger_ui_oidc))
+            .service(web::redirect("/swagger-ui", "/swagger-ui/"))
     }
 }
 

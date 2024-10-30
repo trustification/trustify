@@ -10,12 +10,12 @@ use itertools::Itertools;
 use trustify_common::db::Database;
 use utoipa::OpenApi;
 
-pub const CONTEXT_PATH: &str = "/api/v1/ai";
+pub const CONTEXT_PATH: &str = "/v1/ai";
 
-pub fn configure(config: &mut web::ServiceConfig, db: Database) {
+pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let service = AiService::new(db.clone());
     config.service(
-        web::scope(CONTEXT_PATH)
+        utoipa_actix_web::scope(CONTEXT_PATH)
             .app_data(web::Data::new(service))
             .service(completions)
             .service(flags)

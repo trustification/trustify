@@ -5,13 +5,14 @@ use super::model::{
 };
 use actix_web::{
     http::{header, StatusCode},
-    test as actix, web, App,
+    test as actix, App,
 };
 use serde_json::json;
 use std::time::Duration;
 use test_context::test_context;
 use test_log::test;
 use trustify_test_context::TrustifyContext;
+use utoipa_actix_web::AppExt;
 
 fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
     ImporterConfiguration::Sbom(SbomImporter {
@@ -54,7 +55,12 @@ async fn test_default(ctx: TrustifyContext) {
     let db = ctx.db;
     let app = actix::init_service(
         App::new()
-            .service(web::scope("/api").configure(|svc| super::endpoints::configure(svc, db))),
+            .into_utoipa_app()
+            .service(
+                utoipa_actix_web::scope("/api")
+                    .configure(|svc| super::endpoints::configure(svc, db)),
+            )
+            .into_app(),
     )
     .await;
 
@@ -142,7 +148,12 @@ async fn test_oplock(ctx: TrustifyContext) {
     let db = ctx.db;
     let app = actix::init_service(
         App::new()
-            .service(web::scope("/api").configure(|svc| super::endpoints::configure(svc, db))),
+            .into_utoipa_app()
+            .service(
+                utoipa_actix_web::scope("/api")
+                    .configure(|svc| super::endpoints::configure(svc, db)),
+            )
+            .into_app(),
     )
     .await;
 
@@ -293,7 +304,12 @@ async fn test_patch(ctx: TrustifyContext) {
     let db = ctx.db;
     let app = actix::init_service(
         App::new()
-            .service(web::scope("/api").configure(|svc| super::endpoints::configure(svc, db))),
+            .into_utoipa_app()
+            .service(
+                utoipa_actix_web::scope("/api")
+                    .configure(|svc| super::endpoints::configure(svc, db)),
+            )
+            .into_app(),
     )
     .await;
 

@@ -1,15 +1,15 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: Trustify
   description: Software Supply-Chain Security API
   license:
-    name: Apache-2.0
+    name: Apache License, Version 2.0
+    identifier: Apache-2.0
   version: 0.1.0-alpha.20
 paths:
   /.well-known/trustify:
     get:
-      tags:
-      - crate
+      tags: []
       operationId: info
       responses:
         '200':
@@ -78,7 +78,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedAdvisorySummary'
+                $ref: '#/components/schemas/PaginatedResults_AdvisorySummary'
     post:
       tags:
       - advisory
@@ -90,8 +90,9 @@ paths:
         description: Optional issuer if it cannot be determined from advisory contents.
         required: false
         schema:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
       - name: labels
         in: query
         description: |-
@@ -103,7 +104,7 @@ paths:
           $ref: '#/components/schemas/Labels'
       requestBody:
         content:
-          application/octet-stream:
+          application/json:
             schema:
               type: string
               format: binary
@@ -220,7 +221,7 @@ paths:
         '200':
           description: Download a an advisory
           content:
-            application/octet-stream:
+            application/json:
               schema:
                 type: string
                 format: binary
@@ -446,34 +447,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AnalysisStatus'
-  /api/v1/dataset:
-    post:
-      tags:
-      - advisory
-      summary: Upload a new dataset
-      operationId: uploadDataset
-      parameters:
-      - name: labels
-        in: query
-        description: |-
-          Optional labels.
-
-          Only use keys with a prefix of `labels.`
-        required: true
-        schema:
-          $ref: '#/components/schemas/Labels'
-      requestBody:
-        content:
-          application/octet-stream:
-            schema:
-              type: string
-              format: binary
-        required: true
-      responses:
-        '201':
-          description: Uploaded the dataset
-        '400':
-          description: The file could not be parsed as an dataset
   /api/v1/importer:
     get:
       tags:
@@ -513,9 +486,42 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RevisionedImporter'
+                $ref: '#/components/schemas/Revisioned_Importer'
         '404':
           description: An importer with that name could not be found
+    put:
+      tags:
+      - importer
+      summary: Update an existing importer configuration
+      operationId: updateImporter
+      parameters:
+      - name: name
+        in: path
+        description: The name of the importer
+        required: true
+        schema:
+          type: string
+      - name: if-match
+        in: header
+        description: The revision to update
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImporterConfiguration'
+        required: true
+      responses:
+        '201':
+          description: Updated the importer configuration
+        '409':
+          description: An importer with that name does not exist
+        '412':
+          description: The provided if-match header did not match the stored revision
     post:
       tags:
       - importer
@@ -539,38 +545,6 @@ paths:
           description: Created a new importer configuration
         '409':
           description: An importer with that name already exists
-    put:
-      tags:
-      - importer
-      summary: Update an existing importer configuration
-      operationId: updateImporter
-      parameters:
-      - name: name
-        in: path
-        description: The name of the importer
-        required: true
-        schema:
-          type: string
-      - name: if-match
-        in: header
-        description: The revision to update
-        required: false
-        schema:
-          type: string
-          nullable: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ImporterConfiguration'
-        required: true
-      responses:
-        '201':
-          description: Updated the importer configuration
-        '409':
-          description: An importer with that name does not exist
-        '412':
-          description: The provided if-match header did not match the stored revision
     delete:
       tags:
       - importer
@@ -588,8 +562,9 @@ paths:
         description: The revision to delete
         required: false
         schema:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
       responses:
         '201':
           description: Delete the importer configuration
@@ -610,8 +585,9 @@ paths:
         description: The revision to update
         required: false
         schema:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
       requestBody:
         content:
           application/merge-patch+json:
@@ -642,8 +618,9 @@ paths:
         description: The revision to update
         required: false
         schema:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
       requestBody:
         content:
           text/plain:
@@ -675,8 +652,9 @@ paths:
         description: The revision to update
         required: false
         schema:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
       requestBody:
         content:
           text/plain:
@@ -708,7 +686,35 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedImporterReport'
+                $ref: '#/components/schemas/PaginatedResults_ImporterReport'
+  /api/v1/ingestor/dataset:
+    post:
+      tags:
+      - dataset
+      summary: Upload a new dataset
+      operationId: uploadDataset
+      parameters:
+      - name: labels
+        in: query
+        description: |-
+          Optional labels.
+
+          Only use keys with a prefix of `labels.`
+        required: true
+        schema:
+          $ref: '#/components/schemas/Labels'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              format: binary
+        required: true
+      responses:
+        '201':
+          description: Uploaded the dataset
+        '400':
+          description: The file could not be parsed as an dataset
   /api/v1/license:
     get:
       tags:
@@ -754,7 +760,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedLicenseSummary'
+                $ref: '#/components/schemas/PaginatedResults_LicenseSummary'
   /api/v1/license/spdx/license:
     get:
       tags:
@@ -800,7 +806,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedSpdxLicenseSummary'
+                $ref: '#/components/schemas/PaginatedResults_SpdxLicenseSummary'
   /api/v1/license/spdx/license/{id}:
     get:
       tags:
@@ -936,7 +942,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedOrganizationSummary'
+                $ref: '#/components/schemas/OrganizationSummary'
   /api/v1/organization/{id}:
     get:
       tags:
@@ -1004,7 +1010,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedProductSummary'
+                $ref: '#/components/schemas/PaginatedResults_ProductSummary'
   /api/v1/product/{id}:
     get:
       tags:
@@ -1093,7 +1099,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedPurlSummary'
+                $ref: '#/components/schemas/PaginatedResults_PurlSummary'
   /api/v1/purl/base:
     get:
       tags:
@@ -1139,7 +1145,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedBasePurlSummary'
+                $ref: '#/components/schemas/PaginatedResults_BasePurlSummary'
   /api/v1/purl/base/{key}:
     get:
       tags:
@@ -1226,7 +1232,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedBasePurlSummary'
+                $ref: '#/components/schemas/PaginatedResults_BasePurlSummary'
   /api/v1/purl/type/{type}/{namespace_and_name}:
     get:
       tags:
@@ -1377,7 +1383,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedSbomSummary'
+                $ref: '#/components/schemas/PaginatedResults_SbomSummary'
     post:
       tags:
       - sbom
@@ -1403,8 +1409,11 @@ paths:
         content:
           application/octet-stream:
             schema:
-              type: string
-              format: binary
+              type: array
+              items:
+                type: integer
+                format: int32
+                minimum: 0
         required: true
       responses:
         '201':
@@ -1462,24 +1471,25 @@ paths:
         description: Find by PURL
         required: false
         schema:
-          allOf:
+          oneOf:
+          - type: 'null'
           - $ref: '#/components/schemas/Purl'
-          nullable: true
       - name: id
         in: query
         description: Find by an ID of a package
         required: false
         schema:
-          type: string
+          type:
+          - string
+          - 'null'
           format: uuid
-          nullable: true
       responses:
         '200':
           description: Matching SBOMs
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedSbomSummary'
+                $ref: '#/components/schemas/PaginatedResults_SbomSummary'
   /api/v1/sbom/{id}:
     get:
       tags:
@@ -1643,7 +1653,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedSbomPackage'
+                $ref: '#/components/schemas/PaginatedResults_SbomPackage'
   /api/v1/sbom/{id}/related:
     get:
       tags:
@@ -1663,8 +1673,9 @@ paths:
         description: The Package to use as reference
         required: false
         schema:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
       - name: which
         in: query
         description: Which side the reference should be on
@@ -1676,9 +1687,9 @@ paths:
         description: Optional relationship filter
         required: false
         schema:
-          allOf:
+          oneOf:
+          - type: 'null'
           - $ref: '#/components/schemas/Relationship'
-          nullable: true
       - name: q
         in: query
         required: false
@@ -1717,7 +1728,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedSbomPackageRelation'
+                $ref: '#/components/schemas/PaginatedResults_SbomPackageRelation'
   /api/v1/sbom/{key}/download:
     get:
       tags:
@@ -1734,7 +1745,7 @@ paths:
         '200':
           description: Download a an SBOM
           content:
-            application/octet-stream:
+            application/json:
               schema:
                 type: string
                 format: binary
@@ -1785,7 +1796,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedVulnerabilitySummary'
+                $ref: '#/components/schemas/PaginatedResults_VulnerabilitySummary'
   /api/v1/vulnerability/{id}:
     get:
       tags:
@@ -1874,7 +1885,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedLicenseSummary'
+                $ref: '#/components/schemas/PaginatedResults_LicenseSummary'
   /api/v1/weakness/{id}:
     get:
       tags:
@@ -1899,9 +1910,9 @@ components:
     AdvisoryDetails:
       allOf:
       - $ref: '#/components/schemas/AdvisoryHead'
-      - allOf:
+      - oneOf:
+        - type: 'null'
         - $ref: '#/components/schemas/SourceDocument'
-        nullable: true
       - type: object
         required:
         - vulnerabilities
@@ -1909,14 +1920,16 @@ components:
         - average_score
         properties:
           average_score:
-            type: number
+            type:
+            - number
+            - 'null'
             format: double
             description: Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
-            nullable: true
           average_severity:
-            allOf:
+            oneOf:
+            - type: 'null'
             - $ref: '#/components/schemas/Severity'
-            nullable: true
+              description: Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
           vulnerabilities:
             type: array
             items:
@@ -1937,39 +1950,48 @@ components:
           type: string
           description: The identifier of the advisory, as assigned by the issuing organization.
         issuer:
-          allOf:
+          oneOf:
+          - type: 'null'
           - $ref: '#/components/schemas/OrganizationSummary'
-          nullable: true
+            description: |-
+              The issuer of the advisory, if known. If no issuer is able to be
+              determined, this field will not be included in a response.
         labels:
           $ref: '#/components/schemas/Labels'
+          description: Informational labels attached by the system or users to this advisory.
         modified:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: The date (in RFC3339 format) of when the advisory was last modified, if any.
-          nullable: true
         published:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: The date (in RFC3339 format) of when the advisory was published, if any.
-          nullable: true
         title:
-          type: string
+          type:
+          - string
+          - 'null'
           description: The title of the advisory as assigned by the issuing organization.
-          nullable: true
         uuid:
           type: string
           description: The opaque UUID of the advisory.
         withdrawn:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: The date (in RFC3339 format) of when the advisory was withdrawn, if any.
-          nullable: true
     AdvisorySummary:
       allOf:
       - $ref: '#/components/schemas/AdvisoryHead'
-      - allOf:
+      - oneOf:
+        - type: 'null'
         - $ref: '#/components/schemas/SourceDocument'
-        nullable: true
+          description: Information pertaning to the underlying source document, if any.
       - type: object
         required:
         - average_severity
@@ -1977,30 +1999,21 @@ components:
         - vulnerabilities
         properties:
           average_score:
-            type: number
+            type:
+            - number
+            - 'null'
             format: double
             description: Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
-            nullable: true
           average_severity:
-            type: string
+            type:
+            - string
+            - 'null'
             description: Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
-            nullable: true
           vulnerabilities:
             type: array
             items:
               $ref: '#/components/schemas/AdvisoryVulnerabilityHead'
             description: Vulnerabilities addressed within this advisory.
-    AdvisoryVulnerabilityAssertions:
-      type: object
-      required:
-      - assertions
-      properties:
-        assertions:
-          type: object
-          additionalProperties:
-            type: array
-            items:
-              $ref: '#/components/schemas/Assertion'
     AdvisoryVulnerabilityHead:
       allOf:
       - $ref: '#/components/schemas/VulnerabilityHead'
@@ -2017,6 +2030,16 @@ components:
               the particular vulnerability.
           severity:
             $ref: '#/components/schemas/Severity'
+            description: |-
+              The English-language word description of the severity of the given
+              vulnerability, as asserted by the advisory, using the CVSS bucketing
+              ranges.
+
+              Critical: 9.0–10.0
+              High: 7.0–8.9
+              Medium: 4.0–6.9
+              Low: 0.1–3.9
+              None: 0
     AdvisoryVulnerabilitySummary:
       allOf:
       - $ref: '#/components/schemas/AdvisoryVulnerabilityHead'
@@ -2112,44 +2135,6 @@ components:
           type: string
         sbom_id:
           type: string
-    Assertion:
-      oneOf:
-      - type: object
-        required:
-        - affected
-        properties:
-          affected:
-            type: object
-            required:
-            - start_version
-            - end_version
-            properties:
-              end_version:
-                type: string
-              start_version:
-                type: string
-      - type: object
-        required:
-        - not_affected
-        properties:
-          not_affected:
-            type: object
-            required:
-            - version
-            properties:
-              version:
-                type: string
-      - type: object
-        required:
-        - fixed
-        properties:
-          fixed:
-            type: object
-            required:
-            - version
-            properties:
-              version:
-                type: string
     BasePurlDetails:
       allOf:
       - $ref: '#/components/schemas/BasePurlHead'
@@ -2169,6 +2154,7 @@ components:
       properties:
         purl:
           $ref: '#/components/schemas/Purl'
+          description: The actual base PURL
         uuid:
           type: string
           format: uuid
@@ -2188,8 +2174,9 @@ components:
         content:
           type: string
         internal_state:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
         message_type:
           $ref: '#/components/schemas/MessageType'
     ChatState:
@@ -2245,14 +2232,16 @@ components:
       - period
       properties:
         description:
-          type: string
+          type:
+          - string
+          - 'null'
           description: A description for users.
-          nullable: true
         disabled:
           type: boolean
           description: A flag to disable the importer, without deleting it.
         labels:
           $ref: '#/components/schemas/Labels'
+          description: Labels which will be applied to the ingested documents.
         period:
           type: string
           description: The period the importer should be run.
@@ -2264,8 +2253,9 @@ components:
         - source
         properties:
           fetchRetries:
-            type: integer
-            nullable: true
+            type:
+            - integer
+            - 'null'
             minimum: 0
           onlyPatterns:
             type: array
@@ -2283,9 +2273,10 @@ components:
           source:
             type: string
           startYear:
-            type: integer
+            type:
+            - integer
+            - 'null'
             format: int32
-            nullable: true
             minimum: 0
           years:
             type: array
@@ -2300,20 +2291,6 @@ components:
       - type: object
         properties:
           source:
-            type: string
-    DatasetIngestResult:
-      type: object
-      required:
-      - warnings
-      - files
-      properties:
-        files:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/IngestResult'
-        warnings:
-          type: array
-          items:
             type: string
     DepNode:
       type: object
@@ -2369,11 +2346,6 @@ components:
           type: string
         sbom_id:
           type: string
-    Deprecation:
-      type: string
-      enum:
-      - Ignore
-      - Consider
     Id:
       type: string
       description: A hash/digest prefixed with its type.
@@ -2447,25 +2419,30 @@ components:
           format: date-time
           description: The last state change
         lastError:
-          type: string
+          type:
+          - string
+          - 'null'
           description: The error of the last run (empty if successful)
-          nullable: true
         lastRun:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: The last run (successful or not)
-          nullable: true
         lastSuccess:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: The last successful run
-          nullable: true
         progress:
-          allOf:
+          oneOf:
+          - type: 'null'
           - $ref: '#/components/schemas/Progress'
-          nullable: true
+            description: The current progress, if available.
         state:
           $ref: '#/components/schemas/State'
+          description: The current state of the importer
     ImporterReport:
       type: object
       required:
@@ -2478,22 +2455,14 @@ components:
           type: string
           format: date-time
         error:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
         id:
           type: string
         importer:
           type: string
         report: {}
-    Info:
-      type: object
-      required:
-      - version
-      properties:
-        build:
-          type: object
-        version:
-          type: string
     IngestResult:
       type: object
       description: The result of the ingestion process
@@ -2506,6 +2475,7 @@ components:
           description: The ID declared by the document
         id:
           $ref: '#/components/schemas/Id'
+          description: The internal ID of the document
         warnings:
           type: array
           items:
@@ -2515,16 +2485,6 @@ components:
       type: object
       additionalProperties:
         type: string
-    LicenseDetailsPurlSummary:
-      type: object
-      required:
-      - purl
-      - sbom
-      properties:
-        purl:
-          $ref: '#/components/schemas/VersionedPurlHead'
-        sbom:
-          $ref: '#/components/schemas/SbomHead'
     LicenseSummary:
       type: object
       required:
@@ -2581,9 +2541,10 @@ components:
       - website
       properties:
         cpe_key:
-          type: string
+          type:
+          - string
+          - 'null'
           description: The `CPE` key of the organization, if known.
-          nullable: true
         id:
           type: string
           format: uuid
@@ -2592,9 +2553,10 @@ components:
           type: string
           description: The name of the organization.
         website:
-          type: string
+          type:
+          - string
+          - 'null'
           description: The website of the organization, if known.
-          nullable: true
     OrganizationSummary:
       allOf:
       - $ref: '#/components/schemas/OrganizationHead'
@@ -2607,47 +2569,20 @@ components:
         - source
         properties:
           branch:
-            type: string
+            type:
+            - string
+            - 'null'
             description: An optional branch. Will use the default branch otherwise.
-            nullable: true
           path:
-            type: string
+            type:
+            - string
+            - 'null'
             description: An optional path to start searching for documents. Will use the root of the repository otherwise.
-            nullable: true
           source:
             type: string
             description: The URL to the git repository of the OSV data
-    PackageNode:
+    PaginatedResults_AdvisorySummary:
       type: object
-      required:
-      - sbom_id
-      - node_id
-      - purl
-      - name
-      - published
-      - document_id
-      - product_name
-      - product_version
-      properties:
-        document_id:
-          type: string
-        name:
-          type: string
-        node_id:
-          type: string
-        product_name:
-          type: string
-        product_version:
-          type: string
-        published:
-          type: string
-        purl:
-          type: string
-        sbom_id:
-          type: string
-    PaginatedAdvisorySummary:
-      type: object
-      description: Paginated returned items
       required:
       - items
       - total
@@ -2655,16 +2590,40 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/AdvisorySummary'
-          description: Returned items
+            allOf:
+            - $ref: '#/components/schemas/AdvisoryHead'
+            - oneOf:
+              - type: 'null'
+              - $ref: '#/components/schemas/SourceDocument'
+                description: Information pertaning to the underlying source document, if any.
+            - type: object
+              required:
+              - average_severity
+              - average_score
+              - vulnerabilities
+              properties:
+                average_score:
+                  type:
+                  - number
+                  - 'null'
+                  format: double
+                  description: Average (arithmetic mean) score of the advisory aggregated from *all* related vulnerability assertions.
+                average_severity:
+                  type:
+                  - string
+                  - 'null'
+                  description: Average (arithmetic mean) severity of the advisory aggregated from *all* related vulnerability assertions.
+                vulnerabilities:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AdvisoryVulnerabilityHead'
+                  description: Vulnerabilities addressed within this advisory.
         total:
           type: integer
           format: int64
-          description: Total number of items found
           minimum: 0
-    PaginatedBasePurlSummary:
+    PaginatedResults_BasePurlSummary:
       type: object
-      description: Paginated returned items
       required:
       - items
       - total
@@ -2672,16 +2631,15 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/BasePurlSummary'
-          description: Returned items
+            allOf:
+            - $ref: '#/components/schemas/BasePurlHead'
+            - type: object
         total:
           type: integer
           format: int64
-          description: Total number of items found
           minimum: 0
-    PaginatedImporterReport:
+    PaginatedResults_ImporterReport:
       type: object
-      description: Paginated returned items
       required:
       - items
       - total
@@ -2689,16 +2647,31 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/ImporterReport'
-          description: Returned items
+            type: object
+            required:
+            - id
+            - importer
+            - creation
+            - report
+            properties:
+              creation:
+                type: string
+                format: date-time
+              error:
+                type:
+                - string
+                - 'null'
+              id:
+                type: string
+              importer:
+                type: string
+              report: {}
         total:
           type: integer
           format: int64
-          description: Total number of items found
           minimum: 0
-    PaginatedLicenseDetailsPurlSummary:
+    PaginatedResults_LicenseSummary:
       type: object
-      description: Paginated returned items
       required:
       - items
       - total
@@ -2706,16 +2679,36 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/LicenseDetailsPurlSummary'
-          description: Returned items
+            type: object
+            required:
+            - id
+            - license
+            - spdx_licenses
+            - spdx_license_exceptions
+            - purls
+            properties:
+              id:
+                type: string
+              license:
+                type: string
+              purls:
+                type: integer
+                format: int64
+                minimum: 0
+              spdx_license_exceptions:
+                type: array
+                items:
+                  type: string
+              spdx_licenses:
+                type: array
+                items:
+                  type: string
         total:
           type: integer
           format: int64
-          description: Total number of items found
           minimum: 0
-    PaginatedLicenseSummary:
+    PaginatedResults_ProductSummary:
       type: object
-      description: Paginated returned items
       required:
       - items
       - total
@@ -2723,16 +2716,27 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/LicenseSummary'
-          description: Returned items
+            allOf:
+            - $ref: '#/components/schemas/ProductHead'
+            - type: object
+              required:
+              - versions
+              - vendor
+              properties:
+                vendor:
+                  oneOf:
+                  - type: 'null'
+                  - $ref: '#/components/schemas/OrganizationSummary'
+                versions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ProductVersionHead'
         total:
           type: integer
           format: int64
-          description: Total number of items found
           minimum: 0
-    PaginatedOrganizationSummary:
+    PaginatedResults_PurlSummary:
       type: object
-      description: Paginated returned items
       required:
       - items
       - total
@@ -2740,16 +2744,30 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/OrganizationSummary'
-          description: Returned items
+            allOf:
+            - $ref: '#/components/schemas/PurlHead'
+            - type: object
+              required:
+              - base
+              - version
+              - qualifiers
+              properties:
+                base:
+                  $ref: '#/components/schemas/BasePurlHead'
+                qualifiers:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  propertyNames:
+                    type: string
+                version:
+                  $ref: '#/components/schemas/VersionedPurlHead'
         total:
           type: integer
           format: int64
-          description: Total number of items found
           minimum: 0
-    PaginatedProductSummary:
+    PaginatedResults_SbomPackage:
       type: object
-      description: Paginated returned items
       required:
       - items
       - total
@@ -2757,16 +2775,35 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/ProductSummary'
-          description: Returned items
+            type: object
+            required:
+            - id
+            - name
+            - purl
+            - cpe
+            properties:
+              cpe:
+                type: array
+                items:
+                  type: string
+              id:
+                type: string
+              name:
+                type: string
+              purl:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PurlSummary'
+              version:
+                type:
+                - string
+                - 'null'
         total:
           type: integer
           format: int64
-          description: Total number of items found
           minimum: 0
-    PaginatedPurlSummary:
+    PaginatedResults_SbomPackageRelation:
       type: object
-      description: Paginated returned items
       required:
       - items
       - total
@@ -2774,16 +2811,21 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/PurlSummary'
-          description: Returned items
+            type: object
+            required:
+            - relationship
+            - package
+            properties:
+              package:
+                $ref: '#/components/schemas/SbomPackage'
+              relationship:
+                $ref: '#/components/schemas/Relationship'
         total:
           type: integer
           format: int64
-          description: Total number of items found
           minimum: 0
-    PaginatedSbomPackage:
+    PaginatedResults_SbomSummary:
       type: object
-      description: Paginated returned items
       required:
       - items
       - total
@@ -2791,16 +2833,25 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/SbomPackage'
-          description: Returned items
+            allOf:
+            - $ref: '#/components/schemas/SbomHead'
+            - oneOf:
+              - type: 'null'
+              - $ref: '#/components/schemas/SourceDocument'
+            - type: object
+              required:
+              - described_by
+              properties:
+                described_by:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SbomPackage'
         total:
           type: integer
           format: int64
-          description: Total number of items found
           minimum: 0
-    PaginatedSbomPackageRelation:
+    PaginatedResults_SpdxLicenseSummary:
       type: object
-      description: Paginated returned items
       required:
       - items
       - total
@@ -2808,16 +2859,21 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/SbomPackageRelation'
-          description: Returned items
+            type: object
+            required:
+            - id
+            - name
+            properties:
+              id:
+                type: string
+              name:
+                type: string
         total:
           type: integer
           format: int64
-          description: Total number of items found
           minimum: 0
-    PaginatedSbomSummary:
+    PaginatedResults_VulnerabilitySummary:
       type: object
-      description: Paginated returned items
       required:
       - items
       - total
@@ -2825,63 +2881,32 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/SbomSummary'
-          description: Returned items
+            allOf:
+            - $ref: '#/components/schemas/VulnerabilityHead'
+            - type: object
+              required:
+              - average_severity
+              - average_score
+              - advisories
+              properties:
+                advisories:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/VulnerabilityAdvisoryHead'
+                average_score:
+                  type:
+                  - number
+                  - 'null'
+                  format: double
+                  description: Average (arithmetic mean) score of the vulnerability aggregated from *all* related advisories.
+                average_severity:
+                  oneOf:
+                  - type: 'null'
+                  - $ref: '#/components/schemas/Severity'
+                    description: Average (arithmetic mean) severity of the vulnerability aggregated from *all* related advisories.
         total:
           type: integer
           format: int64
-          description: Total number of items found
-          minimum: 0
-    PaginatedSpdxLicenseSummary:
-      type: object
-      description: Paginated returned items
-      required:
-      - items
-      - total
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/SpdxLicenseSummary'
-          description: Returned items
-        total:
-          type: integer
-          format: int64
-          description: Total number of items found
-          minimum: 0
-    PaginatedVulnerabilitySummary:
-      type: object
-      description: Paginated returned items
-      required:
-      - items
-      - total
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/VulnerabilitySummary'
-          description: Returned items
-        total:
-          type: integer
-          format: int64
-          description: Total number of items found
-          minimum: 0
-    PaginatedWeaknessSummary:
-      type: object
-      description: Paginated returned items
-      required:
-      - items
-      - total
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/WeaknessSummary'
-          description: Returned items
-        total:
-          type: integer
-          format: int64
-          description: Total number of items found
           minimum: 0
     ProductDetails:
       allOf:
@@ -2892,9 +2917,9 @@ components:
         - vendor
         properties:
           vendor:
-            allOf:
+            oneOf:
+            - type: 'null'
             - $ref: '#/components/schemas/OrganizationSummary'
-            nullable: true
           versions:
             type: array
             items:
@@ -2918,9 +2943,10 @@ components:
         labels:
           $ref: '#/components/schemas/Labels'
         published:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
-          nullable: true
     ProductSummary:
       allOf:
       - $ref: '#/components/schemas/ProductHead'
@@ -2930,9 +2956,9 @@ components:
         - vendor
         properties:
           vendor:
-            allOf:
+            oneOf:
+            - type: 'null'
             - $ref: '#/components/schemas/OrganizationSummary'
-            nullable: true
           versions:
             type: array
             items:
@@ -2943,9 +2969,9 @@ components:
       - type: object
         properties:
           sbom:
-            allOf:
+            oneOf:
+            - type: 'null'
             - $ref: '#/components/schemas/ProductSbomHead'
-            nullable: true
     ProductVersionHead:
       type: object
       required:
@@ -3039,6 +3065,7 @@ components:
       properties:
         purl:
           $ref: '#/components/schemas/Purl'
+          description: The actual qualified PURL
         uuid:
           type: string
           format: uuid
@@ -3063,9 +3090,9 @@ components:
       - context
       properties:
         context:
-          allOf:
+          oneOf:
+          - type: 'null'
           - $ref: '#/components/schemas/StatusContext'
-          nullable: true
         status:
           type: string
         vulnerability:
@@ -3084,6 +3111,8 @@ components:
           qualifiers:
             type: object
             additionalProperties:
+              type: string
+            propertyNames:
               type: string
           version:
             $ref: '#/components/schemas/VersionedPurlHead'
@@ -3105,7 +3134,7 @@ components:
       - dev_tool_of
       - described_by
       - package_of
-    RevisionedImporter:
+    Revisioned_Importer:
       type: object
       description: |-
         A struct wrapping an item with a revision.
@@ -3123,7 +3152,14 @@ components:
 
             An opaque string that should have no meaning to the user, only to the backend.
         value:
-          $ref: '#/components/schemas/Importer'
+          allOf:
+          - $ref: '#/components/schemas/ImporterData'
+          - type: object
+            required:
+            - name
+            properties:
+              name:
+                type: string
     SbomAdvisory:
       allOf:
       - $ref: '#/components/schemas/AdvisoryHead'
@@ -3135,17 +3171,6 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/SbomStatus'
-    SbomDetails:
-      allOf:
-      - $ref: '#/components/schemas/SbomSummary'
-      - type: object
-        required:
-        - advisories
-        properties:
-          advisories:
-            type: array
-            items:
-              $ref: '#/components/schemas/SbomAdvisory'
     SbomHead:
       type: object
       required:
@@ -3169,9 +3194,10 @@ components:
         name:
           type: string
         published:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
-          nullable: true
     SbomImporter:
       allOf:
       - $ref: '#/components/schemas/CommonImporter'
@@ -3180,8 +3206,9 @@ components:
         - source
         properties:
           fetchRetries:
-            type: integer
-            nullable: true
+            type:
+            - integer
+            - 'null'
             minimum: 0
           keys:
             type: array
@@ -3193,9 +3220,9 @@ components:
             items:
               type: string
           sizeLimit:
-            allOf:
+            oneOf:
+            - type: 'null'
             - $ref: '#/components/schemas/BinaryByteSize'
-            nullable: true
           source:
             type: string
           v3Signatures:
@@ -3221,8 +3248,9 @@ components:
           items:
             $ref: '#/components/schemas/PurlSummary'
         version:
-          type: string
-          nullable: true
+          type:
+          - string
+          - 'null'
     SbomPackageRelation:
       type: object
       required:
@@ -3241,9 +3269,9 @@ components:
       - packages
       properties:
         context:
-          allOf:
+          oneOf:
+          - type: 'null'
           - $ref: '#/components/schemas/StatusContext'
-          nullable: true
         packages:
           type: array
           items:
@@ -3255,9 +3283,9 @@ components:
     SbomSummary:
       allOf:
       - $ref: '#/components/schemas/SbomHead'
-      - allOf:
+      - oneOf:
+        - type: 'null'
         - $ref: '#/components/schemas/SourceDocument'
-        nullable: true
       - type: object
         required:
         - described_by
@@ -3365,9 +3393,6 @@ components:
         properties:
           counts:
             $ref: '#/components/schemas/TypeCounts'
-    Uuid:
-      type: string
-      description: a UUID
     VersionedPurlAdvisory:
       allOf:
       - $ref: '#/components/schemas/AdvisoryHead'
@@ -3407,6 +3432,7 @@ components:
       properties:
         purl:
           $ref: '#/components/schemas/Purl'
+          description: The actual, versioned PURL
         uuid:
           type: string
           format: uuid
@@ -3447,13 +3473,14 @@ components:
         - score
         properties:
           score:
-            type: number
+            type:
+            - number
+            - 'null'
             format: double
-            nullable: true
           severity:
-            allOf:
+            oneOf:
+            - type: 'null'
             - $ref: '#/components/schemas/Severity'
-            nullable: true
     VulnerabilityAdvisoryStatus:
       type: object
       required:
@@ -3464,9 +3491,9 @@ components:
         base_purl:
           $ref: '#/components/schemas/BasePurlHead'
         context:
-          allOf:
+          oneOf:
+          - type: 'null'
           - $ref: '#/components/schemas/StatusContext'
-          nullable: true
         version:
           type: string
     VulnerabilityAdvisorySummary:
@@ -3489,6 +3516,8 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/VulnerabilityAdvisoryStatus'
+            propertyNames:
+              type: string
           sboms:
             type: array
             items:
@@ -3509,14 +3538,16 @@ components:
               $ref: '#/components/schemas/VulnerabilityAdvisorySummary'
             description: Advisories addressing this vulnerability, if any.
           average_score:
-            type: number
+            type:
+            - number
+            - 'null'
             format: double
             description: Average (arithmetic mean) score of the vulnerability aggregated from *all* related advisories.
-            nullable: true
           average_severity:
-            allOf:
+            oneOf:
+            - type: 'null'
             - $ref: '#/components/schemas/Severity'
-            nullable: true
+              description: Average (arithmetic mean) severity of the vulnerability aggregated from *all* related advisories.
     VulnerabilityHead:
       type: object
       required:
@@ -3537,14 +3568,16 @@ components:
             type: string
           description: Associated CWE, if any.
         description:
-          type: string
+          type:
+          - string
+          - 'null'
           description: The description of the vulnerability, if known.
-          nullable: true
         discovered:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: The date (in RFC3339 format) of when the vulnerability was discovered, if any.
-          nullable: true
         identifier:
           type: string
           description: |-
@@ -3552,31 +3585,36 @@ components:
             Traditionally (but not required) refers to the assigned
             CVE identifier.
         modified:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: The date (in RFC3339 format) of when the vulnerability was last modified, if any.
-          nullable: true
         normative:
           type: boolean
         published:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: The date (in RFC3339 format) of when the vulnerability was published, if any.
-          nullable: true
         released:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: The date (in RFC3339 format) of when software containing the vulnerability first released, if known.
-          nullable: true
         title:
-          type: string
+          type:
+          - string
+          - 'null'
           description: The title of the vulnerability, if known.
-          nullable: true
         withdrawn:
-          type: string
+          type:
+          - string
+          - 'null'
           format: date-time
           description: The date (in RFC3339 format) of when the vulnerability was last withdrawn, if any.
-          nullable: true
     VulnerabilitySbomStatus:
       allOf:
       - $ref: '#/components/schemas/SbomHead'
@@ -3590,8 +3628,9 @@ components:
               type: string
             uniqueItems: true
           version:
-            type: string
-            nullable: true
+            type:
+            - string
+            - 'null'
     VulnerabilitySummary:
       allOf:
       - $ref: '#/components/schemas/VulnerabilityHead'
@@ -3606,81 +3645,16 @@ components:
             items:
               $ref: '#/components/schemas/VulnerabilityAdvisoryHead'
           average_score:
-            type: number
+            type:
+            - number
+            - 'null'
             format: double
             description: Average (arithmetic mean) score of the vulnerability aggregated from *all* related advisories.
-            nullable: true
           average_severity:
-            allOf:
+            oneOf:
+            - type: 'null'
             - $ref: '#/components/schemas/Severity'
-            nullable: true
-    WeaknessDetails:
-      allOf:
-      - $ref: '#/components/schemas/WeaknessHead'
-      - type: object
-        properties:
-          can_also_be:
-            type: array
-            items:
-              type: string
-            nullable: true
-          can_follow:
-            type: array
-            items:
-              type: string
-            nullable: true
-          can_precede:
-            type: array
-            items:
-              type: string
-            nullable: true
-          child_of:
-            type: array
-            items:
-              type: string
-            nullable: true
-          extended_description:
-            type: string
-            nullable: true
-          parent_of:
-            type: array
-            items:
-              type: string
-            nullable: true
-          peer_of:
-            type: array
-            items:
-              type: string
-            nullable: true
-          required_by:
-            type: array
-            items:
-              type: string
-            nullable: true
-          requires:
-            type: array
-            items:
-              type: string
-            nullable: true
-          starts_with:
-            type: array
-            items:
-              type: string
-            nullable: true
-    WeaknessHead:
-      type: object
-      required:
-      - id
-      properties:
-        description:
-          type: string
-          nullable: true
-        id:
-          type: string
-    WeaknessSummary:
-      allOf:
-      - $ref: '#/components/schemas/WeaknessHead'
-      - type: object
+              description: Average (arithmetic mean) severity of the vulnerability aggregated from *all* related advisories.
     Which:
       type: string
       enum:

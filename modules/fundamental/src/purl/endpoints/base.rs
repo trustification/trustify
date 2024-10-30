@@ -10,7 +10,6 @@ use trustify_common::model::PaginatedResults;
 use trustify_common::{db::query::Query, id::IdError, model::Paginated, purl::Purl};
 
 #[utoipa::path(
-    context_path= "/api",
     operation_id = "getBasePurl",
     tag = "base purl",
     params(
@@ -20,7 +19,7 @@ use trustify_common::{db::query::Query, id::IdError, model::Paginated, purl::Pur
         (status = 200, description = "Details for the versionless base PURL", body = BasePurlDetails),
     ),
 )]
-#[get("/v1/purl/base/{key}")]
+#[get("/base/{key}")]
 /// Retrieve details about a base versionless pURL
 pub async fn get_base_purl(
     service: web::Data<PurlService>,
@@ -36,7 +35,6 @@ pub async fn get_base_purl(
 }
 
 #[utoipa::path(
-    context_path= "/api",
     operation_id = "listBasePurls",
     tag = "base purl",
     params(
@@ -47,7 +45,7 @@ pub async fn get_base_purl(
         (status = 200, description = "All relevant matching versionless base PURL", body = PaginatedResults<BasePurlSummary>),
     ),
 )]
-#[get("/v1/purl/base")]
+#[get("/base")]
 /// List base versionless pURLs
 pub async fn all_base_purls(
     service: web::Data<PurlService>,

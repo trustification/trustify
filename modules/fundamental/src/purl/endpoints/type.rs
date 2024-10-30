@@ -11,14 +11,13 @@ use trustify_common::{db::query::Query, model::Paginated, model::PaginatedResult
 #[utoipa::path(
     tag = "purl type",
     operation_id = "listPurlTypes",
-    context_path= "/api",
     params(
     ),
     responses(
         (status = 200, description = "List of all known PURL types", body = Vec<TypeSummary>),
     ),
 )]
-#[get("/v1/purl/type")]
+#[get("/type")]
 /// List known pURL types
 pub async fn all_purl_types(service: web::Data<PurlService>) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(service.purl_types(()).await?))
@@ -27,7 +26,6 @@ pub async fn all_purl_types(service: web::Data<PurlService>) -> actix_web::Resul
 #[utoipa::path(
     tag = "purl type",
     operation_id = "getPurlType",
-    context_path= "/api",
     params(
         Query,
         Paginated,
@@ -37,7 +35,7 @@ pub async fn all_purl_types(service: web::Data<PurlService>) -> actix_web::Resul
         (status = 200, description = "Information regarding PURLs within an type", body = PaginatedResults<BasePurlSummary>),
     ),
 )]
-#[get("/v1/purl/type/{type}")]
+#[get("/type/{type}")]
 /// Retrieve details about a pURL type
 pub async fn get_purl_type(
     service: web::Data<PurlService>,
@@ -55,7 +53,6 @@ pub async fn get_purl_type(
 #[utoipa::path(
     tag = "purl type",
     operation_id = "getBasePurlOfType",
-    context_path= "/api",
     params(
         ("type" = String, Path, description = "PURL identifier of a type"),
         ("namespace_and_name" = String, Path, description = "name of the package optionally preceded by its namespace"),
@@ -65,7 +62,7 @@ pub async fn get_purl_type(
         (status = 200, description = "Matching vulnerabilities", body = BasePurlDetails),
     ),
 )]
-#[get("/v1/purl/type/{type}/{namespace_and_name:[^@]+}")]
+#[get("/type/{type}/{namespace_and_name:[^@]+}")]
 /// Retrieve base pURL details of a type
 pub async fn get_base_purl_of_type(
     service: web::Data<PurlService>,
@@ -85,7 +82,6 @@ pub async fn get_base_purl_of_type(
 #[utoipa::path(
     tag = "purl",
     operation_id = "getVersionedPurlOfType",
-    context_path= "/api",
     params(
         ("type" = String, Path, description = "PURL identifier of a type"),
         ("namespace_and_name" = String, Path, description = "name of the package optionally preceded by its namespace"),
@@ -95,7 +91,7 @@ pub async fn get_base_purl_of_type(
         (status = 200, description = "Matching vulnerabilities", body = VersionedPurlDetails),
     ),
 )]
-#[get("/v1/purl/type/{type}/{namespace_and_name:[^@]+}@{version}")]
+#[get("/type/{type}/{namespace_and_name:[^@]+}@{version}")]
 /// Retrieve versioned pURL details of a type
 pub async fn get_versioned_purl_of_type(
     service: web::Data<PurlService>,
