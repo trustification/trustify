@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730380546609,
+  "lastUpdate": 1730389596657,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -405,6 +405,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 23,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "1164a4fd5a2b678950a952854c38591b62fa6435",
+          "message": "feat: add size of documents and sbom data license",
+          "timestamp": "2024-10-31T15:26:50Z",
+          "tree_id": "4edb3ed00f409a4da1a29f40f21eec1c056226ae",
+          "url": "https://github.com/trustification/trustify/commit/1164a4fd5a2b678950a952854c38591b62fa6435"
+        },
+        "date": 1730389595844,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
             "unit": "s"
           }
         ]
