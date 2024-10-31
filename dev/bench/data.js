@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730389596657,
+  "lastUpdate": 1730390318048,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -429,6 +429,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/1164a4fd5a2b678950a952854c38591b62fa6435"
         },
         "date": 1730389595844,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "3e5171631da9195bc8a555cf163f9e6e196a9a2f",
+          "message": "feat: allow ignoring missing (404) files when importing",
+          "timestamp": "2024-10-31T15:35:28Z",
+          "tree_id": "8bc22148b12afe9e6e95fca1d3760473408ee7b2",
+          "url": "https://github.com/trustification/trustify/commit/3e5171631da9195bc8a555cf163f9e6e196a9a2f"
+        },
+        "date": 1730390317399,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
