@@ -16,6 +16,7 @@ pub struct Model {
 
     pub published: Option<OffsetDateTime>,
     pub authors: Vec<String>,
+    pub data_licenses: Vec<String>,
 
     pub source_document_id: Option<Uuid>,
 

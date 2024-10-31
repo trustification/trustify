@@ -13,8 +13,7 @@ use crate::{
 use sbom_walker::report::{check, ReportSink};
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
-use std::collections::HashMap;
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, db::Transactional, purl::Purl};
@@ -44,6 +43,7 @@ impl<'a> From<Information<'a>> for SbomInformation {
                 .creation_info
                 .creators
                 .clone(),
+            data_licenses: vec![value.0.document_creation_information.data_license.clone()],
         }
     }
 }

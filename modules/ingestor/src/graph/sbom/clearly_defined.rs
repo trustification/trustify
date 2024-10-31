@@ -93,6 +93,7 @@ impl Into<SbomInformation> for &Curation {
             name: self.coordinates.base_purl().to_string(),
             published: None,
             authors: vec!["ClearlyDefined: Community-Curated".to_string()],
+            data_licenses: vec![],
         }
     }
 }

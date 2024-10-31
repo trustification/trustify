@@ -24,6 +24,7 @@ pub struct SbomHead {
 
     pub document_id: String,
     pub labels: Labels,
+    pub data_licenses: Vec<String>,
 
     #[schema(required)]
     #[serde(with = "time::serde::rfc3339::option")]
@@ -49,6 +50,7 @@ impl SbomHead {
             name: sbom_node
                 .map(|node| node.name.clone())
                 .unwrap_or("".to_string()),
+            data_licenses: sbom.data_licenses.clone(),
         })
     }
 }

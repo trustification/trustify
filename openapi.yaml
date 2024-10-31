@@ -3238,11 +3238,16 @@ components:
       - id
       - document_id
       - labels
+      - data_licenses
       - published
       - authors
       - name
       properties:
         authors:
+          type: array
+          items:
+            type: string
+        data_licenses:
           type: array
           items:
             type: string
@@ -3377,6 +3382,7 @@ components:
       - sha256
       - sha384
       - sha512
+      - size
       properties:
         sha256:
           type: string
@@ -3384,6 +3390,10 @@ components:
           type: string
         sha512:
           type: string
+        size:
+          type: integer
+          format: int64
+          minimum: 0
     SpdxLicenseDetails:
       allOf:
       - $ref: '#/components/schemas/SpdxLicenseSummary'
