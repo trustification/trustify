@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730359891374,
+  "lastUpdate": 1730378166395,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -347,6 +347,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "committer": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "distinct": true,
+          "id": "6f0377a1e8cfec4499638f4f7d5d64602e2c0973",
+          "message": "fix(ai): Reduce tooling description duplication.  Move the input description into the the tooling parameters.\n\nSigned-off-by: Hiram Chirino <hiram@hiramchirino.com>",
+          "timestamp": "2024-10-31T12:11:17Z",
+          "tree_id": "d2436dd8545169a483c5b83922f4e01409e0d48b",
+          "url": "https://github.com/trustification/trustify/commit/6f0377a1e8cfec4499638f4f7d5d64602e2c0973"
+        },
+        "date": 1730378165542,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 23,
             "unit": "s"
           }
         ]
