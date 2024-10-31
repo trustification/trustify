@@ -61,11 +61,28 @@ impl<'a> From<Information<'a>> for SbomInformation {
             // TODO: not sure what to use instead, the version will most likely be `1`.
             .unwrap_or_else(|| sbom.version.to_string());
 
+        let data_licenses = sbom
+            .metadata
+            .as_ref()
+            .and_then(|metadata| metadata.licenses.as_ref())
+            .map(|licenses| &licenses.0)
+            .into_iter()
+            .flatten()
+            .map(|license| match license {
+                LicenseChoice::License(l) => match &l.license_identifier {
+                    LicenseIdentifier::SpdxId(spdx) => spdx.to_string(),
+                    LicenseIdentifier::Name(name) => name.to_string(),
+                },
+                LicenseChoice::Expression(e) => e.to_string(),
+            })
+            .collect();
+
         Self {
             node_id: CYCLONEDX_DOC_REF.to_string(),
             name,
             published,
             authors,
+            data_licenses,
         }
     }
 }

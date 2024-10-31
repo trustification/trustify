@@ -8,6 +8,7 @@ pub struct Model {
     pub sha256: String,
     pub sha384: String,
     pub sha512: String,
+    pub size: i64,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

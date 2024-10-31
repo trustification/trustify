@@ -11,9 +11,11 @@ use sea_orm::{JoinType, ModelTrait, QueryFilter, QuerySelect, RelationTrait};
 use sea_query::{Asterisk, Expr, Func, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use trustify_common::db::multi_model::SelectIntoMultiModel;
-use trustify_common::db::VersionMatches;
-use trustify_common::{cpe::CpeCompare, db::ConnectionOrTransaction, memo::Memo};
+use trustify_common::{
+    cpe::CpeCompare,
+    db::{multi_model::SelectIntoMultiModel, ConnectionOrTransaction, VersionMatches},
+    memo::Memo,
+};
 use trustify_entity::{
     base_purl, purl_status,
     qualified_purl::{self},

@@ -52,6 +52,8 @@ pub struct SbomInformation {
     pub name: String,
     pub published: Option<OffsetDateTime>,
     pub authors: Vec<String>,
+    /// The licenses of the data itself, if known.
+    pub data_licenses: Vec<String>,
 }
 
 impl From<()> for SbomInformation {
@@ -116,6 +118,7 @@ impl Graph {
             name,
             published,
             authors,
+            data_licenses,
         } = info.into();
 
         let connection = self.db.connection(&tx);
@@ -127,6 +130,7 @@ impl Graph {
             sha256: Set(sha256),
             sha384: Set(digests.sha384.encode_hex()),
             sha512: Set(digests.sha512.encode_hex()),
+            size: Set(digests.size as i64),
         };
 
         let doc = doc_model.insert(&connection).await?;
@@ -142,6 +146,7 @@ impl Graph {
 
             source_document_id: Set(Some(doc.id)),
             labels: Set(labels.into()),
+            data_licenses: Set(data_licenses),
         };
 
         let node_model = sbom_node::ActiveModel {

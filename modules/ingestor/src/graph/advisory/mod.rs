@@ -141,6 +141,7 @@ impl Graph {
             sha256: Set(sha256),
             sha384: Set(digests.sha384.encode_hex()),
             sha512: Set(digests.sha512.encode_hex()),
+            size: Set(digests.size as i64),
         };
 
         let doc = doc_model.insert(&self.connection(&tx)).await?;

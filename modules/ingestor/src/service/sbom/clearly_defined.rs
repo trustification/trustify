@@ -1,17 +1,15 @@
-use crate::graph::sbom::SbomInformation;
-use crate::graph::Graph;
-use crate::model::IngestResult;
-use crate::service::Error;
+use crate::{graph::sbom::SbomInformation, graph::Graph, model::IngestResult, service::Error};
 use anyhow::anyhow;
 use hex::ToHex;
 use jsonpath_rust::JsonPath;
 use sea_orm::EntityTrait;
 use std::str::FromStr;
-use trustify_common::hashing::Digests;
-use trustify_common::id::{Id, TrySelectForId};
-use trustify_common::purl::Purl;
-use trustify_entity::labels::Labels;
-use trustify_entity::sbom;
+use trustify_common::{
+    hashing::Digests,
+    id::{Id, TrySelectForId},
+    purl::Purl,
+};
+use trustify_entity::{labels::Labels, sbom};
 
 pub struct ClearlyDefinedLoader<'g> {
     graph: &'g Graph,
@@ -80,6 +78,7 @@ impl<'g> ClearlyDefinedLoader<'g> {
                         name: document_id.to_string(),
                         published: None,
                         authors: vec!["ClearlyDefined Definitions".to_string()],
+                        data_licenses: vec![],
                     },
                     &tx,
                 )

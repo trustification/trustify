@@ -25,6 +25,7 @@ impl SbomQuery {
                 published: sbom_context.sbom.published,
                 authors: sbom_context.sbom.authors,
                 source_document_id: sbom_context.sbom.source_document_id,
+                data_licenses: sbom_context.sbom.data_licenses,
             }),
             Ok(None) => Err(FieldError::new("SBOM not found")),
             Err(err) => Err(FieldError::from(err)),
@@ -67,6 +68,7 @@ impl SbomQuery {
                     published: sbom.sbom.published,
                     authors: sbom.sbom.authors,
                     source_document_id: sbom.sbom.source_document_id,
+                    data_licenses: sbom.sbom.data_licenses,
                 })
             })
             .collect()

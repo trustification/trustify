@@ -11,6 +11,7 @@ pub struct Contexts {
     sha512: Context,
     sha384: Context,
     sha256: Context,
+    size: u64,
 }
 
 impl Contexts {
@@ -19,6 +20,7 @@ impl Contexts {
             sha512: Context::new(&SHA512),
             sha384: Context::new(&SHA384),
             sha256: Context::new(&SHA256),
+            size: 0,
         }
     }
 
@@ -26,6 +28,7 @@ impl Contexts {
         self.sha512.update(data);
         self.sha384.update(data);
         self.sha256.update(data);
+        self.size += data.len() as u64;
     }
 
     pub fn digests(&self) -> Digests {
@@ -33,6 +36,7 @@ impl Contexts {
             sha512: self.sha512.clone().finish(),
             sha384: self.sha384.clone().finish(),
             sha256: self.sha256.clone().finish(),
+            size: self.size,
         }
     }
 
@@ -41,6 +45,7 @@ impl Contexts {
             sha512: self.sha512.finish(),
             sha384: self.sha384.finish(),
             sha256: self.sha256.finish(),
+            size: self.size,
         }
     }
 }
@@ -56,6 +61,7 @@ pub struct Digests {
     pub sha512: Digest,
     pub sha384: Digest,
     pub sha256: Digest,
+    pub size: u64,
 }
 
 impl Digests {

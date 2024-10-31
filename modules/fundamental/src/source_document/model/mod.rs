@@ -12,6 +12,7 @@ pub struct SourceDocument {
     pub sha256: String,
     pub sha384: String,
     pub sha512: String,
+    pub size: u64,
 }
 
 impl SourceDocument {
@@ -23,6 +24,7 @@ impl SourceDocument {
             sha256: format!("sha256:{}", source_document.sha256),
             sha384: format!("sha384:{}", source_document.sha384),
             sha512: format!("sha512:{}", source_document.sha512),
+            size: source_document.size as u64,
         })
     }
 }
