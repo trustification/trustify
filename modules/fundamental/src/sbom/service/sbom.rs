@@ -23,7 +23,7 @@ use trustify_common::{
     db::{
         limiter::{limit_selector, LimiterTrait},
         multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
-        query::{Filtering, IntoColumns, Query},
+        query::{Columns, Filtering, IntoColumns, Query},
         ArrayAgg, ConnectionOrTransaction, JsonBuildObject, ToJson, Transactional,
     },
     id::{Id, TrySelectForId},
@@ -114,17 +114,20 @@ impl SbomService {
         let connection = self.db.connection(&tx);
         let labels = labels.into();
 
-        let mut query = sbom::Entity::find().filtering(search)?;
-
-        if !labels.is_empty() {
-            query = query.filter(Expr::col(sbom::Column::Labels).contains(labels));
-        }
-
-        let limiter = query.find_also_linked(SbomNodeLink).limiting(
-            &connection,
-            paginated.offset,
-            paginated.limit,
-        );
+        let query = if labels.is_empty() {
+            sbom::Entity::find()
+        } else {
+            sbom::Entity::find().filter(Expr::col(sbom::Column::Labels).contains(labels))
+        };
+        let limiter = query
+            .find_also_linked(SbomNodeLink)
+            .filtering_with(
+                search,
+                Columns::from_entity::<sbom::Entity>()
+                    .add_columns(sbom_node::Entity)
+                    .alias("sbom_node", "r0"),
+            )?
+            .limiting(&connection, paginated.offset, paginated.limit);
 
         let total = limiter.total().await?;
         let sboms = limiter.fetch().await?;
@@ -744,7 +747,7 @@ mod test {
         let fetch = SbomService::new(ctx.db.clone());
 
         let fetched = fetch
-            .fetch_sboms(q("MySpAcE"), Paginated::default(), (), ())
+            .fetch_sboms(q("MySpAcE").sort("name"), Paginated::default(), (), ())
             .await?;
 
         log::debug!("{:#?}", fetched.items);
