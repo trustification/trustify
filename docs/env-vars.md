@@ -24,6 +24,9 @@
 | `OIDC_PROVIDER_ISSUER_URL`         | OIDC issuer to request access tokens from   |        |
 | `OIDC_PROVIDER_REFRESH_BEFORE`         | Duration an access token must still be valid before requesting a new one   | `30s`       |
 | `OIDC_PROVIDER_TLS_INSECURE`         | Insecure TLS when contacting the OIDC issuer    | `false`        |
+| `OPENAI_API_KEY`         | OpenAI access key |         |
+| `OPENAI_API_BASE`         | To set the base URL path for API requests | `https://api.openapi.com/v1`         |
+| `OPENAI_MODEL`         | OpenAI model | `gpt-4o`         |
 | `TRUSTD_DB_HOST`         | Database address     | `localhost`         |
 | `TRUSTD_DB_MAX_CONN`         | Database max connections    | `75`        |
 | `TRUSTD_DB_MIN_CONN`         | Database min connections    | `25`        |
