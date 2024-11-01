@@ -238,4 +238,25 @@ mod tests {
 
         Ok(())
     }
+
+    #[test(tokio::test)]
+    async fn table_aliasing() -> Result<(), anyhow::Error> {
+        let clause = advisory::Entity::find()
+            .select_only()
+            .column(advisory::Column::Id)
+            .filtering_with(
+                q("location=here"),
+                advisory::Entity.columns().alias("advisory", "foo"),
+            )?
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string()
+            .split("WHERE ")
+            .last()
+            .unwrap()
+            .to_string();
+
+        assert_eq!(clause, r#""foo"."location" = 'here'"#);
+
+        Ok(())
+    }
 }

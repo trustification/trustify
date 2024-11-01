@@ -747,7 +747,12 @@ mod test {
         let fetch = SbomService::new(ctx.db.clone());
 
         let fetched = fetch
-            .fetch_sboms(q("MySpAcE").sort("name"), Paginated::default(), (), ())
+            .fetch_sboms(
+                q("MySpAcE").sort("name,authors,published"),
+                Paginated::default(),
+                (),
+                (),
+            )
             .await?;
 
         log::debug!("{:#?}", fetched.items);
