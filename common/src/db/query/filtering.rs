@@ -1,40 +1,38 @@
 // SeaORM impls
 
-use super::{Columns, Error, IntoColumns, Query, Sort};
-use sea_orm::{EntityTrait, QueryFilter, Select};
+use super::{Columns, Error, IntoColumns, Query};
+use sea_orm::{EntityTrait, QueryFilter, QueryOrder, Select, SelectTwo};
 
 /// Pass a Query instance for filtering
 pub trait Filtering<T: EntityTrait> {
     fn filtering(self, search: Query) -> Result<Self, Error>
     where
-        Self: Sized,
+        Self: Sized + QueryFilter + QueryOrder,
     {
         self.filtering_with(search, Columns::from_entity::<T>())
     }
 
     fn filtering_with<C: IntoColumns>(self, search: Query, context: C) -> Result<Self, Error>
     where
-        Self: Sized;
+        Self: Sized + QueryFilter + QueryOrder,
+    {
+        search.query(self, &context.columns())
+    }
 }
 
-/// Implement filtering for a Select statement
-impl<T: EntityTrait> Filtering<T> for Select<T> {
-    fn filtering_with<C: IntoColumns>(self, search: Query, context: C) -> Result<Self, Error> {
-        let Query { q, sort, .. } = &search;
-        log::debug!("filtering with: q='{q}' sort='{sort}'");
-        let columns = context.columns();
-        // filter the query
-        let result = if q.is_empty() {
-            self
-        } else {
-            self.filter(search.filter_for(&columns)?)
-        };
-        // sort the query
-        Ok(sort
-            .split_terminator(',')
-            .map(|s| Sort::parse(s, &columns))
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .fold(result, |select, s| s.order_by(select)))
+/// SeaORM Select
+impl<T: EntityTrait> Filtering<T> for Select<T> {}
+
+/// SeaORM SelectTwo
+impl<E, F> Filtering<E> for SelectTwo<E, F>
+where
+    E: EntityTrait,
+    F: EntityTrait,
+{
+    fn filtering(self, search: Query) -> Result<Self, Error> {
+        self.filtering_with(
+            search,
+            Columns::from_entity::<E>().add_columns(Columns::from_entity::<F>()),
+        )
     }
 }
