@@ -1,5 +1,5 @@
 use super::{Columns, Error};
-use sea_orm::{EntityTrait, Order, QueryOrder, Select};
+use sea_orm::{Order, QueryOrder};
 use sea_query::{ColumnRef, SimpleExpr};
 
 pub(crate) struct Sort {
@@ -8,7 +8,7 @@ pub(crate) struct Sort {
 }
 
 impl Sort {
-    pub(crate) fn order_by<T: EntityTrait>(self, stmt: Select<T>) -> Select<T> {
+    pub(crate) fn order_by<T: QueryOrder>(self, stmt: T) -> T {
         stmt.order_by(SimpleExpr::Column(self.field), self.order)
     }
     pub(crate) fn parse(s: &str, columns: &Columns) -> Result<Self, Error> {

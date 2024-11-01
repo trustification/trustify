@@ -6,6 +6,7 @@ mod value;
 
 pub use columns::{Columns, IntoColumns};
 pub use filtering::Filtering;
+use sea_orm::{QueryFilter, QueryOrder};
 pub use value::Value;
 
 use filter::{Filter, Operator};
@@ -153,16 +154,36 @@ impl Query {
 
     fn filter_for(&self, columns: &Columns) -> Result<Filter, Error> {
         let constraints = self.parse();
-        if constraints.len() == 1 {
-            constraints[0].filter_for(columns)
-        } else {
-            Ok(Filter::all(
+        Ok(match constraints.len() {
+            1 => constraints[0].filter_for(columns)?,
+            _ => Filter::all(
                 constraints
                     .iter()
                     .map(|constraint| constraint.filter_for(columns))
                     .collect::<Result<Vec<_>, _>>()?,
-            ))
-        }
+            ),
+        })
+    }
+
+    fn query<T>(&self, stmt: T, columns: &Columns) -> Result<T, Error>
+    where
+        T: QueryFilter + QueryOrder,
+    {
+        let Self { q, sort } = self;
+        log::debug!("Query with: q='{q}' sort='{sort}'");
+
+        let stmt = if q.is_empty() {
+            stmt
+        } else {
+            stmt.filter(self.filter_for(columns)?)
+        };
+
+        Ok(sort
+            .split_terminator(',')
+            .map(|s| Sort::parse(s, columns))
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .fold(stmt, |select, s| s.order_by(select)))
     }
 }
 
