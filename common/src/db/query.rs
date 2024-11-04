@@ -6,7 +6,6 @@ mod value;
 
 pub use columns::{Columns, IntoColumns};
 pub use filtering::Filtering;
-use sea_orm::{QueryFilter, QueryOrder};
 pub use value::Value;
 
 use filter::{Filter, Operator};
@@ -82,34 +81,31 @@ impl Query {
     /// values of type Value::String.
     pub fn apply(&self, context: &HashMap<&'static str, Value>) -> bool {
         use Operator::*;
-        self.parse().iter().all(|c| {
-            log::debug!("{c:?}");
-            match c {
-                Constraint {
-                    field: Some(f),
-                    op: Some(o),
-                    value: vs,
-                } => context.get(f.as_str()).is_some_and(|field| match o {
-                    Equal => vs.iter().any(|v| field.eq(v)),
-                    NotEqual => vs.iter().all(|v| field.ne(v)),
-                    Like => vs.iter().any(|v| field.contains(v)),
-                    NotLike => vs.iter().all(|v| !field.contains(v)),
-                    GreaterThan => vs.iter().all(|v| field.gt(v)),
-                    GreaterThanOrEqual => vs.iter().all(|v| field.ge(v)),
-                    LessThan => vs.iter().all(|v| field.lt(v)),
-                    LessThanOrEqual => vs.iter().all(|v| field.le(v)),
-                    _ => false,
-                }),
-                Constraint {
-                    field: None,
-                    value: vs,
-                    ..
-                } => context
-                    .values()
-                    .filter(|v| matches!(v, Value::String(_)))
-                    .any(|field| vs.iter().any(|v| field.contains(v))),
+        self.parse().iter().all(|c| match c {
+            Constraint {
+                field: Some(f),
+                op: Some(o),
+                value: vs,
+            } => context.get(f.as_str()).is_some_and(|field| match o {
+                Equal => vs.iter().any(|v| field.eq(v)),
+                NotEqual => vs.iter().all(|v| field.ne(v)),
+                Like => vs.iter().any(|v| field.contains(v)),
+                NotLike => vs.iter().all(|v| !field.contains(v)),
+                GreaterThan => vs.iter().all(|v| field.gt(v)),
+                GreaterThanOrEqual => vs.iter().all(|v| field.ge(v)),
+                LessThan => vs.iter().all(|v| field.lt(v)),
+                LessThanOrEqual => vs.iter().all(|v| field.le(v)),
                 _ => false,
-            }
+            }),
+            Constraint {
+                field: None,
+                value: vs,
+                ..
+            } => context
+                .values()
+                .filter(|v| matches!(v, Value::String(_)))
+                .any(|field| vs.iter().any(|v| field.contains(v))),
+            _ => false,
         })
     }
 
@@ -163,27 +159,6 @@ impl Query {
                     .collect::<Result<Vec<_>, _>>()?,
             ),
         })
-    }
-
-    fn query<T>(&self, stmt: T, columns: &Columns) -> Result<T, Error>
-    where
-        T: QueryFilter + QueryOrder,
-    {
-        let Self { q, sort } = self;
-        log::debug!("Query with: q='{q}' sort='{sort}'");
-
-        let stmt = if q.is_empty() {
-            stmt
-        } else {
-            stmt.filter(self.filter_for(columns)?)
-        };
-
-        Ok(sort
-            .split_terminator(',')
-            .map(|s| Sort::parse(s, columns))
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .fold(stmt, |select, s| s.order_by(select)))
     }
 }
 

@@ -1,6 +1,6 @@
 // SeaORM impls
 
-use super::{Columns, Error, IntoColumns, Query};
+use super::{Columns, Error, IntoColumns, Query, Sort};
 use sea_orm::{EntityTrait, QueryFilter, QueryOrder, Select, SelectTwo};
 
 /// Pass a Query instance for filtering
@@ -16,7 +16,22 @@ pub trait Filtering<T: EntityTrait> {
     where
         Self: Sized + QueryFilter + QueryOrder,
     {
-        search.query(self, &context.columns())
+        let Query { ref q, ref sort } = search;
+        let columns = context.columns();
+        log::debug!("Query: q='{q}' sort='{sort}' columns={columns}");
+
+        let stmt = if q.is_empty() {
+            self
+        } else {
+            self.filter(search.filter_for(&columns)?)
+        };
+
+        Ok(sort
+            .split_terminator(',')
+            .map(|s| Sort::parse(s, &columns))
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .fold(stmt, |select, s| s.order_by(select)))
     }
 }
 
