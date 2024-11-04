@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730390318048,
+  "lastUpdate": 1730719112862,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -458,6 +458,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/3e5171631da9195bc8a555cf163f9e6e196a9a2f"
         },
         "date": 1730390317399,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": false,
+          "id": "1cfcb86aea1022c6f96e6ca9dddad492b13ec755",
+          "message": "chore: docs missing env vars",
+          "timestamp": "2024-11-04T10:37:19Z",
+          "tree_id": "fcf6ee056ce5bd3b8436116d20b4424fd264d6f4",
+          "url": "https://github.com/trustification/trustify/commit/1cfcb86aea1022c6f96e6ca9dddad492b13ec755"
+        },
+        "date": 1730719111560,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
