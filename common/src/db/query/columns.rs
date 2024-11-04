@@ -1,5 +1,7 @@
+use std::fmt::{Display, Formatter};
+
 use sea_orm::entity::ColumnDef;
-use sea_orm::{sea_query, ColumnTrait, EntityTrait, IntoIdentity, Iterable};
+use sea_orm::{sea_query, ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Iterable};
 use sea_query::{Alias, ColumnRef, IntoColumnRef, IntoIden};
 
 /// Context of columns which can be used for filtering and sorting.
@@ -7,6 +9,37 @@ use sea_query::{Alias, ColumnRef, IntoColumnRef, IntoIden};
 pub struct Columns {
     columns: Vec<(ColumnRef, ColumnDef)>,
     translator: Option<Translator>,
+}
+
+impl Display for Columns {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        for (r, d) in &self.columns {
+            writeln!(f)?;
+            match r {
+                ColumnRef::SchemaTableColumn(_, t, c) | ColumnRef::TableColumn(t, c) => {
+                    write!(f, "  \"{}\".\"{}\"", t.to_string(), c.to_string())?
+                }
+                ColumnRef::Column(c) => write!(f, "  \"{}\"", c.to_string())?,
+                _ => write!(f, "  {r:?}")?,
+            }
+            write!(f, " : ")?;
+            match d.get_column_type() {
+                ColumnType::Text | ColumnType::String(_) | ColumnType::Char(_) => {
+                    write!(f, "String")?
+                }
+                ColumnType::Enum {
+                    name: _,
+                    variants: v,
+                } => write!(
+                    f,
+                    "Enum {:?}",
+                    v.iter().map(|v| v.to_string()).collect::<Vec<_>>()
+                )?,
+                t => write!(f, "  {t:?}")?,
+            }
+        }
+        Ok(())
+    }
 }
 
 pub trait IntoColumns {
