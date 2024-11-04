@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730719112862,
+  "lastUpdate": 1730728756636,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -487,6 +487,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/1cfcb86aea1022c6f96e6ca9dddad492b13ec755"
         },
         "date": 1730719111560,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "030790fa20f9fee3b30f713b0e1f0b7943b8300b",
+          "message": "Add a few tests affirming the V1 parity sort/query fields\n\nRelates to #886\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-11-04T13:38:53Z",
+          "tree_id": "c50682d3f7573d5a44472631395d41fe5423109d",
+          "url": "https://github.com/trustification/trustify/commit/030790fa20f9fee3b30f713b0e1f0b7943b8300b"
+        },
+        "date": 1730728756221,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
