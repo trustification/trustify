@@ -61,6 +61,7 @@ impl<'g> CveLoader<'g> {
 
         let cwes = information.cwes.clone();
         let release_date = information.published;
+        let reserved_date = information.reserved;
         let title = information.title.clone();
         let advisory_info = AdvisoryInformation {
             title: information.title.clone(),
@@ -92,6 +93,7 @@ impl<'g> CveLoader<'g> {
                     title,
                     summary: None,
                     description: english_description.map(ToString::to_string),
+                    reserved_date,
                     discovery_date: assigned,
                     release_date,
                     cwes,
@@ -199,6 +201,10 @@ impl<'g> CveLoader<'g> {
     }
 
     fn extract_vuln_info(cve: &Cve) -> VulnerabilityDetails {
+        let reserved = cve
+            .common_metadata()
+            .date_reserved
+            .map(Timestamp::assume_utc);
         let published = cve
             .common_metadata()
             .date_published
@@ -276,6 +282,7 @@ impl<'g> CveLoader<'g> {
             affected,
             information: VulnerabilityInformation {
                 title: title.clone(),
+                reserved,
                 published,
                 modified,
                 withdrawn,
@@ -325,6 +332,7 @@ mod test {
     use std::str::FromStr;
     use test_context::test_context;
     use test_log::test;
+    use time::macros::datetime;
     use trustify_common::db::Transactional;
     use trustify_common::purl::Purl;
     use trustify_test_context::{document, TrustifyContext};
@@ -351,13 +359,17 @@ mod test {
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
         assert!(loaded_vulnerability.is_some());
+        let loaded_vulnerability = loaded_vulnerability.unwrap();
+        assert_eq!(
+            loaded_vulnerability.vulnerability.reserved,
+            Some(datetime!(2024-03-04 14:19:14.059 UTC))
+        );
 
         let loaded_advisory = graph
             .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
             .await?;
         assert!(loaded_advisory.is_some());
 
-        let loaded_vulnerability = loaded_vulnerability.unwrap();
         let descriptions = loaded_vulnerability.descriptions("en", ()).await?;
         assert_eq!(1, descriptions.len());
         assert!(descriptions[0]

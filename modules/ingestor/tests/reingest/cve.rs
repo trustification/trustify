@@ -1,8 +1,10 @@
 #![allow(clippy::expect_used)]
+#![allow(clippy::unwrap_used)]
 
 use anyhow::bail;
 use test_context::test_context;
 use test_log::test;
+use time::macros::datetime;
 use trustify_common::id::Id;
 use trustify_module_ingestor::model::IngestResult;
 use trustify_test_context::TrustifyContext;
@@ -20,7 +22,13 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             .await?
             .expect("must be found");
 
-        assert_eq!(adv.vulnerabilities(()).await?.len(), 1);
+        let mut adv_vulns = adv.vulnerabilities(()).await?;
+        assert_eq!(adv_vulns.len(), 1);
+        let adv_vuln = adv_vulns.pop().unwrap();
+        assert_eq!(
+            adv_vuln.advisory_vulnerability.reserved_date,
+            Some(datetime!(2021-05-12 0:00:00 UTC))
+        );
 
         let vulns = ctx.graph.get_vulnerabilities(()).await?;
         assert_eq!(vulns.len(), 1);
