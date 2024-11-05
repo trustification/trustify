@@ -3054,19 +3054,19 @@ components:
       - total
       - percent
       - rate
-      - estimated_seconds_remaining
-      - estimated_completion
+      - estimatedSecondsRemaining
+      - estimatedCompletion
       properties:
         current:
           type: integer
           format: int32
           description: The current processed items.
           minimum: 0
-        estimated_completion:
+        estimatedCompletion:
           type: string
           format: date-time
           description: The estimated time of completion.
-        estimated_seconds_remaining:
+        estimatedSecondsRemaining:
           type: integer
           format: int64
           description: The estimated remaining time in seconds.
