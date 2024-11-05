@@ -27,13 +27,11 @@ impl Display for Columns {
                 ColumnType::Text | ColumnType::String(_) | ColumnType::Char(_) => {
                     write!(f, "String")?
                 }
-                ColumnType::Enum {
-                    name: _,
-                    variants: v,
-                } => write!(
+                ColumnType::Enum { name, variants } => write!(
                     f,
-                    "Enum {:?}",
-                    v.iter().map(|v| v.to_string()).collect::<Vec<_>>()
+                    "Enum({}) {:?}",
+                    name.to_string(),
+                    variants.iter().map(|v| v.to_string()).collect::<Vec<_>>()
                 )?,
                 t => write!(f, "  {t:?}")?,
             }
