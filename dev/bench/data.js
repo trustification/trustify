@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730816450687,
+  "lastUpdate": 1730819103328,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -574,6 +574,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/a3429e7d25d16c9810b7959138519f49ec74204b"
         },
         "date": 1730816449910,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "b413951df01b168feefb632f9ddc145d3299302c",
+          "message": "chore: uptick rust version",
+          "timestamp": "2024-11-05T14:25:25Z",
+          "tree_id": "430c47f39677a1d535dd8ec05459a1f7c3955ac2",
+          "url": "https://github.com/trustification/trustify/commit/b413951df01b168feefb632f9ddc145d3299302c"
+        },
+        "date": 1730819102146,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
