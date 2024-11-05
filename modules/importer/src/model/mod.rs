@@ -15,6 +15,7 @@ pub use cwe::*;
 pub use osv::*;
 pub use sbom::*;
 
+use crate::runner::report::Report;
 use std::{
     ops::{Deref, DerefMut},
     time::Duration,
@@ -251,15 +252,20 @@ impl TryFrom<Model> for Importer {
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ImporterReport {
+    /// The ID of the report
     pub id: String,
 
+    /// The name of the importer this report belongs to
     pub importer: String,
+    /// The time the report was created
     #[serde(with = "time::serde::rfc3339")]
     pub creation: OffsetDateTime,
 
+    /// Errors captured by the report
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
-    pub report: serde_json::Value,
+    /// Detailed report information
+    pub report: Option<Report>,
 }
 
 impl From<importer_report::Model> for ImporterReport {
@@ -276,7 +282,7 @@ impl From<importer_report::Model> for ImporterReport {
             importer,
             creation,
             error,
-            report,
+            report: serde_json::from_value(report).ok(),
         }
     }
 }
