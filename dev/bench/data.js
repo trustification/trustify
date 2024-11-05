@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730728756636,
+  "lastUpdate": 1730815687943,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -521,6 +521,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "2654563f8c24c780c888e352a82f0664a39d6849",
+          "message": "feat: add the \"reserved\" field for vulnerabilities\n\nCloses #964",
+          "timestamp": "2024-11-05T13:38:40Z",
+          "tree_id": "00bdfc5308c4ad715e085f837e6093333810b4d6",
+          "url": "https://github.com/trustification/trustify/commit/2654563f8c24c780c888e352a82f0664a39d6849"
+        },
+        "date": 1730815686739,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 23,
             "unit": "s"
           }
         ]
