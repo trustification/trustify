@@ -107,6 +107,7 @@ pub struct ImporterData {
 }
 
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
 pub struct Progress {
     /// The current processed items.
     pub current: u32,
