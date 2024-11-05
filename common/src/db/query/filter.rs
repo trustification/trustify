@@ -412,6 +412,14 @@ pub(crate) mod tests {
             where_clause("published!=NULL")?,
             r#""advisory"."published" IS NOT NULL"#
         );
+        assert_eq!(
+            where_clause("severity=high")?,
+            r#""advisory"."severity" = (CAST('high' AS "Severity"))"#
+        );
+        assert_eq!(
+            where_clause("severity>low")?,
+            r#""advisory"."severity" > (CAST('low' AS "Severity"))"#
+        );
 
         Ok(())
     }

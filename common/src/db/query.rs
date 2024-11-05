@@ -244,7 +244,7 @@ pub(crate) mod tests {
         impl ActiveModelBehavior for ActiveModel {}
 
         #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
-        #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "severity")]
+        #[sea_orm(rs_type = "String", db_type = "Enum")]
         pub enum Severity {
             #[sea_orm(string_value = "low")]
             Low,
