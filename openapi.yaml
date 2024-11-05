@@ -2512,20 +2512,27 @@ components:
       - id
       - importer
       - creation
-      - report
       properties:
         creation:
           type: string
           format: date-time
+          description: The time the report was created
         error:
           type:
           - string
           - 'null'
+          description: Errors captured by the report
         id:
           type: string
+          description: The ID of the report
         importer:
           type: string
-        report: {}
+          description: The name of the importer this report belongs to
+        report:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/Report'
+            description: Detailed report information
     IngestResult:
       type: object
       description: The result of the ingestion process
@@ -2573,6 +2580,18 @@ components:
           type: array
           items:
             type: string
+    Message:
+      type: object
+      required:
+      - severity
+      - message
+      properties:
+        message:
+          type: string
+          description: The message
+        severity:
+          $ref: '#/components/schemas/Severity'
+          description: The severity of the message
     MessageType:
       type: string
       enum:
@@ -2715,20 +2734,27 @@ components:
             - id
             - importer
             - creation
-            - report
             properties:
               creation:
                 type: string
                 format: date-time
+                description: The time the report was created
               error:
                 type:
                 - string
                 - 'null'
+                description: Errors captured by the report
               id:
                 type: string
+                description: The ID of the report
               importer:
                 type: string
-              report: {}
+                description: The name of the importer this report belongs to
+              report:
+                oneOf:
+                - type: 'null'
+                - $ref: '#/components/schemas/Report'
+                  description: Detailed report information
         total:
           type: integer
           format: int64
@@ -3197,6 +3223,42 @@ components:
       - dev_tool_of
       - described_by
       - package_of
+    Report:
+      type: object
+      required:
+      - startDate
+      - endDate
+      properties:
+        endDate:
+          type: string
+          format: date-time
+          description: End of the import run
+        messages:
+          type: object
+          description: Messages emitted during processing
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: array
+              items:
+                $ref: '#/components/schemas/Message'
+            propertyNames:
+              type: string
+          propertyNames:
+            type: string
+            description: The phase of processing
+            enum:
+            - retrieval
+            - validation
+            - upload
+        numberOfItems:
+          type: integer
+          description: Number of processes items
+          minimum: 0
+        startDate:
+          type: string
+          format: date-time
+          description: Start of the import run
     Revisioned_Importer:
       type: object
       description: |-

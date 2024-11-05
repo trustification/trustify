@@ -1,10 +1,22 @@
 use crate::server::RunOutput;
 use parking_lot::Mutex;
+use schemars::JsonSchema;
 use std::{collections::BTreeMap, iter, sync::Arc};
 use time::OffsetDateTime;
 
+/// The phase of processing
 #[derive(
-    Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, serde::Deserialize, serde::Serialize,
+    Copy,
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    Ord,
+    PartialOrd,
+    serde::Deserialize,
+    serde::Serialize,
+    utoipa::ToSchema,
+    JsonSchema,
 )]
 #[serde(rename_all = "camelCase")]
 pub enum Phase {
@@ -17,7 +29,16 @@ pub enum Phase {
 }
 
 #[derive(
-    Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, serde::Deserialize, serde::Serialize,
+    Copy,
+    Clone,
+    Debug,
+    PartialEq,
+    Eq,
+    Ord,
+    PartialOrd,
+    serde::Deserialize,
+    serde::Serialize,
+    utoipa::ToSchema,
 )]
 #[serde(rename_all = "camelCase")]
 pub enum Severity {
@@ -25,23 +46,29 @@ pub enum Severity {
     Warning,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Report {
+    /// Start of the import run
     #[serde(with = "time::serde::rfc3339")]
     pub start_date: OffsetDateTime,
+    /// End of the import run
     #[serde(with = "time::serde::rfc3339")]
     pub end_date: OffsetDateTime,
 
+    /// Number of processes items
     #[serde(default, alias = "numer_of_items")]
     pub number_of_items: usize,
+    /// Messages emitted during processing
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub messages: BTreeMap<Phase, BTreeMap<String, Vec<Message>>>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
 pub struct Message {
+    ///  The severity of the message
     pub severity: Severity,
+    /// The message
     pub message: String,
 }
 
