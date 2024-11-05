@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730820813661,
+  "lastUpdate": 1730835001623,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -632,6 +632,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/5fbbd9ac080c7d11c670b822b5265e5c5e2e65ba"
         },
         "date": 1730820812833,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "68d08bc52e6e65ac8d352ad524904df7a20d2cf8",
+          "message": "chore: define model of import report\n\nCloses https://github.com/trustification/trustify/issues/960",
+          "timestamp": "2024-11-05T19:10:46Z",
+          "tree_id": "6d80fbff848604d9a55ab768f1e120563581cf42",
+          "url": "https://github.com/trustification/trustify/commit/68d08bc52e6e65ac8d352ad524904df7a20d2cf8"
+        },
+        "date": 1730835000396,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
