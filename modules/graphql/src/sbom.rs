@@ -49,13 +49,10 @@ impl SbomQuery {
             );
         }
 
-        let sboms = match graph
+        let sboms = graph
             .locate_sboms_by_labels(local_labels, Transactional::None)
             .await
-        {
-            Ok(sbom) => sbom,
-            _ => vec![],
-        };
+            .unwrap_or_default();
 
         sboms
             .into_iter()

@@ -37,13 +37,10 @@ impl AdvisoryQuery {
     async fn get_advisories<'a>(&self, ctx: &Context<'a>) -> FieldResult<Vec<Advisory>> {
         let graph = ctx.data::<Arc<Graph>>()?;
 
-        let advisories = match graph
+        let advisories = graph
             .get_advisories(Default::default(), Transactional::None)
             .await
-        {
-            Ok(advisories) => advisories,
-            _ => vec![],
-        };
+            .unwrap_or_default();
 
         advisories
             .into_iter()
