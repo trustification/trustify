@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730815687943,
+  "lastUpdate": 1730816450687,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -550,6 +550,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 23,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "a3429e7d25d16c9810b7959138519f49ec74204b",
+          "message": "Refactor sea_orm-dependent logic out of query and into filtering\n\nAlso added a Display impl for Columns to assist in debugging.\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-11-05T14:00:28Z",
+          "tree_id": "81e40df6d99a8626ebc2cea48c43058a4eb97593",
+          "url": "https://github.com/trustification/trustify/commit/a3429e7d25d16c9810b7959138519f49ec74204b"
+        },
+        "date": 1730816449910,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
             "unit": "s"
           }
         ]
