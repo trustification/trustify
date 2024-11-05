@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730819103328,
+  "lastUpdate": 1730820813661,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -603,6 +603,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/b413951df01b168feefb632f9ddc145d3299302c"
         },
         "date": 1730819102146,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "5fbbd9ac080c7d11c670b822b5265e5c5e2e65ba",
+          "message": "fix: we normally use camel case",
+          "timestamp": "2024-11-05T15:12:46Z",
+          "tree_id": "ee5fe9772d19ff8cea26bdbb6cecfa75d4670ef4",
+          "url": "https://github.com/trustification/trustify/commit/5fbbd9ac080c7d11c670b822b5265e5c5e2e65ba"
+        },
+        "date": 1730820812833,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
