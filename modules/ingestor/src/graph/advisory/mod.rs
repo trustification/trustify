@@ -37,6 +37,7 @@ pub struct AdvisoryVulnerabilityInformation {
     pub title: Option<String>,
     pub summary: Option<String>,
     pub description: Option<String>,
+    pub reserved_date: Option<OffsetDateTime>,
     pub discovery_date: Option<OffsetDateTime>,
     pub release_date: Option<OffsetDateTime>,
     pub cwes: Option<Vec<String>>,
@@ -275,6 +276,7 @@ impl<'g> AdvisoryContext<'g> {
             description: Set(information
                 .as_ref()
                 .and_then(|info| info.description.clone())),
+            reserved_date: Set(information.as_ref().and_then(|info| info.reserved_date)),
             discovery_date: Set(information.as_ref().and_then(|info| info.discovery_date)),
             release_date: Set(information.as_ref().and_then(|info| info.release_date)),
             cwes: Set(information.as_ref().and_then(|info| info.cwes.clone())),

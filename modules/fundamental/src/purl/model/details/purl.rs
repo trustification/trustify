@@ -137,6 +137,7 @@ impl PurlAdvisory {
             let vulnerability = vuln.unwrap_or(vulnerability::Model {
                 id: status.vulnerability_id.clone(),
                 title: None,
+                reserved: None,
                 published: None,
                 modified: None,
                 withdrawn: None,

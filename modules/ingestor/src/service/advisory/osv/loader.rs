@@ -88,6 +88,7 @@ impl<'g> OsvLoader<'g> {
                         title: osv.summary.clone(),
                         summary: osv.summary.clone(),
                         description: osv.details.clone(),
+                        reserved_date: None,
                         discovery_date: None,
                         release_date: None,
                         cwes: None,

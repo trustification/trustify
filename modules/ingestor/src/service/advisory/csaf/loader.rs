@@ -138,6 +138,7 @@ impl<'g> CsafLoader<'g> {
                     title: vulnerability.title.clone(),
                     summary: None,
                     description: None,
+                    reserved_date: None,
                     discovery_date: vulnerability.discovery_date.and_then(|date| {
                         OffsetDateTime::from_unix_timestamp(date.timestamp()).ok()
                     }),

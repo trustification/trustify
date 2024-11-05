@@ -131,6 +131,7 @@ async fn delete_check_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 identifier: "CVE-2023-33201".to_string(),
                 title: None,
                 description: None,
+                reserved: None,
                 published: None,
                 modified: None,
                 withdrawn: None,
