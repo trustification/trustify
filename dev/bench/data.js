@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730835001623,
+  "lastUpdate": 1730904091156,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -661,6 +661,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/68d08bc52e6e65ac8d352ad524904df7a20d2cf8"
         },
         "date": 1730835000396,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "3d2e50472c363e4e08f7c92743664d7ace4840da",
+          "message": "Add proper tests for querying enums\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-11-06T14:19:52Z",
+          "tree_id": "e466fcd2cd670422cee8eecb5bad516695115e78",
+          "url": "https://github.com/trustification/trustify/commit/3d2e50472c363e4e08f7c92743664d7ace4840da"
+        },
+        "date": 1730904090385,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
