@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter};
 
 use sea_orm::entity::ColumnDef;
 use sea_orm::{sea_query, ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Iterable};
-use sea_query::{Alias, ColumnRef, IntoColumnRef, IntoIden};
+use sea_query::{Alias, ColumnRef, Expr, IntoColumnRef, IntoIden};
 
 /// Context of columns which can be used for filtering and sorting.
 #[derive(Default, Debug, Clone)]
@@ -128,17 +128,18 @@ impl Columns {
     }
 
     /// Look up the column context for a given simple field name.
-    pub(crate) fn for_field(&self, field: &str) -> Option<(ColumnRef, ColumnDef)> {
+    /// Look up the column context for a given simple field name.
+    pub(crate) fn for_field(&self, field: &str) -> Option<(Expr, ColumnDef)> {
         self.columns
             .iter()
-            .find(|(col_ref, _)| {
-                matches!( col_ref,
+            .find(|(col, _)| {
+                matches!(col,
                    ColumnRef::Column(name)
                     | ColumnRef::TableColumn(_, name)
                     | ColumnRef::SchemaTableColumn(_, _, name)
                         if name.to_string().eq_ignore_ascii_case(field))
             })
-            .cloned()
+            .map(|(r, d)| (Expr::col(r.clone()), d.clone()))
     }
 
     pub(crate) fn translate(&self, field: &str, op: &str, value: &str) -> Option<String> {

@@ -2,7 +2,7 @@ use super::{q, Columns, Error};
 use human_date_parser::{from_human_time, ParseResult};
 use sea_orm::sea_query::{extension::postgres::PgExpr, ConditionExpression, IntoCondition};
 use sea_orm::{sea_query, ColumnType, Condition, IntoSimpleExpr, Value as SeaValue};
-use sea_query::{BinOper, ColumnRef, Expr, Keyword, SimpleExpr};
+use sea_query::{BinOper, Expr, Keyword, SimpleExpr};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 use time::format_description::well_known::Rfc3339;
@@ -30,7 +30,7 @@ impl TryFrom<(&str, Operator, &Vec<String>, &Columns)> for Filter {
     type Error = Error;
     fn try_from(tuple: (&str, Operator, &Vec<String>, &Columns)) -> Result<Self, Self::Error> {
         let (ref field, operator, values, columns) = tuple;
-        let (col_ref, col_def) = columns.for_field(field).ok_or(Error::SearchSyntax(format!(
+        let (expr, col_def) = columns.for_field(field).ok_or(Error::SearchSyntax(format!(
             "Invalid field name for filter: '{field}'"
         )))?;
         Ok(Filter {
@@ -48,7 +48,7 @@ impl TryFrom<(&str, Operator, &Vec<String>, &Columns)> for Filter {
                         |(s, v)| match columns.translate(field, &operator.to_string(), s) {
                             Some(x) => q(&x).filter_for(columns),
                             None => Ok(Filter {
-                                operands: Operand::Simple(col_ref.clone(), v),
+                                operands: Operand::Simple(expr.clone(), v),
                                 operator,
                             }),
                         },
@@ -71,12 +71,12 @@ impl TryFrom<(&Vec<String>, &Columns)> for Filter {
                     .iter()
                     .flat_map(|s| {
                         // Create a LIKE filter for all the string-ish columns
-                        columns.iter().filter_map(|(col_ref, col_def)| {
+                        columns.iter().filter_map(move |(col_ref, col_def)| {
                             match col_def.get_column_type() {
                                 ColumnType::String(_) | ColumnType::Text => Some(Filter {
                                     operands: Operand::Simple(
-                                        col_ref.clone(),
-                                        Arg::Value(SeaValue::String(Some(s.clone().into()))),
+                                        Expr::col(col_ref.clone()),
+                                        Arg::Value(SeaValue::from(s)),
                                     ),
                                     operator: Operator::Like,
                                 }),
@@ -93,26 +93,22 @@ impl TryFrom<(&Vec<String>, &Columns)> for Filter {
 impl IntoCondition for Filter {
     fn into_condition(self) -> Condition {
         match self.operands {
-            Operand::Simple(col, v) => match self.operator {
+            Operand::Simple(expr, v) => match self.operator {
                 Operator::Equal => match v {
-                    Arg::Null => Expr::col(col).is_null(),
-                    v => Expr::col(col).binary(BinOper::Equal, v.into_simple_expr()),
+                    Arg::Null => expr.is_null(),
+                    v => expr.binary(BinOper::Equal, v.into_simple_expr()),
                 },
                 Operator::NotEqual => match v {
-                    Arg::Null => Expr::col(col).is_not_null(),
-                    v => Expr::col(col).binary(BinOper::NotEqual, v.into_simple_expr()),
+                    Arg::Null => expr.is_not_null(),
+                    v => expr.binary(BinOper::NotEqual, v.into_simple_expr()),
                 },
-                Operator::GreaterThan => {
-                    Expr::col(col).binary(BinOper::GreaterThan, v.into_simple_expr())
-                }
+                Operator::GreaterThan => expr.binary(BinOper::GreaterThan, v.into_simple_expr()),
                 Operator::GreaterThanOrEqual => {
-                    Expr::col(col).binary(BinOper::GreaterThanOrEqual, v.into_simple_expr())
+                    expr.binary(BinOper::GreaterThanOrEqual, v.into_simple_expr())
                 }
-                Operator::LessThan => {
-                    Expr::col(col).binary(BinOper::SmallerThan, v.into_simple_expr())
-                }
+                Operator::LessThan => expr.binary(BinOper::SmallerThan, v.into_simple_expr()),
                 Operator::LessThanOrEqual => {
-                    Expr::col(col).binary(BinOper::SmallerThanOrEqual, v.into_simple_expr())
+                    expr.binary(BinOper::SmallerThanOrEqual, v.into_simple_expr())
                 }
                 op @ (Operator::Like | Operator::NotLike) => {
                     if let Arg::Value(v) = v {
@@ -121,12 +117,12 @@ impl IntoCondition for Filter {
                             v.unwrap::<String>().replace('%', r"\%").replace('_', r"\_")
                         );
                         if op == Operator::Like {
-                            SimpleExpr::Column(col).ilike(v)
+                            expr.ilike(v)
                         } else {
-                            SimpleExpr::Column(col).not_ilike(v)
+                            expr.not_ilike(v)
                         }
                     } else {
-                        SimpleExpr::Column(col)
+                        expr.into()
                     }
                 }
                 _ => unreachable!(),
@@ -214,7 +210,7 @@ impl Arg {
 
 #[derive(Debug)]
 enum Operand {
-    Simple(ColumnRef, Arg),
+    Simple(Expr, Arg),
     Composite(Vec<Filter>),
 }
 
