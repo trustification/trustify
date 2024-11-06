@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730905555769,
+  "lastUpdate": 1730913831834,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -724,6 +724,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 23,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "538070a711a3fa7adfe1353b6d86508d6a65d7ed",
+          "message": "fix: add missing \"number of packages\" field\n\nCloses https://github.com/trustification/trustify/issues/975",
+          "timestamp": "2024-11-06T17:01:18Z",
+          "tree_id": "7f13398813a33a217dcbc33f7b6462d1344b79b0",
+          "url": "https://github.com/trustification/trustify/commit/538070a711a3fa7adfe1353b6d86508d6a65d7ed"
+        },
+        "date": 1730913831022,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
             "unit": "s"
           }
         ]
