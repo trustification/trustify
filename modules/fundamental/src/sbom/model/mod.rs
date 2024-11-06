@@ -1,18 +1,16 @@
 pub mod details;
 
 use super::service::SbomService;
-use crate::purl::model::summary::purl::PurlSummary;
-use crate::source_document::model::SourceDocument;
-use crate::Error;
+use crate::{
+    purl::model::summary::purl::PurlSummary, source_document::model::SourceDocument, Error,
+};
 use async_graphql::SimpleObject;
-use sea_orm::prelude::Uuid;
-use sea_orm::ModelTrait;
+use sea_orm::{prelude::Uuid, ModelTrait, PaginatorTrait};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
-use trustify_common::db::ConnectionOrTransaction;
-use trustify_common::model::Paginated;
+use trustify_common::{db::ConnectionOrTransaction, model::Paginated};
 use trustify_entity::{
-    labels::Labels, relationship::Relationship, sbom, sbom_node, source_document,
+    labels::Labels, relationship::Relationship, sbom, sbom_node, sbom_package, source_document,
 };
 use utoipa::ToSchema;
 
@@ -64,6 +62,9 @@ pub struct SbomSummary {
     pub source_document: Option<SourceDocument>,
 
     pub described_by: Vec<SbomPackage>,
+
+    /// The number of packages this SBOM has
+    pub number_of_packages: u64,
 }
 
 impl SbomSummary {
@@ -72,13 +73,14 @@ impl SbomSummary {
         service: &SbomService,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Option<SbomSummary>, Error> {
-        // TODO: consider improving the n-select issue here
+        // TODO: consider improving the n-select issues here
         let described_by = service
             .describes_packages(sbom.sbom_id, Paginated::default(), ())
             .await?
             .items;
 
         let source_document = sbom.find_related(source_document::Entity).one(tx).await?;
+        let number_of_packages = sbom.find_related(sbom_package::Entity).count(tx).await?;
 
         Ok(match node {
             Some(_) => Some(SbomSummary {
@@ -89,6 +91,7 @@ impl SbomSummary {
                     None
                 },
                 described_by,
+                number_of_packages,
             }),
             None => None,
         })
