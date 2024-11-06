@@ -87,6 +87,7 @@ mod m0000670_version_cmp;
 mod m0000680_fix_update_deprecated_advisory;
 mod m0000690_alter_sbom_details;
 mod m0000700_advisory_add_reserved;
+mod m0000710_create_user_prefs;
 
 pub struct Migrator;
 
@@ -181,6 +182,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000680_fix_update_deprecated_advisory::Migration),
             Box::new(m0000690_alter_sbom_details::Migration),
             Box::new(m0000700_advisory_add_reserved::Migration),
+            Box::new(m0000710_create_user_prefs::Migration),
         ]
     }
 }

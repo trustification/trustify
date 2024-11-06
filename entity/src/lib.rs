@@ -28,6 +28,7 @@ pub mod sbom_package_cpe_ref;
 pub mod sbom_package_purl_ref;
 pub mod source_document;
 pub mod status;
+pub mod user_preferences;
 pub mod version_range;
 pub mod version_scheme;
 pub mod versioned_purl;

@@ -7,16 +7,17 @@ members = [
     "cvss",
     "entity",
     "migration",
-    "modules/importer",
-    "modules/ui",
+    "modules/analysis",
     "modules/fundamental",
+    "modules/graphql",
+    "modules/importer",
     "modules/ingestor",
     "modules/storage",
-    "modules/graphql",
-    "modules/analysis",
+    "modules/ui",
+    "modules/user",
     "server",
-    "trustd",
     "test-context",
+    "trustd",
     "xtask",
 ]
 
@@ -167,6 +168,7 @@ trustify-module-storage = { path = "modules/storage" }
 trustify-module-graphql = { path = "modules/graphql" }
 trustify-test-context = { path = "test-context" }
 trustify-module-analysis = { path = "modules/analysis" }
+trustify-module-user = { path = "modules/user" }
 
 # These dependencies are active during both the build time and the run time. So they are normal dependencies
 # as well as build-dependencies. However, we can't control feature flags for build dependencies the way we do

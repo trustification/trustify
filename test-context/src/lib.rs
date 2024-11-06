@@ -1,5 +1,6 @@
 #![allow(clippy::expect_used)]
 
+pub mod auth;
 pub mod call;
 pub mod spdx;
 

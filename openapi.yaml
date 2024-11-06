@@ -1798,6 +1798,97 @@ paths:
                 format: binary
         '404':
           description: The document could not be found
+  /api/v1/userPreference/{key}:
+    get:
+      tags:
+      - userPreferences
+      summary: Get user preferences
+      operationId: getUserPreferences
+      parameters:
+      - name: key
+        in: path
+        description: The key to the user preferences
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: User preference stored under this key
+          headers:
+            etag:
+              schema:
+                type: string
+              description: Revision ID
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: Unknown user preference key
+    put:
+      tags:
+      - userPreferences
+      summary: Set user preferences
+      operationId: setUserPreferences
+      parameters:
+      - name: key
+        in: path
+        description: The key to the user preferences
+        required: true
+        schema:
+          type: string
+      - name: if-match
+        in: header
+        description: The revision to update
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+        required: true
+      responses:
+        '200':
+          description: User preference stored under this key
+          headers:
+            etag:
+              schema:
+                type: string
+              description: Revision ID
+        '412':
+          description: The provided If-Match revision did not match the actual revision
+    delete:
+      tags:
+      - userPreferences
+      summary: Delete user preferences
+      operationId: deleteUserPreferences
+      parameters:
+      - name: key
+        in: path
+        description: The key to the user preferences
+        required: true
+        schema:
+          type: string
+      - name: if-match
+        in: header
+        description: The revision to delete
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      requestBody:
+        content:
+          application/json:
+            schema: {}
+        required: true
+      responses:
+        '201':
+          description: User preferences are deleted
+        '412':
+          description: The provided If-Match revision did not match the actual revision
   /api/v1/vulnerability:
     get:
       tags:

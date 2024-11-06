@@ -8725,6 +8725,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "trustify-module-user"
+version = "0.1.0-alpha.21"
+dependencies = [
+ "actix-http",
+ "actix-web",
+ "anyhow",
+ "sea-orm",
+ "sea-query",
+ "serde_json",
+ "test-context",
+ "test-log",
+ "thiserror",
+ "tokio",
+ "trustify-auth",
+ "trustify-common",
+ "trustify-entity",
+ "trustify-test-context",
+ "utoipa",
+ "utoipa-actix-web",
+]
+
+[[package]]
 name = "trustify-server"
 version = "0.1.0-alpha.21"
 dependencies = [
@@ -8753,6 +8775,7 @@ dependencies = [
  "trustify-module-ingestor",
  "trustify-module-storage",
  "trustify-module-ui",
+ "trustify-module-user",
  "trustify-test-context",
  "url",
  "urlencoding",
