@@ -1,15 +1,15 @@
 use super::{Columns, Error};
 use sea_orm::{Order, QueryOrder};
-use sea_query::{ColumnRef, SimpleExpr};
+use sea_query::Expr;
 
 pub(crate) struct Sort {
-    field: ColumnRef,
+    field: Expr,
     order: Order,
 }
 
 impl Sort {
     pub(crate) fn order_by<T: QueryOrder>(self, stmt: T) -> T {
-        stmt.order_by(SimpleExpr::Column(self.field), self.order)
+        stmt.order_by(self.field, self.order)
     }
     pub(crate) fn parse(s: &str, columns: &Columns) -> Result<Self, Error> {
         let (field, order) = match s.split(':').collect::<Vec<_>>()[..] {
