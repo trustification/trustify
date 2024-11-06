@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730904091156,
+  "lastUpdate": 1730905555769,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -695,6 +695,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "57006c229faf93f1298a65d9b6f362a410e6db00",
+          "message": "feat: add a store for user preferences\n\nCloses https://github.com/trustification/trustify/issues/926",
+          "timestamp": "2024-11-06T14:44:34Z",
+          "tree_id": "c9f6dc720dcac6f5a95b421158283ccdb50ffb43",
+          "url": "https://github.com/trustification/trustify/commit/57006c229faf93f1298a65d9b6f362a410e6db00"
+        },
+        "date": 1730905554559,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 23,
             "unit": "s"
           }
         ]
