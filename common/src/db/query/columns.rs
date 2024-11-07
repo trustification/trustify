@@ -2,6 +2,7 @@ use std::fmt::{Display, Formatter};
 
 use sea_orm::entity::ColumnDef;
 use sea_orm::{sea_query, ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Iterable};
+use sea_query::extension::postgres::PgExpr;
 use sea_query::{Alias, ColumnRef, Expr, IntoColumnRef, IntoIden};
 
 /// Context of columns which can be used for filtering and sorting.
@@ -128,18 +129,39 @@ impl Columns {
     }
 
     /// Look up the column context for a given simple field name.
-    /// Look up the column context for a given simple field name.
     pub(crate) fn for_field(&self, field: &str) -> Option<(Expr, ColumnDef)> {
-        self.columns
-            .iter()
-            .find(|(col, _)| {
+        fn name_match(tgt: &str) -> impl Fn(&&(ColumnRef, ColumnDef)) -> bool + use<'_> {
+            |(col, _)| {
                 matches!(col,
-                   ColumnRef::Column(name)
-                    | ColumnRef::TableColumn(_, name)
-                    | ColumnRef::SchemaTableColumn(_, _, name)
-                        if name.to_string().eq_ignore_ascii_case(field))
-            })
-            .map(|(r, d)| (Expr::col(r.clone()), d.clone()))
+                         ColumnRef::Column(name)
+                         | ColumnRef::TableColumn(_, name)
+                         | ColumnRef::SchemaTableColumn(_, _, name)
+                         if name.to_string().eq_ignore_ascii_case(tgt))
+            }
+        }
+        match field.split_once('.') {
+            None => self
+                .columns
+                .iter()
+                .find(name_match(field))
+                .map(|(r, d)| (Expr::col(r.clone()), d.clone())),
+            Some((col, key)) => self
+                .columns
+                .iter()
+                .filter(|(_, def)| {
+                    matches!(
+                        def.get_column_type(),
+                        ColumnType::Json | ColumnType::JsonBinary
+                    )
+                })
+                .find(name_match(col))
+                .map(|(r, d)| {
+                    (
+                        Expr::expr(Expr::col(r.clone()).cast_json_field(key)),
+                        d.clone(),
+                    )
+                }),
+        }
     }
 
     pub(crate) fn translate(&self, field: &str, op: &str, value: &str) -> Option<String> {
@@ -288,6 +310,30 @@ mod tests {
             .to_string();
 
         assert_eq!(clause, r#""foo"."location" = 'here'"#);
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn json_queries() -> Result<(), anyhow::Error> {
+        let clause = advisory::Entity::find()
+            .select_only()
+            .column(advisory::Column::Id)
+            .filtering_with(
+                q("purl.name~log4j&purl.version>1.0&purl.ty=maven").sort("purl.name"),
+                advisory::Entity.columns().alias("advisory", "foo"),
+            )?
+            .build(sea_orm::DatabaseBackend::Postgres)
+            .to_string()
+            .split("WHERE ")
+            .last()
+            .unwrap()
+            .to_string();
+
+        assert_eq!(
+            clause,
+            r#"(("foo"."purl" ->> 'name') ILIKE '%log4j%') AND ("foo"."purl" ->> 'version') > '1.0' AND ("foo"."purl" ->> 'ty') = 'maven' ORDER BY "foo"."purl" ->> 'name' ASC"#
+        );
 
         Ok(())
     }

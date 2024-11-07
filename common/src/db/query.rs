@@ -111,7 +111,7 @@ impl Query {
 
     fn parse(&self) -> Vec<Constraint> {
         // regex for filters: {field}{op}{value}
-        const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
+        const RE: &str = r"^(?<field>[[:word:]\.]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
         static LOCK: OnceLock<Regex> = OnceLock::new();
         #[allow(clippy::unwrap_used)]
         let regex = LOCK.get_or_init(|| (Regex::new(RE).unwrap()));
@@ -225,7 +225,10 @@ pub(crate) mod tests {
     /////////////////////////////////////////////////////////////////////////
 
     pub(crate) mod advisory {
-        use sea_orm::entity::prelude::*;
+        use std::collections::HashMap;
+
+        use sea_orm::{entity::prelude::*, FromJsonQueryResult};
+        use serde::{Deserialize, Serialize};
         use time::OffsetDateTime;
 
         #[derive(Clone, Debug, PartialEq, DeriveEntityModel)]
@@ -238,6 +241,8 @@ pub(crate) mod tests {
             pub published: Option<OffsetDateTime>,
             pub severity: Severity,
             pub score: f64,
+            #[sea_orm(column_type = "JsonBinary")]
+            pub purl: CanonicalPurl,
         }
         #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
         pub enum Relation {}
@@ -253,5 +258,8 @@ pub(crate) mod tests {
             #[sea_orm(string_value = "high")]
             High,
         }
+
+        #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, FromJsonQueryResult)]
+        pub struct CanonicalPurl(pub HashMap<String, String>);
     }
 }
