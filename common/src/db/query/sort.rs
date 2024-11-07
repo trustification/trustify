@@ -22,12 +22,7 @@ impl Sort {
         match columns.translate(field, &order, "") {
             Some(s) => Sort::parse(&s, columns),
             None => Ok(Self {
-                field: columns
-                    .for_field(field)
-                    .ok_or(Error::SearchSyntax(format!(
-                        "Invalid sort field: '{field}'"
-                    )))?
-                    .0,
+                field: columns.for_field(field)?.0,
                 order: match order.as_str() {
                     "asc" => Order::Asc,
                     "desc" => Order::Desc,
