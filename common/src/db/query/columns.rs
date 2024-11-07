@@ -6,6 +6,8 @@ use sea_orm::{sea_query, ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Ite
 use sea_query::extension::postgres::PgExpr;
 use sea_query::{Alias, ColumnRef, Expr, IntoColumnRef, IntoIden};
 
+use super::Error;
+
 /// Context of columns which can be used for filtering and sorting.
 #[derive(Default, Debug, Clone)]
 pub struct Columns {
@@ -140,7 +142,7 @@ impl Columns {
     }
 
     /// Look up the column context for a given simple field name.
-    pub(crate) fn for_field(&self, field: &str) -> Option<(Expr, ColumnDef)> {
+    pub(crate) fn for_field(&self, field: &str) -> Result<(Expr, ColumnDef), Error> {
         fn name_match(tgt: &str) -> impl Fn(&&(ColumnRef, ColumnDef)) -> bool + '_ {
             |(col, _)| {
                 matches!(col,
@@ -171,6 +173,9 @@ impl Columns {
                         )
                     })
             })
+            .ok_or(Error::SearchSyntax(format!(
+                "Invalid field name: '{field}'"
+            )))
     }
 
     pub(crate) fn translate(&self, field: &str, op: &str, value: &str) -> Option<String> {
