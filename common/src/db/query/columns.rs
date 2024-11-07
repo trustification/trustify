@@ -130,7 +130,7 @@ impl Columns {
 
     /// Look up the column context for a given simple field name.
     pub(crate) fn for_field(&self, field: &str) -> Option<(Expr, ColumnDef)> {
-        fn name_match(tgt: &str) -> impl Fn(&&(ColumnRef, ColumnDef)) -> bool + use<'_> {
+        fn name_match(tgt: &str) -> impl Fn(&&(ColumnRef, ColumnDef)) -> bool + '_ {
             |(col, _)| {
                 matches!(col,
                          ColumnRef::Column(name)
