@@ -3,6 +3,7 @@ use crate::{
     service::{Error, IngestorService},
 };
 use actix_web::{post, web, HttpResponse, Responder};
+use trustify_auth::{authorizer::Require, UploadDataset};
 use trustify_common::{db::Database, model::BinaryData};
 use trustify_entity::labels::Labels;
 use trustify_module_storage::service::dispatch::DispatchBackend;
@@ -56,6 +57,7 @@ pub async fn upload_dataset(
     config: web::Data<Config>,
     web::Query(UploadParams { labels }): web::Query<UploadParams>,
     bytes: web::Bytes,
+    _: Require<UploadDataset>,
 ) -> Result<impl Responder, Error> {
     let result = service
         .ingest_dataset(&bytes, labels, config.dataset_entry_limit)

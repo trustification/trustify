@@ -9,6 +9,7 @@ use crate::{
     Error::Internal,
 };
 use actix_web::{delete, get, web, HttpResponse, Responder};
+use trustify_auth::{authorizer::Require, DeleteMetadata, ReadMetadata};
 use trustify_common::{
     db::{query::Query, Database},
     model::{Paginated, PaginatedResults},
@@ -40,6 +41,7 @@ pub async fn all(
     state: web::Data<ProductService>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadMetadata>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(state.fetch_products(search, paginated, ()).await?))
 }
@@ -59,6 +61,7 @@ pub async fn all(
 pub async fn get(
     state: web::Data<ProductService>,
     id: web::Path<Uuid>,
+    _: Require<ReadMetadata>,
 ) -> actix_web::Result<impl Responder> {
     let fetched = state.fetch_product(*id, ()).await?;
     if let Some(fetched) = fetched {
@@ -83,6 +86,7 @@ pub async fn get(
 pub async fn delete(
     state: web::Data<ProductService>,
     id: web::Path<Uuid>,
+    _: Require<DeleteMetadata>,
 ) -> actix_web::Result<impl Responder> {
     match state.fetch_product(*id, ()).await? {
         Some(v) => {

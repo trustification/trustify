@@ -9,11 +9,47 @@ use std::collections::HashMap;
 pub const DEFAULT_SCOPE_MAPPINGS: &[(&str, &[&str])] = &[
     (
         "create:document",
-        &["create.sbom", "create.vex", "create.vulnerability"],
+        &[
+            "create.advisory",
+            "create.importer",
+            "create.metadata",
+            "create.sbom",
+            "create.weakness",
+            "upload.dataset",
+        ],
     ),
-    ("read:document", &["read.sbom", "read.vex"]),
-    ("update:document", &["update.sbom", "update.vex"]),
-    ("delete:document", &["delete.sbom", "delete.vex"]),
+    (
+        "read:document",
+        &[
+            "ai",
+            "read.advisory",
+            "read.importer",
+            "read.metadata",
+            "read.sbom",
+            "read.weakness",
+        ],
+    ),
+    (
+        "update:document",
+        &[
+            "update.advisory",
+            "update.importer",
+            "update.metadata",
+            "update.sbom",
+            "update.weakness",
+        ],
+    ),
+    (
+        "delete:document",
+        &[
+            "delete.advisory",
+            "delete.importer",
+            "delete.metadata",
+            "delete.sbom",
+            "delete.vulnerability",
+            "delete.weakness",
+        ],
+    ),
 ];
 
 /// A convenience function to get the default scopes in an allocated form.

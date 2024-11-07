@@ -23,7 +23,12 @@ use std::{
     fmt::{Display, Formatter},
     str::FromStr,
 };
-use trustify_auth::{authenticator::user::UserInformation, authorizer::Authorizer, Permission};
+use trustify_auth::{
+    all,
+    authenticator::user::UserInformation,
+    authorizer::{Authorizer, Require},
+    CreateSbom, DeleteSbom, Permission, ReadAdvisory, ReadSbom,
+};
 use trustify_common::{
     db::{query::Query, Database},
     decompress::decompress_async,
@@ -193,11 +198,8 @@ pub async fn all_related(
 pub async fn count_related(
     sbom: web::Data<SbomService>,
     web::Json(ids): web::Json<Vec<AllRelatedQuery>>,
-    authorizer: web::Data<Authorizer>,
-    user: UserInformation,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
-    authorizer.require(&user, Permission::ReadSbom)?;
-
     let ids = ids
         .into_iter()
         .map(Uuid::try_from)
@@ -222,12 +224,9 @@ pub async fn count_related(
 #[get("/v1/sbom/{id}")]
 pub async fn get(
     fetcher: web::Data<SbomService>,
-    authorizer: web::Data<Authorizer>,
-    user: UserInformation,
     id: web::Path<String>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
-    authorizer.require(&user, Permission::ReadSbom)?;
-
     let id = Id::from_str(&id).map_err(Error::IdKey)?;
     match fetcher.fetch_sbom_summary(id, ()).await? {
         Some(v) => Ok(HttpResponse::Ok().json(v)),
@@ -249,19 +248,17 @@ pub async fn get(
 #[get("/v1/sbom/{id}/advisory")]
 pub async fn get_sbom_advisories(
     fetcher: web::Data<SbomService>,
-    authorizer: web::Data<Authorizer>,
-    user: UserInformation,
     id: web::Path<String>,
+    _: Require<GetSbomAdvisories>,
 ) -> actix_web::Result<impl Responder> {
-    authorizer.require(&user, Permission::ReadSbom)?;
-    authorizer.require(&user, Permission::ReadVex)?;
-
     let id = Id::from_str(&id).map_err(Error::IdKey)?;
     match fetcher.fetch_sbom_details(id, ()).await? {
         Some(v) => Ok(HttpResponse::Ok().json(v.advisories)),
         None => Ok(HttpResponse::NotFound().finish()),
     }
 }
+
+all!(GetSbomAdvisories -> ReadSbom, ReadAdvisory);
 
 #[utoipa::path(
     tag = "sbom",
@@ -278,12 +275,9 @@ pub async fn get_sbom_advisories(
 pub async fn delete(
     service: web::Data<SbomService>,
     purl_service: web::Data<PurlService>,
-    authorizer: web::Data<Authorizer>,
-    user: UserInformation,
     id: web::Path<String>,
+    _: Require<DeleteSbom>,
 ) -> actix_web::Result<impl Responder> {
-    authorizer.require(&user, Permission::DeleteSbom)?;
-
     let id = Id::from_str(&id).map_err(Error::IdKey)?;
     match service.fetch_sbom_summary(id.clone(), ()).await? {
         Some(v) => {
@@ -320,11 +314,8 @@ pub async fn packages(
     id: web::Path<Uuid>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
-    authorizer: web::Data<Authorizer>,
-    user: UserInformation,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
-    authorizer.require(&user, Permission::ReadSbom)?;
-
     let result = fetch
         .fetch_sbom_packages(id.into_inner(), search, paginated, ())
         .await?;
@@ -366,11 +357,8 @@ pub async fn related(
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     web::Query(related): web::Query<RelatedQuery>,
-    authorizer: web::Data<Authorizer>,
-    user: UserInformation,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
-    authorizer.require(&user, Permission::ReadSbom)?;
-
     let id = id.into_inner();
 
     let result = fetch
@@ -421,6 +409,7 @@ pub async fn upload(
     web::Query(UploadQuery { labels }): web::Query<UploadQuery>,
     content_type: Option<web::Header<header::ContentType>>,
     bytes: web::Bytes,
+    _: Require<CreateSbom>,
 ) -> Result<impl Responder, Error> {
     let bytes = decompress_async(bytes, content_type.map(|ct| ct.0), config.upload_limit).await??;
     let result = service.ingest(&bytes, Format::SBOM, labels, None).await?;
@@ -444,6 +433,7 @@ pub async fn download(
     ingestor: web::Data<IngestorService>,
     sbom: web::Data<SbomService>,
     key: web::Path<String>,
+    _: Require<ReadSbom>,
 ) -> Result<impl Responder, Error> {
     let id = Id::from_str(&key).map_err(Error::IdKey)?;
 

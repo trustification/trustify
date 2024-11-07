@@ -5,6 +5,8 @@ use crate::{
 use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
+use trustify_auth::authorizer::Require;
+use trustify_auth::ReadSbom;
 use trustify_common::{id::IdError, purl::Purl};
 
 #[utoipa::path(
@@ -22,6 +24,7 @@ use trustify_common::{id::IdError, purl::Purl};
 pub async fn get_versioned_purl(
     service: web::Data<PurlService>,
     key: web::Path<String>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     if key.starts_with("pkg:") {
         let purl = Purl::from_str(&key).map_err(|e| Error::IdKey(IdError::Purl(e)))?;

@@ -8311,7 +8311,9 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
+ "serde_with",
  "serde_yml",
+ "strum 0.26.3",
  "thiserror",
  "tokio",
  "tracing",
@@ -8616,6 +8618,7 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+ "trustify-auth",
  "trustify-common",
  "trustify-entity",
  "trustify-module-ingestor",
@@ -8813,6 +8816,7 @@ dependencies = [
  "trustify-migration",
  "trustify-module-ingestor",
  "trustify-module-storage",
+ "utoipa-actix-web",
 ]
 
 [[package]]

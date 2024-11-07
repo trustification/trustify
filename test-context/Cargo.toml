@@ -28,6 +28,7 @@ test-context = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
+utoipa-actix-web = { workspace = true }
 
 [dev-dependencies]
 test-log = { workspace = true, features = ["log", "trace"] }

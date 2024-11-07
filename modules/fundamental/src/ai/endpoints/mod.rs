@@ -1,12 +1,15 @@
 #[cfg(test)]
 mod test;
 
-use crate::ai::model::{AiFlags, AiTool, ChatState};
-use crate::ai::service::AiService;
-use crate::Error;
+use crate::{
+    ai::model::{AiFlags, AiTool, ChatState},
+    ai::service::AiService,
+    Error,
+};
 use actix_http::header;
 use actix_web::{get, post, web, HttpResponse, Responder};
 use itertools::Itertools;
+use trustify_auth::{authorizer::Require, Ai};
 use trustify_common::db::Database;
 
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
@@ -33,6 +36,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
 pub async fn completions(
     service: web::Data<AiService>,
     request: web::Json<ChatState>,
+    _: Require<Ai>,
 ) -> actix_web::Result<impl Responder> {
     let response = service.completions(&request, ()).await?;
     Ok(HttpResponse::Ok().json(response))
@@ -48,7 +52,10 @@ pub async fn completions(
 )]
 #[get("/v1/ai/flags")]
 // Gets the flags for the AI service
-pub async fn flags(service: web::Data<AiService>) -> actix_web::Result<impl Responder> {
+pub async fn flags(
+    service: web::Data<AiService>,
+    _: Require<Ai>,
+) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(AiFlags {
         completions: service.completions_enabled(),
     }))
@@ -64,7 +71,10 @@ pub async fn flags(service: web::Data<AiService>) -> actix_web::Result<impl Resp
 )]
 #[get("/v1/ai/tools")]
 // Gets the list of tools that are available to assist AI services.
-pub async fn tools(service: web::Data<AiService>) -> actix_web::Result<impl Responder> {
+pub async fn tools(
+    service: web::Data<AiService>,
+    _: Require<Ai>,
+) -> actix_web::Result<impl Responder> {
     let tools = &service
         .tools
         .iter()
@@ -95,6 +105,7 @@ pub async fn tool_call(
     service: web::Data<AiService>,
     name: web::Path<String>,
     request: web::Json<serde_json::Value>,
+    _: Require<Ai>,
 ) -> actix_web::Result<impl Responder> {
     let tool = service
         .tools

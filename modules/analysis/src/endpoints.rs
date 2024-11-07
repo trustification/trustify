@@ -5,6 +5,11 @@ use crate::{
 };
 use actix_web::{get, web, HttpResponse, Responder};
 use std::str::FromStr;
+use trustify_auth::{
+    authenticator::user::UserInformation,
+    authorizer::{Authorizer, Require},
+    Permission, ReadSbom,
+};
 use trustify_common::{db::query::Query, db::Database, model::Paginated, purl::Purl};
 
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
@@ -29,7 +34,11 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
 #[get("/v1/analysis/status")]
 pub async fn analysis_status(
     service: web::Data<AnalysisService>,
+    user: UserInformation,
+    authorizer: web::Data<Authorizer>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
+    authorizer.require(&user, Permission::ReadSbom)?;
     Ok(HttpResponse::Ok().json(service.status(()).await?))
 }
 
@@ -49,6 +58,7 @@ pub async fn search_component_root_components(
     service: web::Data<AnalysisService>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(
         service
@@ -72,6 +82,7 @@ pub async fn get_component_root_components(
     service: web::Data<AnalysisService>,
     key: web::Path<String>,
     web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     if key.starts_with("pkg://") {
         let purl: Purl = Purl::from_str(&key).map_err(Error::Purl)?;
@@ -105,6 +116,7 @@ pub async fn search_component_deps(
     service: web::Data<AnalysisService>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(service.retrieve_deps(search, paginated, ()).await?))
 }
@@ -124,6 +136,7 @@ pub async fn get_component_deps(
     service: web::Data<AnalysisService>,
     key: web::Path<String>,
     web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     if key.starts_with("pkg://") {
         let purl: Purl = Purl::from_str(&key).map_err(Error::Purl)?;

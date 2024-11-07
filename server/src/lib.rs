@@ -497,6 +497,7 @@ mod test {
         service::dispatch::DispatchBackend, service::fs::FileSystemBackend,
     };
     use trustify_module_ui::{endpoints::UiResources, UI};
+    use trustify_test_context::app::TestApp;
     use trustify_test_context::TrustifyContext;
     use utoipa_actix_web::AppExt;
 
@@ -509,6 +510,7 @@ mod test {
         let app = actix_web::test::init_service(
             App::new()
                 .into_utoipa_app()
+                .add_test_authorizer()
                 .configure(|svc| {
                     configure(
                         svc,

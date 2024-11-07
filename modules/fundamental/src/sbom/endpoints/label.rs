@@ -1,5 +1,6 @@
 use crate::sbom::service::SbomService;
 use actix_web::{patch, put, web, HttpResponse, Responder};
+use trustify_auth::{authorizer::Require, UpdateSbom};
 use trustify_common::id::Id;
 use trustify_entity::labels::Labels;
 
@@ -21,6 +22,7 @@ pub async fn update(
     sbom: web::Data<SbomService>,
     id: web::Path<Id>,
     web::Json(update): web::Json<Labels>,
+    _: Require<UpdateSbom>,
 ) -> actix_web::Result<impl Responder> {
     Ok(
         match sbom
@@ -51,6 +53,7 @@ pub async fn set(
     sbom: web::Data<SbomService>,
     id: web::Path<Id>,
     web::Json(labels): web::Json<Labels>,
+    _: Require<UpdateSbom>,
 ) -> actix_web::Result<impl Responder> {
     Ok(match sbom.set_labels(id.into_inner(), labels, ()).await? {
         Some(()) => HttpResponse::NoContent(),

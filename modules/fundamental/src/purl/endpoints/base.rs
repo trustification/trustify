@@ -1,13 +1,17 @@
-use crate::purl::model::summary::base_purl::BasePurlSummary;
 use crate::{
-    purl::{model::details::base_purl::BasePurlDetails, service::PurlService},
+    purl::{
+        model::{details::base_purl::BasePurlDetails, summary::base_purl::BasePurlSummary},
+        service::PurlService,
+    },
     Error,
 };
 use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
-use trustify_common::model::PaginatedResults;
-use trustify_common::{db::query::Query, id::IdError, model::Paginated, purl::Purl};
+use trustify_auth::{authorizer::Require, ReadSbom};
+use trustify_common::{
+    db::query::Query, id::IdError, model::Paginated, model::PaginatedResults, purl::Purl,
+};
 
 #[utoipa::path(
     operation_id = "getBasePurl",
@@ -24,6 +28,7 @@ use trustify_common::{db::query::Query, id::IdError, model::Paginated, purl::Pur
 pub async fn get_base_purl(
     service: web::Data<PurlService>,
     key: web::Path<String>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     if key.starts_with("pkg:") {
         let purl = Purl::from_str(&key).map_err(|e| Error::IdKey(IdError::Purl(e)))?;

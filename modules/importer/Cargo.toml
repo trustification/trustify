@@ -6,6 +6,7 @@ publish.workspace = true
 license.workspace = true
 
 [dependencies]
+trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
 trustify-entity = { workspace = true }
 trustify-module-ingestor = { workspace = true }

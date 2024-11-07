@@ -16,6 +16,8 @@ use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder};
 use config::Config;
 use futures_util::TryStreamExt;
 use std::str::FromStr;
+use trustify_auth::authorizer::Require;
+use trustify_auth::{CreateAdvisory, DeleteAdvisory, ReadAdvisory};
 use trustify_common::{
     db::{query::Query, Database},
     decompress::decompress_async,
@@ -67,6 +69,7 @@ pub async fn all(
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     web::Query(Deprecation { deprecated }): web::Query<Deprecation>,
+    _: Require<ReadAdvisory>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(
         state
@@ -91,6 +94,7 @@ pub async fn all(
 pub async fn get(
     state: web::Data<AdvisoryService>,
     key: web::Path<String>,
+    _: Require<ReadAdvisory>,
 ) -> actix_web::Result<impl Responder> {
     let hash_key = Id::from_str(&key).map_err(Error::IdKey)?;
     let fetched = state.fetch_advisory(hash_key, ()).await?;
@@ -119,6 +123,7 @@ pub async fn delete(
     state: web::Data<AdvisoryService>,
     purl_service: web::Data<PurlService>,
     key: web::Path<String>,
+    _: Require<DeleteAdvisory>,
 ) -> actix_web::Result<impl Responder> {
     let hash_key = Id::from_str(&key).map_err(Error::IdKey)?;
     let fetched = state.fetch_advisory(hash_key, ()).await?;
@@ -170,6 +175,7 @@ pub async fn upload(
     web::Query(UploadParams { issuer, labels }): web::Query<UploadParams>,
     content_type: Option<web::Header<header::ContentType>>,
     bytes: web::Bytes,
+    _: Require<CreateAdvisory>,
 ) -> Result<impl Responder, Error> {
     let bytes = decompress_async(bytes, content_type.map(|ct| ct.0), config.upload_limit).await??;
     let result = service
@@ -196,6 +202,7 @@ pub async fn download(
     ingestor: web::Data<IngestorService>,
     advisory: web::Data<AdvisoryService>,
     key: web::Path<String>,
+    _: Require<ReadAdvisory>,
 ) -> Result<impl Responder, Error> {
     // the user requested id
     let id = Id::from_str(&key).map_err(Error::IdKey)?;

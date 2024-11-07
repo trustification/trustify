@@ -1,5 +1,6 @@
 use crate::advisory::service::AdvisoryService;
 use actix_web::{patch, put, web, HttpResponse, Responder};
+use trustify_auth::{authorizer::Require, UpdateAdvisory};
 use trustify_common::id::Id;
 use trustify_entity::labels::Labels;
 
@@ -21,6 +22,7 @@ pub async fn set(
     advisory: web::Data<AdvisoryService>,
     id: web::Path<Id>,
     web::Json(labels): web::Json<Labels>,
+    _: Require<UpdateAdvisory>,
 ) -> actix_web::Result<impl Responder> {
     Ok(
         match advisory.set_labels(id.into_inner(), labels, ()).await? {
@@ -48,6 +50,7 @@ pub async fn update(
     advisory: web::Data<AdvisoryService>,
     id: web::Path<Id>,
     web::Json(update): web::Json<Labels>,
+    _: Require<UpdateAdvisory>,
 ) -> actix_web::Result<impl Responder> {
     Ok(
         match advisory

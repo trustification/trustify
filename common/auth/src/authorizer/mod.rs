@@ -1,3 +1,6 @@
+mod require;
+pub use require::*;
+
 use crate::{
     authenticator::{error::AuthorizationError, user::UserInformation},
     Permission,
