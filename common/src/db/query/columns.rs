@@ -165,7 +165,7 @@ impl Columns {
                             ColumnType::Json | ColumnType::JsonBinary
                         )
                     })
-                    .find(name_match(self.json_keys.get(field).map_or("", |v| v)))
+                    .find(name_match(self.json_keys.get(field)?))
                     .map(|(r, d)| {
                         (
                             Expr::expr(Expr::col(r.clone()).cast_json_field(field)),
@@ -357,6 +357,7 @@ mod tests {
         assert!(clause(q("missing=gone")).is_err());
         assert!(clause(q("").sort("name")).is_ok());
         assert!(clause(q("").sort("nope")).is_err());
+        assert!(clause(q("q=x")).is_err());
 
         Ok(())
     }
