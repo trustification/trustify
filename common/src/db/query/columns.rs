@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
 use sea_orm::entity::ColumnDef;
@@ -10,6 +11,7 @@ use sea_query::{Alias, ColumnRef, Expr, IntoColumnRef, IntoIden};
 pub struct Columns {
     columns: Vec<(ColumnRef, ColumnDef)>,
     translator: Option<Translator>,
+    json_keys: HashMap<&'static str, &'static str>,
 }
 
 impl Display for Columns {
@@ -73,6 +75,7 @@ impl Columns {
         Self {
             columns,
             translator: None,
+            json_keys: HashMap::new(),
         }
     }
 
@@ -124,6 +127,14 @@ impl Columns {
         self
     }
 
+    /// Declare which query fields are the nested keys of a JSON column
+    pub fn json_keys(mut self, column: &'static str, fields: &[&'static str]) -> Self {
+        for each in fields {
+            self.json_keys.insert(each, column);
+        }
+        self
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &(ColumnRef, ColumnDef)> {
         self.columns.iter()
     }
@@ -139,29 +150,27 @@ impl Columns {
                          if name.to_string().eq_ignore_ascii_case(tgt))
             }
         }
-        match field.split_once('.') {
-            None => self
-                .columns
-                .iter()
-                .find(name_match(field))
-                .map(|(r, d)| (Expr::col(r.clone()), d.clone())),
-            Some((col, key)) => self
-                .columns
-                .iter()
-                .filter(|(_, def)| {
-                    matches!(
-                        def.get_column_type(),
-                        ColumnType::Json | ColumnType::JsonBinary
-                    )
-                })
-                .find(name_match(col))
-                .map(|(r, d)| {
-                    (
-                        Expr::expr(Expr::col(r.clone()).cast_json_field(key)),
-                        d.clone(),
-                    )
-                }),
-        }
+        self.columns
+            .iter()
+            .find(name_match(field))
+            .map(|(r, d)| (Expr::col(r.clone()), d.clone()))
+            .or_else(|| {
+                self.columns
+                    .iter()
+                    .filter(|(_, def)| {
+                        matches!(
+                            def.get_column_type(),
+                            ColumnType::Json | ColumnType::JsonBinary
+                        )
+                    })
+                    .find(name_match(self.json_keys.get(field).map_or("", |v| v)))
+                    .map(|(r, d)| {
+                        (
+                            Expr::expr(Expr::col(r.clone()).cast_json_field(field)),
+                            d.clone(),
+                        )
+                    })
+            })
     }
 
     pub(crate) fn translate(&self, field: &str, op: &str, value: &str) -> Option<String> {
@@ -320,8 +329,11 @@ mod tests {
             .select_only()
             .column(advisory::Column::Id)
             .filtering_with(
-                q("purl.name~log4j&purl.version>1.0&purl.ty=maven").sort("purl.name"),
-                advisory::Entity.columns().alias("advisory", "foo"),
+                q("name~log4j&version>1.0&type=maven").sort("name"),
+                advisory::Entity
+                    .columns()
+                    .alias("advisory", "x")
+                    .json_keys("purl", &["name", "type", "version"]),
             )?
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string()
@@ -332,7 +344,7 @@ mod tests {
 
         assert_eq!(
             clause,
-            r#"(("foo"."purl" ->> 'name') ILIKE '%log4j%') AND ("foo"."purl" ->> 'version') > '1.0' AND ("foo"."purl" ->> 'ty') = 'maven' ORDER BY "foo"."purl" ->> 'name' ASC"#
+            r#"(("x"."purl" ->> 'name') ILIKE '%log4j%') AND ("x"."purl" ->> 'version') > '1.0' AND ("x"."purl" ->> 'type') = 'maven' ORDER BY "x"."purl" ->> 'name' ASC"#
         );
 
         Ok(())
