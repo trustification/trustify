@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730971345703,
+  "lastUpdate": 1730973043686,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -782,6 +782,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "b77ebb3f6d68ec3fc1bd6ea3b213f3577add3af7",
+          "message": "Remove curious use<> syntax\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-11-07T09:30:23Z",
+          "tree_id": "a60bbe119492023df34cd8e28f8c586a8ba93ecd",
+          "url": "https://github.com/trustification/trustify/commit/b77ebb3f6d68ec3fc1bd6ea3b213f3577add3af7"
+        },
+        "date": 1730973043117,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 23,
             "unit": "s"
           }
         ]
