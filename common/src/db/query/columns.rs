@@ -330,27 +330,33 @@ mod tests {
 
     #[test(tokio::test)]
     async fn json_queries() -> Result<(), anyhow::Error> {
-        let clause = advisory::Entity::find()
-            .select_only()
-            .column(advisory::Column::Id)
-            .filtering_with(
-                q("name~log4j&version>1.0&type=maven").sort("name"),
-                advisory::Entity
-                    .columns()
-                    .alias("advisory", "x")
-                    .json_keys("purl", &["name", "type", "version"]),
-            )?
-            .build(sea_orm::DatabaseBackend::Postgres)
-            .to_string()
-            .split("WHERE ")
-            .last()
-            .unwrap()
-            .to_string();
+        fn clause(query: Query) -> Result<String, Error> {
+            Ok(advisory::Entity::find()
+                .filtering_with(
+                    query,
+                    advisory::Entity
+                        .columns()
+                        .json_keys("purl", &["name", "type", "version"]),
+                )?
+                .build(sea_orm::DatabaseBackend::Postgres)
+                .to_string()
+                .split("WHERE ")
+                .last()
+                .unwrap()
+                .to_string())
+        }
 
         assert_eq!(
-            clause,
-            r#"(("x"."purl" ->> 'name') ILIKE '%log4j%') AND ("x"."purl" ->> 'version') > '1.0' AND ("x"."purl" ->> 'type') = 'maven' ORDER BY "x"."purl" ->> 'name' ASC"#
+            clause(q("name~log4j&version>1.0"))?,
+            r#"(("advisory"."purl" ->> 'name') ILIKE '%log4j%') AND ("advisory"."purl" ->> 'version') > '1.0'"#
         );
+        assert_eq!(
+            clause(q("name=log4j").sort("name"))?,
+            r#"("advisory"."purl" ->> 'name') = 'log4j' ORDER BY "advisory"."purl" ->> 'name' ASC"#
+        );
+        assert!(clause(q("missing=gone")).is_err());
+        assert!(clause(q("").sort("name")).is_ok());
+        assert!(clause(q("").sort("nope")).is_err());
 
         Ok(())
     }
