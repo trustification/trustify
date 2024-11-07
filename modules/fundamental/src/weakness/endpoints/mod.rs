@@ -1,5 +1,6 @@
 use crate::{license::model::LicenseSummary, weakness::service::WeaknessService};
 use actix_web::{get, web, HttpResponse, Responder};
+use trustify_auth::{authorizer::Require, ReadWeakness};
 use trustify_common::{
     db::{query::Query, Database},
     model::{Paginated, PaginatedResults},
@@ -31,6 +32,7 @@ pub async fn list_weaknesses(
     state: web::Data<WeaknessService>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadWeakness>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(state.list_weaknesses(search, paginated).await?))
 }
@@ -47,6 +49,7 @@ pub async fn list_weaknesses(
 pub async fn get_weakness(
     state: web::Data<WeaknessService>,
     id: web::Path<String>,
+    _: Require<ReadWeakness>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(state.get_weakness(&id).await?))
 }

@@ -11,7 +11,7 @@ use serde_json::json;
 use std::time::Duration;
 use test_context::test_context;
 use test_log::test;
-use trustify_test_context::TrustifyContext;
+use trustify_test_context::{app::TestApp, TrustifyContext};
 use utoipa_actix_web::AppExt;
 
 fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {
@@ -52,11 +52,12 @@ fn mock_importer(result: &Importer, source: impl Into<String>) -> Importer {
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
-async fn test_default(ctx: TrustifyContext) {
+async fn default(ctx: TrustifyContext) {
     let db = ctx.db;
     let app = actix::init_service(
         App::new()
             .into_utoipa_app()
+            .add_test_authorizer()
             .service(
                 utoipa_actix_web::scope("/api")
                     .configure(|svc| super::endpoints::configure(svc, db)),
@@ -145,11 +146,12 @@ async fn test_default(ctx: TrustifyContext) {
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
-async fn test_oplock(ctx: TrustifyContext) {
+async fn oplock(ctx: TrustifyContext) {
     let db = ctx.db;
     let app = actix::init_service(
         App::new()
             .into_utoipa_app()
+            .add_test_authorizer()
             .service(
                 utoipa_actix_web::scope("/api")
                     .configure(|svc| super::endpoints::configure(svc, db)),
@@ -301,11 +303,12 @@ async fn test_oplock(ctx: TrustifyContext) {
 
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(actix_web::test)]
-async fn test_patch(ctx: TrustifyContext) {
+async fn patch(ctx: TrustifyContext) {
     let db = ctx.db;
     let app = actix::init_service(
         App::new()
             .into_utoipa_app()
+            .add_test_authorizer()
             .service(
                 utoipa_actix_web::scope("/api")
                     .configure(|svc| super::endpoints::configure(svc, db)),

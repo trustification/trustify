@@ -6,6 +6,7 @@ use crate::organization::{
     service::OrganizationService,
 };
 use actix_web::{get, web, HttpResponse, Responder};
+use trustify_auth::{authorizer::Require, ReadMetadata};
 use trustify_common::{
     db::{query::Query, Database},
     model::Paginated,
@@ -37,6 +38,7 @@ pub async fn all(
     state: web::Data<OrganizationService>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadMetadata>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(state.fetch_organizations(search, paginated, ()).await?))
 }
@@ -57,6 +59,7 @@ pub async fn all(
 pub async fn get(
     state: web::Data<OrganizationService>,
     id: web::Path<Uuid>,
+    _: Require<ReadMetadata>,
 ) -> actix_web::Result<impl Responder> {
     let fetched = state.fetch_organization(*id, ()).await?;
 

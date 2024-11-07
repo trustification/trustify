@@ -6,6 +6,7 @@ use crate::purl::{
     service::PurlService,
 };
 use actix_web::{get, web, HttpResponse, Responder};
+use trustify_auth::{authorizer::Require, ReadSbom};
 use trustify_common::{db::query::Query, model::Paginated, model::PaginatedResults};
 
 #[utoipa::path(
@@ -19,7 +20,10 @@ use trustify_common::{db::query::Query, model::Paginated, model::PaginatedResult
 )]
 #[get("/v1/purl/type")]
 /// List known pURL types
-pub async fn all_purl_types(service: web::Data<PurlService>) -> actix_web::Result<impl Responder> {
+pub async fn all_purl_types(
+    service: web::Data<PurlService>,
+    _: Require<ReadSbom>,
+) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(service.purl_types(()).await?))
 }
 
@@ -42,6 +46,7 @@ pub async fn get_purl_type(
     r#type: web::Path<String>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(
         service
@@ -67,6 +72,7 @@ pub async fn get_purl_type(
 pub async fn get_base_purl_of_type(
     service: web::Data<PurlService>,
     path: web::Path<(String, String)>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     let (r#type, namespace_and_name) = path.into_inner();
 
@@ -96,6 +102,7 @@ pub async fn get_base_purl_of_type(
 pub async fn get_versioned_purl_of_type(
     service: web::Data<PurlService>,
     path: web::Path<(String, String, String)>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     let (r#type, namespace_and_name, version) = path.into_inner();
 

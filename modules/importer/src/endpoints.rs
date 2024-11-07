@@ -7,6 +7,8 @@ use actix_web::{
     patch, post, put, web, HttpResponse, Responder,
 };
 use std::convert::Infallible;
+use trustify_auth::authorizer::Require;
+use trustify_auth::{CreateImporter, DeleteImporter, ReadImporter, UpdateImporter};
 use trustify_common::{
     db::Database,
     model::{Paginated, PaginatedResults, Revisioned},
@@ -35,7 +37,10 @@ pub fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, db: 
 )]
 #[get("/v1/importer")]
 /// List importer configurations
-async fn list(service: web::Data<ImporterService>) -> Result<impl Responder, Error> {
+async fn list(
+    service: web::Data<ImporterService>,
+    _: Require<ReadImporter>,
+) -> Result<impl Responder, Error> {
     Ok(web::Json(service.list().await?))
 }
 
@@ -57,6 +62,7 @@ async fn create(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
     web::Json(configuration): web::Json<ImporterConfiguration>,
+    _: Require<CreateImporter>,
 ) -> Result<impl Responder, Error> {
     service.create(name.into_inner(), configuration).await?;
     Ok(HttpResponse::Created().finish())
@@ -83,6 +89,7 @@ async fn create(
 async fn read(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
+    _: Require<ReadImporter>,
 ) -> Result<Option<impl Responder>, Error> {
     Ok(service
         .read(&name)
@@ -115,6 +122,7 @@ async fn update(
     name: web::Path<String>,
     web::Header(if_match): web::Header<IfMatch>,
     web::Json(configuration): web::Json<ImporterConfiguration>,
+    _: Require<UpdateImporter>,
 ) -> Result<impl Responder, Error> {
     let revision = match &if_match {
         IfMatch::Any => None,
@@ -152,6 +160,7 @@ async fn patch_json_merge(
     name: web::Path<String>,
     web::Header(if_match): web::Header<IfMatch>,
     web::Json(patch): web::Json<serde_json::Value>,
+    _: Require<UpdateImporter>,
 ) -> Result<impl Responder, PatchError<serde_json::Error>> {
     let revision = match &if_match {
         IfMatch::Any => None,
@@ -190,6 +199,7 @@ async fn set_enabled(
     name: web::Path<String>,
     web::Header(if_match): web::Header<IfMatch>,
     web::Json(state): web::Json<bool>,
+    _: Require<UpdateImporter>,
 ) -> Result<impl Responder, PatchError<Infallible>> {
     let revision = match &if_match {
         IfMatch::Any => None,
@@ -226,6 +236,7 @@ async fn force(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
     web::Header(if_match): web::Header<IfMatch>,
+    _: Require<UpdateImporter>,
 ) -> Result<impl Responder, Error> {
     let revision = match &if_match {
         IfMatch::Any => None,
@@ -254,6 +265,7 @@ async fn delete(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
     web::Header(if_match): web::Header<IfMatch>,
+    _: Require<DeleteImporter>,
 ) -> Result<impl Responder, Error> {
     let revision = match &if_match {
         IfMatch::Any => None,
@@ -279,6 +291,7 @@ async fn get_reports(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
     web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadImporter>,
 ) -> Result<impl Responder, Error> {
     Ok(web::Json(service.get_reports(&name, paginated).await?))
 }

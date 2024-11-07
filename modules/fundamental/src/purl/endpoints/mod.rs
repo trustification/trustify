@@ -9,6 +9,7 @@ use crate::{
 use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
+use trustify_auth::{authorizer::Require, ReadSbom};
 use trustify_common::{
     db::query::Query, db::Database, id::IdError, model::Paginated, model::PaginatedResults,
     purl::Purl,
@@ -51,6 +52,7 @@ pub async fn get(
     service: web::Data<PurlService>,
     key: web::Path<String>,
     web::Query(Deprecation { deprecated }): web::Query<Deprecation>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     if key.starts_with("pkg") {
         let purl = Purl::from_str(&key).map_err(Error::Purl)?;
@@ -78,6 +80,7 @@ pub async fn all(
     service: web::Data<PurlService>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(service.purls(search, paginated, ()).await?))
 }
