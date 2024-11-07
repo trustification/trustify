@@ -29,7 +29,7 @@ impl Filter {
 impl TryFrom<(&str, Operator, &Vec<String>, &Columns)> for Filter {
     type Error = Error;
     fn try_from(tuple: (&str, Operator, &Vec<String>, &Columns)) -> Result<Self, Self::Error> {
-        let (ref field, operator, values, columns) = tuple;
+        let (field, operator, values, columns) = tuple;
         let (expr, col_def) = columns.for_field(field)?;
         Ok(Filter {
             operator: match operator {
