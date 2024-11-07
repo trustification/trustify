@@ -8290,7 +8290,7 @@ checksum = "343e926fc669bc8cde4fa3129ab681c63671bae288b1f1081ceee6d9d37904fc"
 
 [[package]]
 name = "trustify-auth"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8323,7 +8323,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-common"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8367,7 +8367,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-cvss"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "serde",
  "test-log",
@@ -8377,7 +8377,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-entity"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "anyhow",
  "async-graphql",
@@ -8401,7 +8401,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-infrastructure"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "actix-cors",
  "actix-tls",
@@ -8439,7 +8439,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-migration"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "anyhow",
  "sea-orm-migration",
@@ -8457,7 +8457,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-analysis"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8498,7 +8498,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-fundamental"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8559,7 +8559,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-graphql"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8582,7 +8582,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-importer"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8633,7 +8633,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-ingestor"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8689,7 +8689,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-storage"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "anyhow",
  "async-compression",
@@ -8715,7 +8715,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-ui"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "actix-web",
  "actix-web-static-files",
@@ -8726,7 +8726,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-user"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8748,7 +8748,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-server"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8787,7 +8787,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-test-context"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8817,7 +8817,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-trustd"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "anyhow",
  "clap",
@@ -9724,7 +9724,7 @@ dependencies = [
 
 [[package]]
 name = "xtask"
-version = "0.1.0-alpha.21"
+version = "0.1.0-alpha.22"
 dependencies = [
  "anyhow",
  "async-trait",
