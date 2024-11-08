@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731077445702,
+  "lastUpdate": 1731083148691,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -864,6 +864,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/786aa1bda725abf5d8e9b3310890c735ce07bdc1"
         },
         "date": 1731077445045,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "d5d9d33de2eb1bf7e9128895a781acac66b95e56",
+          "message": "fix: have a default empty array\n\nCloses https://github.com/trustification/trustify/issues/984",
+          "timestamp": "2024-11-08T16:06:16Z",
+          "tree_id": "99d0290230c3352d09a78c83f6d2fb0d37d7fa94",
+          "url": "https://github.com/trustification/trustify/commit/d5d9d33de2eb1bf7e9128895a781acac66b95e56"
+        },
+        "date": 1731083147867,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
