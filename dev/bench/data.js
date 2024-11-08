@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1730976154901,
+  "lastUpdate": 1731077445702,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -835,6 +835,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/e1096f8d40baf0fb36ef4a9061728642c70d10f7"
         },
         "date": 1730976153679,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "786aa1bda725abf5d8e9b3310890c735ce07bdc1",
+          "message": "Deal with missing keys more elegantly\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-11-08T14:31:47Z",
+          "tree_id": "fd1a9014a195f59e867386ad6ad0d5ff1ae66b82",
+          "url": "https://github.com/trustification/trustify/commit/786aa1bda725abf5d8e9b3310890c735ce07bdc1"
+        },
+        "date": 1731077445045,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
