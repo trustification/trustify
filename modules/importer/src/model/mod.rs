@@ -98,9 +98,9 @@ pub struct ImporterData {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub last_error: Option<String>,
 
-    /// The current progress, if available.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub progress: Option<Progress>,
+    /// The current progress.
+    #[serde(default)]
+    pub progress: Progress,
 
     /// The continuation token of the importer.
     #[serde(default, skip_serializing_if = "serde_json::Value::is_null")]
@@ -109,7 +109,7 @@ pub struct ImporterData {
 
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct Progress {
+pub struct ProgressDetails {
     /// The current processed items.
     pub current: u32,
     /// The total number of items to be processed.
@@ -123,6 +123,19 @@ pub struct Progress {
     /// The estimated time of completion.
     #[serde(with = "time::serde::rfc3339")]
     pub estimated_completion: OffsetDateTime,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Progress {
+    // Current message
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+
+    // Current progress, if available.
+    #[serde(flatten)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub details: Option<ProgressDetails>,
 }
 
 #[derive(
@@ -224,6 +237,7 @@ impl TryFrom<Model> for Importer {
             last_error,
             progress_current,
             progress_total,
+            progress_message,
             continuation,
             revision: _,
         }: Model,
@@ -241,6 +255,7 @@ impl TryFrom<Model> for Importer {
                     OffsetDateTime::now_utc(),
                     progress_current,
                     progress_total,
+                    progress_message,
                 ),
                 continuation: continuation.unwrap_or_default(),
                 configuration: serde_json::from_value(configuration)?,
@@ -287,13 +302,27 @@ impl From<importer_report::Model> for ImporterReport {
     }
 }
 
-/// Create the progress information from the progress state
+/// Create the progress from the progress state
 fn into_progress(
     start: OffsetDateTime,
     now: OffsetDateTime,
     current: Option<i32>,
     total: Option<i32>,
-) -> Option<Progress> {
+    message: Option<String>,
+) -> Progress {
+    Progress {
+        message,
+        details: into_progress_details(start, now, current, total),
+    }
+}
+
+/// Create the progress details from the progress state
+fn into_progress_details(
+    start: OffsetDateTime,
+    now: OffsetDateTime,
+    current: Option<i32>,
+    total: Option<i32>,
+) -> Option<ProgressDetails> {
     // elapsed time in seconds
     let elapsed = (now - start).as_seconds_f32();
 
@@ -312,7 +341,7 @@ fn into_progress(
     let estimated_seconds_remaining = (remaining / rate) as u64;
 
     // return result
-    Some(Progress {
+    Some(ProgressDetails {
         current,
         total,
         percent: current as f32 / total_f,
@@ -332,15 +361,18 @@ mod test {
         let start = datetime!(2024-01-01 00:00:00 UTC);
         let now = datetime!(2024-01-01 00:00:10 UTC);
         assert_eq!(
-            into_progress(start, now, Some(15), Some(100)),
-            Some(Progress {
-                current: 15,
-                total: 100,
-                percent: 0.15,
-                rate: 1.5,
-                estimated_seconds_remaining: 56,
-                estimated_completion: datetime!(2024-01-01 00:01:06 UTC),
-            })
+            into_progress(start, now, Some(15), Some(100), None),
+            Progress {
+                message: None,
+                details: Some(ProgressDetails {
+                    current: 15,
+                    total: 100,
+                    percent: 0.15,
+                    rate: 1.5,
+                    estimated_seconds_remaining: 56,
+                    estimated_completion: datetime!(2024-01-01 00:01:06 UTC),
+                })
+            }
         )
     }
 
@@ -348,11 +380,26 @@ mod test {
     fn progress_none() {
         let start = datetime!(2024-01-01 00:00:00 UTC);
         let now = datetime!(2024-01-01 00:00:10 UTC);
-        assert_eq!(into_progress(start, now, None, None), None);
-        assert_eq!(into_progress(start, now, Some(1), None), None);
-        assert_eq!(into_progress(start, now, None, Some(1)), None);
+        assert_eq!(
+            into_progress(start, now, None, None, None),
+            Progress::default()
+        );
+        assert_eq!(
+            into_progress(start, now, Some(1), None, None),
+            Progress::default()
+        );
+        assert_eq!(
+            into_progress(start, now, None, Some(1), None),
+            Progress::default()
+        );
 
-        assert_eq!(into_progress(start, now, Some(10), Some(1)), None);
-        assert_eq!(into_progress(start, now, Some(0), Some(0)), None);
+        assert_eq!(
+            into_progress(start, now, Some(10), Some(1), None),
+            Progress::default()
+        );
+        assert_eq!(
+            into_progress(start, now, Some(0), Some(0), None),
+            Progress::default()
+        );
     }
 }

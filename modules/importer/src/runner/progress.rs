@@ -1,4 +1,5 @@
 use std::{
+    fmt::Display,
     future::Future,
     time::{Duration, Instant},
 };
@@ -7,13 +8,22 @@ use tokio::runtime::Handle;
 pub trait Progress {
     type Instance: ProgressInstance;
 
+    /// start a new work package
     fn start(&self, work: usize) -> Self::Instance;
+
+    fn message(&self, message: impl Display) -> impl Future<Output = ()>;
+
+    fn message_sync(&self, message: impl Display) {
+        Handle::current().block_on(async { self.message(message).await })
+    }
 }
 
 impl Progress for () {
     type Instance = ();
 
     fn start(&self, _work: usize) -> Self::Instance {}
+
+    async fn message(&self, _message: impl Display) {}
 }
 
 impl ProgressInstance for () {
@@ -76,6 +86,10 @@ impl Progress for TracingProgress {
             // first report with update
             last: Instant::now() - self.period,
         }
+    }
+
+    async fn message(&self, message: impl Display) {
+        tracing::info!("Progress: {message}");
     }
 }
 
@@ -160,6 +174,8 @@ mod test {
                 current: 0,
             }
         }
+
+        async fn message(&self, _message: impl Display) {}
     }
 
     impl ProgressInstance for MockProgressInstance {

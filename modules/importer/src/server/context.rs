@@ -46,10 +46,7 @@ impl RunContext for ServiceRunContext {
     }
 
     fn progress(&self, _message: String) -> impl Progress + Send + 'static {
-        ServiceProgress {
-            name: self.name.clone(),
-            service: self.service.clone(),
-        }
+        ServiceProgress::new(self.name.clone(), self.service.clone())
     }
 }
 

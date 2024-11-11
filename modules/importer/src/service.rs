@@ -132,6 +132,7 @@ impl ImporterService {
 
             progress_current: Set(None),
             progress_total: Set(None),
+            progress_message: Set(None),
 
             continuation: Set(None),
 
@@ -269,6 +270,10 @@ impl ImporterService {
             ),
             (importer::Column::ProgressCurrent, Expr::value(i32::null())),
             (importer::Column::ProgressTotal, Expr::value(i32::null())),
+            (
+                importer::Column::ProgressMessage,
+                Expr::value(String::null()),
+            ),
             (importer::Column::LastChange, Expr::value(now)),
             (importer::Column::Continuation, Expr::value(continuation)),
         ];
@@ -355,6 +360,10 @@ impl ImporterService {
                 (importer::Column::ProgressCurrent, Expr::value(i32::null())),
                 (importer::Column::ProgressTotal, Expr::value(i32::null())),
                 (
+                    importer::Column::ProgressMessage,
+                    Expr::value(String::null()),
+                ),
+                (
                     importer::Column::Continuation,
                     Expr::value(None::<serde_json::Value>),
                 ),
@@ -378,7 +387,27 @@ impl ImporterService {
             vec![
                 (importer::Column::ProgressCurrent, Expr::value(current)),
                 (importer::Column::ProgressTotal, Expr::value(total)),
+                (
+                    importer::Column::ProgressMessage,
+                    Expr::value(String::null()),
+                ),
             ],
+        )
+        .await
+    }
+
+    #[instrument(skip(self))]
+    pub async fn set_progress_message(
+        &self,
+        name: &str,
+        expected_revision: Option<&str>,
+        message: &str,
+    ) -> Result<(), Error> {
+        self.update(
+            &self.db,
+            name,
+            expected_revision,
+            vec![(importer::Column::ProgressMessage, Expr::value(message))],
         )
         .await
     }

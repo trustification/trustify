@@ -16,6 +16,7 @@ pub struct Model {
 
     pub progress_current: Option<i32>,
     pub progress_total: Option<i32>,
+    pub progress_message: Option<String>,
 
     /// an importer specific continuation token
     pub continuation: Option<serde_json::Value>,

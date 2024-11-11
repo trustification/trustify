@@ -2590,10 +2590,8 @@ components:
           format: date-time
           description: The last successful run
         progress:
-          oneOf:
-          - type: 'null'
-          - $ref: '#/components/schemas/Progress'
-            description: The current progress, if available.
+          $ref: '#/components/schemas/Progress'
+          description: The current progress.
         state:
           $ref: '#/components/schemas/State'
           description: The current state of the importer
@@ -3171,6 +3169,17 @@ components:
         version:
           type: string
     Progress:
+      allOf:
+      - oneOf:
+        - type: 'null'
+        - $ref: '#/components/schemas/ProgressDetails'
+      - type: object
+        properties:
+          message:
+            type:
+            - string
+            - 'null'
+    ProgressDetails:
       type: object
       required:
       - current
