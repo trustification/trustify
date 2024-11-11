@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731083148691,
+  "lastUpdate": 1731340404503,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -893,6 +893,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/d5d9d33de2eb1bf7e9128895a781acac66b95e56"
         },
         "date": 1731083147867,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "1fd508fcd7c165df2c5fb71158e4491c9157af18",
+          "message": "fix: re-walk all files if the commit cannot be found",
+          "timestamp": "2024-11-11T15:32:38Z",
+          "tree_id": "f915f34d7a3c394283d01ba8bd8b5515f7d92adf",
+          "url": "https://github.com/trustification/trustify/commit/1fd508fcd7c165df2c5fb71158e4491c9157af18"
+        },
+        "date": 1731340403846,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
