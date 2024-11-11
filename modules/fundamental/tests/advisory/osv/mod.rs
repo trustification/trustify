@@ -2,6 +2,7 @@
 #![allow(clippy::expect_used)]
 
 mod delete;
+mod ingest;
 mod reingest;
 
 use osv::schema::{Event, Vulnerability};

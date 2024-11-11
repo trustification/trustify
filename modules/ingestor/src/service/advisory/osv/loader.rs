@@ -61,7 +61,7 @@ impl<'g> OsvLoader<'g> {
             // TODO(#899): check if we have some kind of version information
             version: None,
             issuer,
-            published: Some(osv.published.into_time()),
+            published: osv.published.map(ChronoExt::into_time),
             modified: Some(osv.modified.into_time()),
             withdrawn: osv.withdrawn.map(ChronoExt::into_time),
         };
