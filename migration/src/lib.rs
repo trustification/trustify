@@ -89,6 +89,7 @@ mod m0000690_alter_sbom_details;
 mod m0000700_advisory_add_reserved;
 mod m0000710_create_user_prefs;
 mod m0000720_alter_sbom_fix_null_array;
+mod m0000730_alter_importer_add_progress;
 
 pub struct Migrator;
 
@@ -185,6 +186,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000700_advisory_add_reserved::Migration),
             Box::new(m0000710_create_user_prefs::Migration),
             Box::new(m0000720_alter_sbom_fix_null_array::Migration),
+            Box::new(m0000730_alter_importer_add_progress::Migration),
         ]
     }
 }

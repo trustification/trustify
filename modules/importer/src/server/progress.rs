@@ -2,12 +2,29 @@ use crate::{
     runner::progress::{Progress, ProgressInstance, TracingProgress, TracingProgressInstance},
     service::ImporterService,
 };
-use std::time::{Duration, Instant};
+use std::{
+    fmt::Display,
+    time::{Duration, Instant},
+};
 
 /// [`Progress`] implementation for using the import service.
 pub struct ServiceProgress {
-    pub name: String,
-    pub service: ImporterService,
+    name: String,
+    service: ImporterService,
+    tracing: TracingProgress,
+}
+
+impl ServiceProgress {
+    pub fn new(name: String, service: ImporterService) -> Self {
+        Self {
+            name: name.clone(),
+            service,
+            tracing: TracingProgress {
+                name,
+                period: FLUSH_PERIOD,
+            },
+        }
+    }
 }
 
 const FLUSH_PERIOD: Duration = Duration::from_secs(15);
@@ -22,12 +39,17 @@ impl Progress for ServiceProgress {
             current: 0,
             total: work,
             last_flush: Instant::now() - FLUSH_PERIOD,
-            tracing: TracingProgress {
-                name: self.name.clone(),
-                period: FLUSH_PERIOD,
-            }
-            .start(work),
+            tracing: self.tracing.start(work),
         }
+    }
+
+    async fn message(&self, message: impl Display) {
+        let message = message.to_string();
+        let _ = self
+            .service
+            .set_progress_message(&self.name, None, &message)
+            .await;
+        self.tracing.message(message).await;
     }
 }
 

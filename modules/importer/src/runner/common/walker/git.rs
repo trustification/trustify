@@ -192,6 +192,9 @@ where
         // clone or open repository
 
         let result = info_span!("clone repository").in_scope(|| {
+            self.progress
+                .message_sync(format!("Cloning repository: {}", self.source));
+
             let mut builder = RepoBuilder::new();
 
             if let Some(branch) = &self.branch {
@@ -213,6 +216,10 @@ where
 
                 info_span!("fetching updates").in_scope(|| {
                     log::info!("Fetching updates");
+
+                    self.progress
+                        .message_sync(format!("Fetching updates: {}", self.source));
+
                     let mut remote = repo.find_remote("origin")?;
 
                     let mut fo = Self::create_fetch_options();
