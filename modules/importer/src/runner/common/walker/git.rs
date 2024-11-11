@@ -10,6 +10,7 @@ use std::{
     convert::Infallible,
     env,
     fmt::{Debug, Display},
+    fs::remove_dir_all,
     path::{Path, PathBuf},
 };
 use tracing::{info_span, instrument};
@@ -191,112 +192,13 @@ where
 
         // clone or open repository
 
-        let result = info_span!("clone repository").in_scope(|| {
-            self.progress
-                .message_sync(format!("Cloning repository: {}", self.source));
-
-            let mut builder = RepoBuilder::new();
-
-            if let Some(branch) = &self.branch {
-                builder.branch(branch);
-            }
-
-            let mut fo = Self::create_fetch_options();
-            if self.continuation.0.is_none() {
-                fo.depth(self.depth);
-            }
-            builder.fetch_options(fo).clone(&self.source, path)
-        });
-
-        let repo = match result {
-            Ok(repo) => repo,
-            Err(err) if err.code() == ErrorCode::Exists && err.class() == ErrorClass::Invalid => {
-                log::info!("Already exists, opening ...");
-                let repo = info_span!("open repository").in_scope(|| Repository::open(path))?;
-
-                info_span!("fetching updates").in_scope(|| {
-                    log::info!("Fetching updates");
-
-                    self.progress
-                        .message_sync(format!("Fetching updates: {}", self.source));
-
-                    let mut remote = repo.find_remote("origin")?;
-
-                    let mut fo = Self::create_fetch_options();
-                    remote.fetch(&[] as &[&str], Some(&mut fo), None)?;
-                    remote.disconnect()?;
-
-                    let head = repo.find_reference("FETCH_HEAD")?;
-                    let head = head.peel_to_commit()?;
-
-                    // reset to the most recent commit
-                    repo.reset(head.as_object(), ResetType::Hard, None)?;
-
-                    Ok::<_, Error>(())
-                })?;
-
-                repo
-            }
-            Err(err) => {
-                log::info!(
-                    "Clone failed - code: {:?}, class: {:?}",
-                    err.code(),
-                    err.class()
-                );
-                return Err(err.into());
-            }
-        };
+        let repo = self.clone_or_update_repo(path)?;
 
         log::info!("Repository cloned or updated");
 
         // discover files between "then" and now
 
-        let changes = match &self.continuation.0 {
-            Some(commit) => {
-                log::info!("Continuing from: {commit}");
-
-                let files = info_span!("continue from", commit).in_scope(|| {
-                    let start = repo.find_commit(repo.revparse_single(commit)?.id())?;
-                    let end = repo.head()?.peel_to_commit()?;
-
-                    let start = start.tree()?;
-                    let end = end.tree()?;
-
-                    let diff = repo.diff_tree_to_tree(Some(&start), Some(&end), None)?;
-
-                    let mut files = HashSet::with_capacity(diff.deltas().len());
-
-                    for delta in diff.deltas() {
-                        if let Some(path) = delta.new_file().path() {
-                            let path = match &self.path {
-                                // files are relative to the base dir
-                                Some(base) => match path.strip_prefix(base) {
-                                    Ok(path) => Some(path.to_path_buf()),
-                                    Err(..) => None,
-                                },
-                                // files are relative to the repo
-                                None => Some(path.to_path_buf()),
-                            };
-
-                            if let Some(path) = path {
-                                log::debug!("Record {} as changed file", path.display());
-                                files.insert(path);
-                            }
-                        }
-                    }
-
-                    Ok::<_, Error>(files)
-                })?;
-
-                log::info!("Detected {} changed files", files.len());
-
-                Some(files)
-            }
-            _ => {
-                log::debug!("Ingesting all files");
-                None
-            }
-        };
+        let changes = self.find_changes(&repo)?;
 
         // discover and process files
 
@@ -328,6 +230,158 @@ where
         // return result
 
         Ok(Continuation(Some(commit.to_string())))
+    }
+
+    fn clone_or_update_repo(&self, path: &Path) -> Result<Repository, Error> {
+        match self.clone_repo(path) {
+            Ok(repo) => Ok(repo),
+            Err(err) if err.code() == ErrorCode::Exists && err.class() == ErrorClass::Invalid => {
+                log::info!("Already exists, opening ...");
+                let repo = info_span!("open repository").in_scope(|| Repository::open(path))?;
+
+                let repo = info_span!("fetching updates").in_scope(move || {
+                    log::info!("Fetching updates");
+
+                    self.progress
+                        .message_sync(format!("Fetching updates: {}", self.source));
+
+                    {
+                        let mut remote = repo.find_remote("origin")?;
+                        let mut fo = Self::create_fetch_options();
+
+                        match remote.fetch(&[] as &[&str], Some(&mut fo), None) {
+                            Ok(()) => {}
+                            Err(err)
+                                if err.code() == ErrorCode::NotFound
+                                    && err.class() == ErrorClass::Odb =>
+                            {
+                                // delete repo
+
+                                remove_dir_all(path)?;
+
+                                // clone repo
+
+                                return Ok(self.clone_repo(path)?);
+                            }
+                            err => err?,
+                        }
+                        remote.disconnect()?;
+                    }
+
+                    log::info!("Fetched, resetting");
+
+                    {
+                        let head = repo.find_reference("FETCH_HEAD")?;
+                        let head = head.peel_to_commit()?;
+
+                        // reset to the most recent commit
+                        repo.reset(head.as_object(), ResetType::Hard, None)?;
+                    }
+
+                    Ok::<_, Error>(repo)
+                })?;
+
+                Ok(repo)
+            }
+            Err(err) => {
+                log::info!(
+                    "Clone failed - code: {:?}, class: {:?}",
+                    err.code(),
+                    err.class()
+                );
+                Err(err.into())
+            }
+        }
+    }
+
+    #[instrument(skip(self), err)]
+    fn clone_repo(&self, path: &Path) -> Result<Repository, git2::Error> {
+        self.progress
+            .message_sync(format!("Cloning repository: {}", self.source));
+
+        let mut builder = RepoBuilder::new();
+
+        if let Some(branch) = &self.branch {
+            builder.branch(branch);
+        }
+
+        let mut fo = Self::create_fetch_options();
+        if self.continuation.0.is_none() {
+            fo.depth(self.depth);
+        }
+
+        builder.fetch_options(fo).clone(&self.source, path)
+    }
+
+    fn find_changes(&self, repo: &Repository) -> Result<Option<HashSet<PathBuf>>, Error> {
+        let result = match &self.continuation.0 {
+            Some(commit) => {
+                log::info!("Continuing from: {commit}");
+
+                let files = info_span!("continue from", commit).in_scope(|| {
+                    let start = match repo.find_commit(repo.revparse_single(commit)?.id()) {
+                        Ok(start) => start,
+                        Err(err)
+                            if err.code() == ErrorCode::NotFound
+                                && err.class() == ErrorClass::Odb =>
+                        {
+                            return Ok::<_, Error>(None);
+                        }
+                        err => err?,
+                    };
+                    let end = repo.head()?.peel_to_commit()?;
+
+                    let start = start.tree()?;
+                    let end = end.tree()?;
+
+                    let diff = repo.diff_tree_to_tree(Some(&start), Some(&end), None)?;
+
+                    let mut files = HashSet::with_capacity(diff.deltas().len());
+
+                    for delta in diff.deltas() {
+                        if let Some(path) = delta.new_file().path() {
+                            let path = match &self.path {
+                                // files are relative to the base dir
+                                Some(base) => match path.strip_prefix(base) {
+                                    Ok(path) => Some(path.to_path_buf()),
+                                    Err(..) => None,
+                                },
+                                // files are relative to the repo
+                                None => Some(path.to_path_buf()),
+                            };
+
+                            if let Some(path) = path {
+                                log::debug!("Record {} as changed file", path.display());
+                                files.insert(path);
+                            }
+                        }
+                    }
+
+                    Ok(Some(files))
+                })?;
+
+                if let Some(files) = &files {
+                    log::info!("Detected {} changed files", files.len());
+                }
+
+                files
+            }
+            _ => {
+                log::debug!("Ingesting all files");
+                None
+            }
+        };
+
+        match &result {
+            Some(result) => {
+                log::info!("Detected {} changed files", result.len());
+            }
+            None => {
+                log::debug!("Ingesting all files");
+            }
+        }
+
+        Ok(result)
     }
 
     fn create_fetch_options<'cb>() -> FetchOptions<'cb> {
