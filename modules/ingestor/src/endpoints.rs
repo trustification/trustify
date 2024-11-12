@@ -16,7 +16,7 @@ pub fn configure(
     db: Database,
     storage: impl Into<DispatchBackend>,
 ) {
-    let ingestor_service = IngestorService::new(Graph::new(db.clone()), storage);
+    let ingestor_service = IngestorService::new(Graph::new(db), storage);
 
     svc.app_data(web::Data::new(ingestor_service))
         .app_data(web::Data::new(config))

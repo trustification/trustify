@@ -128,7 +128,7 @@ impl<'a> StatusCreator<'a> {
             // Ingest product
             let pr = graph
                 .ingest_product(
-                    product.product.clone(),
+                    &product.product,
                     ProductInformation {
                         vendor: product.vendor.clone(),
                         cpe: product.cpe.clone(),
@@ -167,8 +167,6 @@ impl<'a> StatusCreator<'a> {
             }
 
             for purl in &product.packages {
-                let purl = purl.clone();
-
                 // Ingest purl status
                 let info = match purl.version.clone() {
                     Some(version) => VersionInfo {

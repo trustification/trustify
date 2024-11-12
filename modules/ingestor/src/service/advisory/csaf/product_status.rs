@@ -76,7 +76,7 @@ impl ProductStatus {
 
     /// Parse cpe or purl from product identifier helper
     pub fn set_version(&mut self, full_name: Option<FullProductName>) {
-        self.version = full_name.clone().and_then(|full_name| {
+        self.version = full_name.and_then(|full_name| {
             full_name.product_identification_helper.and_then(|id| {
                 id.cpe
                     .map(|cpe| {
