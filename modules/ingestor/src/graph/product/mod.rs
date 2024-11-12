@@ -71,8 +71,9 @@ impl<'g> ProductContext<'g> {
         cpe_key: Option<String>,
         tx: TX,
     ) -> Result<entity::product_version_range::Model, Error> {
+        let connection = &self.graph.connection(&tx);
         let version_range = info.into_active_model();
-        let version_range = version_range.insert(&self.graph.connection(&tx)).await?;
+        let version_range = version_range.insert(connection).await?;
 
         let model = entity::product_version_range::ActiveModel {
             id: Default::default(),
@@ -81,7 +82,7 @@ impl<'g> ProductContext<'g> {
             cpe_key: Set(cpe_key),
         };
 
-        Ok(model.insert(&self.graph.connection(&tx)).await?)
+        Ok(model.insert(connection).await?)
     }
 
     pub async fn get_vendor<TX: AsRef<Transactional>>(
