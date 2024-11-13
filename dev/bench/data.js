@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731510551306,
+  "lastUpdate": 1731511310776,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1014,6 +1014,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 21,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "a6e9a09db05cc409db3beec7e6393d8b7f049ec3",
+          "message": "Add 'ci-ai' job\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2024-11-13T15:00:43Z",
+          "tree_id": "d01e5066d4af0bca682ce63c9e322bb776b1be51",
+          "url": "https://github.com/trustification/trustify/commit/a6e9a09db05cc409db3beec7e6393d8b7f049ec3"
+        },
+        "date": 1731511309784,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
             "unit": "s"
           }
         ]
