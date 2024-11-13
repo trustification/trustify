@@ -11,15 +11,15 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(ProductStatus::Table)
-                    .add_column(ColumnDef::new(ProductStatus::Component).string())
+                    .add_column(ColumnDef::new(ProductStatus::Package).string())
                     .to_owned(),
             )
             .await?;
 
-        // Transform data: populate `component` from `base_purl`
+        // Transform data: populate `package` from `base_purl`
         let update_sql = r#"
             UPDATE product_status
-            SET component =
+            SET package =
                 (SELECT namespace || '/' || name FROM base_purl WHERE base_purl.id = product_status.base_purl_id)
             WHERE base_purl_id IS NOT NULL;
         "#;
@@ -71,15 +71,15 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // Insert new rows into `base_purl` for each unique `component`, with type set to 'generic'
+        // Insert new rows into `base_purl` for each unique `package`, with type set to 'generic'
         let insert_sql = r#"
             INSERT INTO base_purl (namespace, name, type)
             SELECT
-                split_part(component, '/', 1) AS namespace,
-                split_part(component, '/', 2) AS name,
+                split_part(package, '/', 1) AS namespace,
+                split_part(package, '/', 2) AS name,
                 'generic' AS type
             FROM product_status
-            WHERE component IS NOT NULL
+            WHERE package IS NOT NULL
             ON CONFLICT DO NOTHING;
         "#;
         manager
@@ -93,10 +93,10 @@ impl MigrationTrait for Migration {
             SET base_purl_id = (
                 SELECT id FROM base_purl
                 WHERE
-                    base_purl.namespace = split_part(product_status.component, '/', 1)
-                    AND base_purl.name = split_part(product_status.component, '/', 2)
+                    base_purl.namespace = split_part(product_status.package, '/', 1)
+                    AND base_purl.name = split_part(product_status.package, '/', 2)
             )
-            WHERE component IS NOT NULL;
+            WHERE package IS NOT NULL;
         "#;
         manager
             .get_connection()
@@ -107,7 +107,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(ProductStatus::Table)
-                    .drop_column(ProductStatus::Component)
+                    .drop_column(ProductStatus::Package)
                     .to_owned(),
             )
             .await?;
@@ -120,7 +120,7 @@ impl MigrationTrait for Migration {
 enum ProductStatus {
     Table,
     BasePurlId,
-    Component,
+    Package,
 }
 
 #[derive(DeriveIden)]

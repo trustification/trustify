@@ -147,24 +147,24 @@ impl<'a> StatusCreator<'a> {
             };
 
             if let Some(range) = &product_version_range {
-                let components = if product.components.is_empty() {
+                let packages = if product.packages.is_empty() {
                     // If there are no components associated to this product, ingest just a product status
                     vec![None]
                 } else {
                     product
-                        .components
+                        .packages
                         .iter()
                         .map(|c| Some(c.to_string()))
                         .collect()
                 };
 
-                for component in components {
+                for package in packages {
                     let base_product = product_status::ActiveModel {
                         id: Default::default(),
                         product_version_range_id: Set(range.id),
                         advisory_id: Set(self.advisory_id),
                         vulnerability_id: Set(self.vulnerability_id.clone()),
-                        component: Set(component),
+                        package: Set(package),
                         context_cpe_id: Set(product.cpe.as_ref().map(Cpe::uuid)),
                         status_id: Set(status_id.id),
                     };
@@ -177,7 +177,8 @@ impl<'a> StatusCreator<'a> {
                 }
             }
 
-            for purl in &product.packages {
+            for purl in &product.purls {
+                let purl = purl.clone();
                 // Ingest purl status
                 let info = match purl.version.clone() {
                     Some(version) => VersionInfo {

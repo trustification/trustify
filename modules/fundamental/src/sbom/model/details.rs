@@ -93,7 +93,7 @@ impl SbomDetails {
             .distinct_on([
                 (product_status::Entity, product_status::Column::ContextCpeId),
                 (product_status::Entity, product_status::Column::StatusId),
-                (product_status::Entity, product_status::Column::Component),
+                (product_status::Entity, product_status::Column::Package),
                 (
                     product_status::Entity,
                     product_status::Column::VulnerabilityId,
@@ -101,7 +101,7 @@ impl SbomDetails {
             ])
             .order_by_asc(product_status::Column::ContextCpeId)
             .order_by_asc(product_status::Column::StatusId)
-            .order_by_asc(product_status::Column::Component)
+            .order_by_asc(product_status::Column::Package)
             .order_by_asc(product_status::Column::VulnerabilityId);
 
         let product_advisory_statuses = product_advisory_info
@@ -247,9 +247,9 @@ impl SbomAdvisory {
             let advisory_cpe: Option<OwnedUri> = (&product.cpe).try_into().ok();
 
             let mut packages = vec![];
-            if let Some(component) = &product.product_status.component {
+            if let Some(package) = &product.product_status.package {
                 let package = SbomPackage {
-                    name: component.to_string(),
+                    name: package.to_string(),
                     ..Default::default()
                 };
                 packages.push(package);
@@ -261,7 +261,7 @@ impl SbomAdvisory {
                 context: advisory_cpe
                     .as_ref()
                     .map(|e| StatusContext::Cpe(e.to_string())),
-                packages, // TODO find packages based on component
+                packages, // TODO find purls based on package names
             };
 
             match advisories.entry(product.advisory.id) {
