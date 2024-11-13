@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731492300783,
+  "lastUpdate": 1731510551306,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -985,6 +985,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": false,
+          "id": "5436509285f447d1b4954065406be363a53ee9a3",
+          "message": "fix: rename component to package",
+          "timestamp": "2024-11-13T14:45:24Z",
+          "tree_id": "03bc8d1217db0ffa88d18e26a26cc015650564da",
+          "url": "https://github.com/trustification/trustify/commit/5436509285f447d1b4954065406be363a53ee9a3"
+        },
+        "date": 1731510550018,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 21,
             "unit": "s"
           }
         ]
