@@ -43,7 +43,7 @@ jobs:
           ollama serve &
           ollama pull llama3.1:8b
       - name: Test
-        run: cargo test -p trustify-module-fundamental ai:: -- --nocapture
+        run: 'cargo test -p trustify-module-fundamental ai:: -- --nocapture'
         env:
           RUST_LOG: trustify_module_fundamental::ai=info,langchain_rust=info
           OPENAI_API_KEY: ollama
