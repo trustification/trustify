@@ -37,6 +37,8 @@ pub async fn ingest_fixtures(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     ctx.ingest_documents(["osv/RUSTSEC-2021-0079.json", "cve/CVE-2021-32714.json"])
         .await?;
+    ctx.ingest_document("quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json")
+        .await?;
 
     Ok(())
 }
@@ -70,12 +72,22 @@ async fn completions(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ingest_fixtures(ctx).await?;
 
     let mut req = ChatState::new();
-    req.add_human_message("What is the latest version of Trusted Profile Analyzer?".into());
+    req.add_human_message(
+        "Give me information about the SBOMs available for quarkus reporting its name, SHA and URL."
+            .into(),
+    );
 
     let result = service.completions(&req, ()).await?;
 
-    log::info!("result: {:?}", result);
-    assert!(result.messages.last().unwrap().content.contains("37.17.9"));
+    log::info!("result: {:#?}", result);
+    let last_message_content = result.messages.last().unwrap().content.clone();
+    println!(
+        "Test formatted output:\n\n{}\n",
+        termimad::inline(last_message_content.as_str())
+    );
+    assert!(last_message_content.contains("quarkus-bom"));
+    assert!(last_message_content
+        .contains("5a370574a991aa42f7ecc5b7d88754b258f81c230a73bea247c0a6fcc6f608ab"));
 
     Ok(())
 }
