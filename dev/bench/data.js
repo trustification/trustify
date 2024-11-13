@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731511310776,
+  "lastUpdate": 1731520198287,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1038,6 +1038,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/a6e9a09db05cc409db3beec7e6393d8b7f049ec3"
         },
         "date": 1731511309784,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "7292e9be21c95a33b068f464f7f6f07c7c73c40f",
+          "message": "Fix ci-ai workflow\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2024-11-13T17:27:18Z",
+          "tree_id": "0b20b11eb9ee2dc56662b27a2c5899f2ac1ff3e7",
+          "url": "https://github.com/trustification/trustify/commit/7292e9be21c95a33b068f464f7f6f07c7c73c40f"
+        },
+        "date": 1731520197054,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
