@@ -5,6 +5,9 @@ edition.workspace = true
 publish.workspace = true
 license.workspace = true
 
+[lib]
+doctest = false
+
 [dependencies]
 actix-cors = { workspace = true }
 actix-tls = { workspace = true, features = ["openssl"] }

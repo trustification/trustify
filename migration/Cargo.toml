@@ -8,6 +8,7 @@ license.workspace = true
 [lib]
 name = "migration"
 path = "src/lib.rs"
+doctest = false
 
 [dependencies]
 sea-orm-migration = { workspace = true, features = ["runtime-tokio-rustls", "sqlx-postgres", "with-uuid"] }
