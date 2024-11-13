@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731437048371,
+  "lastUpdate": 1731492300783,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -951,6 +951,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/d966d32a6aaa89cf679c3ddf444a81c8e82d6d2d"
         },
         "date": 1731437047526,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "5952f3e764568a465187a8eb60b94517cc6278bb",
+          "message": "fix(osv): treat `published` as optional\n\nThe spec says it's optional. So let's make it optional.\n\nCloses https://github.com/trustification/trustify/issues/990",
+          "timestamp": "2024-11-13T09:25:49Z",
+          "tree_id": "462e1778d6e16570a3136fe9ff5eaf7bdd1bac1f",
+          "url": "https://github.com/trustification/trustify/commit/5952f3e764568a465187a8eb60b94517cc6278bb"
+        },
+        "date": 1731492299599,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
