@@ -23,7 +23,7 @@ async fn configure(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let app = caller(ctx).await?;
     let mut req = ChatState::new();
-    req.add_human_message("What is the latest version of Trusted Profile Analyzer?".into());
+    req.add_human_message("Give me information about the SBOMs available for quarkus reporting its name, SHA and URL.".into());
 
     let request = TestRequest::post()
         .uri("/api/v1/ai/completions")
@@ -36,7 +36,12 @@ async fn configure(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let result: ChatState = actix_web::test::read_body_json(response).await;
     log::info!("result: {:?}", result);
-    assert!(result.messages.last().unwrap().content.contains("37.17.9"));
+    assert!(result
+        .messages
+        .last()
+        .unwrap()
+        .content
+        .contains("quarkus-bom"));
 
     Ok(())
 }
