@@ -12,8 +12,8 @@ pub struct ProductStatus {
     pub version: Option<VersionInfo>,
     pub cpe: Option<trustify_common::cpe::Cpe>,
     pub status: &'static str,
-    pub packages: Vec<Purl>,
-    pub components: Vec<String>,
+    pub purls: Vec<Purl>,
+    pub packages: Vec<String>,
 }
 
 impl ProductStatus {
@@ -29,24 +29,24 @@ impl ProductStatus {
             BranchCategory::Vendor => {
                 self.vendor = Some(branch.name.clone());
             }
-            // Get component/package info
+            // Get package/purl info
             BranchCategory::ProductVersion => {
                 match branch.product.clone() {
                     Some(full_name) => match full_name.product_identification_helper {
                         Some(id_helper) => match id_helper.purl {
-                            Some(purl) => self.packages.push(purl.into()),
-                            None => self.components.push(branch.name.clone()),
+                            Some(purl) => self.purls.push(purl.into()),
+                            None => self.packages.push(branch.name.clone()),
                         },
-                        None => self.components.push(full_name.product_id.0),
+                        None => self.packages.push(full_name.product_id.0),
                     },
-                    None => self.components.push(branch.name.clone()),
+                    None => self.packages.push(branch.name.clone()),
                 };
             }
             // For everything else, for now see if we can get any purls
             _ => {
                 if let Some(purl) = branch_purl(branch) {
                     let purl = Purl::from(purl.clone());
-                    self.packages.push(purl);
+                    self.purls.push(purl);
                 }
             }
         }

@@ -8,7 +8,7 @@ pub struct Model {
     pub advisory_id: Uuid,
     pub vulnerability_id: String,
     pub status_id: Uuid,
-    pub component: Option<String>,
+    pub package: Option<String>,
     pub product_version_range_id: Uuid,
     pub context_cpe_id: Option<Uuid>,
 }
