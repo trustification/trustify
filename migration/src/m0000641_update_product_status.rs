@@ -11,16 +11,42 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(ProductStatus::Table)
-                    .drop_column(ProductStatus::BasePurlId)
+                    .add_column(ColumnDef::new(ProductStatus::Component).string())
                     .to_owned(),
             )
+            .await?;
+
+        // Transform data: populate `component` from `base_purl`
+        let update_sql = r#"
+            UPDATE product_status
+            SET component =
+                (SELECT namespace || '/' || name FROM base_purl WHERE base_purl.id = product_status.base_purl_id)
+            WHERE base_purl_id IS NOT NULL;
+        "#;
+        manager
+            .get_connection()
+            .execute_unprepared(update_sql)
+            .await?;
+
+        // Delete original `purl_status` entries now that data has been migrated
+        let delete_statuses_sql = r#"
+            DELETE FROM purl_status
+            WHERE base_purl_id IN (
+                SELECT id FROM base_purl
+                WHERE id IN (SELECT DISTINCT base_purl_id FROM product_status WHERE base_purl_id IS NOT NULL)
+                AND TYPE = 'generic'
+            )
+        "#;
+        manager
+            .get_connection()
+            .execute_unprepared(delete_statuses_sql)
             .await?;
 
         manager
             .alter_table(
                 Table::alter()
                     .table(ProductStatus::Table)
-                    .add_column(ColumnDef::new(ProductStatus::Component).string())
+                    .drop_column(ProductStatus::BasePurlId)
                     .to_owned(),
             )
             .await?;
@@ -33,15 +59,6 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(ProductStatus::Table)
-                    .drop_column(ProductStatus::Component)
-                    .to_owned(),
-            )
-            .await?;
-
-        manager
-            .alter_table(
-                Table::alter()
-                    .table(ProductStatus::Table)
                     .add_column(ColumnDef::new(ProductStatus::BasePurlId).uuid())
                     .add_foreign_key(
                         TableForeignKey::new()
@@ -50,6 +67,47 @@ impl MigrationTrait for Migration {
                             .to_tbl(BasePurl::Table)
                             .to_col(BasePurl::Id),
                     )
+                    .to_owned(),
+            )
+            .await?;
+
+        // Insert new rows into `base_purl` for each unique `component`, with type set to 'generic'
+        let insert_sql = r#"
+            INSERT INTO base_purl (namespace, name, type)
+            SELECT
+                split_part(component, '/', 1) AS namespace,
+                split_part(component, '/', 2) AS name,
+                'generic' AS type
+            FROM product_status
+            WHERE component IS NOT NULL
+            ON CONFLICT DO NOTHING;
+        "#;
+        manager
+            .get_connection()
+            .execute_unprepared(insert_sql)
+            .await?;
+
+        // Update `product_status.base_purl_id` to reference the inserted `base_purl` entries
+        let update_sql = r#"
+            UPDATE product_status
+            SET base_purl_id = (
+                SELECT id FROM base_purl
+                WHERE
+                    base_purl.namespace = split_part(product_status.component, '/', 1)
+                    AND base_purl.name = split_part(product_status.component, '/', 2)
+            )
+            WHERE component IS NOT NULL;
+        "#;
+        manager
+            .get_connection()
+            .execute_unprepared(update_sql)
+            .await?;
+
+        manager
+            .alter_table(
+                Table::alter()
+                    .table(ProductStatus::Table)
+                    .drop_column(ProductStatus::Component)
                     .to_owned(),
             )
             .await?;
