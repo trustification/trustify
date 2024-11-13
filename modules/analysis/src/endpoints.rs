@@ -324,7 +324,7 @@ mod test {
             "pkg:rpm/redhat/B@0.0.0"
         );
 
-        Ok(assert_eq!(&response["total"], 2))
+        Ok(assert_eq!(&response["total"], 3))
     }
 
     #[test_context(TrustifyContext)]
