@@ -1,0 +1,51 @@
+name: ci-ai
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  merge_group:
+    types:
+      - checks_requested
+  pull_request:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+
+  ci-ai:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Maximize build space
+        run: |
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          sudo rm -Rf ${JAVA_HOME_8_X64}
+          sudo rm -Rf ${JAVA_HOME_11_X64}
+          sudo rm -Rf ${JAVA_HOME_17_X64}
+          sudo rm -Rf ${RUBY_PATH}
+          df -h
+
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - name: Install ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+      - name: Run ollama
+        run: |
+          ollama serve &
+          ollama pull llama3.1:8b
+      - name: Test
+        run: cargo test -p trustify-module-fundamental ai:: -- --nocapture
+        env:
+          RUST_LOG: trustify_module_fundamental::ai=info,langchain_rust=info
+          OPENAI_API_KEY: ollama
+          OPENAI_API_BASE: http://localhost:11434/v1
+          OPENAI_MODEL: llama3.1:8b
