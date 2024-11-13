@@ -5,12 +5,12 @@
     "creators": [
       "Trustify"
     ],
-    "comment": "This is an example for an SBOM with looping refs. Based upon an existing SBOM.",
+    "comment": "This is a simple example for an spdx SBOM.",
     "licenseListVersion": "3.8"
   },
   "dataLicense": "CC0-1.0",
   "documentNamespace": "uri:just-an-example",
-  "name": "loop",
+  "name": "simple",
   "packages": [
 
     {
@@ -25,8 +25,8 @@
         },
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:/app:redhat:simple:1::el9",
-          "referenceType": "cpe22Type"
+          "referenceLocator": "cpe:/a:redhat:simple:1::el9",
+          "referenceType": "cpe23Type"
         }
       ],
       "filesAnalyzed": false,
@@ -158,11 +158,6 @@
           "referenceCategory": "PACKAGE_MANAGER",
           "referenceLocator": "pkg:rpm/redhat/EE@0.0.0?arch=src",
           "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:/a:redhat:simple:1::el9",
-          "referenceType": "cpe22Type"
         }
       ],
       "filesAnalyzed": false,
@@ -181,13 +176,8 @@
       "downloadLocation": "foo",
       "externalRefs": [
         {
-          "referenceCategory": "PACKAGE_MANAGER",
-          "referenceLocator": "pkg:rpm/redhat/FF@0.0.0",
-          "referenceType": "purl"
-        },
-        {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:/a:redhat:simple:1::el9",
+          "referenceLocator": "cpe:/a:redhat:a-FF:1:*:*:*:*:*",
           "referenceType": "cpe22Type"
         }
       ],

@@ -3,7 +3,7 @@ use sea_orm::{
     prelude::ConnectionTrait, ColumnTrait, DbErr, EntityOrSelect, EntityTrait, QueryFilter,
     QueryOrder, QueryResult, QuerySelect, QueryTrait, Statement,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use tracing::instrument;
 use trustify_common::{
     db::{
@@ -38,11 +38,17 @@ pub fn dep_nodes(
     node: NodeIndex,
 ) -> Vec<DepNode> {
     let mut depnodes = Vec::new();
+    let mut visited = HashSet::new();
     fn dfs(
         graph: &petgraph::Graph<PackageNode, Relationship, petgraph::Directed>,
         node: NodeIndex,
         depnodes: &mut Vec<DepNode>,
+        visited: &mut HashSet<NodeIndex>,
     ) {
+        if visited.contains(&node) {
+            return;
+        }
+        visited.insert(node);
         for neighbor in graph.neighbors_directed(node, Direction::Incoming) {
             if let Some(dep_packagenode) = graph.node_weight(neighbor).cloned() {
                 let dep_node = DepNode {
@@ -50,9 +56,11 @@ pub fn dep_nodes(
                     node_id: dep_packagenode.node_id,
                     purl: dep_packagenode.purl.to_string(),
                     name: dep_packagenode.name.to_string(),
-                    deps: dep_nodes(graph, neighbor),
+                    version: dep_packagenode.version.to_string(),
+                    deps: Vec::new(), // Avoid recursive call to dep_nodes
                 };
                 depnodes.push(dep_node);
+                dfs(graph, neighbor, depnodes, visited);
             } else {
                 log::warn!(
                     "Processing descendants node weight for neighbor {:?} not found",
@@ -61,7 +69,7 @@ pub fn dep_nodes(
             }
         }
     }
-    dfs(graph, node, &mut depnodes);
+    dfs(graph, node, &mut depnodes, &mut visited);
     depnodes
 }
 
@@ -85,6 +93,7 @@ pub fn ancestor_nodes(
                             node_id: anc_packagenode.node_id,
                             purl: anc_packagenode.purl,
                             name: anc_packagenode.name,
+                            version: anc_packagenode.version,
                         };
                         ancestor_nodes.push(anc_node);
                         stack.push(succ);
@@ -117,9 +126,13 @@ pub async fn get_relationships(
             sbom.published::text,
             t1.node_id AS left_node_id,
             get_purl(t1.qualified_purl_id) AS left_qualified_purl,
+            t1_node.name AS left_node_name,
+            t1_version.version AS left_node_version,
             package_relates_to_package.relationship,
             t2.node_id AS right_node_id,
             get_purl(t2.qualified_purl_id) AS right_qualified_purl,
+            t2_node.name AS right_node_name,
+            t2_version.version AS right_node_version,
             product.name AS product_name,
             product_version.version AS product_version
         FROM
@@ -133,7 +146,15 @@ pub async fn get_relationships(
         LEFT JOIN
             sbom_package_purl_ref t1 ON sbom.sbom_id = t1.sbom_id AND t1.node_id = package_relates_to_package.left_node_id
         LEFT JOIN
+            sbom_node t1_node ON sbom.sbom_id = t1_node.sbom_id AND t1_node.node_id = package_relates_to_package.left_node_id
+        LEFT JOIN
+            sbom_package t1_version ON sbom.sbom_id = t1_version.sbom_id AND t1_version.node_id = package_relates_to_package.left_node_id
+        LEFT JOIN
             sbom_package_purl_ref t2 ON sbom.sbom_id = t2.sbom_id AND t2.node_id = package_relates_to_package.right_node_id
+        LEFT JOIN
+            sbom_node t2_node ON sbom.sbom_id = t2_node.sbom_id AND t2_node.node_id = package_relates_to_package.right_node_id
+        LEFT JOIN
+            sbom_package t2_version ON sbom.sbom_id = t2_version.sbom_id AND t2_version.node_id = package_relates_to_package.right_node_id
         WHERE
             package_relates_to_package.relationship IN (0, 1, 8, 14)
             AND sbom.sbom_id = '{}';
@@ -177,8 +198,12 @@ pub async fn load_graphs(
                                 product_version,
                                 left_node_id,
                                 left_purl_string,
+                                left_node_name,
+                                left_node_version,
                                 right_node_id,
                                 right_purl_string,
+                                right_node_name,
+                                right_node_version,
                                 relationship,
                             ) = {
                                 let default_value = "NOVALUE".to_string(); // TODO: this eventually will have different defaults.
@@ -195,35 +220,32 @@ pub async fn load_graphs(
                                         .unwrap_or(default_value.clone()),
                                     row.try_get("", "left_qualified_purl")
                                         .unwrap_or(default_value.clone()),
+                                    row.try_get("", "left_node_name")
+                                        .unwrap_or(default_value.clone()),
+                                    row.try_get("", "left_node_version")
+                                        .unwrap_or(default_value.clone()),
                                     row.try_get("", "right_node_id")
                                         .unwrap_or(default_value.clone()),
                                     row.try_get("", "right_qualified_purl")
-                                        .unwrap_or(default_value),
+                                        .unwrap_or(default_value.clone()),
+                                    row.try_get("", "right_node_name")
+                                        .unwrap_or(default_value.clone()),
+                                    row.try_get("", "right_node_version")
+                                        .unwrap_or(default_value.clone()),
                                     row.try_get("", "relationship")
                                         .unwrap_or(Relationship::ContainedBy),
                                 )
                             };
 
-                            if left_purl_string == "NOVALUE" {
-                                log::debug!("sbom:{} has packages with no pURL.", document_id);
-                                continue;
-                            }
-
                             let p1 = match nodes.get(&left_purl_string) {
                                 Some(&node_index) => node_index, // already exists
                                 None => {
-                                    let left_purl = match Purl::from_str(&left_purl_string) {
-                                        Ok(purl) => purl,
-                                        Err(e) => {
-                                            log::warn!("Error parsing Purl: {}", e);
-                                            return;
-                                        }
-                                    };
                                     let new_node = PackageNode {
                                         sbom_id: distinct_sbom_id.clone(),
                                         node_id: left_node_id.clone(),
                                         purl: left_purl_string.clone(),
-                                        name: left_purl.name.clone(),
+                                        name: left_node_name.clone(),
+                                        version: left_node_version.clone(),
                                         published: sbom_published.clone(),
                                         document_id: document_id.clone(),
                                         product_name: product_name.clone(),
@@ -235,25 +257,15 @@ pub async fn load_graphs(
                                 }
                             };
 
-                            if right_purl_string == "NOVALUE" {
-                                log::debug!("sbom:{} has packages with no pURL.", document_id);
-                                continue;
-                            }
                             let p2 = match nodes.get(&right_purl_string) {
                                 Some(&node_index) => node_index, // already exists
                                 None => {
-                                    let right_purl = match Purl::from_str(&right_purl_string) {
-                                        Ok(purl) => purl,
-                                        Err(e) => {
-                                            log::warn!("Error parsing Purl: {}", e);
-                                            return;
-                                        }
-                                    };
                                     let new_node = PackageNode {
                                         sbom_id: distinct_sbom_id.clone(),
                                         node_id: right_node_id.clone(),
                                         purl: right_purl_string.clone(),
-                                        name: right_purl.name.clone(),
+                                        name: right_node_name.clone(),
+                                        version: right_node_version.clone(),
                                         published: sbom_published.clone(),
                                         document_id: document_id.clone(),
                                         product_name: product_name.clone(),
@@ -336,6 +348,200 @@ impl AnalysisService {
         })
     }
 
+    pub async fn query_ancestor_graph<TX: AsRef<Transactional>>(
+        component_name: Option<String>,
+        component_purl: Option<Purl>,
+        query: Option<Query>,
+        distinct_sbom_ids: Vec<String>,
+    ) -> Vec<AncestorSummary> {
+        let mut components = Vec::new();
+        let graph_manager = GraphMap::get_instance();
+        {
+            // RwLock for reading hashmap<graph>
+            let graph_read_guard = graph_manager.read();
+            for distinct_sbom_id in &distinct_sbom_ids {
+                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
+                    if is_cyclic_directed(graph) {
+                        log::warn!(
+                            "analysis graph of sbom {} has circular references!",
+                            distinct_sbom_id
+                        );
+                    }
+
+                    let mut visited = HashSet::new();
+
+                    // Iterate over matching node indices and process them directly
+                    graph
+                        .node_indices()
+                        .filter(|&i| {
+                            if let Some(component_name) = &component_name {
+                                graph
+                                    .node_weight(i)
+                                    .map(|node| node.name.eq(component_name))
+                                    .unwrap_or(false)
+                            } else if let Some(component_purl) = component_purl.clone() {
+                                if let Some(node) = graph.node_weight(i) {
+                                    match Purl::from_str(&node.purl).map_err(Error::Purl) {
+                                        Ok(purl) => purl == component_purl,
+                                        Err(err) => {
+                                            log::warn!(
+                                                "Error retrieving purl from analysis graph {}",
+                                                err
+                                            );
+                                            false
+                                        }
+                                    }
+                                } else {
+                                    false // Return false if the node does not exist
+                                }
+                            } else if let Some(query) = &query {
+                                graph
+                                    .node_weight(i)
+                                    .map(|node| {
+                                        query.apply(&HashMap::from([
+                                            ("sbom_id", Value::String(&node.sbom_id)),
+                                            ("node_id", Value::String(&node.node_id)),
+                                            ("name", Value::String(&node.name)),
+                                            ("version", Value::String(&node.version)),
+                                        ]))
+                                    })
+                                    .unwrap_or(false)
+                            } else {
+                                false
+                            }
+                        })
+                        .for_each(|node_index| {
+                            if !visited.contains(&node_index) {
+                                visited.insert(node_index);
+
+                                if let Some(find_match_package_node) = graph.node_weight(node_index)
+                                {
+                                    log::debug!("matched!");
+                                    components.push(AncestorSummary {
+                                        sbom_id: find_match_package_node.sbom_id.to_string(),
+                                        node_id: find_match_package_node.node_id.to_string(),
+                                        purl: find_match_package_node.purl.to_string(),
+                                        name: find_match_package_node.name.to_string(),
+                                        version: find_match_package_node.version.to_string(),
+                                        published: find_match_package_node.published.to_string(),
+                                        document_id: find_match_package_node
+                                            .document_id
+                                            .to_string(),
+                                        product_name: find_match_package_node
+                                            .product_name
+                                            .to_string(),
+                                        product_version: find_match_package_node
+                                            .product_version
+                                            .to_string(),
+                                        ancestors: ancestor_nodes(graph, node_index),
+                                    });
+                                }
+                            }
+                        });
+                }
+            }
+        }
+
+        components
+    }
+
+    pub async fn query_deps_graph<TX: AsRef<Transactional>>(
+        component_name: Option<String>,
+        component_purl: Option<Purl>,
+        query: Option<Query>,
+        distinct_sbom_ids: Vec<String>,
+    ) -> Vec<DepSummary> {
+        let mut components = Vec::new();
+        let graph_manager = GraphMap::get_instance();
+        {
+            // RwLock for reading hashmap<graph>
+            let graph_read_guard = graph_manager.read();
+            for distinct_sbom_id in &distinct_sbom_ids {
+                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
+                    if is_cyclic_directed(graph) {
+                        log::warn!(
+                            "analysis graph of sbom {} has circular references!",
+                            distinct_sbom_id
+                        );
+                    }
+
+                    let mut visited = HashSet::new();
+
+                    // Iterate over matching node indices and process them directly
+                    graph
+                        .node_indices()
+                        .filter(|&i| {
+                            if let Some(component_name) = &component_name {
+                                graph
+                                    .node_weight(i)
+                                    .map(|node| node.name.eq(component_name))
+                                    .unwrap_or(false)
+                            } else if let Some(component_purl) = component_purl.clone() {
+                                if let Some(node) = graph.node_weight(i) {
+                                    match Purl::from_str(&node.purl).map_err(Error::Purl) {
+                                        Ok(purl) => purl == component_purl,
+                                        Err(err) => {
+                                            log::warn!(
+                                                "Error retrieving purl from analysis graph {}",
+                                                err
+                                            );
+                                            false
+                                        }
+                                    }
+                                } else {
+                                    false // Return false if the node does not exist
+                                }
+                            } else if let Some(query) = &query {
+                                graph
+                                    .node_weight(i)
+                                    .map(|node| {
+                                        query.apply(&HashMap::from([
+                                            ("sbom_id", Value::String(&node.sbom_id)),
+                                            ("node_id", Value::String(&node.node_id)),
+                                            ("name", Value::String(&node.name)),
+                                            ("version", Value::String(&node.version)),
+                                        ]))
+                                    })
+                                    .unwrap_or(false)
+                            } else {
+                                false
+                            }
+                        })
+                        .for_each(|node_index| {
+                            if !visited.contains(&node_index) {
+                                visited.insert(node_index);
+
+                                if let Some(find_match_package_node) = graph.node_weight(node_index)
+                                {
+                                    log::debug!("matched!");
+                                    components.push(DepSummary {
+                                        sbom_id: find_match_package_node.sbom_id.to_string(),
+                                        node_id: find_match_package_node.node_id.to_string(),
+                                        purl: find_match_package_node.purl.to_string(),
+                                        name: find_match_package_node.name.to_string(),
+                                        version: find_match_package_node.version.to_string(),
+                                        published: find_match_package_node.published.to_string(),
+                                        document_id: find_match_package_node
+                                            .document_id
+                                            .to_string(),
+                                        product_name: find_match_package_node
+                                            .product_name
+                                            .to_string(),
+                                        product_version: find_match_package_node
+                                            .product_version
+                                            .to_string(),
+                                        deps: dep_nodes(graph, node_index),
+                                    });
+                                }
+                            }
+                        });
+                }
+            }
+        }
+
+        components
+    }
+
     #[instrument(skip(self, tx), err)]
     pub async fn retrieve_root_components<TX: AsRef<Transactional>>(
         &self,
@@ -364,58 +570,13 @@ impl AnalysisService {
 
         load_graphs(&connection, &distinct_sbom_ids).await;
 
-        let mut components = Vec::new();
-        let graph_manager = GraphMap::get_instance();
-        {
-            // RwLock for reading hashmap<graph>
-            let graph_read_guard = graph_manager.read();
-            for distinct_sbom_id in &distinct_sbom_ids {
-                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                    if !is_cyclic_directed(graph) {
-                        // Iterate over matching node indices and process them directly
-                        graph
-                            .node_indices()
-                            .filter(|&i| {
-                                graph.node_weight(i).is_some_and(|node| {
-                                    query.apply(&HashMap::from([
-                                        ("sbom_id", Value::String(&node.sbom_id)),
-                                        ("node_id", Value::String(&node.node_id)),
-                                        ("name", Value::String(&node.name)),
-                                    ]))
-                                })
-                            })
-                            .for_each(|node_index| {
-                                if let Some(find_match_package_node) = graph.node_weight(node_index)
-                                {
-                                    log::debug!("matched!");
-                                    components.push(AncestorSummary {
-                                        sbom_id: find_match_package_node.sbom_id.to_string(),
-                                        node_id: find_match_package_node.node_id.to_string(),
-                                        purl: find_match_package_node.purl.to_string(),
-                                        name: find_match_package_node.name.to_string(),
-                                        published: find_match_package_node.published.to_string(),
-                                        document_id: find_match_package_node
-                                            .document_id
-                                            .to_string(),
-                                        product_name: find_match_package_node
-                                            .product_name
-                                            .to_string(),
-                                        product_version: find_match_package_node
-                                            .product_version
-                                            .to_string(),
-                                        ancestors: ancestor_nodes(graph, node_index),
-                                    });
-                                }
-                            });
-                    } else {
-                        log::warn!(
-                            "analysis graph of sbom {} has circular references!",
-                            distinct_sbom_id
-                        );
-                    }
-                }
-            }
-        }
+        let components = AnalysisService::query_ancestor_graph::<TX>(
+            None,
+            None,
+            Option::from(query),
+            distinct_sbom_ids,
+        )
+        .await;
 
         Ok(paginated.paginate_array(&components))
     }
@@ -448,56 +609,13 @@ impl AnalysisService {
 
         load_graphs(&connection, &distinct_sbom_ids).await;
 
-        let mut components = Vec::new();
-        let graph_manager = GraphMap::get_instance();
-        {
-            // RwLock for reading hashmap<graph>
-            let graph_read_guard = graph_manager.read();
-            for distinct_sbom_id in &distinct_sbom_ids {
-                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                    if !is_cyclic_directed(graph) {
-                        // Iterate over matching node indices and process them directly
-                        graph
-                            .node_indices()
-                            .filter(|&i| {
-                                if let Some(node) = graph.node_weight(i) {
-                                    node.name.eq(&component_name.to_string()) // Use eq for exact match
-                                } else {
-                                    false // Return false if the node does not exist
-                                }
-                            })
-                            .for_each(|node_index| {
-                                if let Some(find_match_package_node) = graph.node_weight(node_index)
-                                {
-                                    log::debug!("matched!");
-                                    components.push(AncestorSummary {
-                                        sbom_id: find_match_package_node.sbom_id.to_string(),
-                                        node_id: find_match_package_node.node_id.to_string(),
-                                        purl: find_match_package_node.purl.to_string(),
-                                        name: find_match_package_node.name.to_string(),
-                                        published: find_match_package_node.published.to_string(),
-                                        document_id: find_match_package_node
-                                            .document_id
-                                            .to_string(),
-                                        product_name: find_match_package_node
-                                            .product_name
-                                            .to_string(),
-                                        product_version: find_match_package_node
-                                            .product_version
-                                            .to_string(),
-                                        ancestors: ancestor_nodes(graph, node_index),
-                                    });
-                                }
-                            });
-                    } else {
-                        log::warn!(
-                            "analysis graph of sbom {} has circular references!",
-                            distinct_sbom_id
-                        );
-                    }
-                }
-            }
-        }
+        let components = AnalysisService::query_ancestor_graph::<TX>(
+            Option::from(component_name),
+            None,
+            None,
+            distinct_sbom_ids,
+        )
+        .await;
 
         Ok(paginated.paginate_array(&components))
     }
@@ -530,72 +648,15 @@ impl AnalysisService {
 
         load_graphs(&connection, &distinct_sbom_ids).await;
 
-        let mut components = Vec::new();
-        let graph_manager = GraphMap::get_instance();
-        {
-            // RwLock for reading hashmap<graph>
-            let graph_read_guard = graph_manager.read();
-            for distinct_sbom_id in &distinct_sbom_ids {
-                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                    if !is_cyclic_directed(graph) {
-                        // Iterate over matching node indices and process them directly
-                        graph
-                            .node_indices()
-                            .filter(|&i| {
-                                if let Some(node) = graph.node_weight(i) {
-                                    match Purl::from_str(&node.purl).map_err(Error::Purl) {
-                                        Ok(purl) => purl == component_purl,
-                                        Err(err) => {
-                                            log::warn!(
-                                                "Error retrieving purl from analysis graph {}",
-                                                err
-                                            );
-                                            false
-                                        }
-                                    }
-                                } else {
-                                    false // Return false if the node does not exist
-                                }
-                            })
-                            .for_each(|node_index| {
-                                if let Some(find_match_package_node) = graph.node_weight(node_index)
-                                {
-                                    log::debug!("matched!");
-                                    components.push(AncestorSummary {
-                                        sbom_id: find_match_package_node.sbom_id.to_string(),
-                                        node_id: find_match_package_node.node_id.to_string(),
-                                        purl: find_match_package_node.purl.to_string(),
-                                        name: find_match_package_node.name.to_string(),
-                                        published: find_match_package_node.published.to_string(),
-                                        document_id: find_match_package_node
-                                            .document_id
-                                            .to_string(),
-                                        product_name: find_match_package_node
-                                            .product_name
-                                            .to_string(),
-                                        product_version: find_match_package_node
-                                            .product_version
-                                            .to_string(),
-                                        ancestors: ancestor_nodes(graph, node_index),
-                                    });
-                                }
-                            });
-                    } else {
-                        log::warn!(
-                            "analysis graph of sbom {} has circular references!",
-                            distinct_sbom_id
-                        );
-                    }
-                }
-            }
-        }
+        let components = AnalysisService::query_ancestor_graph::<TX>(
+            None,
+            Option::from(component_purl),
+            None,
+            distinct_sbom_ids,
+        )
+        .await;
 
-        // TODO: limiting on Vec
-        let total = components.len() as u64;
-        Ok(PaginatedResults {
-            items: components,
-            total,
-        })
+        Ok(paginated.paginate_array(&components))
     }
 
     #[instrument(skip(self, tx), err)]
@@ -626,58 +687,13 @@ impl AnalysisService {
 
         load_graphs(&connection, &distinct_sbom_ids).await;
 
-        let mut components = Vec::new();
-        let graph_manager = GraphMap::get_instance();
-        {
-            // RwLock for reading hashmap<graph>
-            let graph_read_guard = graph_manager.read();
-            for distinct_sbom_id in &distinct_sbom_ids {
-                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                    if !is_cyclic_directed(graph) {
-                        // Iterate over matching node indices and process them directly
-                        graph
-                            .node_indices()
-                            .filter(|&i| {
-                                graph.node_weight(i).is_some_and(|node| {
-                                    query.apply(&HashMap::from([
-                                        ("sbom_id", Value::String(&node.sbom_id)),
-                                        ("node_id", Value::String(&node.node_id)),
-                                        ("name", Value::String(&node.name)),
-                                    ]))
-                                })
-                            })
-                            .for_each(|node_index| {
-                                if let Some(find_match_package_node) = graph.node_weight(node_index)
-                                {
-                                    log::debug!("matched!");
-                                    components.push(DepSummary {
-                                        sbom_id: find_match_package_node.sbom_id.to_string(),
-                                        node_id: find_match_package_node.node_id.to_string(),
-                                        purl: find_match_package_node.purl.to_string(),
-                                        name: find_match_package_node.name.to_string(),
-                                        published: find_match_package_node.published.to_string(),
-                                        document_id: find_match_package_node
-                                            .document_id
-                                            .to_string(),
-                                        product_name: find_match_package_node
-                                            .product_name
-                                            .to_string(),
-                                        product_version: find_match_package_node
-                                            .product_version
-                                            .to_string(),
-                                        deps: dep_nodes(graph, node_index),
-                                    });
-                                }
-                            });
-                    } else {
-                        log::warn!(
-                            "analysis graph of sbom {} has circular references!",
-                            distinct_sbom_id
-                        );
-                    }
-                }
-            }
-        }
+        let components = AnalysisService::query_deps_graph::<TX>(
+            None,
+            None,
+            Option::from(query),
+            distinct_sbom_ids,
+        )
+        .await;
 
         Ok(paginated.paginate_array(&components))
     }
@@ -709,57 +725,13 @@ impl AnalysisService {
 
         load_graphs(&connection, &distinct_sbom_ids).await;
 
-        let mut components = Vec::new();
-        let graph_manager = GraphMap::get_instance();
-        {
-            // RwLock for reading hashmap<graph>
-            let graph_read_guard = graph_manager.read();
-            for distinct_sbom_id in &distinct_sbom_ids {
-                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                    if !is_cyclic_directed(graph) {
-                        // Iterate over matching node indices and process them directly
-                        graph
-                            .node_indices()
-                            .filter(|&i| {
-                                if let Some(node) = graph.node_weight(i) {
-                                    node.name.eq(&component_name.to_string())
-                                // Use eq for exact match
-                                } else {
-                                    false // Return false if the node does not exist
-                                }
-                            })
-                            .for_each(|node_index| {
-                                if let Some(find_match_package_node) = graph.node_weight(node_index)
-                                {
-                                    log::debug!("matched!");
-                                    components.push(DepSummary {
-                                        sbom_id: find_match_package_node.sbom_id.to_string(),
-                                        node_id: find_match_package_node.node_id.to_string(),
-                                        purl: find_match_package_node.purl.to_string(),
-                                        name: find_match_package_node.name.to_string(),
-                                        published: find_match_package_node.published.to_string(),
-                                        document_id: find_match_package_node
-                                            .document_id
-                                            .to_string(),
-                                        product_name: find_match_package_node
-                                            .product_name
-                                            .to_string(),
-                                        product_version: find_match_package_node
-                                            .product_version
-                                            .to_string(),
-                                        deps: dep_nodes(graph, node_index),
-                                    });
-                                }
-                            });
-                    } else {
-                        log::warn!(
-                            "analysis graph of sbom {} has circular references!",
-                            distinct_sbom_id
-                        );
-                    }
-                }
-            }
-        }
+        let components = AnalysisService::query_deps_graph::<TX>(
+            Option::from(component_name),
+            None,
+            None,
+            distinct_sbom_ids,
+        )
+        .await;
 
         Ok(paginated.paginate_array(&components))
     }
@@ -791,65 +763,13 @@ impl AnalysisService {
 
         load_graphs(&connection, &distinct_sbom_ids).await;
 
-        let mut components = Vec::new();
-        let graph_manager = GraphMap::get_instance();
-        {
-            // RwLock for reading hashmap<graph>
-            let graph_read_guard = graph_manager.read();
-            for distinct_sbom_id in &distinct_sbom_ids {
-                if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                    if !is_cyclic_directed(graph) {
-                        // Iterate over matching node indices and process them directly
-                        graph
-                            .node_indices()
-                            .filter(|&i| {
-                                if let Some(node) = graph.node_weight(i) {
-                                    match Purl::from_str(&node.purl).map_err(Error::Purl) {
-                                        Ok(purl) => purl == component_purl,
-                                        Err(err) => {
-                                            log::warn!(
-                                                "Error retrieving purl from analysis graph {}",
-                                                err
-                                            );
-                                            false
-                                        }
-                                    }
-                                } else {
-                                    false // Return false if the node does not exist
-                                }
-                            })
-                            .for_each(|node_index| {
-                                if let Some(find_match_package_node) = graph.node_weight(node_index)
-                                {
-                                    log::debug!("matched!");
-                                    components.push(DepSummary {
-                                        sbom_id: find_match_package_node.sbom_id.to_string(),
-                                        node_id: find_match_package_node.node_id.to_string(),
-                                        purl: find_match_package_node.purl.to_string(),
-                                        name: find_match_package_node.name.to_string(),
-                                        published: find_match_package_node.published.to_string(),
-                                        document_id: find_match_package_node
-                                            .document_id
-                                            .to_string(),
-                                        product_name: find_match_package_node
-                                            .product_name
-                                            .to_string(),
-                                        product_version: find_match_package_node
-                                            .product_version
-                                            .to_string(),
-                                        deps: dep_nodes(graph, node_index),
-                                    });
-                                }
-                            });
-                    } else {
-                        log::warn!(
-                            "analysis graph of sbom {} has circular references!",
-                            distinct_sbom_id
-                        );
-                    }
-                }
-            }
-        }
+        let components = AnalysisService::query_deps_graph::<TX>(
+            None,
+            Option::from(component_purl),
+            None,
+            distinct_sbom_ids,
+        )
+        .await;
 
         Ok(paginated.paginate_array(&components))
     }
@@ -1219,7 +1139,7 @@ mod test {
             .await
             .unwrap();
 
-        Ok(assert_eq!(analysis_graph.total, 0))
+        Ok(assert_eq!(analysis_graph.total, 1))
     }
 
     #[test_context(TrustifyContext)]
@@ -1234,6 +1154,6 @@ mod test {
             .await
             .unwrap();
 
-        Ok(assert_eq!(analysis_graph.total, 0))
+        Ok(assert_eq!(analysis_graph.total, 1))
     }
 }

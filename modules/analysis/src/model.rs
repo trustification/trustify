@@ -27,6 +27,7 @@ pub struct PackageNode {
     pub node_id: String,
     pub purl: String,
     pub name: String,
+    pub version: String,
     pub published: String,
     pub document_id: String,
     pub product_name: String,
@@ -44,6 +45,7 @@ pub struct AncNode {
     pub node_id: String,
     pub purl: String,
     pub name: String,
+    pub version: String,
 }
 
 impl fmt::Display for AncNode {
@@ -58,6 +60,7 @@ pub struct AncestorSummary {
     pub node_id: String,
     pub purl: String,
     pub name: String,
+    pub version: String,
     pub published: String,
     pub document_id: String,
     pub product_name: String,
@@ -71,6 +74,7 @@ pub struct DepNode {
     pub node_id: String,
     pub purl: String,
     pub name: String,
+    pub version: String,
     #[schema(no_recursion)]
     pub deps: Vec<DepNode>,
 }
@@ -85,6 +89,7 @@ pub struct DepSummary {
     pub node_id: String,
     pub purl: String,
     pub name: String,
+    pub version: String,
     pub published: String,
     pub document_id: String,
     pub product_name: String,
