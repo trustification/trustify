@@ -5,7 +5,7 @@ info:
   license:
     name: Apache License, Version 2.0
     identifier: Apache-2.0
-  version: 0.1.0-alpha.22
+  version: 0.1.0-alpha.23
 paths:
   /.well-known/trustify:
     get:
