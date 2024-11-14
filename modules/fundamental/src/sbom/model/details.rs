@@ -1,11 +1,7 @@
 use super::SbomSummary;
 use crate::{
-    advisory::model::AdvisoryHead,
-    purl::{model::details::purl::StatusContext, model::summary::purl::PurlSummary},
-    sbom::{model::SbomPackage, service::sbom::QueryCatcher, service::SbomService},
-    Error,
+    advisory::model::AdvisoryHead, purl::model::{details::purl::StatusContext, summary::purl::PurlSummary}, sbom::{model::SbomPackage, service::{sbom::QueryCatcher, SbomService}}, vulnerability::model::VulnerabilityDetails, Error
 };
-use async_graphql::SimpleObject;
 use cpe::uri::OwnedUri;
 use sea_orm::{
     DbErr, EntityTrait, FromQueryResult, JoinType, ModelTrait, QueryFilter, QueryOrder,
@@ -90,6 +86,7 @@ impl SbomDetails {
             )
             .join(JoinType::Join, product_status::Relation::Status.def())
             .join(JoinType::Join, product_status::Relation::Advisory.def())
+            .join(JoinType::Join, product_status::Relation::Vulnerability.def())
             .distinct_on([
                 (product_status::Entity, product_status::Column::ContextCpeId),
                 (product_status::Entity, product_status::Column::StatusId),
@@ -195,7 +192,7 @@ impl SbomAdvisory {
 
             let sbom_status = if let Some(status) = advisory.status.iter_mut().find(|status| {
                 if status.status == each.status.slug
-                    && status.vulnerability_id == each.vulnerability.id
+                    && status.vulnerability.head.identifier == each.vulnerability.id
                 {
                     match (&status.context, &status_cpe) {
                         (Some(StatusContext::Cpe(context_cpe)), Some(status_cpe)) => {
@@ -211,7 +208,7 @@ impl SbomAdvisory {
                 status
             } else {
                 let status = SbomStatus {
-                    vulnerability_id: each.vulnerability.id.clone(),
+                    vulnerability: VulnerabilityDetails::from_entity(&each.vulnerability, Default::default(), tx).await?,
                     status: each.status.slug.clone(),
                     context: status_cpe
                         .as_ref()
@@ -256,7 +253,7 @@ impl SbomAdvisory {
             }
 
             let status = SbomStatus {
-                vulnerability_id: product.product_status.vulnerability_id.clone(),
+                vulnerability: VulnerabilityDetails::from_entity(&product.vulnerability.clone(), Default::default(), tx).await?,
                 status: product.status.slug.clone(),
                 context: advisory_cpe
                     .as_ref()
@@ -281,12 +278,10 @@ impl SbomAdvisory {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema, SimpleObject)]
-#[graphql(concrete(name = "SbomStatus", params()))]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct SbomStatus {
-    pub vulnerability_id: String,
+    pub vulnerability: VulnerabilityDetails,
     pub status: String,
-    #[graphql(skip)]
     pub context: Option<StatusContext>,
     pub packages: Vec<SbomPackage>,
 }
@@ -297,6 +292,7 @@ impl SbomStatus {}
 #[allow(dead_code)] //TODO sbom field is not used at the moment, but we will probably need it for graph search
 pub struct ProductStatusCatcher {
     advisory: advisory::Model,
+    vulnerability: trustify_entity::vulnerability::Model,
     product_status: product_status::Model,
     cpe: trustify_entity::cpe::Model,
     status: status::Model,
@@ -307,6 +303,7 @@ impl FromQueryResult for ProductStatusCatcher {
     fn from_query_result(res: &QueryResult, _pre: &str) -> Result<Self, DbErr> {
         Ok(Self {
             advisory: Self::from_query_result_multi_model(res, "", advisory::Entity)?,
+            vulnerability: Self::from_query_result_multi_model(res, "", trustify_entity::vulnerability::Entity)?,
             product_status: Self::from_query_result_multi_model(res, "", product_status::Entity)?,
             cpe: Self::from_query_result_multi_model(res, "", trustify_entity::cpe::Entity)?,
             status: Self::from_query_result_multi_model(res, "", status::Entity)?,
@@ -319,6 +316,7 @@ impl FromQueryResultMultiModel for ProductStatusCatcher {
     fn try_into_multi_model<E: EntityTrait>(select: Select<E>) -> Result<Select<E>, DbErr> {
         select
             .try_model_columns(advisory::Entity)?
+            .try_model_columns(trustify_entity::vulnerability::Entity)?
             .try_model_columns(product_status::Entity)?
             .try_model_columns(trustify_entity::cpe::Entity)?
             .try_model_columns(status::Entity)?

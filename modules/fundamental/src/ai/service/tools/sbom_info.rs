@@ -192,10 +192,10 @@ The tool provides a list of advisories/CVEs affecting the SBOM.
                         .status
                         .iter()
                         .map(|v| Vulnerability {
-                            identifier: v.vulnerability_id.clone(),
+                            identifier: v.vulnerability.head.identifier.clone(),
                             link: format!(
                                 "http://localhost:3000/vulnerability/{}",
-                                v.vulnerability_id
+                                v.vulnerability.head.identifier
                             ),
                         })
                         .collect(),
