@@ -1002,8 +1002,7 @@ mod test {
 
         let service = AnalysisService::new(ctx.db.clone());
 
-        let component_purl: Purl =
-            Purl::from_str("pkg:rpm/redhat/B@0.0.0").map_err(Error::Purl)?;
+        let component_purl: Purl = Purl::from_str("pkg:rpm/redhat/B@0.0.0").map_err(Error::Purl)?;
 
         let analysis_graph = service
             .retrieve_root_components_by_purl(component_purl, Paginated::default(), ())
