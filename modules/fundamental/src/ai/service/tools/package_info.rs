@@ -24,7 +24,7 @@ impl Tool for PackageInfo {
             r##"
 This tool provides information about a Package, which has a name and version. Packages are identified by a URI or a UUID. Examples of URIs:
 
-* pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le
+* pkg:rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le
 * pkg:maven/org.apache.maven.wagon/wagon-provider-api@3.5.1?type=jar
 
 Example of a UUID: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df.
@@ -208,7 +208,7 @@ mod tests {
             "pkg:rpm/redhat/libsepol@3.5-1.el9?arch=s390x",
             r#"
 {
-  "identifier": "pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le",
+  "identifier": "pkg:rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le",
   "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "name": "libsepol",
   "version": "3.5-1.el9",
@@ -232,7 +232,7 @@ mod tests {
             "1ca731c3-9596-534c-98eb-8dcc6ff7fef9",
             r#"
 {
-  "identifier": "pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le",
+  "identifier": "pkg:rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le",
   "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "name": "libsepol",
   "version": "3.5-1.el9",
@@ -256,7 +256,7 @@ mod tests {
             "pkg:maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
             r#"
 {
-  "identifier": "pkg://maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+  "identifier": "pkg:maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
   "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "name": "commons-logging-jboss-logging",
   "version": "1.0.0.Final-redhat-1",
@@ -278,7 +278,7 @@ mod tests {
             "commons-logging-jboss-logging",
             r#"
 {
-  "identifier": "pkg://maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+  "identifier": "pkg:maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
   "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "name": "commons-logging-jboss-logging",
   "version": "1.0.0.Final-redhat-1",
@@ -304,25 +304,25 @@ There are multiple that match:
 {
   "items": [
     {
-      "identifier": "pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       "name": "quarkus-resteasy-reactive-jsonb-common",
       "version": "2.13.8.Final-redhat-00004"
     },
     {
-      "identifier": "pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       "name": "quarkus-resteasy-reactive-jsonb",
       "version": "2.13.8.Final-redhat-00004"
     },
     {
-      "identifier": "pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       "name": "quarkus-resteasy-reactive-jsonb-common-deployment",
       "version": "2.13.8.Final-redhat-00004"
     },
     {
-      "identifier": "pkg://maven/io.quarkus/quarkus-resteasy-reactive-jsonb-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       "name": "quarkus-resteasy-reactive-jsonb-deployment",
       "version": "2.13.8.Final-redhat-00004"

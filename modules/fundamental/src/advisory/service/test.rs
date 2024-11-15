@@ -161,7 +161,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     advisory_vuln
         .ingest_package_status(
             None,
-            &Purl::from_str("pkg://maven/org.apache/log4j")?,
+            &Purl::from_str("pkg:maven/org.apache/log4j")?,
             "fixed",
             VersionInfo {
                 scheme: VersionScheme::Maven,
@@ -174,7 +174,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     advisory_vuln
         .ingest_package_status(
             None,
-            &Purl::from_str("pkg://maven/org.apache/log4j")?,
+            &Purl::from_str("pkg:maven/org.apache/log4j")?,
             "fixed",
             VersionInfo {
                 scheme: VersionScheme::Maven,
@@ -259,7 +259,7 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     advisory_vuln
         .ingest_package_status(
             None,
-            &Purl::from_str("pkg://maven/org.apache/log4j")?,
+            &Purl::from_str("pkg:maven/org.apache/log4j")?,
             "fixed",
             VersionInfo {
                 scheme: VersionScheme::Maven,
@@ -272,7 +272,7 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     advisory_vuln
         .ingest_package_status(
             None,
-            &Purl::from_str("pkg://maven/org.apache/log4j")?,
+            &Purl::from_str("pkg:maven/org.apache/log4j")?,
             "fixed",
             VersionInfo {
                 scheme: VersionScheme::Maven,

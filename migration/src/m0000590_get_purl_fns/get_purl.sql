@@ -4,7 +4,7 @@ DECLARE
     result TEXT;
 BEGIN
     SELECT
-        'pkg://' || string_agg(base_purl.type, '') ||
+        'pkg:' || string_agg(base_purl.type, '') ||
         CASE
             WHEN base_purl.namespace IS NOT NULL THEN
                 '/' || string_agg(base_purl.namespace, '') || '/'

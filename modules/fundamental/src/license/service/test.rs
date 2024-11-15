@@ -154,11 +154,7 @@ async fn verify_clearly_defined(ctx: &TrustifyContext) -> Result<(), anyhow::Err
             .sbom
             .authors
             .contains(&"ClearlyDefined: Community-Curated".to_string()));
-        assert!(each
-            .purl
-            .purl
-            .to_string()
-            .starts_with("pkg://crate/chrono@"));
+        assert!(each.purl.purl.to_string().starts_with("pkg:crate/chrono@"));
         seen_versions.push(each.purl.version);
     }
 

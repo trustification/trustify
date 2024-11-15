@@ -41,7 +41,7 @@ async fn test_parse_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error
                     },
                     ..
                 }
-             if *purl == Purl::from_str( "pkg://maven/org.apache.zookeeper/zookeeper@3.9.2?type=jar")?));
+             if *purl == Purl::from_str( "pkg:maven/org.apache.zookeeper/zookeeper@3.9.2?type=jar")?));
 
             assert!(package.cpe.is_empty());
 
@@ -53,7 +53,7 @@ async fn test_parse_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error
                     name: "zookeeper".to_string(),
                     version: Some("3.9.2".to_string()),
                     purl: vec![SbomPackagePurl::String(
-                        "pkg://maven/org.apache.zookeeper/zookeeper@3.9.2?type=jar".to_string()
+                        "pkg:maven/org.apache.zookeeper/zookeeper@3.9.2?type=jar".to_string()
                     )],
                     cpe: vec![],
                 }]

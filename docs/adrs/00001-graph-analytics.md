@@ -88,7 +88,7 @@ all of the above should return paginated lists:
     {
       "sbom_id": "0191d750-49a2-72b2-bf1a-f7c6ae792518",
       "node_id": "SPDXRef-3d373f74-e7e5-4c41-90d9-b29d5a7e2312",
-      "purl": "pkg://oci/sandboxed-containers-operator-bundle@sha256:ff2bb666c2696fed365df55de78141a02e372044647b8031e6d06e7583478af4?arch=x86_64&repository_url=registry.redhat.io/openshift/sandboxed-containers-operator-bundle&tag=1.2.0-24",
+      "purl": "pkg:oci/sandboxed-containers-operator-bundle@sha256:ff2bb666c2696fed365df55de78141a02e372044647b8031e6d06e7583478af4?arch=x86_64&repository_url=registry.redhat.io/openshift/sandboxed-containers-operator-bundle&tag=1.2.0-24",
       "name": "sandboxed-containers-operator-bundle",
       "published": "2024-08-06 05:28:39+00",
       "document_id": "https://access.redhat.com/security/data/sbom/spdx/OSE-OSC-1.2.0-RHEL-8",
@@ -98,7 +98,7 @@ all of the above should return paginated lists:
         {
           "sbom_id": "0191d750-49a2-72b2-bf1a-f7c6ae792518",
           "node_id": "SPDXRef-440459d0-4240-4ac9-844f-2fd6b3d37429",
-          "purl": "pkg://oci/sandboxed-containers-operator-bundle@sha256:782313f2b91c115191593b8b63e10f5e30cf87f6c2d15618d6bfa359f51de947?repository_url=registry.redhat.io/openshift/sandboxed-containers-operator-bundle&tag=1.2.0-24",
+          "purl": "pkg:oci/sandboxed-containers-operator-bundle@sha256:782313f2b91c115191593b8b63e10f5e30cf87f6c2d15618d6bfa359f51de947?repository_url=registry.redhat.io/openshift/sandboxed-containers-operator-bundle&tag=1.2.0-24",
           "name": "sandboxed-containers-operator-bundle"
         }
       ]
@@ -106,7 +106,7 @@ all of the above should return paginated lists:
     {
       "sbom_id": "0191d750-49a2-72b2-bf1a-f7c6ae792518",
       "node_id": "SPDXRef-440459d0-4240-4ac9-844f-2fd6b3d37429",
-      "purl": "pkg://oci/sandboxed-containers-operator-bundle@sha256:782313f2b91c115191593b8b63e10f5e30cf87f6c2d15618d6bfa359f51de947?repository_url=registry.redhat.io/openshift/sandboxed-containers-operator-bundle&tag=1.2.0-24",
+      "purl": "pkg:oci/sandboxed-containers-operator-bundle@sha256:782313f2b91c115191593b8b63e10f5e30cf87f6c2d15618d6bfa359f51de947?repository_url=registry.redhat.io/openshift/sandboxed-containers-operator-bundle&tag=1.2.0-24",
       "name": "sandboxed-containers-operator-bundle",
       "published": "2024-08-06 05:28:39+00",
       "document_id": "https://access.redhat.com/security/data/sbom/spdx/OSE-OSC-1.2.0-RHEL-8",
@@ -132,7 +132,7 @@ HTTP GET api/v1/analysis/dep/{component-purl}
     {
       "sbom_id": "0191d750-49a2-72b2-bf1a-f7c6ae792518",
       "node_id": "SPDXRef-3d373f74-e7e5-4c41-90d9-b29d5a7e2312",
-      "purl": "pkg://oci/sandboxed-containers-operator-bundle@sha256:ff2bb666c2696fed365df55de78141a02e372044647b8031e6d06e7583478af4?arch=x86_64&repository_url=registry.redhat.io/openshift/sandboxed-containers-operator-bundle&tag=1.2.0-24",
+      "purl": "pkg:oci/sandboxed-containers-operator-bundle@sha256:ff2bb666c2696fed365df55de78141a02e372044647b8031e6d06e7583478af4?arch=x86_64&repository_url=registry.redhat.io/openshift/sandboxed-containers-operator-bundle&tag=1.2.0-24",
       "name": "sandboxed-containers-operator-bundle",
       "published": "2024-08-06 05:28:39+00",
       "document_id": "https://access.redhat.com/security/data/sbom/spdx/OSE-OSC-1.2.0-RHEL-8",
@@ -143,7 +143,7 @@ HTTP GET api/v1/analysis/dep/{component-purl}
     {
       "sbom_id": "0191d750-49a2-72b2-bf1a-f7c6ae792518",
       "node_id": "SPDXRef-440459d0-4240-4ac9-844f-2fd6b3d37429",
-      "purl": "pkg://oci/sandboxed-containers-operator-bundle@sha256:782313f2b91c115191593b8b63e10f5e30cf87f6c2d15618d6bfa359f51de947?repository_url=registry.redhat.io/openshift/sandboxed-containers-operator-bundle&tag=1.2.0-24",
+      "purl": "pkg:oci/sandboxed-containers-operator-bundle@sha256:782313f2b91c115191593b8b63e10f5e30cf87f6c2d15618d6bfa359f51de947?repository_url=registry.redhat.io/openshift/sandboxed-containers-operator-bundle&tag=1.2.0-24",
       "name": "sandboxed-containers-operator-bundle",
       "published": "2024-08-06 05:28:39+00",
       "document_id": "https://access.redhat.com/security/data/sbom/spdx/OSE-OSC-1.2.0-RHEL-8",
@@ -153,7 +153,7 @@ HTTP GET api/v1/analysis/dep/{component-purl}
         {
           "sbom_id": "0191d750-49a2-72b2-bf1a-f7c6ae792518",
           "node_id": "SPDXRef-3d373f74-e7e5-4c41-90d9-b29d5a7e2312",
-          "purl": "pkg://oci/sandboxed-containers-operator-bundle@sha256:ff2bb666c2696fed365df55de78141a02e372044647b8031e6d06e7583478af4?arch=x86_64&repository_url=registry.redhat.io/openshift/sandboxed-containers-operator-bundle&tag=1.2.0-24",
+          "purl": "pkg:oci/sandboxed-containers-operator-bundle@sha256:ff2bb666c2696fed365df55de78141a02e372044647b8031e6d06e7583478af4?arch=x86_64&repository_url=registry.redhat.io/openshift/sandboxed-containers-operator-bundle&tag=1.2.0-24",
           "name": "sandboxed-containers-operator-bundle",
           "deps": []
         }
@@ -162,7 +162,7 @@ HTTP GET api/v1/analysis/dep/{component-purl}
     {
       "sbom_id": "0191d750-49a2-72b2-bf1a-f7c6ae792518",
       "node_id": "SPDXRef-6447af1f-4faa-481a-a1e6-90ecbb6ab631",
-      "purl": "pkg://github/openshift/sandboxed-containers-operator@9b5eef5d49a967ba3240f01a2cb4476c44f1f66e",
+      "purl": "pkg:github/openshift/sandboxed-containers-operator@9b5eef5d49a967ba3240f01a2cb4476c44f1f66e",
       "name": "sandboxed-containers-operator",
       "published": "2024-08-06 05:28:39+00",
       "document_id": "https://access.redhat.com/security/data/sbom/spdx/OSE-OSC-1.2.0-RHEL-8",
@@ -172,20 +172,20 @@ HTTP GET api/v1/analysis/dep/{component-purl}
         {
           "sbom_id": "0191d750-49a2-72b2-bf1a-f7c6ae792518",
           "node_id": "SPDXRef-0b155bf3-15cc-4353-9e47-58b722ed067e",
-          "purl": "pkg://oci/osc-must-gather-container@sha256:97c02ff2227bb56c2edeb37f674db11ebd0a5ab63897b64e852d7db11163e1ba?repository_url=registry.redhat.io/openshift-sandboxed-containers-operator-must-gather&tag=1.2.0-11.1655140658",
+          "purl": "pkg:oci/osc-must-gather-container@sha256:97c02ff2227bb56c2edeb37f674db11ebd0a5ab63897b64e852d7db11163e1ba?repository_url=registry.redhat.io/openshift-sandboxed-containers-operator-must-gather&tag=1.2.0-11.1655140658",
           "name": "osc-must-gather-container",
           "deps": [
             {
               "sbom_id": "0191d750-49a2-72b2-bf1a-f7c6ae792518",
               "node_id": "SPDXRef-ff914a27-712b-4e23-8074-f530f0fa2eca",
-              "purl": "pkg://golang/github.com/pmezard/go-difflib@v1.0.0",
+              "purl": "pkg:golang/github.com/pmezard/go-difflib@v1.0.0",
               "name": "go-difflib",
               "deps": []
             },
             {
               "sbom_id": "0191d750-49a2-72b2-bf1a-f7c6ae792518",
               "node_id": "SPDXRef-ff198394-86b5-4cf5-a58f-da0ef9b516e3",
-              "purl": "pkg://golang/k8s.io/api/admissionregistration/v1@v0.22.1",
+              "purl": "pkg:golang/k8s.io/api/admissionregistration/v1@v0.22.1",
               "name": "v1",
               "deps": []
             },
@@ -199,7 +199,7 @@ HTTP GET api/v1/analysis/dep/{component-purl}
             {
               "sbom_id": "0191d750-49a2-72b2-bf1a-f7c6ae792518",
               "node_id": "SPDXRef-fe93b41a-ebab-48b5-813b-60307b4a711d",
-              "purl": "pkg://rpm/redhat/openldap@2.4.46-18.el8?arch=x86_64",
+              "purl": "pkg:rpm/redhat/openldap@2.4.46-18.el8?arch=x86_64",
               "name": "openldap",
               "deps": []
             },

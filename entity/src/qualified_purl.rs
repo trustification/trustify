@@ -23,7 +23,7 @@ pub struct CanonicalPurl {
 // inspired by common/src/purl.rs#135 but avoids any temporary strings for speed
 impl Display for CanonicalPurl {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "pkg://{}", self.ty)?;
+        write!(f, "pkg:{}", self.ty)?;
 
         if let Some(ns) = &self.namespace {
             write!(f, "/{}", ns)?;
@@ -229,7 +229,7 @@ mod test {
 
         let purl: Purl = serde_json::from_str(
             r#"
-            "pkg://rpm/redhat/filesystem@3.8-6.el8?arch=aarch64"
+            "pkg:rpm/redhat/filesystem@3.8-6.el8?arch=aarch64"
             "#,
         )
         .unwrap();
@@ -245,7 +245,7 @@ mod test {
         // check we can serialize CanonicalPurl to url string
         assert_eq!(
             model.clone().purl.unwrap().to_string(),
-            "pkg://rpm/redhat/filesystem@3.8-6.el8?arch=aarch64",
+            "pkg:rpm/redhat/filesystem@3.8-6.el8?arch=aarch64",
         );
 
         // check we can serialize CanonicalPurl to json value
@@ -258,7 +258,7 @@ mod test {
         // check we can serialize CanonicalPurl to Purl
         let purl: Purl = serde_json::from_str(
             r#"
-            "pkg://rpm/redhat/filesystem@3.8-6.el8?arch=aarch64"
+            "pkg:rpm/redhat/filesystem@3.8-6.el8?arch=aarch64"
             "#,
         )
         .unwrap();

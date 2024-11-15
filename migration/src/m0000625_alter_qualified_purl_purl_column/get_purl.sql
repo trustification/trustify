@@ -4,7 +4,7 @@ DECLARE
     result TEXT;
 BEGIN
     SELECT
-        'pkg://' ||
+        'pkg:' ||
         CASE
             WHEN qualified_purl.purl->>'ty'  IS NOT NULL THEN
                 string_agg(qualified_purl.purl->>'ty' , '')

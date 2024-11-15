@@ -250,7 +250,7 @@ mod test {
         //     .await?;
         // assert_eq!(1, affected_assertions.assertions.len());
 
-        // let affected_assertion = affected_assertions.assertions.get("pkg://cargo/hyper");
+        // let affected_assertion = affected_assertions.assertions.get("pkg:cargo/hyper");
         // assert!(affected_assertion.is_some());
 
         // let affected_assertion = &affected_assertion.unwrap()[0];
@@ -264,7 +264,7 @@ mod test {
         // let fixed_assertions = loaded_advisory_vulnerability.fixed_assertions(()).await?;
         // assert_eq!(1, fixed_assertions.assertions.len());
 
-        // let fixed_assertion = fixed_assertions.assertions.get("pkg://cargo/hyper");
+        // let fixed_assertion = fixed_assertions.assertions.get("pkg:cargo/hyper");
         // assert!(fixed_assertion.is_some());
 
         // let fixed_assertion = fixed_assertion.unwrap();
