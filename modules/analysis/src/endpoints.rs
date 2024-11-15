@@ -84,7 +84,7 @@ pub async fn get_component_root_components(
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
-    if key.starts_with("pkg://") {
+    if key.starts_with("pkg:") {
         let purl: Purl = Purl::from_str(&key).map_err(Error::Purl)?;
         Ok(HttpResponse::Ok().json(
             service
@@ -138,7 +138,7 @@ pub async fn get_component_deps(
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
-    if key.starts_with("pkg://") {
+    if key.starts_with("pkg:") {
         let purl: Purl = Purl::from_str(&key).map_err(Error::Purl)?;
         Ok(HttpResponse::Ok().json(service.retrieve_deps_by_purl(purl, paginated, ()).await?))
     } else {
@@ -173,8 +173,8 @@ mod test {
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
 
-        if response["items"][0]["purl"] == "pkg://rpm/redhat/BB@0.0.0"
-            || response["items"][1]["purl"] == "pkg://rpm/redhat/BB@0.0.0"
+        if response["items"][0]["purl"] == "pkg:rpm/redhat/BB@0.0.0"
+            || response["items"][1]["purl"] == "pkg:rpm/redhat/BB@0.0.0"
         {
             assert_eq!(&response["total"], 2);
         } else {
@@ -186,10 +186,10 @@ mod test {
         let uri = "/api/v1/analysis/root-component?q=BB";
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
-        assert_eq!(response["items"][0]["purl"], "pkg://rpm/redhat/BB@0.0.0");
+        assert_eq!(response["items"][0]["purl"], "pkg:rpm/redhat/BB@0.0.0");
         assert_eq!(
             response["items"][0]["ancestors"][0]["purl"],
-            "pkg://rpm/redhat/AA@0.0.0?arch=src"
+            "pkg:rpm/redhat/AA@0.0.0?arch=src"
         );
         Ok(assert_eq!(&response["total"], 1))
     }
@@ -208,10 +208,10 @@ mod test {
 
         let response: Value = app.call_and_read_body_json(request).await;
 
-        assert_eq!(response["items"][0]["purl"], "pkg://rpm/redhat/B@0.0.0");
+        assert_eq!(response["items"][0]["purl"], "pkg:rpm/redhat/B@0.0.0");
         assert_eq!(
             response["items"][0]["ancestors"][0]["purl"],
-            "pkg://rpm/redhat/A@0.0.0?arch=src"
+            "pkg:rpm/redhat/A@0.0.0?arch=src"
         );
         Ok(assert_eq!(&response["total"], 1))
     }
@@ -230,10 +230,10 @@ mod test {
 
         let response: Value = app.call_and_read_body_json(request).await;
 
-        assert_eq!(response["items"][0]["purl"], "pkg://rpm/redhat/B@0.0.0");
+        assert_eq!(response["items"][0]["purl"], "pkg:rpm/redhat/B@0.0.0");
         assert_eq!(
             response["items"][0]["ancestors"][0]["purl"],
-            "pkg://rpm/redhat/A@0.0.0?arch=src"
+            "pkg:rpm/redhat/A@0.0.0?arch=src"
         );
         Ok(assert_eq!(&response["total"], 1))
     }
@@ -258,7 +258,7 @@ mod test {
 
         assert_eq!(
             response["items"][0]["purl"],
-            "pkg://maven/net.spy/spymemcached@2.12.1?type=jar"
+            "pkg:maven/net.spy/spymemcached@2.12.1?type=jar"
         );
         assert_eq!(
             response["items"][0]["document_id"],
@@ -266,7 +266,7 @@ mod test {
         );
         assert_eq!(
             response["items"][0]["ancestors"][0]["purl"],
-            "pkg://maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?type=pom&repository_url=https://maven.repository.redhat.com/ga/"
+            "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?type=pom&repository_url=https://maven.repository.redhat.com/ga/"
         );
 
         Ok(assert_eq!(&response["total"], 2))
@@ -317,11 +317,11 @@ mod test {
 
         assert_eq!(
             response["items"][0]["purl"],
-            "pkg://rpm/redhat/A@0.0.0?arch=src"
+            "pkg:rpm/redhat/A@0.0.0?arch=src"
         );
         assert_eq!(
             response["items"][0]["deps"][0]["purl"],
-            "pkg://rpm/redhat/B@0.0.0"
+            "pkg:rpm/redhat/B@0.0.0"
         );
 
         Ok(assert_eq!(&response["total"], 2))
@@ -340,11 +340,11 @@ mod test {
 
         assert_eq!(
             response["items"][0]["purl"],
-            "pkg://rpm/redhat/A@0.0.0?arch=src"
+            "pkg:rpm/redhat/A@0.0.0?arch=src"
         );
         assert_eq!(
             response["items"][0]["deps"][0]["purl"],
-            "pkg://rpm/redhat/B@0.0.0"
+            "pkg:rpm/redhat/B@0.0.0"
         );
 
         Ok(assert_eq!(&response["total"], 1))
@@ -363,11 +363,11 @@ mod test {
 
         assert_eq!(
             response["items"][0]["purl"],
-            "pkg://rpm/redhat/AA@0.0.0?arch=src"
+            "pkg:rpm/redhat/AA@0.0.0?arch=src"
         );
         assert_eq!(
             response["items"][0]["deps"][0]["purl"],
-            "pkg://rpm/redhat/BB@0.0.0"
+            "pkg:rpm/redhat/BB@0.0.0"
         );
         Ok(assert_eq!(&response["total"], 1))
     }
@@ -390,7 +390,7 @@ mod test {
 
         assert_eq!(
             response["items"][0]["purl"],
-            "pkg://maven/net.spy/spymemcached@2.12.1?type=jar"
+            "pkg:maven/net.spy/spymemcached@2.12.1?type=jar"
         );
         Ok(assert_eq!(&response["total"], 2))
     }

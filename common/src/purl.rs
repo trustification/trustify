@@ -170,7 +170,7 @@ impl Display for Purl {
 
         write!(
             f,
-            "pkg://{}{}/{}{}{}",
+            "pkg:{}{}/{}{}{}",
             self.ty, ns, self.name, version, qualifiers
         )
     }
@@ -225,7 +225,7 @@ mod tests {
     async fn purl_serde() -> Result<(), anyhow::Error> {
         let purl: Purl = serde_json::from_str(
             r#"
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar"
+            "pkg:maven/io.quarkus/quarkus-core@1.2.3?foo=bar"
             "#,
         )
         .unwrap();
@@ -238,12 +238,12 @@ mod tests {
 
         assert_eq!(purl.qualifiers.get("foo"), Some(&"bar".to_string()));
 
-        let purl: Purl = "pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar".try_into()?;
+        let purl: Purl = "pkg:maven/io.quarkus/quarkus-core@1.2.3?foo=bar".try_into()?;
         let json = serde_json::to_string(&purl).unwrap();
 
         Ok(assert_eq!(
             json,
-            r#""pkg://maven/io.quarkus/quarkus-core@1.2.3?foo=bar""#
+            r#""pkg:maven/io.quarkus/quarkus-core@1.2.3?foo=bar""#
         ))
     }
 
@@ -279,7 +279,7 @@ mod tests {
 
         Ok(assert_eq!(
             json,
-            r#""pkg://oci/ose-cluster-network-operator@sha256:0170ba5eebd557fd9f477d915bb7e0d4c1ad6cd4c1852d4b1ceed7a2817dd5d2?repository_url=registry.redhat.io/openshift4/ose-cluster-network-operator&tag=v4.11.0-202403090037.p0.g33da9fb.assembly.stream.el8""#
+            r#""pkg:oci/ose-cluster-network-operator@sha256:0170ba5eebd557fd9f477d915bb7e0d4c1ad6cd4c1852d4b1ceed7a2817dd5d2?repository_url=registry.redhat.io/openshift4/ose-cluster-network-operator&tag=v4.11.0-202403090037.p0.g33da9fb.assembly.stream.el8""#
         ))
     }
 
@@ -302,7 +302,7 @@ mod tests {
 
         Ok(assert_eq!(
             json,
-            r#""pkg://rpm/redhat/filesystem@3.8-6.el8?arch=aarch64""#
+            r#""pkg:rpm/redhat/filesystem@3.8-6.el8?arch=aarch64""#
         ))
     }
 
@@ -335,7 +335,7 @@ mod tests {
 
         Ok(assert_eq!(
             json,
-            r#""pkg://rpm/redhat/subscription-manager-rhsm-certificates@1.28.29.1-1.el8_6?arch=s390x""#
+            r#""pkg:rpm/redhat/subscription-manager-rhsm-certificates@1.28.29.1-1.el8_6?arch=s390x""#
         ))
     }
 

@@ -359,21 +359,21 @@ mod tests {
 
         let pkg1 = system
             .ingest_package(
-                &"pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                &"pkg:maven/io.quarkus/quarkus-core".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg2 = system
             .ingest_package(
-                &"pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                &"pkg:maven/io.quarkus/quarkus-core".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg3 = system
             .ingest_package(
-                &"pkg://maven/io.quarkus/quarkus-addons".try_into()?,
+                &"pkg:maven/io.quarkus/quarkus-addons".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -395,7 +395,7 @@ mod tests {
 
         let result = system
             .ingest_package_version(
-                &"pkg://maven/io.quarkus/quarkus-addons".try_into()?,
+                &"pkg:maven/io.quarkus/quarkus-addons".try_into()?,
                 Transactional::None,
             )
             .await;
@@ -413,21 +413,21 @@ mod tests {
 
         let pkg1 = system
             .ingest_package_version(
-                &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+                &"pkg:maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg2 = system
             .ingest_package_version(
-                &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+                &"pkg:maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 Transactional::None,
             )
             .await?;
 
         let pkg3 = system
             .ingest_package_version(
-                &"pkg://maven/io.quarkus/quarkus-core@4.5.6".try_into()?,
+                &"pkg:maven/io.quarkus/quarkus-core@4.5.6".try_into()?,
                 Transactional::None,
             )
             .await?;
@@ -451,7 +451,7 @@ mod tests {
         let _page_size = NonZeroU64::new(50).unwrap();
 
         for v in 0..TOTAL_ITEMS {
-            let version = format!("pkg://maven/io.quarkus/quarkus-core@{v}").try_into()?;
+            let version = format!("pkg:maven/io.quarkus/quarkus-core@{v}").try_into()?;
 
             let _ = system
                 .ingest_package_version(&version, Transactional::None)
@@ -460,7 +460,7 @@ mod tests {
 
         let pkg = system
             .get_package(
-                &"pkg://maven/io.quarkus/quarkus-core".try_into()?,
+                &"pkg:maven/io.quarkus/quarkus-core".try_into()?,
                 Transactional::None,
             )
             .await?
@@ -513,14 +513,14 @@ mod tests {
             Box::pin(async move {
                 let pkg1 = tx_system
                     .ingest_qualified_package(
-                        &"pkg://oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012".try_into()?,
+                        &"pkg:oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012".try_into()?,
                         &Transactional::None,
                     )
                     .await?;
 
                 let pkg2 = tx_system
                     .ingest_qualified_package(
-                    &"pkg://oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012".try_into()?,
+                    &"pkg:oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012".try_into()?,
                         &Transactional::None,
                     )
                     .await?;
@@ -542,28 +542,28 @@ mod tests {
 
         let pkg1 = system
             .ingest_qualified_package(
-                &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+                &"pkg:maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 &Transactional::None,
             )
             .await?;
 
         let pkg2 = system
             .ingest_qualified_package(
-                &"pkg://maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
+                &"pkg:maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
                 &Transactional::None,
             )
             .await?;
 
         let pkg3 = system
             .ingest_qualified_package(
-                &"pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar".try_into()?,
+                &"pkg:maven/io.quarkus/quarkus-core@1.2.3?type=jar".try_into()?,
                 &Transactional::None,
             )
             .await?;
 
         let pkg4 = system
             .ingest_qualified_package(
-                &"pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar".try_into()?,
+                &"pkg:maven/io.quarkus/quarkus-core@1.2.3?type=jar".try_into()?,
                 &Transactional::None,
             )
             .await?;
@@ -574,11 +574,11 @@ mod tests {
         assert_ne!(pkg1.qualified_package.id, pkg3.qualified_package.id);
 
         assert_eq!(
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3",
+            "pkg:maven/io.quarkus/quarkus-core@1.2.3",
             Purl::from(pkg1).to_string().as_str()
         );
         assert_eq!(
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar",
+            "pkg:maven/io.quarkus/quarkus-core@1.2.3?type=jar",
             Purl::from(pkg3).to_string().as_str()
         );
 
@@ -592,9 +592,9 @@ mod tests {
         let graph = Graph::new(db);
 
         for i in [
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3",
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=jar",
-            "pkg://maven/io.quarkus/quarkus-core@1.2.3?type=pom",
+            "pkg:maven/io.quarkus/quarkus-core@1.2.3",
+            "pkg:maven/io.quarkus/quarkus-core@1.2.3?type=jar",
+            "pkg:maven/io.quarkus/quarkus-core@1.2.3?type=pom",
         ] {
             graph
                 .ingest_qualified_package(&i.try_into()?, &Transactional::None)
@@ -631,7 +631,7 @@ mod tests {
 
     #[test]
     fn test_uuid() {
-        let purl = Purl::from_str("pkg://maven/io.quarkus/quarkus-core@1.2").unwrap();
+        let purl = Purl::from_str("pkg:maven/io.quarkus/quarkus-core@1.2").unwrap();
 
         assert_eq!(
             purl.package_uuid().to_string(),
@@ -642,7 +642,7 @@ mod tests {
             "709c07a3-3936-5d83-8c4f-734991725cbd"
         );
 
-        let purl = Purl::from_str("pkg://maven/io.quarkus/quarkus-core@1.3").unwrap();
+        let purl = Purl::from_str("pkg:maven/io.quarkus/quarkus-core@1.3").unwrap();
 
         assert_eq!(
             purl.package_uuid().to_string(),

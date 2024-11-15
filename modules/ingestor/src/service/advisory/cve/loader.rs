@@ -392,7 +392,7 @@ mod test {
 
         let purl = graph
             .get_package(
-                &Purl::from_str("pkg://maven/org.apache.commons/commons-compress")?,
+                &Purl::from_str("pkg:maven/org.apache.commons/commons-compress")?,
                 Transactional::None,
             )
             .await?;

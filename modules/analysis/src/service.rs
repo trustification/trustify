@@ -886,7 +886,7 @@ mod test {
                 .last()
                 .unwrap()
                 .purl,
-            "pkg://rpm/redhat/AA@0.0.0?arch=src".to_string()
+            "pkg:rpm/redhat/AA@0.0.0?arch=src".to_string()
         );
         assert_eq!(
             analysis_graph
@@ -932,7 +932,7 @@ mod test {
                 .last()
                 .unwrap()
                 .purl,
-            "pkg://rpm/redhat/AA@0.0.0?arch=src".to_string()
+            "pkg:rpm/redhat/AA@0.0.0?arch=src".to_string()
         );
         assert_eq!(
             analysis_graph
@@ -977,7 +977,7 @@ mod test {
                 .last()
                 .unwrap()
                 .purl,
-            "pkg://rpm/redhat/A@0.0.0?arch=src".to_string()
+            "pkg:rpm/redhat/A@0.0.0?arch=src".to_string()
         );
         assert_eq!(
             analysis_graph
@@ -1003,7 +1003,7 @@ mod test {
         let service = AnalysisService::new(ctx.db.clone());
 
         let component_purl: Purl =
-            Purl::from_str("pkg://rpm/redhat/B@0.0.0").map_err(Error::Purl)?;
+            Purl::from_str("pkg:rpm/redhat/B@0.0.0").map_err(Error::Purl)?;
 
         let analysis_graph = service
             .retrieve_root_components_by_purl(component_purl, Paginated::default(), ())
@@ -1019,7 +1019,7 @@ mod test {
                 .last()
                 .unwrap()
                 .purl,
-            "pkg://rpm/redhat/A@0.0.0?arch=src".to_string()
+            "pkg:rpm/redhat/A@0.0.0?arch=src".to_string()
         );
         assert_eq!(
             analysis_graph
@@ -1052,7 +1052,7 @@ mod test {
             .unwrap();
 
         assert_eq!(analysis_graph.items.last().unwrap().ancestors.last().unwrap().purl,
-                   "pkg://maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?type=pom&repository_url=https://maven.repository.redhat.com/ga/".to_string()
+                   "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?type=pom&repository_url=https://maven.repository.redhat.com/ga/".to_string()
         );
         assert_eq!(
             analysis_graph
@@ -1157,7 +1157,7 @@ mod test {
 
         assert_eq!(
             analysis_graph.items[0].purl,
-            "pkg://rpm/redhat/A@0.0.0?arch=src".to_string()
+            "pkg:rpm/redhat/A@0.0.0?arch=src".to_string()
         );
         Ok(assert_eq!(analysis_graph.total, 1))
     }
@@ -1170,7 +1170,7 @@ mod test {
         let service = AnalysisService::new(ctx.db.clone());
 
         let component_purl: Purl =
-            Purl::from_str("pkg://rpm/redhat/AA@0.0.0?arch=src").map_err(Error::Purl)?;
+            Purl::from_str("pkg:rpm/redhat/AA@0.0.0?arch=src").map_err(Error::Purl)?;
 
         let analysis_graph = service
             .retrieve_deps_by_purl(component_purl, Paginated::default(), ())
@@ -1179,7 +1179,7 @@ mod test {
 
         assert_eq!(
             analysis_graph.items[0].purl,
-            "pkg://rpm/redhat/AA@0.0.0?arch=src".to_string()
+            "pkg:rpm/redhat/AA@0.0.0?arch=src".to_string()
         );
 
         Ok(assert_eq!(analysis_graph.total, 1))

@@ -111,7 +111,7 @@ async fn r#type(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(1, response.items.len());
 
     let log4j = &response.items[0];
-    assert_eq!("pkg://maven/org.apache/log4j", log4j.head.purl.to_string());
+    assert_eq!("pkg:maven/org.apache/log4j", log4j.head.purl.to_string());
 
     let uri = "/api/v1/purl/type/rpm";
 
@@ -122,7 +122,7 @@ async fn r#type(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(1, response.items.len());
 
     let sendmail = &response.items[0];
-    assert_eq!("pkg://rpm/sendmail", sendmail.head.purl.to_string());
+    assert_eq!("pkg:rpm/sendmail", sendmail.head.purl.to_string());
 
     Ok(())
 }
@@ -139,10 +139,7 @@ async fn type_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let response: BasePurlDetails = app.call_and_read_body_json(request).await;
 
-    assert_eq!(
-        "pkg://maven/org.apache/log4j",
-        response.head.purl.to_string()
-    );
+    assert_eq!("pkg:maven/org.apache/log4j", response.head.purl.to_string());
 
     assert_eq!(2, response.versions.len());
 
@@ -174,11 +171,11 @@ async fn type_package_version(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     assert!(response
         .purls
         .iter()
-        .any(|e| e.purl.to_string() == "pkg://maven/org.apache/log4j@1.2.3?jdk=11"));
+        .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=11"));
     assert!(response
         .purls
         .iter()
-        .any(|e| e.purl.to_string() == "pkg://maven/org.apache/log4j@1.2.3?jdk=17"));
+        .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=17"));
 
     let uri = "/api/v1/purl/type/rpm/sendmail@4.4.4";
     let request = TestRequest::get().uri(uri).to_request();
@@ -202,7 +199,7 @@ async fn package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let jdk17 = response
         .purls
         .iter()
-        .find(|e| e.purl.to_string() == "pkg://maven/org.apache/log4j@1.2.3?jdk=17");
+        .find(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=17");
 
     assert!(jdk17.is_some());
     let jdk17 = jdk17.unwrap();

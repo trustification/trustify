@@ -33,13 +33,13 @@
   },
   {
     "name": "package-info",
-    "description": "This tool provides information about a Package, which has a name and version. Packages are identified by a URI or a UUID. Examples of URIs:\n\n* pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le\n* pkg:maven/org.apache.maven.wagon/wagon-provider-api@3.5.1?type=jar\n\nExample of a UUID: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df.\n\nInput: The package name, its Identifier URI, or UUID.",
+    "description": "This tool provides information about a Package, which has a name and version. Packages are identified by a URI or a UUID. Examples of URIs:\n\n* pkg:rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le\n* pkg:maven/org.apache.maven.wagon/wagon-provider-api@3.5.1?type=jar\n\nExample of a UUID: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df.\n\nInput: The package name, its Identifier URI, or UUID.",
     "parameters": {
       "type": "object",
       "properties": {
         "input": {
           "type": "string",
-          "description": "This tool provides information about a Package, which has a name and version. Packages are identified by a URI or a UUID. Examples of URIs:\n\n* pkg://rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le\n* pkg:maven/org.apache.maven.wagon/wagon-provider-api@3.5.1?type=jar\n\nExample of a UUID: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df.\n\nInput: The package name, its Identifier URI, or UUID."
+          "description": "This tool provides information about a Package, which has a name and version. Packages are identified by a URI or a UUID. Examples of URIs:\n\n* pkg:rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le\n* pkg:maven/org.apache.maven.wagon/wagon-provider-api@3.5.1?type=jar\n\nExample of a UUID: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df.\n\nInput: The package name, its Identifier URI, or UUID."
         }
       },
       "required": [

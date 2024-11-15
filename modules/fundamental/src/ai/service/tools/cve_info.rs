@@ -185,7 +185,7 @@ mod tests {
   "released": null,
   "affected_packages": [
     {
-      "name": "pkg://cargo/hyper",
+      "name": "pkg:cargo/hyper",
       "version": "[0.0.0-0,0.14.10)"
     }
   ]

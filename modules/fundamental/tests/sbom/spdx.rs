@@ -44,7 +44,7 @@ async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
                     },
                     ..
                 }
-                if *purl == Purl::from_str("pkg://maven/com.redhat.quarkus.platform/quarkus-bom@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=pom")?
+                if *purl == Purl::from_str("pkg:maven/com.redhat.quarkus.platform/quarkus-bom@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=pom")?
             ));
 
             let contains = service
