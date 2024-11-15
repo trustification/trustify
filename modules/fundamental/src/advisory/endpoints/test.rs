@@ -350,6 +350,45 @@ async fn upload_default_csaf_format(ctx: &TrustifyContext) -> Result<(), anyhow:
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+async fn upload_default_csaf_format_multiple(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+    let files = vec![
+        "csaf/cve-2023-0044.json",
+        "csaf/rhsa-2023_5835.json",
+        "csaf/rhsa-2024_2776.json",
+        "csaf/CVE-2023-20862.json",
+        "csaf/rhsa-2024_2049.json",
+        "csaf/cve-2023-33201.json",
+        "csaf/rhsa-2024_2784.json",
+        "csaf/rhsa-2024_2054.json",
+        "csaf/rhsa-2024_3351.json",
+        "csaf/CVE-2024-5154.json",
+        "csaf/rhsa-2024_2071.json",
+        "csaf/rhsa-2024_3666.json",
+        "csaf/RHBA-2024_1440.json",
+        "csaf/rhsa-2024-2705.json",
+    ];
+
+    let uri = "/api/v1/advisory";
+
+    for file in files {
+        let payload = document_bytes(file).await?;
+
+        let request = TestRequest::post()
+            .uri(uri)
+            .set_payload(payload)
+            .to_request();
+
+        let result: IngestResult = app.call_and_read_body_json(request).await;
+        log::debug!("{result:?}");
+        assert!(matches!(result.id, Id::Uuid(_)));
+    }
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
 async fn upload_osv_format(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     let payload = document_bytes("osv/RUSTSEC-2021-0079.json").await?;
