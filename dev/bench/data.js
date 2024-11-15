@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731686604029,
+  "lastUpdate": 1731687205454,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1159,6 +1159,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 23,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "0e3a828a7de0f98d40d0c8929945cfaa50747986",
+          "message": "add cpe, version and handle circular deps",
+          "timestamp": "2024-11-15T15:52:41Z",
+          "tree_id": "caadebfa5294e41bf9e2624d88cf5956430f60b5",
+          "url": "https://github.com/trustification/trustify/commit/0e3a828a7de0f98d40d0c8929945cfaa50747986"
+        },
+        "date": 1731687204974,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
             "unit": "s"
           }
         ]
