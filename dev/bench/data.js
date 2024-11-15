@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731575595389,
+  "lastUpdate": 1731670191227,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1101,6 +1101,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 21,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "b47e58874ce95a2d483b42e96f1437f76f9ddcea",
+          "message": "test: adds a test for multiple csaf file upload",
+          "timestamp": "2024-11-15T11:10:37Z",
+          "tree_id": "3849ab2d84f676db36cefda1cc83504262bab818",
+          "url": "https://github.com/trustification/trustify/commit/b47e58874ce95a2d483b42e96f1437f76f9ddcea"
+        },
+        "date": 1731670190570,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
             "unit": "s"
           }
         ]
