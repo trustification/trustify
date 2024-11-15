@@ -22,12 +22,19 @@ impl Tool for PackageInfo {
     fn description(&self) -> String {
         String::from(
             r##"
-This tool provides information about a Package, which has a name and version. Packages are identified by a URI or a UUID. Examples of URIs:
+This tool provides information about a Package, which has a name and version. Packages are identified by a URI or a UUID.
+
+Examples of URIs:
 
 * pkg:rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le
 * pkg:maven/org.apache.maven.wagon/wagon-provider-api@3.5.1?type=jar
 
 Example of a UUID: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df.
+
+Example of package names:
+
+* log4j
+* openssl
 
 Input: The package name, its Identifier URI, or UUID.
 "##

@@ -63,7 +63,7 @@ pub fn sanitize_uuid_urn(value: String) -> String {
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn completions(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn test_completions_sbom_info(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let service = AiService::new(ctx.db.clone());
     if !service.completions_enabled() {
         return Ok(()); // skip test
@@ -88,6 +88,35 @@ async fn completions(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(last_message_content.contains("quarkus-bom"));
     assert!(last_message_content
         .contains("5a370574a991aa42f7ecc5b7d88754b258f81c230a73bea247c0a6fcc6f608ab"));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn test_completions_package_info(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = AiService::new(ctx.db.clone());
+    if !service.completions_enabled() {
+        return Ok(()); // skip test
+    }
+
+    ingest_fixtures(ctx).await?;
+
+    let mut req = ChatState::new();
+    req.add_human_message("List the httpclient packages with their identifiers".into());
+
+    let result = service.completions(&req, ()).await?;
+
+    log::info!("result: {:#?}", result);
+    let last_message_content = result.messages.last().unwrap().content.clone();
+    println!(
+        "Test formatted output:\n\n{}\n",
+        termimad::inline(last_message_content.as_str())
+    );
+    assert!(last_message_content.contains("httpclient@4.5.13.redhat-00002"));
+    assert!(last_message_content
+        .contains("quarkus-apache-httpclient-deployment@2.13.8.Final-redhat-00004"));
+    assert!(last_message_content.contains("quarkus-apache-httpclient@2.13.8.Final-redhat-00004"));
 
     Ok(())
 }
