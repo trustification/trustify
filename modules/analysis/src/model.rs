@@ -72,6 +72,7 @@ pub struct AncestorSummary {
 pub struct DepNode {
     pub sbom_id: String,
     pub node_id: String,
+    pub relationship: String,
     pub purl: String,
     pub name: String,
     pub version: String,

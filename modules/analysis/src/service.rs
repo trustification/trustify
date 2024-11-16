@@ -36,9 +36,9 @@ pub struct AnalysisService {
 pub fn dep_nodes(
     graph: &petgraph::Graph<PackageNode, Relationship, petgraph::Directed>,
     node: NodeIndex,
+    visited: &mut HashSet<NodeIndex>,
 ) -> Vec<DepNode> {
     let mut depnodes = Vec::new();
-    let mut visited = HashSet::new();
     fn dfs(
         graph: &petgraph::Graph<PackageNode, Relationship, petgraph::Directed>,
         node: NodeIndex,
@@ -51,16 +51,23 @@ pub fn dep_nodes(
         visited.insert(node);
         for neighbor in graph.neighbors_directed(node, Direction::Incoming) {
             if let Some(dep_packagenode) = graph.node_weight(neighbor).cloned() {
-                let dep_node = DepNode {
-                    sbom_id: dep_packagenode.sbom_id,
-                    node_id: dep_packagenode.node_id,
-                    purl: dep_packagenode.purl.to_string(),
-                    name: dep_packagenode.name.to_string(),
-                    version: dep_packagenode.version.to_string(),
-                    deps: Vec::new(), // Avoid recursive call to dep_nodes
-                };
-                depnodes.push(dep_node);
-                dfs(graph, neighbor, depnodes, visited);
+                // Attempt to find the edge and get the relationship in a more elegant way
+                if let Some(relationship) = graph
+                    .find_edge(neighbor, node)
+                    .and_then(|edge_index| graph.edge_weight(edge_index))
+                {
+                    let dep_node = DepNode {
+                        sbom_id: dep_packagenode.sbom_id,
+                        node_id: dep_packagenode.node_id,
+                        relationship: relationship.to_string(),
+                        purl: dep_packagenode.purl.to_string(),
+                        name: dep_packagenode.name.to_string(),
+                        version: dep_packagenode.version.to_string(),
+                        deps: dep_nodes(graph, neighbor, visited),
+                    };
+                    depnodes.push(dep_node);
+                    dfs(graph, neighbor, depnodes, visited);
+                }
             } else {
                 log::warn!(
                     "Processing descendants node weight for neighbor {:?} not found",
@@ -69,7 +76,7 @@ pub fn dep_nodes(
             }
         }
     }
-    dfs(graph, node, &mut depnodes, &mut visited);
+    dfs(graph, node, &mut depnodes, visited);
     depnodes
 }
 
@@ -530,7 +537,7 @@ impl AnalysisService {
                                         product_version: find_match_package_node
                                             .product_version
                                             .to_string(),
-                                        deps: dep_nodes(graph, node_index),
+                                        deps: dep_nodes(graph, node_index, &mut HashSet::new()),
                                     });
                                 }
                             }
