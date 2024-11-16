@@ -2457,6 +2457,7 @@ components:
       required:
       - sbom_id
       - node_id
+      - relationship
       - purl
       - name
       - version
@@ -2471,6 +2472,8 @@ components:
         node_id:
           type: string
         purl:
+          type: string
+        relationship:
           type: string
         sbom_id:
           type: string
