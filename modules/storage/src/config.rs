@@ -44,7 +44,6 @@ pub struct StorageConfig {
         long,
         env = "TRUSTD_STORAGE_COMPRESSION",
         default_value_t = Compression::None,
-        conflicts_with = "s3"
     )]
     pub compression: Compression,
 
