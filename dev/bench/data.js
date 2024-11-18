@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731932577591,
+  "lastUpdate": 1731946467885,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1246,6 +1246,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "2bb653010e71999554b760bbe89575e9e0a95db1",
+          "message": "test: add test for AI 'cve-info' tool\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2024-11-18T15:54:58Z",
+          "tree_id": "510df68167df504c2b119b58dd2591916144e222",
+          "url": "https://github.com/trustification/trustify/commit/2bb653010e71999554b760bbe89575e9e0a95db1"
+        },
+        "date": 1731946467243,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 23,
             "unit": "s"
           }
         ]
