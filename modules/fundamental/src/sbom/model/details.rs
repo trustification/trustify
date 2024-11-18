@@ -13,6 +13,8 @@ use sea_orm::{
 };
 use sea_query::{Asterisk, Expr, Func, SimpleExpr};
 use serde::{Deserialize, Serialize};
+use trustify_module_analysis::service::AnalysisService;
+use uuid::Uuid;
 use std::collections::{hash_map::Entry, HashMap};
 use trustify_common::{
     cpe::CpeCompare,
@@ -20,7 +22,7 @@ use trustify_common::{
         multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
         ConnectionOrTransaction, VersionMatches,
     },
-    memo::Memo,
+    memo::Memo, model::Paginated,
 };
 use trustify_entity::{
     advisory, base_purl, product, product_status, product_version, purl_status,
@@ -42,7 +44,8 @@ impl SbomDetails {
     /// turn an (sbom, sbom_node) row into an [`SbomDetails`], if possible
     pub async fn from_entity(
         (sbom, node): (sbom::Model, Option<sbom_node::Model>),
-        service: &SbomService,
+        sbom_service: &SbomService,
+        graph_service: &AnalysisService,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Option<SbomDetails>, Error> {
         let relevant_advisory_info = sbom
@@ -109,15 +112,16 @@ impl SbomDetails {
             .all(tx)
             .await?;
 
-        let summary = SbomSummary::from_entity((sbom, node), service, tx).await?;
+        let summary = SbomSummary::from_entity((sbom, node), sbom_service, tx).await?;
 
         Ok(match summary {
             Some(summary) => Some(SbomDetails {
                 summary: summary.clone(),
                 advisories: SbomAdvisory::from_models(
-                    &summary.clone().described_by,
+                    summary.clone(),
                     &relevant_advisory_info,
                     &product_advisory_statuses,
+                    graph_service,
                     tx,
                 )
                 .await?,
@@ -136,11 +140,13 @@ pub struct SbomAdvisory {
 
 impl SbomAdvisory {
     pub async fn from_models(
-        described_by: &[SbomPackage],
+        summary: SbomSummary,
         statuses: &[QueryCatcher],
         product_statuses: &[ProductStatusCatcher],
+        graph_service: &AnalysisService,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
+        let described_by = summary.described_by;
         let mut advisories = HashMap::new();
 
         let sbom_cpes = described_by
@@ -248,6 +254,37 @@ impl SbomAdvisory {
 
             let mut packages = vec![];
             if let Some(package) = &product.product_status.package {
+                // We need to enable search on namespace/name pattern as well
+                // Also, from the brief look at it, the search is case sensitive
+                // which doesn't cover all use cases
+                let parts = package.split('/').collect::<Vec<_>>();
+
+                let name = if parts.len() == 1 {parts[0]} else {parts[1]};
+
+                log::debug!("graph {:?} {:?}", parts, name );
+
+
+                let res = graph_service.retrieve_deps_by_name(name.to_string(), Paginated::default(), ()).await;
+                // it would be better to have an API that would do this directly
+                // fn retrieve_sbom_deps_by_name(sbom_id, name);
+                let purls = match res {
+                    Ok(page) => {
+                        page.items
+                        .into_iter()
+                        .filter_map(|dep| {
+                            Uuid::parse_str(&dep.sbom_id)
+                                .ok()
+                                .filter(|uuid| *uuid == summary.head.id)
+                                .map(|_| dep.purl)
+                        })
+                        .collect()
+                    },
+                    Err(_) => {vec![]}
+                };
+
+                log::debug!("purls {:?}", purls);
+                // We need SBOM package as a result,
+                // so at least id is needed, if not the whole struct
                 let package = SbomPackage {
                     name: package.to_string(),
                     ..Default::default()

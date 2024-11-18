@@ -15,6 +15,7 @@ use sea_orm::{
 use sea_query::{extension::postgres::PgExpr, Expr, Func, JoinType, SimpleExpr};
 use serde::Deserialize;
 use serde_json::Value;
+use trustify_module_analysis::service::AnalysisService;
 use std::{collections::HashMap, fmt::Debug};
 use tracing::instrument;
 
@@ -67,8 +68,10 @@ impl SbomService {
 
         tx: TX,
     ) -> Result<Option<SbomDetails>, Error> {
+        // Is it OK to use graph service like this, or is it a better way to reuse data?
+        let graph_service = AnalysisService::new(self.db.clone());
         Ok(match self.fetch_sbom(id, &tx).await? {
-            Some(row) => SbomDetails::from_entity(row, self, &self.db.connection(&tx)).await?,
+            Some(row) => SbomDetails::from_entity(row, self, &graph_service, &self.db.connection(&tx)).await?,
             None => None,
         })
     }

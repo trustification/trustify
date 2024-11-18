@@ -8651,6 +8651,7 @@ dependencies = [
  "trustify-common",
  "trustify-cvss",
  "trustify-entity",
+ "trustify-module-analysis",
  "trustify-module-ingestor",
  "trustify-module-storage",
  "trustify-test-context",
