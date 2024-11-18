@@ -11,7 +11,9 @@ use tokio::io::{AsyncBufRead, AsyncRead, AsyncWrite, BufReader, ReadBuf};
 )]
 pub enum Compression {
     #[default]
+    #[strum(ascii_case_insensitive)]
     None,
+    #[strum(ascii_case_insensitive)]
     Zstd,
 }
 
@@ -104,5 +106,21 @@ where
             InnerDecompression::None(ref mut r) => Pin::new(r).poll_read(cx, buf),
             InnerDecompression::Zstd(ref mut r) => Pin::new(r).poll_read(cx, buf),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::str::FromStr;
+
+    #[test]
+    fn compression_from_str() {
+        assert_eq!(Ok(Compression::None), Compression::from_str("none"));
+        assert_eq!(Ok(Compression::None), Compression::from_str("None"));
+        assert_eq!(Ok(Compression::None), Compression::from_str("NONE"));
+        assert_eq!(Ok(Compression::Zstd), Compression::from_str("zstd"));
+        assert_eq!(Ok(Compression::Zstd), Compression::from_str("Zstd"));
+        assert_eq!(Ok(Compression::Zstd), Compression::from_str("ZSTD"));
     }
 }
