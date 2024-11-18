@@ -9,14 +9,14 @@ use crate::{
     vulnerability::model::VulnerabilityHead,
     Error,
 };
-use cpe::uri::OwnedUri;
+use cpe::{cpe::Cpe, uri::OwnedUri};
 use sea_orm::{
-    ConnectionTrait, DbErr, EntityTrait, FromQueryResult, JoinType, ModelTrait, QueryFilter,
+    ConnectionTrait, DbErr, EntityTrait, FromQueryResult, Iden, JoinType, ModelTrait, QueryFilter,
     QueryOrder, QueryResult, QuerySelect, RelationTrait, Select,
 };
 use sea_query::{Asterisk, Expr, Func, SimpleExpr};
 use serde::{Deserialize, Serialize};
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::HashMap;
 use trustify_common::{
     cpe::CpeCompare,
     db::{
@@ -48,7 +48,7 @@ impl SbomDetails {
         service: &SbomService,
         tx: &C,
     ) -> Result<Option<SbomDetails>, Error> {
-        let relevant_advisory_info = sbom
+        let mut relevant_advisory_info = sbom
             .find_related(sbom_package::Entity)
             .join(JoinType::Join, sbom_package::Relation::Node.def())
             .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
@@ -83,7 +83,7 @@ impl SbomDetails {
             .all(tx)
             .await?;
 
-        let product_advisory_info = sbom
+        let mut product_advisory_info = sbom
             .find_related(product_version::Entity)
             .join(JoinType::LeftJoin, product_version::Relation::Product.def())
             .join(JoinType::LeftJoin, product::Relation::Cpe.def())
@@ -97,6 +97,16 @@ impl SbomDetails {
                 JoinType::Join,
                 product_status::Relation::Vulnerability.def(),
             )
+            // Joins for purl-related tables
+            .join(JoinType::Join, sbom::Relation::Node.def())
+            .join(JoinType::Join, sbom_node::Relation::Package.def())
+            .join(JoinType::Join, sbom_package::Relation::Purl.def())
+            .join(JoinType::Join, sbom_package_purl_ref::Relation::Purl.def())
+            .join(
+                JoinType::Join,
+                qualified_purl::Relation::VersionedPurl.def(),
+            )
+            .join(JoinType::Join, versioned_purl::Relation::BasePurl.def())
             .distinct_on([
                 (product_status::Entity, product_status::Column::ContextCpeId),
                 (product_status::Entity, product_status::Column::StatusId),
@@ -109,12 +119,37 @@ impl SbomDetails {
             .order_by_asc(product_status::Column::ContextCpeId)
             .order_by_asc(product_status::Column::StatusId)
             .order_by_asc(product_status::Column::Package)
-            .order_by_asc(product_status::Column::VulnerabilityId);
-
-        let product_advisory_statuses = product_advisory_info
-            .try_into_multi_model::<ProductStatusCatcher>()?
+            .order_by_asc(product_status::Column::VulnerabilityId)
+            // Filter for product_status.package
+            .filter(
+                Expr::col((product_status::Entity, product_status::Column::Package))
+                    .is_null()
+                    .or(Expr::col((product_status::Entity, product_status::Column::Package)).eq(""))
+                    .or(SimpleExpr::Binary(
+                        Box::new(
+                            Expr::col((product_status::Entity, product_status::Column::Package))
+                                .into(),
+                        ),
+                        sea_query::BinOper::Like,
+                        Box::new(SimpleExpr::FunctionCall(
+                            Func::cust(CustomFunc::Concat).args([
+                                Expr::col((base_purl::Entity, base_purl::Column::Namespace)).into(),
+                                Expr::val("/").into(),
+                                Expr::col((base_purl::Entity, base_purl::Column::Name)).into(),
+                            ]),
+                        )),
+                    ))
+                    .or(
+                        Expr::col((product_status::Entity, product_status::Column::Package))
+                            .eq(Expr::col((base_purl::Entity, base_purl::Column::Name))),
+                    ),
+            )
+            .select_only()
+            .try_into_multi_model::<QueryCatcher>()?
             .all(tx)
             .await?;
+
+        relevant_advisory_info.append(&mut product_advisory_info);
 
         let summary = SbomSummary::from_entity((sbom, node), service, tx).await?;
 
@@ -122,9 +157,8 @@ impl SbomDetails {
             Some(summary) => Some(SbomDetails {
                 summary: summary.clone(),
                 advisories: SbomAdvisory::from_models(
-                    &summary.clone().described_by,
+                    &summary.described_by,
                     &relevant_advisory_info,
-                    &product_advisory_statuses,
                     tx,
                 )
                 .await?,
@@ -132,6 +166,12 @@ impl SbomDetails {
             None => None,
         })
     }
+}
+
+#[derive(Iden)]
+enum CustomFunc {
+    #[iden = "CONCAT"]
+    Concat,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
@@ -145,7 +185,6 @@ impl SbomAdvisory {
     pub async fn from_models<C: ConnectionTrait>(
         described_by: &[SbomPackage],
         statuses: &[QueryCatcher],
-        product_statuses: &[ProductStatusCatcher],
         tx: &C,
     ) -> Result<Vec<Self>, Error> {
         let mut advisories = HashMap::new();
@@ -165,10 +204,15 @@ impl SbomAdvisory {
             let status_cpe = if let Some(status_cpe) = &each.context_cpe {
                 let status_cpe: Result<OwnedUri, _> = status_cpe.try_into();
                 if let Ok(status_cpe) = status_cpe {
-                    if sbom_cpes
-                        .iter()
-                        .any(|sbom_cpe| status_cpe.is_superset(sbom_cpe))
-                    {
+                    if sbom_cpes.iter().any(|sbom_cpe| {
+                        let status_version = status_cpe.version().to_string();
+                        let sbom_version = sbom_cpe.version().to_string();
+                        // This is a bit simplified logic, but it is tune with v1 parity.
+                        // We need to investigate this more and apply proper version matching in the future
+                        status_cpe.is_superset(sbom_cpe)
+                            || status_version == "*"
+                            || sbom_version.starts_with(&status_version)
+                    }) {
                         // status context is applicable, keep truckin'
                     } else {
                         // status context excludes this one, skip over
@@ -250,40 +294,6 @@ impl SbomAdvisory {
             });
         }
 
-        for product in product_statuses {
-            let advisory_cpe: Option<OwnedUri> = (&product.cpe).try_into().ok();
-
-            let mut packages = vec![];
-            if let Some(package) = &product.product_status.package {
-                let package = SbomPackage {
-                    name: package.to_string(),
-                    ..Default::default()
-                };
-                packages.push(package);
-            }
-
-            let status = SbomStatus::new(
-                &product.vulnerability,
-                product.status.slug.clone(),
-                advisory_cpe,
-                packages, // TODO find purls based on package names
-                tx,
-            )
-            .await?;
-
-            match advisories.entry(product.advisory.id) {
-                Entry::Occupied(entry) => entry.into_mut().status.push(status.clone()),
-                Entry::Vacant(entry) => {
-                    let advisory = SbomAdvisory {
-                        head: AdvisoryHead::from_advisory(&product.advisory, Memo::NotProvided, tx)
-                            .await?,
-                        status: vec![status.clone()],
-                    };
-                    entry.insert(advisory.clone());
-                }
-            }
-        }
-
         Ok(advisories.values().cloned().collect::<Vec<_>>())
     }
 }
@@ -335,6 +345,11 @@ pub struct ProductStatusCatcher {
     cpe: trustify_entity::cpe::Model,
     status: status::Model,
     sbom: Option<sbom::Model>,
+    base_purl: base_purl::Model,
+    versioned_purl: versioned_purl::Model,
+    qualified_purl: qualified_purl::Model,
+    sbom_package: sbom_package::Model,
+    sbom_node: sbom_node::Model,
 }
 
 impl FromQueryResult for ProductStatusCatcher {
@@ -350,6 +365,11 @@ impl FromQueryResult for ProductStatusCatcher {
             cpe: Self::from_query_result_multi_model(res, "", trustify_entity::cpe::Entity)?,
             status: Self::from_query_result_multi_model(res, "", status::Entity)?,
             sbom: Self::from_query_result_multi_model_optional(res, "", sbom::Entity)?,
+            base_purl: Self::from_query_result_multi_model(res, "", base_purl::Entity)?,
+            versioned_purl: Self::from_query_result_multi_model(res, "", versioned_purl::Entity)?,
+            qualified_purl: Self::from_query_result_multi_model(res, "", qualified_purl::Entity)?,
+            sbom_package: Self::from_query_result_multi_model(res, "", sbom_package::Entity)?,
+            sbom_node: Self::from_query_result_multi_model(res, "", sbom_node::Entity)?,
         })
     }
 }
@@ -363,6 +383,10 @@ impl FromQueryResultMultiModel for ProductStatusCatcher {
             .try_model_columns(trustify_entity::cpe::Entity)?
             .try_model_columns(status::Entity)?
             .try_model_columns(product_version::Entity)?
-            .try_model_columns(sbom::Entity)
+            .try_model_columns(base_purl::Entity)?
+            .try_model_columns(versioned_purl::Entity)?
+            .try_model_columns(qualified_purl::Entity)?
+            .try_model_columns(sbom_package::Entity)?
+            .try_model_columns(sbom_node::Entity)
     }
 }
