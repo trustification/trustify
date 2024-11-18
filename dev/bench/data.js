@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1731687205454,
+  "lastUpdate": 1731921628452,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1183,6 +1183,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/0e3a828a7de0f98d40d0c8929945cfaa50747986"
         },
         "date": 1731687204974,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "90ad3ef668a0fd5a90b663803501272b01b2f89b",
+          "message": "fix circular deps and add purl migration for get_purl psql func",
+          "timestamp": "2024-11-18T08:40:09Z",
+          "tree_id": "c07e84846d7fb5b2c1091a01aff060605d3f6f42",
+          "url": "https://github.com/trustification/trustify/commit/90ad3ef668a0fd5a90b663803501272b01b2f89b"
+        },
+        "date": 1731921627581,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
