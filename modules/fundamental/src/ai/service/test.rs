@@ -120,3 +120,31 @@ async fn test_completions_package_info(ctx: &TrustifyContext) -> Result<(), anyh
 
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn test_completions_cve_info(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = AiService::new(ctx.db.clone());
+    if !service.completions_enabled() {
+        return Ok(()); // skip test
+    }
+
+    ingest_fixtures(ctx).await?;
+
+    let mut req = ChatState::new();
+    req.add_human_message("Give me details for CVE-2021-32714".into());
+
+    let result = service.completions(&req, ()).await?;
+
+    log::info!("result: {:#?}", result);
+    let last_message_content = result.messages.last().unwrap().content.clone();
+    println!(
+        "Test formatted output:\n\n{}\n",
+        termimad::inline(last_message_content.as_str())
+    );
+    assert!(last_message_content.contains("CVE-2021-32714"));
+    assert!(last_message_content.contains("hyper"));
+    assert!(last_message_content.contains("0.14.10"));
+
+    Ok(())
+}
