@@ -93,6 +93,7 @@ mod m0000720_alter_sbom_fix_null_array;
 mod m0000730_alter_importer_add_progress;
 mod m0000740_ensure_get_purl_fns;
 mod m0000750_alter_advisory_add_document_id;
+mod m0000760_product_status_index;
 
 pub struct Migrator;
 
@@ -193,6 +194,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000730_alter_importer_add_progress::Migration),
             Box::new(m0000740_ensure_get_purl_fns::Migration),
             Box::new(m0000750_alter_advisory_add_document_id::Migration),
+            Box::new(m0000760_product_status_index::Migration),
         ]
     }
 }
