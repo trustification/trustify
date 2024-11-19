@@ -39,6 +39,7 @@ pub async fn ingest_fixtures(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
         .await?;
     ctx.ingest_document("quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json")
         .await?;
+    ctx.ingest_document("csaf/rhsa-2024_3666.json").await?;
 
     Ok(())
 }
@@ -145,6 +146,36 @@ async fn test_completions_cve_info(ctx: &TrustifyContext) -> Result<(), anyhow::
     assert!(last_message_content.contains("CVE-2021-32714"));
     assert!(last_message_content.contains("hyper"));
     assert!(last_message_content.contains("0.14.10"));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn test_completions_advisory_info(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = AiService::new(ctx.db.clone());
+    if !service.completions_enabled() {
+        return Ok(()); // skip test
+    }
+
+    ingest_fixtures(ctx).await?;
+
+    let mut req = ChatState::new();
+    req.add_human_message("Give me details for the RHSA-2024_3666 advisory".into());
+
+    let result = service.completions(&req, ()).await?;
+
+    log::info!("result: {:#?}", result);
+    let last_message_content = result.messages.last().unwrap().content.clone();
+    println!(
+        "Test formatted output:\n\n{}\n",
+        termimad::inline(last_message_content.as_str())
+    );
+    assert!(last_message_content.contains("RHSA-2024_3666"));
+    assert!(last_message_content.contains("Apache Tomcat"));
+    assert!(last_message_content.contains("CVE-2024-23672"));
+    assert!(last_message_content.contains("CVE-2024-24549"));
+    assert!(last_message_content.contains("DoS"));
 
     Ok(())
 }
