@@ -78,7 +78,10 @@ impl Graph {
         let name = name.into();
         let information = information.into();
 
-        if let Some(found) = self.get_organization_by_name(&name, &tx).await? {
+        if let Some(found) = self
+            .get_organization_by_name(&name, Transactional::None)
+            .await?
+        {
             if information.has_data() {
                 let mut entity = organization::ActiveModel::from(found.organization);
                 entity.website = Set(information.website);

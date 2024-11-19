@@ -153,7 +153,7 @@ impl Graph {
 
         let entity = if let Some(vendor) = information.vendor {
             if let Some(found) = self
-                .get_product_by_organization(vendor.clone(), &name, &tx)
+                .get_product_by_organization(vendor.clone(), &name, Transactional::None)
                 .await?
             {
                 return Ok(found);
@@ -223,7 +223,10 @@ impl Graph {
         name: impl Into<String> + Debug,
         tx: TX,
     ) -> Result<Option<ProductContext>, Error> {
-        if let Some(found) = self.get_organization_by_name(org, &tx).await? {
+        if let Some(found) = self
+            .get_organization_by_name(org, Transactional::None)
+            .await?
+        {
             Ok(found
                 .organization
                 .find_related(product::Entity)
