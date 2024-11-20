@@ -31,7 +31,7 @@ async fn sbom_details_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     let details = details.unwrap();
 
-    log::debug!("{}", serde_json::to_string_pretty(&details)?);
+    log::debug!("{details:#?}");
 
     let details = service
         .fetch_sbom_details(Id::Uuid(details.summary.head.id), Transactional::None)

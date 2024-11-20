@@ -328,7 +328,7 @@ async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     let request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
-    log::debug!("{}", serde_json::to_string_pretty(&response)?);
+    log::debug!("{response:#?}");
 
     Ok(())
 }

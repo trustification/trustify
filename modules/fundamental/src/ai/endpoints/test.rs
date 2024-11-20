@@ -66,8 +66,7 @@ async fn flags(ctx: &TrustifyContext) -> anyhow::Result<()> {
         json!({
             "completions": service.completions_enabled(),
         }),
-        "result:\n{}",
-        serde_json::to_string_pretty(&result)?
+        "result:\n{result:#?}"
     );
 
     Ok(())
@@ -88,12 +87,7 @@ async fn tools(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let expected: serde_json::Value =
         serde_json::from_str(include_str!("expected_tools_result.json"))?;
-    assert_eq!(
-        result,
-        expected,
-        "result:\n{}",
-        serde_json::to_string_pretty(&result)?
-    );
+    assert_eq!(result, expected, "result:\n{result:#?}");
 
     Ok(())
 }
