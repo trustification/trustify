@@ -31,14 +31,18 @@ pub struct SbomHead {
     pub authors: Vec<String>,
 
     pub name: String,
+
+    /// The number of packages this SBOM has
+    pub number_of_packages: u64,
 }
 
 impl SbomHead {
     pub async fn from_entity(
         sbom: &sbom::Model,
         sbom_node: Option<sbom_node::Model>,
-        _tx: &ConnectionOrTransaction<'_>,
+        tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
+        let number_of_packages = sbom.find_related(sbom_package::Entity).count(tx).await?;
         Ok(Self {
             id: sbom.sbom_id,
             document_id: sbom.document_id.clone(),
@@ -49,6 +53,7 @@ impl SbomHead {
                 .map(|node| node.name.clone())
                 .unwrap_or("".to_string()),
             data_licenses: sbom.data_licenses.clone(),
+            number_of_packages,
         })
     }
 }
@@ -62,9 +67,6 @@ pub struct SbomSummary {
     pub source_document: Option<SourceDocument>,
 
     pub described_by: Vec<SbomPackage>,
-
-    /// The number of packages this SBOM has
-    pub number_of_packages: u64,
 }
 
 impl SbomSummary {
@@ -80,7 +82,6 @@ impl SbomSummary {
             .items;
 
         let source_document = sbom.find_related(source_document::Entity).one(tx).await?;
-        let number_of_packages = sbom.find_related(sbom_package::Entity).count(tx).await?;
 
         Ok(match node {
             Some(_) => Some(SbomSummary {
@@ -91,7 +92,6 @@ impl SbomSummary {
                     None
                 },
                 described_by,
-                number_of_packages,
             }),
             None => None,
         })
