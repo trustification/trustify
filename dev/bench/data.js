@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732005982583,
+  "lastUpdate": 1732117750205,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1299,6 +1299,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/66c20fd7ac60bcef09bf4373adce8b92ee6120fa"
         },
         "date": 1732005981366,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "96ab4c9e127f2688dada585099742573617a5a97",
+          "message": "feat: enable custom trust anchors for swagger oidc",
+          "timestamp": "2024-11-20T15:29:59Z",
+          "tree_id": "bc2aaf7641845301a5b83038087f0defa48c6635",
+          "url": "https://github.com/trustification/trustify/commit/96ab4c9e127f2688dada585099742573617a5a97"
+        },
+        "date": 1732117749656,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
