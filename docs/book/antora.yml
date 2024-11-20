@@ -1,5 +1,5 @@
-name: trustification
-title: Trustification
+name: trustify
+title: Trustify
 version: master # "master" is a special identifier for Antora
 start_page: ROOT:index.adoc
 nav:
