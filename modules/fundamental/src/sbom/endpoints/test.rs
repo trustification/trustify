@@ -45,7 +45,7 @@ async fn get_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let uri = format!("/api/v1/sbom/{id}");
     let req = TestRequest::get().uri(&uri).to_request();
     let sbom: Value = app.call_and_read_body_json(req).await;
-    log::debug!("{}", serde_json::to_string_pretty(&sbom)?);
+    log::debug!("{sbom:#?}");
 
     // assert expected fields
     assert_eq!(sbom["id"], id);
