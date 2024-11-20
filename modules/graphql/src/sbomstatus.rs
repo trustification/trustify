@@ -4,10 +4,16 @@ use trustify_common::{
     db::{self, Transactional},
     id::Id,
 };
-use trustify_module_fundamental::{purl::model::details::purl::StatusContext, sbom::{
-    model::{details::{SbomDetails, SbomStatus}, SbomPackage},
-    service::SbomService,
-}};
+use trustify_module_fundamental::{
+    purl::model::details::purl::StatusContext,
+    sbom::{
+        model::{
+            details::{SbomDetails, SbomStatus},
+            SbomPackage,
+        },
+        service::SbomService,
+    },
+};
 use uuid::Uuid;
 
 #[derive(Default)]
@@ -15,7 +21,11 @@ pub struct SbomStatusQuery;
 
 #[Object]
 impl SbomStatusQuery {
-    async fn cves_by_sbom<'a>(&self, ctx: &Context<'a>, id: Uuid) -> FieldResult<Vec<GraphQLSbomStatus>> {
+    async fn cves_by_sbom<'a>(
+        &self,
+        ctx: &Context<'a>,
+        id: Uuid,
+    ) -> FieldResult<Vec<GraphQLSbomStatus>> {
         let db = ctx.data::<Arc<db::Database>>()?;
         let sbom_service = SbomService::new(db.deref().clone());
 
@@ -25,7 +35,15 @@ impl SbomStatusQuery {
             .unwrap_or_default();
 
         Ok(sbom_details
-            .and_then(|mut sbom| sbom.advisories.pop().map(|advisory| advisory.status.into_iter().map(GraphQLSbomStatus::from).collect()))
+            .and_then(|mut sbom| {
+                sbom.advisories.pop().map(|advisory| {
+                    advisory
+                        .status
+                        .into_iter()
+                        .map(GraphQLSbomStatus::from)
+                        .collect()
+                })
+            })
             .unwrap_or_default())
     }
 }
