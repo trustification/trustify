@@ -35,6 +35,27 @@ async fn upload(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+async fn get_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+    let id = ctx
+        .ingest_document("spdx/quarkus-bom-3.2.11.Final-redhat-00001.json")
+        .await?
+        .id
+        .to_string();
+    let uri = format!("/api/v1/sbom/{id}");
+    let req = TestRequest::get().uri(&uri).to_request();
+    let sbom: Value = app.call_and_read_body_json(req).await;
+    log::debug!("{}", serde_json::to_string_pretty(&sbom)?);
+
+    // assert expected fields
+    assert_eq!(sbom["id"], id);
+    assert_eq!(sbom["number_of_packages"], 1053);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
 async fn filter_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     async fn query(app: &impl CallService, id: &str, q: &str) -> PaginatedResults<SbomPackage> {
         let uri = format!("/api/v1/sbom/{id}/packages?q={}", urlencoding::encode(q));
