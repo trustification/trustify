@@ -1,0 +1,13 @@
+= Trustify
+:page-aliases: docs:ROOT:index.adoc
+
+The Trustify project is a collection of software components that enables you to store and retrieve Software Bill of
+Materials (SBOMs), and Advisories information. Developers can use this information to
+learn about common security vulnerabilities and dependency changes within their software supply chain.
+
+Trustify can do the following:
+
+* Store SBOM and Advisory documents for your software and its dependencies.
+* Discover and learn the state of vulnerabilities related to your software.
+* Explore SBOM and Advisory documents by using search queries.
+* Share access to your SBOM and Advisory information with others.
