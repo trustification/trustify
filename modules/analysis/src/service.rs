@@ -1,7 +1,7 @@
 // use crate::Error;
 use sea_orm::{
-    prelude::ConnectionTrait, ColumnTrait, DbErr, EntityOrSelect, EntityTrait, QueryFilter,
-    QueryOrder, QueryResult, QuerySelect, QueryTrait, Statement,
+    prelude::ConnectionTrait, ColumnTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
+    QueryFilter, QueryOrder, QueryResult, QuerySelect, QueryTrait, Statement,
 };
 use std::collections::{HashMap, HashSet};
 use tracing::instrument;
@@ -28,6 +28,7 @@ use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::purl::Purl;
 use trustify_entity::relationship::Relationship;
 use trustify_entity::{sbom, sbom_node};
+use uuid::Uuid;
 
 pub struct AnalysisService {
     db: Database,
@@ -95,15 +96,28 @@ pub fn ancestor_nodes(
             for succ in graph.neighbors_directed(node, Direction::Outgoing) {
                 if !discovered.is_visited(&succ) {
                     if let Some(anc_packagenode) = graph.node_weight(succ).cloned() {
-                        let anc_node = AncNode {
-                            sbom_id: anc_packagenode.sbom_id,
-                            node_id: anc_packagenode.node_id,
-                            purl: anc_packagenode.purl,
-                            name: anc_packagenode.name,
-                            version: anc_packagenode.version,
-                        };
-                        ancestor_nodes.push(anc_node);
-                        stack.push(succ);
+                        if let Some(edge) = graph.find_edge(node, succ) {
+                            if let Some(relationship) = graph.edge_weight(edge) {
+                                let anc_node = AncNode {
+                                    sbom_id: anc_packagenode.sbom_id,
+                                    node_id: anc_packagenode.node_id,
+                                    relationship: relationship.to_string(),
+                                    purl: anc_packagenode.purl,
+                                    name: anc_packagenode.name,
+                                    version: anc_packagenode.version,
+                                };
+                                ancestor_nodes.push(anc_node);
+                                stack.push(succ);
+                            } else {
+                                log::warn!(
+                                    "Edge weight not found for edge between {:?} and {:?}",
+                                    node,
+                                    succ
+                                );
+                            }
+                        } else {
+                            log::warn!("Edge not found between {:?} and {:?}", node, succ);
+                        }
                     } else {
                         log::warn!("Processing ancestors, node value for {:?} not found", succ);
                     }
@@ -117,16 +131,57 @@ pub fn ancestor_nodes(
     ancestor_nodes
 }
 
+pub async fn get_implicit_relationships(
+    connection: &ConnectionOrTransaction<'_>,
+    distinct_sbom_id: &str,
+) -> Result<Vec<QueryResult>, DbErr> {
+    let sql = r#"
+        SELECT
+             sbom.document_id,
+             sbom.sbom_id,
+             sbom.published::text,
+             get_purl(t1.qualified_purl_id) as purl,
+             t1_node.node_id,
+             t1_node.name AS node_name,
+             t1_version.version AS node_version,
+             product.name AS product_name,
+             product_version.version AS product_version
+        FROM
+            sbom
+        LEFT JOIN
+            product_version ON sbom.sbom_id = product_version.sbom_id
+        LEFT JOIN
+            product ON product_version.product_id = product.id
+        LEFT JOIN
+            sbom_node t1_node ON sbom.sbom_id = t1_node.sbom_id
+        LEFT JOIN
+            package_relates_to_package prtp ON t1_node.node_id = prtp.left_node_id OR t1_node.node_id = prtp.right_node_id
+        LEFT JOIN
+            sbom_package_purl_ref t1 ON t1_node.node_id = t1.node_id AND t1.sbom_id = sbom.sbom_id
+        LEFT JOIN
+            sbom_package t1_version ON t1_node.node_id = t1_version.node_id AND t1_version.sbom_id = sbom.sbom_id
+        WHERE
+            prtp.left_node_id IS NULL AND prtp.right_node_id IS NULL
+          AND
+            sbom.sbom_id = $1
+        "#;
+
+    let uuid = match Uuid::parse_str(distinct_sbom_id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Err(sea_orm::DbErr::Custom("Invalid SBOM ID".to_string())),
+    };
+    let stmt = Statement::from_sql_and_values(DatabaseBackend::Postgres, sql, [uuid.into()]);
+    let results: Vec<QueryResult> = connection.query_all(stmt).await?;
+
+    Ok(results)
+}
+
 pub async fn get_relationships(
     connection: &ConnectionOrTransaction<'_>,
     distinct_sbom_id: &str,
 ) -> Result<Vec<QueryResult>, DbErr> {
-    // TODO: We may convert this to sea_orm at some point though keeping this in its current form, to highlight
-    //       there is no rewriting of the query (in sea_orm or sql) that will significantly speed this up eg.
-    //       most of the time is spent resolving pURL using get_purl() which performs a sql join. Optimising
-    //       that or consolidating/materialising those tables might be a better approach.
-    let sql = format!(
-        r#"
+    // Retrieve all SBOM components that have defined relationships
+    let sql = r#"
         SELECT
             sbom.document_id,
             sbom.sbom_id,
@@ -163,21 +218,16 @@ pub async fn get_relationships(
         LEFT JOIN
             sbom_package t2_version ON sbom.sbom_id = t2_version.sbom_id AND t2_version.node_id = package_relates_to_package.right_node_id
         WHERE
-            package_relates_to_package.relationship IN (0, 1, 8, 14)
-            AND sbom.sbom_id = '{}';
-        "#,
-        distinct_sbom_id
-    );
+            package_relates_to_package.relationship IN (0, 1, 8, 13, 14, 15)
+            AND sbom.sbom_id = $1;
+        "#;
 
-    // TODO: there might be better ways to stream this result
-    let results: Vec<QueryResult> = connection
-        .query_all(Statement::from_string(
-            connection.get_database_backend(),
-            sql,
-        ))
-        .await?
-        .into_iter()
-        .collect();
+    let uuid = match Uuid::parse_str(distinct_sbom_id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Err(sea_orm::DbErr::Custom("Invalid SBOM ID".to_string())),
+    };
+    let stmt = Statement::from_sql_and_values(DatabaseBackend::Postgres, sql, [uuid.into()]);
+    let results: Vec<QueryResult> = connection.query_all(stmt).await?;
 
     Ok(results)
 }
@@ -192,11 +242,13 @@ pub async fn load_graphs(
             if !graph_map.read().contains_key(distinct_sbom_id) {
                 // lazy load graphs
                 let mut g: Graph<PackageNode, Relationship, petgraph::Directed> = Graph::new();
+                let mut nodes = HashMap::new();
 
+                let mut describedby_purl: String = Default::default();
+
+                // Set relationships explicitly defined in SBOM
                 match get_relationships(connection, &distinct_sbom_id.to_string()).await {
                     Ok(results) => {
-                        let mut nodes = HashMap::new();
-
                         for row in results {
                             let (
                                 sbom_published,
@@ -244,54 +296,124 @@ pub async fn load_graphs(
                                 )
                             };
 
-                            let p1 = match nodes.get(&left_purl_string) {
-                                Some(&node_index) => node_index, // already exists
-                                None => {
-                                    let new_node = PackageNode {
-                                        sbom_id: distinct_sbom_id.clone(),
-                                        node_id: left_node_id.clone(),
-                                        purl: left_purl_string.clone(),
-                                        name: left_node_name.clone(),
-                                        version: left_node_version.clone(),
-                                        published: sbom_published.clone(),
-                                        document_id: document_id.clone(),
-                                        product_name: product_name.clone(),
-                                        product_version: product_version.clone(),
-                                    };
-                                    let i = g.add_node(new_node);
-                                    nodes.insert(left_purl_string.clone(), i);
-                                    i
-                                }
-                            };
+                            if relationship == Relationship::DescribedBy {
+                                // Save for implicit relationships performed later
+                                describedby_purl = left_purl_string.clone();
+                            } else {
+                                let p1 = match nodes.get(&left_purl_string) {
+                                    Some(&node_index) => node_index, // already exists
+                                    None => {
+                                        let new_node = PackageNode {
+                                            sbom_id: distinct_sbom_id.clone(),
+                                            node_id: left_node_id.clone(),
+                                            purl: left_purl_string.clone(),
+                                            name: left_node_name.clone(),
+                                            version: left_node_version.clone(),
+                                            published: sbom_published.clone(),
+                                            document_id: document_id.clone(),
+                                            product_name: product_name.clone(),
+                                            product_version: product_version.clone(),
+                                        };
+                                        let i = g.add_node(new_node);
+                                        nodes.insert(left_purl_string.clone(), i);
+                                        i
+                                    }
+                                };
 
-                            let p2 = match nodes.get(&right_purl_string) {
-                                Some(&node_index) => node_index, // already exists
-                                None => {
-                                    let new_node = PackageNode {
-                                        sbom_id: distinct_sbom_id.clone(),
-                                        node_id: right_node_id.clone(),
-                                        purl: right_purl_string.clone(),
-                                        name: right_node_name.clone(),
-                                        version: right_node_version.clone(),
-                                        published: sbom_published.clone(),
-                                        document_id: document_id.clone(),
-                                        product_name: product_name.clone(),
-                                        product_version: product_version.clone(),
-                                    };
-                                    let i = g.add_node(new_node);
-                                    nodes.insert(right_purl_string.clone(), i);
-                                    i
-                                }
-                            };
+                                let p2 = match nodes.get(&right_purl_string) {
+                                    Some(&node_index) => node_index, // already exists
+                                    None => {
+                                        let new_node = PackageNode {
+                                            sbom_id: distinct_sbom_id.clone(),
+                                            node_id: right_node_id.clone(),
+                                            purl: right_purl_string.clone(),
+                                            name: right_node_name.clone(),
+                                            version: right_node_version.clone(),
+                                            published: sbom_published.clone(),
+                                            document_id: document_id.clone(),
+                                            product_name: product_name.clone(),
+                                            product_version: product_version.clone(),
+                                        };
+                                        let i = g.add_node(new_node);
+                                        nodes.insert(right_purl_string.clone(), i);
+                                        i
+                                    }
+                                };
 
-                            g.add_edge(p1, p2, relationship);
+                                g.add_edge(p1, p2, relationship);
+                            }
                         }
-                        graph_map.write().insert(distinct_sbom_id.to_string(), g);
                     }
                     Err(err) => {
                         log::error!("Error fetching graph relationships: {}", err);
                     }
                 }
+
+                // Set relationships implicitly defined in SBOM
+                match get_implicit_relationships(connection, &distinct_sbom_id.to_string()).await {
+                    Ok(results) => {
+                        for row in results {
+                            let (
+                                sbom_published,
+                                document_id,
+                                product_name,
+                                product_version,
+                                node_id,
+                                purl,
+                                node_name,
+                                node_version,
+                            ) = {
+                                let default_value = "NOVALUE".to_string(); // TODO: this eventually will have different defaults.
+                                (
+                                    row.try_get("", "published")
+                                        .unwrap_or_else(|_| default_value.clone()),
+                                    row.try_get("", "document_id")
+                                        .unwrap_or_else(|_| default_value.clone()),
+                                    row.try_get("", "product_name")
+                                        .unwrap_or_else(|_| default_value.clone()),
+                                    row.try_get("", "product_version")
+                                        .unwrap_or_else(|_| default_value.clone()),
+                                    row.try_get("", "node_id").unwrap_or(default_value.clone()),
+                                    row.try_get("", "purl").unwrap_or(default_value.clone()),
+                                    row.try_get("", "node_name")
+                                        .unwrap_or(default_value.clone()),
+                                    row.try_get("", "node_version")
+                                        .unwrap_or(default_value.clone()),
+                                )
+                            };
+
+                            let p1 = match nodes.get(&purl) {
+                                Some(&node_index) => node_index, // already exists
+                                None => {
+                                    let new_node = PackageNode {
+                                        sbom_id: distinct_sbom_id.clone(),
+                                        node_id: node_id.clone(),
+                                        purl: purl.clone(),
+                                        name: node_name.clone(),
+                                        version: node_version.clone(),
+                                        published: sbom_published.clone(),
+                                        document_id: document_id.clone(),
+                                        product_name: product_name.clone(),
+                                        product_version: product_version.clone(),
+                                    };
+                                    let i = g.add_node(new_node);
+                                    nodes.insert(purl.clone(), i);
+                                    i
+                                }
+                            };
+                            if let Some(describedby_node_index) = nodes.get(&describedby_purl) {
+                                g.add_edge(p1, *describedby_node_index, Relationship::Undefined);
+                            } else {
+                                log::warn!("No 'describes' relationship found in {} SBOM, no implicit relationship set.", distinct_sbom_id);
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        log::error!("Error fetching graph relationships: {}", err);
+                    }
+                }
+
+                graph_map.write().insert(distinct_sbom_id.to_string(), g);
             }
         }
     }
@@ -828,11 +950,12 @@ mod test {
         );
         assert_eq!(analysis_graph.total, 1);
 
+        // ensure we set implicit relationship on component with no defined relationships
         let analysis_graph = service
             .retrieve_root_components(Query::q("EE"), Paginated::default(), ())
             .await
             .unwrap();
-        Ok(assert_eq!(analysis_graph.total, 0)) //TODO: it maybe implied that a node with no relationship is a root ?
+        Ok(assert_eq!(analysis_graph.total, 1))
     }
 
     #[test_context(TrustifyContext)]
@@ -874,11 +997,12 @@ mod test {
         );
         assert_eq!(analysis_graph.total, 1);
 
+        // ensure we set implicit relationship on component with no defined relationships
         let analysis_graph = service
             .retrieve_root_components(Query::q("EE"), Paginated::default(), ())
             .await
             .unwrap();
-        Ok(assert_eq!(analysis_graph.total, 0)) //TODO: it maybe implied that a node with no relationship is a root ?
+        Ok(assert_eq!(analysis_graph.total, 1))
     }
 
     #[test_context(TrustifyContext)]
@@ -1039,11 +1163,12 @@ mod test {
 
         assert_eq!(analysis_graph.total, 1);
 
+        // ensure we set implicit relationship on component with no defined relationships
         let analysis_graph = service
             .retrieve_root_components(Query::q("EE"), Paginated::default(), ())
             .await
             .unwrap();
-        Ok(assert_eq!(analysis_graph.total, 0)) //TODO: should this not match with no root_components ?
+        Ok(assert_eq!(analysis_graph.total, 1))
     }
 
     #[test_context(TrustifyContext)]
@@ -1062,11 +1187,12 @@ mod test {
 
         assert_eq!(analysis_graph.total, 1);
 
+        // ensure we set implicit relationship on component with no defined relationships
         let analysis_graph = service
             .retrieve_root_components(Query::q("EE"), Paginated::default(), ())
             .await
             .unwrap();
-        Ok(assert_eq!(analysis_graph.total, 0)) //TODO: should this not match with no root_components ?
+        Ok(assert_eq!(analysis_graph.total, 1))
     }
 
     #[test_context(TrustifyContext)]

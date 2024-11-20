@@ -8431,6 +8431,7 @@ dependencies = [
  "urlencoding",
  "utoipa",
  "utoipa-actix-web",
+ "uuid",
  "zip",
 ]
 

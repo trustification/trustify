@@ -48,6 +48,8 @@ pub enum Relationship {
     DescribedBy,
     #[sea_orm(num_value = 14)]
     PackageOf,
+    #[sea_orm(num_value = 15)]
+    Undefined,
 }
 
 impl fmt::Display for Relationship {
