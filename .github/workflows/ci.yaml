@@ -61,3 +61,8 @@ jobs:
               echo "::error::Uncommitted changes (run 'cargo xtask generate-schemas' after making changes to the models)"
               exit 1
           fi
+      - name: Check the docs
+        run: |
+          cd docs/book
+          npm ci
+          make all
