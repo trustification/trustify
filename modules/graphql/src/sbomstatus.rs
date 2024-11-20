@@ -63,7 +63,7 @@ impl GraphQLSbomStatus {}
 impl From<SbomStatus> for GraphQLSbomStatus {
     fn from(sbom_status: SbomStatus) -> Self {
         GraphQLSbomStatus {
-            vulnerability_id: sbom_status.vulnerability.head.identifier.clone(),
+            vulnerability_id: sbom_status.vulnerability.identifier.clone(),
             status: sbom_status.status,
             context: sbom_status.context,
             packages: sbom_status.packages,
