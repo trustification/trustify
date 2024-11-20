@@ -5,9 +5,10 @@ use crate::{
     vulnerability::model::VulnerabilityHead,
     Error,
 };
+use ::cpe::uri::OwnedUri;
 use sea_orm::{
     ColumnTrait, DbErr, EntityTrait, FromQueryResult, LoaderTrait, ModelTrait, QueryFilter,
-    QueryResult, QuerySelect, RelationTrait, Select,
+    QueryOrder, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select,
 };
 use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
@@ -19,11 +20,13 @@ use trustify_common::db::{ConnectionOrTransaction, VersionMatches};
 use trustify_common::memo::Memo;
 use trustify_common::purl::Purl;
 use trustify_entity::{
-    advisory, base_purl, cpe, license, organization, purl_license_assertion, purl_status,
-    qualified_purl, sbom, status, version_range, versioned_purl, vulnerability,
+    advisory, base_purl, cpe, license, organization, product, product_status, product_version,
+    product_version_range, purl_license_assertion, purl_status, qualified_purl, sbom, sbom_package,
+    sbom_package_purl_ref, status, version_range, versioned_purl, vulnerability,
 };
 use trustify_module_ingestor::common::{Deprecation, DeprecationForExt};
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct PurlDetails {
@@ -65,7 +68,7 @@ impl PurlDetails {
                 .ok_or(Error::Data("underlying package missing".to_string()))?
         };
 
-        let statuses = purl_status::Entity::find()
+        let purl_statuses = purl_status::Entity::find()
             .filter(purl_status::Column::BasePurlId.eq(package.id))
             .left_join(version_range::Entity)
             .columns(version_range::Column::iter())
@@ -82,6 +85,14 @@ impl PurlDetails {
             .with_deprecation_related(deprecation)
             .all(tx)
             .await?;
+
+        let product_statuses = get_product_statuses_for_purl(
+            tx,
+            qualified_package.id,
+            &package.name,
+            package.namespace.as_deref(),
+        )
+        .await?;
 
         let licenses = purl_license_assertion::Entity::find()
             .join(
@@ -105,10 +116,68 @@ impl PurlDetails {
             head: PurlHead::from_entity(&package, &package_version, qualified_package, tx).await?,
             version: VersionedPurlHead::from_entity(&package, &package_version, tx).await?,
             base: BasePurlHead::from_entity(&package, tx).await?,
-            advisories: PurlAdvisory::from_entities(statuses, tx).await?,
+            advisories: PurlAdvisory::from_entities(purl_statuses, product_statuses, tx).await?,
             licenses: PurlLicenseSummary::from_entities(&licenses, tx).await?,
         })
     }
+}
+
+async fn get_product_statuses_for_purl(
+    tx: &ConnectionOrTransaction<'_>,
+    qualified_package_id: Uuid,
+    purl_name: &str,
+    namespace_name: Option<&str>,
+) -> Result<Vec<ProductStatusCatcher>, Error> {
+    // Subquery to get all SBOM IDs for the given purl
+    let sbom_ids_query = sbom::Entity::find()
+        .join(JoinType::Join, sbom::Relation::Packages.def())
+        .join(JoinType::Join, sbom_package::Relation::Purl.def())
+        .filter(sbom_package_purl_ref::Column::QualifiedPurlId.eq(qualified_package_id))
+        .select_only()
+        .column(sbom::Column::SbomId)
+        .into_query();
+
+    // Main query to get product statuses
+    let product_statuses_query = product_status::Entity::find()
+        .join(JoinType::Join, product_status::Relation::ContextCpe.def())
+        .join(
+            JoinType::Join,
+            product_status::Relation::ProductVersionRange.def(),
+        )
+        .join(
+            JoinType::Join,
+            product_version_range::Relation::VersionRange.def(),
+        )
+        .join(JoinType::Join, cpe::Relation::Product.def())
+        .join(JoinType::LeftJoin, product::Relation::ProductVersion.def())
+        .join(JoinType::Join, product_status::Relation::Status.def())
+        .join(JoinType::Join, product_status::Relation::Advisory.def())
+        .filter(product_version::Column::SbomId.in_subquery(sbom_ids_query))
+        .filter(Expr::col(product_status::Column::Package).eq(purl_name).or(
+            namespace_name.map_or(Expr::value(false), |ns| {
+                Expr::col(product_status::Column::Package).eq(format!("{}/{}", ns, purl_name))
+            }),
+        ))
+        .distinct_on([
+            (product_status::Entity, product_status::Column::ContextCpeId),
+            (product_status::Entity, product_status::Column::StatusId),
+            (product_status::Entity, product_status::Column::Package),
+            (
+                product_status::Entity,
+                product_status::Column::VulnerabilityId,
+            ),
+        ])
+        .order_by_asc(product_status::Column::ContextCpeId)
+        .order_by_asc(product_status::Column::StatusId)
+        .order_by_asc(product_status::Column::Package)
+        .order_by_asc(product_status::Column::VulnerabilityId);
+
+    let product_statuses = product_statuses_query
+        .try_into_multi_model::<ProductStatusCatcher>()?
+        .all(tx)
+        .await?;
+
+    Ok(product_statuses)
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq)]
@@ -120,19 +189,20 @@ pub struct PurlAdvisory {
 
 impl PurlAdvisory {
     pub async fn from_entities(
-        statuses: Vec<purl_status::Model>,
+        purl_statuses: Vec<purl_status::Model>,
+        product_statuses: Vec<ProductStatusCatcher>,
         tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
-        let vulns = statuses.load_one(vulnerability::Entity, tx).await?;
+        let vulns = purl_statuses.load_one(vulnerability::Entity, tx).await?;
 
-        let advisories = statuses.load_one(advisory::Entity, tx).await?;
+        let advisories = purl_statuses.load_one(advisory::Entity, tx).await?;
 
         let mut results: Vec<PurlAdvisory> = Vec::new();
 
         for ((vuln, advisory), status) in vulns
             .into_iter()
             .zip(advisories.iter())
-            .zip(statuses.iter())
+            .zip(purl_statuses.iter())
         {
             let vulnerability = vuln.unwrap_or(vulnerability::Model {
                 id: status.vulnerability_id.clone(),
@@ -163,6 +233,56 @@ impl PurlAdvisory {
                         status: vec![qualified_package_status],
                     })
                 }
+            }
+        }
+
+        for product_status in product_statuses {
+            let vuln = vulnerability::Model {
+                id: product_status.product_status.vulnerability_id.clone(),
+                title: None,
+                reserved: None,
+                published: None,
+                modified: None,
+                withdrawn: None,
+                cwes: None,
+            };
+
+            let advisory_cpe: Option<OwnedUri> = (&product_status.cpe).try_into().ok();
+
+            let purl_status = PurlStatus {
+                vulnerability: VulnerabilityHead::from_vulnerability_entity(
+                    &vuln,
+                    Memo::NotProvided,
+                    tx,
+                )
+                .await?,
+                status: product_status.status.slug,
+                context: advisory_cpe
+                    .as_ref()
+                    .map(|e| StatusContext::Cpe(e.to_string())),
+            };
+
+            if let Some(entry) = results
+                .iter_mut()
+                .find(|e| e.head.uuid == product_status.advisory.id)
+            {
+                entry.status.push(purl_status)
+            } else {
+                let organization = product_status
+                    .advisory
+                    .find_related(organization::Entity)
+                    .one(tx)
+                    .await?;
+
+                results.push(Self {
+                    head: AdvisoryHead::from_advisory(
+                        &product_status.advisory,
+                        Memo::Provided(organization),
+                        tx,
+                    )
+                    .await?,
+                    status: vec![purl_status],
+                })
             }
         }
 
@@ -273,5 +393,34 @@ impl FromQueryResultMultiModel for LicenseCatcher {
         select
             .try_model_columns(sbom::Entity)?
             .try_model_columns(license::Entity)
+    }
+}
+
+#[derive(Debug)]
+pub struct ProductStatusCatcher {
+    advisory: advisory::Model,
+    product_status: product_status::Model,
+    cpe: trustify_entity::cpe::Model,
+    status: status::Model,
+}
+
+impl FromQueryResult for ProductStatusCatcher {
+    fn from_query_result(res: &QueryResult, _pre: &str) -> Result<Self, DbErr> {
+        Ok(Self {
+            advisory: Self::from_query_result_multi_model(res, "", advisory::Entity)?,
+            product_status: Self::from_query_result_multi_model(res, "", product_status::Entity)?,
+            cpe: Self::from_query_result_multi_model(res, "", trustify_entity::cpe::Entity)?,
+            status: Self::from_query_result_multi_model(res, "", status::Entity)?,
+        })
+    }
+}
+
+impl FromQueryResultMultiModel for ProductStatusCatcher {
+    fn try_into_multi_model<E: EntityTrait>(select: Select<E>) -> Result<Select<E>, DbErr> {
+        select
+            .try_model_columns(advisory::Entity)?
+            .try_model_columns(product_status::Entity)?
+            .try_model_columns(trustify_entity::cpe::Entity)?
+            .try_model_columns(status::Entity)
     }
 }
