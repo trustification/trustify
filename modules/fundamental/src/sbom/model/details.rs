@@ -1,6 +1,13 @@
 use super::SbomSummary;
 use crate::{
-    advisory::model::AdvisoryHead, purl::model::{details::purl::StatusContext, summary::purl::PurlSummary}, sbom::{model::SbomPackage, service::{sbom::QueryCatcher, SbomService}}, vulnerability::model::VulnerabilityDetails, Error
+    advisory::model::AdvisoryHead,
+    purl::model::{details::purl::StatusContext, summary::purl::PurlSummary},
+    sbom::{
+        model::SbomPackage,
+        service::{sbom::QueryCatcher, SbomService},
+    },
+    vulnerability::model::VulnerabilityHead,
+    Error,
 };
 use cpe::uri::OwnedUri;
 use sea_orm::{
@@ -86,7 +93,10 @@ impl SbomDetails {
             )
             .join(JoinType::Join, product_status::Relation::Status.def())
             .join(JoinType::Join, product_status::Relation::Advisory.def())
-            .join(JoinType::Join, product_status::Relation::Vulnerability.def())
+            .join(
+                JoinType::Join,
+                product_status::Relation::Vulnerability.def(),
+            )
             .distinct_on([
                 (product_status::Entity, product_status::Column::ContextCpeId),
                 (product_status::Entity, product_status::Column::StatusId),
@@ -192,7 +202,7 @@ impl SbomAdvisory {
 
             let sbom_status = if let Some(status) = advisory.status.iter_mut().find(|status| {
                 if status.status == each.status.slug
-                    && status.vulnerability.head.identifier == each.vulnerability.id
+                    && status.vulnerability.identifier == each.vulnerability.id
                 {
                     match (&status.context, &status_cpe) {
                         (Some(StatusContext::Cpe(context_cpe)), Some(status_cpe)) => {
@@ -208,7 +218,10 @@ impl SbomAdvisory {
                 status
             } else {
                 let status = SbomStatus {
-                    vulnerability: VulnerabilityDetails::from_entity(&each.vulnerability, Default::default(), tx).await?,
+                    vulnerability: VulnerabilityHead::from_vulnerability_entity_and_description(
+                        &each.vulnerability,
+                        None,
+                    ),
                     status: each.status.slug.clone(),
                     context: status_cpe
                         .as_ref()
@@ -253,7 +266,10 @@ impl SbomAdvisory {
             }
 
             let status = SbomStatus {
-                vulnerability: VulnerabilityDetails::from_entity(&product.vulnerability.clone(), Default::default(), tx).await?,
+                vulnerability: VulnerabilityHead::from_vulnerability_entity_and_description(
+                    &product.vulnerability,
+                    None,
+                ),
                 status: product.status.slug.clone(),
                 context: advisory_cpe
                     .as_ref()
@@ -280,7 +296,7 @@ impl SbomAdvisory {
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct SbomStatus {
-    pub vulnerability: VulnerabilityDetails,
+    pub vulnerability: VulnerabilityHead,
     pub status: String,
     pub context: Option<StatusContext>,
     pub packages: Vec<SbomPackage>,
@@ -303,7 +319,11 @@ impl FromQueryResult for ProductStatusCatcher {
     fn from_query_result(res: &QueryResult, _pre: &str) -> Result<Self, DbErr> {
         Ok(Self {
             advisory: Self::from_query_result_multi_model(res, "", advisory::Entity)?,
-            vulnerability: Self::from_query_result_multi_model(res, "", trustify_entity::vulnerability::Entity)?,
+            vulnerability: Self::from_query_result_multi_model(
+                res,
+                "",
+                trustify_entity::vulnerability::Entity,
+            )?,
             product_status: Self::from_query_result_multi_model(res, "", product_status::Entity)?,
             cpe: Self::from_query_result_multi_model(res, "", trustify_entity::cpe::Entity)?,
             status: Self::from_query_result_multi_model(res, "", status::Entity)?,
