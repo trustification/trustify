@@ -321,6 +321,10 @@ mod test {
         );
         assert_eq!(
             response["items"][0]["deps"][0]["purl"],
+            "pkg:rpm/redhat/EE@0.0.0?arch=src"
+        );
+        assert_eq!(
+            response["items"][0]["deps"][1]["purl"],
             "pkg:rpm/redhat/B@0.0.0"
         );
 
@@ -344,6 +348,10 @@ mod test {
         );
         assert_eq!(
             response["items"][0]["deps"][0]["purl"],
+            "pkg:rpm/redhat/EE@0.0.0?arch=src"
+        );
+        assert_eq!(
+            response["items"][0]["deps"][1]["purl"],
             "pkg:rpm/redhat/B@0.0.0"
         );
 
@@ -429,7 +437,7 @@ mod test {
         let uri = format!("/api/v1/analysis/root-component?q=sbom_id={}", sbom_id);
         let request: Request = TestRequest::get().uri(uri.clone().as_str()).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
-        assert_eq!(&response["total"], 7);
+        assert_eq!(&response["total"], 8);
 
         // negative test
         let uri = "/api/v1/analysis/root-component?q=sbom_id=urn:uuid:99999999-9999-9999-9999-999999999999";

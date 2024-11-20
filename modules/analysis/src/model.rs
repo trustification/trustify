@@ -43,6 +43,7 @@ impl fmt::Display for PackageNode {
 pub struct AncNode {
     pub sbom_id: String,
     pub node_id: String,
+    pub relationship: String,
     pub purl: String,
     pub name: String,
     pub version: String,
@@ -139,6 +140,11 @@ impl GraphMap {
     // Retrieve a reference to a graph by its key (read access)
     pub fn get(&self, key: &str) -> Option<&Graph<PackageNode, Relationship, petgraph::Directed>> {
         self.map.get(key)
+    }
+
+    // Retrieve all sbom ids(read access)
+    pub fn sbom_ids(&self) -> Vec<String> {
+        self.map.keys().cloned().collect()
     }
 
     // Get the singleton instance of GraphMap

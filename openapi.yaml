@@ -2243,6 +2243,7 @@ components:
       required:
       - sbom_id
       - node_id
+      - relationship
       - purl
       - name
       - version
@@ -2252,6 +2253,8 @@ components:
         node_id:
           type: string
         purl:
+          type: string
+        relationship:
           type: string
         sbom_id:
           type: string
@@ -3344,6 +3347,7 @@ components:
       - dev_tool_of
       - described_by
       - package_of
+      - undefined
     Report:
       type: object
       required:
