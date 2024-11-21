@@ -101,7 +101,7 @@ petgraph = { version = "0.6.5", features = ["serde-1"] }
 prometheus = "0.13.3"
 quick-xml = "0.37.0"
 rand = "0.8.5"
-reedline = "0.36.0"
+reedline = "0.37.0"
 regex = "1.10.3"
 reqwest = "0.12"
 ring = "0.17.8"
