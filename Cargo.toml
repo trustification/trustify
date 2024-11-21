@@ -42,9 +42,9 @@ anyhow = "1.0.72"
 async-compression = "0.4.13"
 async-graphql = "7.0.5"
 async-graphql-actix-web = "7.0.5"
+async-openai = "0.25.0"
 async-std = "1"
 async-trait = "0.1.74"
-async-openai = "0.25.0"
 base64 = "0.22"
 biscuit = "0.7"
 build-info = "0.0.39"
@@ -52,11 +52,11 @@ build-info-build = "0.0.39"
 build-info-common = "0.0.39"
 bytes = "1.5"
 bytesize = "1.3"
-criterion = "0.5.1"
 chrono = { version = "0.4.35", default-features = false }
 clap = "4"
 concat-idents = "1"
 cpe = "0.1.5"
+criterion = "0.5.1"
 csaf = { version = "0.5.0", default-features = false }
 csaf-walker = { version = "0.10.0-alpha.1", default-features = false }
 cve = "0.3.1"
@@ -90,8 +90,7 @@ once_cell = "1.19.0"
 openid = "0.15"
 openssl = "0.10"
 opentelemetry = "0.24"
-# Note: This uses OTEL 0.24 https://crates.io/crates/opentelemetry-otlp/0.17.0/dependencies
-opentelemetry-otlp = "0.17"
+opentelemetry-otlp = "0.17" # Note: This uses OTEL 0.24 https://crates.io/crates/opentelemetry-otlp/0.17.0/dependencies
 opentelemetry_sdk = "0.24"
 osv = { version = "0.2.0", default-features = false }
 packageurl = "0.3.0"
@@ -137,8 +136,7 @@ tokio-stream = "0.1.15"
 tokio-util = "0.7"
 tracing = "0.1"
 tracing-bunyan-formatter = "0.3.7"
-# Note: This uses OTEL 0.24 https://crates.io/crates/tracing-opentelemetry/0.25.0/dependencies
-tracing-opentelemetry = "0.25"
+tracing-opentelemetry = "0.25" # Note: This uses OTEL 0.24 https://crates.io/crates/tracing-opentelemetry/0.25.0/dependencies
 tracing-subscriber = { version = "0.3.18", default-features = false }
 url = "2.5.0"
 urlencoding = "2"
