@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732189557395,
+  "lastUpdate": 1732193503107,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1386,6 +1386,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/5136c6d798cc6e8b68607d1edb68b90446c3d331"
         },
         "date": 1732189556636,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "582213670c662e755c3a0f83219c98e0e7ff15d3",
+          "message": "ci: need to disable deployment, as we already have a gh-pages setup",
+          "timestamp": "2024-11-21T12:29:16Z",
+          "tree_id": "6c1197ebb164b3389d2e4d0d9840b699340cc89b",
+          "url": "https://github.com/trustification/trustify/commit/582213670c662e755c3a0f83219c98e0e7ff15d3"
+        },
+        "date": 1732193501904,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
