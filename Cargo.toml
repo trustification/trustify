@@ -22,7 +22,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0-alpha.23"
+version = "0.1.0-alpha.24"
 edition = "2021"
 publish = false
 license = "Apache-2.0"
@@ -175,9 +175,9 @@ trustify-module-user = { path = "modules/user" }
 # as well as build-dependencies. However, we can't control feature flags for build dependencies the way we do
 # it for normal dependencies. So enabling the vendor feature for openssl-sys doesn't work for the build-dependencies.
 # This will fail the build on targets where we need vendoring for openssl. Using rustls instead works around this issue.
-postgresql_archive = { version = "0.16.3", default-features = false, features = ["theseus", "rustls-tls"] }
-postgresql_embedded = { version = "0.16.3", default-features = false, features = ["theseus", "rustls-tls"] }
-postgresql_commands = { version = "0.16.3", default-features = false, features = ["tokio"] }
+postgresql_archive = { version = "0.17.3", default-features = false, features = ["theseus", "rustls-tls"] }
+postgresql_embedded = { version = "0.17.3", default-features = false, features = ["theseus", "rustls-tls"] }
+postgresql_commands = { version = "0.17.3", default-features = false, features = ["tokio"] }
 
 [patch.crates-io]
 #csaf-walker = { git = "https://github.com/ctron/csaf-walker", rev = "7b6e64dd56e4be79e184b053ef754a42e1496fe0" }
