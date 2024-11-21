@@ -3521,7 +3521,7 @@ components:
     SbomStatus:
       type: object
       required:
-      - vulnerability_id
+      - vulnerability
       - status
       - packages
       properties:
@@ -3533,10 +3533,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SbomPackage'
+        severity:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/Severity'
         status:
           type: string
-        vulnerability_id:
-          type: string
+        vulnerability:
+          $ref: '#/components/schemas/VulnerabilityHead'
     SbomSummary:
       allOf:
       - $ref: '#/components/schemas/SbomHead'
