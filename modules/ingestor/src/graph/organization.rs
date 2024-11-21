@@ -1,4 +1,4 @@
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, QuerySelect, Set};
 use std::fmt::Debug;
 use tracing::instrument;
 use trustify_common::db::Transactional;
@@ -62,6 +62,7 @@ impl Graph {
         tx: TX,
     ) -> Result<Option<OrganizationContext>, Error> {
         Ok(organization::Entity::find()
+            .lock(sea_query::LockType::NoKeyUpdate)
             .filter(organization::Column::Name.eq(name.into()))
             .one(&self.connection(&tx))
             .await?
