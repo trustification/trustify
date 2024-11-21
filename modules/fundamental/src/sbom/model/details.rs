@@ -6,7 +6,7 @@ use crate::{
         model::SbomPackage,
         service::{sbom::QueryCatcher, SbomService},
     },
-    vulnerability::model::VulnerabilityHead,
+    vulnerability::model::{VulnerabilityDetails, VulnerabilityHead},
     Error,
 };
 use cpe::uri::OwnedUri;
@@ -25,6 +25,7 @@ use trustify_common::{
     },
     memo::Memo,
 };
+use trustify_cvss::cvss3::severity::Severity;
 use trustify_entity::{
     advisory, base_purl, product, product_status, product_version, purl_status,
     qualified_purl::{self},
@@ -217,11 +218,16 @@ impl SbomAdvisory {
             }) {
                 status
             } else {
+                let (score, _) =
+                    VulnerabilityDetails::average_score(&each.vulnerability, tx).await?;
                 let status = SbomStatus {
-                    vulnerability: VulnerabilityHead::from_vulnerability_entity_and_description(
+                    vulnerability: VulnerabilityHead::from_vulnerability_entity(
                         &each.vulnerability,
-                        None,
-                    ),
+                        Memo::NotProvided,
+                        tx,
+                    )
+                    .await?,
+                    severity: score.map(|v| v.severity()),
                     status: each.status.slug.clone(),
                     context: status_cpe
                         .as_ref()
@@ -265,11 +271,16 @@ impl SbomAdvisory {
                 packages.push(package);
             }
 
+            let (score, _) =
+                VulnerabilityDetails::average_score(&product.vulnerability, tx).await?;
             let status = SbomStatus {
-                vulnerability: VulnerabilityHead::from_vulnerability_entity_and_description(
+                vulnerability: VulnerabilityHead::from_vulnerability_entity(
                     &product.vulnerability,
-                    None,
-                ),
+                    Memo::NotProvided,
+                    tx,
+                )
+                .await?,
+                severity: score.map(|v| v.severity()),
                 status: product.status.slug.clone(),
                 context: advisory_cpe
                     .as_ref()
@@ -297,6 +308,7 @@ impl SbomAdvisory {
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct SbomStatus {
     pub vulnerability: VulnerabilityHead,
+    pub severity: Option<Severity>,
     pub status: String,
     pub context: Option<StatusContext>,
     pub packages: Vec<SbomPackage>,
