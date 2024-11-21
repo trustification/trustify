@@ -1940,6 +1940,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "cyclonedx-bom"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ce2ec98a191e17f63b92b132f6852462de9eaee03ca8dbf2df401b9fd809bcac"
+dependencies = [
+ "base64 0.21.7",
+ "cyclonedx-bom-macros",
+ "fluent-uri 0.1.4",
+ "indexmap 2.6.0",
+ "once_cell",
+ "ordered-float 4.5.0",
+ "purl",
+ "regex",
+ "serde",
+ "serde_json",
+ "spdx",
+ "strum 0.26.3",
+ "thiserror 1.0.69",
+ "time",
+ "uuid",
+ "xml-rs",
+]
+
+[[package]]
 name = "cyclonedx-bom-macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6462,7 +6486,7 @@ dependencies = [
  "bytes",
  "chrono",
  "csv",
- "cyclonedx-bom",
+ "cyclonedx-bom 0.7.0",
  "digest",
  "filetime",
  "fluent-uri 0.3.2",
@@ -8574,7 +8598,7 @@ dependencies = [
  "chrono",
  "criterion",
  "csaf",
- "cyclonedx-bom",
+ "cyclonedx-bom 0.8.0",
  "hex",
  "humantime",
  "jsonpath-rust",
@@ -8620,7 +8644,7 @@ dependencies = [
  "criterion",
  "csaf",
  "cve",
- "cyclonedx-bom",
+ "cyclonedx-bom 0.8.0",
  "futures-util",
  "hex",
  "humantime",
@@ -8752,7 +8776,7 @@ dependencies = [
  "cpe",
  "csaf",
  "cve",
- "cyclonedx-bom",
+ "cyclonedx-bom 0.8.0",
  "hex",
  "humantime",
  "jsn",
