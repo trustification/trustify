@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732195105324,
+  "lastUpdate": 1732199295051,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1444,6 +1444,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/b1ec04883079e605f9d8e30a23dbabd40f4f968b"
         },
         "date": 1732195104526,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "81f0c12733614e04e1d2d93aa9db18ca1e7f1cef",
+          "message": "For components in an SBOM that have no explicitly defined relationships we now set an implied relationship in analysis graph.",
+          "timestamp": "2024-11-21T13:55:48Z",
+          "tree_id": "3225cd459d73aaa7643a9f6b4ef793399a9fe1d7",
+          "url": "https://github.com/trustification/trustify/commit/81f0c12733614e04e1d2d93aa9db18ca1e7f1cef"
+        },
+        "date": 1732199293927,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
