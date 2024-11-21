@@ -3519,28 +3519,26 @@ components:
         relationship:
           $ref: '#/components/schemas/Relationship'
     SbomStatus:
-      type: object
-      required:
-      - vulnerability
-      - status
-      - packages
-      properties:
-        context:
-          oneOf:
-          - type: 'null'
-          - $ref: '#/components/schemas/StatusContext'
-        packages:
-          type: array
-          items:
-            $ref: '#/components/schemas/SbomPackage'
-        severity:
-          oneOf:
-          - type: 'null'
-          - $ref: '#/components/schemas/Severity'
-        status:
-          type: string
-        vulnerability:
-          $ref: '#/components/schemas/VulnerabilityHead'
+      allOf:
+      - $ref: '#/components/schemas/VulnerabilityHead'
+      - type: object
+        required:
+        - average_severity
+        - status
+        - packages
+        properties:
+          average_severity:
+            $ref: '#/components/schemas/Severity'
+          context:
+            oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/StatusContext'
+          packages:
+            type: array
+            items:
+              $ref: '#/components/schemas/SbomPackage'
+          status:
+            type: string
     SbomSummary:
       allOf:
       - $ref: '#/components/schemas/SbomHead'

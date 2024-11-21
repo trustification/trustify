@@ -28,8 +28,8 @@ pub struct Model {
     pub severity: Severity,
 }
 
-impl From<Model> for cvss3::Cvss3Base {
-    fn from(value: Model) -> Self {
+impl From<&Model> for cvss3::Cvss3Base {
+    fn from(value: &Model) -> Self {
         Self {
             minor_version: value.minor_version as u8,
             av: value.av.into(),
@@ -44,19 +44,9 @@ impl From<Model> for cvss3::Cvss3Base {
     }
 }
 
-impl From<&Model> for cvss3::Cvss3Base {
-    fn from(value: &Model) -> Self {
-        Self {
-            minor_version: value.minor_version as u8,
-            av: value.av.into(),
-            ac: value.ac.into(),
-            pr: value.pr.into(),
-            ui: value.ui.into(),
-            s: value.s.into(),
-            c: value.c.into(),
-            i: value.i.into(),
-            a: value.a.into(),
-        }
+impl From<Model> for cvss3::Cvss3Base {
+    fn from(value: Model) -> Self {
+        Self::from(&value)
     }
 }
 
