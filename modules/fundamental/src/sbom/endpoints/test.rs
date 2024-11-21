@@ -202,3 +202,33 @@ async fn download_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let id = ctx
+        .ingest_documents([
+            "quarkus-bom-2.13.8.Final-redhat-00004.json",
+            "csaf/cve-2023-0044.json",
+        ])
+        .await?[0]
+        .id
+        .to_string();
+
+    let app = caller(ctx).await?;
+    let v: Value = app
+        .call_and_read_body_json(
+            TestRequest::get()
+                .uri(&format!("/api/v1/sbom/{id}/advisory"))
+                .to_request(),
+        )
+        .await;
+
+    log::debug!("{v:#?}");
+
+    // assert expected fields
+    assert_eq!(v[0]["identifier"], "https://www.redhat.com/#CVE-2023-0044");
+    assert_eq!(v[0]["status"][0]["average_severity"], "high");
+
+    Ok(())
+}
