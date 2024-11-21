@@ -121,15 +121,7 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
             vulnerability: VulnerabilityHead {
                 normative: true,
                 identifier: "CVE-2020-5238".to_string(),
-                title: None,
-                description: None,
-                reserved: None,
-                published: None,
-                modified: None,
-                withdrawn: None,
-                discovered: None,
-                released: None,
-                cwes: vec![],
+                ..Default::default()
             },
             status: "affected".to_string(),
             context: None,
@@ -141,15 +133,7 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
             vulnerability: VulnerabilityHead {
                 normative: true,
                 identifier: "CVE-2020-5238".to_string(),
-                title: None,
-                description: None,
-                reserved: None,
-                published: None,
-                modified: None,
-                withdrawn: None,
-                discovered: None,
-                released: None,
-                cwes: vec![],
+                ..Default::default()
             },
             status: "affected".to_string(),
             context: None,
