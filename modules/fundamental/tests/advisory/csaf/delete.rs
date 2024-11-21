@@ -129,15 +129,7 @@ async fn delete_check_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
             vulnerability: VulnerabilityHead {
                 normative: true,
                 identifier: "CVE-2023-33201".to_string(),
-                title: None,
-                description: None,
-                reserved: None,
-                published: None,
-                modified: None,
-                withdrawn: None,
-                discovered: None,
-                released: None,
-                cwes: vec![],
+                ..Default::default()
             },
             status: "affected".to_string(),
             context: Some(StatusContext::Cpe(
