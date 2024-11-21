@@ -24,8 +24,8 @@ Running Trustify on bare-metal servers requires you to download the `trustd` bin
 link:https://github.com/trustification/trustify/releases[Trustify releases] page.
 
 There currently exist two variants of this binary, `trustd` and `trustd-pm`. The `-pm` version includes a few embedded
-services (like PostgreSQL and an OIDC issuer) which make it easier to run Trustify locally for trying it out. However,
-this may be insecure, dangerous, and is not production ready. Still, it is great for trying it out and demoing it
+services, such as PostgreSQL and an OIDC issuer, which make it easier to run Trustify locally for trying it out. However,
+this might be insecure, dangerous, and is not production ready. Still, it is great for trying it out and demoing it
 without too much trouble.
 
 === Container image
@@ -39,4 +39,4 @@ We do not provide any out-of-the-box charts or an installation script, since man
 specific to the running environment.
 
 We keep a Helm chart in the https://github.com/trustification/trustify-helm-charts to deploy a Trustify instance.
-Feel free to use this Helm chart as a starting point for your specific environment.
+You can use this Helm chart as a starting point for your specific environment.
