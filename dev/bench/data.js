@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732193503107,
+  "lastUpdate": 1732195105324,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1415,6 +1415,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/582213670c662e755c3a0f83219c98e0e7ff15d3"
         },
         "date": 1732193501904,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "b1ec04883079e605f9d8e30a23dbabd40f4f968b",
+          "message": "test: fix up test after sea_orm/sqlx upgrade",
+          "timestamp": "2024-11-21T12:51:25Z",
+          "tree_id": "d402602d42bc8f25794ee2f4f71f17f33049a91a",
+          "url": "https://github.com/trustification/trustify/commit/b1ec04883079e605f9d8e30a23dbabd40f4f968b"
+        },
+        "date": 1732195104526,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
