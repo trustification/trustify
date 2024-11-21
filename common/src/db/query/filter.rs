@@ -408,11 +408,11 @@ pub(crate) mod tests {
         );
         assert_eq!(
             where_clause("severity=high")?,
-            r#""advisory"."severity" = (CAST('high' AS "Severity"))"#
+            r#""advisory"."severity" = (CAST('high' AS Severity))"#
         );
         assert_eq!(
             where_clause("severity>low")?,
-            r#""advisory"."severity" > (CAST('low' AS "Severity"))"#
+            r#""advisory"."severity" > (CAST('low' AS Severity))"#
         );
 
         Ok(())
