@@ -106,6 +106,7 @@ resource "aws_cognito_user_pool_client" "frontend" {
     "${var.console-url}/",
   ]
   logout_urls = [
+    "${var.console-url}/",
     "${var.console-url}/notloggedin",
   ]
 }
