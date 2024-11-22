@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732203544184,
+  "lastUpdate": 1732269534604,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1502,6 +1502,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/6b9e7580e03186f59f0e8cd5f3064a9aab4b2541"
         },
         "date": 1732203543570,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "9ee0d138ddd7b43c8450ab24a795a4bc7998cc2d",
+          "message": "feat: correlate vulnerabilties for purls using product statuses",
+          "timestamp": "2024-11-22T09:37:26Z",
+          "tree_id": "51043892035c7e7de046ba138bc3343f6a0372f0",
+          "url": "https://github.com/trustification/trustify/commit/9ee0d138ddd7b43c8450ab24a795a4bc7998cc2d"
+        },
+        "date": 1732269533785,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
