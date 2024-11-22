@@ -710,6 +710,40 @@ impl AnalysisService {
         Ok(paginated.paginate_array(&components))
     }
 
+    pub async fn retrieve_all_sbom_roots_by_name<TX: AsRef<Transactional>>(
+        &self,
+        sbom_id: Uuid,
+        component_name: String,
+        tx: TX,
+    ) -> Result<Vec<AncNode>, Error> {
+        // This function searches for a component(s) by name in a specific sbom, then returns that components
+        // root components.
+
+        let connection = self.db.connection(&tx);
+        let distinct_sbom_ids = vec![sbom_id.to_string()];
+        load_graphs(&connection, &distinct_sbom_ids).await;
+
+        let components = AnalysisService::query_ancestor_graph::<TX>(
+            Option::from(component_name),
+            None,
+            None,
+            distinct_sbom_ids,
+        )
+        .await;
+
+        let mut root_components = Vec::new();
+        for component in components {
+            if let Some(last_ancestor) = component.ancestors.last() {
+                if !root_components.contains(last_ancestor) {
+                    // we want distinct list
+                    root_components.push(last_ancestor.clone());
+                }
+            }
+        }
+
+        Ok(root_components)
+    }
+
     #[instrument(skip(self, tx), err)]
     pub async fn retrieve_root_components_by_name<TX: AsRef<Transactional>>(
         &self,
@@ -1287,5 +1321,36 @@ mod test {
             .unwrap();
 
         Ok(assert_eq!(analysis_graph.total, 1))
+    }
+
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn test_retrieve_all_sbom_roots_by_name1(
+        ctx: &TrustifyContext,
+    ) -> Result<(), anyhow::Error> {
+        ctx.ingest_documents(["spdx/quarkus-bom-3.2.11.Final-redhat-00001.json"])
+            .await?;
+
+        let service = AnalysisService::new(ctx.db.clone());
+        let component_name = "quarkus-vertx-http".to_string();
+
+        let analysis_graph = service
+            .retrieve_root_components(Query::q(&component_name), Paginated::default(), ())
+            .await?;
+
+        let sbom_id = analysis_graph
+            .items
+            .last()
+            .unwrap()
+            .sbom_id
+            .parse::<Uuid>()?;
+
+        let roots = service
+            .retrieve_all_sbom_roots_by_name(sbom_id, component_name, ())
+            .await?;
+
+        assert_eq!(roots.last().unwrap().name, "quarkus-bom");
+
+        Ok(())
     }
 }
