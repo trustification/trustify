@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732269534604,
+  "lastUpdate": 1732279305708,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1536,6 +1536,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "205ed5f404a5bef74ba9c0ea90b634dafbc2f637",
+          "message": "Add a unit test for /api/v1/sbom/{id}/advisory\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-11-22T12:18:24Z",
+          "tree_id": "c181cbaa614394a1c05ac4ae7eca6562eb804d20",
+          "url": "https://github.com/trustification/trustify/commit/205ed5f404a5bef74ba9c0ea90b634dafbc2f637"
+        },
+        "date": 1732279305065,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 21,
             "unit": "s"
           }
         ]
