@@ -35,7 +35,6 @@ impl S3Backend {
             CONTENT_ENCODING,
             HeaderValue::from_str(&compression.to_string())?,
         )]))?;
-        assert!(bucket.exists().await?, "S3 bucket not found");
         log::info!(
             "Using S3 bucket '{}' in '{}' for doc storage",
             bucket.name,
