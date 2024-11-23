@@ -20,6 +20,7 @@ pub mod cve_info;
 pub mod logger;
 pub mod package_info;
 pub mod product_info;
+pub mod remote;
 pub mod sbom_info;
 
 pub fn new(db: Database) -> Vec<Arc<dyn Tool>> {
