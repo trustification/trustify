@@ -2,9 +2,11 @@ pub mod tools;
 
 use crate::ai::model::{ChatMessage, ChatState, LLMInfo, MessageType};
 
+use crate::ai::service::tools::remote::RemoteToolsProvider;
 use crate::Error;
 use base64::engine::general_purpose::STANDARD;
 use base64::engine::Engine as _;
+
 use langchain_rust::chain::options::ChainCallOptions;
 use langchain_rust::chain::Chain;
 use langchain_rust::language_models::options::CallOptions;
@@ -19,6 +21,7 @@ use langchain_rust::{
 };
 use std::env;
 use std::sync::Arc;
+use tokio::sync::OnceCell;
 use trustify_common::db::{Database, Transactional};
 
 pub const PREFIX: &str = include_str!("prefix.txt");
@@ -26,7 +29,9 @@ pub const PREFIX: &str = include_str!("prefix.txt");
 pub struct AiService {
     llm: Option<OpenAI<OpenAIConfig>>,
     llm_info: Option<LLMInfo>,
-    pub tools: Vec<Arc<dyn Tool>>,
+    remote_tools_providers: Vec<RemoteToolsProvider>,
+    pub local_tools: Vec<Arc<dyn Tool>>,
+    tools: OnceCell<Vec<Arc<dyn Tool>>>,
 }
 
 impl AiService {
@@ -72,7 +77,7 @@ impl AiService {
     /// ```
     ///
     pub fn new(db: Database) -> Self {
-        let tools = tools::new(db.clone());
+        let local_tools = tools::new(db.clone());
 
         let api_key = env::var("OPENAI_API_KEY");
         let api_key = match api_key {
@@ -81,7 +86,9 @@ impl AiService {
                 return Self {
                     llm: None,
                     llm_info: None,
-                    tools,
+                    remote_tools_providers: Vec::new(),
+                    local_tools,
+                    tools: OnceCell::new(),
                 };
             }
         };
@@ -102,10 +109,26 @@ impl AiService {
             .with_model(model.clone())
             .with_options(CallOptions::default().with_seed(2000));
 
+        let mut remote_tools_providers = vec![];
+
+        if let Ok(remote_tool_urls) = env::var("REMOTE_AI_TOOL_URLS") {
+            let mut i = 0;
+            remote_tool_urls.split(',').for_each(|url| {
+                i += 1;
+                let provider_id = format!("r{}_", i);
+                remote_tools_providers.push(RemoteToolsProvider::new(
+                    provider_id.clone(),
+                    url.to_string(),
+                ));
+            });
+        }
+
         Self {
             llm: Some(llm),
             llm_info: Some(LLMInfo { api_base, model }),
-            tools,
+            remote_tools_providers,
+            local_tools,
+            tools: OnceCell::new(),
         }
     }
 
@@ -115,6 +138,39 @@ impl AiService {
 
     pub fn llm_info(&self) -> Option<LLMInfo> {
         self.llm_info.clone()
+    }
+
+    async fn fetch_tools(&self) -> Vec<Arc<dyn Tool>> {
+        let mut result = vec![];
+        for provider in &self.remote_tools_providers {
+            match provider.tools().await {
+                Ok(tools) => {
+                    for tool in tools {
+                        result.push(tool.clone());
+                    }
+                }
+                Err(e) => {
+                    log::error!("failed to fetch remote tools: {}", e);
+                }
+            }
+        }
+
+        if env::var("AGENT_DISABLE_LOCAL_TOOLS").is_err() {
+            for tool in &self.local_tools {
+                result.push(tool.clone());
+            }
+        }
+
+        result
+    }
+
+    async fn tools_ref(&self) -> &Vec<Arc<dyn Tool>> {
+        // this handles fetching the remote tools only once on the first request...
+        // would be better if we could periodically check for tool updates
+        // and cache the results for a certain amount of time
+        self.tools
+            .get_or_init(|| async { self.fetch_tools().await })
+            .await
     }
 
     pub async fn completions<TX: AsRef<Transactional>>(
@@ -129,7 +185,7 @@ impl AiService {
 
         let agent = OpenAiToolAgentBuilder::new()
             .prefix(PREFIX)
-            .tools(&self.tools)
+            .tools(self.tools_ref().await)
             .options(
                 ChainCallOptions::new()
                     .with_max_tokens(1000)

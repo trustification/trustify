@@ -76,7 +76,7 @@ pub async fn tools(
     _: Require<Ai>,
 ) -> actix_web::Result<impl Responder> {
     let tools = &service
-        .tools
+        .local_tools
         .iter()
         .map(|tool| AiTool {
             name: tool.name(),
@@ -104,17 +104,17 @@ pub async fn tools(
 pub async fn tool_call(
     service: web::Data<AiService>,
     name: web::Path<String>,
-    request: web::Json<serde_json::Value>,
+    request: String,
     _: Require<Ai>,
 ) -> actix_web::Result<impl Responder> {
     let tool = service
-        .tools
+        .local_tools
         .iter()
         .find(|tool| tool.name() == name.clone())
         .ok_or_else(|| actix_web::error::ErrorNotFound("Tool not found"))?;
 
     let result = tool
-        .run(request.clone())
+        .call(request.as_str())
         .await
         .map_err(|e| Error::BadRequest(e.to_string()))?;
 

@@ -25,6 +25,7 @@ itertools = { workspace = true }
 lenient_semver = { workspace = true }
 langchain-rust = { workspace = true }
 log = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
 sea-orm = { workspace = true }
 sea-query = { workspace = true }
 serde = { workspace = true }

@@ -108,7 +108,7 @@ async fn tools_call(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let request = TestRequest::post()
         .uri("/api/v1/ai/tools/unknown")
-        .set_json(json!("bad tool call"))
+        .set_json(json!({"input":"quarkus"}))
         .to_request();
 
     let response = app.call_service(request).await;
@@ -116,7 +116,7 @@ async fn tools_call(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let request = TestRequest::post()
         .uri("/api/v1/ai/tools/sbom-info")
-        .set_json(json!("quarkus"))
+        .set_json(json!({"input":"quarkus"}))
         .to_request();
 
     let response = app.call_service(request).await;
