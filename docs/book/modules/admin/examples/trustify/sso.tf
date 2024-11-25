@@ -35,6 +35,14 @@ resource "aws_cognito_resource_server" "trustify" {
     scope_description = "importer"
     scope_name        = "importer"
   }
+  scope {
+    scope_description = "ai"
+    scope_name        = "ai"
+  }
+  scope {
+    scope_description = "admin"
+    scope_name        = "admin"
+  }
 }
 
 resource "aws_cognito_user_pool_domain" "main" {
