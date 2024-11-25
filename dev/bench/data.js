@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732285372267,
+  "lastUpdate": 1732527374816,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1618,6 +1618,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/67e725aab8bd88ad793ae6452481552737085db7"
         },
         "date": 1732285371618,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": false,
+          "id": "7d6b71eaa02fe0f7e2c7bf8a71fb70474a2c8235",
+          "message": "add retrieve_all_sbom_roots_by_name() func",
+          "timestamp": "2024-11-25T08:55:39Z",
+          "tree_id": "55f568988a015b5c2a1ac98bf157663ba6e62e9e",
+          "url": "https://github.com/trustification/trustify/commit/7d6b71eaa02fe0f7e2c7bf8a71fb70474a2c8235"
+        },
+        "date": 1732527374018,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
