@@ -64,7 +64,7 @@ resource "aws_cognito_user_in_group" "admin-manager" {
 }
 
 resource "aws_cognito_user_pool_client" "cli" {
-  name         = "walker-${var.environment}"
+  name         = "cli-${var.environment}"
   user_pool_id = aws_cognito_user_pool.pool.id
 
   supported_identity_providers = ["COGNITO"]
