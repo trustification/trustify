@@ -83,6 +83,81 @@ async fn test_parse_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     .await
 }
 
+#[ignore]
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn test_parse_runtime_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    test_with_cyclonedx(
+        ctx,
+        "quarkus-34476-cyclonedx.json",
+        |WithContext { service, sbom, .. }| async move {
+            let described = service
+                .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
+                .await?;
+
+            assert_eq!(1, described.items.len());
+
+            let package = &described.items[0];
+
+            assert_eq!(
+                package.id,
+                "pkg:maven/org.apache.zookeeper/zookeeper@3.9.2?type=jar"
+            );
+            assert_eq!(package.name, "zookeeper");
+            assert_eq!(package.version, Some("3.9.2".to_string()));
+            assert_eq!(1, package.purl.len());
+
+            assert!(matches!(
+                &package.purl[0],
+                PurlSummary {
+                    head: PurlHead {
+                        purl,
+                        ..
+                    },
+                    ..
+                }
+             if *purl == Purl::from_str( "pkg:maven/org.apache.zookeeper/zookeeper@3.9.2?type=jar")?));
+
+            assert!(package.cpe.is_empty());
+
+            /*
+            assert_eq!(
+                described.items,
+                vec![SbomPackage {
+                    id: "pkg:maven/org.apache.zookeeper/zookeeper@3.9.2?type=jar".to_string(),
+                    name: "zookeeper".to_string(),
+                    version: Some("3.9.2".to_string()),
+                    purl: vec![SbomPackagePurl::String(
+                        "pkg:maven/org.apache.zookeeper/zookeeper@3.9.2?type=jar".to_string()
+                    )],
+                    cpe: vec![],
+                }]
+            );
+
+             */
+
+            let packages = service
+                .fetch_sbom_packages(
+                    sbom.sbom.sbom_id,
+                    Default::default(),
+                    Paginated {
+                        offset: 0,
+                        limit: 1,
+                    },
+                    (),
+                )
+                .await?;
+
+            log::debug!("{:?}", packages);
+
+            assert_eq!(41, packages.total);
+
+            Ok(())
+        },
+    )
+    .await
+}
+
 #[instrument(skip(ctx, f))]
 pub async fn test_with_cyclonedx<F, Fut>(
     ctx: &TrustifyContext,
