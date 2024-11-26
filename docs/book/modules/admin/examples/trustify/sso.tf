@@ -131,3 +131,14 @@ resource "kubernetes_secret" "oidc-frontend" {
 
   type = "Opaque"
 }
+
+resource "kubernetes_config_map" "aws-oidc" {
+  metadata {
+    name      = "aws-oidc"
+    namespace = var.namespace
+  }
+
+  data = {
+    issuer-url = "https://cognito-idp.${data.aws_region.current.name}.amazonaws.com/${aws_cognito_user_pool.pool.id}"
+  }
+}
