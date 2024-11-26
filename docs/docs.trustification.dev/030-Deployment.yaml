@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trustify-docs
+  labels:
+    app.kubernetes.io/name: trustify-docs
+    app.kubernetes.io/component: serve
+    app.kubernetes.io/part-of: trustify
+  annotations:
+    image.openshift.io/triggers: |
+      [{
+        "from": {
+          "kind": "ImageStreamTag",
+          "name":"trustify-docs:latest"
+        },
+        "fieldPath": "spec.template.spec.containers[?(@.name==\"service\")].image"
+      }]
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: trustify-docs
+      app.kubernetes.io/component: serve
+      app.kubernetes.io/part-of: trustify
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: trustify-docs
+        app.kubernetes.io/component: serve
+        app.kubernetes.io/part-of: trustify
+    spec:
+      containers:
+        - image: "trustify-docs"
+          imagePullPolicy: IfNotPresent
+          name: service
+          ports:
+            - containerPort: 8080
+              name: endpoint
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 2

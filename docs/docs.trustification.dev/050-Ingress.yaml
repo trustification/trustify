@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: trustify-docs
+  labels:
+    app.kubernetes.io/name: trustify-docs
+    app.kubernetes.io/component: serve
+    app.kubernetes.io/part-of: trustify
+  annotations:
+    route.openshift.io/termination: edge
+
+spec:
+  ingressClassName: openshift-default
+  rules:
+    - host: docs.trustification.dev
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: trustify-docs
+                port:
+                  name: endpoint

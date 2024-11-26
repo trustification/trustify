@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: trustify-docs
+  labels:
+    app.kubernetes.io/name: trustify-docs
+    app.kubernetes.io/component: serve
+    app.kubernetes.io/part-of: trustify
+spec:
+  ports:
+    - name: endpoint
+      port: 8080
+      protocol: TCP
+      targetPort: endpoint
+  selector:
+    app.kubernetes.io/name: trustify-docs
+    app.kubernetes.io/component: serve
+    app.kubernetes.io/part-of: trustify
+  type: ClusterIP

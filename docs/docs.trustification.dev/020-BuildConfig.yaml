@@ -1,0 +1,35 @@
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: trustify-docs
+  labels:
+    app.kubernetes.io/name: trustify-docs
+    app.kubernetes.io/component: trustify
+    app.kubernetes.io/part-of: trustify
+spec:
+  runPolicy: Serial
+  triggers:
+    - type: ImageChange
+    - type: ConfigChange
+  source:
+    git:
+      uri: "https://github.com/trustification/trustify"
+    dockerfile: |
+      FROM registry.access.redhat.com/ubi9/ubi:latest AS builder
+      RUN dnf install -y make
+      RUN dnf module install nodejs:22/common -y
+      COPY . /app
+      WORKDIR /app/docs/book/
+      RUN find /app
+      RUN npm ci
+      RUN unset http_proxy && unset https_proxy && env | sort && make all
+      
+      FROM docker.io/nginxinc/nginx-unprivileged:1
+      COPY --from=builder /app/docs/book/build/site /usr/share/nginx/html
+  strategy:
+    type: Docker
+    dockerStrategy: { }
+  output:
+    to:
+      kind: "ImageStreamTag"
+      name: "trustify-docs:latest"
