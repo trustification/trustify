@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732527374816,
+  "lastUpdate": 1732633924243,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1652,6 +1652,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "committer": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "distinct": false,
+          "id": "b59a03d6026c2336f4228d658dc3fe273ebaf052",
+          "message": "feat[ai]: agent can now use remote tools.\n\nTo have the agent invoke the local tools via remote http calls, add the following env vars:\n\n    AGENT_DISABLE_LOCAL_TOOLS=true\n    REMOTE_AI_TOOL_URLS=http://localhost:8080/api/v1/ai/tools\n\n\nSigned-off-by: Hiram Chirino <hiram@hiramchirino.com>",
+          "timestamp": "2024-11-26T14:43:42Z",
+          "tree_id": "598cf881823776357fc2af1a3bbe1ee01fc4a804",
+          "url": "https://github.com/trustification/trustify/commit/b59a03d6026c2336f4228d658dc3fe273ebaf052"
+        },
+        "date": 1732633923196,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 23,
             "unit": "s"
           }
         ]
