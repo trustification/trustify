@@ -2,6 +2,8 @@ terraform {
   required_version = ">= 1.5.0"
 }
 
+data "aws_region" "current" {}
+
 variable "availability-zone" {
   type        = string
   default     = "eu-west-1a"

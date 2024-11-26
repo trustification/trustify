@@ -77,3 +77,13 @@ resource "aws_s3_bucket_policy" "storage-bucket-policy" {
   policy = data.aws_iam_policy_document.bucket_policy.json
 }
 
+resource "kubernetes_config_map" "aws-storage" {
+  metadata {
+    name      = "aws-storage"
+    namespace = var.namespace
+  }
+
+  data = {
+    region = data.aws_region.current.name
+  }
+}
