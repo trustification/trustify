@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732692366218,
+  "lastUpdate": 1732724776945,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1710,6 +1710,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 23,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "0f36466a0449ed8aae25aeee726985b8587efc60",
+          "message": "feat: allow more postgres database options\n\nAllow setting the \"sslmode\" as well as providing a complete URL.\n\nCloses: #1000",
+          "timestamp": "2024-11-27T16:04:07Z",
+          "tree_id": "5b3a5cebc4d317849cb6a4e187afa6468200c38f",
+          "url": "https://github.com/trustification/trustify/commit/0f36466a0449ed8aae25aeee726985b8587efc60"
+        },
+        "date": 1732724775666,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
             "unit": "s"
           }
         ]
