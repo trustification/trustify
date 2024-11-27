@@ -8,7 +8,7 @@ pub mod query;
 
 pub use func::*;
 
-use anyhow::Context;
+use anyhow::{ensure, Context};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{
     prelude::async_trait, ConnectOptions, ConnectionTrait, DatabaseConnection, DatabaseTransaction,
@@ -123,12 +123,7 @@ impl Database {
 
     #[instrument(err)]
     pub async fn new(database: &crate::config::Database) -> Result<Self, anyhow::Error> {
-        let username = &database.username;
-        let password = &database.password;
-        let host = &database.host;
-        let port = database.port;
-        let db_name = &database.name;
-        let url = format!("postgres://{username}:{password}@{host}:{port}/{db_name}");
+        let url = database.to_url();
         log::debug!("connect to {}", url);
 
         let mut opt = ConnectOptions::new(url);
@@ -137,11 +132,9 @@ impl Database {
         opt.sqlx_logging_level(log::LevelFilter::Trace);
 
         let db = sea_orm::Database::connect(opt).await?;
+        let name = database.name.clone();
 
-        Ok(Self {
-            db,
-            name: db_name.to_string(),
-        })
+        Ok(Self { db, name })
     }
 
     #[instrument(skip(self), err)]
@@ -164,10 +157,17 @@ impl Database {
 
     #[instrument(err)]
     pub async fn bootstrap(database: &crate::config::Database) -> Result<Self, anyhow::Error> {
-        let url = format!(
-            "postgres://{}:{}@{}:{}/postgres",
-            database.username, database.password, database.host, database.port,
+        ensure!(
+            database.url.is_none(),
+            "Unable to bootstrap database with '--db-url'"
         );
+
+        let url = crate::config::Database {
+            name: "postgres".into(),
+            ..database.clone()
+        }
+        .to_url();
+
         log::debug!("bootstrap to {}", url);
         let db = sea_orm::Database::connect(url).await?;
 

@@ -122,7 +122,7 @@ sha2 = "0.10.8"
 spdx = "0.10.6"
 spdx-expression = "0.5.2"
 spdx-rs = "0.5.3"
-sqlx = "0.8"
+sqlx = { version = "0.8", features = ["tls-native-tls"] }
 static-files = "0.2.3"
 strum = "0.26.3"
 temp-env = "0.3"
