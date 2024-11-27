@@ -89,7 +89,9 @@ async fn test_parse_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error
 async fn test_parse_runtime_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     test_with_cyclonedx(
         ctx,
-        "quarkus-34476-cyclonedx.json",
+        "cyclone.json",
+        // "sample-runtime-sbom.json",
+        // "quarkus-34476-cyclonedx.json",
         |WithContext { service, sbom, .. }| async move {
             let described = service
                 .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)

@@ -1,0 +1,191 @@
+{
+  "bomFormat" : "CycloneDX",
+  "specVersion" : "1.4",
+  "serialNumber" : "urn:uuid:d2fe3229-ee0d-43f7-b6e3-bfdf53e35f12",
+  "version" : 1,
+  "metadata" : {
+    "timestamp" : "2024-11-27T11:55:34Z",
+    "tools" : [ {
+      "vendor" : "Eclipse Foundation - https://projects.eclipse.org/projects/technology.jbom",
+      "name" : "jbom",
+      "version" : "unknown"
+    } ],
+    "component" : {
+      "name" : "192.168.0.10 (beevans-mac)",
+      "version" : "unknown",
+      "description" : "Java",
+      "type" : "application"
+    },
+    "manufacture" : {
+      "name" : "Unknown"
+    }
+  },
+  "components" : [ {
+    "name" : "byte-buddy-agent",
+    "version" : "agent/pom",
+    "scope" : "required",
+    "hashes" : [ {
+      "alg" : "SHA-1",
+      "content" : "4970ca464b1f70226b1b06a05c262026b51f5dea"
+    }, {
+      "alg" : "MD5",
+      "content" : "95c919fe313211ad498247deb76e00dc"
+    } ],
+    "properties" : [ {
+      "name" : "path",
+      "value" : "META-INF/maven/net.bytebuddy/byte-buddy-agent"
+    }, {
+      "name" : "archive",
+      "value" : "pom.xml"
+    }, {
+      "name" : "codesource",
+      "value" : "/Users/beevans/.m2/repository/net/bytebuddy/byte-buddy-agent/1.14.0/byte-buddy-agent-1.14.0.jar!/META-INF/maven/net.bytebuddy/byte-buddy-agent/pom.xml"
+    } ],
+    "type" : "library",
+    "bom-ref" : "null:byte-buddy-agent:agent/pom"
+  }, {
+    "group" : "com.fasterxml.jackson.core",
+    "name" : "jackson-core",
+    "version" : "2.17.2",
+    "scope" : "required",
+    "hashes" : [ {
+      "alg" : "SHA-1",
+      "content" : "969a35cb35c86512acbadcdbbbfb044c877db814"
+    }, {
+      "alg" : "MD5",
+      "content" : "50c2dab1f29136714d5ef5c6c640336c"
+    } ],
+    "purl" : "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.17.2",
+    "properties" : [ {
+      "name" : "path",
+      "value" : "META-INF/maven/com.fasterxml.jackson.core/jackson-core"
+    }, {
+      "name" : "archive",
+      "value" : "pom.xml"
+    }, {
+      "name" : "codesource",
+      "value" : "/Users/beevans/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.17.2/jackson-core-2.17.2.jar!/META-INF/maven/com.fasterxml.jackson.core/jackson-core/pom.xml"
+    } ],
+    "type" : "library",
+    "bom-ref" : "com.fasterxml.jackson.core:jackson-core:2.17.2"
+  }, {
+    "name" : "slf4j-simple",
+    "version" : "simple/pom",
+    "scope" : "required",
+    "hashes" : [ {
+      "alg" : "SHA-1",
+      "content" : "bfa4d4dad645a5b11c022ae0043bac2df6cf16b5"
+    }, {
+      "alg" : "MD5",
+      "content" : "2f6dd5da0703850d4af89524b38e250e"
+    } ],
+    "properties" : [ {
+      "name" : "path",
+      "value" : "META-INF/maven/org.slf4j/slf4j-simple"
+    }, {
+      "name" : "archive",
+      "value" : "pom.xml"
+    }, {
+      "name" : "codesource",
+      "value" : "/Users/beevans/.m2/repository/org/slf4j/slf4j-simple/2.0.7/slf4j-simple-2.0.7.jar!/META-INF/maven/org.slf4j/slf4j-simple/pom.xml"
+    } ],
+    "type" : "library",
+    "bom-ref" : "null:slf4j-simple:simple/pom"
+  }, {
+    "group" : "com.fasterxml.jackson.core",
+    "name" : "jackson-databind",
+    "version" : "2.17.2",
+    "scope" : "required",
+    "hashes" : [ {
+      "alg" : "SHA-1",
+      "content" : "e6deb029e5901e027c129341fac39e515066b68c"
+    }, {
+      "alg" : "MD5",
+      "content" : "3e1ff7c1f0fda885946619a47ef9d5de"
+    } ],
+    "purl" : "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.17.2",
+    "properties" : [ {
+      "name" : "path",
+      "value" : "META-INF/maven/com.fasterxml.jackson.core/jackson-databind"
+    }, {
+      "name" : "archive",
+      "value" : "pom.xml"
+    }, {
+      "name" : "codesource",
+      "value" : "/Users/beevans/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.17.2/jackson-databind-2.17.2.jar!/META-INF/maven/com.fasterxml.jackson.core/jackson-databind/pom.xml"
+    } ],
+    "type" : "library",
+    "bom-ref" : "com.fasterxml.jackson.core:jackson-databind:2.17.2"
+  }, {
+    "name" : "runtimes-java-api",
+    "version" : "api/pom",
+    "scope" : "required",
+    "hashes" : [ {
+      "alg" : "SHA-1",
+      "content" : "bf1415a6afcc245ee30a7f50da539cabdaadaba3"
+    }, {
+      "alg" : "MD5",
+      "content" : "b3ba0edcf25654f9a7727e94bcd1418f"
+    } ],
+    "properties" : [ {
+      "name" : "path",
+      "value" : "META-INF/maven/com.redhat.insights/runtimes-java-api"
+    }, {
+      "name" : "archive",
+      "value" : "pom.xml"
+    }, {
+      "name" : "codesource",
+      "value" : "/Users/beevans/.m2/repository/com/redhat/insights/runtimes-java-api/2.0.3/runtimes-java-api-2.0.3.jar!/META-INF/maven/com.redhat.insights/runtimes-java-api/pom.xml"
+    } ],
+    "type" : "library",
+    "bom-ref" : "null:runtimes-java-api:api/pom"
+  }, {
+    "name" : "slf4j-api",
+    "version" : "api/pom",
+    "scope" : "required",
+    "hashes" : [ {
+      "alg" : "SHA-1",
+      "content" : "41eb7184ea9d556f23e18b5cb99cad1f8581fc00"
+    }, {
+      "alg" : "MD5",
+      "content" : "403dffa46cdd2e3c82da19df4f394a4c"
+    } ],
+    "properties" : [ {
+      "name" : "path",
+      "value" : "META-INF/maven/org.slf4j/slf4j-api"
+    }, {
+      "name" : "archive",
+      "value" : "pom.xml"
+    }, {
+      "name" : "codesource",
+      "value" : "/Users/beevans/.m2/repository/org/slf4j/slf4j-api/2.0.7/slf4j-api-2.0.7.jar!/META-INF/maven/org.slf4j/slf4j-api/pom.xml"
+    } ],
+    "type" : "library",
+    "bom-ref" : "null:slf4j-api:api/pom"
+  }, {
+    "group" : "org.cyclonedx",
+    "name" : "cyclonedx-core-java",
+    "version" : "7.3.1",
+    "scope" : "required",
+    "hashes" : [ {
+      "alg" : "SHA-1",
+      "content" : "e891a609eae79267a05c0ccb6719adbf15eef28c"
+    }, {
+      "alg" : "MD5",
+      "content" : "8bf5ed26fce41ce6d915e7b0c04fdf87"
+    } ],
+    "purl" : "pkg:maven/org.cyclonedx/cyclonedx-core-java@7.3.1",
+    "properties" : [ {
+      "name" : "path",
+      "value" : "META-INF/maven/org.cyclonedx/cyclonedx-core-java"
+    }, {
+      "name" : "archive",
+      "value" : "pom.xml"
+    }, {
+      "name" : "codesource",
+      "value" : "/Users/beevans/.m2/repository/org/cyclonedx/cyclonedx-core-java/7.3.1/cyclonedx-core-java-7.3.1.jar!/META-INF/maven/org.cyclonedx/cyclonedx-core-java/pom.xml"
+    } ],
+    "type" : "library",
+    "bom-ref" : "org.cyclonedx:cyclonedx-core-java:7.3.1"
+  } ]
+}
