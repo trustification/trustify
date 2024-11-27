@@ -8,6 +8,7 @@ use sea_orm::entity::prelude::*;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
+    #[sea_orm(unique, indexed)]
     pub name: String,
     pub cpe_key: Option<String>,
     pub website: Option<String>,

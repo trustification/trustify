@@ -19,7 +19,12 @@ impl MigrationTrait for Migration {
                             .default(Func::cust(UuidV4))
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Organization::Name).string().not_null())
+                    .col(
+                        ColumnDef::new(Organization::Name)
+                            .unique_key()
+                            .string()
+                            .not_null(),
+                    )
                     .col(ColumnDef::new(Organization::CpeKey).string())
                     .col(ColumnDef::new(Organization::Website).string())
                     .to_owned(),
