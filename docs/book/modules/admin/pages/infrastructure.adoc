@@ -103,7 +103,7 @@ variable "app-domain" {
   type = string
 }
 
-module "trustification" {
+module "trustify" {
   source = "./trustify" # <5>
 
   cluster-vpc-id = "<your cluster vpc>" # <6>
