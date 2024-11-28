@@ -8,7 +8,8 @@ use hex::ToHex;
 use jsonpath_rust::JsonPathQuery;
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
-use test_context::test_context;
+use std::rc::Rc;
+use test_context::{futures, test_context};
 use test_log::test;
 use time::OffsetDateTime;
 use trustify_common::{db::Transactional, hashing::Digests, id::Id, model::PaginatedResults};
@@ -382,6 +383,56 @@ async fn upload_default_csaf_format_multiple(ctx: &TrustifyContext) -> Result<()
         let result: IngestResult = app.call_and_read_body_json(request).await;
         log::debug!("{result:?}");
         assert!(matches!(result.id, Id::Uuid(_)));
+    }
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+#[ignore]
+async fn upload_default_csaf_format_multiple_concurrent(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let app = Rc::new(caller(ctx).await?);
+    let files = vec![
+        "csaf/cve-2023-0044.json",
+        "csaf/rhsa-2023_5835.json",
+        "csaf/rhsa-2024_2776.json",
+        "csaf/CVE-2023-20862.json",
+        "csaf/rhsa-2024_2049.json",
+        "csaf/cve-2023-33201.json",
+        "csaf/rhsa-2024_2784.json",
+        "csaf/rhsa-2024_2054.json",
+        "csaf/rhsa-2024_3351.json",
+        "csaf/CVE-2024-5154.json",
+        "csaf/rhsa-2024_2071.json",
+        "csaf/rhsa-2024_3666.json",
+        "csaf/RHBA-2024_1440.json",
+        "csaf/rhsa-2024-2705.json",
+    ];
+
+    let uri = "/api/v1/advisory";
+
+    let tasks = files.into_iter().map(|file| {
+        let app = app.clone();
+        async move {
+            let payload = document_bytes(file).await?;
+            let request = TestRequest::post()
+                .uri(uri)
+                .set_payload(payload)
+                .to_request();
+
+            let result: IngestResult = app.call_and_read_body_json(request).await;
+            log::debug!("{result:?}");
+            assert!(matches!(result.id, Id::Uuid(_)));
+            Ok::<(), anyhow::Error>(())
+        }
+    });
+
+    let results = futures::future::join_all(tasks).await;
+    for result in results {
+        result?;
     }
 
     Ok(())
