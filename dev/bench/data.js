@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732799054618,
+  "lastUpdate": 1732800005045,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1797,6 +1797,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 23,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "da4a1077f9942614913129bc4dc4cf75b0e446d6",
+          "message": "chore: add a kubernetes deployment for hosting the docs",
+          "timestamp": "2024-11-28T12:47:23Z",
+          "tree_id": "edb1049b4393ee793a0f817bbcaaf2f355845576",
+          "url": "https://github.com/trustification/trustify/commit/da4a1077f9942614913129bc4dc4cf75b0e446d6"
+        },
+        "date": 1732800004365,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
             "unit": "s"
           }
         ]
