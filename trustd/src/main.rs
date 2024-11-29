@@ -3,6 +3,7 @@
 use clap::Parser;
 use std::env;
 use std::process::{ExitCode, Termination};
+use tokio::select;
 use tokio::task::{spawn_local, LocalSet};
 
 mod db;
@@ -12,7 +13,9 @@ mod openapi;
 #[derive(clap::Subcommand, Debug)]
 pub enum Command {
     /// Run the API server
-    Api(trustify_server::Run),
+    Api(trustify_server::profile::api::Run),
+    /// Run the importer server
+    Importer(trustify_server::profile::importer::Run),
     /// Manage the database
     Db(db::Run),
     /// Access OpenAPI related information of the API server
@@ -35,6 +38,7 @@ impl Trustd {
     async fn run(self) -> anyhow::Result<ExitCode> {
         match self.command {
             Some(Command::Api(run)) => run.run().await,
+            Some(Command::Importer(run)) => run.run().await,
             Some(Command::Db(run)) => run.run().await,
             Some(Command::Openapi(run)) => run.run().await,
             None => pm_mode().await,
@@ -60,16 +64,28 @@ async fn pm_mode() -> anyhow::Result<ExitCode> {
         "api",
         #[cfg(feature = "garage-door")]
         "--embedded-oidc",
-        "--working-dir",
-        ".trustify/importer",
         "--sample-data",
         "--db-port",
         &postgres.settings().port.to_string(),
     ]);
 
+    let importer = Trustd::parse_from([
+        "trustd",
+        "importer",
+        "--working-dir",
+        ".trustify/importer",
+        "--db-port",
+        &postgres.settings().port.to_string(),
+    ]);
+
     LocalSet::new()
-        .run_until(async { spawn_local(api.run()).await? })
-        .await
+        .run_until(async {
+            select! {
+                ret = spawn_local(api.run())=> { ret },
+                ret = spawn_local(importer.run())=> { ret },
+            }
+        })
+        .await?
 }
 
 #[tokio::main]
