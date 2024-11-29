@@ -1,0 +1,508 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ImporterConfiguration",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "sbom"
+      ],
+      "properties": {
+        "sbom": {
+          "$ref": "#/definitions/SbomImporter"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "csaf"
+      ],
+      "properties": {
+        "csaf": {
+          "$ref": "#/definitions/CsafImporter"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "osv"
+      ],
+      "properties": {
+        "osv": {
+          "$ref": "#/definitions/OsvImporter"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "cve"
+      ],
+      "properties": {
+        "cve": {
+          "$ref": "#/definitions/CveImporter"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "clearlyDefined"
+      ],
+      "properties": {
+        "clearlyDefined": {
+          "$ref": "#/definitions/ClearlyDefinedImporter"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "clearlyDefinedCuration"
+      ],
+      "properties": {
+        "clearlyDefinedCuration": {
+          "$ref": "#/definitions/ClearlyDefinedCurationImporter"
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "cwe"
+      ],
+      "properties": {
+        "cwe": {
+          "$ref": "#/definitions/CweImporter"
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "BinaryByteSize": {
+      "$ref": "#/definitions/ByteSize"
+    },
+    "ByteSize": {
+      "type": "string"
+    },
+    "ClearlyDefinedCurationImporter": {
+      "type": "object",
+      "required": [
+        "period"
+      ],
+      "properties": {
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disabled": {
+          "description": "A flag to disable the importer, without deleting it.",
+          "default": false,
+          "type": "boolean"
+        },
+        "labels": {
+          "description": "Labels which will be applied to the ingested documents.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Labels"
+            }
+          ]
+        },
+        "period": {
+          "description": "The period the importer should be run.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumantimeSerde"
+            }
+          ]
+        },
+        "source": {
+          "default": "https://github.com/clearlydefined/curated-data",
+          "type": "string"
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ClearlyDefinedPackageType"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "ClearlyDefinedImporter": {
+      "type": "object",
+      "required": [
+        "period"
+      ],
+      "properties": {
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disabled": {
+          "description": "A flag to disable the importer, without deleting it.",
+          "default": false,
+          "type": "boolean"
+        },
+        "labels": {
+          "description": "Labels which will be applied to the ingested documents.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Labels"
+            }
+          ]
+        },
+        "period": {
+          "description": "The period the importer should be run.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumantimeSerde"
+            }
+          ]
+        },
+        "source": {
+          "default": "https://clearlydefinedprod.blob.core.windows.net/changes-notifications",
+          "type": "string"
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ClearlyDefinedPackageType"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "ClearlyDefinedPackageType": {
+      "type": "string",
+      "enum": [
+        "composer",
+        "crate",
+        "deb",
+        "gem",
+        "git",
+        "go",
+        "maven",
+        "npm",
+        "nuget",
+        "pod",
+        "pypi"
+      ]
+    },
+    "CsafImporter": {
+      "type": "object",
+      "required": [
+        "period",
+        "source"
+      ],
+      "properties": {
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disabled": {
+          "description": "A flag to disable the importer, without deleting it.",
+          "default": false,
+          "type": "boolean"
+        },
+        "fetchRetries": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "ignoreMissing": {
+          "type": "boolean"
+        },
+        "labels": {
+          "description": "Labels which will be applied to the ingested documents.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Labels"
+            }
+          ]
+        },
+        "onlyPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "period": {
+          "description": "The period the importer should be run.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumantimeSerde"
+            }
+          ]
+        },
+        "source": {
+          "type": "string"
+        },
+        "v3Signatures": {
+          "default": false,
+          "type": "boolean"
+        }
+      }
+    },
+    "CveImporter": {
+      "type": "object",
+      "required": [
+        "period"
+      ],
+      "properties": {
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disabled": {
+          "description": "A flag to disable the importer, without deleting it.",
+          "default": false,
+          "type": "boolean"
+        },
+        "labels": {
+          "description": "Labels which will be applied to the ingested documents.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Labels"
+            }
+          ]
+        },
+        "period": {
+          "description": "The period the importer should be run.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumantimeSerde"
+            }
+          ]
+        },
+        "source": {
+          "default": "https://github.com/CVEProject/cvelistV5",
+          "type": "string"
+        },
+        "startYear": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "years": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "CweImporter": {
+      "type": "object",
+      "required": [
+        "period"
+      ],
+      "properties": {
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disabled": {
+          "description": "A flag to disable the importer, without deleting it.",
+          "default": false,
+          "type": "boolean"
+        },
+        "labels": {
+          "description": "Labels which will be applied to the ingested documents.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Labels"
+            }
+          ]
+        },
+        "period": {
+          "description": "The period the importer should be run.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumantimeSerde"
+            }
+          ]
+        },
+        "source": {
+          "default": "https://cwe.mitre.org/data/xml/cwec_latest.xml.zip",
+          "type": "string"
+        }
+      }
+    },
+    "HumantimeSerde": {
+      "type": "string"
+    },
+    "Labels": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "OsvImporter": {
+      "type": "object",
+      "required": [
+        "period",
+        "source"
+      ],
+      "properties": {
+        "branch": {
+          "description": "An optional branch. Will use the default branch otherwise.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disabled": {
+          "description": "A flag to disable the importer, without deleting it.",
+          "default": false,
+          "type": "boolean"
+        },
+        "labels": {
+          "description": "Labels which will be applied to the ingested documents.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Labels"
+            }
+          ]
+        },
+        "path": {
+          "description": "An optional path to start searching for documents. Will use the root of the repository otherwise.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "period": {
+          "description": "The period the importer should be run.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumantimeSerde"
+            }
+          ]
+        },
+        "source": {
+          "description": "The URL to the git repository of the OSV data",
+          "type": "string"
+        }
+      }
+    },
+    "SbomImporter": {
+      "type": "object",
+      "required": [
+        "period",
+        "source"
+      ],
+      "properties": {
+        "description": {
+          "description": "A description for users.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "disabled": {
+          "description": "A flag to disable the importer, without deleting it.",
+          "default": false,
+          "type": "boolean"
+        },
+        "fetchRetries": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint",
+          "minimum": 0.0
+        },
+        "ignoreMissing": {
+          "type": "boolean"
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "labels": {
+          "description": "Labels which will be applied to the ingested documents.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Labels"
+            }
+          ]
+        },
+        "onlyPatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "period": {
+          "description": "The period the importer should be run.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/HumantimeSerde"
+            }
+          ]
+        },
+        "sizeLimit": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/BinaryByteSize"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source": {
+          "type": "string"
+        },
+        "v3Signatures": {
+          "default": false,
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
