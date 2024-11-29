@@ -6,6 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use trustify_auth::auth::AuthConfig;
+use trustify_module_importer::model::ImporterConfiguration;
 
 #[derive(Debug, Parser)]
 pub struct GenerateSchema {
@@ -18,6 +19,7 @@ impl GenerateSchema {
         // write schema
         self.write_schema::<Instructions>("xtask/schema/generate-dump.json")?;
         self.write_schema::<AuthConfig>("common/auth/schema/auth.json")?;
+        self.write_schema::<ImporterConfiguration>("modules/importer/schema/importer.json")?;
         Ok(())
     }
 
