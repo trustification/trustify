@@ -77,12 +77,12 @@ async fn main() -> impl Termination {
     match Trustd::parse().run().await {
         Ok(code) => code,
         Err(err) => {
-            eprintln!("Error: {err}");
+            log::error!("Error: {err}");
             for (n, err) in err.chain().skip(1).enumerate() {
                 if n == 0 {
-                    eprintln!("Caused by:");
+                    log::error!("Caused by:");
                 }
-                eprintln!("\t{err}");
+                log::error!("\t{err}");
             }
             ExitCode::FAILURE
         }

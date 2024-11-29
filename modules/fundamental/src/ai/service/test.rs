@@ -82,7 +82,7 @@ async fn test_completions_sbom_info(ctx: &TrustifyContext) -> Result<(), anyhow:
 
     log::info!("result: {:#?}", result);
     let last_message_content = result.messages.last().unwrap().content.clone();
-    println!(
+    log::info!(
         "Test formatted output:\n\n{}\n",
         termimad::inline(last_message_content.as_str())
     );
@@ -110,7 +110,7 @@ async fn test_completions_package_info(ctx: &TrustifyContext) -> Result<(), anyh
 
     log::info!("result: {:#?}", result);
     let last_message_content = result.messages.last().unwrap().content.clone();
-    println!(
+    log::info!(
         "Test formatted output:\n\n{}\n",
         termimad::inline(last_message_content.as_str())
     );
@@ -139,7 +139,7 @@ async fn test_completions_cve_info(ctx: &TrustifyContext) -> Result<(), anyhow::
 
     log::info!("result: {:#?}", result);
     let last_message_content = result.messages.last().unwrap().content.clone();
-    println!(
+    log::info!(
         "Test formatted output:\n\n{}\n",
         termimad::inline(last_message_content.as_str())
     );
@@ -167,7 +167,7 @@ async fn test_completions_advisory_info(ctx: &TrustifyContext) -> Result<(), any
 
     log::info!("result: {:#?}", result);
     let last_message_content = result.messages.last().unwrap().content.clone();
-    println!(
+    log::info!(
         "Test formatted output:\n\n{}\n",
         termimad::inline(last_message_content.as_str())
     );

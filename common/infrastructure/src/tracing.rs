@@ -130,8 +130,8 @@ fn init_otlp(name: &str) {
         .install_batch(opentelemetry_sdk::runtime::Tokio)
         .expect("unable to setup tracing pipeline");
 
-    println!("Using Jaeger tracing.");
-    println!("{:#?}", provider);
+    log::info!("Using Jaeger tracing.");
+    log::info!("{:#?}", provider);
 
     let formatting_layer = tracing_subscriber::fmt::Layer::default();
 
@@ -141,7 +141,7 @@ fn init_otlp(name: &str) {
         .with(formatting_layer)
         .try_init()
     {
-        eprintln!("Error initializing tracing: {:?}", e);
+        log::error!("Error initializing tracing: {e}");
     }
 }
 
@@ -149,7 +149,7 @@ fn init_no_tracing() {
     const RUST_LOG: &str = "info,actix_web_prom=error";
 
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-        eprintln!("RUST_LOG is unset, using default: '{RUST_LOG}'");
+        log::error!("RUST_LOG is unset, using default: '{RUST_LOG}'");
         EnvFilter::new(RUST_LOG)
     });
 
@@ -166,6 +166,6 @@ fn init_no_tracing() {
         .try_init();
 
     if let Err(err) = result {
-        eprintln!("Error initializing logging: {:?}", err);
+        log::error!("Error initializing logging: {err}");
     }
 }

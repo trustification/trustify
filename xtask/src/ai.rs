@@ -26,7 +26,7 @@ async fn run(url: String) -> anyhow::Result<()> {
         right_prompt: DefaultPromptSegment::Basic(">>".to_string()),
     };
 
-    println!(
+    log::info!(
         "{}",
         Blue.paint(
             r#"
@@ -39,7 +39,7 @@ Enter your question or type:
         )
     );
 
-    println!("Using Trustify endpoint: {}", url);
+    log::info!("Using Trustify endpoint: {}", url);
 
     let mut chat_state = ChatState::new();
     loop {
@@ -47,12 +47,12 @@ Enter your question or type:
             Ok(Signal::Success(buffer)) => {
                 match buffer.trim().to_lowercase().as_str() {
                     "quit" | "exit" => {
-                        println!("{}", Blue.paint("\nBye!"));
+                        log::info!("{}", Blue.paint("\nBye!"));
                         return Ok(());
                     }
                     "clear" => {
                         chat_state = ChatState::new();
-                        println!("{}", Blue.paint("\nChat history cleared..."));
+                        log::info!("{}", Blue.paint("\nChat history cleared..."));
                         continue;
                     }
                     _ => {}
@@ -69,7 +69,7 @@ Enter your question or type:
                     .await?;
 
                 if res.status() != 200 {
-                    println!("Error: {}, {}", res.status(), res.text().await?);
+                    log::info!("Error: {}, {}", res.status(), res.text().await?);
                     continue;
                 }
 
@@ -88,14 +88,14 @@ Enter your question or type:
                 for i in pos..new_state.messages.len() {
                     let message = &new_state.messages[i];
                     if message.message_type == MessageType::Ai {
-                        println!("{}", Blue.paint(&message.content));
+                        log::info!("{}", Blue.paint(&message.content));
                     }
                 }
 
                 chat_state = new_state;
             }
             Ok(Signal::CtrlD) | Ok(Signal::CtrlC) => {
-                println!("\nBye!");
+                log::info!("\nBye!");
                 break;
             }
             _ => {}

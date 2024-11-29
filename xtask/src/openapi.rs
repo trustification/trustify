@@ -48,7 +48,7 @@ pub async fn generate_openapi(base: Option<&Path>) -> anyhow::Result<()> {
 
     // create spec from actual server
 
-    println!("Building openapi");
+    log::info!("Building openapi");
 
     let doc = create_openapi()
         .await?
@@ -57,7 +57,7 @@ pub async fn generate_openapi(base: Option<&Path>) -> anyhow::Result<()> {
 
     // write
 
-    println!("Writing openapi to {:?}", &path);
+    log::info!("Writing openapi to {:?}", &path);
 
     fs::write(path, doc).context("Failed to write openapi spec")?;
 
@@ -75,7 +75,7 @@ pub fn validate() -> anyhow::Result<()> {
         ));
     };
 
-    println!("Validating openapi at {:?}", "openapi.yaml");
+    log::info!("Validating openapi at {:?}", "openapi.yaml");
 
     // run the openapi validator container
     if Command::new(command)

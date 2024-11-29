@@ -18,7 +18,7 @@ impl Precommit {
 
         Openapi::default().run().await?;
 
-        println!("Running: cargo clippy");
+        log::info!("Running: cargo clippy");
         if !Command::new("cargo")
             .args([
                 "clippy",
@@ -39,7 +39,7 @@ impl Precommit {
             return Err(anyhow!("cargo clippy failed"));
         }
 
-        println!("Running: cargo fmt");
+        log::info!("Running: cargo fmt");
         if !Command::new("cargo")
             .args(["fmt"])
             .status()
@@ -49,7 +49,7 @@ impl Precommit {
             return Err(anyhow!("cargo fmt failed"));
         }
 
-        println!("Running: cargo check");
+        log::info!("Running: cargo check");
         if !Command::new("cargo")
             .args(["check"])
             .status()
