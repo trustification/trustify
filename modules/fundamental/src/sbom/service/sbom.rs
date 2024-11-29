@@ -17,7 +17,6 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::{collections::HashMap, fmt::Debug};
 use tracing::instrument;
-
 use trustify_common::{
     cpe::Cpe,
     db::{
@@ -29,13 +28,12 @@ use trustify_common::{
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},
 };
-use trustify_entity::qualified_purl::CanonicalPurl;
 use trustify_entity::{
     advisory, base_purl,
     cpe::{self, CpeDto},
     labels::Labels,
     package_relates_to_package,
-    qualified_purl::{self, Qualifiers},
+    qualified_purl::{self, CanonicalPurl, Qualifiers},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
     sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, status, versioned_purl,
@@ -108,7 +106,6 @@ impl SbomService {
         search: Query,
         paginated: Paginated,
         labels: impl Into<Labels>,
-
         tx: TX,
     ) -> Result<PaginatedResults<SbomSummary>, Error> {
         let connection = self.db.connection(&tx);
