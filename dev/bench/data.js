@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732800005045,
+  "lastUpdate": 1732871463310,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1821,6 +1821,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/da4a1077f9942614913129bc4dc4cf75b0e446d6"
         },
         "date": 1732800004365,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "5c09d15731fab25ce336773899f8ba866121f03d",
+          "message": "ci: disable musl builds for now\n\nThe reason for this, that we enable sqlx's TLS mode. Which requires,\nopenssl, even for the build-dependency. In combination with musl, this\ncreates some major problems, as vendoring doesn't seem to work.\n\nFor now, we just disable musl.",
+          "timestamp": "2024-11-29T08:30:56Z",
+          "tree_id": "500a6737eddd51096cf54e926da672acf07ea76f",
+          "url": "https://github.com/trustification/trustify/commit/5c09d15731fab25ce336773899f8ba866121f03d"
+        },
+        "date": 1732871462626,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
