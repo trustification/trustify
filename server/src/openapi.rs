@@ -1,4 +1,4 @@
-use crate::{configure, default_openapi_info, Config, ModuleConfig};
+use crate::profile::api::{configure, default_openapi_info, Config, ModuleConfig};
 use actix_web::App;
 use trustify_common::{config::Database, db};
 use trustify_module_storage::service::{dispatch::DispatchBackend, fs::FileSystemBackend};
