@@ -1,4 +1,4 @@
-use crate::{embedded_oidc, endpoints, sample_data};
+use crate::{endpoints, sample_data};
 use actix_web::{
     body::MessageBody,
     dev::{ConnectionInfo, Url},
@@ -40,10 +40,15 @@ use trustify_module_storage::{
     service::{dispatch::DispatchBackend, fs::FileSystemBackend, s3::S3Backend},
 };
 use trustify_module_ui::{endpoints::UiResources, UI};
-use utoipa::openapi::{Info, License};
-use utoipa::OpenApi;
+use utoipa::{
+    openapi::{Info, License},
+    OpenApi,
+};
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::{Redoc, Servable};
+
+#[cfg(feature = "garage-door")]
+use crate::embedded_oidc;
 
 /// Run the API server
 #[derive(clap::Args, Debug)]

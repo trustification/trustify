@@ -1,4 +1,4 @@
-use crate::{embedded_oidc, endpoints, sample_data};
+use crate::{endpoints, sample_data};
 use actix_web::{
     body::MessageBody,
     dev::{ConnectionInfo, Url},
