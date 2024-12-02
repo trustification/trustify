@@ -59,6 +59,7 @@ impl TrustifyContext {
         }
     }
 
+    /// The paths are relative to `<workspace>/etc/test-data`.
     pub async fn ingest_documents<'a, P: IntoIterator<Item = &'a str>>(
         &self,
         paths: P,
@@ -70,11 +71,16 @@ impl TrustifyContext {
         Ok(results)
     }
 
-    /// Same as [`self.ingest_document_as`], but with a format of [`Format::Unknown`].
+    /// Same as [`Self::ingest_document_as`], but with a format of [`Format::Unknown`].
+    ///
+    /// The path is relative to `<workspace>/etc/test-data`.
     pub async fn ingest_document(&self, path: &str) -> Result<IngestResult, anyhow::Error> {
         self.ingest_document_as(path, Format::Unknown).await
     }
 
+    /// Ingest a document with a specific format.
+    ///
+    /// The path is relative to `<workspace>/etc/test-data`.
     pub async fn ingest_document_as(
         &self,
         path: &str,
@@ -138,6 +144,7 @@ impl AsyncTestContext for TrustifyContext {
     }
 }
 
+/// return an absolute part, relative to `<workspace>/etc/test-data`.
 fn absolute(path: impl AsRef<Path>) -> Result<PathBuf, anyhow::Error> {
     let workspace_root: PathBuf = env!("CARGO_WORKSPACE_ROOT").into();
     let test_data = workspace_root.join("etc/test-data");
@@ -152,6 +159,8 @@ pub async fn document_bytes(path: &str) -> Result<Bytes, anyhow::Error> {
 }
 
 /// Load a test document as-is, no decompression.
+///
+/// The path is relative to `<workspace>/etc/test-data`.
 pub async fn document_bytes_raw(path: &str) -> Result<Bytes, anyhow::Error> {
     let bytes = tokio::fs::read(absolute(path)?).await?;
     Ok(bytes.into())

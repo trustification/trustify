@@ -1,3 +1,5 @@
+mod cpe;
+
 use super::*;
 use std::str::FromStr;
 use test_context::test_context;
