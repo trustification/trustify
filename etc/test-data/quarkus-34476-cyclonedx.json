@@ -1,0 +1,3873 @@
+{
+  "bomFormat" : "CycloneDX",
+  "specVersion" : "1.4",
+  "serialNumber" : "urn:uuid:7153c320-a925-42dc-87e1-1a675669ad36",
+  "version" : 1,
+  "metadata" : {
+    "timestamp" : "2024-11-25T16:40:11Z",
+    "tools" : [
+      {
+        "vendor" : "Eclipse Foundation - https://projects.eclipse.org/projects/technology.jbom",
+        "name" : "jbom",
+        "version" : "1.2.3-SNAPSHOT"
+      }
+    ],
+    "component" : {
+      "name" : "192.168.0.10 (beevans-mac)",
+      "version" : "1.2.3-SNAPSHOT",
+      "description" : "Java",
+      "type" : "application"
+    },
+    "manufacture" : {
+      "name" : "Unknown"
+    }
+  },
+  "components" : [
+    {
+      "name" : "quarkus-vertx",
+      "version" : "vertx/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "aab3f4874b09ca07835ae4ffc072e4daac92cbf5"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "ff63111e993ef2fc21e626f71d1b0b0e"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-vertx"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-vertx/3.8.0/quarkus-vertx-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-vertx/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-vertx:vertx/pom"
+    },
+    {
+      "name" : "resteasy-reactive-vertx",
+      "version" : "vertx/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "8c986250734e7c957f4450c66da2d803cb29427c"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "e32d8de86c87f65893010a272b49927c"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus.resteasy.reactive/resteasy-reactive-vertx"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/resteasy/reactive/resteasy-reactive-vertx/3.8.0/resteasy-reactive-vertx-3.8.0.jar!/META-INF/maven/io.quarkus.resteasy.reactive/resteasy-reactive-vertx/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:resteasy-reactive-vertx:vertx/pom"
+    },
+    {
+      "name" : "quarkus-resteasy-reactive",
+      "version" : "reactive/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "58cdce570194d3bbaa95be3d7b3ba458d85fb57f"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "c743a0db78521116f318010e490e7e55"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-resteasy-reactive"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-resteasy-reactive/3.8.0/quarkus-resteasy-reactive-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-resteasy-reactive/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-resteasy-reactive:reactive/pom"
+    },
+    {
+      "name" : "resteasy-reactive",
+      "version" : "reactive/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "0881d952213ba79140367a5dcf5e80ab9dd19eeb"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "58ace4df684f2a8ef21ea0e82552af18"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus.resteasy.reactive/resteasy-reactive"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/resteasy/reactive/resteasy-reactive/3.8.0/resteasy-reactive-3.8.0.jar!/META-INF/maven/io.quarkus.resteasy.reactive/resteasy-reactive/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:resteasy-reactive:reactive/pom"
+    },
+    {
+      "name" : "quarkus-netty",
+      "version" : "netty/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "8f8d97ba4b4dadbffc44655af29f1eb89e4ae783"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "44adef72d6fb73930f28bf00d1bc7aaa"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-netty"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-netty/3.8.0/quarkus-netty-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-netty/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-netty:netty/pom"
+    },
+    {
+      "name" : "vertx-web",
+      "version" : "web/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "b4e9c6b83e43b279e0bd945d5ebf8365b8a74146"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "877f8603a3d11c142fb838c17dd674af"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.vertx/vertx-web"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/vertx/vertx-web/4.5.3/vertx-web-4.5.3.jar!/META-INF/maven/io.vertx/vertx-web/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:vertx-web:web/pom"
+    },
+    {
+      "name" : "smallrye-mutiny-vertx-web",
+      "version" : "web/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "cc2e400cc04159cc0560030618bef57a7e8a5ac1"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "3b34296df69718c07cf4c6f9477830f5"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.reactive/smallrye-mutiny-vertx-web"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/reactive/smallrye-mutiny-vertx-web/3.9.0/smallrye-mutiny-vertx-web-3.9.0.jar!/META-INF/maven/io.smallrye.reactive/smallrye-mutiny-vertx-web/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-mutiny-vertx-web:web/pom"
+    },
+    {
+      "name" : "quarkus-bootstrap-app-model",
+      "version" : "model/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "3995c18e29a0dab2300d3e59b12f720a56ce3f69"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "0e8e4b5c0cb561f528655dbd07471adc"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-bootstrap-app-model"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-bootstrap-app-model/3.8.0/quarkus-bootstrap-app-model-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-bootstrap-app-model/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-bootstrap-app-model:model/pom"
+    },
+    {
+      "group" : "org.yaml",
+      "name" : "snakeyaml",
+      "version" : "2.2",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "3af797a25458550a16bf89acc8e4ab2b7f2bfce0"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "d78aacf5f2de5b52f1a327470efd1ad7"
+        }
+      ],
+      "purl" : "pkg:maven/org.yaml/snakeyaml@2.2",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/org.yaml/snakeyaml"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/org/yaml/snakeyaml/2.2/snakeyaml-2.2.jar!/META-INF/maven/org.yaml/snakeyaml/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "org.yaml:snakeyaml:2.2"
+    },
+    {
+      "name" : "quarkus-vertx-http-dev-ui-spi",
+      "version" : "spi/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "f6b7eb59a8a244511e78c09b11a428c123c37113"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "569694d187c81378679d659442569b66"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-vertx-http-dev-ui-spi"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-vertx-http-dev-ui-spi/3.8.0/quarkus-vertx-http-dev-ui-spi-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-vertx-http-dev-ui-spi/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-vertx-http-dev-ui-spi:spi/pom"
+    },
+    {
+      "name" : "quarkus-vertx-http-deployment-spi",
+      "version" : "spi/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "bd513f06756e984c0633b70739feae28bc2e35da"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "ccdb6dd129a6f8594a0db4abead858ae"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-vertx-http-deployment-spi"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-vertx-http-deployment-spi/3.8.0/quarkus-vertx-http-deployment-spi-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-vertx-http-deployment-spi/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-vertx-http-deployment-spi:spi/pom"
+    },
+    {
+      "name" : "quarkus-security-spi",
+      "version" : "spi/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "8cdcad50a0195bd28e05a0ba5a765db029eb3cbe"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "276796e15b2017a28a5b9857452aed55"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-security-spi"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-security-spi/3.8.0/quarkus-security-spi-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-security-spi/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-security-spi:spi/pom"
+    },
+    {
+      "name" : "quarkus-smallrye-context-propagation-spi",
+      "version" : "spi/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "a7ec37b11e53b91a3320214291c46b92ab5749d4"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "a6f74990672f8beab39fafe130ebf955"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-smallrye-context-propagation-spi"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-smallrye-context-propagation-spi/3.8.0/quarkus-smallrye-context-propagation-spi-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-smallrye-context-propagation-spi/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-smallrye-context-propagation-spi:spi/pom"
+    },
+    {
+      "name" : "quarkus-kubernetes-spi",
+      "version" : "spi/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "a11cb918a81f71ec3ea7c898a4e197fbdaf55e5f"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "6f79b6865a7d7132d6ebcda221db4511"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-kubernetes-spi"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-kubernetes-spi/3.8.0/quarkus-kubernetes-spi-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-kubernetes-spi/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-kubernetes-spi:spi/pom"
+    },
+    {
+      "name" : "quarkus-development-mode-spi",
+      "version" : "spi/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "a5f52525116b410b0327fc4b561f38b2c992e8bb"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "046f9c4ee0564b51d040b75ac6636d2b"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-development-mode-spi"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-development-mode-spi/3.8.0/quarkus-development-mode-spi-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-development-mode-spi/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-development-mode-spi:spi/pom"
+    },
+    {
+      "name" : "smallrye-mutiny-vertx-runtime",
+      "version" : "runtime/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "ae618d8820100fd8704607673a53f0f55444d2cb"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "1d35d5f6bf59825392381c53eff07dca"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.reactive/smallrye-mutiny-vertx-runtime"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/reactive/smallrye-mutiny-vertx-runtime/3.9.0/smallrye-mutiny-vertx-runtime-3.9.0.jar!/META-INF/maven/io.smallrye.reactive/smallrye-mutiny-vertx-runtime/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-mutiny-vertx-runtime:runtime/pom"
+    },
+    {
+      "name" : "netty-common",
+      "version" : "common/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "132defb4689f41b51b483b7202b22b6e89fe35fd"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "e97fc4a046e887ad72199a4598712d59"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.netty/netty-common"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/netty/netty-common/4.1.106.Final/netty-common-4.1.106.Final.jar!/META-INF/maven/io.netty/netty-common/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:netty-common:common/pom"
+    },
+    {
+      "group" : "org.wildfly.common",
+      "name" : "wildfly-common",
+      "version" : "1.7.0.Final",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "b5237d5e5a46ede4e4e142d79623d04b59d11476"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "f1c1941a984207798ab00b111cb20b3b"
+        }
+      ],
+      "purl" : "pkg:maven/org.wildfly.common/wildfly-common@1.7.0.Final",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/org.wildfly.common/wildfly-common"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/org/wildfly/common/wildfly-common/1.7.0.Final/wildfly-common-1.7.0.Final.jar!/META-INF/maven/org.wildfly.common/wildfly-common/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "org.wildfly.common:wildfly-common:1.7.0.Final"
+    },
+    {
+      "name" : "quarkus-resteasy-reactive-common",
+      "version" : "common/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "cc35862ddc250c9543a7780f8b7bf8cb525cb9e7"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "324e72454bad8a0851427b01adda6250"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-resteasy-reactive-common"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-resteasy-reactive-common/3.8.0/quarkus-resteasy-reactive-common-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-resteasy-reactive-common/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-resteasy-reactive-common:common/pom"
+    },
+    {
+      "name" : "resteasy-reactive-common",
+      "version" : "common/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "1525c0ba79406c762e53dd80c586ca0b19a1cff8"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "d0dee9ddb34bbd31012973828e06e5de"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus.resteasy.reactive/resteasy-reactive-common"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/resteasy/reactive/resteasy-reactive-common/3.8.0/resteasy-reactive-common-3.8.0.jar!/META-INF/maven/io.quarkus.resteasy.reactive/resteasy-reactive-common/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:resteasy-reactive-common:common/pom"
+    },
+    {
+      "name" : "smallrye-config-common",
+      "version" : "common/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "953feb3dc96cea32db008b83605a955fcd47580a"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "dab9724f8b38e467ef86ad9ed614773f"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.config/smallrye-config-common"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/config/smallrye-config-common/3.5.4/smallrye-config-common-3.5.4.jar!/META-INF/maven/io.smallrye.config/smallrye-config-common/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-config-common:common/pom"
+    },
+    {
+      "name" : "quarkus-vertx-http",
+      "version" : "http/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "196b73243ff3cfbee2ccddb8bcc9dd93ff6de22b"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "16ae31188d6c769ba4b00fc0788ae86f"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-vertx-http"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-vertx-http/3.8.0/quarkus-vertx-http-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-vertx-http/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-vertx-http:http/pom"
+    },
+    {
+      "name" : "netty-codec-http",
+      "version" : "http/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "21a07cdf0fc46b313fe2248f1275cdbdac0ba87b"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "7462ef9dcc87d4ecaaded602e0202906"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.netty/netty-codec-http"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/netty/netty-codec-http/4.1.106.Final/netty-codec-http-4.1.106.Final.jar!/META-INF/maven/io.netty/netty-codec-http/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:netty-codec-http:http/pom"
+    },
+    {
+      "name" : "smallrye-common-net",
+      "version" : "net/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "67e1ba3435161b43d214dc217590ee9f9c496896"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "ac42239b56740590c8d4464a90f5455a"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.common/smallrye-common-net"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/common/smallrye-common-net/2.1.2/smallrye-common-net-2.1.2.jar!/META-INF/maven/io.smallrye.common/smallrye-common-net/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-common-net:net/pom"
+    },
+    {
+      "name" : "quarkus-class-change-agent",
+      "version" : "agent/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "cf2cf4568be48249258ca3d4b910bda0f1e06c11"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "47332768f01b149a398ae789041c8e8e"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-class-change-agent"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-class-change-agent/3.8.0/quarkus-class-change-agent-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-class-change-agent/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-class-change-agent:agent/pom"
+    },
+    {
+      "group" : "org.jboss.logmanager",
+      "name" : "jboss-logmanager",
+      "version" : "3.0.4.Final",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "14edfb193ddd49b68ed271a28e6d8caf59bb388e"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "c2fd6858ba9c6bd9775ac97cf899d575"
+        }
+      ],
+      "purl" : "pkg:maven/org.jboss.logmanager/jboss-logmanager@3.0.4.Final",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/org.jboss.logmanager/jboss-logmanager"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/org/jboss/logmanager/jboss-logmanager/3.0.4.Final/jboss-logmanager-3.0.4.Final.jar!/META-INF/maven/org.jboss.logmanager/jboss-logmanager/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "org.jboss.logmanager:jboss-logmanager:3.0.4.Final"
+    },
+    {
+      "name" : "pom",
+      "version" : "logmanager/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "accb024e15025215cb5ef8c8f41ce5b684fddbf0"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "76f06095f83e219c4e01ff6c3fbd1eb2"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/org.jboss.slf4j/slf4j-jboss-logmanager"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/org/jboss/slf4j/slf4j-jboss-logmanager/2.0.0.Final/slf4j-jboss-logmanager-2.0.0.Final.jar!/META-INF/maven/org.jboss.slf4j/slf4j-jboss-logmanager/pom.xml"
+        }
+      ],
+      "type" : "library"
+    },
+    {
+      "group" : "org.jboss.logging",
+      "name" : "jboss-logging",
+      "version" : "3.5.3.Final",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "c88fc1d8a96d4c3491f55d4317458ccad53ca663"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "ee7e24e94235c13f53392ecaa53f938c"
+        }
+      ],
+      "purl" : "pkg:maven/org.jboss.logging/jboss-logging@3.5.3.Final",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/org.jboss.logging/jboss-logging"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/org/jboss/logging/jboss-logging/3.5.3.Final/jboss-logging-3.5.3.Final.jar!/META-INF/maven/org.jboss.logging/jboss-logging/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "org.jboss.logging:jboss-logging:3.5.3.Final"
+    },
+    {
+      "name" : "smallrye-config",
+      "version" : "config/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "afcc7201b2f3c539dee7117ff663ddfbdd02d41b"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "5f6273c01b80a7766da4fe1bf00d6b4d"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.config/smallrye-config"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/config/smallrye-config/3.5.4/smallrye-config-3.5.4.jar!/META-INF/maven/io.smallrye.config/smallrye-config/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-config:config/pom"
+    },
+    {
+      "name" : "smallrye-common-classloader",
+      "version" : "classloader/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "0c22f4e8ae8f393465ef41f42a026f9634361f55"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "a4448841834f7b3a4a3386335f4e1549"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.common/smallrye-common-classloader"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/common/smallrye-common-classloader/2.1.2/smallrye-common-classloader-2.1.2.jar!/META-INF/maven/io.smallrye.common/smallrye-common-classloader/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-common-classloader:classloader/pom"
+    },
+    {
+      "group" : "com.fasterxml.jackson.datatype",
+      "name" : "jackson-datatype-jdk8",
+      "version" : "jdk8/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "695d9b8639cfc7a42a0507708cef2366fe492a44"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "90d066a2c701779401751fe66e9939d7"
+        }
+      ],
+      "purl" : "pkg:maven/com.fasterxml.jackson.datatype/jackson-datatype-jdk8@jdk8%2Fpom",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/com.fasterxml.jackson.datatype/jackson-datatype-jdk8"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.16.1/jackson-datatype-jdk8-2.16.1.jar!/META-INF/maven/com.fasterxml.jackson.datatype/jackson-datatype-jdk8/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jdk8/pom"
+    },
+    {
+      "name" : "netty-resolver",
+      "version" : "resolver/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "e185ae573db04939215f94d6ba869758dcecbde9"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "2def73e9e3270eb85dfe3ba8a4275860"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.netty/netty-resolver"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/netty/netty-resolver/4.1.106.Final/netty-resolver-4.1.106.Final.jar!/META-INF/maven/io.netty/netty-resolver/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:netty-resolver:resolver/pom"
+    },
+    {
+      "name" : "quarkus-vertx-latebound-mdc-provider",
+      "version" : "provider/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "0f2dc7b4a813a9daabf8af3a32390a6b8894b6e7"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "c3d83b1cf59090ea83f83c4ec12ca2e0"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-vertx-latebound-mdc-provider"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-vertx-latebound-mdc-provider/3.8.0/quarkus-vertx-latebound-mdc-provider-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-vertx-latebound-mdc-provider/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-vertx-latebound-mdc-provider:provider/pom"
+    },
+    {
+      "name" : "netty-handler",
+      "version" : "handler/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "874c970c4ff958b1140dde52bc17e6a9e7cde662"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "bea2a6a477a240f875a7844cc3e03f79"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.netty/netty-handler"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/netty/netty-handler/4.1.106.Final/netty-handler-4.1.106.Final.jar!/META-INF/maven/io.netty/netty-handler/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:netty-handler:handler/pom"
+    },
+    {
+      "group" : "com.fasterxml.jackson.core",
+      "name" : "jackson-databind",
+      "version" : "2.16.1",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "02a16efeb840c45af1e2f31753dfe76795278b73"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "ac71b868569d329136f2c63f34dd2c89"
+        }
+      ],
+      "purl" : "pkg:maven/com.fasterxml.jackson.core/jackson-databind@2.16.1",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/com.fasterxml.jackson.core/jackson-databind"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.16.1/jackson-databind-2.16.1.jar!/META-INF/maven/com.fasterxml.jackson.core/jackson-databind/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "com.fasterxml.jackson.core:jackson-databind:2.16.1"
+    },
+    {
+      "name" : "smallrye-common-constraint",
+      "version" : "constraint/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "eb3bced1b2b2bff38a605687c6a7622c4ff38729"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "9c313cd63311881cfb1246ec7ff5a954"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.common/smallrye-common-constraint"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/common/smallrye-common-constraint/2.1.2/smallrye-common-constraint-2.1.2.jar!/META-INF/maven/io.smallrye.common/smallrye-common-constraint/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-common-constraint:constraint/pom"
+    },
+    {
+      "name" : "pom",
+      "version" : "INF/maven/org.aesh/readline/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "86e0ff06f34e4c0eeda47868dd8f63bc4356c82e"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "47dbf7f59801b5c3b92989f50e843dae"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/org.aesh/readline"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/org/aesh/readline/2.4/readline-2.4.jar!/META-INF/maven/org.aesh/readline/pom.xml"
+        }
+      ],
+      "type" : "library"
+    },
+    {
+      "name" : "netty-buffer",
+      "version" : "buffer/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "c5495ba59a627641b3a7c23f6bcb801874c7f7b0"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "a5fbb5cf0dd6726bb647e6395e695b7f"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.netty/netty-buffer"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/netty/netty-buffer/4.1.106.Final/netty-buffer-4.1.106.Final.jar!/META-INF/maven/io.netty/netty-buffer/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:netty-buffer:buffer/pom"
+    },
+    {
+      "name" : "quarkus-bootstrap-runner",
+      "version" : "runner/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "1dd74dcfd95b8a85f408f28bec8ab9ba2919dba0"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "50d0c0b77c419b0582d790daa24885a5"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-bootstrap-runner"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-bootstrap-runner/3.8.0/quarkus-bootstrap-runner-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-bootstrap-runner/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-bootstrap-runner:runner/pom"
+    },
+    {
+      "name" : "quarkus-vertx-http-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "a0f0b58fa215dd38f9393845b445792adfd71536"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "cf61481c221f6a6492bf7f4ce0415d2e"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-vertx-http-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-vertx-http-deployment/3.8.0/quarkus-vertx-http-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-vertx-http-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-vertx-http-deployment:deployment/pom"
+    },
+    {
+      "name" : "quarkus-core-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "8055cd44629bfd7cc4d9302cc52509fc09334579"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "d0cfffad22a154c6f993dd72015c5326"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-core-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-core-deployment/3.8.0/quarkus-core-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-core-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-core-deployment:deployment/pom"
+    },
+    {
+      "name" : "quarkus-resteasy-reactive-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "0a517777f79fede911877f898475137a082c89c3"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "8a303755774a1ea6b92bb8554f9840f5"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-resteasy-reactive-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-resteasy-reactive-deployment/3.8.0/quarkus-resteasy-reactive-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-resteasy-reactive-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-resteasy-reactive-deployment:deployment/pom"
+    },
+    {
+      "name" : "quarkus-jsonp-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "91b3995d34df7b3735f0a3f3fd41ac9db09f5be9"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "f3ad3ce42d26251cb7b4bd9d12618251"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-jsonp-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-jsonp-deployment/3.8.0/quarkus-jsonp-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-jsonp-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-jsonp-deployment:deployment/pom"
+    },
+    {
+      "name" : "quarkus-arc-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "eb5454f791639e596dd255ac6d0f57dded4a7998"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "988b946da0557eac0ae7d357a9d6f9ca"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-arc-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-arc-deployment/3.8.0/quarkus-arc-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-arc-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-arc-deployment:deployment/pom"
+    },
+    {
+      "name" : "quarkus-resteasy-reactive-server-spi-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "fe6086253ddf6a01b5cd489b33dfbd591cedd33f"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "dcfb4178a13550dffcd241dabcc22f62"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-resteasy-reactive-server-spi-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-resteasy-reactive-server-spi-deployment/3.8.0/quarkus-resteasy-reactive-server-spi-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-resteasy-reactive-server-spi-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-resteasy-reactive-server-spi-deployment:deployment/pom"
+    },
+    {
+      "name" : "quarkus-virtual-threads-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "6ab197be12d18af82d9f6d6114684fcbd31f0017"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "c617606047f24d23b74dcc35689d0b5c"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-virtual-threads-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-virtual-threads-deployment/3.8.0/quarkus-virtual-threads-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-virtual-threads-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-virtual-threads-deployment:deployment/pom"
+    },
+    {
+      "name" : "quarkus-vertx-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "9befd00f1e83691ba9bf92908dcaf1d98a9fec27"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "f428ce6ce27b3293cebac3b58c8e1849"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-vertx-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-vertx-deployment/3.8.0/quarkus-vertx-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-vertx-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-vertx-deployment:deployment/pom"
+    },
+    {
+      "name" : "quarkus-resteasy-reactive-common-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "99bc6f50d6ba8b5d46216af3830179097868688c"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "bd335e28e39dcb39a36fc681db4ca1f7"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-resteasy-reactive-common-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-resteasy-reactive-common-deployment/3.8.0/quarkus-resteasy-reactive-common-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-resteasy-reactive-common-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-resteasy-reactive-common-deployment:deployment/pom"
+    },
+    {
+      "name" : "quarkus-resteasy-reactive-spi-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "674ff461f06443c839f38882636dc21de0c08a20"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "561206630172f2ddf233ad630d119b99"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-resteasy-reactive-spi-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-resteasy-reactive-spi-deployment/3.8.0/quarkus-resteasy-reactive-spi-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-resteasy-reactive-spi-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-resteasy-reactive-spi-deployment:deployment/pom"
+    },
+    {
+      "name" : "quarkus-smallrye-context-propagation-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "85b3862074e2f7967d9375bf744e60b20252b052"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "e8dca784a36984a381bc74377df6531e"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-smallrye-context-propagation-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-smallrye-context-propagation-deployment/3.8.0/quarkus-smallrye-context-propagation-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-smallrye-context-propagation-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-smallrye-context-propagation-deployment:deployment/pom"
+    },
+    {
+      "name" : "quarkus-netty-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "0865d3fab4972dd542351ddbb7ee2fd635418b99"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "6ebb0596b88c76ce47a71bf132703b28"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-netty-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-netty-deployment/3.8.0/quarkus-netty-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-netty-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-netty-deployment:deployment/pom"
+    },
+    {
+      "name" : "quarkus-mutiny-deployment",
+      "version" : "deployment/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "8fda1edad0b8dc189ca73d2dd2432c622df99f0c"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "188b05deaf176230ecddbdcee2c46fb2"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-mutiny-deployment"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-mutiny-deployment/3.8.0/quarkus-mutiny-deployment-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-mutiny-deployment/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-mutiny-deployment:deployment/pom"
+    },
+    {
+      "name" : "pom",
+      "version" : "util/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "1fd00b93c4566a2b8e4bcb1597efb357bdee2175"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "8540039901af2da347bb26e805b408f6"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-fs-util"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-fs-util/0.0.10/quarkus-fs-util-0.0.10.jar!/META-INF/maven/io.quarkus/quarkus-fs-util/pom.xml"
+        }
+      ],
+      "type" : "library"
+    },
+    {
+      "name" : "netty-transport",
+      "version" : "transport/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "8fcca44ae16b98e15965093e7696832019fd6f27"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "a72246e5c21f3f6d465231530768f257"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.netty/netty-transport"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/netty/netty-transport/4.1.106.Final/netty-transport-4.1.106.Final.jar!/META-INF/maven/io.netty/netty-transport/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:netty-transport:transport/pom"
+    },
+    {
+      "name" : "netty-resolver-dns",
+      "version" : "dns/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "3970474ed55aa1e3e8de5a5602c342c6b8155371"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "f5282b67dd16a10ce387bd5a4f3282de"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.netty/netty-resolver-dns"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/netty/netty-resolver-dns/4.1.106.Final/netty-resolver-dns-4.1.106.Final.jar!/META-INF/maven/io.netty/netty-resolver-dns/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:netty-resolver-dns:dns/pom"
+    },
+    {
+      "group" : "org.jboss.threads",
+      "name" : "jboss-threads",
+      "version" : "3.5.1.Final",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "4a9ba4b753b0148d74a7984b03f5d744e32b42f0"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "9e7f0bc2de17be45db031afbcf1de0ea"
+        }
+      ],
+      "purl" : "pkg:maven/org.jboss.threads/jboss-threads@3.5.1.Final",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/org.jboss.threads/jboss-threads"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/org/jboss/threads/jboss-threads/3.5.1.Final/jboss-threads-3.5.1.Final.jar!/META-INF/maven/org.jboss.threads/jboss-threads/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "org.jboss.threads:jboss-threads:3.5.1.Final"
+    },
+    {
+      "name" : "quarkus-virtual-threads",
+      "version" : "threads/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "61079619cbc8911ecfd24c724067eb7dfb4eb81d"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "a7b327b6a05fd6c9ed784c10ab72f331"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-virtual-threads"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-virtual-threads/3.8.0/quarkus-virtual-threads-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-virtual-threads/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-virtual-threads:threads/pom"
+    },
+    {
+      "group" : "org.aesh",
+      "name" : "aesh",
+      "version" : "2.7",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "bbcc467602d2235dcea6a1d5b7e7c4195a3c174c"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "07d46c7be2258d85a332301ae50f2e47"
+        }
+      ],
+      "purl" : "pkg:maven/org.aesh/aesh@2.7",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/org.aesh/aesh"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/org/aesh/aesh/2.7/aesh-2.7.jar!/META-INF/maven/org.aesh/aesh/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "org.aesh:aesh:2.7"
+    },
+    {
+      "name" : "jandex",
+      "version" : "INF/maven/io.smallrye/jandex/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "d5c9e6d1bd0ca1963b0603fcc6ac01615eda85c9"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "480f59821517a1031b443a4d2c3e8df1"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye/jandex"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/jandex/3.1.6/jandex-3.1.6.jar!/META-INF/maven/io.smallrye/jandex/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:jandex:INF/maven/io.smallrye/jandex/pom"
+    },
+    {
+      "group" : "org.eclipse.parsson",
+      "name" : "parsson",
+      "version" : "1.1.5",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "1b1969eb2c40e3880ac0faeb7e5ef1eae5fc6444"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "a11e6154d775931cd0bf8b92db61439b"
+        }
+      ],
+      "purl" : "pkg:maven/org.eclipse.parsson/parsson@1.1.5",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/org.eclipse.parsson/parsson"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/org/eclipse/parsson/parsson/1.1.5/parsson-1.1.5.jar!/META-INF/maven/org.eclipse.parsson/parsson/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "org.eclipse.parsson:parsson:1.1.5"
+    },
+    {
+      "name" : "quarkus-arc",
+      "version" : "arc/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "a38e501c0c5a2fa59acfb99e78117b79188008b7"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "5e5e19806340600d31a2f55b852e52a5"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-arc"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-arc/3.8.0/quarkus-arc-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-arc/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-arc:arc/pom"
+    },
+    {
+      "name" : "pom",
+      "version" : "INF/maven/io.mvnpm/importmap/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "ef303f83966bd9547edfd21e754a21abceb71eb2"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "14413e6cad0de4cabaafe0072207bf4d"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.mvnpm/importmap"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/mvnpm/importmap/1.0.10/importmap-1.0.10.jar!/META-INF/maven/io.mvnpm/importmap/pom.xml"
+        }
+      ],
+      "type" : "library"
+    },
+    {
+      "name" : "smallrye-common-ref",
+      "version" : "ref/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "c00ac16f8719308933548b1694ca1be9aa374365"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "132357ba903021fe1fe5253be272224a"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.common/smallrye-common-ref"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/common/smallrye-common-ref/2.1.2/smallrye-common-ref-2.1.2.jar!/META-INF/maven/io.smallrye.common/smallrye-common-ref/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-common-ref:ref/pom"
+    },
+    {
+      "name" : "quarkus-smallrye-context-propagation",
+      "version" : "propagation/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "2ffea884b4b29e507d97e79682f30a991f87528f"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "98bef5d05d4a7c74486220efd85c31cd"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-smallrye-context-propagation"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-smallrye-context-propagation/3.8.0/quarkus-smallrye-context-propagation-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-smallrye-context-propagation/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-smallrye-context-propagation:propagation/pom"
+    },
+    {
+      "name" : "mutiny-smallrye-context-propagation",
+      "version" : "propagation/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "2645c9c328b8af7ddaeeb87bdee89241e35cb083"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "32013b96a843bfa9227a77c9d9f7baf4"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.reactive/mutiny-smallrye-context-propagation"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/reactive/mutiny-smallrye-context-propagation/2.5.6/mutiny-smallrye-context-propagation-2.5.6.jar!/META-INF/maven/io.smallrye.reactive/mutiny-smallrye-context-propagation/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:mutiny-smallrye-context-propagation:propagation/pom"
+    },
+    {
+      "name" : "smallrye-context-propagation",
+      "version" : "propagation/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "1da1ba2f32c940b8b1d18bb2707cbb496498c16f"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "f911c600f32133d54d8b70fbf31a959f"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye/smallrye-context-propagation"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/smallrye-context-propagation/2.1.0/smallrye-context-propagation-2.1.0.jar!/META-INF/maven/io.smallrye/smallrye-context-propagation/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-context-propagation:propagation/pom"
+    },
+    {
+      "name" : "resteasy-reactive-common-processor",
+      "version" : "processor/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "fd589916cb302a1df1607e3259c849ece6248867"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "bf9018f59c61ccf7cf9133ae8b68425f"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus.resteasy.reactive/resteasy-reactive-common-processor"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/resteasy/reactive/resteasy-reactive-common-processor/3.8.0/resteasy-reactive-common-processor-3.8.0.jar!/META-INF/maven/io.quarkus.resteasy.reactive/resteasy-reactive-common-processor/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:resteasy-reactive-common-processor:processor/pom"
+    },
+    {
+      "name" : "resteasy-reactive-processor",
+      "version" : "processor/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "15b0cfecb58ac643275d66ecde50564da22e5572"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "2c397d5e63cfa3bd2278f7693c1ec7db"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus.resteasy.reactive/resteasy-reactive-processor"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/resteasy/reactive/resteasy-reactive-processor/3.8.0/resteasy-reactive-processor-3.8.0.jar!/META-INF/maven/io.quarkus.resteasy.reactive/resteasy-reactive-processor/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:resteasy-reactive-processor:processor/pom"
+    },
+    {
+      "name" : "arc-processor",
+      "version" : "processor/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "fd0fa2f2c3bf7fa9f506a796d0a96987b199a248"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "afaf37005796642c1f691c6dc94395af"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus.arc/arc-processor"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/arc/arc-processor/3.8.0/arc-processor-3.8.0.jar!/META-INF/maven/io.quarkus.arc/arc-processor/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:arc-processor:processor/pom"
+    },
+    {
+      "name" : "vertx-core",
+      "version" : "4.5.3",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "841583a4ad61035cca47865c5665df8321857d63"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "f9ad5a0293c35b4c5fc0ffe4a3b0f9e9"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.vertx/vertx-core"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/vertx/vertx-core/4.5.3/vertx-core-4.5.3.jar!/META-INF/maven/io.vertx/vertx-core/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:vertx-core:4.5.3"
+    },
+    {
+      "name" : "quarkus-core",
+      "version" : "core/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "174ed4aa9c9d077ff427d94e5f3967637a9a7006"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "4ccbb3774e2c7e430fc23c14718c553d"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-core"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-core/3.8.0/quarkus-core-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-core/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-core:core/pom"
+    },
+    {
+      "group" : "org.jctools",
+      "name" : "jctools-core",
+      "version" : "3.1.0",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "132defb4689f41b51b483b7202b22b6e89fe35fd"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "e97fc4a046e887ad72199a4598712d59"
+        }
+      ],
+      "purl" : "pkg:maven/org.jctools/jctools-core@3.1.0",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/org.jctools/jctools-core"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/netty/netty-common/4.1.106.Final/netty-common-4.1.106.Final.jar!/META-INF/maven/org.jctools/jctools-core/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "org.jctools:jctools-core:3.1.0"
+    },
+    {
+      "name" : "smallrye-mutiny-vertx-core",
+      "version" : "core/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "8d83dfa71357d6a38ef9594a3f27dea0f6262b1b"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "20a752ddbc44b59d85d488b1958a1962"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.reactive/smallrye-mutiny-vertx-core"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/reactive/smallrye-mutiny-vertx-core/3.9.0/smallrye-mutiny-vertx-core-3.9.0.jar!/META-INF/maven/io.smallrye.reactive/smallrye-mutiny-vertx-core/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-mutiny-vertx-core:core/pom"
+    },
+    {
+      "name" : "smallrye-config-core",
+      "version" : "core/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "c9f69f9caa9e13e290888b0aeb63e58202d1e304"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "cb2be2b632be7d8065ace4452f9a8dc8"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.config/smallrye-config-core"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/config/smallrye-config-core/3.5.4/smallrye-config-core-3.5.4.jar!/META-INF/maven/io.smallrye.config/smallrye-config-core/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-config-core:core/pom"
+    },
+    {
+      "group" : "com.fasterxml.jackson.core",
+      "name" : "jackson-core",
+      "version" : "2.16.1",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "9456bb3cdd0f79f91a5f730a1b1bb041a380c91f"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "0f51c6a7d713aed6e044cf1692bb59f4"
+        }
+      ],
+      "purl" : "pkg:maven/com.fasterxml.jackson.core/jackson-core@2.16.1",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/com.fasterxml.jackson.core/jackson-core"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.16.1/jackson-core-2.16.1.jar!/META-INF/maven/com.fasterxml.jackson.core/jackson-core/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "com.fasterxml.jackson.core:jackson-core:2.16.1"
+    },
+    {
+      "name" : "qute-core",
+      "version" : "core/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "74bf344f1b524784e5a2bf0915a8ae87f8cf0429"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "ea80175c03d2271df4756a3faf777d84"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus.qute/qute-core"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/qute/qute-core/3.8.0/qute-core-3.8.0.jar!/META-INF/maven/io.quarkus.qute/qute-core/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:qute-core:core/pom"
+    },
+    {
+      "name" : "quarkus-bootstrap-core",
+      "version" : "core/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "5126a8b18ad9bf1b862e9cae97a501460392e98e"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "047af67c1ee3a48e912d10947989e98f"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-bootstrap-core"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-bootstrap-core/3.8.0/quarkus-bootstrap-core-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-bootstrap-core/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-bootstrap-core:core/pom"
+    },
+    {
+      "name" : "arc",
+      "version" : "INF/maven/io.quarkus.arc/arc/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "26db5fc62f00a095ce631a7b726d4778389c73d4"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "a35b2c36c984bebb973bfb8f657c01b6"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus.arc/arc"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/arc/arc/3.8.0/arc-3.8.0.jar!/META-INF/maven/io.quarkus.arc/arc/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:arc:INF/maven/io.quarkus.arc/arc/pom"
+    },
+    {
+      "group" : "io.quarkus.security",
+      "name" : "quarkus-security",
+      "version" : "2.0.3.Final",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "11b43fc3a16bff3d7efd329b7cafcbf462ffc979"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "19e27d7d4b12b1c2dc4d162c3ed01838"
+        }
+      ],
+      "purl" : "pkg:maven/io.quarkus.security/quarkus-security@2.0.3.Final",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus.security/quarkus-security"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/security/quarkus-security/2.0.3.Final/quarkus-security-2.0.3.Final.jar!/META-INF/maven/io.quarkus.security/quarkus-security/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "io.quarkus.security:quarkus-security:2.0.3.Final"
+    },
+    {
+      "name" : "netty-codec",
+      "version" : "codec/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "025171b63aa1e7a5fd8a7e4e660d6d3110241ea7"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "d7867a17c4841fc3d354e835f0f6f334"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.netty/netty-codec"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/netty/netty-codec/4.1.106.Final/netty-codec-4.1.106.Final.jar!/META-INF/maven/io.netty/netty-codec/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:netty-codec:codec/pom"
+    },
+    {
+      "name" : "smallrye-common-os",
+      "version" : "os/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "69aa7fb01d27a1adb7dc5b9c350161f4df4ced36"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "fc254a41cd75dce89df8b8844fab84c8"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.common/smallrye-common-os"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/common/smallrye-common-os/2.1.2/smallrye-common-os-2.1.2.jar!/META-INF/maven/io.smallrye.common/smallrye-common-os/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-common-os:os/pom"
+    },
+    {
+      "name" : "mutiny",
+      "version" : "INF/maven/io.smallrye.reactive/mutiny/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "5c3d0007ab4af718ffc245c4cd0063a49192f1e0"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "7d92a262cd54d43b3d94c3af4f53b305"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.reactive/mutiny"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/reactive/mutiny/2.5.6/mutiny-2.5.6.jar!/META-INF/maven/io.smallrye.reactive/mutiny/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:mutiny:INF/maven/io.smallrye.reactive/mutiny/pom"
+    },
+    {
+      "name" : "quarkus-builder",
+      "version" : "builder/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "01142beb2cf055a838629481fc00c219386d73a8"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "6ba486b5cf74b52bebebd544b38fb829"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-builder"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-builder/3.8.0/quarkus-builder-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-builder/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-builder:builder/pom"
+    },
+    {
+      "group" : "io.quarkus.gizmo",
+      "name" : "gizmo",
+      "version" : "1.7.0",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "7550d5268dec73e55df0c6df562248b903a389b4"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "fea430289b9b004225edf1b2ddc9c55f"
+        }
+      ],
+      "purl" : "pkg:maven/io.quarkus.gizmo/gizmo@1.7.0",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus.gizmo/gizmo"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/gizmo/gizmo/1.7.0/gizmo-1.7.0.jar!/META-INF/maven/io.quarkus.gizmo/gizmo/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "io.quarkus.gizmo:gizmo:1.7.0"
+    },
+    {
+      "group" : "io.github.crac",
+      "name" : "org-crac",
+      "version" : "0.1.3",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "78ca3679ec8ff707c18b17885ef589467780c486"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "f4817d4dfc402336774ce645488e9efc"
+        }
+      ],
+      "purl" : "pkg:maven/io.github.crac/org-crac@0.1.3",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.github.crac/org-crac"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/github/crac/org-crac/0.1.3/org-crac-0.1.3.jar!/META-INF/maven/io.github.crac/org-crac/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "io.github.crac:org-crac:0.1.3"
+    },
+    {
+      "name" : "pom",
+      "version" : "api/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "2012f388c6de83e29101cbf82c3ed2bd37931c64"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "4ddecd5a6280ef5f222e693ce9d29898"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/jakarta.enterprise/jakarta.enterprise.cdi-api"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/jakarta/enterprise/jakarta.enterprise.cdi-api/4.0.1/jakarta.enterprise.cdi-api-4.0.1.jar!/META-INF/maven/jakarta.enterprise/jakarta.enterprise.cdi-api/pom.xml"
+        }
+      ],
+      "type" : "library"
+    },
+    {
+      "name" : "quarkus-mutiny",
+      "version" : "mutiny/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "682da4ca7c241fca150b15c9760c642da8417d8a"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "356e276ab63bacac8ff0a47411daa2fd"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.quarkus/quarkus-mutiny"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/quarkus/quarkus-mutiny/3.8.0/quarkus-mutiny-3.8.0.jar!/META-INF/maven/io.quarkus/quarkus-mutiny/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:quarkus-mutiny:mutiny/pom"
+    },
+    {
+      "group" : "com.fasterxml.jackson.core",
+      "name" : "jackson-annotations",
+      "version" : "2.16.1",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "fd441d574a71e7d10a4f73de6609f881d8cdfeec"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "1c1e081b6b61ee1f1cb0ef52eef45d61"
+        }
+      ],
+      "purl" : "pkg:maven/com.fasterxml.jackson.core/jackson-annotations@2.16.1",
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/com.fasterxml.jackson.core/jackson-annotations"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.16.1/jackson-annotations-2.16.1.jar!/META-INF/maven/com.fasterxml.jackson.core/jackson-annotations/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "com.fasterxml.jackson.core:jackson-annotations:2.16.1"
+    },
+    {
+      "name" : "smallrye-common-expression",
+      "version" : "expression/pom",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "SHA-1",
+          "content" : "dcb78d2e61367406e42f1ed4bf8578618a1b4d58"
+        },
+        {
+          "alg" : "MD5",
+          "content" : "c5029b5945391c0495b2a1294b4a2bb8"
+        }
+      ],
+      "properties" : [
+        {
+          "name" : "path",
+          "value" : "META-INF/maven/io.smallrye.common/smallrye-common-expression"
+        },
+        {
+          "name" : "archive",
+          "value" : "pom.xml"
+        },
+        {
+          "name" : "codesource",
+          "value" : "/Users/beevans/.m2/repository/io/smallrye/common/smallrye-common-expression/2.1.2/smallrye-common-expression-2.1.2.jar!/META-INF/maven/io.smallrye.common/smallrye-common-expression/pom.xml"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "null:smallrye-common-expression:expression/pom"
+    }
+  ],
+  "dependencies" : [
+    {
+      "ref" : "null:quarkus-vertx:vertx/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-arc:null",
+        "io.quarkus:quarkus-netty:null",
+        "io.netty:netty-codec-haproxy:null",
+        "com.fasterxml.jackson.core:jackson-databind:null",
+        "io.smallrye.common:smallrye-common-annotation:null",
+        "io.smallrye.common:smallrye-common-vertx-context:null",
+        "io.quarkus:quarkus-mutiny:null",
+        "io.quarkus:quarkus-virtual-threads:null",
+        "io.quarkus:quarkus-vertx-latebound-mdc-provider:null",
+        "io.smallrye.reactive:smallrye-mutiny-vertx-core:null",
+        "io.smallrye:smallrye-fault-tolerance-vertx:null",
+        "org.graalvm.sdk:graal-sdk:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.assertj:assertj-core:null"
+      ]
+    },
+    {
+      "ref" : "null:netty-codec:codec/pom",
+      "dependsOn" : [
+        "${project.groupId}:netty-common:${project.version}",
+        "${project.groupId}:netty-buffer:${project.version}",
+        "${project.groupId}:netty-transport:${project.version}",
+        "com.google.protobuf:protobuf-java:null",
+        "com.google.protobuf.nano:protobuf-javanano:null",
+        "org.jboss.marshalling:jboss-marshalling:null",
+        "com.jcraft:jzlib:null",
+        "com.ning:compress-lzf:null",
+        "net.jpountz.lz4:lz4:null",
+        "com.github.jponge:lzma-java:null",
+        "com.github.luben:zstd-jni:null",
+        "com.aayushatharva.brotli4j:brotli4j:null",
+        "com.aayushatharva.brotli4j:native-linux-x86_64:null",
+        "com.aayushatharva.brotli4j:native-linux-aarch64:null",
+        "com.aayushatharva.brotli4j:native-linux-riscv64:null",
+        "com.aayushatharva.brotli4j:native-osx-x86_64:null",
+        "com.aayushatharva.brotli4j:native-osx-aarch64:null",
+        "com.aayushatharva.brotli4j:native-windows-x86_64:null",
+        "org.mockito:mockito-core:null",
+        "org.jboss.marshalling:jboss-marshalling-serial:null",
+        "org.jboss.marshalling:jboss-marshalling-river:null",
+        "org.apache.commons:commons-compress:null",
+        "org.reflections:reflections:null",
+        "com.google.code.gson:gson:null"
+      ]
+    },
+    {
+      "ref" : "com.fasterxml.jackson.core:jackson-annotations:2.16.1",
+      "dependsOn" : [
+        "junit:junit:${version.junit}"
+      ]
+    },
+    {
+      "ref" : "null:microprofile-config-api:api/pom",
+      "dependsOn" : [
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "biz.aQute.bnd:biz.aQute.bnd.annotation:null",
+        "org.osgi:org.osgi.service.cdi:null"
+      ]
+    },
+    {
+      "ref" : "null:smallrye-config-common:common/pom",
+      "dependsOn" : [
+        "org.eclipse.microprofile.config:microprofile-config-api:null",
+        "io.smallrye.common:smallrye-common-classloader:null",
+        "org.jboss.logging:jboss-logging:null",
+        "org.junit.jupiter:junit-jupiter:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-vertx-http:http/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-core:null",
+        "io.quarkus:quarkus-security-runtime-spi:null",
+        "io.quarkus:quarkus-credentials:null",
+        "io.quarkus:quarkus-mutiny:null",
+        "io.smallrye.common:smallrye-common-vertx-context:null",
+        "io.quarkus.security:quarkus-security:null",
+        "io.quarkus:quarkus-vertx:null",
+        "io.smallrye.reactive:smallrye-mutiny-vertx-web:null",
+        "io.vertx:vertx-web:null",
+        "org.graalvm.sdk:graal-sdk:null",
+        "io.github.crac:org-crac:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.assertj:assertj-core:null",
+        "com.fasterxml.jackson.core:jackson-databind:null",
+        "org.mockito:mockito-core:null",
+        "org.mockito:mockito-junit-jupiter:null"
+      ]
+    },
+    {
+      "ref" : "null:smallrye-common-constraint:constraint/pom",
+      "dependsOn" : [
+        "org.jboss.logging:jboss-logging:null",
+        "org.jboss.logging:jboss-logging-annotations:null",
+        "org.jboss.logging:jboss-logging-processor:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-class-change-agent:agent/pom",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "null:smallrye-mutiny-vertx-core:core/pom",
+      "dependsOn" : [
+        "io.smallrye.reactive:mutiny:null",
+        "io.smallrye.reactive:smallrye-mutiny-vertx-runtime:${project.version}",
+        "${gen-source-groupId}:${gen-source-artifactId}:${gen-source-version}",
+        "${project.groupId}:vertx-mutiny-generator:${project.version}",
+        "com.fasterxml.jackson.core:jackson-databind:${jackson.version}",
+        "io.vertx:vertx-core:null",
+        "junit:junit:null",
+        "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:null",
+        "org.assertj:assertj-core:null"
+      ]
+    },
+    {
+      "ref" : "null:qute-core:core/pom",
+      "dependsOn" : [
+        "org.jboss.logging:jboss-logging:null",
+        "io.smallrye.reactive:mutiny:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.assertj:assertj-core:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-resteasy-reactive-common:common/pom",
+      "dependsOn" : [
+        "io.quarkus.resteasy.reactive:resteasy-reactive-common:null",
+        "io.quarkus:quarkus-mutiny:null",
+        "io.quarkus:quarkus-vertx:null",
+        "io.quarkus:quarkus-jsonp:null",
+        "org.junit.jupiter:junit-jupiter:null"
+      ]
+    },
+    {
+      "ref" : "com.fasterxml.jackson.core:jackson-core:2.16.1",
+      "dependsOn" : [
+        "ch.randelshofer:fastdoubleparser:1.0.0",
+        "org.junit.vintage:junit-vintage-engine:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.assertj:assertj-core:null"
+      ]
+    },
+    {
+      "ref" : "null:smallrye-config:config/pom",
+      "dependsOn" : [
+        "io.smallrye.config:smallrye-config-core:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "org.jboss.logging:jboss-logging:null",
+        "org.jboss.logging:jboss-logging-annotations:null",
+        "org.jboss.logging:jboss-logging-processor:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.junit.platform:junit-platform-launcher:null",
+        "org.junit.platform:junit-platform-testkit:null",
+        "org.junit.platform:junit-platform-commons:null",
+        "org.jboss.weld:weld-junit5:null"
+      ]
+    },
+    {
+      "ref" : "null:mutiny:INF/maven/io.smallrye.reactive/mutiny/pom",
+      "dependsOn" : [
+        "io.smallrye.common:smallrye-common-annotation:${smallrye-common-annotation.version}",
+        "io.reactivex.rxjava3:rxjava:null",
+        "io.smallrye.reactive:mutiny-zero-flow-adapters:null",
+        "io.smallrye.reactive:mutiny-test-utils:null",
+        "org.junit.jupiter:junit-jupiter-api:null",
+        "org.junit.jupiter:junit-jupiter-engine:null",
+        "org.junit.jupiter:junit-jupiter-params:null",
+        "org.awaitility:awaitility:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-resteasy-reactive-spi-deployment:deployment/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-core-deployment:null",
+        "jakarta.ws.rs:jakarta.ws.rs-api:null"
+      ]
+    },
+    {
+      "ref" : "org.jboss.threads:jboss-threads:3.5.1.Final",
+      "dependsOn" : [
+        "org.graalvm.nativeimage:svm:19.3.1",
+        "org.jboss.logging:jboss-logging-annotations:2.2.0.Final",
+        "org.jboss.logging:jboss-logging-processor:2.2.0.Final",
+        "org.jboss.logging:jboss-logging:3.4.1.Final",
+        "org.wildfly.common:wildfly-common:1.5.0.Final",
+        "junit:junit:4.13.1",
+        "org.assertj:assertj-core:3.16.1",
+        "org.awaitility:awaitility:4.0.2",
+        "org.jboss.logmanager:jboss-logmanager:2.1.14.Final"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-virtual-threads-deployment:deployment/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-arc-deployment:null",
+        "io.quarkus:quarkus-virtual-threads:null",
+        "io.quarkus:quarkus-core-deployment:null"
+      ]
+    },
+    {
+      "ref" : "null:netty-resolver-dns:dns/pom",
+      "dependsOn" : [
+        "${project.groupId}:netty-common:${project.version}",
+        "${project.groupId}:netty-buffer:${project.version}",
+        "${project.groupId}:netty-resolver:${project.version}",
+        "${project.groupId}:netty-transport:${project.version}",
+        "${project.groupId}:netty-codec:${project.version}",
+        "${project.groupId}:netty-codec-dns:${project.version}",
+        "${project.groupId}:netty-handler:${project.version}",
+        "org.apache.directory.server:apacheds-protocol-dns:null",
+        "commons-lang:commons-lang:2.6",
+        "org.reflections:reflections:null",
+        "com.google.code.gson:gson:null"
+      ]
+    },
+    {
+      "ref" : "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:jdk8/pom",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "null:smallrye-config-core:core/pom",
+      "dependsOn" : [
+        "org.eclipse.microprofile.config:microprofile-config-api:null",
+        "jakarta.annotation:jakarta.annotation-api:null",
+        "io.smallrye.common:smallrye-common-annotation:null",
+        "io.smallrye.common:smallrye-common-expression:null",
+        "io.smallrye.common:smallrye-common-constraint:null",
+        "io.smallrye.common:smallrye-common-classloader:null",
+        "org.jboss.logging:jboss-logging:null",
+        "org.jboss.logging:jboss-logging-annotations:null",
+        "org.jboss.logging:jboss-logging-processor:null",
+        "org.ow2.asm:asm:null",
+        "io.smallrye.config:smallrye-config-common:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "io.smallrye.testing:smallrye-testing-utilities:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-mutiny:mutiny/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-core:null",
+        "io.smallrye.reactive:mutiny:null",
+        "io.quarkus:quarkus-smallrye-context-propagation:null",
+        "io.smallrye.reactive:mutiny-smallrye-context-propagation:null",
+        "io.quarkus:quarkus-junit5-internal:null",
+        "org.awaitility:awaitility:null",
+        "org.assertj:assertj-core:null"
+      ]
+    },
+    {
+      "ref" : "null:smallrye-context-propagation-api:api/pom",
+      "dependsOn" : [
+        "org.eclipse.microprofile.context-propagation:microprofile-context-propagation-api:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null"
+      ]
+    },
+    {
+      "ref" : "io.quarkus.security:quarkus-security:2.0.3.Final",
+      "dependsOn" : [
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:${cdi-api.version}",
+        "org.jboss.logging:jboss-logging:${jboss-logging.version}",
+        "io.smallrye.reactive:mutiny:${mutiny.version}"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-netty-deployment:deployment/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-netty:null",
+        "io.quarkus:quarkus-arc-deployment:null",
+        "io.vertx:vertx-web:null"
+      ]
+    },
+    {
+      "ref" : "null:netty-resolver:resolver/pom",
+      "dependsOn" : [
+        "${project.groupId}:netty-common:${project.version}",
+        "org.mockito:mockito-core:null"
+      ]
+    },
+    {
+      "ref" : "null:arc:INF/maven/io.quarkus.arc/arc/pom",
+      "dependsOn" : [
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "jakarta.annotation:jakarta.annotation-api:null",
+        "jakarta.transaction:jakarta.transaction-api:null",
+        "io.smallrye.reactive:mutiny:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.jboss.logging:jboss-logging:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-resteasy-reactive:reactive/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-resteasy-reactive-common:null",
+        "io.quarkus:quarkus-resteasy-reactive-kotlin:null",
+        "io.quarkus.resteasy.reactive:resteasy-reactive-vertx:null",
+        "io.quarkus:quarkus-vertx-http:null",
+        "com.fasterxml.jackson.core:jackson-databind:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "io.quarkus:quarkus-jsonp:null",
+        "io.quarkus:quarkus-virtual-threads:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-vertx-http-dev-ui-spi:spi/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-core-deployment:null"
+      ]
+    },
+    {
+      "ref" : "null:vertx-core:4.5.3",
+      "dependsOn" : [
+        "io.netty:netty-common:null",
+        "io.netty:netty-buffer:null",
+        "io.netty:netty-transport:null",
+        "io.netty:netty-handler:null",
+        "io.netty:netty-handler-proxy:null",
+        "io.netty:netty-codec-http:null",
+        "io.netty:netty-codec-http2:null",
+        "io.netty:netty-resolver:null",
+        "io.netty:netty-resolver-dns:null",
+        "io.netty:netty-codec-haproxy:null",
+        "io.netty:netty-transport-native-epoll:null",
+        "io.netty:netty-transport-native-kqueue:null",
+        "com.fasterxml.jackson.core:jackson-core:null",
+        "com.fasterxml.jackson.core:jackson-databind:null",
+        "org.apache.logging.log4j:log4j-api:null",
+        "org.slf4j:slf4j-api:null",
+        "io.vertx:vertx-codegen:null",
+        "io.vertx:vertx-docgen:null",
+        "junit:junit:${junit.version}",
+        "org.apache.directory.server:apacheds-protocol-dns:${apacheds-protocol-dns.version}",
+        "org.assertj:assertj-core:${assertj.version}",
+        "org.slf4j:slf4j-simple:null",
+        "org.apache.logging.log4j:log4j-core:null",
+        "io.netty:netty-tcnative-boringssl-static:null",
+        "com.aayushatharva.brotli4j:brotli4j:1.12.0",
+        "org.openjdk.jmh:jmh-core:${jmh.version}"
+      ]
+    },
+    {
+      "ref" : "null:netty-transport:transport/pom",
+      "dependsOn" : [
+        "${project.groupId}:netty-common:${project.version}",
+        "${project.groupId}:netty-buffer:${project.version}",
+        "${project.groupId}:netty-resolver:${project.version}",
+        "org.mockito:mockito-core:null",
+        "org.reflections:reflections:null",
+        "com.google.code.gson:gson:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-core:core/pom",
+      "dependsOn" : [
+        "jakarta.annotation:jakarta.annotation-api:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "jakarta.inject:jakarta.inject-api:null",
+        "io.smallrye.common:smallrye-common-os:null",
+        "io.quarkus:quarkus-ide-launcher:null",
+        "io.quarkus:quarkus-development-mode-spi:null",
+        "io.smallrye.config:smallrye-config:null",
+        "org.jboss.logging:jboss-logging:null",
+        "org.jboss.logmanager:jboss-logmanager:null",
+        "org.jboss.logging:jboss-logging-annotations:null",
+        "org.jboss.threads:jboss-threads:null",
+        "org.slf4j:slf4j-api:null",
+        "org.jboss.slf4j:slf4j-jboss-logmanager:null",
+        "org.graalvm.sdk:graal-sdk:null",
+        "org.wildfly.common:wildfly-common:null",
+        "io.quarkus:quarkus-bootstrap-runner:null",
+        "io.quarkus:quarkus-fs-util:null",
+        "io.quarkus:quarkus-extension-processor:${project.version}",
+        "com.github.javaparser:javaparser-core:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.assertj:assertj-core:null"
+      ]
+    },
+    {
+      "ref" : "null:netty-buffer:buffer/pom",
+      "dependsOn" : [
+        "${project.groupId}:netty-common:${project.version}",
+        "org.mockito:mockito-core:null"
+      ]
+    },
+    {
+      "ref" : "null:microprofile-context-propagation-api:1.3",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "null:quarkus-development-mode-spi:spi/pom",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "null:jandex:INF/maven/io.smallrye/jandex/pom",
+      "dependsOn" : [
+        "org.apache.ant:ant:null",
+        "io.smallrye:jandex-test-data:null",
+        "net.bytebuddy:byte-buddy:null",
+        "org.junit.jupiter:junit-jupiter:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-core-deployment:deployment/pom",
+      "dependsOn" : [
+        "org.aesh:readline:null",
+        "org.aesh:aesh:null",
+        "org.apache.commons:commons-lang3:null",
+        "org.wildfly.common:wildfly-common:null",
+        "io.quarkus.gizmo:gizmo:null",
+        "io.smallrye:jandex:null",
+        "org.ow2.asm:asm:null",
+        "org.ow2.asm:asm-commons:null",
+        "io.quarkus:quarkus-development-mode-spi:null",
+        "io.quarkus:quarkus-class-change-agent:null",
+        "io.quarkus:quarkus-bootstrap-core:null",
+        "io.quarkus:quarkus-bootstrap-maven-resolver:null",
+        "io.quarkus:quarkus-bootstrap-gradle-resolver:null",
+        "io.quarkus:quarkus-devtools-utilities:null",
+        "org.eclipse.sisu:org.eclipse.sisu.inject:null",
+        "io.quarkus:quarkus-core:null",
+        "org.assertj:assertj-core:null",
+        "io.quarkus:quarkus-builder:null",
+        "org.graalvm.sdk:graal-sdk:null",
+        "io.quarkus:quarkus-bom-quarkus-platform-properties:${project.version}",
+        "org.junit.platform:junit-platform-launcher:null",
+        "org.junit.jupiter:junit-jupiter:null"
+      ]
+    },
+    {
+      "ref" : "org.aesh:aesh:2.7",
+      "dependsOn" : [
+        "org.aesh:readline:${readline.version}",
+        "junit:junit:4.13.1"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-mutiny-deployment:deployment/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-core-deployment:null",
+        "io.quarkus:quarkus-arc-deployment:null",
+        "io.quarkus:quarkus-smallrye-context-propagation-deployment:null",
+        "io.quarkus:quarkus-mutiny:null",
+        "io.quarkus:quarkus-junit5-internal:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-smallrye-context-propagation-deployment:deployment/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-core-deployment:null",
+        "io.quarkus:quarkus-arc-deployment:null",
+        "io.quarkus:quarkus-smallrye-context-propagation-spi:null",
+        "io.quarkus:quarkus-smallrye-context-propagation:null",
+        "io.quarkus:quarkus-junit5-internal:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-virtual-threads:threads/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-core:null",
+        "io.quarkus:quarkus-arc:null",
+        "io.vertx:vertx-core:null",
+        "io.quarkus:quarkus-junit5-internal:null",
+        "org.assertj:assertj-core:null"
+      ]
+    },
+    {
+      "ref" : "org.jboss.logmanager:jboss-logmanager:3.0.4.Final",
+      "dependsOn" : [
+        "org.jboss.logging:jboss-logging:${version.org.jboss.logging.jboss-logging}",
+        "org.jboss.modules:jboss-modules:${version.org.jboss.modules.jboss-modules}",
+        "io.smallrye.common:smallrye-common-constraint:null",
+        "io.smallrye.common:smallrye-common-cpu:null",
+        "io.smallrye.common:smallrye-common-expression:null",
+        "io.smallrye.common:smallrye-common-net:null",
+        "io.smallrye.common:smallrye-common-os:null",
+        "io.smallrye.common:smallrye-common-ref:null",
+        "jakarta.json:jakarta.json-api:${version.jakarta.json.jakarta-json-api}",
+        "org.eclipse.parsson:parsson:${version.org.eclipse.parsson.jakarta.json}",
+        "org.jboss.byteman:byteman-bmunit5:${version.org.byteman}",
+        "org.junit.jupiter:junit-jupiter:null"
+      ]
+    },
+    {
+      "ref" : "null:smallrye-mutiny-vertx-runtime:runtime/pom",
+      "dependsOn" : [
+        "io.smallrye.reactive:mutiny:null",
+        "io.vertx:vertx-core:null"
+      ]
+    },
+    {
+      "ref" : "null:smallrye-mutiny-vertx-web:web/pom",
+      "dependsOn" : [
+        "${gen-source-groupId}:${gen-source-artifactId}:${vertx.version}",
+        "${project.groupId}:smallrye-mutiny-vertx-core:${project.version}",
+        "${project.groupId}:smallrye-mutiny-vertx-web-common:${project.version}",
+        "io.smallrye.reactive:smallrye-mutiny-vertx-auth-common:${project.version}",
+        "io.smallrye.reactive:smallrye-mutiny-vertx-bridge-common:${project.version}",
+        "io.smallrye.reactive:smallrye-mutiny-vertx-auth-jwt:${project.version}",
+        "io.smallrye.reactive:smallrye-mutiny-vertx-auth-htdigest:${project.version}",
+        "io.smallrye.reactive:smallrye-mutiny-vertx-auth-webauthn:${project.version}",
+        "io.smallrye.reactive:smallrye-mutiny-vertx-auth-oauth2:${project.version}",
+        "io.smallrye.reactive:smallrye-mutiny-vertx-auth-otp:${project.version}",
+        "${project.groupId}:smallrye-mutiny-vertx-uri-template:${project.version}",
+        "junit:junit:null",
+        "io.smallrye.reactive:smallrye-mutiny-vertx-web-client:${project.version}"
+      ]
+    },
+    {
+      "ref" : "null:mutiny-smallrye-context-propagation:propagation/pom",
+      "dependsOn" : [
+        "org.eclipse.microprofile.context-propagation:microprofile-context-propagation-api:null",
+        "${project.groupId}:mutiny:null",
+        "org.junit.jupiter:junit-jupiter-api:null",
+        "org.junit.jupiter:junit-jupiter-engine:null",
+        "org.awaitility:awaitility:null",
+        "io.smallrye.reactive:mutiny-test-utils:null",
+        "io.smallrye:smallrye-context-propagation:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:${jakarta.enterprise.cdi-api.version}",
+        "jakarta.annotation:jakarta.annotation-api:${jakarta.annotation-api.version}",
+        "io.smallrye.config:smallrye-config:null"
+      ]
+    },
+    {
+      "ref" : "null:slf4j-api:api/pom",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "null:quarkus-smallrye-context-propagation:propagation/pom",
+      "dependsOn" : [
+        "io.smallrye:smallrye-context-propagation:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "io.quarkus:quarkus-core:null",
+        "io.quarkus:quarkus-arc:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-resteasy-reactive-common-deployment:deployment/pom",
+      "dependsOn" : [
+        "io.quarkus.resteasy.reactive:resteasy-reactive-common-processor:null",
+        "io.quarkus:quarkus-vertx-deployment:null",
+        "io.quarkus:quarkus-arc-deployment:null",
+        "io.quarkus:quarkus-mutiny-deployment:null",
+        "io.quarkus:quarkus-resteasy-reactive-common:null",
+        "io.quarkus:quarkus-resteasy-reactive-spi-deployment:null",
+        "io.quarkus:quarkus-security-spi:null",
+        "io.quarkus:quarkus-jsonp-deployment:null"
+      ]
+    },
+    {
+      "ref" : "null:smallrye-common-os:os/pom",
+      "dependsOn" : [
+        "org.junit.jupiter:junit-jupiter:null"
+      ]
+    },
+    {
+      "ref" : "com.fasterxml.jackson.core:jackson-databind:2.16.1",
+      "dependsOn" : [
+        "com.fasterxml.jackson.core:jackson-annotations:${jackson.version.annotations}",
+        "com.fasterxml.jackson.core:jackson-core:${jackson.version.core}",
+        "org.junit.vintage:junit-vintage-engine:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.assertj:assertj-core:null",
+        "org.powermock:powermock-core:${version.powermock}",
+        "org.powermock:powermock-module-junit4:${version.powermock}",
+        "org.powermock:powermock-api-mockito2:${version.powermock}",
+        "com.google.guava:guava-testlib:31.1-jre",
+        "javax.measure:jsr-275:0.9.1",
+        "org.openjdk.jol:jol-core:0.16"
+      ]
+    },
+    {
+      "ref" : "null:resteasy-reactive-common:common/pom",
+      "dependsOn" : [
+        "io.quarkus.resteasy.reactive:resteasy-reactive-common-types:null",
+        "io.smallrye.reactive:mutiny:null",
+        "org.reactivestreams:reactive-streams:null",
+        "io.smallrye.reactive:mutiny-zero-flow-adapters:null",
+        "io.smallrye.common:smallrye-common-annotation:null",
+        "org.eclipse.parsson:parsson:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "jakarta.ws.rs:jakarta.ws.rs-api:null",
+        "jakarta.annotation:jakarta.annotation-api:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.jboss.logging:jboss-logging:null"
+      ]
+    },
+    {
+      "ref" : "org.jctools:jctools-core:3.1.0",
+      "dependsOn" : [
+        "org.hamcrest:hamcrest-all:${hamcrest.version}",
+        "junit:junit:${junit.version}",
+        "com.google.guava:guava-testlib:${guava-testlib.version}"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-resteasy-reactive-deployment:deployment/pom",
+      "dependsOn" : [
+        "io.quarkus.resteasy.reactive:resteasy-reactive-processor:null",
+        "io.quarkus:quarkus-resteasy-reactive-kotlin-deployment:null",
+        "io.quarkus:quarkus-vertx-http-deployment:null",
+        "io.quarkus:quarkus-arc-deployment:null",
+        "io.quarkus:quarkus-resteasy-reactive:null",
+        "io.quarkus:quarkus-resteasy-reactive-server-spi-deployment:null",
+        "io.quarkus:quarkus-jaxrs-spi-deployment:null",
+        "io.quarkus:quarkus-security-spi:null",
+        "io.quarkus:quarkus-jsonp-deployment:null",
+        "io.quarkus:quarkus-resteasy-reactive-common-deployment:null",
+        "io.quarkus:quarkus-virtual-threads-deployment:null",
+        "io.quarkus:quarkus-security-deployment:null",
+        "io.quarkus:quarkus-junit5-internal:null",
+        "io.rest-assured:rest-assured:null",
+        "org.assertj:assertj-core:null",
+        "org.awaitility:awaitility:null",
+        "commons-io:commons-io:null",
+        "io.quarkus:quarkus-security-test-utils:null",
+        "io.quarkus:quarkus-hibernate-validator-deployment:null",
+        "io.quarkus:quarkus-jaxrs-client-reactive-deployment:null",
+        "io.quarkus:quarkus-reactive-routes-deployment:null"
+      ]
+    },
+    {
+      "ref" : "null:netty-handler:handler/pom",
+      "dependsOn" : [
+        "${project.groupId}:netty-common:${project.version}",
+        "${project.groupId}:netty-resolver:${project.version}",
+        "${project.groupId}:netty-buffer:${project.version}",
+        "${project.groupId}:netty-transport:${project.version}",
+        "${project.groupId}:netty-transport-native-unix-common:${project.version}",
+        "${project.groupId}:netty-codec:${project.version}",
+        "${project.groupId}:netty-tcnative-classes:null",
+        "${project.groupId}:${tcnative.artifactId}:null",
+        "org.bouncycastle:bcpkix-jdk15on:null",
+        "org.bouncycastle:bctls-jdk15on:null",
+        "org.eclipse.jetty.npn:npn-api:null",
+        "org.eclipse.jetty.alpn:alpn-api:null",
+        "${conscrypt.groupId}:${conscrypt.artifactId}:null",
+        "org.mockito:mockito-core:null",
+        "software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.1.0",
+        "org.reflections:reflections:null",
+        "com.google.code.gson:gson:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-builder:builder/pom",
+      "dependsOn" : [
+        "org.wildfly.common:wildfly-common:null",
+        "org.jboss.logging:jboss-logging:null",
+        "org.jboss.threads:jboss-threads:null",
+        "org.jboss.logmanager:jboss-logmanager:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.assertj:assertj-core:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-security-spi:spi/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-core-deployment:null",
+        "io.quarkus.security:quarkus-security:null"
+      ]
+    },
+    {
+      "ref" : "null:smallrye-common-ref:ref/pom",
+      "dependsOn" : [
+        "${project.groupId}:smallrye-common-constraint:null",
+        "org.graalvm.sdk:graal-sdk:null"
+      ]
+    },
+    {
+      "ref" : "null:vertx-web:web/pom",
+      "dependsOn" : [
+        "io.vertx:vertx-web-common:null",
+        "io.vertx:vertx-auth-common:null",
+        "io.vertx:vertx-bridge-common:null",
+        "io.vertx:vertx-auth-jwt:null",
+        "io.vertx:vertx-auth-oauth2:null",
+        "io.vertx:vertx-auth-htdigest:null",
+        "io.vertx:vertx-auth-webauthn:null",
+        "io.vertx:vertx-auth-otp:null",
+        "io.vertx:vertx-unit:null",
+        "io.vertx:vertx-auth-properties:null",
+        "org.slf4j:slf4j-api:null",
+        "org.mockito:mockito-core:2.22.0",
+        "com.fasterxml.jackson.core:jackson-databind:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-smallrye-context-propagation-spi:spi/pom",
+      "dependsOn" : [
+        "org.eclipse.microprofile.context-propagation:microprofile-context-propagation-api:null",
+        "io.quarkus:quarkus-core-deployment:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-vertx-latebound-mdc-provider:provider/pom",
+      "dependsOn" : [
+        "org.jboss.logmanager:jboss-logmanager:null"
+      ]
+    },
+    {
+      "ref" : "org.wildfly.common:wildfly-common:1.7.0.Final",
+      "dependsOn" : [
+        "org.graalvm.sdk:graal-sdk:23.1.1",
+        "com.oracle.substratevm:svm:19.2.1",
+        "org.jboss.logging:jboss-logging-annotations:${version.org.jboss.logging.jboss-logging-tools}",
+        "org.jboss.logging:jboss-logging-processor:${version.org.jboss.logging.jboss-logging-tools}",
+        "org.jboss.logging:jboss-logging:${version.org.jboss.logging.jboss-logging}",
+        "javax.annotation:javax.annotation-api:1.3.2",
+        "junit:junit:4.13.2"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-kubernetes-spi:spi/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-core-deployment:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.assertj:assertj-core:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-resteasy-reactive-server-spi-deployment:deployment/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-resteasy-reactive-spi-deployment:null",
+        "io.quarkus.resteasy.reactive:resteasy-reactive-processor:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-vertx-http-deployment:deployment/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-vertx-deployment:null",
+        "io.quarkus:quarkus-vertx-http:null",
+        "io.quarkus:quarkus-vertx-http-deployment-spi:null",
+        "io.quarkus:quarkus-mutiny-deployment:null",
+        "io.quarkus:quarkus-kubernetes-spi:null",
+        "io.quarkus:quarkus-vertx-http-dev-ui-spi:null",
+        "io.quarkus:quarkus-vertx-http-dev-ui-resources:null",
+        "io.mvnpm:importmap:null",
+        "io.quarkus.qute:qute-core:null",
+        "org.yaml:snakeyaml:null",
+        "com.fasterxml.jackson.core:jackson-databind:null",
+        "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:null",
+        "io.quarkus:quarkus-vertx-http-dev-ui-tests:null",
+        "io.quarkus:quarkus-security-deployment:null",
+        "io.quarkus:quarkus-security-test-utils:null",
+        "io.quarkus:quarkus-junit5-internal:null",
+        "io.quarkus:quarkus-junit5:null",
+        "io.rest-assured:rest-assured:null",
+        "org.awaitility:awaitility:null",
+        "org.assertj:assertj-core:null",
+        "io.vertx:vertx-web-client:null"
+      ]
+    },
+    {
+      "ref" : "null:arc-processor:processor/pom",
+      "dependsOn" : [
+        "io.quarkus.arc:arc:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "org.jboss.logging:jboss-logging:null",
+        "io.smallrye:jandex:null",
+        "io.quarkus.gizmo:gizmo:null",
+        "jakarta.annotation:jakarta.annotation-api:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.assertj:assertj-core:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-bootstrap-runner:runner/pom",
+      "dependsOn" : [
+        "io.smallrye.common:smallrye-common-io:null",
+        "org.jboss.logmanager:jboss-logmanager:null",
+        "org.jboss.logging:jboss-logging:null",
+        "io.github.crac:org-crac:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.jboss.shrinkwrap:shrinkwrap-depchain:null",
+        "io.quarkus:quarkus-bootstrap-bom:${project.version}",
+        "io.quarkus:quarkus-bootstrap-bom-test:${project.version}"
+      ]
+    },
+    {
+      "ref" : "null:resteasy-reactive-vertx:vertx/pom",
+      "dependsOn" : [
+        "io.vertx:vertx-web:null",
+        "io.smallrye.reactive:smallrye-mutiny-vertx-core:null",
+        "io.quarkus.resteasy.reactive:resteasy-reactive:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "jakarta.ws.rs:jakarta.ws.rs-api:null",
+        "org.jboss.shrinkwrap:shrinkwrap-depchain:null",
+        "io.quarkus.resteasy.reactive:resteasy-reactive-processor:null",
+        "io.quarkus.resteasy.reactive:resteasy-reactive-client:null",
+        "jakarta.annotation:jakarta.annotation-api:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.awaitility:awaitility:null",
+        "org.assertj:assertj-core:null",
+        "io.rest-assured:rest-assured:null",
+        "org.jboss.logging:commons-logging-jboss-logging:null",
+        "jakarta.xml.bind:jakarta.xml.bind-api:null",
+        "jakarta.validation:jakarta.validation-api:null",
+        "io.vertx:vertx-web-client:null",
+        "org.jboss.logging:jboss-logging:null",
+        "org.jboss.logmanager:jboss-logmanager:null"
+      ]
+    },
+    {
+      "ref" : "io.quarkus.gizmo:gizmo:1.7.0",
+      "dependsOn" : [
+        "org.ow2.asm:asm:${version.asm}",
+        "org.ow2.asm:asm-util:${version.asm}",
+        "io.smallrye:jandex:${version.jandex}",
+        "junit:junit:${version.junit}"
+      ]
+    },
+    {
+      "ref" : "null:resteasy-reactive-common-processor:processor/pom",
+      "dependsOn" : [
+        "io.smallrye:jandex:null",
+        "io.quarkus.gizmo:gizmo:null",
+        "io.quarkus.resteasy.reactive:resteasy-reactive-common:null",
+        "jakarta.ws.rs:jakarta.ws.rs-api:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "jakarta.annotation:jakarta.annotation-api:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.jboss.logging:jboss-logging:null"
+      ]
+    },
+    {
+      "ref" : "null:netty-codec-http:http/pom",
+      "dependsOn" : [
+        "${project.groupId}:netty-common:${project.version}",
+        "${project.groupId}:netty-buffer:${project.version}",
+        "${project.groupId}:netty-transport:${project.version}",
+        "${project.groupId}:netty-codec:${project.version}",
+        "${project.groupId}:netty-handler:${project.version}",
+        "com.jcraft:jzlib:null",
+        "org.mockito:mockito-core:null",
+        "commons-io:commons-io:null",
+        "com.aayushatharva.brotli4j:brotli4j:null",
+        "com.aayushatharva.brotli4j:native-linux-x86_64:null",
+        "com.aayushatharva.brotli4j:native-linux-aarch64:null",
+        "com.aayushatharva.brotli4j:native-linux-riscv64:null",
+        "com.aayushatharva.brotli4j:native-osx-x86_64:null",
+        "com.aayushatharva.brotli4j:native-osx-aarch64:null",
+        "com.aayushatharva.brotli4j:native-windows-x86_64:null",
+        "com.github.luben:zstd-jni:null",
+        "org.reflections:reflections:null",
+        "com.google.code.gson:gson:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-vertx-http-deployment-spi:spi/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-core-deployment:null",
+        "io.vertx:vertx-web:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-bootstrap-app-model:model/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-fs-util:null",
+        "org.jboss.logging:jboss-logging:null",
+        "org.jboss.logging:commons-logging-jboss-logging:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.assertj:assertj-core:null",
+        "io.quarkus:quarkus-bootstrap-bom:${project.version}",
+        "io.quarkus:quarkus-bootstrap-bom-test:${project.version}"
+      ]
+    },
+    {
+      "ref" : "org.eclipse.parsson:parsson:1.1.5",
+      "dependsOn" : [
+        "jakarta.json:jakarta.json-api:null",
+        "junit:junit:null"
+      ]
+    },
+    {
+      "ref" : "null:resteasy-reactive-processor:processor/pom",
+      "dependsOn" : [
+        "io.smallrye:jandex:null",
+        "io.quarkus.resteasy.reactive:resteasy-reactive:null",
+        "io.quarkus.gizmo:gizmo:null",
+        "io.quarkus.resteasy.reactive:resteasy-reactive-common-processor:null",
+        "jakarta.ws.rs:jakarta.ws.rs-api:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "jakarta.annotation:jakarta.annotation-api:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.jboss.logging:jboss-logging:null",
+        "io.quarkus.resteasy.reactive:resteasy-reactive-build-support:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-bootstrap-core:core/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-bootstrap-app-model:null",
+        "io.quarkus:quarkus-bootstrap-maven-resolver:null",
+        "io.quarkus:quarkus-bootstrap-gradle-resolver:null",
+        "io.smallrye.common:smallrye-common-io:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.jboss.shrinkwrap:shrinkwrap-depchain:null",
+        "io.quarkus:quarkus-bootstrap-bom:${project.version}",
+        "io.quarkus:quarkus-bootstrap-bom-test:${project.version}"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-arc:arc/pom",
+      "dependsOn" : [
+        "io.quarkus.arc:arc:null",
+        "io.quarkus:quarkus-core:null",
+        "org.eclipse.microprofile.context-propagation:microprofile-context-propagation-api:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-vertx-deployment:deployment/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-arc-deployment:null",
+        "io.quarkus:quarkus-netty-deployment:null",
+        "io.quarkus:quarkus-vertx:null",
+        "io.quarkus:quarkus-virtual-threads-deployment:null",
+        "io.quarkus:quarkus-mutiny-deployment:null",
+        "io.quarkus:quarkus-junit5-internal:null",
+        "org.awaitility:awaitility:null",
+        "org.assertj:assertj-core:null",
+        "io.rest-assured:rest-assured:null",
+        "io.vertx:vertx-web-client:null"
+      ]
+    },
+    {
+      "ref" : "org.yaml:snakeyaml:2.2",
+      "dependsOn" : [
+        "junit:junit:4.13.2",
+        "org.apache.velocity:velocity-engine-core:2.3",
+        "joda-time:joda-time:2.11.1",
+        "org.projectlombok:lombok:1.18.24",
+        "org.openjdk.jmh:jmh-core:1.36",
+        "org.openjdk.jmh:jmh-generator-annprocess:1.36"
+      ]
+    },
+    {
+      "ref" : "null:smallrye-common-net:net/pom",
+      "dependsOn" : [
+        "io.smallrye.common:smallrye-common-constraint:null",
+        "org.graalvm.sdk:graal-sdk:null",
+        "org.graalvm.nativeimage:svm:null",
+        "org.jboss.logging:jboss-logging:null",
+        "org.jboss.logging:jboss-logging-annotations:null",
+        "org.jboss.logging:jboss-logging-processor:null",
+        "org.junit.jupiter:junit-jupiter:null"
+      ]
+    },
+    {
+      "ref" : "org.jboss.logging:jboss-logging:3.5.3.Final",
+      "dependsOn" : [
+        "org.jboss.logmanager:jboss-logmanager:${version.org.jboss.logmanager}",
+        "log4j:log4j:${version.org.apache.log4j}",
+        "org.apache.logging.log4j:log4j-api:${version.org.apache.logging.log4j}",
+        "org.slf4j:slf4j-api:${version.org.sfl4j}",
+        "org.junit.jupiter:junit-jupiter:null",
+        "ch.qos.logback:logback-classic:${version.ch.qos.logback}",
+        "org.apache.logging.log4j:log4j-core:${version.org.apache.logging.log4j}"
+      ]
+    },
+    {
+      "ref" : "null:netty-common:common/pom",
+      "dependsOn" : [
+        "org.graalvm.nativeimage:svm:${graalvm.version}",
+        "org.jctools:jctools-core:null",
+        "org.jetbrains:annotations-java5:null",
+        "org.slf4j:slf4j-api:null",
+        "commons-logging:commons-logging:null",
+        "org.apache.logging.log4j:log4j-1.2-api:null",
+        "org.apache.logging.log4j:log4j-api:null",
+        "org.apache.logging.log4j:log4j-core:null",
+        "io.projectreactor.tools:blockhound:null",
+        "org.mockito:mockito-core:null",
+        "io.netty:netty-dev-tools:null"
+      ]
+    },
+    {
+      "ref" : "null:smallrye-context-propagation:propagation/pom",
+      "dependsOn" : [
+        "org.eclipse.microprofile.context-propagation:microprofile-context-propagation-api:null",
+        "org.eclipse.microprofile.config:microprofile-config-api:null",
+        "${project.groupId}:smallrye-context-propagation-api:null",
+        "${project.groupId}:smallrye-context-propagation-storage:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "org.jboss.threads:jboss-threads:null"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-netty:netty/pom",
+      "dependsOn" : [
+        "io.netty:netty-codec:null",
+        "io.netty:netty-codec-http:null",
+        "io.netty:netty-codec-http2:null",
+        "io.quarkus:quarkus-arc:null",
+        "io.netty:netty-handler:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "org.graalvm.sdk:graal-sdk:null",
+        "io.netty:netty-transport-native-epoll:null",
+        "io.netty:netty-transport-native-kqueue:null",
+        "com.aayushatharva.brotli4j:brotli4j:1.7.1"
+      ]
+    },
+    {
+      "ref" : "null:smallrye-common-classloader:classloader/pom",
+      "dependsOn" : [
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.ow2.asm:asm:null",
+        "org.jboss.shrinkwrap:shrinkwrap-api:null",
+        "org.jboss.shrinkwrap:shrinkwrap-impl-base:null"
+      ]
+    },
+    {
+      "ref" : "io.github.crac:org-crac:0.1.3",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "null:quarkus-arc-deployment:deployment/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-core-deployment:null",
+        "io.quarkus:quarkus-smallrye-context-propagation-spi:null",
+        "io.quarkus:quarkus-vertx-http-dev-ui-spi:null",
+        "io.quarkus:quarkus-arc:null",
+        "io.quarkus.arc:arc-processor:null",
+        "io.quarkus:quarkus-junit5-internal:null",
+        "org.assertj:assertj-core:null",
+        "io.quarkus:quarkus-arc-test-supplement:null",
+        "jakarta.ejb:jakarta.ejb-api:4.0.1"
+      ]
+    },
+    {
+      "ref" : "null:resteasy-reactive:reactive/pom",
+      "dependsOn" : [
+        "io.quarkus.resteasy.reactive:resteasy-reactive-common:null",
+        "jakarta.enterprise:jakarta.enterprise.cdi-api:null",
+        "jakarta.ws.rs:jakarta.ws.rs-api:null",
+        "jakarta.annotation:jakarta.annotation-api:null",
+        "org.junit.jupiter:junit-jupiter:null",
+        "org.jboss.logging:jboss-logging:null",
+        "org.mockito:mockito-core:${mockito.version}"
+      ]
+    },
+    {
+      "ref" : "null:quarkus-jsonp-deployment:deployment/pom",
+      "dependsOn" : [
+        "io.quarkus:quarkus-core-deployment:null",
+        "io.quarkus:quarkus-jsonp:null"
+      ]
+    },
+    {
+      "ref" : "null:smallrye-common-expression:expression/pom",
+      "dependsOn" : [
+        "io.smallrye.common:smallrye-common-function:null",
+        "org.jboss.logging:jboss-logging:null",
+        "org.jboss.logging:jboss-logging-annotations:null",
+        "org.jboss.logging:jboss-logging-processor:null",
+        "org.junit.jupiter:junit-jupiter:null"
+      ]
+    }
+  ]
+}
