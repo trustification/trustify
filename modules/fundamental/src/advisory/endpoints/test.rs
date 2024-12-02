@@ -33,6 +33,7 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
+                id: "RHSA-1".to_string(),
                 title: Some("RHSA-1".to_string()),
                 version: None,
                 issuer: None,
@@ -70,6 +71,7 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-2"),
             AdvisoryInformation {
+                id: "RHSA-2".to_string(),
                 title: Some("RHSA-2".to_string()),
                 version: None,
                 issuer: None,
@@ -118,6 +120,7 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
+                id: "RHSA-1".to_string(),
                 title: Some("RHSA-1".to_string()),
                 version: None,
                 issuer: Some("Red Hat Product Security".to_string()),
@@ -136,6 +139,7 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-2"),
             AdvisoryInformation {
+                id: "RHSA-2".to_string(),
                 title: Some("RHSA-2".to_string()),
                 version: None,
                 issuer: Some("Red Hat Product Security".to_string()),
@@ -213,6 +217,7 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
             ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
+                id: "RHSA-1".to_string(),
                 title: Some("RHSA-1".to_string()),
                 version: None,
                 issuer: Some("Red Hat Product Security".to_string()),
@@ -231,6 +236,7 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
             ("source", "http://redhat.com/"),
             &Digests::digest("RHSA-1"),
             AdvisoryInformation {
+                id: "RHSA-2".to_string(),
                 title: Some("RHSA-2".to_string()),
                 version: None,
                 issuer: Some("Red Hat Product Security".to_string()),

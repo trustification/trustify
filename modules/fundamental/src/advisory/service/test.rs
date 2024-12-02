@@ -21,6 +21,7 @@ use trustify_test_context::TrustifyContext;
 
 pub async fn ingest_sample_advisory<'a>(
     ctx: &'a TrustifyContext,
+    id: &'a str,
     title: &'a str,
 ) -> Result<AdvisoryContext<'a>, trustify_module_ingestor::graph::error::Error> {
     ctx.graph
@@ -29,6 +30,7 @@ pub async fn ingest_sample_advisory<'a>(
             ("source", "http://redhat.com/"),
             &Digests::digest(title),
             AdvisoryInformation {
+                id: id.to_string(),
                 title: Some(title.to_string()),
                 version: None,
                 issuer: None,
@@ -42,7 +44,7 @@ pub async fn ingest_sample_advisory<'a>(
 }
 
 pub async fn ingest_and_link_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let advisory = ingest_sample_advisory(ctx, "RHSA-1").await?;
+    let advisory = ingest_sample_advisory(ctx, "RHSA-1", "RHSA-1").await?;
 
     let advisory_vuln = advisory
         .link_to_vulnerability("CVE-123", None, Transactional::None)
@@ -72,7 +74,7 @@ pub async fn ingest_and_link_advisory(ctx: &TrustifyContext) -> Result<(), anyho
 async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ingest_and_link_advisory(ctx).await?;
 
-    ingest_sample_advisory(ctx, "RHSA-2").await?;
+    ingest_sample_advisory(ctx, "RHSA-2", "RHSA-2").await?;
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
@@ -90,7 +92,7 @@ async fn all_advisories_filtered_by_average_score(
 ) -> Result<(), anyhow::Error> {
     ingest_and_link_advisory(ctx).await?;
 
-    ingest_sample_advisory(ctx, "RHSA-2").await?;
+    ingest_sample_advisory(ctx, "RHSA-2", "RHSA-2").await?;
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
@@ -113,7 +115,7 @@ async fn all_advisories_filtered_by_average_severity(
 ) -> Result<(), anyhow::Error> {
     ingest_and_link_advisory(ctx).await?;
 
-    ingest_sample_advisory(ctx, "RHSA-2").await?;
+    ingest_sample_advisory(ctx, "RHSA-2", "RHSA-2").await?;
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
@@ -136,7 +138,7 @@ async fn all_advisories_filtered_by_average_severity(
 async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let digests = Digests::digest("RHSA-1");
 
-    let advisory = ingest_sample_advisory(ctx, "RHSA-1").await?;
+    let advisory = ingest_sample_advisory(ctx, "RHSA-1", "RHSA-1").await?;
 
     let advisory_vuln: trustify_module_ingestor::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext<'_> = advisory
         .link_to_vulnerability("CVE-123", None, Transactional::None)
@@ -184,7 +186,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    ingest_sample_advisory(ctx, "RHSA-2").await?;
+    ingest_sample_advisory(ctx, "RHSA-2", "RHSA-2").await?;
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let jenny256 = Id::sha256(&digests.sha256);
@@ -234,7 +236,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let digests = Digests::digest("RHSA-1");
 
-    let advisory = ingest_sample_advisory(ctx, "RHSA-1").await?;
+    let advisory = ingest_sample_advisory(ctx, "RHSA-1", "RHSA-1").await?;
 
     let advisory_vuln = advisory
         .link_to_vulnerability("CVE-123", None, Transactional::None)

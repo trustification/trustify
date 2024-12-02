@@ -16,6 +16,7 @@ async fn all_organizations(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             ("source", "http://captpickles.com/"),
             &Digests::digest("CPIC-1"),
             AdvisoryInformation {
+                id: "CAPT-1".to_string(),
                 title: Some("CAPT-1".to_string()),
                 version: None,
                 issuer: Some("Capt Pickles Industrial Conglomerate".to_string()),

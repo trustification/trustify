@@ -28,6 +28,7 @@ impl AdvisoryQuery {
                 withdrawn: advisory.advisory.withdrawn,
                 title: advisory.advisory.title,
                 source_document_id: advisory.advisory.source_document_id,
+                document_id: advisory.advisory.document_id,
             }),
             Ok(None) => Err(FieldError::new("Advisory not found")),
             Err(err) => Err(FieldError::from(err)),
@@ -57,6 +58,7 @@ impl AdvisoryQuery {
                     withdrawn: advisory.advisory.withdrawn,
                     title: advisory.advisory.title,
                     source_document_id: advisory.advisory.source_document_id,
+                    document_id: advisory.advisory.document_id,
                 })
             })
             .collect()

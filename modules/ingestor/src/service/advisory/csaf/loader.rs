@@ -30,6 +30,7 @@ impl<'a> From<Information<'a>> for AdvisoryInformation {
     fn from(value: Information<'a>) -> Self {
         let value = value.0;
         Self {
+            id: value.document.tracking.id.clone(),
             // TODO: consider failing if the version doesn't parse
             version: parse_csaf_version(value),
             title: Some(value.document.title.clone()),

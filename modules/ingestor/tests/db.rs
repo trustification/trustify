@@ -132,6 +132,7 @@ async fn create_set(ctx: &TrustifyContext) -> anyhow::Result<()> {
             let modified = published + Duration::days(i as i64);
 
             let info = AdvisoryInformation {
+                id,
                 title: None,
                 issuer: None,
                 published: Some(published),

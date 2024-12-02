@@ -150,7 +150,7 @@ mod tests {
     #[test(actix_web::test)]
     async fn advisory_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         crate::advisory::service::test::ingest_and_link_advisory(ctx).await?;
-        crate::advisory::service::test::ingest_sample_advisory(ctx, "RHSA-2").await?;
+        crate::advisory::service::test::ingest_sample_advisory(ctx, "RHSA-2", "RHSA-2").await?;
 
         let tool = Rc::new(AdvisoryInfo(AdvisoryService::new(ctx.db.clone())));
 

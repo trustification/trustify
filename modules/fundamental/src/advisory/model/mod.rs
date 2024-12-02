@@ -24,6 +24,9 @@ pub struct AdvisoryHead {
     /// The identifier of the advisory, as assigned by the issuing organization.
     pub identifier: String,
 
+    /// The identifier of the advisory, as provided by the document.
+    pub document_id: String,
+
     /// The issuer of the advisory, if known. If no issuer is able to be
     /// determined, this field will not be included in a response.
     #[schema(required)]
@@ -74,6 +77,7 @@ impl AdvisoryHead {
         Ok(Self {
             uuid: advisory.id,
             identifier: advisory.identifier.clone(),
+            document_id: advisory.document_id.clone(),
             issuer,
             published: advisory.published,
             modified: advisory.modified,
@@ -101,6 +105,7 @@ impl AdvisoryHead {
             heads.push(Self {
                 uuid: advisory.id,
                 identifier: advisory.identifier.clone(),
+                document_id: advisory.document_id.clone(),
                 issuer,
                 published: advisory.published,
                 modified: advisory.modified,
