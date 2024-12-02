@@ -57,6 +57,7 @@ impl<'g> OsvLoader<'g> {
         });
 
         let information = AdvisoryInformation {
+            id: osv.id.clone(),
             title: osv.summary.clone(),
             // TODO(#899): check if we have some kind of version information
             version: None,

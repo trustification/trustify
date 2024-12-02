@@ -13,11 +13,15 @@ use trustify_common::{
 #[graphql(concrete(name = "Advisory", params()))]
 #[sea_orm(table_name = "advisory")]
 pub struct Model {
+    /// The database internal ID
     #[sea_orm(primary_key)]
     pub id: Uuid,
+    /// A unique document identifier
     #[graphql(name = "name")]
     pub identifier: String,
     pub version: Option<String>,
+    /// An ID as claimed by the document
+    pub document_id: String,
     pub deprecated: bool,
     pub issuer_id: Option<Uuid>,
     pub published: Option<OffsetDateTime>,

@@ -64,6 +64,7 @@ impl<'g> CveLoader<'g> {
         let reserved_date = information.reserved;
         let title = information.title.clone();
         let advisory_info = AdvisoryInformation {
+            id: id.to_string(),
             title: information.title.clone(),
             // TODO: check if we have some kind of version information
             version: None,

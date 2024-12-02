@@ -25,6 +25,7 @@ pub mod advisory_vulnerability;
 
 #[derive(Clone, Default)]
 pub struct AdvisoryInformation {
+    pub id: String,
     pub title: Option<String>,
     pub issuer: Option<String>,
     pub published: Option<OffsetDateTime>,
@@ -118,6 +119,7 @@ impl Graph {
         let labels = labels.into();
         let sha256 = digests.sha256.encode_hex::<String>();
         let AdvisoryInformation {
+            id,
             title,
             issuer,
             published,
@@ -155,6 +157,7 @@ impl Graph {
             // we create it as not deprecated (false), as we update all documents in the next step.
             deprecated: Set(false),
             version: Set(version.map(|version| version.to_string())),
+            document_id: Set(id),
             issuer_id: Set(organization.map(|org| org.organization.id)),
             title: Set(title),
             published: Set(published),
@@ -412,15 +415,16 @@ mod test {
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn deprecation(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        struct Info(OffsetDateTime);
+        struct Info<'i>(&'i str, OffsetDateTime);
 
-        impl From<Info> for AdvisoryInformation {
+        impl From<Info<'_>> for AdvisoryInformation {
             fn from(value: Info) -> Self {
                 AdvisoryInformation {
+                    id: value.0.to_string(),
                     title: None,
                     issuer: None,
                     published: None,
-                    modified: Some(value.0),
+                    modified: Some(value.1),
                     withdrawn: None,
                     version: None,
                 }
@@ -435,7 +439,7 @@ mod test {
                 "RHSA",
                 (),
                 &Digests::digest("RHSA-1"),
-                Info(datetime!(2024-01-02 00:00:00 UTC)),
+                Info("RHSA", datetime!(2024-01-02 00:00:00 UTC)),
                 Transactional::None,
             )
             .await?
@@ -447,7 +451,7 @@ mod test {
                 "RHSA",
                 (),
                 &Digests::digest("RHSA-2"),
-                Info(datetime!(2024-01-03 00:00:00 UTC)),
+                Info("RHSA", datetime!(2024-01-03 00:00:00 UTC)),
                 Transactional::None,
             )
             .await?
@@ -459,7 +463,7 @@ mod test {
                 "RHSA",
                 (),
                 &Digests::digest("RHSA-3"),
-                Info(datetime!(2024-01-01 00:00:00 UTC)),
+                Info("RHSA", datetime!(2024-01-01 00:00:00 UTC)),
                 Transactional::None,
             )
             .await?

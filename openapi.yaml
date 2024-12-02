@@ -2078,12 +2078,16 @@ components:
       required:
       - uuid
       - identifier
+      - document_id
       - issuer
       - published
       - withdrawn
       - title
       - labels
       properties:
+        document_id:
+          type: string
+          description: The identifier of the advisory, as provided by the document.
         identifier:
           type: string
           description: The identifier of the advisory, as assigned by the issuing organization.
