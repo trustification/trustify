@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1732881044963,
+  "lastUpdate": 1733136042466,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1879,6 +1879,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/9a92ddd4c197d21169ab5d0a54c3fbde8e96efc6"
         },
         "date": 1732881044325,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "80914b902895975a9b215d5ca7f8e744ae8847f6",
+          "message": "chore: Adds 4 extra files for tests",
+          "timestamp": "2024-12-02T10:18:41Z",
+          "tree_id": "8672ea61292fb923f116b157f95bb4c063478f25",
+          "url": "https://github.com/trustification/trustify/commit/80914b902895975a9b215d5ca7f8e744ae8847f6"
+        },
+        "date": 1733136041608,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
