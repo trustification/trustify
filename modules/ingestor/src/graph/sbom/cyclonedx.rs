@@ -91,7 +91,7 @@ impl SbomContext {
     #[instrument(skip(tx, sbom), ret)]
     pub async fn ingest_cyclonedx<TX: AsRef<Transactional>>(
         &self,
-        sbom: Bom,
+        mut sbom: Bom,
         tx: TX,
     ) -> Result<(), anyhow::Error> {
         let db = &self.graph.db.connection(&tx);
@@ -99,8 +99,15 @@ impl SbomContext {
         let mut license_creator = LicenseCreator::new();
         let mut creator = Creator::new(self.sbom.sbom_id);
 
-        if let Some(metadata) = &sbom.metadata {
-            if let Some(component) = &metadata.component {
+        // extract "describes"
+
+        if let Some(metadata) = &mut sbom.metadata {
+            if let Some(component) = &mut metadata.component {
+                let bom_ref = component
+                    .bom_ref
+                    .get_or_insert_with(|| Uuid::new_v4().to_string())
+                    .to_string();
+
                 let product_cpe = component
                     .cpe
                     .as_ref()
@@ -123,18 +130,25 @@ impl SbomContext {
                         .await?;
                 }
 
+                // create component
+
                 creator.add(component);
-                if let Some(r#ref) = &component.bom_ref {
-                    creator.relate(
-                        r#ref.to_string(),
-                        Relationship::DescribedBy,
-                        CYCLONEDX_DOC_REF.to_string(),
-                    );
-                }
+
+                // create a relationship
+
+                creator.relate(
+                    bom_ref,
+                    Relationship::DescribedBy,
+                    CYCLONEDX_DOC_REF.to_string(),
+                );
             }
         }
 
+        // record components
+
         creator.add_all(&sbom.components);
+
+        // record licenses
 
         if let Some(components) = &sbom.components {
             for component in &components.0 {
@@ -161,6 +175,8 @@ impl SbomContext {
             }
         }
 
+        // create relationships
+
         for left in sbom.dependencies.iter().flat_map(|e| &e.0) {
             for right in &left.dependencies {
                 creator.relate(
@@ -171,8 +187,12 @@ impl SbomContext {
             }
         }
 
+        // create
+
         license_creator.create(db).await?;
         creator.create(db).await?;
+
+        // done
 
         Ok(())
     }
@@ -246,6 +266,7 @@ impl<'a> Creator<'a> {
                 .bom_ref
                 .as_ref()
                 .cloned()
+                // TODO: we might re-consider this
                 .unwrap_or_else(|| comp.name.to_string());
 
             let mut refs = vec![];
