@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733224856093,
+  "lastUpdate": 1733229878376,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1995,6 +1995,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/88e4a52b68c89768d6c5a502d98f959e1d1fa0f1"
         },
         "date": 1733224854883,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "9165a94d1bd72674c133ea5147866ae0716d5b77",
+          "message": "ci: remove AI CI tests\n\nAs those tests only fail, I don't see them adding any value right now.\nJust adding confusion.",
+          "timestamp": "2024-12-03T12:19:28Z",
+          "tree_id": "d93664f8d2fb8dd921cf58d038be24de6b64f28c",
+          "url": "https://github.com/trustification/trustify/commit/9165a94d1bd72674c133ea5147866ae0716d5b77"
+        },
+        "date": 1733229877324,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
