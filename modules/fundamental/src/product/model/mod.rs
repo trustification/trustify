@@ -6,7 +6,6 @@ pub mod details;
 pub mod summary;
 
 use crate::Error;
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_entity::{product, product_version};
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
@@ -18,10 +17,7 @@ pub struct ProductHead {
 }
 
 impl ProductHead {
-    pub async fn from_entity(
-        product: &product::Model,
-        _tx: &ConnectionOrTransaction<'_>,
-    ) -> Result<Self, Error> {
+    pub async fn from_entity(product: &product::Model) -> Result<Self, Error> {
         Ok(ProductHead {
             id: product.id,
             name: product.name.clone(),
@@ -45,10 +41,7 @@ pub struct ProductVersionHead {
 }
 
 impl ProductVersionHead {
-    pub async fn from_entity(
-        product_version: &product_version::Model,
-        _tx: &ConnectionOrTransaction<'_>,
-    ) -> Result<Self, Error> {
+    pub async fn from_entity(product_version: &product_version::Model) -> Result<Self, Error> {
         Ok(ProductVersionHead {
             id: product_version.id,
             version: product_version.version.clone(),
@@ -58,12 +51,11 @@ impl ProductVersionHead {
 
     pub async fn from_entities(
         product_versions: &[product_version::Model],
-        tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
         let mut heads = Vec::new();
 
         for entity in product_versions {
-            heads.push(ProductVersionHead::from_entity(entity, tx).await?);
+            heads.push(ProductVersionHead::from_entity(entity).await?);
         }
 
         Ok(heads)

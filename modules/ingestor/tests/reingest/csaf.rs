@@ -36,31 +36,31 @@ async fn reingest(ctx: TrustifyContext) -> anyhow::Result<()> {
         };
         let adv = ctx
             .graph
-            .get_advisory_by_id(id, ())
+            .get_advisory_by_id(id, &ctx.db)
             .await?
             .expect("must be found");
 
-        assert_eq!(adv.vulnerabilities(()).await?.len(), 1);
+        assert_eq!(adv.vulnerabilities(&ctx.db).await?.len(), 1);
 
-        let all = adv.vulnerabilities(&()).await?;
+        let all = adv.vulnerabilities(&ctx.db).await?;
         assert_eq!(all.len(), 1);
         assert_eq!(
             all[0].advisory_vulnerability.vulnerability_id,
             "CVE-2023-33201"
         );
 
-        let all = ctx.graph.get_vulnerabilities(()).await?;
+        let all = ctx.graph.get_vulnerabilities(&ctx.db).await?;
         assert_eq!(all.len(), 1);
 
         let vuln = ctx
             .graph
-            .get_vulnerability("CVE-2023-33201", ())
+            .get_vulnerability("CVE-2023-33201", &ctx.db)
             .await?
             .expect("Must be found");
 
         assert_eq!(vuln.vulnerability.id, "CVE-2023-33201");
 
-        let descriptions = vuln.descriptions("en", ()).await?;
+        let descriptions = vuln.descriptions("en", &ctx.db).await?;
         assert_eq!(descriptions.len(), 0);
 
         Ok(())

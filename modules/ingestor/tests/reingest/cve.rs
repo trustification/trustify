@@ -18,11 +18,11 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         };
         let adv = ctx
             .graph
-            .get_advisory_by_id(id, ())
+            .get_advisory_by_id(id, &ctx.db)
             .await?
             .expect("must be found");
 
-        let mut adv_vulns = adv.vulnerabilities(()).await?;
+        let mut adv_vulns = adv.vulnerabilities(&ctx.db).await?;
         assert_eq!(adv_vulns.len(), 1);
         let adv_vuln = adv_vulns.pop().unwrap();
         assert_eq!(
@@ -30,16 +30,16 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             Some(datetime!(2021-05-12 0:00:00 UTC))
         );
 
-        let vulns = ctx.graph.get_vulnerabilities(()).await?;
+        let vulns = ctx.graph.get_vulnerabilities(&ctx.db).await?;
         assert_eq!(vulns.len(), 1);
 
         let vuln = ctx
             .graph
-            .get_vulnerability("CVE-2021-32714", ())
+            .get_vulnerability("CVE-2021-32714", &ctx.db)
             .await?
             .expect("Must be found");
 
-        let descriptions = vuln.descriptions("en", ()).await?;
+        let descriptions = vuln.descriptions("en", &ctx.db).await?;
         assert_eq!(descriptions.len(), 1);
 
         Ok(())

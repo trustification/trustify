@@ -11,7 +11,7 @@ use sha2::{Digest, Sha256};
 use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
-use trustify_common::{db::Transactional, hashing::Digests, id::Id, model::PaginatedResults};
+use trustify_common::{hashing::Digests, id::Id, model::PaginatedResults};
 use trustify_cvss::cvss3::{
     AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
     PrivilegesRequired, Scope, UserInteraction,
@@ -41,12 +41,12 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 modified: None,
                 withdrawn: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
     let advisory_vuln = advisory
-        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .link_to_vulnerability("CVE-123", None, &ctx.db)
         .await?;
     advisory_vuln
         .ingest_cvss3_score(
@@ -61,7 +61,7 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 i: Integrity::None,
                 a: Availability::None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -79,7 +79,7 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 modified: None,
                 withdrawn: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -128,7 +128,7 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 modified: None,
                 withdrawn: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -147,12 +147,12 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 modified: None,
                 withdrawn: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
     let advisory_vuln = advisory2
-        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .link_to_vulnerability("CVE-123", None, &ctx.db)
         .await?;
     advisory_vuln
         .ingest_cvss3_score(
@@ -167,7 +167,7 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 i: Integrity::None,
                 a: Availability::None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -225,7 +225,7 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
                 modified: None,
                 withdrawn: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -244,14 +244,14 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
                 modified: None,
                 withdrawn: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
     let uuid = advisory.advisory.id;
 
     let advisory_vuln = advisory
-        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .link_to_vulnerability("CVE-123", None, &ctx.db)
         .await?;
     advisory_vuln
         .ingest_cvss3_score(
@@ -266,7 +266,7 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
                 i: Integrity::None,
                 a: Availability::None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 

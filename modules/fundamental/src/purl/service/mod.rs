@@ -17,7 +17,6 @@ use trustify_common::{
     db::{
         limiter::LimiterTrait,
         query::{Filtering, Query},
-        Database, Transactional,
     },
     model::{Paginated, PaginatedResults},
     purl::{Purl, PurlErr},
@@ -25,25 +24,22 @@ use trustify_common::{
 use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 use trustify_module_ingestor::common::Deprecation;
 
-pub struct PurlService {
-    db: Database,
-}
+#[derive(Default)]
+pub struct PurlService {}
 
 impl PurlService {
-    pub fn new(db: Database) -> Self {
-        Self { db }
+    pub fn new() -> Self {
+        Self {}
     }
 
-    pub async fn purl_types<TX: AsRef<Transactional>>(
+    pub async fn purl_types<C: ConnectionTrait>(
         &self,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<TypeSummary>, Error> {
         #[derive(FromQueryResult)]
         struct Ecosystem {
             r#type: String,
         }
-
-        let connection = self.db.connection(&tx);
 
         let ecosystems: Vec<_> = base_purl::Entity::find()
             .select_only()
@@ -52,46 +48,42 @@ impl PurlService {
             .distinct()
             .order_by(base_purl::Column::Type, Order::Asc)
             .into_model::<Ecosystem>()
-            .all(&connection)
+            .all(connection)
             .await?
             .into_iter()
             .map(|e| e.r#type)
             .collect();
 
-        TypeSummary::from_names(&ecosystems, &connection).await
+        TypeSummary::from_names(&ecosystems, connection).await
     }
 
-    pub async fn base_purls_by_type<TX: AsRef<Transactional>>(
+    pub async fn base_purls_by_type<C: ConnectionTrait>(
         &self,
         r#type: &str,
         query: Query,
         paginated: Paginated,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<BasePurlSummary>, Error> {
-        let connection = self.db.connection(&tx);
-
         let limiter = base_purl::Entity::find()
             .filter(base_purl::Column::Type.eq(r#type))
             .filtering(query)?
-            .limiting(&connection, paginated.offset, paginated.limit);
+            .limiting(connection, paginated.offset, paginated.limit);
 
         let total = limiter.total().await?;
 
         Ok(PaginatedResults {
-            items: BasePurlSummary::from_entities(&limiter.fetch().await?, &connection).await?,
+            items: BasePurlSummary::from_entities(&limiter.fetch().await?).await?,
             total,
         })
     }
 
-    pub async fn base_purl<TX: AsRef<Transactional>>(
+    pub async fn base_purl<C: ConnectionTrait>(
         &self,
         r#type: &str,
         namespace: Option<String>,
         name: &str,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<BasePurlDetails>, Error> {
-        let connection = self.db.connection(&tx);
-
         let mut query = base_purl::Entity::find()
             .filter(base_purl::Column::Type.eq(r#type))
             .filter(base_purl::Column::Name.eq(name));
@@ -102,25 +94,23 @@ impl PurlService {
             query = query.filter(base_purl::Column::Namespace.is_null());
         }
 
-        if let Some(package) = query.one(&connection).await? {
+        if let Some(package) = query.one(connection).await? {
             Ok(Some(
-                BasePurlDetails::from_entity(&package, &connection).await?,
+                BasePurlDetails::from_entity(&package, connection).await?,
             ))
         } else {
             Ok(None)
         }
     }
 
-    pub async fn versioned_purl<TX: AsRef<Transactional>>(
+    pub async fn versioned_purl<C: ConnectionTrait>(
         &self,
         r#type: &str,
         namespace: Option<String>,
         name: &str,
         version: &str,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<VersionedPurlDetails>, Error> {
-        let connection = self.db.connection(&tx);
-
         let mut query = versioned_purl::Entity::find()
             .left_join(base_purl::Entity)
             .filter(base_purl::Column::Type.eq(r#type))
@@ -133,42 +123,39 @@ impl PurlService {
             query = query.filter(base_purl::Column::Namespace.is_null());
         }
 
-        let package_version = query.one(&connection).await?;
+        let package_version = query.one(connection).await?;
 
         if let Some(package_version) = package_version {
             Ok(Some(
-                VersionedPurlDetails::from_entity(None, &package_version, &connection).await?,
+                VersionedPurlDetails::from_entity(None, &package_version, connection).await?,
             ))
         } else {
             Ok(None)
         }
     }
 
-    pub async fn base_purl_by_uuid<TX: AsRef<Transactional>>(
+    pub async fn base_purl_by_uuid<C: ConnectionTrait>(
         &self,
         base_purl_uuid: &Uuid,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<BasePurlDetails>, Error> {
-        let connection = self.db.connection(&tx);
-
         if let Some(package) = base_purl::Entity::find_by_id(*base_purl_uuid)
-            .one(&connection)
+            .one(connection)
             .await?
         {
             Ok(Some(
-                BasePurlDetails::from_entity(&package, &connection).await?,
+                BasePurlDetails::from_entity(&package, connection).await?,
             ))
         } else {
             Ok(None)
         }
     }
 
-    pub async fn base_purl_by_purl<TX: AsRef<Transactional>>(
+    pub async fn base_purl_by_purl<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<BasePurlDetails>, Error> {
-        let connection = self.db.connection(&tx);
         let mut query = base_purl::Entity::find()
             .filter(base_purl::Column::Type.eq(&purl.ty))
             .filter(base_purl::Column::Name.eq(&purl.name));
@@ -179,41 +166,37 @@ impl PurlService {
             query = query.filter(base_purl::Column::Namespace.is_null());
         }
 
-        if let Some(base_purl) = query.one(&connection).await? {
+        if let Some(base_purl) = query.one(connection).await? {
             Ok(Some(
-                BasePurlDetails::from_entity(&base_purl, &connection).await?,
+                BasePurlDetails::from_entity(&base_purl, connection).await?,
             ))
         } else {
             Ok(None)
         }
     }
 
-    pub async fn versioned_purl_by_uuid<TX: AsRef<Transactional>>(
+    pub async fn versioned_purl_by_uuid<C: ConnectionTrait>(
         &self,
         purl_version_uuid: &Uuid,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<VersionedPurlDetails>, Error> {
-        let connection = self.db.connection(&tx);
-
         if let Some(package_version) = versioned_purl::Entity::find_by_id(*purl_version_uuid)
-            .one(&connection)
+            .one(connection)
             .await?
         {
             Ok(Some(
-                VersionedPurlDetails::from_entity(None, &package_version, &connection).await?,
+                VersionedPurlDetails::from_entity(None, &package_version, connection).await?,
             ))
         } else {
             Ok(None)
         }
     }
 
-    pub async fn versioned_purl_by_purl<TX: AsRef<Transactional>>(
+    pub async fn versioned_purl_by_purl<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<VersionedPurlDetails>, Error> {
-        let connection = self.db.connection(&tx);
-
         if let Some(version) = &purl.version {
             let mut query = versioned_purl::Entity::find()
                 .left_join(base_purl::Entity)
@@ -227,11 +210,11 @@ impl PurlService {
                 query = query.filter(base_purl::Column::Namespace.is_null());
             }
 
-            let package_version = query.one(&connection).await?;
+            let package_version = query.one(connection).await?;
 
             if let Some(package_version) = package_version {
                 Ok(Some(
-                    VersionedPurlDetails::from_entity(None, &package_version, &connection).await?,
+                    VersionedPurlDetails::from_entity(None, &package_version, connection).await?,
                 ))
             } else {
                 Ok(None)
@@ -243,13 +226,12 @@ impl PurlService {
         }
     }
 
-    pub async fn purl_by_purl<TX: AsRef<Transactional>>(
+    pub async fn purl_by_purl<C: ConnectionTrait>(
         &self,
         purl: &Purl,
         deprecation: Deprecation,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<PurlDetails>, Error> {
-        let connection = self.db.connection(&tx);
         if let Some(version) = &purl.version {
             let mut query = qualified_purl::Entity::find()
                 .left_join(versioned_purl::Entity)
@@ -264,11 +246,11 @@ impl PurlService {
                 query = query.filter(base_purl::Column::Namespace.is_null());
             }
 
-            let purl = query.one(&connection).await?;
+            let purl = query.one(connection).await?;
 
             if let Some(purl) = purl {
                 Ok(Some(
-                    PurlDetails::from_entity(None, None, &purl, deprecation, &connection).await?,
+                    PurlDetails::from_entity(None, None, &purl, deprecation, connection).await?,
                 ))
             } else {
                 Ok(None)
@@ -280,21 +262,19 @@ impl PurlService {
         }
     }
 
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn purl_by_uuid<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn purl_by_uuid<C: ConnectionTrait>(
         &self,
         purl_uuid: &Uuid,
         deprecation: Deprecation,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<PurlDetails>, Error> {
-        let connection = self.db.connection(&tx);
-
         if let Some(qualified_package) = qualified_purl::Entity::find_by_id(*purl_uuid)
-            .one(&connection)
+            .one(connection)
             .await?
         {
             Ok(Some(
-                PurlDetails::from_entity(None, None, &qualified_package, deprecation, &connection)
+                PurlDetails::from_entity(None, None, &qualified_package, deprecation, connection)
                     .await?,
             ))
         } else {
@@ -302,16 +282,14 @@ impl PurlService {
         }
     }
 
-    pub async fn base_purls<TX: AsRef<Transactional>>(
+    pub async fn base_purls<C: ConnectionTrait>(
         &self,
         query: Query,
         paginated: Paginated,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<BasePurlSummary>, Error> {
-        let connection = self.db.connection(&tx);
-
         let limiter = base_purl::Entity::find().filtering(query)?.limiting(
-            &connection,
+            connection,
             paginated.offset,
             paginated.limit,
         );
@@ -319,20 +297,18 @@ impl PurlService {
         let total = limiter.total().await?;
 
         Ok(PaginatedResults {
-            items: BasePurlSummary::from_entities(&limiter.fetch().await?, &connection).await?,
+            items: BasePurlSummary::from_entities(&limiter.fetch().await?).await?,
             total,
         })
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn purls<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    pub async fn purls<C: ConnectionTrait>(
         &self,
         query: Query,
         paginated: Paginated,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<PurlSummary>, Error> {
-        let connection = self.db.connection(&tx);
-
         // TODO: this would be the condition used to select from jsonb name key
         let _unused_condition = Expr::cust_with_exprs(
             "$1->>'name' ~~* $2",
@@ -356,20 +332,18 @@ impl PurlService {
                     ),
                 ),
             )
-            .limiting(&connection, paginated.offset, paginated.limit);
+            .limiting(connection, paginated.offset, paginated.limit);
 
         let total = limiter.total().await?;
 
         Ok(PaginatedResults {
-            items: PurlSummary::from_entities(&limiter.fetch().await?, &connection).await?,
+            items: PurlSummary::from_entities(&limiter.fetch().await?, connection).await?,
             total,
         })
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn gc_purls<TX: AsRef<Transactional>>(&self, tx: TX) -> Result<u64, Error> {
-        let connection = self.db.connection(&tx);
-
+    #[instrument(skip(self, connection), err)]
+    pub async fn gc_purls<C: ConnectionTrait>(&self, connection: &C) -> Result<u64, Error> {
         let res = connection
             .execute_unprepared(include_str!("gc_purls.sql"))
             .await?;

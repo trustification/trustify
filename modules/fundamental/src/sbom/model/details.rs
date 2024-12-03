@@ -11,8 +11,8 @@ use crate::{
 };
 use cpe::uri::OwnedUri;
 use sea_orm::{
-    DbErr, EntityTrait, FromQueryResult, JoinType, ModelTrait, QueryFilter, QueryOrder,
-    QueryResult, QuerySelect, RelationTrait, Select,
+    ConnectionTrait, DbErr, EntityTrait, FromQueryResult, JoinType, ModelTrait, QueryFilter,
+    QueryOrder, QueryResult, QuerySelect, RelationTrait, Select,
 };
 use sea_query::{Asterisk, Expr, Func, SimpleExpr};
 use serde::{Deserialize, Serialize};
@@ -21,7 +21,7 @@ use trustify_common::{
     cpe::CpeCompare,
     db::{
         multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
-        ConnectionOrTransaction, VersionMatches,
+        VersionMatches,
     },
     memo::Memo,
 };
@@ -43,10 +43,10 @@ pub struct SbomDetails {
 
 impl SbomDetails {
     /// turn an (sbom, sbom_node) row into an [`SbomDetails`], if possible
-    pub async fn from_entity(
+    pub async fn from_entity<C: ConnectionTrait>(
         (sbom, node): (sbom::Model, Option<sbom_node::Model>),
         service: &SbomService,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Option<SbomDetails>, Error> {
         let relevant_advisory_info = sbom
             .find_related(sbom_package::Entity)
@@ -142,11 +142,11 @@ pub struct SbomAdvisory {
 }
 
 impl SbomAdvisory {
-    pub async fn from_models(
+    pub async fn from_models<C: ConnectionTrait>(
         described_by: &[SbomPackage],
         statuses: &[QueryCatcher],
         product_statuses: &[ProductStatusCatcher],
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Vec<Self>, Error> {
         let mut advisories = HashMap::new();
 
@@ -299,12 +299,12 @@ pub struct SbomStatus {
 }
 
 impl SbomStatus {
-    pub async fn new(
+    pub async fn new<C: ConnectionTrait>(
         vulnerability: &vulnerability::Model,
         status: String,
         cpe: Option<OwnedUri>,
         packages: Vec<SbomPackage>,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Self, Error> {
         let cvss3 = vulnerability.find_related(cvss3::Entity).all(tx).await?;
         let average_severity = Score::from_iter(cvss3.iter().map(Cvss3Base::from)).severity();

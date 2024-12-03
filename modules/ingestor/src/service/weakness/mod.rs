@@ -134,6 +134,7 @@ impl<'d> CweCatalogLoader<'d> {
                         .exec(&tx)
                         .await?;
                 }
+
                 tx.commit().await?;
             }
         }

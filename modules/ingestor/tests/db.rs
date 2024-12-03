@@ -140,7 +140,9 @@ async fn create_set(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 withdrawn: None,
                 version: None,
             };
-            graph.ingest_advisory(d, (), &digests, info, ()).await?;
+            graph
+                .ingest_advisory(d, (), &digests, info, &ctx.db)
+                .await?;
         }
     }
 

@@ -6,10 +6,9 @@ pub use details::*;
 pub use summary::*;
 
 use crate::{organization::model::OrganizationSummary, Error};
-use sea_orm::{prelude::Uuid, LoaderTrait, ModelTrait};
+use sea_orm::{prelude::Uuid, ConnectionTrait, LoaderTrait, ModelTrait};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::memo::Memo;
 use trustify_entity::{advisory, labels::Labels, organization};
 use utoipa::ToSchema;
@@ -55,19 +54,17 @@ pub struct AdvisoryHead {
 }
 
 impl AdvisoryHead {
-    pub async fn from_advisory(
+    pub async fn from_advisory<C: ConnectionTrait>(
         advisory: &advisory::Model,
         issuer: Memo<organization::Model>,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Self, Error> {
         let issuer = match &issuer {
-            Memo::Provided(Some(issuer)) => {
-                Some(OrganizationSummary::from_entity(issuer, tx).await?)
-            }
+            Memo::Provided(Some(issuer)) => Some(OrganizationSummary::from_entity(issuer).await?),
             Memo::Provided(None) => None,
             Memo::NotProvided => {
                 if let Some(issuer) = advisory.find_related(organization::Entity).one(tx).await? {
-                    Some(OrganizationSummary::from_entity(&issuer, tx).await?)
+                    Some(OrganizationSummary::from_entity(&issuer).await?)
                 } else {
                     None
                 }
@@ -87,9 +84,9 @@ impl AdvisoryHead {
         })
     }
 
-    pub async fn from_entities(
+    pub async fn from_entities<C: ConnectionTrait>(
         entities: &[advisory::Model],
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Vec<Self>, Error> {
         let mut heads = Vec::new();
 
@@ -97,7 +94,7 @@ impl AdvisoryHead {
 
         for (advisory, issuer) in entities.iter().zip(issuers) {
             let issuer = if let Some(issuer) = issuer {
-                Some(OrganizationSummary::from_entity(&issuer, tx).await?)
+                Some(OrganizationSummary::from_entity(&issuer).await?)
             } else {
                 None
             };

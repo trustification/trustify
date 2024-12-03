@@ -1,8 +1,9 @@
 use crate::purl::model::TypeHead;
 use crate::Error;
-use sea_orm::{ColumnTrait, DeriveColumn, EntityTrait, EnumIter, QueryFilter, QuerySelect};
+use sea_orm::{
+    ColumnTrait, ConnectionTrait, DeriveColumn, EntityTrait, EnumIter, QueryFilter, QuerySelect,
+};
 use serde::{Deserialize, Serialize};
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 use utoipa::ToSchema;
 
@@ -21,9 +22,9 @@ pub struct TypeCounts {
 }
 
 impl TypeSummary {
-    pub async fn from_names(
+    pub async fn from_names<C: ConnectionTrait>(
         names: &Vec<String>,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Vec<Self>, Error> {
         #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
         enum QueryAs {

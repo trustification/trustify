@@ -4,9 +4,8 @@ use crate::advisory::service::AdvisoryCatcher;
 use crate::source_document::model::SourceDocument;
 use crate::{advisory::model::AdvisoryHead, Error};
 use advisory_vulnerability::AdvisoryVulnerabilitySummary;
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect};
+use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::memo::Memo;
 use trustify_cvss::cvss3::severity::Severity;
 use trustify_entity::{self as entity};
@@ -33,9 +32,9 @@ pub struct AdvisoryDetails {
 }
 
 impl AdvisoryDetails {
-    pub async fn from_entity(
+    pub async fn from_entity<C: ConnectionTrait>(
         advisory: &AdvisoryCatcher,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Self, Error> {
         let vulnerabilities = entity::vulnerability::Entity::find()
             .right_join(entity::advisory_vulnerability::Entity)
@@ -59,7 +58,7 @@ impl AdvisoryDetails {
             )
             .await?,
             source_document: if let Some(doc) = &advisory.source_document {
-                Some(SourceDocument::from_entity(doc, tx).await?)
+                Some(SourceDocument::from_entity(doc).await?)
             } else {
                 None
             },

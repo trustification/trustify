@@ -9,8 +9,9 @@ use crate::{
 };
 use futures_util::{stream, StreamExt, TryStreamExt};
 use sea_orm::{
-    prelude::Uuid, ColumnTrait, DbErr, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
-    QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns,
+    prelude::Uuid, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult,
+    IntoSimpleExpr, QueryFilter, QueryOrder, QueryResult, QuerySelect, RelationTrait, Select,
+    SelectColumns,
 };
 use sea_query::{extension::postgres::PgExpr, Expr, Func, JoinType, SimpleExpr};
 use serde::Deserialize;
@@ -23,7 +24,7 @@ use trustify_common::{
         limiter::{limit_selector, LimiterTrait},
         multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
         query::{Columns, Filtering, IntoColumns, Query},
-        ArrayAgg, ConnectionOrTransaction, JsonBuildObject, ToJson, Transactional,
+        ArrayAgg, JsonBuildObject, ToJson,
     },
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},
@@ -41,74 +42,67 @@ use trustify_entity::{
 };
 
 impl SbomService {
-    async fn fetch_sbom<TX: AsRef<Transactional>>(
+    async fn fetch_sbom<C: ConnectionTrait>(
         &self,
         id: Id,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<(sbom::Model, Option<sbom_node::Model>)>, Error> {
-        let connection = self.db.connection(&tx);
-
         let select = sbom::Entity::find()
             .join(JoinType::LeftJoin, sbom::Relation::SourceDocument.def())
             .try_filter(id)?;
 
         Ok(select
             .find_also_linked(SbomNodeLink)
-            .one(&connection)
+            .one(connection)
             .await?)
     }
 
     /// fetch one sbom
-    pub async fn fetch_sbom_details<TX: AsRef<Transactional>>(
+    pub async fn fetch_sbom_details<C: ConnectionTrait>(
         &self,
         id: Id,
 
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<SbomDetails>, Error> {
-        Ok(match self.fetch_sbom(id, &tx).await? {
-            Some(row) => SbomDetails::from_entity(row, self, &self.db.connection(&tx)).await?,
+        Ok(match self.fetch_sbom(id, connection).await? {
+            Some(row) => SbomDetails::from_entity(row, self, connection).await?,
             None => None,
         })
     }
 
     /// fetch the summary of one sbom
-    pub async fn fetch_sbom_summary<TX: AsRef<Transactional>>(
+    pub async fn fetch_sbom_summary<C: ConnectionTrait>(
         &self,
         id: Id,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<SbomSummary>, Error> {
-        let connection = self.db.connection(&tx);
-
-        Ok(match self.fetch_sbom(id, &tx).await? {
-            Some(row) => SbomSummary::from_entity(row, self, &connection).await?,
+        Ok(match self.fetch_sbom(id, connection).await? {
+            Some(row) => SbomSummary::from_entity(row, self, connection).await?,
             None => None,
         })
     }
 
     /// delete one sbom
-    pub async fn delete_sbom<TX: AsRef<Transactional>>(
+    pub async fn delete_sbom<C: ConnectionTrait>(
         &self,
         id: Uuid,
-        tx: TX,
+        connection: &C,
     ) -> Result<u64, Error> {
-        let connection = self.db.connection(&tx);
-
         let query = sbom::Entity::delete_by_id(id);
 
-        let result = query.exec(&connection).await?;
+        let result = query.exec(connection).await?;
 
         Ok(result.rows_affected)
     }
 
     /// fetch all SBOMs
-    pub async fn fetch_sboms<TX: AsRef<Transactional>>(
+    pub async fn fetch_sboms<C: ConnectionTrait>(
         &self,
         search: Query,
         paginated: Paginated,
         labels: impl Into<Labels>,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<SbomSummary>, Error> {
-        let connection = self.db.connection(&tx);
         let labels = labels.into();
 
         let query = if labels.is_empty() {
@@ -124,13 +118,13 @@ impl SbomService {
                     .add_columns(sbom_node::Entity)
                     .alias("sbom_node", "r0"),
             )?
-            .limiting(&connection, paginated.offset, paginated.limit);
+            .limiting(connection, paginated.offset, paginated.limit);
 
         let total = limiter.total().await?;
         let sboms = limiter.fetch().await?;
 
         let items = stream::iter(sboms.into_iter())
-            .then(|row| async { SbomSummary::from_entity(row, self, &connection).await })
+            .then(|row| async { SbomSummary::from_entity(row, self, connection).await })
             .try_filter_map(futures_util::future::ok)
             .try_collect()
             .await?;
@@ -142,16 +136,14 @@ impl SbomService {
     ///
     /// If you need to find packages based on their relationship, even in the relationship to
     /// SBOM itself, use [`Self::fetch_related_packages`].
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn fetch_sbom_packages<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn fetch_sbom_packages<C: ConnectionTrait>(
         &self,
         sbom_id: Uuid,
         search: Query,
         paginated: Paginated,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<SbomPackage>, Error> {
-        let db = self.db.connection(&tx);
-
         let mut query = sbom_package::Entity::find()
             .filter(sbom_package::Column::SbomId.eq(sbom_id))
             .join(JoinType::Join, sbom_package::Relation::Node.def())
@@ -182,7 +174,7 @@ impl SbomService {
         // limit and execute
 
         let limiter = limit_selector::<'_, _, _, _, PackageCatcher>(
-            &db,
+            connection,
             query,
             paginated.offset,
             paginated.limit,
@@ -196,19 +188,19 @@ impl SbomService {
         let mut items = Vec::new();
 
         for row in packages {
-            items.push(package_from_row(row, &self.db.connection(&tx)).await?);
+            items.push(package_from_row(row, connection).await?);
         }
 
         Ok(PaginatedResults { items, total })
     }
 
     /// Get all packages describing the SBOM.
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn describes_packages<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, db), err(level=tracing::Level::INFO))]
+    pub async fn describes_packages<C: ConnectionTrait>(
         &self,
         sbom_id: Uuid,
         paginated: Paginated,
-        tx: TX,
+        db: &C,
     ) -> Result<PaginatedResults<SbomPackage>, Error> {
         self.fetch_related_packages(
             sbom_id,
@@ -217,20 +209,18 @@ impl SbomService {
             Which::Right,
             SbomPackageReference::All,
             Some(Relationship::DescribedBy),
-            tx,
+            db,
         )
         .await
         .map(|r| r.map(|rel| rel.package))
     }
 
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn count_related_sboms(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn count_related_sboms<C: ConnectionTrait>(
         &self,
         qualified_package_ids: Vec<Uuid>,
-        tx: impl AsRef<Transactional>,
+        connection: &C,
     ) -> Result<Vec<i64>, Error> {
-        let db = self.db.connection(&tx);
-
         let query = sbom::Entity::find()
             .join(JoinType::Join, sbom::Relation::Packages.def())
             .join(JoinType::Join, sbom_package::Relation::Purl.def())
@@ -242,7 +232,7 @@ impl SbomService {
             .column(sbom_package_purl_ref::Column::QualifiedPurlId)
             .column_as(sbom_package::Column::SbomId.count(), "count")
             .into_tuple::<(Uuid, i64)>()
-            .all(&db)
+            .all(connection)
             .await?;
 
         // turn result into a map
@@ -261,16 +251,14 @@ impl SbomService {
         Ok(result)
     }
 
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn find_related_sboms(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn find_related_sboms<C: ConnectionTrait>(
         &self,
         qualified_package_id: Uuid,
         paginated: Paginated,
         query: Query,
-        tx: impl AsRef<Transactional>,
+        connection: &C,
     ) -> Result<PaginatedResults<SbomSummary>, Error> {
-        let db = self.db.connection(&tx);
-
         let query = sbom::Entity::find()
             .join(JoinType::Join, sbom::Relation::Packages.def())
             .join(JoinType::Join, sbom_package::Relation::Purl.def())
@@ -280,7 +268,7 @@ impl SbomService {
 
         // limit and execute
 
-        let limiter = query.limiting(&db, paginated.offset, paginated.limit);
+        let limiter = query.limiting(connection, paginated.offset, paginated.limit);
 
         let total = limiter.total().await?;
         let sboms = limiter.fetch().await?;
@@ -288,7 +276,7 @@ impl SbomService {
         // collect results
 
         let items = stream::iter(sboms.into_iter())
-            .then(|row| async { SbomSummary::from_entity(row, self, &db).await })
+            .then(|row| async { SbomSummary::from_entity(row, self, connection).await })
             .try_filter_map(futures_util::future::ok)
             .try_collect()
             .await?;
@@ -298,8 +286,8 @@ impl SbomService {
 
     /// Fetch all related packages in the context of an SBOM.
     #[allow(clippy::too_many_arguments)]
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn fetch_related_packages<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, db), err(level=tracing::Level::INFO))]
+    pub async fn fetch_related_packages<C: ConnectionTrait>(
         &self,
         sbom_id: Uuid,
         search: Query,
@@ -307,9 +295,9 @@ impl SbomService {
         which: Which,
         reference: impl Into<SbomPackageReference<'_>> + Debug,
         relationship: Option<Relationship>,
-        tx: TX,
+        db: &C,
     ) -> Result<PaginatedResults<SbomPackageRelation>, Error> {
-        let db = self.db.connection(&tx);
+        // let db = self.db.connection(connection);
 
         // which way
 
@@ -378,7 +366,7 @@ impl SbomService {
         // limit and execute
 
         let limiter = limit_selector::<'_, _, _, _, PackageCatcher>(
-            &db,
+            db,
             query,
             paginated.offset,
             paginated.limit,
@@ -395,7 +383,7 @@ impl SbomService {
             if let Some(relationship) = row.relationship {
                 items.push(SbomPackageRelation {
                     relationship,
-                    package: package_from_row(row, &self.db.connection(&tx)).await?,
+                    package: package_from_row(row, db).await?,
                 });
             }
         }
@@ -406,12 +394,12 @@ impl SbomService {
     /// A simplified version of [`Self::fetch_related_packages`].
     ///
     /// It uses [`Which::Right`] and the provided reference, [`Default::default`] for the rest.
-    pub async fn related_packages<TX: AsRef<Transactional>>(
+    pub async fn related_packages<C: ConnectionTrait>(
         &self,
         sbom_id: Uuid,
         relationship: impl Into<Option<Relationship>>,
         pkg: impl Into<SbomPackageReference<'_>> + Debug,
-        tx: TX,
+        tx: &C,
     ) -> Result<Vec<SbomPackage>, Error> {
         let result = self
             .fetch_related_packages(
@@ -526,9 +514,9 @@ struct PackageCatcher {
 }
 
 /// Convert values from a "package row" into an SBOM package
-async fn package_from_row(
+async fn package_from_row<C: ConnectionTrait>(
     row: PackageCatcher,
-    tx: &ConnectionOrTransaction<'_>,
+    db: &C,
 ) -> Result<SbomPackage, Error> {
     let mut purls = Vec::new();
 
@@ -565,7 +553,7 @@ async fn package_from_row(
                         qualifiers: dto.qualifiers,
                         purl: cp,
                     },
-                    tx,
+                    db,
                 )
                 .await?,
             );
@@ -703,7 +691,7 @@ mod test {
                 &Digests::digest("RHSA-1"),
                 "http://redhat.com/test.json",
                 (),
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
         let sbom_v1_again = ctx
@@ -713,7 +701,7 @@ mod test {
                 &Digests::digest("RHSA-1"),
                 "http://redhat.com/test.json",
                 (),
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
         let sbom_v2 = ctx
@@ -723,7 +711,7 @@ mod test {
                 &Digests::digest("RHSA-2"),
                 "http://myspace.com/test.json",
                 (),
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
@@ -734,7 +722,7 @@ mod test {
                 &Digests::digest("RHSA-3"),
                 "http://geocities.com/other.json",
                 (),
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
@@ -748,7 +736,7 @@ mod test {
                 q("MySpAcE").sort("name,authors,published"),
                 Paginated::default(),
                 (),
-                (),
+                &ctx.db,
             )
             .await?;
 
@@ -771,7 +759,7 @@ mod test {
                 &Digests::digest("RHSA-1"),
                 "http://redhat.com/test1.json",
                 (),
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
@@ -785,7 +773,7 @@ mod test {
                 &Digests::digest("RHSA-2"),
                 "http://redhat.com/test2.json",
                 (),
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
@@ -799,34 +787,54 @@ mod test {
                 &Digests::digest("RHSA-3"),
                 "http://redhat.com/test3.json",
                 (),
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
         let service = SbomService::new(ctx.db.clone());
 
         let fetched = service
-            .fetch_sboms(Query::default(), Paginated::default(), ("ci", "job1"), ())
+            .fetch_sboms(
+                Query::default(),
+                Paginated::default(),
+                ("ci", "job1"),
+                &ctx.db,
+            )
             .await?;
         assert_eq!(1, fetched.total);
 
         let fetched = service
-            .fetch_sboms(Query::default(), Paginated::default(), ("ci", "job2"), ())
+            .fetch_sboms(
+                Query::default(),
+                Paginated::default(),
+                ("ci", "job2"),
+                &ctx.db,
+            )
             .await?;
         assert_eq!(2, fetched.total);
 
         let fetched = service
-            .fetch_sboms(Query::default(), Paginated::default(), ("ci", "job3"), ())
+            .fetch_sboms(
+                Query::default(),
+                Paginated::default(),
+                ("ci", "job3"),
+                &ctx.db,
+            )
             .await?;
         assert_eq!(0, fetched.total);
 
         let fetched = service
-            .fetch_sboms(Query::default(), Paginated::default(), ("foo", "bar"), ())
+            .fetch_sboms(
+                Query::default(),
+                Paginated::default(),
+                ("foo", "bar"),
+                &ctx.db,
+            )
             .await?;
         assert_eq!(0, fetched.total);
 
         let fetched = service
-            .fetch_sboms(Query::default(), Paginated::default(), (), ())
+            .fetch_sboms(Query::default(), Paginated::default(), (), &ctx.db)
             .await?;
         assert_eq!(3, fetched.total);
 
@@ -835,7 +843,7 @@ mod test {
                 Query::default(),
                 Paginated::default(),
                 [("ci", "job2"), ("team", "a")],
-                (),
+                &ctx.db,
             )
             .await?;
         assert_eq!(1, fetched.total);
@@ -853,18 +861,18 @@ mod test {
                 &Digests::digest("RHSA-1"),
                 "http://redhat.com/test.json",
                 (),
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
         let service = SbomService::new(ctx.db.clone());
 
-        let affected = service.delete_sbom(sbom_v1.sbom.sbom_id, ()).await?;
+        let affected = service.delete_sbom(sbom_v1.sbom.sbom_id, &ctx.db).await?;
 
         log::debug!("{:#?}", affected);
         assert_eq!(1, affected);
 
-        let affected = service.delete_sbom(sbom_v1.sbom.sbom_id, ()).await?;
+        let affected = service.delete_sbom(sbom_v1.sbom.sbom_id, &ctx.db).await?;
 
         log::debug!("{:#?}", affected);
         assert_eq!(0, affected);

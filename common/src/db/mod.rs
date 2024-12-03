@@ -11,96 +11,12 @@ pub use func::*;
 use anyhow::{ensure, Context};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{
-    prelude::async_trait, ConnectOptions, ConnectionTrait, DatabaseConnection, DatabaseTransaction,
-    DbBackend, DbErr, ExecResult, QueryResult, RuntimeErr, Statement,
+    prelude::async_trait, ConnectOptions, ConnectionTrait, DatabaseConnection, DbBackend, DbErr,
+    ExecResult, QueryResult, RuntimeErr, Statement,
 };
 use sqlx::error::ErrorKind;
 use std::ops::{Deref, DerefMut};
 use tracing::instrument;
-
-pub enum Transactional {
-    None,
-    Some(DatabaseTransaction),
-}
-
-impl Transactional {
-    /// Commit the database transaction.
-    ///
-    /// If there's no underlying database transaction, then this becomes a no-op.
-    #[instrument(skip_all, fields(transactional=matches!(self, Transactional::Some(_))), ret)]
-    pub async fn commit(self) -> Result<(), DbErr> {
-        match self {
-            Transactional::None => {}
-            Transactional::Some(inner) => {
-                inner.commit().await?;
-            }
-        }
-
-        Ok(())
-    }
-}
-
-impl AsRef<Transactional> for Transactional {
-    fn as_ref(&self) -> &Transactional {
-        self
-    }
-}
-
-impl AsRef<Transactional> for () {
-    fn as_ref(&self) -> &Transactional {
-        &Transactional::None
-    }
-}
-
-#[derive(Clone)]
-pub enum ConnectionOrTransaction<'db> {
-    Connection(&'db DatabaseConnection),
-    Transaction(&'db DatabaseTransaction),
-}
-
-impl<'db> From<&'db DatabaseTransaction> for ConnectionOrTransaction<'db> {
-    fn from(value: &'db DatabaseTransaction) -> Self {
-        Self::Transaction(value)
-    }
-}
-
-#[async_trait::async_trait]
-impl ConnectionTrait for ConnectionOrTransaction<'_> {
-    fn get_database_backend(&self) -> DbBackend {
-        match self {
-            ConnectionOrTransaction::Connection(inner) => inner.get_database_backend(),
-            ConnectionOrTransaction::Transaction(inner) => inner.get_database_backend(),
-        }
-    }
-
-    async fn execute(&self, stmt: Statement) -> Result<ExecResult, DbErr> {
-        match self {
-            ConnectionOrTransaction::Connection(inner) => inner.execute(stmt).await,
-            ConnectionOrTransaction::Transaction(inner) => inner.execute(stmt).await,
-        }
-    }
-
-    async fn execute_unprepared(&self, sql: &str) -> Result<ExecResult, DbErr> {
-        match self {
-            ConnectionOrTransaction::Connection(inner) => inner.execute_unprepared(sql).await,
-            ConnectionOrTransaction::Transaction(inner) => inner.execute_unprepared(sql).await,
-        }
-    }
-
-    async fn query_one(&self, stmt: Statement) -> Result<Option<QueryResult>, DbErr> {
-        match self {
-            ConnectionOrTransaction::Connection(inner) => inner.query_one(stmt).await,
-            ConnectionOrTransaction::Transaction(inner) => inner.query_one(stmt).await,
-        }
-    }
-
-    async fn query_all(&self, stmt: Statement) -> Result<Vec<QueryResult>, DbErr> {
-        match self {
-            ConnectionOrTransaction::Connection(inner) => inner.query_all(stmt).await,
-            ConnectionOrTransaction::Transaction(inner) => inner.query_all(stmt).await,
-        }
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct Database {
@@ -111,16 +27,6 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn connection<'db, TX: AsRef<Transactional>>(
-        &'db self,
-        tx: &'db TX,
-    ) -> ConnectionOrTransaction<'db> {
-        match tx.as_ref() {
-            Transactional::None => ConnectionOrTransaction::Connection(&self.db),
-            Transactional::Some(tx) => ConnectionOrTransaction::Transaction(tx),
-        }
-    }
-
     #[instrument(err)]
     pub async fn new(database: &crate::config::Database) -> Result<Self, anyhow::Error> {
         let url = database.to_url();
@@ -235,6 +141,37 @@ impl DerefMut for Database {
 /// require us to have the `Database` struct to be non-clone, which we don't support anyway.
 #[async_trait::async_trait]
 impl ConnectionTrait for Database {
+    fn get_database_backend(&self) -> DbBackend {
+        self.db.get_database_backend()
+    }
+
+    async fn execute(&self, stmt: Statement) -> Result<ExecResult, DbErr> {
+        self.db.execute(stmt).await
+    }
+
+    async fn execute_unprepared(&self, sql: &str) -> Result<ExecResult, DbErr> {
+        self.db.execute_unprepared(sql).await
+    }
+
+    async fn query_one(&self, stmt: Statement) -> Result<Option<QueryResult>, DbErr> {
+        self.db.query_one(stmt).await
+    }
+
+    async fn query_all(&self, stmt: Statement) -> Result<Vec<QueryResult>, DbErr> {
+        self.db.query_all(stmt).await
+    }
+
+    fn support_returning(&self) -> bool {
+        self.db.support_returning()
+    }
+}
+
+/// Implementation of the connection trait for our database struct.
+///
+/// **NOTE**: We lack the implementations for the `mock` feature. However, the mock feature would
+/// require us to have the `Database` struct to be non-clone, which we don't support anyway.
+#[async_trait::async_trait]
+impl ConnectionTrait for &Database {
     fn get_database_backend(&self) -> DbBackend {
         self.db.get_database_backend()
     }

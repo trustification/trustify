@@ -6,9 +6,10 @@ use crate::{
         model::{details::ProductDetails, summary::ProductSummary},
         service::ProductService,
     },
-    Error::Internal,
+    Error,
 };
 use actix_web::{delete, get, web, HttpResponse, Responder};
+use sea_orm::TransactionTrait;
 use trustify_auth::{authorizer::Require, DeleteMetadata, ReadMetadata};
 use trustify_common::{
     db::{query::Query, Database},
@@ -17,8 +18,9 @@ use trustify_common::{
 use uuid::Uuid;
 
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
-    let service = ProductService::new(db);
+    let service = ProductService::new();
     config
+        .app_data(web::Data::new(db))
         .app_data(web::Data::new(service))
         .service(all)
         .service(delete)
@@ -39,11 +41,12 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
 #[get("/v1/product")]
 pub async fn all(
     state: web::Data<ProductService>,
+    db: web::Data<Database>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadMetadata>,
 ) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(state.fetch_products(search, paginated, ()).await?))
+    Ok(HttpResponse::Ok().json(state.fetch_products(search, paginated, db.as_ref()).await?))
 }
 
 #[utoipa::path(
@@ -60,10 +63,11 @@ pub async fn all(
 #[get("/v1/product/{id}")]
 pub async fn get(
     state: web::Data<ProductService>,
+    db: web::Data<Database>,
     id: web::Path<Uuid>,
     _: Require<ReadMetadata>,
 ) -> actix_web::Result<impl Responder> {
-    let fetched = state.fetch_product(*id, ()).await?;
+    let fetched = state.fetch_product(*id, db.as_ref()).await?;
     if let Some(fetched) = fetched {
         Ok(HttpResponse::Ok().json(fetched))
     } else {
@@ -85,16 +89,22 @@ pub async fn get(
 #[delete("/v1/product/{id}")]
 pub async fn delete(
     state: web::Data<ProductService>,
+    db: web::Data<Database>,
     id: web::Path<Uuid>,
     _: Require<DeleteMetadata>,
-) -> actix_web::Result<impl Responder> {
-    match state.fetch_product(*id, ()).await? {
+) -> Result<impl Responder, Error> {
+    let tx = db.begin().await?;
+
+    match state.fetch_product(*id, &tx).await? {
         Some(v) => {
-            let rows_affected = state.delete_product(v.head.id, ()).await?;
+            let rows_affected = state.delete_product(v.head.id, &tx).await?;
             match rows_affected {
                 0 => Ok(HttpResponse::NotFound().finish()),
-                1 => Ok(HttpResponse::Ok().json(v)),
-                _ => Err(Internal("Unexpected number of rows affected".into()).into()),
+                1 => {
+                    tx.commit().await?;
+                    Ok(HttpResponse::Ok().json(v))
+                }
+                _ => Err(Error::Internal("Unexpected number of rows affected".into())),
             }
         }
         None => Ok(HttpResponse::NotFound().finish()),

@@ -1,7 +1,6 @@
 use crate::Error;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::id::{Id, IdError};
 use trustify_entity::source_document;
 use trustify_module_storage::service::StorageKey;
@@ -16,10 +15,7 @@ pub struct SourceDocument {
 }
 
 impl SourceDocument {
-    pub async fn from_entity(
-        source_document: &source_document::Model,
-        _tx: &ConnectionOrTransaction<'_>,
-    ) -> Result<Self, Error> {
+    pub async fn from_entity(source_document: &source_document::Model) -> Result<Self, Error> {
         Ok(Self {
             sha256: format!("sha256:{}", source_document.sha256),
             sha384: format!("sha384:{}", source_document.sha384),

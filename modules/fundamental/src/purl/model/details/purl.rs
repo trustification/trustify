@@ -1,24 +1,25 @@
-use crate::sbom::model::SbomHead;
 use crate::{
     advisory::model::AdvisoryHead,
     purl::model::{BasePurlHead, PurlHead, VersionedPurlHead},
+    sbom::model::SbomHead,
     vulnerability::model::VulnerabilityHead,
     Error,
 };
 use ::cpe::uri::OwnedUri;
 use sea_orm::{
-    ColumnTrait, DbErr, EntityTrait, FromQueryResult, LoaderTrait, ModelTrait, QueryFilter,
-    QueryOrder, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select,
+    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, LoaderTrait, ModelTrait,
+    QueryFilter, QueryOrder, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select,
 };
 use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::{collections::hash_map::Entry, collections::HashMap};
 use strum::IntoEnumIterator;
-use trustify_common::db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel};
-use trustify_common::db::{ConnectionOrTransaction, VersionMatches};
-use trustify_common::memo::Memo;
-use trustify_common::purl::Purl;
+use trustify_common::{
+    db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
+    db::VersionMatches,
+    memo::Memo,
+    purl::Purl,
+};
 use trustify_entity::{
     advisory, base_purl, cpe, license, organization, product, product_status, product_version,
     product_version_range, purl_license_assertion, purl_status, qualified_purl, sbom, sbom_package,
@@ -39,12 +40,12 @@ pub struct PurlDetails {
 }
 
 impl PurlDetails {
-    pub async fn from_entity(
+    pub async fn from_entity<C: ConnectionTrait>(
         package: Option<base_purl::Model>,
         package_version: Option<versioned_purl::Model>,
         qualified_package: &qualified_purl::Model,
         deprecation: Deprecation,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Self, Error> {
         let package_version = if let Some(package_version) = package_version {
             package_version
@@ -115,15 +116,15 @@ impl PurlDetails {
         Ok(PurlDetails {
             head: PurlHead::from_entity(&package, &package_version, qualified_package, tx).await?,
             version: VersionedPurlHead::from_entity(&package, &package_version, tx).await?,
-            base: BasePurlHead::from_entity(&package, tx).await?,
+            base: BasePurlHead::from_entity(&package).await?,
             advisories: PurlAdvisory::from_entities(purl_statuses, product_statuses, tx).await?,
             licenses: PurlLicenseSummary::from_entities(&licenses, tx).await?,
         })
     }
 }
 
-async fn get_product_statuses_for_purl(
-    tx: &ConnectionOrTransaction<'_>,
+async fn get_product_statuses_for_purl<C: ConnectionTrait>(
+    tx: &C,
     qualified_package_id: Uuid,
     purl_name: &str,
     namespace_name: Option<&str>,
@@ -188,10 +189,10 @@ pub struct PurlAdvisory {
 }
 
 impl PurlAdvisory {
-    pub async fn from_entities(
+    pub async fn from_entities<C: ConnectionTrait>(
         purl_statuses: Vec<purl_status::Model>,
         product_statuses: Vec<ProductStatusCatcher>,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Vec<Self>, Error> {
         let vulns = purl_statuses.load_one(vulnerability::Entity, tx).await?;
 
@@ -306,10 +307,10 @@ pub enum StatusContext {
 }
 
 impl PurlStatus {
-    pub async fn from_entity(
+    pub async fn from_entity<C: ConnectionTrait>(
         vuln: &vulnerability::Model,
         package_status: &purl_status::Model,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Self, Error> {
         let status = status::Entity::find_by_id(package_status.status_id)
             .one(tx)
@@ -345,9 +346,9 @@ pub struct PurlLicenseSummary {
 }
 
 impl PurlLicenseSummary {
-    pub async fn from_entities(
+    pub async fn from_entities<C: ConnectionTrait>(
         entities: &[LicenseCatcher],
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Vec<Self>, Error> {
         let mut summaries = HashMap::new();
 

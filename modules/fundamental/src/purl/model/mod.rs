@@ -1,7 +1,7 @@
 use crate::Error;
 use sea_orm::prelude::Uuid;
+use sea_orm::ConnectionTrait;
 use serde::{Deserialize, Serialize};
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_common::purl::Purl;
 use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 use utoipa::ToSchema;
@@ -18,10 +18,7 @@ pub struct BasePurlHead {
 }
 
 impl BasePurlHead {
-    pub async fn from_entity(
-        entity: &base_purl::Model,
-        _tx: &ConnectionOrTransaction<'_>,
-    ) -> Result<Self, Error> {
+    pub async fn from_entity(entity: &base_purl::Model) -> Result<Self, Error> {
         Ok(BasePurlHead {
             uuid: entity.id,
             purl: Purl {
@@ -36,12 +33,11 @@ impl BasePurlHead {
 
     pub async fn from_package_entities(
         entities: &Vec<base_purl::Model>,
-        tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Vec<Self>, Error> {
         let mut heads = Vec::new();
 
         for entity in entities {
-            heads.push(Self::from_entity(entity, tx).await?)
+            heads.push(Self::from_entity(entity).await?)
         }
 
         Ok(heads)
@@ -59,10 +55,10 @@ pub struct VersionedPurlHead {
 }
 
 impl VersionedPurlHead {
-    pub async fn from_entity(
+    pub async fn from_entity<C: ConnectionTrait>(
         package: &base_purl::Model,
         package_version: &versioned_purl::Model,
-        _tx: &ConnectionOrTransaction<'_>,
+        _db: &C,
     ) -> Result<Self, Error> {
         Ok(Self {
             uuid: package_version.id,
@@ -87,11 +83,11 @@ pub struct PurlHead {
 }
 
 impl PurlHead {
-    pub async fn from_entity(
+    pub async fn from_entity<C: ConnectionTrait>(
         package: &base_purl::Model,
         package_version: &versioned_purl::Model,
         qualified_package: &qualified_purl::Model,
-        _tx: &ConnectionOrTransaction<'_>,
+        _db: &C,
     ) -> Result<Self, Error> {
         Ok(Self {
             uuid: qualified_package.id,
@@ -105,11 +101,11 @@ impl PurlHead {
         })
     }
 
-    pub async fn from_entities(
+    pub async fn from_entities<C: ConnectionTrait>(
         package: &base_purl::Model,
         package_version: &versioned_purl::Model,
         qualified_packages: &Vec<qualified_purl::Model>,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Vec<Self>, Error> {
         let mut heads = Vec::new();
 

@@ -10,7 +10,10 @@ use sea_orm::prelude::Uuid;
 use std::str::FromStr;
 use trustify_auth::{authorizer::Require, ReadSbom};
 use trustify_common::{
-    db::query::Query, id::IdError, model::Paginated, model::PaginatedResults, purl::Purl,
+    db::{query::Query, Database},
+    id::IdError,
+    model::{Paginated, PaginatedResults},
+    purl::Purl,
 };
 
 #[utoipa::path(
@@ -27,15 +30,16 @@ use trustify_common::{
 /// Retrieve details about a base versionless pURL
 pub async fn get_base_purl(
     service: web::Data<PurlService>,
+    db: web::Data<Database>,
     key: web::Path<String>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     if key.starts_with("pkg:") {
         let purl = Purl::from_str(&key).map_err(|e| Error::IdKey(IdError::Purl(e)))?;
-        Ok(HttpResponse::Ok().json(service.base_purl_by_purl(&purl, ()).await?))
+        Ok(HttpResponse::Ok().json(service.base_purl_by_purl(&purl, db.as_ref()).await?))
     } else {
         let uuid = Uuid::from_str(&key).map_err(|e| Error::IdKey(IdError::InvalidUuid(e)))?;
-        Ok(HttpResponse::Ok().json(service.base_purl_by_uuid(&uuid, ()).await?))
+        Ok(HttpResponse::Ok().json(service.base_purl_by_uuid(&uuid, db.as_ref()).await?))
     }
 }
 
@@ -54,8 +58,9 @@ pub async fn get_base_purl(
 /// List base versionless pURLs
 pub async fn all_base_purls(
     service: web::Data<PurlService>,
+    db: web::Data<Database>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
 ) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(service.base_purls(search, paginated, ()).await?))
+    Ok(HttpResponse::Ok().json(service.base_purls(search, paginated, db.as_ref()).await?))
 }

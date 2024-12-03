@@ -15,7 +15,7 @@ async fn simple(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .describes_packages(
             result.id.try_as_uid().expect("Must be a UID"),
             Default::default(),
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -40,7 +40,7 @@ async fn simple_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .describes_packages(
             result.id.try_as_uid().expect("Must be a UID"),
             Default::default(),
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -65,7 +65,7 @@ async fn simple_comp(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .describes_packages(
             result.id.try_as_uid().expect("Must be a UID"),
             Default::default(),
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -82,7 +82,7 @@ async fn simple_comp(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             result.id.try_as_uid().expect("Must be a UID"),
             Default::default(),
             Default::default(),
-            (),
+            &ctx.db,
         )
         .await?;
 

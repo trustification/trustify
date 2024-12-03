@@ -6,6 +6,7 @@ use crate::{
     model::IngestResult,
     service::{Error, Warnings},
 };
+use sea_orm::TransactionTrait;
 use serde_json::Value;
 use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
@@ -36,7 +37,7 @@ impl<'g> SpdxLoader<'g> {
             spdx.document_creation_information.document_name
         );
 
-        let tx = self.graph.transaction().await?;
+        let tx = self.graph.db.begin().await?;
 
         let labels = labels.add("type", "spdx");
 

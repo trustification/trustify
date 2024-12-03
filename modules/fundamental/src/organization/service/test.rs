@@ -24,14 +24,14 @@ async fn all_organizations(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 modified: None,
                 withdrawn: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
-    let service = crate::organization::service::OrganizationService::new(ctx.db.clone());
+    let service = crate::organization::service::OrganizationService::new();
 
     let orgs = service
-        .fetch_organizations(Query::default(), Paginated::default(), ())
+        .fetch_organizations(Query::default(), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(1, orgs.total);

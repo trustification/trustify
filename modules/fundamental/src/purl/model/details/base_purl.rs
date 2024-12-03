@@ -1,9 +1,8 @@
 use crate::purl::model::summary::versioned_purl::VersionedPurlSummary;
 use crate::purl::model::BasePurlHead;
 use crate::Error;
-use sea_orm::ModelTrait;
+use sea_orm::{ConnectionTrait, ModelTrait};
 use serde::{Deserialize, Serialize};
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_entity::{base_purl, versioned_purl};
 use utoipa::ToSchema;
 
@@ -15,14 +14,14 @@ pub struct BasePurlDetails {
 }
 
 impl BasePurlDetails {
-    pub async fn from_entity(
+    pub async fn from_entity<C: ConnectionTrait>(
         package: &base_purl::Model,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Self, Error> {
         let package_versions = package.find_related(versioned_purl::Entity).all(tx).await?;
 
         Ok(Self {
-            head: BasePurlHead::from_entity(package, tx).await?,
+            head: BasePurlHead::from_entity(package).await?,
             versions: VersionedPurlSummary::from_entities_with_common_package(
                 package,
                 &package_versions,

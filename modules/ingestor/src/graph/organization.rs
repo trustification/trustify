@@ -1,7 +1,6 @@
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, Set};
 use std::fmt::Debug;
 use tracing::instrument;
-use trustify_common::db::Transactional;
 use trustify_entity::organization;
 
 use crate::graph::{error::Error, Graph};
@@ -42,48 +41,48 @@ impl<'g> OrganizationContext<'g> {
 }
 
 impl Graph {
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn get_organizations(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn get_organizations<C: ConnectionTrait>(
         &self,
-        tx: impl AsRef<Transactional>,
+        connection: &C,
     ) -> Result<Vec<OrganizationContext>, Error> {
         Ok(organization::Entity::find()
-            .all(&self.connection(&tx))
+            .all(connection)
             .await?
             .into_iter()
             .map(|organization| OrganizationContext::new(self, organization))
             .collect())
     }
 
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn get_organization_by_name<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn get_organization_by_name<C: ConnectionTrait>(
         &self,
         name: impl Into<String> + Debug,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<OrganizationContext>, Error> {
         Ok(organization::Entity::find()
             .filter(organization::Column::Name.eq(name.into()))
-            .one(&self.connection(&tx))
+            .one(connection)
             .await?
             .map(|organization| OrganizationContext::new(self, organization)))
     }
 
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn ingest_organization<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn ingest_organization<C: ConnectionTrait>(
         &self,
         name: impl Into<String> + Debug,
         information: impl Into<OrganizationInformation> + Debug,
-        tx: TX,
+        connection: &C,
     ) -> Result<OrganizationContext, Error> {
         let name = name.into();
         let information = information.into();
 
-        if let Some(found) = self.get_organization_by_name(&name, &tx).await? {
+        if let Some(found) = self.get_organization_by_name(&name, connection).await? {
             if information.has_data() {
                 let mut entity = organization::ActiveModel::from(found.organization);
                 entity.website = Set(information.website);
                 entity.cpe_key = Set(information.cpe_key);
-                let model = entity.update(&self.connection(&tx)).await?;
+                let model = entity.update(connection).await?;
                 Ok(OrganizationContext::new(found.graph, model))
             } else {
                 Ok(found)
@@ -98,7 +97,7 @@ impl Graph {
 
             Ok(OrganizationContext::new(
                 self,
-                entity.insert(&self.connection(&tx)).await?,
+                entity.insert(connection).await?,
             ))
         }
     }

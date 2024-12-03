@@ -2,7 +2,7 @@ use crate::{graph::sbom::SbomInformation, graph::Graph, model::IngestResult, ser
 use anyhow::anyhow;
 use hex::ToHex;
 use jsonpath_rust::JsonPath;
-use sea_orm::EntityTrait;
+use sea_orm::{EntityTrait, TransactionTrait};
 use std::str::FromStr;
 use trustify_common::{
     hashing::Digests,
@@ -65,7 +65,7 @@ impl<'g> ClearlyDefinedLoader<'g> {
         });
 
         if let Some(document_id) = document_id {
-            let tx = self.graph.transaction().await?;
+            let tx = self.graph.db.begin().await?;
 
             let sbom = self
                 .graph

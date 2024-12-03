@@ -5,12 +5,12 @@ use crate::{
     Error,
 };
 use sea_orm::{
-    ColumnTrait, EntityTrait, LoaderTrait, ModelTrait, QueryFilter, QuerySelect, RelationTrait,
+    ColumnTrait, ConnectionTrait, EntityTrait, LoaderTrait, ModelTrait, QueryFilter, QuerySelect,
+    RelationTrait,
 };
 use sea_query::{Asterisk, Expr, Func, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
-use trustify_common::db::{ConnectionOrTransaction, VersionMatches};
-use trustify_common::memo::Memo;
+use trustify_common::{db::VersionMatches, memo::Memo};
 use trustify_entity::{
     advisory, base_purl, organization, purl_status, qualified_purl, status, version_range,
     versioned_purl, vulnerability,
@@ -27,10 +27,10 @@ pub struct VersionedPurlDetails {
 }
 
 impl VersionedPurlDetails {
-    pub async fn from_entity(
+    pub async fn from_entity<C: ConnectionTrait>(
         package: Option<base_purl::Model>,
         package_version: &versioned_purl::Model,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Self, Error> {
         let package = if let Some(package) = package {
             package
@@ -75,7 +75,7 @@ impl VersionedPurlDetails {
 
         Ok(Self {
             head: VersionedPurlHead::from_entity(&package, package_version, tx).await?,
-            base: BasePurlHead::from_entity(&package, tx).await?,
+            base: BasePurlHead::from_entity(&package).await?,
             purls: qualified_packages,
             advisories: VersionedPurlAdvisory::from_entities(statuses, tx).await?,
         })
@@ -90,9 +90,9 @@ pub struct VersionedPurlAdvisory {
 }
 
 impl VersionedPurlAdvisory {
-    pub async fn from_entities(
+    pub async fn from_entities<C: ConnectionTrait>(
         statuses: Vec<purl_status::Model>,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Vec<Self>, Error> {
         let vulns = statuses.load_one(vulnerability::Entity, tx).await?;
 
@@ -134,10 +134,10 @@ pub struct VersionedPurlStatus {
 }
 
 impl VersionedPurlStatus {
-    pub async fn from_entity(
+    pub async fn from_entity<C: ConnectionTrait>(
         vuln: &vulnerability::Model,
         package_status: &purl_status::Model,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Self, Error> {
         let status = package_status.find_related(status::Entity).one(tx).await?;
 

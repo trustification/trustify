@@ -1,9 +1,7 @@
-use std::sync::Arc;
-
 use async_graphql::{Context, FieldError, FieldResult, Object};
-use trustify_common::db::Transactional;
-use trustify_entity::labels::Labels;
-use trustify_entity::sbom::Model as Sbom;
+use std::sync::Arc;
+use trustify_common::db::Database;
+use trustify_entity::{labels::Labels, sbom::Model as Sbom};
 use trustify_module_ingestor::graph::Graph;
 use uuid::Uuid;
 
@@ -13,8 +11,9 @@ pub struct SbomQuery;
 #[Object]
 impl SbomQuery {
     async fn get_sbom_by_id<'a>(&self, ctx: &Context<'a>, id: Uuid) -> FieldResult<Sbom> {
+        let db = ctx.data::<Arc<Database>>()?;
         let graph = ctx.data::<Arc<Graph>>()?;
-        let sbom = graph.locate_sbom_by_id(id, Transactional::None).await;
+        let sbom = graph.locate_sbom_by_id(id, db.as_ref()).await;
 
         match sbom {
             Ok(Some(sbom_context)) => Ok(Sbom {
@@ -37,6 +36,7 @@ impl SbomQuery {
         ctx: &Context<'a>,
         labels: String,
     ) -> FieldResult<Vec<Sbom>> {
+        let db = ctx.data::<Arc<Database>>()?;
         let graph = ctx.data::<Arc<Graph>>()?;
 
         let mut local_labels = Labels::new();
@@ -50,7 +50,7 @@ impl SbomQuery {
         }
 
         let sboms = graph
-            .locate_sboms_by_labels(local_labels, Transactional::None)
+            .locate_sboms_by_labels(local_labels, db.as_ref())
             .await
             .unwrap_or_default();
 

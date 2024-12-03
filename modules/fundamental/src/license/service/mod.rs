@@ -16,7 +16,7 @@ use trustify_common::{
         limiter::{LimiterAsModelTrait, LimiterTrait},
         multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
         query::{Filtering, Query},
-        ConnectionOrTransaction, Database,
+        Database,
     },
     model::{Paginated, PaginatedResults},
 };
@@ -38,7 +38,6 @@ impl LicenseService {
         paginated: Paginated,
     ) -> Result<PaginatedResults<LicenseSummary>, Error> {
         let tx = self.db.begin().await?;
-        let tx = (&tx).into();
 
         let limiter = license::Entity::find().filtering(search)?.limiting(
             &self.db,
@@ -56,16 +55,13 @@ impl LicenseService {
 
     pub async fn get_license(&self, id: Uuid) -> Result<Option<LicenseSummary>, Error> {
         let tx = self.db.begin().await?;
-        let tx = (&tx).into();
 
         if let Some(license) = license::Entity::find_by_id(id).one(&tx).await? {
             let purls = license
                 .find_related(purl_license_assertion::Entity)
                 .count(&tx)
                 .await?;
-            return Ok(Some(
-                LicenseSummary::from_entity(&license, purls, &tx).await?,
-            ));
+            return Ok(Some(LicenseSummary::from_entity(&license, purls).await?));
         }
 
         Ok(None)
@@ -108,7 +104,6 @@ impl LicenseService {
         }
 
         let tx = self.db.begin().await?;
-        let tx: ConnectionOrTransaction = (&tx).into();
 
         let licensed_purls = versioned_purl::Entity::find()
             .join(JoinType::Join, versioned_purl::Relation::BasePurl.def())

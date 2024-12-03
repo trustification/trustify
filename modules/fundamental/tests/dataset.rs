@@ -63,7 +63,7 @@ async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
     let sbom = &result.files["spdx/quarkus-bom-2.13.8.Final-redhat-00004.json.bz2"];
     assert!(matches!(sbom.id, Id::Uuid(_)));
 
-    let sbom_summary = service.fetch_sbom_summary(sbom.id.clone(), ()).await?;
+    let sbom_summary = service.fetch_sbom_summary(sbom.id.clone(), &ctx.db).await?;
     assert!(sbom_summary.is_some());
     let sbom_summary = sbom_summary.unwrap();
     assert_eq!(sbom_summary.head.name, "quarkus-bom");

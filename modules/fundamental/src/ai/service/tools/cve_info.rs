@@ -1,33 +1,37 @@
-use crate::ai::service::tools;
-use crate::ai::service::tools::input_description;
-use crate::vulnerability::service::VulnerabilityService;
+use crate::{
+    ai::service::tools::{self, input_description},
+    vulnerability::service::VulnerabilityService,
+};
 use async_trait::async_trait;
 use langchain_rust::tools::Tool;
 use serde::Serialize;
 use serde_json::Value;
-use std::error::Error;
-use std::fmt::Write;
+use std::{error::Error, fmt::Write};
 use time::OffsetDateTime;
-use trustify_common::db::query::Query;
-use trustify_common::purl::Purl;
+use trustify_common::{
+    db::{query::Query, Database},
+    purl::Purl,
+};
 use trustify_module_ingestor::common::Deprecation;
 
-pub struct CVEInfo(pub VulnerabilityService);
+pub struct CVEInfo {
+    pub db: Database,
+    pub service: VulnerabilityService,
+}
+
+impl CVEInfo {
+    pub fn new(db: Database) -> Self {
+        Self {
+            db,
+            service: VulnerabilityService::new(),
+        }
+    }
+}
 
 #[async_trait]
 impl Tool for CVEInfo {
     fn name(&self) -> String {
         String::from("cve-info")
-    }
-
-    fn parameters(&self) -> Value {
-        input_description(
-            r#"
-The input should be the partial or full name of the Vulnerability to search for.  Example:
-* CVE-2014-0160
-
-        "#,
-        )
     }
 
     fn description(&self) -> String {
@@ -45,8 +49,18 @@ Vulnerability are identified by their CVE Identifier.
         )
     }
 
+    fn parameters(&self) -> Value {
+        input_description(
+            r#"
+The input should be the partial or full name of the Vulnerability to search for.  Example:
+* CVE-2014-0160
+
+        "#,
+        )
+    }
+
     async fn run(&self, input: Value) -> Result<String, Box<dyn Error>> {
-        let service = &self.0;
+        let service = &self.service;
 
         let input = input
             .as_str()
@@ -54,7 +68,7 @@ Vulnerability are identified by their CVE Identifier.
             .to_string();
 
         let item = match service
-            .fetch_vulnerability(input.as_str(), Deprecation::Ignore, ())
+            .fetch_vulnerability(input.as_str(), Deprecation::Ignore, &self.db)
             .await?
         {
             Some(v) => v,
@@ -68,7 +82,7 @@ Vulnerability are identified by their CVE Identifier.
                         },
                         Default::default(),
                         Deprecation::Ignore,
-                        (),
+                        &self.db,
                     )
                     .await?;
 
@@ -96,7 +110,7 @@ Vulnerability are identified by their CVE Identifier.
                     .fetch_vulnerability(
                         results.items[0].head.identifier.as_str(),
                         Deprecation::Ignore,
-                        (),
+                        &self.db,
                     )
                     .await?
                 {
@@ -171,7 +185,7 @@ mod tests {
     #[test(actix_web::test)]
     async fn cve_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ingest_fixtures(ctx).await?;
-        let tool = Rc::new(CVEInfo(VulnerabilityService::new(ctx.db.clone())));
+        let tool = Rc::new(CVEInfo::new(ctx.db.clone()));
         assert_tool_contains(
             tool.clone(),
             "CVE-2021-32714",

@@ -2,9 +2,8 @@ use crate::organization::model::OrganizationSummary;
 use crate::product::model::{ProductHead, ProductVersionHead};
 use crate::Error;
 use itertools::izip;
-use sea_orm::LoaderTrait;
+use sea_orm::{ConnectionTrait, LoaderTrait};
 use serde::{Deserialize, Serialize};
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_entity::{organization, product, product_version};
 use utoipa::ToSchema;
 
@@ -22,23 +21,22 @@ impl ProductSummary {
         product: &product::Model,
         org: Option<organization::Model>,
         versions: &[product_version::Model],
-        tx: &ConnectionOrTransaction<'_>,
     ) -> Result<Self, Error> {
         let vendor = if let Some(org) = org {
-            Some(OrganizationSummary::from_entity(&org, tx).await?)
+            Some(OrganizationSummary::from_entity(&org).await?)
         } else {
             None
         };
         Ok(ProductSummary {
-            head: ProductHead::from_entity(product, tx).await?,
-            versions: ProductVersionHead::from_entities(versions, tx).await?,
+            head: ProductHead::from_entity(product).await?,
+            versions: ProductVersionHead::from_entities(versions).await?,
             vendor,
         })
     }
 
-    pub async fn from_entities(
+    pub async fn from_entities<C: ConnectionTrait>(
         products: &[product::Model],
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Vec<Self>, Error> {
         let versions = products.load_many(product_version::Entity, tx).await?;
         let orgs = products.load_one(organization::Entity, tx).await?;
@@ -46,7 +44,7 @@ impl ProductSummary {
         let mut summaries = Vec::new();
 
         for (product, org, version) in izip!(products, orgs, versions) {
-            summaries.push(ProductSummary::from_entity(product, org, &version, tx).await?);
+            summaries.push(ProductSummary::from_entity(product, org, &version).await?);
         }
 
         Ok(summaries)

@@ -1,6 +1,6 @@
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QuerySelect};
+use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
-use trustify_common::{db::ConnectionOrTransaction, memo::Memo};
+use trustify_common::memo::Memo;
 use trustify_cvss::cvss3::score::Score;
 use trustify_entity::{advisory_vulnerability, vulnerability};
 use utoipa::ToSchema;
@@ -32,9 +32,9 @@ pub struct AdvisorySummary {
 }
 
 impl AdvisorySummary {
-    pub async fn from_entities(
+    pub async fn from_entities<C: ConnectionTrait>(
         entities: &[AdvisoryCatcher],
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Vec<Self>, Error> {
         let mut summaries = Vec::with_capacity(entities.len());
 
@@ -63,7 +63,7 @@ impl AdvisorySummary {
                 )
                 .await?,
                 source_document: if let Some(doc) = &each.source_document {
-                    Some(SourceDocument::from_entity(doc, tx).await?)
+                    Some(SourceDocument::from_entity(doc).await?)
                 } else {
                     None
                 },

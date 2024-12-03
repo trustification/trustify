@@ -14,7 +14,7 @@ use trustify_common::{
         limiter::LimiterAsModelTrait,
         multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
         query::{Columns, Filtering, Query},
-        Database, Transactional,
+        Database,
     },
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},
@@ -37,15 +37,13 @@ impl AdvisoryService {
         Self { db }
     }
 
-    pub async fn fetch_advisories<TX: AsRef<Transactional> + Sync + Send>(
+    pub async fn fetch_advisories<C: ConnectionTrait + Sync + Send>(
         &self,
         search: Query,
         paginated: Paginated,
         deprecation: Deprecation,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<AdvisorySummary>, Error> {
-        let connection = self.db.connection(&tx);
-
         // To be able to ORDER or WHERE using a synthetic column, we must first
         // SELECT col, extra_col FROM (SELECT col, random as extra_col FROM...)
         // which involves mucking about inside the Select<E> to re-target from
@@ -119,7 +117,7 @@ impl AdvisoryService {
                     }),
             )?
             .try_limiting_as_multi_model::<AdvisoryCatcher>(
-                &connection,
+                connection,
                 paginated.offset,
                 paginated.limit,
             )?;
@@ -130,17 +128,15 @@ impl AdvisoryService {
 
         Ok(PaginatedResults {
             total,
-            items: AdvisorySummary::from_entities(&items, &connection).await?,
+            items: AdvisorySummary::from_entities(&items, connection).await?,
         })
     }
 
-    pub async fn fetch_advisory<TX: AsRef<Transactional> + Sync + Send>(
+    pub async fn fetch_advisory<C: ConnectionTrait + Sync + Send>(
         &self,
         id: Id,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<AdvisoryDetails>, Error> {
-        let connection = self.db.connection(&tx);
-
         // To be able to ORDER or WHERE using a synthetic column, we must first
         // SELECT col, extra_col FROM (SELECT col, random as extra_col FROM...)
         // which involves mucking about inside the Select<E> to re-target from
@@ -189,26 +185,24 @@ impl AdvisoryService {
             )
             .try_filter(id)?
             .try_into_multi_model::<AdvisoryCatcher>()?
-            .one(&connection)
+            .one(connection)
             .await?;
 
         if let Some(catcher) = results {
             Ok(Some(
-                AdvisoryDetails::from_entity(&catcher, &connection).await?,
+                AdvisoryDetails::from_entity(&catcher, connection).await?,
             ))
         } else {
             Ok(None)
         }
     }
 
-    /// delete one sbom
-    pub async fn delete_advisory<TX: AsRef<Transactional>>(
+    /// delete one advisory
+    pub async fn delete_advisory<C: ConnectionTrait>(
         &self,
         id: Uuid,
-        tx: TX,
+        connection: &C,
     ) -> Result<u64, Error> {
-        let connection = self.db.connection(&tx);
-
         let stmt = Statement::from_sql_and_values(
             connection.get_database_backend(),
             r#"DELETE FROM advisory WHERE id=$1 RETURNING identifier"#,
@@ -220,7 +214,7 @@ impl AdvisoryService {
 
         for row in result {
             let identifier = row.try_get_by_index::<String>(0)?;
-            UpdateDeprecatedAdvisory::execute(&connection, &identifier).await?;
+            UpdateDeprecatedAdvisory::execute(connection, &identifier).await?;
         }
 
         Ok(rows_affected as u64)
@@ -230,18 +224,16 @@ impl AdvisoryService {
     ///
     /// Returns `Ok(Some(()))` if a document was found and updated. If no document was found, it will
     /// return `Ok(None)`.
-    pub async fn set_labels(
+    pub async fn set_labels<C: ConnectionTrait>(
         &self,
         id: Id,
         labels: Labels,
-        tx: impl AsRef<Transactional>,
+        connection: &C,
     ) -> Result<Option<()>, Error> {
-        let db = self.db.connection(&tx);
-
         let result = advisory::Entity::update_many()
             .try_filter(id)?
             .col_expr(advisory::Column::Labels, Expr::value(labels))
-            .exec(&db)
+            .exec(connection)
             .await?;
 
         Ok((result.rows_affected > 0).then_some(()))

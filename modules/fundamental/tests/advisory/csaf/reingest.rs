@@ -26,9 +26,9 @@ async fn equal(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // check info
 
-    let vuln = VulnerabilityService::new(ctx.db.clone());
+    let vuln = VulnerabilityService::new();
     let v = vuln
-        .fetch_vulnerability("CVE-2023-33201", Default::default(), ())
+        .fetch_vulnerability("CVE-2023-33201", Default::default(), &ctx.db)
         .await?
         .expect("must exist");
 
@@ -51,9 +51,9 @@ async fn change_ps_num_advisories(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // check info - non-deprecated
 
-    let vuln = VulnerabilityService::new(ctx.db.clone());
+    let vuln = VulnerabilityService::new();
     let v = vuln
-        .fetch_vulnerability("CVE-2023-33201", Deprecation::Ignore, ())
+        .fetch_vulnerability("CVE-2023-33201", Deprecation::Ignore, &ctx.db)
         .await?
         .expect("must exist");
 
@@ -61,9 +61,9 @@ async fn change_ps_num_advisories(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // check info - with-deprecated
 
-    let vuln = VulnerabilityService::new(ctx.db.clone());
+    let vuln = VulnerabilityService::new();
     let v = vuln
-        .fetch_vulnerability("CVE-2023-33201", Deprecation::Consider, ())
+        .fetch_vulnerability("CVE-2023-33201", Deprecation::Consider, &ctx.db)
         .await?
         .expect("must exist");
 
@@ -86,9 +86,9 @@ async fn change_ps_list_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // check info
 
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
     let purls = service
-        .purls(Default::default(), Default::default(), ())
+        .purls(Default::default(), Default::default(), &ctx.db)
         .await?;
 
     // pkg:rpm/redhat/eap7-bouncycastle@1.76.0-4.redhat_00001.1.el9eap?arch=noarch
@@ -121,7 +121,7 @@ async fn change_ps_list_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
     // get vuln by purl
 
     let purl = service
-        .purl_by_uuid(&purl.head.uuid, Deprecation::Ignore, ())
+        .purl_by_uuid(&purl.head.uuid, Deprecation::Ignore, &ctx.db)
         .await?
         .expect("must find something");
 
@@ -167,9 +167,9 @@ async fn change_ps_list_vulns_all(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // check info
 
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
     let purls = service
-        .purls(Default::default(), Default::default(), ())
+        .purls(Default::default(), Default::default(), &ctx.db)
         .await?;
 
     // pkg:rpm/redhat/eap7-bouncycastle-util@1.76.0-4.redhat_00001.1.el9eap?arch=noarch
@@ -202,7 +202,7 @@ async fn change_ps_list_vulns_all(ctx: &TrustifyContext) -> anyhow::Result<()> {
     // get vuln by purl
 
     let mut purl = service
-        .purl_by_uuid(&purl.head.uuid, Deprecation::Consider, ())
+        .purl_by_uuid(&purl.head.uuid, Deprecation::Consider, &ctx.db)
         .await?
         .expect("must find something");
 

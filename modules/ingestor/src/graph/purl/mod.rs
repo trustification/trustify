@@ -7,12 +7,14 @@ pub mod qualified_package;
 use crate::graph::{error::Error, Graph};
 use package_version::PackageVersionContext;
 use qualified_package::QualifiedPackageContext;
-use sea_orm::{prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+use sea_orm::{
+    prelude::Uuid, ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, Set,
+};
 use sea_query::SelectStatement;
 use std::fmt::{Debug, Formatter};
 use tracing::instrument;
 use trustify_common::{
-    db::{limiter::LimiterTrait, Transactional},
+    db::limiter::LimiterTrait,
     model::{Paginated, PaginatedResults},
     purl::{Purl, PurlErr},
 };
@@ -25,42 +27,44 @@ impl Graph {
     ///
     /// The `pkg` parameter does not necessarily require the presence of qualifiers, but
     /// is assumed to be *complete*.
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn ingest_qualified_package<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn ingest_qualified_package<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<QualifiedPackageContext, Error> {
-        let package = self.ingest_package(purl, &tx).await?;
-        let package_version = package.ingest_package_version(purl, &tx).await?;
-        package_version.ingest_qualified_package(purl, &tx).await
+        let package = self.ingest_package(purl, connection).await?;
+        let package_version = package.ingest_package_version(purl, connection).await?;
+        package_version
+            .ingest_qualified_package(purl, connection)
+            .await
     }
 
     /// Ensure the fetch knows about and contains a record for a *versioned* package.
     ///
     /// This method will ensure the package being referenced is also ingested.
-    pub async fn ingest_package_version<TX: AsRef<Transactional>>(
+    pub async fn ingest_package_version<C: ConnectionTrait>(
         &self,
         pkg: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<PackageVersionContext, Error> {
-        if let Some(found) = self.get_package_version(pkg, &tx).await? {
+        if let Some(found) = self.get_package_version(pkg, connection).await? {
             return Ok(found);
         }
-        let package = self.ingest_package(pkg, &tx).await?;
+        let package = self.ingest_package(pkg, connection).await?;
 
-        package.ingest_package_version(pkg, &tx).await
+        package.ingest_package_version(pkg, connection).await
     }
 
     /// Ensure the fetch knows about and contains a record for a *versionless* package.
     ///
     /// This method will ensure the package being referenced is also ingested.
-    pub async fn ingest_package<TX: AsRef<Transactional>>(
+    pub async fn ingest_package<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<PackageContext, Error> {
-        if let Some(found) = self.get_package(purl, &tx).await? {
+        if let Some(found) = self.get_package(purl, connection).await? {
             Ok(found)
         } else {
             let model = entity::base_purl::ActiveModel {
@@ -70,40 +74,39 @@ impl Graph {
                 name: Set(purl.name.clone()),
             };
 
-            Ok(PackageContext::new(
-                self,
-                model.insert(&self.connection(&tx)).await?,
-            ))
+            Ok(PackageContext::new(self, model.insert(connection).await?))
         }
     }
 
     /// Retrieve a *fully-qualified* package entry, if it exists.
     ///
     /// Non-mutating to the fetch.
-    pub async fn get_qualified_package<TX: AsRef<Transactional>>(
+    pub async fn get_qualified_package<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<QualifiedPackageContext>, Error> {
-        if let Some(package_version) = self.get_package_version(purl, &tx).await? {
-            package_version.get_qualified_package(purl, &tx).await
+        if let Some(package_version) = self.get_package_version(purl, connection).await? {
+            package_version
+                .get_qualified_package(purl, connection)
+                .await
         } else {
             Ok(None)
         }
     }
 
-    pub async fn get_qualified_package_by_id<TX: AsRef<Transactional>>(
+    pub async fn get_qualified_package_by_id<C: ConnectionTrait>(
         &self,
         id: Uuid,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<QualifiedPackageContext>, Error> {
         let found = entity::qualified_purl::Entity::find_by_id(id)
-            .one(&self.connection(&tx))
+            .one(connection)
             .await?;
 
         if let Some(qualified_package) = found {
             if let Some(package_version) = self
-                .get_package_version_by_id(qualified_package.versioned_purl_id, tx)
+                .get_package_version_by_id(qualified_package.versioned_purl_id, connection)
                 .await?
             {
                 Ok(Some(QualifiedPackageContext::new(
@@ -118,22 +121,22 @@ impl Graph {
         }
     }
 
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn get_qualified_packages_by_query<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn get_qualified_packages_by_query<C: ConnectionTrait>(
         &self,
         query: SelectStatement,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         let found = entity::qualified_purl::Entity::find()
             .filter(entity::qualified_purl::Column::Id.in_subquery(query))
-            .all(&self.connection(&tx))
+            .all(connection)
             .await?;
 
         let mut package_versions = Vec::new();
 
         for base in &found {
             if let Some(package_version) = self
-                .get_package_version_by_id(base.versioned_purl_id, &tx)
+                .get_package_version_by_id(base.versioned_purl_id, connection)
                 .await?
             {
                 let qualified_package =
@@ -148,30 +151,30 @@ impl Graph {
     /// Retrieve a *versioned* package entry, if it exists.
     ///
     /// Non-mutating to the fetch.
-    pub async fn get_package_version<TX: AsRef<Transactional>>(
+    pub async fn get_package_version<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<PackageVersionContext<'_>>, Error> {
-        if let Some(pkg) = self.get_package(purl, &tx).await? {
-            pkg.get_package_version(purl, &tx).await
+        if let Some(pkg) = self.get_package(purl, connection).await? {
+            pkg.get_package_version(purl, connection).await
         } else {
             Ok(None)
         }
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn get_package_version_by_id<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    pub async fn get_package_version_by_id<C: ConnectionTrait>(
         &self,
         id: Uuid,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<PackageVersionContext>, Error> {
         if let Some(package_version) = entity::versioned_purl::Entity::find_by_id(id)
-            .one(&self.connection(&tx))
+            .one(connection)
             .await?
         {
             if let Some(package) = self
-                .get_package_by_id(package_version.base_purl_id, &tx)
+                .get_package_by_id(package_version.base_purl_id, connection)
                 .await?
             {
                 Ok(Some(PackageVersionContext::new(&package, package_version)))
@@ -186,10 +189,10 @@ impl Graph {
     /// Retrieve a *versionless* package entry, if it exists.
     ///
     /// Non-mutating to the fetch.
-    pub async fn get_package<TX: AsRef<Transactional>>(
+    pub async fn get_package<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<PackageContext>, Error> {
         Ok(entity::base_purl::Entity::find()
             .filter(entity::base_purl::Column::Type.eq(&purl.ty))
@@ -199,19 +202,19 @@ impl Graph {
                 entity::base_purl::Column::Namespace.is_null()
             })
             .filter(entity::base_purl::Column::Name.eq(&purl.name))
-            .one(&self.connection(&tx))
+            .one(connection)
             .await?
             .map(|package| PackageContext::new(self, package)))
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn get_package_by_id<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    pub async fn get_package_by_id<C: ConnectionTrait>(
         &self,
         id: Uuid,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<PackageContext>, Error> {
         if let Some(found) = entity::base_purl::Entity::find_by_id(id)
-            .one(&self.connection(&tx))
+            .one(connection)
             .await?
         {
             Ok(Some(PackageContext::new(self, found)))
@@ -243,13 +246,13 @@ impl<'g> PackageContext<'g> {
     }
 
     /// Ensure the fetch knows about and contains a record for a *version* of this package.
-    pub async fn ingest_package_version<TX: AsRef<Transactional>>(
+    pub async fn ingest_package_version<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<PackageVersionContext<'g>, Error> {
         if let Some(version) = &purl.version {
-            if let Some(found) = self.get_package_version(purl, &tx).await? {
+            if let Some(found) = self.get_package_version(purl, connection).await? {
                 Ok(found)
             } else {
                 let model = entity::versioned_purl::ActiveModel {
@@ -260,7 +263,7 @@ impl<'g> PackageContext<'g> {
 
                 Ok(PackageVersionContext::new(
                     self,
-                    model.insert(&self.graph.connection(&tx)).await?,
+                    model.insert(connection).await?,
                 ))
             }
         } else {
@@ -271,15 +274,15 @@ impl<'g> PackageContext<'g> {
     /// Retrieve a *version* package entry for this package, if it exists.
     ///
     /// Non-mutating to the fetch.
-    pub async fn get_package_version<TX: AsRef<Transactional>>(
+    pub async fn get_package_version<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<PackageVersionContext<'g>>, Error> {
         Ok(entity::versioned_purl::Entity::find()
             .filter(entity::versioned_purl::Column::BasePurlId.eq(self.base_purl.id))
             .filter(entity::versioned_purl::Column::Version.eq(purl.version.clone()))
-            .one(&self.graph.connection(&tx))
+            .one(connection)
             .await
             .map(|package_version| {
                 package_version
@@ -290,29 +293,27 @@ impl<'g> PackageContext<'g> {
     /// Retrieve known versions of this package.
     ///
     /// Non-mutating to the fetch.
-    pub async fn get_versions<TX: AsRef<Transactional>>(
+    pub async fn get_versions<C: ConnectionTrait>(
         &self,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<PackageVersionContext>, Error> {
         Ok(entity::versioned_purl::Entity::find()
             .filter(entity::versioned_purl::Column::BasePurlId.eq(self.base_purl.id))
-            .all(&self.graph.connection(&tx))
+            .all(connection)
             .await?
             .drain(0..)
             .map(|each| PackageVersionContext::new(self, each))
             .collect())
     }
 
-    pub async fn get_versions_paginated<TX: AsRef<Transactional>>(
+    pub async fn get_versions_paginated<C: ConnectionTrait>(
         &self,
         paginated: Paginated,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<PackageVersionContext>, Error> {
-        let connection = self.graph.connection(&tx);
-
         let limiter = entity::versioned_purl::Entity::find()
             .filter(entity::versioned_purl::Column::BasePurlId.eq(self.base_purl.id))
-            .limiting(&connection, paginated.limit, paginated.offset);
+            .limiting(connection, paginated.limit, paginated.offset);
 
         Ok(PaginatedResults {
             total: limiter.total().await?,
@@ -341,7 +342,6 @@ mod tests {
     use test_context::test_context;
     use test_log::test;
 
-    use trustify_common::db::Transactional;
     use trustify_common::model::Paginated;
     use trustify_common::purl::Purl;
     use trustify_entity::qualified_purl;
@@ -354,28 +354,18 @@ mod tests {
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn ingest_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db);
+        let system = Graph::new(ctx.db.clone());
 
         let pkg1 = system
-            .ingest_package(
-                &"pkg:maven/io.quarkus/quarkus-core".try_into()?,
-                Transactional::None,
-            )
+            .ingest_package(&"pkg:maven/io.quarkus/quarkus-core".try_into()?, &ctx.db)
             .await?;
 
         let pkg2 = system
-            .ingest_package(
-                &"pkg:maven/io.quarkus/quarkus-core".try_into()?,
-                Transactional::None,
-            )
+            .ingest_package(&"pkg:maven/io.quarkus/quarkus-core".try_into()?, &ctx.db)
             .await?;
 
         let pkg3 = system
-            .ingest_package(
-                &"pkg:maven/io.quarkus/quarkus-addons".try_into()?,
-                Transactional::None,
-            )
+            .ingest_package(&"pkg:maven/io.quarkus/quarkus-addons".try_into()?, &ctx.db)
             .await?;
 
         assert_eq!(pkg1.base_purl.id, pkg2.base_purl.id,);
@@ -390,14 +380,10 @@ mod tests {
     async fn ingest_package_versions_missing_version(
         ctx: TrustifyContext,
     ) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db);
+        let system = Graph::new(ctx.db.clone());
 
         let result = system
-            .ingest_package_version(
-                &"pkg:maven/io.quarkus/quarkus-addons".try_into()?,
-                Transactional::None,
-            )
+            .ingest_package_version(&"pkg:maven/io.quarkus/quarkus-addons".try_into()?, &ctx.db)
             .await;
 
         assert!(result.is_err());
@@ -408,27 +394,26 @@ mod tests {
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn ingest_package_versions(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db);
+        let system = Graph::new(ctx.db.clone());
 
         let pkg1 = system
             .ingest_package_version(
                 &"pkg:maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
         let pkg2 = system
             .ingest_package_version(
                 &"pkg:maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
         let pkg3 = system
             .ingest_package_version(
                 &"pkg:maven/io.quarkus/quarkus-core@4.5.6".try_into()?,
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
@@ -444,8 +429,7 @@ mod tests {
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn get_versions_paginated(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db);
+        let system = Graph::new(ctx.db.clone());
 
         const TOTAL_ITEMS: u64 = 200;
         let _page_size = NonZeroU64::new(50).unwrap();
@@ -453,20 +437,15 @@ mod tests {
         for v in 0..TOTAL_ITEMS {
             let version = format!("pkg:maven/io.quarkus/quarkus-core@{v}").try_into()?;
 
-            let _ = system
-                .ingest_package_version(&version, Transactional::None)
-                .await?;
+            let _ = system.ingest_package_version(&version, &ctx.db).await?;
         }
 
         let pkg = system
-            .get_package(
-                &"pkg:maven/io.quarkus/quarkus-core".try_into()?,
-                Transactional::None,
-            )
+            .get_package(&"pkg:maven/io.quarkus/quarkus-core".try_into()?, &ctx.db)
             .await?
             .unwrap();
 
-        let all_versions = pkg.get_versions(Transactional::None).await?;
+        let all_versions = pkg.get_versions(&ctx.db).await?;
 
         assert_eq!(TOTAL_ITEMS, all_versions.len() as u64);
 
@@ -476,7 +455,7 @@ mod tests {
                     offset: 50,
                     limit: 50,
                 },
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
@@ -489,7 +468,7 @@ mod tests {
                     offset: 100,
                     limit: 50,
                 },
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
@@ -504,24 +483,23 @@ mod tests {
     async fn ingest_qualified_packages_transactionally(
         ctx: TrustifyContext,
     ) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db.clone());
+        let system = Graph::new(ctx.db.clone());
 
         let tx_system = system.clone();
 
-        db.transaction(|_tx| {
+        ctx.db.transaction(|tx| {
             Box::pin(async move {
                 let pkg1 = tx_system
                     .ingest_qualified_package(
                         &"pkg:oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012".try_into()?,
-                        &Transactional::None,
+                        tx,
                     )
                     .await?;
 
                 let pkg2 = tx_system
                     .ingest_qualified_package(
                     &"pkg:oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012".try_into()?,
-                        &Transactional::None,
+                        tx,
                     )
                     .await?;
 
@@ -537,34 +515,33 @@ mod tests {
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn ingest_qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db);
+        let system = Graph::new(ctx.db.clone());
 
         let pkg1 = system
             .ingest_qualified_package(
                 &"pkg:maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
-                &Transactional::None,
+                &&ctx.db,
             )
             .await?;
 
         let pkg2 = system
             .ingest_qualified_package(
                 &"pkg:maven/io.quarkus/quarkus-core@1.2.3".try_into()?,
-                &Transactional::None,
+                &&ctx.db,
             )
             .await?;
 
         let pkg3 = system
             .ingest_qualified_package(
                 &"pkg:maven/io.quarkus/quarkus-core@1.2.3?type=jar".try_into()?,
-                &Transactional::None,
+                &&ctx.db,
             )
             .await?;
 
         let pkg4 = system
             .ingest_qualified_package(
                 &"pkg:maven/io.quarkus/quarkus-core@1.2.3?type=jar".try_into()?,
-                &Transactional::None,
+                &&ctx.db,
             )
             .await?;
 
@@ -588,8 +565,7 @@ mod tests {
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn query_qualified_packages(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let graph = Graph::new(db);
+        let graph = Graph::new(ctx.db.clone());
 
         for i in [
             "pkg:maven/io.quarkus/quarkus-core@1.2.3",
@@ -597,7 +573,7 @@ mod tests {
             "pkg:maven/io.quarkus/quarkus-core@1.2.3?type=pom",
         ] {
             graph
-                .ingest_qualified_package(&i.try_into()?, &Transactional::None)
+                .ingest_qualified_package(&i.try_into()?, &&ctx.db)
                 .await?;
         }
 
@@ -615,7 +591,7 @@ mod tests {
             ))
             .into_query();
         let result = graph
-            .get_qualified_packages_by_query(select, Transactional::None)
+            .get_qualified_packages_by_query(select, &ctx.db)
             .await?;
 
         log::debug!("{result:?}");

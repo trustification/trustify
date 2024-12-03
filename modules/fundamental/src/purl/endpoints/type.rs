@@ -7,7 +7,10 @@ use crate::purl::{
 };
 use actix_web::{get, web, HttpResponse, Responder};
 use trustify_auth::{authorizer::Require, ReadSbom};
-use trustify_common::{db::query::Query, model::Paginated, model::PaginatedResults};
+use trustify_common::{
+    db::{query::Query, Database},
+    model::{Paginated, PaginatedResults},
+};
 
 #[utoipa::path(
     tag = "purl type",
@@ -22,9 +25,10 @@ use trustify_common::{db::query::Query, model::Paginated, model::PaginatedResult
 /// List known pURL types
 pub async fn all_purl_types(
     service: web::Data<PurlService>,
+    db: web::Data<Database>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(service.purl_types(()).await?))
+    Ok(HttpResponse::Ok().json(service.purl_types(db.as_ref()).await?))
 }
 
 #[utoipa::path(
@@ -43,6 +47,7 @@ pub async fn all_purl_types(
 /// Retrieve details about a pURL type
 pub async fn get_purl_type(
     service: web::Data<PurlService>,
+    db: web::Data<Database>,
     r#type: web::Path<String>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
@@ -50,7 +55,7 @@ pub async fn get_purl_type(
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(
         service
-            .base_purls_by_type(&r#type, search, paginated, ())
+            .base_purls_by_type(&r#type, search, paginated, db.as_ref())
             .await?,
     ))
 }
@@ -71,6 +76,7 @@ pub async fn get_purl_type(
 /// Retrieve base pURL details of a type
 pub async fn get_base_purl_of_type(
     service: web::Data<PurlService>,
+    db: web::Data<Database>,
     path: web::Path<(String, String)>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
@@ -82,7 +88,11 @@ pub async fn get_base_purl_of_type(
         (None, namespace_and_name)
     };
 
-    Ok(HttpResponse::Ok().json(service.base_purl(&r#type, namespace, &name, ()).await?))
+    Ok(HttpResponse::Ok().json(
+        service
+            .base_purl(&r#type, namespace, &name, db.as_ref())
+            .await?,
+    ))
 }
 
 #[utoipa::path(
@@ -101,6 +111,7 @@ pub async fn get_base_purl_of_type(
 /// Retrieve versioned pURL details of a type
 pub async fn get_versioned_purl_of_type(
     service: web::Data<PurlService>,
+    db: web::Data<Database>,
     path: web::Path<(String, String, String)>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
@@ -114,7 +125,7 @@ pub async fn get_versioned_purl_of_type(
 
     Ok(HttpResponse::Ok().json(
         service
-            .versioned_purl(&r#type, namespace, &name, &version, ())
+            .versioned_purl(&r#type, namespace, &name, &version, db.as_ref())
             .await?,
     ))
 }

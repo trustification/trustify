@@ -19,6 +19,7 @@ use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder, R
 use config::Config;
 use futures_util::TryStreamExt;
 use sea_orm::prelude::Uuid;
+use sea_orm::TransactionTrait;
 use std::{
     fmt::{Display, Formatter},
     str::FromStr,
@@ -50,9 +51,10 @@ pub fn configure(
     upload_limit: usize,
 ) {
     let sbom_service = SbomService::new(db.clone());
-    let purl_service = PurlService::new(db);
+    let purl_service = PurlService::new();
 
     config
+        .app_data(web::Data::new(db))
         .app_data(web::Data::new(sbom_service))
         .app_data(web::Data::new(purl_service))
         .app_data(web::Data::new(Config { upload_limit }))
@@ -84,6 +86,7 @@ pub fn configure(
 #[get("/v1/sbom")]
 pub async fn all(
     fetch: web::Data<SbomService>,
+    db: web::Data<Database>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     authorizer: web::Data<Authorizer>,
@@ -91,7 +94,9 @@ pub async fn all(
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadSbom)?;
 
-    let result = fetch.fetch_sboms(search, paginated, (), ()).await?;
+    let result = fetch
+        .fetch_sboms(search, paginated, (), db.as_ref())
+        .await?;
 
     Ok(HttpResponse::Ok().json(result))
 }
@@ -165,6 +170,7 @@ impl TryFrom<AllRelatedQuery> for Uuid {
 #[get("/v1/sbom/by-package")]
 pub async fn all_related(
     sbom: web::Data<SbomService>,
+    db: web::Data<Database>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     web::Query(all_related): web::Query<AllRelatedQuery>,
@@ -175,7 +181,9 @@ pub async fn all_related(
 
     let id = all_related.try_into()?;
 
-    let result = sbom.find_related_sboms(id, paginated, search, ()).await?;
+    let result = sbom
+        .find_related_sboms(id, paginated, search, db.as_ref())
+        .await?;
 
     Ok(HttpResponse::Ok().json(result))
 }
@@ -197,6 +205,7 @@ pub async fn all_related(
 #[get("/v1/sbom/count-by-package")]
 pub async fn count_related(
     sbom: web::Data<SbomService>,
+    db: web::Data<Database>,
     web::Json(ids): web::Json<Vec<AllRelatedQuery>>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
@@ -205,7 +214,7 @@ pub async fn count_related(
         .map(Uuid::try_from)
         .collect::<Result<Vec<_>, _>>()?;
 
-    let result = sbom.count_related_sboms(ids, ()).await?;
+    let result = sbom.count_related_sboms(ids, db.as_ref()).await?;
 
     Ok(HttpResponse::Ok().json(result))
 }
@@ -224,11 +233,12 @@ pub async fn count_related(
 #[get("/v1/sbom/{id}")]
 pub async fn get(
     fetcher: web::Data<SbomService>,
+    db: web::Data<Database>,
     id: web::Path<String>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     let id = Id::from_str(&id).map_err(Error::IdKey)?;
-    match fetcher.fetch_sbom_summary(id, ()).await? {
+    match fetcher.fetch_sbom_summary(id, db.as_ref()).await? {
         Some(v) => Ok(HttpResponse::Ok().json(v)),
         None => Ok(HttpResponse::NotFound().finish()),
     }
@@ -248,11 +258,12 @@ pub async fn get(
 #[get("/v1/sbom/{id}/advisory")]
 pub async fn get_sbom_advisories(
     fetcher: web::Data<SbomService>,
+    db: web::Data<Database>,
     id: web::Path<String>,
     _: Require<GetSbomAdvisories>,
 ) -> actix_web::Result<impl Responder> {
     let id = Id::from_str(&id).map_err(Error::IdKey)?;
-    match fetcher.fetch_sbom_details(id, ()).await? {
+    match fetcher.fetch_sbom_details(id, db.as_ref()).await? {
         Some(v) => Ok(HttpResponse::Ok().json(v.advisories)),
         None => Ok(HttpResponse::NotFound().finish()),
     }
@@ -274,21 +285,25 @@ all!(GetSbomAdvisories -> ReadSbom, ReadAdvisory);
 #[delete("/v1/sbom/{id}")]
 pub async fn delete(
     service: web::Data<SbomService>,
+    db: web::Data<Database>,
     purl_service: web::Data<PurlService>,
     id: web::Path<String>,
     _: Require<DeleteSbom>,
-) -> actix_web::Result<impl Responder> {
-    let id = Id::from_str(&id).map_err(Error::IdKey)?;
-    match service.fetch_sbom_summary(id.clone(), ()).await? {
+) -> Result<impl Responder, Error> {
+    let tx = db.begin().await?;
+
+    let id = Id::from_str(&id)?;
+    match service.fetch_sbom_summary(id.clone(), &tx).await? {
         Some(v) => {
-            let rows_affected = service.delete_sbom(v.head.id, ()).await?;
+            let rows_affected = service.delete_sbom(v.head.id, &tx).await?;
             match rows_affected {
                 0 => Ok(HttpResponse::NotFound().finish()),
                 1 => {
-                    let _ = purl_service.gc_purls(()).await; // ignore gc failure..
+                    let _ = purl_service.gc_purls(&tx).await; // ignore gc failure..
+                    tx.commit().await?;
                     Ok(HttpResponse::Ok().json(v))
                 }
-                _ => Err(Internal("Unexpected number of rows affected".into()).into()),
+                _ => Err(Internal("Unexpected number of rows affected".into())),
             }
         }
         None => Ok(HttpResponse::NotFound().finish()),
@@ -311,13 +326,14 @@ pub async fn delete(
 #[get("/v1/sbom/{id}/packages")]
 pub async fn packages(
     fetch: web::Data<SbomService>,
+    db: web::Data<Database>,
     id: web::Path<Uuid>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     let result = fetch
-        .fetch_sbom_packages(id.into_inner(), search, paginated, ())
+        .fetch_sbom_packages(id.into_inner(), search, paginated, db.as_ref())
         .await?;
 
     Ok(HttpResponse::Ok().json(result))
@@ -353,6 +369,7 @@ struct RelatedQuery {
 #[get("/v1/sbom/{id}/related")]
 pub async fn related(
     fetch: web::Data<SbomService>,
+    db: web::Data<Database>,
     id: web::Path<Uuid>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
@@ -372,7 +389,7 @@ pub async fn related(
                 Some(id) => SbomPackageReference::Package(id),
             },
             related.relationship,
-            (),
+            db.as_ref(),
         )
         .await?;
 
@@ -431,13 +448,14 @@ pub async fn upload(
 #[get("/v1/sbom/{key}/download")]
 pub async fn download(
     ingestor: web::Data<IngestorService>,
+    db: web::Data<Database>,
     sbom: web::Data<SbomService>,
     key: web::Path<String>,
     _: Require<ReadSbom>,
 ) -> Result<impl Responder, Error> {
     let id = Id::from_str(&key).map_err(Error::IdKey)?;
 
-    let Some(sbom) = sbom.fetch_sbom_summary(id, ()).await? else {
+    let Some(sbom) = sbom.fetch_sbom_summary(id, db.as_ref()).await? else {
         return Ok(HttpResponse::NotFound().finish());
     };
 

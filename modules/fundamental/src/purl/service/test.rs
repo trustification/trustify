@@ -7,10 +7,7 @@ use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::{
-    db::{
-        query::{q, Query},
-        Transactional,
-    },
+    db::query::{q, Query},
     id::Id,
     model::Paginated,
     purl::Purl,
@@ -19,10 +16,10 @@ use trustify_test_context::TrustifyContext;
 
 async fn ingest_extra_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.myspace/tom")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.myspace/tom")?, &ctx.db)
         .await?;
     ctx.graph
-        .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
+        .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, &ctx.db)
         .await?;
 
     Ok(())
@@ -31,31 +28,37 @@ async fn ingest_extra_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn types(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     let log4j = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, &ctx.db)
         .await?;
 
     let log4j_123 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j_123
-        .ingest_qualified_package(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?repository_url=http://jboss.org")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
     ingest_extra_packages(ctx).await?;
 
-    let types = service.purl_types(()).await?;
+    let types = service.purl_types(&ctx.db).await?;
 
     assert_eq!(2, types.len());
 
@@ -82,29 +85,38 @@ async fn types(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn packages_for_type(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     let log4j = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, &ctx.db)
         .await?;
 
     log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.4")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.4")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.5")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.5")?,
+            &ctx.db,
+        )
         .await?;
 
     ingest_extra_packages(ctx).await?;
 
     let packages = service
-        .base_purls_by_type("maven", Query::default(), Paginated::default(), ())
+        .base_purls_by_type("maven", Query::default(), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(packages.total, 2);
@@ -125,29 +137,38 @@ async fn packages_for_type(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn packages_for_type_with_filtering(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     let log4j = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, &ctx.db)
         .await?;
 
     log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.4")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.4")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.5")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.5")?,
+            &ctx.db,
+        )
         .await?;
 
     ingest_extra_packages(ctx).await?;
 
     let packages = service
-        .base_purls_by_type("maven", q("myspace"), Paginated::default(), ())
+        .base_purls_by_type("maven", q("myspace"), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(packages.total, 1);
@@ -163,64 +184,73 @@ async fn packages_for_type_with_filtering(ctx: &TrustifyContext) -> Result<(), a
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     let log4j = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, &ctx.db)
         .await?;
 
     let log4j_123 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?repository_url=http://maven.org")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?repository_url=http://jboss.org")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
     let _log4j_124 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.4")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.4")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.5")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.5")?,
+            &ctx.db,
+        )
         .await?;
 
     let tom = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.myspace/tom")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.myspace/tom")?, &ctx.db)
         .await?;
 
-    tom.ingest_package_version(&Purl::from_str("pkg:maven/org.myspace/tom@1.1.1")?, ())
+    tom.ingest_package_version(&Purl::from_str("pkg:maven/org.myspace/tom@1.1.1")?, &ctx.db)
         .await?;
 
-    tom.ingest_package_version(&Purl::from_str("pkg:maven/org.myspace/tom@9.9.9")?, ())
+    tom.ingest_package_version(&Purl::from_str("pkg:maven/org.myspace/tom@9.9.9")?, &ctx.db)
         .await?;
 
     ctx.graph
-        .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
+        .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, &ctx.db)
         .await?;
 
     let bind = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:rpm/bind")?, ())
+        .ingest_package(&Purl::from_str("pkg:rpm/bind")?, &ctx.db)
         .await?;
 
-    bind.ingest_package_version(&Purl::from_str("pkg:rpm/bind@4.4.4")?, ())
+    bind.ingest_package_version(&Purl::from_str("pkg:rpm/bind@4.4.4")?, &ctx.db)
         .await?;
 
     let results = service
-        .base_purl("maven", Some("org.apache".to_string()), "log4j", ())
+        .base_purl("maven", Some("org.apache".to_string()), "log4j", &ctx.db)
         .await?;
 
     assert!(results.is_some());
@@ -235,46 +265,52 @@ async fn package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn package_version(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     let log4j = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, &ctx.db)
         .await?;
 
     let log4j_123 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=11")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=17")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
     let log4j_345 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@3.4.5")?, ())
-        .await?;
-
-    log4j_345
-        .ingest_qualified_package(
-            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
-            (),
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5")?,
+            &ctx.db,
         )
         .await?;
 
     log4j_345
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
-            (),
+            &ctx.db,
+        )
+        .await?;
+
+    log4j_345
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
+            &ctx.db,
         )
         .await?;
 
@@ -284,7 +320,7 @@ async fn package_version(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             Some("org.apache".to_string()),
             "log4j",
             "1.2.3",
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -315,51 +351,57 @@ async fn package_version(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn package_version_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     let log4j = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, &ctx.db)
         .await?;
 
     let log4j_123 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=11")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=17")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
     let log4j_345 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@3.4.5")?, ())
-        .await?;
-
-    log4j_345
-        .ingest_qualified_package(
-            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
-            (),
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5")?,
+            &ctx.db,
         )
         .await?;
 
     log4j_345
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
-            (),
+            &ctx.db,
+        )
+        .await?;
+
+    log4j_345
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
+            &ctx.db,
         )
         .await?;
 
     let result = service
-        .versioned_purl_by_uuid(&log4j_123.package_version.id, ())
+        .versioned_purl_by_uuid(&log4j_123.package_version.id, &ctx.db)
         .await?;
 
     assert!(result.is_some());
@@ -389,85 +431,94 @@ async fn package_version_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Er
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     let log4j = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, &ctx.db)
         .await?;
 
     let log4j_123 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=11")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=17")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
     let log4j_345 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@3.4.5")?, ())
-        .await?;
-
-    log4j_345
-        .ingest_qualified_package(
-            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
-            (),
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5")?,
+            &ctx.db,
         )
         .await?;
 
     log4j_345
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
-            (),
+            &ctx.db,
+        )
+        .await?;
+
+    log4j_345
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
+            &ctx.db,
         )
         .await?;
 
     let quarkus = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.jboss/quarkus")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.jboss/quarkus")?, &ctx.db)
         .await?;
 
     let quarkus_123 = quarkus
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.jboss/quarkus@1.2.3")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.jboss/quarkus@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     quarkus_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.jboss/quarkus@1.2.3?repository_url=http://jboss.org/")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
     let results = service
-        .base_purls(q("log4j"), Paginated::default(), ())
+        .base_purls(q("log4j"), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(1, results.items.len());
 
     let results = service
-        .base_purls(q("quarkus"), Paginated::default(), ())
+        .base_purls(q("quarkus"), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(1, results.items.len());
 
     let results = service
-        .base_purls(q("jboss"), Paginated::default(), ())
+        .base_purls(q("jboss"), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(1, results.items.len());
 
     let results = service
-        .base_purls(q("maven"), Paginated::default(), ())
+        .base_purls(q("maven"), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(2, results.items.len());
@@ -478,66 +529,77 @@ async fn packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn qualified_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     let log4j = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, &ctx.db)
         .await?;
 
     let log4j_123 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=11")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=17")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
     let log4j_345 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@3.4.5")?, ())
-        .await?;
-
-    log4j_345
-        .ingest_qualified_package(
-            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
-            (),
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5")?,
+            &ctx.db,
         )
         .await?;
 
     log4j_345
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
-            (),
+            &ctx.db,
+        )
+        .await?;
+
+    log4j_345
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
+            &ctx.db,
         )
         .await?;
 
     let quarkus = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.jboss/quarkus")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.jboss/quarkus")?, &ctx.db)
         .await?;
 
     let quarkus_123 = quarkus
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.jboss/quarkus@1.2.3")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.jboss/quarkus@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     quarkus_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.jboss/quarkus@1.2.3?repository_url=http://jboss.org/")?,
-            (),
+            &ctx.db,
         )
         .await?;
 
-    let results = service.purls(q("log4j"), Paginated::default(), ()).await?;
+    let results = service
+        .purls(q("log4j"), Paginated::default(), &ctx.db)
+        .await?;
 
     log::debug!("{:#?}", results);
 
@@ -547,20 +609,17 @@ async fn qualified_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn statuses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
     ctx.ingest_documents(["osv/RUSTSEC-2021-0079.json", "cve/CVE-2021-32714.json"])
         .await?;
 
     ctx.ingestor
         .graph()
-        .ingest_qualified_package(
-            &Purl::from_str("pkg:cargo/hyper@0.14.1")?,
-            Transactional::None,
-        )
+        .ingest_qualified_package(&Purl::from_str("pkg:cargo/hyper@0.14.1")?, &ctx.db)
         .await?;
 
     let results = service
-        .purls(Query::default(), Paginated::default(), Transactional::None)
+        .purls(Query::default(), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(1, results.items.len());
@@ -568,7 +627,7 @@ async fn statuses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let uuid = results.items[0].head.uuid;
 
     let _results = service
-        .purl_by_uuid(&uuid, Default::default(), Transactional::None)
+        .purl_by_uuid(&uuid, Default::default(), &ctx.db)
         .await?;
 
     Ok(())
@@ -577,12 +636,12 @@ async fn statuses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn contextual_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     ctx.ingest_document("csaf/rhsa-2024_3666.json").await?;
 
     let results = service
-        .purls(Query::default(), Paginated::default(), Transactional::None)
+        .purls(Query::default(), Paginated::default(), &ctx.db)
         .await?;
 
     let tomcat_jsp = results
@@ -597,7 +656,7 @@ async fn contextual_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let uuid = tomcat_jsp.head.uuid;
 
     let tomcat_jsp = service
-        .purl_by_uuid(&uuid, Default::default(), Transactional::None)
+        .purl_by_uuid(&uuid, Default::default(), &ctx.db)
         .await?;
 
     assert!(tomcat_jsp.is_some());
@@ -628,11 +687,11 @@ async fn contextual_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let purl_service = PurlService::new(ctx.db.clone());
+    let purl_service = PurlService::new();
     assert_eq!(
         0,
         purl_service
-            .purls(Query::default(), Paginated::default(), Transactional::None)
+            .purls(Query::default(), Paginated::default(), &ctx.db)
             .await?
             .items
             .len()
@@ -647,7 +706,7 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(
         880,
         purl_service
-            .purls(Query::default(), Paginated::default(), Transactional::None)
+            .purls(Query::default(), Paginated::default(), &ctx.db)
             .await?
             .items
             .len()
@@ -660,7 +719,7 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(
         1490,
         purl_service
-            .purls(Query::default(), Paginated::default(), Transactional::None)
+            .purls(Query::default(), Paginated::default(), &ctx.db)
             .await?
             .items
             .len()
@@ -673,13 +732,13 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ) -> Result<(), anyhow::Error> {
         let sbom_service = SbomService::new(ctx.db.clone());
         let sbom = sbom_service
-            .fetch_sbom_details(id, ())
+            .fetch_sbom_details(id, &ctx.db)
             .await?
             .expect("fetch_sbom");
         assert_eq!(
             1,
             sbom_service
-                .delete_sbom(sbom.summary.head.id, Transactional::None)
+                .delete_sbom(sbom.summary.head.id, &ctx.db)
                 .await?
         );
 
@@ -689,7 +748,7 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             assert_eq!(
                 1,
                 advisory_service
-                    .delete_advisory(a.head.uuid, Transactional::None)
+                    .delete_advisory(a.head.uuid, &ctx.db)
                     .await?
             );
         }
@@ -701,16 +760,16 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // it should leave behind orphaned purls
     let result = purl_service
-        .purls(Query::default(), Paginated::default(), Transactional::None)
+        .purls(Query::default(), Paginated::default(), &ctx.db)
         .await?;
     assert_eq!(1490, result.items.len());
 
     // running the gc, should delete those orphaned purls
-    let deleted_records_count = purl_service.gc_purls(()).await?;
+    let deleted_records_count = purl_service.gc_purls(&ctx.db).await?;
     assert_eq!(792, deleted_records_count);
 
     let result = purl_service
-        .purls(Query::default(), Paginated::default(), Transactional::None)
+        .purls(Query::default(), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(880, result.items.len());
@@ -720,16 +779,16 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // it should leave behind orphaned purls
     let result = purl_service
-        .purls(Query::default(), Paginated::default(), Transactional::None)
+        .purls(Query::default(), Paginated::default(), &ctx.db)
         .await?;
     assert_eq!(880, result.items.len());
 
     // running the gc, should delete those orphaned purls
-    let deleted_records_count = purl_service.gc_purls(()).await?;
+    let deleted_records_count = purl_service.gc_purls(&ctx.db).await?;
     assert_eq!(1759, deleted_records_count);
 
     let result = purl_service
-        .purls(Query::default(), Paginated::default(), Transactional::None)
+        .purls(Query::default(), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(0, result.items.len());
@@ -739,17 +798,20 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 async fn ingest_some_log4j_data(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let log4j = ctx
         .graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, &ctx.db)
         .await?;
 
     let log4j_123 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .ingest_package_version(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=11")?,
-            (),
+            &ctx.db,
         )
         .await?;
     Ok(())
@@ -758,7 +820,7 @@ async fn ingest_some_log4j_data(ctx: &TrustifyContext) -> Result<(), anyhow::Err
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     ingest_some_log4j_data(ctx).await?;
 
@@ -766,7 +828,7 @@ async fn purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .purl_by_purl(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
             Default::default(),
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -778,12 +840,15 @@ async fn purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn base_purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     ingest_some_log4j_data(ctx).await?;
 
     let results = service
-        .base_purl_by_purl(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .base_purl_by_purl(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     assert!(!results.unwrap().versions.is_empty());
@@ -794,12 +859,15 @@ async fn base_purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn versioned_base_purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     ingest_some_log4j_data(ctx).await?;
 
     let results = service
-        .versioned_purl_by_purl(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .versioned_purl_by_purl(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
         .await?;
 
     assert!(!results.unwrap().purls.is_empty());
@@ -810,7 +878,7 @@ async fn versioned_base_purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn license_information(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
 
     ctx.ingest_document("ubi9-9.2-755.1697625012.json").await?;
 
@@ -818,7 +886,7 @@ async fn license_information(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
         .purl_by_purl(
             &Purl::try_from("pkg:rpm/redhat/libsepol@3.5-1.el9?arch=s390x")?,
             Default::default(),
-            Transactional::None,
+            &ctx.db,
         )
         .await?;
 

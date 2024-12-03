@@ -3,7 +3,6 @@ use crate::ai::service::AiService;
 
 use test_context::test_context;
 use test_log::test;
-use trustify_common::db::Transactional;
 use trustify_common::hashing::Digests;
 use trustify_module_ingestor::graph::product::ProductInformation;
 use trustify_test_context::TrustifyContext;
@@ -16,7 +15,7 @@ pub async fn ingest_fixtures(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
             &Digests::digest("RHSA-1"),
             "a",
             (),
-            Transactional::None,
+            &ctx.db,
         )
         .await?;
 
@@ -28,11 +27,11 @@ pub async fn ingest_fixtures(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
                 vendor: Some("Red Hat".to_string()),
                 cpe: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
-    pr.ingest_product_version("37.17.9".to_string(), Some(sbom.sbom.sbom_id), ())
+    pr.ingest_product_version("37.17.9".to_string(), Some(sbom.sbom.sbom_id), &ctx.db)
         .await?;
 
     ctx.ingest_documents(["osv/RUSTSEC-2021-0079.json", "cve/CVE-2021-32714.json"])
@@ -78,7 +77,7 @@ async fn test_completions_sbom_info(ctx: &TrustifyContext) -> Result<(), anyhow:
             .into(),
     );
 
-    let result = service.completions(&req, ()).await?;
+    let result = service.completions(&req, &ctx.db).await?;
 
     log::info!("result: {:#?}", result);
     let last_message_content = result.messages.last().unwrap().content.clone();
@@ -106,7 +105,7 @@ async fn test_completions_package_info(ctx: &TrustifyContext) -> Result<(), anyh
     let mut req = ChatState::new();
     req.add_human_message("List the httpclient packages with their identifiers".into());
 
-    let result = service.completions(&req, ()).await?;
+    let result = service.completions(&req, &ctx.db).await?;
 
     log::info!("result: {:#?}", result);
     let last_message_content = result.messages.last().unwrap().content.clone();
@@ -135,7 +134,7 @@ async fn test_completions_cve_info(ctx: &TrustifyContext) -> Result<(), anyhow::
     let mut req = ChatState::new();
     req.add_human_message("Give me details for CVE-2021-32714".into());
 
-    let result = service.completions(&req, ()).await?;
+    let result = service.completions(&req, &ctx.db).await?;
 
     log::info!("result: {:#?}", result);
     let last_message_content = result.messages.last().unwrap().content.clone();
@@ -163,7 +162,7 @@ async fn test_completions_advisory_info(ctx: &TrustifyContext) -> Result<(), any
     let mut req = ChatState::new();
     req.add_human_message("Give me details for the RHSA-2024_3666 advisory".into());
 
-    let result = service.completions(&req, ()).await?;
+    let result = service.completions(&req, &ctx.db).await?;
 
     log::info!("result: {:#?}", result);
     let last_message_content = result.messages.last().unwrap().content.clone();

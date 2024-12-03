@@ -6,12 +6,10 @@ mod reingest;
 mod spdx;
 
 use cyclonedx_bom::prelude::Bom;
+use sea_orm::{DatabaseTransaction, TransactionTrait};
 use std::{future::Future, pin::Pin, time::Instant};
 use tracing::{info_span, instrument, Instrument};
-use trustify_common::{
-    db::{Database, Transactional},
-    hashing::Digests,
-};
+use trustify_common::{db::Database, hashing::Digests};
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::{
     graph::{
@@ -44,7 +42,7 @@ where
     for<'a> I: FnOnce(
         &'a SbomContext,
         B,
-        &'a Transactional,
+        &'a DatabaseTransaction,
     ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + 'a>>,
     C: FnOnce(&B) -> SbomInformation,
     F: FnOnce(WithContext) -> FFut,
@@ -68,7 +66,7 @@ where
 
     let parse_time = start.elapsed();
 
-    let tx = graph.transaction().await?;
+    let tx = db.begin().await?;
 
     let start = Instant::now();
     let ctx = graph

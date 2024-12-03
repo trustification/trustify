@@ -30,22 +30,22 @@ async fn simple(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let service = AdvisoryService::new(ctx.db.clone());
     service
-        .delete_advisory(r2.id.try_as_uid().expect("must be a UUID variant"), ())
+        .delete_advisory(r2.id.try_as_uid().expect("must be a UUID variant"), &ctx.db)
         .await?;
 
     // now test, find only one, for either ignore or consider
 
-    let vuln = VulnerabilityService::new(ctx.db.clone());
+    let vuln = VulnerabilityService::new();
     let v = vuln
-        .fetch_vulnerability("CVE-2023-33201", Deprecation::Consider, ())
+        .fetch_vulnerability("CVE-2023-33201", Deprecation::Consider, &ctx.db)
         .await?
         .expect("must exist");
 
     assert_eq!(v.advisories.len(), 1);
 
-    let vuln = VulnerabilityService::new(ctx.db.clone());
+    let vuln = VulnerabilityService::new();
     let v = vuln
-        .fetch_vulnerability("CVE-2023-33201", Deprecation::Ignore, ())
+        .fetch_vulnerability("CVE-2023-33201", Deprecation::Ignore, &ctx.db)
         .await?
         .expect("must exist");
 
@@ -70,14 +70,14 @@ async fn delete_check_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let service = AdvisoryService::new(ctx.db.clone());
     service
-        .delete_advisory(r2.id.try_as_uid().expect("must be a UUID variant"), ())
+        .delete_advisory(r2.id.try_as_uid().expect("must be a UUID variant"), &ctx.db)
         .await?;
 
     // check info
 
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
     let purls = service
-        .purls(Default::default(), Default::default(), ())
+        .purls(Default::default(), Default::default(), &ctx.db)
         .await?;
 
     // pkg:rpm/redhat/eap7-bouncycastle-util@1.76.0-4.redhat_00001.1.el9eap?arch=noarch
@@ -105,7 +105,7 @@ async fn delete_check_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
     // get vuln by purl
 
     let mut purl = service
-        .purl_by_uuid(&purl.head.uuid, Deprecation::Ignore, ())
+        .purl_by_uuid(&purl.head.uuid, Deprecation::Ignore, &ctx.db)
         .await?
         .expect("must find something");
 

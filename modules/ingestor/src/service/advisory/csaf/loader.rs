@@ -15,12 +15,13 @@ use csaf::{
     Csaf,
 };
 use sbom_walker::report::ReportSink;
+use sea_orm::{ConnectionTrait, TransactionTrait};
 use semver::Version;
 use std::fmt::Debug;
 use std::str::FromStr;
 use time::OffsetDateTime;
 use tracing::instrument;
-use trustify_common::{db::Transactional, hashing::Digests, id::Id};
+use trustify_common::{hashing::Digests, id::Id};
 use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity::labels::Labels;
 
@@ -88,7 +89,7 @@ impl<'g> CsafLoader<'g> {
     ) -> Result<IngestResult, Error> {
         let warnings = Warnings::new();
 
-        let tx = self.graph.transaction().await?;
+        let tx = self.graph.db.begin().await?;
 
         let advisory_id = gen_identifier(&csaf);
         let labels = labels.into().add("type", "csaf");
@@ -118,19 +119,21 @@ impl<'g> CsafLoader<'g> {
             cve=vulnerability.cve
         )
     )]
-    async fn ingest_vulnerability<TX: AsRef<Transactional>>(
+    async fn ingest_vulnerability<C: ConnectionTrait>(
         &self,
         csaf: &Csaf,
         advisory: &AdvisoryContext<'_>,
         vulnerability: &Vulnerability,
         report: &dyn ReportSink,
-        tx: TX,
+        connection: &C,
     ) -> Result<(), Error> {
         let Some(cve_id) = &vulnerability.cve else {
             return Ok(());
         };
 
-        self.graph.ingest_vulnerability(cve_id, (), &tx).await?;
+        self.graph
+            .ingest_vulnerability(cve_id, (), connection)
+            .await?;
 
         let advisory_vulnerability = advisory
             .link_to_vulnerability(
@@ -148,12 +151,12 @@ impl<'g> CsafLoader<'g> {
                     }),
                     cwes: vulnerability.cwe.as_ref().map(|cwe| vec![cwe.id.clone()]),
                 }),
-                &tx,
+                connection,
             )
             .await?;
 
         if let Some(product_status) = &vulnerability.product_status {
-            self.ingest_product_statuses(csaf, &advisory_vulnerability, product_status, &tx)
+            self.ingest_product_statuses(csaf, &advisory_vulnerability, product_status, connection)
                 .await?;
         }
 
@@ -163,7 +166,7 @@ impl<'g> CsafLoader<'g> {
                     Ok(cvss3) => {
                         log::debug!("{cvss3:?}");
                         advisory_vulnerability
-                            .ingest_cvss3_score(cvss3, &tx)
+                            .ingest_cvss3_score(cvss3, connection)
                             .await?;
                     }
                     Err(err) => {
@@ -179,12 +182,12 @@ impl<'g> CsafLoader<'g> {
     }
 
     #[instrument(skip_all, err)]
-    async fn ingest_product_statuses<TX: AsRef<Transactional>>(
+    async fn ingest_product_statuses<C: ConnectionTrait>(
         &self,
         csaf: &Csaf,
         advisory_vulnerability: &AdvisoryVulnerabilityContext<'_>,
         product_status: &ProductStatus,
-        tx: TX,
+        connection: &C,
     ) -> Result<(), Error> {
         let mut creator = StatusCreator::new(
             csaf,
@@ -199,7 +202,7 @@ impl<'g> CsafLoader<'g> {
         creator.add_all(&product_status.known_not_affected, "not_affected");
         creator.add_all(&product_status.known_affected, "affected");
 
-        creator.create(self.graph, tx).await?;
+        creator.create(self.graph, connection).await?;
 
         Ok(())
     }
@@ -213,14 +216,12 @@ mod test {
     use crate::graph::Graph;
     use test_context::test_context;
     use test_log::test;
-    use trustify_common::db::Transactional;
     use trustify_test_context::{document, TrustifyContext};
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
     async fn loader(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = &ctx.db;
-        let graph = Graph::new(db.clone());
+        let graph = Graph::new(ctx.db.clone());
 
         let (csaf, digests): (Csaf, _) = document("csaf/CVE-2023-20862.json").await?;
         let loader = CsafLoader::new(&graph);
@@ -228,13 +229,11 @@ mod test {
             .load(("file", "CVE-2023-20862.json"), csaf, &digests)
             .await?;
 
-        let loaded_vulnerability = graph
-            .get_vulnerability("CVE-2023-20862", Transactional::None)
-            .await?;
+        let loaded_vulnerability = graph.get_vulnerability("CVE-2023-20862", &ctx.db).await?;
         assert!(loaded_vulnerability.is_some());
 
         let loaded_advisory = graph
-            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), &ctx.db)
             .await?;
         assert!(loaded_advisory.is_some());
 
@@ -242,7 +241,7 @@ mod test {
 
         assert!(loaded_advisory.advisory.issuer_id.is_some());
 
-        let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(()).await?;
+        let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(&ctx.db).await?;
         assert_eq!(1, loaded_advisory_vulnerabilities.len());
         // let loaded_advisory_vulnerability = &loaded_advisory_vulnerabilities[0];
 
@@ -277,12 +276,12 @@ mod test {
         // ));
 
         let advisory_vuln = loaded_advisory
-            .get_vulnerability("CVE-2023-20862", ())
+            .get_vulnerability("CVE-2023-20862", &ctx.db)
             .await?;
         assert!(advisory_vuln.is_some());
 
         let advisory_vuln = advisory_vuln.unwrap();
-        let scores = advisory_vuln.cvss3_scores(()).await?;
+        let scores = advisory_vuln.cvss3_scores(&ctx.db).await?;
         assert_eq!(1, scores.len());
 
         let score = scores[0];
@@ -297,20 +296,17 @@ mod test {
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn multiple_vulnerabilities(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let graph = Graph::new(db);
+        let graph = Graph::new(ctx.db.clone());
         let loader = CsafLoader::new(&graph);
 
         let (csaf, digests): (Csaf, _) = document("csaf/rhsa-2024_3666.json").await?;
         loader.load(("source", "test"), csaf, &digests).await?;
 
-        let loaded_vulnerability = graph
-            .get_vulnerability("CVE-2024-23672", Transactional::None)
-            .await?;
+        let loaded_vulnerability = graph.get_vulnerability("CVE-2024-23672", &ctx.db).await?;
         assert!(loaded_vulnerability.is_some());
 
         let loaded_advisory = graph
-            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), &ctx.db)
             .await?;
         assert!(loaded_advisory.is_some());
 
@@ -318,16 +314,16 @@ mod test {
 
         assert!(loaded_advisory.advisory.issuer_id.is_some());
 
-        let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(()).await?;
+        let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(&ctx.db).await?;
         assert_eq!(2, loaded_advisory_vulnerabilities.len());
 
         let advisory_vuln = loaded_advisory
-            .get_vulnerability("CVE-2024-23672", ())
+            .get_vulnerability("CVE-2024-23672", &ctx.db)
             .await?;
         assert!(advisory_vuln.is_some());
 
         let advisory_vuln = advisory_vuln.unwrap();
-        let scores = advisory_vuln.cvss3_scores(()).await?;
+        let scores = advisory_vuln.cvss3_scores(&ctx.db).await?;
         assert_eq!(1, scores.len());
 
         let score = scores[0];
@@ -341,20 +337,17 @@ mod test {
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn product_status(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let graph = Graph::new(db);
+        let graph = Graph::new(ctx.db.clone());
         let loader = CsafLoader::new(&graph);
 
         let (csaf, digests): (Csaf, _) = document("csaf/cve-2023-0044.json").await?;
         loader.load(("source", "test"), csaf, &digests).await?;
 
-        let loaded_vulnerability = graph
-            .get_vulnerability("CVE-2023-0044", Transactional::None)
-            .await?;
+        let loaded_vulnerability = graph.get_vulnerability("CVE-2023-0044", &ctx.db).await?;
         assert!(loaded_vulnerability.is_some());
 
         let loaded_advisory = graph
-            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), &ctx.db)
             .await?;
         assert!(loaded_advisory.is_some());
 
@@ -362,16 +355,16 @@ mod test {
 
         assert!(loaded_advisory.advisory.issuer_id.is_some());
 
-        let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(()).await?;
+        let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(&ctx.db).await?;
         assert_eq!(1, loaded_advisory_vulnerabilities.len());
 
         let advisory_vuln = loaded_advisory
-            .get_vulnerability("CVE-2023-0044", ())
+            .get_vulnerability("CVE-2023-0044", &ctx.db)
             .await?;
         assert!(advisory_vuln.is_some());
 
         let advisory_vuln = advisory_vuln.unwrap();
-        let scores = advisory_vuln.cvss3_scores(()).await?;
+        let scores = advisory_vuln.cvss3_scores(&ctx.db).await?;
         assert_eq!(1, scores.len());
 
         let score = scores[0];

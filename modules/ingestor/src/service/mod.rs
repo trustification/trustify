@@ -198,21 +198,24 @@ impl IngestorService {
 
         match fmt {
             Format::SPDX | Format::CycloneDX => {
-                let analysis_service = AnalysisService::new(self.graph.db.clone());
+                let analysis_service = AnalysisService::new();
                 if result.id.to_string().starts_with("urn:uuid:") {
                     match analysis_service // TODO: today we chop off 'urn:uuid:' prefix using .split_off on result.id
-                        .load_graphs(vec![result.id.to_string().split_off("urn:uuid:".len())], ())
+                        .load_graphs(
+                            vec![result.id.to_string().split_off("urn:uuid:".len())],
+                            &self.graph.db,
+                        )
                         .await
                     {
                         Ok(_) => log::debug!(
-                        "Analysis graph for sbom: {} loaded successfully.",
-                        result.id.value()
-                    ),
+                            "Analysis graph for sbom: {} loaded successfully.",
+                            result.id.value()
+                        ),
                         Err(e) => log::warn!(
-                        "Error loading sbom {} into analysis graph : {}",
-                        result.id.value(),
-                        e
-                    ),
+                            "Error loading sbom {} into analysis graph : {}",
+                            result.id.value(),
+                            e
+                        ),
                     }
                 }
             }

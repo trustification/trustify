@@ -1,47 +1,42 @@
-// use crate::Error;
+use crate::{
+    model::{AnalysisStatus, AncNode, AncestorSummary, DepNode, DepSummary, GraphMap, PackageNode},
+    Error,
+};
+use petgraph::{
+    algo::is_cyclic_directed,
+    graph::{Graph, NodeIndex},
+    visit::{NodeIndexable, VisitMap, Visitable},
+    Direction,
+};
 use sea_orm::{
     prelude::ConnectionTrait, ColumnTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
     QueryFilter, QueryOrder, QueryResult, QuerySelect, QueryTrait, Statement,
 };
-use std::collections::{HashMap, HashSet};
+use sea_query::Order;
+use std::{
+    collections::{HashMap, HashSet},
+    str::FromStr,
+};
 use tracing::instrument;
 use trustify_common::{
-    db::{
-        query::{Query, Value},
-        Database, Transactional,
-    },
+    db::query::{Filtering, Query, Value},
     model::{Paginated, PaginatedResults},
+    purl::Purl,
 };
-
-use crate::model::{
-    AnalysisStatus, AncNode, AncestorSummary, DepNode, DepSummary, GraphMap, PackageNode,
-};
-use crate::Error;
-use petgraph::algo::is_cyclic_directed;
-use petgraph::graph::{Graph, NodeIndex};
-use petgraph::visit::{NodeIndexable, VisitMap, Visitable};
-use petgraph::Direction;
-use sea_query::Order;
-use std::str::FromStr;
-use trustify_common::db::query::Filtering;
-use trustify_common::db::ConnectionOrTransaction;
-use trustify_common::purl::Purl;
-use trustify_entity::relationship::Relationship;
-use trustify_entity::{sbom, sbom_node};
+use trustify_entity::{relationship::Relationship, sbom, sbom_node};
 use uuid::Uuid;
 
-pub struct AnalysisService {
-    db: Database,
-}
+#[derive(Default)]
+pub struct AnalysisService {}
 
 pub fn dep_nodes(
-    graph: &petgraph::Graph<PackageNode, Relationship, petgraph::Directed>,
+    graph: &Graph<PackageNode, Relationship, petgraph::Directed>,
     node: NodeIndex,
     visited: &mut HashSet<NodeIndex>,
 ) -> Vec<DepNode> {
     let mut depnodes = Vec::new();
     fn dfs(
-        graph: &petgraph::Graph<PackageNode, Relationship, petgraph::Directed>,
+        graph: &Graph<PackageNode, Relationship, petgraph::Directed>,
         node: NodeIndex,
         depnodes: &mut Vec<DepNode>,
         visited: &mut HashSet<NodeIndex>,
@@ -82,7 +77,7 @@ pub fn dep_nodes(
 }
 
 pub fn ancestor_nodes(
-    graph: &petgraph::Graph<PackageNode, Relationship, petgraph::Directed>,
+    graph: &Graph<PackageNode, Relationship, petgraph::Directed>,
     node: NodeIndex,
 ) -> Vec<AncNode> {
     let mut discovered = graph.visit_map();
@@ -131,8 +126,8 @@ pub fn ancestor_nodes(
     ancestor_nodes
 }
 
-pub async fn get_implicit_relationships(
-    connection: &ConnectionOrTransaction<'_>,
+pub async fn get_implicit_relationships<C: ConnectionTrait>(
+    connection: &C,
     distinct_sbom_id: &str,
 ) -> Result<Vec<QueryResult>, DbErr> {
     let sql = r#"
@@ -176,8 +171,8 @@ pub async fn get_implicit_relationships(
     Ok(results)
 }
 
-pub async fn get_relationships(
-    connection: &ConnectionOrTransaction<'_>,
+pub async fn get_relationships<C: ConnectionTrait>(
+    connection: &C,
     distinct_sbom_id: &str,
 ) -> Result<Vec<QueryResult>, DbErr> {
     // Retrieve all SBOM components that have defined relationships
@@ -232,10 +227,7 @@ pub async fn get_relationships(
     Ok(results)
 }
 
-pub async fn load_graphs(
-    connection: &ConnectionOrTransaction<'_>,
-    distinct_sbom_ids: &Vec<String>,
-) {
+pub async fn load_graphs<C: ConnectionTrait>(connection: &C, distinct_sbom_ids: &Vec<String>) {
     let graph_map = GraphMap::get_instance();
     {
         for distinct_sbom_id in distinct_sbom_ids {
@@ -420,53 +412,53 @@ pub async fn load_graphs(
 }
 
 impl AnalysisService {
-    pub fn new(db: Database) -> Self {
-        GraphMap::get_instance();
-        Self { db }
+    pub fn new() -> Self {
+        let _ = GraphMap::get_instance();
+        Self {}
     }
 
-    pub async fn load_graphs<TX: AsRef<Transactional>>(
+    pub async fn load_graphs<C: ConnectionTrait>(
         &self,
         distinct_sbom_ids: Vec<String>,
-        tx: TX,
+        connection: &C,
     ) -> Result<(), Error> {
-        let connection = self.db.connection(&tx);
-        load_graphs(&connection, &distinct_sbom_ids).await;
+        load_graphs(connection, &distinct_sbom_ids).await;
 
         Ok(())
     }
-    pub async fn load_all_graphs<TX: AsRef<Transactional>>(&self, tx: TX) -> Result<(), Error> {
-        let connection = self.db.connection(&tx);
+    pub async fn load_all_graphs<C: ConnectionTrait>(&self, connection: &C) -> Result<(), Error> {
         // retrieve all sboms in trustify
         let distinct_sbom_ids = sbom::Entity::find()
             .select()
             .order_by(sbom::Column::DocumentId, Order::Asc)
             .order_by(sbom::Column::Published, Order::Desc)
-            .all(&connection)
+            .all(connection)
             .await?
             .into_iter()
             .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
             .collect();
 
-        load_graphs(&connection, &distinct_sbom_ids).await;
+        load_graphs(connection, &distinct_sbom_ids).await;
 
         Ok(())
     }
 
-    pub async fn clear_all_graphs<TX: AsRef<Transactional>>(&self, _tx: TX) -> Result<(), Error> {
+    pub async fn clear_all_graphs(&self) -> Result<(), Error> {
         let graph_manager = GraphMap::get_instance();
         let mut manager = graph_manager.write();
         manager.clear();
         Ok(())
     }
 
-    pub async fn status<TX: AsRef<Transactional>>(&self, tx: TX) -> Result<AnalysisStatus, Error> {
-        let connection = self.db.connection(&tx);
+    pub async fn status<C: ConnectionTrait>(
+        &self,
+        connection: &C,
+    ) -> Result<AnalysisStatus, Error> {
         let distinct_sbom_ids = sbom::Entity::find()
             .select()
             .order_by(sbom::Column::DocumentId, Order::Asc)
             .order_by(sbom::Column::Published, Order::Desc)
-            .all(&connection)
+            .all(connection)
             .await?;
 
         let graph_manager = GraphMap::get_instance();
@@ -477,7 +469,7 @@ impl AnalysisService {
         })
     }
 
-    pub async fn query_ancestor_graph<TX: AsRef<Transactional>>(
+    pub async fn query_ancestor_graph(
         component_name: Option<String>,
         component_purl: Option<Purl>,
         query: Option<Query>,
@@ -574,7 +566,7 @@ impl AnalysisService {
         components
     }
 
-    pub async fn query_deps_graph<TX: AsRef<Transactional>>(
+    pub async fn query_deps_graph(
         component_name: Option<String>,
         component_purl: Option<Purl>,
         query: Option<Query>,
@@ -671,15 +663,13 @@ impl AnalysisService {
         components
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn retrieve_root_components<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    pub async fn retrieve_root_components<C: ConnectionTrait>(
         &self,
         query: Query,
         paginated: Paginated,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<AncestorSummary>, Error> {
-        let connection = self.db.connection(&tx);
-
         let search_sbom_node_name_subquery = sbom_node::Entity::find()
             .filtering(query.clone())?
             .select_only()
@@ -691,15 +681,15 @@ impl AnalysisService {
             .select()
             .order_by(sbom::Column::DocumentId, Order::Asc)
             .order_by(sbom::Column::Published, Order::Desc)
-            .all(&connection)
+            .all(connection)
             .await?
             .into_iter()
             .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
             .collect();
 
-        load_graphs(&connection, &distinct_sbom_ids).await;
+        load_graphs(connection, &distinct_sbom_ids).await;
 
-        let components = AnalysisService::query_ancestor_graph::<TX>(
+        let components = AnalysisService::query_ancestor_graph(
             None,
             None,
             Option::from(query),
@@ -710,20 +700,19 @@ impl AnalysisService {
         Ok(paginated.paginate_array(&components))
     }
 
-    pub async fn retrieve_all_sbom_roots_by_name<TX: AsRef<Transactional>>(
+    pub async fn retrieve_all_sbom_roots_by_name<C: ConnectionTrait>(
         &self,
         sbom_id: Uuid,
         component_name: String,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<AncNode>, Error> {
         // This function searches for a component(s) by name in a specific sbom, then returns that components
         // root components.
 
-        let connection = self.db.connection(&tx);
         let distinct_sbom_ids = vec![sbom_id.to_string()];
-        load_graphs(&connection, &distinct_sbom_ids).await;
+        load_graphs(connection, &distinct_sbom_ids).await;
 
-        let components = AnalysisService::query_ancestor_graph::<TX>(
+        let components = AnalysisService::query_ancestor_graph(
             Option::from(component_name),
             None,
             None,
@@ -744,15 +733,13 @@ impl AnalysisService {
         Ok(root_components)
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn retrieve_root_components_by_name<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    pub async fn retrieve_root_components_by_name<C: ConnectionTrait>(
         &self,
         component_name: String,
         paginated: Paginated,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<AncestorSummary>, Error> {
-        let connection = self.db.connection(&tx);
-
         let search_sbom_node_exact_name_subquery = sbom_node::Entity::find()
             .filter(sbom_node::Column::Name.eq(component_name.as_str()))
             .select_only()
@@ -764,15 +751,15 @@ impl AnalysisService {
             .select()
             .order_by(sbom::Column::DocumentId, Order::Asc)
             .order_by(sbom::Column::Published, Order::Desc)
-            .all(&connection)
+            .all(connection)
             .await?
             .into_iter()
             .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
             .collect();
 
-        load_graphs(&connection, &distinct_sbom_ids).await;
+        load_graphs(connection, &distinct_sbom_ids).await;
 
-        let components = AnalysisService::query_ancestor_graph::<TX>(
+        let components = AnalysisService::query_ancestor_graph(
             Option::from(component_name),
             None,
             None,
@@ -783,15 +770,13 @@ impl AnalysisService {
         Ok(paginated.paginate_array(&components))
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn retrieve_root_components_by_purl<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    pub async fn retrieve_root_components_by_purl<C: ConnectionTrait>(
         &self,
         component_purl: Purl,
         paginated: Paginated,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<AncestorSummary>, Error> {
-        let connection = self.db.connection(&tx);
-
         let search_sbom_node_exact_name_subquery = sbom_node::Entity::find()
             .filter(sbom_node::Column::Name.eq(component_purl.name.as_str()))
             .select_only()
@@ -803,15 +788,15 @@ impl AnalysisService {
             .select()
             .order_by(sbom::Column::DocumentId, Order::Asc)
             .order_by(sbom::Column::Published, Order::Desc)
-            .all(&connection)
+            .all(connection)
             .await?
             .into_iter()
             .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
             .collect();
 
-        load_graphs(&connection, &distinct_sbom_ids).await;
+        load_graphs(connection, &distinct_sbom_ids).await;
 
-        let components = AnalysisService::query_ancestor_graph::<TX>(
+        let components = AnalysisService::query_ancestor_graph(
             None,
             Option::from(component_purl),
             None,
@@ -822,15 +807,13 @@ impl AnalysisService {
         Ok(paginated.paginate_array(&components))
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn retrieve_deps<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    pub async fn retrieve_deps<C: ConnectionTrait>(
         &self,
         query: Query,
         paginated: Paginated,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<DepSummary>, Error> {
-        let connection = self.db.connection(&tx);
-
         let search_sbom_node_name_subquery = sbom_node::Entity::find()
             .filtering(query.clone())?
             .select_only()
@@ -842,33 +825,27 @@ impl AnalysisService {
             .select()
             .order_by(sbom::Column::DocumentId, Order::Asc)
             .order_by(sbom::Column::Published, Order::Desc)
-            .all(&connection)
+            .all(connection)
             .await?
             .into_iter()
             .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
             .collect();
 
-        load_graphs(&connection, &distinct_sbom_ids).await;
+        load_graphs(connection, &distinct_sbom_ids).await;
 
-        let components = AnalysisService::query_deps_graph::<TX>(
-            None,
-            None,
-            Option::from(query),
-            distinct_sbom_ids,
-        )
-        .await;
+        let components =
+            AnalysisService::query_deps_graph(None, None, Option::from(query), distinct_sbom_ids)
+                .await;
 
         Ok(paginated.paginate_array(&components))
     }
 
-    pub async fn retrieve_deps_by_name<TX: AsRef<Transactional>>(
+    pub async fn retrieve_deps_by_name<C: ConnectionTrait>(
         &self,
         component_name: String,
         paginated: Paginated,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<DepSummary>, Error> {
-        let connection = self.db.connection(&tx);
-
         let search_sbom_node_exact_name_subquery = sbom_node::Entity::find()
             .filter(sbom_node::Column::Name.eq(component_name.as_str()))
             .select_only()
@@ -880,15 +857,15 @@ impl AnalysisService {
             .select()
             .order_by(sbom::Column::DocumentId, Order::Asc)
             .order_by(sbom::Column::Published, Order::Desc)
-            .all(&connection)
+            .all(connection)
             .await?
             .into_iter()
             .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
             .collect();
 
-        load_graphs(&connection, &distinct_sbom_ids).await;
+        load_graphs(connection, &distinct_sbom_ids).await;
 
-        let components = AnalysisService::query_deps_graph::<TX>(
+        let components = AnalysisService::query_deps_graph(
             Option::from(component_name),
             None,
             None,
@@ -899,14 +876,12 @@ impl AnalysisService {
         Ok(paginated.paginate_array(&components))
     }
 
-    pub async fn retrieve_deps_by_purl<TX: AsRef<Transactional>>(
+    pub async fn retrieve_deps_by_purl<C: ConnectionTrait>(
         &self,
         component_purl: Purl,
         paginated: Paginated,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<DepSummary>, Error> {
-        let connection = self.db.connection(&tx);
-
         let search_sbom_node_exact_name_subquery = sbom_node::Entity::find()
             .filter(sbom_node::Column::Name.eq(component_purl.name.as_str()))
             .select_only()
@@ -918,15 +893,15 @@ impl AnalysisService {
             .select()
             .order_by(sbom::Column::DocumentId, Order::Asc)
             .order_by(sbom::Column::Published, Order::Desc)
-            .all(&connection)
+            .all(connection)
             .await?
             .into_iter()
             .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
             .collect();
 
-        load_graphs(&connection, &distinct_sbom_ids).await;
+        load_graphs(connection, &distinct_sbom_ids).await;
 
-        let components = AnalysisService::query_deps_graph::<TX>(
+        let components = AnalysisService::query_deps_graph(
             None,
             Option::from(component_purl),
             None,
@@ -953,10 +928,10 @@ mod test {
         ctx.ingest_documents(["spdx/simple.json", "spdx/simple.json"])
             .await?; //double ingestion intended
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
 
         let analysis_graph = service
-            .retrieve_root_components(Query::q("DD"), Paginated::default(), ())
+            .retrieve_root_components(Query::q("DD"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
 
@@ -986,7 +961,7 @@ mod test {
 
         // ensure we set implicit relationship on component with no defined relationships
         let analysis_graph = service
-            .retrieve_root_components(Query::q("EE"), Paginated::default(), ())
+            .retrieve_root_components(Query::q("EE"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
         Ok(assert_eq!(analysis_graph.total, 1))
@@ -1000,10 +975,10 @@ mod test {
         ctx.ingest_documents(["cyclonedx/simple.json", "cyclonedx/simple.json"])
             .await?; //double ingestion intended
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
 
         let analysis_graph = service
-            .retrieve_root_components(Query::q("DD"), Paginated::default(), ())
+            .retrieve_root_components(Query::q("DD"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
 
@@ -1031,7 +1006,7 @@ mod test {
 
         // ensure we set implicit relationship on component with no defined relationships
         let analysis_graph = service
-            .retrieve_root_components(Query::q("EE"), Paginated::default(), ())
+            .retrieve_root_components(Query::q("EE"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
         Ok(assert_eq!(analysis_graph.total, 1))
@@ -1044,10 +1019,10 @@ mod test {
     ) -> Result<(), anyhow::Error> {
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
 
         let analysis_graph = service
-            .retrieve_root_components_by_name("B".to_string(), Paginated::default(), ())
+            .retrieve_root_components_by_name("B".to_string(), Paginated::default(), &ctx.db)
             .await
             .unwrap();
 
@@ -1083,12 +1058,12 @@ mod test {
     ) -> Result<(), anyhow::Error> {
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
 
         let component_purl: Purl = Purl::from_str("pkg:rpm/redhat/B@0.0.0").map_err(Error::Purl)?;
 
         let analysis_graph = service
-            .retrieve_root_components_by_purl(component_purl, Paginated::default(), ())
+            .retrieve_root_components_by_purl(component_purl, Paginated::default(), &ctx.db)
             .await
             .unwrap();
 
@@ -1126,10 +1101,10 @@ mod test {
         ])
         .await?;
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
 
         let analysis_graph = service
-            .retrieve_root_components(Query::q("spymemcached"), Paginated::default(), ())
+            .retrieve_root_components(Query::q("spymemcached"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
 
@@ -1158,14 +1133,14 @@ mod test {
     async fn test_status_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-        let service = AnalysisService::new(ctx.db.clone());
-        let _load_all_graphs = service.load_all_graphs(()).await;
-        let analysis_status = service.status(()).await.unwrap();
+        let service = AnalysisService::new();
+        let _load_all_graphs = service.load_all_graphs(&ctx.db).await;
+        let analysis_status = service.status(&ctx.db).await.unwrap();
 
         assert_eq!(analysis_status.sbom_count, 1);
         assert_eq!(analysis_status.graph_count, 1);
 
-        let _clear_all_graphs = service.clear_all_graphs(()).await;
+        let _clear_all_graphs = service.clear_all_graphs().await;
 
         ctx.ingest_documents([
             "spdx/quarkus-bom-3.2.11.Final-redhat-00001.json",
@@ -1173,7 +1148,7 @@ mod test {
         ])
         .await?;
 
-        let analysis_status = service.status(()).await.unwrap();
+        let analysis_status = service.status(&ctx.db).await.unwrap();
 
         assert_eq!(analysis_status.sbom_count, 3);
         assert_eq!(analysis_status.graph_count, 0);
@@ -1186,10 +1161,10 @@ mod test {
     async fn test_simple_deps_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
 
         let analysis_graph = service
-            .retrieve_deps(Query::q("AA"), Paginated::default(), ())
+            .retrieve_deps(Query::q("AA"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
 
@@ -1197,7 +1172,7 @@ mod test {
 
         // ensure we set implicit relationship on component with no defined relationships
         let analysis_graph = service
-            .retrieve_root_components(Query::q("EE"), Paginated::default(), ())
+            .retrieve_root_components(Query::q("EE"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
         Ok(assert_eq!(analysis_graph.total, 1))
@@ -1210,10 +1185,10 @@ mod test {
     ) -> Result<(), anyhow::Error> {
         ctx.ingest_documents(["cyclonedx/simple.json"]).await?;
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
 
         let analysis_graph = service
-            .retrieve_deps(Query::q("AA"), Paginated::default(), ())
+            .retrieve_deps(Query::q("AA"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
 
@@ -1221,7 +1196,7 @@ mod test {
 
         // ensure we set implicit relationship on component with no defined relationships
         let analysis_graph = service
-            .retrieve_root_components(Query::q("EE"), Paginated::default(), ())
+            .retrieve_root_components(Query::q("EE"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
         Ok(assert_eq!(analysis_graph.total, 1))
@@ -1232,10 +1207,10 @@ mod test {
     async fn test_simple_by_name_deps_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
 
         let analysis_graph = service
-            .retrieve_deps_by_name("A".to_string(), Paginated::default(), ())
+            .retrieve_deps_by_name("A".to_string(), Paginated::default(), &ctx.db)
             .await
             .unwrap();
 
@@ -1251,13 +1226,13 @@ mod test {
     async fn test_simple_by_purl_deps_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
 
         let component_purl: Purl =
             Purl::from_str("pkg:rpm/redhat/AA@0.0.0?arch=src").map_err(Error::Purl)?;
 
         let analysis_graph = service
-            .retrieve_deps_by_purl(component_purl, Paginated::default(), ())
+            .retrieve_deps_by_purl(component_purl, Paginated::default(), &ctx.db)
             .await
             .unwrap();
 
@@ -1278,10 +1253,10 @@ mod test {
         ])
         .await?;
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
 
         let analysis_graph = service
-            .retrieve_deps(Query::q("spymemcached"), Paginated::default(), ())
+            .retrieve_deps(Query::q("spymemcached"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
 
@@ -1296,10 +1271,10 @@ mod test {
         ctx.ingest_documents(["cyclonedx/cyclonedx-circular.json"])
             .await?;
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
 
         let analysis_graph = service
-            .retrieve_deps_by_name("junit-bom".to_string(), Paginated::default(), ())
+            .retrieve_deps_by_name("junit-bom".to_string(), Paginated::default(), &ctx.db)
             .await
             .unwrap();
 
@@ -1311,10 +1286,10 @@ mod test {
     async fn test_circular_deps_spdx_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ctx.ingest_documents(["spdx/loop.json"]).await?;
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
 
         let analysis_graph = service
-            .retrieve_deps_by_name("A".to_string(), Paginated::default(), ())
+            .retrieve_deps_by_name("A".to_string(), Paginated::default(), &ctx.db)
             .await
             .unwrap();
 
@@ -1329,11 +1304,11 @@ mod test {
         ctx.ingest_documents(["spdx/quarkus-bom-3.2.11.Final-redhat-00001.json"])
             .await?;
 
-        let service = AnalysisService::new(ctx.db.clone());
+        let service = AnalysisService::new();
         let component_name = "quarkus-vertx-http".to_string();
 
         let analysis_graph = service
-            .retrieve_root_components(Query::q(&component_name), Paginated::default(), ())
+            .retrieve_root_components(Query::q(&component_name), Paginated::default(), &ctx.db)
             .await?;
 
         let sbom_id = analysis_graph
@@ -1344,7 +1319,7 @@ mod test {
             .parse::<Uuid>()?;
 
         let roots = service
-            .retrieve_all_sbom_roots_by_name(sbom_id, component_name, ())
+            .retrieve_all_sbom_roots_by_name(sbom_id, component_name, &ctx.db)
             .await?;
 
         assert_eq!(roots.last().unwrap().name, "quarkus-bom");

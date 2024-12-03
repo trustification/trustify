@@ -11,12 +11,13 @@ use crate::{
     service::Error,
 };
 use sbom_walker::report::{check, ReportSink};
+use sea_orm::ConnectionTrait;
 use serde_json::Value;
 use spdx_rs::models::{RelationshipType, SPDX};
 use std::{collections::HashMap, str::FromStr};
 use time::OffsetDateTime;
 use tracing::instrument;
-use trustify_common::{cpe::Cpe, db::Transactional, purl::Purl};
+use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::relationship::Relationship;
 
 pub struct Information<'a>(pub &'a SPDX);
@@ -49,12 +50,12 @@ impl<'a> From<Information<'a>> for SbomInformation {
 }
 
 impl SbomContext {
-    #[instrument(skip(tx, sbom_data, warnings), ret)]
-    pub async fn ingest_spdx<TX: AsRef<Transactional>>(
+    #[instrument(skip(db, sbom_data, warnings), ret)]
+    pub async fn ingest_spdx<C: ConnectionTrait>(
         &self,
         sbom_data: SPDX,
         warnings: &dyn ReportSink,
-        tx: TX,
+        db: &C,
     ) -> Result<(), Error> {
         // pre-flight checks
 
@@ -191,12 +192,12 @@ impl SbomContext {
                             vendor: package.package_supplier.clone(),
                             cpe: product_cpe,
                         },
-                        &tx,
+                        db,
                     )
                     .await?;
 
                 if let Some(ver) = package.package_version.clone() {
-                    pr.ingest_product_version(ver, Some(self.sbom.sbom_id), &tx)
+                    pr.ingest_product_version(ver, Some(self.sbom.sbom_id), db)
                         .await?;
                 }
             }
@@ -211,15 +212,11 @@ impl SbomContext {
             files.add(file.file_spdx_identifier, file.file_name);
         }
 
-        // get database connection
-
-        let db = self.graph.connection(&tx);
-
         // create all purls and CPEs
 
-        licenses.create(&db).await?;
-        purls.create(&db).await?;
-        cpes.create(&db).await?;
+        licenses.create(db).await?;
+        purls.create(db).await?;
+        cpes.create(db).await?;
 
         // validate relationships before inserting
 
@@ -235,9 +232,9 @@ impl SbomContext {
 
         // create packages, files, and relationships
 
-        packages.create(&db).await?;
-        files.create(&db).await?;
-        relationships.create(&db).await?;
+        packages.create(db).await?;
+        files.create(db).await?;
+        relationships.create(db).await?;
 
         // done
 

@@ -6,18 +6,15 @@ use crate::{
 };
 use hex::ToHex;
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTrait, EntityTrait, IntoActiveModel, ModelTrait,
-    QueryFilter, QuerySelect, RelationTrait,
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, IntoActiveModel,
+    ModelTrait, QueryFilter, QuerySelect, RelationTrait,
 };
 use sea_query::{Condition, JoinType, OnConflict};
 use semver::Version;
 use std::fmt::{Debug, Formatter};
 use time::OffsetDateTime;
 use tracing::instrument;
-use trustify_common::{
-    db::{Transactional, UpdateDeprecatedAdvisory},
-    hashing::Digests,
-};
+use trustify_common::{db::UpdateDeprecatedAdvisory, hashing::Digests};
 use trustify_entity::{self as entity, advisory, labels::Labels, source_document};
 use uuid::Uuid;
 
@@ -62,22 +59,22 @@ impl From<()> for AdvisoryInformation {
 }
 
 impl Graph {
-    pub async fn get_advisory_by_id<TX: AsRef<Transactional>>(
+    pub async fn get_advisory_by_id<C: ConnectionTrait>(
         &self,
         id: Uuid,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<AdvisoryContext>, Error> {
-        Ok(entity::advisory::Entity::find_by_id(id)
-            .one(&self.connection(&tx))
+        Ok(advisory::Entity::find_by_id(id)
+            .one(connection)
             .await?
             .map(|advisory| AdvisoryContext::new(self, advisory)))
     }
 
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn get_advisory_by_digest<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn get_advisory_by_digest<C: ConnectionTrait>(
         &self,
         digest: &str,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<AdvisoryContext>, Error> {
         Ok(advisory::Entity::find()
             .join(JoinType::Join, advisory::Relation::SourceDocument.def())
@@ -87,33 +84,33 @@ impl Graph {
                     .add(source_document::Column::Sha384.eq(digest.to_string()))
                     .add(source_document::Column::Sha512.eq(digest.to_string())),
             )
-            .one(&self.connection(&tx))
+            .one(connection)
             .await?
             .map(|advisory| AdvisoryContext::new(self, advisory)))
     }
 
-    pub async fn get_advisories<TX: AsRef<Transactional>>(
+    pub async fn get_advisories<C: ConnectionTrait>(
         &self,
         deprecation: Deprecation,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<AdvisoryContext>, Error> {
         Ok(advisory::Entity::find()
             .with_deprecation(deprecation)
-            .all(&self.db.connection(&tx))
+            .all(connection)
             .await?
             .into_iter()
             .map(|advisory| AdvisoryContext::new(self, advisory))
             .collect())
     }
 
-    #[instrument(skip(self, labels, information, tx), err(level=tracing::Level::INFO))]
-    pub async fn ingest_advisory<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, labels, information, connection), err(level=tracing::Level::INFO))]
+    pub async fn ingest_advisory<C: ConnectionTrait>(
         &self,
         identifier: impl Into<String> + Debug,
         labels: impl Into<Labels>,
         digests: &Digests,
         information: impl Into<AdvisoryInformation>,
-        tx: TX,
+        connection: &C,
     ) -> Result<AdvisoryContext, Error> {
         let identifier = identifier.into();
         let labels = labels.into();
@@ -128,13 +125,13 @@ impl Graph {
             version,
         } = information.into();
 
-        if let Some(found) = self.get_advisory_by_digest(&sha256, &tx).await? {
+        if let Some(found) = self.get_advisory_by_digest(&sha256, connection).await? {
             // we already have the exact same document.
             return Ok(found);
         }
 
         let organization = if let Some(issuer) = issuer {
-            Some(self.ingest_organization(issuer, (), &tx).await?)
+            Some(self.ingest_organization(issuer, (), connection).await?)
         } else {
             None
         };
@@ -147,7 +144,7 @@ impl Graph {
             size: Set(digests.size as i64),
         };
 
-        let doc = doc_model.insert(&self.connection(&tx)).await?;
+        let doc = doc_model.insert(connection).await?;
 
         // insert
 
@@ -167,13 +164,11 @@ impl Graph {
             source_document_id: Set(Some(doc.id)),
         };
 
-        let db = self.connection(&tx);
-
-        let result = model.insert(&db).await?;
+        let result = model.insert(connection).await?;
 
         // update deprecation marker
 
-        UpdateDeprecatedAdvisory::execute(&db, &result.identifier).await?;
+        UpdateDeprecatedAdvisory::execute(connection, &result.identifier).await?;
 
         // done
 
@@ -204,14 +199,14 @@ impl<'g> AdvisoryContext<'g> {
         Self { graph, advisory }
     }
 
-    pub async fn set_published_at<TX: AsRef<Transactional>>(
+    pub async fn set_published_at<C: ConnectionTrait>(
         &self,
         published_at: OffsetDateTime,
-        tx: TX,
+        connection: &C,
     ) -> Result<(), Error> {
         let mut entity = self.advisory.clone().into_active_model();
         entity.published = Set(Some(published_at));
-        entity.save(&self.graph.connection(&tx)).await?;
+        entity.save(connection).await?;
         Ok(())
     }
 
@@ -219,14 +214,14 @@ impl<'g> AdvisoryContext<'g> {
         self.advisory.published
     }
 
-    pub async fn set_modified_at<TX: AsRef<Transactional>>(
+    pub async fn set_modified_at<C: ConnectionTrait>(
         &self,
         modified_at: OffsetDateTime,
-        tx: TX,
+        connection: &C,
     ) -> Result<(), Error> {
         let mut entity = self.advisory.clone().into_active_model();
         entity.modified = Set(Some(modified_at));
-        entity.save(&self.graph.connection(&tx)).await?;
+        entity.save(connection).await?;
         Ok(())
     }
 
@@ -234,14 +229,14 @@ impl<'g> AdvisoryContext<'g> {
         self.advisory.modified
     }
 
-    pub async fn set_withdrawn_at<TX: AsRef<Transactional>>(
+    pub async fn set_withdrawn_at<C: ConnectionTrait>(
         &self,
         withdrawn_at: OffsetDateTime,
-        tx: TX,
+        connection: &C,
     ) -> Result<(), Error> {
         let mut entity = self.advisory.clone().into_active_model();
         entity.withdrawn = Set(Some(withdrawn_at));
-        entity.save(&self.graph.connection(&tx)).await?;
+        entity.save(connection).await?;
         Ok(())
     }
 
@@ -249,27 +244,27 @@ impl<'g> AdvisoryContext<'g> {
         self.advisory.withdrawn
     }
 
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn get_vulnerability<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn get_vulnerability<C: ConnectionTrait>(
         &self,
         identifier: &str,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<AdvisoryVulnerabilityContext<'g>>, Error> {
         Ok(self
             .advisory
             .find_related(entity::advisory_vulnerability::Entity)
             .filter(entity::advisory_vulnerability::Column::VulnerabilityId.eq(identifier))
-            .one(&self.graph.connection(&tx))
+            .one(connection)
             .await?
             .map(|vuln| (self, vuln).into()))
     }
 
-    #[instrument(skip(self, information, tx), err)]
-    pub async fn link_to_vulnerability<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, information, connection), err)]
+    pub async fn link_to_vulnerability<C: ConnectionTrait>(
         &self,
         identifier: &str,
         information: Option<AdvisoryVulnerabilityInformation>,
-        tx: TX,
+        connection: &C,
     ) -> Result<AdvisoryVulnerabilityContext, Error> {
         let entity = entity::advisory_vulnerability::ActiveModel {
             advisory_id: Set(self.advisory.id),
@@ -302,20 +297,20 @@ impl<'g> AdvisoryContext<'g> {
                 ])
                 .to_owned(),
             )
-            .exec_with_returning(&self.graph.connection(&tx))
+            .exec_with_returning(connection)
             .await?;
 
         Ok((self, entity).into())
     }
 
-    pub async fn vulnerabilities<TX: AsRef<Transactional>>(
+    pub async fn vulnerabilities<C: ConnectionTrait>(
         &self,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<AdvisoryVulnerabilityContext>, Error> {
         Ok(self
             .advisory
             .find_related(entity::advisory_vulnerability::Entity)
-            .all(&self.graph.connection(&tx))
+            .all(connection)
             .await?
             .into_iter()
             .map(|e| (self, e).into())
@@ -332,7 +327,6 @@ mod test {
     use test_log::test;
     use time::macros::datetime;
     use time::OffsetDateTime;
-    use trustify_common::db::Transactional;
     use trustify_common::hashing::Digests;
     use trustify_entity::labels::Labels;
     use trustify_test_context::TrustifyContext;
@@ -340,8 +334,7 @@ mod test {
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn ingest_advisories(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db);
+        let system = Graph::new(ctx.db.clone());
 
         let advisory1 = system
             .ingest_advisory(
@@ -349,7 +342,7 @@ mod test {
                 Labels::from_one("source", "http://db.com/rhsa-ghsa-2"),
                 &Digests::digest("RHSA-GHSA-1_1"),
                 (),
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
@@ -359,7 +352,7 @@ mod test {
                 Labels::from_one("source", "http://db.com/rhsa-ghsa-2"),
                 &Digests::digest("RHSA-GHSA-1_1"),
                 (),
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
@@ -369,7 +362,7 @@ mod test {
                 Labels::from_one("source", "http://db.com/rhsa-ghsa-2"),
                 &Digests::digest("RHSA-GHSA-1_2"),
                 (),
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
@@ -382,8 +375,7 @@ mod test {
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]
     async fn ingest_advisory_cve(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
-        let db = ctx.db;
-        let system = Graph::new(db);
+        let system = Graph::new(ctx.db.clone());
 
         let advisory = system
             .ingest_advisory(
@@ -391,21 +383,21 @@ mod test {
                 Labels::from_one("source", "http://db.com/rhsa-ghsa-2"),
                 &Digests::digest("RHSA-GHSA-1"),
                 (),
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 
         advisory
-            .link_to_vulnerability("CVE-123", None, Transactional::None)
+            .link_to_vulnerability("CVE-123", None, &ctx.db)
             .await?;
         advisory
-            .link_to_vulnerability("CVE-123", None, Transactional::None)
+            .link_to_vulnerability("CVE-123", None, &ctx.db)
             .await?;
         advisory
-            .link_to_vulnerability("CVE-456", None, Transactional::None)
+            .link_to_vulnerability("CVE-456", None, &ctx.db)
             .await?;
 
-        let vulns = advisory.vulnerabilities(()).await?;
+        let vulns = advisory.vulnerabilities(&ctx.db).await?;
 
         assert_eq!(vulns.len(), 2);
 
@@ -431,8 +423,7 @@ mod test {
             }
         }
 
-        let db = ctx.db;
-        let system = Graph::new(db);
+        let system = Graph::new(ctx.db.clone());
 
         let a1 = system
             .ingest_advisory(
@@ -440,7 +431,7 @@ mod test {
                 (),
                 &Digests::digest("RHSA-1"),
                 Info("RHSA", datetime!(2024-01-02 00:00:00 UTC)),
-                Transactional::None,
+                &ctx.db,
             )
             .await?
             .advisory
@@ -452,7 +443,7 @@ mod test {
                 (),
                 &Digests::digest("RHSA-2"),
                 Info("RHSA", datetime!(2024-01-03 00:00:00 UTC)),
-                Transactional::None,
+                &ctx.db,
             )
             .await?
             .advisory
@@ -464,13 +455,15 @@ mod test {
                 (),
                 &Digests::digest("RHSA-3"),
                 Info("RHSA", datetime!(2024-01-01 00:00:00 UTC)),
-                Transactional::None,
+                &ctx.db,
             )
             .await?
             .advisory
             .id;
 
-        let mut advs = system.get_advisories(Deprecation::Consider, ()).await?;
+        let mut advs = system
+            .get_advisories(Deprecation::Consider, &ctx.db)
+            .await?;
         advs.sort_unstable_by(|a, b| a.advisory.modified.cmp(&b.advisory.modified));
         let deps = advs
             .iter()

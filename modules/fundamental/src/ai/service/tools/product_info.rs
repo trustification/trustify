@@ -1,24 +1,31 @@
-use crate::ai::service::tools;
-use crate::ai::service::tools::input_description;
-use crate::product::service::ProductService;
+use crate::{
+    ai::service::tools::{self, input_description},
+    product::service::ProductService,
+};
 use async_trait::async_trait;
 use langchain_rust::tools::Tool;
 use serde::Serialize;
 use serde_json::Value;
 use std::error::Error;
-use trustify_common::db::query::Query;
+use trustify_common::db::{query::Query, Database};
 use uuid::Uuid;
 
-pub struct ProductInfo(pub ProductService);
+pub struct ProductInfo {
+    pub db: Database,
+    pub service: ProductService,
+}
+
+impl ProductInfo {
+    pub fn new(db: Database) -> Self {
+        let service = ProductService::new();
+        Self { db, service }
+    }
+}
 
 #[async_trait]
 impl Tool for ProductInfo {
     fn name(&self) -> String {
         String::from("product-info")
-    }
-
-    fn parameters(&self) -> Value {
-        input_description("The name of the product to search for.")
     }
 
     fn description(&self) -> String {
@@ -34,12 +41,16 @@ Products are names of Software Products.  Examples:
 * Quay
 
 "##
-            .trim(),
+                .trim(),
         )
     }
 
+    fn parameters(&self) -> Value {
+        input_description("The name of the product to search for.")
+    }
+
     async fn run(&self, input: Value) -> Result<String, Box<dyn Error>> {
-        let service = &self.0;
+        let service = &self.service;
         let input = input
             .as_str()
             .ok_or("Input should be a string")?
@@ -52,7 +63,7 @@ Products are names of Software Products.  Examples:
                     ..Default::default()
                 },
                 Default::default(),
-                (),
+                &self.db,
             )
             .await?;
 
@@ -90,7 +101,7 @@ mod tests {
     #[test(actix_web::test)]
     async fn product_info_tool(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ingest_fixtures(ctx).await?;
-        let tool = Rc::new(ProductInfo(ProductService::new(ctx.db.clone())));
+        let tool = Rc::new(ProductInfo::new(ctx.db.clone()));
         assert_tool_contains(
             tool.clone(),
             "Trusted Profile Analyzer",

@@ -6,7 +6,6 @@ use serde_json::{json, Value};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::db::query::Query;
-use trustify_common::db::Transactional;
 use trustify_common::hashing::Digests;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::advisory::AdvisoryInformation;
@@ -31,7 +30,7 @@ async fn all_organizations(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 modified: None,
                 withdrawn: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -49,7 +48,7 @@ async fn all_organizations(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 modified: None,
                 withdrawn: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -92,18 +91,18 @@ async fn one_organization(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 modified: None,
                 withdrawn: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
     advisory
-        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .link_to_vulnerability("CVE-123", None, &ctx.db)
         .await?;
 
-    let service = crate::organization::service::OrganizationService::new(ctx.db.clone());
+    let service = crate::organization::service::OrganizationService::new();
 
     let orgs = service
-        .fetch_organizations(Query::default(), Paginated::default(), ())
+        .fetch_organizations(Query::default(), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(1, orgs.total);

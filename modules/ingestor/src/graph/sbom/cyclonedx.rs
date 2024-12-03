@@ -5,14 +5,15 @@ use crate::graph::{
     purl::creator::PurlCreator,
     sbom::{PackageCreator, PackageReference, RelationshipCreator, SbomContext, SbomInformation},
 };
-use cyclonedx_bom::models::license::{LicenseChoice, LicenseIdentifier};
-use cyclonedx_bom::prelude::{Bom, Component, Components};
+use cyclonedx_bom::{
+    models::license::{LicenseChoice, LicenseIdentifier},
+    prelude::{Bom, Component, Components},
+};
 use sea_orm::ConnectionTrait;
-use std::collections::HashMap;
-use std::str::FromStr;
+use std::{collections::HashMap, str::FromStr};
 use time::{format_description::well_known::Iso8601, OffsetDateTime};
 use tracing::instrument;
-use trustify_common::{cpe::Cpe, db::Transactional, purl::Purl};
+use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use uuid::Uuid;
 
@@ -88,14 +89,12 @@ impl<'a> From<Information<'a>> for SbomInformation {
 }
 
 impl SbomContext {
-    #[instrument(skip(tx, sbom), ret)]
-    pub async fn ingest_cyclonedx<TX: AsRef<Transactional>>(
+    #[instrument(skip(connection, sbom), ret)]
+    pub async fn ingest_cyclonedx<C: ConnectionTrait>(
         &self,
         mut sbom: Bom,
-        tx: TX,
+        connection: &C,
     ) -> Result<(), anyhow::Error> {
-        let db = &self.graph.db.connection(&tx);
-
         let mut license_creator = LicenseCreator::new();
         let mut creator = Creator::new(self.sbom.sbom_id);
 
@@ -121,12 +120,12 @@ impl SbomContext {
                             vendor: component.publisher.clone().map(|p| p.to_string()),
                             cpe: product_cpe,
                         },
-                        &tx,
+                        connection,
                     )
                     .await?;
 
                 if let Some(ver) = component.version.clone() {
-                    pr.ingest_product_version(ver.to_string(), Some(self.sbom.sbom_id), &tx)
+                    pr.ingest_product_version(ver.to_string(), Some(self.sbom.sbom_id), connection)
                         .await?;
                 }
 
@@ -189,8 +188,8 @@ impl SbomContext {
 
         // create
 
-        license_creator.create(db).await?;
-        creator.create(db).await?;
+        license_creator.create(connection).await?;
+        creator.create(connection).await?;
 
         // done
 
