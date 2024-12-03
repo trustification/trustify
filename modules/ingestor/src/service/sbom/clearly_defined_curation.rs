@@ -1,6 +1,7 @@
 use crate::{
     graph::sbom::clearly_defined::Curation, graph::Graph, model::IngestResult, service::Error,
 };
+use sea_orm::TransactionTrait;
 use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
@@ -21,7 +22,7 @@ impl<'g> ClearlyDefinedCurationLoader<'g> {
         curation: Curation,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
-        let tx = self.graph.transaction().await?;
+        let tx = self.graph.db.begin().await?;
 
         let sbom = self
             .graph

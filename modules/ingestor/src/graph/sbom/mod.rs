@@ -22,8 +22,8 @@ use cpe::uri::OwnedUri;
 use entity::{product, product_version};
 use hex::ToHex;
 use sea_orm::{
-    prelude::Uuid, ActiveModelTrait, ColumnTrait, EntityTrait, ModelTrait, QueryFilter,
-    QuerySelect, QueryTrait, RelationTrait, Select, SelectColumns, Set,
+    prelude::Uuid, ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait,
+    QueryFilter, QuerySelect, QueryTrait, RelationTrait, Select, SelectColumns, Set,
 };
 use sea_query::{
     extension::postgres::PgExpr, Alias, Condition, Expr, Func, JoinType, Query, SimpleExpr,
@@ -35,9 +35,7 @@ use std::{
 };
 use time::OffsetDateTime;
 use tracing::instrument;
-use trustify_common::{
-    cpe::Cpe, db::Transactional, hashing::Digests, purl::Purl, sbom::SbomLocator,
-};
+use trustify_common::{cpe::Cpe, hashing::Digests, purl::Purl, sbom::SbomLocator};
 use trustify_entity::{
     self as entity, labels::Labels, license, package_relates_to_package, purl_license_assertion,
     relationship::Relationship, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
@@ -65,51 +63,48 @@ impl From<()> for SbomInformation {
 type SelectEntity<E> = Select<E>;
 
 impl Graph {
-    pub async fn get_sbom_by_id<TX: AsRef<Transactional>>(
+    pub async fn get_sbom_by_id<C: ConnectionTrait>(
         &self,
         id: Uuid,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<SbomContext>, Error> {
         Ok(sbom::Entity::find_by_id(id)
-            .one(&self.connection(&tx))
+            .one(connection)
             .await?
             .map(|sbom| SbomContext::new(self, sbom)))
     }
 
-    #[instrument(skip(tx))]
-    pub async fn get_sbom_by_digest<TX: AsRef<Transactional>>(
+    #[instrument(skip(connection))]
+    pub async fn get_sbom_by_digest<C: ConnectionTrait>(
         &self,
         digest: &str,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<SbomContext>, Error> {
-        Ok(entity::sbom::Entity::find()
-            .join(
-                JoinType::LeftJoin,
-                entity::sbom::Relation::SourceDocument.def(),
-            )
+        Ok(sbom::Entity::find()
+            .join(JoinType::LeftJoin, sbom::Relation::SourceDocument.def())
             .filter(
                 Condition::any()
                     .add(source_document::Column::Sha256.eq(digest.to_string()))
                     .add(source_document::Column::Sha384.eq(digest.to_string()))
                     .add(source_document::Column::Sha512.eq(digest.to_string())),
             )
-            .one(&self.connection(&tx))
+            .one(connection)
             .await?
             .map(|sbom| SbomContext::new(self, sbom)))
     }
 
-    #[instrument(skip(tx, info), err(level=tracing::Level::INFO))]
-    pub async fn ingest_sbom<TX: AsRef<Transactional>>(
+    #[instrument(skip(connection, info), err(level=tracing::Level::INFO))]
+    pub async fn ingest_sbom<C: ConnectionTrait>(
         &self,
         labels: impl Into<Labels> + Debug,
         digests: &Digests,
         document_id: &str,
         info: impl Into<SbomInformation>,
-        tx: TX,
+        connection: &C,
     ) -> Result<SbomContext, Error> {
         let sha256 = digests.sha256.encode_hex::<String>();
 
-        if let Some(found) = self.get_sbom_by_digest(&sha256, &tx).await? {
+        if let Some(found) = self.get_sbom_by_digest(&sha256, connection).await? {
             return Ok(found);
         }
 
@@ -121,8 +116,6 @@ impl Graph {
             data_licenses,
         } = info.into();
 
-        let connection = self.db.connection(&tx);
-
         let sbom_id = Uuid::now_v7();
 
         let doc_model = source_document::ActiveModel {
@@ -133,7 +126,7 @@ impl Graph {
             size: Set(digests.size as i64),
         };
 
-        let doc = doc_model.insert(&connection).await?;
+        let doc = doc_model.insert(connection).await?;
 
         let model = sbom::ActiveModel {
             sbom_id: Set(sbom_id),
@@ -155,8 +148,8 @@ impl Graph {
             name: Set(name),
         };
 
-        let result = model.insert(&connection).await?;
-        node_model.insert(&connection).await?;
+        let result = model.insert(connection).await?;
+        node_model.insert(connection).await?;
 
         Ok(SbomContext::new(self, result))
     }
@@ -169,116 +162,116 @@ impl Graph {
     ///
     /// If the requested SBOM does not exist in the fetch, it will not exist
     /// after this query either. This function is *non-mutating*.
-    pub async fn locate_sbom<TX: AsRef<Transactional>>(
+    pub async fn locate_sbom<C: ConnectionTrait>(
         &self,
         sbom_locator: SbomLocator,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<SbomContext>, Error> {
         match sbom_locator {
-            SbomLocator::Id(id) => self.locate_sbom_by_id(id, tx).await,
-            SbomLocator::Sha256(sha256) => self.locate_sbom_by_sha256(&sha256, tx).await,
-            SbomLocator::Purl(purl) => self.locate_sbom_by_purl(&purl, tx).await,
-            SbomLocator::Cpe(cpe) => self.locate_sbom_by_cpe22(&cpe, tx).await,
+            SbomLocator::Id(id) => self.locate_sbom_by_id(id, connection).await,
+            SbomLocator::Sha256(sha256) => self.locate_sbom_by_sha256(&sha256, connection).await,
+            SbomLocator::Purl(purl) => self.locate_sbom_by_purl(&purl, connection).await,
+            SbomLocator::Cpe(cpe) => self.locate_sbom_by_cpe22(&cpe, connection).await,
         }
     }
 
-    pub async fn locate_sboms<TX: AsRef<Transactional>>(
+    pub async fn locate_sboms<C: ConnectionTrait>(
         &self,
         sbom_locator: SbomLocator,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<SbomContext>, Error> {
         match sbom_locator {
             SbomLocator::Id(id) => {
-                if let Some(sbom) = self.locate_sbom_by_id(id, tx).await? {
+                if let Some(sbom) = self.locate_sbom_by_id(id, connection).await? {
                     Ok(vec![sbom])
                 } else {
                     Ok(vec![])
                 }
             }
-            SbomLocator::Sha256(sha256) => self.locate_sboms_by_sha256(&sha256, tx).await,
-            SbomLocator::Purl(purl) => self.locate_sboms_by_purl(&purl, tx).await,
-            SbomLocator::Cpe(cpe) => self.locate_sboms_by_cpe22(cpe, tx).await,
+            SbomLocator::Sha256(sha256) => self.locate_sboms_by_sha256(&sha256, connection).await,
+            SbomLocator::Purl(purl) => self.locate_sboms_by_purl(&purl, connection).await,
+            SbomLocator::Cpe(cpe) => self.locate_sboms_by_cpe22(cpe, connection).await,
         }
     }
 
-    async fn locate_one_sbom<TX: AsRef<Transactional>>(
+    async fn locate_one_sbom<C: ConnectionTrait>(
         &self,
         query: SelectEntity<sbom::Entity>,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<SbomContext>, Error> {
         Ok(query
-            .one(&self.connection(&tx))
+            .one(connection)
             .await?
             .map(|sbom| SbomContext::new(self, sbom)))
     }
 
-    pub async fn locate_many_sboms<TX: AsRef<Transactional>>(
+    pub async fn locate_many_sboms<C: ConnectionTrait>(
         &self,
         query: SelectEntity<sbom::Entity>,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<SbomContext>, Error> {
         Ok(query
-            .all(&self.connection(&tx))
+            .all(connection)
             .await?
             .into_iter()
             .map(|sbom| SbomContext::new(self, sbom))
             .collect())
     }
 
-    pub async fn locate_sbom_by_id<TX: AsRef<Transactional>>(
+    pub async fn locate_sbom_by_id<C: ConnectionTrait>(
         &self,
         id: Uuid,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<SbomContext>, Error> {
         let _query = sbom::Entity::find_by_id(id);
         Ok(sbom::Entity::find_by_id(id)
-            .one(&self.connection(&tx))
+            .one(connection)
             .await?
             .map(|sbom| SbomContext::new(self, sbom)))
     }
 
-    pub async fn locate_sboms_by_labels<TX: AsRef<Transactional>>(
+    pub async fn locate_sboms_by_labels<C: ConnectionTrait>(
         &self,
         labels: Labels,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<SbomContext>, Error> {
         self.locate_many_sboms(
             sbom::Entity::find().filter(Expr::col(sbom::Column::Labels).contains(labels)),
-            tx,
+            connection,
         )
         .await
     }
 
-    async fn locate_sbom_by_sha256<TX: AsRef<Transactional>>(
+    async fn locate_sbom_by_sha256<C: ConnectionTrait>(
         &self,
         sha256: &str,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<SbomContext>, Error> {
         self.locate_one_sbom(
             sbom::Entity::find()
                 .join(JoinType::Join, sbom::Relation::SourceDocument.def())
                 .filter(source_document::Column::Sha256.eq(sha256.to_string())),
-            tx,
+            connection,
         )
         .await
     }
 
-    async fn locate_sboms_by_sha256<TX: AsRef<Transactional>>(
+    async fn locate_sboms_by_sha256<C: ConnectionTrait>(
         &self,
         sha256: &str,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<SbomContext>, Error> {
         self.locate_many_sboms(
             sbom::Entity::find()
                 .join(JoinType::Join, sbom::Relation::SourceDocument.def())
                 .filter(source_document::Column::Sha256.eq(sha256.to_string())),
-            tx,
+            connection,
         )
         .await
     }
 
     fn query_by_purl(package: QualifiedPackageContext) -> Select<sbom::Entity> {
-        entity::sbom::Entity::find()
+        sbom::Entity::find()
             .join_rev(JoinType::Join, sbom_package::Relation::Sbom.def())
             .join_rev(
                 JoinType::Join,
@@ -288,7 +281,7 @@ impl Graph {
     }
 
     fn query_by_cpe(cpe: CpeContext) -> Select<sbom::Entity> {
-        entity::sbom::Entity::find()
+        sbom::Entity::find()
             .join_rev(JoinType::Join, sbom_package::Relation::Sbom.def())
             .join_rev(
                 JoinType::Join,
@@ -297,58 +290,60 @@ impl Graph {
             .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.cpe.id))
     }
 
-    async fn locate_sbom_by_purl<TX: AsRef<Transactional>>(
+    async fn locate_sbom_by_purl<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<SbomContext>, Error> {
-        let package = self.get_qualified_package(purl, &tx).await?;
+        let package = self.get_qualified_package(purl, connection).await?;
 
         if let Some(package) = package {
-            self.locate_one_sbom(Self::query_by_purl(package), &tx)
+            self.locate_one_sbom(Self::query_by_purl(package), connection)
                 .await
         } else {
             Ok(None)
         }
     }
 
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    async fn locate_sboms_by_purl<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    async fn locate_sboms_by_purl<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<SbomContext>, Error> {
-        let package = self.get_qualified_package(purl, &tx).await?;
+        let package = self.get_qualified_package(purl, connection).await?;
 
         if let Some(package) = package {
-            self.locate_many_sboms(Self::query_by_purl(package), &tx)
+            self.locate_many_sboms(Self::query_by_purl(package), connection)
                 .await
         } else {
             Ok(vec![])
         }
     }
 
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    async fn locate_sbom_by_cpe22<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    async fn locate_sbom_by_cpe22<C: ConnectionTrait>(
         &self,
         cpe: &Cpe,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<SbomContext>, Error> {
-        if let Some(cpe) = self.get_cpe(cpe.clone(), &tx).await? {
-            self.locate_one_sbom(Self::query_by_cpe(cpe), &tx).await
+        if let Some(cpe) = self.get_cpe(cpe.clone(), connection).await? {
+            self.locate_one_sbom(Self::query_by_cpe(cpe), connection)
+                .await
         } else {
             Ok(None)
         }
     }
 
-    #[instrument(skip(self, tx), err)]
-    async fn locate_sboms_by_cpe22<C, TX>(&self, cpe: C, tx: TX) -> Result<Vec<SbomContext>, Error>
-    where
-        C: Into<Cpe> + Debug,
-        TX: AsRef<Transactional>,
-    {
-        if let Some(cpe) = self.get_cpe(cpe, &tx).await? {
-            self.locate_many_sboms(Self::query_by_cpe(cpe), &tx).await
+    #[instrument(skip(self, connection), err)]
+    async fn locate_sboms_by_cpe22<C: ConnectionTrait>(
+        &self,
+        cpe: impl Into<Cpe> + Debug,
+        connection: &C,
+    ) -> Result<Vec<SbomContext>, Error> {
+        if let Some(cpe) = self.get_cpe(cpe, connection).await? {
+            self.locate_many_sboms(Self::query_by_cpe(cpe), connection)
+                .await
         } else {
             Ok(vec![])
         }
@@ -423,14 +418,16 @@ impl SbomContext {
         }
     }
 
-    pub async fn ingest_purl_license_assertion<TX: AsRef<Transactional>>(
+    pub async fn ingest_purl_license_assertion<C: ConnectionTrait>(
         &self,
         purl: &Purl,
         license: &str,
-        tx: TX,
+        connection: &C,
     ) -> Result<(), Error> {
-        let connection = self.graph.connection(&tx);
-        let purl = self.graph.ingest_qualified_package(purl, &tx).await?;
+        let purl = self
+            .graph
+            .ingest_qualified_package(purl, connection)
+            .await?;
 
         let license_info = LicenseInfo {
             license: license.to_string(),
@@ -440,7 +437,7 @@ impl SbomContext {
         let (spdx_licenses, spdx_exceptions) = license_info.spdx_info();
 
         let license = license::Entity::find_by_id(license_info.uuid())
-            .one(&connection)
+            .one(connection)
             .await?;
 
         let license = if let Some(license) = license {
@@ -460,7 +457,7 @@ impl SbomContext {
                     Set(Some(spdx_exceptions))
                 },
             }
-            .insert(&connection)
+            .insert(connection)
             .await?
         };
 
@@ -471,7 +468,7 @@ impl SbomContext {
                     .eq(purl.package_version.package_version.id),
             )
             .filter(purl_license_assertion::Column::SbomId.eq(self.sbom.sbom_id))
-            .one(&connection)
+            .one(connection)
             .await?;
 
         if assertion.is_none() {
@@ -481,7 +478,7 @@ impl SbomContext {
                 versioned_purl_id: Set(purl.package_version.package_version.id),
                 sbom_id: Set(self.sbom.sbom_id),
             }
-            .insert(&connection)
+            .insert(connection)
             .await?;
         }
 
@@ -510,10 +507,10 @@ impl SbomContext {
     }
 
     /// Get the PURLs which describe an SBOM
-    #[instrument(skip(tx), err)]
-    pub async fn describes_purls<TX: AsRef<Transactional>>(
+    #[instrument(skip(connection), err)]
+    pub async fn describes_purls<C: ConnectionTrait>(
         &self,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         let describes = self.query_describes_packages();
 
@@ -523,16 +520,16 @@ impl SbomContext {
                     .join(JoinType::Join, sbom_package::Relation::Purl.def())
                     .select_column(sbom_package_purl_ref::Column::QualifiedPurlId)
                     .into_query(),
-                tx,
+                connection,
             )
             .await
     }
 
     /// Get the CPEs which describe an SBOM
-    #[instrument(skip(tx), err)]
-    pub async fn describes_cpe22s<TX: AsRef<Transactional>>(
+    #[instrument(skip(connection), err)]
+    pub async fn describes_cpe22s<C: ConnectionTrait>(
         &self,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<CpeContext>, Error> {
         let describes = self.query_describes_packages();
 
@@ -542,16 +539,16 @@ impl SbomContext {
                     .join(JoinType::Join, sbom_package::Relation::Cpe.def())
                     .select_column(sbom_package_cpe_ref::Column::CpeId)
                     .into_query(),
-                tx,
+                connection,
             )
             .await
     }
 
     /*
         #[instrument(skip(tx), err)]
-        pub async fn packages<TX: AsRef<Transactional>>(
+        pub async fn packages<C: ConnectionTrait>(
             &self,
-            tx: TX,
+            connection: &C,
         ) -> Result<Vec<QualifiedPackageContext>, Error> {
             self.graph
                 .get_qualified_packages_by_query(
@@ -572,13 +569,13 @@ impl SbomContext {
     /// The packages will be created if they don't yet exist.
     ///
     /// **NOTE:** This is a convenience function, creating relationships for tests. It is terribly slow.
-    #[instrument(skip(tx), err)]
-    pub async fn ingest_package_relates_to_package<'a, TX: AsRef<Transactional>>(
+    #[instrument(skip(connection), err)]
+    pub async fn ingest_package_relates_to_package<'a, C: ConnectionTrait>(
         &'a self,
         left: impl Into<RelationshipReference> + Debug,
         relationship: Relationship,
         right: impl Into<RelationshipReference> + Debug,
-        tx: TX,
+        connection: &C,
     ) -> Result<(), Error> {
         let left = left.into();
         let right = right.into();
@@ -597,7 +594,7 @@ impl SbomContext {
                 )
             }
             RelationshipReference::Cpe(cpe) => {
-                let cpe_ctx = self.graph.ingest_cpe22(cpe.clone(), &tx).await?;
+                let cpe_ctx = self.graph.ingest_cpe22(cpe.clone(), connection).await?;
                 (Some(cpe.to_string()), vec![], vec![cpe_ctx.cpe.id])
             }
         };
@@ -612,12 +609,12 @@ impl SbomContext {
                 )
             }
             RelationshipReference::Cpe(cpe) => {
-                let cpe_ctx = self.graph.ingest_cpe22(cpe.clone(), &tx).await?;
+                let cpe_ctx = self.graph.ingest_cpe22(cpe.clone(), connection).await?;
                 (Some(cpe.to_string()), vec![], vec![cpe_ctx.cpe.id])
             }
         };
 
-        creator.create(&self.graph.connection(&tx)).await?;
+        creator.create(connection).await?;
 
         // create the nodes
 
@@ -628,7 +625,7 @@ impl SbomContext {
                 None,
                 left_purls,
                 left_cpes,
-                &tx,
+                connection,
             )
             .await?;
         }
@@ -640,7 +637,7 @@ impl SbomContext {
                 None,
                 right_purls,
                 right_cpes,
-                &tx,
+                connection,
             )
             .await?;
         }
@@ -652,38 +649,38 @@ impl SbomContext {
 
         let mut relationships = RelationshipCreator::new(self.sbom.sbom_id);
         relationships.relate(left_node_id, relationship, right_node_id);
-        relationships.create(&self.graph.db.connection(&tx)).await?;
+        relationships.create(connection).await?;
 
         Ok(())
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn ingest_describes_package<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    pub async fn ingest_describes_package<C: ConnectionTrait>(
         &self,
         package: Purl,
-        tx: TX,
+        connection: &C,
     ) -> anyhow::Result<()> {
         self.ingest_package_relates_to_package(
             RelationshipReference::Root,
             Relationship::DescribedBy,
             RelationshipReference::Purl(package),
-            tx,
+            connection,
         )
         .await?;
         Ok(())
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn ingest_describes_cpe22<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    pub async fn ingest_describes_cpe22<C: ConnectionTrait>(
         &self,
         cpe: Cpe,
-        tx: TX,
+        connection: &C,
     ) -> anyhow::Result<()> {
         self.ingest_package_relates_to_package(
             RelationshipReference::Root,
             Relationship::DescribedBy,
             RelationshipReference::Cpe(cpe),
-            tx,
+            connection,
         )
         .await?;
         Ok(())
@@ -693,15 +690,15 @@ impl SbomContext {
     ///
     /// **NOTE:** This function ingests a single package, and is terribly slow.
     /// Use the [`PackageCreator`] for creating more than one.
-    #[instrument(skip(self, tx), err)]
-    async fn ingest_package<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    async fn ingest_package<C: ConnectionTrait>(
         &self,
         node_id: String,
         name: String,
         version: Option<String>,
         purls: Vec<(Uuid, Uuid)>,
         cpes: Vec<Uuid>,
-        tx: TX,
+        connection: &C,
     ) -> Result<(), Error> {
         let mut creator = PackageCreator::new(self.sbom.sbom_id);
 
@@ -714,21 +711,21 @@ impl SbomContext {
             .chain(cpes.into_iter().map(PackageReference::Cpe));
         creator.add(node_id, name, version, refs, iter::empty());
 
-        creator.create(&self.graph.db.connection(&tx)).await?;
+        creator.create(connection).await?;
 
         // done
 
         Ok(())
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn related_packages_transitively<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    pub async fn related_packages_transitively<C: ConnectionTrait>(
         &self,
         relationships: &[Relationship],
         pkg: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        let pkg = self.graph.get_qualified_package(pkg, &tx).await?;
+        let pkg = self.graph.get_qualified_package(pkg, connection).await?;
 
         if let Some(pkg) = pkg {
             let rels: SimpleExpr = relationships
@@ -754,7 +751,7 @@ impl SbomContext {
                             QualifiedPackageTransitive,
                         )
                         .to_owned(),
-                    &tx,
+                    connection,
                 )
                 .await?)
         } else {
@@ -762,31 +759,27 @@ impl SbomContext {
         }
     }
 
-    pub async fn link_to_product<'a, TX: AsRef<Transactional>>(
+    pub async fn link_to_product<'a, C: ConnectionTrait>(
         &self,
         product_version: ProductVersionContext<'a>,
-        tx: TX,
+        connection: &C,
     ) -> Result<ProductVersionContext<'a>, Error> {
         let mut entity = product_version::ActiveModel::from(product_version.product_version);
         entity.sbom_id = Set(Some(self.sbom.sbom_id));
-        let model = entity.update(&self.graph.connection(&tx)).await?;
+        let model = entity.update(connection).await?;
         Ok(ProductVersionContext::new(&product_version.product, model))
     }
 
-    pub async fn get_product<TX: AsRef<Transactional>>(
+    pub async fn get_product<C: ConnectionTrait>(
         &self,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<ProductVersionContext>, Error> {
         if let Some(vers) = product_version::Entity::find()
             .filter(product_version::Column::SbomId.eq(self.sbom.sbom_id))
-            .one(&self.graph.connection(&tx))
+            .one(connection)
             .await?
         {
-            if let Some(prod) = vers
-                .find_related(product::Entity)
-                .one(&self.graph.connection(&tx))
-                .await?
-            {
+            if let Some(prod) = vers.find_related(product::Entity).one(connection).await? {
                 Ok(Some(ProductVersionContext::new(
                     &ProductContext::new(&self.graph, prod),
                     vers,

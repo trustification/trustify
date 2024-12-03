@@ -1,32 +1,34 @@
-use crate::organization::model::{OrganizationDetails, OrganizationSummary};
-use crate::Error;
-use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-use trustify_common::db::limiter::LimiterTrait;
-use trustify_common::db::query::{Filtering, Query};
-use trustify_common::db::{Database, Transactional};
-use trustify_common::model::{Paginated, PaginatedResults};
+use crate::{
+    organization::model::{OrganizationDetails, OrganizationSummary},
+    Error,
+};
+use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
+use trustify_common::{
+    db::{
+        limiter::LimiterTrait,
+        query::{Filtering, Query},
+    },
+    model::{Paginated, PaginatedResults},
+};
 use trustify_entity::organization;
 use uuid::Uuid;
 
-pub struct OrganizationService {
-    db: Database,
-}
+#[derive(Default)]
+pub struct OrganizationService {}
 
 impl OrganizationService {
-    pub fn new(db: Database) -> Self {
-        Self { db }
+    pub fn new() -> Self {
+        Self {}
     }
 
-    pub async fn fetch_organizations<TX: AsRef<Transactional> + Sync + Send>(
+    pub async fn fetch_organizations<C: ConnectionTrait>(
         &self,
         search: Query,
         paginated: Paginated,
-        tx: TX,
+        connection: &C,
     ) -> Result<PaginatedResults<OrganizationSummary>, Error> {
-        let connection = self.db.connection(&tx);
-
         let limiter = organization::Entity::find().filtering(search)?.limiting(
-            &connection,
+            connection,
             paginated.offset,
             paginated.limit,
         );
@@ -35,23 +37,21 @@ impl OrganizationService {
 
         Ok(PaginatedResults {
             total,
-            items: OrganizationSummary::from_entities(&limiter.fetch().await?, &connection).await?,
+            items: OrganizationSummary::from_entities(&limiter.fetch().await?).await?,
         })
     }
-    pub async fn fetch_organization<TX: AsRef<Transactional> + Sync + Send>(
+    pub async fn fetch_organization<C: ConnectionTrait>(
         &self,
         id: Uuid,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<OrganizationDetails>, Error> {
-        let connection = self.db.connection(&tx);
-
         if let Some(organization) = organization::Entity::find()
             .filter(organization::Column::Id.eq(id))
-            .one(&connection)
+            .one(connection)
             .await?
         {
             Ok(Some(
-                OrganizationDetails::from_entity(&organization, &connection).await?,
+                OrganizationDetails::from_entity(&organization, connection).await?,
             ))
         } else {
             Ok(None)

@@ -5,9 +5,8 @@ use crate::{
 use actix_web::{get, web, HttpResponse, Responder};
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
-use trustify_auth::authorizer::Require;
-use trustify_auth::ReadSbom;
-use trustify_common::{id::IdError, purl::Purl};
+use trustify_auth::{authorizer::Require, ReadSbom};
+use trustify_common::{db::Database, id::IdError, purl::Purl};
 
 #[utoipa::path(
     tag = "versioned purl",
@@ -23,14 +22,15 @@ use trustify_common::{id::IdError, purl::Purl};
 /// Retrieve details of a versioned, non-qualified pURL
 pub async fn get_versioned_purl(
     service: web::Data<PurlService>,
+    db: web::Data<Database>,
     key: web::Path<String>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     if key.starts_with("pkg:") {
         let purl = Purl::from_str(&key).map_err(|e| Error::IdKey(IdError::Purl(e)))?;
-        Ok(HttpResponse::Ok().json(service.versioned_purl_by_purl(&purl, ()).await?))
+        Ok(HttpResponse::Ok().json(service.versioned_purl_by_purl(&purl, db.as_ref()).await?))
     } else {
         let uuid = Uuid::from_str(&key).map_err(|e| Error::IdKey(IdError::InvalidUuid(e)))?;
-        Ok(HttpResponse::Ok().json(service.versioned_purl_by_uuid(&uuid, ()).await?))
+        Ok(HttpResponse::Ok().json(service.versioned_purl_by_uuid(&uuid, db.as_ref()).await?))
     }
 }

@@ -1,6 +1,7 @@
 #![allow(clippy::expect_used)]
 
 use anyhow::bail;
+use sea_orm::ConnectionTrait;
 use strum::VariantArray;
 use test_context::test_context;
 use test_log::test;
@@ -12,13 +13,14 @@ use trustify_module_ingestor::graph::purl::qualified_package::QualifiedPackageCo
 use trustify_module_ingestor::graph::sbom::SbomContext;
 use trustify_test_context::TrustifyContext;
 
-async fn related_packages_transitively(
-    sbom: &SbomContext,
-) -> Result<Vec<QualifiedPackageContext>, anyhow::Error> {
+async fn related_packages_transitively<'a, C: ConnectionTrait>(
+    sbom: &'a SbomContext,
+    connection: &C,
+) -> Result<Vec<QualifiedPackageContext<'a>>, anyhow::Error> {
     let purl = Purl::try_from("pkg:cargo/A@0.0.0").expect("must parse");
 
     let result = sbom
-        .related_packages_transitively(Relationship::VARIANTS, &purl, ())
+        .related_packages_transitively(Relationship::VARIANTS, &purl, connection)
         .await?;
 
     Ok(result)
@@ -37,28 +39,28 @@ async fn infinite_loop(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let sbom = ctx
         .graph
-        .get_sbom_by_id(id, ())
+        .get_sbom_by_id(id, &ctx.db)
         .await?
         .expect("must be found");
 
     let packages = service
-        .fetch_sbom_packages(id, Default::default(), Default::default(), ())
+        .fetch_sbom_packages(id, Default::default(), Default::default(), &ctx.db)
         .await?;
 
     assert_eq!(packages.total, 3);
 
-    let packages = related_packages_transitively(&sbom).await?;
+    let packages = related_packages_transitively(&sbom, &ctx.db).await?;
 
     assert_eq!(packages.len(), 3);
 
     let packages = service
-        .describes_packages(id, Default::default(), ())
+        .describes_packages(id, Default::default(), &ctx.db)
         .await?;
 
     assert_eq!(packages.total, 1);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::All, ())
+        .related_packages(id, None, SbomPackageReference::All, &ctx.db)
         .await?;
 
     log::info!("Packages: {packages:#?}");
@@ -78,23 +80,23 @@ async fn double_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     };
     let sbom = ctx
         .graph
-        .get_sbom_by_id(id, ())
+        .get_sbom_by_id(id, &ctx.db)
         .await?
         .expect("must be found");
 
     let service = SbomService::new(ctx.db.clone());
     let packages = service
-        .fetch_sbom_packages(id, Default::default(), Default::default(), ())
+        .fetch_sbom_packages(id, Default::default(), Default::default(), &ctx.db)
         .await?;
 
     assert_eq!(packages.total, 3);
 
-    let packages = related_packages_transitively(&sbom).await?;
+    let packages = related_packages_transitively(&sbom, &ctx.db).await?;
 
     assert_eq!(packages.len(), 3);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::All, ())
+        .related_packages(id, None, SbomPackageReference::All, &ctx.db)
         .await?;
 
     log::info!("Packages: {packages:#?}");
@@ -114,23 +116,23 @@ async fn self_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     };
     let sbom = ctx
         .graph
-        .get_sbom_by_id(id, ())
+        .get_sbom_by_id(id, &ctx.db)
         .await?
         .expect("must be found");
 
     let service = SbomService::new(ctx.db.clone());
     let packages = service
-        .fetch_sbom_packages(id, Default::default(), Default::default(), ())
+        .fetch_sbom_packages(id, Default::default(), Default::default(), &ctx.db)
         .await?;
 
     assert_eq!(packages.total, 0);
 
-    let packages = related_packages_transitively(&sbom).await?;
+    let packages = related_packages_transitively(&sbom, &ctx.db).await?;
 
     assert_eq!(packages.len(), 0);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::All, ())
+        .related_packages(id, None, SbomPackageReference::All, &ctx.db)
         .await?;
 
     log::info!("Packages: {packages:#?}");
@@ -150,23 +152,23 @@ async fn self_ref_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     };
     let sbom = ctx
         .graph
-        .get_sbom_by_id(id, ())
+        .get_sbom_by_id(id, &ctx.db)
         .await?
         .expect("must be found");
 
     let service = SbomService::new(ctx.db.clone());
     let packages = service
-        .fetch_sbom_packages(id, Default::default(), Default::default(), ())
+        .fetch_sbom_packages(id, Default::default(), Default::default(), &ctx.db)
         .await?;
 
     assert_eq!(packages.total, 1);
 
-    let packages = related_packages_transitively(&sbom).await?;
+    let packages = related_packages_transitively(&sbom, &ctx.db).await?;
 
     assert_eq!(packages.len(), 1);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::All, ())
+        .related_packages(id, None, SbomPackageReference::All, &ctx.db)
         .await?;
 
     log::info!("Packages: {packages:#?}");
@@ -174,7 +176,12 @@ async fn self_ref_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(packages.len(), 1);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::Package("SPDXRef-A"), ())
+        .related_packages(
+            id,
+            None,
+            SbomPackageReference::Package("SPDXRef-A"),
+            &ctx.db,
+        )
         .await?;
 
     log::info!("Packages: {packages:#?}");

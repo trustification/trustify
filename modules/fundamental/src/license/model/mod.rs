@@ -1,7 +1,6 @@
 use crate::{purl::model::VersionedPurlHead, sbom::model::SbomHead, Error};
-use sea_orm::{ModelTrait, PaginatorTrait};
+use sea_orm::{ConnectionTrait, ModelTrait, PaginatorTrait};
 use serde::{Deserialize, Serialize};
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_entity::{license, purl_license_assertion};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -18,11 +17,7 @@ pub struct LicenseSummary {
 }
 
 impl LicenseSummary {
-    pub async fn from_entity(
-        license: &license::Model,
-        purls: u64,
-        _tx: &ConnectionOrTransaction<'_>,
-    ) -> Result<Self, Error> {
+    pub async fn from_entity(license: &license::Model, purls: u64) -> Result<Self, Error> {
         Ok(LicenseSummary {
             id: license.id,
             license: license.text.clone(),
@@ -36,18 +31,18 @@ impl LicenseSummary {
         })
     }
 
-    pub async fn from_entities(
+    pub async fn from_entities<C: ConnectionTrait>(
         licenses: &[license::Model],
-        tx: &ConnectionOrTransaction<'_>,
+        connection: &C,
     ) -> Result<Vec<Self>, Error> {
         let mut summaries = Vec::new();
 
         for license in licenses {
             let purls = license
                 .find_related(purl_license_assertion::Entity)
-                .count(tx)
+                .count(connection)
                 .await?;
-            summaries.push(Self::from_entity(license, purls, tx).await?)
+            summaries.push(Self::from_entity(license, purls).await?)
         }
 
         Ok(summaries)

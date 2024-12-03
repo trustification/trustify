@@ -16,13 +16,10 @@ use sea_orm::{ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, Query
 use sea_query::IntoCondition;
 use std::collections::{hash_map::Entry, HashMap, HashSet};
 use tracing::instrument;
-use trustify_common::{
-    cpe::Cpe,
-    db::{chunk::EntityChunkedIter, Transactional},
-    purl::Purl,
+use trustify_common::{cpe::Cpe, db::chunk::EntityChunkedIter, purl::Purl};
+use trustify_entity::{
+    product_status, purl_status, status, version_range, version_scheme::VersionScheme,
 };
-use trustify_entity::version_scheme::VersionScheme;
-use trustify_entity::{product_status, purl_status, status, version_range};
 use uuid::Uuid;
 
 #[derive(Debug, Eq, Hash, PartialEq)]
@@ -101,13 +98,11 @@ impl<'a> StatusCreator<'a> {
     }
 
     #[instrument(skip_all, ret)]
-    pub async fn create<TX: AsRef<Transactional>>(
+    pub async fn create<C: ConnectionTrait>(
         &mut self,
         graph: &Graph,
-        tx: TX,
+        connection: &C,
     ) -> Result<(), Error> {
-        let connection = &graph.connection(&tx);
-
         let mut checked = HashMap::new();
         let mut product_statuses = Vec::new();
         let mut purls = PurlCreator::new();
@@ -133,14 +128,14 @@ impl<'a> StatusCreator<'a> {
                         vendor: product.vendor.clone(),
                         cpe: product.cpe.clone(),
                     },
-                    &tx,
+                    connection,
                 )
                 .await?;
 
             // Ingest product range
             let product_version_range = match product.version {
                 Some(ref ver) => Some(
-                    pr.ingest_product_version_range(ver.clone(), None, &tx)
+                    pr.ingest_product_version_range(ver.clone(), None, connection)
                         .await?,
                 ),
                 None => None,

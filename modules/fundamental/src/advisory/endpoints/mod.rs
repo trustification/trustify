@@ -10,11 +10,12 @@ use crate::{
     },
     endpoints::Deprecation,
     purl::service::PurlService,
-    Error::{self, Internal},
+    Error,
 };
 use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder};
 use config::Config;
 use futures_util::TryStreamExt;
+use sea_orm::TransactionTrait;
 use std::str::FromStr;
 use trustify_auth::authorizer::Require;
 use trustify_auth::{CreateAdvisory, DeleteAdvisory, ReadAdvisory};
@@ -35,9 +36,10 @@ pub fn configure(
     upload_limit: usize,
 ) {
     let advisory_service = AdvisoryService::new(db.clone());
-    let purl_service = PurlService::new(db);
+    let purl_service = PurlService::new();
 
     config
+        .app_data(web::Data::new(db))
         .app_data(web::Data::new(advisory_service))
         .app_data(web::Data::new(purl_service))
         .app_data(web::Data::new(Config { upload_limit }))
@@ -66,6 +68,7 @@ pub fn configure(
 /// List advisories
 pub async fn all(
     state: web::Data<AdvisoryService>,
+    db: web::Data<Database>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     web::Query(Deprecation { deprecated }): web::Query<Deprecation>,
@@ -73,7 +76,7 @@ pub async fn all(
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(
         state
-            .fetch_advisories(search, paginated, deprecated, ())
+            .fetch_advisories(search, paginated, deprecated, db.as_ref())
             .await?,
     ))
 }
@@ -93,11 +96,12 @@ pub async fn all(
 /// Get an advisory
 pub async fn get(
     state: web::Data<AdvisoryService>,
+    db: web::Data<Database>,
     key: web::Path<String>,
     _: Require<ReadAdvisory>,
 ) -> actix_web::Result<impl Responder> {
     let hash_key = Id::from_str(&key).map_err(Error::IdKey)?;
-    let fetched = state.fetch_advisory(hash_key, ()).await?;
+    let fetched = state.fetch_advisory(hash_key, db.as_ref()).await?;
 
     if let Some(fetched) = fetched {
         Ok(HttpResponse::Ok().json(fetched))
@@ -121,22 +125,26 @@ pub async fn get(
 /// Delete an advisory
 pub async fn delete(
     state: web::Data<AdvisoryService>,
+    db: web::Data<Database>,
     purl_service: web::Data<PurlService>,
     key: web::Path<String>,
     _: Require<DeleteAdvisory>,
-) -> actix_web::Result<impl Responder> {
-    let hash_key = Id::from_str(&key).map_err(Error::IdKey)?;
-    let fetched = state.fetch_advisory(hash_key, ()).await?;
+) -> Result<impl Responder, Error> {
+    let tx = db.begin().await?;
+
+    let hash_key = Id::from_str(&key)?;
+    let fetched = state.fetch_advisory(hash_key, &tx).await?;
 
     if let Some(fetched) = fetched {
-        let rows_affected = state.delete_advisory(fetched.head.uuid, ()).await?;
+        let rows_affected = state.delete_advisory(fetched.head.uuid, &tx).await?;
         match rows_affected {
             0 => Ok(HttpResponse::NotFound().finish()),
             1 => {
-                _ = purl_service.gc_purls(()).await; // ignore gc failure..
+                let _ = purl_service.gc_purls(&tx).await; // ignore gc failure..
+                tx.commit().await?;
                 Ok(HttpResponse::Ok().json(fetched))
             }
-            _ => Err(Internal("Unexpected number of rows affected".into()).into()),
+            _ => Err(Error::Internal("Unexpected number of rows affected".into())),
         }
     } else {
         Ok(HttpResponse::NotFound().finish())
@@ -199,6 +207,7 @@ pub async fn upload(
 #[get("/v1/advisory/{key}/download")]
 /// Download an advisory document
 pub async fn download(
+    db: web::Data<Database>,
     ingestor: web::Data<IngestorService>,
     advisory: web::Data<AdvisoryService>,
     key: web::Path<String>,
@@ -208,7 +217,7 @@ pub async fn download(
     let id = Id::from_str(&key).map_err(Error::IdKey)?;
 
     // look up document by id
-    let Some(advisory) = advisory.fetch_advisory(id, ()).await? else {
+    let Some(advisory) = advisory.fetch_advisory(id, db.as_ref()).await? else {
         return Ok(HttpResponse::NotFound().finish());
     };
 

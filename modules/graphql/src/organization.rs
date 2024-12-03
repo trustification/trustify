@@ -1,7 +1,6 @@
-use std::sync::Arc;
-
 use async_graphql::{Context, FieldError, FieldResult, Object};
-use trustify_common::db::Transactional;
+use std::sync::Arc;
+use trustify_common::db::Database;
 use trustify_entity::organization::Model as Organization;
 use trustify_module_ingestor::graph::Graph;
 
@@ -15,10 +14,9 @@ impl OrganizationQuery {
         ctx: &Context<'a>,
         name: String,
     ) -> FieldResult<Organization> {
+        let db = ctx.data::<Arc<Database>>()?;
         let graph = ctx.data::<Arc<Graph>>()?;
-        let organization = graph
-            .get_organization_by_name(name, Transactional::None)
-            .await;
+        let organization = graph.get_organization_by_name(name, db.as_ref()).await;
 
         match organization {
             Ok(Some(organization)) => Ok(Organization {

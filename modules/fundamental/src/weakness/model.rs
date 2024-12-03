@@ -1,6 +1,5 @@
 use crate::Error;
 use serde::{Deserialize, Serialize};
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_entity::weakness;
 use utoipa::ToSchema;
 
@@ -17,22 +16,16 @@ pub struct WeaknessSummary {
 }
 
 impl WeaknessSummary {
-    pub async fn from_entities(
-        entities: &[weakness::Model],
-        tx: &ConnectionOrTransaction<'_>,
-    ) -> Result<Vec<Self>, Error> {
+    pub async fn from_entities(entities: &[weakness::Model]) -> Result<Vec<Self>, Error> {
         let mut summaries = Vec::new();
         for each in entities {
-            summaries.push(Self::from_entity(each, tx).await?)
+            summaries.push(Self::from_entity(each).await?)
         }
 
         Ok(summaries)
     }
 
-    pub async fn from_entity(
-        entity: &weakness::Model,
-        _tx: &ConnectionOrTransaction<'_>,
-    ) -> Result<Self, Error> {
+    pub async fn from_entity(entity: &weakness::Model) -> Result<Self, Error> {
         Ok(Self {
             head: WeaknessHead {
                 id: entity.id.clone(),
@@ -59,10 +52,7 @@ pub struct WeaknessDetails {
 }
 
 impl WeaknessDetails {
-    pub async fn from_entity(
-        entity: &weakness::Model,
-        _tx: &ConnectionOrTransaction<'_>,
-    ) -> Result<Self, Error> {
+    pub async fn from_entity(entity: &weakness::Model) -> Result<Self, Error> {
         Ok(Self {
             head: WeaknessHead {
                 id: entity.id.clone(),

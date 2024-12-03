@@ -1,19 +1,12 @@
-use crate::advisory::service::AdvisoryService;
-use crate::ai::service::tools::advisory_info::AdvisoryInfo;
-use crate::ai::service::tools::cve_info::CVEInfo;
-use crate::ai::service::tools::logger::ToolLogger;
-use crate::ai::service::tools::package_info::PackageInfo;
-use crate::ai::service::tools::sbom_info::SbomInfo;
-use crate::purl::service::PurlService;
-use crate::sbom::service::SbomService;
-use crate::vulnerability::service::VulnerabilityService;
+use crate::ai::service::tools::{
+    advisory_info::AdvisoryInfo, cve_info::CVEInfo, logger::ToolLogger, package_info::PackageInfo,
+    sbom_info::SbomInfo,
+};
 use langchain_rust::tools::Tool;
 use serde::Serialize;
 use serde_json::{json, Value};
-use std::error::Error;
-use std::sync::Arc;
-use trustify_common::db::Database;
-use trustify_common::model::PaginatedResults;
+use std::{error::Error, sync::Arc};
+use trustify_common::{db::Database, model::PaginatedResults};
 
 pub mod advisory_info;
 pub mod cve_info;
@@ -26,13 +19,10 @@ pub mod sbom_info;
 pub fn new(db: Database) -> Vec<Arc<dyn Tool>> {
     vec![
         // Arc::new(ToolLogger(ProductInfo(ProductService::new(db.clone())))),
-        Arc::new(ToolLogger(CVEInfo(VulnerabilityService::new(db.clone())))),
-        Arc::new(ToolLogger(AdvisoryInfo(AdvisoryService::new(db.clone())))),
-        Arc::new(ToolLogger(PackageInfo((
-            PurlService::new(db.clone()),
-            SbomService::new(db.clone()),
-        )))),
-        Arc::new(ToolLogger(SbomInfo(SbomService::new(db.clone())))),
+        Arc::new(ToolLogger(CVEInfo::new(db.clone()))),
+        Arc::new(ToolLogger(AdvisoryInfo::new(db.clone()))),
+        Arc::new(ToolLogger(PackageInfo::new(db.clone()))),
+        Arc::new(ToolLogger(SbomInfo::new(db.clone()))),
     ]
 }
 

@@ -1,15 +1,14 @@
 //! Support for a *fully-qualified* package.
 
-use crate::graph::error::Error;
-use crate::graph::purl::package_version::PackageVersionContext;
-use crate::graph::sbom::SbomContext;
-use std::collections::BTreeMap;
-use std::fmt::{Debug, Formatter};
-use std::hash::{Hash, Hasher};
-use trustify_common::db::Transactional;
+use crate::graph::{error::Error, purl::package_version::PackageVersionContext, sbom::SbomContext};
+use sea_orm::ConnectionTrait;
+use std::{
+    collections::BTreeMap,
+    fmt::{Debug, Formatter},
+    hash::{Hash, Hasher},
+};
 use trustify_common::purl::Purl;
-use trustify_entity as entity;
-use trustify_entity::qualified_purl;
+use trustify_entity::{self as entity, qualified_purl};
 
 #[derive(Clone)]
 pub struct QualifiedPackageContext<'g> {
@@ -59,9 +58,9 @@ impl<'g> QualifiedPackageContext<'g> {
             qualified_package,
         }
     }
-    pub async fn sboms_containing<TX: AsRef<Transactional>>(
+    pub async fn sboms_containing<C: ConnectionTrait>(
         &self,
-        _tx: TX,
+        _connection: &C,
     ) -> Result<Vec<SbomContext>, Error> {
         /*
         Ok(entity::sbom::Entity::find()

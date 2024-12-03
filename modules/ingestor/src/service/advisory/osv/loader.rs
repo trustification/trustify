@@ -17,9 +17,10 @@ use crate::{
 };
 use osv::schema::{Event, Range, RangeType, ReferenceType, SeverityType, Vulnerability};
 use sbom_walker::report::ReportSink;
+use sea_orm::{ConnectionTrait, TransactionTrait};
 use std::{fmt::Debug, str::FromStr};
 use tracing::instrument;
-use trustify_common::{db::Transactional, hashing::Digests, id::Id, purl::Purl, time::ChronoExt};
+use trustify_common::{hashing::Digests, id::Id, purl::Purl, time::ChronoExt};
 use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity::{labels::Labels, version_scheme::VersionScheme};
 
@@ -46,7 +47,7 @@ impl<'g> OsvLoader<'g> {
 
         let issuer = issuer.or(detect_organization(&osv));
 
-        let tx = self.graph.transaction().await?;
+        let tx = self.graph.db.begin().await?;
 
         let cve_ids = osv.aliases.iter().flat_map(|aliases| {
             aliases
@@ -162,7 +163,7 @@ impl<'g> OsvLoader<'g> {
             }
         }
 
-        purl_creator.create(&self.graph.connection(&tx)).await?;
+        purl_creator.create(&tx).await?;
 
         tx.commit().await?;
 
@@ -175,12 +176,12 @@ impl<'g> OsvLoader<'g> {
 }
 
 /// create package statues based on listed versions
-async fn create_package_status_versions(
+async fn create_package_status_versions<C: ConnectionTrait>(
     advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
     purl: &Purl,
     range: &Range,
     versions: impl IntoIterator<Item = &String>,
-    tx: impl AsRef<Transactional>,
+    connection: &C,
 ) -> Result<(), Error> {
     // the list of versions, sorted by the range type
     let versions = versions.into_iter().cloned().collect::<Vec<_>>();
@@ -200,12 +201,12 @@ async fn create_package_status_versions(
                         start,
                         Some(version),
                         &versions,
-                        &tx,
+                        connection,
                     )
                     .await?;
                 }
 
-                ingest_exact(advisory_vuln, purl, "fixed", version, &tx).await?;
+                ingest_exact(advisory_vuln, purl, "fixed", version, connection).await?;
             }
             Event::Limit(_) => {}
             // for non_exhaustive
@@ -214,14 +215,23 @@ async fn create_package_status_versions(
     }
 
     if let Some(start) = start {
-        ingest_range_from(advisory_vuln, purl, "affected", start, None, &versions, &tx).await?;
+        ingest_range_from(
+            advisory_vuln,
+            purl,
+            "affected",
+            start,
+            None,
+            &versions,
+            connection,
+        )
+        .await?;
     }
 
     Ok(())
 }
 
 /// Ingest all from a start to an end
-async fn ingest_range_from(
+async fn ingest_range_from<C: ConnectionTrait>(
     advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
     purl: &Purl,
     status: &str,
@@ -229,12 +239,12 @@ async fn ingest_range_from(
     // exclusive end
     end: Option<&str>,
     versions: &[impl AsRef<str>],
-    tx: impl AsRef<Transactional>,
+    connection: &C,
 ) -> Result<(), Error> {
     let versions = match_versions(versions, start, end);
 
     for version in versions {
-        ingest_exact(advisory_vuln, purl, status, version, &tx).await?;
+        ingest_exact(advisory_vuln, purl, status, version, connection).await?;
     }
 
     Ok(())
@@ -275,12 +285,12 @@ fn match_versions<'v>(
 }
 
 /// Ingest an exact version
-async fn ingest_exact(
+async fn ingest_exact<C: ConnectionTrait>(
     advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
     purl: &Purl,
     status: &str,
     version: &str,
-    tx: impl AsRef<Transactional>,
+    connection: &C,
 ) -> Result<(), Error> {
     Ok(advisory_vuln
         .ingest_package_status(
@@ -291,17 +301,17 @@ async fn ingest_exact(
                 scheme: VersionScheme::Generic,
                 spec: VersionSpec::Exact(version.to_string()),
             },
-            &tx,
+            connection,
         )
         .await?)
 }
 
 /// create a package status from a semver range
-async fn create_package_status_semver(
+async fn create_package_status_semver<C: ConnectionTrait>(
     advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
     purl: &Purl,
     range: &Range,
-    tx: impl AsRef<Transactional>,
+    connection: &C,
 ) -> Result<(), Error> {
     let parsed_range = events_to_range(&range.events);
 
@@ -331,7 +341,7 @@ async fn create_package_status_semver(
                     scheme: VersionScheme::Semver,
                     spec,
                 },
-                &tx,
+                connection,
             )
             .await?;
     }
@@ -346,7 +356,7 @@ async fn create_package_status_semver(
                     scheme: VersionScheme::Semver,
                     spec: VersionSpec::Exact(fixed.clone()),
                 },
-                &tx,
+                connection,
             )
             .await?
     }
@@ -390,19 +400,15 @@ fn events_to_range(events: &[Event]) -> (Option<String>, Option<String>) {
 
 #[cfg(test)]
 mod test {
+    use super::*;
+    use crate::graph::Graph;
+    use crate::service::advisory::osv::loader::OsvLoader;
     use hex::ToHex;
     use osv::schema::Vulnerability;
     use rstest::rstest;
     use test_context::test_context;
     use test_log::test;
-
-    use crate::graph::Graph;
-    use trustify_common::db::Transactional;
     use trustify_test_context::{document, TrustifyContext};
-
-    use crate::service::advisory::osv::loader::OsvLoader;
-
-    use super::*;
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
@@ -412,13 +418,11 @@ mod test {
 
         let (osv, digests): (Vulnerability, _) = document("osv/RUSTSEC-2021-0079.json").await?;
 
-        let loaded_vulnerability = graph
-            .get_vulnerability("CVE-2021-32714", Transactional::None)
-            .await?;
+        let loaded_vulnerability = graph.get_vulnerability("CVE-2021-32714", &ctx.db).await?;
         assert!(loaded_vulnerability.is_none());
 
         let loaded_advisory = graph
-            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), &ctx.db)
             .await?;
         assert!(loaded_advisory.is_none());
 
@@ -427,13 +431,11 @@ mod test {
             .load(("file", "RUSTSEC-2021-0079.json"), osv, &digests, None)
             .await?;
 
-        let loaded_vulnerability = graph
-            .get_vulnerability("CVE-2021-32714", Transactional::None)
-            .await?;
+        let loaded_vulnerability = graph.get_vulnerability("CVE-2021-32714", &ctx.db).await?;
         assert!(loaded_vulnerability.is_some());
 
         let loaded_advisory = graph
-            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), &ctx.db)
             .await?;
         assert!(loaded_advisory.is_some());
 
@@ -441,17 +443,17 @@ mod test {
 
         assert!(loaded_advisory.advisory.issuer_id.is_some());
 
-        let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(()).await?;
+        let loaded_advisory_vulnerabilities = loaded_advisory.vulnerabilities(&ctx.db).await?;
         assert_eq!(1, loaded_advisory_vulnerabilities.len());
         let _loaded_advisory_vulnerability = &loaded_advisory_vulnerabilities[0];
 
         let advisory_vuln = loaded_advisory
-            .get_vulnerability("CVE-2021-32714", ())
+            .get_vulnerability("CVE-2021-32714", &ctx.db)
             .await?;
         assert!(advisory_vuln.is_some());
 
         let advisory_vuln = advisory_vuln.unwrap();
-        let scores = advisory_vuln.cvss3_scores(()).await?;
+        let scores = advisory_vuln.cvss3_scores(&ctx.db).await?;
         assert_eq!(1, scores.len());
 
         let score = scores[0];
@@ -461,7 +463,7 @@ mod test {
         );
 
         assert!(loaded_advisory
-            .get_vulnerability("CVE-8675309", ())
+            .get_vulnerability("CVE-8675309", &ctx.db)
             .await?
             .is_none());
 

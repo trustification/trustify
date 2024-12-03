@@ -1,10 +1,12 @@
 pub mod product_version;
 
 use entity::organization;
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, ModelTrait, QueryFilter, Set};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait, QueryFilter, Set,
+};
 use std::fmt::Debug;
 use tracing::instrument;
-use trustify_common::{cpe::Cpe, db::Transactional};
+use trustify_common::cpe::Cpe;
 use trustify_entity as entity;
 use trustify_entity::product;
 use uuid::Uuid;
@@ -26,19 +28,19 @@ impl<'g> ProductContext<'g> {
         Self { graph, product }
     }
 
-    pub async fn ingest_product_version<TX: AsRef<Transactional>>(
+    pub async fn ingest_product_version<C: ConnectionTrait>(
         &self,
         version: String,
         sbom_id: Option<Uuid>,
-        tx: TX,
+        connection: &C,
     ) -> Result<ProductVersionContext<'g>, Error> {
-        if let Some(found) = self.get_version(version.clone(), &tx).await? {
+        if let Some(found) = self.get_version(version.clone(), connection).await? {
             let product_version = ProductVersionContext::new(self, found.product_version.clone());
 
             if let Some(id) = sbom_id {
                 // If sbom is not yet set, link to the SBOM and update the context
                 if found.product_version.sbom_id.is_none() {
-                    Ok(product_version.link_to_sbom(id, &tx).await?)
+                    Ok(product_version.link_to_sbom(id, connection).await?)
                 } else {
                     Ok(product_version)
                 }
@@ -53,25 +55,23 @@ impl<'g> ProductContext<'g> {
                 version: Set(version.clone()),
             };
 
-            let product_version =
-                ProductVersionContext::new(self, model.insert(&self.graph.connection(&tx)).await?);
+            let product_version = ProductVersionContext::new(self, model.insert(connection).await?);
 
             // If there's an sbom_id, link to the SBOM and update the context
             if let Some(id) = sbom_id {
-                Ok(product_version.link_to_sbom(id, &tx).await?)
+                Ok(product_version.link_to_sbom(id, connection).await?)
             } else {
                 Ok(product_version)
             }
         }
     }
 
-    pub async fn ingest_product_version_range<TX: AsRef<Transactional>>(
+    pub async fn ingest_product_version_range<C: ConnectionTrait>(
         &self,
         info: VersionInfo,
         cpe_key: Option<String>,
-        tx: TX,
+        connection: &C,
     ) -> Result<entity::product_version_range::Model, Error> {
-        let connection = &self.graph.connection(&tx);
         let version_range = info.into_active_model();
         let version_range = version_range.insert(connection).await?;
 
@@ -85,14 +85,14 @@ impl<'g> ProductContext<'g> {
         Ok(model.insert(connection).await?)
     }
 
-    pub async fn get_vendor<TX: AsRef<Transactional>>(
+    pub async fn get_vendor<C: ConnectionTrait>(
         &self,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<OrganizationContext>, Error> {
         match self
             .product
             .find_related(organization::Entity)
-            .one(&self.graph.connection(&tx))
+            .one(connection)
             .await?
         {
             Some(org) => Ok(Some(OrganizationContext::new(self.graph, org))),
@@ -100,16 +100,16 @@ impl<'g> ProductContext<'g> {
         }
     }
 
-    pub async fn get_version<TX: AsRef<Transactional>>(
+    pub async fn get_version<C: ConnectionTrait>(
         &self,
         version: String,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<ProductVersionContext>, Error> {
         match self
             .product
             .find_related(entity::product_version::Entity)
             .filter(entity::product_version::Column::Version.eq(version))
-            .one(&self.graph.connection(&tx))
+            .one(connection)
             .await?
         {
             Some(ver) => Ok(Some(ProductVersionContext::new(self, ver))),
@@ -137,12 +137,12 @@ impl From<()> for ProductInformation {
 }
 
 impl Graph {
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
-    pub async fn ingest_product<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn ingest_product<C: ConnectionTrait>(
         &self,
         name: impl Into<String> + Debug,
         information: impl Into<ProductInformation> + Debug,
-        tx: TX,
+        connection: &C,
     ) -> Result<ProductContext, Error> {
         let name = name.into();
         let information = information.into();
@@ -153,7 +153,7 @@ impl Graph {
 
         let entity = if let Some(vendor) = information.vendor {
             if let Some(found) = self
-                .get_product_by_organization(vendor.clone(), &name, &tx)
+                .get_product_by_organization(vendor.clone(), &name, connection)
                 .await?
             {
                 return Ok(found);
@@ -166,7 +166,7 @@ impl Graph {
                     cpe_key: organization_cpe_key,
                     website: None,
                 };
-                let org = self.ingest_organization(vendor, org, &tx).await?;
+                let org = self.ingest_organization(vendor, org, connection).await?;
 
                 product::ActiveModel {
                     id: Default::default(),
@@ -184,51 +184,48 @@ impl Graph {
             }
         };
 
-        Ok(ProductContext::new(
-            self,
-            entity.insert(&self.connection(&tx)).await?,
-        ))
+        Ok(ProductContext::new(self, entity.insert(connection).await?))
     }
 
-    #[instrument(skip(self, tx), err(level=tracing::Level::INFO))]
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
     pub async fn get_products(
         &self,
-        tx: impl AsRef<Transactional>,
+        connection: &impl ConnectionTrait,
     ) -> Result<Vec<ProductContext>, Error> {
         Ok(product::Entity::find()
-            .all(&self.connection(&tx))
+            .all(connection)
             .await?
             .into_iter()
             .map(|product| ProductContext::new(self, product))
             .collect())
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn get_product_by_name<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    pub async fn get_product_by_name<C: ConnectionTrait>(
         &self,
         name: impl Into<String> + Debug,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<ProductContext>, Error> {
         Ok(product::Entity::find()
             .filter(product::Column::Name.eq(name.into()))
-            .one(&self.connection(&tx))
+            .one(connection)
             .await?
             .map(|product| ProductContext::new(self, product)))
     }
 
-    #[instrument(skip(self, tx), err)]
-    pub async fn get_product_by_organization<TX: AsRef<Transactional>>(
+    #[instrument(skip(self, connection), err)]
+    pub async fn get_product_by_organization<C: ConnectionTrait>(
         &self,
         org: impl Into<String> + Debug,
         name: impl Into<String> + Debug,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<ProductContext>, Error> {
-        if let Some(found) = self.get_organization_by_name(org, &tx).await? {
+        if let Some(found) = self.get_organization_by_name(org, connection).await? {
             Ok(found
                 .organization
                 .find_related(product::Entity)
                 .filter(product::Column::Name.eq(name.into()))
-                .one(&self.connection(&tx))
+                .one(connection)
                 .await?
                 .map(|product| ProductContext::new(self, product)))
         } else {

@@ -4,9 +4,9 @@ use crate::graph::{
     error::Error,
     purl::{qualified_package::QualifiedPackageContext, PackageContext},
 };
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
+use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, Set};
 use std::fmt::{Debug, Formatter};
-use trustify_common::{db::Transactional, purl::Purl};
+use trustify_common::purl::Purl;
 use trustify_entity::{self as entity, qualified_purl::Qualifiers, versioned_purl};
 
 /// Live context for a package version.
@@ -30,12 +30,12 @@ impl<'g> PackageVersionContext<'g> {
         }
     }
 
-    pub async fn ingest_qualified_package<TX: AsRef<Transactional>>(
+    pub async fn ingest_qualified_package<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<QualifiedPackageContext<'g>, Error> {
-        if let Some(found) = self.get_qualified_package(purl, &tx).await? {
+        if let Some(found) = self.get_qualified_package(purl, connection).await? {
             return Ok(found);
         }
         let cp = purl.clone().into();
@@ -47,24 +47,22 @@ impl<'g> PackageVersionContext<'g> {
             purl: Set(cp),
         };
 
-        let qualified_package = qualified_package
-            .insert(&self.package.graph.connection(&tx))
-            .await?;
+        let qualified_package = qualified_package.insert(connection).await?;
 
         Ok(QualifiedPackageContext::new(self, qualified_package))
     }
 
-    pub async fn get_qualified_package<TX: AsRef<Transactional>>(
+    pub async fn get_qualified_package<C: ConnectionTrait>(
         &self,
         purl: &Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<Option<QualifiedPackageContext<'g>>, Error> {
         let found = entity::qualified_purl::Entity::find()
             .filter(entity::qualified_purl::Column::VersionedPurlId.eq(self.package_version.id))
             .filter(
                 entity::qualified_purl::Column::Qualifiers.eq(Qualifiers(purl.qualifiers.clone())),
             )
-            .one(&self.package.graph.connection(&tx))
+            .one(connection)
             .await?;
 
         Ok(found.map(|model| QualifiedPackageContext::new(self, model)))
@@ -73,14 +71,14 @@ impl<'g> PackageVersionContext<'g> {
     /// Retrieve known variants of this package version.
     ///
     /// Non-mutating to the fetch.
-    pub async fn get_variants<TX: AsRef<Transactional>>(
+    pub async fn get_variants<C: ConnectionTrait>(
         &self,
         _pkg: Purl,
-        tx: TX,
+        connection: &C,
     ) -> Result<Vec<QualifiedPackageContext>, Error> {
         Ok(entity::qualified_purl::Entity::find()
             .filter(entity::qualified_purl::Column::VersionedPurlId.eq(self.package_version.id))
-            .all(&self.package.graph.connection(&tx))
+            .all(connection)
             .await?
             .into_iter()
             .map(|base| QualifiedPackageContext::new(self, base))

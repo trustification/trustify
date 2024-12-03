@@ -22,8 +22,6 @@ pub(crate) mod trustify_benches {
     use sea_orm::ConnectionTrait;
     use test_context::AsyncTestContext;
     use tokio::runtime::Runtime;
-
-    use trustify_common::db::Transactional;
     use trustify_entity::labels::Labels;
     use trustify_module_ingestor::service::Format;
     use trustify_test_context::{document, TrustifyContext};
@@ -156,15 +154,11 @@ pub(crate) mod trustify_benches {
             "vulnerability",
         ] {
             ctx.db
-                .clone()
-                .connection(&Transactional::None)
                 .execute_unprepared(format!("DELETE FROM {table} WHERE 1=1").as_str())
                 .await
                 .expect("DELETE ok");
         }
         ctx.db
-            .clone()
-            .connection(&Transactional::None)
             .execute_unprepared("VACUUM ANALYZE")
             .await
             .expect("vacuum analyze ok");

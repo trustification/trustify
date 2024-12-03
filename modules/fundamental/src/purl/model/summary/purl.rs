@@ -1,9 +1,8 @@
 use crate::purl::model::{BasePurlHead, PurlHead, VersionedPurlHead};
 use crate::Error;
-use sea_orm::{LoaderTrait, ModelTrait};
+use sea_orm::{ConnectionTrait, LoaderTrait, ModelTrait};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 use utoipa::ToSchema;
 
@@ -17,9 +16,9 @@ pub struct PurlSummary {
 }
 
 impl PurlSummary {
-    pub async fn from_entities(
+    pub async fn from_entities<C: ConnectionTrait>(
         qualified_packages: &Vec<qualified_purl::Model>,
-        tx: &ConnectionOrTransaction<'_>,
+        tx: &C,
     ) -> Result<Vec<Self>, Error> {
         let package_versions = qualified_packages
             .load_one(versioned_purl::Entity, tx)
@@ -45,7 +44,7 @@ impl PurlSummary {
                             tx,
                         )
                         .await?,
-                        base: BasePurlHead::from_entity(&package, tx).await?,
+                        base: BasePurlHead::from_entity(&package).await?,
                         version: VersionedPurlHead::from_entity(&package, package_version, tx)
                             .await?,
                         qualifiers: qualified_package.qualifiers.0.clone(),
@@ -57,16 +56,16 @@ impl PurlSummary {
         Ok(summaries)
     }
 
-    pub async fn from_entity(
+    pub async fn from_entity<C: ConnectionTrait>(
         base_purl: &base_purl::Model,
         versioned_purl: &versioned_purl::Model,
         purl: &qualified_purl::Model,
-        tx: &ConnectionOrTransaction<'_>,
+        db: &C,
     ) -> Result<Self, Error> {
         Ok(PurlSummary {
-            head: PurlHead::from_entity(base_purl, versioned_purl, purl, tx).await?,
-            base: BasePurlHead::from_entity(base_purl, tx).await?,
-            version: VersionedPurlHead::from_entity(base_purl, versioned_purl, tx).await?,
+            head: PurlHead::from_entity(base_purl, versioned_purl, purl, db).await?,
+            base: BasePurlHead::from_entity(base_purl).await?,
+            version: VersionedPurlHead::from_entity(base_purl, versioned_purl, db).await?,
             qualifiers: purl.qualifiers.0.clone(),
         })
     }

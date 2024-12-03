@@ -8,7 +8,6 @@ mod summary;
 use crate::Error;
 pub use details::*;
 pub use summary::*;
-use trustify_common::db::ConnectionOrTransaction;
 use trustify_entity::organization;
 
 /// An organization who may issue advisories, product SBOMs, or
@@ -31,10 +30,7 @@ pub struct OrganizationHead {
 }
 
 impl OrganizationHead {
-    pub async fn from_entity(
-        organization: &organization::Model,
-        _tx: &ConnectionOrTransaction<'_>,
-    ) -> Result<Self, Error> {
+    pub async fn from_entity(organization: &organization::Model) -> Result<Self, Error> {
         Ok(OrganizationHead {
             id: organization.id,
             name: organization.name.clone(),

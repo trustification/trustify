@@ -19,10 +19,11 @@ use langchain_rust::{
     prompt_args,
     tools::Tool,
 };
+use sea_orm::ConnectionTrait;
 use std::env;
 use std::sync::Arc;
 use tokio::sync::OnceCell;
-use trustify_common::db::{Database, Transactional};
+use trustify_common::db::Database;
 
 pub const PREFIX: &str = include_str!("prefix.txt");
 
@@ -173,10 +174,10 @@ impl AiService {
             .await
     }
 
-    pub async fn completions<TX: AsRef<Transactional>>(
+    pub async fn completions<C: ConnectionTrait>(
         &self,
         request: &ChatState,
-        _tx: TX,
+        _connection: &C,
     ) -> Result<ChatState, Error> {
         let llm = match self.llm.clone() {
             Some(llm) => llm,

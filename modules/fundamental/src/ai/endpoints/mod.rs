@@ -35,10 +35,11 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
 #[post("/v1/ai/completions")]
 pub async fn completions(
     service: web::Data<AiService>,
+    db: web::Data<Database>,
     request: web::Json<ChatState>,
     _: Require<Ai>,
 ) -> actix_web::Result<impl Responder> {
-    let response = service.completions(&request, ()).await?;
+    let response = service.completions(&request, db.as_ref()).await?;
     Ok(HttpResponse::Ok().json(response))
 }
 

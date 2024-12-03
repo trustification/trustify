@@ -21,9 +21,9 @@ async fn equal(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // check info
 
-    let vuln = VulnerabilityService::new(ctx.db.clone());
+    let vuln = VulnerabilityService::new();
     let v = vuln
-        .fetch_vulnerability("CVE-2020-5238", Default::default(), ())
+        .fetch_vulnerability("CVE-2020-5238", Default::default(), &ctx.db)
         .await?
         .expect("must exist");
 
@@ -46,9 +46,9 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // check without deprecated
 
-    let vuln = VulnerabilityService::new(ctx.db.clone());
+    let vuln = VulnerabilityService::new();
     let v = vuln
-        .fetch_vulnerability("CVE-2020-5238", Deprecation::Ignore, ())
+        .fetch_vulnerability("CVE-2020-5238", Deprecation::Ignore, &ctx.db)
         .await?
         .expect("must exist");
 
@@ -58,9 +58,9 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // check with deprecated
 
-    let vuln = VulnerabilityService::new(ctx.db.clone());
+    let vuln = VulnerabilityService::new();
     let v = vuln
-        .fetch_vulnerability("CVE-2020-5238", Deprecation::Consider, ())
+        .fetch_vulnerability("CVE-2020-5238", Deprecation::Consider, &ctx.db)
         .await?
         .expect("must exist");
 
@@ -71,9 +71,9 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // check status
 
-    let service = PurlService::new(ctx.db.clone());
+    let service = PurlService::new();
     let purls = service
-        .purls(Default::default(), Default::default(), ())
+        .purls(Default::default(), Default::default(), &ctx.db)
         .await?;
 
     let purl = purls
@@ -98,7 +98,7 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
     // get vuln by purl
 
     let mut purl = service
-        .purl_by_uuid(&purl.head.uuid, Deprecation::Consider, ())
+        .purl_by_uuid(&purl.head.uuid, Deprecation::Consider, &ctx.db)
         .await?
         .expect("must find something");
 

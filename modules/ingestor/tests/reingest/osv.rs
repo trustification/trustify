@@ -104,31 +104,31 @@ async fn assert_common(
     };
     let adv = ctx
         .graph
-        .get_advisory_by_id(id, ())
+        .get_advisory_by_id(id, &ctx.db)
         .await?
         .expect("must be found");
 
-    assert_eq!(adv.vulnerabilities(()).await?.len(), 1);
+    assert_eq!(adv.vulnerabilities(&ctx.db).await?.len(), 1);
 
-    let all = adv.vulnerabilities(&()).await?;
+    let all = adv.vulnerabilities(&ctx.db).await?;
     assert_eq!(all.len(), 1);
     assert_eq!(
         all[0].advisory_vulnerability.vulnerability_id,
         expected_vuln_id
     );
 
-    let all = ctx.graph.get_vulnerabilities(()).await?;
+    let all = ctx.graph.get_vulnerabilities(&ctx.db).await?;
     assert_eq!(all.len(), 1);
 
     let vuln = ctx
         .graph
-        .get_vulnerability(expected_vuln_id, ())
+        .get_vulnerability(expected_vuln_id, &ctx.db)
         .await?
         .expect("Must be found");
 
     assert_eq!(vuln.vulnerability.id, expected_vuln_id);
 
-    let descriptions = vuln.descriptions("en", ()).await?;
+    let descriptions = vuln.descriptions("en", &ctx.db).await?;
     assert_eq!(descriptions.len(), 0);
 
     Ok(())

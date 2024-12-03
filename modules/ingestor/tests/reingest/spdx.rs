@@ -18,13 +18,13 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         };
         let sbom = ctx
             .graph
-            .get_sbom_by_id(id, ())
+            .get_sbom_by_id(id, &ctx.db)
             .await?
             .expect("must be found");
 
         // check CPEs
 
-        let cpes = sbom.describes_cpe22s(()).await?;
+        let cpes = sbom.describes_cpe22s(&ctx.db).await?;
         assert_eq!(
             cpes.into_iter()
                 .map(|cpe| CpeDto::from(cpe.cpe))
@@ -35,7 +35,7 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
         // check purls
 
-        let purls = sbom.describes_purls(()).await?;
+        let purls = sbom.describes_purls(&ctx.db).await?;
         assert_eq!(
             purls
                 .into_iter()
@@ -46,22 +46,25 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
         // get product
 
-        let product = sbom.get_product(()).await?.expect("must have a product");
+        let product = sbom
+            .get_product(&ctx.db)
+            .await?
+            .expect("must have a product");
         assert_eq!(product.product.product.name, "quarkus-bom");
 
-        let products = ctx.graph.get_products(()).await?;
+        let products = ctx.graph.get_products(&ctx.db).await?;
         assert_eq!(products.len(), 1);
 
         // get orgs, expect one
 
-        let orgs = ctx.graph.get_organizations(()).await?;
+        let orgs = ctx.graph.get_organizations(&ctx.db).await?;
         assert_eq!(orgs.len(), 1);
 
         // get all sboms, expect one
 
         let sboms = ctx
             .graph
-            .locate_many_sboms(sbom::Entity::find(), ())
+            .locate_many_sboms(sbom::Entity::find(), &ctx.db)
             .await?;
 
         assert_eq!(sboms.len(), 1);

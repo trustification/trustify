@@ -17,9 +17,9 @@ async fn equal(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // check info
 
-    let vuln = VulnerabilityService::new(ctx.db.clone());
+    let vuln = VulnerabilityService::new();
     let v = vuln
-        .fetch_vulnerability("CVE-2021-32714", Default::default(), ())
+        .fetch_vulnerability("CVE-2021-32714", Default::default(), &ctx.db)
         .await?
         .expect("must exist");
 
@@ -42,9 +42,9 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // check without deprecated
 
-    let vuln = VulnerabilityService::new(ctx.db.clone());
+    let vuln = VulnerabilityService::new();
     let v = vuln
-        .fetch_vulnerability("CVE-2021-32714", Deprecation::Ignore, ())
+        .fetch_vulnerability("CVE-2021-32714", Deprecation::Ignore, &ctx.db)
         .await?
         .expect("must exist");
 
@@ -56,9 +56,9 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // check with deprecated
 
-    let vuln = VulnerabilityService::new(ctx.db.clone());
+    let vuln = VulnerabilityService::new();
     let v = vuln
-        .fetch_vulnerability("CVE-2021-32714", Deprecation::Consider, ())
+        .fetch_vulnerability("CVE-2021-32714", Deprecation::Consider, &ctx.db)
         .await?
         .expect("must exist");
 

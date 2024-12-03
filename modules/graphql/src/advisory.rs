@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use async_graphql::{Context, FieldError, FieldResult, Object};
-use trustify_common::db::Transactional;
+use trustify_common::db::Database;
 use trustify_entity::advisory::Model as Advisory;
 use trustify_module_ingestor::graph::Graph;
 use uuid::Uuid;
@@ -12,8 +12,9 @@ pub struct AdvisoryQuery;
 #[Object]
 impl AdvisoryQuery {
     async fn get_advisory_by_id<'a>(&self, ctx: &Context<'a>, id: Uuid) -> FieldResult<Advisory> {
+        let db = ctx.data::<Arc<Database>>()?;
         let graph = ctx.data::<Arc<Graph>>()?;
-        let advisory = graph.get_advisory_by_id(id, Transactional::None).await;
+        let advisory = graph.get_advisory_by_id(id, db.as_ref()).await;
 
         match advisory {
             Ok(Some(advisory)) => Ok(Advisory {
@@ -36,10 +37,11 @@ impl AdvisoryQuery {
     }
 
     async fn get_advisories<'a>(&self, ctx: &Context<'a>) -> FieldResult<Vec<Advisory>> {
+        let db = ctx.data::<Arc<Database>>()?;
         let graph = ctx.data::<Arc<Graph>>()?;
 
         let advisories = graph
-            .get_advisories(Default::default(), Transactional::None)
+            .get_advisories(Default::default(), db.as_ref())
             .await
             .unwrap_or_default();
 

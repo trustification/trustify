@@ -1,36 +1,33 @@
-use crate::ai::service::tools;
-use crate::sbom::service::SbomService;
-
-use crate::ai::service::tools::input_description;
+use crate::{
+    ai::service::tools::{self, input_description},
+    sbom::service::SbomService,
+};
 use async_trait::async_trait;
 use itertools::Itertools;
 use langchain_rust::tools::Tool;
 use serde::Serialize;
 use serde_json::Value;
-use std::error::Error;
-use std::str::FromStr;
+use std::{error::Error, str::FromStr};
 use time::OffsetDateTime;
-use trustify_common::db::query::Query;
-use trustify_common::id::Id;
+use trustify_common::{db::query::Query, db::Database, id::Id};
 use uuid::Uuid;
 
-pub struct SbomInfo(pub SbomService);
+pub struct SbomInfo {
+    pub db: Database,
+    pub service: SbomService,
+}
+
+impl SbomInfo {
+    pub fn new(db: Database) -> Self {
+        let service = SbomService::new(db.clone());
+        Self { db, service }
+    }
+}
 
 #[async_trait]
 impl Tool for SbomInfo {
     fn name(&self) -> String {
         String::from("sbom-info")
-    }
-
-    fn parameters(&self) -> Value {
-        input_description(
-            r#"
-An SBOM identifier or a product name.
-A full SBOM name typically combines the product name and version (e.g., "product-version").
-If a user specifies both, use the product name get a list of best matching SBOMs.
-For example, input "quarkus" instead of "quarkus 3.2.11".
-"#,
-        )
     }
 
     fn description(&self) -> String {
@@ -47,8 +44,19 @@ The tool provides a list of advisories/CVEs affecting the SBOM.
         )
     }
 
+    fn parameters(&self) -> Value {
+        input_description(
+            r#"
+An SBOM identifier or a product name.
+A full SBOM name typically combines the product name and version (e.g., "product-version").
+If a user specifies both, use the product name get a list of best matching SBOMs.
+For example, input "quarkus" instead of "quarkus 3.2.11".
+"#,
+        )
+    }
+
     async fn run(&self, input: Value) -> Result<String, Box<dyn Error>> {
-        let service = &self.0;
+        let service = &self.service;
 
         let input = input
             .as_str()
@@ -59,7 +67,7 @@ The tool provides a list of advisories/CVEs affecting the SBOM.
             Err(_) => None,
             Ok(id) => {
                 log::info!("Fetching SBOM details by Id: {}", id);
-                service.fetch_sbom_details(id, ()).await?
+                service.fetch_sbom_details(id, &self.db).await?
             }
         };
 
@@ -68,7 +76,7 @@ The tool provides a list of advisories/CVEs affecting the SBOM.
                 Err(_) => None,
                 Ok(id) => {
                     log::info!("Fetching SBOM details by UUID: {}", id);
-                    service.fetch_sbom_details(Id::Uuid(id), ()).await?
+                    service.fetch_sbom_details(Id::Uuid(id), &self.db).await?
                 }
             };
         }
@@ -84,7 +92,7 @@ The tool provides a list of advisories/CVEs affecting the SBOM.
                     },
                     Default::default(),
                     (),
-                    (),
+                    &self.db,
                 )
                 .await?;
 
@@ -92,7 +100,7 @@ The tool provides a list of advisories/CVEs affecting the SBOM.
                 0 => None,
                 1 => {
                     service
-                        .fetch_sbom_details(Id::Uuid(results.items[0].head.id), ())
+                        .fetch_sbom_details(Id::Uuid(results.items[0].head.id), &self.db)
                         .await?
                 }
                 _ => {
@@ -221,7 +229,7 @@ mod tests {
         ctx.ingest_document("quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json")
             .await?;
 
-        let tool = Rc::new(SbomInfo(SbomService::new(ctx.db.clone())));
+        let tool = Rc::new(SbomInfo::new(ctx.db.clone()));
 
         assert_tool_contains(
             tool.clone(),

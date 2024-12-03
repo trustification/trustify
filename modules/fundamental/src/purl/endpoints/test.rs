@@ -10,59 +10,59 @@ use serde_json::Value;
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
-use trustify_common::db::Transactional;
+use trustify_common::db::Database;
 use trustify_common::model::PaginatedResults;
 use trustify_common::purl::Purl;
 use trustify_module_ingestor::graph::Graph;
 use trustify_test_context::{call::CallService, TrustifyContext};
 
-async fn setup(graph: &Graph) -> Result<(), anyhow::Error> {
+async fn setup(db: &Database, graph: &Graph) -> Result<(), anyhow::Error> {
     let log4j = graph
-        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, ())
+        .ingest_package(&Purl::from_str("pkg:maven/org.apache/log4j")?, db)
         .await?;
 
     let log4j_123 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, ())
+        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?, db)
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=11")?,
-            (),
+            db,
         )
         .await?;
 
     log4j_123
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3?jdk=17")?,
-            (),
+            db,
         )
         .await?;
 
     let log4j_345 = log4j
-        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@3.4.5")?, ())
+        .ingest_package_version(&Purl::from_str("pkg:maven/org.apache/log4j@3.4.5")?, db)
         .await?;
 
     log4j_345
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
-            (),
+            db,
         )
         .await?;
 
     log4j_345
         .ingest_qualified_package(
             &Purl::from_str("pkg:maven/org.apache/log4j@3.4.5?repository_url=http://jboss.org/")?,
-            (),
+            db,
         )
         .await?;
 
     let sendmail = graph
-        .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, ())
+        .ingest_package(&Purl::from_str("pkg:rpm/sendmail")?, db)
         .await?;
 
     let _sendmail_444 = sendmail
-        .ingest_package_version(&Purl::from_str("pkg:rpm/sendmail@4.4.4")?, ())
+        .ingest_package_version(&Purl::from_str("pkg:rpm/sendmail@4.4.4")?, db)
         .await?;
 
     Ok(())
@@ -71,7 +71,7 @@ async fn setup(graph: &Graph) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn types(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.graph).await?;
+    setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type";
@@ -99,7 +99,7 @@ async fn types(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn r#type(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.graph).await?;
+    setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type/maven";
@@ -130,7 +130,7 @@ async fn r#type(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn type_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.graph).await?;
+    setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j";
@@ -161,7 +161,7 @@ async fn type_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn type_package_version(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.graph).await?;
+    setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j@1.2.3";
@@ -188,7 +188,7 @@ async fn type_package_version(ctx: &TrustifyContext) -> Result<(), anyhow::Error
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.graph).await?;
+    setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j@1.2.3";
@@ -218,7 +218,7 @@ async fn package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn version(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.graph).await?;
+    setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j@1.2.3";
@@ -238,7 +238,7 @@ async fn version(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn base(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.graph).await?;
+    setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/type/maven/org.apache/log4j";
@@ -257,7 +257,7 @@ async fn base(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn base_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.graph).await?;
+    setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl/base?q=log4j";
@@ -272,7 +272,7 @@ async fn base_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn qualified_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.graph).await?;
+    setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl?q=log4j";
@@ -287,7 +287,7 @@ async fn qualified_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn qualified_packages_filtering(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    setup(&ctx.graph).await?;
+    setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
     let uri = "/api/v1/purl?q=type%3Dmaven";
@@ -304,10 +304,7 @@ async fn qualified_packages_filtering(ctx: &TrustifyContext) -> Result<(), anyho
 async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingestor
         .graph()
-        .ingest_qualified_package(
-            &Purl::from_str("pkg:cargo/hyper@0.14.1")?,
-            Transactional::None,
-        )
+        .ingest_qualified_package(&Purl::from_str("pkg:cargo/hyper@0.14.1")?, &ctx.db)
         .await?;
 
     ctx.ingest_documents(["osv/RUSTSEC-2021-0079.json", "cve/CVE-2021-32714.json"])

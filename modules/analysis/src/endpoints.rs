@@ -13,10 +13,11 @@ use trustify_auth::{
 use trustify_common::{db::query::Query, db::Database, model::Paginated, purl::Purl};
 
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
-    let analysis = AnalysisService::new(db);
+    let analysis = AnalysisService::new();
 
     config
         .app_data(web::Data::new(analysis))
+        .app_data(web::Data::new(db))
         .service(search_component_root_components)
         .service(get_component_root_components)
         .service(analysis_status)
@@ -34,12 +35,13 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
 #[get("/v1/analysis/status")]
 pub async fn analysis_status(
     service: web::Data<AnalysisService>,
+    db: web::Data<Database>,
     user: UserInformation,
     authorizer: web::Data<Authorizer>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadSbom)?;
-    Ok(HttpResponse::Ok().json(service.status(()).await?))
+    Ok(HttpResponse::Ok().json(service.status(db.as_ref()).await?))
 }
 
 #[utoipa::path(
@@ -56,13 +58,14 @@ pub async fn analysis_status(
 #[get("/v1/analysis/root-component")]
 pub async fn search_component_root_components(
     service: web::Data<AnalysisService>,
+    db: web::Data<Database>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(
         service
-            .retrieve_root_components(search, paginated, ())
+            .retrieve_root_components(search, paginated, db.as_ref())
             .await?,
     ))
 }
@@ -80,6 +83,7 @@ pub async fn search_component_root_components(
 #[get("/v1/analysis/root-component/{key}")]
 pub async fn get_component_root_components(
     service: web::Data<AnalysisService>,
+    db: web::Data<Database>,
     key: web::Path<String>,
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadSbom>,
@@ -88,13 +92,13 @@ pub async fn get_component_root_components(
         let purl: Purl = Purl::from_str(&key).map_err(Error::Purl)?;
         Ok(HttpResponse::Ok().json(
             service
-                .retrieve_root_components_by_purl(purl, paginated, ())
+                .retrieve_root_components_by_purl(purl, paginated, db.as_ref())
                 .await?,
         ))
     } else {
         Ok(HttpResponse::Ok().json(
             service
-                .retrieve_root_components_by_name(key.to_string(), paginated, ())
+                .retrieve_root_components_by_name(key.to_string(), paginated, db.as_ref())
                 .await?,
         ))
     }
@@ -114,11 +118,16 @@ pub async fn get_component_root_components(
 #[get("/v1/analysis/dep")]
 pub async fn search_component_deps(
     service: web::Data<AnalysisService>,
+    db: web::Data<Database>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(service.retrieve_deps(search, paginated, ()).await?))
+    Ok(HttpResponse::Ok().json(
+        service
+            .retrieve_deps(search, paginated, db.as_ref())
+            .await?,
+    ))
 }
 
 #[utoipa::path(
@@ -134,17 +143,22 @@ pub async fn search_component_deps(
 #[get("/v1/analysis/dep/{key}")]
 pub async fn get_component_deps(
     service: web::Data<AnalysisService>,
+    db: web::Data<Database>,
     key: web::Path<String>,
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     if key.starts_with("pkg:") {
         let purl: Purl = Purl::from_str(&key).map_err(Error::Purl)?;
-        Ok(HttpResponse::Ok().json(service.retrieve_deps_by_purl(purl, paginated, ()).await?))
+        Ok(HttpResponse::Ok().json(
+            service
+                .retrieve_deps_by_purl(purl, paginated, db.as_ref())
+                .await?,
+        ))
     } else {
         Ok(HttpResponse::Ok().json(
             service
-                .retrieve_deps_by_name(key.to_string(), paginated, ())
+                .retrieve_deps_by_name(key.to_string(), paginated, db.as_ref())
                 .await?,
         ))
     }

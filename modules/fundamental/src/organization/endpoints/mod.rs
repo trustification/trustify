@@ -14,8 +14,9 @@ use trustify_common::{
 use uuid::Uuid;
 
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
-    let service = OrganizationService::new(db);
+    let service = OrganizationService::new();
     config
+        .app_data(web::Data::new(db))
         .app_data(web::Data::new(service))
         .service(all)
         .service(get);
@@ -36,11 +37,16 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
 /// List organizations
 pub async fn all(
     state: web::Data<OrganizationService>,
+    db: web::Data<Database>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadMetadata>,
 ) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(state.fetch_organizations(search, paginated, ()).await?))
+    Ok(HttpResponse::Ok().json(
+        state
+            .fetch_organizations(search, paginated, db.as_ref())
+            .await?,
+    ))
 }
 
 #[utoipa::path(
@@ -58,10 +64,11 @@ pub async fn all(
 /// Retrieve organization details
 pub async fn get(
     state: web::Data<OrganizationService>,
+    db: web::Data<Database>,
     id: web::Path<Uuid>,
     _: Require<ReadMetadata>,
 ) -> actix_web::Result<impl Responder> {
-    let fetched = state.fetch_organization(*id, ()).await?;
+    let fetched = state.fetch_organization(*id, db.as_ref()).await?;
 
     if let Some(fetched) = fetched {
         Ok(HttpResponse::Ok().json(fetched))

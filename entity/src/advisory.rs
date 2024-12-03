@@ -38,7 +38,7 @@ impl Model {
         let db = ctx.data::<Arc<db::Database>>()?;
         if let Some(found) = self
             .find_related(organization::Entity)
-            .one(&db.connection(&db::Transactional::None))
+            .one(db.as_ref())
             .await?
         {
             Ok(found)
@@ -51,7 +51,7 @@ impl Model {
         let db = ctx.data::<Arc<db::Database>>()?;
         Ok(self
             .find_related(vulnerability::Entity)
-            .all(&db.connection(&db::Transactional::None))
+            .all(db.as_ref())
             .await?)
     }
 }

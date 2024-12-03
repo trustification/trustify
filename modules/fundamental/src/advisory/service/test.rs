@@ -1,15 +1,13 @@
 use super::*;
-use crate::advisory::model::AdvisoryHead;
-use crate::source_document::model::SourceDocument;
+use crate::{advisory::model::AdvisoryHead, source_document::model::SourceDocument};
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
 use trustify_common::{db::query::q, hashing::Digests, model::Paginated, purl::Purl};
-use trustify_cvss::cvss3::severity::Severity;
 use trustify_cvss::cvss3::{
-    AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
-    PrivilegesRequired, Scope, UserInteraction,
+    severity::Severity, AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base,
+    Integrity, PrivilegesRequired, Scope, UserInteraction,
 };
 use trustify_entity::version_scheme::VersionScheme;
 use trustify_module_ingestor::graph::advisory::{
@@ -38,7 +36,7 @@ pub async fn ingest_sample_advisory<'a>(
                 modified: None,
                 withdrawn: None,
             },
-            (),
+            &ctx.db,
         )
         .await
 }
@@ -47,7 +45,7 @@ pub async fn ingest_and_link_advisory(ctx: &TrustifyContext) -> Result<(), anyho
     let advisory = ingest_sample_advisory(ctx, "RHSA-1", "RHSA-1").await?;
 
     let advisory_vuln = advisory
-        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .link_to_vulnerability("CVE-123", None, &ctx.db)
         .await?;
 
     advisory_vuln
@@ -63,7 +61,7 @@ pub async fn ingest_and_link_advisory(ctx: &TrustifyContext) -> Result<(), anyho
                 i: Integrity::High,
                 a: Availability::High,
             },
-            (),
+            &ctx.db,
         )
         .await?;
     Ok(())
@@ -78,7 +76,7 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let fetched = fetch
-        .fetch_advisories(q(""), Paginated::default(), Default::default(), ())
+        .fetch_advisories(q(""), Paginated::default(), Default::default(), &ctx.db)
         .await?;
 
     assert_eq!(fetched.total, 2);
@@ -100,7 +98,7 @@ async fn all_advisories_filtered_by_average_score(
             q("average_score>8"),
             Paginated::default(),
             Default::default(),
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -123,7 +121,7 @@ async fn all_advisories_filtered_by_average_severity(
             q("average_severity>=critical"),
             Paginated::default(),
             Default::default(),
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -141,7 +139,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let advisory = ingest_sample_advisory(ctx, "RHSA-1", "RHSA-1").await?;
 
     let advisory_vuln: trustify_module_ingestor::graph::advisory::advisory_vulnerability::AdvisoryVulnerabilityContext<'_> = advisory
-        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .link_to_vulnerability("CVE-123", None,&ctx.db)
         .await?;
     advisory_vuln
         .ingest_cvss3_score(
@@ -156,7 +154,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 i: Integrity::High,
                 a: Availability::High,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -169,7 +167,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 scheme: VersionScheme::Maven,
                 spec: VersionSpec::Exact("1.2.3".to_string()),
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -182,7 +180,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 scheme: VersionScheme::Maven,
                 spec: VersionSpec::Exact("1.2.3".to_string()),
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -192,7 +190,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let jenny256 = Id::sha256(&digests.sha256);
     let jenny384 = Id::sha384(&digests.sha384);
     let jenny512 = Id::sha512(&digests.sha512);
-    let fetched = fetch.fetch_advisory(jenny256.clone(), ()).await?;
+    let fetched = fetch.fetch_advisory(jenny256.clone(), &ctx.db).await?;
     let id = Id::Uuid(fetched.as_ref().unwrap().head.uuid);
 
     assert!(matches!(
@@ -211,7 +209,7 @@ async fn single_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             })
         if sha256 == jenny256.to_string() && sha384 == jenny384.to_string() && sha512 == jenny512.to_string() && average_severity == Severity::Critical));
 
-    let fetched = fetch.fetch_advisory(id, ()).await?;
+    let fetched = fetch.fetch_advisory(id, &ctx.db).await?;
     assert!(matches!(
             fetched,
             Some(AdvisoryDetails {
@@ -239,7 +237,7 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let advisory = ingest_sample_advisory(ctx, "RHSA-1", "RHSA-1").await?;
 
     let advisory_vuln = advisory
-        .link_to_vulnerability("CVE-123", None, Transactional::None)
+        .link_to_vulnerability("CVE-123", None, &ctx.db)
         .await?;
     advisory_vuln
         .ingest_cvss3_score(
@@ -254,7 +252,7 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 i: Integrity::High,
                 a: Availability::High,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -267,7 +265,7 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 scheme: VersionScheme::Maven,
                 spec: VersionSpec::Exact("1.2.3".to_string()),
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -280,20 +278,20 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 scheme: VersionScheme::Maven,
                 spec: VersionSpec::Exact("1.2.3".to_string()),
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
     let fetch = AdvisoryService::new(ctx.db.clone());
     let jenny256 = Id::sha256(&digests.sha256);
-    let fetched = fetch.fetch_advisory(jenny256.clone(), ()).await?;
+    let fetched = fetch.fetch_advisory(jenny256.clone(), &ctx.db).await?;
 
     let fetched = fetched.expect("Advisory not found");
 
-    let affected = fetch.delete_advisory(fetched.head.uuid, ()).await?;
+    let affected = fetch.delete_advisory(fetched.head.uuid, &ctx.db).await?;
     assert_eq!(affected, 1);
 
-    let affected = fetch.delete_advisory(fetched.head.uuid, ()).await?;
+    let affected = fetch.delete_advisory(fetched.head.uuid, &ctx.db).await?;
     assert_eq!(affected, 0);
 
     Ok(())

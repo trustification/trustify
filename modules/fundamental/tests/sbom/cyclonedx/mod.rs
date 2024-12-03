@@ -4,7 +4,6 @@ use super::*;
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
-use trustify_common::db::Transactional;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_module_fundamental::purl::model::summary::purl::PurlSummary;
@@ -19,7 +18,7 @@ async fn test_parse_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error
         "zookeeper-3.9.2-cyclonedx.json",
         |WithContext { service, sbom, .. }| async move {
             let described = service
-                .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
+                .describes_packages(sbom.sbom.sbom_id, Default::default(), &ctx.db)
                 .await?;
 
             assert_eq!(1, described.items.len());
@@ -71,7 +70,7 @@ async fn test_parse_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error
                         offset: 0,
                         limit: 1,
                     },
-                    (),
+                    &ctx.db,
                 )
                 .await?;
 
@@ -99,7 +98,7 @@ where
         ctx,
         sbom,
         |data| Ok(Bom::parse_from_json(data)?),
-        |ctx, sbom, tx| Box::pin(async move { ctx.ingest_cyclonedx(sbom.clone(), &tx).await }),
+        |ctx, sbom, tx| Box::pin(async move { ctx.ingest_cyclonedx(sbom.clone(), tx).await }),
         |sbom| sbom::cyclonedx::Information(sbom).into(),
         f,
     )

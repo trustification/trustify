@@ -1,13 +1,10 @@
 use crate::{sbom::service::SbomService, Error};
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, DatabaseBackend, EntityTrait, IntoActiveModel, QueryTrait,
-    TransactionTrait,
+    ActiveModelTrait, ActiveValue::Set, ConnectionTrait, DatabaseBackend, EntityTrait,
+    IntoActiveModel, QueryTrait, TransactionTrait,
 };
 use sea_query::Expr;
-use trustify_common::{
-    db::Transactional,
-    id::{Id, TrySelectForId},
-};
+use trustify_common::id::{Id, TrySelectForId};
 use trustify_entity::{labels::Labels, sbom};
 
 impl SbomService {
@@ -15,18 +12,16 @@ impl SbomService {
     ///
     /// Returns `Ok(Some(()))` if a document was found and updated. If no document was found, it will
     /// return `Ok(None)`.
-    pub async fn set_labels(
+    pub async fn set_labels<C: ConnectionTrait>(
         &self,
         id: Id,
         labels: Labels,
-        tx: impl AsRef<Transactional>,
+        connection: &C,
     ) -> Result<Option<()>, Error> {
-        let db = self.db.connection(&tx);
-
         let result = sbom::Entity::update_many()
             .try_filter(id)?
             .col_expr(sbom::Column::Labels, Expr::value(labels))
-            .exec(&db)
+            .exec(connection)
             .await?;
 
         Ok((result.rows_affected > 0).then_some(()))

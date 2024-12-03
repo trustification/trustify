@@ -1,17 +1,29 @@
-use crate::ai::service::tools;
-use crate::purl::service::PurlService;
-use crate::sbom::service::SbomService;
+use crate::{ai::service::tools, purl::service::PurlService, sbom::service::SbomService};
 use async_trait::async_trait;
 use langchain_rust::tools::Tool;
 use serde::Serialize;
 use serde_json::Value;
 use std::error::Error;
-use trustify_common::db::query::Query;
-use trustify_common::purl::Purl;
+use trustify_common::{
+    db::{query::Query, Database},
+    purl::Purl,
+};
 use trustify_module_ingestor::common::Deprecation;
 use uuid::Uuid;
 
-pub struct PackageInfo(pub (PurlService, SbomService));
+pub struct PackageInfo {
+    pub db: Database,
+    pub purl: PurlService,
+    pub sbom: SbomService,
+}
+
+impl PackageInfo {
+    pub fn new(db: Database) -> Self {
+        let purl = PurlService::new();
+        let sbom = SbomService::new(db.clone());
+        Self { db, purl, sbom }
+    }
+}
 
 #[async_trait]
 impl Tool for PackageInfo {
@@ -43,7 +55,11 @@ Input: The package name, its Identifier URI, or UUID.
     }
 
     async fn run(&self, input: Value) -> Result<String, Box<dyn Error>> {
-        let (service, sbom_service) = &self.0;
+        let Self {
+            purl: service,
+            sbom: sbom_service,
+            db,
+        } = &self;
 
         let input = input
             .as_str()
@@ -53,14 +69,14 @@ Input: The package name, its Identifier URI, or UUID.
         // Try lookup as a PURL
         let mut purl_details = match Purl::try_from(input.clone()) {
             Err(_) => None,
-            Ok(purl) => service.purl_by_purl(&purl, Deprecation::Ignore, ()).await?,
+            Ok(purl) => service.purl_by_purl(&purl, Deprecation::Ignore, db).await?,
         };
 
         // Try lookup as a UUID
         if purl_details.is_none() {
             purl_details = match Uuid::parse_str(input.as_str()) {
                 Err(_) => None,
-                Ok(uuid) => service.purl_by_uuid(&uuid, Deprecation::Ignore, ()).await?,
+                Ok(uuid) => service.purl_by_uuid(&uuid, Deprecation::Ignore, db).await?,
             };
         }
 
@@ -74,7 +90,7 @@ Input: The package name, its Identifier URI, or UUID.
                         ..Default::default()
                     },
                     Default::default(),
-                    (),
+                    &db,
                 )
                 .await?;
 
@@ -82,7 +98,7 @@ Input: The package name, its Identifier URI, or UUID.
                 0 => None,
                 1 => {
                     service
-                        .purl_by_uuid(&results.items[0].head.uuid, Deprecation::Ignore, ())
+                        .purl_by_uuid(&results.items[0].head.uuid, Deprecation::Ignore, db)
                         .await?
                 }
                 _ => {
@@ -111,7 +127,7 @@ Input: The package name, its Identifier URI, or UUID.
         };
 
         let sboms = sbom_service
-            .find_related_sboms(item.head.uuid, Default::default(), Default::default(), ())
+            .find_related_sboms(item.head.uuid, Default::default(), Default::default(), db)
             .await?;
 
         #[derive(Serialize)]
@@ -205,10 +221,7 @@ mod tests {
         ctx.ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
             .await?;
 
-        let tool = Rc::new(PackageInfo((
-            PurlService::new(ctx.db.clone()),
-            SbomService::new(ctx.db.clone()),
-        )));
+        let tool = Rc::new(PackageInfo::new(ctx.db.clone()));
 
         assert_tool_contains(
             tool.clone(),

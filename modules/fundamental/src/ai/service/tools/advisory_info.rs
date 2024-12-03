@@ -1,27 +1,34 @@
-use crate::advisory::service::AdvisoryService;
-use crate::ai::service::tools;
-use crate::ai::service::tools::input_description;
+use crate::{
+    advisory::service::AdvisoryService,
+    ai::service::tools::{self, input_description},
+};
 use async_trait::async_trait;
 use langchain_rust::tools::Tool;
 use serde::Serialize;
 use serde_json::Value;
 use std::error::Error;
 use time::OffsetDateTime;
-use trustify_common::db::query::Query;
-use trustify_common::id::Id;
+use trustify_common::db::Database;
+use trustify_common::{db::query::Query, id::Id};
 use trustify_module_ingestor::common::Deprecation;
 use uuid::Uuid;
 
-pub struct AdvisoryInfo(pub AdvisoryService);
+pub struct AdvisoryInfo {
+    db: Database,
+    service: AdvisoryService,
+}
+
+impl AdvisoryInfo {
+    pub fn new(db: Database) -> Self {
+        let service = AdvisoryService::new(db.clone());
+        Self { db, service }
+    }
+}
 
 #[async_trait]
 impl Tool for AdvisoryInfo {
     fn name(&self) -> String {
         String::from("advisory-info")
-    }
-
-    fn parameters(&self) -> Value {
-        input_description("UUID of the Advisory. Example: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df")
     }
 
     fn description(&self) -> String {
@@ -39,8 +46,12 @@ Advisories have a UUID that uniquely identifies the advisory.
         )
     }
 
+    fn parameters(&self) -> Value {
+        input_description("UUID of the Advisory. Example: 2fd0d1b7-a908-4d63-9310-d57a7f77c6df")
+    }
+
     async fn run(&self, input: Value) -> Result<String, Box<dyn Error>> {
-        let service = &self.0;
+        let service = &self.service;
 
         let input = input
             .as_str()
@@ -48,7 +59,7 @@ Advisories have a UUID that uniquely identifies the advisory.
             .to_string();
 
         let item = match Uuid::parse_str(input.as_str()).ok() {
-            Some(x) => service.fetch_advisory(Id::Uuid(x), ()).await?,
+            Some(x) => service.fetch_advisory(Id::Uuid(x), &self.db).await?,
             None => {
                 // search for possible matches
                 let results = service
@@ -59,7 +70,7 @@ Advisories have a UUID that uniquely identifies the advisory.
                         },
                         Default::default(),
                         Deprecation::Ignore,
-                        (),
+                        &self.db,
                     )
                     .await?;
 
@@ -84,7 +95,7 @@ Advisories have a UUID that uniquely identifies the advisory.
 
                 // let's show the details
                 service
-                    .fetch_advisory(Id::Uuid(results.items[0].head.uuid), ())
+                    .fetch_advisory(Id::Uuid(results.items[0].head.uuid), &self.db)
                     .await?
             }
         };
@@ -152,7 +163,7 @@ mod tests {
         crate::advisory::service::test::ingest_and_link_advisory(ctx).await?;
         crate::advisory::service::test::ingest_sample_advisory(ctx, "RHSA-2", "RHSA-2").await?;
 
-        let tool = Rc::new(AdvisoryInfo(AdvisoryService::new(ctx.db.clone())));
+        let tool = Rc::new(AdvisoryInfo::new(ctx.db.clone()));
 
         assert_tool_contains(
             tool.clone(),

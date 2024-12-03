@@ -22,7 +22,7 @@ async fn all_products(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 vendor: Some("Red Hat".to_string()),
                 cpe: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -33,7 +33,7 @@ async fn all_products(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 vendor: Some("Red Hat".to_string()),
                 cpe: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
@@ -62,14 +62,14 @@ async fn one_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 vendor: Some("Red Hat".to_string()),
                 cpe: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
-    let service = crate::product::service::ProductService::new(ctx.db.clone());
+    let service = crate::product::service::ProductService::new();
 
     let products = service
-        .fetch_products(Query::default(), Paginated::default(), ())
+        .fetch_products(Query::default(), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(1, products.total);
@@ -102,14 +102,14 @@ async fn delete_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 vendor: Some("Red Hat".to_string()),
                 cpe: None,
             },
-            (),
+            &ctx.db,
         )
         .await?;
 
-    let service = crate::product::service::ProductService::new(ctx.db.clone());
+    let service = crate::product::service::ProductService::new();
 
     let products = service
-        .fetch_products(Query::default(), Paginated::default(), ())
+        .fetch_products(Query::default(), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(1, products.total);
@@ -126,7 +126,7 @@ async fn delete_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(response.status(), StatusCode::OK);
 
     let products = service
-        .fetch_products(Query::default(), Paginated::default(), ())
+        .fetch_products(Query::default(), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(0, products.total);

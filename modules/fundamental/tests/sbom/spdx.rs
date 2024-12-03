@@ -8,7 +8,7 @@ use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
-use trustify_common::{db::Transactional, purl::Purl};
+use trustify_common::purl::Purl;
 use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::{
     purl::model::{summary::purl::PurlSummary, PurlHead},
@@ -25,7 +25,7 @@ async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         "quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json",
         |WithContext { service, sbom, .. }| async move {
             let described = service
-                .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
+                .describes_packages(sbom.sbom.sbom_id, Default::default(), &ctx.db)
                 .await?;
             log::debug!("{:#?}", described);
             assert_eq!(1, described.items.len());
@@ -52,7 +52,7 @@ async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
                     sbom.sbom.sbom_id,
                     Relationship::ContainedBy,
                     first,
-                    Transactional::None,
+                    &ctx.db,
                 )
                 .await?;
 
@@ -73,7 +73,7 @@ async fn test_parse_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         "ubi9-9.2-755.1697625012.json",
         |WithContext { service, sbom, .. }| async move {
             let described = service
-                .describes_packages(sbom.sbom.sbom_id, Default::default(), Transactional::None)
+                .describes_packages(sbom.sbom.sbom_id, Default::default(), &ctx.db)
                 .await?;
 
             assert_eq!(1, described.total);
@@ -87,7 +87,7 @@ async fn test_parse_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                     Which::Right,
                     first,
                     Some(Relationship::ContainedBy),
-                    (),
+                    &ctx.db,
                 )
                 .await?
                 .items;
@@ -118,7 +118,7 @@ async fn ingest_spdx_broken_refs(ctx: &TrustifyContext) -> Result<(), anyhow::Er
     );
 
     let result = sbom
-        .fetch_sboms(Default::default(), Default::default(), (), ())
+        .fetch_sboms(Default::default(), Default::default(), (), &ctx.db)
         .await?;
 
     // there must be no traces, everything must be rolled back
@@ -143,7 +143,7 @@ where
         },
         |ctx, sbom, tx| {
             Box::pin(async move {
-                ctx.ingest_spdx(sbom.clone(), &Discard, &tx).await?;
+                ctx.ingest_spdx(sbom.clone(), &Discard, tx).await?;
                 Ok(())
             })
         },

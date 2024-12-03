@@ -14,6 +14,7 @@ use cve::{
     common::{Description, Product, Status, VersionRange},
     Cve, Timestamp,
 };
+use sea_orm::TransactionTrait;
 use std::fmt::Debug;
 use time::OffsetDateTime;
 use tracing::instrument;
@@ -49,7 +50,7 @@ impl<'g> CveLoader<'g> {
         let id = cve.id();
         let labels = labels.into().add("type", "cve");
 
-        let tx = self.graph.transaction().await?;
+        let tx = self.graph.db.begin().await?;
 
         let VulnerabilityDetails {
             org_name,
@@ -334,7 +335,6 @@ mod test {
     use test_context::test_context;
     use test_log::test;
     use time::macros::datetime;
-    use trustify_common::db::Transactional;
     use trustify_common::purl::Purl;
     use trustify_test_context::{document, TrustifyContext};
 
@@ -345,11 +345,11 @@ mod test {
 
         let (cve, digests): (Cve, _) = document("mitre/CVE-2024-28111.json").await?;
 
-        let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
+        let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", &ctx.db).await?;
         assert!(loaded_vulnerability.is_none());
 
         let loaded_advisory = graph
-            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), &ctx.db)
             .await?;
         assert!(loaded_advisory.is_none());
 
@@ -358,7 +358,7 @@ mod test {
             .load(("file", "CVE-2024-28111.json"), cve, &digests)
             .await?;
 
-        let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", ()).await?;
+        let loaded_vulnerability = graph.get_vulnerability("CVE-2024-28111", &ctx.db).await?;
         assert!(loaded_vulnerability.is_some());
         let loaded_vulnerability = loaded_vulnerability.unwrap();
         assert_eq!(
@@ -367,11 +367,11 @@ mod test {
         );
 
         let loaded_advisory = graph
-            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), Transactional::None)
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), &ctx.db)
             .await?;
         assert!(loaded_advisory.is_some());
 
-        let descriptions = loaded_vulnerability.descriptions("en", ()).await?;
+        let descriptions = loaded_vulnerability.descriptions("en", &ctx.db).await?;
         assert_eq!(1, descriptions.len());
         assert!(descriptions[0]
             .starts_with("Canarytokens helps track activity and actions on a network"));
@@ -394,7 +394,7 @@ mod test {
         let purl = graph
             .get_package(
                 &Purl::from_str("pkg:maven/org.apache.commons/commons-compress")?,
-                Transactional::None,
+                &ctx.db,
             )
             .await?;
 

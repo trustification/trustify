@@ -5,10 +5,10 @@ use crate::{
     purl::model::summary::purl::PurlSummary, source_document::model::SourceDocument, Error,
 };
 use async_graphql::SimpleObject;
-use sea_orm::{prelude::Uuid, ModelTrait, PaginatorTrait};
+use sea_orm::{prelude::Uuid, ConnectionTrait, ModelTrait, PaginatorTrait};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
-use trustify_common::{db::ConnectionOrTransaction, model::Paginated};
+use trustify_common::model::Paginated;
 use trustify_entity::{
     labels::Labels, relationship::Relationship, sbom, sbom_node, sbom_package, source_document,
 };
@@ -37,12 +37,12 @@ pub struct SbomHead {
 }
 
 impl SbomHead {
-    pub async fn from_entity(
+    pub async fn from_entity<C: ConnectionTrait>(
         sbom: &sbom::Model,
         sbom_node: Option<sbom_node::Model>,
-        tx: &ConnectionOrTransaction<'_>,
+        db: &C,
     ) -> Result<Self, Error> {
-        let number_of_packages = sbom.find_related(sbom_package::Entity).count(tx).await?;
+        let number_of_packages = sbom.find_related(sbom_package::Entity).count(db).await?;
         Ok(Self {
             id: sbom.sbom_id,
             document_id: sbom.document_id.clone(),
@@ -70,24 +70,24 @@ pub struct SbomSummary {
 }
 
 impl SbomSummary {
-    pub async fn from_entity(
+    pub async fn from_entity<C: ConnectionTrait>(
         (sbom, node): (sbom::Model, Option<sbom_node::Model>),
         service: &SbomService,
-        tx: &ConnectionOrTransaction<'_>,
+        db: &C,
     ) -> Result<Option<SbomSummary>, Error> {
         // TODO: consider improving the n-select issues here
         let described_by = service
-            .describes_packages(sbom.sbom_id, Paginated::default(), ())
+            .describes_packages(sbom.sbom_id, Paginated::default(), db)
             .await?
             .items;
 
-        let source_document = sbom.find_related(source_document::Entity).one(tx).await?;
+        let source_document = sbom.find_related(source_document::Entity).one(db).await?;
 
         Ok(match node {
             Some(_) => Some(SbomSummary {
-                head: SbomHead::from_entity(&sbom, node, tx).await?,
+                head: SbomHead::from_entity(&sbom, node, db).await?,
                 source_document: if let Some(doc) = &source_document {
-                    Some(SourceDocument::from_entity(doc, tx).await?)
+                    Some(SourceDocument::from_entity(doc).await?)
                 } else {
                     None
                 },

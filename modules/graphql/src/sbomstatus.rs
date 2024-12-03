@@ -1,7 +1,7 @@
 use async_graphql::{Context, FieldResult, Object, SimpleObject};
 use std::{ops::Deref, sync::Arc};
 use trustify_common::{
-    db::{self, Transactional},
+    db::{self},
     id::Id,
 };
 use trustify_module_fundamental::{
@@ -30,7 +30,7 @@ impl SbomStatusQuery {
         let sbom_service = SbomService::new(db.deref().clone());
 
         let sbom_details: Option<SbomDetails> = sbom_service
-            .fetch_sbom_details(Id::Uuid(id), Transactional::None)
+            .fetch_sbom_details(Id::Uuid(id), db.as_ref())
             .await
             .unwrap_or_default();
 

@@ -13,7 +13,7 @@ use trustify_test_context::TrustifyContext;
 async fn fixed(ctx: &TrustifyContext) -> anyhow::Result<()> {
     let (r1, r2) = twice(ctx, update_unmark_fixed, update_mark_fixed_again).await?;
 
-    let vuln = VulnerabilityService::new(ctx.db.clone());
+    let vuln = VulnerabilityService::new();
 
     // must be changed
 
@@ -23,13 +23,13 @@ async fn fixed(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let service = AdvisoryService::new(ctx.db.clone());
     service
-        .delete_advisory(r2.id.try_as_uid().expect("must be a UUID variant"), ())
+        .delete_advisory(r2.id.try_as_uid().expect("must be a UUID variant"), &ctx.db)
         .await?;
 
     // check info
 
     let v = vuln
-        .fetch_vulnerability("CVE-2020-5238", Deprecation::Ignore, ())
+        .fetch_vulnerability("CVE-2020-5238", Deprecation::Ignore, &ctx.db)
         .await?
         .expect("must exist");
 
@@ -38,7 +38,7 @@ async fn fixed(ctx: &TrustifyContext) -> anyhow::Result<()> {
     // check with deprecated, should be the same result
 
     let v = vuln
-        .fetch_vulnerability("CVE-2020-5238", Deprecation::Consider, ())
+        .fetch_vulnerability("CVE-2020-5238", Deprecation::Consider, &ctx.db)
         .await?
         .expect("must exist");
 

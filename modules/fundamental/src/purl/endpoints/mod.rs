@@ -20,9 +20,10 @@ mod r#type;
 mod version;
 
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
-    let purl_service = PurlService::new(db);
+    let purl_service = PurlService::new();
 
     config
+        .app_data(web::Data::new(db))
         .app_data(web::Data::new(purl_service))
         .service(r#type::all_purl_types)
         .service(r#type::get_purl_type)
@@ -50,16 +51,17 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
 /// Retrieve details of a fully-qualified pURL
 pub async fn get(
     service: web::Data<PurlService>,
+    db: web::Data<Database>,
     key: web::Path<String>,
     web::Query(Deprecation { deprecated }): web::Query<Deprecation>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     if key.starts_with("pkg") {
         let purl = Purl::from_str(&key).map_err(Error::Purl)?;
-        Ok(HttpResponse::Ok().json(service.purl_by_purl(&purl, deprecated, ()).await?))
+        Ok(HttpResponse::Ok().json(service.purl_by_purl(&purl, deprecated, db.as_ref()).await?))
     } else {
         let id = Uuid::from_str(&key).map_err(|e| Error::IdKey(IdError::InvalidUuid(e)))?;
-        Ok(HttpResponse::Ok().json(service.purl_by_uuid(&id, deprecated, ()).await?))
+        Ok(HttpResponse::Ok().json(service.purl_by_uuid(&id, deprecated, db.as_ref()).await?))
     }
 }
 
@@ -78,11 +80,12 @@ pub async fn get(
 /// List fully-qualified pURLs
 pub async fn all(
     service: web::Data<PurlService>,
+    db: web::Data<Database>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(service.purls(search, paginated, ()).await?))
+    Ok(HttpResponse::Ok().json(service.purls(search, paginated, db.as_ref()).await?))
 }
 
 #[cfg(test)]
