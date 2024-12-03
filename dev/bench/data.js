@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733136042466,
+  "lastUpdate": 1733211690360,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1908,6 +1908,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/80914b902895975a9b215d5ca7f8e744ae8847f6"
         },
         "date": 1733136041608,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "ddd20e8f794c12a7a018c90762086a36358aab2f",
+          "message": "fix: always create \"described by\" relationships\n\nAlso, improve some test coverage.",
+          "timestamp": "2024-12-03T07:21:59Z",
+          "tree_id": "fdc6abd32322d62d3efe51f76bf7ae65af9c909c",
+          "url": "https://github.com/trustification/trustify/commit/ddd20e8f794c12a7a018c90762086a36358aab2f"
+        },
+        "date": 1733211689540,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
