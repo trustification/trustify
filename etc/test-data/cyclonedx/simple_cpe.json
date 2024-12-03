@@ -14,20 +14,22 @@
     {
       "name": "A",
       "version": "1",
+      "bom-ref": "a",
       "purl": "pkg:rpm/redhat/A@0.0.0?arch=src",
       "type": "library"
     },
     {
       "name": "B",
       "version": "1",
+      "bom-ref": "b",
       "purl": "pkg:rpm/redhat/B@0.0.0?arch=src",
       "type": "library"
     }
   ],
   "dependencies": [
     {
-      "ref": "A",
-      "dependsOn": ["B"]
+      "ref": "a",
+      "dependsOn": ["b"]
     }
   ]
 }
