@@ -1018,17 +1018,15 @@ mod test {
                 .purl,
             "pkg:rpm/redhat/AA@0.0.0?arch=src".to_string()
         );
-        assert_eq!(
-            analysis_graph
-                .items
-                .last()
-                .unwrap()
-                .ancestors
-                .last()
-                .unwrap()
-                .node_id,
-            "AA".to_string()
-        );
+        let node = analysis_graph
+            .items
+            .last()
+            .unwrap()
+            .ancestors
+            .last()
+            .unwrap();
+        assert_eq!(node.node_id, "aa".to_string());
+        assert_eq!(node.name, "AA".to_string());
         assert_eq!(analysis_graph.total, 1);
 
         // ensure we set implicit relationship on component with no defined relationships

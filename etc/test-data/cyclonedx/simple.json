@@ -13,72 +13,80 @@
     {
       "name": "A",
       "version": "1",
+      "bom-ref": "a",
       "purl": "pkg:rpm/redhat/A@0.0.0?arch=src",
       "type": "library"
     },
     {
       "name": "B",
       "version": "1",
+      "bom-ref": "b",
       "purl": "pkg:rpm/redhat/B@0.0.0?arch=src",
       "type": "library"
     },
     {
       "name": "AA",
       "version": "1",
+      "bom-ref": "aa",
       "purl": "pkg:rpm/redhat/AA@0.0.0?arch=src",
       "type": "library"
     },
     {
       "name": "BB",
       "version": "1",
+      "bom-ref": "bb",
       "purl": "pkg:rpm/redhat/BB@0.0.0?arch=src",
       "type": "library"
     },
     {
       "name": "CC",
       "version": "1",
+      "bom-ref": "cc",
       "purl": "pkg:rpm/redhat/CC@0.0.0?arch=src",
       "type": "library"
     },
     {
       "name": "DD",
       "version": "1",
+      "bom-ref": "dd",
       "purl": "pkg:rpm/redhat/DD@0.0.0?arch=src",
       "type": "library"
     },
     {
       "name": "EE",
       "version": "1",
+      "bom-ref": "ee",
       "purl": "pkg:rpm/redhat/EE@0.0.0?arch=src",
       "type": "library"
     },
     {
       "name": "FF",
       "version": "1",
+      "bom-ref": "ff",
       "purl": "pkg:rpm/redhat/FF@0.0.0?arch=src",
       "type": "library"
     }
   ],
   "dependencies": [
     {
-      "ref": "A",
-      "dependsOn": ["B"]
+      "ref": "a",
+      "dependsOn": ["b"]
     },
     {
-      "ref": "AA",
-      "dependsOn": ["BB"]
+      "ref": "aa",
+      "dependsOn": ["bb"]
     },
     {
-      "ref": "BB",
-      "dependsOn": ["CC"]
+      "ref": "bb",
+      "dependsOn": ["cc"]
     },
     {
-      "ref": "BB",
-      "dependsOn": ["DD"]
+      "ref": "bb",
+      "dependsOn": ["dd"]
     },
     {
-      "ref": "DD",
-      "dependsOn": ["FF"]
+      "ref": "dd",
+      "dependsOn": ["ff"]
     }
   ]
 }
