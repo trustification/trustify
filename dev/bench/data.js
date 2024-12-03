@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733212044510,
+  "lastUpdate": 1733224856093,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -1966,6 +1966,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/b75838a7176605a61e447635b801ecb5e45e30f7"
         },
         "date": 1733212043822,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "88e4a52b68c89768d6c5a502d98f959e1d1fa0f1",
+          "message": "test: fix invalid cyclonedx test data\n\nCyclonedx dependencies without bom-refs aren't allowed. Though some\nvalidation tools might ignore this, as they only check for the schema.",
+          "timestamp": "2024-12-03T10:58:13Z",
+          "tree_id": "9bacceea7b4bd6c0290abd192554bbdde62b1614",
+          "url": "https://github.com/trustification/trustify/commit/88e4a52b68c89768d6c5a502d98f959e1d1fa0f1"
+        },
+        "date": 1733224854883,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
