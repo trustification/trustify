@@ -264,10 +264,8 @@ impl<'a> Creator<'a> {
         for comp in self.components {
             let node_id = comp
                 .bom_ref
-                .as_ref()
-                .cloned()
-                // TODO: we might re-consider this
-                .unwrap_or_else(|| comp.name.to_string());
+                .clone()
+                .unwrap_or_else(|| Uuid::new_v4().to_string());
 
             let mut refs = vec![];
 
