@@ -83,8 +83,8 @@ impl GenerateDump {
 
     pub async fn run(self) -> anyhow::Result<()> {
         let (db, postgres) = match &self.working_dir {
-            Some(wd) => db::embedded::create_in(wd.join("db")).await?,
-            None => db::embedded::create().await?,
+            Some(wd) => db::embedded::create_in(wd.join("db"), true).await?,
+            None => db::embedded::create(true).await?,
         };
 
         let (storage, _tmp) = match &self.working_dir {

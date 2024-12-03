@@ -4,31 +4,40 @@ use postgresql_embedded::{PostgreSQL, Settings, VersionReq};
 use std::path::Path;
 use tracing::{info_span, Instrument};
 
-/// Create common default settings for the embedded database
-fn default_settings() -> anyhow::Result<Settings> {
+/// Create common default settings for the embedded database.
+/// Use the bool `temp` parameter to indicate if the pg_data
+/// directory is temporary or not.
+fn default_settings(temp: bool) -> anyhow::Result<Settings> {
     let version = VersionReq::parse("=16.3.0").context("valid psql version")?;
     Ok(Settings {
         version,
         username: "postgres".to_string(),
         password: "trustify".to_string(),
-        temporary: true,
+        temporary: temp,
         ..Default::default()
     })
 }
 
 /// Create a new, embedded database instance
-pub async fn create() -> anyhow::Result<(Database, PostgreSQL)> {
-    create_for(default_settings()?).await
+/// Use the bool `temporary` parameter to indicate if the pg_data
+/// directory is temporary or not.
+pub async fn create(temporary: bool) -> anyhow::Result<(Database, PostgreSQL)> {
+    create_for(default_settings(temporary)?).await
 }
 
 /// Create a new, embedded database instance in a specific directory
-pub async fn create_in(base: impl AsRef<Path>) -> anyhow::Result<(Database, PostgreSQL)> {
+/// Use the bool `temporary` parameter to indicate if the pg_data
+/// directory is temporary or not.
+pub async fn create_in(
+    base: impl AsRef<Path>,
+    temporary: bool,
+) -> anyhow::Result<(Database, PostgreSQL)> {
     let base = base.as_ref();
 
     create_for(Settings {
         data_dir: base.join("data"),
         installation_dir: base.join("instance"),
-        ..default_settings()?
+        ..default_settings(temporary)?
     })
     .await
 }

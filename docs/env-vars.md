@@ -50,6 +50,7 @@
 
 | Environment Variable | Description                    | Default Value |
 |----------------------|--------------------------------|---------------|
+| `DB_PATH`       | Specifies a location for postgres data directory making it persistent after the test |           |
 | `EXTERNAL_TEST_DB`       | Run tests against external test database if set |           |
 | `EXTERNAL_TEST_DB_BOOTSTRAP`       | Run tests against external test database if set |           |
 | `MEM_LIMIT_MB`       | Set memory limit for tests that use TrustifyContext, shows the memory usage when the test reaches the limit  | `500 MiB`          |

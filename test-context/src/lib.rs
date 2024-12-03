@@ -126,11 +126,25 @@ impl AsyncTestContext for TrustifyContext {
             return TrustifyContext::new(db, None).await;
         }
 
-        let (db, postgresql) = db::embedded::create()
-            .await
-            .expect("Create an embedded database");
+        if env::var("DB_PATH").is_ok() {
+            let db_path: String = env::var("DB_PATH")
+                .unwrap_or(".".into())
+                .parse()
+                .expect("a text value");
+            let path = Path::new(&db_path);
 
-        TrustifyContext::new(db, postgresql).await
+            let (db, postgresql) = db::embedded::create_in(&path, false)
+                .await
+                .expect("Create an embedded database");
+
+            TrustifyContext::new(db, postgresql).await
+        } else {
+            let (db, postgresql) = db::embedded::create(true)
+                .await
+                .expect("Create an embedded database");
+
+            TrustifyContext::new(db, postgresql).await
+        }
     }
 
     async fn teardown(self) {
