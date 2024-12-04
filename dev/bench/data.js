@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733229878376,
+  "lastUpdate": 1733309392548,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2024,6 +2024,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/9165a94d1bd72674c133ea5147866ae0716d5b77"
         },
         "date": 1733229877324,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "67cf6ea3f01f7f4cb86fc91990421787419da7ef",
+          "message": "chore: update nu-ansi-term\n\nThis is used on AI part of the code only:\n\n```\nrg \"nu_ansi_term\"\nxtask/src/ai.rs\n3:use nu_ansi_term::Color::Blue;\n```\n\nThey have some improvements over ~2 years see: https://github.com/nushell/nu-ansi-term/releases",
+          "timestamp": "2024-12-04T10:27:51Z",
+          "tree_id": "5c152734ef56950a568c823996333e1dd8b4dbe4",
+          "url": "https://github.com/trustification/trustify/commit/67cf6ea3f01f7f4cb86fc91990421787419da7ef"
+        },
+        "date": 1733309391749,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
