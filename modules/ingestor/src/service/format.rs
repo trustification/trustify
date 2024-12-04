@@ -14,7 +14,6 @@ use crate::{
 };
 use csaf::Csaf;
 use cve::Cve;
-use cyclonedx_bom::models::bom::Bom;
 use jsn::{mask::*, Format as JsnFormat, TokenReader};
 use osv::schema::Vulnerability;
 use quick_xml::{events::Event, Reader};
@@ -80,10 +79,8 @@ impl<'g> Format {
             Format::CycloneDX => {
                 let loader = CyclonedxLoader::new(graph);
                 let v: Value = serde_json::from_slice(buffer)?;
-                let sbom = Bom::parse_json_value(v)
-                    .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
-                loader.load(labels, sbom, digests).await
+                loader.load(labels, v, digests).await
             }
             Format::ClearlyDefined => {
                 let loader = ClearlyDefinedLoader::new(graph);
