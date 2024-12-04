@@ -5,6 +5,7 @@ use crate::{
 };
 use cyclonedx_bom::prelude::Bom;
 use sea_orm::TransactionTrait;
+use serde_json::Value;
 use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
@@ -18,13 +19,16 @@ impl<'g> CyclonedxLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, sbom), ret)]
+    #[instrument(skip(self, value), ret)]
     pub async fn load(
         &self,
         labels: Labels,
-        sbom: Bom,
+        value: Value,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
+        let sbom = Bom::parse_json_value(value)
+            .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
+
         let labels = labels.add("type", "cyclonedx");
 
         log::info!(
