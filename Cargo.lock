@@ -9675,7 +9675,7 @@ dependencies = [
  "clap",
  "langchain-rust",
  "log",
- "nu-ansi-term 0.46.0",
+ "nu-ansi-term 0.50.1",
  "postgresql_commands",
  "reedline",
  "reqwest 0.12.9",
