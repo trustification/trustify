@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733309392548,
+  "lastUpdate": 1733322139764,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2053,6 +2053,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/67cf6ea3f01f7f4cb86fc91990421787419da7ef"
         },
         "date": 1733309391749,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "bf0f15770308beef23e8780837dd5bd49e42c1c7",
+          "message": "refactor: drop Transactional and ConnectionOrTransaction\n\nDirectly use the `ConnectionTrait` from sea_orm.",
+          "timestamp": "2024-12-04T14:00:29Z",
+          "tree_id": "6ab758d6ff18733f73f5fb5d6d891236618c9df6",
+          "url": "https://github.com/trustification/trustify/commit/bf0f15770308beef23e8780837dd5bd49e42c1c7"
+        },
+        "date": 1733322138521,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
