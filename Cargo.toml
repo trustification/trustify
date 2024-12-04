@@ -1,24 +1,24 @@
 [workspace]
 resolver = "2"
 members = [
-    "common",
-    "common/auth",
-    "common/infrastructure",
-    "cvss",
-    "entity",
-    "migration",
-    "modules/analysis",
-    "modules/fundamental",
-    "modules/graphql",
-    "modules/importer",
-    "modules/ingestor",
-    "modules/storage",
-    "modules/ui",
-    "modules/user",
-    "server",
-    "test-context",
-    "trustd",
-    "xtask",
+  "common",
+  "common/auth",
+  "common/infrastructure",
+  "cvss",
+  "entity",
+  "migration",
+  "modules/analysis",
+  "modules/fundamental",
+  "modules/graphql",
+  "modules/importer",
+  "modules/ingestor",
+  "modules/storage",
+  "modules/ui",
+  "modules/user",
+  "server",
+  "test-context",
+  "trustd",
+  "xtask",
 ]
 
 [workspace.package]
@@ -85,7 +85,7 @@ libz-sys = "*"
 log = "0.4.19"
 mime = "0.3.17"
 native-tls = "0.2"
-nu-ansi-term = "0.46"
+nu-ansi-term = "0.50"
 once_cell = "1.19.0"
 openid = "0.15"
 openssl = "0.10"
@@ -108,7 +108,11 @@ ring = "0.17.8"
 roxmltree = "0.20.0"
 rstest = "0.23.0"
 rust-s3 = "0.35"
-sbom-walker = { version = "0.10.0", default-features = false, features = ["crypto-openssl", "cyclonedx-bom", "spdx-rs"] }
+sbom-walker = { version = "0.10.0", default-features = false, features = [
+  "crypto-openssl",
+  "cyclonedx-bom",
+  "spdx-rs",
+] }
 schemars = "0.8"
 sea-orm = { version = "1", features = ["debug-print"] }
 sea-orm-migration = "1"
@@ -173,9 +177,17 @@ trustify-module-user = { path = "modules/user" }
 # as well as build-dependencies. However, we can't control feature flags for build dependencies the way we do
 # it for normal dependencies. So enabling the vendor feature for openssl-sys doesn't work for the build-dependencies.
 # This will fail the build on targets where we need vendoring for openssl. Using rustls instead works around this issue.
-postgresql_archive = { version = "0.17.3", default-features = false, features = ["theseus", "rustls-tls"] }
-postgresql_embedded = { version = "0.17.3", default-features = false, features = ["theseus", "rustls-tls"] }
-postgresql_commands = { version = "0.17.3", default-features = false, features = ["tokio"] }
+postgresql_archive = { version = "0.17.3", default-features = false, features = [
+  "theseus",
+  "rustls-tls",
+] }
+postgresql_embedded = { version = "0.17.3", default-features = false, features = [
+  "theseus",
+  "rustls-tls",
+] }
+postgresql_commands = { version = "0.17.3", default-features = false, features = [
+  "tokio",
+] }
 
 [patch.crates-io]
 #csaf-walker = { git = "https://github.com/ctron/csaf-walker", rev = "7b6e64dd56e4be79e184b053ef754a42e1496fe0" }
