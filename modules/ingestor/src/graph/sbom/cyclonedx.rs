@@ -1,13 +1,11 @@
-use crate::graph::sbom::{LicenseCreator, LicenseInfo};
 use crate::graph::{
     cpe::CpeCreator,
     product::ProductInformation,
     purl::creator::PurlCreator,
-    sbom::{PackageCreator, PackageReference, RelationshipCreator, SbomContext, SbomInformation},
-};
-use cyclonedx_bom::{
-    models::license::{LicenseChoice, LicenseIdentifier},
-    prelude::{Bom, Component, Components},
+    sbom::{
+        LicenseCreator, LicenseInfo, PackageCreator, PackageReference, RelationshipCreator,
+        SbomContext, SbomInformation,
+    },
 };
 use sea_orm::ConnectionTrait;
 use std::{collections::HashMap, str::FromStr};
