@@ -32,7 +32,7 @@ impl Authorizer {
         permission: Permission,
     ) -> Result<(), AuthorizationError> {
         if self.config.is_none() {
-            log::warn!("Authorization disabled, all permissions granted");
+            log::debug!("Authorization disabled, all permissions granted");
             return Ok(());
         }
 

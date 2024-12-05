@@ -15,6 +15,8 @@ use trustify_common::model::PaginatedResults;
 use trustify_common::purl::Purl;
 use trustify_module_ingestor::graph::Graph;
 use trustify_test_context::{call::CallService, TrustifyContext};
+use urlencoding::encode;
+use uuid::Uuid;
 
 async fn setup(db: &Database, graph: &Graph) -> Result<(), anyhow::Error> {
     let log4j = graph
@@ -290,11 +292,22 @@ async fn qualified_packages_filtering(ctx: &TrustifyContext) -> Result<(), anyho
     setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/purl?q=type%3Dmaven";
-    let request = TestRequest::get().uri(uri).to_request();
+    let uri = format!("/api/v1/purl?q={}", encode("ty=maven"));
+    let request = TestRequest::get().uri(&uri).to_request();
     let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
-
     assert_eq!(3, response.items.len());
+
+    ctx.ingestor
+        .graph()
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:rpm/fedora/curl@7.50.3-1.fc25?arch=i386")?,
+            &ctx.db,
+        )
+        .await?;
+    let uri = format!("/api/v1/purl?q={}", encode("ty=rpm&arch=i386"));
+    let request = TestRequest::get().uri(&uri).to_request();
+    let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
+    assert_eq!(1, response.items.len());
 
     Ok(())
 }
@@ -325,7 +338,7 @@ async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     let request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
-    log::debug!("{response:#?}");
+    assert_eq!(uuid, Uuid::parse_str(response["uuid"].as_str().unwrap())?);
 
     Ok(())
 }
