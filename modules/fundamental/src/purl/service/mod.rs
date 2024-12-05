@@ -8,10 +8,10 @@ use crate::{
     Error,
 };
 use sea_orm::{
-    prelude::Uuid, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, IntoSimpleExpr,
-    QueryFilter, QueryOrder, QuerySelect, QueryTrait,
+    prelude::Uuid, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, QueryFilter,
+    QueryOrder, QuerySelect,
 };
-use sea_query::{Condition, Expr, Order, SimpleExpr};
+use sea_query::Order;
 use tracing::instrument;
 use trustify_common::{
     db::{
