@@ -48,7 +48,13 @@ impl<'g> SpdxLoader<'g> {
 
         let sbom = self
             .graph
-            .ingest_sbom(labels, digests, &document_id, spdx::Information(&spdx), &tx)
+            .ingest_sbom(
+                labels,
+                digests,
+                Some(document_id.clone()),
+                spdx::Information(&spdx),
+                &tx,
+            )
             .await?;
 
         sbom.ingest_spdx(spdx, &warnings, &tx).await?;
@@ -57,7 +63,7 @@ impl<'g> SpdxLoader<'g> {
 
         Ok(IngestResult {
             id: Id::Uuid(sbom.sbom.sbom_id),
-            document_id,
+            document_id: Some(document_id),
             warnings: warnings.into(),
         })
     }

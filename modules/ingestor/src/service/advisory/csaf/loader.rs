@@ -108,7 +108,7 @@ impl<'g> CsafLoader<'g> {
 
         Ok(IngestResult {
             id: Id::Uuid(advisory.advisory.id),
-            document_id: advisory_id,
+            document_id: Some(advisory_id),
             warnings: warnings.into(),
         })
     }

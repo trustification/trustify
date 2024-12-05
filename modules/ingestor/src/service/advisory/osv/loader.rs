@@ -169,7 +169,7 @@ impl<'g> OsvLoader<'g> {
 
         Ok(IngestResult {
             id: Id::Uuid(advisory.advisory.id),
-            document_id: osv.id,
+            document_id: Some(osv.id),
             warnings: warnings.into(),
         })
     }
