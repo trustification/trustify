@@ -357,7 +357,10 @@ async fn upload_default_csaf_format(ctx: &TrustifyContext) -> Result<(), anyhow:
     let result: IngestResult = app.call_and_read_body_json(request).await;
     log::debug!("{result:?}");
     assert!(matches!(result.id, Id::Uuid(_)));
-    assert_eq!(result.document_id, "https://www.redhat.com/#CVE-2023-33201");
+    assert_eq!(
+        result.document_id,
+        Some("https://www.redhat.com/#CVE-2023-33201".to_string())
+    );
 
     Ok(())
 }
@@ -415,7 +418,7 @@ async fn upload_osv_format(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result: IngestResult = app.call_and_read_body_json(request).await;
     assert!(matches!(result.id, Id::Uuid(_)));
-    assert_eq!(result.document_id, "RUSTSEC-2021-0079");
+    assert_eq!(result.document_id, Some("RUSTSEC-2021-0079".to_string()));
 
     Ok(())
 }
@@ -434,7 +437,7 @@ async fn upload_cve_format(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result: IngestResult = app.call_and_read_body_json(request).await;
     assert!(matches!(result.id, Id::Uuid(_)));
-    assert_eq!(result.document_id, "CVE-2024-27088");
+    assert_eq!(result.document_id, Some("CVE-2024-27088".to_string()));
 
     Ok(())
 }
@@ -474,7 +477,10 @@ async fn upload_with_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     let result: IngestResult = app.call_and_read_body_json(request).await;
     log::debug!("{result:?}");
     assert!(matches!(result.id, Id::Uuid(_)));
-    assert_eq!(result.document_id, "https://www.redhat.com/#CVE-2023-33201");
+    assert_eq!(
+        result.document_id,
+        Some("https://www.redhat.com/#CVE-2023-33201".to_string())
+    );
 
     // now check the labels
 

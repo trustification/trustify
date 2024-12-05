@@ -20,7 +20,7 @@ pub struct SbomHead {
     #[schema(value_type=String)]
     pub id: Uuid,
 
-    pub document_id: String,
+    pub document_id: Option<String>,
     pub labels: Labels,
     pub data_licenses: Vec<String>,
 

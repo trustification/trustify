@@ -26,7 +26,13 @@ impl<'g> ClearlyDefinedCurationLoader<'g> {
 
         let sbom = self
             .graph
-            .ingest_sbom(labels, digests, &curation.document_id(), &curation, &tx)
+            .ingest_sbom(
+                labels,
+                digests,
+                Some(curation.document_id()),
+                &curation,
+                &tx,
+            )
             .await?;
 
         sbom.ingest_clearly_defined_curation(curation, &tx)

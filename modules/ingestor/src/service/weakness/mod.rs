@@ -141,7 +141,7 @@ impl<'d> CweCatalogLoader<'d> {
 
         Ok(IngestResult {
             id: Id::Sha512(digests.sha512.encode_hex()),
-            document_id: "CWE".to_string(),
+            document_id: Some("CWE".to_string()),
             warnings: vec![],
         })
     }

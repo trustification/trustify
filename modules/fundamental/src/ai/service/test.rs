@@ -13,7 +13,7 @@ pub async fn ingest_fixtures(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
         .ingest_sbom(
             ("source", "http://redhat.com/test.json"),
             &Digests::digest("RHSA-1"),
-            "a",
+            Some("a".to_string()),
             (),
             &ctx.db,
         )
