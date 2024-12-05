@@ -324,9 +324,9 @@ There are multiple that match:
 {
   "items": [
     {
-      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      "name": "quarkus-resteasy-reactive-jsonb-common",
+      "name": "quarkus-resteasy-reactive-jsonb-common-deployment",
       "version": "2.13.8.Final-redhat-00004"
     },
     {
@@ -336,9 +336,9 @@ There are multiple that match:
       "version": "2.13.8.Final-redhat-00004"
     },
     {
-      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      "name": "quarkus-resteasy-reactive-jsonb-common-deployment",
+      "name": "quarkus-resteasy-reactive-jsonb-common",
       "version": "2.13.8.Final-redhat-00004"
     },
     {
