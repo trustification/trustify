@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733397154572,
+  "lastUpdate": 1733406869664,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2111,6 +2111,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/cf4aa9aab81158898ae0f0d52249cfc3986f3c48"
         },
         "date": 1733397153375,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "10b89a13b2bc0cfe2bb23b277384b2a380da9f51",
+          "message": "chore: drop importer from regular API server",
+          "timestamp": "2024-12-05T13:30:48Z",
+          "tree_id": "7f2b6a6f218c6003fd18cdbeff8d8d5513500ad0",
+          "url": "https://github.com/trustification/trustify/commit/10b89a13b2bc0cfe2bb23b277384b2a380da9f51"
+        },
+        "date": 1733406868473,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
