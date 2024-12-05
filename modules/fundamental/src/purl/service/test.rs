@@ -626,9 +626,11 @@ async fn statuses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let uuid = results.items[0].head.uuid;
 
-    let _results = service
+    let results = service
         .purl_by_uuid(&uuid, Default::default(), &ctx.db)
         .await?;
+
+    assert_eq!(uuid, results.unwrap().head.uuid);
 
     Ok(())
 }
