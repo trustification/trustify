@@ -211,7 +211,7 @@ mod test {
 
         let ingestion_result = &result[0];
 
-        assert!(!ingestion_result.document_id.is_empty());
+        assert!(ingestion_result.document_id.is_some());
 
         Ok(())
     }

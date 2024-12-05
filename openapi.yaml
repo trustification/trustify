@@ -2649,10 +2649,11 @@ components:
       description: The result of the ingestion process
       required:
       - id
-      - document_id
       properties:
         document_id:
-          type: string
+          type:
+          - string
+          - 'null'
           description: The ID declared by the document
         id:
           $ref: '#/components/schemas/Id'
@@ -3423,7 +3424,6 @@ components:
       type: object
       required:
       - id
-      - document_id
       - labels
       - data_licenses
       - published
@@ -3440,7 +3440,9 @@ components:
           items:
             type: string
         document_id:
-          type: string
+          type:
+          - string
+          - 'null'
         id:
           type: string
         labels:

@@ -97,7 +97,11 @@ where
     test_with(
         ctx,
         sbom,
-        |data| Ok(Bom::parse_from_json(data)?),
+        |data| {
+            Ok(serde_json::from_slice::<
+                serde_cyclonedx::cyclonedx::v_1_6::CycloneDx,
+            >(data)?)
+        },
         |ctx, sbom, tx| Box::pin(async move { ctx.ingest_cyclonedx(sbom.clone(), tx).await }),
         |sbom| sbom::cyclonedx::Information(sbom).into(),
         f,

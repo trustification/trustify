@@ -12,7 +12,7 @@ pub struct Model {
     pub sbom_id: Uuid,
     pub node_id: String,
 
-    pub document_id: String,
+    pub document_id: Option<String>,
 
     pub published: Option<OffsetDateTime>,
     pub authors: Vec<String>,

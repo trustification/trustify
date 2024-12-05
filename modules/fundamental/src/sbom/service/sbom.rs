@@ -691,7 +691,7 @@ mod test {
             .ingest_sbom(
                 Labels::default(),
                 &Digests::digest("RHSA-1"),
-                "http://redhat.com/test.json",
+                Some("http://redhat.com/test.json".to_string()),
                 (),
                 &ctx.db,
             )
@@ -701,7 +701,7 @@ mod test {
             .ingest_sbom(
                 Labels::default(),
                 &Digests::digest("RHSA-1"),
-                "http://redhat.com/test.json",
+                Some("http://redhat.com/test.json".to_string()),
                 (),
                 &ctx.db,
             )
@@ -711,7 +711,7 @@ mod test {
             .ingest_sbom(
                 Labels::default(),
                 &Digests::digest("RHSA-2"),
-                "http://myspace.com/test.json",
+                Some("http://myspace.com/test.json".to_string()),
                 (),
                 &ctx.db,
             )
@@ -722,7 +722,7 @@ mod test {
             .ingest_sbom(
                 Labels::default(),
                 &Digests::digest("RHSA-3"),
-                "http://geocities.com/other.json",
+                Some("http://geocities.com/other.json".to_string()),
                 (),
                 &ctx.db,
             )
@@ -759,7 +759,7 @@ mod test {
                     .add("ci", "job1")
                     .add("team", "a"),
                 &Digests::digest("RHSA-1"),
-                "http://redhat.com/test1.json",
+                Some("http://redhat.com/test1.json".to_string()),
                 (),
                 &ctx.db,
             )
@@ -773,7 +773,7 @@ mod test {
                     .add("ci", "job2")
                     .add("team", "b"),
                 &Digests::digest("RHSA-2"),
-                "http://redhat.com/test2.json",
+                Some("http://redhat.com/test2.json".to_string()),
                 (),
                 &ctx.db,
             )
@@ -787,7 +787,7 @@ mod test {
                     .add("ci", "job2")
                     .add("team", "a"),
                 &Digests::digest("RHSA-3"),
-                "http://redhat.com/test3.json",
+                Some("http://redhat.com/test3.json".to_string()),
                 (),
                 &ctx.db,
             )
@@ -861,7 +861,7 @@ mod test {
             .ingest_sbom(
                 Labels::default(),
                 &Digests::digest("RHSA-1"),
-                "http://redhat.com/test.json",
+                Some("http://redhat.com/test.json".to_string()),
                 (),
                 &ctx.db,
             )

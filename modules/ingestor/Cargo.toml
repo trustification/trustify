@@ -19,7 +19,6 @@ bytes = { workspace = true }
 cpe = { workspace = true }
 csaf = { workspace = true }
 cve = { workspace = true }
-cyclonedx-bom = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }
 jsn = { workspace = true }
@@ -36,6 +35,7 @@ sea-orm = { workspace = true }
 sea-query = { workspace = true }
 semver = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+serde-cyclonedx = { workspace = true }
 serde_json = { workspace = true }
 serde_yml = { workspace = true }
 spdx = { workspace = true }
