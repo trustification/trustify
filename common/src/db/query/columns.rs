@@ -137,8 +137,17 @@ impl Columns {
         self
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &(ColumnRef, ColumnDef)> {
-        self.columns.iter()
+    /// Return the columns that are string-ish
+    pub(crate) fn strings(&self) -> impl Iterator<Item = Expr> + '_ {
+        self.columns
+            .iter()
+            .filter_map(|(col_ref, col_def)| match col_def.get_column_type() {
+                ColumnType::String(_) | ColumnType::Text => Some(Expr::col(col_ref.clone())),
+                _ => None,
+            })
+            .chain(self.json_keys.iter().map(|(field, column)| {
+                Expr::expr(Expr::col(column.into_identity()).cast_json_field(*field))
+            }))
     }
 
     /// Look up the column context for a given simple field name.
@@ -353,6 +362,10 @@ mod tests {
         assert_eq!(
             clause(q("name=log4j").sort("name"))?,
             r#"("advisory"."purl" ->> 'name') = 'log4j' ORDER BY "advisory"."purl" ->> 'name' ASC"#
+        );
+        assert_eq!(
+            clause(q("foo"))?,
+            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (("purl" ->> 'type') ILIKE '%foo%') OR (("purl" ->> 'version') ILIKE '%foo%') OR (("purl" ->> 'name') ILIKE '%foo%')"#
         );
         assert!(clause(q("missing=gone")).is_err());
         assert!(clause(q("").sort("name")).is_ok());
