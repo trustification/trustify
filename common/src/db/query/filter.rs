@@ -69,17 +69,9 @@ impl TryFrom<(&Vec<String>, &Columns)> for Filter {
                     .iter()
                     .flat_map(|s| {
                         // Create a LIKE filter for all the string-ish columns
-                        columns.iter().filter_map(move |(col_ref, col_def)| {
-                            match col_def.get_column_type() {
-                                ColumnType::String(_) | ColumnType::Text => Some(Filter {
-                                    operands: Operand::Simple(
-                                        Expr::col(col_ref.clone()),
-                                        Arg::Value(SeaValue::from(s)),
-                                    ),
-                                    operator: Operator::Like,
-                                }),
-                                _ => None,
-                            }
+                        columns.strings().map(move |expr| Filter {
+                            operands: Operand::Simple(expr, Arg::Value(SeaValue::from(s))),
+                            operator: Operator::Like,
                         })
                     })
                     .collect(),
