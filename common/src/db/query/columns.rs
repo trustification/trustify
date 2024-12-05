@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 
 use sea_orm::entity::ColumnDef;
@@ -13,7 +13,7 @@ use super::Error;
 pub struct Columns {
     columns: Vec<(ColumnRef, ColumnDef)>,
     translator: Option<Translator>,
-    json_keys: HashMap<&'static str, &'static str>,
+    json_keys: BTreeMap<&'static str, &'static str>,
 }
 
 impl Display for Columns {
@@ -77,7 +77,7 @@ impl Columns {
         Self {
             columns,
             translator: None,
-            json_keys: HashMap::new(),
+            json_keys: BTreeMap::new(),
         }
     }
 
@@ -365,7 +365,7 @@ mod tests {
         );
         assert_eq!(
             clause(q("foo"))?,
-            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (("purl" ->> 'type') ILIKE '%foo%') OR (("purl" ->> 'version') ILIKE '%foo%') OR (("purl" ->> 'name') ILIKE '%foo%')"#
+            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (("purl" ->> 'name') ILIKE '%foo%') OR (("purl" ->> 'type') ILIKE '%foo%') OR (("purl" ->> 'version') ILIKE '%foo%')"#
         );
         assert!(clause(q("missing=gone")).is_err());
         assert!(clause(q("").sort("name")).is_ok());
