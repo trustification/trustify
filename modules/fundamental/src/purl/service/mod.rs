@@ -315,7 +315,11 @@ impl PurlService {
                 qualified_purl::Entity
                     .columns()
                     .json_keys("purl", &["ty", "namespace", "name", "version"])
-                    .json_keys("qualifiers", &["arch", "type", "repository_url"]),
+                    .json_keys("qualifiers", &["arch", "distro", "repository_url"])
+                    .translator(|f, op, v| match f {
+                        "type" => Some(format!("ty{op}{v}")),
+                        _ => None,
+                    }),
             )?
             .limiting(connection, paginated.offset, paginated.limit);
 
