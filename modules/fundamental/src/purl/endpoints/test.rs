@@ -292,7 +292,7 @@ async fn qualified_packages_filtering(ctx: &TrustifyContext) -> Result<(), anyho
     setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = format!("/api/v1/purl?q={}", encode("ty=maven"));
+    let uri = format!("/api/v1/purl?q={}", encode("type=maven"));
     let request = TestRequest::get().uri(&uri).to_request();
     let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
     assert_eq!(3, response.items.len());
@@ -304,7 +304,7 @@ async fn qualified_packages_filtering(ctx: &TrustifyContext) -> Result<(), anyho
             &ctx.db,
         )
         .await?;
-    let uri = format!("/api/v1/purl?q={}", encode("ty=rpm&arch=i386"));
+    let uri = format!("/api/v1/purl?q={}", encode("type=rpm&arch=i386"));
     let request = TestRequest::get().uri(&uri).to_request();
     let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
     assert_eq!(1, response.items.len());

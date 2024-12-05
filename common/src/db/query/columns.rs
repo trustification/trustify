@@ -264,8 +264,8 @@ mod tests {
 
     #[test(tokio::test)]
     async fn translation() -> Result<(), anyhow::Error> {
-        let test = |query: Query, expected: &str| {
-            let stmt = advisory::Entity::find()
+        let clause = |query: Query| -> Result<String, Error> {
+            Ok(advisory::Entity::find()
                 .select_only()
                 .column(advisory::Column::Id)
                 .filtering_with(
@@ -281,6 +281,7 @@ mod tests {
                             ("severity", "<", "low") => Some("score<0"),
                             ("severity", "<", "medium") => Some("score<3"),
                             ("severity", "<", "high") => Some("score<6"),
+                            ("painful", "=", "true") => Some("severity>high"),
                             _ => None,
                         }
                         .map(String::from)
@@ -289,29 +290,29 @@ mod tests {
                             _ => None,
                         })
                     }),
-                )
-                .unwrap()
+                )?
                 .build(sea_orm::DatabaseBackend::Postgres)
                 .to_string()
                 .split("WHERE ")
                 .last()
                 .unwrap()
-                .to_string();
-            assert_eq!(stmt, expected);
+                .to_string())
         };
 
-        test(
-            q("severity>medium").sort("severity:desc"),
+        assert_eq!(
+            clause(q("severity>medium").sort("severity:desc"))?,
             r#""advisory"."score" > 6 ORDER BY "advisory"."score" DESC"#,
         );
-        test(
-            q("severity=medium"),
+        assert_eq!(
+            clause(q("severity=medium"))?,
             r#""advisory"."score" >= 3 AND "advisory"."score" < 6"#,
         );
-        test(
-            q("severity=low|high"),
+        assert_eq!(
+            clause(q("severity=low|high"))?,
             r#"("advisory"."score" >= 0 AND "advisory"."score" < 3) OR ("advisory"."score" >= 6 AND "advisory"."score" < 10)"#,
         );
+        assert_eq!(clause(q("painful=true"))?, r#""advisory"."score" > 10"#);
+        assert!(clause(q("painful=false")).is_err());
 
         Ok(())
     }
@@ -339,7 +340,7 @@ mod tests {
 
     #[test(tokio::test)]
     async fn json_queries() -> Result<(), anyhow::Error> {
-        fn clause(query: Query) -> Result<String, Error> {
+        let clause = |query: Query| -> Result<String, Error> {
             Ok(advisory::Entity::find()
                 .filtering_with(
                     query,
@@ -353,7 +354,7 @@ mod tests {
                 .last()
                 .unwrap()
                 .to_string())
-        }
+        };
 
         assert_eq!(
             clause(q("name~log4j&version>1.0"))?,

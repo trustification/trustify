@@ -30,7 +30,6 @@ impl TryFrom<(&str, Operator, &Vec<String>, &Columns)> for Filter {
     type Error = Error;
     fn try_from(tuple: (&str, Operator, &Vec<String>, &Columns)) -> Result<Self, Self::Error> {
         let (field, operator, values, columns) = tuple;
-        let (expr, col_def) = columns.for_field(field)?;
         Ok(Filter {
             operator: match operator {
                 Operator::NotLike | Operator::NotEqual => Operator::And,
@@ -39,19 +38,20 @@ impl TryFrom<(&str, Operator, &Vec<String>, &Columns)> for Filter {
             operands: Operand::Composite(
                 values
                     .iter()
-                    .map(|s| Arg::parse(s, col_def.get_column_type()).map(|v| (s, v)))
-                    .collect::<Result<Vec<_>, _>>()?
-                    .into_iter()
-                    .flat_map(
-                        |(s, v)| match columns.translate(field, &operator.to_string(), s) {
+                    .map(
+                        |s| match columns.translate(field, &operator.to_string(), s) {
                             Some(x) => q(&x).filter_for(columns),
-                            None => Ok(Filter {
-                                operands: Operand::Simple(expr.clone(), v),
-                                operator,
+                            None => columns.for_field(field).and_then(|(expr, col_def)| {
+                                Arg::parse(s, col_def.get_column_type()).and_then(|v| {
+                                    Ok(Filter {
+                                        operands: Operand::Simple(expr.clone(), v),
+                                        operator,
+                                    })
+                                })
                             }),
                         },
                     )
-                    .collect(),
+                    .collect::<Result<Vec<_>, _>>()?,
             ),
         })
     }
