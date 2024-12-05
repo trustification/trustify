@@ -59,10 +59,6 @@ pub struct Run {
     #[arg(long, env)]
     pub sample_data: bool,
 
-    /// Run an embedded importer server.
-    #[arg(long, env = "TRUSTD_WITH_IMPORTER", default_value_t = false)]
-    pub with_importer: bool,
-
     /// Allows enabling the GraphQL endpoint
     #[arg(long, env = "TRUSTD_WITH_GRAPHQL", default_value_t = false)]
     pub with_graphql: bool,
@@ -71,10 +67,6 @@ pub struct Run {
     #[cfg(feature = "garage-door")]
     #[arg(long, env)]
     pub embedded_oidc: bool,
-
-    /// The importer working directory
-    #[arg(long, env)]
-    pub working_dir: Option<PathBuf>,
 
     /// The size limit of SBOMs, uncompressed.
     #[arg(
@@ -174,9 +166,7 @@ struct InitData {
     #[cfg(feature = "garage-door")]
     embedded_oidc: Option<embedded_oidc::EmbeddedOidc>,
     ui: UI,
-    working_dir: Option<PathBuf>,
     with_graphql: bool,
-    with_importer: bool,
     config: ModuleConfig,
 }
 
@@ -309,9 +299,7 @@ impl InitData {
             #[cfg(feature = "garage-door")]
             embedded_oidc,
             ui,
-            working_dir: run.working_dir,
             with_graphql: run.with_graphql,
-            with_importer: run.with_importer || run.devmode,
         })
     }
 
@@ -345,12 +333,6 @@ impl InitData {
         let http = async { http.run().await }.boxed_local();
 
         let mut tasks = vec![http];
-
-        // run the importer, when requested
-        if self.with_importer {
-            let importer = async { importer(db, storage, self.working_dir).await }.boxed_local();
-            tasks.push(importer);
-        }
 
         // track the embedded OIDC server task
         #[cfg(feature = "garage-door")]
