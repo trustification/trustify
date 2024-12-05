@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733406869664,
+  "lastUpdate": 1733407232814,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2140,6 +2140,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/10b89a13b2bc0cfe2bb23b277384b2a380da9f51"
         },
         "date": 1733406868473,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "1354501359e2f31354b650e4c47f35e5b7f14503",
+          "message": "feat: find purls for affected packages",
+          "timestamp": "2024-12-05T13:36:06Z",
+          "tree_id": "a67c347ab5246433046bf510979375405a8a2c76",
+          "url": "https://github.com/trustification/trustify/commit/1354501359e2f31354b650e4c47f35e5b7f14503"
+        },
+        "date": 1733407231611,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
