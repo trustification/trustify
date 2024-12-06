@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733493312554,
+  "lastUpdate": 1733508606214,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2227,6 +2227,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/60c6097304e8531d57581a86e3afb64f6dd97625"
         },
         "date": 1733493311913,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "608bfc1074c97056b6447190772d6a793478fe72",
+          "message": "Freshen up the README\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-12-06T17:48:54Z",
+          "tree_id": "89a98aa7a3add57e799dfbc4c520a7ef2f2ff166",
+          "url": "https://github.com/trustification/trustify/commit/608bfc1074c97056b6447190772d6a793478fe72"
+        },
+        "date": 1733508605558,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
