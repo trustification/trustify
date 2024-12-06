@@ -7,7 +7,9 @@ use serde_json::Value;
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
+use time::OffsetDateTime;
 use tracing::instrument;
+use trustify_common::id::Id;
 use trustify_common::purl::Purl;
 use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::{
@@ -31,9 +33,9 @@ async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
             assert_eq!(1, described.items.len());
             let first = &described.items[0];
 
-            assert_eq!( first.id, "SPDXRef-b52acd7c-3a3f-441e-aef0-bbdaa1ec8acf");
-            assert_eq!( first.name, "quarkus-bom");
-            assert_eq!( first.version, Some("2.13.8.Final-redhat-00004".to_string()));
+            assert_eq!(first.id, "SPDXRef-b52acd7c-3a3f-441e-aef0-bbdaa1ec8acf");
+            assert_eq!(first.name, "quarkus-bom");
+            assert_eq!(first.version, Some("2.13.8.Final-redhat-00004".to_string()));
 
             assert!( matches!(
                 &first.purl[0],
@@ -149,6 +151,35 @@ where
         },
         |sbom| sbom::spdx::Information(sbom).into(),
         f,
+    )
+    .await
+}
+
+/// check ingest timestamp
+#[test_context(TrustifyContext)]
+#[instrument]
+#[test(tokio::test)]
+async fn ingested_timestamp(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let start = OffsetDateTime::now_utc();
+
+    test_with_spdx(
+        ctx,
+        "quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json",
+        |WithContext { service, sbom, .. }| async move {
+            let sbom = service
+                .fetch_sbom_summary(Id::Uuid(sbom.sbom.sbom_id), &ctx.db)
+                .await?
+                .expect("must find the document");
+
+            let ingested = sbom
+                .source_document
+                .expect("must have a source document")
+                .ingested;
+            let now = OffsetDateTime::now_utc();
+            assert!(ingested > start && ingested < now);
+
+            Ok(())
+        },
     )
     .await
 }
