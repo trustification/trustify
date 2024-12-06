@@ -15,7 +15,7 @@ pub struct SourceDocument {
     pub size: u64,
     /// The timestamp the document was ingested
     #[serde(with = "time::serde::rfc3339")]
-    pub ingestion_time: OffsetDateTime,
+    pub ingested: OffsetDateTime,
 }
 
 impl SourceDocument {
@@ -25,7 +25,7 @@ impl SourceDocument {
             sha384: format!("sha384:{}", source_document.sha384),
             sha512: format!("sha512:{}", source_document.sha512),
             size: source_document.size as u64,
-            ingestion_time: source_document.ingestion_time,
+            ingested: source_document.ingested,
         })
     }
 }

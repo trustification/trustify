@@ -124,7 +124,7 @@ impl Graph {
             sha384: Set(digests.sha384.encode_hex()),
             sha512: Set(digests.sha512.encode_hex()),
             size: Set(digests.size as i64),
-            ingestion_time: Set(OffsetDateTime::now_utc()),
+            ingested: Set(OffsetDateTime::now_utc()),
         };
 
         let doc = doc_model.insert(connection).await?;
