@@ -1,0 +1,3511 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "registry.k8s.io/coredns/coredns:v1.9.3",
+  "documentNamespace": "https://anchore.com/syft/image/registry.k8s.io/coredns/coredns-v1.9.3-feed6dea-b0bc-483a-be72-0c3229d8d3e6",
+  "creationInfo": {
+    "licenseListVersion": "3.19",
+    "creators": [
+      "Organization: Anchore, Inc",
+      "Tool: syft-0.65.0"
+    ],
+    "created": "2023-05-17T17:07:54Z",
+    "comment": ""
+  },
+  "packages": [
+    {
+      "name": "cloud.google.com/go/compute",
+      "SPDXID": "SPDXRef-Package-go-module-cloud.google.com-go-compute-36357a787dfd18c0",
+      "versionInfo": "v1.6.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "dac326b7ca6b0a7ec33da1b83e687437722799cf1c4fc69ee64d4ce9527d5aa7"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go:compute:v1.6.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/cloud.google.com/go/compute@v1.6.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/Azure/azure-sdk-for-go",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-Azure-azure-sdk-for-go-54dde0491dbcf8d7",
+      "versionInfo": "v65.0.0+incompatible",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1f328bb77908c0c9b829e2584ddc7d11b8d1613c920ffb7c8b511efd6e44197c"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:azure-sdk-for-go:v65.0.0\\+incompatible:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:azure_sdk_for_go:v65.0.0\\+incompatible:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/Azure/azure-sdk-for-go@v65.0.0+incompatible",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/Azure/go-autorest/autorest",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-Azure-go-autorest-autorest-c800711185c12b58",
+      "versionInfo": "v0.11.27",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "177477ab8d9a5b2b68ce457c8a1cdc80c3b8380e1cbaaaf76cd96c12e17afff0"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go-autorest\\/autorest:v0.11.27:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go_autorest\\/autorest:v0.11.27:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/Azure/go-autorest/autorest@v0.11.27",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/Azure/go-autorest/autorest/adal",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-Azure-go-autorest-autorest-adal-839dfeade6e14dad",
+      "versionInfo": "v0.9.18",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "90b9cfb118f3659505dcae5112efca73ea8c42bbeecdad9bc129cd7619b32df4"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go-autorest\\/autorest\\/adal:v0.9.18:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go_autorest\\/autorest\\/adal:v0.9.18:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/Azure/go-autorest/autorest/adal@v0.9.18",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/Azure/go-autorest/autorest/azure/auth",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-Azure-go-autorest-autorest-azure-auth-da0e586a88d9b54",
+      "versionInfo": "v0.5.11",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3fa6d85c5a1aa34e73e6e84e4336c2dd077c26a1778d4a287284de231929d9c0"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go-autorest\\/autorest\\/azure\\/auth:v0.5.11:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go_autorest\\/autorest\\/azure\\/auth:v0.5.11:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/Azure/go-autorest/autorest/azure/auth@v0.5.11",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/Azure/go-autorest/autorest/azure/cli",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-Azure-go-autorest-autorest-azure-cli-1f3e7754c437c737",
+      "versionInfo": "v0.4.5",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d16ff21a615d4c84fbedfbdd9466742cc212a0b1c527b4f1e14d32781fae16ce"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go-autorest\\/autorest\\/azure\\/cli:v0.4.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go_autorest\\/autorest\\/azure\\/cli:v0.4.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/Azure/go-autorest/autorest/azure/cli@v0.4.5",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/Azure/go-autorest/autorest/date",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-Azure-go-autorest-autorest-date-8c6be91d3b33ce39",
+      "versionInfo": "v0.3.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ee0524d54e4cfc241ba7d5a8aa29cdcc96abfbc298f8b3c8eb0896acffe6c87c"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go-autorest\\/autorest\\/date:v0.3.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go_autorest\\/autorest\\/date:v0.3.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/Azure/go-autorest/autorest/date@v0.3.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/Azure/go-autorest/autorest/to",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-Azure-go-autorest-autorest-to-5808fd85f531533b",
+      "versionInfo": "v0.2.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9d0399cc50ae75387e4efaae02d0918ccd35544631f397bda9bc2de67716e0bf"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go-autorest\\/autorest\\/to:v0.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go_autorest\\/autorest\\/to:v0.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/Azure/go-autorest/autorest/to@v0.2.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/Azure/go-autorest/logger",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-Azure-go-autorest-logger-19a0151333c4c19a",
+      "versionInfo": "v0.2.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "206ee2e29fe60dad827b84d1c803bc2079d5840545dd1154f99b5759299fe138"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go-autorest\\/logger:v0.2.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go_autorest\\/logger:v0.2.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/Azure/go-autorest/logger@v0.2.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/Azure/go-autorest/tracing",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-Azure-go-autorest-tracing-975f508d46aa8209",
+      "versionInfo": "v0.6.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4d88b8fb79b9b7a2b8f13188f4051d6fe2336e74b1be7bd431fba2b5f81c7eea"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go-autorest\\/tracing:v0.6.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:Azure:go_autorest\\/tracing:v0.6.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/Azure/go-autorest/tracing@v0.6.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/DataDog/datadog-agent/pkg/obfuscate",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-DataDog-datadog-agent-pkg-obfuscate-7f34a1f236e89f5",
+      "versionInfo": "v0.0.0-20211129110424-6491aa3bf583",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "de754ed6743287ae08518e813d9529318319ef7f0fbbe2ec32ddc4d1eaaa218c"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:DataDog:datadog-agent\\/pkg\\/obfuscate:v0.0.0-20211129110424-6491aa3bf583:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:DataDog:datadog_agent\\/pkg\\/obfuscate:v0.0.0-20211129110424-6491aa3bf583:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/DataDog/datadog-agent/pkg/obfuscate@v0.0.0-20211129110424-6491aa3bf583",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/DataDog/datadog-go",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-DataDog-datadog-go-2ae60f58ac8dea22",
+      "versionInfo": "v4.8.2+incompatible",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a9b70a4b1dbd6812c3fb940bbe5419946991305fc57c6a852c57afff54c3cd1a"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:DataDog:datadog-go:v4.8.2\\+incompatible:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:DataDog:datadog_go:v4.8.2\\+incompatible:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/DataDog/datadog-go@v4.8.2+incompatible",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/DataDog/datadog-go/v5",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-DataDog-datadog-go-v5-e7f21cacf0f56ef4",
+      "versionInfo": "v5.0.2",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "505b447bbebadbf4288f1930d5de926e801e03408f2379da2a15404b0167fb4e"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:DataDog:datadog-go\\/v5:v5.0.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:DataDog:datadog_go\\/v5:v5.0.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/DataDog/datadog-go/v5@v5.0.2",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/DataDog/sketches-go",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-DataDog-sketches-go-575fb196dcf78a1e",
+      "versionInfo": "v1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7219b92925ceee43becb019627466cead766594f0f05749bcb01557222fa046e"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:DataDog:sketches-go:v1.0.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:DataDog:sketches_go:v1.0.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/DataDog/sketches-go@v1.0.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/PuerkitoBio/purell",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-PuerkitoBio-purell-ed116fa49ad7e8a2",
+      "versionInfo": "v1.1.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "58442a96a6866eb3e4c4b2567c1c1099f10013567b38d7432eaacddfcb4d15f2"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:PuerkitoBio:purell:v1.1.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/PuerkitoBio/purell@v1.1.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/PuerkitoBio/urlesc",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-PuerkitoBio-urlesc-644cac936a402a5f",
+      "versionInfo": "v0.0.0-20170810143723-de5bf2ad4578",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "77e05cedae6b2ee7d5fec4a4ffc76782e7ea7a57e1ea39eb8bce6b88c01a17f3"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:PuerkitoBio:urlesc:v0.0.0-20170810143723-de5bf2ad4578:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/PuerkitoBio/urlesc@v0.0.0-20170810143723-de5bf2ad4578",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/apparentlymart/go-cidr",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-apparentlymart-go-cidr-307ae58fb91a58f5",
+      "versionInfo": "v1.1.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "da6021acca05fa7857ab14f3499314cc31e42e39881c2f99ce7e2d7600598e75"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:apparentlymart:go-cidr:v1.1.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:apparentlymart:go_cidr:v1.1.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/apparentlymart/go-cidr@v1.1.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/aws/aws-sdk-go",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-aws-aws-sdk-go-79f068674053e983",
+      "versionInfo": "v1.44.22",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4ad3febf1685ce5e38e6648c2fa2b38224dcaa903e795c1b3b97cc36f85537b7"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:aws:aws-sdk-go:v1.44.22:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:aws:aws_sdk_go:v1.44.22:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/aws/aws-sdk-go@v1.44.22",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/beorn7/perks",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-beorn7-perks-a6a014678a18e85",
+      "versionInfo": "v1.0.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5656ca2a735f57c6c9cdeaa86b870e2aa3ba6d8af75a0299c4ef19d7afa1b0e3"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:beorn7:perks:v1.0.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/beorn7/perks@v1.0.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/cespare/xxhash/v2",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-cespare-xxhash-v2-b79a5cde9f8765a0",
+      "versionInfo": "v2.1.2",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6115e129f4c36aebb86a3320d533e014ee639e50b61c26e62d731c4c6e5c6d81"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:cespare:xxhash\\/v2:v2.1.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/cespare/xxhash/v2@v2.1.2",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/coredns/caddy",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-coredns-caddy-b5935a6cd49e5ced",
+      "versionInfo": "v1.1.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d9e60a653ee2eb2c487c63f7a8b26827b1c0b0326a601f97ebc8383588d2ac4d"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:coredns:caddy:v1.1.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/coredns/caddy@v1.1.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/coredns/coredns",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-coredns-coredns-c160e0742041e542",
+      "versionInfo": "v0.0.0-20220527153959-45b0a11294c5",
+      "downloadLocation": "NOASSERTION",
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:coredns:coredns:v0.0.0-20220527153959-45b0a11294c5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/coredns/coredns@v0.0.0-20220527153959-45b0a11294c5",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/coreos/go-semver",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-coreos-go-semver-a3611eefa55dbf5e",
+      "versionInfo": "v0.3.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c241cb8b0d163404d99d21bb7a92ecba388c0a03c073dc618c9e2d82703199f3"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:coreos:go-semver:v0.3.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:coreos:go_semver:v0.3.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/coreos/go-semver@v0.3.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/coreos/go-systemd/v22",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-coreos-go-systemd-v22-ee91c4f46f0ea76f",
+      "versionInfo": "v22.3.2",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0fdfdb424e6f95740567a2b0baeeb36a25c9f684cf7baf3ef80cc025cd43cd22"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:coreos:go-systemd\\/v22:v22.3.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:coreos:go_systemd\\/v22:v22.3.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/coreos/go-systemd/v22@v22.3.2",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/davecgh/go-spew",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-davecgh-go-spew-5463a700469baf94",
+      "versionInfo": "v1.1.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "be3f63feed5baa7bc211f24ec1486d94e011aacdfeae41d8635de36164d4f7b7"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:davecgh:go-spew:v1.1.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:davecgh:go_spew:v1.1.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/davecgh/go-spew@v1.1.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/dgraph-io/ristretto",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-dgraph-io-ristretto-647bd5a102abb7d4",
+      "versionInfo": "v0.1.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "26fdc21901e9f4e8ee3014a77b5e3ce5a0e95244ca11c52a17e8e6fcbb9eacf2"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:dgraph-io:ristretto:v0.1.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:dgraph_io:ristretto:v0.1.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:dgraph:ristretto:v0.1.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/dgraph-io/ristretto@v0.1.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/dimchansky/utfbom",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-dimchansky-utfbom-4364e7b6dab6443a",
+      "versionInfo": "v1.1.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "bd5eb0d4084ae153278419e8fd33d50a82bd53f2cfd0f90b092f6d6f11dd8bf5"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:dimchansky:utfbom:v1.1.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/dimchansky/utfbom@v1.1.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/dnstap/golang-dnstap",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-dnstap-golang-dnstap-3a8d080121b4e131",
+      "versionInfo": "v0.4.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2911c1a1447281d1ad0630c8db0e0789f25f3008613aa0ee92d02891a49adb7e"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:dnstap:golang-dnstap:v0.4.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:dnstap:golang_dnstap:v0.4.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/dnstap/golang-dnstap@v0.4.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/dustin/go-humanize",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-dustin-go-humanize-ceda6e5717468e41",
+      "versionInfo": "v1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5529d3b180a79451da336fe280ed61e97dc703bd637286d0bb17a6824ab8cd8a"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:dustin:go-humanize:v1.0.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:dustin:go_humanize:v1.0.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/dustin/go-humanize@v1.0.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/emicklei/go-restful",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-emicklei-go-restful-46d796dc11a199e6",
+      "versionInfo": "v2.9.5+incompatible",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b294ed6419390d812f6f1315bad52e4f2875028dabe22caf2dd002aac97f2e39"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:emicklei:go-restful:v2.9.5\\+incompatible:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:emicklei:go_restful:v2.9.5\\+incompatible:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/emicklei/go-restful@v2.9.5+incompatible",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/farsightsec/golang-framestream",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-farsightsec-golang-framestream-3c3cc9b1898268a3",
+      "versionInfo": "v0.3.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "feca45407b9c4e57bf6483e462aadfb2142a3ded95404cdeb07db8dd38c8c2a0"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:farsightsec:golang-framestream:v0.3.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:farsightsec:golang_framestream:v0.3.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/farsightsec/golang-framestream@v0.3.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/flynn/go-shlex",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-flynn-go-shlex-b4419a73d439a91a",
+      "versionInfo": "v0.0.0-20150515145356-3f9db97f8568",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "047b258c7cd59517324218ebb2ce93653758d957c2a993dbbf993788115ad994"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:flynn:go-shlex:v0.0.0-20150515145356-3f9db97f8568:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:flynn:go_shlex:v0.0.0-20150515145356-3f9db97f8568:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/flynn/go-shlex@v0.0.0-20150515145356-3f9db97f8568",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/go-logr/logr",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-go-logr-logr-6d2c36c62e5e7392",
+      "versionInfo": "v1.2.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "40ae3424a27231d503cfe87ec6f0acaeefdb261bc6d14c6f78f574b9f2ff01c1"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go-logr:logr:v1.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go_logr:logr:v1.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go:logr:v1.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/go-logr/logr@v1.2.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/go-openapi/jsonpointer",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-go-openapi-jsonpointer-75300edca5b2c4c4",
+      "versionInfo": "v0.19.5",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "819afe088601c94aa372078b5e742eda01d8402f68ef71b65d478e1581080ae6"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go-openapi:jsonpointer:v0.19.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go_openapi:jsonpointer:v0.19.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go:jsonpointer:v0.19.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/go-openapi/jsonpointer@v0.19.5",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/go-openapi/jsonreference",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-go-openapi-jsonreference-853f99551ffe35f3",
+      "versionInfo": "v0.19.5",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d5624fff08b83a3078895f0a55b1fbdeb41aa226a526baaff208ad64bc462ed3"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go-openapi:jsonreference:v0.19.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go_openapi:jsonreference:v0.19.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go:jsonreference:v0.19.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/go-openapi/jsonreference@v0.19.5",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/go-openapi/swag",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-go-openapi-swag-c30c93dbc6586ad6",
+      "versionInfo": "v0.19.14",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "826def38e5df8aec398bda7937dc49bdf8efba87e9caf2c0f56afa41f2b91678"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go-openapi:swag:v0.19.14:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go_openapi:swag:v0.19.14:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:go:swag:v0.19.14:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/go-openapi/swag@v0.19.14",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/gogo/protobuf",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-gogo-protobuf-84b7594333644c44",
+      "versionInfo": "v1.3.2",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3afd5cbdce7c505ddbe578c19d9bfbfa8a5c4dc40565e6d88d6ce2df8bdd9b84"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:gogo:protobuf:v1.3.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/gogo/protobuf@v1.3.2",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/golang-jwt/jwt/v4",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-golang-jwt-jwt-v4-5948e45ba0a69f8e",
+      "versionInfo": "v4.2.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6deb200530bcc3c1e33fa37341dc70287f59e6840c676e13853ac7a77719f1e5"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang-jwt:jwt\\/v4:v4.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang_jwt:jwt\\/v4:v4.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang:jwt\\/v4:v4.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/golang-jwt/jwt/v4@v4.2.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/golang/glog",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-golang-glog-21792c66496d9c57",
+      "versionInfo": "v0.0.0-20160126235308-23def4e6c14b",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "54ab7169ba97664176e6963d7a47d12fa6b9f364f83f7effdf55c4b2d439a79f"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang:glog:v0.0.0-20160126235308-23def4e6c14b:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/golang/glog@v0.0.0-20160126235308-23def4e6c14b",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/golang/groupcache",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-golang-groupcache-2295455f6061849a",
+      "versionInfo": "v0.0.0-20210331224755-41bb18bfe9da",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a08e710aab02a39eb897c88d53e0f00797a9c66b1aa81fab8462f49b98ed62a1"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang:groupcache:v0.0.0-20210331224755-41bb18bfe9da:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/golang/groupcache@v0.0.0-20210331224755-41bb18bfe9da",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/golang/protobuf",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-golang-protobuf-a51a98a8c47f1d52",
+      "versionInfo": "v1.5.2",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "44e3ca04d15f4203943227c7c8ff8a61bbe98db76814db3e68aec35e58e2d13c"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang:protobuf:v1.5.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/golang/protobuf@v1.5.2",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/google/gnostic",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-google-gnostic-90b1930f71886ce8",
+      "versionInfo": "v0.5.7-v3refs",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1614cc38a8f65618e9a2ec6f589015d532f7d38b8c95bf73703aa497a704239e"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:google:gnostic:v0.5.7-v3refs:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/google/gnostic@v0.5.7-v3refs",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/google/go-cmp",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-google-go-cmp-99de0be479a04953",
+      "versionInfo": "v0.5.8",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7ba3fbab6964d4efaa2496f806d0905e52bcbd610ef15d597ae11d24d3aa6728"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:google:go-cmp:v0.5.8:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:google:go_cmp:v0.5.8:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/google/go-cmp@v0.5.8",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/google/gofuzz",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-google-gofuzz-c2c888f307470a4c",
+      "versionInfo": "v1.2.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c51cb803e46165a88a8c9d5b3dfc10f2c79d080f984b661c0875ba79cec9322d"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:google:gofuzz:v1.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/google/gofuzz@v1.2.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/google/uuid",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-google-uuid-bfbdae0c3664b271",
+      "versionInfo": "v1.3.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b7a2625e09b05cc8c4b3c56eb172099360571ec9fec31f0165d4daa19e5fbbb2"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:google:uuid:v1.3.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/google/uuid@v1.3.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/googleapis/gax-go/v2",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-googleapis-gax-go-v2-ebeed4e8a8a2d428",
+      "versionInfo": "v2.4.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "752f5e6008e1ac4d918e6cd8c365c03ef7177e67102ed1444169f4091f366b09"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:googleapis:gax-go\\/v2:v2.4.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:googleapis:gax_go\\/v2:v2.4.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/googleapis/gax-go/v2@v2.4.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/grpc-ecosystem/grpc-opentracing",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-grpc-ecosystem-grpc-opentracing-5b19dff904e0a581",
+      "versionInfo": "v0.0.0-20180507213350-8e809c8a8645",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3091bf2ac99ca8cc0502487c9939c0c21c8aa01fac4c09d8e020020b5d74b5b5"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:grpc-ecosystem:grpc-opentracing:v0.0.0-20180507213350-8e809c8a8645:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:grpc-ecosystem:grpc_opentracing:v0.0.0-20180507213350-8e809c8a8645:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:grpc_ecosystem:grpc-opentracing:v0.0.0-20180507213350-8e809c8a8645:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:grpc_ecosystem:grpc_opentracing:v0.0.0-20180507213350-8e809c8a8645:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:grpc:grpc-opentracing:v0.0.0-20180507213350-8e809c8a8645:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:grpc:grpc_opentracing:v0.0.0-20180507213350-8e809c8a8645:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/grpc-ecosystem/grpc-opentracing@v0.0.0-20180507213350-8e809c8a8645",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/imdario/mergo",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-imdario-mergo-5937caf0a161c169",
+      "versionInfo": "v0.3.12",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6fa47606c9536c8113a002ca3fb2f152f8a34ec348f5301ef34a4b58dda0fc75"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:imdario:mergo:v0.3.12:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/imdario/mergo@v0.3.12",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/infobloxopen/go-trees",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-infobloxopen-go-trees-9143e9b392e15ead",
+      "versionInfo": "v0.0.0-20200715205103-96a057b8dfb9",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c3ae9a68fddce92210d298b7407d536f800c3b7696a043f177508dbcba616e40"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:infobloxopen:go-trees:v0.0.0-20200715205103-96a057b8dfb9:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:infobloxopen:go_trees:v0.0.0-20200715205103-96a057b8dfb9:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/infobloxopen/go-trees@v0.0.0-20200715205103-96a057b8dfb9",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/jmespath/go-jmespath",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-jmespath-go-jmespath-9958bc95e894fe6",
+      "versionInfo": "v0.4.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "04480b9f97298e7f14375980c38363c03ad2df939d79bc84b457bef583e84148"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:jmespath:go-jmespath:v0.4.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:jmespath:go_jmespath:v0.4.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/jmespath/go-jmespath@v0.4.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/josharian/intern",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-josharian-intern-150113817eb028cc",
+      "versionInfo": "v1.0.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "be54b8cf9e2849d8e6d1b823462808f86d47a45fad23ef6b1392cbcce83c1e66"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:josharian:intern:v1.0.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/josharian/intern@v1.0.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/json-iterator/go",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-json-iterator-go-e8ca5d3c4bb4197d",
+      "versionInfo": "v1.1.12",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3d5f29788e1ad32b27733ae0f8bb71ca40fc2df298f4c2fabb68e7c5a127ae73"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:json-iterator:go:v1.1.12:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:json_iterator:go:v1.1.12:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:json:go:v1.1.12:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/json-iterator/go@v1.1.12",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/mailru/easyjson",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-mailru-easyjson-e39037d9e6756359",
+      "versionInfo": "v0.7.7",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "506600bcac5edec06c103ccef1979639294841f5859716f32d97bb87015446bd"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:mailru:easyjson:v0.7.7:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/mailru/easyjson@v0.7.7",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/matttproud/golang_protobuf_extensions",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-matttproud-golang-protobuf-extensions-eb0308f9f98d03c2",
+      "versionInfo": "v1.0.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e21a7d8e41f184c1e4aa4ac1dc8c748de812e6cc7f464a80465b1667aa48c225"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:matttproud:golang-protobuf-extensions:v1.0.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:matttproud:golang_protobuf_extensions:v1.0.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/matttproud/golang_protobuf_extensions@v1.0.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/miekg/dns",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-miekg-dns-dc8563591553915c",
+      "versionInfo": "v1.1.49",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a9ed26414dd9fd7a45784f80101a36aea692d483c12776a79aa6785e2649546f"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:miekg:dns:v1.1.49:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/miekg/dns@v1.1.49",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/mitchellh/go-homedir",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-mitchellh-go-homedir-121d11ba01090632",
+      "versionInfo": "v1.1.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "96e905f738971710c53e4035becaf9ce97355ee3c39ffc059edab9986fb81346"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:mitchellh:go-homedir:v1.1.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:mitchellh:go_homedir:v1.1.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/mitchellh/go-homedir@v1.1.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/modern-go/concurrent",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-modern-go-concurrent-c243a5c74b1f9d43",
+      "versionInfo": "v0.0.0-20180306012644-bacd9c7ef1dd",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4d12da67d703ff0f0f561f779ec3d76b556b43a8e5c0be6837c975e1095c35f8"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:modern-go:concurrent:v0.0.0-20180306012644-bacd9c7ef1dd:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:modern_go:concurrent:v0.0.0-20180306012644-bacd9c7ef1dd:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:modern:concurrent:v0.0.0-20180306012644-bacd9c7ef1dd:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/modern-go/concurrent@v0.0.0-20180306012644-bacd9c7ef1dd",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/modern-go/reflect2",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-modern-go-reflect2-5d71e9a906eb5021",
+      "versionInfo": "v1.0.2",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c416a0a0bb45b3de02067b7196e29e696813329bcbc42e2eaf79cc682f46cf43"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:modern-go:reflect2:v1.0.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:modern_go:reflect2:v1.0.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:modern:reflect2:v1.0.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/modern-go/reflect2@v1.0.2",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/munnerz/goautoneg",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-munnerz-goautoneg-39e2c87a8b690c39",
+      "versionInfo": "v0.0.0-20191010083416-a7dc8b61c822",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0b7c3d3ea208d35fceab57359d4026f3c30e1dc402f65e6622548c02964cac70"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:munnerz:goautoneg:v0.0.0-20191010083416-a7dc8b61c822:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/munnerz/goautoneg@v0.0.0-20191010083416-a7dc8b61c822",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/opentracing-contrib/go-observer",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-opentracing-contrib-go-observer-5d58ce3fb638324c",
+      "versionInfo": "v0.0.0-20170622124052-a52f23424492",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "94ce91c717d432b60bfdff1b58452a757ac0356b6b2fb36775b9bd8853740e55"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:opentracing-contrib:go-observer:v0.0.0-20170622124052-a52f23424492:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:opentracing-contrib:go_observer:v0.0.0-20170622124052-a52f23424492:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:opentracing_contrib:go-observer:v0.0.0-20170622124052-a52f23424492:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:opentracing_contrib:go_observer:v0.0.0-20170622124052-a52f23424492:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:opentracing:go-observer:v0.0.0-20170622124052-a52f23424492:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:opentracing:go_observer:v0.0.0-20170622124052-a52f23424492:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/opentracing-contrib/go-observer@v0.0.0-20170622124052-a52f23424492",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/opentracing/opentracing-go",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-opentracing-opentracing-go-f74c64f60ec5f858",
+      "versionInfo": "v1.2.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b8424fcbfd5ae5120f009d0ebfe3883bc3b15aeefb8c4bfed41d158632ab654b"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:opentracing:opentracing-go:v1.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:opentracing:opentracing_go:v1.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/opentracing/opentracing-go@v1.2.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/openzipkin-contrib/zipkin-go-opentracing",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-openzipkin-contrib-zipkin-go-opentracing-1334823190964fd2",
+      "versionInfo": "v0.4.5",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6429eaf8952bbd77035615ffc51a254416627e669b3751dc4b5c2b3d2bf186b5"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:openzipkin-contrib:zipkin-go-opentracing:v0.4.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:openzipkin-contrib:zipkin_go_opentracing:v0.4.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:openzipkin_contrib:zipkin-go-opentracing:v0.4.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:openzipkin_contrib:zipkin_go_opentracing:v0.4.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:openzipkin:zipkin-go-opentracing:v0.4.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:openzipkin:zipkin_go_opentracing:v0.4.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/openzipkin-contrib/zipkin-go-opentracing@v0.4.5",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/openzipkin/zipkin-go",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-openzipkin-zipkin-go-f73a26c12b087ae",
+      "versionInfo": "v0.4.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0ad7d1ace559b5b0e3f2bb755978e4970d24aaa250c080ab08a9a57d4b81514c"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:openzipkin:zipkin-go:v0.4.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:openzipkin:zipkin_go:v0.4.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/openzipkin/zipkin-go@v0.4.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/oschwald/geoip2-golang",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-oschwald-geoip2-golang-587fd190115bf2cd",
+      "versionInfo": "v1.7.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "256d6be402a2fafbf6ba34b18cab61c922b78e8f30f282963f25ecc3e42cfd2f"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:oschwald:geoip2-golang:v1.7.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:oschwald:geoip2_golang:v1.7.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/oschwald/geoip2-golang@v1.7.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/oschwald/maxminddb-golang",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-oschwald-maxminddb-golang-56701bcc505383f8",
+      "versionInfo": "v1.9.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b489389efe954fd3a23f2ae70c07c94b5b35c4a0d03193ac1a88da6fa1230b56"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:oschwald:maxminddb-golang:v1.9.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:oschwald:maxminddb_golang:v1.9.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/oschwald/maxminddb-golang@v1.9.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/philhofer/fwd",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-philhofer-fwd-eaff0b9b9a7129ea",
+      "versionInfo": "v1.1.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "19d19c4e37f944d031c12e102ec88ccc9623e4a12f3c90f701baf6eb5c914174"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:philhofer:fwd:v1.1.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/philhofer/fwd@v1.1.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/pkg/errors",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-pkg-errors-abf21efbe3e16309",
+      "versionInfo": "v0.9.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "14404bc75cd2db5e28c298f2eeab017a2c5b51192e850030acae54c0b193c2de"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:pkg:errors:v0.9.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/pkg/errors@v0.9.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/prometheus/client_golang",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-prometheus-client-golang-6ea365d04acd6d98",
+      "versionInfo": "v1.12.2",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e752fd703a141d5ad7c78cd662570b40867e77e5571e0aa760a908baae20ff7e"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:prometheus:client-golang:v1.12.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:prometheus:client_golang:v1.12.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/prometheus/client_golang@v1.12.2",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/prometheus/client_model",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-prometheus-client-model-6a1ea953a19c8d2",
+      "versionInfo": "v0.2.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "baae61d1df86bb18972c92cd001320a76a945833e22ef802cf3d9d511fbf5bf3"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:prometheus:client-model:v0.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:prometheus:client_model:v0.2.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/prometheus/client_model@v0.2.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/prometheus/common",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-prometheus-common-2115c68b2611ed76",
+      "versionInfo": "v0.34.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4419863bd77f1558ea1d3d32506430049864c0a57ec0f0a7eca1a9bdf69bd2e1"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:prometheus:common:v0.34.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/prometheus/common@v0.34.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/prometheus/procfs",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-prometheus-procfs-78031081d5df3c89",
+      "versionInfo": "v0.7.3",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e23557865900cb33927260a45c14ce2d12d3cfc11e53e7b28ebc01fc43ead155"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:prometheus:procfs:v0.7.3:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/prometheus/procfs@v0.7.3",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/spf13/pflag",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-spf13-pflag-3d803a888efa7790",
+      "versionInfo": "v1.0.5",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8b2f951543823f56bef3216da3f76b836089e6ed3246807b7d9c370cabff2570"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:spf13:pflag:v1.0.5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/spf13/pflag@v1.0.5",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "github.com/tinylib/msgp",
+      "SPDXID": "SPDXRef-Package-go-module-github.com-tinylib-msgp-538d9386c6edbcf0",
+      "versionInfo": "v1.1.2",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "81698eee7d18b3644111bec63d807d523abc324e69d94d3c9519e631c1b2e814"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:tinylib:msgp:v1.1.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/github.com/tinylib/msgp@v1.1.2",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "go.etcd.io/etcd/api/v3",
+      "SPDXID": "SPDXRef-Package-go-module-go.etcd.io-etcd-api-v3-563a88ae0d009574",
+      "versionInfo": "v3.5.4",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "387572b774e8a70b5443618a75de70bb73e69a2a51e054f00aaa048d2c917487"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:etcd:api\\/v3:v3.5.4:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/go.etcd.io/etcd/api/v3@v3.5.4",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "go.etcd.io/etcd/client/pkg/v3",
+      "SPDXID": "SPDXRef-Package-go-module-go.etcd.io-etcd-client-pkg-v3-c365e51d3fdbac4f",
+      "versionInfo": "v3.5.4",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "96b9de62fcfddb776f0b5e11e785dc03b157a19de6946640826c217e6ec7a8e8"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:etcd:client\\/pkg\\/v3:v3.5.4:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/go.etcd.io/etcd/client/pkg/v3@v3.5.4",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "go.etcd.io/etcd/client/v3",
+      "SPDXID": "SPDXRef-Package-go-module-go.etcd.io-etcd-client-v3-492f4b36c91f7910",
+      "versionInfo": "v3.5.4",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a7cdc150bded0184b4393febd2a82581cdccd498e133476257c0d25808555efe"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:etcd:client\\/v3:v3.5.4:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/go.etcd.io/etcd/client/v3@v3.5.4",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "go.opencensus.io",
+      "SPDXID": "SPDXRef-Package-go-module-go.opencensus.io-a04565a4466a75c4",
+      "versionInfo": "v0.23.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "82a0b0d0b7cbc52733f22ad28bc7b141cedfc90d1f29053faa70bf5fcf95ff53"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/go.opencensus.io@v0.23.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "go.uber.org/atomic",
+      "SPDXID": "SPDXRef-Package-go-module-go.uber.org-atomic-8e0404f7eb03ba15",
+      "versionInfo": "v1.9.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "102984f019ff5854d8c045bf6e9283dccf15b51ff34156dabc0a1a942d4f6321"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/go.uber.org/atomic@v1.9.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "go.uber.org/multierr",
+      "SPDXID": "SPDXRef-Package-go-module-go.uber.org-multierr-8bdb665087536577",
+      "versionInfo": "v1.6.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "cba20f152b530084f962d97bfd76261efcd743b4b783f21e656f61c99e6d870e"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/go.uber.org/multierr@v1.6.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "go.uber.org/zap",
+      "SPDXID": "SPDXRef-Package-go-module-go.uber.org-zap-5ccca62630083a16",
+      "versionInfo": "v1.17.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3138e016ee992cabd8e8fbdaaa4f7b1a5c4d06e3295781f2ff73fab511a52365"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/go.uber.org/zap@v1.17.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "golang.org/x/crypto",
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-crypto-4d17f22e8c359e8c",
+      "versionInfo": "v0.0.0-20220525230936-793ad666bf5e",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4fc354dc7c90f0294fe12104f8a6c5960ea7d0d86e4ec378332ce769aac6b193"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/crypto:v0.0.0-20220525230936-793ad666bf5e:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/golang.org/x/crypto@v0.0.0-20220525230936-793ad666bf5e",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "golang.org/x/net",
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-f8d79c630f82a8f4",
+      "versionInfo": "v0.0.0-20220520000938-2e3eb7b945c2",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "356cb9fa19516c2ec72be3e6717554996d4833215c7bbb68e7a214be15059bb6"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/net:v0.0.0-20220520000938-2e3eb7b945c2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/golang.org/x/net@v0.0.0-20220520000938-2e3eb7b945c2",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "golang.org/x/oauth2",
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-oauth2-70b20bf7b037be32",
+      "versionInfo": "v0.0.0-20220411215720-9780585627b5",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3929d659c39dfc2b56402d9c6120606d3489bf7722a9df2be78c92216db2dd11"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/oauth2:v0.0.0-20220411215720-9780585627b5:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/golang.org/x/oauth2@v0.0.0-20220411215720-9780585627b5",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "golang.org/x/sys",
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-2bbf0429b15d5bce",
+      "versionInfo": "v0.0.0-20220520151302-bc2c85ada10a",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "746ccfc9d815b2a19c4d157088b2758d56ee7d8c26cc3dcb7d53cb2ac2a0fb49"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.0.0-20220520151302-bc2c85ada10a:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.0.0-20220520151302-bc2c85ada10a",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "golang.org/x/term",
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-term-de8f7497476ac3e9",
+      "versionInfo": "v0.0.0-20210927222741-03fcf44c2211",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2468113a02a5f4df03b96db4a054b983173e944ebbfcddc57309813cc7bb02b6"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/term:v0.0.0-20210927222741-03fcf44c2211:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/golang.org/x/term@v0.0.0-20210927222741-03fcf44c2211",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "golang.org/x/text",
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-text-12d1cef637f6591b",
+      "versionInfo": "v0.3.7",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a25a70bcfd8a69c5b5656bec47bb90868c9362f280ba97d0ad118114cdf9d869"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/text:v0.3.7:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/golang.org/x/text@v0.3.7",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "golang.org/x/time",
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-time-b69d8219894153d1",
+      "versionInfo": "v0.0.0-20220210224613-90d013bbcef8",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "bd529d96fa1606987077158aac5644b8cd241a018bc54398718e14ff6563838e"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/time:v0.0.0-20220210224613-90d013bbcef8:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/golang.org/x/time@v0.0.0-20220210224613-90d013bbcef8",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "golang.org/x/xerrors",
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-xerrors-a0cf80f6297a5a44",
+      "versionInfo": "v0.0.0-20220517211312-f3a8303e98df",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e4f7faa452aef7c3839a09e9be427790550e40618b2332c891bcd41e9e3beb5f"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/xerrors:v0.0.0-20220517211312-f3a8303e98df:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/golang.org/x/xerrors@v0.0.0-20220517211312-f3a8303e98df",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "google.golang.org/api",
+      "SPDXID": "SPDXRef-Package-go-module-google.golang.org-api-27570d109e160298",
+      "versionInfo": "v0.81.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a3c585e40bdf89d69f59b163b11caea71c844093545b12d92422b9357af1659f"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:google:api:v0.81.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/google.golang.org/api@v0.81.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "google.golang.org/genproto",
+      "SPDXID": "SPDXRef-Package-go-module-google.golang.org-genproto-a45ba1d95d279079",
+      "versionInfo": "v0.0.0-20220519153652-3a47de7e79bd",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7b44f091739d6e71ffd71e6b739319fd5632899e2ff917557eb18ca84c13ebc2"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:google:genproto:v0.0.0-20220519153652-3a47de7e79bd:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/google.golang.org/genproto@v0.0.0-20220519153652-3a47de7e79bd",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "google.golang.org/grpc",
+      "SPDXID": "SPDXRef-Package-go-module-google.golang.org-grpc-78a98b34382726a5",
+      "versionInfo": "v1.46.2",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "bbe30b1a055feef45d8c4619f300c584054d9a191b279866ac0d4b3162b50804"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:google:grpc:v1.46.2:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/google.golang.org/grpc@v1.46.2",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "google.golang.org/protobuf",
+      "SPDXID": "SPDXRef-Package-go-module-google.golang.org-protobuf-46dc5e66cce21556",
+      "versionInfo": "v1.28.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c38df289abfee9b5454c1405657d2bee2a5ef4943542c6cc807c1b0738ac70bc"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:google:protobuf:v1.28.0:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/google.golang.org/protobuf@v1.28.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "gopkg.in/DataDog/dd-trace-go.v1",
+      "SPDXID": "SPDXRef-Package-go-module-gopkg.in-DataDog-dd-trace-go.v1-9b52e9513c6da2a7",
+      "versionInfo": "v1.38.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9c02a072924b5d11c5e7a70a08fddb37c8134d09a634064511b95bc862a1293a"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/gopkg.in/DataDog/dd-trace-go.v1@v1.38.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "gopkg.in/inf.v0",
+      "SPDXID": "SPDXRef-Package-go-module-gopkg.in-inf.v0-9b02b478d62b4e32",
+      "versionInfo": "v0.9.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ef73390a86728b764b30ec83950874df50b1e8df4d0c9d95bdf97be840c08037"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/gopkg.in/inf.v0@v0.9.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "gopkg.in/yaml.v2",
+      "SPDXID": "SPDXRef-Package-go-module-gopkg.in-yaml.v2-58613c564e830afa",
+      "versionInfo": "v2.4.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0fcc60c04098ec262fc7e6369f8b01cfddc99fd251bf1762cb2a3c0937ee29a6"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/gopkg.in/yaml.v2@v2.4.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "gopkg.in/yaml.v3",
+      "SPDXID": "SPDXRef-Package-go-module-gopkg.in-yaml.v3-a8c2cdf8a5a5f009",
+      "versionInfo": "v3.0.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "863cbc13d38dfde80dd6d018a8a6fad46d745ad8a1a9eb43e2ccf61fef2721e0"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/gopkg.in/yaml.v3@v3.0.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "k8s.io/api",
+      "SPDXID": "SPDXRef-Package-go-module-k8s.io-api-df5f941bd949789d",
+      "versionInfo": "v0.24.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "27485a9e7da17f15abd618a76480de7f0ed0f7ac26081c7a49207c218d0c7438"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/k8s.io/api@v0.24.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "k8s.io/apimachinery",
+      "SPDXID": "SPDXRef-Package-go-module-k8s.io-apimachinery-42d7c98bbe812317",
+      "versionInfo": "v0.24.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c9d142c82fc38c2bc50872b938f30a065c5ac90cad07ca71cbc6102277795324"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/k8s.io/apimachinery@v0.24.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "k8s.io/client-go",
+      "SPDXID": "SPDXRef-Package-go-module-k8s.io-client-go-2dda7d107c5ec821",
+      "versionInfo": "v0.24.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "95b138681d604c7bd8152c26e9e0f7385d783611432827a3967b066254897b95"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/k8s.io/client-go@v0.24.0",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "k8s.io/klog/v2",
+      "SPDXID": "SPDXRef-Package-go-module-k8s.io-klog-v2-d2ee00396ce9a3d3",
+      "versionInfo": "v2.60.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "556db9ab76d9c7db84defbdd2fa33c7b3397efdbc0d80ab59c458ba8d41c9477"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:klog:v2:v2.60.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/k8s.io/klog/v2@v2.60.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "k8s.io/kube-openapi",
+      "SPDXID": "SPDXRef-Package-go-module-k8s.io-kube-openapi-5c63f38b6aa8d50a",
+      "versionInfo": "v0.0.0-20220328201542-3ee0da9b0b42",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1a28b97aa7fe1a6204c0634a4184029426b2b8909edbfe1f654bc5ed51bdf6c5"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/k8s.io/kube-openapi@v0.0.0-20220328201542-3ee0da9b0b42",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "k8s.io/utils",
+      "SPDXID": "SPDXRef-Package-go-module-k8s.io-utils-8030d300153c7ea2",
+      "versionInfo": "v0.0.0-20220210201930-3a6ce19ff2f9",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1cd4838030abaffe8bcb758418a65fb6213b218d7d573d8675b382c88e2aaa17"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/k8s.io/utils@v0.0.0-20220210201930-3a6ce19ff2f9",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "sigs.k8s.io/json",
+      "SPDXID": "SPDXRef-Package-go-module-sigs.k8s.io-json-2f5433615397b274",
+      "versionInfo": "v0.0.0-20211208200746-9f7c6b3444d2",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9038b8241340b0959fcf56845e13bc260f3b24968f34b879b48cd81e04ad43d6"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/sigs.k8s.io/json@v0.0.0-20211208200746-9f7c6b3444d2",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "sigs.k8s.io/structured-merge-diff/v4",
+      "SPDXID": "SPDXRef-Package-go-module-sigs.k8s.io-structured-merge-diff-v4-ef526ebd254e4cd6",
+      "versionInfo": "v4.2.1",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6ca0aa13d1af439b625479f9adf9f5afec9aa3768b40468bce49260247fe03a6"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:structured-merge-diff:v4:v4.2.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:structured_merge_diff:v4:v4.2.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:structured-merge:v4:v4.2.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:structured_merge:v4:v4.2.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceType": "cpe23Type",
+          "referenceLocator": "cpe:2.3:a:structured:v4:v4.2.1:*:*:*:*:*:*:*",
+          "comment": ""
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/sigs.k8s.io/structured-merge-diff/v4@v4.2.1",
+          "comment": ""
+        }
+      ]
+    },
+    {
+      "name": "sigs.k8s.io/yaml",
+      "SPDXID": "SPDXRef-Package-go-module-sigs.k8s.io-yaml-c291facdf683815f",
+      "versionInfo": "v1.2.0",
+      "downloadLocation": "NOASSERTION",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "92bfcc09e1562564f0c9a1e847d73c1231fd3ae98e9a817d60689977b9459bf4"
+        }
+      ],
+      "sourceInfo": "acquired package info from go module information: /coredns",
+      "licenseConcluded": "NONE",
+      "licenseDeclared": "NONE",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:golang/sigs.k8s.io/yaml@v1.2.0",
+          "comment": ""
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relatedSpdxElement": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES"
+    }
+  ]
+}
