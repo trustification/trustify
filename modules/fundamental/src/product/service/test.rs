@@ -16,7 +16,7 @@ async fn all_products(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_sbom(
             ("source", "http://redhat.com/test.json"),
             &Digests::digest("RHSA-1"),
-            "a",
+            Some("a".to_string()),
             (),
             &ctx.db,
         )
@@ -77,7 +77,7 @@ async fn link_sbom_to_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error
         .ingest_sbom(
             ("source", "http://redhat.com/test.json"),
             &Digests::digest("RHSA-1"),
-            "a",
+            Some("a".to_string()),
             (),
             &ctx.db,
         )

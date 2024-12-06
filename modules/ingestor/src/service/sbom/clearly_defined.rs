@@ -72,7 +72,7 @@ impl<'g> ClearlyDefinedLoader<'g> {
                 .ingest_sbom(
                     labels,
                     digests,
-                    document_id,
+                    Some(document_id.to_string()),
                     SbomInformation {
                         node_id: document_id.to_string(),
                         name: document_id.to_string(),
