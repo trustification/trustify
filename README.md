@@ -7,30 +7,88 @@
 Let's call this "PM mode":
 
 ```shell
-cargo run --bin trustd
+AUTH_DISABLED=true cargo run --bin trustd
 ```
 
-That will create its own database on your local filesystem.
+If you haven't setup your Rust development environment yet, i.e. you
+don't have `cargo`, you can alternatively use the latest "trustd-pm"
+[release binary](https://github.com/trustification/trustify/releases).
 
-* To use the **UI**, navigate to: <http://localhost:8080>.
-* To use the **Swagger UI**, navigate to: <http://localhost:8080/openapi/>.
+That will create its own database in your current directory beneath
+`.trustify/`.
 
-### Running containerized UI
+* To use the **GUI**, navigate to: <http://localhost:8080>.
+* To use the **REST API**, navigate to: <http://localhost:8080/openapi/>.
 
-You can also fire up the UI using:
+### Data
+
+The app's not much fun without data, e.g. SBOM's and Advisories. There are a few ways to ingest some:
+
+#### Datasets
+
+There are some bundles of related data beneath
+[etc/datasets](etc/datasets). You can use any HTTP command line
+client, e.g. curl, wget, or [httpie](https://httpie.io/) to ingest a
+zipped archive of SBOMs and/or Advisories like so:
 
 ```shell
-podman run --network="host" --pull=always \
--e TRUSTIFY_API_URL=http://localhost:8080 \
--e OIDC_CLIENT_ID=frontend \
--e OIDC_SERVER_URL=http://localhost:8090/realms/trustify \
--e ANALYTICS_ENABLED=false \
--e PORT=3000 \
--p 3000:3000 \
-ghcr.io/trustification/trustify-ui:latest
+cd etc/datasets
+make
+http POST localhost:8080/api/v1/dataset @ds1.zip
 ```
 
-Open the UI at <http://localhost:3000>
+#### Upload
+
+There is an "Upload" menu option in the GUI: http://localhost:8080/upload
+
+You can also interact with the API directly in a shell:
+
+```shell
+cat some-sbom.json | http POST localhost:8080/api/v1/sbom
+cat some-advisory.json | http POST localhost:8080/api/v1/advisory
+```
+
+#### Importers
+
+You may configure importers to regularly fetch data from remote
+sites. See [modules/importer/README.md](modules/importer/README.md)
+for details.
+
+### Authentication
+
+When testing the app using "PM mode", it may be convenient to set an
+environment variable, `AUTH_DISABLED=true`, to bypass all auth checks.
+
+By default, authentication is enabled. It can be disabled using the
+flag `--auth-disabled` when running the server.  Also. by default,
+there is no working authentication/authorization configuration. For
+development purposes, one can use `--devmode` to use the Keycloak
+instance deployed with the compose deployment.
+
+Also see: [docs/oidc.md](docs/oidc.md)
+
+HTTP requests must provide the bearer token using the `Authorization`
+header. For that, a valid access token is required. There are
+tutorials using `curl` on getting such a token. It is also possible
+the use the `oidc` client tool:
+
+Installation:
+
+```bash
+cargo install oidc-cli
+```
+
+Then, set up an initial client (needs to be done every time the client/keycloak instance if re-created):
+
+```bash
+oidc create confidential --name trusty --issuer http://localhost:8090/realms/chicken --client-id walker --client-secret ZVzq9AMOVUdMY1lSohpx1jI3aW56QDPS
+```
+
+Then one can perform `http` request using HTTPie like this:
+
+```bash
+http localhost:8080/purl/asdf/dependencies Authorization:$(oidc token trusty -b)
+```
 
 ## Repository Organization
 
@@ -48,17 +106,9 @@ Database entity models, implemented via SeaORM.
 
 SeaORM migrations for the DDL.
 
-#### `modules/graph`
+#### `modules`
 
-The primary graph engine and API.
-
-#### `modules/importer`
-
-Importers capable of adding documents into the graph.
-
-#### `modules/ingestor`
-
-Ingestors/readers for various formats (SPDX, CSAF, CVE, OSV, etc, etc)
+The primary behavior of the application.
 
 #### `server`
 
@@ -70,15 +120,30 @@ The server CLI tool `trustd`
 
 ### Et Merde
 
+#### `etc/test-data`
+
+Arbitrary test-data used for unit tests
+
+#### `etc/datasets`
+
+Integrated data bundles that show off the features of the app.
+
 #### `etc/deploy`
 
 Deployment-related (such as `compose`) files.
 
-#### `etc/test-data`
-
-Arbitrary test-data.
-
 ## Development Environment
+
+### Rust
+
+If you haven't already, [get started!](https://www.rust-lang.org/learn/get-started)
+
+#### If test failures on OSX
+
+Potentially our concurrent Postgres installations during testing can
+exhaust shared-memory.  Adjusting shared-memory on OSX is not
+straight-forward.  Use [this
+guide](https://unix.stackexchange.com/questions/689295/values-from-sysctl-a-dont-match-etc-sysctl-conf-even-after-restart).
 
 ### Postgres
 
@@ -110,60 +175,6 @@ Point the app at an external db:
 ```shell
 cargo run --bin trustd api --help
 RUST_LOG=info cargo run --bin trustd api --db-password eggs --devmode --auth-disabled
-```
-
-#### If test failures on OSX
-
-Potentially our concurrent Postgres installations during testing can exhaust shared-memory.
-Adjusting shared-memory on OSX is not straight-forward.
-Use [this guide](https://unix.stackexchange.com/questions/689295/values-from-sysctl-a-dont-match-etc-sysctl-conf-even-after-restart).
-
-### Import some data
-
-Import data (also see: [modules/importer/README.md](modules/importer/README.md) for more options):
-
-```shell
-# SBOM's
-http POST localhost:8080/api/v1/importer/redhat-sbom sbom[source]=https://access.redhat.com/security/data/sbom/beta/ sbom[keys][]=https://access.redhat.com/security/data/97f5eac4.txt#77E79ABE93673533ED09EBE2DCE3823597F5EAC4 sbom[disabled]:=false sbom[onlyPatterns][]=quarkus sbom[period]=30s sbom[v3Signatures]:=true
-# CSAF's
-http POST localhost:8080/api/v1/importer/redhat-csaf csaf[source]=https://redhat.com/.well-known/csaf/provider-metadata.json csaf[disabled]:=false csaf[onlyPatterns][]="^cve-2023-" csaf[period]=30s csaf[v3Signatures]:=true
-```
-
-
-To import files from a local disk or a location that is not properly-formed csaf repository, use [csaf walker](https://github.com/ctron/csaf-walker) tool:
-
-```shell
-sbom scoop http://localhost:8080/api/v1/sbom /workspace/github.com/trustification/trustification/data/ds1/sbom/
-csaf scoop http://localhost:8080/api/v1/advisory /workspace/github.com/trustification/trustification/data/ds1/csaf/
-```
-
-### Authentication
-
-By default, authentication is enabled. It can be disabled using the flag `--auth-disabled` when running the server.
-Also. by default, there is no working authentication/authorization configuration. For development purposes, one can
-use `--devmode` to use the Keycloak instance deployed with the compose deployment.
-
-Also see: [docs/oidc.md](docs/oidc.md)
-
-HTTP requests must provide the bearer token using the `Authorization` header. For that, a valid access token is
-required. There are tutorials using `curl` on getting such a token. It is also possible the use the `oidc` client tool:
-
-Installation:
-
-```bash
-cargo install oidc-cli
-```
-
-Then, set up an initial client (needs to be done every time the client/keycloak instance if re-created):
-
-```bash
-oidc create confidential --name trusty --issuer http://localhost:8090/realms/chicken --client-id walker --client-secret ZVzq9AMOVUdMY1lSohpx1jI3aW56QDPS
-```
-
-Then one can perform `http` request using HTTPie like this:
-
-```bash
-http localhost:8080/purl/asdf/dependencies Authorization:$(oidc token trusty -b)
 ```
 
 ## Notes on models
