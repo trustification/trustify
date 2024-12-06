@@ -44,3 +44,11 @@ impl TryInto<StorageKey> for &SourceDocument {
         Err(IdError::MissingPrefix)
     }
 }
+
+impl TryInto<StorageKey> for SourceDocument {
+    type Error = IdError;
+
+    fn try_into(self) -> Result<StorageKey, Self::Error> {
+        (&self).try_into()
+    }
+}
