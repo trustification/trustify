@@ -3580,9 +3580,9 @@ components:
       - sha384
       - sha512
       - size
-      - ingestion_time
+      - ingested
       properties:
-        ingestion_time:
+        ingested:
           type: string
           format: date-time
           description: The timestamp the document was ingested

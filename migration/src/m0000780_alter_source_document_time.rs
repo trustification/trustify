@@ -12,7 +12,7 @@ impl MigrationTrait for Migration {
                 Table::alter()
                     .table(SourceDocument::Table)
                     .add_column(
-                        ColumnDef::new(SourceDocument::IngestionTime)
+                        ColumnDef::new(SourceDocument::Ingested)
                             .timestamp_with_time_zone()
                             .default(Func::cust(Now))
                             .not_null()
@@ -30,7 +30,7 @@ impl MigrationTrait for Migration {
             .alter_table(
                 Table::alter()
                     .table(SourceDocument::Table)
-                    .drop_column(SourceDocument::IngestionTime)
+                    .drop_column(SourceDocument::Ingested)
                     .to_owned(),
             )
             .await?;
@@ -42,5 +42,5 @@ impl MigrationTrait for Migration {
 #[derive(DeriveIden)]
 enum SourceDocument {
     Table,
-    IngestionTime,
+    Ingested,
 }
