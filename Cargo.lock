@@ -1400,9 +1400,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.22"
+version = "4.5.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69371e34337c4c984bbe322360c2547210bf632eb2814bbe78a6e87a2935bd2b"
+checksum = "3135e7ec2ef7b10c6ed8950f0f792ed96ee093fa088608f1c76e569722700c84"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -1410,9 +1410,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.22"
+version = "4.5.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e24c1b4099818523236a8ca881d2b45db98dadfb4625cf6608c12069fcbbde1"
+checksum = "30582fc632330df2bd26877bde0c1f4470d57c582bbc070376afcd04d8cb4838"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1434,9 +1434,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.7.3"
+version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afb84c814227b90d6895e01398aee0d8033c00e7466aca416fb6a8e0eb19d8a7"
+checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
 
 [[package]]
 name = "colorchoice"
@@ -7989,12 +7989,11 @@ dependencies = [
 
 [[package]]
 name = "tokio-rustls"
-version = "0.26.0"
+version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c7bc40d0e5a97695bb96e27995cd3a08538541b0a846f65bba7a359f36700d4"
+checksum = "5f6d0975eaace0cf0fcadee4e4aaa5da15b5c079146f2cffb67c113be122bf37"
 dependencies = [
  "rustls",
- "rustls-pki-types",
  "tokio",
 ]
 
@@ -8219,7 +8218,7 @@ checksum = "343e926fc669bc8cde4fa3129ab681c63671bae288b1f1081ceee6d9d37904fc"
 
 [[package]]
 name = "trustify-auth"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8254,7 +8253,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-common"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8299,7 +8298,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-cvss"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "serde",
  "test-log",
@@ -8309,7 +8308,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-entity"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "anyhow",
  "async-graphql",
@@ -8333,7 +8332,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-infrastructure"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "actix-cors",
  "actix-tls",
@@ -8371,7 +8370,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-migration"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "anyhow",
  "sea-orm-migration",
@@ -8389,7 +8388,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-analysis"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8431,7 +8430,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-fundamental"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8495,7 +8494,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-graphql"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8518,7 +8517,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-importer"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8570,7 +8569,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-ingestor"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8626,7 +8625,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-storage"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "anyhow",
  "async-compression",
@@ -8652,7 +8651,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-ui"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "actix-web",
  "actix-web-static-files",
@@ -8663,7 +8662,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-user"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8685,7 +8684,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-server"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8724,7 +8723,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-test-context"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8755,7 +8754,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-trustd"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "anyhow",
  "clap",
@@ -8776,7 +8775,7 @@ dependencies = [
 [[package]]
 name = "trustify-ui"
 version = "0.1.0"
-source = "git+https://github.com/trustification/trustify-ui.git?branch=publish/main#dddc510d918aacfaf540c33273a28f9674bcdc4d"
+source = "git+https://github.com/trustification/trustify-ui.git?branch=publish/main#a02210f3caf1a96669e219ff03b8aab691a87110"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -9663,7 +9662,7 @@ dependencies = [
 
 [[package]]
 name = "xtask"
-version = "0.1.0-alpha.27"
+version = "0.1.0-alpha.28"
 dependencies = [
  "anyhow",
  "async-trait",
