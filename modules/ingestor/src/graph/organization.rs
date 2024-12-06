@@ -1,4 +1,7 @@
-use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, Set};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect, Set,
+};
+use sea_query::{LockBehavior, LockType};
 use std::fmt::Debug;
 use tracing::instrument;
 use trustify_entity::organization;
@@ -62,6 +65,7 @@ impl Graph {
     ) -> Result<Option<OrganizationContext>, Error> {
         Ok(organization::Entity::find()
             .filter(organization::Column::Name.eq(name.into()))
+            .lock_with_behavior(LockType::Update, LockBehavior::SkipLocked)
             .one(connection)
             .await?
             .map(|organization| OrganizationContext::new(self, organization)))
