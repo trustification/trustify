@@ -8,13 +8,12 @@ use sea_orm::{
     QueryTrait, RelationTrait, Select, Statement, TransactionTrait,
 };
 use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, JoinType, SimpleExpr};
-use trustify_common::db::UpdateDeprecatedAdvisory;
 use trustify_common::{
     db::{
         limiter::LimiterAsModelTrait,
         multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
         query::{Columns, Filtering, Query},
-        Database,
+        Database, UpdateDeprecatedAdvisory,
     },
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},

@@ -9,6 +9,7 @@ pub struct Model {
     pub sha384: String,
     pub sha512: String,
     pub size: i64,
+    pub ingested: time::OffsetDateTime,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

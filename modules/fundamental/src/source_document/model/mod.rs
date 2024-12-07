@@ -1,6 +1,7 @@
 use crate::Error;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+use time::OffsetDateTime;
 use trustify_common::id::{Id, IdError};
 use trustify_entity::source_document;
 use trustify_module_storage::service::StorageKey;
@@ -12,6 +13,9 @@ pub struct SourceDocument {
     pub sha384: String,
     pub sha512: String,
     pub size: u64,
+    /// The timestamp the document was ingested
+    #[serde(with = "time::serde::rfc3339")]
+    pub ingested: OffsetDateTime,
 }
 
 impl SourceDocument {
@@ -21,6 +25,7 @@ impl SourceDocument {
             sha384: format!("sha384:{}", source_document.sha384),
             sha512: format!("sha512:{}", source_document.sha512),
             size: source_document.size as u64,
+            ingested: source_document.ingested,
         })
     }
 }
