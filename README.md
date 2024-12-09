@@ -161,7 +161,7 @@ podman-compose -f etc/deploy/compose/compose.yaml up
 Connect to PSQL:
 
 ```shell
-env PGPASSWORD=eggs psql -U postgres -d trustify -h localhost -p 5432
+env PGPASSWORD=trustify psql -U postgres -d trustify -h localhost -p 5432
 ```
 
 If you don't have the `psql` command available, you can also use the `podman-compose` command:
@@ -174,7 +174,7 @@ Point the app at an external db:
 
 ```shell
 cargo run --bin trustd api --help
-RUST_LOG=info cargo run --bin trustd api --db-password eggs --devmode --auth-disabled
+RUST_LOG=info cargo run --bin trustd api --db-password trustify --devmode --auth-disabled
 ```
 
 ## Notes on models

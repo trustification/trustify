@@ -4,6 +4,6 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_PASSWORD: "eggs"
+      POSTGRES_PASSWORD: "trustify"
       POSTGRES_DB: "trustify"
     restart: always
