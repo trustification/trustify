@@ -22,7 +22,7 @@ impl Xtask {
         match self.command {
             Command::Openapi(command) => command.run().await,
             Command::GenerateDump(command) => command.run().await,
-            Command::GenerateSchemas(command) => command.run().await,
+            Command::GenerateSchemas(command) => command.run(),
             Command::Precommit(command) => command.run().await,
             Command::Ai(command) => command.run().await,
         }

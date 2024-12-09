@@ -13,8 +13,7 @@ impl Precommit {
         GenerateSchema {
             base: Path::new(".").to_path_buf(),
         }
-        .run()
-        .await?;
+        .run()?;
 
         Openapi::default().run().await?;
 

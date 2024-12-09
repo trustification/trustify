@@ -443,7 +443,7 @@ impl AnalysisService {
         Ok(())
     }
 
-    pub async fn clear_all_graphs(&self) -> Result<(), Error> {
+    pub fn clear_all_graphs(&self) -> Result<(), Error> {
         let graph_manager = GraphMap::get_instance();
         let mut manager = graph_manager.write();
         manager.clear();
@@ -469,7 +469,7 @@ impl AnalysisService {
         })
     }
 
-    pub async fn query_ancestor_graph(
+    pub fn query_ancestor_graph(
         component_name: Option<String>,
         component_purl: Option<Purl>,
         query: Option<Query>,
@@ -694,8 +694,7 @@ impl AnalysisService {
             None,
             Option::from(query),
             distinct_sbom_ids,
-        )
-        .await;
+        );
 
         Ok(paginated.paginate_array(&components))
     }
@@ -717,8 +716,7 @@ impl AnalysisService {
             None,
             None,
             distinct_sbom_ids,
-        )
-        .await;
+        );
 
         let mut root_components = Vec::new();
         for component in components {
@@ -764,8 +762,7 @@ impl AnalysisService {
             None,
             None,
             distinct_sbom_ids,
-        )
-        .await;
+        );
 
         Ok(paginated.paginate_array(&components))
     }
@@ -801,8 +798,7 @@ impl AnalysisService {
             Option::from(component_purl),
             None,
             distinct_sbom_ids,
-        )
-        .await;
+        );
 
         Ok(paginated.paginate_array(&components))
     }
@@ -1140,7 +1136,7 @@ mod test {
         assert_eq!(analysis_status.sbom_count, 1);
         assert_eq!(analysis_status.graph_count, 1);
 
-        let _clear_all_graphs = service.clear_all_graphs().await;
+        let _clear_all_graphs = service.clear_all_graphs();
 
         ctx.ingest_documents([
             "spdx/quarkus-bom-3.2.11.Final-redhat-00001.json",

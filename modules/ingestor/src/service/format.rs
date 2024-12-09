@@ -299,7 +299,7 @@ mod test {
         let spdx = document_bytes("ubi9-9.2-755.1697625012.json").await?;
         assert!(matches!(Format::from_bytes(&spdx), Ok(Format::SPDX)));
 
-        let cwe = document_read("cwec_latest.xml.zip").await?;
+        let cwe = document_read("cwec_latest.xml.zip")?;
         let mut cwe = ZipArchive::new(cwe)?;
         let mut cwe = cwe.by_index(0)?;
         let mut xml = Vec::new();

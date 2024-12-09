@@ -10,7 +10,7 @@ use zip::ZipArchive;
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn list_weaknesses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let zip = document_read("cwec_latest.xml.zip").await?;
+    let zip = document_read("cwec_latest.xml.zip")?;
 
     let mut archive = ZipArchive::new(zip)?;
 
@@ -34,7 +34,7 @@ async fn list_weaknesses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn query_weaknesses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let zip = document_read("cwec_latest.xml.zip").await?;
+    let zip = document_read("cwec_latest.xml.zip")?;
 
     let mut archive = ZipArchive::new(zip)?;
 
@@ -58,7 +58,7 @@ async fn query_weaknesses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn get_weakness(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let zip = document_read("cwec_latest.xml.zip").await?;
+    let zip = document_read("cwec_latest.xml.zip")?;
 
     let mut archive = ZipArchive::new(zip)?;
 

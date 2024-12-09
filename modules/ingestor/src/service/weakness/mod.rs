@@ -207,7 +207,7 @@ mod test {
         let graph = Graph::new(ctx.db.clone());
         let loader = CweCatalogLoader::new(&graph);
 
-        let zip = document_read("cwec_latest.xml.zip").await?;
+        let zip = document_read("cwec_latest.xml.zip")?;
 
         let mut archive = ZipArchive::new(zip)?;
 
