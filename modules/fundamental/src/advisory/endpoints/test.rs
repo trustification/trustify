@@ -301,7 +301,11 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
 #[test(actix_web::test)]
 async fn search_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     async fn query(app: &impl CallService, q: &str) -> PaginatedResults<AdvisorySummary> {
-        let uri = format!("/api/v1/advisory?q={}", urlencoding::encode(q));
+        let uri = format!(
+            "/api/v1/advisory?q={}&sort={}",
+            urlencoding::encode(q),
+            urlencoding::encode("ingested:desc")
+        );
         let req = TestRequest::get().uri(&uri).to_request();
         app.call_and_read_body_json(req).await
     }
@@ -317,6 +321,10 @@ async fn search_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let result = query(&app, "").await;
     assert_eq!(result.total, 2);
+    assert_eq!(result.items[0].head.identifier, "CVE-2024-28111");
+    let result = query(&app, "ingested>last week").await;
+    assert_eq!(result.total, 2);
+    assert_eq!(result.items[0].head.identifier, "CVE-2024-28111");
     let result = query(&app, "csv").await;
     assert_eq!(result.total, 1);
     assert_eq!(result.items[0].head.identifier, "CVE-2024-28111");

@@ -237,7 +237,11 @@ async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test(actix_web::test)]
 async fn query_sboms_by_ingested_time(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     async fn query(app: &impl CallService, q: &str) -> Value {
-        let uri = format!("/api/v1/sbom?q={}", urlencoding::encode(q));
+        let uri = format!(
+            "/api/v1/sbom?q={}&sort={}",
+            urlencoding::encode(q),
+            urlencoding::encode("ingested:desc")
+        );
         let req = TestRequest::get().uri(&uri).to_request();
         app.call_and_read_body_json(req).await
     }
@@ -257,6 +261,8 @@ async fn query_sboms_by_ingested_time(ctx: &TrustifyContext) -> Result<(), anyho
 
     // assert expected fields
     assert_eq!(all["total"], 2);
+    assert_eq!(all["items"][0]["name"], json!("zookeeper"));
+    assert_eq!(all["items"][1]["name"], json!("ubi9-container"));
     assert_eq!(ubi["total"], 1);
     assert_eq!(ubi["items"][0]["name"], json!("ubi9-container"));
     assert_eq!(zoo["total"], 1);
