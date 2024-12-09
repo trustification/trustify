@@ -15,7 +15,7 @@ pub struct GenerateSchema {
 }
 
 impl GenerateSchema {
-    pub async fn run(self) -> anyhow::Result<()> {
+    pub fn run(self) -> anyhow::Result<()> {
         // write schema
         self.write_schema::<Instructions>("xtask/schema/generate-dump.json")?;
         self.write_schema::<AuthConfig>("common/auth/schema/auth.json")?;
