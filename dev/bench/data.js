@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733508606214,
+  "lastUpdate": 1733732340559,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2256,6 +2256,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/608bfc1074c97056b6447190772d6a793478fe72"
         },
         "date": 1733508605558,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "a3638acd0442a2af28f6af9f04008b07354eb977",
+          "message": "test: added a test case for TC-1817",
+          "timestamp": "2024-12-09T07:57:11Z",
+          "tree_id": "e3562ed18a4fc77b60b12dba4536dad8220f9e7f",
+          "url": "https://github.com/trustification/trustify/commit/a3638acd0442a2af28f6af9f04008b07354eb977"
+        },
+        "date": 1733732339338,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
