@@ -4,7 +4,7 @@ use crate::{
 };
 use actix_http::StatusCode;
 use actix_web::test::TestRequest;
-use serde_json::Value;
+use serde_json::{json, Value};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::{id::Id, model::PaginatedResults};
@@ -229,6 +229,38 @@ async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // assert expected fields
     assert_eq!(v[0]["identifier"], "https://www.redhat.com/#CVE-2023-0044");
     assert_eq!(v[0]["status"][0]["average_severity"], "high");
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn query_sboms_by_ingested_time(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    async fn query(app: &impl CallService, q: &str) -> Value {
+        let uri = format!("/api/v1/sbom?q={}", urlencoding::encode(q));
+        let req = TestRequest::get().uri(&uri).to_request();
+        app.call_and_read_body_json(req).await
+    }
+    let app = caller(ctx).await?;
+
+    // Ingest 2 sbom's, capturing the time between each ingestion
+    ctx.ingest_document("ubi9-9.2-755.1697625012.json").await?;
+    let t = chrono::Local::now().to_rfc3339();
+    ctx.ingest_document("zookeeper-3.9.2-cyclonedx.json")
+        .await?;
+
+    let all = query(&app, "ingested>yesterday").await;
+    let ubi = query(&app, &format!("ingested<{t}")).await;
+    let zoo = query(&app, &format!("ingested>{t}")).await;
+
+    log::debug!("{all:#?}");
+
+    // assert expected fields
+    assert_eq!(all["total"], 2);
+    assert_eq!(ubi["total"], 1);
+    assert_eq!(ubi["items"][0]["name"], json!("ubi9-container"));
+    assert_eq!(zoo["total"], 1);
+    assert_eq!(zoo["items"][0]["name"], json!("zookeeper"));
 
     Ok(())
 }

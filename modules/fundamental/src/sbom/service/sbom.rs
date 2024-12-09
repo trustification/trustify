@@ -37,8 +37,8 @@ use trustify_entity::{
     qualified_purl::{self, CanonicalPurl, Qualifiers},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
-    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, status, versioned_purl,
-    vulnerability,
+    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, source_document, status,
+    versioned_purl, vulnerability,
 };
 
 impl SbomService {
@@ -111,11 +111,13 @@ impl SbomService {
             sbom::Entity::find().filter(Expr::col(sbom::Column::Labels).contains(labels))
         };
         let limiter = query
+            .join(JoinType::Join, sbom::Relation::SourceDocument.def())
             .find_also_linked(SbomNodeLink)
             .filtering_with(
                 search,
                 Columns::from_entity::<sbom::Entity>()
                     .add_columns(sbom_node::Entity)
+                    .add_columns(source_document::Entity)
                     .alias("sbom_node", "r0"),
             )?
             .limiting(connection, paginated.offset, paginated.limit);
