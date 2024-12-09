@@ -191,9 +191,9 @@ impl<'g> Format {
 
     pub fn is_cyclonedx(bytes: &[u8]) -> Result<bool, Error> {
         match masked(depth(1).and(key("specVersion")), bytes) {
-            Ok(Some(x)) if matches!(x.as_str(), "1.3" | "1.4" | "1.5") => Ok(true),
+            Ok(Some(x)) if matches!(x.as_str(), "1.3" | "1.4" | "1.5" | "1.6") => Ok(true),
             Ok(Some(x)) => Err(Error::UnsupportedFormat(format!(
-                "CycloneDX version {x} is unsupported; try 1.3, 1.4, or 1.5"
+                "CycloneDX version {x} is unsupported; try 1.3, 1.4, 1.5, 1.6"
             ))),
             Err(_) | Ok(None) => Ok(false),
         }
@@ -288,6 +288,12 @@ mod test {
         assert!(matches!(Format::from_bytes(&cve), Ok(Format::CVE)));
 
         let cyclone = document_bytes("zookeeper-3.9.2-cyclonedx.json").await?;
+        assert!(matches!(
+            Format::from_bytes(&cyclone),
+            Ok(Format::CycloneDX)
+        ));
+
+        let cyclone = document_bytes("cyclonedx/simple_1dot6.json").await?;
         assert!(matches!(
             Format::from_bytes(&cyclone),
             Ok(Format::CycloneDX)
