@@ -175,7 +175,7 @@ pub async fn document_stream(
 }
 
 /// Read a document from the test-data directory. Does not decompress.
-pub async fn document_read(path: &str) -> Result<impl Read + Seek, anyhow::Error> {
+pub fn document_read(path: &str) -> Result<impl Read + Seek, anyhow::Error> {
     Ok(std::fs::File::open(absolute(path)?)?)
 }
 
