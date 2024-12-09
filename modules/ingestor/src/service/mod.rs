@@ -224,7 +224,7 @@ impl IngestorService {
 
         let duration = Instant::now() - start;
         log::debug!(
-            "Ingested: {} ({}): took {}",
+            "Ingested: {} ({:?}): took {}",
             result.id,
             result.document_id,
             humantime::Duration::from(duration),

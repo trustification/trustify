@@ -1,15 +1,14 @@
-use crate::graph::sbom::{LicenseCreator, LicenseInfo};
 use crate::graph::{
     cpe::CpeCreator,
     product::ProductInformation,
     purl::creator::PurlCreator,
-    sbom::{PackageCreator, PackageReference, RelationshipCreator, SbomContext, SbomInformation},
-};
-use cyclonedx_bom::{
-    models::license::{LicenseChoice, LicenseIdentifier},
-    prelude::{Bom, Component, Components},
+    sbom::{
+        LicenseCreator, LicenseInfo, PackageCreator, PackageReference, RelationshipCreator,
+        SbomContext, SbomInformation,
+    },
 };
 use sea_orm::ConnectionTrait;
+use serde_cyclonedx::cyclonedx::v_1_6::{Component, CycloneDx, LicenseChoiceUrl};
 use std::{collections::HashMap, str::FromStr};
 use time::{format_description::well_known::Iso8601, OffsetDateTime};
 use tracing::instrument;
@@ -24,7 +23,7 @@ use uuid::Uuid;
 /// component.
 const CYCLONEDX_DOC_REF: &str = "CycloneDX-doc-ref";
 
-pub struct Information<'a>(pub &'a Bom);
+pub struct Information<'a>(pub &'a CycloneDx);
 
 impl<'a> From<Information<'a>> for SbomInformation {
     fn from(value: Information<'a>) -> Self {
@@ -60,21 +59,22 @@ impl<'a> From<Information<'a>> for SbomInformation {
             // otherwise use the serial number
             .or_else(|| sbom.serial_number.as_ref().map(|id| id.to_string()))
             // TODO: not sure what to use instead, the version will most likely be `1`.
-            .unwrap_or_else(|| sbom.version.to_string());
+            .or_else(|| sbom.version.as_ref().map(|v| v.to_string()))
+            .unwrap_or_else(|| "<unknown>".to_string());
 
         let data_licenses = sbom
             .metadata
             .as_ref()
             .and_then(|metadata| metadata.licenses.as_ref())
-            .map(|licenses| &licenses.0)
             .into_iter()
-            .flatten()
-            .map(|license| match license {
-                LicenseChoice::License(l) => match &l.license_identifier {
-                    LicenseIdentifier::SpdxId(spdx) => spdx.to_string(),
-                    LicenseIdentifier::Name(name) => name.to_string(),
-                },
-                LicenseChoice::Expression(e) => e.to_string(),
+            .flat_map(|licenses| match licenses {
+                LicenseChoiceUrl::Variant0(license) => license
+                    .iter()
+                    .flat_map(|l| l.license.id.as_ref().or(l.license.name.as_ref()).cloned())
+                    .collect::<Vec<_>>(),
+                LicenseChoiceUrl::Variant1(license) => {
+                    license.iter().map(|l| l.expression.clone()).collect()
+                }
             })
             .collect();
 
@@ -92,7 +92,7 @@ impl SbomContext {
     #[instrument(skip(connection, sbom), ret)]
     pub async fn ingest_cyclonedx<C: ConnectionTrait>(
         &self,
-        mut sbom: Bom,
+        mut sbom: CycloneDx,
         connection: &C,
     ) -> Result<(), anyhow::Error> {
         let mut license_creator = LicenseCreator::new();
@@ -149,26 +149,38 @@ impl SbomContext {
 
         // record licenses
 
-        if let Some(components) = &sbom.components {
-            for component in &components.0 {
-                if let Some(licenses) = &component.licenses {
-                    for license in &licenses.0 {
-                        let license = match license {
-                            LicenseChoice::License(license) => LicenseInfo {
-                                license: match &license.license_identifier {
-                                    LicenseIdentifier::SpdxId(id) => id.to_string(),
-                                    LicenseIdentifier::Name(name) => name.to_string(),
-                                },
-                                refs: Default::default(),
-                            },
-                            LicenseChoice::Expression(spdx_expression) => LicenseInfo {
-                                license: spdx_expression.to_string(),
-                                refs: Default::default(),
-                            },
-                        };
+        for component in sbom.components.iter().flatten() {
+            if let Some(licenses) = &component.licenses {
+                match licenses {
+                    LicenseChoiceUrl::Variant0(licenses) => {
+                        'l: for license in licenses {
+                            let license = if let Some(id) = license.license.id.clone() {
+                                id
+                            } else if let Some(name) = license.license.name.clone() {
+                                name
+                            } else {
+                                continue 'l;
+                            };
 
-                        license_creator.add(&license);
-                        creator.add_license_relation(component, &license);
+                            let license = LicenseInfo {
+                                license,
+                                refs: Default::default(),
+                            };
+
+                            license_creator.add(&license);
+                            creator.add_license_relation(component, &license);
+                        }
+                    }
+                    LicenseChoiceUrl::Variant1(licenses) => {
+                        for license in licenses {
+                            let license = LicenseInfo {
+                                license: license.expression.clone(),
+                                refs: Default::default(),
+                            };
+
+                            license_creator.add(&license);
+                            creator.add_license_relation(component, &license);
+                        }
                     }
                 }
             }
@@ -176,13 +188,9 @@ impl SbomContext {
 
         // create relationships
 
-        for left in sbom.dependencies.iter().flat_map(|e| &e.0) {
-            for right in &left.dependencies {
-                creator.relate(
-                    right.clone(),
-                    Relationship::DependencyOf,
-                    left.dependency_ref.clone(),
-                );
+        for left in sbom.dependencies.iter().flatten() {
+            for right in left.depends_on.iter().flatten() {
+                creator.relate(right.clone(), Relationship::DependencyOf, left.ref_.clone());
             }
         }
 
@@ -216,15 +224,13 @@ impl<'a> Creator<'a> {
         }
     }
 
-    pub fn add_all(&mut self, components: impl Into<Option<&'a Components>>) {
-        if let Some(components) = components.into() {
-            self.extend(&components.0)
-        }
+    pub fn add_all(&mut self, components: &'a Option<Vec<Component>>) {
+        self.extend(components.iter().flatten())
     }
 
     pub fn add(&mut self, component: &'a Component) {
         self.components.push(component);
-        self.add_all(&component.components)
+        self.extend(component.components.iter().flatten());
     }
 
     pub fn add_license_relation(&mut self, component: &'a Component, license: &LicenseInfo) {

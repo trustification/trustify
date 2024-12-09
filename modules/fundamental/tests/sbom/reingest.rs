@@ -38,7 +38,7 @@ async fn quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_document("quarkus/v1/quarkus-bom-2.13.8.Final-redhat-00004.json")
         .await?;
 
-    assert_eq!(result1.document_id, "https://access.redhat.com/security/data/sbom/beta/spdx/quarkus-bom-b52acd7c-3a3f-441e-aef0-bbdaa1ec8acf");
+    assert_eq!(result1.document_id, Some("https://access.redhat.com/security/data/sbom/beta/spdx/quarkus-bom-b52acd7c-3a3f-441e-aef0-bbdaa1ec8acf".to_string()));
 
     // ingest the second version
     let result2 = ctx
@@ -47,7 +47,7 @@ async fn quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(
         result2.document_id,
-        "https://access.redhat.com/security/data/sbom/spdx/quarkus-bom-2.13.8.Final-redhat-00004"
+        Some("https://access.redhat.com/security/data/sbom/spdx/quarkus-bom-2.13.8.Final-redhat-00004".to_string())
     );
 
     // now start testing
@@ -113,7 +113,7 @@ async fn nhc(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(
         result1.document_id,
-        "https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8"
+        Some("https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8".to_string())
     );
 
     // ingest the second version
@@ -121,7 +121,7 @@ async fn nhc(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(
         result2.document_id,
-        "https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8"
+        Some("https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8".to_string())
     );
 
     // now start testing
@@ -164,7 +164,7 @@ async fn nhc_same(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(
         result1.document_id,
-        "https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8"
+        Some("https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8".to_string())
     );
 
     // ingest the same version again
@@ -172,7 +172,7 @@ async fn nhc_same(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(
         result2.document_id,
-        "https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8"
+        Some("https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8".to_string())
     );
 
     // now start testing
@@ -218,7 +218,7 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(
         result1.document_id,
-        "https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8"
+        Some("https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8".to_string())
     );
 
     // ingest the second version
@@ -239,7 +239,7 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(
         result2.document_id,
-        "https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8"
+        Some("https://access.redhat.com/security/data/sbom/spdx/RHWA-NHC-0.4-RHEL-8".to_string())
     );
 
     // now start testing
@@ -288,7 +288,7 @@ async fn syft_rerun(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(
         result1.document_id,
-        "https://anchore.com/syft/image/registry.access.redhat.com/ubi9/ubi-f41e17d4-e739-4d33-ab2e-48c95b856220"
+        Some("https://anchore.com/syft/image/registry.access.redhat.com/ubi9/ubi-f41e17d4-e739-4d33-ab2e-48c95b856220".to_string())
     );
 
     // ingest the second version
@@ -296,7 +296,7 @@ async fn syft_rerun(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(
         result2.document_id,
-        "https://anchore.com/syft/image/registry.access.redhat.com/ubi9/ubi-768a701e-12fb-4ed1-a03b-463b784b01bf"
+        Some("https://anchore.com/syft/image/registry.access.redhat.com/ubi9/ubi-768a701e-12fb-4ed1-a03b-463b784b01bf".to_string())
     );
 
     // now start testing

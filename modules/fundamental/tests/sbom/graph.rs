@@ -20,7 +20,7 @@ async fn ingest_sboms(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_sbom(
             ("source", "http://sbom.com/test.json"),
             &Digests::digest("8"),
-            "a",
+            Some("a".to_string()),
             (),
             &ctx.db,
         )
@@ -29,7 +29,7 @@ async fn ingest_sboms(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_sbom(
             ("source", "http://sbom.com/test.json"),
             &Digests::digest("8"),
-            "b",
+            Some("b".to_string()),
             (),
             &ctx.db,
         )
@@ -38,7 +38,7 @@ async fn ingest_sboms(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_sbom(
             ("source", "http://sbom.com/test.json"),
             &Digests::digest("9"),
-            "c",
+            Some("c".to_string()),
             (),
             &ctx.db,
         )
@@ -48,7 +48,7 @@ async fn ingest_sboms(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_sbom(
             ("source", "http://sbom.com/other.json"),
             &Digests::digest("10"),
-            "d",
+            Some("d".to_string()),
             (),
             &ctx.db,
         )
@@ -71,7 +71,7 @@ async fn ingest_and_fetch_sboms_describing_purls(
         .ingest_sbom(
             ("source", "http://sbom.com/test.json"),
             &Digests::digest("8"),
-            "a",
+            Some("a".to_string()),
             (),
             &ctx.db,
         )
@@ -80,7 +80,7 @@ async fn ingest_and_fetch_sboms_describing_purls(
         .ingest_sbom(
             ("source", "http://sbom.com/test.json"),
             &Digests::digest("9"),
-            "b",
+            Some("b".to_string()),
             (),
             &ctx.db,
         )
@@ -89,7 +89,7 @@ async fn ingest_and_fetch_sboms_describing_purls(
         .ingest_sbom(
             ("source", "http://sbom.com/test.json"),
             &Digests::digest("10"),
-            "c",
+            Some("c".to_string()),
             (),
             &ctx.db,
         )
@@ -141,7 +141,7 @@ async fn ingest_and_locate_sboms_describing_cpes(
         .ingest_sbom(
             ("source", "http://sbom.com/test.json"),
             &Digests::digest("8"),
-            "a",
+            Some("a".to_string()),
             (),
             &ctx.db,
         )
@@ -150,7 +150,7 @@ async fn ingest_and_locate_sboms_describing_cpes(
         .ingest_sbom(
             ("source", "http://sbom.com/test.json"),
             &Digests::digest("9"),
-            "b",
+            Some("b".to_string()),
             (),
             &ctx.db,
         )
@@ -159,7 +159,7 @@ async fn ingest_and_locate_sboms_describing_cpes(
         .ingest_sbom(
             ("source", "http://sbom.com/test.json"),
             &Digests::digest("10"),
-            "c",
+            Some("c".to_string()),
             (),
             &ctx.db,
         )
@@ -200,7 +200,7 @@ async fn transitive_dependency_of(ctx: &TrustifyContext) -> Result<(), anyhow::E
         .ingest_sbom(
             ("source", "http://sbomsRus.gov/thing1.json"),
             &Digests::digest("8675309"),
-            "a",
+            Some("a".to_string()),
             (),
             &ctx.db,
         )
@@ -274,7 +274,7 @@ async fn ingest_package_relates_to_package_dependency_of(
         .ingest_sbom(
             ("source", "http://sbomsRus.gov/thing1.json"),
             &Digests::digest("8675309"),
-            "a",
+            Some("a".to_string()),
             (),
             &ctx.db,
         )
@@ -293,7 +293,7 @@ async fn ingest_package_relates_to_package_dependency_of(
         .ingest_sbom(
             ("source", "http://sbomsRus.gov/thing2.json"),
             &Digests::digest("8675308"),
-            "b",
+            Some("b".to_string()),
             (),
             &ctx.db,
         )
@@ -368,7 +368,7 @@ async fn sbom_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error
         .ingest_sbom(
             ("source", "http://sbomsRus.gov/thing1.json"),
             &Digests::digest("8675309"),
-            "a",
+            Some("a".to_string()),
             (),
             &ctx.db,
         )

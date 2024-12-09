@@ -98,7 +98,7 @@ impl Graph {
         &self,
         labels: impl Into<Labels> + Debug,
         digests: &Digests,
-        document_id: &str,
+        document_id: Option<String>,
         info: impl Into<SbomInformation>,
         connection: &C,
     ) -> Result<SbomContext, Error> {
@@ -133,7 +133,7 @@ impl Graph {
             sbom_id: Set(sbom_id),
             node_id: Set(node_id.clone()),
 
-            document_id: Set(document_id.to_string()),
+            document_id: Set(document_id),
 
             published: Set(published),
             authors: Set(authors),

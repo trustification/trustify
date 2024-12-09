@@ -84,6 +84,49 @@ async fn test_parse_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     .await
 }
 
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn parse_cyclonedx_1dot6(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    test_with_cyclonedx(
+        ctx,
+        "cyclonedx/simple_1dot6.json",
+        |WithContext { service, sbom, .. }| async move {
+            let described = service
+                .describes_packages(sbom.sbom.sbom_id, Default::default(), &ctx.db)
+                .await?;
+
+            assert_eq!(1, described.items.len());
+
+            let package = &described.items[0];
+
+            assert_eq!(package.name, "simple");
+            assert_eq!(package.version, None);
+            assert_eq!(0, package.purl.len());
+
+            assert!(package.cpe.is_empty());
+
+            let packages = service
+                .fetch_sbom_packages(
+                    sbom.sbom.sbom_id,
+                    Default::default(),
+                    Paginated {
+                        offset: 0,
+                        limit: 1,
+                    },
+                    &ctx.db,
+                )
+                .await?;
+
+            log::debug!("{:?}", packages);
+
+            assert_eq!(9, packages.total);
+
+            Ok(())
+        },
+    )
+    .await
+}
+
 #[instrument(skip(ctx, f))]
 pub async fn test_with_cyclonedx<F, Fut>(
     ctx: &TrustifyContext,
@@ -97,7 +140,11 @@ where
     test_with(
         ctx,
         sbom,
-        |data| Ok(Bom::parse_from_json(data)?),
+        |data| {
+            Ok(serde_json::from_slice::<
+                serde_cyclonedx::cyclonedx::v_1_6::CycloneDx,
+            >(data)?)
+        },
         |ctx, sbom, tx| Box::pin(async move { ctx.ingest_cyclonedx(sbom.clone(), tx).await }),
         |sbom| sbom::cyclonedx::Information(sbom).into(),
         f,

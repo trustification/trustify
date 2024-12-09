@@ -5,7 +5,6 @@ mod graph;
 mod reingest;
 mod spdx;
 
-use cyclonedx_bom::prelude::Bom;
 use sea_orm::{DatabaseTransaction, TransactionTrait};
 use std::{future::Future, pin::Pin, time::Instant};
 use tracing::{info_span, instrument, Instrument};
@@ -73,7 +72,7 @@ where
         .ingest_sbom(
             ("source", "test.com/my-sbom.json"),
             &Digests::digest("10"),
-            "document-id",
+            Some("document-id".to_string()),
             c(&sbom),
             &tx,
         )

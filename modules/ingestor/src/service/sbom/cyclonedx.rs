@@ -3,8 +3,8 @@ use crate::{
     model::IngestResult,
     service::Error,
 };
-use cyclonedx_bom::prelude::Bom;
 use sea_orm::TransactionTrait;
+use serde_json::Value;
 use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
@@ -18,17 +18,20 @@ impl<'g> CyclonedxLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, sbom), ret)]
+    #[instrument(skip(self, value), ret)]
     pub async fn load(
         &self,
         labels: Labels,
-        sbom: Bom,
+        value: Value,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
+        let sbom: serde_cyclonedx::cyclonedx::v_1_6::CycloneDx = serde_json::from_value(value)
+            .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
+
         let labels = labels.add("type", "cyclonedx");
 
         log::info!(
-            "Storing - version: {}, serialNumber: {:?}",
+            "Storing - version: {:?}, serialNumber: {:?}",
             sbom.version,
             sbom.serial_number,
         );
@@ -37,16 +40,15 @@ impl<'g> CyclonedxLoader<'g> {
 
         let document_id = sbom
             .serial_number
-            .as_ref()
-            .map(|uuid| uuid.to_string())
-            .unwrap_or_else(|| sbom.version.to_string());
+            .clone()
+            .or_else(|| sbom.version.map(|v| v.to_string()));
 
         let ctx = self
             .graph
             .ingest_sbom(
                 labels,
                 digests,
-                &document_id,
+                document_id.clone(),
                 cyclonedx::Information(&sbom),
                 &tx,
             )

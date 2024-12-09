@@ -1,4 +1,3 @@
-use crate::service::advisory::csaf::util::gen_identifier;
 use crate::{
     graph::{
         advisory::{
@@ -8,7 +7,10 @@ use crate::{
         Graph,
     },
     model::IngestResult,
-    service::{advisory::csaf::StatusCreator, Error, Warnings},
+    service::{
+        advisory::csaf::{util::gen_identifier, StatusCreator},
+        Error, Warnings,
+    },
 };
 use csaf::{
     vulnerability::{ProductStatus, Vulnerability},
@@ -17,8 +19,7 @@ use csaf::{
 use sbom_walker::report::ReportSink;
 use sea_orm::{ConnectionTrait, TransactionTrait};
 use semver::Version;
-use std::fmt::Debug;
-use std::str::FromStr;
+use std::{fmt::Debug, str::FromStr};
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
@@ -108,7 +109,7 @@ impl<'g> CsafLoader<'g> {
 
         Ok(IngestResult {
             id: Id::Uuid(advisory.advisory.id),
-            document_id: advisory_id,
+            document_id: Some(advisory_id),
             warnings: warnings.into(),
         })
     }
