@@ -1,6 +1,5 @@
 use actix_web::{body::BoxBody, HttpResponse, ResponseError};
-use langchain_rust::agent::AgentError;
-use langchain_rust::chain::ChainError;
+use langchain_rust::{agent::AgentError, chain::ChainError};
 use sea_orm::DbErr;
 use trustify_common::{decompress, error::ErrorInformation, id::IdError, purl::PurlErr};
 use trustify_module_storage::service::StorageKeyError;
@@ -61,24 +60,22 @@ impl ResponseError for Error {
             Self::NotFound(msg) => {
                 HttpResponse::NotFound().json(ErrorInformation::new("Not Found", msg))
             }
-            Error::Ingestor(inner) => {
-                HttpResponse::BadRequest().json(ErrorInformation::new("Ingestor error", inner))
-            }
-            Error::Query(err) => {
+            Self::Ingestor(inner) => inner.error_response(),
+            Self::Query(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Query error", err))
             }
-            Error::IdKey(err) => HttpResponse::BadRequest().json(ErrorInformation::new("Key", err)),
-            Error::StorageKey(err) => {
+            Self::IdKey(err) => HttpResponse::BadRequest().json(ErrorInformation::new("Key", err)),
+            Self::StorageKey(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("Storage Key", err))
             }
-            Error::Compression(decompress::Error::UnknownType) => {
+            Self::Compression(decompress::Error::UnknownType) => {
                 HttpResponse::UnsupportedMediaType()
                     .json(ErrorInformation::new("UnsupportedCompression", self))
             }
-            Error::Compression(decompress::Error::PayloadTooLarge) => {
+            Self::Compression(decompress::Error::PayloadTooLarge) => {
                 HttpResponse::PayloadTooLarge().json(ErrorInformation::new("PayloadTooLarge", self))
             }
-            Error::Compression(err) => {
+            Self::Compression(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("CompressionError", err))
             }
 
