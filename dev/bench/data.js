@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733732340559,
+  "lastUpdate": 1733754857465,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2285,6 +2285,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/a3638acd0442a2af28f6af9f04008b07354eb977"
         },
         "date": 1733732339338,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "881a9dc5f65852d17b6aecece4847bc06ee6ad1f",
+          "message": "chore: add tracing to storage \"store\" function",
+          "timestamp": "2024-12-09T14:08:43Z",
+          "tree_id": "7b0cd19747f1e82ce0cfda5b0e56c3e3e155b0b0",
+          "url": "https://github.com/trustification/trustify/commit/881a9dc5f65852d17b6aecece4847bc06ee6ad1f"
+        },
+        "date": 1733754856671,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
