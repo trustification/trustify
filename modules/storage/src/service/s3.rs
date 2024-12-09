@@ -11,6 +11,7 @@ use http::{header::CONTENT_ENCODING, HeaderMap, HeaderValue};
 use s3::{creds::Credentials, error::S3Error, Bucket};
 use std::{fmt::Debug, io, pin::pin, str::FromStr};
 use tokio_util::io::{ReaderStream, StreamReader};
+use tracing::instrument;
 
 #[derive(Clone, Debug)]
 pub struct S3Backend {
@@ -50,6 +51,7 @@ impl S3Backend {
 impl StorageBackend for S3Backend {
     type Error = Error;
 
+    #[instrument(skip(self, stream), err(Debug, level=tracing::Level::INFO))]
     async fn store<E, S>(&self, stream: S) -> Result<StorageResult, StoreError<E, Self::Error>>
     where
         E: Debug,

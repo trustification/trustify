@@ -17,6 +17,7 @@ use tokio::{
     io::AsyncWriteExt,
 };
 use tokio_util::io::ReaderStream;
+use tracing::instrument;
 
 /// A filesystem backed store
 ///
@@ -98,6 +99,7 @@ impl FileSystemBackend {
 impl StorageBackend for FileSystemBackend {
     type Error = std::io::Error;
 
+    #[instrument(skip(stream), err(Debug, level=tracing::Level::INFO))]
     async fn store<E, S>(&self, stream: S) -> Result<StorageResult, StoreError<E, Self::Error>>
     where
         E: Debug,
