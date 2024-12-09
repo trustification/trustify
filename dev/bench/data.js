@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733754857465,
+  "lastUpdate": 1733755250088,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2314,6 +2314,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/881a9dc5f65852d17b6aecece4847bc06ee6ad1f"
         },
         "date": 1733754856671,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "606f5966ae0df5da893be53d5cbe901ce00f0206",
+          "message": "fix: use the ingested column in the sbom query\n\nRelates #1077\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-12-09T14:15:08Z",
+          "tree_id": "a8fe10ec78d84f90e6e9b235f039f0e0ff7082e5",
+          "url": "https://github.com/trustification/trustify/commit/606f5966ae0df5da893be53d5cbe901ce00f0206"
+        },
+        "date": 1733755249274,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
