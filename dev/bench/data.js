@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733818156343,
+  "lastUpdate": 1733822460612,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2401,6 +2401,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/b168e2680ce8c4918ee4d2a52f017e32ee43a085"
         },
         "date": 1733818155669,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "bcf4fc23c06e5664e55d44dc44cd7b7c0e1f4f05",
+          "message": "fix: actually set a default value, instead of `null`\n\nCloses: https://github.com/trustification/trustify/issues/1089",
+          "timestamp": "2024-12-10T08:57:51Z",
+          "tree_id": "f2ba48d3970bad5b91832112b6d9723c0a455e40",
+          "url": "https://github.com/trustification/trustify/commit/bcf4fc23c06e5664e55d44dc44cd7b7c0e1f4f05"
+        },
+        "date": 1733822459407,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
