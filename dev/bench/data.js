@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733755250088,
+  "lastUpdate": 1733817710108,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2348,6 +2348,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "b920d6397961469215888b303b474e6dc6a9f97e",
+          "message": "fix: ensure sbom's and adv's can be filtered/sorted by ingested date\n\nFixes: #1077\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2024-12-10T07:40:15Z",
+          "tree_id": "ccfecf81421567d8e8b716adb12bb0edadf9f32a",
+          "url": "https://github.com/trustification/trustify/commit/b920d6397961469215888b303b474e6dc6a9f97e"
+        },
+        "date": 1733817709429,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 23,
             "unit": "s"
           }
         ]
