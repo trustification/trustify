@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733817710108,
+  "lastUpdate": 1733818156343,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2377,6 +2377,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 23,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "b168e2680ce8c4918ee4d2a52f017e32ee43a085",
+          "message": "chore: extend loader detection for cyclonedx 1.6",
+          "timestamp": "2024-12-10T07:40:58Z",
+          "tree_id": "e1f262772f5096c9ce128cb6e3b4215b48608652",
+          "url": "https://github.com/trustification/trustify/commit/b168e2680ce8c4918ee4d2a52f017e32ee43a085"
+        },
+        "date": 1733818155669,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
             "unit": "s"
           }
         ]
