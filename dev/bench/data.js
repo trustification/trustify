@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1733822460612,
+  "lastUpdate": 1733845877819,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2430,6 +2430,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/bcf4fc23c06e5664e55d44dc44cd7b7c0e1f4f05"
         },
         "date": 1733822459407,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "9d7a54617e91acb5c75ddadef2b2912add0a19fa",
+          "message": "chore: removes unused declared deps, move others to dev-deps",
+          "timestamp": "2024-12-10T15:24:00Z",
+          "tree_id": "1a18aac8992550a044340979d768ba330bd9318c",
+          "url": "https://github.com/trustification/trustify/commit/9d7a54617e91acb5c75ddadef2b2912add0a19fa"
+        },
+        "date": 1733845877056,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
