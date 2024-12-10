@@ -20,7 +20,6 @@ sea-orm = { workspace = true }
 sea-query = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["full"] }
 tracing = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras", "uuid"] }
 utoipa-actix-web = { workspace = true }
@@ -41,6 +40,7 @@ sha2 = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 tokio-util = { workspace = true, features = ["full"] }
+tokio = { workspace = true, features = ["full"] }
 trustify-test-context = { workspace = true }
 urlencoding = { workspace = true }
 criterion = { workspace = true, features = ["html_reports", "async_tokio"] }
