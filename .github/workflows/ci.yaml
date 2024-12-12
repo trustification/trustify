@@ -4,12 +4,14 @@ on:
   push:
     branches:
       - main
+      - release/**
   merge_group:
     types:
       - checks_requested
   pull_request:
     branches:
       - main
+      - release/**
 
 env:
   CARGO_TERM_COLOR: always
