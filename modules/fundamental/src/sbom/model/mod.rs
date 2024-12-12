@@ -124,7 +124,7 @@ impl<'a> From<&'a str> for SbomPackageReference<'a> {
     }
 }
 
-impl<'a> From<()> for SbomPackageReference<'a> {
+impl From<()> for SbomPackageReference<'_> {
     fn from(_value: ()) -> Self {
         Self::All
     }

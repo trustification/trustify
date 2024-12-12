@@ -26,6 +26,7 @@ pub struct AppOptions {
 }
 
 /// create a new authenticator
+#[allow(clippy::type_complexity)]
 pub fn new_auth(
     auth: Option<Arc<Authenticator>>,
 ) -> Condition<
