@@ -960,7 +960,8 @@ mod test {
             .retrieve_root_components(Query::q("EE"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
-        Ok(assert_eq!(analysis_graph.total, 1))
+        assert_eq!(analysis_graph.total, 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -1005,7 +1006,8 @@ mod test {
             .retrieve_root_components(Query::q("EE"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
-        Ok(assert_eq!(analysis_graph.total, 1))
+        assert_eq!(analysis_graph.total, 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -1044,7 +1046,8 @@ mod test {
                 .node_id,
             "SPDXRef-A".to_string()
         );
-        Ok(assert_eq!(analysis_graph.total, 1))
+        assert_eq!(analysis_graph.total, 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -1085,7 +1088,8 @@ mod test {
                 .node_id,
             "SPDXRef-A".to_string()
         );
-        Ok(assert_eq!(analysis_graph.total, 1))
+        assert_eq!(analysis_graph.total, 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -1119,7 +1123,8 @@ mod test {
             "SPDXRef-e24fec28-1001-499c-827f-2e2e5f2671b5".to_string()
         );
 
-        Ok(assert_eq!(analysis_graph.total, 2))
+        assert_eq!(analysis_graph.total, 2);
+        Ok(())
     }
 
     // TODO: this test passes when run individually.
@@ -1171,7 +1176,8 @@ mod test {
             .retrieve_root_components(Query::q("EE"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
-        Ok(assert_eq!(analysis_graph.total, 1))
+        assert_eq!(analysis_graph.total, 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -1195,7 +1201,8 @@ mod test {
             .retrieve_root_components(Query::q("EE"), Paginated::default(), &ctx.db)
             .await
             .unwrap();
-        Ok(assert_eq!(analysis_graph.total, 1))
+        assert_eq!(analysis_graph.total, 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -1214,7 +1221,8 @@ mod test {
             analysis_graph.items[0].purl,
             "pkg:rpm/redhat/A@0.0.0?arch=src".to_string()
         );
-        Ok(assert_eq!(analysis_graph.total, 1))
+        assert_eq!(analysis_graph.total, 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -1237,7 +1245,8 @@ mod test {
             "pkg:rpm/redhat/AA@0.0.0?arch=src".to_string()
         );
 
-        Ok(assert_eq!(analysis_graph.total, 1))
+        assert_eq!(analysis_graph.total, 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -1256,7 +1265,8 @@ mod test {
             .await
             .unwrap();
 
-        Ok(assert_eq!(analysis_graph.total, 2))
+        assert_eq!(analysis_graph.total, 2);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -1274,7 +1284,8 @@ mod test {
             .await
             .unwrap();
 
-        Ok(assert_eq!(analysis_graph.total, 1))
+        assert_eq!(analysis_graph.total, 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -1289,7 +1300,8 @@ mod test {
             .await
             .unwrap();
 
-        Ok(assert_eq!(analysis_graph.total, 1))
+        assert_eq!(analysis_graph.total, 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]

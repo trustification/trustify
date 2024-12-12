@@ -178,7 +178,7 @@ pub mod prefixed {
         prefix: &'p str,
     }
 
-    impl<'p, 'de> Visitor<'de> for PrefixLabelsVisitor<'p> {
+    impl<'de> Visitor<'de> for PrefixLabelsVisitor<'_> {
         type Value = Labels;
 
         fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
