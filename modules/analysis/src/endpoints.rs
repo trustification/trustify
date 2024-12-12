@@ -205,7 +205,9 @@ mod test {
             response["items"][0]["ancestors"][0]["purl"],
             "pkg:rpm/redhat/AA@0.0.0?arch=src"
         );
-        Ok(assert_eq!(&response["total"], 1))
+
+        assert_eq!(&response["total"], 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -227,7 +229,8 @@ mod test {
             response["items"][0]["ancestors"][0]["purl"],
             "pkg:rpm/redhat/A@0.0.0?arch=src"
         );
-        Ok(assert_eq!(&response["total"], 1))
+        assert_eq!(&response["total"], 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -249,7 +252,8 @@ mod test {
             response["items"][0]["ancestors"][0]["purl"],
             "pkg:rpm/redhat/A@0.0.0?arch=src"
         );
-        Ok(assert_eq!(&response["total"], 1))
+        assert_eq!(&response["total"], 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -283,7 +287,8 @@ mod test {
             "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?type=pom&repository_url=https://maven.repository.redhat.com/ga/"
         );
 
-        Ok(assert_eq!(&response["total"], 2))
+        assert_eq!(&response["total"], 2);
+        Ok(())
     }
 
     // TODO: this test passes when run individually.
@@ -342,7 +347,8 @@ mod test {
             "pkg:rpm/redhat/B@0.0.0"
         );
 
-        Ok(assert_eq!(&response["total"], 3))
+        assert_eq!(&response["total"], 3);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -369,7 +375,8 @@ mod test {
             "pkg:rpm/redhat/B@0.0.0"
         );
 
-        Ok(assert_eq!(&response["total"], 1))
+        assert_eq!(&response["total"], 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -391,7 +398,8 @@ mod test {
             response["items"][0]["deps"][0]["purl"],
             "pkg:rpm/redhat/BB@0.0.0"
         );
-        Ok(assert_eq!(&response["total"], 1))
+        assert_eq!(&response["total"], 1);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -414,7 +422,8 @@ mod test {
             response["items"][0]["purl"],
             "pkg:maven/net.spy/spymemcached@2.12.1?type=jar"
         );
-        Ok(assert_eq!(&response["total"], 2))
+        assert_eq!(&response["total"], 2);
+        Ok(())
     }
 
     #[test_context(TrustifyContext)]
@@ -464,6 +473,7 @@ mod test {
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
 
-        Ok(assert_eq!(&response["total"], 0))
+        assert_eq!(&response["total"], 0);
+        Ok(())
     }
 }

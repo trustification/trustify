@@ -221,6 +221,7 @@ mod tests {
         assert_eq!(0, claimants.len());
 
         let claimants = assertions.affected_claimants_for_version("1.3")?;
-        Ok(assert_eq!(1, claimants.len()))
+        assert_eq!(1, claimants.len());
+        Ok(())
     }
 }
