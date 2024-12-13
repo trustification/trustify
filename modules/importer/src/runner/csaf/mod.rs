@@ -103,12 +103,23 @@ impl super::ImportRunner {
             .await
             // if the walker fails, we record the outcome as part of the report, but skip any
             // further processing, like storing the marker
-            .map_err(|err| ScannerError::Normal {
-                err: err.into(),
-                output: RunOutput {
-                    report: report.lock().clone().build(),
-                    continuation: None,
-                },
+            .map_err(|err| {
+                // Formatted error for user (UI)
+                let err_string = err.to_string();
+                // Checks if the error message contains a custom prefix like `Visitor error:`
+                let formatted_err = if let Some(index) = err_string.find(':') {
+                    format!("Error: {}", &err_string[index + 1..].trim_start())
+                } else {
+                    format!("Error: {}", err_string)
+                };
+
+                ScannerError::Normal {
+                    err: anyhow::Error::msg(formatted_err),
+                    output: RunOutput {
+                        report: report.lock().clone().build(),
+                        continuation: None,
+                    },
+                }
             })?;
 
         Ok(match Arc::try_unwrap(report) {
