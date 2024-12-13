@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 use utoipa::ToSchema;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, ToSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, ToSchema, Hash)]
 pub struct PurlSummary {
     #[serde(flatten)]
     pub head: PurlHead,
