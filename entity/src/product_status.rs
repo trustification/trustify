@@ -50,6 +50,12 @@ pub enum Relation {
         to = "super::cpe::Column::Id"
     )]
     ContextCpe,
+
+    #[sea_orm(belongs_to = "super::base_purl::Entity",
+        from = "Column::Package"
+        to = "super::base_purl::Column::Name"
+    )]
+    BasePurl,
 }
 
 impl Related<super::product_version_range::Entity> for Entity {
