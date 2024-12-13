@@ -4785,7 +4785,7 @@ dependencies = [
 [[package]]
 name = "osv"
 version = "0.2.0"
-source = "git+http://github.com/ctron/osv?rev=b53f1590bbbdc663e3efe405f1fa2603e71e8680#b53f1590bbbdc663e3efe405f1fa2603e71e8680"
+source = "git+https://github.com/ctron/osv?rev=b53f1590bbbdc663e3efe405f1fa2603e71e8680#b53f1590bbbdc663e3efe405f1fa2603e71e8680"
 dependencies = [
  "chrono",
  "serde",
