@@ -1,4 +1,5 @@
 use super::*;
+use std::collections::HashSet;
 
 #[derive(
     Clone,
@@ -25,6 +26,12 @@ pub struct OsvImporter {
     /// An optional path to start searching for documents. Will use the root of the repository otherwise.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub path: Option<String>,
+
+    #[serde(default, skip_serializing_if = "HashSet::is_empty")]
+    pub years: HashSet<u16>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub start_year: Option<u16>,
 }
 
 impl Deref for OsvImporter {

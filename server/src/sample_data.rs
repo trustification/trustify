@@ -48,6 +48,8 @@ async fn add_osv(
             source: source.to_string(),
             branch: branch.map(ToString::to_string),
             path: base.map(|s| s.into()),
+            years: Default::default(),
+            start_year: None,
         }),
     )
     .await

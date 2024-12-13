@@ -9,21 +9,25 @@ use crate::{
         RunOutput,
     },
 };
+use chrono::Datelike;
 use handler::OsvHandler;
 use parking_lot::Mutex;
+use std::collections::HashSet;
 use std::{path::Path, path::PathBuf, sync::Arc};
 use tokio::runtime::Handle;
 use tracing::instrument;
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::{
     graph::Graph,
-    service::{Format, IngestorService},
+    service::{advisory::osv::parse, Format, IngestorService},
 };
 
 struct Context<C: RunContext + 'static> {
     context: C,
     source: String,
     labels: Labels,
+    years: HashSet<u16>,
+    start_year: Option<u16>,
     report: Arc<Mutex<ReportBuilder>>,
     ingestor: IngestorService,
 }
@@ -31,6 +35,29 @@ struct Context<C: RunContext + 'static> {
 impl<C: RunContext> Context<C> {
     fn store(&self, path: &Path, data: Vec<u8>) -> anyhow::Result<()> {
         self.report.lock().tick();
+
+        // apply year based filter, we need to parse
+        if !self.years.is_empty() || self.start_year.is_some() {
+            let osv = parse(&data)?;
+
+            let year = osv
+                .published
+                .unwrap_or(osv.modified)
+                .year()
+                .clamp(u16::MIN as _, u16::MAX as _) as u16;
+
+            // check the set of years
+            if !self.years.is_empty() && !self.years.contains(&year) {
+                return Ok(());
+            }
+
+            // check starting year
+            if let Some(start_year) = self.start_year {
+                if year < start_year {
+                    return Ok(());
+                }
+            }
+        }
 
         Handle::current().block_on(async {
             self.ingestor
@@ -98,6 +125,8 @@ impl super::ImportRunner {
                 context,
                 source: osv.source,
                 labels: osv.common.labels,
+                years: osv.years,
+                start_year: osv.start_year,
                 report: report.clone(),
                 ingestor,
             }),
