@@ -42,6 +42,12 @@ pub enum Relation {
     PackageRelatesToPackages,
     #[sea_orm(has_one = "super::product_version::Entity")]
     ProductVersion,
+    #[sea_orm(
+        belongs_to = "super::sbom_node::Entity",
+        from = "(Column::NodeId, Column::SbomId)",
+        to = "(super::sbom_node::Column::NodeId, super::sbom_node::Column::SbomId)"
+    )]
+    SbomNode,
 }
 
 pub struct SbomPurlsLink;

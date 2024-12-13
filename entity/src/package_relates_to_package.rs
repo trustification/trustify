@@ -37,6 +37,12 @@ pub enum Relation {
         to = "super::sbom::Column::SbomId"
     )]
     Sbom,
+    #[sea_orm(
+        belongs_to = "super::sbom_package::Entity",
+        from = "(Column::SbomId, Column::LeftNodeId)",
+        to = "(super::sbom_package::Column::SbomId, super::sbom_package::Column::NodeId)"
+    )]
+    LeftPackage,
 }
 
 impl ActiveModelBehavior for ActiveModel {}

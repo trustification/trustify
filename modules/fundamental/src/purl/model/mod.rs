@@ -9,7 +9,7 @@ use utoipa::ToSchema;
 pub mod details;
 pub mod summary;
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, Hash)]
 pub struct BasePurlHead {
     /// The ID of the base PURL
     pub uuid: Uuid,
@@ -44,7 +44,7 @@ impl BasePurlHead {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, Hash)]
 pub struct VersionedPurlHead {
     /// The ID of the versioned PURL
     pub uuid: Uuid,
@@ -74,7 +74,7 @@ impl VersionedPurlHead {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, Hash)]
 pub struct PurlHead {
     /// The ID of the qualified PURL
     pub uuid: Uuid,
