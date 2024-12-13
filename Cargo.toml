@@ -197,7 +197,7 @@ postgresql_commands = { version = "0.17.3", default-features = false, features =
 # required due to https://github.com/voteblake/csaf-rs/pull/29
 csaf = { git = "https://github.com/chirino/csaf-rs", rev = "414896904bc5e5287fd88b1daef5c27f70503d01" }
 # required due to https://github.com/gcmurphy/osv/pull/51
-osv = { git = "http://github.com/ctron/osv", rev = "b53f1590bbbdc663e3efe405f1fa2603e71e8680" }
+osv = { git = "https://github.com/ctron/osv", rev = "b53f1590bbbdc663e3efe405f1fa2603e71e8680" }
 
 # to pickup fix: https://github.com/Abraxas-365/langchain-rust/pull/246
 #       and fix: https://github.com/Abraxas-365/langchain-rust/pull/250
