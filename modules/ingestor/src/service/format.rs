@@ -15,7 +15,6 @@ use crate::{
 use csaf::Csaf;
 use cve::Cve;
 use jsn::{mask::*, Format as JsnFormat, TokenReader};
-use osv::schema::Vulnerability;
 use quick_xml::{events::Event, Reader};
 use serde_json::Value;
 use std::io::Cursor;
@@ -60,9 +59,7 @@ impl<'g> Format {
             Format::OSV => {
                 // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
                 let loader = OsvLoader::new(graph);
-                let osv: Vulnerability = serde_json::from_slice(buffer)
-                    .map_err(Error::from)
-                    .or_else(|_| super::advisory::osv::from_yaml(buffer).map_err(Error::from))?;
+                let osv = super::advisory::osv::parse(buffer)?;
                 loader.load(labels, osv, digests, issuer).await
             }
             Format::CVE => {
