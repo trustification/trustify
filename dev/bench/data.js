@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734022691184,
+  "lastUpdate": 1734096086803,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2488,6 +2488,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/c4a3768d925c1d441e0308496d58ab47e361613b"
         },
         "date": 1734022690509,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "7c2c140fc488829634a7ee69cac78a90bbae1ead",
+          "message": "feat: reimplament vulnerability endpoint logic and api so we can retrieve purls for affected sboms",
+          "timestamp": "2024-12-13T12:38:37Z",
+          "tree_id": "f6aa51d65b67b8cc1ebd38f50ad5240b1bdd5db0",
+          "url": "https://github.com/trustification/trustify/commit/7c2c140fc488829634a7ee69cac78a90bbae1ead"
+        },
+        "date": 1734096086300,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
