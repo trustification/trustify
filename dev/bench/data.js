@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734341720356,
+  "lastUpdate": 1734347676779,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2575,6 +2575,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/bd139c305f9267fcf717900adaeadb04283a2702"
         },
         "date": 1734341719763,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "1b43a55202a048a4f014486efbe710c1a1139f6f",
+          "message": "chore: reducing logging of things that are ok",
+          "timestamp": "2024-12-16T10:52:42Z",
+          "tree_id": "a6cd2b611b7370c76934fdb548af4f60c5ea06dd",
+          "url": "https://github.com/trustification/trustify/commit/1b43a55202a048a4f014486efbe710c1a1139f6f"
+        },
+        "date": 1734347676154,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
