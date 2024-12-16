@@ -437,6 +437,23 @@
         "source": {
           "description": "The URL to the git repository of the OSV data",
           "type": "string"
+        },
+        "startYear": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint16",
+          "minimum": 0.0
+        },
+        "years": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint16",
+            "minimum": 0.0
+          },
+          "uniqueItems": true
         }
       }
     },
