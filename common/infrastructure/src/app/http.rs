@@ -1,10 +1,12 @@
-use crate::app::{new_app, AppOptions};
-use crate::endpoint::Endpoint;
-use crate::tracing::Tracing;
+use crate::{
+    app::{new_app, AppOptions},
+    endpoint::Endpoint,
+    tracing::Tracing,
+};
 use actix_cors::Cors;
 use actix_tls::{accept::openssl::reexports::SslAcceptor, connect::openssl::reexports::SslMethod};
-use actix_web::dev::{ServiceFactory, ServiceRequest};
 use actix_web::{
+    dev::{ServiceFactory, ServiceRequest},
     web::{self, JsonConfig},
     App, HttpResponse, HttpServer,
 };
@@ -15,15 +17,20 @@ use bytesize::ByteSize;
 use clap::{value_parser, Arg, ArgMatches, Args, Command, Error, FromArgMatches};
 use openssl::ssl::SslFiletype;
 use prometheus::Registry;
-use std::fmt::Debug;
-use std::marker::PhantomData;
-use std::net::{IpAddr, Ipv6Addr, SocketAddr, TcpListener};
-use std::ops::Deref;
-use std::path::PathBuf;
-use std::str::FromStr;
-use std::sync::Arc;
-use trustify_auth::swagger_ui::{swagger_ui_with_auth, SwaggerUiOidc};
-use trustify_auth::{authenticator::Authenticator, authorizer::Authorizer};
+use std::{
+    fmt::Debug,
+    marker::PhantomData,
+    net::{IpAddr, Ipv6Addr, SocketAddr, TcpListener},
+    ops::Deref,
+    path::PathBuf,
+    str::FromStr,
+    sync::Arc,
+};
+use trustify_auth::{
+    authenticator::Authenticator,
+    authorizer::Authorizer,
+    swagger_ui::{swagger_ui_with_auth, SwaggerUiOidc},
+};
 use trustify_common::model::BinaryByteSize;
 use utoipa::openapi::Info;
 use utoipa_actix_web::AppExt;
@@ -168,6 +175,10 @@ where
     )]
     pub tls_certificate_file: Option<PathBuf>,
 
+    /// Disable the request log
+    #[arg(id = "http-disable-log", long, env = "HTTP_SERVER_DISABLE_LOG")]
+    pub disable_log: bool,
+
     #[arg(skip)]
     _marker: Marker<E>,
 }
@@ -202,6 +213,7 @@ where
             tls_enabled: false,
             tls_key_file: None,
             tls_certificate_file: None,
+            disable_log: false,
             _marker: Default::default(),
         }
     }
@@ -278,6 +290,8 @@ pub struct HttpServerBuilder {
     request_limit: Option<usize>,
     tracing: Tracing,
 
+    disable_log: bool,
+
     openapi_info: Option<Info>,
 }
 
@@ -316,6 +330,7 @@ impl HttpServerBuilder {
             request_limit: None,
             tracing: Tracing::default(),
             openapi_info: None,
+            disable_log: false,
         }
     }
 
@@ -431,6 +446,11 @@ impl HttpServerBuilder {
         self
     }
 
+    pub fn disable_log(mut self, disable_log: bool) -> Self {
+        self.disable_log = disable_log;
+        self
+    }
+
     pub async fn run(self) -> anyhow::Result<()> {
         let metrics = self
             .metrics_factory
@@ -453,9 +473,12 @@ impl HttpServerBuilder {
                 json = json.limit(limit);
             }
 
-            let (logger, tracing_logger) = match self.tracing {
-                Tracing::Disabled => (Some(actix_web::middleware::Logger::default()), None),
-                Tracing::Enabled => (None, Some(RequestTracing::default())),
+            let (logger, tracing_logger) = match (self.disable_log, self.tracing) {
+                (true, Tracing::Disabled) => (None, None),
+                (false, Tracing::Disabled) => {
+                    (Some(actix_web::middleware::Logger::default()), None)
+                }
+                (_, Tracing::Enabled) => (None, Some(RequestTracing::default())),
             };
 
             log::debug!(
