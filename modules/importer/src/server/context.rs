@@ -11,7 +11,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::sync::Mutex;
-use tracing::instrument;
+use tracing::{instrument, Level};
 
 /// Context for an import run
 #[derive(Debug)]
@@ -85,7 +85,10 @@ impl CheckCancellation {
         self.canceled
     }
 
-    #[instrument(ret)]
+    #[instrument(
+        ret(level=Level::DEBUG),
+        err(level=Level::INFO),
+    )]
     async fn perform_check(&self) -> anyhow::Result<bool> {
         let importer = self.service.read(&self.importer_name).await?;
 
