@@ -96,6 +96,7 @@ mod m0000750_alter_advisory_add_document_id;
 mod m0000760_product_status_index;
 mod m0000780_alter_source_document_time;
 mod m0000790_alter_sbom_alter_document_id;
+mod m0000800_alter_product_version_range_scheme;
 
 pub struct Migrator;
 
@@ -199,6 +200,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000760_product_status_index::Migration),
             Box::new(m0000780_alter_source_document_time::Migration),
             Box::new(m0000790_alter_sbom_alter_document_id::Migration),
+            Box::new(m0000800_alter_product_version_range_scheme::Migration),
         ]
     }
 }
