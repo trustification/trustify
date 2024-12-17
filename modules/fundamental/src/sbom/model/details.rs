@@ -11,8 +11,8 @@ use crate::{
 };
 use cpe::{cpe::Cpe, uri::OwnedUri};
 use sea_orm::{
-    ConnectionTrait, DbErr, EntityTrait, FromQueryResult, Iden, JoinType, ModelTrait, QueryFilter,
-    QueryOrder, QueryResult, QuerySelect, RelationTrait, Select,
+    ConnectionTrait, DbBackend, DbErr, EntityTrait, FromQueryResult, JoinType, ModelTrait,
+    QueryFilter, QueryResult, QuerySelect, RelationTrait, Select, Statement,
 };
 use sea_query::{Asterisk, Expr, Func, SimpleExpr};
 use serde::{Deserialize, Serialize};
@@ -27,9 +27,9 @@ use trustify_common::{
 };
 use trustify_cvss::cvss3::{score::Score, severity::Severity, Cvss3Base};
 use trustify_entity::{
-    advisory, base_purl, cvss3, product, product_status, product_version, purl_status,
-    qualified_purl, sbom, sbom_node, sbom_package, sbom_package_purl_ref, status, version_range,
-    versioned_purl, vulnerability,
+    advisory, base_purl, cvss3, product_status, product_version, purl_status, qualified_purl, sbom,
+    sbom_node, sbom_package, sbom_package_purl_ref, status, version_range, versioned_purl,
+    vulnerability,
 };
 use utoipa::ToSchema;
 
@@ -83,73 +83,101 @@ impl SbomDetails {
             .all(tx)
             .await?;
 
-        let mut product_advisory_info = sbom
-            .find_related(product_version::Entity)
-            .join(JoinType::LeftJoin, product_version::Relation::Product.def())
-            .join(JoinType::LeftJoin, product::Relation::Cpe.def())
-            .join(
-                JoinType::Join,
-                trustify_entity::cpe::Relation::ProductStatus.def(),
-            )
-            .join(JoinType::Join, product_status::Relation::Status.def())
-            .join(JoinType::Join, product_status::Relation::Advisory.def())
-            .join(
-                JoinType::Join,
-                product_status::Relation::Vulnerability.def(),
-            )
-            // Joins for purl-related tables
-            .join(JoinType::Join, sbom::Relation::Node.def())
-            .join(JoinType::Join, sbom_node::Relation::Package.def())
-            .join(JoinType::Join, sbom_package::Relation::Purl.def())
-            .join(JoinType::Join, sbom_package_purl_ref::Relation::Purl.def())
-            .join(
-                JoinType::Join,
-                qualified_purl::Relation::VersionedPurl.def(),
-            )
-            .join(JoinType::Join, versioned_purl::Relation::BasePurl.def())
-            .distinct_on([
-                (product_status::Entity, product_status::Column::ContextCpeId),
-                (product_status::Entity, product_status::Column::StatusId),
-                (product_status::Entity, product_status::Column::Package),
-                (
-                    product_status::Entity,
-                    product_status::Column::VulnerabilityId,
-                ),
-            ])
-            .order_by_asc(product_status::Column::ContextCpeId)
-            .order_by_asc(product_status::Column::StatusId)
-            .order_by_asc(product_status::Column::Package)
-            .order_by_asc(product_status::Column::VulnerabilityId)
-            // Filter for product_status.package
-            .filter(
-                Expr::col((product_status::Entity, product_status::Column::Package))
-                    .is_null()
-                    .or(Expr::col((product_status::Entity, product_status::Column::Package)).eq(""))
-                    .or(SimpleExpr::Binary(
-                        Box::new(
-                            Expr::col((product_status::Entity, product_status::Column::Package))
-                                .into(),
-                        ),
-                        sea_query::BinOper::Like,
-                        Box::new(SimpleExpr::FunctionCall(
-                            Func::cust(CustomFunc::Concat).args([
-                                Expr::col((base_purl::Entity, base_purl::Column::Namespace)).into(),
-                                Expr::val("/").into(),
-                                Expr::col((base_purl::Entity, base_purl::Column::Name)).into(),
-                            ]),
-                        )),
-                    ))
-                    .or(
-                        Expr::col((product_status::Entity, product_status::Column::Package))
-                            .eq(Expr::col((base_purl::Entity, base_purl::Column::Name))),
-                    ),
-            )
-            .select_only()
-            .try_into_multi_model::<QueryCatcher>()?
-            .all(tx)
+        // The query for now is in the raw form for couple of reasons
+        // First some of the join are not easily (or at all) doable using sea-orm concepts
+        // Second, it's much easier to iterate over query and work on it in this form
+        // than using the code
+        // It might be a good practice to start like this for complex query logic and
+        // turn it into a code once things stabilize
+        let product_advisory_info = r#"
+            SELECT
+                "advisory"."id" AS "advisory$id",
+                "advisory"."identifier" AS "advisory$identifier",
+                "advisory"."version" AS "advisory$version",
+                "advisory"."document_id" AS "advisory$document_id",
+                "advisory"."deprecated" AS "advisory$deprecated",
+                "advisory"."issuer_id" AS "advisory$issuer_id",
+                "advisory"."published" AS "advisory$published",
+                "advisory"."modified" AS "advisory$modified",
+                "advisory"."withdrawn" AS "advisory$withdrawn",
+                "advisory"."title" AS "advisory$title",
+                "advisory"."labels" AS "advisory$labels",
+                "advisory"."source_document_id" AS "advisory$source_document_id",
+                "vulnerability"."id" AS "vulnerability$id",
+                "vulnerability"."title" AS "vulnerability$title",
+                "vulnerability"."reserved" AS "vulnerability$reserved",
+                "vulnerability"."published" AS "vulnerability$published",
+                "vulnerability"."modified" AS "vulnerability$modified",
+                "vulnerability"."withdrawn" AS "vulnerability$withdrawn",
+                "vulnerability"."cwes" AS "vulnerability$cwes",
+                "base_purl"."id" AS "base_purl$id",
+                "base_purl"."type" AS "base_purl$type",
+                "base_purl"."namespace" AS "base_purl$namespace",
+                "base_purl"."name" AS "base_purl$name",
+                "versioned_purl"."id" AS "versioned_purl$id",
+                "versioned_purl"."base_purl_id" AS "versioned_purl$base_purl_id",
+                "versioned_purl"."version" AS "versioned_purl$version",
+                "qualified_purl"."id" AS "qualified_purl$id",
+                "qualified_purl"."versioned_purl_id" AS "qualified_purl$versioned_purl_id",
+                "qualified_purl"."qualifiers" AS "qualified_purl$qualifiers",
+                "qualified_purl"."purl" AS "qualified_purl$purl",
+                "sbom_package"."sbom_id" AS "sbom_package$sbom_id",
+                "sbom_package"."node_id" AS "sbom_package$node_id",
+                "sbom_package"."version" AS "sbom_package$version",
+                "sbom_node"."sbom_id" AS "sbom_node$sbom_id",
+                "sbom_node"."node_id" AS "sbom_node$node_id",
+                "sbom_node"."name" AS "sbom_node$name",
+                "status"."id" AS "status$id",
+                "status"."slug" AS "status$slug",
+                "status"."name" AS "status$name",
+                "status"."description" AS "status$description",
+                "cpe"."id" AS "cpe$id",
+                "cpe"."part" AS "cpe$part",
+                "cpe"."vendor" AS "cpe$vendor",
+                "cpe"."product" AS "cpe$product",
+                "cpe"."version" AS "cpe$version",
+                "cpe"."update" AS "cpe$update",
+                "cpe"."edition" AS "cpe$edition",
+                "cpe"."language" AS "cpe$language"
+            FROM "sbom"
+            -- find statuses that matches SBOMs
+            JOIN "product_version" ON "product_version"."sbom_id" = "sbom"."sbom_id"
+            JOIN "product" ON "product_version"."product_id" = "product"."id"
+            JOIN "cpe" ON "product"."cpe_key" = "cpe"."product"
+            JOIN "product_status" ON "cpe"."id" = "product_status"."context_cpe_id" AND product_status.package IS NOT NULL
+            JOIN "product_version_range" ON "product_status"."product_version_range_id" = "product_version_range"."id"
+            JOIN "version_range" ON "product_version_range"."version_range_id" = "version_range"."id" AND version_matches("product_version"."version", "version_range".*)
+
+            -- now find matching purls in these statuses
+            JOIN base_purl ON "product_status"."package" LIKE CONCAT("base_purl"."namespace", '/', "base_purl"."name") OR "product_status"."package" = "base_purl"."name"
+            JOIN "versioned_purl" ON "versioned_purl"."base_purl_id" = "base_purl"."id"
+            JOIN "qualified_purl" ON "qualified_purl"."versioned_purl_id" = "versioned_purl"."id"
+            join sbom_package_purl_ref ON sbom_package_purl_ref.qualified_purl_id = qualified_purl.id AND sbom_package_purl_ref.sbom_id = sbom.sbom_id
+            JOIN sbom_package on sbom_package.sbom_id = sbom_package_purl_ref.sbom_id AND sbom_package.node_id = sbom_package_purl_ref.node_id
+            JOIN sbom_node on sbom_node.sbom_id = sbom_package_purl_ref.sbom_id AND sbom_node.node_id = sbom_package_purl_ref.node_id
+
+            -- get basic status info
+            JOIN "status" ON "product_status"."status_id" = "status"."id"
+            JOIN "advisory" ON "product_status"."advisory_id" = "advisory"."id"
+            JOIN "vulnerability" ON "product_status"."vulnerability_id" = "vulnerability"."id"
+            WHERE
+            "sbom"."sbom_id" = $1
+            "#;
+
+        let result: Vec<QueryResult> = tx
+            .query_all(Statement::from_sql_and_values(
+                DbBackend::Postgres,
+                product_advisory_info,
+                [sbom.sbom_id.into()],
+            ))
             .await?;
 
-        relevant_advisory_info.append(&mut product_advisory_info);
+        relevant_advisory_info.extend(
+            result
+                .iter()
+                .map(|row| QueryCatcher::from_query_result(row, ""))
+                .collect::<Result<Vec<_>, _>>()?,
+        );
 
         let summary = SbomSummary::from_entity((sbom, node), service, tx).await?;
 
@@ -166,12 +194,6 @@ impl SbomDetails {
             None => None,
         })
     }
-}
-
-#[derive(Iden)]
-enum CustomFunc {
-    #[iden = "CONCAT"]
-    Concat,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]

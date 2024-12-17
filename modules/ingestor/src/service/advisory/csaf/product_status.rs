@@ -70,12 +70,14 @@ impl ProductStatus {
                                     // let upper = semver.clone().set_major(semver.major + 1).build();
                                     let mut upper = semver.clone();
                                     upper.major += 1;
+                                    upper.minor = 0;
+                                    upper.patch = 0;
                                     VersionInfo {
                                         spec: VersionSpec::Range(
                                             Version::Inclusive(semver.to_string()),
                                             Version::Exclusive(upper.to_string()),
                                         ),
-                                        scheme: VersionScheme::Semver,
+                                        scheme: VersionScheme::Rpm,
                                     }
                                 }
                                 Err(_) => VersionInfo {
