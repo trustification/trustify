@@ -1,1 +1,2 @@
 * xref:concepts:index.adoc[Concepts]
+** xref:concepts:a_v.adoc[Advisories & vulnerabilities]
