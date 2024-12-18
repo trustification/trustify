@@ -13,6 +13,7 @@
 | `CLIENT_TLS_CA_CERTIFICATES`         | Additional certificates which will be added as trust anchors   |        |
 | `CLIENT_TLS_INSECURE`         | Make the TLS client insecure, disabling all validation   | `false`       |
 | `HTTP_SERVER_BIND_ADDR`         | Address to listen on   | `::1`       |
+| `HTTP_SERVER_DISABLE_LOG`       | Disable the request log | `false` |
 | `HTTP_SERVER_JSON_LIMIT`         | JSON request limit   | `2 MiB`       |
 | `HTTP_SERVER_REQUEST_LIMIT`         | Overall request limit   | `256 KiB`       |
 | `HTTP_SERVER_TLS_CERTIFICATE_FILE`         | Path to the TLS certificate in PEM format   |       |
