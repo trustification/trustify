@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734525608625,
+  "lastUpdate": 1734527679515,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2667,6 +2667,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "678284e2ca74d4dda72431e2a77aa18c5513a2ca",
+          "message": "fix: optimize import of product related entities during csaf ingestion",
+          "timestamp": "2024-12-18T12:52:49Z",
+          "tree_id": "8d0b0b01c32fff42c5852ee4831360fc75ee5efe",
+          "url": "https://github.com/trustification/trustify/commit/678284e2ca74d4dda72431e2a77aa18c5513a2ca"
+        },
+        "date": 1734527678323,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 11,
             "unit": "s"
           }
         ]
