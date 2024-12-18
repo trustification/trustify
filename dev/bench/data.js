@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734358215916,
+  "lastUpdate": 1734525608625,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2633,6 +2633,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/88c8632c685c916429e23d19f0ee0227395141fd"
         },
         "date": 1734358215086,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 22,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "a98d4681dd51b30758a2037bcbb94242a124caac",
+          "message": "fix: improve sbom to vunerabilities correlation both in performance and accuracy",
+          "timestamp": "2024-12-18T12:06:09Z",
+          "tree_id": "547bf13268ace8636a9cc57728f4d51929060743",
+          "url": "https://github.com/trustification/trustify/commit/a98d4681dd51b30758a2037bcbb94242a124caac"
+        },
+        "date": 1734525607667,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
