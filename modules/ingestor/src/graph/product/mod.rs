@@ -166,7 +166,8 @@ impl Graph {
                     cpe_key: organization_cpe_key,
                     website: None,
                 };
-                let org = self.ingest_organization(vendor, org, connection).await?;
+                let org: OrganizationContext<'_> =
+                    self.ingest_organization(vendor, org, connection).await?;
 
                 product::ActiveModel {
                     id: Default::default(),
