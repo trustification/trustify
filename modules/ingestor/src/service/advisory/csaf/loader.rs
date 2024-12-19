@@ -16,6 +16,7 @@ use csaf::{
     vulnerability::{ProductStatus, Vulnerability},
     Csaf,
 };
+use hex::ToHex;
 use sbom_walker::report::ReportSink;
 use sea_orm::{ConnectionTrait, TransactionTrait};
 use semver::Version;
@@ -94,6 +95,16 @@ impl<'g> CsafLoader<'g> {
 
         let advisory_id = gen_identifier(&csaf);
         let labels = labels.into().add("type", "csaf");
+
+        let sha256 = digests.sha256.encode_hex::<String>();
+        if let Some(found) = self.graph.get_advisory_by_digest(&sha256, &tx).await? {
+            // we already have the exact same document.
+            return Ok(IngestResult {
+                id: Id::Uuid(found.advisory.id),
+                document_id: Some(advisory_id),
+                warnings: warnings.into(),
+            });
+        }
 
         let advisory = self
             .graph

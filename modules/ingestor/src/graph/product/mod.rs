@@ -3,6 +3,7 @@ pub mod product_version;
 use entity::organization;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait, QueryFilter, Set,
+    TryIntoModel,
 };
 use std::fmt::Debug;
 use tracing::instrument;
@@ -124,9 +125,21 @@ pub struct ProductInformation {
     pub cpe: Option<Cpe>,
 }
 
+const PRODUCT_NAMESPACE: Uuid = Uuid::from_bytes([
+    0x37, 0x38, 0xb4, 0x3d, 0xfd, 0x03, 0x4a, 0x9d, 0x84, 0x9c, 0x48, 0x9b, 0xec, 0x61, 0x0f, 0x07,
+]);
+
 impl ProductInformation {
     pub fn has_data(&self) -> bool {
         self.vendor.is_some() || self.cpe.is_some()
+    }
+
+    pub fn create_uuid(org: Option<Uuid>, name: String) -> Uuid {
+        let mut result = Uuid::new_v5(&PRODUCT_NAMESPACE, name.as_bytes());
+        if let Some(org) = org {
+            result = Uuid::new_v5(&result, org.as_bytes());
+        }
+        Uuid::new_v5(&result, name.as_bytes())
     }
 }
 
@@ -151,6 +164,8 @@ impl Graph {
             .clone()
             .map(|cpe| cpe.product().as_ref().to_string());
 
+        let id;
+
         let entity = if let Some(vendor) = information.vendor {
             if let Some(found) = self
                 .get_product_by_organization(vendor.clone(), &name, connection)
@@ -169,23 +184,30 @@ impl Graph {
                 let org: OrganizationContext<'_> =
                     self.ingest_organization(vendor, org, connection).await?;
 
+                id = ProductInformation::create_uuid(Some(org.organization.id), name.clone());
                 product::ActiveModel {
-                    id: Default::default(),
+                    id: Set(id),
                     name: Set(name),
                     cpe_key: Set(cpe_key),
                     vendor_id: Set(Some(org.organization.id)),
                 }
             }
         } else {
+            id = ProductInformation::create_uuid(None, name.clone());
             product::ActiveModel {
-                id: Default::default(),
+                id: Set(id),
                 name: Set(name),
                 vendor_id: Set(None),
                 cpe_key: Set(cpe_key),
             }
         };
 
-        Ok(ProductContext::new(self, entity.insert(connection).await?))
+        product::Entity::insert(entity.clone())
+            .on_conflict_do_nothing()
+            .exec(connection)
+            .await?;
+
+        Ok(ProductContext::new(self, entity.try_into_model()?))
     }
 
     #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
