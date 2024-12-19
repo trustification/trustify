@@ -1,6 +1,19 @@
 use sea_orm::entity::prelude::*;
+use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, Eq, Hash, Debug, PartialEq, EnumIter, DeriveActiveEnum, strum::Display)]
+#[derive(
+    Copy,
+    Clone,
+    Eq,
+    Hash,
+    Debug,
+    PartialEq,
+    EnumIter,
+    DeriveActiveEnum,
+    strum::Display,
+    Serialize,
+    Deserialize,
+)]
 #[sea_orm(
     rs_type = "String",
     db_type = "String(StringLen::None)",
