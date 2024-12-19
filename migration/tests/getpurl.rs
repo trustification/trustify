@@ -54,12 +54,35 @@ async fn test_getpurl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         match get_purl(&ctx.db, sbom_package_purl_ref.qualified_purl_id.to_string()).await {
             Ok(Some(purl)) => {
                 let parse_purl: Purl = Purl::from_str(purl.as_str())?;
-                assert!(parse_purl.name == sbom_node_name);
+                assert_eq!(parse_purl.name, sbom_node_name);
             }
             Ok(None) => panic!("getpurl() test should match"),
             Err(e) => panic!("error testing getpurl() pg function. {}", e),
         }
     }
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn getpurl_urls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let qualified = ctx
+        .graph
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.foo.bar/foo-bar@1.0?key=value%3dvalue")?,
+            &ctx.db,
+        )
+        .await?;
+
+    let id = qualified.qualified_package.id;
+
+    let result = get_purl(&ctx.db, id.to_string()).await?;
+
+    assert_eq!(
+        result.as_deref(),
+        Some("pkg:maven/org.foo.bar/foo-bar@1.0?key=value%3dvalue")
+    );
 
     Ok(())
 }
