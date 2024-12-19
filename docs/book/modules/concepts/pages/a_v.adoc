@@ -1,0 +1,9 @@
+= Advisories & vulnerabilities
+
+xref:index.adoc#vulnerability[Vulnerabilities] are learned from ingesting advisories. During the ingestion process,
+Trustify will extract and aggregate vulnerability information, grouped by their vulnerability identifier.
+
+Advisories may contain multiple vulnerabilities and may scope the application of statements the advisories make to
+certain packages. This means that trustify has an aggregated set of information for a vulnerability, where information
+from the CVE project supersedes information from more specific advisories. And has "vulnerabilities of an advisory",
+which contains the specific information provided by this advisory.

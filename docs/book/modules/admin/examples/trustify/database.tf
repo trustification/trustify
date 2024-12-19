@@ -122,4 +122,6 @@ resource "aws_db_instance" "trustify" {
   skip_final_snapshot = true
 
   availability_zone = var.availability-zone
+
+  performance_insights_enabled = true
 }
