@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734530520339,
+  "lastUpdate": 1734627760262,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2725,6 +2725,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 10,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "80c6d09502626a7cca8f92a12ce7f2698ee23f8e",
+          "message": "fix: use predictable ids for product related entities and additionally speed up csaf ingestion",
+          "timestamp": "2024-12-19T16:41:46Z",
+          "tree_id": "4aa3ede800b431b6b038041cb5d9d390cc52c1d9",
+          "url": "https://github.com/trustification/trustify/commit/80c6d09502626a7cca8f92a12ce7f2698ee23f8e"
+        },
+        "date": 1734627758924,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 6,
             "unit": "s"
           }
         ]
