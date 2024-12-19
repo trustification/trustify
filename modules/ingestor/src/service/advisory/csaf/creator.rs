@@ -3,6 +3,7 @@ use crate::{
         advisory::advisory_vulnerability::{Version, VersionInfo, VersionSpec},
         cpe::CpeCreator,
         organization::{OrganizationContext, OrganizationInformation},
+        product::ProductInformation,
         purl::creator::PurlCreator,
         Graph,
     },
@@ -13,7 +14,6 @@ use crate::{
 };
 use csaf::{definitions::ProductIdT, Csaf};
 use sea_orm::{ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
-use sea_query::IntoCondition;
 use std::collections::{hash_map::Entry, HashMap, HashSet};
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, db::chunk::EntityChunkedIter, purl::Purl};
@@ -157,8 +157,10 @@ impl<'a> StatusCreator<'a> {
                 .clone()
                 .map(|cpe| cpe.product().as_ref().to_string());
 
+            let product_id = ProductInformation::create_uuid(org_id, product.product.clone());
+
             let product_entity = product::ActiveModel {
-                id: Set(Uuid::now_v7()),
+                id: Set(product_id),
                 name: Set(product.product.clone()),
                 vendor_id: Set(org_id),
                 cpe_key: Set(product_cpe_key),
@@ -168,15 +170,22 @@ impl<'a> StatusCreator<'a> {
             // Create all product ranges for batch ingesting
             let product_version_range = match product.version {
                 Some(ref ver) => {
+                    let version_range_id =
+                        Uuid::new_v5(&product_id, serde_json::to_string(ver)?.as_bytes());
                     let mut version_range_entity = ver.clone().into_active_model();
-                    version_range_entity.id = Set(Uuid::now_v7());
+                    version_range_entity.id = Set(version_range_id);
                     version_ranges.push(version_range_entity.clone());
 
+                    let version_cpe_key = product
+                        .cpe
+                        .clone()
+                        .map(|cpe| cpe.version().as_ref().to_string());
+
                     let product_version_range_entity = product_version_range::ActiveModel {
-                        id: Set(Uuid::now_v7()),
+                        id: Set(version_range_id),
                         product_id: product_entity.id,
-                        version_range_id: version_range_entity.id,
-                        cpe_key: Set(None),
+                        version_range_id: Set(version_range_id),
+                        cpe_key: Set(version_cpe_key),
                     };
                     product_version_ranges.push(product_version_range_entity.clone());
                     Some(product_version_range_entity)
@@ -257,17 +266,22 @@ impl<'a> StatusCreator<'a> {
         self.create_status(connection, checked).await?;
 
         for batch in &products.chunked() {
-            product::Entity::insert_many(batch).exec(connection).await?;
+            product::Entity::insert_many(batch)
+                .on_conflict_do_nothing()
+                .exec(connection)
+                .await?;
         }
 
         for batch in &version_ranges.chunked() {
             version_range::Entity::insert_many(batch)
+                .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
 
         for batch in &product_version_ranges.chunked() {
             product_version_range::Entity::insert_many(batch)
+                .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
@@ -301,25 +315,6 @@ impl<'a> StatusCreator<'a> {
 
             let package_id = ps.purl.package_uuid();
             let cpe_id = ps.cpe.as_ref().map(Cpe::uuid);
-
-            let package_status = purl_status::Entity::find()
-                .filter(purl_status::Column::BasePurlId.eq(package_id))
-                .filter(purl_status::Column::AdvisoryId.eq(self.advisory_id))
-                .filter(purl_status::Column::VulnerabilityId.eq(&self.vulnerability_id))
-                .filter(purl_status::Column::StatusId.eq(status.id))
-                .filter(
-                    cpe_id
-                        .map(|inner| purl_status::Column::ContextCpeId.eq(inner))
-                        .unwrap_or(purl_status::Column::ContextCpeId.is_null()),
-                )
-                .left_join(version_range::Entity)
-                .filter(ps.info.clone().into_condition())
-                .one(connection)
-                .await?;
-
-            if package_status.is_some() {
-                continue;
-            }
 
             let mut version_range = ps.info.clone().into_active_model();
             let version_range_id = Uuid::now_v7();
