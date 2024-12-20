@@ -284,7 +284,7 @@ mod test {
         );
         assert_eq!(
             response["items"][0]["ancestors"][0]["purl"],
-            "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?type=pom&repository_url=https://maven.repository.redhat.com/ga/"
+            "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?type=pom&repository_url=https%3a%2f%2fmaven.repository.redhat.com%2fga%2f"
         );
 
         assert_eq!(&response["total"], 2);
