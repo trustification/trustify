@@ -2327,7 +2327,6 @@ components:
     BasePurlSummary:
       allOf:
       - $ref: '#/components/schemas/BasePurlHead'
-      - type: object
     BinaryByteSize:
       type: string
     ChatMessage:
@@ -2754,7 +2753,6 @@ components:
     OrganizationSummary:
       allOf:
       - $ref: '#/components/schemas/OrganizationHead'
-      - type: object
     OsvImporter:
       allOf:
       - $ref: '#/components/schemas/CommonImporter'
@@ -2840,7 +2838,6 @@ components:
           items:
             allOf:
             - $ref: '#/components/schemas/BasePurlHead'
-            - type: object
         total:
           type: integer
           format: int64
