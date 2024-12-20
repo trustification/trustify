@@ -1,6 +1,6 @@
 = Advisories & vulnerabilities
 
-Trustify learns about xref:index.adoc#vulnerability[Vulnerabilities] by ingesting advisories. During the ingestion
+Trustify learns about xref:index.adoc#vulnerability[vulnerabilities] by ingesting advisories. During the ingestion
 process, Trustify extracts and aggregates vulnerability information, grouped by their vulnerability identifier.
 
 Advisories can contain multiple vulnerabilities and can scope the application of statements the advisories make to
