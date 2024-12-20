@@ -1109,7 +1109,7 @@ mod test {
             .unwrap();
 
         assert_eq!(analysis_graph.items.last().unwrap().ancestors.last().unwrap().purl,
-                   "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?type=pom&repository_url=https://maven.repository.redhat.com/ga/".to_string()
+                   "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?type=pom&repository_url=https%3a%2f%2fmaven.repository.redhat.com%2fga%2f".to_string()
         );
         assert_eq!(
             analysis_graph
