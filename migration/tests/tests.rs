@@ -24,5 +24,7 @@ async fn test_migrations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext, skip_teardown)]
 #[test(tokio::test)]
 async fn only_up_migration(_ctx: TrustifyContext) -> Result<(), anyhow::Error> {
+    // The initialization of the database will already call the `up` function. So we
+    // don't need any extra code here
     Ok(())
 }
