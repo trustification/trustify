@@ -4,6 +4,7 @@ use test_log::test;
 use tracing::instrument;
 use trustify_common::model::Paginated;
 use trustify_module_fundamental::sbom::model::SbomPackage;
+use trustify_module_ingestor::service::{Format, IngestorService};
 use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext)]
@@ -119,4 +120,35 @@ async fn ingest_spdx_medium_cpes(ctx: &TrustifyContext) -> Result<(), anyhow::Er
         },
     )
     .await
+}
+
+/// A test having a lot of CPEs to ingest
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+#[instrument]
+async fn ingest_spdx_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    // let graph = Graph::new(ctx.db.clone());
+    // let data = document_bytes("openshift-4.13.json.xz").await?;
+
+    //let json: Value = serde_json::from_slice(&data)?;
+    //let (sbom, _) = parse_spdx(&Discard, json)?;
+    //let sbom = fix_spdx_rels(sbom);
+    //let next = serde_json::to_vec(&sbom)?;
+
+    let start = Instant::now();
+
+    // let ingestor = IngestorService::new(graph, ctx.storage.clone());
+    // let result = ingestor
+    //     .ingest(&next, Format::SPDX, ("source", "test"), None)
+    //     .await?;
+
+    //let result = ctx.ingest_document("rhel-9.5.json.bz2").await?;
+    let result = ctx.ingest_document("openshift-4.17.json.bz2").await?;
+
+    let ingest_time = start.elapsed();
+    log::info!("ingest: {}", humantime::Duration::from(ingest_time));
+
+    assert!(matches!(result.id, Id::Uuid(_)));
+
+    Ok(())
 }
