@@ -1,6 +1,7 @@
 pub mod advisory;
 pub mod advisory_vulnerability;
 pub mod base_purl;
+pub mod conversation;
 pub mod cpe;
 pub mod cpe_license_assertion;
 pub mod cvss3;

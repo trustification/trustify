@@ -1,9 +1,12 @@
 use crate::ai::model::ChatState;
 use crate::ai::service::AiService;
+use serde_json::json;
 
 use test_context::test_context;
 use test_log::test;
+
 use trustify_common::hashing::Digests;
+use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::product::ProductInformation;
 use trustify_test_context::TrustifyContext;
 
@@ -175,6 +178,86 @@ async fn test_completions_advisory_info(ctx: &TrustifyContext) -> Result<(), any
     assert!(last_message_content.contains("CVE-2024-23672"));
     assert!(last_message_content.contains("CVE-2024-24549"));
     assert!(last_message_content.contains("DoS"));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn conversation_crud(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let service = AiService::new(ctx.db.clone());
+
+    // create a conversation
+    let value1 = json!({"test":"value1"});
+    let conversation = service
+        .create_conversation("user_a".into(), value1.clone(), "summary".into(), &ctx.db)
+        .await?;
+
+    assert_eq!("user_a", conversation.user_id);
+    assert_eq!(value1, conversation.state);
+    assert_eq!("summary", conversation.summary);
+    assert_eq!(0i32, conversation.seq);
+    let conversation_id = conversation.id;
+
+    // get the created conversation
+    let fetched = service.fetch_conversation(conversation_id, &ctx.db).await?;
+
+    assert_eq!(Some(conversation.clone()), fetched);
+
+    // list the conversations of the user
+    let converstations = service
+        .fetch_conversations(
+            "user_a".into(),
+            Paginated {
+                offset: 0,
+                limit: 10,
+            },
+            &ctx.db,
+        )
+        .await?;
+
+    assert_eq!(1, converstations.total);
+    assert_eq!(1, converstations.items.len());
+    assert_eq!(conversation, converstations.items[0]);
+
+    let value2 = json!({"test":"value2"});
+    service
+        .update_conversation(
+            conversation_id,
+            value2.clone(),
+            "summary2".into(),
+            1,
+            &ctx.db,
+        )
+        .await?;
+
+    // get the updated conversation
+    let fetched = service.fetch_conversation(conversation_id, &ctx.db).await?;
+
+    assert_eq!(value2, fetched.unwrap().state);
+
+    // verify that the update fails due to old seq
+    service
+        .update_conversation(
+            conversation_id,
+            json!({"test":"bad"}),
+            "summary2".into(),
+            0,
+            &ctx.db,
+        )
+        .await
+        .expect_err("should fail due to old seq");
+
+    // delete the conversation
+    let delete_count = service
+        .delete_conversation(conversation_id, &ctx.db)
+        .await?;
+    assert_eq!(delete_count, 1u64);
+
+    // get the deleted conversation
+    let fetched = service.fetch_conversation(conversation_id, &ctx.db).await?;
+
+    assert_eq!(None, fetched);
 
     Ok(())
 }
