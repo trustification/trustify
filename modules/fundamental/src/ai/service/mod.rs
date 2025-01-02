@@ -19,11 +19,21 @@ use langchain_rust::{
     prompt_args,
     tools::Tool,
 };
-use sea_orm::ConnectionTrait;
+use sea_orm::{prelude::Uuid, ColumnTrait, EntityTrait, QueryFilter, QueryOrder};
+use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
+
+use serde_json::Value;
 use std::env;
 use std::sync::Arc;
+use time::OffsetDateTime;
 use tokio::sync::OnceCell;
+
+use trustify_common::db::{limiter::LimiterTrait, query::Filtering};
+
+use trustify_common::db::query::q;
 use trustify_common::db::Database;
+use trustify_common::model::{Paginated, PaginatedResults};
+use trustify_entity::conversation;
 
 pub const PREFIX: &str = include_str!("prefix.txt");
 
@@ -283,6 +293,88 @@ impl AiService {
         }
 
         Ok(response)
+    }
+
+    pub async fn create_conversation<C: ConnectionTrait>(
+        &self,
+        user_id: String,
+        state: Value,
+        summary: String,
+        connection: &C,
+    ) -> Result<conversation::Model, Error> {
+        let model = conversation::ActiveModel {
+            id: Default::default(),
+            user_id: Set(user_id),
+            state: Set(state),
+            seq: Set(0),
+            summary: Set(summary),
+            updated_at: Set(OffsetDateTime::now_utc()),
+        };
+        Ok(model.insert(connection).await?)
+    }
+
+    pub async fn update_conversation<C: ConnectionTrait>(
+        &self,
+        conversation_id: Uuid,
+        state: Value,
+        summary: String,
+        seq: i32,
+        connection: &C,
+    ) -> Result<conversation::Model, Error> {
+        let model = conversation::ActiveModel {
+            id: Set(conversation_id),
+            state: Set(state),
+            summary: Set(summary),
+            seq: Set(seq),
+            updated_at: Set(OffsetDateTime::now_utc()),
+            ..Default::default()
+        };
+
+        let result = conversation::Entity::update(model)
+            .filter(conversation::Column::Seq.lte(seq))
+            .exec(connection)
+            .await?;
+
+        Ok(result)
+    }
+
+    pub async fn fetch_conversation<C: ConnectionTrait>(
+        &self,
+        id: Uuid,
+        connection: &C,
+    ) -> Result<Option<conversation::Model>, Error> {
+        let select = conversation::Entity::find().filter(conversation::Column::Id.eq(id));
+
+        Ok(select.one(connection).await?)
+    }
+
+    pub async fn fetch_conversations<C: ConnectionTrait + Sync + Send>(
+        &self,
+        user_id: String,
+        paginated: Paginated,
+        connection: &C,
+    ) -> Result<PaginatedResults<conversation::Model>, Error> {
+        let limiter = conversation::Entity::find()
+            .order_by_desc(conversation::Column::UpdatedAt)
+            .filtering(q(format!("user_id={}", user_id).as_str()))?
+            .limiting(connection, paginated.offset, paginated.limit);
+
+        let total = limiter.total().await?;
+
+        Ok(PaginatedResults {
+            total,
+            items: limiter.fetch().await?,
+        })
+    }
+
+    pub async fn delete_conversation<C: ConnectionTrait>(
+        &self,
+        id: Uuid,
+        connection: &C,
+    ) -> Result<u64, Error> {
+        let query = conversation::Entity::delete_by_id(id);
+        let result = query.exec(connection).await?;
+        Ok(result.rows_affected)
     }
 }
 

@@ -98,6 +98,7 @@ mod m0000780_alter_source_document_time;
 mod m0000790_alter_sbom_alter_document_id;
 mod m0000800_alter_product_version_range_scheme;
 mod m0000810_fix_get_purl;
+mod m0000820_create_conversation;
 
 pub struct Migrator;
 
@@ -203,6 +204,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000790_alter_sbom_alter_document_id::Migration),
             Box::new(m0000800_alter_product_version_range_scheme::Migration),
             Box::new(m0000810_fix_get_purl::Migration),
+            Box::new(m0000820_create_conversation::Migration),
         ]
     }
 }
