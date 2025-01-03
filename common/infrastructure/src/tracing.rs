@@ -1,6 +1,7 @@
 use core::fmt;
 use opentelemetry::{propagation::Injector, trace::TracerProvider, Context, KeyValue};
-use opentelemetry_sdk::Resource;
+use opentelemetry_otlp::SpanExporter;
+use opentelemetry_sdk::{trace as sdktrace, Resource};
 use reqwest::RequestBuilder;
 use std::sync::Once;
 use tracing_subscriber::{
@@ -107,28 +108,26 @@ pub fn init_tracing(name: &str, tracing: Tracing) {
 }
 
 fn init_otlp(name: &str) {
-    use tracing_subscriber::prelude::*;
-
     opentelemetry::global::set_text_map_propagator(
         opentelemetry_sdk::propagation::TraceContextPropagator::new(),
     );
 
     #[allow(clippy::expect_used)]
-    let provider = opentelemetry_otlp::new_pipeline()
-        .tracing()
-        .with_trace_config(
-            opentelemetry_sdk::trace::Config::default()
-                .with_resource(Resource::new(vec![KeyValue::new(
-                    "service.name",
-                    name.to_string(),
-                )]))
-                .with_sampler(opentelemetry_sdk::trace::Sampler::ParentBased(Box::new(
-                    sampler(),
-                ))),
-        )
-        .with_exporter(opentelemetry_otlp::new_exporter().tonic())
-        .install_batch(opentelemetry_sdk::runtime::Tokio)
-        .expect("unable to setup tracing pipeline");
+    let exporter = SpanExporter::builder()
+        .with_tonic()
+        .build()
+        .expect("Unable to build OTEL exporter");
+
+    let provider = sdktrace::TracerProvider::builder()
+        .with_resource(Resource::new(vec![KeyValue::new(
+            "service.name",
+            name.to_string(),
+        )]))
+        .with_batch_exporter(exporter, opentelemetry_sdk::runtime::Tokio)
+        .with_sampler(opentelemetry_sdk::trace::Sampler::ParentBased(Box::new(
+            sampler(),
+        )))
+        .build();
 
     println!("Using Jaeger tracing.");
     println!("{:#?}", provider);
