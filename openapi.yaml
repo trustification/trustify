@@ -24,6 +24,159 @@ paths:
                     type: object
                   version:
                     type: string
+  /api/v1/ai/conversations:
+    get:
+      tags:
+      - ai
+      operationId: listConversations
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: offset
+        in: query
+        description: |-
+          The first item to return, skipping all that come before it.
+
+          NOTE: The order of items is defined by the API being called.
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: limit
+        in: query
+        description: |-
+          The maximum number of entries to return.
+
+          Zero means: no limit
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      responses:
+        '200':
+          description: The resulting list of conversation summaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResults_ConversationSummary'
+        '404':
+          description: The AI service is not enabled
+    post:
+      tags:
+      - ai
+      operationId: createConversation
+      responses:
+        '200':
+          description: The resulting conversation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: The request was invalid
+        '404':
+          description: The AI service is not enabled
+  /api/v1/ai/conversations/{id}:
+    get:
+      tags:
+      - ai
+      operationId: getConversation
+      parameters:
+      - name: id
+        in: path
+        description: Opaque ID of the conversation
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The resulting conversation
+          headers:
+            etag:
+              schema:
+                type: string
+              description: Sequence ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: The request was invalid
+        '404':
+          description: The AI service is not enabled
+    put:
+      tags:
+      - ai
+      operationId: updateConversation
+      parameters:
+      - name: id
+        in: path
+        description: Opaque ID of the conversation
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: if-match
+        in: header
+        description: The revision to update
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChatMessage'
+        required: true
+      responses:
+        '200':
+          description: The resulting conversation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: The request was invalid
+        '404':
+          description: The AI service is not enabled or the conversation was not found
+    delete:
+      tags:
+      - ai
+      operationId: deleteConversation
+      parameters:
+      - name: id
+        in: path
+        description: Opaque ID of the conversation
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The resulting conversation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: The request was invalid
+        '404':
+          description: The AI service is not enabled or the conversation was not found
   /api/v2/advisory:
     get:
       tags:
@@ -2334,20 +2487,24 @@ components:
       required:
       - message_type
       - content
+      - timestamp
       properties:
         content:
           type: string
-        internal_state:
-          type:
-          - string
-          - 'null'
         message_type:
           $ref: '#/components/schemas/MessageType'
+        timestamp:
+          type: string
+          format: date-time
     ChatState:
       type: object
       required:
       - messages
       properties:
+        internal_state:
+          type:
+          - string
+          - 'null'
         messages:
           type: array
           items:
@@ -2409,6 +2566,42 @@ components:
         period:
           type: string
           description: The period the importer should be run.
+    Conversation:
+      type: object
+      required:
+      - id
+      - messages
+      - updated_at
+      - seq
+      properties:
+        id:
+          type: string
+          format: uuid
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        seq:
+          type: integer
+          format: int32
+        updated_at:
+          type: string
+          format: date-time
+    ConversationSummary:
+      type: object
+      required:
+      - id
+      - updated_at
+      - summary
+      properties:
+        id:
+          type: string
+          format: uuid
+        summary:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
     CsafImporter:
       allOf:
       - $ref: '#/components/schemas/CommonImporter'
@@ -2838,6 +3031,33 @@ components:
           items:
             allOf:
             - $ref: '#/components/schemas/BasePurlHead'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+    PaginatedResults_ConversationSummary:
+      type: object
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - updated_at
+            - summary
+            properties:
+              id:
+                type: string
+                format: uuid
+              summary:
+                type: string
+              updated_at:
+                type: string
+                format: date-time
         total:
           type: integer
           format: int64

@@ -3,7 +3,7 @@ use clap::Parser;
 use nu_ansi_term::Color::Blue;
 use reedline::FileBackedHistory;
 use reedline::{DefaultPrompt, DefaultPromptSegment, Reedline, Signal};
-use trustify_module_fundamental::ai::model::{ChatState, MessageType};
+use trustify_module_fundamental::ai::model::{ChatMessage, ChatState, MessageType};
 
 #[derive(Debug, Parser, Default)]
 pub struct Ai {
@@ -41,7 +41,7 @@ Enter your question or type:
 
     println!("Using Trustify endpoint: {}", url);
 
-    let mut chat_state = ChatState::new();
+    let mut chat_state = ChatState::default();
     loop {
         match line_editor.read_line(&prompt) {
             Ok(Signal::Success(buffer)) => {
@@ -51,14 +51,14 @@ Enter your question or type:
                         return Ok(());
                     }
                     "clear" => {
-                        chat_state = ChatState::new();
+                        chat_state = ChatState::default();
                         println!("{}", Blue.paint("\nChat history cleared..."));
                         continue;
                     }
                     _ => {}
                 }
 
-                chat_state.add_human_message(buffer.clone());
+                chat_state.messages.push(ChatMessage::human(buffer.clone()));
                 let pos = chat_state.messages.len();
 
                 let client = reqwest::Client::new();

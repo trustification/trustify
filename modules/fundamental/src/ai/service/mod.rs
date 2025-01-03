@@ -1,6 +1,6 @@
 pub mod tools;
 
-use crate::ai::model::{ChatMessage, ChatState, LLMInfo, MessageType};
+use crate::ai::model::{ChatMessage, ChatState, InternalState, LLMInfo, MessageType};
 
 use crate::ai::service::tools::remote::RemoteToolsProvider;
 use crate::Error;
@@ -22,7 +22,6 @@ use langchain_rust::{
 use sea_orm::{prelude::Uuid, ColumnTrait, EntityTrait, QueryFilter, QueryOrder};
 use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
 
-use serde_json::Value;
 use std::env;
 use std::sync::Arc;
 use time::OffsetDateTime;
@@ -30,6 +29,7 @@ use tokio::sync::OnceCell;
 
 use trustify_common::db::limiter::LimiterTrait;
 
+use trustify_common::db::query::{Filtering, Query};
 use trustify_common::db::Database;
 use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_entity::conversation;
@@ -183,11 +183,65 @@ impl AiService {
             .await
     }
 
-    pub async fn completions<C: ConnectionTrait>(
+    pub async fn summarize(&self, messages: &[ChatMessage]) -> Result<String, Error> {
+        // we could ask an LLM to summarize the conversation, but for now lets use the first message.
+        match messages.first() {
+            Some(message) => {
+                let mut summary = message.content.clone();
+                summary.truncate(97);
+                if message.content.len() > 97 {
+                    summary.push_str("...");
+                }
+                Ok(summary)
+            }
+            None => Ok("...".to_string()),
+        }
+    }
+    pub async fn completions(&self, request: &ChatState) -> Result<ChatState, Error> {
+        // get the previous LLM message history
+        let internal_state = match &request.internal_state {
+            Some(internal_state) => match STANDARD.decode(internal_state) {
+                Ok(decoded) => {
+                    let internal_state: InternalState = serde_json::from_slice(decoded.as_slice())
+                        .map_err(|_| {
+                            Error::BadRequest("internal_state failed to decode".to_string())
+                        })?;
+                    internal_state
+                }
+                Err(_) => return Err(Error::BadRequest("invalid internal_state".to_string())),
+            },
+            None => InternalState {
+                messages: Vec::new(),
+                timestamps: Vec::new(),
+            },
+        };
+
+        let internal_state = self
+            .completions_decoded(&request.messages, &internal_state)
+            .await?;
+
+        let messages = internal_state.chat_messages();
+
+        // encode the internal state
+        let internal_state = match serde_json::to_vec(&internal_state) {
+            Ok(serialized) => {
+                // todo: implement data encryption to avoid client side tampering
+                STANDARD.encode(serialized.as_slice())
+            }
+            Err(e) => return Err(Error::Internal(e.to_string())),
+        };
+
+        Ok(ChatState {
+            messages,
+            internal_state: Some(internal_state),
+        })
+    }
+
+    async fn completions_decoded(
         &self,
-        request: &ChatState,
-        _connection: &C,
-    ) -> Result<ChatState, Error> {
+        request_messages: &Vec<ChatMessage>,
+        internal_state: &InternalState,
+    ) -> Result<InternalState, Error> {
         let llm = match self.llm.clone() {
             Some(llm) => llm,
             None => return Err(Error::NotFound("AI service is not enabled".to_string())),
@@ -205,156 +259,185 @@ impl AiService {
             .build(llm)
             .map_err(Error::AgentError)?;
 
-        let mut memory = SimpleMemory::new();
+        if internal_state.messages.len() != internal_state.timestamps.len() {
+            return Err(Error::BadRequest("invalid internal_state".to_string()));
+        }
+
+        // Get all the new user messages
         let mut new_user_messages = Vec::new();
-
-        for chat_message in &request.messages {
-            match &chat_message.internal_state {
-                None => {
-                    new_user_messages
-                        .push(Message::new_human_message(chat_message.content.clone()));
+        if internal_state.messages.is_empty() {
+            for chat_message in request_messages {
+                // all messages should be user messages...
+                if chat_message.message_type != MessageType::Human {
+                    return Err(Error::BadRequest(
+                        "message without internal_state must be a user message".to_string(),
+                    ));
                 }
-
-                Some(internal_state) => {
-                    if !new_user_messages.is_empty() {
-                        return Err(Error::BadRequest(
-                            "message with internal_state found after messages without".to_string(),
-                        ));
-                    }
-                    match STANDARD.decode(internal_state) {
-                        Ok(decoded) => {
-                            // todo: implement data encryption to avoid client side tampering
-                            let m: Message =
-                                serde_json::from_slice(decoded.as_slice()).map_err(|_| {
-                                    Error::BadRequest("internal_state failed to decode".to_string())
-                                })?;
-                            memory.add_message(m);
-                        }
-                        Err(_) => {
-                            return Err(Error::BadRequest("invalid internal_state".to_string()))
-                        }
-                    }
-                }
+                new_user_messages.push(chat_message.clone());
             }
+        } else {
+            // find the new user messages...
+            for chat_message in request_messages.iter().rev() {
+                // Add all the messages at the tail that are human.
+                if chat_message.message_type != MessageType::Human {
+                    break;
+                }
+                new_user_messages.push(chat_message.clone());
+            }
+            new_user_messages.reverse();
         }
 
-        let mut history = memory.messages();
-        for message in &new_user_messages {
-            history.push(message.clone());
+        // add all messages from the internal state to the memory
+        let mut memory = SimpleMemory::new();
+        for message in &internal_state.messages {
+            memory.add_message(message.clone());
         }
 
+        // add all new user messages except the last one to the memory
         let last_message = new_user_messages
             .pop()
             .ok_or(Error::BadRequest("no new user messages".to_string()))?;
+
+        // timestamp all the user messages...
+        let mut timestamps = internal_state.timestamps.clone();
+        let now = OffsetDateTime::now_utc().unix_timestamp();
+        timestamps.push(now);
+
         for message in new_user_messages {
-            memory.add_message(message);
+            memory.add_message(Message::new_human_message(message.content.clone()));
+            timestamps.push(now);
         }
 
+        // use the last user message as the prompt
         let memory: Arc<tokio::sync::Mutex<dyn BaseMemory>> = memory.into();
         let executor = AgentExecutor::from_agent(agent).with_memory(memory.clone());
-
-        let answer = executor
+        _ = executor
             .invoke(prompt_args! {
                 "input" => last_message.content.clone(),
             })
             .await
             .map_err(Error::ChainError)?;
-        history.push(Message::new_ai_message(answer.clone()));
-
-        let mut response = ChatState {
-            messages: Vec::new(),
-        };
 
         let memory = memory.lock().await;
-        for mut message in memory.messages() {
-            if message.message_type == langchain_rust::schemas::MessageType::ToolMessage {
-                // hide tool results from the user
-                message.content = "".to_string();
-            }
-            let internal_state = match serde_json::to_vec(&message) {
-                Ok(serialized) => {
-                    // todo: implement data encryption to avoid client side tampering
-                    STANDARD.encode(serialized.as_slice())
-                }
-                Err(e) => return Err(Error::Internal(e.to_string())),
-            };
-            let ch = ChatMessage {
-                content: message.content.clone(),
-                message_type: match message.message_type.clone() {
-                    langchain_rust::schemas::MessageType::HumanMessage => MessageType::Human,
-                    langchain_rust::schemas::MessageType::AIMessage => MessageType::Ai,
-                    langchain_rust::schemas::MessageType::SystemMessage => MessageType::System,
-                    langchain_rust::schemas::MessageType::ToolMessage => MessageType::Tool,
-                },
-                internal_state: Some(internal_state),
-            };
-            response.messages.push(ch);
+        let history = memory.messages();
+
+        // add timestamps for all the new messages added by the LLM to the memory.
+        let now = OffsetDateTime::now_utc().unix_timestamp();
+        for _i in 0..(history.len() - timestamps.len()) {
+            timestamps.push(now);
         }
 
-        Ok(response)
-    }
-
-    pub async fn create_conversation<C: ConnectionTrait>(
-        &self,
-        user_id: String,
-        state: Value,
-        summary: String,
-        connection: &C,
-    ) -> Result<conversation::Model, Error> {
-        let model = conversation::ActiveModel {
-            id: Default::default(),
-            user_id: Set(user_id),
-            state: Set(state),
-            seq: Set(0),
-            summary: Set(summary),
-            updated_at: Set(OffsetDateTime::now_utc()),
+        // convert the memory messages to ChatMessages
+        let internal_state = InternalState {
+            messages: history,
+            timestamps,
         };
-        Ok(model.insert(connection).await?)
+        Ok(internal_state)
     }
 
-    pub async fn update_conversation<C: ConnectionTrait>(
+    pub async fn upsert_conversation<C: ConnectionTrait>(
         &self,
         conversation_id: Uuid,
-        state: Value,
-        summary: String,
-        seq: i32,
+        user_id: String,
+        messages: &Vec<ChatMessage>,
+        if_seq: Option<i32>,
         connection: &C,
-    ) -> Result<conversation::Model, Error> {
+    ) -> Result<(conversation::Model, Vec<ChatMessage>), Error> {
+        let found = self.fetch_conversation(conversation_id, connection).await?;
+        let (internal_state, current_seq) = match found {
+            Some((conversation, internal_state)) => {
+                // verify that the conversation belongs to the user
+                if conversation.user_id != user_id {
+                    // make this error look like a not found error to avoid leaking
+                    // existence of the conversation
+                    Err(Error::NotFound("conversation not found".to_string()))?;
+                }
+                (internal_state, if_seq.unwrap_or(conversation.seq))
+            }
+            None => {
+                // store the new conversation, LLM request will take a while,
+                // and we want subsequent concurrent requests to update this record.
+                let internal_state = InternalState::default();
+                let seq = if_seq.unwrap_or(0);
+                let model = conversation::ActiveModel {
+                    id: Set(conversation_id),
+                    user_id: Set(user_id),
+                    state: Set(serde_json::to_value(&internal_state)
+                        .map_err(|e| Error::Internal(e.to_string()))?),
+                    summary: Set("".to_string()),
+                    seq: Set(seq),
+                    updated_at: Set(OffsetDateTime::now_utc()),
+                };
+
+                // TODO: check for duplicate conversation_id error, and retry as an update
+                // to deal with concurrent initial upsert requests.
+                log::info!("inserting conversation into db: {}", conversation_id);
+                model.insert(connection).await?;
+                (internal_state, seq)
+            }
+        };
+
+        // generate an assistant response
+        log::info!(
+            "got conversation: {}, seq: {}, if_seq: {:?}",
+            conversation_id,
+            current_seq,
+            if_seq
+        );
+        let internal_state = self.completions_decoded(messages, &internal_state).await?;
+
+        let response = internal_state.chat_messages();
+
+        // If summarizing the conversation takes a while, maybe we can figure out how to do it
+        // in the background and update the record later.
+        let summary = self.summarize(&response).await?;
+
         let model = conversation::ActiveModel {
             id: Set(conversation_id),
-            state: Set(state),
+            state: Set(serde_json::to_value(&internal_state)
+                .map_err(|e| Error::Internal(e.to_string()))?),
             summary: Set(summary),
-            seq: Set(seq),
+            seq: Set(current_seq + 1),
             updated_at: Set(OffsetDateTime::now_utc()),
             ..Default::default()
         };
 
-        let result = conversation::Entity::update(model)
-            .filter(conversation::Column::Seq.lte(seq))
-            .exec(connection)
-            .await?;
+        let mut query = conversation::Entity::update(model);
+        if let Some(seq) = if_seq {
+            query = query.filter(conversation::Column::Seq.lte(seq))
+        }
+        let result = query.exec(connection).await?;
 
-        Ok(result)
+        Ok((result, response))
     }
 
     pub async fn fetch_conversation<C: ConnectionTrait>(
         &self,
         id: Uuid,
         connection: &C,
-    ) -> Result<Option<conversation::Model>, Error> {
+    ) -> Result<Option<(conversation::Model, InternalState)>, Error> {
         let select = conversation::Entity::find_by_id(id);
-
-        Ok(select.one(connection).await?)
+        let found = select.one(connection).await?;
+        Ok(match found {
+            Some(conversation) => {
+                let internal_state = serde_json::from_value(conversation.state.clone())
+                    .map_err(|e| Error::Internal(e.to_string()))?;
+                Some((conversation, internal_state))
+            }
+            None => None,
+        })
     }
 
     pub async fn fetch_conversations<C: ConnectionTrait + Sync + Send>(
         &self,
         user_id: String,
+        search: Query,
         paginated: Paginated,
         connection: &C,
     ) -> Result<PaginatedResults<conversation::Model>, Error> {
         let limiter = conversation::Entity::find()
             .order_by_desc(conversation::Column::UpdatedAt)
+            .filtering(search)?
             .filter(conversation::Column::UserId.eq(user_id))
             .limiting(connection, paginated.offset, paginated.limit);
 
@@ -374,6 +457,39 @@ impl AiService {
         let query = conversation::Entity::delete_by_id(id);
         let result = query.exec(connection).await?;
         Ok(result.rows_affected)
+    }
+}
+
+impl InternalState {
+    pub fn chat_messages(&self) -> Vec<ChatMessage> {
+        let mut response_messages = Vec::new();
+        for (index, message) in self.messages.iter().enumerate() {
+            // Skip showing some of the messages to the user.
+            match message.message_type {
+                langchain_rust::schemas::MessageType::SystemMessage => continue,
+                langchain_rust::schemas::MessageType::ToolMessage => continue,
+                langchain_rust::schemas::MessageType::HumanMessage => {}
+                langchain_rust::schemas::MessageType::AIMessage => {
+                    // is it a tools call?
+                    if message.tool_calls.is_some() {
+                        continue;
+                    }
+                }
+            }
+
+            response_messages.push(ChatMessage {
+                content: message.content.clone(),
+                message_type: match message.message_type.clone() {
+                    langchain_rust::schemas::MessageType::HumanMessage => MessageType::Human,
+                    langchain_rust::schemas::MessageType::AIMessage => MessageType::Ai,
+                    langchain_rust::schemas::MessageType::SystemMessage => MessageType::System,
+                    langchain_rust::schemas::MessageType::ToolMessage => MessageType::Tool,
+                },
+                timestamp: OffsetDateTime::from_unix_timestamp(self.timestamps[index])
+                    .unwrap_or_else(|_| OffsetDateTime::now_utc()),
+            });
+        }
+        response_messages
     }
 }
 
