@@ -1,14 +1,14 @@
-use crate::ai::model::ChatState;
+use crate::ai::model::{ChatMessage, ChatState};
 use crate::ai::service::AiService;
-use serde_json::json;
 
 use test_context::test_context;
 use test_log::test;
-
+use trustify_common::db::query::Query;
 use trustify_common::hashing::Digests;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::product::ProductInformation;
 use trustify_test_context::TrustifyContext;
+use uuid::Uuid;
 
 pub async fn ingest_fixtures(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let sbom = ctx
@@ -74,13 +74,13 @@ async fn test_completions_sbom_info(ctx: &TrustifyContext) -> Result<(), anyhow:
 
     ingest_fixtures(ctx).await?;
 
-    let mut req = ChatState::new();
-    req.add_human_message(
+    let mut req = ChatState::default();
+    req.messages.push(ChatMessage::human(
         "Give me information about the SBOMs available for quarkus reporting its name, SHA and URL."
             .into(),
-    );
+    ));
 
-    let result = service.completions(&req, &ctx.db).await?;
+    let result = service.completions(&req).await?;
 
     log::info!("result: {:#?}", result);
     let last_message_content = result.messages.last().unwrap().content.clone();
@@ -105,10 +105,12 @@ async fn test_completions_package_info(ctx: &TrustifyContext) -> Result<(), anyh
 
     ingest_fixtures(ctx).await?;
 
-    let mut req = ChatState::new();
-    req.add_human_message("List the httpclient packages with their identifiers".into());
+    let mut req = ChatState::default();
+    req.messages.push(ChatMessage::human(
+        "List the httpclient packages with their identifiers".into(),
+    ));
 
-    let result = service.completions(&req, &ctx.db).await?;
+    let result = service.completions(&req).await?;
 
     log::info!("result: {:#?}", result);
     let last_message_content = result.messages.last().unwrap().content.clone();
@@ -134,10 +136,12 @@ async fn test_completions_cve_info(ctx: &TrustifyContext) -> Result<(), anyhow::
 
     ingest_fixtures(ctx).await?;
 
-    let mut req = ChatState::new();
-    req.add_human_message("Give me details for CVE-2021-32714".into());
+    let mut req = ChatState::default();
+    req.messages.push(ChatMessage::human(
+        "Give me details for CVE-2021-32714".into(),
+    ));
 
-    let result = service.completions(&req, &ctx.db).await?;
+    let result = service.completions(&req).await?;
 
     log::info!("result: {:#?}", result);
     let last_message_content = result.messages.last().unwrap().content.clone();
@@ -162,10 +166,12 @@ async fn test_completions_advisory_info(ctx: &TrustifyContext) -> Result<(), any
 
     ingest_fixtures(ctx).await?;
 
-    let mut req = ChatState::new();
-    req.add_human_message("Give me details for the RHSA-2024_3666 advisory".into());
+    let mut req = ChatState::default();
+    req.messages.push(ChatMessage::human(
+        "Give me details for the RHSA-2024_3666 advisory".into(),
+    ));
 
-    let result = service.completions(&req, &ctx.db).await?;
+    let result = service.completions(&req).await?;
 
     log::info!("result: {:#?}", result);
     let last_message_content = result.messages.last().unwrap().content.clone();
@@ -186,21 +192,34 @@ async fn test_completions_advisory_info(ctx: &TrustifyContext) -> Result<(), any
 #[test(actix_web::test)]
 async fn conversation_crud(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let service = AiService::new(ctx.db.clone());
+    if !service.completions_enabled() {
+        return Ok(()); // skip test
+    }
 
     // create a conversation
-    let value1 = json!({"test":"value1"});
-    let conversation = service
-        .create_conversation("user_a".into(), value1.clone(), "summary".into(), &ctx.db)
+    let conversation_id = Uuid::now_v7();
+    let mut state = ChatState::default();
+    state.messages.push(ChatMessage::human("hello".into()));
+
+    let (conversation, _internal_state) = service
+        .upsert_conversation(
+            conversation_id,
+            "user_a".into(),
+            &state.messages,
+            Some(0),
+            &ctx.db,
+        )
         .await?;
 
     assert_eq!("user_a", conversation.user_id);
-    assert_eq!(value1, conversation.state);
-    assert_eq!("summary", conversation.summary);
-    assert_eq!(0i32, conversation.seq);
-    let conversation_id = conversation.id;
+    assert_eq!("hello", conversation.summary);
+    assert_eq!(1i32, conversation.seq);
 
     // get the created conversation
-    let fetched = service.fetch_conversation(conversation_id, &ctx.db).await?;
+    let fetched = service
+        .fetch_conversation(conversation_id, &ctx.db)
+        .await?
+        .map(|x| x.0);
 
     assert_eq!(Some(conversation.clone()), fetched);
 
@@ -208,6 +227,7 @@ async fn conversation_crud(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let converstations = service
         .fetch_conversations(
             "user_a".into(),
+            Query::default(),
             Paginated {
                 offset: 0,
                 limit: 10,
@@ -220,31 +240,33 @@ async fn conversation_crud(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(1, converstations.items.len());
     assert_eq!(conversation, converstations.items[0]);
 
-    let value2 = json!({"test":"value2"});
-    service
-        .update_conversation(
+    state
+        .messages
+        .push(ChatMessage::human("hello again".into()));
+
+    let value2 = service
+        .upsert_conversation(
             conversation_id,
-            value2.clone(),
-            "summary2".into(),
-            1,
+            "user_a".into(),
+            &state.messages,
+            Some(1),
             &ctx.db,
         )
-        .await?;
+        .await?
+        .0;
 
     // get the updated conversation
-    let fetched = service.fetch_conversation(conversation_id, &ctx.db).await?;
+    let fetched = service
+        .fetch_conversation(conversation_id, &ctx.db)
+        .await?
+        .unwrap()
+        .0;
 
-    assert_eq!(value2, fetched.unwrap().state);
+    assert_eq!(value2, fetched);
 
     // verify that the update fails due to old seq
     service
-        .update_conversation(
-            conversation_id,
-            json!({"test":"bad"}),
-            "summary2".into(),
-            0,
-            &ctx.db,
-        )
+        .upsert_conversation(conversation_id, "user_a".into(), &vec![], Some(0), &ctx.db)
         .await
         .expect_err("should fail due to old seq");
 
@@ -255,7 +277,10 @@ async fn conversation_crud(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(delete_count, 1u64);
 
     // get the deleted conversation
-    let fetched = service.fetch_conversation(conversation_id, &ctx.db).await?;
+    let fetched = service
+        .fetch_conversation(conversation_id, &ctx.db)
+        .await?
+        .map(|x| x.0);
 
     assert_eq!(None, fetched);
 

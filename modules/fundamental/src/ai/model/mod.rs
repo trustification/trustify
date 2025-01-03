@@ -1,16 +1,46 @@
+use langchain_rust::schemas::Message;
 use serde::{Deserialize, Serialize};
+use time::OffsetDateTime;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
-pub struct ChatState {
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema, PartialEq)]
+pub struct Conversation {
+    pub id: Uuid,
     pub messages: Vec<ChatMessage>,
+    #[schema(required)]
+    #[serde(with = "time::serde::rfc3339")]
+    pub updated_at: OffsetDateTime,
+    pub seq: i32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+pub struct ConversationSummary {
+    pub id: Uuid,
+    #[schema(required)]
+    #[serde(with = "time::serde::rfc3339")]
+    pub updated_at: OffsetDateTime,
+    pub summary: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema, PartialEq, Default)]
+pub struct ChatState {
+    pub messages: Vec<ChatMessage>,
+    pub internal_state: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+pub struct InternalState {
+    pub messages: Vec<Message>,
+    pub timestamps: Vec<i64>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema, PartialEq)]
 pub struct ChatMessage {
     pub message_type: MessageType,
     pub content: String,
-    pub internal_state: Option<String>,
+    #[serde(with = "time::serde::rfc3339")]
+    pub timestamp: OffsetDateTime,
 }
 
 #[derive(Clone, Eq, PartialEq, Default, Debug, Serialize, Deserialize, ToSchema)]
@@ -40,25 +70,13 @@ impl std::fmt::Display for MessageType {
     }
 }
 
-impl Default for ChatState {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ChatState {
-    pub fn new() -> Self {
-        Self {
-            messages: Vec::new(),
-        }
-    }
-
-    pub fn add_human_message(&mut self, message: String) {
-        self.messages.push(ChatMessage {
+impl ChatMessage {
+    pub fn human(message: String) -> Self {
+        ChatMessage {
             message_type: MessageType::Human,
             content: message,
-            internal_state: None,
-        });
+            timestamp: OffsetDateTime::now_utc(),
+        }
     }
 }
 
