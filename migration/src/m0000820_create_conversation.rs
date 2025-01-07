@@ -36,7 +36,7 @@ impl MigrationTrait for Migration {
             .create_index(
                 Index::create()
                     .table(Conversation::Table)
-                    .name(Conversation::ConverstationUserIdUpdatedAtIdx.to_string())
+                    .name(Indexes::ConversationUserIdUpdatedAtIdx.to_string())
                     .col(Conversation::UserId)
                     .col(Conversation::UpdatedAt)
                     .to_owned(),
@@ -52,7 +52,7 @@ impl MigrationTrait for Migration {
                 Index::drop()
                     .if_exists()
                     .table(Conversation::Table)
-                    .name(Conversation::ConverstationUserIdUpdatedAtIdx.to_string())
+                    .name(Indexes::ConversationUserIdUpdatedAtIdx.to_string())
                     .to_owned(),
             )
             .await?;
@@ -64,11 +64,15 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
+enum Indexes {
+    ConversationUserIdUpdatedAtIdx,
+}
+
+#[derive(DeriveIden)]
 enum Conversation {
     Table,
     Id,
     UserId,
-    ConverstationUserIdUpdatedAtIdx,
     State,
     Seq,
     Summary,

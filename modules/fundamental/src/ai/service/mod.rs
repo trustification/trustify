@@ -28,9 +28,8 @@ use std::sync::Arc;
 use time::OffsetDateTime;
 use tokio::sync::OnceCell;
 
-use trustify_common::db::{limiter::LimiterTrait, query::Filtering};
+use trustify_common::db::limiter::LimiterTrait;
 
-use trustify_common::db::query::q;
 use trustify_common::db::Database;
 use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_entity::conversation;
@@ -343,7 +342,7 @@ impl AiService {
         id: Uuid,
         connection: &C,
     ) -> Result<Option<conversation::Model>, Error> {
-        let select = conversation::Entity::find().filter(conversation::Column::Id.eq(id));
+        let select = conversation::Entity::find_by_id(id);
 
         Ok(select.one(connection).await?)
     }
@@ -356,7 +355,7 @@ impl AiService {
     ) -> Result<PaginatedResults<conversation::Model>, Error> {
         let limiter = conversation::Entity::find()
             .order_by_desc(conversation::Column::UpdatedAt)
-            .filtering(q(format!("user_id={}", user_id).as_str()))?
+            .filter(conversation::Column::UserId.eq(user_id))
             .limiting(connection, paginated.offset, paginated.limit);
 
         let total = limiter.total().await?;
