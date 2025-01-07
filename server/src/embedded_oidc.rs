@@ -9,7 +9,7 @@ use rand::Rng;
 use std::time::Duration;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
-use trustify_auth::devmode::{
+use trustify_auth::default::{
     CONFIDENTIAL_CLIENT_IDS, ISSUER_URL, PUBLIC_CLIENT_IDS, SSO_CLIENT_SECRET,
 };
 use trustify_infrastructure::health::Check;
@@ -61,8 +61,6 @@ fn create(enabled: bool) -> anyhow::Result<Option<Server>> {
             default_scope: SCOPE.to_string(),
         });
     }
-
-    // take the devmode url and extract all information for building the server
 
     let url = Url::parse(ISSUER_URL)?;
     let port = url.port().unwrap_or(8090);

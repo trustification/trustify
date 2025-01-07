@@ -1,4 +1,4 @@
-use crate::devmode::{self, SWAGGER_UI_CLIENT_ID};
+use crate::default::{self, SWAGGER_UI_CLIENT_ID};
 use actix_web::dev::HttpServiceFactory;
 use openid::{Client, Discovered, Provider, StandardClaims};
 use std::sync::Arc;
@@ -11,7 +11,7 @@ use utoipa::openapi::{
 };
 use utoipa_swagger_ui::{oauth, Config, SwaggerUi};
 
-#[derive(Clone, Debug, Default, clap::Args)]
+#[derive(Clone, Debug, clap::Args)]
 #[command(
     rename_all_env = "SCREAMING_SNAKE_CASE",
     next_help_heading = "Swagger UI OIDC"
@@ -44,12 +44,12 @@ pub struct SwaggerUiOidcConfig {
     pub swagger_ui_oidc_client_id: String,
 }
 
-impl SwaggerUiOidcConfig {
-    pub fn devmode() -> Self {
+impl Default for SwaggerUiOidcConfig {
+    fn default() -> Self {
         Self {
             tls_insecure: false,
             ca_certificates: vec![],
-            swagger_ui_oidc_issuer_url: Some(devmode::issuer_url()),
+            swagger_ui_oidc_issuer_url: Some(default::issuer_url()),
             swagger_ui_oidc_client_id: SWAGGER_UI_CLIENT_ID.to_string(),
         }
     }
@@ -96,18 +96,6 @@ impl SwaggerUiOidc {
             auth_url: client.provider.auth_uri().to_string(),
             client_id: client.client_id,
         }))
-    }
-
-    pub async fn from_devmode_or_config(
-        devmode: bool,
-        config: SwaggerUiOidcConfig,
-    ) -> anyhow::Result<Option<Self>> {
-        let config = match devmode {
-            true => SwaggerUiOidcConfig::devmode(),
-            false => config,
-        };
-
-        Self::new(config).await
     }
 
     pub fn apply_to_schema(&self, openapi: &mut OpenApi) {
