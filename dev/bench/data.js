@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1734699643121,
+  "lastUpdate": 1736292812658,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2807,6 +2807,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/ff1e5a8ed121dd97496161d45377fb73678cc642"
         },
         "date": 1734699642420,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "hchirino@redhat.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "distinct": true,
+          "id": "44ade245dc621e5a93aea19b2ad5e52163579b6f",
+          "message": "Conversation: proposed changes\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-01-07T22:54:09Z",
+          "tree_id": "839b808f5a58900e4ece5c3f9a967d6a575dc1d4",
+          "url": "https://github.com/trustification/trustify/commit/44ade245dc621e5a93aea19b2ad5e52163579b6f"
+        },
+        "date": 1736292811854,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
