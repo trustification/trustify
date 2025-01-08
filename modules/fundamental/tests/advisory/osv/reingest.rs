@@ -2,6 +2,7 @@ use super::{twice, update_mark_fixed_again, update_unmark_fixed};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::purl::Purl;
+use trustify_cvss::cvss3::severity::Severity;
 use trustify_module_fundamental::{
     purl::{model::details::purl::PurlStatus, service::PurlService},
     vulnerability::{model::VulnerabilityHead, service::VulnerabilityService},
@@ -123,6 +124,7 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 identifier: "CVE-2020-5238".to_string(),
                 ..Default::default()
             },
+            average_severity: Severity::None,
             status: "affected".to_string(),
             context: None,
         }]
@@ -135,6 +137,7 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 identifier: "CVE-2020-5238".to_string(),
                 ..Default::default()
             },
+            average_severity: Severity::None,
             status: "affected".to_string(),
             context: None,
         }]

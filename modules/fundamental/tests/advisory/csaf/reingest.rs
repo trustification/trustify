@@ -4,6 +4,7 @@ use super::{prepare_ps_state_change, twice};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::purl::Purl;
+use trustify_cvss::cvss3::severity::Severity;
 use trustify_module_fundamental::{
     purl::{
         model::details::purl::{PurlStatus, StatusContext},
@@ -143,6 +144,7 @@ async fn change_ps_list_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 identifier: "CVE-2023-33201".to_string(),
                 ..Default::default()
             },
+            average_severity: Severity::High,
             status: "fixed".to_string(),
             context: Some(StatusContext::Cpe(
                 "cpe:/a:redhat:jboss_enterprise_application_platform:7.4:*:el9:*".to_string()
@@ -233,6 +235,7 @@ async fn change_ps_list_vulns_all(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 identifier: "CVE-2023-33201".to_string(),
                 ..Default::default()
             },
+            average_severity: Severity::High,
             status: "affected".to_string(),
             context: Some(StatusContext::Cpe(
                 "cpe:/a:redhat:jboss_enterprise_application_platform:7.4:*:el9:*".to_string()
@@ -247,6 +250,7 @@ async fn change_ps_list_vulns_all(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 identifier: "CVE-2023-33201".to_string(),
                 ..Default::default()
             },
+            average_severity: Severity::High,
             status: "fixed".to_string(),
             context: Some(StatusContext::Cpe(
                 "cpe:/a:redhat:jboss_enterprise_application_platform:7.4:*:el9:*".to_string()
