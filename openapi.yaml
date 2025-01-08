@@ -3308,9 +3308,12 @@ components:
       type: object
       required:
       - vulnerability
+      - average_severity
       - status
       - context
       properties:
+        average_severity:
+          $ref: '#/components/schemas/Severity'
         context:
           oneOf:
           - type: 'null'

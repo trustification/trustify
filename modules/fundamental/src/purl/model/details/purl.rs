@@ -5,7 +5,6 @@ use crate::{
     vulnerability::model::VulnerabilityHead,
     Error,
 };
-use ::cpe::uri::OwnedUri;
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, LoaderTrait, ModelTrait,
     QueryFilter, QueryOrder, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select,
@@ -20,10 +19,12 @@ use trustify_common::{
     memo::Memo,
     purl::Purl,
 };
+use trustify_cvss::cvss3::{score::Score, severity::Severity, Cvss3Base};
 use trustify_entity::{
-    advisory, base_purl, cpe, license, organization, product, product_status, product_version,
-    product_version_range, purl_license_assertion, purl_status, qualified_purl, sbom, sbom_package,
-    sbom_package_purl_ref, status, version_range, versioned_purl, vulnerability,
+    advisory, base_purl, cpe, cvss3, license, organization, product, product_status,
+    product_version, product_version_range, purl_license_assertion, purl_status, qualified_purl,
+    sbom, sbom_package, sbom_package_purl_ref, status, version_range, versioned_purl,
+    vulnerability,
 };
 use trustify_module_ingestor::common::{Deprecation, DeprecationForExt};
 use utoipa::ToSchema;
@@ -247,21 +248,13 @@ impl PurlAdvisory {
                 withdrawn: None,
                 cwes: None,
             };
-
-            let advisory_cpe: Option<OwnedUri> = (&product_status.cpe).try_into().ok();
-
-            let purl_status = PurlStatus {
-                vulnerability: VulnerabilityHead::from_vulnerability_entity(
-                    &vuln,
-                    Memo::NotProvided,
-                    tx,
-                )
-                .await?,
-                status: product_status.status.slug,
-                context: advisory_cpe
-                    .as_ref()
-                    .map(|e| StatusContext::Cpe(e.to_string())),
-            };
+            let purl_status = PurlStatus::new(
+                &vuln,
+                product_status.status.slug,
+                Some(product_status.cpe.to_string()),
+                tx,
+            )
+            .await?;
 
             if let Some(entry) = results
                 .iter_mut()
@@ -294,6 +287,7 @@ impl PurlAdvisory {
 #[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq)]
 pub struct PurlStatus {
     pub vulnerability: VulnerabilityHead,
+    pub average_severity: Severity,
     pub status: String,
     #[schema(required)]
     pub context: Option<StatusContext>,
@@ -307,25 +301,14 @@ pub enum StatusContext {
 }
 
 impl PurlStatus {
-    pub async fn from_entity<C: ConnectionTrait>(
+    pub async fn new<C: ConnectionTrait>(
         vuln: &vulnerability::Model,
-        package_status: &purl_status::Model,
+        status: String,
+        cpe: Option<String>,
         tx: &C,
     ) -> Result<Self, Error> {
-        let status = status::Entity::find_by_id(package_status.status_id)
-            .one(tx)
-            .await?;
-
-        let status = status.map(|e| e.slug).unwrap_or("unknown".to_string());
-
-        let cpe = if let Some(context_cpe) = package_status.context_cpe_id {
-            let cpe = cpe::Entity::find_by_id(context_cpe).one(tx).await?;
-
-            cpe.map(|cpe| cpe.to_string())
-        } else {
-            None
-        };
-
+        let cvss3 = vuln.find_related(cvss3::Entity).all(tx).await?;
+        let average_severity = Score::from_iter(cvss3.iter().map(Cvss3Base::from)).severity();
         Ok(Self {
             vulnerability: VulnerabilityHead::from_vulnerability_entity(
                 vuln,
@@ -333,9 +316,30 @@ impl PurlStatus {
                 tx,
             )
             .await?,
+            average_severity,
             status,
             context: cpe.map(StatusContext::Cpe),
         })
+    }
+
+    pub async fn from_entity<C: ConnectionTrait>(
+        vuln: &vulnerability::Model,
+        package_status: &purl_status::Model,
+        tx: &C,
+    ) -> Result<Self, Error> {
+        let status = status::Entity::find_by_id(package_status.status_id)
+            .one(tx)
+            .await?
+            .map(|e| e.slug)
+            .unwrap_or("unknown".into());
+        let cpe = match package_status.context_cpe_id {
+            Some(context_cpe) => {
+                let cpe = cpe::Entity::find_by_id(context_cpe).one(tx).await?;
+                cpe.map(|v| v.to_string())
+            }
+            _ => None,
+        };
+        PurlStatus::new(vuln, status, cpe, tx).await
     }
 }
 
