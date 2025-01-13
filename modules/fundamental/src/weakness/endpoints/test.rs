@@ -20,7 +20,7 @@ async fn list_weaknesses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/weakness";
+    let uri = "/api/v2/weakness";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -44,7 +44,7 @@ async fn query_weaknesses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/weakness?q=struts";
+    let uri = "/api/v2/weakness?q=struts";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -68,7 +68,7 @@ async fn get_weakness(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/weakness/CWE-1004";
+    let uri = "/api/v2/weakness/CWE-1004";
 
     let request = TestRequest::get().uri(uri).to_request();
 

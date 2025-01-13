@@ -33,7 +33,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 200, description = "Matching organizations", body = OrganizationSummary),
     ),
 )]
-#[get("/v1/organization")]
+#[get("/v2/organization")]
 /// List organizations
 pub async fn all(
     state: web::Data<OrganizationService>,
@@ -60,7 +60,7 @@ pub async fn all(
         (status = 404, description = "Matching organization not found"),
     ),
 )]
-#[get("/v1/organization/{id}")]
+#[get("/v2/organization/{id}")]
 /// Retrieve organization details
 pub async fn get(
     state: web::Data<OrganizationService>,

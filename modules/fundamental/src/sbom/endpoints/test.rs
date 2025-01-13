@@ -19,7 +19,7 @@ async fn upload(ctx: &TrustifyContext) -> anyhow::Result<()> {
     let app = caller(ctx).await?;
 
     let request = TestRequest::post()
-        .uri("/api/v1/sbom")
+        .uri("/api/v2/sbom")
         .set_payload(document_bytes("quarkus-bom-2.13.8.Final-redhat-00004.json").await?)
         .to_request();
 
@@ -42,7 +42,7 @@ async fn get_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .await?
         .id
         .to_string();
-    let uri = format!("/api/v1/sbom/{id}");
+    let uri = format!("/api/v2/sbom/{id}");
     let req = TestRequest::get().uri(&uri).to_request();
     let sbom: Value = app.call_and_read_body_json(req).await;
     log::debug!("{sbom:#?}");
@@ -58,7 +58,7 @@ async fn get_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test(actix_web::test)]
 async fn filter_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     async fn query(app: &impl CallService, id: &str, q: &str) -> PaginatedResults<SbomPackage> {
-        let uri = format!("/api/v1/sbom/{id}/packages?q={}", urlencoding::encode(q));
+        let uri = format!("/api/v2/sbom/{id}/packages?q={}", urlencoding::encode(q));
         let req = TestRequest::get().uri(&uri).to_request();
         app.call_and_read_body_json(req).await
     }
@@ -95,7 +95,7 @@ async fn set_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
         .await?;
     let request = TestRequest::patch()
-        .uri(&format!("/api/v1/sbom/{}/label", result.id))
+        .uri(&format!("/api/v2/sbom/{}/label", result.id))
         .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
         .to_request();
     let response = app.call_service(request).await;
@@ -113,7 +113,7 @@ async fn set_labels_not_found(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     ctx.ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
         .await?;
     let request = TestRequest::patch()
-        .uri(&format!("/api/v1/sbom/{}/label", Id::Uuid(Uuid::now_v7())))
+        .uri(&format!("/api/v2/sbom/{}/label", Id::Uuid(Uuid::now_v7())))
         .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
         .to_request();
     let response = app.call_service(request).await;
@@ -135,7 +135,7 @@ async fn delete_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let response = app
         .call_service(
             TestRequest::delete()
-                .uri(&format!("/api/v1/sbom/{}", result.id.clone()))
+                .uri(&format!("/api/v2/sbom/{}", result.id.clone()))
                 .to_request(),
         )
         .await;
@@ -151,7 +151,7 @@ async fn delete_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let response = app
         .call_service(
             TestRequest::delete()
-                .uri(&format!("/api/v1/sbom/{}", result.id.clone()))
+                .uri(&format!("/api/v2/sbom/{}", result.id.clone()))
                 .to_request(),
         )
         .await;
@@ -173,7 +173,7 @@ async fn download_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let id = result.id.to_string();
 
     let req = TestRequest::get()
-        .uri(&format!("/api/v1/sbom/{id}"))
+        .uri(&format!("/api/v2/sbom/{id}"))
         .to_request();
 
     let sbom = app.call_and_read_body_json::<SbomSummary>(req).await;
@@ -187,7 +187,7 @@ async fn download_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // Verify we can download by all hashes
     for hash in hashes {
         let req = TestRequest::get()
-            .uri(&format!("/api/v1/sbom/{hash}/download"))
+            .uri(&format!("/api/v2/sbom/{hash}/download"))
             .to_request();
         let body = app.call_and_read_body(req).await;
         assert_eq!(bytes, body);
@@ -195,7 +195,7 @@ async fn download_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // Verify we can download by uuid
     let req = TestRequest::get()
-        .uri(&format!("/api/v1/sbom/{id}/download"))
+        .uri(&format!("/api/v2/sbom/{id}/download"))
         .to_request();
     let body = app.call_and_read_body(req).await;
     assert_eq!(bytes, body);
@@ -219,7 +219,7 @@ async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let v: Value = app
         .call_and_read_body_json(
             TestRequest::get()
-                .uri(&format!("/api/v1/sbom/{id}/advisory"))
+                .uri(&format!("/api/v2/sbom/{id}/advisory"))
                 .to_request(),
         )
         .await;
@@ -238,7 +238,7 @@ async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 async fn query_sboms_by_ingested_time(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     async fn query(app: &impl CallService, q: &str) -> Value {
         let uri = format!(
-            "/api/v1/sbom?q={}&sort={}",
+            "/api/v2/sbom?q={}&sort={}",
             urlencoding::encode(q),
             urlencoding::encode("ingested:desc")
         );

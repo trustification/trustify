@@ -21,7 +21,7 @@ use trustify_common::{
         (status = 200, description = "List of all known PURL types", body = Vec<TypeSummary>),
     ),
 )]
-#[get("/v1/purl/type")]
+#[get("/v2/purl/type")]
 /// List known pURL types
 pub async fn all_purl_types(
     service: web::Data<PurlService>,
@@ -43,7 +43,7 @@ pub async fn all_purl_types(
         (status = 200, description = "Information regarding PURLs within an type", body = PaginatedResults<BasePurlSummary>),
     ),
 )]
-#[get("/v1/purl/type/{type}")]
+#[get("/v2/purl/type/{type}")]
 /// Retrieve details about a pURL type
 pub async fn get_purl_type(
     service: web::Data<PurlService>,
@@ -72,7 +72,7 @@ pub async fn get_purl_type(
         (status = 200, description = "Matching vulnerabilities", body = BasePurlDetails),
     ),
 )]
-#[get("/v1/purl/type/{type}/{namespace_and_name:[^@]+}")]
+#[get("/v2/purl/type/{type}/{namespace_and_name:[^@]+}")]
 /// Retrieve base pURL details of a type
 pub async fn get_base_purl_of_type(
     service: web::Data<PurlService>,
@@ -107,7 +107,7 @@ pub async fn get_base_purl_of_type(
         (status = 200, description = "Matching vulnerabilities", body = VersionedPurlDetails),
     ),
 )]
-#[get("/v1/purl/type/{type}/{namespace_and_name:[^@]+}@{version}")]
+#[get("/v2/purl/type/{type}/{namespace_and_name:[^@]+}@{version}")]
 /// Retrieve versioned pURL details of a type
 pub async fn get_versioned_purl_of_type(
     service: web::Data<PurlService>,

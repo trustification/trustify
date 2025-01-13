@@ -32,7 +32,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 404, description = "The AI service is not enabled")
     )
 )]
-#[post("/v1/ai/completions")]
+#[post("/v2/ai/completions")]
 pub async fn completions(
     service: web::Data<AiService>,
     db: web::Data<Database>,
@@ -51,7 +51,7 @@ pub async fn completions(
         (status = 404, description = "The AI service is not enabled")
     )
 )]
-#[get("/v1/ai/flags")]
+#[get("/v2/ai/flags")]
 // Gets the flags for the AI service
 pub async fn flags(
     service: web::Data<AiService>,
@@ -70,7 +70,7 @@ pub async fn flags(
         (status = 404, description = "The AI service is not enabled")
     )
 )]
-#[get("/v1/ai/tools")]
+#[get("/v2/ai/tools")]
 // Gets the list of tools that are available to assist AI services.
 pub async fn tools(
     service: web::Data<AiService>,
@@ -101,7 +101,7 @@ pub async fn tools(
         (status = 404, description = "The tool was not found")
     )
 )]
-#[post("/v1/ai/tools/{name}")]
+#[post("/v2/ai/tools/{name}")]
 pub async fn tool_call(
     service: web::Data<AiService>,
     name: web::Path<String>,

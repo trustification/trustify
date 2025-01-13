@@ -83,7 +83,7 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let uri = "/api/v1/advisory";
+    let uri = "/api/v2/advisory";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -171,7 +171,7 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         )
         .await?;
 
-    let uri = format!("/api/v1/advisory/urn:uuid:{}", advisory2.advisory.id);
+    let uri = format!("/api/v2/advisory/urn:uuid:{}", advisory2.advisory.id);
 
     let request = TestRequest::get().uri(&uri).to_request();
 
@@ -193,7 +193,7 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         json!(["CVSS:3.0/AV:N/AC:L/PR:H/UI:N/S:C/C:H/I:N/A:N"])
     );
 
-    let uri = format!("/api/v1/advisory/urn:uuid:{}", advisory1.advisory.id);
+    let uri = format!("/api/v2/advisory/urn:uuid:{}", advisory1.advisory.id);
 
     let request = TestRequest::get().uri(&uri).to_request();
 
@@ -270,7 +270,7 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
         )
         .await?;
 
-    let uri = format!("/api/v1/advisory/{}", uuid.urn());
+    let uri = format!("/api/v2/advisory/{}", uuid.urn());
 
     let request = TestRequest::get().uri(&uri).to_request();
 
@@ -302,7 +302,7 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
 async fn search_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     async fn query(app: &impl CallService, q: &str) -> PaginatedResults<AdvisorySummary> {
         let uri = format!(
-            "/api/v1/advisory?q={}&sort={}",
+            "/api/v2/advisory?q={}&sort={}",
             urlencoding::encode(q),
             urlencoding::encode("ingested:desc")
         );
@@ -348,7 +348,7 @@ async fn upload_default_csaf_format(ctx: &TrustifyContext) -> Result<(), anyhow:
 
     let payload = document_bytes("csaf/cve-2023-33201.json").await?;
 
-    let uri = "/api/v1/advisory";
+    let uri = "/api/v2/advisory";
     let request = TestRequest::post()
         .uri(uri)
         .set_payload(payload)
@@ -386,7 +386,7 @@ async fn upload_default_csaf_format_multiple(ctx: &TrustifyContext) -> Result<()
         "csaf/rhsa-2024-2705.json",
     ];
 
-    let uri = "/api/v1/advisory";
+    let uri = "/api/v2/advisory";
 
     for file in files {
         let payload = document_bytes(file).await?;
@@ -410,7 +410,7 @@ async fn upload_osv_format(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     let payload = document_bytes("osv/RUSTSEC-2021-0079.json").await?;
 
-    let uri = "/api/v1/advisory";
+    let uri = "/api/v2/advisory";
     let request = TestRequest::post()
         .uri(uri)
         .set_payload(payload)
@@ -429,7 +429,7 @@ async fn upload_cve_format(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     let payload = document_bytes("mitre/CVE-2024-27088.json").await?;
 
-    let uri = "/api/v1/advisory";
+    let uri = "/api/v2/advisory";
     let request = TestRequest::post()
         .uri(uri)
         .set_payload(payload)
@@ -447,7 +447,7 @@ async fn upload_cve_format(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 async fn upload_unknown_format(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/advisory";
+    let uri = "/api/v2/advisory";
     let request = TestRequest::post().uri(uri).to_request();
 
     let response = app.call_service(request).await;
@@ -468,7 +468,7 @@ async fn upload_with_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     let app = caller(ctx).await?;
     let payload = document_bytes("csaf/cve-2023-33201.json").await?;
 
-    let uri = "/api/v1/advisory?labels.foo=bar&labels.bar=baz";
+    let uri = "/api/v2/advisory?labels.foo=bar&labels.bar=baz";
     let request = TestRequest::post()
         .uri(uri)
         .set_payload(payload)
@@ -485,7 +485,7 @@ async fn upload_with_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     // now check the labels
 
     let request = TestRequest::get()
-        .uri(&format!("/api/v1/advisory/{}", result.id))
+        .uri(&format!("/api/v2/advisory/{}", result.id))
         .to_request();
     let result: AdvisoryDetails = app.call_and_read_body_json(request).await;
 
@@ -511,7 +511,7 @@ async fn download_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let digest: String = Sha256::digest(document_bytes(DOC).await?).encode_hex();
     let app = caller(ctx).await?;
     ctx.ingest_document(DOC).await?;
-    let uri = format!("/api/v1/advisory/sha256:{digest}/download");
+    let uri = format!("/api/v2/advisory/sha256:{digest}/download");
     let request = TestRequest::get().uri(&uri).to_request();
     let doc: Value = app.call_and_read_body_json(request).await;
     assert_eq!(doc["document"]["tracking"]["id"], "CVE-2023-33201");
@@ -525,7 +525,7 @@ async fn download_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 async fn download_advisory_by_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     let result = ctx.ingest_document(DOC).await?;
-    let uri = format!("/api/v1/advisory/{}/download", result.id);
+    let uri = format!("/api/v2/advisory/{}/download", result.id);
     let request = TestRequest::get().uri(&uri).to_request();
     let doc: Value = app.call_and_read_body_json(request).await;
     assert_eq!(doc["document"]["tracking"]["id"], "CVE-2023-33201");
@@ -540,7 +540,7 @@ async fn set_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     let result = ctx.ingest_document(DOC).await?;
     let request = TestRequest::patch()
-        .uri(&format!("/api/v1/advisory/{}/label", result.id))
+        .uri(&format!("/api/v2/advisory/{}/label", result.id))
         .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
         .to_request();
     let response = app.call_service(request).await;
@@ -558,7 +558,7 @@ async fn set_labels_not_found(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     ctx.ingest_document(DOC).await?;
     let request = TestRequest::patch()
         .uri(&format!(
-            "/api/v1/advisory/{}/label",
+            "/api/v2/advisory/{}/label",
             Id::Uuid(Uuid::now_v7())
         ))
         .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
@@ -578,7 +578,7 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let doc = ctx.ingest_document(DOC).await?;
 
     let advisory_list: PaginatedResults<AdvisorySummary> = app
-        .call_and_read_body_json(TestRequest::get().uri("/api/v1/advisory").to_request())
+        .call_and_read_body_json(TestRequest::get().uri("/api/v2/advisory").to_request())
         .await;
     assert_eq!(advisory_list.total, 1);
 
@@ -586,7 +586,7 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let response = app
         .call_service(
             TestRequest::delete()
-                .uri(&format!("/api/v1/advisory/{}", doc.id))
+                .uri(&format!("/api/v2/advisory/{}", doc.id))
                 .to_request(),
         )
         .await;
@@ -596,7 +596,7 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // check that the document is gone
     let advisory_list: PaginatedResults<AdvisorySummary> = app
-        .call_and_read_body_json(TestRequest::get().uri("/api/v1/advisory").to_request())
+        .call_and_read_body_json(TestRequest::get().uri("/api/v2/advisory").to_request())
         .await;
     assert_eq!(advisory_list.total, 0);
 
@@ -604,7 +604,7 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let response = app
         .call_service(
             TestRequest::delete()
-                .uri(&format!("/api/v1/advisory/{}", doc.id))
+                .uri(&format!("/api/v2/advisory/{}", doc.id))
                 .to_request(),
         )
         .await;

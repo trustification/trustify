@@ -13,7 +13,7 @@ use trustify_test_context::{call::CallService, TrustifyContext};
 async fn list_spdx_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/license/spdx/license";
+    let uri = "/api/v2/license/spdx/license";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -29,12 +29,12 @@ async fn list_spdx_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 async fn get_spdx_license(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/license/spdx/license/GLWTPL";
+    let uri = "/api/v2/license/spdx/license/GLWTPL";
     let request = TestRequest::get().uri(uri).to_request();
     let response: SpdxLicenseDetails = app.call_and_read_body_json(request).await;
     assert_eq!(response.summary.id, "GLWTPL");
 
-    let uri = "/api/v1/license/spdx/license/GlwtPL";
+    let uri = "/api/v2/license/spdx/license/GlwtPL";
     let request = TestRequest::get().uri(uri).to_request();
     let response: SpdxLicenseDetails = app.call_and_read_body_json(request).await;
     assert_eq!(response.summary.id, "GLWTPL");
@@ -47,7 +47,7 @@ async fn get_spdx_license(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 async fn list_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/license?q=LGPL";
+    let uri = "/api/v2/license?q=LGPL";
 
     let request = TestRequest::get().uri(uri).to_request();
     let response: PaginatedResults<LicenseSummary> = app.call_and_read_body_json(request).await;
@@ -69,7 +69,7 @@ async fn list_license_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 
     ctx.ingest_document("ubi9-9.2-755.1697625012.json").await?;
 
-    let uri = "/api/v1/license?q=LGPL&limit=0";
+    let uri = "/api/v2/license?q=LGPL&limit=0";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PaginatedResults<LicenseSummary> = app.call_and_read_body_json(request).await;
 
@@ -79,7 +79,7 @@ async fn list_license_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 
     let lgpl = lgpl.unwrap();
 
-    let uri = format!("/api/v1/license/{}/purl", lgpl.id.urn());
+    let uri = format!("/api/v2/license/{}/purl", lgpl.id.urn());
 
     let request = TestRequest::get().uri(&uri).to_request();
     let response: PaginatedResults<LicenseDetailsPurlSummary> =
@@ -87,7 +87,7 @@ async fn list_license_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 
     assert_eq!(29, response.total);
 
-    let uri = format!("/api/v1/license/{}/purl?offset=25", lgpl.id.urn());
+    let uri = format!("/api/v2/license/{}/purl?offset=25", lgpl.id.urn());
 
     let request = TestRequest::get().uri(&uri).to_request();
     let response: PaginatedResults<LicenseDetailsPurlSummary> =

@@ -32,7 +32,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 200, description = "Analysis status.", body = AnalysisStatus),
     ),
 )]
-#[get("/v1/analysis/status")]
+#[get("/v2/analysis/status")]
 pub async fn analysis_status(
     service: web::Data<AnalysisService>,
     db: web::Data<Database>,
@@ -55,7 +55,7 @@ pub async fn analysis_status(
         (status = 200, description = "Search component(s) and return their root components.", body = AncestorSummary),
     ),
 )]
-#[get("/v1/analysis/root-component")]
+#[get("/v2/analysis/root-component")]
 pub async fn search_component_root_components(
     service: web::Data<AnalysisService>,
     db: web::Data<Database>,
@@ -80,7 +80,7 @@ pub async fn search_component_root_components(
         (status = 200, description = "Retrieve component(s) root components by name or pURL.", body = AncestorSummary),
     ),
 )]
-#[get("/v1/analysis/root-component/{key}")]
+#[get("/v2/analysis/root-component/{key}")]
 pub async fn get_component_root_components(
     service: web::Data<AnalysisService>,
     db: web::Data<Database>,
@@ -115,7 +115,7 @@ pub async fn get_component_root_components(
         (status = 200, description = "Search component(s) and return their deps.", body = DepSummary),
     ),
 )]
-#[get("/v1/analysis/dep")]
+#[get("/v2/analysis/dep")]
 pub async fn search_component_deps(
     service: web::Data<AnalysisService>,
     db: web::Data<Database>,
@@ -140,7 +140,7 @@ pub async fn search_component_deps(
         (status = 200, description = "Retrieve component(s) dep components by name or pURL.", body = DepSummary),
     ),
 )]
-#[get("/v1/analysis/dep/{key}")]
+#[get("/v2/analysis/dep/{key}")]
 pub async fn get_component_deps(
     service: web::Data<AnalysisService>,
     db: web::Data<Database>,
@@ -183,7 +183,7 @@ mod test {
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
         //should match multiple components
-        let uri = "/api/v1/analysis/root-component?q=B";
+        let uri = "/api/v2/analysis/root-component?q=B";
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
 
@@ -197,7 +197,7 @@ mod test {
         log::info!("{:?}", response);
 
         //should match a single component
-        let uri = "/api/v1/analysis/root-component?q=BB";
+        let uri = "/api/v2/analysis/root-component?q=BB";
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
         assert_eq!(response["items"][0]["purl"], "pkg:rpm/redhat/BB@0.0.0");
@@ -218,7 +218,7 @@ mod test {
         let app = caller(ctx).await?;
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-        let uri = "/api/v1/analysis/root-component/B";
+        let uri = "/api/v2/analysis/root-component/B";
 
         let request: Request = TestRequest::get().uri(uri).to_request();
 
@@ -241,7 +241,7 @@ mod test {
         let app = caller(ctx).await?;
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-        let uri = "/api/v1/analysis/root-component/pkg%3A%2F%2Frpm%2Fredhat%2FB%400.0.0";
+        let uri = "/api/v2/analysis/root-component/pkg%3A%2F%2Frpm%2Fredhat%2FB%400.0.0";
 
         let request: Request = TestRequest::get().uri(uri).to_request();
 
@@ -268,7 +268,7 @@ mod test {
         ])
         .await?;
 
-        let uri = "/api/v1/analysis/root-component?q=spymemcached";
+        let uri = "/api/v2/analysis/root-component?q=spymemcached";
 
         let request: Request = TestRequest::get().uri(uri).to_request();
 
@@ -300,11 +300,11 @@ mod test {
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
         //prime the graph hashmap
-        let uri = "/api/v1/analysis/root-component?q=BB";
+        let uri = "/api/v2/analysis/root-component?q=BB";
         let load1 = TestRequest::get().uri(uri).to_request();
         let _response: Value = app.call_and_read_body_json(load1).await;
 
-        let uri = "/api/v1/analysis/status";
+        let uri = "/api/v2/analysis/status";
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
 
@@ -314,7 +314,7 @@ mod test {
         // ingest duplicate sbom which has different date
         ctx.ingest_documents(["spdx/simple-dup.json"]).await?;
 
-        let uri = "/api/v1/analysis/status";
+        let uri = "/api/v2/analysis/status";
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
 
@@ -330,7 +330,7 @@ mod test {
         let app = caller(ctx).await?;
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-        let uri = "/api/v1/analysis/dep?q=A";
+        let uri = "/api/v2/analysis/dep?q=A";
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
 
@@ -357,7 +357,7 @@ mod test {
         let app = caller(ctx).await?;
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-        let uri = "/api/v1/analysis/dep/A";
+        let uri = "/api/v2/analysis/dep/A";
 
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
@@ -385,7 +385,7 @@ mod test {
         let app = caller(ctx).await?;
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-        let uri = "/api/v1/analysis/dep/pkg%3A%2F%2Frpm%2Fredhat%2FAA%400.0.0%3Farch%3Dsrc";
+        let uri = "/api/v2/analysis/dep/pkg%3A%2F%2Frpm%2Fredhat%2FAA%400.0.0%3Farch%3Dsrc";
 
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
@@ -412,7 +412,7 @@ mod test {
         ])
         .await?;
 
-        let uri = "/api/v1/analysis/dep?q=spymemcached";
+        let uri = "/api/v2/analysis/dep?q=spymemcached";
 
         let request: Request = TestRequest::get().uri(uri).to_request();
 
@@ -435,21 +435,21 @@ mod test {
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
         // filter on node_id
-        let uri = "/api/v1/analysis/dep?q=node_id%3DSPDXRef-A";
+        let uri = "/api/v2/analysis/dep?q=node_id%3DSPDXRef-A";
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
         assert_eq!(response["items"][0]["name"], "A");
         assert_eq!(&response["total"], 1);
 
         // filter on node_id
-        let uri = "/api/v1/analysis/root-component?q=node_id%3DSPDXRef-B";
+        let uri = "/api/v2/analysis/root-component?q=node_id%3DSPDXRef-B";
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
         assert_eq!(response["items"][0]["name"], "B");
         assert_eq!(&response["total"], 1);
 
         // filter on node_id & name
-        let uri = "/api/v1/analysis/root-component?q=node_id%3DSPDXRef-B%26name%3DB";
+        let uri = "/api/v2/analysis/root-component?q=node_id%3DSPDXRef-B%26name%3DB";
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
         assert_eq!(response["items"][0]["name"], "B");
@@ -457,19 +457,19 @@ mod test {
 
         // filter on sbom_id (which has urn:uuid: prefix)
         let sbom_id = response["items"][0]["sbom_id"].as_str().unwrap();
-        let uri = format!("/api/v1/analysis/root-component?q=sbom_id={}", sbom_id);
+        let uri = format!("/api/v2/analysis/root-component?q=sbom_id={}", sbom_id);
         let request: Request = TestRequest::get().uri(uri.clone().as_str()).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
         assert_eq!(&response["total"], 8);
 
         // negative test
-        let uri = "/api/v1/analysis/root-component?q=sbom_id=urn:uuid:99999999-9999-9999-9999-999999999999";
+        let uri = "/api/v2/analysis/root-component?q=sbom_id=urn:uuid:99999999-9999-9999-9999-999999999999";
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
         assert_eq!(&response["total"], 0);
 
         // negative test
-        let uri = "/api/v1/analysis/root-component?q=node_id%3DSPDXRef-B%26name%3DA";
+        let uri = "/api/v2/analysis/root-component?q=node_id%3DSPDXRef-B%26name%3DA";
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
 
@@ -486,7 +486,7 @@ mod test {
 
         // Find all deps of src rpm
         let src = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
-        let uri = format!("/api/v1/analysis/dep/{}", urlencoding::encode(src));
+        let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(src));
         let request: Request = TestRequest::get().uri(&uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
         log::debug!("{response:#?}");
@@ -495,7 +495,7 @@ mod test {
         // Ensure binary rpm GeneratedFrom src rpm
         let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
         let uri = format!(
-            "/api/v1/analysis/root-component/{}",
+            "/api/v2/analysis/root-component/{}",
             urlencoding::encode(x86)
         );
         let request: Request = TestRequest::get().uri(&uri).to_request();

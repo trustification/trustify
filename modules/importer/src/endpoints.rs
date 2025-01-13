@@ -35,7 +35,7 @@ pub fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, db: 
         (status = 200, description = "List importer configurations", body = [Importer])
     )
 )]
-#[get("/v1/importer")]
+#[get("/v2/importer")]
 /// List importer configurations
 async fn list(
     service: web::Data<ImporterService>,
@@ -56,7 +56,7 @@ async fn list(
         (status = 409, description = "An importer with that name already exists")
     )
 )]
-#[post("/v1/importer/{name}")]
+#[post("/v2/importer/{name}")]
 /// Create a new importer configuration
 async fn create(
     service: web::Data<ImporterService>,
@@ -84,7 +84,7 @@ async fn create(
         (status = 404, description = "An importer with that name could not be found")
     )
 )]
-#[get("/v1/importer/{name}")]
+#[get("/v2/importer/{name}")]
 /// Get an importer configuration
 async fn read(
     service: web::Data<ImporterService>,
@@ -115,7 +115,7 @@ async fn read(
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
-#[put("/v1/importer/{name}")]
+#[put("/v2/importer/{name}")]
 /// Update an existing importer configuration
 async fn update(
     service: web::Data<ImporterService>,
@@ -153,7 +153,7 @@ async fn update(
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
-#[patch("/v1/importer/{name}", guard = "guards::json_merge")]
+#[patch("/v2/importer/{name}", guard = "guards::json_merge")]
 /// Update an existing importer configuration
 async fn patch_json_merge(
     service: web::Data<ImporterService>,
@@ -192,7 +192,7 @@ async fn patch_json_merge(
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
-#[put("/v1/importer/{name}/enabled")]
+#[put("/v2/importer/{name}/enabled")]
 /// Update an existing importer configuration
 async fn set_enabled(
     service: web::Data<ImporterService>,
@@ -230,7 +230,7 @@ async fn set_enabled(
         (status = 412, description = "The provided if-match header did not match the stored revision"),
     )
 )]
-#[post("/v1/importer/{name}/force")]
+#[post("/v2/importer/{name}/force")]
 /// Force an importer to run as soon as possible
 async fn force(
     service: web::Data<ImporterService>,
@@ -259,7 +259,7 @@ async fn force(
         (status = 201, description = "Delete the importer configuration"),
     )
 )]
-#[delete("/v1/importer/{name}")]
+#[delete("/v2/importer/{name}")]
 /// Delete an importer configuration
 async fn delete(
     service: web::Data<ImporterService>,
@@ -285,7 +285,7 @@ async fn delete(
         (status = 200, description = "Retrieved importer reports", body = PaginatedResults<ImporterReport>),
     )
 )]
-#[get("/v1/importer/{name}/report")]
+#[get("/v2/importer/{name}/report")]
 /// Get reports for an importer
 async fn get_reports(
     service: web::Data<ImporterService>,

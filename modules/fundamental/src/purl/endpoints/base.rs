@@ -26,7 +26,7 @@ use trustify_common::{
         (status = 200, description = "Details for the versionless base PURL", body = BasePurlDetails),
     ),
 )]
-#[get("/v1/purl/base/{key}")]
+#[get("/v2/purl/base/{key}")]
 /// Retrieve details about a base versionless pURL
 pub async fn get_base_purl(
     service: web::Data<PurlService>,
@@ -54,7 +54,7 @@ pub async fn get_base_purl(
         (status = 200, description = "All relevant matching versionless base PURL", body = PaginatedResults<BasePurlSummary>),
     ),
 )]
-#[get("/v1/purl/base")]
+#[get("/v2/purl/base")]
 /// List base versionless pURLs
 pub async fn all_base_purls(
     service: web::Data<PurlService>,

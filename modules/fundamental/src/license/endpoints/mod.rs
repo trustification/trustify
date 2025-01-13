@@ -40,7 +40,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 200, description = "Matching licenses", body = PaginatedResults<LicenseSummary>),
     ),
 )]
-#[get("/v1/license")]
+#[get("/v2/license")]
 /// List licenses
 pub async fn list_licenses(
     state: web::Data<LicenseService>,
@@ -57,7 +57,7 @@ pub async fn list_licenses(
         (status = 200, description = "The license", body = LicenseSummary),
     ),
 )]
-#[get("/v1/license/{uuid}")]
+#[get("/v2/license/{uuid}")]
 /// Retrieve license details
 pub async fn get_license(
     state: web::Data<LicenseService>,
@@ -77,7 +77,7 @@ pub async fn get_license(
         (status = 200, description = "The versioned pURLs allowing the license", body = LicenseSummary),
     ),
 )]
-#[get("/v1/license/{uuid}/purl")]
+#[get("/v2/license/{uuid}/purl")]
 /// Retrieve pURLs covered by a license
 pub async fn get_license_purls(
     state: web::Data<LicenseService>,

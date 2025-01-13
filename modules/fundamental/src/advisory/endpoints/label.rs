@@ -18,7 +18,7 @@ use trustify_entity::labels::Labels;
         (status = 404, description = "The advisory could not be found"),
     ),
 )]
-#[put("/v1/advisory/{id}/label")]
+#[put("/v2/advisory/{id}/label")]
 pub async fn set(
     advisory: web::Data<AdvisoryService>,
     db: web::Data<Database>,
@@ -50,7 +50,7 @@ pub async fn set(
         (status = 404, description = "The advisory could not be found"),
     ),
 )]
-#[patch("/v1/advisory/{id}/label")]
+#[patch("/v2/advisory/{id}/label")]
 pub async fn update(
     advisory: web::Data<AdvisoryService>,
     id: web::Path<Id>,

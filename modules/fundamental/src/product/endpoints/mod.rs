@@ -38,7 +38,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 200, description = "Matching products", body = PaginatedResults<ProductSummary>),
     ),
 )]
-#[get("/v1/product")]
+#[get("/v2/product")]
 pub async fn all(
     state: web::Data<ProductService>,
     db: web::Data<Database>,
@@ -60,7 +60,7 @@ pub async fn all(
         (status = 404, description = "Matching product not found"),
     ),
 )]
-#[get("/v1/product/{id}")]
+#[get("/v2/product/{id}")]
 pub async fn get(
     state: web::Data<ProductService>,
     db: web::Data<Database>,
@@ -86,7 +86,7 @@ pub async fn get(
         (status = 404, description = "Matching product not found"),
     ),
 )]
-#[delete("/v1/product/{id}")]
+#[delete("/v2/product/{id}")]
 pub async fn delete(
     state: web::Data<ProductService>,
     db: web::Data<Database>,

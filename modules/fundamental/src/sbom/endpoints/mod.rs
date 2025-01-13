@@ -83,7 +83,7 @@ pub fn configure(
         (status = 200, description = "Matching SBOMs", body = PaginatedResults<SbomSummary>),
     ),
 )]
-#[get("/v1/sbom")]
+#[get("/v2/sbom")]
 pub async fn all(
     fetch: web::Data<SbomService>,
     db: web::Data<Database>,
@@ -167,7 +167,7 @@ impl TryFrom<AllRelatedQuery> for Uuid {
         (status = 200, description = "Matching SBOMs", body = PaginatedResults<SbomSummary>),
     ),
 )]
-#[get("/v1/sbom/by-package")]
+#[get("/v2/sbom/by-package")]
 pub async fn all_related(
     sbom: web::Data<SbomService>,
     db: web::Data<Database>,
@@ -202,7 +202,7 @@ pub async fn all_related(
         (status = 200, description = "Number of matching SBOMs per package", body = Vec<i64>),
     ),
 )]
-#[get("/v1/sbom/count-by-package")]
+#[get("/v2/sbom/count-by-package")]
 pub async fn count_related(
     sbom: web::Data<SbomService>,
     db: web::Data<Database>,
@@ -230,7 +230,7 @@ pub async fn count_related(
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
-#[get("/v1/sbom/{id}")]
+#[get("/v2/sbom/{id}")]
 pub async fn get(
     fetcher: web::Data<SbomService>,
     db: web::Data<Database>,
@@ -255,7 +255,7 @@ pub async fn get(
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
-#[get("/v1/sbom/{id}/advisory")]
+#[get("/v2/sbom/{id}/advisory")]
 pub async fn get_sbom_advisories(
     fetcher: web::Data<SbomService>,
     db: web::Data<Database>,
@@ -282,7 +282,7 @@ all!(GetSbomAdvisories -> ReadSbom, ReadAdvisory);
         (status = 404, description = "Matching SBOM not found"),
     ),
 )]
-#[delete("/v1/sbom/{id}")]
+#[delete("/v2/sbom/{id}")]
 pub async fn delete(
     service: web::Data<SbomService>,
     db: web::Data<Database>,
@@ -323,7 +323,7 @@ pub async fn delete(
         (status = 200, description = "Packages", body = PaginatedResults<SbomPackage>),
     ),
 )]
-#[get("/v1/sbom/{id}/packages")]
+#[get("/v2/sbom/{id}/packages")]
 pub async fn packages(
     fetch: web::Data<SbomService>,
     db: web::Data<Database>,
@@ -366,7 +366,7 @@ struct RelatedQuery {
         (status = 200, description = "Packages", body = PaginatedResults<SbomPackageRelation>),
     ),
 )]
-#[get("/v1/sbom/{id}/related")]
+#[get("/v2/sbom/{id}/related")]
 pub async fn related(
     fetch: web::Data<SbomService>,
     db: web::Data<Database>,
@@ -418,7 +418,7 @@ struct UploadQuery {
         (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
-#[post("/v1/sbom")]
+#[post("/v2/sbom")]
 /// Upload a new SBOM
 pub async fn upload(
     service: web::Data<IngestorService>,
@@ -445,7 +445,7 @@ pub async fn upload(
         (status = 404, description = "The document could not be found"),
     )
 )]
-#[get("/v1/sbom/{key}/download")]
+#[get("/v2/sbom/{key}/download")]
 pub async fn download(
     ingestor: web::Data<IngestorService>,
     db: web::Data<Database>,

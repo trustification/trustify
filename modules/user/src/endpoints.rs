@@ -33,7 +33,7 @@ pub fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, db: 
         (status = 404, description = "Unknown user preference key"),
     )
 )]
-#[get("/v1/userPreference/{key}")]
+#[get("/v2/userPreference/{key}")]
 /// Get user preferences
 async fn get(
     service: web::Data<UserPreferenceService>,
@@ -67,7 +67,7 @@ async fn get(
         (status = 412, description = "The provided If-Match revision did not match the actual revision")
     )
 )]
-#[put("/v1/userPreference/{key}")]
+#[put("/v2/userPreference/{key}")]
 /// Set user preferences
 async fn set(
     service: web::Data<UserPreferenceService>,
@@ -106,7 +106,7 @@ async fn set(
         (status = 412, description = "The provided If-Match revision did not match the actual revision")
     )
 )]
-#[delete("/v1/userPreference/{key}")]
+#[delete("/v2/userPreference/{key}")]
 /// Delete user preferences
 async fn delete(
     service: web::Data<UserPreferenceService>,
