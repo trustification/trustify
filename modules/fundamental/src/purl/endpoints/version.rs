@@ -18,7 +18,7 @@ use trustify_common::{db::Database, id::IdError, purl::Purl};
         (status = 200, description = "Details for the version of a PURL", body = VersionedPurlDetails),
     ),
 )]
-#[get("/v1/purl/version/{key}")]
+#[get("/v2/purl/version/{key}")]
 /// Retrieve details of a versioned, non-qualified pURL
 pub async fn get_versioned_purl(
     service: web::Data<PurlService>,

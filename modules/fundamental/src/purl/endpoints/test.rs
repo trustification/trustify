@@ -76,7 +76,7 @@ async fn types(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/purl/type";
+    let uri = "/api/v2/purl/type";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -104,7 +104,7 @@ async fn r#type(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/purl/type/maven";
+    let uri = "/api/v2/purl/type/maven";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -115,7 +115,7 @@ async fn r#type(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let log4j = &response.items[0];
     assert_eq!("pkg:maven/org.apache/log4j", log4j.head.purl.to_string());
 
-    let uri = "/api/v1/purl/type/rpm";
+    let uri = "/api/v2/purl/type/rpm";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -135,7 +135,7 @@ async fn type_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/purl/type/maven/org.apache/log4j";
+    let uri = "/api/v2/purl/type/maven/org.apache/log4j";
 
     let request = TestRequest::get().uri(uri).to_request();
 
@@ -166,7 +166,7 @@ async fn type_package_version(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/purl/type/maven/org.apache/log4j@1.2.3";
+    let uri = "/api/v2/purl/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
     let response: VersionedPurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(2, response.purls.len());
@@ -179,7 +179,7 @@ async fn type_package_version(ctx: &TrustifyContext) -> Result<(), anyhow::Error
         .iter()
         .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=17"));
 
-    let uri = "/api/v1/purl/type/rpm/sendmail@4.4.4";
+    let uri = "/api/v2/purl/type/rpm/sendmail@4.4.4";
     let request = TestRequest::get().uri(uri).to_request();
     let response: VersionedPurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(0, response.purls.len());
@@ -193,7 +193,7 @@ async fn package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/purl/type/maven/org.apache/log4j@1.2.3";
+    let uri = "/api/v2/purl/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
     let response: VersionedPurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(2, response.purls.len());
@@ -206,7 +206,7 @@ async fn package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(jdk17.is_some());
     let jdk17 = jdk17.unwrap();
 
-    let uri = format!("/api/v1/purl/{}", jdk17.uuid);
+    let uri = format!("/api/v2/purl/{}", jdk17.uuid);
     let request = TestRequest::get().uri(&uri).to_request();
     let response: PurlDetails = app.call_and_read_body_json(request).await;
 
@@ -223,12 +223,12 @@ async fn version(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/purl/type/maven/org.apache/log4j@1.2.3";
+    let uri = "/api/v2/purl/type/maven/org.apache/log4j@1.2.3";
     let request = TestRequest::get().uri(uri).to_request();
     let log4j_123: VersionedPurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(2, log4j_123.purls.len());
 
-    let uri = format!("/api/v1/purl/version/{}", log4j_123.head.uuid);
+    let uri = format!("/api/v2/purl/version/{}", log4j_123.head.uuid);
     let request = TestRequest::get().uri(&uri).to_request();
     let response: VersionedPurlDetails = app.call_and_read_body_json(request).await;
 
@@ -243,12 +243,12 @@ async fn base(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/purl/type/maven/org.apache/log4j";
+    let uri = "/api/v2/purl/type/maven/org.apache/log4j";
     let request = TestRequest::get().uri(uri).to_request();
     let log4j: BasePurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(2, log4j.versions.len());
 
-    let uri = format!("/api/v1/purl/base/{}", log4j.head.uuid);
+    let uri = format!("/api/v2/purl/base/{}", log4j.head.uuid);
     let request = TestRequest::get().uri(&uri).to_request();
     let response: BasePurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(log4j.head.uuid, response.head.uuid);
@@ -262,7 +262,7 @@ async fn base_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/purl/base?q=log4j";
+    let uri = "/api/v2/purl/base?q=log4j";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PaginatedResults<BasePurlSummary> = app.call_and_read_body_json(request).await;
 
@@ -277,7 +277,7 @@ async fn qualified_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/purl?q=log4j";
+    let uri = "/api/v2/purl?q=log4j";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
 
@@ -292,7 +292,7 @@ async fn qualified_packages_filtering(ctx: &TrustifyContext) -> Result<(), anyho
     setup(&ctx.db, &ctx.graph).await?;
     let app = caller(ctx).await?;
 
-    let uri = format!("/api/v1/purl?q={}", encode("type=maven"));
+    let uri = format!("/api/v2/purl?q={}", encode("type=maven"));
     let request = TestRequest::get().uri(&uri).to_request();
     let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
     assert_eq!(3, response.items.len());
@@ -304,7 +304,7 @@ async fn qualified_packages_filtering(ctx: &TrustifyContext) -> Result<(), anyho
             &ctx.db,
         )
         .await?;
-    let uri = format!("/api/v1/purl?q={}", encode("type=rpm&arch=i386"));
+    let uri = format!("/api/v2/purl?q={}", encode("type=rpm&arch=i386"));
     let request = TestRequest::get().uri(&uri).to_request();
     let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
     assert_eq!(1, response.items.len());
@@ -325,7 +325,7 @@ async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     let app = caller(ctx).await?;
 
-    let uri = "/api/v1/purl?q=hyper";
+    let uri = "/api/v2/purl?q=hyper";
     let request = TestRequest::get().uri(uri).to_request();
     let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
 
@@ -333,7 +333,7 @@ async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     let uuid = response.items[0].head.uuid;
 
-    let uri = format!("/api/v1/purl/{uuid}");
+    let uri = format!("/api/v2/purl/{uuid}");
 
     let request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;

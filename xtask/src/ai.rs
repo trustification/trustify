@@ -63,7 +63,7 @@ Enter your question or type:
 
                 let client = reqwest::Client::new();
                 let res = client
-                    .post(format!("{}/api/v1/ai/completions", url))
+                    .post(format!("{}/api/v2/ai/completions", url))
                     .json(&chat_state)
                     .send()
                     .await?;

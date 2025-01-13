@@ -26,7 +26,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         (status = 200, description = "Matching weaknesses", body = PaginatedResults<LicenseSummary>),
     ),
 )]
-#[get("/v1/weakness")]
+#[get("/v2/weakness")]
 /// List weaknesses
 pub async fn list_weaknesses(
     state: web::Data<WeaknessService>,
@@ -44,7 +44,7 @@ pub async fn list_weaknesses(
         (status = 200, description = "The weakness", body = LicenseSummary),
     ),
 )]
-#[get("/v1/weakness/{id}")]
+#[get("/v2/weakness/{id}")]
 /// Retrieve weakness details
 pub async fn get_weakness(
     state: web::Data<WeaknessService>,

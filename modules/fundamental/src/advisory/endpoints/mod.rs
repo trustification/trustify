@@ -64,7 +64,7 @@ pub fn configure(
         (status = 200, description = "Matching vulnerabilities", body = PaginatedResults<AdvisorySummary>),
     ),
 )]
-#[get("/v1/advisory")]
+#[get("/v2/advisory")]
 /// List advisories
 pub async fn all(
     state: web::Data<AdvisoryService>,
@@ -92,7 +92,7 @@ pub async fn all(
         (status = 404, description = "Matching advisory not found"),
     ),
 )]
-#[get("/v1/advisory/{key}")]
+#[get("/v2/advisory/{key}")]
 /// Get an advisory
 pub async fn get(
     state: web::Data<AdvisoryService>,
@@ -121,7 +121,7 @@ pub async fn get(
         (status = 404, description = "Matching advisory not found"),
     ),
 )]
-#[delete("/v1/advisory/{key}")]
+#[delete("/v2/advisory/{key}")]
 /// Delete an advisory
 pub async fn delete(
     state: web::Data<AdvisoryService>,
@@ -175,7 +175,7 @@ struct UploadParams {
         (status = 400, description = "The file could not be parsed as an advisory"),
     )
 )]
-#[post("/v1/advisory")]
+#[post("/v2/advisory")]
 /// Upload a new advisory
 pub async fn upload(
     service: web::Data<IngestorService>,
@@ -204,7 +204,7 @@ pub async fn upload(
         (status = 404, description = "The document could not be found"),
     )
 )]
-#[get("/v1/advisory/{key}/download")]
+#[get("/v2/advisory/{key}/download")]
 /// Download an advisory document
 pub async fn download(
     db: web::Data<Database>,

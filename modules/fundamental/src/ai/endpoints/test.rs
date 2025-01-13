@@ -26,7 +26,7 @@ async fn configure(ctx: &TrustifyContext) -> anyhow::Result<()> {
     req.add_human_message("Give me information about the SBOMs available for quarkus reporting its name, SHA and URL.".into());
 
     let request = TestRequest::post()
-        .uri("/api/v1/ai/completions")
+        .uri("/api/v2/ai/completions")
         .set_json(req)
         .to_request();
 
@@ -50,7 +50,7 @@ async fn configure(ctx: &TrustifyContext) -> anyhow::Result<()> {
 #[test(actix_web::test)]
 async fn flags(ctx: &TrustifyContext) -> anyhow::Result<()> {
     let app = caller(ctx).await?;
-    let request = TestRequest::get().uri("/api/v1/ai/flags").to_request();
+    let request = TestRequest::get().uri("/api/v2/ai/flags").to_request();
 
     let response = app.call_service(request).await;
     log::debug!("Code: {}", response.status());
@@ -76,7 +76,7 @@ async fn flags(ctx: &TrustifyContext) -> anyhow::Result<()> {
 #[test(actix_web::test)]
 async fn tools(ctx: &TrustifyContext) -> anyhow::Result<()> {
     let app = caller(ctx).await?;
-    let request = TestRequest::get().uri("/api/v1/ai/tools").to_request();
+    let request = TestRequest::get().uri("/api/v2/ai/tools").to_request();
 
     let response = app.call_service(request).await;
     log::debug!("Code: {}", response.status());
@@ -107,7 +107,7 @@ async fn tools_call(ctx: &TrustifyContext) -> anyhow::Result<()> {
     let app = caller(ctx).await?;
 
     let request = TestRequest::post()
-        .uri("/api/v1/ai/tools/unknown")
+        .uri("/api/v2/ai/tools/unknown")
         .set_json(json!({"input":"quarkus"}))
         .to_request();
 
@@ -115,7 +115,7 @@ async fn tools_call(ctx: &TrustifyContext) -> anyhow::Result<()> {
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 
     let request = TestRequest::post()
-        .uri("/api/v1/ai/tools/sbom-info")
+        .uri("/api/v2/ai/tools/sbom-info")
         .set_json(json!({"input":"quarkus"}))
         .to_request();
 

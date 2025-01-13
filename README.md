@@ -34,7 +34,7 @@ zipped archive of SBOMs and/or Advisories like so:
 ```shell
 cd etc/datasets
 make
-http POST localhost:8080/api/v1/dataset @ds1.zip
+http POST localhost:8080/api/v2/dataset @ds1.zip
 ```
 
 #### Upload
@@ -44,8 +44,8 @@ There is an "Upload" menu option in the GUI: http://localhost:8080/upload
 You can also interact with the API directly in a shell:
 
 ```shell
-cat some-sbom.json | http POST localhost:8080/api/v1/sbom
-cat some-advisory.json | http POST localhost:8080/api/v1/advisory
+cat some-sbom.json | http POST localhost:8080/api/v2/sbom
+cat some-advisory.json | http POST localhost:8080/api/v2/advisory
 ```
 
 #### Importers
@@ -140,7 +140,7 @@ If you haven't already, [get started!](https://www.rust-lang.org/learn/get-start
 
 #### If test failures on OSX
 
-Potentially our concurrent Postgres installations during testing can
+Potentially, our concurrent Postgres installations during testing can
 exhaust shared-memory.  Adjusting shared-memory on OSX is not
 straight-forward.  Use [this
 guide](https://unix.stackexchange.com/questions/689295/values-from-sysctl-a-dont-match-etc-sysctl-conf-even-after-restart).
@@ -149,7 +149,7 @@ guide](https://unix.stackexchange.com/questions/689295/values-from-sysctl-a-dont
 
 Unit tests and "PM mode" use an embedded instance of Postgres that is
 installed as required on the local filesystem. This is convenient for
-local development but you can also configure the app to use an
+local development, but you can also configure the app to use an
 external database.
 
 Starting a containerized Postgres instance:
