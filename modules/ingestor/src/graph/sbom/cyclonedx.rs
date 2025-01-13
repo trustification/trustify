@@ -192,6 +192,17 @@ impl SbomContext {
             for right in left.depends_on.iter().flatten() {
                 creator.relate(right.clone(), Relationship::DependencyOf, left.ref_.clone());
             }
+
+            // https://github.com/trustification/trustify/issues/1131
+            // Do we need to qualify this so that only "arch=src" refs
+            // get the GeneratedFrom relationship?
+            for right in left.provides.iter().flatten() {
+                creator.relate(
+                    right.clone(),
+                    Relationship::GeneratedFrom,
+                    left.ref_.clone(),
+                );
+            }
         }
 
         // create

@@ -1,0 +1,1749 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:a4f16b62-fea9-42c1-8365-d72d3cef37d1",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-12-17T05:38:26.655298+00:00",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "manufacturer": {
+            "name": "Red Hat",
+            "url": [
+              "https://www.redhat.com"
+            ]
+          },
+          "name": "rpm-manifest-generator",
+          "version": "0.0.1"
+        }
+      ]
+    },
+    "supplier": {
+      "name": "Red Hat",
+      "url": [
+        "https://www.redhat.com"
+      ]
+    },
+    "component": {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl",
+      "version": "3.0.7-18.el9_2",
+      "description": "The OpenSSL toolkit provides support for secure communications between\nmachines. OpenSSL includes a certificate management tool and shared\nlibraries which provide various cryptographic algorithms and\nprotocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "0da276f660b44ab5bd128db8aa3d8ce1"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "31b5079268339cff7ba65a0aee77930560c5adef4b1b3f8f5927a43ee46a56d9"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9215c64e7289a058248728089e4d98ed1cc392bb5eb9b8fcbe661d57e8145bbd"
+        }
+      ]
+    },
+    "licenses": [
+      {
+        "expression": "Apache-2.0"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl",
+      "version": "3.0.7-18.el9_2",
+      "description": "The OpenSSL toolkit provides support for secure communications between\nmachines. OpenSSL includes a certificate management tool and shared\nlibraries which provide various cryptographic algorithms and\nprotocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "0da276f660b44ab5bd128db8aa3d8ce1"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "31b5079268339cff7ba65a0aee77930560c5adef4b1b3f8f5927a43ee46a56d9"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9215c64e7289a058248728089e4d98ed1cc392bb5eb9b8fcbe661d57e8145bbd"
+        }
+      ],
+      "externalReferences": [
+        {
+          "comment": "brew-build-id",
+          "type": "build-system",
+          "url": "https://brewweb.engineering.redhat.com/brew/buildinfo?buildID=2788361"
+        }
+      ],
+      "pedigree": {
+        "ancestors": [
+          {
+            "type": "library",
+            "name": "openssl",
+            "version": "3.0.7",
+            "hashes": [
+              {
+                "alg": "SHA-512",
+                "content": "1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e"
+              }
+            ],
+            "purl": "pkg:generic/openssl@3.0.7?download_url=https://pkgs.devel.redhat.com/repo/openssl/openssl-3.0.7-hobbled.tar.gz/sha512/1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e/openssl-3.0.7-hobbled.tar.gz&checksum=SHA-512:1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e",
+            "evidence": {
+              "identity": [
+                {
+                  "field": "purl",
+                  "concludedValue": "pkg:generic/openssl@3.0.7?download_url=https://pkgs.devel.redhat.com/repo/openssl/openssl-3.0.7-hobbled.tar.gz/sha512/1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e/openssl-3.0.7-hobbled.tar.gz&checksum=SHA-512:1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e"
+                }
+              ]
+            },
+            "bom-ref": "pkg:generic/openssl@3.0.7?download_url=https://pkgs.devel.redhat.com/repo/openssl/openssl-3.0.7-hobbled.tar.gz/sha512/1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e/openssl-3.0.7-hobbled.tar.gz&checksum=SHA-512:1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e"
+          }
+        ]
+      }
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-perl",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-perl\npackage provides Perl scripts for converting certificates and keys\nfrom other formats to the formats used by the OpenSSL toolkit.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "4cc665dd3173c8952184293588f9ee46"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "96e53b2da90ce5ad109ba659ce3ed1b5a819b108c95fc493f84847429898b2ed"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fbdd94bb6ce796441e4d4b9b04a960b41f6f7577e51c764e2befe9226e71da4b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-debuginfo",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug information for package openssl.\nDebug information is useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=aarch64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=aarch64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "8bf628bbb31e41bcc4139001ffca1fcb"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "8721bc9673ccc43f729485aba48fd75a927305980f48ee9d0b79d06937b68d16"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=aarch64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4cfed027c112894a8742eab76cd1003801d01b0cd2f26be4cf9f7a3a46e62223"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-libs",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-libs\npackage contains the libraries that are used by various applications which\nsupport cryptographic algorithms and protocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=aarch64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=aarch64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "a4815b267d59c43662d6ea94d6b32eba"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "cae5941219fd64e75c2b29509c6fe712bef77181a586702275a46a5e812d4dd4"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=aarch64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "832757f9bcb231e954fb390b835fb833b9046594aa3c6387eeaadd9af592f40f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-libs-debuginfo",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug information for package openssl-libs.\nDebug information is useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=aarch64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=aarch64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "f9e91d29b3e3b10cb1fe6b792d6ec3c6"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "036985b5bd34712963e4a9009dd196e4f583479283d88b6e908a231aa5bddfae"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=aarch64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6daa6877ba8b2951e18ea8e57a5d0267a13ba94ae12eef38223cc3138e7a47bc"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl",
+      "version": "3.0.7-18.el9_2",
+      "description": "The OpenSSL toolkit provides support for secure communications between\nmachines. OpenSSL includes a certificate management tool and shared\nlibraries which provide various cryptographic algorithms and\nprotocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=aarch64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=aarch64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "2a8826422579bd43b49774d11a68e383"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "aaafa61c115ec37bb3895e124216ce46774069e49f6178248df085708ecb3878"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=aarch64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9538011195d4997d7be4bba8cd01473abbf50e397dea06b6545d1d5fbd04817d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-debugsource",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug sources for package openssl.\nDebug sources are useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=aarch64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=aarch64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "b6245825de11c602beff7870c7612542"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "036bd68632078d2b12e87f4541047823b5675d7e1141e56639cbc1e2e42c9f65"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=aarch64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "372c4b2996b5d1a539a7e48d65a76e93002a0fe4fd8a3f01717cacc0f513946e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-devel",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-devel\npackage contains include files needed to develop applications which\nsupport various cryptographic algorithms and protocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=aarch64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=aarch64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "728afe59ed2768caea0634737878e2b9"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "deff41d222f613c3292d1bd0256c793c7fc7d5a4d61a24fa81f23990123bd79d"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=aarch64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "af7342cf0b04d24e8055f364d67afd705fbb94c7ec2460999a59cacfdf554920"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-perl",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-perl\npackage provides Perl scripts for converting certificates and keys\nfrom other formats to the formats used by the OpenSSL toolkit.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=ppc64le",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=ppc64le"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "2b8f23243dc5469c31a1d78fe817cc63"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "7ae23594204f2688d5b16be98782d5456080f55e6baf76172d8cb4e100c2507e"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=ppc64le",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bf63da42704f9da1e9eeefab808900f521a357b9a07433c0973965a02a2bb915"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-libs",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-libs\npackage contains the libraries that are used by various applications which\nsupport cryptographic algorithms and protocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=ppc64le",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=ppc64le"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "0a8de436e7188fd6a2eae746d0afce1f"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "6c35abfc44cc24048921fd519bbcdba0bc43cf45cdece57df99ede720600a686"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=ppc64le",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "71cb34e11fa6bda16512f0dbb314ac761348cf907b3e49fa54c7576305ed6afb"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-devel",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-devel\npackage contains include files needed to develop applications which\nsupport various cryptographic algorithms and protocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=ppc64le",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=ppc64le"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "8bc5175c12d9772a5dee1721f40f691e"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "b2e00a6e064e8efd9fac7b4633221ef5b3f49fb16e6eb2752cffae6965007cb7"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=ppc64le",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "36d11f2f192aef3abf391e4cf6699a24a303f09d68b2477595bb12af82b26e48"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl",
+      "version": "3.0.7-18.el9_2",
+      "description": "The OpenSSL toolkit provides support for secure communications between\nmachines. OpenSSL includes a certificate management tool and shared\nlibraries which provide various cryptographic algorithms and\nprotocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=ppc64le",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=ppc64le"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "c8006421182838d0db0559f89121e14d"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "10135a468b85a35b0373609ad48c50e71499d034c6f7e7455691b63f87105f12"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=ppc64le",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c96d6029cfa0e6a01c4419c154cbf98c08ab9bb69cc756d81350ab77b4d1f44c"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-debuginfo",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug information for package openssl.\nDebug information is useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=ppc64le",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=ppc64le"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "7d0cccc64dfed49cf9954784fb52d6d8"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "8e14cfaf5ae8bf1858b8d262b6d891dfdcc31378b6805345b8c1e08e4f0ce442"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=ppc64le",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a019fb248b731bb774bd559ed9ff1c5f12c2939b8fbe0f56696e9465a4ed1e8f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-debugsource",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug sources for package openssl.\nDebug sources are useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=ppc64le",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=ppc64le"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "df3c6c904df9135c5dbfb125be69cdb6"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "d7de194a98e577ebaa0344c55002f83c2d22b52bf62cac22920759f2679e8124"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=ppc64le",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3eed827b556e88f546fba10840ac33f001550343dc75971077a222ebc2b6e22f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-libs-debuginfo",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug information for package openssl-libs.\nDebug information is useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=ppc64le",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=ppc64le"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "050d1106c338216f24cf1300b73e7647"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "d6c29685fcd8a62504e223fcd4b520819118456cc65273e43c5fed19dd1d1a11"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=ppc64le",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e0d315e1763426f8ce1199e6ed76f116628f3533dc429f6e7980b64c0000b217"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-libs-debuginfo",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug information for package openssl-libs.\nDebug information is useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=i686",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=i686"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "cc789f980e1db3b3b49106f09d94b459"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "8897777ff03ce9308b8e7dd890e3c22c3b9f0da29d641d3844a52635ed926649"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=i686",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c6f7722acb3034abfedf21a131e5a1faf93acbed3ff1b4d4150f7c6a158e54d3"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-libs",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-libs\npackage contains the libraries that are used by various applications which\nsupport cryptographic algorithms and protocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=i686",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=i686"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "3ceb671050a402f897728066d844414e"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "ed85dfebb27dadf0d786da2aa15ce0dfbcb442ed38846360a82ab6abf7b71334"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=i686",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "69e098aceca261b8cdd127b78c90868d40d39c3cb94e37b07703b3f7a85f832f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-debugsource",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug sources for package openssl.\nDebug sources are useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=i686",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=i686"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "4437626dedb09a7d5fefea71391d9666"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "d13f9f85d90d4d0e4f39bdc743f42dc064a6ca16e2cb85fe1695e8a08b9163b4"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=i686",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "09a218d7864bfe519ec9815cfcbda1ea68c52947da80f293ed5017cca0e72ebb"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-devel",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-devel\npackage contains include files needed to develop applications which\nsupport various cryptographic algorithms and protocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=i686",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=i686"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "427cd7fdea922cddcfbdd736b6bb8717"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "03d6054aafea54f4496f8c35550eec87f2ceb06566e3fd5eea0446bd91e3242e"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=i686",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "689777a4cc483b0cbb3757da0e3274b49d6e697f8174405df415e0018cef7646"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-debuginfo",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug information for package openssl.\nDebug information is useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=i686",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=i686"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "497871ca44f5dd4859c73c507f7c40f8"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "02867d6b799b5ebc56f1f945a474f59c6b1a8430da4acf3fa35dae9cf992ea58"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=i686",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "67f5ec7e09b53771ee0f622b5a18d66028424dd1cdd1316dadeb4a336f9a494c"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl",
+      "version": "3.0.7-18.el9_2",
+      "description": "The OpenSSL toolkit provides support for secure communications between\nmachines. OpenSSL includes a certificate management tool and shared\nlibraries which provide various cryptographic algorithms and\nprotocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=i686",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=i686"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "eea71314fcc3f1be5af5d6773f82b6da"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "b7b39d8d7a960d75da6347206927e5a9bf33642148a0d291b0205f70eac8bf42"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=i686",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9b529f697702037b712e81778fa4e222d385568e4b3be167e6e42431a3270bfd"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-perl",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-perl\npackage provides Perl scripts for converting certificates and keys\nfrom other formats to the formats used by the OpenSSL toolkit.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=i686",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=i686"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "0c92f2f4cd6bd41361dc25ddd4ffbb21"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "d4732a4e60c831e1e8e4ddb89419a029accf2ee6dc1c2efe62e8bf20e97e2577"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=i686",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0bc733036256ec160b8ca5ed6bc1082e4d4c15f84cf6ff141f02d8e45d73b4b8"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-libs-debuginfo",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug information for package openssl-libs.\nDebug information is useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=x86_64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=x86_64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "62bc1369f326b14bfdb5450a59086c05"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "596206f99a50ede734b1f989977b210289debcfdd972666bd0d5ba03e7afbf19"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=x86_64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9b71a8428177e995b301f0821806cf22d64228d384afb624c79399a33e70b676"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-debuginfo",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug information for package openssl.\nDebug information is useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=x86_64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=x86_64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "746bb9be1752b46631e55fc2e8c1d48e"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "7fbdc911663e437e7be7e30f5bd87450f4ff38551ecbb3de27e362bb9f2ac2aa"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=x86_64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f8f2757bf8dd09442c1487b50437e4520d4e80cd132cf834da902eda803a9a2b"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-debugsource",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug sources for package openssl.\nDebug sources are useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=x86_64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=x86_64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "94d964a9a930e8c914e7601b9df395a0"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "96e137f9561e7669417fe5998ec2aa6ba55a67aef0c2c205eede5a5a5941e8ac"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=x86_64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4a5791dd6863d2e6b65c7faae9ce90a603b9c3a4c9be0f01b0103a536e7ecd29"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-perl",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-perl\npackage provides Perl scripts for converting certificates and keys\nfrom other formats to the formats used by the OpenSSL toolkit.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=x86_64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=x86_64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "862b17959c237e619217fabcf9939212"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "403624aed89502e17352b50f00c413104c9be31307477d02c3a7ae78cfcb1ca4"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=x86_64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b2fe5b3a9230446e6e8119cd24eef1bee107b8d5ac37d2c5442d524bf5745a4e"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-libs",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-libs\npackage contains the libraries that are used by various applications which\nsupport cryptographic algorithms and protocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=x86_64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=x86_64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "cceaf391f5defa464df7bb55b6ad7486"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "73e869a62715910bdec02ee3f0275a81ca96f539a07aced314182b6f4dc8c828"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=x86_64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0cb4cd2487dcbc2c0d97ded42f7998ff5f27c6e38ad40b204cce1e22c9966148"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl",
+      "version": "3.0.7-18.el9_2",
+      "description": "The OpenSSL toolkit provides support for secure communications between\nmachines. OpenSSL includes a certificate management tool and shared\nlibraries which provide various cryptographic algorithms and\nprotocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "ebe25fb0a0033a8e0248869989e587e8"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "96045880ef4a2167abe9ea14f2b325402996a7671df8f594924dc24b6c2263e4"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "82b40f3403399fc808bd26f1a91edb7855e8f10087b925651001c17cb17a38ed"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-devel",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-devel\npackage contains include files needed to develop applications which\nsupport various cryptographic algorithms and protocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=x86_64",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=x86_64"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "94df67b3c5c8d3cb192ba79d6559b46f"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "72f42e7c9ade55a24d3c53f4370d5d6d3b2fe99a4735d564825556ccd4cc1df3"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=x86_64",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0af316c88f24a4a3df742376b8875c89137acec5df2b40717dcc3d81789f52f0"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-libs-debuginfo",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug information for package openssl-libs.\nDebug information is useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=s390x",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=s390x"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "5ccbf569de20ef8c965993391c024832"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "bc5de92a3830cd99f7d291ccaafb5fd640127c8c1c925231e1e37d060a69563f"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=s390x",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1f336ab860b96b066fe6784b4d2674717d879f4902bc405a50dfdda9bf1ad469"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-libs",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-libs\npackage contains the libraries that are used by various applications which\nsupport cryptographic algorithms and protocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=s390x",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=s390x"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "349224e7170e1bcee0cf15c04164fe85"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "0543b42f6491762fab8defbc6ec68a30d8e17e2f55e50b29095c382a6ad5baf1"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=s390x",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3a92cded871cffdb2290d078fe4cf300bc9d74fd0af612a607898d9b6c7967fd"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-debugsource",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug sources for package openssl.\nDebug sources are useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=s390x",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=s390x"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "8ea0991914a7a90bccdee1264baaf74f"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "90ca984f844882a5c0678887851cc58be90a187c65ef010b866791c40116f7fc"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=s390x",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e8e12b987dbf73a8654a648d82a4c4dcc954a43758bae681c8e7dccc2bcedae4"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-devel",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-devel\npackage contains include files needed to develop applications which\nsupport various cryptographic algorithms and protocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=s390x",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=s390x"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "12e9fefcf812eaf6e727b53b613d7f88"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "4a8588e587337d65cd2da98b0ba813a1e178a9b515c82bbc7fe96f1ba749b8fc"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=s390x",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1c4e7f767b47e9dd36f00c1c213328ab84f0c1516d17b17f068eadefd5cc706d"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-debuginfo",
+      "version": "3.0.7-18.el9_2",
+      "description": "This package provides debug information for package openssl.\nDebug information is useful when developing applications that use this\npackage or when debugging this package.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=s390x",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=s390x"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "fd189955871f77470c91193b845f755f"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "0a2a6b1409b045894d15c1b05ff5be2c1feba0b2b5f2d3bbac9d2e44c93f0583"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=s390x",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9d615e97293c3177eaaffbe9d626467b75a6f97ebbdf85fef5953115eea8a03f"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl",
+      "version": "3.0.7-18.el9_2",
+      "description": "The OpenSSL toolkit provides support for secure communications between\nmachines. OpenSSL includes a certificate management tool and shared\nlibraries which provide various cryptographic algorithms and\nprotocols.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "5678f991a6d453ae482989fbe2ef5e51"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "11c42421e6d07bca92122575ac023016471383f58575b2dd478a19e0ba7ce4db"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c99bf4a5bf29434baca2e30e40fc9f6c7152ec9c372a48b79dbc9294d08a7774"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "name": "openssl-perl",
+      "version": "3.0.7-18.el9_2",
+      "description": "OpenSSL is a toolkit for supporting cryptography. The openssl-perl\npackage provides Perl scripts for converting certificates and keys\nfrom other formats to the formats used by the OpenSSL toolkit.",
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "purl": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x"
+          }
+        ]
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "879e4c4ba7c890c9fba001534ea552b5"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "6f885dd8acf32d367528f47f0289a04035fddc1eb83b720bc6889293b94892fc"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fe1ef3b6550b1f4153ac2d280f84d46bb36bb63a11ddaec7f76ff7fc0770d2db"
+        }
+      ]
+    },
+    {
+      "bom-ref": "pkg:generic/openssl@3.0.7?package-id=d4557c28c5c2e817",
+      "type": "application",
+      "name": "openssl",
+      "version": "3.0.7",
+      "purl": "pkg:generic/openssl@3.0.7",
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "binary-classifier-cataloger"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/usr/bin/openssl"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
+      "provides": [
+        "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64",
+        "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=aarch64",
+        "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=aarch64",
+        "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=aarch64",
+        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=aarch64",
+        "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=aarch64",
+        "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=aarch64",
+        "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=ppc64le",
+        "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=ppc64le",
+        "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=ppc64le",
+        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=ppc64le",
+        "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=ppc64le",
+        "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=ppc64le",
+        "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=ppc64le",
+        "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=i686",
+        "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=i686",
+        "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=i686",
+        "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=i686",
+        "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=i686",
+        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=i686",
+        "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=i686",
+        "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=x86_64",
+        "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=x86_64",
+        "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=x86_64",
+        "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=x86_64",
+        "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=x86_64",
+        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64",
+        "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=x86_64",
+        "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=s390x",
+        "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=s390x",
+        "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=s390x",
+        "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=s390x",
+        "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=s390x",
+        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x",
+        "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x"
+      ]
+    },
+    {
+      "ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=aarch64",
+      "provides": [
+        "pkg:generic/openssl@3.0.7?package-id=d4557c28c5c2e817"
+      ]
+    },
+    {
+      "ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=ppc64le",
+      "provides": [
+        "pkg:generic/openssl@3.0.7?package-id=d4557c28c5c2e817"
+      ]
+    },
+    {
+      "ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=i686",
+      "provides": [
+        "pkg:generic/openssl@3.0.7?package-id=d4557c28c5c2e817"
+      ]
+    },
+    {
+      "ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64",
+      "provides": [
+        "pkg:generic/openssl@3.0.7?package-id=d4557c28c5c2e817"
+      ]
+    },
+    {
+      "ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x",
+      "provides": [
+        "pkg:generic/openssl@3.0.7?package-id=d4557c28c5c2e817"
+      ]
+    }
+  ]
+}
