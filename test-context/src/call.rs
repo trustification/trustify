@@ -1,11 +1,13 @@
 use actix_http::Request;
 use actix_web::{
     dev::{Service, ServiceResponse},
-    Error,
+    web, App, Error,
 };
 use bytes::Bytes;
 use serde::de::DeserializeOwned;
 use std::future::Future;
+use trustify_auth::authorizer::Authorizer;
+use utoipa_actix_web::{service_config::ServiceConfig, AppExt};
 
 /// A trait wrapping an `impl Service` in a way that we can pass it as a reference.
 pub trait CallService {
@@ -29,4 +31,19 @@ where
     async fn call_and_read_body_json<T: DeserializeOwned>(&self, r: Request) -> T {
         actix_web::test::call_and_read_body_json(self, r).await
     }
+}
+
+pub async fn caller<F>(cfg_fn: F) -> anyhow::Result<impl CallService>
+where
+    F: FnOnce(&mut ServiceConfig),
+{
+    Ok(actix_web::test::init_service(
+        App::new()
+            .into_utoipa_app()
+            .app_data(web::PayloadConfig::default().limit(5 * 1024 * 1024))
+            .app_data(web::Data::new(Authorizer::new(None)))
+            .service(utoipa_actix_web::scope("/api").configure(cfg_fn))
+            .into_app(),
+    )
+    .await)
 }
