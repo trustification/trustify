@@ -166,13 +166,13 @@ pub async fn get_component_deps(
 
 #[cfg(test)]
 mod test {
-    use crate::test::{caller, CallService};
+    use crate::test::caller;
     use actix_http::Request;
     use actix_web::test::TestRequest;
     use serde_json::Value;
     use test_context::test_context;
     use test_log::test;
-    use trustify_test_context::TrustifyContext;
+    use trustify_test_context::{call::CallService, TrustifyContext};
 
     #[test_context(TrustifyContext)]
     #[test(actix_web::test)]
