@@ -476,4 +476,37 @@ mod test {
         assert_eq!(&response["total"], 0);
         Ok(())
     }
+
+    #[test_context(TrustifyContext)]
+    #[test(actix_web::test)]
+    async fn issue_tc_2050(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let app = caller(ctx).await?;
+        ctx.ingest_documents(["cyclonedx/openssl-3.0.7-18.el9_2.cdx_1.6.sbom.json"])
+            .await?;
+
+        // Find all deps of src rpm
+        let src = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
+        let uri = format!("/api/v1/analysis/dep/{}", urlencoding::encode(src));
+        let request: Request = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        log::debug!("{response:#?}");
+        assert_eq!(35, response["items"][0]["deps"].as_array().unwrap().len());
+
+        // Ensure binary rpm GeneratedFrom src rpm
+        let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
+        let uri = format!(
+            "/api/v1/analysis/root-component/{}",
+            urlencoding::encode(x86)
+        );
+        let request: Request = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        log::debug!("{response:#?}");
+        assert_eq!(
+            "GeneratedFrom",
+            response["items"][0]["ancestors"][0]["relationship"]
+        );
+        assert_eq!(src, response["items"][0]["ancestors"][0]["purl"]);
+
+        Ok(())
+    }
 }
