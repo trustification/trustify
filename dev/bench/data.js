@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736433483987,
+  "lastUpdate": 1736778962056,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2865,6 +2865,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/4a7ae8479540d03d9546a6d48992c99e0770d1a7"
         },
         "date": 1736433482675,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "26e33cbe58be53e83112ce6d0652ac989c7dcb91",
+          "message": "chore: update OTEL deps",
+          "timestamp": "2025-01-13T14:05:39Z",
+          "tree_id": "7cfae4065c908bb8aac0226addef18c26f0556c4",
+          "url": "https://github.com/trustification/trustify/commit/26e33cbe58be53e83112ce6d0652ac989c7dcb91"
+        },
+        "date": 1736778961250,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
