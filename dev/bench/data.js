@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736846031247,
+  "lastUpdate": 1736853354806,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2923,6 +2923,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/6eea981d4f64b5e650eec7d5c5c392a5cac46e83"
         },
         "date": 1736846030710,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "dc319f59ce0ef1b319d4d656c04966c88ac52c35",
+          "message": "chore: update tokio\n\n* Past week I did a basic investigation with new tokio version and importers\n  * We are using a tokio version from ~1 year ago\n  * I need to run the importers with hotspot to see if we have differences with the tokio versions\n    * result: nothing major changed",
+          "timestamp": "2025-01-14T10:51:34Z",
+          "tree_id": "95e2b7cf1f4858360994a0189dd1f510a8d29948",
+          "url": "https://github.com/trustification/trustify/commit/dc319f59ce0ef1b319d4d656c04966c88ac52c35"
+        },
+        "date": 1736853354184,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
