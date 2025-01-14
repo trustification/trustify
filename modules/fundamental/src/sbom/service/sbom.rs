@@ -1,4 +1,5 @@
 use super::SbomService;
+use crate::sbom::model::SbomExternalPackageReference;
 use crate::{
     purl::model::summary::purl::PurlSummary,
     sbom::model::{
@@ -257,17 +258,26 @@ impl SbomService {
     #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
     pub async fn find_related_sboms<C: ConnectionTrait>(
         &self,
-        qualified_package_id: Uuid,
+        external_package_ref: SbomExternalPackageReference,
         paginated: Paginated,
         query: Query,
         connection: &C,
     ) -> Result<PaginatedResults<SbomSummary>, Error> {
-        let query = sbom::Entity::find()
-            .join(JoinType::Join, sbom::Relation::Packages.def())
-            .join(JoinType::Join, sbom_package::Relation::Purl.def())
-            .filter(sbom_package_purl_ref::Column::QualifiedPurlId.eq(qualified_package_id))
-            .filtering(query)?
-            .find_also_linked(SbomNodeLink);
+        let select = sbom::Entity::find().join(JoinType::Join, sbom::Relation::Packages.def());
+
+        let select = match external_package_ref {
+            SbomExternalPackageReference::Purl(purl) => select
+                .join(JoinType::Join, sbom_package::Relation::Purl.def())
+                .filter(sbom_package_purl_ref::Column::QualifiedPurlId.eq(purl.qualifier_uuid())),
+            SbomExternalPackageReference::Id(id) => {
+                select.filter(sbom_package::Column::NodeId.eq(id))
+            }
+            SbomExternalPackageReference::Cpe(cpe) => select
+                .join(JoinType::Join, sbom_package::Relation::Cpe.def())
+                .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid())),
+        };
+
+        let query = select.filtering(query)?.find_also_linked(SbomNodeLink);
 
         // limit and execute
 

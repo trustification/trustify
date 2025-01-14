@@ -3,6 +3,7 @@ mod label;
 #[cfg(test)]
 mod test;
 
+use crate::sbom::model::SbomExternalPackageReference;
 use crate::{
     purl::service::PurlService,
     sbom::{
@@ -18,8 +19,7 @@ use actix_http::body::BoxBody;
 use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder, ResponseError};
 use config::Config;
 use futures_util::TryStreamExt;
-use sea_orm::prelude::Uuid;
-use sea_orm::TransactionTrait;
+use sea_orm::{prelude::Uuid, TransactionTrait};
 use std::{
     fmt::{Display, Formatter},
     str::FromStr,
@@ -30,6 +30,7 @@ use trustify_auth::{
     authorizer::{Authorizer, Require},
     CreateSbom, DeleteSbom, Permission, ReadAdvisory, ReadSbom,
 };
+use trustify_common::cpe::Cpe;
 use trustify_common::{
     db::{query::Query, Database},
     decompress::decompress_async,
@@ -106,9 +107,12 @@ struct AllRelatedQuery {
     /// Find by PURL
     #[serde(default)]
     pub purl: Option<Purl>,
+    /// Find by CPE
+    #[serde(default)]
+    pub cpe: Option<Cpe>,
     /// Find by an ID of a package
     #[serde(default)]
-    pub id: Option<Uuid>,
+    pub id: Option<String>,
 }
 
 #[derive(Debug)]
@@ -118,8 +122,8 @@ impl Display for AllRelatedQueryParseError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Requires either `purl` or `id` (got - purl: {:?}, id: {:?})",
-            self.0.purl, self.0.id
+            "Requires either `purl`, `cpe`, or `id` (got - purl: {:?}, cpe: {:?}, id: {:?})",
+            self.0.purl, self.0.cpe, self.0.id
         )
     }
 }
@@ -128,22 +132,35 @@ impl ResponseError for AllRelatedQueryParseError {
     fn error_response(&self) -> HttpResponse<BoxBody> {
         HttpResponse::BadRequest().json(ErrorInformation {
             error: "IdOrPurl".into(),
-            message: "Requires either `purl` or `id`".to_string(),
+            message: "Requires either `purl`, `cpe`, or `id`".to_string(),
             details: Some(format!(
-                "Received - PURL: {:?}, ID: {:?}",
-                self.0.purl, self.0.id
+                "Received - PURL: {:?}, CPE: {:?}, ID: {:?}",
+                self.0.purl, self.0.cpe, self.0.id
             )),
         })
     }
 }
 
-impl TryFrom<AllRelatedQuery> for Uuid {
+impl TryFrom<AllRelatedQuery> for SbomExternalPackageReference {
     type Error = AllRelatedQueryParseError;
 
     fn try_from(value: AllRelatedQuery) -> Result<Self, Self::Error> {
-        Ok(match (&value.purl, &value.id) {
-            (Some(purl), None) => purl.qualifier_uuid(),
-            (None, Some(id)) => *id,
+        Ok(match value {
+            AllRelatedQuery {
+                purl: Some(purl),
+                cpe: None,
+                id: None,
+            } => SbomExternalPackageReference::Purl(purl),
+            AllRelatedQuery {
+                purl: None,
+                cpe: Some(cpe),
+                id: None,
+            } => SbomExternalPackageReference::Cpe(cpe),
+            AllRelatedQuery {
+                purl: None,
+                cpe: None,
+                id: Some(id),
+            } => SbomExternalPackageReference::Id(id),
             _ => {
                 return Err(AllRelatedQueryParseError(value));
             }
