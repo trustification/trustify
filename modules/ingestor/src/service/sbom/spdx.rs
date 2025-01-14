@@ -83,7 +83,7 @@ mod test {
         let graph = Graph::new(ctx.db.clone());
         let data = document_bytes("ubi9-9.2-755.1697625012.json").await?;
 
-        let ingestor = IngestorService::new(graph, ctx.storage.clone());
+        let ingestor = IngestorService::new(graph, ctx.storage.clone(), Default::default());
 
         ingestor
             .ingest(&data, Format::SPDX, ("source", "test"), None)

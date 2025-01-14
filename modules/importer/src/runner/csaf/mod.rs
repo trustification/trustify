@@ -64,7 +64,11 @@ impl super::ImportRunner {
 
         // storage (called by validator)
 
-        let ingestor = IngestorService::new(Graph::new(self.db.clone()), self.storage.clone());
+        let ingestor = IngestorService::new(
+            Graph::new(self.db.clone()),
+            self.storage.clone(),
+            self.analysis.clone(),
+        );
         let storage = storage::StorageVisitor {
             context,
             ingestor,

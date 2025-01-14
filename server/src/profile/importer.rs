@@ -133,7 +133,17 @@ impl InitData {
         let db = self.db;
         let storage = self.storage;
 
-        let importer = async { importer(db, storage, self.working_dir).await }.boxed_local();
+        let importer = async {
+            importer(
+                db,
+                storage,
+                self.working_dir,
+                // Running the importer, we don't need an analysis graph update
+                None,
+            )
+            .await
+        }
+        .boxed_local();
 
         let tasks = vec![importer];
 

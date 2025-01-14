@@ -83,7 +83,7 @@ mod test {
         let graph = Graph::new(db.clone());
         let data = document_bytes("zookeeper-3.9.2-cyclonedx.json").await?;
 
-        let ingestor = IngestorService::new(graph, ctx.storage.clone());
+        let ingestor = IngestorService::new(graph, ctx.storage.clone(), Default::default());
 
         ingestor
             .ingest(&data, Format::CycloneDX, ("source", "test"), None)

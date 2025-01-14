@@ -1626,15 +1626,14 @@ paths:
           oneOf:
           - type: 'null'
           - $ref: '#/components/schemas/Purl'
-      - name: id
+      - name: cpe
         in: query
-        description: Find by an ID of a package
+        description: Find by CPE
         required: false
         schema:
-          type:
-          - string
-          - 'null'
-          format: uuid
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/Cpe'
       responses:
         '200':
           description: Matching SBOMs
@@ -1660,22 +1659,21 @@ paths:
           oneOf:
           - type: 'null'
           - $ref: '#/components/schemas/Purl'
-      - name: id
+      - name: cpe
         in: path
-        description: Find by an ID of a package
+        description: Find by CPE
         required: true
         schema:
-          type:
-          - string
-          - 'null'
-          format: uuid
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/Cpe'
       requestBody:
         content:
           application/json:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/AllRelatedQuery'
+                $ref: '#/components/schemas/ExternalReferenceQuery'
         required: true
       responses:
         '200':
@@ -2369,20 +2367,6 @@ components:
         name:
           type: string
         parameters: {}
-    AllRelatedQuery:
-      type: object
-      properties:
-        id:
-          type:
-          - string
-          - 'null'
-          format: uuid
-          description: Find by an ID of a package
-        purl:
-          oneOf:
-          - type: 'null'
-          - $ref: '#/components/schemas/Purl'
-            description: Find by PURL
     AnalysisStatus:
       type: object
       required:
@@ -2392,9 +2376,13 @@ components:
         graph_count:
           type: integer
           format: int32
+          description: The number of graphs loaded in memory
+          minimum: 0
         sbom_count:
           type: integer
           format: int32
+          description: The number of SBOMs found in the database
+          minimum: 0
     AncNode:
       type: object
       required:
@@ -2402,15 +2390,22 @@ components:
       - node_id
       - relationship
       - purl
+      - cpe
       - name
       - version
       properties:
+        cpe:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cpe'
         name:
           type: string
         node_id:
           type: string
         purl:
-          type: string
+          type: array
+          items:
+            $ref: '#/components/schemas/Purl'
         relationship:
           type: string
         sbom_id:
@@ -2423,6 +2418,7 @@ components:
       - sbom_id
       - node_id
       - purl
+      - cpe
       - name
       - version
       - published
@@ -2435,6 +2431,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AncNode'
+        cpe:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cpe'
         document_id:
           type: string
         name:
@@ -2448,7 +2448,9 @@ components:
         published:
           type: string
         purl:
-          type: string
+          type: array
+          items:
+            $ref: '#/components/schemas/Purl'
         sbom_id:
           type: string
         version:
@@ -2602,6 +2604,9 @@ components:
         updated_at:
           type: string
           format: date-time
+    Cpe:
+      type: string
+      format: uri
     CsafImporter:
       allOf:
       - $ref: '#/components/schemas/CommonImporter'
@@ -2658,10 +2663,15 @@ components:
       - node_id
       - relationship
       - purl
+      - cpe
       - name
       - version
       - deps
       properties:
+        cpe:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cpe'
         deps:
           type: array
           items:
@@ -2671,7 +2681,9 @@ components:
         node_id:
           type: string
         purl:
-          type: string
+          type: array
+          items:
+            $ref: '#/components/schemas/Purl'
         relationship:
           type: string
         sbom_id:
@@ -2684,6 +2696,7 @@ components:
       - sbom_id
       - node_id
       - purl
+      - cpe
       - name
       - version
       - published
@@ -2692,6 +2705,10 @@ components:
       - product_version
       - deps
       properties:
+        cpe:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cpe'
         deps:
           type: array
           items:
@@ -2709,11 +2726,26 @@ components:
         published:
           type: string
         purl:
-          type: string
+          type: array
+          items:
+            $ref: '#/components/schemas/Purl'
         sbom_id:
           type: string
         version:
           type: string
+    ExternalReferenceQuery:
+      type: object
+      properties:
+        cpe:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/Cpe'
+            description: Find by CPE
+        purl:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/Purl'
+            description: Find by PURL
     Id:
       type: string
       description: A hash/digest prefixed with its type.

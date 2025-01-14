@@ -102,6 +102,8 @@ impl GenerateDump {
             db: db.clone(),
             storage: storage.into(),
             working_dir: self.working_dir.as_ref().map(|wd| wd.join("wd")),
+            // The xtask doesn't need the analysis graph
+            analysis: None,
         };
 
         // ingest documents

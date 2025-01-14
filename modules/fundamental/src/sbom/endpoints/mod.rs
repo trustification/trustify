@@ -1,43 +1,38 @@
 mod config;
 mod label;
+mod query;
 #[cfg(test)]
 mod test;
 
-use crate::sbom::model::SbomExternalPackageReference;
+pub use query::*;
+
 use crate::{
     purl::service::PurlService,
     sbom::{
         model::{
-            details::SbomAdvisory, SbomPackage, SbomPackageReference, SbomPackageRelation,
-            SbomSummary, Which,
+            details::SbomAdvisory, SbomExternalPackageReference, SbomNodeReference, SbomPackage,
+            SbomPackageRelation, SbomSummary, Which,
         },
         service::SbomService,
     },
     Error::{self, Internal},
 };
-use actix_http::body::BoxBody;
-use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder, ResponseError};
+use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder};
 use config::Config;
 use futures_util::TryStreamExt;
 use sea_orm::{prelude::Uuid, TransactionTrait};
-use std::{
-    fmt::{Display, Formatter},
-    str::FromStr,
-};
+use std::str::FromStr;
 use trustify_auth::{
     all,
     authenticator::user::UserInformation,
     authorizer::{Authorizer, Require},
     CreateSbom, DeleteSbom, Permission, ReadAdvisory, ReadSbom,
 };
-use trustify_common::cpe::Cpe;
 use trustify_common::{
     db::{query::Query, Database},
     decompress::decompress_async,
-    error::ErrorInformation,
     id::Id,
     model::{BinaryData, Paginated, PaginatedResults},
-    purl::Purl,
 };
 use trustify_entity::{labels::Labels, relationship::Relationship};
 use trustify_module_ingestor::{
@@ -102,72 +97,6 @@ pub async fn all(
     Ok(HttpResponse::Ok().json(result))
 }
 
-#[derive(Clone, Debug, serde::Deserialize, utoipa::IntoParams, utoipa::ToSchema)]
-struct AllRelatedQuery {
-    /// Find by PURL
-    #[serde(default)]
-    pub purl: Option<Purl>,
-    /// Find by CPE
-    #[serde(default)]
-    pub cpe: Option<Cpe>,
-    /// Find by an ID of a package
-    #[serde(default)]
-    pub id: Option<String>,
-}
-
-#[derive(Debug)]
-pub struct AllRelatedQueryParseError(AllRelatedQuery);
-
-impl Display for AllRelatedQueryParseError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Requires either `purl`, `cpe`, or `id` (got - purl: {:?}, cpe: {:?}, id: {:?})",
-            self.0.purl, self.0.cpe, self.0.id
-        )
-    }
-}
-
-impl ResponseError for AllRelatedQueryParseError {
-    fn error_response(&self) -> HttpResponse<BoxBody> {
-        HttpResponse::BadRequest().json(ErrorInformation {
-            error: "IdOrPurl".into(),
-            message: "Requires either `purl`, `cpe`, or `id`".to_string(),
-            details: Some(format!(
-                "Received - PURL: {:?}, CPE: {:?}, ID: {:?}",
-                self.0.purl, self.0.cpe, self.0.id
-            )),
-        })
-    }
-}
-
-impl TryFrom<AllRelatedQuery> for SbomExternalPackageReference {
-    type Error = AllRelatedQueryParseError;
-
-    fn try_from(value: AllRelatedQuery) -> Result<Self, Self::Error> {
-        Ok(match value {
-            AllRelatedQuery {
-                purl: Some(purl),
-                cpe: None,
-                id: None,
-            } => SbomExternalPackageReference::Purl(purl),
-            AllRelatedQuery {
-                purl: None,
-                cpe: Some(cpe),
-                id: None,
-            } => SbomExternalPackageReference::Cpe(cpe),
-            AllRelatedQuery {
-                purl: None,
-                cpe: None,
-                id: Some(id),
-            } => SbomExternalPackageReference::Id(id),
-            _ => {
-                return Err(AllRelatedQueryParseError(value));
-            }
-        })
-    }
-}
-
 /// Find all SBOMs containing the provided package.
 ///
 /// The package can be provided either via a PURL or using the ID of a package as returned by
@@ -178,7 +107,7 @@ impl TryFrom<AllRelatedQuery> for SbomExternalPackageReference {
     params(
         Query,
         Paginated,
-        AllRelatedQuery,
+        ExternalReferenceQuery,
     ),
     responses(
         (status = 200, description = "Matching SBOMs", body = PaginatedResults<SbomSummary>),
@@ -190,13 +119,13 @@ pub async fn all_related(
     db: web::Data<Database>,
     web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
-    web::Query(all_related): web::Query<AllRelatedQuery>,
+    web::Query(all_related): web::Query<ExternalReferenceQuery>,
     authorizer: web::Data<Authorizer>,
     user: UserInformation,
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadSbom)?;
 
-    let id = all_related.try_into()?;
+    let id = (&all_related).try_into()?;
 
     let result = sbom
         .find_related_sboms(id, paginated, search, db.as_ref())
@@ -213,7 +142,7 @@ pub async fn all_related(
     tag = "sbom",
     operation_id = "countRelatedSboms",
     params(
-        AllRelatedQuery,
+        ExternalReferenceQuery,
     ),
     responses(
         (status = 200, description = "Number of matching SBOMs per package", body = Vec<i64>),
@@ -223,12 +152,12 @@ pub async fn all_related(
 pub async fn count_related(
     sbom: web::Data<SbomService>,
     db: web::Data<Database>,
-    web::Json(ids): web::Json<Vec<AllRelatedQuery>>,
+    web::Json(ids): web::Json<Vec<ExternalReferenceQuery>>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     let ids = ids
-        .into_iter()
-        .map(Uuid::try_from)
+        .iter()
+        .map(SbomExternalPackageReference::try_from)
         .collect::<Result<Vec<_>, _>>()?;
 
     let result = sbom.count_related_sboms(ids, db.as_ref()).await?;
@@ -406,8 +335,8 @@ pub async fn related(
             paginated,
             related.which,
             match &related.reference {
-                None => SbomPackageReference::All,
-                Some(id) => SbomPackageReference::Package(id),
+                None => SbomNodeReference::All,
+                Some(id) => SbomNodeReference::Package(id),
             },
             related.relationship,
             db.as_ref(),
