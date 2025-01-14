@@ -11,7 +11,7 @@ use sea_orm::{
 };
 use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
-use std::{collections::hash_map::Entry, collections::HashMap};
+use std::collections::{hash_map::Entry, HashMap};
 use strum::IntoEnumIterator;
 use trustify_common::{
     db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
@@ -21,10 +21,10 @@ use trustify_common::{
 };
 use trustify_cvss::cvss3::{score::Score, severity::Severity, Cvss3Base};
 use trustify_entity::{
-    advisory, base_purl, cpe, cvss3, license, organization, product, product_status,
-    product_version, product_version_range, purl_license_assertion, purl_status, qualified_purl,
-    sbom, sbom_package, sbom_package_purl_ref, status, version_range, versioned_purl,
-    vulnerability,
+    advisory, base_purl, cpe, cvss3, license, organization, package_relates_to_package, product,
+    product_status, product_version, product_version_range, purl_license_assertion, purl_status,
+    qualified_purl, relationship::Relationship, sbom, sbom_package, sbom_package_purl_ref, status,
+    version_range, versioned_purl, vulnerability,
 };
 use trustify_module_ingestor::common::{Deprecation, DeprecationForExt};
 use utoipa::ToSchema;
@@ -38,6 +38,7 @@ pub struct PurlDetails {
     pub base: BasePurlHead,
     pub advisories: Vec<PurlAdvisory>,
     pub licenses: Vec<PurlLicenseSummary>,
+    pub relationships: Vec<(Relationship, String)>,
 }
 
 impl PurlDetails {
@@ -114,12 +115,24 @@ impl PurlDetails {
             .all(tx)
             .await?;
 
+        let relationships = package_relates_to_package::Entity::find()
+            .filter(
+                package_relates_to_package::Column::LeftNodeId
+                    .eq(qualified_package.purl.to_string()),
+            )
+            .all(tx)
+            .await?
+            .into_iter()
+            .map(|model| (model.relationship, model.right_node_id))
+            .collect();
+
         Ok(PurlDetails {
             head: PurlHead::from_entity(&package, &package_version, qualified_package, tx).await?,
             version: VersionedPurlHead::from_entity(&package, &package_version, tx).await?,
             base: BasePurlHead::from_entity(&package).await?,
             advisories: PurlAdvisory::from_entities(purl_statuses, product_statuses, tx).await?,
             licenses: PurlLicenseSummary::from_entities(&licenses, tx).await?,
+            relationships,
         })
     }
 }
