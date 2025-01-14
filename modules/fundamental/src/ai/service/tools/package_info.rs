@@ -1,3 +1,4 @@
+use crate::sbom::model::SbomExternalPackageReference;
 use crate::{ai::service::tools, purl::service::PurlService, sbom::service::SbomService};
 use async_trait::async_trait;
 use langchain_rust::tools::Tool;
@@ -127,7 +128,12 @@ Input: The package name, its Identifier URI, or UUID.
         };
 
         let sboms = sbom_service
-            .find_related_sboms(item.head.uuid, Default::default(), Default::default(), db)
+            .find_related_sboms(
+                SbomExternalPackageReference::Purl(item.head.purl.clone()),
+                Default::default(),
+                Default::default(),
+                db,
+            )
             .await?;
 
         #[derive(Serialize)]

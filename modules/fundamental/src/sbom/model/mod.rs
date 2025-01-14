@@ -8,7 +8,9 @@ use async_graphql::SimpleObject;
 use sea_orm::{prelude::Uuid, ConnectionTrait, ModelTrait, PaginatorTrait};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
+use trustify_common::cpe::Cpe;
 use trustify_common::model::Paginated;
+use trustify_common::purl::Purl;
 use trustify_entity::{
     labels::Labels, relationship::Relationship, sbom, sbom_node, sbom_package, source_document,
 };
@@ -150,4 +152,16 @@ pub enum Which {
     Left,
     /// Target side
     Right,
+}
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub enum SbomExternalPackageReference {
+    /// The ID of the package/component.
+    ///
+    /// This is actually not internal, but external.
+    Id(String),
+    /// The PackageURL of the package/component.
+    Purl(Purl),
+    /// The CPE of the package/component.
+    Cpe(Cpe),
 }
