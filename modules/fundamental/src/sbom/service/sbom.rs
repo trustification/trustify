@@ -1,10 +1,9 @@
 use super::SbomService;
-use crate::sbom::model::SbomExternalPackageReference;
 use crate::{
     purl::model::summary::purl::PurlSummary,
     sbom::model::{
-        details::SbomDetails, SbomPackage, SbomPackageReference, SbomPackageRelation, SbomSummary,
-        Which,
+        details::SbomDetails, SbomExternalPackageReference, SbomNodeReference, SbomPackage,
+        SbomPackageRelation, SbomSummary, Which,
     },
     Error,
 };
@@ -63,7 +62,6 @@ impl SbomService {
         &self,
         id: Id,
         statuses: Vec<String>,
-
         connection: &C,
     ) -> Result<Option<SbomDetails>, Error> {
         Ok(match self.fetch_sbom(id, connection).await? {
@@ -211,7 +209,7 @@ impl SbomService {
             Default::default(),
             paginated,
             Which::Right,
-            SbomPackageReference::All,
+            SbomNodeReference::All,
             Some(Relationship::DescribedBy),
             db,
         )
@@ -222,30 +220,76 @@ impl SbomService {
     #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
     pub async fn count_related_sboms<C: ConnectionTrait>(
         &self,
-        qualified_package_ids: Vec<Uuid>,
+        references: Vec<SbomExternalPackageReference<'_>>,
         connection: &C,
     ) -> Result<Vec<i64>, Error> {
-        let query = sbom::Entity::find()
-            .join(JoinType::Join, sbom::Relation::Packages.def())
-            .join(JoinType::Join, sbom_package::Relation::Purl.def())
-            .filter(
-                sbom_package_purl_ref::Column::QualifiedPurlId.is_in(qualified_package_ids.clone()),
-            )
-            .group_by(sbom_package_purl_ref::Column::QualifiedPurlId)
-            .select_only()
-            .column(sbom_package_purl_ref::Column::QualifiedPurlId)
-            .column_as(sbom_package::Column::SbomId.count(), "count")
-            .into_tuple::<(Uuid, i64)>()
-            .all(connection)
-            .await?;
+        #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+        enum Id {
+            Cpe(Uuid),
+            Purl(Uuid),
+        }
 
-        // turn result into a map
+        let ids = references
+            .iter()
+            .map(|r| match r {
+                SbomExternalPackageReference::Cpe(c) => Id::Cpe(c.uuid()),
+                SbomExternalPackageReference::Purl(p) => Id::Purl(p.qualifier_uuid()),
+            })
+            .collect::<Vec<_>>();
 
-        let counts_map = query.into_iter().collect::<HashMap<_, _>>();
+        let mut counts_map = HashMap::new();
+
+        let cpes = ids
+            .iter()
+            .filter_map(|id| match id {
+                Id::Cpe(id) => Some(*id),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+
+        counts_map.extend(
+            sbom::Entity::find()
+                .join(JoinType::Join, sbom::Relation::Packages.def())
+                .join(JoinType::Join, sbom_package::Relation::Cpe.def())
+                .filter(sbom_package_cpe_ref::Column::CpeId.is_in(cpes))
+                .group_by(sbom_package_cpe_ref::Column::CpeId)
+                .select_only()
+                .column(sbom_package_cpe_ref::Column::CpeId)
+                .column_as(sbom_package::Column::SbomId.count(), "count")
+                .into_tuple::<(Uuid, i64)>()
+                .all(connection)
+                .await?
+                .into_iter()
+                .map(|(id, count)| (Id::Cpe(id), count)),
+        );
+
+        let purls = ids
+            .iter()
+            .filter_map(|id| match id {
+                Id::Purl(id) => Some(*id),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+
+        counts_map.extend(
+            sbom::Entity::find()
+                .join(JoinType::Join, sbom::Relation::Packages.def())
+                .join(JoinType::Join, sbom_package::Relation::Purl.def())
+                .filter(sbom_package_purl_ref::Column::QualifiedPurlId.is_in(purls))
+                .group_by(sbom_package_purl_ref::Column::QualifiedPurlId)
+                .select_only()
+                .column(sbom_package_purl_ref::Column::QualifiedPurlId)
+                .column_as(sbom_package::Column::SbomId.count(), "count")
+                .into_tuple::<(Uuid, i64)>()
+                .all(connection)
+                .await?
+                .into_iter()
+                .map(|(id, count)| (Id::Purl(id), count)),
+        );
 
         // now use the inbound order and retrieve results in that order
 
-        let result: Vec<i64> = qualified_package_ids
+        let result: Vec<i64> = ids
             .into_iter()
             .map(|id| counts_map.get(&id).copied().unwrap_or_default())
             .collect();
@@ -258,20 +302,17 @@ impl SbomService {
     #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
     pub async fn find_related_sboms<C: ConnectionTrait>(
         &self,
-        external_package_ref: SbomExternalPackageReference,
+        package_ref: SbomExternalPackageReference<'_>,
         paginated: Paginated,
         query: Query,
         connection: &C,
     ) -> Result<PaginatedResults<SbomSummary>, Error> {
         let select = sbom::Entity::find().join(JoinType::Join, sbom::Relation::Packages.def());
 
-        let select = match external_package_ref {
+        let select = match package_ref {
             SbomExternalPackageReference::Purl(purl) => select
                 .join(JoinType::Join, sbom_package::Relation::Purl.def())
                 .filter(sbom_package_purl_ref::Column::QualifiedPurlId.eq(purl.qualifier_uuid())),
-            SbomExternalPackageReference::Id(id) => {
-                select.filter(sbom_package::Column::NodeId.eq(id))
-            }
             SbomExternalPackageReference::Cpe(cpe) => select
                 .join(JoinType::Join, sbom_package::Relation::Cpe.def())
                 .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid())),
@@ -306,12 +347,10 @@ impl SbomService {
         search: Query,
         paginated: Paginated,
         which: Which,
-        reference: impl Into<SbomPackageReference<'_>> + Debug,
+        reference: impl Into<SbomNodeReference<'_>> + Debug,
         relationship: Option<Relationship>,
         db: &C,
     ) -> Result<PaginatedResults<SbomPackageRelation>, Error> {
-        // let db = self.db.connection(connection);
-
         // which way
 
         log::debug!("Which: {which:?}");
@@ -356,11 +395,11 @@ impl SbomService {
         // filter for reference
 
         query = match reference.into() {
-            SbomPackageReference::All => {
+            SbomNodeReference::All => {
                 // sbom - add join to sbom table
                 query.join(JoinType::Join, sbom_node::Relation::Sbom.def())
             }
-            SbomPackageReference::Package(node_id) => {
+            SbomNodeReference::Package(node_id) => {
                 // package - set node id filter
                 query.filter(filter.eq(node_id))
             }
@@ -411,7 +450,7 @@ impl SbomService {
         &self,
         sbom_id: Uuid,
         relationship: impl Into<Option<Relationship>>,
-        pkg: impl Into<SbomPackageReference<'_>> + Debug,
+        pkg: impl Into<SbomNodeReference<'_>> + Debug,
         tx: &C,
     ) -> Result<Vec<SbomPackage>, Error> {
         let result = self
@@ -613,32 +652,6 @@ struct PurlDto {
     qualified_purl_id: Uuid,
     qualifiers: Qualifiers,
 }
-
-/*
-impl From<PurlDto> for Purl {
-    fn from(value: PurlDto) -> Self {
-        let PurlDto {
-            r#type,
-            name,
-            namespace,
-            version,
-            qualifiers,
-        } = value;
-        Self {
-            ty: r#type,
-            name,
-            namespace,
-            version: if version.is_empty() {
-                None
-            } else {
-                Some(version)
-            },
-            qualifiers: qualifiers.0,
-        }
-    }
-}
-
- */
 
 #[derive(Debug)]
 pub struct QueryCatcher {

@@ -77,7 +77,11 @@ impl super::ImportRunner {
         cve: CveImporter,
         continuation: serde_json::Value,
     ) -> Result<RunOutput, ScannerError> {
-        let ingestor = IngestorService::new(Graph::new(self.db.clone()), self.storage.clone());
+        let ingestor = IngestorService::new(
+            Graph::new(self.db.clone()),
+            self.storage.clone(),
+            self.analysis.clone(),
+        );
 
         let report = Arc::new(Mutex::new(ReportBuilder::new()));
         let continuation = serde_json::from_value(continuation).unwrap_or_default();

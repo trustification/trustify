@@ -20,12 +20,14 @@ use std::path::PathBuf;
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::db::Database;
+use trustify_module_analysis::service::AnalysisService;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 
 pub struct ImportRunner {
     pub db: Database,
     pub storage: DispatchBackend,
     pub working_dir: Option<PathBuf>,
+    pub analysis: Option<AnalysisService>,
 }
 
 impl ImportRunner {

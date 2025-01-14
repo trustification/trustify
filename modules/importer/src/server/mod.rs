@@ -15,6 +15,7 @@ use time::OffsetDateTime;
 use tokio::time::MissedTickBehavior;
 use tracing::instrument;
 use trustify_common::db::Database;
+use trustify_module_analysis::service::AnalysisService;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 
 /// run the importer loop
@@ -22,11 +23,13 @@ pub async fn importer(
     db: Database,
     storage: DispatchBackend,
     working_dir: Option<PathBuf>,
+    analysis: Option<AnalysisService>,
 ) -> anyhow::Result<()> {
     Server {
         db,
         storage,
         working_dir,
+        analysis,
     }
     .run()
     .await
@@ -52,6 +55,7 @@ struct Server {
     db: Database,
     storage: DispatchBackend,
     working_dir: Option<PathBuf>,
+    analysis: Option<AnalysisService>,
 }
 
 impl Server {
@@ -90,6 +94,7 @@ impl Server {
                     db: self.db.clone(),
                     storage: self.storage.clone(),
                     working_dir: self.working_dir.clone(),
+                    analysis: self.analysis.clone(),
                 };
 
                 let (last_error, report, continuation) = match runner

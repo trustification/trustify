@@ -6,6 +6,7 @@ use actix_web::{post, web, HttpResponse, Responder};
 use trustify_auth::{authorizer::Require, UploadDataset};
 use trustify_common::{db::Database, model::BinaryData};
 use trustify_entity::labels::Labels;
+use trustify_module_analysis::service::AnalysisService;
 use trustify_module_storage::service::dispatch::DispatchBackend;
 use utoipa::IntoParams;
 
@@ -15,8 +16,9 @@ pub fn configure(
     config: Config,
     db: Database,
     storage: impl Into<DispatchBackend>,
+    analysis: Option<AnalysisService>,
 ) {
-    let ingestor_service = IngestorService::new(Graph::new(db), storage);
+    let ingestor_service = IngestorService::new(Graph::new(db), storage, analysis);
 
     svc.app_data(web::Data::new(ingestor_service))
         .app_data(web::Data::new(config))

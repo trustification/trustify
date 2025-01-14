@@ -1,3 +1,5 @@
+#[cfg(feature = "garage-door")]
+use crate::embedded_oidc;
 use crate::{endpoints, sample_data};
 use actix_web::{
     body::MessageBody,
@@ -32,6 +34,7 @@ use trustify_infrastructure::{
     tracing::Tracing,
     Infrastructure, InfrastructureConfig, InitContext, Metrics,
 };
+use trustify_module_analysis::service::AnalysisService;
 use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
@@ -46,9 +49,6 @@ use utoipa::{
 };
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::{Redoc, Servable};
-
-#[cfg(feature = "garage-door")]
-use crate::embedded_oidc;
 
 /// Run the API server
 #[derive(clap::Args, Debug)]
@@ -413,6 +413,8 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
 
     // register REST API & UI
 
+    let analysis = AnalysisService::new();
+
     svc.app_data(graph)
         .configure(|svc| {
             endpoints::configure(svc, auth.clone());
@@ -427,12 +429,14 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
                         ingestor,
                         db.clone(),
                         storage.clone(),
+                        Some(analysis.clone()),
                     );
                     trustify_module_fundamental::endpoints::configure(
                         svc,
                         fundamental,
                         db.clone(),
                         storage,
+                        analysis,
                     );
                     trustify_module_analysis::endpoints::configure(svc, db.clone());
                     trustify_module_user::endpoints::configure(svc, db.clone());

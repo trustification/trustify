@@ -1,7 +1,9 @@
 use actix_http::StatusCode;
 use actix_web::body::BoxBody;
 use actix_web::{HttpResponse, ResponseError};
+use cpe::uri::OwnedUri;
 use sea_orm::DbErr;
+use std::str::FromStr;
 use trustify_common::error::ErrorInformation;
 use trustify_common::id::IdError;
 use trustify_common::purl::PurlErr;
@@ -16,6 +18,8 @@ pub enum Error {
     Query(#[from] trustify_common::db::query::Error),
     #[error(transparent)]
     Purl(#[from] PurlErr),
+    #[error(transparent)]
+    Cpe(<OwnedUri as FromStr>::Err),
     #[error(transparent)]
     Actix(#[from] actix_web::Error),
     #[error("Invalid request {msg}")]

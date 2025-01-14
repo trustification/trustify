@@ -9,7 +9,7 @@ use test_context::test_context;
 use test_log::test;
 use trustify_common::{id::Id, purl::Purl};
 use trustify_entity::relationship::Relationship;
-use trustify_module_fundamental::{sbom::model::SbomPackageReference, sbom::service::SbomService};
+use trustify_module_fundamental::{sbom::model::SbomNodeReference, sbom::service::SbomService};
 use trustify_module_ingestor::graph::{
     purl::qualified_package::QualifiedPackageContext, sbom::SbomContext,
 };
@@ -63,7 +63,7 @@ async fn infinite_loop(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(packages.total, 1);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::All, &ctx.db)
+        .related_packages(id, None, SbomNodeReference::All, &ctx.db)
         .await?;
 
     log::info!("Packages: {packages:#?}");
@@ -99,7 +99,7 @@ async fn double_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(packages.len(), 3);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::All, &ctx.db)
+        .related_packages(id, None, SbomNodeReference::All, &ctx.db)
         .await?;
 
     log::info!("Packages: {packages:#?}");
@@ -135,7 +135,7 @@ async fn self_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(packages.len(), 0);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::All, &ctx.db)
+        .related_packages(id, None, SbomNodeReference::All, &ctx.db)
         .await?;
 
     log::info!("Packages: {packages:#?}");
@@ -171,7 +171,7 @@ async fn self_ref_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(packages.len(), 1);
 
     let packages = service
-        .related_packages(id, None, SbomPackageReference::All, &ctx.db)
+        .related_packages(id, None, SbomNodeReference::All, &ctx.db)
         .await?;
 
     log::info!("Packages: {packages:#?}");
@@ -179,12 +179,7 @@ async fn self_ref_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(packages.len(), 1);
 
     let packages = service
-        .related_packages(
-            id,
-            None,
-            SbomPackageReference::Package("SPDXRef-A"),
-            &ctx.db,
-        )
+        .related_packages(id, None, SbomNodeReference::Package("SPDXRef-A"), &ctx.db)
         .await?;
 
     log::info!("Packages: {packages:#?}");

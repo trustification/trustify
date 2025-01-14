@@ -62,7 +62,7 @@ mod test {
     #[test(tokio::test)]
     async fn ingest_clearly_defined(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         let graph = Graph::new(ctx.db.clone());
-        let ingestor = IngestorService::new(graph, ctx.storage.clone());
+        let ingestor = IngestorService::new(graph, ctx.storage.clone(), Default::default());
 
         let data = document_bytes("clearly-defined/chrono.yaml").await?;
 

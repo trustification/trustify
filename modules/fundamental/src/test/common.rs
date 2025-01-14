@@ -1,3 +1,4 @@
+use trustify_module_analysis::service::AnalysisService;
 use trustify_test_context::{
     call::{self, CallService},
     TrustifyContext,
@@ -11,5 +12,6 @@ async fn caller_with(
     ctx: &TrustifyContext,
     config: Config,
 ) -> anyhow::Result<impl CallService + '_> {
-    call::caller(|svc| configure(svc, config, ctx.db.clone(), ctx.storage.clone())).await
+    let analysis = AnalysisService::new();
+    call::caller(|svc| configure(svc, config, ctx.db.clone(), ctx.storage.clone(), analysis)).await
 }
