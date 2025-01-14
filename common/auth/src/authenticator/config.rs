@@ -1,4 +1,4 @@
-use crate::{authenticator::default_scope_mappings, devmode};
+use crate::{authenticator::default_scope_mappings, default};
 use clap::ArgAction;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -31,15 +31,14 @@ pub struct AuthenticatorConfig {
     pub clients: Vec<AuthenticatorClientConfig>,
 }
 
-impl AuthenticatorConfig {
-    /// Create settings when using `--devmode`.
-    pub fn devmode() -> Self {
+impl Default for AuthenticatorConfig {
+    fn default() -> Self {
         Self {
-            clients: devmode::CLIENT_IDS
+            clients: default::CLIENT_IDS
                 .iter()
                 .map(|client_id| AuthenticatorClientConfig {
                     client_id: client_id.to_string(),
-                    issuer_url: devmode::issuer_url(),
+                    issuer_url: default::issuer_url(),
                     scope_mappings: default_scope_mappings(),
                     additional_permissions: Default::default(),
                     required_audience: None,

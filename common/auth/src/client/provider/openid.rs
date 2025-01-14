@@ -3,10 +3,8 @@ use super::{
     {Credentials, TokenProvider},
 };
 use crate::client::Expires;
-use crate::devmode;
 use anyhow::Context;
 use core::fmt::{self, Debug, Formatter};
-use std::time::Duration;
 use std::{ops::Deref, sync::Arc};
 use tokio::sync::RwLock;
 use url::Url;
@@ -53,32 +51,8 @@ pub struct OpenIdTokenProviderConfigArguments {
 }
 
 impl OpenIdTokenProviderConfigArguments {
-    pub fn devmode() -> OpenIdTokenProviderConfigArguments {
-        Self {
-            issuer_url: Some(devmode::issuer_url()),
-            client_id: Some(devmode::SERVICE_CLIENT_ID.to_string()),
-            client_secret: Some(devmode::SSO_CLIENT_SECRET.to_string()),
-            refresh_before: Duration::from_secs(30).into(),
-            tls_insecure: false,
-        }
-    }
-}
-
-impl OpenIdTokenProviderConfigArguments {
     pub async fn into_provider(self) -> anyhow::Result<Arc<dyn TokenProvider>> {
         OpenIdTokenProviderConfig::new_provider(OpenIdTokenProviderConfig::from_args(self)).await
-    }
-
-    pub async fn into_provider_or_devmode(
-        self,
-        devmode: bool,
-    ) -> anyhow::Result<Arc<dyn TokenProvider>> {
-        let config = match devmode {
-            true => Some(OpenIdTokenProviderConfig::devmode()),
-            false => OpenIdTokenProviderConfig::from_args(self),
-        };
-
-        OpenIdTokenProviderConfig::new_provider(config).await
     }
 }
 
@@ -92,31 +66,11 @@ pub struct OpenIdTokenProviderConfig {
 }
 
 impl OpenIdTokenProviderConfig {
-    pub fn devmode() -> Self {
-        Self {
-            issuer_url: devmode::issuer_url(),
-            client_id: devmode::SERVICE_CLIENT_ID.to_string(),
-            client_secret: devmode::SSO_CLIENT_SECRET.to_string(),
-            refresh_before: Duration::from_secs(30).into(),
-            tls_insecure: false,
-        }
-    }
-
     pub async fn new_provider(config: Option<Self>) -> anyhow::Result<Arc<dyn TokenProvider>> {
         Ok(match config {
             Some(config) => Arc::new(OpenIdTokenProvider::with_config(config).await?),
             None => Arc::new(()),
         })
-    }
-
-    pub fn from_args_or_devmode(
-        arguments: OpenIdTokenProviderConfigArguments,
-        devmode: bool,
-    ) -> Option<Self> {
-        match devmode {
-            true => Some(Self::devmode()),
-            false => Self::from_args(arguments),
-        }
     }
 
     pub fn from_args(arguments: OpenIdTokenProviderConfigArguments) -> Option<Self> {

@@ -18,7 +18,7 @@ use trustify_auth::{
     auth::AuthConfigArguments,
     authenticator::Authenticator,
     authorizer::Authorizer,
-    devmode::{FRONTEND_CLIENT_ID, ISSUER_URL, PUBLIC_CLIENT_IDS},
+    default::{FRONTEND_CLIENT_ID, ISSUER_URL, PUBLIC_CLIENT_IDS},
     swagger_ui::{swagger_ui_with_auth, SwaggerUiOidc, SwaggerUiOidcConfig},
 };
 use trustify_common::{config::Database, db, model::BinaryByteSize};
@@ -53,9 +53,6 @@ use crate::embedded_oidc;
 /// Run the API server
 #[derive(clap::Args, Debug)]
 pub struct Run {
-    #[arg(long, env)]
-    pub devmode: bool,
-
     #[arg(long, env)]
     pub sample_data: bool,
 
@@ -194,21 +191,16 @@ impl Run {
 
 impl InitData {
     async fn new(context: InitContext, run: Run) -> anyhow::Result<Self> {
-        // The devmode for the auth parts. This allows us to enable devmode for auth, but not
-        // for other parts.
         #[allow(unused_mut)]
-        let mut auth_devmode = run.devmode;
+        let mut auth_embedded = false;
 
         #[cfg(feature = "garage-door")]
         let embedded_oidc = {
-            // When running with the embedded OIDC server, re-use devmode. Running the embedded OIDC
-            // without devmode doesn't make any sense. However, the pm-mode doesn't know about
-            // devmode. Also, enabling devmode might trigger other logic.
-            auth_devmode = run.embedded_oidc;
+            auth_embedded = run.embedded_oidc;
             embedded_oidc::spawn(run.embedded_oidc).await?
         };
 
-        let (authn, authz) = run.auth.split(auth_devmode)?.unzip();
+        let (authn, authz) = run.auth.split(auth_embedded)?.unzip();
         let authenticator: Option<Arc<Authenticator>> =
             Authenticator::from_config(authn).await?.map(Arc::new);
         let authorizer = Authorizer::new(authz);
@@ -218,19 +210,19 @@ impl InitData {
         }
 
         let swagger_oidc = match authenticator.is_some() {
-            true => SwaggerUiOidc::from_devmode_or_config(auth_devmode, run.swagger_ui_oidc)
-                .await?
-                .map(Arc::new),
+            true => SwaggerUiOidc::new(if auth_embedded {
+                Default::default()
+            } else {
+                run.swagger_ui_oidc
+            })
+            .await?
+            .map(Arc::new),
             false => None,
         };
 
         let db = db::Database::new(&run.database).await?;
 
-        if run.devmode {
-            db.migrate().await?;
-        }
-
-        if run.devmode || run.sample_data {
+        if run.sample_data {
             sample_data(db.clone()).await?;
         }
 
@@ -252,12 +244,10 @@ impl InitData {
                     .as_ref()
                     .cloned()
                     .unwrap_or_else(|| PathBuf::from("./.trustify/storage"));
-                if run.devmode {
-                    create_dir_all(&storage).context(format!(
-                        "Failed to create filesystem storage directory: {:?}",
-                        run.storage.fs_path
-                    ))?;
-                }
+                create_dir_all(&storage).context(format!(
+                    "Failed to create filesystem storage directory: {:?}",
+                    run.storage.fs_path
+                ))?;
                 DispatchBackend::Filesystem(
                     FileSystemBackend::new(storage, run.storage.compression).await?,
                 )

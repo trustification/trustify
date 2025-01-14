@@ -53,17 +53,14 @@ pub fn is_default<D: Default + PartialEq>(d: &D) -> bool {
 impl AuthConfigArguments {
     pub fn split(
         self,
-        devmode: bool,
+        defaults: bool,
     ) -> Result<Option<(AuthenticatorConfig, AuthorizerConfig)>, anyhow::Error> {
-        // disabled overrides devmode
         if self.disabled {
             return Ok(None);
         }
-
-        // check for devmode
-        if devmode {
-            log::warn!("Running in developer mode");
-            return Ok(Some((AuthenticatorConfig::devmode(), Default::default())));
+        if defaults {
+            log::warn!("Running with default auth config");
+            return Ok(Some(Default::default()));
         }
 
         Ok(Some(match self.config {
@@ -96,7 +93,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn auth_disabled_devmode_false() {
+    fn auth_disabled_no_defaults() {
         let args = AuthConfigArguments {
             disabled: true,
             config: None,
@@ -108,7 +105,7 @@ mod tests {
     }
 
     #[test]
-    fn auth_enabled_devmode_true() {
+    fn auth_enabled_with_defaults() {
         let args = AuthConfigArguments {
             disabled: false,
             config: None,
