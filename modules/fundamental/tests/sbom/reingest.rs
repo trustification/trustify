@@ -7,6 +7,7 @@ use tracing::instrument;
 use trustify_common::db::query::Query;
 use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
+use trustify_module_fundamental::sbom::model::SbomExternalPackageReference;
 use trustify_module_fundamental::sbom::{model::details::SbomDetails, service::SbomService};
 use trustify_module_ingestor::service::Format;
 use trustify_test_context::{document_bytes, TrustifyContext};
@@ -86,7 +87,7 @@ async fn quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let sboms = sbom
         .find_related_sboms(
-            Purl::from_str(purl).expect("must parse").qualifier_uuid(),
+            SbomExternalPackageReference::Purl(&Purl::from_str(purl).expect("must parse")),
             Paginated::default(),
             Query::default(),
             &ctx.db,

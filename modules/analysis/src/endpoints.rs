@@ -65,7 +65,7 @@ pub async fn search_component_root_components(
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(
         service
-            .retrieve_root_components(search, paginated, db.as_ref())
+            .retrieve_root_components(&search, paginated, db.as_ref())
             .await?,
     ))
 }
@@ -92,13 +92,13 @@ pub async fn get_component_root_components(
         let purl: Purl = Purl::from_str(&key).map_err(Error::Purl)?;
         Ok(HttpResponse::Ok().json(
             service
-                .retrieve_root_components_by_purl(purl, paginated, db.as_ref())
+                .retrieve_root_components(&purl, paginated, db.as_ref())
                 .await?,
         ))
     } else {
         Ok(HttpResponse::Ok().json(
             service
-                .retrieve_root_components_by_name(key.to_string(), paginated, db.as_ref())
+                .retrieve_root_components(&key.to_string(), paginated, db.as_ref())
                 .await?,
         ))
     }
@@ -125,7 +125,7 @@ pub async fn search_component_deps(
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(
         service
-            .retrieve_deps(search, paginated, db.as_ref())
+            .retrieve_deps(&search, paginated, db.as_ref())
             .await?,
     ))
 }
@@ -150,15 +150,11 @@ pub async fn get_component_deps(
 ) -> actix_web::Result<impl Responder> {
     if key.starts_with("pkg:") {
         let purl: Purl = Purl::from_str(&key).map_err(Error::Purl)?;
-        Ok(HttpResponse::Ok().json(
-            service
-                .retrieve_deps_by_purl(purl, paginated, db.as_ref())
-                .await?,
-        ))
+        Ok(HttpResponse::Ok().json(service.retrieve_deps(&purl, paginated, db.as_ref()).await?))
     } else {
         Ok(HttpResponse::Ok().json(
             service
-                .retrieve_deps_by_name(key.to_string(), paginated, db.as_ref())
+                .retrieve_deps(&key.to_string(), paginated, db.as_ref())
                 .await?,
         ))
     }
@@ -187,8 +183,14 @@ mod test {
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
 
-        if response["items"][0]["purl"] == "pkg:rpm/redhat/BB@0.0.0"
-            || response["items"][1]["purl"] == "pkg:rpm/redhat/BB@0.0.0"
+        if response["items"][0]["purl"]
+            .as_array()
+            .unwrap()
+            .contains(&Value::from("pkg:rpm/redhat/BB@0.0.0"))
+            || response["items"][1]["purl"]
+                .as_array()
+                .unwrap()
+                .contains(&Value::from("pkg:rpm/redhat/BB@0.0.0"))
         {
             assert_eq!(&response["total"], 2);
         } else {
@@ -200,10 +202,13 @@ mod test {
         let uri = "/api/v2/analysis/root-component?q=BB";
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
-        assert_eq!(response["items"][0]["purl"], "pkg:rpm/redhat/BB@0.0.0");
+        assert_eq!(
+            response["items"][0]["purl"],
+            Value::from(["pkg:rpm/redhat/BB@0.0.0"])
+        );
         assert_eq!(
             response["items"][0]["ancestors"][0]["purl"],
-            "pkg:rpm/redhat/AA@0.0.0?arch=src"
+            Value::from(["pkg:rpm/redhat/AA@0.0.0?arch=src"])
         );
 
         assert_eq!(&response["total"], 1);
@@ -224,10 +229,13 @@ mod test {
 
         let response: Value = app.call_and_read_body_json(request).await;
 
-        assert_eq!(response["items"][0]["purl"], "pkg:rpm/redhat/B@0.0.0");
+        assert_eq!(
+            response["items"][0]["purl"],
+            Value::from(["pkg:rpm/redhat/B@0.0.0"])
+        );
         assert_eq!(
             response["items"][0]["ancestors"][0]["purl"],
-            "pkg:rpm/redhat/A@0.0.0?arch=src"
+            Value::from(["pkg:rpm/redhat/A@0.0.0?arch=src"])
         );
         assert_eq!(&response["total"], 1);
         Ok(())
@@ -247,10 +255,13 @@ mod test {
 
         let response: Value = app.call_and_read_body_json(request).await;
 
-        assert_eq!(response["items"][0]["purl"], "pkg:rpm/redhat/B@0.0.0");
+        assert_eq!(
+            response["items"][0]["purl"],
+            Value::from(["pkg:rpm/redhat/B@0.0.0"])
+        );
         assert_eq!(
             response["items"][0]["ancestors"][0]["purl"],
-            "pkg:rpm/redhat/A@0.0.0?arch=src"
+            Value::from(["pkg:rpm/redhat/A@0.0.0?arch=src"])
         );
         assert_eq!(&response["total"], 1);
         Ok(())
@@ -276,7 +287,7 @@ mod test {
 
         assert_eq!(
             response["items"][0]["purl"],
-            "pkg:maven/net.spy/spymemcached@2.12.1?type=jar"
+            Value::from(["pkg:maven/net.spy/spymemcached@2.12.1?type=jar"])
         );
         assert_eq!(
             response["items"][0]["document_id"],
@@ -284,7 +295,7 @@ mod test {
         );
         assert_eq!(
             response["items"][0]["ancestors"][0]["purl"],
-            "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?type=pom&repository_url=https%3a%2f%2fmaven.repository.redhat.com%2fga%2f"
+            Value::from(["pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https%3A%2F%2Fmaven%2Erepository%2Eredhat%2Ecom%2Fga%2F&type=pom"])
         );
 
         assert_eq!(&response["total"], 2);
@@ -334,20 +345,22 @@ mod test {
         let request: Request = TestRequest::get().uri(uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
 
+        println!("Result: {response:#?}");
+
         assert_eq!(
             response["items"][0]["purl"],
-            "pkg:rpm/redhat/A@0.0.0?arch=src"
+            Value::from(["pkg:rpm/redhat/A@0.0.0?arch=src"]),
         );
         assert_eq!(
             response["items"][0]["deps"][0]["purl"],
-            "pkg:rpm/redhat/EE@0.0.0?arch=src"
+            Value::from(["pkg:rpm/redhat/EE@0.0.0?arch=src"]),
         );
         assert_eq!(
             response["items"][0]["deps"][1]["purl"],
-            "pkg:rpm/redhat/B@0.0.0"
+            Value::from(["pkg:rpm/redhat/B@0.0.0"]),
         );
 
-        assert_eq!(&response["total"], 3);
+        assert_eq!(&response["total"], 2);
         Ok(())
     }
 
@@ -364,15 +377,15 @@ mod test {
 
         assert_eq!(
             response["items"][0]["purl"],
-            "pkg:rpm/redhat/A@0.0.0?arch=src"
+            Value::from(["pkg:rpm/redhat/A@0.0.0?arch=src"]),
         );
         assert_eq!(
             response["items"][0]["deps"][0]["purl"],
-            "pkg:rpm/redhat/EE@0.0.0?arch=src"
+            Value::from(["pkg:rpm/redhat/EE@0.0.0?arch=src"]),
         );
         assert_eq!(
             response["items"][0]["deps"][1]["purl"],
-            "pkg:rpm/redhat/B@0.0.0"
+            Value::from(["pkg:rpm/redhat/B@0.0.0"]),
         );
 
         assert_eq!(&response["total"], 1);
@@ -392,11 +405,11 @@ mod test {
 
         assert_eq!(
             response["items"][0]["purl"],
-            "pkg:rpm/redhat/AA@0.0.0?arch=src"
+            Value::from(["pkg:rpm/redhat/AA@0.0.0?arch=src"]),
         );
         assert_eq!(
             response["items"][0]["deps"][0]["purl"],
-            "pkg:rpm/redhat/BB@0.0.0"
+            Value::from(["pkg:rpm/redhat/BB@0.0.0"]),
         );
         assert_eq!(&response["total"], 1);
         Ok(())
@@ -420,7 +433,7 @@ mod test {
 
         assert_eq!(
             response["items"][0]["purl"],
-            "pkg:maven/net.spy/spymemcached@2.12.1?type=jar"
+            Value::from(["pkg:maven/net.spy/spymemcached@2.12.1?type=jar"]),
         );
         assert_eq!(&response["total"], 2);
         Ok(())

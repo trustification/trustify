@@ -96,7 +96,8 @@ packageurl = "0.3.0"
 parking_lot = "0.12"
 peak_alloc = "0.2.0"
 pem = "3"
-petgraph = { version = "0.6.5", features = ["serde-1"] }
+percent-encoding = "2.3.1"
+petgraph = { version = "0.7.1", features = ["serde-1"] }
 prometheus = "0.13.3"
 quick-xml = "0.37.0"
 rand = "0.8.5"

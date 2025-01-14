@@ -1,4 +1,5 @@
 use packageurl::PackageUrl;
+use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
 use serde::{
     de::{Error, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
@@ -157,7 +158,7 @@ impl Display for Purl {
                 "?{}",
                 self.qualifiers
                     .iter()
-                    .map(|(k, v)| format!("{}={}", k, v))
+                    .map(|(k, v)| format!("{}={}", k, utf8_percent_encode(v, NON_ALPHANUMERIC)))
                     .collect::<Vec<_>>()
                     .join("&")
             )
@@ -250,7 +251,7 @@ mod tests {
     async fn purl_oci() -> Result<(), anyhow::Error> {
         let purl: Purl = serde_json::from_str(
             r#"
-            "pkg:oci/ose-cluster-network-operator@sha256:0170ba5eebd557fd9f477d915bb7e0d4c1ad6cd4c1852d4b1ceed7a2817dd5d2?repository_url=registry.redhat.io/openshift4/ose-cluster-network-operator&tag=v4.11.0-202403090037.p0.g33da9fb.assembly.stream.el8"
+            "pkg:oci/ose-cluster-network-operator@sha256:0170ba5eebd557fd9f477d915bb7e0d4c1ad6cd4c1852d4b1ceed7a2817dd5d2?repository_url=registry.redhat.io%2Fopenshift4%2Fose%2Dcluster%2Dnetwork%2Doperator&tag=v4%2E11%2E0%2D202403090037%2Ep0%2Eg33da9fb%2Eassembly%2Estream%2Eel8"
             "#,
         )
             .unwrap();
@@ -273,12 +274,12 @@ mod tests {
             Some(&"v4.11.0-202403090037.p0.g33da9fb.assembly.stream.el8".to_string())
         );
 
-        let purl: Purl = "pkg:oci/ose-cluster-network-operator@sha256:0170ba5eebd557fd9f477d915bb7e0d4c1ad6cd4c1852d4b1ceed7a2817dd5d2?repository_url=registry.redhat.io/openshift4/ose-cluster-network-operator&tag=v4.11.0-202403090037.p0.g33da9fb.assembly.stream.el8".try_into()?;
+        let purl: Purl = "pkg:oci/ose-cluster-network-operator@sha256:0170ba5eebd557fd9f477d915bb7e0d4c1ad6cd4c1852d4b1ceed7a2817dd5d2?repository_url=registry%2Eredhat%2Eio%2Eopenshift4%2Eose%2Dcluster%2Dnetwork%2Doperator&tag=v4%2E11%2E0%2D202403090037%2Ep0%2Eg33da9fb%2Eassembly%2Estream%2Eel8".try_into()?;
         let json = serde_json::to_string(&purl).unwrap();
 
         assert_eq!(
             json,
-            r#""pkg:oci/ose-cluster-network-operator@sha256:0170ba5eebd557fd9f477d915bb7e0d4c1ad6cd4c1852d4b1ceed7a2817dd5d2?repository_url=registry.redhat.io/openshift4/ose-cluster-network-operator&tag=v4.11.0-202403090037.p0.g33da9fb.assembly.stream.el8""#
+            r#""pkg:oci/ose-cluster-network-operator@sha256:0170ba5eebd557fd9f477d915bb7e0d4c1ad6cd4c1852d4b1ceed7a2817dd5d2?repository_url=registry%2Eredhat%2Eio%2Eopenshift4%2Eose%2Dcluster%2Dnetwork%2Doperator&tag=v4%2E11%2E0%2D202403090037%2Ep0%2Eg33da9fb%2Eassembly%2Estream%2Eel8""#
         );
         Ok(())
     }

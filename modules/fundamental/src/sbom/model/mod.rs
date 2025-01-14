@@ -8,9 +8,7 @@ use async_graphql::SimpleObject;
 use sea_orm::{prelude::Uuid, ConnectionTrait, ModelTrait, PaginatorTrait};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
-use trustify_common::cpe::Cpe;
-use trustify_common::model::Paginated;
-use trustify_common::purl::Purl;
+use trustify_common::{cpe::Cpe, model::Paginated, purl::Purl};
 use trustify_entity::{
     labels::Labels, relationship::Relationship, sbom, sbom_node, sbom_package, source_document,
 };
@@ -111,28 +109,46 @@ pub struct SbomPackage {
     pub cpe: Vec<String>,
 }
 
-// TODO: think about a way to add CPE and PURLs too
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum SbomPackageReference<'a> {
+    Internal(&'a str),
+    External(SbomExternalPackageReference<'a>),
+}
+
+impl<'a> From<SbomExternalPackageReference<'a>> for SbomPackageReference<'a> {
+    fn from(value: SbomExternalPackageReference<'a>) -> Self {
+        Self::External(value)
+    }
+}
+
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+pub enum SbomExternalPackageReference<'a> {
+    Purl(&'a Purl),
+    Cpe(&'a Cpe),
+}
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub enum SbomNodeReference<'a> {
     /// Reference all packages of the SBOM.
     All,
     /// Reference a package inside an SBOM, by its node id.
+    // TODO: replace with `SbomPackageReference`
     Package(&'a str),
 }
 
-impl<'a> From<&'a str> for SbomPackageReference<'a> {
+impl<'a> From<&'a str> for SbomNodeReference<'a> {
     fn from(value: &'a str) -> Self {
         Self::Package(value)
     }
 }
 
-impl From<()> for SbomPackageReference<'_> {
+impl From<()> for SbomNodeReference<'_> {
     fn from(_value: ()) -> Self {
         Self::All
     }
 }
 
-impl<'a> From<&'a SbomPackage> for SbomPackageReference<'a> {
+impl<'a> From<&'a SbomPackage> for SbomNodeReference<'a> {
     fn from(value: &'a SbomPackage) -> Self {
         Self::Package(&value.id)
     }
@@ -152,16 +168,4 @@ pub enum Which {
     Left,
     /// Target side
     Right,
-}
-
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub enum SbomExternalPackageReference {
-    /// The ID of the package/component.
-    ///
-    /// This is actually not internal, but external.
-    Id(String),
-    /// The PackageURL of the package/component.
-    Purl(Purl),
-    /// The CPE of the package/component.
-    Cpe(Cpe),
 }

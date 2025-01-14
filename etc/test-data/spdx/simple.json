@@ -12,7 +12,6 @@
   "documentNamespace": "uri:just-an-example",
   "name": "simple",
   "packages": [
-
     {
       "SPDXID": "SPDXRef-A",
       "copyrightText": "NOASSERTION",
@@ -26,7 +25,7 @@
         {
           "referenceCategory": "SECURITY",
           "referenceLocator": "cpe:/a:redhat:simple:1::el9",
-          "referenceType": "cpe23Type"
+          "referenceType": "cpe22Type"
         }
       ],
       "filesAnalyzed": false,

@@ -1,18 +1,17 @@
-use parking_lot::RwLock;
 use petgraph::Graph;
 use serde::Serialize;
-use std::{
-    collections::HashMap,
-    fmt,
-    sync::{Arc, OnceLock},
-};
+use std::{collections::HashMap, fmt};
+use trustify_common::cpe::Cpe;
+use trustify_common::purl::Purl;
 use trustify_entity::relationship::Relationship;
 use utoipa::ToSchema;
 
 #[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize)]
 pub struct AnalysisStatus {
-    pub sbom_count: i32,
-    pub graph_count: i32,
+    /// The number of SBOMs found in the database
+    pub sbom_count: u32,
+    /// The number of graphs loaded in memory
+    pub graph_count: u32,
 }
 
 impl fmt::Display for AnalysisStatus {
@@ -25,7 +24,8 @@ impl fmt::Display for AnalysisStatus {
 pub struct PackageNode {
     pub sbom_id: String,
     pub node_id: String,
-    pub purl: String,
+    pub purl: Vec<Purl>,
+    pub cpe: Vec<Cpe>,
     pub name: String,
     pub version: String,
     pub published: String,
@@ -35,7 +35,7 @@ pub struct PackageNode {
 }
 impl fmt::Display for PackageNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.purl)
+        write!(f, "{:?}", self.purl)
     }
 }
 
@@ -44,14 +44,15 @@ pub struct AncNode {
     pub sbom_id: String,
     pub node_id: String,
     pub relationship: String,
-    pub purl: String,
+    pub purl: Vec<Purl>,
+    pub cpe: Vec<Cpe>,
     pub name: String,
     pub version: String,
 }
 
 impl fmt::Display for AncNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.purl)
+        write!(f, "{:?}", self.purl)
     }
 }
 
@@ -59,7 +60,8 @@ impl fmt::Display for AncNode {
 pub struct AncestorSummary {
     pub sbom_id: String,
     pub node_id: String,
-    pub purl: String,
+    pub purl: Vec<Purl>,
+    pub cpe: Vec<Cpe>,
     pub name: String,
     pub version: String,
     pub published: String,
@@ -74,7 +76,8 @@ pub struct DepNode {
     pub sbom_id: String,
     pub node_id: String,
     pub relationship: String,
-    pub purl: String,
+    pub purl: Vec<Purl>,
+    pub cpe: Vec<Cpe>,
     pub name: String,
     pub version: String,
     #[schema(no_recursion)]
@@ -82,14 +85,15 @@ pub struct DepNode {
 }
 impl fmt::Display for DepNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.purl)
+        write!(f, "{:?}", self.purl)
     }
 }
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct DepSummary {
     pub sbom_id: String,
     pub node_id: String,
-    pub purl: String,
+    pub purl: Vec<Purl>,
+    pub cpe: Vec<Cpe>,
     pub name: String,
     pub version: String,
     pub published: String,
@@ -102,8 +106,6 @@ pub struct DepSummary {
 pub struct GraphMap {
     map: HashMap<String, Graph<PackageNode, Relationship, petgraph::Directed>>,
 }
-
-static G: OnceLock<Arc<RwLock<GraphMap>>> = OnceLock::new();
 
 impl GraphMap {
     // Create a new instance of GraphMap
@@ -145,12 +147,6 @@ impl GraphMap {
     // Retrieve all sbom ids(read access)
     pub fn sbom_ids(&self) -> Vec<String> {
         self.map.keys().cloned().collect()
-    }
-
-    // Get the singleton instance of GraphMap
-    pub fn get_instance() -> Arc<RwLock<GraphMap>> {
-        G.get_or_init(|| Arc::new(RwLock::new(GraphMap::new())))
-            .clone()
     }
 
     // Clear all graphs from the map

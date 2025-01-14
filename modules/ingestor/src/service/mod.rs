@@ -143,13 +143,19 @@ impl ResponseError for Error {
 pub struct IngestorService {
     graph: Graph,
     storage: DispatchBackend,
+    analysis: Option<AnalysisService>,
 }
 
 impl IngestorService {
-    pub fn new(graph: Graph, storage: impl Into<DispatchBackend>) -> Self {
+    pub fn new(
+        graph: Graph,
+        storage: impl Into<DispatchBackend>,
+        analysis: Option<AnalysisService>,
+    ) -> Self {
         Self {
             graph,
             storage: storage.into(),
+            analysis,
         }
     }
 
@@ -196,31 +202,33 @@ impl IngestorService {
             .load(&self.graph, labels.into(), issuer, &result.digests, bytes)
             .await?;
 
-        match fmt {
-            Format::SPDX | Format::CycloneDX => {
-                let analysis_service = AnalysisService::new();
-                if result.id.to_string().starts_with("urn:uuid:") {
-                    match analysis_service // TODO: today we chop off 'urn:uuid:' prefix using .split_off on result.id
-                        .load_graphs(
-                            vec![result.id.to_string().split_off("urn:uuid:".len())],
-                            &self.graph.db,
-                        )
-                        .await
-                    {
-                        Ok(_) => log::debug!(
-                            "Analysis graph for sbom: {} loaded successfully.",
-                            result.id.value()
-                        ),
-                        Err(e) => log::warn!(
-                            "Error loading sbom {} into analysis graph : {}",
-                            result.id.value(),
-                            e
-                        ),
+        if let Some(analysis) = &self.analysis {
+            match fmt {
+                Format::SPDX | Format::CycloneDX => {
+                    if result.id.to_string().starts_with("urn:uuid:") {
+                        match analysis
+                            .load_graphs(
+                                &self.graph.db,
+                                // TODO: today we chop off 'urn:uuid:' prefix using .split_off on result.id
+                                &vec![result.id.to_string().split_off("urn:uuid:".len())],
+                            )
+                            .await
+                        {
+                            Ok(_) => log::debug!(
+                                "Analysis graph for sbom: {} loaded successfully.",
+                                result.id.value()
+                            ),
+                            Err(e) => log::warn!(
+                                "Error loading sbom {} into analysis graph : {}",
+                                result.id.value(),
+                                e
+                            ),
+                        }
                     }
                 }
-            }
-            _ => {}
-        };
+                _ => {}
+            };
+        }
 
         let duration = Instant::now() - start;
         log::debug!(

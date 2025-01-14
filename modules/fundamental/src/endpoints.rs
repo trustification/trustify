@@ -1,5 +1,6 @@
 use actix_web::web;
 use trustify_common::db::Database;
+use trustify_module_analysis::service::AnalysisService;
 use trustify_module_ingestor::graph::Graph;
 use trustify_module_ingestor::service::IngestorService;
 use trustify_module_storage::service::dispatch::DispatchBackend;
@@ -16,8 +17,9 @@ pub fn configure(
     config: Config,
     db: Database,
     storage: impl Into<DispatchBackend>,
+    analysis: AnalysisService,
 ) {
-    let ingestor_service = IngestorService::new(Graph::new(db.clone()), storage);
+    let ingestor_service = IngestorService::new(Graph::new(db.clone()), storage, Some(analysis));
     svc.app_data(web::Data::new(ingestor_service));
 
     crate::advisory::endpoints::configure(svc, db.clone(), config.advisory_upload_limit);
