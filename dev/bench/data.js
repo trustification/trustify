@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736853354806,
+  "lastUpdate": 1736864182126,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2952,6 +2952,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/dc319f59ce0ef1b319d4d656c04966c88ac52c35"
         },
         "date": 1736853354184,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "88fa55ce71c0262b7245c4df7f4ce8f4df7b8b06",
+          "message": "feat: create GeneratedFrom relationship from CycloneDX dependencies\n\nFixes #1131\n\nI'm not entirely sure my right and left is correct, because I don't\nfully grok the expected output of `analysis/root-component` and\n`analysis/dep`.\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2025-01-14T13:57:17Z",
+          "tree_id": "c7b36e14d29df1af7b43d9e069d03952c986bc61",
+          "url": "https://github.com/trustification/trustify/commit/88fa55ce71c0262b7245c4df7f4ce8f4df7b8b06"
+        },
+        "date": 1736864181491,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
