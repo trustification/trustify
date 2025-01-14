@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736778962056,
+  "lastUpdate": 1736846031247,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2894,6 +2894,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/26e33cbe58be53e83112ce6d0652ac989c7dcb91"
         },
         "date": 1736778961250,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "6eea981d4f64b5e650eec7d5c5c392a5cac46e83",
+          "message": "refactor: dry up redundant test app creation logic\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2025-01-14T08:55:28Z",
+          "tree_id": "f392bad3b5d37de121c70562cb66aa52970923b8",
+          "url": "https://github.com/trustification/trustify/commit/6eea981d4f64b5e650eec7d5c5c392a5cac46e83"
+        },
+        "date": 1736846030710,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
