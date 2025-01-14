@@ -115,6 +115,7 @@ impl FromStr for Purl {
             .map_err(PurlErr::Package)
     }
 }
+
 impl<'de> Deserialize<'de> for Purl {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

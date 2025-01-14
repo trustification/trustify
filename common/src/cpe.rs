@@ -2,8 +2,15 @@ use cpe::{
     cpe::Cpe as _,
     uri::{OwnedUri, Uri},
 };
-use std::fmt::{Debug, Display, Formatter};
-use std::str::FromStr;
+use serde::de::{Error, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::borrow::Cow;
+use std::{
+    fmt::{Debug, Display, Formatter},
+    str::FromStr,
+};
+use utoipa::openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, Type};
+use utoipa::{PartialSchema, ToSchema};
 use uuid::Uuid;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
@@ -11,9 +18,59 @@ pub struct Cpe {
     uri: OwnedUri,
 }
 
+impl ToSchema for Cpe {
+    fn name() -> Cow<'static, str> {
+        "Cpe".into()
+    }
+}
+
+impl PartialSchema for Cpe {
+    fn schema() -> RefOr<Schema> {
+        ObjectBuilder::new()
+            .schema_type(Type::String)
+            .format(Some(SchemaFormat::KnownFormat(KnownFormat::Uri)))
+            .into()
+    }
+}
+
 impl Display for Cpe {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         Display::fmt(&self.uri, f)
+    }
+}
+
+impl Serialize for Cpe {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(self.to_string().as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for Cpe {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_str(CpeVisitor)
+    }
+}
+
+struct CpeVisitor;
+
+impl Visitor<'_> for CpeVisitor {
+    type Value = Cpe;
+
+    fn expecting(&self, formatter: &mut Formatter) -> std::fmt::Result {
+        formatter.write_str("a CPE")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: Error,
+    {
+        v.try_into().map_err(Error::custom)
     }
 }
 
@@ -169,6 +226,22 @@ impl FromStr for Cpe {
         Ok(Self {
             uri: OwnedUri::from_str(s)?,
         })
+    }
+}
+
+impl TryFrom<&str> for Cpe {
+    type Error = <OwnedUri as FromStr>::Err;
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Ok(Self {
+            uri: OwnedUri::from_str(value)?,
+        })
+    }
+}
+
+impl TryFrom<String> for Cpe {
+    type Error = <OwnedUri as FromStr>::Err;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        value.as_str().try_into()
     }
 }
 
