@@ -47,6 +47,7 @@ impl SbomDetails {
         (sbom, node): (sbom::Model, Option<sbom_node::Model>),
         service: &SbomService,
         tx: &C,
+        statuses: Vec<String>,
     ) -> Result<Option<SbomDetails>, Error> {
         let mut relevant_advisory_info = sbom
             .find_related(sbom_package::Entity)
@@ -60,6 +61,14 @@ impl SbomDetails {
                 JoinType::LeftJoin,
                 qualified_purl::Relation::VersionedPurl.def(),
             )
+            .join(JoinType::LeftJoin, versioned_purl::Relation::BasePurl.def())
+            .join(JoinType::Join, base_purl::Relation::PurlStatus.def())
+            .join(JoinType::Join, purl_status::Relation::Status.def())
+            .filter(Expr::col((status::Entity, status::Column::Slug)).is_in(statuses.clone()))
+            .join(
+                JoinType::LeftJoin,
+                purl_status::Relation::VersionRange.def(),
+            )
             .filter(SimpleExpr::FunctionCall(
                 Func::cust(VersionMatches)
                     .arg(Expr::col((
@@ -68,13 +77,6 @@ impl SbomDetails {
                     )))
                     .arg(Expr::col((version_range::Entity, Asterisk))),
             ))
-            .join(JoinType::LeftJoin, versioned_purl::Relation::BasePurl.def())
-            .join(JoinType::Join, base_purl::Relation::PurlStatus.def())
-            .join(JoinType::Join, purl_status::Relation::Status.def())
-            .join(
-                JoinType::LeftJoin,
-                purl_status::Relation::VersionRange.def(),
-            )
             .join(JoinType::LeftJoin, purl_status::Relation::ContextCpe.def())
             .join(JoinType::Join, purl_status::Relation::Advisory.def())
             .join(JoinType::Join, purl_status::Relation::Vulnerability.def())
@@ -149,7 +151,7 @@ impl SbomDetails {
             JOIN "version_range" ON "product_version_range"."version_range_id" = "version_range"."id" AND version_matches("product_version"."version", "version_range".*)
 
             -- now find matching purls in these statuses
-            JOIN base_purl ON "product_status"."package" LIKE CONCAT("base_purl"."namespace", '/', "base_purl"."name") OR "product_status"."package" = "base_purl"."name"
+            JOIN base_purl ON product_status.package = base_purl.name OR product_status.package LIKE CONCAT(base_purl.namespace, '/%')
             JOIN "versioned_purl" ON "versioned_purl"."base_purl_id" = "base_purl"."id"
             JOIN "qualified_purl" ON "qualified_purl"."versioned_purl_id" = "versioned_purl"."id"
             join sbom_package_purl_ref ON sbom_package_purl_ref.qualified_purl_id = qualified_purl.id AND sbom_package_purl_ref.sbom_id = sbom.sbom_id
@@ -162,13 +164,14 @@ impl SbomDetails {
             JOIN "vulnerability" ON "product_status"."vulnerability_id" = "vulnerability"."id"
             WHERE
             "sbom"."sbom_id" = $1
+            AND "status"."slug" = ANY($2::text[])
             "#;
 
         let result: Vec<QueryResult> = tx
             .query_all(Statement::from_sql_and_values(
                 DbBackend::Postgres,
                 product_advisory_info,
-                [sbom.sbom_id.into()],
+                [sbom.sbom_id.into(), statuses.into()],
             ))
             .await?;
 

@@ -65,7 +65,10 @@ impl SbomService {
         connection: &C,
     ) -> Result<Option<SbomDetails>, Error> {
         Ok(match self.fetch_sbom(id, connection).await? {
-            Some(row) => SbomDetails::from_entity(row, self, connection).await?,
+            Some(row) => {
+                SbomDetails::from_entity(row, self, connection, vec!["affected".to_string()])
+                    .await?
+            }
             None => None,
         })
     }
