@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736939274932,
+  "lastUpdate": 1736940795339,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3015,6 +3015,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "0d080590abf02f5f41d75cf7a1faa8fe238d781a",
+          "message": "feat: add some OSV examples to DS3",
+          "timestamp": "2025-01-15T11:14:25Z",
+          "tree_id": "596154056e0b8c354db00dfc566c4489beacae09",
+          "url": "https://github.com/trustification/trustify/commit/0d080590abf02f5f41d75cf7a1faa8fe238d781a"
+        },
+        "date": 1736940794071,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 6,
             "unit": "s"
           }
         ]
