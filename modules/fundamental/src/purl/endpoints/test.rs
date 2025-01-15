@@ -355,13 +355,14 @@ async fn purl_relationships(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         .await?;
 
     let src = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
-    let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
-    let uri = format!("/api/v1/purl/{}", urlencoding::encode(x86));
+    let bin = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
+
+    let uri = format!("/api/v2/purl/{}", urlencoding::encode(bin));
     let request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
-    assert_eq!("generated_from", response["relationships"][0][0]);
-    assert_eq!(src, response["relationships"][0][1]);
+
+    assert_eq!(src, response["relationships"]["generated_from"][0]);
 
     Ok(())
 }

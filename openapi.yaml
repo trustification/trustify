@@ -3279,30 +3279,30 @@ components:
             items:
               $ref: '#/components/schemas/PurlLicenseSummary'
           relationships:
-            type: array
-            items:
+            type: object
+            additionalProperties:
               type: array
-              items: false
-              prefixItems:
-              - type: string
-                enum:
-                - contained_by
-                - dependency_of
-                - dev_dependency_of
-                - optional_dependency_of
-                - provided_dependency_of
-                - test_dependency_of
-                - runtime_dependency_of
-                - example_of
-                - generated_from
-                - ancestor_of
-                - variant_of
-                - build_tool_of
-                - dev_tool_of
-                - described_by
-                - package_of
-                - undefined
-              - type: string
+              items:
+                type: string
+            propertyNames:
+              type: string
+              enum:
+              - contained_by
+              - dependency_of
+              - dev_dependency_of
+              - optional_dependency_of
+              - provided_dependency_of
+              - test_dependency_of
+              - runtime_dependency_of
+              - example_of
+              - generated_from
+              - ancestor_of
+              - variant_of
+              - build_tool_of
+              - dev_tool_of
+              - described_by
+              - package_of
+              - undefined
           version:
             $ref: '#/components/schemas/VersionedPurlHead'
     PurlHead:

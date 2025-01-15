@@ -38,7 +38,7 @@ pub struct PurlDetails {
     pub base: BasePurlHead,
     pub advisories: Vec<PurlAdvisory>,
     pub licenses: Vec<PurlLicenseSummary>,
-    pub relationships: Vec<(Relationship, String)>,
+    pub relationships: HashMap<Relationship, Vec<String>>,
 }
 
 impl PurlDetails {
@@ -115,16 +115,19 @@ impl PurlDetails {
             .all(tx)
             .await?;
 
-        let relationships = package_relates_to_package::Entity::find()
-            .filter(
-                package_relates_to_package::Column::LeftNodeId
-                    .eq(qualified_package.purl.to_string()),
-            )
-            .all(tx)
-            .await?
-            .into_iter()
-            .map(|model| (model.relationship, model.right_node_id))
-            .collect();
+        let relationships: HashMap<Relationship, Vec<_>> =
+            package_relates_to_package::Entity::find()
+                .filter(
+                    package_relates_to_package::Column::LeftNodeId
+                        .eq(qualified_package.purl.to_string()),
+                )
+                .all(tx)
+                .await?
+                .into_iter()
+                .fold(HashMap::new(), |mut h, m| {
+                    h.entry(m.relationship).or_default().push(m.right_node_id);
+                    h
+                });
 
         Ok(PurlDetails {
             head: PurlHead::from_entity(&package, &package_version, qualified_package, tx).await?,
