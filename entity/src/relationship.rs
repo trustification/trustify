@@ -5,6 +5,7 @@ use std::fmt;
     Debug,
     Copy,
     Clone,
+    Hash,
     PartialEq,
     Eq,
     EnumIter,
