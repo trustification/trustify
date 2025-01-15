@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1736864182126,
+  "lastUpdate": 1736939274932,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -2981,6 +2981,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/88fa55ce71c0262b7245c4df7f4ce8f4df7b8b06"
         },
         "date": 1736864181491,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "e08aacb0769b111c132a1a99ecd65892933758d4",
+          "message": "feat: add two example entries fro GHSA data",
+          "timestamp": "2025-01-15T10:47:42Z",
+          "tree_id": "d887deb3b78f608e82c75870c7cd04860413cae7",
+          "url": "https://github.com/trustification/trustify/commit/e08aacb0769b111c132a1a99ecd65892933758d4"
+        },
+        "date": 1736939273700,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
