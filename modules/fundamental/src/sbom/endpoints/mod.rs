@@ -263,7 +263,11 @@ pub async fn get_sbom_advisories(
     _: Require<GetSbomAdvisories>,
 ) -> actix_web::Result<impl Responder> {
     let id = Id::from_str(&id).map_err(Error::IdKey)?;
-    match fetcher.fetch_sbom_details(id, db.as_ref()).await? {
+    let statuses: Vec<String> = vec!["affected".to_string()];
+    match fetcher
+        .fetch_sbom_details(id, statuses, db.as_ref())
+        .await?
+    {
         Some(v) => Ok(HttpResponse::Ok().json(v.advisories)),
         None => Ok(HttpResponse::NotFound().finish()),
     }

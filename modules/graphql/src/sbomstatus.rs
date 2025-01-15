@@ -30,7 +30,7 @@ impl SbomStatusQuery {
         let sbom_service = SbomService::new(db.deref().clone());
 
         let sbom_details: Option<SbomDetails> = sbom_service
-            .fetch_sbom_details(Id::Uuid(id), db.as_ref())
+            .fetch_sbom_details(Id::Uuid(id), vec![], db.as_ref())
             .await
             .unwrap_or_default();
 

@@ -49,7 +49,7 @@ impl SbomDetails {
         tx: &C,
         statuses: Vec<String>,
     ) -> Result<Option<SbomDetails>, Error> {
-        let mut relevant_advisory_info = sbom
+        let mut query = sbom
             .find_related(sbom_package::Entity)
             .join(JoinType::Join, sbom_package::Relation::Node.def())
             .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
@@ -63,8 +63,14 @@ impl SbomDetails {
             )
             .join(JoinType::LeftJoin, versioned_purl::Relation::BasePurl.def())
             .join(JoinType::Join, base_purl::Relation::PurlStatus.def())
-            .join(JoinType::Join, purl_status::Relation::Status.def())
-            .filter(Expr::col((status::Entity, status::Column::Slug)).is_in(statuses.clone()))
+            .join(JoinType::Join, purl_status::Relation::Status.def());
+
+        if !statuses.is_empty() {
+            query = query
+                .filter(Expr::col((status::Entity, status::Column::Slug)).is_in(statuses.clone()));
+        }
+
+        let mut relevant_advisory_info = query
             .join(
                 JoinType::LeftJoin,
                 purl_status::Relation::VersionRange.def(),
@@ -164,7 +170,7 @@ impl SbomDetails {
             JOIN "vulnerability" ON "product_status"."vulnerability_id" = "vulnerability"."id"
             WHERE
             "sbom"."sbom_id" = $1
-            AND "status"."slug" = ANY($2::text[])
+            AND ($2::text[] = ARRAY[]::text[] OR "status"."slug" = ANY($2::text[]))
             "#;
 
         let result: Vec<QueryResult> = tx
