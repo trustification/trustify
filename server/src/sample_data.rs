@@ -33,6 +33,7 @@ async fn add_osv(
     source: &str,
     base: Option<&str>,
     branch: Option<&str>,
+    start_year: Option<u16>,
     description: &str,
 ) -> anyhow::Result<()> {
     add(
@@ -49,7 +50,7 @@ async fn add_osv(
             branch: branch.map(ToString::to_string),
             path: base.map(|s| s.into()),
             years: Default::default(),
-            start_year: None,
+            start_year,
         }),
     )
     .await
@@ -228,6 +229,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         "https://github.com/pypa/advisory-database",
         Some("vulns"),
         None,
+        None,
         "Python Packaging Advisory Database",
     )
     .await?;
@@ -237,6 +239,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         "osv-psf",
         "https://github.com/psf/advisory-database",
         Some("advisories"),
+        None,
         None,
         "Python Software Foundation Advisory Database",
     )
@@ -248,6 +251,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         "https://github.com/RConsortium/r-advisory-database",
         Some("vulns"),
         None,
+        None,
         "RConsortium Advisory Database",
     )
     .await?;
@@ -257,6 +261,7 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         "osv-oss-fuzz",
         "https://github.com/google/oss-fuzz-vulns",
         Some("vulns"),
+        None,
         None,
         "OSS-Fuzz vulnerabilities",
     )
@@ -268,7 +273,30 @@ pub async fn sample_data(db: trustify_common::db::Database) -> anyhow::Result<()
         "https://github.com/rustsec/advisory-db",
         Some("crates"),
         Some("osv"),
+        None,
         "RustSec Advisory Database",
+    )
+    .await?;
+
+    add_osv(
+        &importer,
+        "osv-github",
+        "https://github.com/github/advisory-database",
+        Some("advisories"),
+        None,
+        None,
+        "GitHub Advisory Database",
+    )
+    .await?;
+
+    add_osv(
+        &importer,
+        "osv-github-2024",
+        "https://github.com/github/advisory-database",
+        Some("advisories"),
+        None,
+        Some(2024),
+        "GitHub Advisory Database (starting 2024)",
     )
     .await?;
 
