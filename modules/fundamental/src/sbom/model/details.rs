@@ -157,7 +157,7 @@ impl SbomDetails {
             JOIN "version_range" ON "product_version_range"."version_range_id" = "version_range"."id" AND version_matches("product_version"."version", "version_range".*)
 
             -- now find matching purls in these statuses
-            JOIN base_purl ON product_status.package = base_purl.name OR product_status.package LIKE CONCAT(base_purl.namespace, '/%')
+            JOIN base_purl ON product_status.package = base_purl.name OR product_status.package LIKE CONCAT(base_purl.namespace, '/', base_purl.name)
             JOIN "versioned_purl" ON "versioned_purl"."base_purl_id" = "base_purl"."id"
             JOIN "qualified_purl" ON "qualified_purl"."versioned_purl_id" = "versioned_purl"."id"
             join sbom_package_purl_ref ON sbom_package_purl_ref.qualified_purl_id = qualified_purl.id AND sbom_package_purl_ref.sbom_id = sbom.sbom_id
