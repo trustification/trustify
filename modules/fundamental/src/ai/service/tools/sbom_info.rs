@@ -67,7 +67,7 @@ For example, input "quarkus" instead of "quarkus 3.2.11".
             Err(_) => None,
             Ok(id) => {
                 log::info!("Fetching SBOM details by Id: {}", id);
-                service.fetch_sbom_details(id, &self.db).await?
+                service.fetch_sbom_details(id, vec![], &self.db).await?
             }
         };
 
@@ -76,7 +76,9 @@ For example, input "quarkus" instead of "quarkus 3.2.11".
                 Err(_) => None,
                 Ok(id) => {
                     log::info!("Fetching SBOM details by UUID: {}", id);
-                    service.fetch_sbom_details(Id::Uuid(id), &self.db).await?
+                    service
+                        .fetch_sbom_details(Id::Uuid(id), vec![], &self.db)
+                        .await?
                 }
             };
         }
@@ -100,7 +102,7 @@ For example, input "quarkus" instead of "quarkus 3.2.11".
                 0 => None,
                 1 => {
                     service
-                        .fetch_sbom_details(Id::Uuid(results.items[0].head.id), &self.db)
+                        .fetch_sbom_details(Id::Uuid(results.items[0].head.id), vec![], &self.db)
                         .await?
                 }
                 _ => {

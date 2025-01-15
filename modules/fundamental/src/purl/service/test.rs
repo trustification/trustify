@@ -734,7 +734,7 @@ async fn gc_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ) -> Result<(), anyhow::Error> {
         let sbom_service = SbomService::new(ctx.db.clone());
         let sbom = sbom_service
-            .fetch_sbom_details(id, &ctx.db)
+            .fetch_sbom_details(id, vec![], &ctx.db)
             .await?
             .expect("fetch_sbom");
         assert_eq!(

@@ -61,14 +61,12 @@ impl SbomService {
     pub async fn fetch_sbom_details<C: ConnectionTrait>(
         &self,
         id: Id,
+        statuses: Vec<String>,
 
         connection: &C,
     ) -> Result<Option<SbomDetails>, Error> {
         Ok(match self.fetch_sbom(id, connection).await? {
-            Some(row) => {
-                SbomDetails::from_entity(row, self, connection, vec!["affected".to_string()])
-                    .await?
-            }
+            Some(row) => SbomDetails::from_entity(row, self, connection, statuses).await?,
             None => None,
         })
     }
