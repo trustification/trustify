@@ -24,159 +24,6 @@ paths:
                     type: object
                   version:
                     type: string
-  /api/v1/ai/conversations:
-    get:
-      tags:
-      - ai
-      operationId: listConversations
-      parameters:
-      - name: q
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: sort
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: offset
-        in: query
-        description: |-
-          The first item to return, skipping all that come before it.
-
-          NOTE: The order of items is defined by the API being called.
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      - name: limit
-        in: query
-        description: |-
-          The maximum number of entries to return.
-
-          Zero means: no limit
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      responses:
-        '200':
-          description: The resulting list of conversation summaries
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResults_ConversationSummary'
-        '404':
-          description: The AI service is not enabled
-    post:
-      tags:
-      - ai
-      operationId: createConversation
-      responses:
-        '200':
-          description: The resulting conversation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Conversation'
-        '400':
-          description: The request was invalid
-        '404':
-          description: The AI service is not enabled
-  /api/v1/ai/conversations/{id}:
-    get:
-      tags:
-      - ai
-      operationId: getConversation
-      parameters:
-      - name: id
-        in: path
-        description: Opaque ID of the conversation
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: The resulting conversation
-          headers:
-            etag:
-              schema:
-                type: string
-              description: Sequence ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Conversation'
-        '400':
-          description: The request was invalid
-        '404':
-          description: The AI service is not enabled
-    put:
-      tags:
-      - ai
-      operationId: updateConversation
-      parameters:
-      - name: id
-        in: path
-        description: Opaque ID of the conversation
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: if-match
-        in: header
-        description: The revision to update
-        required: false
-        schema:
-          type:
-          - string
-          - 'null'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/ChatMessage'
-        required: true
-      responses:
-        '200':
-          description: The resulting conversation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Conversation'
-        '400':
-          description: The request was invalid
-        '404':
-          description: The AI service is not enabled or the conversation was not found
-    delete:
-      tags:
-      - ai
-      operationId: deleteConversation
-      parameters:
-      - name: id
-        in: path
-        description: Opaque ID of the conversation
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: The resulting conversation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Conversation'
-        '400':
-          description: The request was invalid
-        '404':
-          description: The AI service is not enabled or the conversation was not found
   /api/v2/advisory:
     get:
       tags:
@@ -401,6 +248,159 @@ paths:
           description: The request was invalid
         '404':
           description: The AI service is not enabled
+  /api/v2/ai/conversations:
+    get:
+      tags:
+      - ai
+      operationId: listConversations
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: offset
+        in: query
+        description: |-
+          The first item to return, skipping all that come before it.
+
+          NOTE: The order of items is defined by the API being called.
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: limit
+        in: query
+        description: |-
+          The maximum number of entries to return.
+
+          Zero means: no limit
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      responses:
+        '200':
+          description: The resulting list of conversation summaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResults_ConversationSummary'
+        '404':
+          description: The AI service is not enabled
+    post:
+      tags:
+      - ai
+      operationId: createConversation
+      responses:
+        '200':
+          description: The resulting conversation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: The request was invalid
+        '404':
+          description: The AI service is not enabled
+  /api/v2/ai/conversations/{id}:
+    get:
+      tags:
+      - ai
+      operationId: getConversation
+      parameters:
+      - name: id
+        in: path
+        description: Opaque ID of the conversation
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The resulting conversation
+          headers:
+            etag:
+              schema:
+                type: string
+              description: Sequence ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: The request was invalid
+        '404':
+          description: The AI service is not enabled
+    put:
+      tags:
+      - ai
+      operationId: updateConversation
+      parameters:
+      - name: id
+        in: path
+        description: Opaque ID of the conversation
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: if-match
+        in: header
+        description: The revision to update
+        required: false
+        schema:
+          type:
+          - string
+          - 'null'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChatMessage'
+        required: true
+      responses:
+        '200':
+          description: The resulting conversation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: The request was invalid
+        '404':
+          description: The AI service is not enabled or the conversation was not found
+    delete:
+      tags:
+      - ai
+      operationId: deleteConversation
+      parameters:
+      - name: id
+        in: path
+        description: Opaque ID of the conversation
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: The resulting conversation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '400':
+          description: The request was invalid
+        '404':
+          description: The AI service is not enabled or the conversation was not found
   /api/v2/ai/flags:
     get:
       tags:
