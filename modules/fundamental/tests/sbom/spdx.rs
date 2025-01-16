@@ -37,7 +37,7 @@ async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
             assert_eq!(first.name, "quarkus-bom");
             assert_eq!(first.version, Some("2.13.8.Final-redhat-00004".to_string()));
 
-            assert!( matches!(
+            assert!(matches!(
                 &first.purl[0],
                 PurlSummary {
                     head: PurlHead {
@@ -48,6 +48,11 @@ async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
                 }
                 if *purl == Purl::from_str("pkg:maven/com.redhat.quarkus.platform/quarkus-bom@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=pom")?
             ));
+
+            assert_eq!(
+                first.cpe[0],
+                "cpe:/a:redhat:quarkus:2.13:*:el8:*"
+            );
 
             let contains = service
                 .related_packages(
