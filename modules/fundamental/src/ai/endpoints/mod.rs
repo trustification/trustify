@@ -3,7 +3,7 @@ mod test;
 
 use crate::{
     ai::{
-        model::{AiFlags, AiTool, ChatState, Conversation, ConversationSummary},
+        model::{AiFlags, AiTool, ChatMessage, ChatState, Conversation, ConversationSummary},
         service::AiService,
     },
     Error,
@@ -13,15 +13,13 @@ use actix_web::{
     http::header::{self, ETag, EntityTag, IfMatch},
     post, put, web, HttpResponse, Responder,
 };
-
-use crate::ai::model::ChatMessage;
 use itertools::Itertools;
 use time::OffsetDateTime;
-use trustify_auth::authenticator::user::UserDetails;
-use trustify_auth::{authorizer::Require, Ai};
-use trustify_common::db::query::Query;
-use trustify_common::db::Database;
-use trustify_common::model::{Paginated, PaginatedResults};
+use trustify_auth::{authenticator::user::UserDetails, authorizer::Require, Ai};
+use trustify_common::{
+    db::{query::Query, Database},
+    model::{Paginated, PaginatedResults},
+};
 use uuid::Uuid;
 
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
@@ -149,7 +147,7 @@ pub async fn tool_call(
         (status = 404, description = "The AI service is not enabled")
     )
 )]
-#[post("/v1/ai/conversations")]
+#[post("/v2/ai/conversations")]
 pub async fn create_conversation(_: Require<Ai>) -> actix_web::Result<impl Responder, Error> {
     // generate an assistant response
     let uuid = Uuid::now_v7();
@@ -187,7 +185,7 @@ fn to_offset_date_time(uuid: Uuid) -> Result<OffsetDateTime, Error> {
         (status = 404, description = "The AI service is not enabled or the conversation was not found")
     )
 )]
-#[put("/v1/ai/conversations/{id}")]
+#[put("/v2/ai/conversations/{id}")]
 pub async fn update_conversation(
     service: web::Data<AiService>,
     db: web::Data<Database>,
@@ -232,7 +230,7 @@ pub async fn update_conversation(
         (status = 404, description = "The AI service is not enabled")
     )
 )]
-#[get("/v1/ai/conversations")]
+#[get("/v2/ai/conversations")]
 // Gets the list of the user's previous conversations
 pub async fn list_conversations(
     service: web::Data<AiService>,
@@ -278,7 +276,7 @@ pub async fn list_conversations(
         (status = 404, description = "The AI service is not enabled")
     )
 )]
-#[get("/v1/ai/conversations/{id}")]
+#[get("/v2/ai/conversations/{id}")]
 pub async fn get_conversation(
     service: web::Data<AiService>,
     db: web::Data<Database>,
@@ -338,7 +336,7 @@ pub async fn get_conversation(
         (status = 404, description = "The AI service is not enabled or the conversation was not found")
     )
 )]
-#[delete("/v1/ai/conversations/{id}")]
+#[delete("/v2/ai/conversations/{id}")]
 pub async fn delete_conversation(
     service: web::Data<AiService>,
     db: web::Data<Database>,
