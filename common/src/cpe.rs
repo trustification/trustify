@@ -2,15 +2,19 @@ use cpe::{
     cpe::Cpe as _,
     uri::{OwnedUri, Uri},
 };
-use serde::de::{Error, Visitor};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::borrow::Cow;
+use serde::{
+    de::{Error, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
 use std::{
+    borrow::Cow,
     fmt::{Debug, Display, Formatter},
     str::FromStr,
 };
-use utoipa::openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, Type};
-use utoipa::{PartialSchema, ToSchema};
+use utoipa::{
+    openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, Type},
+    PartialSchema, ToSchema,
+};
 use uuid::Uuid;
 
 #[derive(Clone, Hash, Eq, PartialEq)]
