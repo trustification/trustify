@@ -1,4 +1,5 @@
 mod cpe;
+mod purl;
 
 use super::*;
 use std::str::FromStr;

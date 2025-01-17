@@ -8,7 +8,9 @@ use crate::graph::{
     },
 };
 use sea_orm::ConnectionTrait;
-use serde_cyclonedx::cyclonedx::v_1_6::{Component, CycloneDx, LicenseChoiceUrl};
+use serde_cyclonedx::cyclonedx::v_1_6::{
+    Component, ComponentEvidenceIdentity, CycloneDx, LicenseChoiceUrl,
+};
 use std::{collections::HashMap, str::FromStr};
 use time::{format_description::well_known::Iso8601, OffsetDateTime};
 use tracing::instrument;
@@ -283,22 +285,43 @@ impl<'a> Creator<'a> {
                 .clone()
                 .unwrap_or_else(|| Uuid::new_v4().to_string());
 
-            let mut refs = vec![];
+            let mut refs = RefCreator::new(&mut cpes, &mut purls);
+
+            if let Some(cpe) = &comp.cpe {
+                if let Ok(cpe) = Cpe::from_str(cpe.as_ref()) {
+                    refs.add_cpe(cpe);
+                }
+            }
 
             if let Some(purl) = &comp.purl {
                 if let Ok(purl) = Purl::from_str(purl.as_ref()) {
-                    refs.push(PackageReference::Purl {
-                        versioned_purl: purl.version_uuid(),
-                        qualified_purl: purl.qualifier_uuid(),
-                    });
-                    purls.add(purl);
+                    refs.add_purl(purl);
                 }
             }
-            if let Some(cpe) = &comp.cpe {
-                if let Ok(cpe) = Cpe::from_str(cpe.as_ref()) {
-                    let id = cpe.uuid();
-                    cpes.add(cpe);
-                    refs.push(PackageReference::Cpe(id));
+
+            for identity in comp
+                .evidence
+                .as_ref()
+                .and_then(|evidence| evidence.identity.as_ref())
+                .iter()
+                .flat_map(|id| match id {
+                    ComponentEvidenceIdentity::Variant0(value) => value.iter().collect::<Vec<_>>(),
+                    ComponentEvidenceIdentity::Variant1(value) => vec![value],
+                })
+            {
+                match (identity.field.as_str(), &identity.concluded_value) {
+                    ("cpe", Some(cpe)) => {
+                        if let Ok(cpe) = Cpe::from_str(cpe.as_ref()) {
+                            refs.add_cpe(cpe);
+                        }
+                    }
+                    ("purl", Some(purl)) => {
+                        if let Ok(purl) = Purl::from_str(purl.as_ref()) {
+                            refs.add_purl(purl);
+                        }
+                    }
+
+                    _ => {}
                 }
             }
 
@@ -312,7 +335,7 @@ impl<'a> Creator<'a> {
                 node_id,
                 comp.name.to_string(),
                 comp.version.as_ref().map(|v| v.to_string()),
-                refs,
+                refs.refs,
                 license_refs,
             );
         }
@@ -327,5 +350,36 @@ impl<'a> Creator<'a> {
         relationships.create(db).await?;
 
         Ok(())
+    }
+}
+
+struct RefCreator<'a> {
+    cpes: &'a mut CpeCreator,
+    purls: &'a mut PurlCreator,
+
+    refs: Vec<PackageReference>,
+}
+
+impl<'a> RefCreator<'a> {
+    pub fn new(cpes: &'a mut CpeCreator, purls: &'a mut PurlCreator) -> Self {
+        Self {
+            cpes,
+            purls,
+            refs: Default::default(),
+        }
+    }
+
+    pub fn add_cpe(&mut self, cpe: Cpe) {
+        let id = cpe.uuid();
+        self.refs.push(PackageReference::Cpe(id));
+        self.cpes.add(cpe);
+    }
+
+    pub fn add_purl(&mut self, purl: Purl) {
+        self.refs.push(PackageReference::Purl {
+            versioned_purl: purl.version_uuid(),
+            qualified_purl: purl.qualifier_uuid(),
+        });
+        self.purls.add(purl);
     }
 }
