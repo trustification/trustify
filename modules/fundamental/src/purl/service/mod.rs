@@ -237,16 +237,15 @@ impl PurlService {
         connection: &C,
     ) -> Result<Option<PurlDetails>, Error> {
         let canonical = CanonicalPurl::from(purl.clone());
-        let purl = qualified_purl::Entity::find()
+        match qualified_purl::Entity::find()
             .filter(qualified_purl::Column::Purl.eq(canonical))
             .one(connection)
-            .await?;
-        if let Some(purl) = purl {
-            Ok(Some(
+            .await?
+        {
+            Some(purl) => Ok(Some(
                 PurlDetails::from_entity(None, None, &purl, deprecation, connection).await?,
-            ))
-        } else {
-            Ok(None)
+            )),
+            None => Ok(None),
         }
     }
 
@@ -257,16 +256,14 @@ impl PurlService {
         deprecation: Deprecation,
         connection: &C,
     ) -> Result<Option<PurlDetails>, Error> {
-        if let Some(qualified_package) = qualified_purl::Entity::find_by_id(*purl_uuid)
+        match qualified_purl::Entity::find_by_id(*purl_uuid)
             .one(connection)
             .await?
         {
-            Ok(Some(
-                PurlDetails::from_entity(None, None, &qualified_package, deprecation, connection)
-                    .await?,
-            ))
-        } else {
-            Ok(None)
+            Some(pkg) => Ok(Some(
+                PurlDetails::from_entity(None, None, &pkg, deprecation, connection).await?,
+            )),
+            None => Ok(None),
         }
     }
 
