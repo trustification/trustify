@@ -15,7 +15,7 @@ use crate::{
         Error, Warnings,
     },
 };
-use osv::schema::{Event, Range, RangeType, ReferenceType, SeverityType, Vulnerability};
+use osv::schema::{Ecosystem, Event, Range, RangeType, ReferenceType, SeverityType, Vulnerability};
 use sbom_walker::report::ReportSink;
 use sea_orm::{ConnectionTrait, TransactionTrait};
 use std::{fmt::Debug, str::FromStr};
@@ -142,12 +142,38 @@ impl<'g> OsvLoader<'g> {
                     }
 
                     for range in affected.ranges.iter().flatten() {
-                        match range.range_type {
-                            RangeType::Semver => {
-                                create_package_status_semver(&advisory_vuln, &purl, range, &tx)
-                                    .await?;
+                        match (&range.range_type, &package.ecosystem) {
+                            (RangeType::Semver, _) => {
+                                create_package_status(
+                                    &advisory_vuln,
+                                    &purl,
+                                    range,
+                                    &VersionScheme::Semver,
+                                    &tx,
+                                )
+                                .await?;
                             }
-                            _ => {
+                            (RangeType::Git, _) => {
+                                create_package_status(
+                                    &advisory_vuln,
+                                    &purl,
+                                    range,
+                                    &VersionScheme::Git,
+                                    &tx,
+                                )
+                                .await?;
+                            }
+                            (RangeType::Ecosystem, Ecosystem::Maven(_)) => {
+                                create_package_status(
+                                    &advisory_vuln,
+                                    &purl,
+                                    range,
+                                    &VersionScheme::Maven,
+                                    &tx,
+                                )
+                                .await?;
+                            }
+                            (_, _) => {
                                 create_package_status_versions(
                                     &advisory_vuln,
                                     &purl,
@@ -306,11 +332,12 @@ async fn ingest_exact<C: ConnectionTrait>(
         .await?)
 }
 
-/// create a package status from a semver range
-async fn create_package_status_semver<C: ConnectionTrait>(
+/// create a package/purl status
+async fn create_package_status<C: ConnectionTrait>(
     advisory_vuln: &AdvisoryVulnerabilityContext<'_>,
     purl: &Purl,
     range: &Range,
+    version_scheme: &VersionScheme,
     connection: &C,
 ) -> Result<(), Error> {
     let parsed_range = events_to_range(&range.events);
@@ -338,7 +365,7 @@ async fn create_package_status_semver<C: ConnectionTrait>(
                 purl,
                 "affected",
                 VersionInfo {
-                    scheme: VersionScheme::Semver,
+                    scheme: *version_scheme,
                     spec,
                 },
                 connection,
@@ -353,7 +380,7 @@ async fn create_package_status_semver<C: ConnectionTrait>(
                 purl,
                 "fixed",
                 VersionInfo {
-                    scheme: VersionScheme::Semver,
+                    scheme: *version_scheme,
                     spec: VersionSpec::Exact(fixed.clone()),
                 },
                 connection,
