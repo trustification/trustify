@@ -816,25 +816,33 @@ async fn ingest_some_log4j_data(ctx: &TrustifyContext) -> Result<(), anyhow::Err
             &ctx.db,
         )
         .await?;
+
+    log4j_123
+        .ingest_qualified_package(
+            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
+            &ctx.db,
+        )
+        .await?;
     Ok(())
 }
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn unqualified_purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let service = PurlService::new();
 
     ingest_some_log4j_data(ctx).await?;
 
-    let results = service
-        .purl_by_purl(
-            &Purl::from_str("pkg:maven/org.apache/log4j@1.2.3")?,
-            Default::default(),
-            &ctx.db,
-        )
-        .await?;
+    let purl = "pkg:maven/org.apache/log4j@1.2.3";
 
-    assert_eq!(results.unwrap().version.version, "1.2.3");
+    let results = service
+        .purl_by_purl(&Purl::from_str(purl)?, Default::default(), &ctx.db)
+        .await?
+        .unwrap();
+
+    log::debug!("{results:#?}");
+    assert_eq!(results.head.purl.to_string(), purl);
+    assert_eq!(results.version.version, "1.2.3");
 
     Ok(())
 }
