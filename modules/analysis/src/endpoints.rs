@@ -302,15 +302,13 @@ mod test {
         Ok(())
     }
 
-    // TODO: this test passes when run individually.
     #[test_context(TrustifyContext)]
     #[test(actix_web::test)]
-    #[ignore]
     async fn test_status_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         let app = caller(ctx).await?;
         ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-        //prime the graph hashmap
+        // prime the graph hashmap
         let uri = "/api/v2/analysis/root-component?q=BB";
         let load1 = TestRequest::get().uri(uri).to_request();
         let _response: Value = app.call_and_read_body_json(load1).await;
