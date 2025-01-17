@@ -88,6 +88,29 @@ async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
 
     assert_eq!(content.len(), 1174356);
 
+    let sbom_details = service
+        .fetch_sbom_details(sbom.id.clone(), vec![], &ctx.db)
+        .await?;
+    assert!(sbom_details.is_some());
+    let sbom_details = sbom_details.unwrap();
+    assert_eq!(sbom_details.summary.head.name, "quarkus-bom");
+
+    // test advisories
+
+    let advisories = sbom_details.advisories;
+    assert_eq!(advisories.len(), 22);
+
+    let advisories_affected = advisories
+        .into_iter()
+        .filter(|advisory| {
+            advisory
+                .status
+                .iter()
+                .any(|sbom_status| sbom_status.status == "affected")
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(advisories_affected.len(), 11);
+
     // done
 
     Ok(())
