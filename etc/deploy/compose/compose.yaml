@@ -7,3 +7,4 @@ services:
       POSTGRES_PASSWORD: "trustify"
       POSTGRES_DB: "trustify"
     restart: always
+    shm_size: '1g'

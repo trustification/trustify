@@ -9,7 +9,9 @@ impl MigrationTrait for Migration {
         // use rpm version range scheme as it covers more usecases
         manager
             .get_connection()
-            .execute_unprepared(r#"UPDATE version_range SET version_scheme_id = 'rpm' WHERE id IN (SELECT version_range_id FROM product_version_range)"#)
+            .execute_unprepared(include_str!(
+                "m0000800_alter_product_version_range_scheme/migration_up.sql"
+            ))
             .await?;
 
         Ok(())
@@ -19,7 +21,9 @@ impl MigrationTrait for Migration {
         // return to semver version range scheme
         manager
             .get_connection()
-            .execute_unprepared(r#"UPDATE version_range SET version_scheme_id = 'semver' WHERE id IN (SELECT version_range_id FROM product_version_range)"#)
+            .execute_unprepared(include_str!(
+                "m0000800_alter_product_version_range_scheme/migration_down.sql"
+            ))
             .await?;
 
         Ok(())
