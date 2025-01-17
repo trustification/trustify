@@ -95,10 +95,6 @@ impl LicenseCreator {
     where
         C: ConnectionTrait,
     {
-        if self.licenses.is_empty() {
-            return Ok(());
-        }
-
         for batch in &self.licenses.into_values().chunked() {
             license::Entity::insert_many(batch)
                 .on_conflict(
