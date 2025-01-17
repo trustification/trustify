@@ -295,7 +295,7 @@ mod test {
         );
         assert_eq!(
             response["items"][0]["ancestors"][0]["purl"],
-            Value::from(["pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https%3A%2F%2Fmaven%2Erepository%2Eredhat%2Ecom%2Fga%2F&type=pom"])
+            Value::from(["pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom"])
         );
 
         assert_eq!(&response["total"], 2);
@@ -518,7 +518,10 @@ mod test {
             "GeneratedFrom",
             response["items"][0]["ancestors"][0]["relationship"]
         );
-        assert_eq!(src, response["items"][0]["ancestors"][0]["purl"]);
+        assert_eq!(
+            Value::from(vec![Value::from(src)]),
+            response["items"][0]["ancestors"][0]["purl"]
+        );
 
         Ok(())
     }
