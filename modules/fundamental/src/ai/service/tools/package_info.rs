@@ -279,10 +279,10 @@ mod tests {
 
         assert_tool_contains(
             tool.clone(),
-            "pkg:maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https%3A%2F%2Fmaven%2Erepository%2Eredhat%2Ecom%2Fga%2F&type=jar",
+            "pkg:maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
             r#"
 {
-  "identifier": "pkg:maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https%3A%2F%2Fmaven%2Erepository%2Eredhat%2Ecom%2Fga%2F&type=jar",
+  "identifier": "pkg:maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
   "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "name": "commons-logging-jboss-logging",
   "version": "1.0.0.Final-redhat-1",
@@ -304,7 +304,7 @@ mod tests {
             "commons-logging-jboss-logging",
             r#"
 {
-  "identifier": "pkg:maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https%3A%2F%2Fmaven%2Erepository%2Eredhat%2Ecom%2Fga%2F&type=jar",
+  "identifier": "pkg:maven/org.jboss.logging/commons-logging-jboss-logging@1.0.0.Final-redhat-1?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
   "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "name": "commons-logging-jboss-logging",
   "version": "1.0.0.Final-redhat-1",
@@ -330,25 +330,25 @@ There are multiple that match:
 {
   "items": [
     {
-      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common-deployment@2.13.8.Final-redhat-00004?repository_url=https%3A%2F%2Fmaven%2Erepository%2Eredhat%2Ecom%2Fga%2F&type=jar",
+      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       "name": "quarkus-resteasy-reactive-jsonb-common-deployment",
       "version": "2.13.8.Final-redhat-00004"
     },
     {
-      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb@2.13.8.Final-redhat-00004?repository_url=https%3A%2F%2Fmaven%2Erepository%2Eredhat%2Ecom%2Fga%2F&type=jar",
+      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       "name": "quarkus-resteasy-reactive-jsonb",
       "version": "2.13.8.Final-redhat-00004"
     },
     {
-      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common@2.13.8.Final-redhat-00004?repository_url=https%3A%2F%2Fmaven%2Erepository%2Eredhat%2Ecom%2Fga%2F&type=jar",
+      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       "name": "quarkus-resteasy-reactive-jsonb-common",
       "version": "2.13.8.Final-redhat-00004"
     },
     {
-      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-deployment@2.13.8.Final-redhat-00004?repository_url=https%3A%2F%2Fmaven%2Erepository%2Eredhat%2Ecom%2Fga%2F&type=jar",
+      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       "name": "quarkus-resteasy-reactive-jsonb-deployment",
       "version": "2.13.8.Final-redhat-00004"
