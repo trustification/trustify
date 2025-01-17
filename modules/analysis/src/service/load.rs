@@ -33,13 +33,13 @@ pub async fn get_implicit_relationships<C: ConnectionTrait>(
         LEFT JOIN
             package_relates_to_package prtp ON t1_node.node_id = prtp.left_node_id OR t1_node.node_id = prtp.right_node_id
         LEFT JOIN
-            sbom_package_purl_ref t1 ON t1_node.node_id = t1.node_id AND t1.sbom_id = sbom.sbom_id
+            sbom_package_purl_ref t1 ON t1.sbom_id = sbom.sbom_id AND t1_node.node_id = t1.node_id
         LEFT JOIN
-            sbom_package_cpe_ref t2 ON t1_node.node_id = t2.node_id AND t2.sbom_id = sbom.sbom_id
+            sbom_package_cpe_ref t2 ON t2.sbom_id = sbom.sbom_id AND t1_node.node_id = t2.node_id
         LEFT JOIN
             cpe t2_cpe ON t2.cpe_id = t2_cpe.id
         LEFT JOIN
-            sbom_package t1_version ON t1_node.node_id = t1_version.node_id AND t1_version.sbom_id = sbom.sbom_id
+            sbom_package t1_version ON t1_version.sbom_id = sbom.sbom_id AND t1_node.node_id = t1_version.node_id
         WHERE
             prtp.left_node_id IS NULL AND prtp.right_node_id IS NULL
           AND
@@ -117,7 +117,7 @@ pub async fn get_relationships<C: ConnectionTrait>(
         LEFT JOIN
             cpe t4_cpe ON t4.cpe_id = t4_cpe.id
         WHERE
-            package_relates_to_package.relationship IN (0, 1, 8, 13, 14, 15)
+            package_relates_to_package.relationship IN (0, 1, 8, 9, 10, 13, 14, 15)
           AND
             sbom.sbom_id = $1
         GROUP BY
