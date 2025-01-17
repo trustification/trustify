@@ -21,7 +21,11 @@ use trustify_common::{
     model::{Paginated, PaginatedResults},
     purl::{Purl, PurlErr},
 };
-use trustify_entity::{base_purl, qualified_purl, versioned_purl};
+use trustify_entity::{
+    base_purl,
+    qualified_purl::{self, CanonicalPurl},
+    versioned_purl,
+};
 use trustify_module_ingestor::common::Deprecation;
 
 #[derive(Default)]
@@ -232,33 +236,17 @@ impl PurlService {
         deprecation: Deprecation,
         connection: &C,
     ) -> Result<Option<PurlDetails>, Error> {
-        if let Some(version) = &purl.version {
-            let mut query = qualified_purl::Entity::find()
-                .left_join(versioned_purl::Entity)
-                .left_join(base_purl::Entity)
-                .filter(base_purl::Column::Type.eq(&purl.ty))
-                .filter(base_purl::Column::Name.eq(&purl.name))
-                .filter(versioned_purl::Column::Version.eq(version));
-
-            if let Some(ns) = &purl.namespace {
-                query = query.filter(base_purl::Column::Namespace.eq(ns));
-            } else {
-                query = query.filter(base_purl::Column::Namespace.is_null());
-            }
-
-            let purl = query.one(connection).await?;
-
-            if let Some(purl) = purl {
-                Ok(Some(
-                    PurlDetails::from_entity(None, None, &purl, deprecation, connection).await?,
-                ))
-            } else {
-                Ok(None)
-            }
+        let canonical = CanonicalPurl::from(purl.clone());
+        let purl = qualified_purl::Entity::find()
+            .filter(qualified_purl::Column::Purl.eq(canonical))
+            .one(connection)
+            .await?;
+        if let Some(purl) = purl {
+            Ok(Some(
+                PurlDetails::from_entity(None, None, &purl, deprecation, connection).await?,
+            ))
         } else {
-            Err(Error::Purl(PurlErr::MissingVersion(
-                "A fully-qualified pURL requires a version".to_string(),
-            )))
+            Ok(None)
         }
     }
 

@@ -234,7 +234,7 @@ mod tests {
             "pkg:rpm/redhat/libsepol@3.5-1.el9?arch=s390x",
             r#"
 {
-  "identifier": "pkg:rpm/redhat/libsepol@3.5-1.el9?arch=ppc64le",
+  "identifier": "pkg:rpm/redhat/libsepol@3.5-1.el9?arch=s390x",
   "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "name": "libsepol",
   "version": "3.5-1.el9",
