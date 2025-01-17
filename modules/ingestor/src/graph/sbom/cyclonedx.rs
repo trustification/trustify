@@ -9,9 +9,9 @@ use crate::graph::{
 };
 use sea_orm::ConnectionTrait;
 use serde_cyclonedx::cyclonedx::v_1_6::{
-    Component, ComponentEvidenceIdentity, CycloneDx, LicenseChoiceUrl,
+    Component, ComponentEvidenceIdentity, CycloneDx, LicenseChoiceUrl, RefLinkType,
 };
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 use time::{format_description::well_known::Iso8601, OffsetDateTime};
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, purl::Purl};
@@ -97,7 +97,6 @@ impl SbomContext {
         mut sbom: CycloneDx,
         connection: &C,
     ) -> Result<(), anyhow::Error> {
-        let mut license_creator = LicenseCreator::new();
         let mut creator = Creator::new(self.sbom.sbom_id);
 
         // extract "describes"
@@ -149,67 +148,19 @@ impl SbomContext {
 
         creator.add_all(&sbom.components);
 
-        // record licenses
-
-        for component in sbom.components.iter().flatten() {
-            if let Some(licenses) = &component.licenses {
-                match licenses {
-                    LicenseChoiceUrl::Variant0(licenses) => {
-                        'l: for license in licenses {
-                            let license = if let Some(id) = license.license.id.clone() {
-                                id
-                            } else if let Some(name) = license.license.name.clone() {
-                                name
-                            } else {
-                                continue 'l;
-                            };
-
-                            let license = LicenseInfo {
-                                license,
-                                refs: Default::default(),
-                            };
-
-                            license_creator.add(&license);
-                            creator.add_license_relation(component, &license);
-                        }
-                    }
-                    LicenseChoiceUrl::Variant1(licenses) => {
-                        for license in licenses {
-                            let license = LicenseInfo {
-                                license: license.expression.clone(),
-                                refs: Default::default(),
-                            };
-
-                            license_creator.add(&license);
-                            creator.add_license_relation(component, &license);
-                        }
-                    }
-                }
-            }
-        }
-
         // create relationships
 
         for left in sbom.dependencies.iter().flatten() {
-            for right in left.depends_on.iter().flatten() {
-                creator.relate(right.clone(), Relationship::DependencyOf, left.ref_.clone());
-            }
+            creator.relate_all(&left.ref_, Relationship::DependencyOf, &left.depends_on);
 
             // https://github.com/trustification/trustify/issues/1131
             // Do we need to qualify this so that only "arch=src" refs
             // get the GeneratedFrom relationship?
-            for right in left.provides.iter().flatten() {
-                creator.relate(
-                    right.clone(),
-                    Relationship::GeneratedFrom,
-                    left.ref_.clone(),
-                );
-            }
+            creator.relate_all(&left.ref_, Relationship::GeneratedFrom, &left.provides);
         }
 
         // create
 
-        license_creator.create(connection).await?;
         creator.create(connection).await?;
 
         // done
@@ -224,7 +175,6 @@ struct Creator<'a> {
     sbom_id: Uuid,
     components: Vec<&'a Component>,
     relations: Vec<(String, Relationship, String)>,
-    license_relations: HashMap<String, Vec<LicenseInfo>>,
 }
 
 impl<'a> Creator<'a> {
@@ -233,7 +183,6 @@ impl<'a> Creator<'a> {
             sbom_id,
             components: Default::default(),
             relations: Default::default(),
-            license_relations: Default::default(),
         }
     }
 
@@ -244,19 +193,6 @@ impl<'a> Creator<'a> {
     pub fn add(&mut self, component: &'a Component) {
         self.components.push(component);
         self.extend(component.components.iter().flatten());
-    }
-
-    pub fn add_license_relation(&mut self, component: &'a Component, license: &LicenseInfo) {
-        let node_id = component
-            .bom_ref
-            .as_ref()
-            .cloned()
-            .unwrap_or_else(|| component.name.to_string());
-
-        self.license_relations
-            .entry(node_id)
-            .or_default()
-            .push(license.clone());
     }
 
     pub fn extend<I>(&mut self, i: I)
@@ -272,72 +208,34 @@ impl<'a> Creator<'a> {
         self.relations.push((left, rel, right));
     }
 
+    pub fn relate_all(
+        &mut self,
+        source: &RefLinkType,
+        rel: Relationship,
+        targets: &Option<Vec<RefLinkType>>,
+    ) {
+        for target in targets.iter().flatten() {
+            self.relate(target.clone(), rel, source.clone());
+        }
+    }
+
     pub async fn create(self, db: &impl ConnectionTrait) -> anyhow::Result<()> {
         let mut purls = PurlCreator::new();
         let mut cpes = CpeCreator::new();
         let mut packages = PackageCreator::with_capacity(self.sbom_id, self.components.len());
         let mut relationships =
             RelationshipCreator::with_capacity(self.sbom_id, self.relations.len());
+        let mut licenses = LicenseCreator::new();
 
         for comp in self.components {
-            let node_id = comp
-                .bom_ref
-                .clone()
-                .unwrap_or_else(|| Uuid::new_v4().to_string());
-
-            let mut refs = RefCreator::new(&mut cpes, &mut purls);
-
-            if let Some(cpe) = &comp.cpe {
-                if let Ok(cpe) = Cpe::from_str(cpe.as_ref()) {
-                    refs.add_cpe(cpe);
-                }
-            }
-
-            if let Some(purl) = &comp.purl {
-                if let Ok(purl) = Purl::from_str(purl.as_ref()) {
-                    refs.add_purl(purl);
-                }
-            }
-
-            for identity in comp
-                .evidence
-                .as_ref()
-                .and_then(|evidence| evidence.identity.as_ref())
-                .iter()
-                .flat_map(|id| match id {
-                    ComponentEvidenceIdentity::Variant0(value) => value.iter().collect::<Vec<_>>(),
-                    ComponentEvidenceIdentity::Variant1(value) => vec![value],
-                })
-            {
-                match (identity.field.as_str(), &identity.concluded_value) {
-                    ("cpe", Some(cpe)) => {
-                        if let Ok(cpe) = Cpe::from_str(cpe.as_ref()) {
-                            refs.add_cpe(cpe);
-                        }
-                    }
-                    ("purl", Some(purl)) => {
-                        if let Ok(purl) = Purl::from_str(purl.as_ref()) {
-                            refs.add_purl(purl);
-                        }
-                    }
-
-                    _ => {}
-                }
-            }
-
-            let license_refs = self
-                .license_relations
-                .get(&node_id)
-                .cloned()
-                .unwrap_or_default();
-
-            packages.add(
-                node_id,
-                comp.name.to_string(),
-                comp.version.as_ref().map(|v| v.to_string()),
-                refs.refs,
-                license_refs,
+            let creator = ComponentCreator::new(
+                &mut cpes,
+                &mut purls,
+                &mut licenses,
+                &mut packages,
+                &mut relationships,
             );
+            creator.create(comp);
         }
 
         for (left, rel, right) in self.relations {
@@ -346,6 +244,8 @@ impl<'a> Creator<'a> {
 
         purls.create(db).await?;
         cpes.create(db).await?;
+        licenses.create(db).await?;
+
         packages.create(db).await?;
         relationships.create(db).await?;
 
@@ -353,19 +253,117 @@ impl<'a> Creator<'a> {
     }
 }
 
-struct RefCreator<'a> {
+struct ComponentCreator<'a> {
     cpes: &'a mut CpeCreator,
     purls: &'a mut PurlCreator,
+    licenses: &'a mut LicenseCreator,
+    packages: &'a mut PackageCreator,
+    relationships: &'a mut RelationshipCreator,
 
     refs: Vec<PackageReference>,
+    license_relations: Vec<LicenseInfo>,
 }
 
-impl<'a> RefCreator<'a> {
-    pub fn new(cpes: &'a mut CpeCreator, purls: &'a mut PurlCreator) -> Self {
+impl<'a> ComponentCreator<'a> {
+    pub fn new(
+        cpes: &'a mut CpeCreator,
+        purls: &'a mut PurlCreator,
+        licenses: &'a mut LicenseCreator,
+        packages: &'a mut PackageCreator,
+        relationships: &'a mut RelationshipCreator,
+    ) -> Self {
         Self {
             cpes,
             purls,
+            licenses,
             refs: Default::default(),
+            license_relations: Default::default(),
+            packages,
+            relationships,
+        }
+    }
+
+    pub fn create(mut self, comp: &Component) {
+        let node_id = comp
+            .bom_ref
+            .clone()
+            .unwrap_or_else(|| Uuid::new_v4().to_string());
+
+        self.add_license(comp);
+
+        if let Some(cpe) = &comp.cpe {
+            if let Ok(cpe) = Cpe::from_str(cpe.as_ref()) {
+                self.add_cpe(cpe);
+            }
+        }
+
+        if let Some(purl) = &comp.purl {
+            if let Ok(purl) = Purl::from_str(purl.as_ref()) {
+                self.add_purl(purl);
+            }
+        }
+
+        for identity in comp
+            .evidence
+            .as_ref()
+            .and_then(|evidence| evidence.identity.as_ref())
+            .iter()
+            .flat_map(|id| match id {
+                ComponentEvidenceIdentity::Variant0(value) => value.iter().collect::<Vec<_>>(),
+                ComponentEvidenceIdentity::Variant1(value) => vec![value],
+            })
+        {
+            match (identity.field.as_str(), &identity.concluded_value) {
+                ("cpe", Some(cpe)) => {
+                    if let Ok(cpe) = Cpe::from_str(cpe.as_ref()) {
+                        self.add_cpe(cpe);
+                    }
+                }
+                ("purl", Some(purl)) => {
+                    if let Ok(purl) = Purl::from_str(purl.as_ref()) {
+                        self.add_purl(purl);
+                    }
+                }
+
+                _ => {}
+            }
+        }
+
+        self.packages.add(
+            node_id.clone(),
+            comp.name.to_string(),
+            comp.version.as_ref().map(|v| v.to_string()),
+            self.refs,
+            self.license_relations,
+        );
+
+        for ancestor in comp
+            .pedigree
+            .iter()
+            .flat_map(|pedigree| pedigree.ancestors.iter().flatten())
+        {
+            let target = ancestor
+                .bom_ref
+                .clone()
+                .unwrap_or_else(|| Uuid::new_v4().to_string());
+
+            // create the component
+
+            let creator = ComponentCreator::new(
+                self.cpes,
+                self.purls,
+                self.licenses,
+                self.packages,
+                self.relationships,
+            );
+
+            creator.create(ancestor);
+
+            // and store a relationship
+
+            // TODO: check - self.relate(source.clone(), Relationship::AncestorOf, target);
+            self.relationships
+                .relate(node_id.clone(), Relationship::AncestorOf, target);
         }
     }
 
@@ -381,5 +379,42 @@ impl<'a> RefCreator<'a> {
             qualified_purl: purl.qualifier_uuid(),
         });
         self.purls.add(purl);
+    }
+
+    fn add_license(&mut self, component: &Component) {
+        if let Some(licenses) = &component.licenses {
+            match licenses {
+                LicenseChoiceUrl::Variant0(licenses) => {
+                    'l: for license in licenses {
+                        let license = if let Some(id) = license.license.id.clone() {
+                            id
+                        } else if let Some(name) = license.license.name.clone() {
+                            name
+                        } else {
+                            continue 'l;
+                        };
+
+                        let license = LicenseInfo {
+                            license,
+                            refs: Default::default(),
+                        };
+
+                        self.licenses.add(&license);
+                        self.license_relations.push(license.clone());
+                    }
+                }
+                LicenseChoiceUrl::Variant1(licenses) => {
+                    for license in licenses {
+                        let license = LicenseInfo {
+                            license: license.expression.clone(),
+                            refs: Default::default(),
+                        };
+
+                        self.licenses.add(&license);
+                        self.license_relations.push(license.clone());
+                    }
+                }
+            }
+        }
     }
 }

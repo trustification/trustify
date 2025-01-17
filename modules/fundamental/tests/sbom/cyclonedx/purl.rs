@@ -10,7 +10,7 @@ fn to_string(purl: &PurlSummary) -> String {
 }
 
 fn to_strings(purls: &[PurlSummary]) -> Vec<String> {
-    purls.iter().map(|purl| to_string(purl)).collect()
+    purls.iter().map(to_string).collect()
 }
 
 /// test with multiple purls
