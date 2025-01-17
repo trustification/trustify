@@ -364,5 +364,14 @@ async fn purl_relationships(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 
     assert_eq!(src, response["relationships"]["generated_from"][0]);
 
+    // https://github.com/trustification/trustify/issues/1151
+    // Verify that the ancestor is returned for the source package
+    let uri = format!("/api/v2/purl/{}", urlencoding::encode(src));
+    let request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+
+    let ancestor = "pkg:generic/openssl@3.0.7?download_url=https://pkgs.devel.redhat.com/repo/openssl/openssl-3.0.7-hobbled.tar.gz/sha512/1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e/openssl-3.0.7-hobbled.tar.gz&checksum=SHA-512:1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e";
+    assert_eq!(ancestor, response["relationships"]["ancestor_of"][0]);
+
     Ok(())
 }
