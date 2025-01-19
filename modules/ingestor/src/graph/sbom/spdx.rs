@@ -1,3 +1,4 @@
+use crate::graph::sbom::{HasExtractedLicensingInfoCreator, HasExtratedLicensingInfo};
 use crate::{
     graph::{
         cpe::CpeCreator,
@@ -18,6 +19,7 @@ use std::{collections::HashMap, str::FromStr};
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, purl::Purl};
+use trustify_entity::license::LicenseCategory;
 use trustify_entity::relationship::Relationship;
 
 pub struct Information<'a>(pub &'a SPDX);
@@ -102,44 +104,91 @@ impl SbomContext {
             }
         }
 
-        let mut licenses = LicenseCreator::new();
+        let mut lincense_refs = HasExtractedLicensingInfoCreator::new();
+        let mut extracted_licensing_info_list = Vec::new();
 
-        let license_refs = sbom_data
-            .other_licensing_information_detected
-            .iter()
-            .map(|e| (e.license_identifier.clone(), e.license_name.clone()))
-            .collect::<HashMap<_, _>>();
+        for license_ref in sbom_data.other_licensing_information_detected {
+            let extracted_licensing_info = &HasExtratedLicensingInfo::with_sbom_id(
+                self.sbom.sbom_id,
+                license_ref.license_identifier.clone(),
+                license_ref.license_name,
+                license_ref.extracted_text,
+                license_ref.license_comment,
+            );
+            lincense_refs.add(extracted_licensing_info);
+
+            extracted_licensing_info_list.push(extracted_licensing_info.clone());
+        }
+
+        let mut licenses = LicenseCreator::new_with_extracted_licensing_info_and_sbom_id(
+            extracted_licensing_info_list,
+            self.sbom.sbom_id.clone(),
+        );
+        // let license_refs = sbom_data
+        //     .other_licensing_information_detected
+        //     .iter()
+        //     .map(|e| (e.license_identifier.clone(), e.license_name.clone()))
+        //     .collect::<HashMap<_, _>>();
 
         let mut packages =
             PackageCreator::with_capacity(self.sbom.sbom_id, sbom_data.package_information.len());
 
         for package in &sbom_data.package_information {
-            let declared_license_info = package.declared_license.as_ref().map(|e| LicenseInfo {
-                license: e.to_string(),
-                refs: license_refs.clone(),
-            });
+            if let Some(declared_license) = &package.declared_license {
+                for (license) in declared_license.licenses() {
+                    licenses.add(&LicenseInfo {
+                        license: license.identifier.to_string(),
+                        license_category: LicenseCategory::SPDXDECLARED,
+                        license_name: license.identifier.clone().to_string(),
+                        is_license_ref: license.license_ref,
+                    });
+                }
+            }
 
-            let concluded_license_info = package.concluded_license.as_ref().map(|e| LicenseInfo {
-                license: e.to_string(),
-                refs: license_refs.clone(),
-            });
+            if let Some(concluded_license) = &package.concluded_license {
+                for license in concluded_license.licenses() {
+                    licenses.add(&LicenseInfo {
+                        license: license.identifier.to_string(),
+                        license_category: LicenseCategory::SPDXCONCLUDED,
+                        license_name: license.identifier.clone().to_string(),
+                        is_license_ref: license.license_ref,
+                    });
+                }
+            }
+
+            // let declared_license_info = package.declared_license.as_ref().map(|e| LicenseInfo {
+            //     license: e.to_string(),
+            //     license_category: LicenseCategory::SPDXLICENSE(SpdxLicense::DECLARED),
+            //     refs: license_refs.clone(),
+            //     license_name: ,
+            //     is_license_ref: false,
+            // });
+            //
+            // let concluded_license_info = package.concluded_license.as_ref().map(|e| LicenseInfo {
+            //     license: e.to_string(),
+            //     license_category: LicenseCategory::CONCLUDED,
+            //     refs: license_refs.clone(),
+            //     spdx_licenses: None,
+            //     spdx_license_exceptions: None,
+            //     is_license_ref: false,
+            // });
 
             let mut refs = Vec::new();
-            let mut license_refs = Vec::new();
+            // let mut license_refs = Vec::new();
 
-            if let Some(declared_license) = declared_license_info {
-                if declared_license.license != "NOASSERTION" {
-                    licenses.add(&declared_license);
-                    license_refs.push(declared_license);
-                }
-            }
-
-            if let Some(concluded_license) = concluded_license_info {
-                if concluded_license.license != "NOASSERTION" {
-                    licenses.add(&concluded_license);
-                    license_refs.push(concluded_license);
-                }
-            }
+            // if let Some(declared_license) = declared_license_info {
+            //     if declared_license.license != "NOASSERTION" {
+            //         licenses.add(&declared_license);
+            //         license_refs.push(declared_license);
+            //     }
+            // }
+            //
+            // if let Some(concluded_license) = concluded_license_info {
+            //     if concluded_license.license != "NOASSERTION" {
+            //         licenses.add(&concluded_license);
+            //         license_refs.push(concluded_license);
+            //     }
+            // }
 
             let mut product_cpe = None;
 
@@ -180,7 +229,7 @@ impl SbomContext {
                 package.package_name.clone(),
                 package.package_version.clone(),
                 refs,
-                license_refs,
+                licenses.get_license_copy(),
             );
 
             if product_packages.contains(&package.package_spdx_identifier) {
@@ -212,8 +261,8 @@ impl SbomContext {
             files.add(file.file_spdx_identifier, file.file_name);
         }
 
+        lincense_refs.create(db).await?;
         // create all purls and CPEs
-
         licenses.create(db).await?;
         purls.create(db).await?;
         cpes.create(db).await?;

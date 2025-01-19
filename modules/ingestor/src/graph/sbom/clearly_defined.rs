@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::instrument;
 use trustify_common::purl::Purl;
+use trustify_entity::license::LicenseCategory;
 use trustify_entity::purl_license_assertion;
 
 impl SbomContext {
@@ -23,7 +24,9 @@ impl SbomContext {
         for (purl, license) in curation.iter() {
             let license_info = LicenseInfo {
                 license: license.clone(),
-                refs: Default::default(),
+                license_category: LicenseCategory::CLEARLYDEFINED,
+                license_name: license,
+                is_license_ref: false,
             };
 
             assertions.push(purl_license_assertion::ActiveModel {

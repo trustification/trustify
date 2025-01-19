@@ -14,6 +14,7 @@ use std::{collections::HashMap, str::FromStr};
 use time::{format_description::well_known::Iso8601, OffsetDateTime};
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, purl::Purl};
+use trustify_entity::license::LicenseCategory;
 use trustify_entity::relationship::Relationship;
 use uuid::Uuid;
 
@@ -154,21 +155,62 @@ impl SbomContext {
                 if let Some(licenses) = &component.licenses {
                     for license in &licenses.0 {
                         let license = match license {
-                            LicenseChoice::License(license) => LicenseInfo {
-                                license: match &license.license_identifier {
-                                    LicenseIdentifier::SpdxId(id) => id.to_string(),
-                                    LicenseIdentifier::Name(name) => name.to_string(),
-                                },
-                                refs: Default::default(),
+                            // LicenseChoice::License(license) => LicenseInfo {
+                            //     license: match &license.license_identifier {
+                            //         LicenseIdentifier::SpdxId(id) => id.to_string(),
+                            //         LicenseIdentifier::Name(name) => name.to_string(),
+                            //     },
+                            //     license_category: LicenseCategory::OTHER,
+                            //     refs: Default::default(),
+                            //     spdx_licenses: None,
+                            //     spdx_license_exceptions: None,
+                            //     is_license_ref: false,
+                            // },
+                            // LicenseChoice::Expression(spdx_expression) => LicenseInfo {
+                            //     license: spdx_expression.to_string(),
+                            //     license_category: LicenseCategory::OTHER,
+                            //     refs: Default::default(),
+                            //     spdx_licenses: None,
+                            //     spdx_license_exceptions: None,
+                            //     is_license_ref: false,
+                            // },
+                            LicenseChoice::License(license) => match &license.license_identifier {
+                                LicenseIdentifier::SpdxId(id) => {
+                                    let license_info = LicenseInfo {
+                                        license: id.to_string(),
+                                        license_category: LicenseCategory::CYDXLCID,
+                                        license_name: id.clone().to_string(),
+                                        is_license_ref: false,
+                                    };
+                                    license_creator.add(&license_info);
+                                    creator.add_license_relation(component, &license_info);
+                                }
+                                LicenseIdentifier::Name(name) => {
+                                    let license_info = LicenseInfo {
+                                        license: name.to_string(),
+                                        license_category: LicenseCategory::CYDXLCNAME,
+                                        license_name: name.clone().to_string(),
+                                        is_license_ref: false,
+                                    };
+                                    license_creator.add(&license_info);
+                                    creator.add_license_relation(component, &license_info);
+                                }
                             },
-                            LicenseChoice::Expression(spdx_expression) => LicenseInfo {
-                                license: spdx_expression.to_string(),
-                                refs: Default::default(),
-                            },
+                            LicenseChoice::Expression(spdx_expression) => {
+                                let (ids, exceptions) =
+                                    LicenseInfo::spdx_info(spdx_expression.to_string());
+                                for id in ids {
+                                    let license_info = LicenseInfo {
+                                        license: id.to_string(),
+                                        license_category: LicenseCategory::CYDXLEXPRESSION,
+                                        license_name: id.clone().to_string(),
+                                        is_license_ref: false,
+                                    };
+                                    license_creator.add(&license_info);
+                                    creator.add_license_relation(component, &license_info);
+                                }
+                            }
                         };
-
-                        license_creator.add(&license);
-                        creator.add_license_relation(component, &license);
                     }
                 }
             }

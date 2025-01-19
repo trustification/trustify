@@ -5,6 +5,7 @@ pub mod cpe;
 pub mod cpe_license_assertion;
 pub mod cvss3;
 pub mod cvss4;
+pub mod has_extracted_licensing_infos;
 pub mod importer;
 pub mod importer_report;
 pub mod labels;

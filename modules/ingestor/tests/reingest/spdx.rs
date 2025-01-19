@@ -76,9 +76,7 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // ingest once
 
-    let result = ctx
-        .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
-        .await?;
+    let result = ctx.ingest_document("spdx/OCP-TOOLS-4.11-RHEL-8.json").await?;
     assert(ctx, result).await?;
 
     // ingest second time

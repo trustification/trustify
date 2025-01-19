@@ -36,6 +36,7 @@ use std::{
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, hashing::Digests, purl::Purl, sbom::SbomLocator};
+use trustify_entity::license::LicenseCategory;
 use trustify_entity::{
     self as entity, labels::Labels, license, package_relates_to_package, purl_license_assertion,
     relationship::Relationship, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
@@ -431,56 +432,107 @@ impl SbomContext {
 
         let license_info = LicenseInfo {
             license: license.to_string(),
-            refs: Default::default(),
+            license_category: LicenseCategory::OTHER,
+            license_name: license.clone().to_string(),
+            is_license_ref: false,
         };
 
-        let (spdx_licenses, spdx_exceptions) = license_info.spdx_info();
+        let (spdx_licenses, spdx_exceptions) = LicenseInfo::spdx_info(license.to_string());
 
-        let license = license::Entity::find_by_id(license_info.uuid())
-            .one(connection)
-            .await?;
+        for spdx_license_id in spdx_licenses {
+            let license_info = LicenseInfo {
+                license: spdx_license_id.to_string(),
+                license_category: LicenseCategory::OTHER,
+                license_name: spdx_license_id.clone().to_string(),
+                is_license_ref: false,
+            };
 
-        let license = if let Some(license) = license {
-            license
-        } else {
-            license::ActiveModel {
-                id: Set(license_info.uuid()),
-                text: Set(license_info.license.clone()),
-                spdx_licenses: if spdx_licenses.is_empty() {
-                    Set(None)
-                } else {
-                    Set(Some(spdx_licenses))
-                },
-                spdx_license_exceptions: if spdx_exceptions.is_empty() {
-                    Set(None)
-                } else {
-                    Set(Some(spdx_exceptions))
-                },
+            let license = license::Entity::find_by_id(license_info.uuid())
+                .one(connection)
+                .await?;
+
+            let license = if let Some(license) = license {
+                license
+            } else {
+                license::ActiveModel {
+                    id: Set(license_info.uuid()),
+                    license_id: Set(license_info.license.clone()),
+                    license_ref_id: Set(None),
+                    license_type: Set(LicenseCategory::OTHER),
+                }
+                .insert(connection)
+                .await?
+            };
+
+            let assertion = purl_license_assertion::Entity::find()
+                .filter(purl_license_assertion::Column::LicenseId.eq(license.id))
+                .filter(
+                    purl_license_assertion::Column::VersionedPurlId
+                        .eq(purl.package_version.package_version.id),
+                )
+                .filter(purl_license_assertion::Column::SbomId.eq(self.sbom.sbom_id))
+                .one(connection)
+                .await?;
+
+            if assertion.is_none() {
+                purl_license_assertion::ActiveModel {
+                    id: Default::default(),
+                    license_id: Set(license.id),
+                    versioned_purl_id: Set(purl.package_version.package_version.id),
+                    sbom_id: Set(self.sbom.sbom_id),
+                }
+                .insert(connection)
+                .await?;
             }
-            .insert(connection)
-            .await?
-        };
-
-        let assertion = purl_license_assertion::Entity::find()
-            .filter(purl_license_assertion::Column::LicenseId.eq(license.id))
-            .filter(
-                purl_license_assertion::Column::VersionedPurlId
-                    .eq(purl.package_version.package_version.id),
-            )
-            .filter(purl_license_assertion::Column::SbomId.eq(self.sbom.sbom_id))
-            .one(connection)
-            .await?;
-
-        if assertion.is_none() {
-            purl_license_assertion::ActiveModel {
-                id: Default::default(),
-                license_id: Set(license.id),
-                versioned_purl_id: Set(purl.package_version.package_version.id),
-                sbom_id: Set(self.sbom.sbom_id),
-            }
-            .insert(connection)
-            .await?;
         }
+
+        // let license = license::Entity::find_by_id(license_info.uuid())
+        //     .one(connection)
+        //     .await?;
+
+        // let license = if let Some(license) = license {
+        //     license
+        // } else {
+        //     license::ActiveModel {
+        //         id: Set(license_info.uuid()),
+        //         text: Set(license_info.license.clone()),
+        //         spdx_licenses: if spdx_licenses.is_empty() {
+        //             Set(None)
+        //         } else {
+        //             Set(Some(spdx_licenses))
+        //         },
+        //         spdx_license_exceptions: if spdx_exceptions.is_empty() {
+        //             Set(None)
+        //         } else {
+        //             Set(Some(spdx_exceptions))
+        //         },
+        //         license_ref_id: Set(Some(license_info.uuid())),
+        //         license_type: Set(LicenseCategory::OTHER),
+        //     }
+        //     .insert(connection)
+        //     .await?
+        // };
+
+        // let assertion = purl_license_assertion::Entity::find()
+        //     .filter(purl_license_assertion::Column::LicenseId.eq(license.id))
+        //     .filter(
+        //         purl_license_assertion::Column::VersionedPurlId
+        //             .eq(purl.package_version.package_version.id),
+        //     )
+        //     .filter(purl_license_assertion::Column::SbomId.eq(self.sbom.sbom_id))
+        //     .one(connection)
+        //     .await?;
+        //
+        // if assertion.is_none() {
+        //     purl_license_assertion::ActiveModel {
+        //         id: Default::default(),
+        //         license_id: Set(license.id),
+        //         versioned_purl_id: Set(purl.package_version.package_version.id),
+        //         sbom_id: Set(self.sbom.sbom_id),
+        //     }
+        //     .insert(connection)
+        //     .await?;
+        // }
 
         Ok(())
     }
