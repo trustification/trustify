@@ -9,8 +9,7 @@ use test_context::test_context;
 use test_log::test;
 use time::OffsetDateTime;
 use tracing::instrument;
-use trustify_common::id::Id;
-use trustify_common::purl::Purl;
+use trustify_common::{id::Id, purl::Purl, sbom::spdx::parse_spdx};
 use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::{
     purl::model::{summary::purl::PurlSummary, PurlHead},

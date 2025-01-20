@@ -12,7 +12,7 @@ use trustify_common::{db::Database, hashing::Digests};
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::{
     graph::{
-        sbom::{self, spdx::parse_spdx, SbomContext, SbomInformation},
+        sbom::{self, SbomContext, SbomInformation},
         Graph,
     },
     service::Discard,
