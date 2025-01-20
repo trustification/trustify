@@ -1,11 +1,16 @@
 mod load;
 mod query;
 
+pub use query::*;
+
 #[cfg(test)]
 mod test;
 
 use crate::{
-    model::{AnalysisStatus, AncNode, AncestorSummary, DepNode, DepSummary, GraphMap, PackageNode},
+    model::{
+        AnalysisStatus, AncNode, AncestorSummary, BaseSummary, DepNode, DepSummary, GraphMap,
+        PackageNode,
+    },
     Error,
 };
 use parking_lot::RwLock;
@@ -15,24 +20,19 @@ use petgraph::{
     visit::{NodeIndexable, VisitMap, Visitable},
     Direction,
 };
-use query::*;
-use sea_orm::{
-    prelude::ConnectionTrait, ColumnTrait, EntityOrSelect, EntityTrait, QueryFilter, QueryOrder,
-    QuerySelect, QueryTrait, RelationTrait,
+use sea_orm::{prelude::ConnectionTrait, EntityOrSelect, EntityTrait, QueryOrder};
+use sea_query::Order;
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Debug,
+    sync::Arc,
 };
-use sea_query::{JoinType, Order, SelectStatement};
-use std::collections::{HashMap, HashSet};
-use std::fmt::Debug;
-use std::sync::Arc;
 use tracing::instrument;
 use trustify_common::{
-    db::query::{Filtering, Value},
+    db::query::Value,
     model::{Paginated, PaginatedResults},
 };
-use trustify_entity::{
-    relationship::Relationship, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
-    sbom_package_purl_ref,
-};
+use trustify_entity::{relationship::Relationship, sbom};
 use uuid::Uuid;
 
 #[derive(Clone, Default)]
@@ -188,13 +188,39 @@ impl AnalysisService {
         })
     }
 
-    pub fn query_ancestor_graph<'a>(
+    /// Collect nodes from the graph
+    ///
+    /// Similar to [`Self::query_graph`], but manages the state of collecting.
+    fn collect_graph<'a, T, I, C>(
         &self,
         query: impl Into<GraphQuery<'a>>,
         distinct_sbom_ids: Vec<String>,
-    ) -> Vec<AncestorSummary> {
+        init: I,
+        collector: C,
+    ) -> T
+    where
+        I: FnOnce() -> T,
+        C: Fn(&mut T, &Graph<PackageNode, Relationship>, NodeIndex, &PackageNode),
+    {
+        let mut value = init();
+
+        self.query_graph(query, distinct_sbom_ids, |graph, index, node| {
+            collector(&mut value, graph, index, node);
+        });
+
+        value
+    }
+
+    /// Traverse the graph, call the function for every matching node.
+    fn query_graph<'a, F>(
+        &self,
+        query: impl Into<GraphQuery<'a>>,
+        distinct_sbom_ids: Vec<String>,
+        mut f: F,
+    ) where
+        F: FnMut(&Graph<PackageNode, Relationship>, NodeIndex, &PackageNode),
+    {
         let query = query.into();
-        let mut components = Vec::new();
 
         // RwLock for reading hashmap<graph>
         let graph_read_guard = self.graph.read();
@@ -212,69 +238,37 @@ impl AnalysisService {
                 // Iterate over matching node indices and process them directly
                 graph
                     .node_indices()
-                    .filter(|&i| {
-                        match &query {
-                            GraphQuery::Component(ComponentReference::Name(name)) => graph
-                                .node_weight(i)
-                                .map(|node| node.name.eq(name))
-                                .unwrap_or(false),
-                            GraphQuery::Component(ComponentReference::Purl(component_purl)) => {
-                                if let Some(node) = graph.node_weight(i) {
-                                    node.purl.contains(component_purl)
-                                } else {
-                                    false // Return false if the node does not exist
-                                }
-                            }
-                            GraphQuery::Component(ComponentReference::Cpe(component_cpe)) => {
-                                if let Some(node) = graph.node_weight(i) {
-                                    node.cpe.contains(component_cpe)
-                                } else {
-                                    false // Return false if the node does not exist
-                                }
-                            }
-                            GraphQuery::Query(query) => graph
-                                .node_weight(i)
-                                .map(|node| {
-                                    query.apply(&HashMap::from([
-                                        ("sbom_id", Value::String(&node.sbom_id)),
-                                        ("node_id", Value::String(&node.node_id)),
-                                        ("name", Value::String(&node.name)),
-                                        ("version", Value::String(&node.version)),
-                                    ]))
-                                })
-                                .unwrap_or(false),
-                        }
-                    })
+                    .filter(|&i| Self::filter(graph, &query, i))
                     .for_each(|node_index| {
                         if !visited.contains(&node_index) {
                             visited.insert(node_index);
 
                             if let Some(find_match_package_node) = graph.node_weight(node_index) {
                                 log::debug!("matched!");
-                                components.push(AncestorSummary {
-                                    sbom_id: find_match_package_node.sbom_id.to_string(),
-                                    node_id: find_match_package_node.node_id.to_string(),
-                                    purl: find_match_package_node.purl.clone(),
-                                    cpe: find_match_package_node.cpe.clone(),
-                                    name: find_match_package_node.name.to_string(),
-                                    version: find_match_package_node.version.to_string(),
-                                    published: find_match_package_node.published.to_string(),
-                                    document_id: find_match_package_node.document_id.to_string(),
-                                    product_name: find_match_package_node.product_name.to_string(),
-                                    product_version: find_match_package_node
-                                        .product_version
-                                        .to_string(),
-                                    ancestors: ancestor_nodes(graph, node_index),
-                                });
+                                f(graph, node_index, find_match_package_node);
                             }
                         }
                     });
             }
         }
+    }
 
-        drop(graph_read_guard);
-
-        components
+    pub fn query_ancestor_graph<'a>(
+        &self,
+        query: impl Into<GraphQuery<'a>>,
+        distinct_sbom_ids: Vec<String>,
+    ) -> Vec<AncestorSummary> {
+        self.collect_graph(
+            query,
+            distinct_sbom_ids,
+            Vec::new,
+            |components, graph, node_index, node| {
+                components.push(AncestorSummary {
+                    base: node.into(),
+                    ancestors: ancestor_nodes(graph, node_index),
+                });
+            },
+        )
     }
 
     pub async fn query_deps_graph(
@@ -282,91 +276,17 @@ impl AnalysisService {
         query: impl Into<GraphQuery<'_>>,
         distinct_sbom_ids: Vec<String>,
     ) -> Vec<DepSummary> {
-        let query = query.into();
-
-        let mut components = Vec::new();
-
-        // RwLock for reading hashmap<graph>
-        let graph_read_guard = self.graph.read();
-        for distinct_sbom_id in &distinct_sbom_ids {
-            if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                if is_cyclic_directed(graph) {
-                    log::warn!(
-                        "analysis graph of sbom {} has circular references!",
-                        distinct_sbom_id
-                    );
-                }
-
-                let mut visited = HashSet::new();
-
-                // Iterate over matching node indices and process them directly
-                graph
-                    .node_indices()
-                    .filter(|&i| {
-                        match &query {
-                            GraphQuery::Component(ComponentReference::Name(component_name)) => {
-                                graph
-                                    .node_weight(i)
-                                    .map(|node| node.name.eq(component_name))
-                                    .unwrap_or(false)
-                            }
-                            GraphQuery::Component(ComponentReference::Purl(component_purl)) => {
-                                if let Some(node) = graph.node_weight(i) {
-                                    node.purl.contains(component_purl)
-                                } else {
-                                    false // Return false if the node does not exist
-                                }
-                            }
-                            GraphQuery::Component(ComponentReference::Cpe(component_cpe)) => {
-                                if let Some(node) = graph.node_weight(i) {
-                                    node.cpe.contains(component_cpe)
-                                } else {
-                                    false // Return false if the node does not exist
-                                }
-                            }
-                            GraphQuery::Query(query) => graph
-                                .node_weight(i)
-                                .map(|node| {
-                                    query.apply(&HashMap::from([
-                                        ("sbom_id", Value::String(&node.sbom_id)),
-                                        ("node_id", Value::String(&node.node_id)),
-                                        ("name", Value::String(&node.name)),
-                                        ("version", Value::String(&node.version)),
-                                    ]))
-                                })
-                                .unwrap_or(false),
-                        }
-                    })
-                    .for_each(|node_index| {
-                        if !visited.contains(&node_index) {
-                            visited.insert(node_index);
-
-                            if let Some(find_match_package_node) = graph.node_weight(node_index) {
-                                log::debug!("matched!");
-                                components.push(DepSummary {
-                                    sbom_id: find_match_package_node.sbom_id.to_string(),
-                                    node_id: find_match_package_node.node_id.to_string(),
-                                    purl: find_match_package_node.purl.clone(),
-                                    cpe: find_match_package_node.cpe.clone(),
-                                    name: find_match_package_node.name.to_string(),
-                                    version: find_match_package_node.version.to_string(),
-                                    published: find_match_package_node.published.to_string(),
-                                    document_id: find_match_package_node.document_id.to_string(),
-                                    product_name: find_match_package_node.product_name.to_string(),
-                                    product_version: find_match_package_node
-                                        .product_version
-                                        .to_string(),
-                                    deps: dep_nodes(graph, node_index, &mut HashSet::new()),
-                                });
-                            }
-                        }
-                    });
-            }
-        }
-
-        drop(graph_read_guard);
-
-        components
+        self.collect_graph(
+            query,
+            distinct_sbom_ids,
+            Vec::new,
+            |components, graph, node_index, node| {
+                components.push(DepSummary {
+                    base: node.into(),
+                    deps: dep_nodes(graph, node_index, &mut HashSet::new()),
+                });
+            },
+        )
     }
 
     pub async fn retrieve_all_sbom_roots_by_name<C: ConnectionTrait>(
@@ -390,7 +310,7 @@ impl AnalysisService {
         for component in components {
             if let Some(last_ancestor) = component.ancestors.last() {
                 if !root_components.contains(last_ancestor) {
-                    // we want distinct list
+                    // we want a distinct list
                     root_components.push(last_ancestor.clone());
                 }
             }
@@ -399,6 +319,7 @@ impl AnalysisService {
         Ok(root_components)
     }
 
+    /// locate components, retrieve ancestor information
     #[instrument(skip(self, connection), err)]
     pub async fn retrieve_root_components<C: ConnectionTrait>(
         &self,
@@ -414,6 +335,7 @@ impl AnalysisService {
         Ok(paginated.paginate_array(&components))
     }
 
+    /// locate components, retrieve dependency information
     #[instrument(skip(self, connection), err)]
     pub async fn retrieve_deps<C: ConnectionTrait>(
         &self,
@@ -429,66 +351,61 @@ impl AnalysisService {
         Ok(paginated.paginate_array(&components))
     }
 
-    /// Take a [`GraphQuery`] and load all required SBOMs
-    async fn load_graphs_query<C: ConnectionTrait>(
+    /// locate components, retrieve basic information only
+    #[instrument(skip(self, connection), err)]
+    pub async fn retrieve_components<C: ConnectionTrait>(
         &self,
+        query: impl Into<GraphQuery<'_>> + Debug,
+        paginated: Paginated,
         connection: &C,
-        query: GraphQuery<'_>,
-    ) -> Result<Vec<String>, Error> {
-        let search_sbom_subquery = match query {
-            GraphQuery::Component(ComponentReference::Name(name)) => sbom_node::Entity::find()
-                .filter(sbom_node::Column::Name.eq(name))
-                .select_only()
-                .column(sbom_node::Column::SbomId)
-                .distinct()
-                .into_query(),
-            GraphQuery::Component(ComponentReference::Purl(purl)) => sbom_node::Entity::find()
-                .join(JoinType::Join, sbom_node::Relation::Package.def())
-                .join(JoinType::Join, sbom_package::Relation::Purl.def())
-                .filter(sbom_package_purl_ref::Column::QualifiedPurlId.eq(purl.qualifier_uuid()))
-                .select_only()
-                .column(sbom_node::Column::SbomId)
-                .distinct()
-                .into_query(),
-            GraphQuery::Component(ComponentReference::Cpe(cpe)) => sbom_node::Entity::find()
-                .join(JoinType::Join, sbom_node::Relation::Package.def())
-                .join(JoinType::Join, sbom_package::Relation::Cpe.def())
-                .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()))
-                .select_only()
-                .column(sbom_node::Column::SbomId)
-                .distinct()
-                .into_query(),
-            GraphQuery::Query(query) => sbom_node::Entity::find()
-                .filtering(query.clone())?
-                .select_only()
-                .column(sbom_node::Column::SbomId)
-                .distinct()
-                .into_query(),
-        };
+    ) -> Result<PaginatedResults<BaseSummary>, Error> {
+        let query = query.into();
 
-        self.load_graphs_subquery(connection, search_sbom_subquery)
-            .await
+        let distinct_sbom_ids = self.load_graphs_query(connection, query).await?;
+        let components = self.collect_graph(
+            query,
+            distinct_sbom_ids,
+            Vec::new,
+            |components, _, _, node| {
+                components.push(BaseSummary::from(node));
+            },
+        );
+
+        Ok(paginated.paginate_array(&components))
     }
 
-    /// Take a select for sboms, and ensure they are loaded and return their IDs.
-    async fn load_graphs_subquery<C: ConnectionTrait>(
-        &self,
-        connection: &C,
-        subquery: SelectStatement,
-    ) -> Result<Vec<String>, Error> {
-        let distinct_sbom_ids: Vec<String> = sbom::Entity::find()
-            .filter(sbom::Column::SbomId.in_subquery(subquery))
-            .select()
-            .order_by(sbom::Column::DocumentId, Order::Asc)
-            .order_by(sbom::Column::Published, Order::Desc)
-            .all(connection)
-            .await?
-            .into_iter()
-            .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
-            .collect();
-
-        self.load_graphs(connection, &distinct_sbom_ids).await?;
-
-        Ok(distinct_sbom_ids)
+    /// check if a node in the graph matches the provided query
+    fn filter(graph: &Graph<PackageNode, Relationship>, query: &GraphQuery, i: NodeIndex) -> bool {
+        match query {
+            GraphQuery::Component(ComponentReference::Name(component_name)) => graph
+                .node_weight(i)
+                .map(|node| node.name.eq(component_name))
+                .unwrap_or(false),
+            GraphQuery::Component(ComponentReference::Purl(component_purl)) => {
+                if let Some(node) = graph.node_weight(i) {
+                    node.purl.contains(component_purl)
+                } else {
+                    false // Return false if the node does not exist
+                }
+            }
+            GraphQuery::Component(ComponentReference::Cpe(component_cpe)) => {
+                if let Some(node) = graph.node_weight(i) {
+                    node.cpe.contains(component_cpe)
+                } else {
+                    false // Return false if the node does not exist
+                }
+            }
+            GraphQuery::Query(query) => graph
+                .node_weight(i)
+                .map(|node| {
+                    query.apply(&HashMap::from([
+                        ("sbom_id", Value::String(&node.sbom_id)),
+                        ("node_id", Value::String(&node.node_id)),
+                        ("name", Value::String(&node.name)),
+                        ("version", Value::String(&node.version)),
+                    ]))
+                })
+                .unwrap_or(false),
+        }
     }
 }

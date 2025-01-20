@@ -1,5 +1,4 @@
-use trustify_common::db::query::Query;
-use trustify_common::{cpe::Cpe, purl::Purl};
+use trustify_common::{cpe::Cpe, db::query::Query, purl::Purl};
 
 #[derive(Copy, Clone, Debug)]
 pub enum ComponentReference<'a> {

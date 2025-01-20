@@ -1,9 +1,20 @@
-use crate::{model::PackageNode, service::AnalysisService};
+use crate::{
+    model::PackageNode,
+    service::{AnalysisService, ComponentReference, GraphQuery},
+    Error,
+};
 use petgraph::Graph;
-use sea_orm::{ConnectionTrait, DatabaseBackend, DbErr, QueryResult, Statement};
+use sea_orm::{
+    ColumnTrait, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait, QueryFilter,
+    QueryOrder, QueryResult, QuerySelect, QueryTrait, RelationTrait, Statement,
+};
+use sea_query::{JoinType, Order, SelectStatement};
 use std::collections::HashMap;
-use trustify_common::{cpe::Cpe, purl::Purl};
-use trustify_entity::{cpe::CpeDto, relationship::Relationship};
+use trustify_common::{cpe::Cpe, db::query::Filtering, purl::Purl};
+use trustify_entity::{
+    cpe::CpeDto, relationship::Relationship, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
+    sbom_package_purl_ref,
+};
 use uuid::Uuid;
 
 pub async fn get_implicit_relationships<C: ConnectionTrait>(
@@ -163,6 +174,69 @@ fn to_cpes(cpes: Vec<serde_json::Value>) -> Vec<Cpe> {
 }
 
 impl AnalysisService {
+    /// Take a [`GraphQuery`] and load all required SBOMs
+    pub(crate) async fn load_graphs_query<C: ConnectionTrait>(
+        &self,
+        connection: &C,
+        query: GraphQuery<'_>,
+    ) -> Result<Vec<String>, Error> {
+        let search_sbom_subquery = match query {
+            GraphQuery::Component(ComponentReference::Name(name)) => sbom_node::Entity::find()
+                .filter(sbom_node::Column::Name.eq(name))
+                .select_only()
+                .column(sbom_node::Column::SbomId)
+                .distinct()
+                .into_query(),
+            GraphQuery::Component(ComponentReference::Purl(purl)) => sbom_node::Entity::find()
+                .join(JoinType::Join, sbom_node::Relation::Package.def())
+                .join(JoinType::Join, sbom_package::Relation::Purl.def())
+                .filter(sbom_package_purl_ref::Column::QualifiedPurlId.eq(purl.qualifier_uuid()))
+                .select_only()
+                .column(sbom_node::Column::SbomId)
+                .distinct()
+                .into_query(),
+            GraphQuery::Component(ComponentReference::Cpe(cpe)) => sbom_node::Entity::find()
+                .join(JoinType::Join, sbom_node::Relation::Package.def())
+                .join(JoinType::Join, sbom_package::Relation::Cpe.def())
+                .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()))
+                .select_only()
+                .column(sbom_node::Column::SbomId)
+                .distinct()
+                .into_query(),
+            GraphQuery::Query(query) => sbom_node::Entity::find()
+                .filtering(query.clone())?
+                .select_only()
+                .column(sbom_node::Column::SbomId)
+                .distinct()
+                .into_query(),
+        };
+
+        self.load_graphs_subquery(connection, search_sbom_subquery)
+            .await
+    }
+
+    /// Take a select for sboms, and ensure they are loaded and return their IDs.
+    async fn load_graphs_subquery<C: ConnectionTrait>(
+        &self,
+        connection: &C,
+        subquery: SelectStatement,
+    ) -> Result<Vec<String>, Error> {
+        let distinct_sbom_ids: Vec<String> = sbom::Entity::find()
+            .filter(sbom::Column::SbomId.in_subquery(subquery))
+            .select()
+            .order_by(sbom::Column::DocumentId, Order::Asc)
+            .order_by(sbom::Column::Published, Order::Desc)
+            .all(connection)
+            .await?
+            .into_iter()
+            .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
+            .collect();
+
+        self.load_graphs(connection, &distinct_sbom_ids).await?;
+
+        Ok(distinct_sbom_ids)
+    }
+
     pub async fn load_graphs<C: ConnectionTrait>(
         &self,
         connection: &C,
