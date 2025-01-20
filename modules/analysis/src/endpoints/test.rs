@@ -512,3 +512,47 @@ async fn issue_tc_2052(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn issue_tc_2054(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+    ctx.ingest_documents(["cyclonedx/openssl-3.0.7-18.el9_2.cdx_1.6.sbom.json"])
+        .await?;
+
+    // Find all deps of parent
+    let parent = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
+    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    log::debug!("{response:#?}");
+    assert_eq!(
+        1,
+        response["items"][0]["deps"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter(|m| m["relationship"] == "AncestorOf")
+            .count()
+    );
+
+    // Ensure child has ancestors
+    let child = "pkg:generic/openssl@3.0.7?download_url=https://pkgs.devel.redhat.com/repo/openssl/openssl-3.0.7-hobbled.tar.gz/sha512/1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e/openssl-3.0.7-hobbled.tar.gz&checksum=SHA-512:1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e";
+    let uri = format!(
+        "/api/v2/analysis/root-component/{}",
+        urlencoding::encode(child)
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    log::debug!("{response:#?}");
+    assert_eq!(
+        "AncestorOf",
+        response["items"][0]["ancestors"][0]["relationship"]
+    );
+    assert_eq!(
+        Value::from(vec![Value::from(parent)]),
+        response["items"][0]["ancestors"][0]["purl"]
+    );
+
+    Ok(())
+}
