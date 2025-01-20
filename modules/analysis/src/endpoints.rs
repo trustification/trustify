@@ -501,7 +501,59 @@ mod test {
         let request: Request = TestRequest::get().uri(&uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
         log::debug!("{response:#?}");
-        assert_eq!(35, response["items"][0]["deps"].as_array().unwrap().len());
+        assert_eq!(
+            35,
+            response["items"][0]["deps"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter(|m| m["relationship"] == "GeneratedFrom")
+                .count()
+        );
+
+        // Ensure binary rpm GeneratedFrom src rpm
+        let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
+        let uri = format!(
+            "/api/v2/analysis/root-component/{}",
+            urlencoding::encode(x86)
+        );
+        let request: Request = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        log::debug!("{response:#?}");
+        assert_eq!(
+            "GeneratedFrom",
+            response["items"][0]["ancestors"][0]["relationship"]
+        );
+        assert_eq!(
+            Value::from(vec![Value::from(src)]),
+            response["items"][0]["ancestors"][0]["purl"]
+        );
+
+        Ok(())
+    }
+
+    #[test_context(TrustifyContext)]
+    #[test(actix_web::test)]
+    async fn issue_tc_2051(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let app = caller(ctx).await?;
+        ctx.ingest_documents(["spdx/openssl-3.0.7-18.el9_2.spdx.json"])
+            .await?;
+
+        // Find all deps of src rpm
+        let src = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
+        let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(src));
+        let request: Request = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        log::debug!("{response:#?}");
+        assert_eq!(
+            35,
+            response["items"][0]["deps"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter(|m| m["relationship"] == "GeneratedFrom")
+                .count()
+        );
 
         // Ensure binary rpm GeneratedFrom src rpm
         let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
