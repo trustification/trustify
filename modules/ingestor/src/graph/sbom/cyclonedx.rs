@@ -360,10 +360,8 @@ impl<'a> ComponentCreator<'a> {
             creator.create(ancestor);
 
             // and store a relationship
-
-            // TODO: check - self.relate(source.clone(), Relationship::AncestorOf, target);
             self.relationships
-                .relate(node_id.clone(), Relationship::AncestorOf, target);
+                .relate(target, Relationship::AncestorOf, node_id.clone());
         }
 
         for variant in comp
