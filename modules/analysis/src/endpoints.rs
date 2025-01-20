@@ -523,4 +523,40 @@ mod test {
 
         Ok(())
     }
+
+    #[test_context(TrustifyContext)]
+    #[test(actix_web::test)]
+    async fn issue_tc_2052(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let app = caller(ctx).await?;
+        ctx.ingest_documents(["cyclonedx/66FF73123BB3489.json"])
+            .await?;
+
+        // Find all deps of parent
+        let parent = "pkg:oci/openshift-ose-console@sha256:94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679";
+        let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
+        let request: Request = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        log::debug!("{response:#?}");
+        assert_eq!(1, response["items"][0]["deps"].as_array().unwrap().len());
+
+        // Ensure child is variant of src
+        let child = "pkg:oci/ose-console@sha256:c2d69e860b7457eb42f550ba2559a0452ec3e5c9ff6521d758c186266247678e?arch=s390x&os=linux&tag=v4.14.0-202412110104.p0.g350e1ea.assembly.stream.el8";
+        let uri = format!(
+            "/api/v2/analysis/root-component/{}",
+            urlencoding::encode(child)
+        );
+        let request: Request = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        log::debug!("{response:#?}");
+        assert_eq!(
+            "VariantOf",
+            response["items"][0]["ancestors"][0]["relationship"]
+        );
+        assert_eq!(
+            Value::from(vec![Value::from(parent)]),
+            response["items"][0]["ancestors"][0]["purl"]
+        );
+
+        Ok(())
+    }
 }

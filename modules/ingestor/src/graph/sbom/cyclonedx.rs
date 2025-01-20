@@ -365,6 +365,32 @@ impl<'a> ComponentCreator<'a> {
             self.relationships
                 .relate(node_id.clone(), Relationship::AncestorOf, target);
         }
+
+        for variant in comp
+            .pedigree
+            .iter()
+            .flat_map(|pedigree| pedigree.variants.iter().flatten())
+        {
+            let target = variant
+                .bom_ref
+                .clone()
+                .unwrap_or_else(|| Uuid::new_v4().to_string());
+
+            // create the component
+
+            let creator = ComponentCreator::new(
+                self.cpes,
+                self.purls,
+                self.licenses,
+                self.packages,
+                self.relationships,
+            );
+
+            creator.create(variant);
+
+            self.relationships
+                .relate(target, Relationship::VariantOf, node_id.clone());
+        }
     }
 
     pub fn add_cpe(&mut self, cpe: Cpe) {

@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "dce92b5d"
+        }
+      ]
+    },
+    "component": {
+      "name": "openshift/ose-console",
+      "purl": "pkg:oci/openshift-ose-console@sha256%3A94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679",
+      "type": "container",
+      "description": "Image index manifest of pkg:oci/openshift-ose-console@sha256%3A94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679"
+    },
+    "timestamp": "2024-12-19T18:04:12Z"
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "openshift/ose-console",
+      "purl": "pkg:oci/openshift-ose-console@sha256%3A94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679",
+      "type": "container",
+      "bom-ref": "pkg:oci/openshift-ose-console@sha256%3A94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679",
+      "version": "sha256:94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679",
+      "pedigree": {
+        "variants": [
+          {
+            "name": "openshift/ose-console",
+            "purl": "pkg:oci/ose-console@sha256%3Ac2d69e860b7457eb42f550ba2559a0452ec3e5c9ff6521d758c186266247678e?arch=s390x&os=linux&tag=v4.14.0-202412110104.p0.g350e1ea.assembly.stream.el8",
+            "type": "container",
+            "bom-ref": "pkg:oci/ose-console@sha256%3Ac2d69e860b7457eb42f550ba2559a0452ec3e5c9ff6521d758c186266247678e?arch=s390x&os=linux&tag=v4.14.0-202412110104.p0.g350e1ea.assembly.stream.el8",
+            "version": "sha256:c2d69e860b7457eb42f550ba2559a0452ec3e5c9ff6521d758c186266247678e",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "properties": [
+        {
+          "name": "sbomer:image:labels:com.redhat.component",
+          "value": "openshift-enterprise-console-container"
+        },
+        {
+          "name": "sbomer:image:labels:name",
+          "value": "openshift/ose-console"
+        },
+        {
+          "name": "sbomer:image:labels:release",
+          "value": "202412110104.p0.g350e1ea.assembly.stream.el8"
+        },
+        {
+          "name": "sbomer:image:labels:version",
+          "value": "v4.14.0"
+        }
+      ]
+    }
+  ],
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:537c8dc3-6f66-3cac-b504-cc5fb0a09ece"
+}
