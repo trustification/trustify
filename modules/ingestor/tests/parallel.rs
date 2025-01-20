@@ -7,12 +7,12 @@ use std::{collections::HashMap, str::FromStr};
 use test_context::{futures, test_context};
 use test_log::test;
 use tracing::instrument;
-use trustify_common::{cpe::Cpe, purl::Purl};
+use trustify_common::{cpe::Cpe, purl::Purl, sbom::spdx::parse_spdx};
 use trustify_module_ingestor::{
     graph::{
         cpe::CpeCreator,
         purl::creator::PurlCreator,
-        sbom::{spdx::parse_spdx, LicenseCreator, LicenseInfo},
+        sbom::{LicenseCreator, LicenseInfo},
     },
     service::{Discard, Format},
 };

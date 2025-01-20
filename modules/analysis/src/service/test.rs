@@ -418,7 +418,12 @@ async fn load_performance(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         document::<serde_json::Value>("openshift-container-storage-4.8.z.json.xz").await?;
     let (spdx, _) = fix_license(&(), spdx);
     let spdx = fix_spdx_rels(serde_json::from_value(spdx)?);
-    ctx.ingest_json(&spdx).await?;
+
+    log::info!("Start ingestion");
+
+    ctx.ingest_json(spdx).await?;
+
+    log::info!("Start populating graph");
 
     let start = SystemTime::now();
     let service = AnalysisService::new();
