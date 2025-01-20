@@ -1,8 +1,11 @@
 use petgraph::Graph;
 use serde::Serialize;
-use std::{collections::HashMap, fmt};
-use trustify_common::cpe::Cpe;
-use trustify_common::purl::Purl;
+use std::{
+    collections::HashMap,
+    fmt,
+    ops::{Deref, DerefMut},
+};
+use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use utoipa::ToSchema;
 
@@ -57,7 +60,7 @@ impl fmt::Display for AncNode {
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
-pub struct AncestorSummary {
+pub struct BaseSummary {
     pub sbom_id: String,
     pub node_id: String,
     pub purl: Vec<Purl>,
@@ -68,7 +71,44 @@ pub struct AncestorSummary {
     pub document_id: String,
     pub product_name: String,
     pub product_version: String,
+}
+
+impl From<&PackageNode> for BaseSummary {
+    fn from(value: &PackageNode) -> Self {
+        Self {
+            sbom_id: value.sbom_id.to_string(),
+            node_id: value.node_id.to_string(),
+            purl: value.purl.clone(),
+            cpe: value.cpe.clone(),
+            name: value.name.to_string(),
+            version: value.version.to_string(),
+            published: value.published.to_string(),
+            document_id: value.document_id.to_string(),
+            product_name: value.product_name.to_string(),
+            product_version: value.product_version.to_string(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct AncestorSummary {
+    #[serde(flatten)]
+    pub base: BaseSummary,
     pub ancestors: Vec<AncNode>,
+}
+
+impl Deref for AncestorSummary {
+    type Target = BaseSummary;
+
+    fn deref(&self) -> &Self::Target {
+        &self.base
+    }
+}
+
+impl DerefMut for AncestorSummary {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.base
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize)]
@@ -83,25 +123,34 @@ pub struct DepNode {
     #[schema(no_recursion)]
     pub deps: Vec<DepNode>,
 }
+
 impl fmt::Display for DepNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.purl)
     }
 }
+
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct DepSummary {
-    pub sbom_id: String,
-    pub node_id: String,
-    pub purl: Vec<Purl>,
-    pub cpe: Vec<Cpe>,
-    pub name: String,
-    pub version: String,
-    pub published: String,
-    pub document_id: String,
-    pub product_name: String,
-    pub product_version: String,
+    #[serde(flatten)]
+    pub base: BaseSummary,
     pub deps: Vec<DepNode>,
 }
+
+impl Deref for DepSummary {
+    type Target = BaseSummary;
+
+    fn deref(&self) -> &Self::Target {
+        &self.base
+    }
+}
+
+impl DerefMut for DepSummary {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.base
+    }
+}
+
 #[derive(Debug)]
 pub struct GraphMap {
     map: HashMap<String, Graph<PackageNode, Relationship, petgraph::Directed>>,
