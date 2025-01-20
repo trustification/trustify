@@ -67,21 +67,4 @@ impl<'g> PackageVersionContext<'g> {
 
         Ok(found.map(|model| QualifiedPackageContext::new(self, model)))
     }
-
-    /// Retrieve known variants of this package version.
-    ///
-    /// Non-mutating to the fetch.
-    pub async fn get_variants<C: ConnectionTrait>(
-        &self,
-        _pkg: Purl,
-        connection: &C,
-    ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        Ok(entity::qualified_purl::Entity::find()
-            .filter(entity::qualified_purl::Column::VersionedPurlId.eq(self.package_version.id))
-            .all(connection)
-            .await?
-            .into_iter()
-            .map(|base| QualifiedPackageContext::new(self, base))
-            .collect())
-    }
 }
