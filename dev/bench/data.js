@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1737015018853,
+  "lastUpdate": 1737364268628,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3073,6 +3073,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 1,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "e3783b209a43f70ca0e25e7df4c66da6580c712e",
+          "message": "OSV loader: set properly VersionScheme in version_range\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-01-20T08:50:23Z",
+          "tree_id": "330dcac2314c09a9afe74cafdc52502dd05e6086",
+          "url": "https://github.com/trustification/trustify/commit/e3783b209a43f70ca0e25e7df4c66da6580c712e"
+        },
+        "date": 1737364267799,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 0,
             "unit": "s"
           }
         ]
