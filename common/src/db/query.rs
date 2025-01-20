@@ -162,7 +162,7 @@ impl Query {
     }
 }
 
-#[derive(Clone, Default, Debug, Deserialize, Serialize, ToSchema, IntoParams)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize, ToSchema, IntoParams)]
 #[serde(rename_all = "camelCase")]
 pub struct Query {
     #[serde(default)]
