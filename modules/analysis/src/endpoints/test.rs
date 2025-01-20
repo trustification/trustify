@@ -185,13 +185,21 @@ async fn test_simple_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::E
         response["items"][0]["purl"],
         Value::from(["pkg:rpm/redhat/A@0.0.0?arch=src"]),
     );
+
+    let purls: Value = response["items"][0]["deps"]
+        .as_array()
+        .iter()
+        .map(|deps| *deps)
+        .flatten()
+        .flat_map(|dep| dep["purl"].as_array())
+        .flatten()
+        .cloned()
+        .collect::<Vec<_>>()
+        .into();
+
     assert_eq!(
-        response["items"][0]["deps"][0]["purl"],
-        Value::from(["pkg:rpm/redhat/EE@0.0.0?arch=src"]),
-    );
-    assert_eq!(
-        response["items"][0]["deps"][1]["purl"],
-        Value::from(["pkg:rpm/redhat/B@0.0.0"]),
+        purls,
+        json!(["pkg:rpm/redhat/B@0.0.0", "pkg:rpm/redhat/EE@0.0.0?arch=src"])
     );
 
     assert_eq!(&response["total"], 2);
