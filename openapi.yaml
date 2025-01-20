@@ -459,6 +459,25 @@ paths:
           description: The tool request was invalid
         '404':
           description: The tool was not found
+  /api/v2/analysis/component/{key}:
+    get:
+      tags:
+      - analysis
+      operationId: getComponent
+      parameters:
+      - name: key
+        in: path
+        description: provide component name, URL-encoded pURL, or CPE itself
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Retrieve component(s) root components by name, pURL, or CPE.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResults_BaseSummary'
   /api/v2/analysis/dep:
     get:
       tags:
@@ -503,7 +522,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepSummary'
+                $ref: '#/components/schemas/PaginatedResults_DepSummary'
   /api/v2/analysis/dep/{key}:
     get:
       tags:
@@ -522,7 +541,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DepSummary'
+                $ref: '#/components/schemas/PaginatedResults_DepSummary'
   /api/v2/analysis/root-component:
     get:
       tags:
@@ -567,7 +586,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AncestorSummary'
+                $ref: '#/components/schemas/PaginatedResults_AncestorSummary'
   /api/v2/analysis/root-component/{key}:
     get:
       tags:
@@ -576,17 +595,17 @@ paths:
       parameters:
       - name: key
         in: path
-        description: provide component name or URL-encoded pURL itself
+        description: provide component name, URL-encoded pURL, or CPE itself
         required: true
         schema:
           type: string
       responses:
         '200':
-          description: Retrieve component(s) root components by name or pURL.
+          description: Retrieve component(s) root components by name, pURL, or CPE.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AncestorSummary'
+                $ref: '#/components/schemas/PaginatedResults_AncestorSummary'
   /api/v2/analysis/status:
     get:
       tags:
@@ -2413,48 +2432,16 @@ components:
         version:
           type: string
     AncestorSummary:
-      type: object
-      required:
-      - sbom_id
-      - node_id
-      - purl
-      - cpe
-      - name
-      - version
-      - published
-      - document_id
-      - product_name
-      - product_version
-      - ancestors
-      properties:
-        ancestors:
-          type: array
-          items:
-            $ref: '#/components/schemas/AncNode'
-        cpe:
-          type: array
-          items:
-            $ref: '#/components/schemas/Cpe'
-        document_id:
-          type: string
-        name:
-          type: string
-        node_id:
-          type: string
-        product_name:
-          type: string
-        product_version:
-          type: string
-        published:
-          type: string
-        purl:
-          type: array
-          items:
-            $ref: '#/components/schemas/Purl'
-        sbom_id:
-          type: string
-        version:
-          type: string
+      allOf:
+      - $ref: '#/components/schemas/BaseSummary'
+      - type: object
+        required:
+        - ancestors
+        properties:
+          ancestors:
+            type: array
+            items:
+              $ref: '#/components/schemas/AncNode'
     BasePurlDetails:
       allOf:
       - $ref: '#/components/schemas/BasePurlHead'
@@ -2482,6 +2469,44 @@ components:
     BasePurlSummary:
       allOf:
       - $ref: '#/components/schemas/BasePurlHead'
+    BaseSummary:
+      type: object
+      required:
+      - sbom_id
+      - node_id
+      - purl
+      - cpe
+      - name
+      - version
+      - published
+      - document_id
+      - product_name
+      - product_version
+      properties:
+        cpe:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cpe'
+        document_id:
+          type: string
+        name:
+          type: string
+        node_id:
+          type: string
+        product_name:
+          type: string
+        product_version:
+          type: string
+        published:
+          type: string
+        purl:
+          type: array
+          items:
+            $ref: '#/components/schemas/Purl'
+        sbom_id:
+          type: string
+        version:
+          type: string
     BinaryByteSize:
       type: string
     ChatMessage:
@@ -2691,48 +2716,16 @@ components:
         version:
           type: string
     DepSummary:
-      type: object
-      required:
-      - sbom_id
-      - node_id
-      - purl
-      - cpe
-      - name
-      - version
-      - published
-      - document_id
-      - product_name
-      - product_version
-      - deps
-      properties:
-        cpe:
-          type: array
-          items:
-            $ref: '#/components/schemas/Cpe'
-        deps:
-          type: array
-          items:
-            $ref: '#/components/schemas/DepNode'
-        document_id:
-          type: string
-        name:
-          type: string
-        node_id:
-          type: string
-        product_name:
-          type: string
-        product_version:
-          type: string
-        published:
-          type: string
-        purl:
-          type: array
-          items:
-            $ref: '#/components/schemas/Purl'
-        sbom_id:
-          type: string
-        version:
-          type: string
+      allOf:
+      - $ref: '#/components/schemas/BaseSummary'
+      - type: object
+        required:
+        - deps
+        properties:
+          deps:
+            type: array
+            items:
+              $ref: '#/components/schemas/DepNode'
     ExternalReferenceQuery:
       type: object
       properties:
@@ -3052,6 +3045,29 @@ components:
           type: integer
           format: int64
           minimum: 0
+    PaginatedResults_AncestorSummary:
+      type: object
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/BaseSummary'
+            - type: object
+              required:
+              - ancestors
+              properties:
+                ancestors:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AncNode'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
     PaginatedResults_BasePurlSummary:
       type: object
       required:
@@ -3063,6 +3079,56 @@ components:
           items:
             allOf:
             - $ref: '#/components/schemas/BasePurlHead'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+    PaginatedResults_BaseSummary:
+      type: object
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required:
+            - sbom_id
+            - node_id
+            - purl
+            - cpe
+            - name
+            - version
+            - published
+            - document_id
+            - product_name
+            - product_version
+            properties:
+              cpe:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cpe'
+              document_id:
+                type: string
+              name:
+                type: string
+              node_id:
+                type: string
+              product_name:
+                type: string
+              product_version:
+                type: string
+              published:
+                type: string
+              purl:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Purl'
+              sbom_id:
+                type: string
+              version:
+                type: string
         total:
           type: integer
           format: int64
@@ -3090,6 +3156,29 @@ components:
               updated_at:
                 type: string
                 format: date-time
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+    PaginatedResults_DepSummary:
+      type: object
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/BaseSummary'
+            - type: object
+              required:
+              - deps
+              properties:
+                deps:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/DepNode'
         total:
           type: integer
           format: int64
