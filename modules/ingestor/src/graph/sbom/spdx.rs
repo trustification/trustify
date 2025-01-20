@@ -1,4 +1,4 @@
-use crate::graph::sbom::{HasExtractedLicensingInfoCreator, HasExtratedLicensingInfo};
+use crate::graph::sbom::{ExtractedLicensingInfoCreator, ExtratedLicensingInfo};
 use crate::{
     graph::{
         cpe::CpeCreator,
@@ -104,11 +104,11 @@ impl SbomContext {
             }
         }
 
-        let mut lincense_refs = HasExtractedLicensingInfoCreator::new();
+        let mut lincense_refs = ExtractedLicensingInfoCreator::new();
         let mut extracted_licensing_info_list = Vec::new();
 
         for license_ref in sbom_data.other_licensing_information_detected {
-            let extracted_licensing_info = &HasExtratedLicensingInfo::with_sbom_id(
+            let extracted_licensing_info = &ExtratedLicensingInfo::with_sbom_id(
                 self.sbom.sbom_id,
                 license_ref.license_identifier.clone(),
                 license_ref.license_name,
@@ -124,11 +124,6 @@ impl SbomContext {
             extracted_licensing_info_list,
             self.sbom.sbom_id.clone(),
         );
-        // let license_refs = sbom_data
-        //     .other_licensing_information_detected
-        //     .iter()
-        //     .map(|e| (e.license_identifier.clone(), e.license_name.clone()))
-        //     .collect::<HashMap<_, _>>();
 
         let mut packages =
             PackageCreator::with_capacity(self.sbom.sbom_id, sbom_data.package_information.len());
@@ -136,59 +131,46 @@ impl SbomContext {
         for package in &sbom_data.package_information {
             if let Some(declared_license) = &package.declared_license {
                 for (license) in declared_license.licenses() {
-                    licenses.add(&LicenseInfo {
-                        license: license.identifier.to_string(),
-                        license_category: LicenseCategory::SPDXDECLARED,
-                        license_name: license.identifier.clone().to_string(),
-                        is_license_ref: license.license_ref,
-                    });
+                    if license.license_ref.clone() {
+                        licenses.add(&LicenseInfo {
+                            license: format!("LicenseRef-{}",license.identifier.to_string()),
+                            license_category: LicenseCategory::SPDXDECLARED,
+                            license_name: license.identifier.clone().to_string(),
+                            is_license_ref: license.license_ref,
+                        });
+                    }else {
+                        licenses.add(&LicenseInfo {
+                            license: license.identifier.to_string(),
+                            license_category: LicenseCategory::SPDXDECLARED,
+                            license_name: license.identifier.clone().to_string(),
+                            is_license_ref: license.license_ref,
+                        });
+                    }
                 }
             }
 
             if let Some(concluded_license) = &package.concluded_license {
                 for license in concluded_license.licenses() {
-                    licenses.add(&LicenseInfo {
-                        license: license.identifier.to_string(),
-                        license_category: LicenseCategory::SPDXCONCLUDED,
-                        license_name: license.identifier.clone().to_string(),
-                        is_license_ref: license.license_ref,
-                    });
+                    if license.license_ref.clone() {
+                        licenses.add(&LicenseInfo {
+                            license: format!("LicenseRef-{}",license.identifier.to_string()),
+                            license_category: LicenseCategory::SPDXCONCLUDED,
+                            license_name: license.identifier.clone().to_string(),
+                            is_license_ref: license.license_ref,
+                        });
+                    }else {
+                        licenses.add(&LicenseInfo {
+                            license: license.identifier.to_string(),
+                            license_category: LicenseCategory::SPDXCONCLUDED,
+                            license_name: license.identifier.clone().to_string(),
+                            is_license_ref: license.license_ref,
+                        });
+                    }
                 }
             }
 
-            // let declared_license_info = package.declared_license.as_ref().map(|e| LicenseInfo {
-            //     license: e.to_string(),
-            //     license_category: LicenseCategory::SPDXLICENSE(SpdxLicense::DECLARED),
-            //     refs: license_refs.clone(),
-            //     license_name: ,
-            //     is_license_ref: false,
-            // });
-            //
-            // let concluded_license_info = package.concluded_license.as_ref().map(|e| LicenseInfo {
-            //     license: e.to_string(),
-            //     license_category: LicenseCategory::CONCLUDED,
-            //     refs: license_refs.clone(),
-            //     spdx_licenses: None,
-            //     spdx_license_exceptions: None,
-            //     is_license_ref: false,
-            // });
 
             let mut refs = Vec::new();
-            // let mut license_refs = Vec::new();
-
-            // if let Some(declared_license) = declared_license_info {
-            //     if declared_license.license != "NOASSERTION" {
-            //         licenses.add(&declared_license);
-            //         license_refs.push(declared_license);
-            //     }
-            // }
-            //
-            // if let Some(concluded_license) = concluded_license_info {
-            //     if concluded_license.license != "NOASSERTION" {
-            //         licenses.add(&concluded_license);
-            //         license_refs.push(concluded_license);
-            //     }
-            // }
 
             let mut product_cpe = None;
 

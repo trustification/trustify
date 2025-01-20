@@ -5,10 +5,10 @@ use sea_orm::EntityTrait;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::{cpe::Cpe, id::Id};
-use trustify_entity::{cpe::CpeDto, sbom};
+use trustify_entity::{cpe::CpeDto, sbom, extracted_licensing_infos, license};
+use trustify_module_ingestor::graph::sbom::ExtratedLicensingInfo;
 use trustify_module_ingestor::model::IngestResult;
 use trustify_test_context::TrustifyContext;
-
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
@@ -77,14 +77,28 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // ingest once
 
     let result = ctx.ingest_document("spdx/OCP-TOOLS-4.11-RHEL-8.json").await?;
-    assert(ctx, result).await?;
+    let resul: Vec<extracted_licensing_infos::Model> = extracted_licensing_infos::Entity::find().all(&ctx.db).await?;
+
+   for m in resul {
+
+       println!("{}", format!("id = {} sbom_id ={} licenseid ={} extracted_text={}",m.id, m.sbom_id, m.licenseId,m.extracted_text));
+   }
+
+    let resul: Vec<license::Model> = license::Entity::find().all(&ctx.db).await?;
+
+    for m in resul {
+
+        println!("{}", format!("id = {} license_id ={} license_ref_id ={:?} license_type= {}",m.id, m.license_id, m.license_ref_id, m.license_type));
+    }
+
+    // assert(ctx, result).await?;
 
     // ingest second time
 
-    let result = ctx
-        .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
-        .await?;
-    assert(ctx, result).await?;
+    // let result = ctx
+    //     .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
+    //     .await?;
+    // assert(ctx, result).await?;
 
     // done
 

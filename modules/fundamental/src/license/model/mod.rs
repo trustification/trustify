@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use trustify_entity::{license, purl_license_assertion};
 use utoipa::ToSchema;
 use uuid::Uuid;
+use trustify_entity::license::LicenseCategory;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct LicenseSummary {
@@ -11,25 +12,34 @@ pub struct LicenseSummary {
     #[schema(value_type=String)]
     pub id: Uuid,
     pub license: String,
-    pub spdx_licenses: Vec<String>,
-    pub spdx_license_exceptions: Vec<String>,
+    pub license_ref_id: Option<Uuid>,
+    pub license_type: String,
     pub purls: u64,
 }
 
 impl LicenseSummary {
     pub async fn from_entity(license: &license::Model, purls: u64) -> Result<Self, Error> {
+        fn convert_LicenseCategory(license_category: LicenseCategory) -> String {
+            match license_category {
+                LicenseCategory::SPDXDECLARED => {return String::from("Spdx_License_Declared")}
+                LicenseCategory::SPDXCONCLUDED => {return String::from("Spdx_License_CONCLUDED")}
+                LicenseCategory::CYDXLCID => {return String::from("Cydx_LicenseChoice_Id")}
+                LicenseCategory::CYDXLCNAME => {return String::from("Cydx_LicenseChoice_Name")}
+                LicenseCategory::CYDXLEXPRESSION =>{return String::from("Cydx_icenseExpression")}
+                LicenseCategory::CLEARLYDEFINED => {return String::from("ClearlyDefined")}
+                LicenseCategory::OTHER => {return String::from("Other")}
+            }
+        }
+
         Ok(LicenseSummary {
             id: license.id,
-            license: license.text.clone(),
-            spdx_licenses: license.spdx_licenses.as_ref().cloned().unwrap_or_default(),
-            spdx_license_exceptions: license
-                .spdx_license_exceptions
-                .as_ref()
-                .cloned()
-                .unwrap_or_default(),
+            license: license.license_id.clone(),
+            license_ref_id: license.license_ref_id,
+            license_type: convert_LicenseCategory(license.license_type.clone()),
             purls,
         })
     }
+
 
     pub async fn from_entities<C: ConnectionTrait>(
         licenses: &[license::Model],

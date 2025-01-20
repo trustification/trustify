@@ -366,7 +366,7 @@ impl PurlLicenseSummary {
 
         for row in entities {
             if let Some(summary) = summaries.get_mut(&row.sbom.sbom_id) {
-                summary.licenses.push(row.license.text.clone());
+                summary.licenses.push(row.license.license_id.clone());
             }
         }
 

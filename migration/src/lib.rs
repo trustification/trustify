@@ -4,6 +4,7 @@ mod m0000010_create_cvss3_enums;
 mod m0000020_create_cvss4_enums;
 mod m0000022_create_organization;
 mod m0000030_create_sbom;
+mod m0000035_create_extracted_licensing_infos;
 mod m0000040_create_vulnerability;
 mod m0000050_create_vulnerability_description;
 mod m0000060_create_advisory;
@@ -63,6 +64,7 @@ mod m0000510_create_maven_cmp_fns;
 mod m0000520_scale_indexes;
 mod m0000530_base_purl_index;
 mod m0000540_ingestion_indexes;
+mod m0000015_create_license_category_enums;
 mod m0000543_create_license;
 mod m0000545_create_purl_license_assertion;
 mod m0000550_create_cpe_license_assertion;
@@ -100,10 +102,12 @@ pub struct Migrator;
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
+            Box::new(m0000015_create_license_category_enums::Migration),
             Box::new(m0000010_create_cvss3_enums::Migration),
             Box::new(m0000020_create_cvss4_enums::Migration),
             Box::new(m0000022_create_organization::Migration),
             Box::new(m0000030_create_sbom::Migration),
+            Box::new(m0000035_create_extracted_licensing_infos::Migration),
             Box::new(m0000040_create_vulnerability::Migration),
             Box::new(m0000050_create_vulnerability_description::Migration),
             Box::new(m0000060_create_advisory::Migration),

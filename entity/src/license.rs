@@ -1,5 +1,6 @@
 use sea_orm::entity::prelude::*;
 use std::fmt;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "license")]
@@ -19,9 +20,9 @@ pub enum Relation {
     #[sea_orm(has_many = "super::purl_license_assertion::Entity")]
     PurlAssertions,
 
-    #[sea_orm(belongs_to="super::has_extracted_licensing_infos::Entity"
+    #[sea_orm(belongs_to="super::extracted_licensing_infos::Entity"
     from = "Column::LicenseRefId",
-    to = "super::has_extracted_licensing_infos::Column::Id",
+    to = "super::extracted_licensing_infos::Column::Id",
     )]
     LicenseRefInfo,
 }
@@ -32,7 +33,7 @@ impl Related<super::purl_license_assertion::Entity> for Entity {
     }
 }
 
-impl Related<super::has_extracted_licensing_infos::Entity> for Entity {
+impl Related<super::extracted_licensing_infos::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::LicenseRefInfo.def()
     }
@@ -40,22 +41,23 @@ impl Related<super::has_extracted_licensing_infos::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
-#[sea_orm(rs_type = "String", db_type = "Enum")]
+// #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name="license_category")]
 pub enum LicenseCategory {
-    #[sea_orm(string_value = "Spdx_License_Declared")]
+    #[sea_orm(string_value = "slc")]
     SPDXDECLARED,
-    #[sea_orm(string_value = "Spdx_License_CONCLUDED")]
+    #[sea_orm(string_value = "sld")]
     SPDXCONCLUDED,
-    #[sea_orm(string_value = "Cydx_LicenseChoice_Id")]
+    #[sea_orm(string_value = "clci")]
     CYDXLCID,
-    #[sea_orm(string_value = "Cydx_LicenseChoice_Name")]
+    #[sea_orm(string_value = "clcn")]
     CYDXLCNAME,
-    #[sea_orm(string_value = "Cydx_icenseExpression")]
+    #[sea_orm(string_value = "cle")]
     CYDXLEXPRESSION,
-    #[sea_orm(string_value = "ClearlyDefined")]
+    #[sea_orm(string_value = "cd")]
     CLEARLYDEFINED,
-    #[sea_orm(string_value = "Other")]
+    #[sea_orm(string_value = "o")]
     OTHER,
 }
 
@@ -71,6 +73,23 @@ impl fmt::Display for LicenseCategory {
             LicenseCategory::OTHER => "Other",
         };
         write!(f, "{}", str_value)
+    }
+}
+
+impl From<&str> for LicenseCategory {
+
+    fn from(value: &str) -> Self {
+        match value {
+            "A" => LicenseCategory::SPDXDECLARED,
+            "B" => LicenseCategory::SPDXCONCLUDED,
+            "C" => LicenseCategory::CYDXLCID,
+            "D" => LicenseCategory::CYDXLCNAME,
+            "E" => LicenseCategory::CYDXLEXPRESSION,
+            "F" => LicenseCategory::CLEARLYDEFINED,
+            "O" => LicenseCategory::OTHER,
+            // _ => Err("Invalid LicenseCategory value"),
+            _ => LicenseCategory::OTHER,
+        }
     }
 }
 

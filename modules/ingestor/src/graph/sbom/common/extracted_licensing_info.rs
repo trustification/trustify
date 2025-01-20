@@ -4,7 +4,7 @@ use sea_query::OnConflict;
 use std::collections::BTreeMap;
 use tracing::instrument;
 use trustify_common::db::chunk::EntityChunkedIter;
-use trustify_entity::has_extracted_licensing_infos;
+use trustify_entity::extracted_licensing_infos;
 use uuid::Uuid;
 
 const NAMESPACE: Uuid = Uuid::from_bytes([
@@ -12,7 +12,7 @@ const NAMESPACE: Uuid = Uuid::from_bytes([
 ]);
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct HasExtratedLicensingInfo {
+pub struct ExtratedLicensingInfo {
     pub id: Uuid,
     pub sbom_id: Uuid,
     pub license_id: String,
@@ -21,7 +21,7 @@ pub struct HasExtratedLicensingInfo {
     pub comment: Option<String>,
 }
 
-impl HasExtratedLicensingInfo {
+impl ExtratedLicensingInfo {
     pub fn uuid(sbom_id: Uuid, licenseId: String) -> Uuid {
         let text = format!("{}{}", sbom_id.to_string(), licenseId);
         Uuid::new_v5(&NAMESPACE, text.to_lowercase().as_bytes())
@@ -30,41 +30,41 @@ impl HasExtratedLicensingInfo {
         sbom_id: Uuid,
         licenseId: String,
         name: String,
-        extractedText: String,
+        extracted_text: String,
         comment: Option<String>,
     ) -> Self {
         Self {
-            id: HasExtratedLicensingInfo::uuid(sbom_id, licenseId.clone()),
+            id: ExtratedLicensingInfo::uuid(sbom_id, licenseId.clone()),
             sbom_id: sbom_id,
             license_id: licenseId,
             name,
-            extracted_text: extractedText,
+            extracted_text,
             comment,
         }
     }
 }
 
-pub struct HasExtractedLicensingInfoCreator {
-    license_refs: BTreeMap<Uuid, has_extracted_licensing_infos::ActiveModel>,
+pub struct ExtractedLicensingInfoCreator {
+    license_refs: BTreeMap<Uuid, extracted_licensing_infos::ActiveModel>,
 }
 
-impl HasExtractedLicensingInfoCreator {
+impl ExtractedLicensingInfoCreator {
     pub fn new() -> Self {
         Self {
             license_refs: Default::default(),
         }
     }
 
-    pub fn add(&mut self, info: &HasExtratedLicensingInfo) {
+    pub fn add(&mut self, info: &ExtratedLicensingInfo) {
         let uuid = info.clone().id;
         self.license_refs
             .entry(uuid)
-            .or_insert(has_extracted_licensing_infos::ActiveModel {
+            .or_insert(extracted_licensing_infos::ActiveModel {
                 id: Set(info.id.clone()),
                 sbom_id: Set(info.sbom_id.clone()),
                 licenseId: Set(info.license_id.clone()),
                 // name: Set(info.name.clone()),
-                extractedText: Set(info.extracted_text.clone()),
+                extracted_text: Set(info.extracted_text.clone()),
                 comment: if let Some(comment) = info.comment.clone() {
                     Set(comment)
                 } else {
@@ -82,9 +82,9 @@ impl HasExtractedLicensingInfoCreator {
             return Ok(());
         }
         for batch in &self.license_refs.into_values().chunked() {
-            has_extracted_licensing_infos::Entity::insert_many(batch)
+            extracted_licensing_infos::Entity::insert_many(batch)
                 .on_conflict(
-                    OnConflict::columns([has_extracted_licensing_infos::Column::Id])
+                    OnConflict::columns([extracted_licensing_infos::Column::Id])
                         .do_nothing()
                         .to_owned(),
                 )

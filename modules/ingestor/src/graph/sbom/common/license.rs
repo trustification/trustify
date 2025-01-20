@@ -1,4 +1,4 @@
-use crate::graph::sbom::HasExtratedLicensingInfo;
+use crate::graph::sbom::ExtratedLicensingInfo;
 use sea_orm::ColumnTrait;
 use sea_orm::QueryFilter;
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
@@ -25,7 +25,7 @@ pub struct LicenseInfo {
 
 impl LicenseInfo {
     pub fn uuid(&self) -> Uuid {
-        let text = format!("{}{}", self.license.clone(), self.license_category);
+        let text = format!("{}{}{}", self.license.clone(), self.license_category,self.is_license_ref);
 
         // for (user_ref, user_license) in &self.refs {
         //     if &text == user_ref {
@@ -66,8 +66,8 @@ pub struct LicenseCreator {
     /// Uses a [`BTreeMap`] to ensure we have a stable insertion order, avoiding deadlocks on the
     /// database.
     // licenses: BTreeMap<Uuid, license::ActiveModel>,
-    licenses: BTreeMap<Uuid, LicenseInfo>,
-    extracted_licensing_info: Vec<HasExtratedLicensingInfo>,
+    pub licenses: BTreeMap<Uuid, LicenseInfo>,
+    extracted_licensing_info: Vec<ExtratedLicensingInfo>,
     sbom_id: Uuid,
 }
 
@@ -81,7 +81,7 @@ impl LicenseCreator {
     }
 
     pub fn new_with_extracted_licensing_info_and_sbom_id(
-        extracted_licensing_info: Vec<HasExtratedLicensingInfo>,
+        extracted_licensing_info: Vec<ExtratedLicensingInfo>,
         sbom_id: Uuid,
     ) -> Self {
         Self {
@@ -131,6 +131,10 @@ impl LicenseCreator {
 
         for (uuid, info) in &self.licenses {
             if info.is_license_ref {
+                let a  = info.clone().license;
+                let b = info.clone().license_category;
+                let c = uuid.clone().to_string();
+                println!("{}", format!("a={:?}, b= {:?} c={:?}", a, b, c));
                 let license_ref_data = self
                     .extracted_licensing_info
                     .iter()
@@ -139,11 +143,11 @@ impl LicenseCreator {
                     id: Set(*uuid),
                     license_id: Set(info.license.clone()),
                     license_ref_id: if let Some(license_ref) = license_ref_data {
-                        Set(Some(HasExtratedLicensingInfo::uuid(self.sbom_id, license_ref.license_id.clone())))
+                        Set(Some(ExtratedLicensingInfo::uuid(self.sbom_id, license_ref.license_id.clone())))
                     } else {
                         Set(None)
                     },
-                    license_type: Set(info.license_category.clone()),
+                    license_type: Set(info.license_category.clone().into()),
                 })
                 .exec(db)
                 .await?;
