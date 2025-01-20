@@ -1,6 +1,7 @@
 use itertools::Itertools;
 use test_context::test_context;
 use test_log::test;
+use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::sbom::model::{SbomNodeReference, Which};
 use trustify_module_fundamental::{
     purl::model::summary::purl::PurlSummary, sbom::service::SbomService,
@@ -53,9 +54,9 @@ async fn simple_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             sbom_id,
             Default::default(),
             Default::default(),
-            Which::Left,
+            Which::Right,
             SbomNodeReference::Package("pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src" /* this is actually the bom-ref value */),
-            None,
+            Some(Relationship::AncestorOf),
             &ctx.db,
         )
         .await?;
