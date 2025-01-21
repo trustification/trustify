@@ -243,6 +243,8 @@ impl AnalysisService {
                         product_version: package.product_version.clone().unwrap_or_default(),
                     });
 
+                    log::debug!("Inserting - id: {}, index: {index:?}", entry.key());
+
                     entry.insert(index);
                 }
                 Entry::Occupied(_) => {}
@@ -259,10 +261,11 @@ impl AnalysisService {
             }
         };
 
+        // the nodes describing the document
         let mut describedby_node_id: Vec<NodeIndex> = Default::default();
 
         for edge in edges {
-            // remove all node IDs we somehow connected
+            log::debug!("Adding edge {:?}", edge);
 
             // insert edge into the graph
             match (
@@ -271,9 +274,10 @@ impl AnalysisService {
             ) {
                 (Some(left), Some(right)) => {
                     if edge.relationship == Relationship::DescribedBy {
-                        describedby_node_id.push(*right);
+                        describedby_node_id.push(*left);
                     }
 
+                    // remove all node IDs we somehow connected
                     detected_nodes.remove(&edge.left_node_id);
                     detected_nodes.remove(&edge.right_node_id);
 
@@ -283,13 +287,17 @@ impl AnalysisService {
             }
         }
 
+        log::debug!("Describing nodes: {describedby_node_id:?}");
+        log::debug!("Unconnected nodes: {detected_nodes:?}");
+
         if !describedby_node_id.is_empty() {
-            // search of unconnected nodes and create dummy relationships
+            // search of unconnected nodes and create undefined relationships
             // all nodes not removed are unconnected
             for id in detected_nodes {
                 let Some(id) = nodes.get(&id) else { continue };
                 // add "undefined" relationship
                 for from in &describedby_node_id {
+                    log::debug!("Creating undefined relationship - left: {id:?}, right: {from:?}");
                     g.add_edge(*id, *from, Relationship::Undefined);
                 }
             }
