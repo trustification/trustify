@@ -1,6 +1,7 @@
 pub use sea_orm_migration::prelude::*;
 
 mod m0000010_create_cvss3_enums;
+mod m0000015_create_license_category_enums;
 mod m0000020_create_cvss4_enums;
 mod m0000022_create_organization;
 mod m0000030_create_sbom;
@@ -64,7 +65,6 @@ mod m0000510_create_maven_cmp_fns;
 mod m0000520_scale_indexes;
 mod m0000530_base_purl_index;
 mod m0000540_ingestion_indexes;
-mod m0000015_create_license_category_enums;
 mod m0000543_create_license;
 mod m0000545_create_purl_license_assertion;
 mod m0000550_create_cpe_license_assertion;

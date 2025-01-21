@@ -1,10 +1,10 @@
 use crate::{purl::model::VersionedPurlHead, sbom::model::SbomHead, Error};
 use sea_orm::{ConnectionTrait, ModelTrait, PaginatorTrait};
 use serde::{Deserialize, Serialize};
+use trustify_entity::license::LicenseCategory;
 use trustify_entity::{license, purl_license_assertion};
 use utoipa::ToSchema;
 use uuid::Uuid;
-use trustify_entity::license::LicenseCategory;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct LicenseSummary {
@@ -21,13 +21,13 @@ impl LicenseSummary {
     pub async fn from_entity(license: &license::Model, purls: u64) -> Result<Self, Error> {
         fn convert_LicenseCategory(license_category: LicenseCategory) -> String {
             match license_category {
-                LicenseCategory::SPDXDECLARED => {return String::from("Spdx_License_Declared")}
-                LicenseCategory::SPDXCONCLUDED => {return String::from("Spdx_License_CONCLUDED")}
-                LicenseCategory::CYDXLCID => {return String::from("Cydx_LicenseChoice_Id")}
-                LicenseCategory::CYDXLCNAME => {return String::from("Cydx_LicenseChoice_Name")}
-                LicenseCategory::CYDXLEXPRESSION =>{return String::from("Cydx_icenseExpression")}
-                LicenseCategory::CLEARLYDEFINED => {return String::from("ClearlyDefined")}
-                LicenseCategory::OTHER => {return String::from("Other")}
+                LicenseCategory::SPDXDECLARED => return String::from("Spdx_License_Declared"),
+                LicenseCategory::SPDXCONCLUDED => return String::from("Spdx_License_CONCLUDED"),
+                LicenseCategory::CYDXLCID => return String::from("Cydx_LicenseChoice_Id"),
+                LicenseCategory::CYDXLCNAME => return String::from("Cydx_LicenseChoice_Name"),
+                LicenseCategory::CYDXLEXPRESSION => return String::from("Cydx_icenseExpression"),
+                LicenseCategory::CLEARLYDEFINED => return String::from("ClearlyDefined"),
+                LicenseCategory::OTHER => return String::from("Other"),
             }
         }
 
@@ -39,7 +39,6 @@ impl LicenseSummary {
             purls,
         })
     }
-
 
     pub async fn from_entities<C: ConnectionTrait>(
         licenses: &[license::Model],

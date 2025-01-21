@@ -1,11 +1,11 @@
 #![allow(clippy::expect_used)]
 
 use anyhow::bail;
-use sea_orm::EntityTrait;
+use sea_orm::{ColumnTrait, Condition, EntityTrait, QueryFilter,JoinType,QuerySelect};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::{cpe::Cpe, id::Id};
-use trustify_entity::{cpe::CpeDto, sbom, extracted_licensing_infos, license};
+use trustify_entity::{cpe::CpeDto, extracted_licensing_infos, license, sbom};
 use trustify_module_ingestor::graph::sbom::ExtratedLicensingInfo;
 use trustify_module_ingestor::model::IngestResult;
 use trustify_test_context::TrustifyContext;
@@ -76,31 +76,76 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // ingest once
 
-    let result = ctx.ingest_document("spdx/OCP-TOOLS-4.11-RHEL-8.json").await?;
-    let resul: Vec<extracted_licensing_infos::Model> = extracted_licensing_infos::Entity::find().all(&ctx.db).await?;
+    let result = ctx
+        .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
+        .await?;
 
-   for m in resul {
-
-       println!("{}", format!("id = {} sbom_id ={} licenseid ={} extracted_text={}",m.id, m.sbom_id, m.licenseId,m.extracted_text));
-   }
-
-    let resul: Vec<license::Model> = license::Entity::find().all(&ctx.db).await?;
-
-    for m in resul {
-
-        println!("{}", format!("id = {} license_id ={} license_ref_id ={:?} license_type= {}",m.id, m.license_id, m.license_ref_id, m.license_type));
-    }
-
-    // assert(ctx, result).await?;
+    assert(ctx, result).await?;
 
     // ingest second time
 
-    // let result = ctx
-    //     .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
-    //     .await?;
-    // assert(ctx, result).await?;
+    let result = ctx
+        .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
+        .await?;
+    assert(ctx, result).await?;
 
     // done
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn test_duplicate_license_ref_id(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let result = ctx
+        .ingest_document("spdx/OCP-TOOLS-4.11-RHEL-8.json")
+        .await?;
+    let result = ctx
+        .ingest_document("spdx/quarkus-bom-3.2.12.Final-redhat-00002.json")
+        .await?;
+
+    let result: Vec<extracted_licensing_infos::Model> = extracted_licensing_infos::Entity::find()
+        .filter(
+            Condition::all().add(extracted_licensing_infos::Column::LicenseId.eq("LicenseRef-0")),
+        )
+        .all(&ctx.db)
+        .await?;
+
+    assert_eq!(result.len(), 2);
+    assert_eq!(result[0].licenseId, "LicenseRef-0");
+    assert_eq!(result[1].licenseId, "LicenseRef-0");
+    assert_ne!(result[1].id, result[0].id);
+    assert_ne!(result[1].extracted_text, result[0].extracted_text);
+    Ok(())
+}
+
+
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn test_license_ref_related_license(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let result = ctx
+        .ingest_document("spdx/OCP-TOOLS-4.11-RHEL-8.json")
+        .await?;
+
+    let result_license_ref: Vec<extracted_licensing_infos::Model> = extracted_licensing_infos::Entity::find()
+        .filter(
+            Condition::all().add(extracted_licensing_infos::Column::LicenseId.eq("LicenseRef-0")),
+        )
+        .all(&ctx.db)
+        .await?;
+
+    let result_license: Vec<license::Model> = license::Entity::find()
+        .filter(
+            Condition::all().add(license::Column::LicenseId.eq("LicenseRef-0")),
+        )
+        .all(&ctx.db)
+        .await?;
+
+    for license in result_license{
+        assert_eq!(license.license_id, "LicenseRef-0");
+        assert_eq!(license.license_ref_id, Some(result_license_ref[0].id));
+        println!("license_type= {} license_id={} license_ref_id={:?}, id={}",license.license_type, license.license_id, license.license_ref_id, license.id)
+    }
 
     Ok(())
 }

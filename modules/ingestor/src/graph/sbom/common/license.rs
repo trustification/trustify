@@ -2,12 +2,13 @@ use crate::graph::sbom::ExtratedLicensingInfo;
 use sea_orm::ColumnTrait;
 use sea_orm::QueryFilter;
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
+use sea_query::OnConflict;
 use spdx_expression::SpdxExpression;
 use std::collections::BTreeMap;
 use tracing::instrument;
 use trustify_common::db::chunk::EntityChunkedIter;
-use trustify_entity::license;
 use trustify_entity::license::LicenseCategory;
+use trustify_entity::{extracted_licensing_infos, license};
 use uuid::Uuid;
 
 const NAMESPACE: Uuid = Uuid::from_bytes([
@@ -20,12 +21,19 @@ pub struct LicenseInfo {
     pub license_category: LicenseCategory,
     // pub refs: HashMap<String, String>,
     pub license_name: String,
+    pub license_ref_id: Option<Uuid>,
     pub is_license_ref: bool,
 }
 
 impl LicenseInfo {
     pub fn uuid(&self) -> Uuid {
-        let text = format!("{}{}{}", self.license.clone(), self.license_category,self.is_license_ref);
+        let text = format!(
+            "{}{}{}{:?}",
+            self.license.clone(),
+            self.license_category,
+            self.is_license_ref,
+            self.license_ref_id
+        );
 
         // for (user_ref, user_license) in &self.refs {
         //     if &text == user_ref {
@@ -131,24 +139,22 @@ impl LicenseCreator {
 
         for (uuid, info) in &self.licenses {
             if info.is_license_ref {
-                let a  = info.clone().license;
-                let b = info.clone().license_category;
-                let c = uuid.clone().to_string();
-                println!("{}", format!("a={:?}, b= {:?} c={:?}", a, b, c));
-                let license_ref_data = self
-                    .extracted_licensing_info
-                    .iter()
-                    .find(|e| e.license_id == info.license && e.sbom_id == self.sbom_id);
                 license::Entity::insert(license::ActiveModel {
                     id: Set(*uuid),
                     license_id: Set(info.license.clone()),
-                    license_ref_id: if let Some(license_ref) = license_ref_data {
-                        Set(Some(ExtratedLicensingInfo::uuid(self.sbom_id, license_ref.license_id.clone())))
+                    license_ref_id: if let Some(license_ref) = info.license_ref_id {
+                        Set(Some(license_ref))
                     } else {
                         Set(None)
                     },
                     license_type: Set(info.license_category.clone().into()),
                 })
+                .on_conflict(
+                    OnConflict::columns([license::Column::Id])
+                        .do_nothing()
+                        .to_owned(),
+                )
+                .do_nothing()
                 .exec(db)
                 .await?;
             } else {
@@ -158,6 +164,12 @@ impl LicenseCreator {
                     license_ref_id: Set(None),
                     license_type: Set(info.license_category.clone()),
                 })
+                .on_conflict(
+                    OnConflict::columns([license::Column::Id])
+                        .do_nothing()
+                        .to_owned(),
+                )
+                .do_nothing()
                 .exec(db)
                 .await?;
             }

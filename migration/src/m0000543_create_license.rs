@@ -1,9 +1,9 @@
 use crate::extension::postgres::Type;
 use crate::m0000010_create_cvss3_enums::Cvss3I;
 use crate::m0000015_create_license_category_enums::LicenseCategory;
+use crate::m0000035_create_extracted_licensing_infos::ExtractedLicensingInfos;
 use sea_orm_migration::prelude::*;
 use uuid::Uuid;
-use crate::m0000035_create_extracted_licensing_infos::ExtractedLicensingInfos;
 
 const NAMESPACE: Uuid = Uuid::from_bytes([
     0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0x41, 0x18, 0xa1, 0x38, 0xb8, 0x9f, 0x19, 0x35, 0xe0, 0xa7,

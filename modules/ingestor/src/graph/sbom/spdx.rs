@@ -21,6 +21,7 @@ use tracing::instrument;
 use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::license::LicenseCategory;
 use trustify_entity::relationship::Relationship;
+use uuid::Uuid;
 
 pub struct Information<'a>(pub &'a SPDX);
 
@@ -104,7 +105,7 @@ impl SbomContext {
             }
         }
 
-        let mut lincense_refs = ExtractedLicensingInfoCreator::new();
+        let mut license_refs = ExtractedLicensingInfoCreator::new();
         let mut extracted_licensing_info_list = Vec::new();
 
         for license_ref in sbom_data.other_licensing_information_detected {
@@ -115,34 +116,56 @@ impl SbomContext {
                 license_ref.extracted_text,
                 license_ref.license_comment,
             );
-            lincense_refs.add(extracted_licensing_info);
+            license_refs.add(extracted_licensing_info);
 
             extracted_licensing_info_list.push(extracted_licensing_info.clone());
         }
 
         let mut licenses = LicenseCreator::new_with_extracted_licensing_info_and_sbom_id(
-            extracted_licensing_info_list,
+            extracted_licensing_info_list.clone(),
             self.sbom.sbom_id.clone(),
         );
 
         let mut packages =
             PackageCreator::with_capacity(self.sbom.sbom_id, sbom_data.package_information.len());
 
+        fn get_license_ref_id_from_extracted_licensing_info(
+            license_id: String,
+            sbom_id: Uuid,
+            extracted_licensing_info_list: Vec<ExtratedLicensingInfo>,
+        ) -> Option<Uuid> {
+            let license_ref_data = extracted_licensing_info_list
+                .iter()
+                .find(|e| e.license_id == license_id && e.sbom_id == sbom_id);
+            if let Some(data) = license_ref_data {
+                Some(data.id)
+            } else {
+                None
+            }
+        }
+
         for package in &sbom_data.package_information {
             if let Some(declared_license) = &package.declared_license {
                 for (license) in declared_license.licenses() {
                     if license.license_ref.clone() {
+                        let license_ref_id = get_license_ref_id_from_extracted_licensing_info(
+                            format!("LicenseRef-{}", license.identifier.clone().to_string()),
+                            self.sbom.sbom_id.clone(),
+                            extracted_licensing_info_list.clone(),
+                        );
                         licenses.add(&LicenseInfo {
-                            license: format!("LicenseRef-{}",license.identifier.to_string()),
+                            license: format!("LicenseRef-{}", license.identifier.to_string()),
                             license_category: LicenseCategory::SPDXDECLARED,
                             license_name: license.identifier.clone().to_string(),
+                            license_ref_id,
                             is_license_ref: license.license_ref,
                         });
-                    }else {
+                    } else {
                         licenses.add(&LicenseInfo {
                             license: license.identifier.to_string(),
                             license_category: LicenseCategory::SPDXDECLARED,
                             license_name: license.identifier.clone().to_string(),
+                            license_ref_id: None,
                             is_license_ref: license.license_ref,
                         });
                     }
@@ -152,23 +175,29 @@ impl SbomContext {
             if let Some(concluded_license) = &package.concluded_license {
                 for license in concluded_license.licenses() {
                     if license.license_ref.clone() {
+                        let license_ref_id = get_license_ref_id_from_extracted_licensing_info(
+                            format!("LicenseRef-{}", license.identifier.clone().to_string()),
+                            self.sbom.sbom_id.clone(),
+                            extracted_licensing_info_list.clone(),
+                        );
                         licenses.add(&LicenseInfo {
-                            license: format!("LicenseRef-{}",license.identifier.to_string()),
+                            license: format!("LicenseRef-{}", license.identifier.to_string()),
                             license_category: LicenseCategory::SPDXCONCLUDED,
                             license_name: license.identifier.clone().to_string(),
+                            license_ref_id,
                             is_license_ref: license.license_ref,
                         });
-                    }else {
+                    } else {
                         licenses.add(&LicenseInfo {
                             license: license.identifier.to_string(),
                             license_category: LicenseCategory::SPDXCONCLUDED,
                             license_name: license.identifier.clone().to_string(),
+                            license_ref_id: None,
                             is_license_ref: license.license_ref,
                         });
                     }
                 }
             }
-
 
             let mut refs = Vec::new();
 
@@ -243,7 +272,7 @@ impl SbomContext {
             files.add(file.file_spdx_identifier, file.file_name);
         }
 
-        lincense_refs.create(db).await?;
+        license_refs.create(db).await?;
         // create all purls and CPEs
         licenses.create(db).await?;
         purls.create(db).await?;

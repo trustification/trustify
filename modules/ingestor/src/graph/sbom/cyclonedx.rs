@@ -180,6 +180,7 @@ impl SbomContext {
                                         license: id.to_string(),
                                         license_category: LicenseCategory::CYDXLCID,
                                         license_name: id.clone().to_string(),
+                                        license_ref_id: None,
                                         is_license_ref: false,
                                     };
                                     license_creator.add(&license_info);
@@ -190,6 +191,7 @@ impl SbomContext {
                                         license: name.to_string(),
                                         license_category: LicenseCategory::CYDXLCNAME,
                                         license_name: name.clone().to_string(),
+                                        license_ref_id: None,
                                         is_license_ref: false,
                                     };
                                     license_creator.add(&license_info);
@@ -204,6 +206,7 @@ impl SbomContext {
                                         license: id.to_string(),
                                         license_category: LicenseCategory::CYDXLEXPRESSION,
                                         license_name: id.clone().to_string(),
+                                        license_ref_id: None,
                                         is_license_ref: false,
                                     };
                                     license_creator.add(&license_info);

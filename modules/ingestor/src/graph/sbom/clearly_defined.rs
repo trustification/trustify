@@ -26,6 +26,7 @@ impl SbomContext {
                 license: license.clone(),
                 license_category: LicenseCategory::CLEARLYDEFINED,
                 license_name: license,
+                license_ref_id: None,
                 is_license_ref: false,
             };
 

@@ -1,6 +1,6 @@
 use sea_orm::entity::prelude::*;
-use std::fmt;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "license")]
@@ -43,7 +43,7 @@ impl ActiveModelBehavior for ActiveModel {}
 
 // #[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Serialize, Deserialize)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
-#[sea_orm(rs_type = "String", db_type = "Enum", enum_name="license_category")]
+#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "license_category")]
 pub enum LicenseCategory {
     #[sea_orm(string_value = "slc")]
     SPDXDECLARED,
@@ -77,7 +77,6 @@ impl fmt::Display for LicenseCategory {
 }
 
 impl From<&str> for LicenseCategory {
-
     fn from(value: &str) -> Self {
         match value {
             "A" => LicenseCategory::SPDXDECLARED,

@@ -434,6 +434,7 @@ impl SbomContext {
             license: license.to_string(),
             license_category: LicenseCategory::OTHER,
             license_name: license.clone().to_string(),
+            license_ref_id: None,
             is_license_ref: false,
         };
 
@@ -444,6 +445,7 @@ impl SbomContext {
                 license: spdx_license_id.to_string(),
                 license_category: LicenseCategory::OTHER,
                 license_name: spdx_license_id.clone().to_string(),
+                license_ref_id: None,
                 is_license_ref: false,
             };
 
