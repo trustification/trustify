@@ -251,31 +251,32 @@ impl<'spdx> TryFrom<(&'spdx str, &'spdx RelationshipType, &'spdx str)> for SpdxR
         (left, rel, right): (&'spdx str, &'spdx RelationshipType, &'spdx str),
     ) -> Result<Self, Self::Error> {
         match rel {
-            RelationshipType::Contains => Ok((right, Relationship::ContainedBy, left)),
+            RelationshipType::AncestorOf => Ok((left, Relationship::AncestorOf, right)),
+            RelationshipType::BuildToolOf => Ok((left, Relationship::BuildToolOf, right)),
             RelationshipType::ContainedBy => Ok((left, Relationship::ContainedBy, right)),
-            RelationshipType::Describes => Ok((right, Relationship::DescribedBy, left)),
-            RelationshipType::DescribedBy => Ok((left, Relationship::DescribedBy, right)),
-            RelationshipType::DependsOn => Ok((right, Relationship::DependencyOf, left)),
+            RelationshipType::Contains => Ok((right, Relationship::ContainedBy, left)),
             RelationshipType::DependencyOf => Ok((left, Relationship::DependencyOf, right)),
+            RelationshipType::DependsOn => Ok((right, Relationship::DependencyOf, left)),
+            RelationshipType::DescendantOf => Ok((right, Relationship::AncestorOf, left)),
+            RelationshipType::DescribedBy => Ok((left, Relationship::DescribedBy, right)),
+            RelationshipType::Describes => Ok((right, Relationship::DescribedBy, left)),
             RelationshipType::DevDependencyOf => Ok((left, Relationship::DevDependencyOf, right)),
+            RelationshipType::DevToolOf => Ok((left, Relationship::DevToolOf, right)),
+            RelationshipType::ExampleOf => Ok((left, Relationship::ExampleOf, right)),
+            RelationshipType::GeneratedFrom => Ok((left, Relationship::GeneratedFrom, right)),
+            RelationshipType::Generates => Ok((right, Relationship::GeneratedFrom, left)),
             RelationshipType::OptionalDependencyOf => {
                 Ok((left, Relationship::OptionalDependencyOf, right))
             }
+            RelationshipType::PackageOf => Ok((right, Relationship::PackageOf, left)),
             RelationshipType::ProvidedDependencyOf => {
                 Ok((left, Relationship::ProvidedDependencyOf, right))
             }
-            RelationshipType::TestDependencyOf => Ok((left, Relationship::TestDependencyOf, right)),
             RelationshipType::RuntimeDependencyOf => {
                 Ok((left, Relationship::RuntimeDependencyOf, right))
             }
-            RelationshipType::ExampleOf => Ok((left, Relationship::ExampleOf, right)),
-            RelationshipType::Generates => Ok((right, Relationship::GeneratedFrom, left)),
-            RelationshipType::GeneratedFrom => Ok((left, Relationship::GeneratedFrom, right)),
-            RelationshipType::AncestorOf => Ok((left, Relationship::AncestorOf, right)),
-            RelationshipType::DescendantOf => Ok((right, Relationship::AncestorOf, left)),
+            RelationshipType::TestDependencyOf => Ok((left, Relationship::TestDependencyOf, right)),
             RelationshipType::VariantOf => Ok((left, Relationship::VariantOf, right)),
-            RelationshipType::BuildToolOf => Ok((left, Relationship::BuildToolOf, right)),
-            RelationshipType::DevToolOf => Ok((left, Relationship::DevToolOf, right)),
             _ => Err(()),
         }
         .map(|(left, rel, right)| Self(left, rel, right))
