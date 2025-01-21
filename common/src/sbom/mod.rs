@@ -1,3 +1,5 @@
+pub mod spdx;
+
 use crate::cpe::Cpe;
 use crate::purl::Purl;
 use uuid::Uuid;
