@@ -189,8 +189,7 @@ async fn test_simple_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::E
     let purls = response["items"][0]["deps"]
         .as_array()
         .iter()
-        .map(|deps| *deps)
-        .flatten()
+        .flat_map(|deps| *deps)
         .flat_map(|dep| dep["purl"].as_array())
         .flatten()
         .flat_map(|purl| purl.as_str().map(|s| s.to_string()))
