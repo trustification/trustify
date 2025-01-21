@@ -8,20 +8,21 @@ pub mod spdx;
 use futures::Stream;
 use peak_alloc::PeakAlloc;
 use postgresql_embedded::PostgreSQL;
-use std::env;
-use std::io::{Read, Seek};
-use std::path::{Path, PathBuf};
+use serde::Serialize;
+use std::{
+    env,
+    io::{Read, Seek},
+    path::{Path, PathBuf},
+};
 use test_context::AsyncTestContext;
-use tokio_util::bytes::Bytes;
-use tokio_util::io::{ReaderStream, SyncIoBridge};
+use tokio_util::{bytes::Bytes, io::ReaderStream};
 use tracing::instrument;
-use trustify_common as common;
-use trustify_common::db;
-use trustify_common::decompress::decompress_async;
-use trustify_common::hashing::{Digests, HashingRead};
-use trustify_module_ingestor::graph::Graph;
-use trustify_module_ingestor::model::IngestResult;
-use trustify_module_ingestor::service::{Format, IngestorService};
+use trustify_common::{self as common, db, decompress::decompress_async, hashing::Digests};
+use trustify_module_ingestor::{
+    graph::Graph,
+    model::IngestResult,
+    service::{Format, IngestorService},
+};
 use trustify_module_storage::service::fs::FileSystemBackend;
 
 #[allow(dead_code)]
@@ -96,6 +97,16 @@ impl TrustifyContext {
     pub async fn ingest_read<R: Read>(&self, mut read: R) -> Result<IngestResult, anyhow::Error> {
         let mut bytes = Vec::new();
         read.read_to_end(&mut bytes)?;
+
+        Ok(self
+            .ingestor
+            .ingest(&bytes, Format::Unknown, ("source", "TrustifyContext"), None)
+            .await?)
+    }
+
+    /// Ingest a document by ingesting its JSON representation
+    pub async fn ingest_json<S: Serialize>(&self, doc: S) -> Result<IngestResult, anyhow::Error> {
+        let bytes = serde_json::to_vec(&doc)?;
 
         Ok(self
             .ingestor
@@ -179,20 +190,16 @@ pub fn document_read(path: &str) -> Result<impl Read + Seek, anyhow::Error> {
     Ok(std::fs::File::open(absolute(path)?)?)
 }
 
+/// Read a document and parse it as JSON.
 pub async fn document<T>(path: &str) -> Result<(T, Digests), anyhow::Error>
 where
     T: serde::de::DeserializeOwned + Send + 'static,
 {
-    let file = tokio::fs::File::open(absolute(path)?).await?;
-    let mut reader = HashingRead::new(SyncIoBridge::new(file));
-    let f = || match serde_json::from_reader(&mut reader) {
-        Ok(v) => match reader.finish() {
-            Ok(digests) => Ok((v, digests)),
-            Err(e) => Err(anyhow::Error::new(e)),
-        },
-        Err(e) => Err(anyhow::Error::new(e)),
-    };
-    tokio::task::spawn_blocking(f).await?
+    let data = document_bytes(path).await?;
+    let digests = Digests::digest(&data);
+    let f = move || Ok::<_, anyhow::Error>(serde_json::from_slice::<T>(&data)?);
+
+    Ok((tokio::task::spawn_blocking(f).await??, digests))
 }
 
 #[cfg(test)]
