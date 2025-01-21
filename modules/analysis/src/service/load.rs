@@ -10,6 +10,7 @@ use sea_orm::{
 };
 use sea_query::{JoinType, Order, SelectStatement};
 use std::collections::HashMap;
+use tracing::{instrument, Level};
 use trustify_common::{cpe::Cpe, db::query::Filtering, purl::Purl};
 use trustify_entity::{
     cpe::CpeDto, relationship::Relationship, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
@@ -175,6 +176,7 @@ fn to_cpes(cpes: Vec<serde_json::Value>) -> Vec<Cpe> {
 
 impl AnalysisService {
     /// Take a [`GraphQuery`] and load all required SBOMs
+    #[instrument(skip(self, connection), err(level=Level::INFO))]
     pub(crate) async fn load_graphs_query<C: ConnectionTrait>(
         &self,
         connection: &C,
@@ -237,216 +239,212 @@ impl AnalysisService {
         Ok(distinct_sbom_ids)
     }
 
-    pub async fn load_graphs<C: ConnectionTrait>(
-        &self,
-        connection: &C,
-        distinct_sbom_ids: &Vec<String>,
-    ) -> Result<(), DbErr> {
-        for distinct_sbom_id in distinct_sbom_ids {
-            if !self.graph.read().contains_key(distinct_sbom_id) {
-                // lazy load graphs
-                let mut g: Graph<PackageNode, Relationship, petgraph::Directed> = Graph::new();
-                let mut nodes = HashMap::new();
+    /// Load the SBOM matching the provided ID
+    pub async fn load_graph<C: ConnectionTrait>(&self, connection: &C, distinct_sbom_id: &str) {
+        if !self.graph.read().contains_key(distinct_sbom_id) {
+            // lazy load graphs
+            let mut g: Graph<PackageNode, Relationship, petgraph::Directed> = Graph::new();
+            let mut nodes = HashMap::new();
 
-                let mut describedby_node_id: Option<String> = Default::default();
+            let mut describedby_node_id: Option<String> = Default::default();
 
-                // Set relationships explicitly defined in SBOM
-                match get_relationships(connection, &distinct_sbom_id.to_string()).await {
-                    Ok(results) => {
-                        for row in results {
-                            let (
-                                sbom_published,
-                                document_id,
-                                product_name,
-                                product_version,
-                                left_node_id,
-                                left_purl_string,
-                                left_cpe_json,
-                                left_node_name,
-                                left_node_version,
-                                right_node_id,
-                                right_purl_string,
-                                right_cpe_json,
-                                right_node_name,
-                                right_node_version,
-                                relationship,
-                            ) = {
-                                let default_value = "NOVALUE".to_string(); // TODO: this eventually will have different defaults.
-                                (
-                                    row.try_get("", "published")
-                                        .unwrap_or_else(|_| default_value.clone()),
-                                    row.try_get("", "document_id")
-                                        .unwrap_or_else(|_| default_value.clone()),
-                                    row.try_get("", "product_name")
-                                        .unwrap_or_else(|_| default_value.clone()),
-                                    row.try_get("", "product_version")
-                                        .unwrap_or_else(|_| default_value.clone()),
-                                    row.try_get("", "left_node_id")
-                                        .unwrap_or(default_value.clone()),
-                                    row.try_get::<Vec<String>>("", "left_qualified_purl")
-                                        .unwrap_or_default(),
-                                    row.try_get("", "left_cpe")
-                                        .ok()
-                                        .unwrap_or_else(Vec::<serde_json::Value>::new),
-                                    row.try_get("", "left_node_name")
-                                        .unwrap_or(default_value.clone()),
-                                    row.try_get("", "left_node_version")
-                                        .unwrap_or(default_value.clone()),
-                                    row.try_get("", "right_node_id")
-                                        .unwrap_or(default_value.clone()),
-                                    row.try_get::<Vec<String>>("", "right_qualified_purl")
-                                        .unwrap_or_default(),
-                                    row.try_get("", "right_cpe")
-                                        .ok()
-                                        .unwrap_or_else(Vec::<serde_json::Value>::new),
-                                    row.try_get("", "right_node_name")
-                                        .unwrap_or(default_value.clone()),
-                                    row.try_get("", "right_node_version")
-                                        .unwrap_or(default_value.clone()),
-                                    row.try_get("", "relationship")
-                                        .unwrap_or(Relationship::ContainedBy),
-                                )
-                            };
+            // Set relationships explicitly defined in SBOM
+            match get_relationships(connection, distinct_sbom_id).await {
+                Ok(results) => {
+                    for row in results {
+                        let (
+                            sbom_published,
+                            document_id,
+                            product_name,
+                            product_version,
+                            left_node_id,
+                            left_purl_string,
+                            left_cpe_json,
+                            left_node_name,
+                            left_node_version,
+                            right_node_id,
+                            right_purl_string,
+                            right_cpe_json,
+                            right_node_name,
+                            right_node_version,
+                            relationship,
+                        ) = {
+                            let default_value = "NOVALUE".to_string(); // TODO: this eventually will have different defaults.
+                            (
+                                row.try_get("", "published")
+                                    .unwrap_or_else(|_| default_value.clone()),
+                                row.try_get("", "document_id")
+                                    .unwrap_or_else(|_| default_value.clone()),
+                                row.try_get("", "product_name")
+                                    .unwrap_or_else(|_| default_value.clone()),
+                                row.try_get("", "product_version")
+                                    .unwrap_or_else(|_| default_value.clone()),
+                                row.try_get("", "left_node_id")
+                                    .unwrap_or(default_value.clone()),
+                                row.try_get::<Vec<String>>("", "left_qualified_purl")
+                                    .unwrap_or_default(),
+                                row.try_get("", "left_cpe")
+                                    .ok()
+                                    .unwrap_or_else(Vec::<serde_json::Value>::new),
+                                row.try_get("", "left_node_name")
+                                    .unwrap_or(default_value.clone()),
+                                row.try_get("", "left_node_version")
+                                    .unwrap_or(default_value.clone()),
+                                row.try_get("", "right_node_id")
+                                    .unwrap_or(default_value.clone()),
+                                row.try_get::<Vec<String>>("", "right_qualified_purl")
+                                    .unwrap_or_default(),
+                                row.try_get("", "right_cpe")
+                                    .ok()
+                                    .unwrap_or_else(Vec::<serde_json::Value>::new),
+                                row.try_get("", "right_node_name")
+                                    .unwrap_or(default_value.clone()),
+                                row.try_get("", "right_node_version")
+                                    .unwrap_or(default_value.clone()),
+                                row.try_get("", "relationship")
+                                    .unwrap_or(Relationship::ContainedBy),
+                            )
+                        };
 
-                            /*log::info!(
-                                "Row - left_node: {left_node_id:?}, right_node: {right_node_id:?}",
-                            );
-                            log::info!(
-                                "Row - left_cpe: {left_cpe_json:?}, right_cpe: {right_cpe_json:?}",
-                            );
-                            log::info!(
-                                "Row - left_purl: {left_purl_string:?}, right_purl: {right_purl_string:?}",
-                            );*/
-
-                            if relationship == Relationship::DescribedBy {
-                                // Save for implicit relationships performed later
-                                describedby_node_id = Some(left_node_id);
-                            } else {
-                                let p1 = match nodes.get(&left_node_id) {
-                                    Some(&node_index) => node_index, // already exists
-                                    None => {
-                                        let new_node = PackageNode {
-                                            sbom_id: distinct_sbom_id.clone(),
-                                            node_id: left_node_id.clone(),
-                                            purl: to_purls(left_purl_string.clone()),
-                                            cpe: to_cpes(left_cpe_json),
-                                            name: left_node_name.clone(),
-                                            version: left_node_version.clone(),
-                                            published: sbom_published.clone(),
-                                            document_id: document_id.clone(),
-                                            product_name: product_name.clone(),
-                                            product_version: product_version.clone(),
-                                        };
-                                        let i = g.add_node(new_node);
-                                        nodes.insert(left_node_id.clone(), i);
-                                        i
-                                    }
-                                };
-
-                                let p2 = match nodes.get(&right_node_id) {
-                                    Some(&node_index) => node_index, // already exists
-                                    None => {
-                                        let new_node = PackageNode {
-                                            sbom_id: distinct_sbom_id.clone(),
-                                            node_id: right_node_id.clone(),
-                                            purl: to_purls(right_purl_string.clone()),
-                                            cpe: to_cpes(right_cpe_json),
-                                            name: right_node_name.clone(),
-                                            version: right_node_version.clone(),
-                                            published: sbom_published.clone(),
-                                            document_id: document_id.clone(),
-                                            product_name: product_name.clone(),
-                                            product_version: product_version.clone(),
-                                        };
-                                        let i = g.add_node(new_node);
-                                        nodes.insert(right_node_id.clone(), i);
-                                        i
-                                    }
-                                };
-
-                                g.add_edge(p1, p2, relationship);
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        log::error!("Error fetching graph relationships: {}", err);
-                    }
-                }
-
-                // Set relationships implicitly defined in SBOM
-                match get_implicit_relationships(connection, &distinct_sbom_id.to_string()).await {
-                    Ok(results) => {
-                        for row in results {
-                            let (
-                                sbom_published,
-                                document_id,
-                                product_name,
-                                product_version,
-                                node_id,
-                                purl,
-                                cpe,
-                                node_name,
-                                node_version,
-                            ) = {
-                                let default_value = "NOVALUE".to_string(); // TODO: this eventually will have different defaults.
-                                (
-                                    row.try_get("", "published")
-                                        .unwrap_or_else(|_| default_value.clone()),
-                                    row.try_get("", "document_id")
-                                        .unwrap_or_else(|_| default_value.clone()),
-                                    row.try_get("", "product_name")
-                                        .unwrap_or_else(|_| default_value.clone()),
-                                    row.try_get("", "product_version")
-                                        .unwrap_or_else(|_| default_value.clone()),
-                                    row.try_get("", "node_id").unwrap_or(default_value.clone()),
-                                    row.try_get::<Vec<String>>("", "purl").unwrap_or_default(),
-                                    row.try_get("", "cpe")
-                                        .ok()
-                                        .unwrap_or_else(Vec::<serde_json::Value>::new),
-                                    row.try_get("", "node_name")
-                                        .unwrap_or(default_value.clone()),
-                                    row.try_get("", "node_version")
-                                        .unwrap_or(default_value.clone()),
-                                )
-                            };
-
-                            let p1 = match nodes.get(&node_id) {
+                        if relationship == Relationship::DescribedBy {
+                            // Save for implicit relationships performed later
+                            describedby_node_id = Some(left_node_id);
+                        } else {
+                            let p1 = match nodes.get(&left_node_id) {
                                 Some(&node_index) => node_index, // already exists
                                 None => {
                                     let new_node = PackageNode {
-                                        sbom_id: distinct_sbom_id.clone(),
-                                        node_id: node_id.clone(),
-                                        purl: to_purls(purl),
-                                        cpe: to_cpes(cpe),
-                                        name: node_name.clone(),
-                                        version: node_version.clone(),
+                                        sbom_id: distinct_sbom_id.to_string(),
+                                        node_id: left_node_id.clone(),
+                                        purl: to_purls(left_purl_string.clone()),
+                                        cpe: to_cpes(left_cpe_json),
+                                        name: left_node_name.clone(),
+                                        version: left_node_version.clone(),
                                         published: sbom_published.clone(),
                                         document_id: document_id.clone(),
                                         product_name: product_name.clone(),
                                         product_version: product_version.clone(),
                                     };
                                     let i = g.add_node(new_node);
-                                    nodes.insert(node_id.clone(), i);
+                                    nodes.insert(left_node_id.clone(), i);
                                     i
                                 }
                             };
 
-                            if let Some(describedby_node_index) =
-                                describedby_node_id.as_ref().and_then(|id| nodes.get(id))
-                            {
-                                g.add_edge(p1, *describedby_node_index, Relationship::Undefined);
-                            } else {
-                                log::warn!("No 'describes' relationship found in {} SBOM, no implicit relationship set.", distinct_sbom_id);
-                            }
+                            let p2 = match nodes.get(&right_node_id) {
+                                Some(&node_index) => node_index, // already exists
+                                None => {
+                                    let new_node = PackageNode {
+                                        sbom_id: distinct_sbom_id.to_string(),
+                                        node_id: right_node_id.clone(),
+                                        purl: to_purls(right_purl_string.clone()),
+                                        cpe: to_cpes(right_cpe_json),
+                                        name: right_node_name.clone(),
+                                        version: right_node_version.clone(),
+                                        published: sbom_published.clone(),
+                                        document_id: document_id.clone(),
+                                        product_name: product_name.clone(),
+                                        product_version: product_version.clone(),
+                                    };
+                                    let i = g.add_node(new_node);
+                                    nodes.insert(right_node_id.clone(), i);
+                                    i
+                                }
+                            };
+
+                            g.add_edge(p1, p2, relationship);
                         }
                     }
-                    Err(err) => {
-                        log::error!("Error fetching graph relationships: {}", err);
+                }
+                Err(err) => {
+                    log::error!("Error fetching graph relationships: {}", err);
+                }
+            }
+
+            // Set relationships implicitly defined in SBOM
+            match get_implicit_relationships(connection, &distinct_sbom_id.to_string()).await {
+                Ok(results) => {
+                    for row in results {
+                        let (
+                            sbom_published,
+                            document_id,
+                            product_name,
+                            product_version,
+                            node_id,
+                            purl,
+                            cpe,
+                            node_name,
+                            node_version,
+                        ) = {
+                            let default_value = "NOVALUE".to_string(); // TODO: this eventually will have different defaults.
+                            (
+                                row.try_get("", "published")
+                                    .unwrap_or_else(|_| default_value.clone()),
+                                row.try_get("", "document_id")
+                                    .unwrap_or_else(|_| default_value.clone()),
+                                row.try_get("", "product_name")
+                                    .unwrap_or_else(|_| default_value.clone()),
+                                row.try_get("", "product_version")
+                                    .unwrap_or_else(|_| default_value.clone()),
+                                row.try_get("", "node_id").unwrap_or(default_value.clone()),
+                                row.try_get::<Vec<String>>("", "purl").unwrap_or_default(),
+                                row.try_get("", "cpe")
+                                    .ok()
+                                    .unwrap_or_else(Vec::<serde_json::Value>::new),
+                                row.try_get("", "node_name")
+                                    .unwrap_or(default_value.clone()),
+                                row.try_get("", "node_version")
+                                    .unwrap_or(default_value.clone()),
+                            )
+                        };
+
+                        let p1 = match nodes.get(&node_id) {
+                            Some(&node_index) => node_index, // already exists
+                            None => {
+                                let new_node = PackageNode {
+                                    sbom_id: distinct_sbom_id.to_string(),
+                                    node_id: node_id.clone(),
+                                    purl: to_purls(purl),
+                                    cpe: to_cpes(cpe),
+                                    name: node_name.clone(),
+                                    version: node_version.clone(),
+                                    published: sbom_published.clone(),
+                                    document_id: document_id.clone(),
+                                    product_name: product_name.clone(),
+                                    product_version: product_version.clone(),
+                                };
+                                let i = g.add_node(new_node);
+                                nodes.insert(node_id.clone(), i);
+                                i
+                            }
+                        };
+
+                        if let Some(describedby_node_index) =
+                            describedby_node_id.as_ref().and_then(|id| nodes.get(id))
+                        {
+                            g.add_edge(p1, *describedby_node_index, Relationship::Undefined);
+                        } else {
+                            log::warn!("No 'describes' relationship found in {} SBOM, no implicit relationship set.", distinct_sbom_id);
+                        }
                     }
                 }
-
-                self.graph.write().insert(distinct_sbom_id.to_string(), g);
+                Err(err) => {
+                    log::error!("Error fetching graph relationships: {}", err);
+                }
             }
+
+            self.graph.write().insert(distinct_sbom_id.to_string(), g);
+        }
+    }
+
+    /// Load all SBOMs by the provided IDs
+    pub async fn load_graphs<C: ConnectionTrait>(
+        &self,
+        connection: &C,
+        distinct_sbom_ids: &Vec<String>,
+    ) -> Result<(), DbErr> {
+        for distinct_sbom_id in distinct_sbom_ids {
+            self.load_graph(connection, &distinct_sbom_id).await;
         }
 
         Ok(())
