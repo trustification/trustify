@@ -585,9 +585,6 @@ async fn spdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn cdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    use std::str::FromStr;
-    use trustify_common::purl::Purl;
-
     let app = caller(ctx).await?;
     ctx.ingest_documents(["cyclonedx/openssl-3.0.7-18.el9_2.cdx_1.6.sbom.json"])
         .await?;
