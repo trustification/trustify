@@ -21,10 +21,10 @@ use trustify_common::{
 };
 use trustify_cvss::cvss3::{score::Score, severity::Severity, Cvss3Base};
 use trustify_entity::{
-    advisory, base_purl, cpe, cvss3, license, organization, package_relates_to_package, product,
-    product_status, product_version, product_version_range, purl_license_assertion, purl_status,
-    qualified_purl, relationship::Relationship, sbom, sbom_package, sbom_package_purl_ref, status,
-    version_range, versioned_purl, vulnerability,
+    advisory, base_purl, cpe, cvss3, license, organization, product, product_status,
+    product_version, product_version_range, purl_license_assertion, purl_status, qualified_purl,
+    sbom, sbom_package, sbom_package_purl_ref, status, version_range, versioned_purl,
+    vulnerability,
 };
 use trustify_module_ingestor::common::{Deprecation, DeprecationForExt};
 use utoipa::ToSchema;
@@ -38,7 +38,6 @@ pub struct PurlDetails {
     pub base: BasePurlHead,
     pub advisories: Vec<PurlAdvisory>,
     pub licenses: Vec<PurlLicenseSummary>,
-    pub relationships: HashMap<Relationship, Vec<String>>,
 }
 
 impl PurlDetails {
@@ -115,27 +114,12 @@ impl PurlDetails {
             .all(tx)
             .await?;
 
-        let relationships: HashMap<Relationship, Vec<_>> =
-            package_relates_to_package::Entity::find()
-                .filter(
-                    package_relates_to_package::Column::LeftNodeId
-                        .eq(qualified_package.purl.to_string()),
-                )
-                .all(tx)
-                .await?
-                .into_iter()
-                .fold(HashMap::new(), |mut h, m| {
-                    h.entry(m.relationship).or_default().push(m.right_node_id);
-                    h
-                });
-
         Ok(PurlDetails {
             head: PurlHead::from_entity(&package, &package_version, qualified_package, tx).await?,
             version: VersionedPurlHead::from_entity(&package, &package_version, tx).await?,
             base: BasePurlHead::from_entity(&package).await?,
             advisories: PurlAdvisory::from_entities(purl_statuses, product_statuses, tx).await?,
             licenses: PurlLicenseSummary::from_entities(&licenses, tx).await?,
-            relationships,
         })
     }
 }
