@@ -419,7 +419,7 @@ where
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn issue_tc_2050(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     ctx.ingest_documents(["cyclonedx/openssl-3.0.7-18.el9_2.cdx_1.6.sbom.json"])
         .await?;
@@ -457,7 +457,7 @@ async fn issue_tc_2050(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn issue_tc_2051(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn spdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     ctx.ingest_documents(["spdx/openssl-3.0.7-18.el9_2.spdx.json"])
         .await?;
@@ -495,7 +495,7 @@ async fn issue_tc_2051(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn issue_tc_2052(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     ctx.ingest_documents(["cyclonedx/66FF73123BB3489.json"])
         .await?;
@@ -533,7 +533,7 @@ async fn issue_tc_2052(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn issue_tc_2053(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn spdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     ctx.ingest_documents(["ubi9-9.2-755.1697625012.json"])
         .await?;
@@ -584,7 +584,10 @@ async fn issue_tc_2053(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn issue_tc_2054(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn cdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    use std::str::FromStr;
+    use trustify_common::purl::Purl;
+
     let app = caller(ctx).await?;
     ctx.ingest_documents(["cyclonedx/openssl-3.0.7-18.el9_2.cdx_1.6.sbom.json"])
         .await?;
