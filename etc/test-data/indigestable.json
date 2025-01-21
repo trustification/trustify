@@ -1,0 +1,32 @@
+{
+  "SPDXVersion": "SPDX-2.2",
+  "DataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "DocumentName": "Example-SPDX-Document-using-AncestorOf",
+  "DocumentNamespace": "http://spdx.org/spdxdocs/example-spdx-document-123456",
+  "Creator": "Person: Jim Fuller-RedHat",
+  "Created": "2025-01-21T17:41:32Z",
+  "packages": [
+    {
+      "PackageName": "PackageUpstreamA",
+      "SPDXID": "SPDXRef-PackageUpstreamA",
+      "PackageVersion": "1.0",
+      "PackageDownloadLocation": "NOASSERTION",
+      "FilesAnalyzed": false
+    },
+    {
+      "PackageName": "PackageB",
+      "SPDXID": "SPDXRef-PackageB",
+      "PackageVersion": "2.0",
+      "PackageDownloadLocation": "NOASSERTION",
+      "FilesAnalyzed": false
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-PackageUpstreamA",
+      "relationshipType": "ANCESTOR_OF",
+      "relatedSpdxElement": "SPDXRef-PackageB"
+    }
+  ]
+}
