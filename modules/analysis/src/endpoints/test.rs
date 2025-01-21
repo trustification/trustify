@@ -640,7 +640,7 @@ async fn cdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn issue_spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // test case for the simple case of "relationshipType": "PACKAGE_OF" spdx relationships:
     // https://github.com/trustification/trustify/issues/1140
 
