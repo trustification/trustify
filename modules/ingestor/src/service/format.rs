@@ -300,7 +300,7 @@ mod test {
         assert!(matches!(Format::from_bytes(&spdx), Ok(Format::SPDX)));
 
         let indigestable = document_bytes("indigestable.json").await?;
-        assert!(matches!(Format::from_bytes(&indigestable), Err(_)));
+        assert!(Format::from_bytes(&indigestable).is_err());
 
         let cwe = document_read("cwec_latest.xml.zip")?;
         let mut cwe = ZipArchive::new(cwe)?;
