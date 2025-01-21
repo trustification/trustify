@@ -104,8 +104,8 @@ impl<'g> Format {
         match Self::advisory_from_bytes(bytes) {
             Err(Error::UnsupportedFormat(ea)) => match Self::sbom_from_bytes(bytes) {
                 Err(Error::UnsupportedFormat(es)) => match Self::is_cwe_catalog(bytes) {
-                    Ok(_) => Ok(Self::CweCatalog),
-                    Err(_) => Err(Error::UnsupportedFormat(format!("{ea}\n{es}"))),
+                    Ok(true) => Ok(Self::CweCatalog),
+                    _ => Err(Error::UnsupportedFormat(format!("{ea}\n{es}"))),
                 },
                 x => x,
             },
@@ -237,7 +237,7 @@ impl<'g> Format {
                     // First tag was apparently not the droids we were looking for.
                     return Ok(false);
                 }
-                Err(_) => return Ok(false),
+                Err(_) | Ok(Event::Eof) => return Ok(false),
                 _ => {
                     // not an error or a start tag, keep on looping
                     buf.clear()
@@ -298,6 +298,9 @@ mod test {
 
         let spdx = document_bytes("ubi9-9.2-755.1697625012.json").await?;
         assert!(matches!(Format::from_bytes(&spdx), Ok(Format::SPDX)));
+
+        let indigestable = document_bytes("indigestable.json").await?;
+        assert!(matches!(Format::from_bytes(&indigestable), Err(_)));
 
         let cwe = document_read("cwec_latest.xml.zip")?;
         let mut cwe = ZipArchive::new(cwe)?;
