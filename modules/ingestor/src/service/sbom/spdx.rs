@@ -1,6 +1,6 @@
 use crate::{
     graph::{
-        sbom::spdx::{self, parse_spdx},
+        sbom::spdx::{self},
         Graph,
     },
     model::IngestResult,
@@ -9,7 +9,7 @@ use crate::{
 use sea_orm::TransactionTrait;
 use serde_json::Value;
 use tracing::instrument;
-use trustify_common::{hashing::Digests, id::Id};
+use trustify_common::{hashing::Digests, id::Id, sbom::spdx::parse_spdx};
 use trustify_entity::labels::Labels;
 
 pub struct SpdxLoader<'g> {

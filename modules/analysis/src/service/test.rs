@@ -1,10 +1,12 @@
 use super::*;
-
 use std::str::FromStr;
+use std::time::SystemTime;
 use test_context::test_context;
 use test_log::test;
-use trustify_common::{cpe::Cpe, db::query::Query, model::Paginated, purl::Purl};
-use trustify_test_context::TrustifyContext;
+use trustify_common::{
+    cpe::Cpe, db::query::Query, model::Paginated, purl::Purl, sbom::spdx::fix_license,
+};
+use trustify_test_context::{document, spdx::fix_spdx_rels, TrustifyContext};
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
@@ -405,6 +407,27 @@ async fn test_retrieve_all_sbom_roots_by_name1(ctx: &TrustifyContext) -> Result<
         .await?;
 
     assert_eq!(roots.last().unwrap().name, "quarkus-bom");
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn load_performance(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let (spdx, _) =
+        document::<serde_json::Value>("openshift-container-storage-4.8.z.json.xz").await?;
+    let (spdx, _) = fix_license(&(), spdx);
+    let spdx = fix_spdx_rels(serde_json::from_value(spdx)?);
+    ctx.ingest_json(&spdx).await?;
+
+    let start = SystemTime::now();
+    let service = AnalysisService::new();
+    service.load_all_graphs(&ctx.db).await?;
+
+    log::info!(
+        "Loading took: {}",
+        humantime::format_duration(start.elapsed()?)
+    );
 
     Ok(())
 }
