@@ -637,3 +637,45 @@ async fn cdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn issue_spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    // test case for the simple case of "relationshipType": "PACKAGE_OF" spdx relationships:
+    // https://github.com/trustification/trustify/issues/1140
+
+    let app = caller(ctx).await?;
+    ctx.ingest_document("spdx/SATELLITE-6.15-RHEL-8.json")
+        .await?;
+
+    let purl = "pkg:rpm/redhat/rubygem-google-cloud-compute@0.5.0-1.el8sat?arch=src";
+
+    // Ensure parent has deps that include the child
+    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(purl));
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    log::debug!("{response:#?}");
+
+    let sbom = &response["items"][0];
+    let matches: Vec<_> = sbom["deps"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|m| {
+            m == &&json!({
+                "sbom_id": sbom["sbom_id"],
+                "node_id": "SPDXRef-83c9faa0-ca85-4e48-9165-707b2f9a324b",
+                "relationship": "PackageOf",
+                "purl": [],
+                "cpe": m["cpe"], // long list assume it's correct
+                "name": "SATELLITE-6.15-RHEL-8",
+                "version": "6.15",
+                "deps": [],
+            })
+        })
+        .collect();
+
+    assert_eq!(1, matches.len());
+
+    Ok(())
+}

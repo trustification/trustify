@@ -100,6 +100,7 @@ mod m0000800_alter_product_version_range_scheme;
 mod m0000810_fix_get_purl;
 mod m0000820_create_conversation;
 mod m0000830_perf_indexes;
+mod m0000840_add_relationship_14_15;
 
 pub struct Migrator;
 
@@ -207,6 +208,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000810_fix_get_purl::Migration),
             Box::new(m0000820_create_conversation::Migration),
             Box::new(m0000830_perf_indexes::Migration),
+            Box::new(m0000840_add_relationship_14_15::Migration),
         ]
     }
 }
