@@ -88,7 +88,7 @@ pub async fn get_nodes<C: ConnectionTrait>(
     let stmt =
         Statement::from_sql_and_values(DatabaseBackend::Postgres, sql, [distinct_sbom_id.into()]);
 
-    Ok(Node::find_by_statement(stmt).all(connection).await?)
+    Node::find_by_statement(stmt).all(connection).await
 }
 
 #[instrument(skip(connection))]
@@ -268,22 +268,19 @@ impl AnalysisService {
             log::debug!("Adding edge {:?}", edge);
 
             // insert edge into the graph
-            match (
+            if let (Some(left), Some(right)) = (
                 nodes.get(&edge.left_node_id),
                 nodes.get(&edge.right_node_id),
             ) {
-                (Some(left), Some(right)) => {
-                    if edge.relationship == Relationship::DescribedBy {
-                        describedby_node_id.push(*left);
-                    }
-
-                    // remove all node IDs we somehow connected
-                    detected_nodes.remove(&edge.left_node_id);
-                    detected_nodes.remove(&edge.right_node_id);
-
-                    g.add_edge(*left, *right, edge.relationship);
+                if edge.relationship == Relationship::DescribedBy {
+                    describedby_node_id.push(*left);
                 }
-                _ => {}
+
+                // remove all node IDs we somehow connected
+                detected_nodes.remove(&edge.left_node_id);
+                detected_nodes.remove(&edge.right_node_id);
+
+                g.add_edge(*left, *right, edge.relationship);
             }
         }
 

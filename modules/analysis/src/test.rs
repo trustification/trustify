@@ -64,7 +64,7 @@ where
         .map(|item| {
             item.ancestors
                 .iter()
-                .map(|anc| OwnedNode::from(anc))
+                .map(OwnedNode::from)
                 .sorted_by_key(|n| n.id.to_string())
                 .collect::<Vec<_>>()
         })
