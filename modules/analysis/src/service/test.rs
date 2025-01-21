@@ -1,6 +1,6 @@
 use super::*;
-use std::str::FromStr;
-use std::time::SystemTime;
+use crate::test::*;
+use std::{str::FromStr, time::SystemTime};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::{
@@ -107,29 +107,30 @@ async fn test_simple_by_name_analysis_service(ctx: &TrustifyContext) -> Result<(
         .retrieve_root_components("B", Paginated::default(), &ctx.db)
         .await?;
 
-    assert_eq!(
-        analysis_graph
-            .items
-            .last()
-            .unwrap()
-            .ancestors
-            .last()
-            .unwrap()
-            .purl,
-        vec![Purl::from_str("pkg:rpm/redhat/A@0.0.0?arch=src")?]
-    );
-    assert_eq!(
-        analysis_graph
-            .items
-            .last()
-            .unwrap()
-            .ancestors
-            .last()
-            .unwrap()
-            .node_id,
-        "SPDXRef-A".to_string()
-    );
+    assert_ancestors(&analysis_graph.items, |ancestors| {
+        assert_eq!(
+            ancestors,
+            &[&[
+                Node {
+                    id: "SPDXRef-A",
+                    name: "A",
+                    version: "1",
+                    cpes: &["cpe:/a:redhat:simple:1:*:el9:*"],
+                    purls: &["pkg:rpm/redhat/A@0.0.0?arch=src"],
+                },
+                Node {
+                    id: "SPDXRef-DOCUMENT",
+                    name: "simple",
+                    version: "",
+                    cpes: &[],
+                    purls: &[],
+                },
+            ]]
+        );
+    });
+
     assert_eq!(analysis_graph.total, 1);
+
     Ok(())
 }
 
@@ -146,28 +147,28 @@ async fn test_simple_by_purl_analysis_service(ctx: &TrustifyContext) -> Result<(
         .retrieve_root_components(&component_purl, Paginated::default(), &ctx.db)
         .await?;
 
-    assert_eq!(
-        analysis_graph
-            .items
-            .last()
-            .unwrap()
-            .ancestors
-            .last()
-            .unwrap()
-            .purl,
-        vec![Purl::from_str("pkg:rpm/redhat/A@0.0.0?arch=src")?]
-    );
-    assert_eq!(
-        analysis_graph
-            .items
-            .last()
-            .unwrap()
-            .ancestors
-            .last()
-            .unwrap()
-            .node_id,
-        "SPDXRef-A".to_string()
-    );
+    assert_ancestors(&analysis_graph.items, |ancestors| {
+        assert_eq!(
+            ancestors,
+            [[
+                Node {
+                    id: "SPDXRef-A",
+                    name: "A",
+                    version: "1",
+                    purls: &["pkg:rpm/redhat/A@0.0.0?arch=src"],
+                    cpes: &["cpe:/a:redhat:simple:1:*:el9:*"],
+                },
+                Node {
+                    id: "SPDXRef-DOCUMENT",
+                    name: "simple",
+                    version: "",
+                    cpes: &[],
+                    purls: &[],
+                }
+            ]]
+        );
+    });
+
     assert_eq!(analysis_graph.total, 1);
     Ok(())
 }
@@ -187,23 +188,36 @@ async fn test_quarkus_analysis_service(ctx: &TrustifyContext) -> Result<(), anyh
         .retrieve_root_components(&Query::q("spymemcached"), Paginated::default(), &ctx.db)
         .await?;
 
-    assert_eq!(
-        analysis_graph.items.last().unwrap().ancestors.last().unwrap().purl,
-        vec![Purl::from_str("pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?type=pom&repository_url=https%3a%2f%2fmaven.repository.redhat.com%2fga%2f")?]
-    );
-    assert_eq!(
-        analysis_graph
-            .items
-            .last()
-            .unwrap()
-            .ancestors
-            .last()
-            .unwrap()
-            .node_id,
-        "SPDXRef-e24fec28-1001-499c-827f-2e2e5f2671b5".to_string()
-    );
+    assert_ancestors(&analysis_graph.items, |ancestors| {
+        assert!(
+            matches!(ancestors, [
+                [..],
+                [
+                   Node {
+                       id: "SPDXRef-DOCUMENT",
+                       name: "quarkus-bom-3.2.12.Final-redhat-00002",
+                       version: "",
+                       ..
+                   },
+                   Node {
+                       id: "SPDXRef-e24fec28-1001-499c-827f-2e2e5f2671b5",
+                       name: "quarkus-bom",
+                       version: "3.2.12.Final-redhat-00002",
+                       cpes: [
+                           "cpe:/a:redhat:quarkus:3.2:*:el8:*",
+                       ],
+                       purls: [
+                           "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?repository_url=https://maven.repository.redhat.com/ga/&type=pom"
+                       ],
+                   },
+                ]
+            ]),
+            "must match: {ancestors:#?}"
+        );
+    });
 
     assert_eq!(analysis_graph.total, 2);
+
     Ok(())
 }
 
@@ -384,7 +398,7 @@ async fn test_circular_deps_spdx_service(ctx: &TrustifyContext) -> Result<(), an
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
-async fn test_retrieve_all_sbom_roots_by_name1(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn test_retrieve_all_sbom_roots_by_name(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingest_documents(["spdx/quarkus-bom-3.2.11.Final-redhat-00001.json"])
         .await?;
 
@@ -394,6 +408,8 @@ async fn test_retrieve_all_sbom_roots_by_name1(ctx: &TrustifyContext) -> Result<
     let analysis_graph = service
         .retrieve_root_components(&Query::q(&component_name), Paginated::default(), &ctx.db)
         .await?;
+
+    log::debug!("Result: {analysis_graph:#?}");
 
     let sbom_id = analysis_graph
         .items
@@ -406,7 +422,10 @@ async fn test_retrieve_all_sbom_roots_by_name1(ctx: &TrustifyContext) -> Result<
         .retrieve_all_sbom_roots_by_name(sbom_id, component_name, &ctx.db)
         .await?;
 
-    assert_eq!(roots.last().unwrap().name, "quarkus-bom");
+    assert_eq!(
+        roots.last().unwrap().name,
+        "quarkus-bom-3.2.11.Final-redhat-00001"
+    );
 
     Ok(())
 }
