@@ -516,28 +516,34 @@ async fn issue_tc_2052(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn issue_tc_2054(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    use std::str::FromStr;
+    use trustify_common::purl::Purl;
+
     let app = caller(ctx).await?;
     ctx.ingest_documents(["cyclonedx/openssl-3.0.7-18.el9_2.cdx_1.6.sbom.json"])
         .await?;
 
-    // Find all deps of parent
     let parent = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
+    let child = "pkg:generic/openssl@3.0.7?download_url=https://pkgs.devel.redhat.com/repo/openssl/openssl-3.0.7-hobbled.tar.gz/sha512/1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e/openssl-3.0.7-hobbled.tar.gz&checksum=SHA-512:1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e";
+
+    // Ensure parent has deps that include the child
     let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
+    let deps: Vec<_> = response["items"][0]["deps"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|m| m["relationship"] == "AncestorOf")
+        .collect();
+    assert_eq!(1, deps.len());
     assert_eq!(
-        1,
-        response["items"][0]["deps"]
-            .as_array()
-            .into_iter()
-            .flatten()
-            .filter(|m| m["relationship"] == "AncestorOf")
-            .count()
+        Purl::from_str(child)?,
+        Purl::from_str(deps[0]["purl"][0].as_str().unwrap())?
     );
 
-    // Ensure child has ancestors
-    let child = "pkg:generic/openssl@3.0.7?download_url=https://pkgs.devel.redhat.com/repo/openssl/openssl-3.0.7-hobbled.tar.gz/sha512/1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e/openssl-3.0.7-hobbled.tar.gz&checksum=SHA-512:1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e";
+    // Ensure child has ancestors that include the parent
     let uri = format!(
         "/api/v2/analysis/root-component/{}",
         urlencoding::encode(child)
