@@ -402,6 +402,7 @@ async fn issue_tc_2050(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
+
     assert_eq!(
         35,
         response["items"][0]["deps"]
