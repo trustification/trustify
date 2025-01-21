@@ -1,7 +1,9 @@
 use crate::test::caller;
 use actix_http::Request;
 use actix_web::test::TestRequest;
+use itertools::Itertools;
 use serde_json::{json, Value};
+use std::collections::HashMap;
 use test_context::test_context;
 use test_log::test;
 use trustify_test_context::{call::CallService, TrustifyContext};
@@ -179,27 +181,25 @@ async fn test_simple_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::E
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
-    println!("Result: {response:#?}");
-
     assert_eq!(
         response["items"][0]["purl"],
         Value::from(["pkg:rpm/redhat/A@0.0.0?arch=src"]),
     );
 
-    let purls: Value = response["items"][0]["deps"]
+    let purls = response["items"][0]["deps"]
         .as_array()
         .iter()
         .map(|deps| *deps)
         .flatten()
         .flat_map(|dep| dep["purl"].as_array())
         .flatten()
-        .cloned()
-        .collect::<Vec<_>>()
-        .into();
+        .flat_map(|purl| purl.as_str().map(|s| s.to_string()))
+        .sorted()
+        .collect::<Vec<_>>();
 
     assert_eq!(
         purls,
-        json!(["pkg:rpm/redhat/B@0.0.0", "pkg:rpm/redhat/EE@0.0.0?arch=src"])
+        &["pkg:rpm/redhat/B@0.0.0", "pkg:rpm/redhat/EE@0.0.0?arch=src"]
     );
 
     assert_eq!(&response["total"], 2);
@@ -379,7 +379,7 @@ async fn test_retrieve_query_params_endpoint(ctx: &TrustifyContext) -> Result<()
     let uri = format!("/api/v2/analysis/root-component?q=sbom_id={}", sbom_id);
     let request: Request = TestRequest::get().uri(uri.clone().as_str()).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(&response["total"], 8);
+    assert_eq!(&response["total"], 9);
 
     // negative test
     let uri =
@@ -397,6 +397,27 @@ async fn test_retrieve_query_params_endpoint(ctx: &TrustifyContext) -> Result<()
     Ok(())
 }
 
+fn count_deps<F>(response: &Value, filter: F) -> HashMap<&str, usize>
+where
+    F: Fn(&Value) -> bool,
+{
+    let mut num = HashMap::new();
+
+    for item in response["items"].as_array().unwrap() {
+        num.insert(
+            item["node_id"].as_str().unwrap(),
+            item["deps"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter(|f| filter(f))
+                .count(),
+        );
+    }
+
+    num
+}
+
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn issue_tc_2050(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
@@ -411,15 +432,8 @@ async fn issue_tc_2050(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
 
-    assert_eq!(
-        35,
-        response["items"][0]["deps"]
-            .as_array()
-            .into_iter()
-            .flatten()
-            .filter(|m| m["relationship"] == "GeneratedFrom")
-            .count()
-    );
+    let num = count_deps(&response, |m| m["relationship"] == "GeneratedFrom");
+    assert_eq!(num["pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"], 35);
 
     // Ensure binary rpm GeneratedFrom src rpm
     let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
@@ -455,15 +469,9 @@ async fn issue_tc_2051(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
-    assert_eq!(
-        35,
-        response["items"][0]["deps"]
-            .as_array()
-            .into_iter()
-            .flatten()
-            .filter(|m| m["relationship"] == "GeneratedFrom")
-            .count()
-    );
+
+    let num = count_deps(&response, |m| m["relationship"] == "GeneratedFrom");
+    assert_eq!(num["SPDXRef-SRPM"], 35);
 
     // Ensure binary rpm GeneratedFrom src rpm
     let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
@@ -499,7 +507,9 @@ async fn issue_tc_2052(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
-    assert_eq!(1, response["items"][0]["deps"].as_array().unwrap().len());
+
+    let num = count_deps(&response, |_| true);
+    assert_eq!(num["pkg:oci/openshift-ose-console@sha256%3A94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679"], 1);
 
     // Ensure child is variant of src
     let child = "pkg:oci/ose-console@sha256:c2d69e860b7457eb42f550ba2559a0452ec3e5c9ff6521d758c186266247678e?arch=s390x&os=linux&tag=v4.14.0-202412110104.p0.g350e1ea.assembly.stream.el8";
@@ -576,32 +586,38 @@ async fn issue_tc_2053(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn issue_tc_2054(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    use std::str::FromStr;
-    use trustify_common::purl::Purl;
-
     let app = caller(ctx).await?;
     ctx.ingest_documents(["cyclonedx/openssl-3.0.7-18.el9_2.cdx_1.6.sbom.json"])
         .await?;
 
     let parent = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
-    let child = "pkg:generic/openssl@3.0.7?download_url=https://pkgs.devel.redhat.com/repo/openssl/openssl-3.0.7-hobbled.tar.gz/sha512/1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e/openssl-3.0.7-hobbled.tar.gz&checksum=SHA-512:1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e";
+    let child = "pkg:generic/openssl@3.0.7?checksum=SHA-512:1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e&download_url=https://pkgs.devel.redhat.com/repo/openssl/openssl-3.0.7-hobbled.tar.gz/sha512/1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e/openssl-3.0.7-hobbled.tar.gz";
 
     // Ensure parent has deps that include the child
     let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
-    let deps: Vec<_> = response["items"][0]["deps"]
+
+    // get all PURLs of 'AncestorOf' for all dependencies of the parent
+    let deps: Vec<_> = response["items"]
         .as_array()
         .into_iter()
         .flatten()
+        // we're only looking for the parent node
+        .filter(|m| m["node_id"] == parent)
+        // flatten all dependencies of that parent node
+        .flat_map(|m| m["deps"].as_array().into_iter().flatten())
+        // filter out all non-AncestorOf dependencies
         .filter(|m| m["relationship"] == "AncestorOf")
         .collect();
+
+    // check if there is one dependency of type 'AncestorOf' in the parent package dependencies
     assert_eq!(1, deps.len());
-    assert_eq!(
-        Purl::from_str(child)?,
-        Purl::from_str(deps[0]["purl"][0].as_str().unwrap())?
-    );
+    // that dependency must have a single purl
+    assert_eq!(1, deps[0]["purl"].as_array().unwrap().len());
+    // that purl must be the child purl
+    assert_eq!(child, deps[0]["purl"][0]);
 
     // Ensure child has ancestors that include the parent
     let uri = format!(
