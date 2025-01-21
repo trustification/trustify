@@ -146,6 +146,7 @@ impl AnalysisService {
         Self::default()
     }
 
+    #[instrument(skip_all, err)]
     pub async fn load_all_graphs<C: ConnectionTrait>(&self, connection: &C) -> Result<(), Error> {
         // retrieve all sboms in trustify
 
@@ -191,9 +192,10 @@ impl AnalysisService {
     /// Collect nodes from the graph
     ///
     /// Similar to [`Self::query_graph`], but manages the state of collecting.
+    #[instrument(skip(self, init, collector))]
     fn collect_graph<'a, T, I, C>(
         &self,
-        query: impl Into<GraphQuery<'a>>,
+        query: impl Into<GraphQuery<'a>> + Debug,
         distinct_sbom_ids: Vec<String>,
         init: I,
         collector: C,
@@ -212,9 +214,10 @@ impl AnalysisService {
     }
 
     /// Traverse the graph, call the function for every matching node.
+    #[instrument(skip(self, f))]
     fn query_graph<'a, F>(
         &self,
-        query: impl Into<GraphQuery<'a>>,
+        query: impl Into<GraphQuery<'a>> + Debug,
         distinct_sbom_ids: Vec<String>,
         mut f: F,
     ) where
@@ -253,9 +256,10 @@ impl AnalysisService {
         }
     }
 
+    #[instrument(skip(self))]
     pub fn query_ancestor_graph<'a>(
         &self,
-        query: impl Into<GraphQuery<'a>>,
+        query: impl Into<GraphQuery<'a>> + Debug,
         distinct_sbom_ids: Vec<String>,
     ) -> Vec<AncestorSummary> {
         self.collect_graph(
@@ -271,9 +275,10 @@ impl AnalysisService {
         )
     }
 
+    #[instrument(skip(self))]
     pub async fn query_deps_graph(
         &self,
-        query: impl Into<GraphQuery<'_>>,
+        query: impl Into<GraphQuery<'_>> + Debug,
         distinct_sbom_ids: Vec<String>,
     ) -> Vec<DepSummary> {
         self.collect_graph(
