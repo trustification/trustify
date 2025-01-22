@@ -654,7 +654,7 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(purl));
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{response:#?}");
+    log::debug!("{}", serde_json::to_string_pretty(&response)?);
 
     let sbom = &response["items"][0];
     let matches: Vec<_> = sbom["deps"]
@@ -671,6 +671,34 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 "name": "SATELLITE-6.15-RHEL-8",
                 "version": "6.15",
                 "deps": [],
+            })
+        })
+        .collect();
+
+    assert_eq!(1, matches.len());
+
+    let uri = format!(
+        "/api/v2/analysis/root-component?q={}",
+        urlencoding::encode("SATELLITE-6.15-RHEL-8")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    log::info!("{}", serde_json::to_string_pretty(&response)?);
+
+    let sbom = &response["items"][0];
+    let matches: Vec<_> = sbom["ancestors"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|m| {
+            m == &&json!({
+              "sbom_id":  sbom["sbom_id"],
+              "node_id": m["node_id"],
+              "relationship": "PackageOf",
+              "purl": m["purl"], // long list assume it's correct
+              "cpe": m["cpe"], // long list assume it's correct
+              "name": "rubygem-google-cloud-compute",
+              "version": "0.5.0-1.el8sat"
             })
         })
         .collect();
