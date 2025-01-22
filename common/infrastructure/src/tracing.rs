@@ -123,13 +123,13 @@ fn init_otlp(name: &str) {
             "service.name",
             name.to_string(),
         )]))
-        .with_batch_exporter(exporter, opentelemetry_sdk::runtime::Tokio)
+        .with_batch_exporter(exporter, opentelemetry_sdk::runtime::TokioCurrentThread)
         .with_sampler(opentelemetry_sdk::trace::Sampler::ParentBased(Box::new(
             sampler(),
         )))
         .build();
 
-    println!("Using Jaeger tracing.");
+    println!("Using OTEL Collector with Jaeger as the back-end.");
     println!("{:#?}", provider);
 
     let formatting_layer = tracing_subscriber::fmt::Layer::default();
@@ -142,6 +142,7 @@ fn init_otlp(name: &str) {
     {
         eprintln!("Error initializing tracing: {:?}", e);
     }
+    opentelemetry::global::set_tracer_provider(provider);
 }
 
 fn init_no_tracing() {

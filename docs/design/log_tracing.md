@@ -135,3 +135,26 @@ However, not all function variants might expose the same behavior. Just because 
 mean it will panic. For example, the `Option::unwrap_or` function:
 
 ![Screenshot of rustdoc for Option::unwrap_or](drawings/log_tracing_2.png)
+
+## Sending traces to OpenTelemetry Collector (devmode)
+
+Jaeger and OTEL Collector:
+
+```shell
+podman compose -f etc/dev-traces/compose.yaml up
+```
+
+Database:
+
+```shell
+podman compose -f etc/deploy/compose/compose.yaml up
+```
+
+Trustify with traces:
+
+```shell
+OTEL_TRACES_SAMPLER_ARG=1 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" cargo run --bin trustd api --db-password trustify --auth-disabled --tracing enabled
+```
+
+Access Trustify at [localhost:8080](http://localhost:8080) and analyze the traces using the [Jaeger UI](http://localhost:16686/)
+

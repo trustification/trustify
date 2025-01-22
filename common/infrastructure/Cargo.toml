@@ -23,7 +23,7 @@ mime = { workspace = true }
 openssl = { workspace = true }
 opentelemetry = { workspace = true }
 opentelemetry-otlp = { workspace = true }
-opentelemetry_sdk = { workspace = true, features = ["rt-tokio"] }
+opentelemetry_sdk = { workspace = true, features = ["rt-tokio-current-thread"] }
 parking_lot = { workspace = true }
 prometheus = { workspace = true }
 reqwest = { workspace = true }
