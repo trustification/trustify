@@ -47,6 +47,9 @@ impl From<DbErr> for Error {
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse<BoxBody> {
         match self {
+            Self::Cpe(err) => {
+                HttpResponse::BadRequest().json(ErrorInformation::new("InvalidCpeSyntax", err))
+            }
             Self::Purl(err) => {
                 HttpResponse::BadRequest().json(ErrorInformation::new("InvalidPurlSyntax", err))
             }
