@@ -1,0 +1,17 @@
+services:
+  jaeger-all-in-one:
+    hostname: jaeger-all-in-one
+    image: jaegertracing/all-in-one:1.53.0 # Using this version to align with trustify-helm-charts
+    ports:
+      - "16686:16686"
+      - "14250:14250"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+  collector:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector:0.115.1 # Using this version to align with trustify-helm-charts https://github.com/TylerHelmuth/opentelemetry-helm-charts/commit/86188fea6022a6424ef6a086e928d0056fb5dfe8#diff-55020f2b796ba5770731a3b4913592732431ff180c7f7473e5f469e92ed00e74R48
+    command: ["--config=/otel-collector-config.yaml"]
+    volumes:
+      - './config.yaml:/otel-collector-config.yaml:z'
+    ports:
+      - "4317:4317"
+    depends_on: [jaeger-all-in-one]
