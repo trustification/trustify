@@ -382,6 +382,10 @@ impl AnalysisService {
     /// check if a node in the graph matches the provided query
     fn filter(graph: &Graph<PackageNode, Relationship>, query: &GraphQuery, i: NodeIndex) -> bool {
         match query {
+            GraphQuery::Component(ComponentReference::Id(component_id)) => graph
+                .node_weight(i)
+                .map(|node| node.node_id.eq(component_id))
+                .unwrap_or(false),
             GraphQuery::Component(ComponentReference::Name(component_name)) => graph
                 .node_weight(i)
                 .map(|node| node.name.eq(component_name))

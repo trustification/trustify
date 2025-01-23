@@ -2,21 +2,16 @@ use trustify_common::{cpe::Cpe, db::query::Query, purl::Purl};
 
 #[derive(Copy, Clone, Debug)]
 pub enum ComponentReference<'a> {
+    /// The ID of the component.
+    ///
+    /// This is the ID provided by the document. For CycloneDX, this is the `bom-ref`.
+    Id(&'a str),
+    /// The name of the component
     Name(&'a str),
+    /// A PURL of the component
     Purl(&'a Purl),
+    /// A CPE of the component
     Cpe(&'a Cpe),
-}
-
-impl<'a> From<&'a str> for ComponentReference<'a> {
-    fn from(value: &'a str) -> Self {
-        Self::Name(value)
-    }
-}
-
-impl<'a> From<&'a String> for ComponentReference<'a> {
-    fn from(value: &'a String) -> Self {
-        Self::Name(value)
-    }
 }
 
 impl<'a> From<&'a Cpe> for ComponentReference<'a> {
@@ -40,18 +35,6 @@ pub enum GraphQuery<'a> {
 impl<'a> From<ComponentReference<'a>> for GraphQuery<'a> {
     fn from(reference: ComponentReference<'a>) -> Self {
         Self::Component(reference)
-    }
-}
-
-impl<'a> From<&'a str> for GraphQuery<'a> {
-    fn from(value: &'a str) -> Self {
-        Self::Component(ComponentReference::Name(value))
-    }
-}
-
-impl<'a> From<&'a String> for GraphQuery<'a> {
-    fn from(value: &'a String) -> Self {
-        Self::Component(ComponentReference::Name(value))
     }
 }
 

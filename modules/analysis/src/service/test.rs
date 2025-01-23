@@ -104,7 +104,7 @@ async fn test_simple_by_name_analysis_service(ctx: &TrustifyContext) -> Result<(
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_root_components("B", Paginated::default(), &ctx.db)
+        .retrieve_root_components(ComponentReference::Name("B"), Paginated::default(), &ctx.db)
         .await?;
 
     assert_ancestors(&analysis_graph.items, |ancestors| {
@@ -301,7 +301,7 @@ async fn test_simple_by_name_deps_service(ctx: &TrustifyContext) -> Result<(), a
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_deps("A", Paginated::default(), &ctx.db)
+        .retrieve_deps(ComponentReference::Name("A"), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(analysis_graph.items.len(), 1);
@@ -372,7 +372,11 @@ async fn test_circular_deps_cyclonedx_service(ctx: &TrustifyContext) -> Result<(
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_deps("junit-bom", Paginated::default(), &ctx.db)
+        .retrieve_deps(
+            ComponentReference::Name("junit-bom"),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
 
     assert_eq!(analysis_graph.total, 1);
@@ -388,7 +392,7 @@ async fn test_circular_deps_spdx_service(ctx: &TrustifyContext) -> Result<(), an
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_deps("A", Paginated::default(), &ctx.db)
+        .retrieve_deps(ComponentReference::Name("A"), Paginated::default(), &ctx.db)
         .await?;
 
     assert_eq!(analysis_graph.total, 1);
