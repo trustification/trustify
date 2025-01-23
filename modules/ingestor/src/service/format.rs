@@ -39,11 +39,11 @@ pub enum Format {
     Unknown,
 }
 
-impl<'g> Format {
+impl Format {
     #[instrument(skip(self, graph, buffer))]
     pub async fn load(
         &self,
-        graph: &'g Graph,
+        graph: &'_ Graph,
         labels: Labels,
         issuer: Option<String>,
         digests: &Digests,

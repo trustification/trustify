@@ -9,9 +9,9 @@ pub struct OrganizationQuery;
 
 #[Object]
 impl OrganizationQuery {
-    async fn get_organization_by_name<'a>(
+    async fn get_organization_by_name(
         &self,
-        ctx: &Context<'a>,
+        ctx: &Context<'_>,
         name: String,
     ) -> FieldResult<Organization> {
         let db = ctx.data::<Arc<Database>>()?;

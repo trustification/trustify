@@ -10,7 +10,7 @@ pub struct SbomQuery;
 
 #[Object]
 impl SbomQuery {
-    async fn get_sbom_by_id<'a>(&self, ctx: &Context<'a>, id: Uuid) -> FieldResult<Sbom> {
+    async fn get_sbom_by_id(&self, ctx: &Context<'_>, id: Uuid) -> FieldResult<Sbom> {
         let db = ctx.data::<Arc<Database>>()?;
         let graph = ctx.data::<Arc<Graph>>()?;
         let sbom = graph.locate_sbom_by_id(id, db.as_ref()).await;
@@ -31,9 +31,9 @@ impl SbomQuery {
         }
     }
 
-    async fn get_sboms_by_labels<'a>(
+    async fn get_sboms_by_labels(
         &self,
-        ctx: &Context<'a>,
+        ctx: &Context<'_>,
         labels: String,
     ) -> FieldResult<Vec<Sbom>> {
         let db = ctx.data::<Arc<Database>>()?;

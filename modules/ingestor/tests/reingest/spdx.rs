@@ -8,6 +8,7 @@ use trustify_common::{cpe::Cpe, id::Id};
 use trustify_entity::{cpe::CpeDto, sbom};
 use trustify_module_ingestor::model::IngestResult;
 use trustify_test_context::TrustifyContext;
+use uuid::Uuid;
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
@@ -41,7 +42,7 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                 .into_iter()
                 .map(|purl| purl.qualified_package.id)
                 .collect::<Vec<_>>(),
-            vec![]
+            Vec::<Uuid>::new()
         );
 
         // get product

@@ -11,7 +11,7 @@ pub struct AdvisoryQuery;
 
 #[Object]
 impl AdvisoryQuery {
-    async fn get_advisory_by_id<'a>(&self, ctx: &Context<'a>, id: Uuid) -> FieldResult<Advisory> {
+    async fn get_advisory_by_id(&self, ctx: &Context<'_>, id: Uuid) -> FieldResult<Advisory> {
         let db = ctx.data::<Arc<Database>>()?;
         let graph = ctx.data::<Arc<Graph>>()?;
         let advisory = graph.get_advisory_by_id(id, db.as_ref()).await;
@@ -36,7 +36,7 @@ impl AdvisoryQuery {
         }
     }
 
-    async fn get_advisories<'a>(&self, ctx: &Context<'a>) -> FieldResult<Vec<Advisory>> {
+    async fn get_advisories(&self, ctx: &Context<'_>) -> FieldResult<Vec<Advisory>> {
         let db = ctx.data::<Arc<Database>>()?;
         let graph = ctx.data::<Arc<Graph>>()?;
 
