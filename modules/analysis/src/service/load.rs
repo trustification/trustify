@@ -46,44 +46,58 @@ pub async fn get_nodes<C: ConnectionTrait>(
     distinct_sbom_id: Uuid,
 ) -> Result<Vec<Node>, DbErr> {
     let sql = r#"
-        SELECT
-             sbom.document_id,
-             sbom.published::text,
-             array_agg(get_purl(t1.qualified_purl_id)) FILTER (WHERE get_purl(t1.qualified_purl_id) IS NOT NULL) AS purls,
-             array_agg(row_to_json(t2_cpe)) FILTER (WHERE row_to_json(t2_cpe) IS NOT NULL) AS cpes,
-             t1_node.node_id AS node_id,
-             t1_node.name AS node_name,
-             t1_version.version AS node_version,
-             product.name AS product_name,
-             product_version.version AS product_version
-        FROM
-            sbom
-        LEFT JOIN
-            product_version ON sbom.sbom_id = product_version.sbom_id
-        LEFT JOIN
-            product ON product_version.product_id = product.id
-        LEFT JOIN
-            sbom_node t1_node ON sbom.sbom_id = t1_node.sbom_id
-        LEFT JOIN
-            sbom_package_purl_ref t1 ON t1.sbom_id = sbom.sbom_id AND t1_node.node_id = t1.node_id
-        LEFT JOIN
-            sbom_package_cpe_ref t2 ON t2.sbom_id = sbom.sbom_id AND t1_node.node_id = t2.node_id
-        LEFT JOIN
-            cpe t2_cpe ON t2.cpe_id = t2_cpe.id
-        LEFT JOIN
-            sbom_package t1_version ON t1_version.sbom_id = sbom.sbom_id AND t1_node.node_id = t1_version.node_id
-        WHERE
-            sbom.sbom_id = $1
-        GROUP BY
-            sbom.document_id,
-            sbom.sbom_id,
-            sbom.published,
-            t1_node.node_id,
-            t1_node.name,
-            t1_version.version,
-            product.name,
-            product_version.version
-        "#;
+WITH
+purl_ref AS (
+    SELECT
+        sbom_id,
+        node_id,
+        array_agg(get_purl(qualified_purl_id)) AS purls
+    FROM
+        sbom_package_purl_ref
+    GROUP BY
+        sbom_id,
+        node_id
+),
+cpe_ref AS (
+    SELECT
+        sbom_id,
+        node_id,
+        array_agg(row_to_json(cpe)) AS cpes
+    FROM
+        sbom_package_cpe_ref
+    LEFT JOIN
+        cpe ON (sbom_package_cpe_ref.cpe_id = cpe.id)
+    GROUP BY
+        sbom_id,
+        node_id
+)
+SELECT
+    sbom.document_id,
+    sbom.published::text,
+    purl_ref.purls,
+    cpe_ref.cpes,
+    t1_node.node_id AS node_id,
+    t1_node.name AS node_name,
+    t1_package.version AS node_version,
+    product.name AS product_name,
+    product_version.version AS product_version
+FROM
+    sbom
+LEFT JOIN
+    product_version ON sbom.sbom_id = product_version.sbom_id
+LEFT JOIN
+    product ON product_version.product_id = product.id
+LEFT JOIN
+    sbom_node t1_node ON sbom.sbom_id = t1_node.sbom_id
+LEFT JOIN
+    sbom_package t1_package ON t1_node.sbom_id = t1_package.sbom_id AND t1_node.node_id = t1_package.node_id
+LEFT JOIN
+    purl_ref ON purl_ref.sbom_id = sbom.sbom_id AND purl_ref.node_id = t1_node.node_id
+LEFT JOIN
+    cpe_ref ON cpe_ref.sbom_id = sbom.sbom_id AND cpe_ref.node_id = t1_node.node_id
+WHERE
+    sbom.sbom_id = $1
+"#;
 
     let stmt =
         Statement::from_sql_and_values(DatabaseBackend::Postgres, sql, [distinct_sbom_id.into()]);
@@ -137,6 +151,12 @@ impl AnalysisService {
         query: GraphQuery<'_>,
     ) -> Result<Vec<String>, Error> {
         let search_sbom_subquery = match query {
+            GraphQuery::Component(ComponentReference::Id(name)) => sbom_node::Entity::find()
+                .filter(sbom_node::Column::NodeId.eq(name))
+                .select_only()
+                .column(sbom_node::Column::SbomId)
+                .distinct()
+                .into_query(),
             GraphQuery::Component(ComponentReference::Name(name)) => sbom_node::Entity::find()
                 .filter(sbom_node::Column::Name.eq(name))
                 .select_only()
