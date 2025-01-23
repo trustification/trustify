@@ -21,9 +21,9 @@ pub struct SbomStatusQuery;
 
 #[Object]
 impl SbomStatusQuery {
-    async fn cves_by_sbom<'a>(
+    async fn cves_by_sbom(
         &self,
-        ctx: &Context<'a>,
+        ctx: &Context<'_>,
         id: Uuid,
     ) -> FieldResult<Vec<GraphQLSbomStatus>> {
         let db = ctx.data::<Arc<db::Database>>()?;
