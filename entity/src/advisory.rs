@@ -34,7 +34,7 @@ pub struct Model {
 
 #[ComplexObject]
 impl Model {
-    async fn organization<'a>(&self, ctx: &Context<'a>) -> Result<organization::Model> {
+    async fn organization(&self, ctx: &Context<'_>) -> Result<organization::Model> {
         let db = ctx.data::<Arc<db::Database>>()?;
         if let Some(found) = self
             .find_related(organization::Entity)
@@ -47,7 +47,7 @@ impl Model {
         }
     }
 
-    async fn vulnerabilities<'a>(&self, ctx: &Context<'a>) -> Result<Vec<vulnerability::Model>> {
+    async fn vulnerabilities(&self, ctx: &Context<'_>) -> Result<Vec<vulnerability::Model>> {
         let db = ctx.data::<Arc<db::Database>>()?;
         Ok(self
             .find_related(vulnerability::Entity)
