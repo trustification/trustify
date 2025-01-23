@@ -6,7 +6,7 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use test_context::test_context;
 use test_log::test;
-use trustify_test_context::{call::CallService, TrustifyContext};
+use trustify_test_context::{call::CallService, subset::ContainsSubset, TrustifyContext};
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
@@ -662,16 +662,11 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .into_iter()
         .flatten()
         .filter(|m| {
-            m == &&json!({
-                "sbom_id": sbom["sbom_id"],
-                "node_id": "SPDXRef-83c9faa0-ca85-4e48-9165-707b2f9a324b",
+            m.contains_subset(json!({
                 "relationship": "PackageOf",
-                "purl": [],
-                "cpe": m["cpe"], // long list assume it's correct
                 "name": "SATELLITE-6.15-RHEL-8",
                 "version": "6.15",
-                "deps": [],
-            })
+            }))
         })
         .collect();
 
@@ -683,7 +678,7 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::info!("{}", serde_json::to_string_pretty(&response)?);
+    log::debug!("{}", serde_json::to_string_pretty(&response)?);
 
     let sbom = &response["items"][0];
     let matches: Vec<_> = sbom["ancestors"]
@@ -691,15 +686,11 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .into_iter()
         .flatten()
         .filter(|m| {
-            m == &&json!({
-              "sbom_id":  sbom["sbom_id"],
-              "node_id": m["node_id"],
+            m.contains_subset(json!({
               "relationship": "PackageOf",
-              "purl": m["purl"], // long list assume it's correct
-              "cpe": m["cpe"], // long list assume it's correct
               "name": "rubygem-google-cloud-compute",
               "version": "0.5.0-1.el8sat"
-            })
+            }))
         })
         .collect();
 

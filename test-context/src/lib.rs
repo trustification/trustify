@@ -4,6 +4,7 @@ pub mod app;
 pub mod auth;
 pub mod call;
 pub mod spdx;
+pub mod subset;
 
 use futures::Stream;
 use peak_alloc::PeakAlloc;
