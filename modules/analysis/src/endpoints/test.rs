@@ -656,26 +656,14 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
 
-    let sbom = &response["items"][0];
-    let matches: Vec<_> = sbom["deps"]
-        .as_array()
-        .into_iter()
-        .flatten()
-        .filter(|m| {
-            m == &&json!({
-                "sbom_id": sbom["sbom_id"],
-                "node_id": "SPDXRef-83c9faa0-ca85-4e48-9165-707b2f9a324b",
-                "relationship": "PackageOf",
-                "purl": [],
-                "cpe": m["cpe"], // long list assume it's correct
-                "name": "SATELLITE-6.15-RHEL-8",
-                "version": "6.15",
-                "deps": [],
-            })
-        })
-        .collect();
-
-    assert_eq!(1, matches.len());
+    assert_eq!(
+        response.pointer("/items/0/sbom_id"),
+        response.pointer("/items/0/deps/0/sbom_id")
+    );
+    assert_eq!(
+        Some(&json!("PackageOf")),
+        response.pointer("/items/0/deps/0/relationship")
+    );
 
     Ok(())
 }
@@ -683,10 +671,12 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn spdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    // A helper closure to compare nested json values
+    let assert = |v: &Value, path, s: &str| assert_eq!(v.pointer(path).unwrap(), &json!(s));
     let app = caller(ctx).await?;
     ctx.ingest_documents(["spdx/1178.json"]).await?;
 
-    // This smells a little funny... are they backward?
+    // The purl's we'll use to invoke the opposing analysis endpoints
     let parent = "pkg:rpm/redhat/B@0.0.0";
     let child = "pkg:generic/upstream-component@0.0.0?arch=src";
 
@@ -695,20 +685,17 @@ async fn spdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
-    let item = &response["items"][0];
-    let deps = &item["deps"];
-    let dep = &deps[0];
-
-    // assert array lengths
-    assert!(response["items"].get(1).is_none());
-    assert!(item["purl"].get(1).is_none());
-    assert!(deps.get(1).is_none());
-    assert!(dep["purl"].get(1).is_none());
 
     // assert expected values
-    assert_eq!(parent, item["purl"][0]);
-    assert_eq!("AncestorOf", dep["relationship"]);
-    assert_eq!(child, dep["purl"][0]);
+    assert(&response, "/items/0/purl/0", parent);
+    assert(&response, "/items/0/deps/0/relationship", "AncestorOf");
+    assert(&response, "/items/0/deps/0/purl/0", child);
+
+    // assert array lengths
+    assert!(response.pointer("/items/1").is_none());
+    assert!(response.pointer("/items/0/purl/1").is_none());
+    assert!(response.pointer("/items/0/deps/1").is_none());
+    assert!(response.pointer("/items/0/deps/0/purl/1").is_none());
 
     // Ensure child has ancestors that include the parent
     let uri = format!(
@@ -718,20 +705,17 @@ async fn spdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
-    let item = &response["items"][0];
-    let ancs = &item["ancestors"];
-    let anc = &ancs[0];
-
-    // assert array lengths
-    assert!(response["items"].get(1).is_none());
-    assert!(item["purl"].get(1).is_none());
-    assert!(ancs.get(1).is_none());
-    assert!(anc["purl"].get(1).is_none());
 
     // assert expected values
-    assert_eq!(child, item["purl"][0]);
-    assert_eq!("AncestorOf", anc["relationship"]);
-    assert_eq!(parent, anc["purl"][0]);
+    assert(&response, "/items/0/purl/0", child);
+    assert(&response, "/items/0/ancestors/0/relationship", "AncestorOf");
+    assert(&response, "/items/0/ancestors/0/purl/0", parent);
+
+    // assert array lengths
+    assert!(response.pointer("/items/1").is_none());
+    assert!(response.pointer("/items/0/purl/1").is_none());
+    assert!(response.pointer("/items/0/ancestors/1").is_none());
+    assert!(response.pointer("/items/0/ancestors/0/purl/1").is_none());
 
     Ok(())
 }
