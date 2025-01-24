@@ -656,21 +656,15 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{}", serde_json::to_string_pretty(&response)?);
 
-    let sbom = &response["items"][0];
-    let matches: Vec<_> = sbom["deps"]
-        .as_array()
-        .into_iter()
-        .flatten()
-        .filter(|m| {
-            m.contains_subset(json!({
+    assert!(response.contains_deep_subset(json!({
+        "items": [ {
+            "deps": [ {
                 "relationship": "PackageOf",
                 "name": "SATELLITE-6.15-RHEL-8",
                 "version": "6.15",
-            }))
-        })
-        .collect();
-
-    assert_eq!(1, matches.len());
+            }]
+        }]
+    })));
 
     let uri = format!(
         "/api/v2/analysis/root-component?q={}",
@@ -680,21 +674,15 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{}", serde_json::to_string_pretty(&response)?);
 
-    let sbom = &response["items"][0];
-    let matches: Vec<_> = sbom["ancestors"]
-        .as_array()
-        .into_iter()
-        .flatten()
-        .filter(|m| {
-            m.contains_subset(json!({
-              "relationship": "PackageOf",
-              "name": "rubygem-google-cloud-compute",
-              "version": "0.5.0-1.el8sat"
-            }))
-        })
-        .collect();
-
-    assert_eq!(1, matches.len());
+    assert!(response.contains_deep_subset(json!({
+        "items": [ {
+            "ancestors": [ {
+                "relationship": "PackageOf",
+                "name": "rubygem-google-cloud-compute",
+                "version": "0.5.0-1.el8sat"
+            }]
+        }]
+    })));
 
     Ok(())
 }
