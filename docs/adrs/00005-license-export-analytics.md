@@ -7,7 +7,6 @@ Date: 2025-01-23
 DRAFT
 
 ## Context
-### An SBOM typically contains three types of license information:
 
 #### 1 License information for the entire SBOM
 
@@ -56,6 +55,10 @@ The licenseId can be associated with the license in the package.
 ### 2 Current license export requirements
 https://docs.google.com/spreadsheets/d/1Ki9hkLl94L3G4A4rfQQ4wuEnQFTPkpNflClVjlk2mQA/edit?gid=0#gid=0
 
+Here is a simple summary: This function needs to obtain all the packages from an SBOM, then retrieve the licenses of these packages 
+and list this information in a CSV file. Additionally, for SPDX SBOMs, it should also list the information from the ExtractedLicensingInfos 
+in a separate CSV, because this type of SBOM allows License-Refs that reference information from ExtractedLicensingInfos. An important point is that in SPDX SBOMs, 
+there are two types of licenses: declared license and concluded license. The requirement is to only list the declared licenses.
 ### 3 Current license data structure design in trustify
 
 ```rust
@@ -97,6 +100,9 @@ pub enum LicenseCategory {
     OTHER,
 }
 ```
+
+Currently, the system's licenses come from the following sources: 1) SPDX's declared license and concluded license, 2) CycloneDX, and 3) clearlyDefined. The license export only requires SPDX's declared license and CycloneDX licenses, while concluded licenses and clearlyDefined licenses are not needed. Therefore, the system must distinguish between them.
+
 SPDXDECLARED: The license from spdx sbom's declered license.
 SPDXCONCLUDED: The license from spdx sbom's concluded license.
 CYDXLCID: The license from CycloneDX sbom's id.
@@ -108,6 +114,12 @@ This design currently has two issues:
 1. The complete expression is not saved, as the complete expression includes not only individual license
    information but also the relationships between these licenses.
 2. SBOM-level licenses are not saved.
+
+### Next design proposal
+![next_erd_license.png](next_erd_license.png)
+
+
+The new design retains the original license structure, but adds a new attribute: license type. It also removes the physical association between the license and ExtractedLicensingInfos when the license is a licenseRef. If needed, we can retrieve this information through conditional queries. Additionally, a new entity, sbom_license, is introduced to store license information at the SBOM level. However, as I mentioned earlier, the SBOM-level licenses in SPDX and CycloneDX have completely different meanings, so a type attribute is required to distinguish between them.
 
 ## Alternative approaches
 
