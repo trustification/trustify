@@ -3,7 +3,6 @@ use actix_http::Request;
 use actix_web::test::TestRequest;
 use itertools::Itertools;
 use serde_json::{json, Value};
-use std::collections::HashMap;
 use test_context::test_context;
 use test_log::test;
 use trustify_test_context::{call::CallService, subset::ContainsSubset, TrustifyContext};
@@ -396,27 +395,6 @@ async fn test_retrieve_query_params_endpoint(ctx: &TrustifyContext) -> Result<()
     Ok(())
 }
 
-fn count_deps<F>(response: &Value, filter: F) -> HashMap<&str, usize>
-where
-    F: Fn(&Value) -> bool,
-{
-    let mut num = HashMap::new();
-
-    for item in response["items"].as_array().unwrap() {
-        num.insert(
-            item["node_id"].as_str().unwrap(),
-            item["deps"]
-                .as_array()
-                .into_iter()
-                .flatten()
-                .filter(|f| filter(f))
-                .count(),
-        );
-    }
-
-    num
-}
-
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
@@ -429,10 +407,19 @@ async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(src));
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{response:#?}");
+    tracing::debug!(test = "", "{response:#?}");
 
-    let num = count_deps(&response, |m| m["relationship"] == "GeneratedFrom");
-    assert_eq!(num["pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"], 35);
+    assert_eq!(
+        35,
+        response["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|i| i["node_id"] == "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src")
+            .flat_map(|i| i["deps"].as_array().unwrap().iter())
+            .filter(|d| d["relationship"] == "GeneratedFrom")
+            .count()
+    );
 
     // Ensure binary rpm GeneratedFrom src rpm
     let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
@@ -442,15 +429,16 @@ async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{response:#?}");
-    assert_eq!(
-        "GeneratedFrom",
-        response["items"][0]["ancestors"][0]["relationship"]
-    );
-    assert_eq!(
-        Value::from(vec![Value::from(src)]),
-        response["items"][0]["ancestors"][0]["purl"]
-    );
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ x86 ],
+            "ancestors": [{
+                "relationship": "GeneratedFrom",
+                "purl": [ src ]
+            }]
+        }]
+    })));
 
     Ok(())
 }
@@ -469,8 +457,17 @@ async fn spdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
 
-    let num = count_deps(&response, |m| m["relationship"] == "GeneratedFrom");
-    assert_eq!(num["SPDXRef-SRPM"], 35);
+    assert_eq!(
+        35,
+        response["items"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|i| i["node_id"] == "SPDXRef-SRPM")
+            .flat_map(|i| i["deps"].as_array().unwrap().iter())
+            .filter(|d| d["relationship"] == "GeneratedFrom")
+            .count()
+    );
 
     // Ensure binary rpm GeneratedFrom src rpm
     let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
@@ -481,14 +478,15 @@ async fn spdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
-    assert_eq!(
-        "GeneratedFrom",
-        response["items"][0]["ancestors"][0]["relationship"]
-    );
-    assert_eq!(
-        Value::from(vec![Value::from(src)]),
-        response["items"][0]["ancestors"][0]["purl"]
-    );
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ x86 ],
+            "ancestors": [{
+                "relationship": "GeneratedFrom",
+                "purl": [ src ]
+            }]
+        }]
+    })));
 
     Ok(())
 }
@@ -502,16 +500,23 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // Find all deps of parent
     let parent = "pkg:oci/openshift-ose-console@sha256:94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679";
+    let child = "pkg:oci/ose-console@sha256:c2d69e860b7457eb42f550ba2559a0452ec3e5c9ff6521d758c186266247678e?arch=s390x&os=linux&tag=v4.14.0-202412110104.p0.g350e1ea.assembly.stream.el8";
+
     let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{response:#?}");
-
-    let num = count_deps(&response, |_| true);
-    assert_eq!(num["pkg:oci/openshift-ose-console@sha256%3A94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679"], 1);
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ parent ],
+            "deps": [{
+                "relationship": "VariantOf",
+                "purl": [ child ]
+            }]
+        }]
+    })));
 
     // Ensure child is variant of src
-    let child = "pkg:oci/ose-console@sha256:c2d69e860b7457eb42f550ba2559a0452ec3e5c9ff6521d758c186266247678e?arch=s390x&os=linux&tag=v4.14.0-202412110104.p0.g350e1ea.assembly.stream.el8";
     let uri = format!(
         "/api/v2/analysis/root-component/{}",
         urlencoding::encode(child)
@@ -519,14 +524,15 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
-    assert_eq!(
-        "VariantOf",
-        response["items"][0]["ancestors"][0]["relationship"]
-    );
-    assert_eq!(
-        Value::from(vec![Value::from(parent)]),
-        response["items"][0]["ancestors"][0]["purl"]
-    );
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ child ],
+            "ancestors": [{
+                "relationship": "VariantOf",
+                "purl": [ parent ]
+            }]
+        }]
+    })));
 
     Ok(())
 }
@@ -538,45 +544,60 @@ async fn spdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingest_documents(["ubi9-9.2-755.1697625012.json"])
         .await?;
 
-    // Find all deps of "parent" package
     let parent = "pkg:oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012";
-    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
-    let request: Request = TestRequest::get().uri(&uri).to_request();
-    let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{response:#?}");
-    assert_eq!(
-        4,
-        response["items"][0]["deps"]
-            .as_array()
-            .into_iter()
-            .flatten()
-            .filter(|m| m["relationship"] == "VariantOf")
-            .count()
-    );
-
-    // Ensure VariantOf relationships
-    let purls = [
+    let children = [
             "pkg:oci/ubi9-container@sha256:d4c5d9c980678267b81c3c197a4a0dd206382111c912875a6cdffc6ca319b769?arch=aarch64&repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
             "pkg:oci/ubi9-container@sha256:204383c3d96c0e6c7154c91d07764f92035738dd67aa8896679f7feb73f66bfd?arch=x86_64&repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
             "pkg:oci/ubi9-container@sha256:721ca837c80c8b98752010a17ffccbdf17a0d260ddd916b7097f04187f6aa3a8?arch=s390x&repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
             "pkg:oci/ubi9-container@sha256:9a6092cdd8e7f4361ea3f508ae6d6d3d9dbb9458a921ab09e4cc006c0a7f0a61?arch=ppc64le&repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
         ];
-    for purl in purls {
+
+    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ parent ],
+            "deps": [
+                {
+                    "relationship": "VariantOf",
+                    "purl": [ children[0] ]
+                },
+                {
+                    "relationship": "VariantOf",
+                    "purl": [ children[1] ]
+                },
+                {
+                    "relationship": "VariantOf",
+                    "purl": [ children[2] ]
+                },
+                {
+                    "relationship": "VariantOf",
+                    "purl": [ children[3] ]
+                }
+            ]
+        }]
+    })));
+
+    // Ensure VariantOf relationships
+    for child in children {
         let uri = format!(
             "/api/v2/analysis/root-component/{}",
-            urlencoding::encode(purl)
+            urlencoding::encode(child)
         );
         let request: Request = TestRequest::get().uri(&uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
-        log::debug!("{response:#?}");
-        assert_eq!(
-            "VariantOf",
-            response["items"][0]["ancestors"][0]["relationship"]
-        );
-        assert_eq!(
-            Value::from(vec![Value::from(parent)]),
-            response["items"][0]["ancestors"][0]["purl"]
-        );
+        tracing::debug!(test = "", "{response:#?}");
+        assert!(response.contains_subset(json!({
+            "items": [{
+                "purl": [ child ],
+                "ancestors": [{
+                    "relationship": "VariantOf",
+                    "purl": [ parent ]
+                }]
+            }]
+        })));
     }
 
     Ok(())
@@ -597,26 +618,15 @@ async fn cdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
-
-    // get all PURLs of 'AncestorOf' for all dependencies of the parent
-    let deps: Vec<_> = response["items"]
-        .as_array()
-        .into_iter()
-        .flatten()
-        // we're only looking for the parent node
-        .filter(|m| m["node_id"] == parent)
-        // flatten all dependencies of that parent node
-        .flat_map(|m| m["deps"].as_array().into_iter().flatten())
-        // filter out all non-AncestorOf dependencies
-        .filter(|m| m["relationship"] == "AncestorOf")
-        .collect();
-
-    // check if there is one dependency of type 'AncestorOf' in the parent package dependencies
-    assert_eq!(1, deps.len());
-    // that dependency must have a single purl
-    assert_eq!(1, deps[0]["purl"].as_array().unwrap().len());
-    // that purl must be the child purl
-    assert_eq!(child, deps[0]["purl"][0]);
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ parent ],
+            "deps": [{
+                "relationship": "AncestorOf",
+                "purl": [ child ]
+            }]
+        }]
+    })));
 
     // Ensure child has ancestors that include the parent
     let uri = format!(
@@ -626,14 +636,59 @@ async fn cdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
-    assert_eq!(
-        "AncestorOf",
-        response["items"][0]["ancestors"][0]["relationship"]
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ child ],
+            "ancestors": [{
+                "relationship": "AncestorOf",
+                "purl": [ parent ]
+            }]
+        }]
+    })));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn spdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+    ctx.ingest_documents(["spdx/1178.json"]).await?;
+
+    let parent = "pkg:rpm/redhat/B@0.0.0";
+    let child = "pkg:generic/upstream-component@0.0.0?arch=src";
+
+    // Ensure parent has deps that include the child
+    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ parent ],
+            "deps": [{
+                "relationship": "AncestorOf",
+                "purl": [ child ]
+            }]
+        }]
+    })));
+
+    // Ensure child has ancestors that include the parent
+    let uri = format!(
+        "/api/v2/analysis/root-component/{}",
+        urlencoding::encode(child)
     );
-    assert_eq!(
-        Value::from(vec![Value::from(parent)]),
-        response["items"][0]["ancestors"][0]["purl"]
-    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ child ],
+            "ancestors": [{
+                "relationship": "AncestorOf",
+                "purl": [ parent ]
+            }]
+        }]
+    })));
 
     Ok(())
 }
@@ -656,7 +711,7 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{}", serde_json::to_string_pretty(&response)?);
 
-    assert!(response.contains_deep_subset(json!({
+    assert!(response.contains_subset(json!({
         "items": [ {
             "deps": [ {
                 "relationship": "PackageOf",
@@ -674,7 +729,7 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{}", serde_json::to_string_pretty(&response)?);
 
-    assert!(response.contains_deep_subset(json!({
+    assert!(response.contains_subset(json!({
         "items": [ {
             "ancestors": [ {
                 "relationship": "PackageOf",
@@ -683,62 +738,6 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             }]
         }]
     })));
-
-    Ok(())
-}
-
-#[test_context(TrustifyContext)]
-#[test(actix_web::test)]
-async fn spdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = caller(ctx).await?;
-    ctx.ingest_documents(["spdx/1178.json"]).await?;
-
-    // This smells a little funny... are they backward?
-    let parent = "pkg:rpm/redhat/B@0.0.0";
-    let child = "pkg:generic/upstream-component@0.0.0?arch=src";
-
-    // Ensure parent has deps that include the child
-    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
-    let request: Request = TestRequest::get().uri(&uri).to_request();
-    let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{response:#?}");
-    let item = &response["items"][0];
-    let deps = &item["deps"];
-    let dep = &deps[0];
-
-    // assert array lengths
-    assert!(response["items"].get(1).is_none());
-    assert!(item["purl"].get(1).is_none());
-    assert!(deps.get(1).is_none());
-    assert!(dep["purl"].get(1).is_none());
-
-    // assert expected values
-    assert_eq!(parent, item["purl"][0]);
-    assert_eq!("AncestorOf", dep["relationship"]);
-    assert_eq!(child, dep["purl"][0]);
-
-    // Ensure child has ancestors that include the parent
-    let uri = format!(
-        "/api/v2/analysis/root-component/{}",
-        urlencoding::encode(child)
-    );
-    let request: Request = TestRequest::get().uri(&uri).to_request();
-    let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{response:#?}");
-    let item = &response["items"][0];
-    let ancs = &item["ancestors"];
-    let anc = &ancs[0];
-
-    // assert array lengths
-    assert!(response["items"].get(1).is_none());
-    assert!(item["purl"].get(1).is_none());
-    assert!(ancs.get(1).is_none());
-    assert!(anc["purl"].get(1).is_none());
-
-    // assert expected values
-    assert_eq!(child, item["purl"][0]);
-    assert_eq!("AncestorOf", anc["relationship"]);
-    assert_eq!(parent, anc["purl"][0]);
 
     Ok(())
 }

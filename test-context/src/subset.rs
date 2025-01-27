@@ -3,35 +3,18 @@ use serde_json::Value;
 pub trait ContainsSubset {
     // Returns true if the value is a subset of the receiver.
     fn contains_subset(&self, value: Value) -> bool;
-    // Returns true if the value a deep subset of the receiver.
-    fn contains_deep_subset(&self, value: Value) -> bool;
 }
 
 impl ContainsSubset for Value {
-    fn contains_subset(&self, value: Value) -> bool {
-        match (self, &value) {
-            (Value::Object(src), Value::Object(subset)) => subset
-                .iter()
-                .all(|(k, v)| src.get(k).is_some_and(|x| x == v)),
-
-            (Value::Array(src), Value::Array(subset)) => {
-                subset.iter().all(|v| src.iter().any(|x| x == v))
-            }
-
-            _ => value == *self,
-        }
-    }
-
-    fn contains_deep_subset(&self, subset: Value) -> bool {
+    fn contains_subset(&self, subset: Value) -> bool {
         match (self, &subset) {
-            (Value::Object(src), Value::Object(tgt)) => tgt.iter().all(|(k, v)| {
-                src.get(k)
-                    .is_some_and(|x| x.contains_deep_subset(v.clone()))
-            }),
+            (Value::Object(src), Value::Object(tgt)) => tgt
+                .iter()
+                .all(|(k, v)| src.get(k).is_some_and(|x| x.contains_subset(v.clone()))),
 
             (Value::Array(src), Value::Array(subset)) => subset
                 .iter()
-                .all(|v| src.iter().any(|x| x.contains_deep_subset(v.clone()))),
+                .all(|v| src.iter().any(|x| x.contains_subset(v.clone()))),
 
             _ => subset == *self,
         }
