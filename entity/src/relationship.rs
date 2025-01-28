@@ -20,35 +20,35 @@ use std::fmt;
 // When adding a new variant, also add this to the "relationship" table.
 pub enum Relationship {
     #[sea_orm(num_value = 0)]
-    ContainedBy,
+    Contains,
     #[sea_orm(num_value = 1)]
-    DependencyOf,
+    Dependency,
     #[sea_orm(num_value = 2)]
-    DevDependencyOf,
+    DevDependency,
     #[sea_orm(num_value = 3)]
-    OptionalDependencyOf,
+    OptionalDependency,
     #[sea_orm(num_value = 4)]
-    ProvidedDependencyOf,
+    ProvidedDependency,
     #[sea_orm(num_value = 5)]
-    TestDependencyOf,
+    TestDependency,
     #[sea_orm(num_value = 6)]
-    RuntimeDependencyOf,
+    RuntimeDependency,
     #[sea_orm(num_value = 7)]
-    ExampleOf,
+    Example,
     #[sea_orm(num_value = 8)]
-    GeneratedFrom,
+    Generates,
     #[sea_orm(num_value = 9)]
     AncestorOf,
     #[sea_orm(num_value = 10)]
-    VariantOf,
+    Variant,
     #[sea_orm(num_value = 11)]
-    BuildToolOf,
+    BuildTool,
     #[sea_orm(num_value = 12)]
-    DevToolOf,
+    DevTool,
     #[sea_orm(num_value = 13)]
-    DescribedBy,
+    Describes,
     #[sea_orm(num_value = 14)]
-    PackageOf,
+    Package,
     #[sea_orm(num_value = 15)]
     Undefined,
 }

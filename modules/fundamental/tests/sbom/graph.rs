@@ -208,17 +208,8 @@ async fn transitive_dependency_of(ctx: &TrustifyContext) -> Result<(), anyhow::E
 
     sbom1
         .ingest_package_relates_to_package(
-            Purl::from_str("pkg:maven/io.quarkus/transitive-b@1.2.3")?,
-            Relationship::DependencyOf,
             Purl::from_str("pkg:maven/io.quarkus/transitive-a@1.2.3")?,
-            &ctx.db,
-        )
-        .await?;
-
-    sbom1
-        .ingest_package_relates_to_package(
-            Purl::from_str("pkg:maven/io.quarkus/transitive-c@1.2.3")?,
-            Relationship::DependencyOf,
+            Relationship::Dependency,
             Purl::from_str("pkg:maven/io.quarkus/transitive-b@1.2.3")?,
             &ctx.db,
         )
@@ -226,8 +217,8 @@ async fn transitive_dependency_of(ctx: &TrustifyContext) -> Result<(), anyhow::E
 
     sbom1
         .ingest_package_relates_to_package(
-            Purl::from_str("pkg:maven/io.quarkus/transitive-d@1.2.3")?,
-            Relationship::DependencyOf,
+            Purl::from_str("pkg:maven/io.quarkus/transitive-b@1.2.3")?,
+            Relationship::Dependency,
             Purl::from_str("pkg:maven/io.quarkus/transitive-c@1.2.3")?,
             &ctx.db,
         )
@@ -235,25 +226,34 @@ async fn transitive_dependency_of(ctx: &TrustifyContext) -> Result<(), anyhow::E
 
     sbom1
         .ingest_package_relates_to_package(
+            Purl::from_str("pkg:maven/io.quarkus/transitive-c@1.2.3")?,
+            Relationship::Dependency,
+            Purl::from_str("pkg:maven/io.quarkus/transitive-d@1.2.3")?,
+            &ctx.db,
+        )
+        .await?;
+
+    sbom1
+        .ingest_package_relates_to_package(
+            Purl::from_str("pkg:maven/io.quarkus/transitive-c@1.2.3")?,
+            Relationship::Dependency,
             Purl::from_str("pkg:maven/io.quarkus/transitive-e@1.2.3")?,
-            Relationship::DependencyOf,
-            Purl::from_str("pkg:maven/io.quarkus/transitive-c@1.2.3")?,
             &ctx.db,
         )
         .await?;
 
     sbom1
         .ingest_package_relates_to_package(
-            Purl::from_str("pkg:maven/io.quarkus/transitive-d@1.2.3")?,
-            Relationship::DependencyOf,
             Purl::from_str("pkg:maven/io.quarkus/transitive-b@1.2.3")?,
+            Relationship::Dependency,
+            Purl::from_str("pkg:maven/io.quarkus/transitive-d@1.2.3")?,
             &ctx.db,
         )
         .await?;
 
     let _results = sbom1
         .related_packages_transitively(
-            &[Relationship::DependencyOf],
+            &[Relationship::Dependency],
             &"pkg:maven/io.quarkus/transitive-a@1.2.3".try_into()?,
             &ctx.db,
         )
@@ -282,9 +282,9 @@ async fn ingest_package_relates_to_package_dependency_of(
 
     sbom1
         .ingest_package_relates_to_package(
-            Purl::from_str("pkg:maven/io.quarkus/quarkus-postgres@1.2.3")?,
-            Relationship::DependencyOf,
             Purl::from_str("pkg:maven/io.quarkus/quarkus-core@1.2.3")?,
+            Relationship::Dependency,
+            Purl::from_str("pkg:maven/io.quarkus/quarkus-postgres@1.2.3")?,
             &ctx.db,
         )
         .await?;
@@ -301,9 +301,9 @@ async fn ingest_package_relates_to_package_dependency_of(
 
     sbom2
         .ingest_package_relates_to_package(
-            Purl::from_str("pkg:maven/io.quarkus/quarkus-sqlite@1.2.3")?,
-            Relationship::DependencyOf,
             Purl::from_str("pkg:maven/io.quarkus/quarkus-core@1.2.3")?,
+            Relationship::Dependency,
+            Purl::from_str("pkg:maven/io.quarkus/quarkus-sqlite@1.2.3")?,
             &ctx.db,
         )
         .await?;
@@ -311,7 +311,7 @@ async fn ingest_package_relates_to_package_dependency_of(
     let dependencies = fetch
         .related_packages(
             sbom1.sbom.sbom_id,
-            Relationship::DependencyOf,
+            Relationship::Dependency,
             "pkg:maven/io.quarkus/quarkus-core@1.2.3",
             &ctx.db,
         )
@@ -334,7 +334,7 @@ async fn ingest_package_relates_to_package_dependency_of(
     let dependencies = fetch
         .related_packages(
             sbom2.sbom.sbom_id,
-            Relationship::DependencyOf,
+            Relationship::Dependency,
             "pkg:maven/io.quarkus/quarkus-core@1.2.3",
             &ctx.db,
         )
@@ -381,27 +381,27 @@ async fn sbom_vulnerabilities(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     log::debug!("-------------------- B");
 
     sbom.ingest_package_relates_to_package(
-        Purl::from_str("pkg:maven/io.quarkus/quarkus-core@1.2.3")?,
-        Relationship::DependencyOf,
         Purl::from_str("pkg:oci/my-app@1.2.3")?,
+        Relationship::Dependency,
+        Purl::from_str("pkg:maven/io.quarkus/quarkus-core@1.2.3")?,
         &ctx.db,
     )
     .await?;
     log::debug!("-------------------- C");
 
     sbom.ingest_package_relates_to_package(
-        Purl::from_str("pkg:maven/io.quarkus/quarkus-postgres@1.2.3")?,
-        Relationship::DependencyOf,
         Purl::from_str("pkg:maven/io.quarkus/quarkus-core@1.2.3")?,
+        Relationship::Dependency,
+        Purl::from_str("pkg:maven/io.quarkus/quarkus-postgres@1.2.3")?,
         &ctx.db,
     )
     .await?;
     log::debug!("-------------------- D");
 
     sbom.ingest_package_relates_to_package(
-        Purl::from_str("pkg:maven/postgres/postgres-driver@1.2.3")?,
-        Relationship::DependencyOf,
         Purl::from_str("pkg:maven/io.quarkus/quarkus-postgres@1.2.3")?,
+        Relationship::Dependency,
+        Purl::from_str("pkg:maven/postgres/postgres-driver@1.2.3")?,
         &ctx.db,
     )
     .await?;

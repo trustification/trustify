@@ -3,6 +3,23 @@ use sea_orm_migration::prelude::*;
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
+pub(crate) const DATA: [(i32, &str); 14] = [
+    (0, "ContainedBy"),
+    (1, "DependencyOf"),
+    (2, "DevDependencyOf"),
+    (3, "OptionalDependencyOf"),
+    (4, "ProvidedDependencyOf"),
+    (5, "TestDependencyOf"),
+    (6, "RuntimeDependencyOf"),
+    (7, "ExampleOf"),
+    (8, "GeneratedFrom"),
+    (9, "AncestorOf"),
+    (10, "VariantOf"),
+    (11, "BuildToolOf"),
+    (12, "DevToolOf"),
+    (13, "DescribedBy"),
+];
+
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
@@ -27,24 +44,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        let data = [
-            (0, "ContainedBy"),
-            (1, "DependencyOf"),
-            (2, "DevDependencyOf"),
-            (3, "OptionalDependencyOf"),
-            (4, "ProvidedDependencyOf"),
-            (5, "TestDependencyOf"),
-            (6, "RuntimeDependencyOf"),
-            (7, "ExampleOf"),
-            (8, "GeneratedFrom"),
-            (9, "AncestorOf"),
-            (10, "VariantOf"),
-            (11, "BuildToolOf"),
-            (12, "DevToolOf"),
-            (13, "DescribedBy"),
-        ];
-
-        for (id, description) in data {
+        for (id, description) in DATA {
             let insert = Query::insert()
                 .into_table(Relationship::Table)
                 .columns([Relationship::Id, Relationship::Description])
