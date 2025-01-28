@@ -1,7 +1,7 @@
 use crate::service::AnalysisService;
 use crate::{
     endpoints::configure,
-    model::{AncNode, AncestorSummary},
+    model::{BaseSummary, Node as GraphNode},
 };
 use itertools::Itertools;
 use trustify_test_context::{
@@ -44,8 +44,14 @@ struct RefNode<'a> {
     pub purls: Vec<&'a str>,
 }
 
-impl<'a> From<&'a AncNode> for OwnedNode<'a> {
-    fn from(value: &'a AncNode) -> Self {
+impl<'a> From<&'a GraphNode> for OwnedNode<'a> {
+    fn from(value: &'a GraphNode) -> Self {
+        (&value.base).into()
+    }
+}
+
+impl<'a> From<&'a BaseSummary> for OwnedNode<'a> {
+    fn from(value: &'a BaseSummary) -> Self {
         Self {
             id: &value.node_id,
             name: &value.name,
@@ -56,16 +62,17 @@ impl<'a> From<&'a AncNode> for OwnedNode<'a> {
     }
 }
 
-pub fn assert_ancestors<F>(ancestors: &[AncestorSummary], f: F)
+pub fn assert_ancestors<F>(ancestors: &[GraphNode], f: F)
 where
     F: for<'a> FnOnce(&'a [&'a [Node]]),
 {
     let ancestors = ancestors
         .iter()
-        .sorted_by_key(|a| &a.node_id)
+        .sorted_by_key(|a| &a.base.node_id)
         .map(|item| {
-            item.ancestors
+            item.ancestor
                 .iter()
+                .flatten()
                 .map(OwnedNode::from)
                 .sorted_by_key(|n| n.id.to_string())
                 .collect::<Vec<_>>()
