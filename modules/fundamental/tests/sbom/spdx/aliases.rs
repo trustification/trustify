@@ -21,8 +21,9 @@ async fn cpe_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let service = AnalysisService::new();
 
     let result = service
-        .retrieve_components(
+        .retrieve(
             ComponentReference::Id("SPDXRef-SRPM"),
+            (),
             Default::default(),
             &ctx.db,
         )
@@ -33,7 +34,8 @@ async fn cpe_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let item = &result.items[0];
     assert_eq!(
-        item.cpe
+        item.base
+            .cpe
             .iter()
             .map(ToString::to_string)
             .sorted()
@@ -44,7 +46,8 @@ async fn cpe_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         ]
     );
     assert_eq!(
-        item.purl
+        item.base
+            .purl
             .iter()
             .map(ToString::to_string)
             .sorted()

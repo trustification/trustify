@@ -1,5 +1,8 @@
 use super::*;
-use crate::test::*;
+use crate::{
+    model::*,
+    test::{Node, *},
+};
 use std::{str::FromStr, time::SystemTime};
 use test_context::test_context;
 use test_log::test;
@@ -17,38 +20,52 @@ async fn test_simple_analysis_service(ctx: &TrustifyContext) -> Result<(), anyho
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_root_components(&Query::q("DD"), Paginated::default(), &ctx.db)
+        .retrieve(
+            &Query::q("DD"),
+            QueryOptions::ancestors(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
 
-    assert_eq!(
-        analysis_graph
-            .items
-            .last()
-            .unwrap()
-            .ancestors
-            .last()
-            .unwrap()
-            .purl,
-        vec![Purl::from_str("pkg:rpm/redhat/AA@0.0.0?arch=src")?]
-    );
-    assert_eq!(
-        analysis_graph
-            .items
-            .last()
-            .unwrap()
-            .ancestors
-            .last()
-            .unwrap()
-            .node_id,
-        "SPDXRef-AA".to_string()
-    );
+    log::debug!("Before: {analysis_graph:#?}");
+    let analysis_graph = analysis_graph.root_traces();
+    log::debug!("After: {analysis_graph:#?}");
+
+    assert_ancestors(&analysis_graph.items, |ancestors| {
+        assert!(
+            matches!(
+                ancestors[..],
+                [[
+                    ..,
+                    Node {
+                        id: "SPDXRef-AA",
+                        purls: ["pkg:rpm/redhat/AA@0.0.0?arch=src"],
+                        ..
+                    }
+                ]]
+            ),
+            "doesn't match: {ancestors:#?}"
+        );
+    });
     assert_eq!(analysis_graph.total, 1);
 
-    // ensure we set implicit relationship on component with no defined relationships
+    // ensure we set implicit relationship on components with no defined relationships
     let analysis_graph = service
-        .retrieve_root_components(&Query::q("EE"), Paginated::default(), &ctx.db)
+        .retrieve(
+            &Query::q("EE"),
+            QueryOptions::ancestors(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
+
+    log::debug!("Before: {analysis_graph:#?}");
+    let analysis_graph = analysis_graph.roots();
+    log::debug!("After: {analysis_graph:#?}");
+
     assert_eq!(analysis_graph.total, 1);
+
     Ok(())
 }
 
@@ -63,36 +80,49 @@ async fn test_simple_analysis_cyclonedx_service(
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_root_components(&Query::q("DD"), Paginated::default(), &ctx.db)
+        .retrieve(
+            &Query::q("DD"),
+            QueryOptions::ancestors(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
 
-    assert_eq!(
-        analysis_graph
-            .items
-            .last()
-            .unwrap()
-            .ancestors
-            .last()
-            .unwrap()
-            .purl,
-        vec![Purl::from_str("pkg:rpm/redhat/AA@0.0.0?arch=src")?]
-    );
-    let node = analysis_graph
-        .items
-        .last()
-        .unwrap()
-        .ancestors
-        .last()
-        .unwrap();
-    assert_eq!(node.node_id, "aa".to_string());
-    assert_eq!(node.name, "AA".to_string());
+    let analysis_graph = analysis_graph.root_traces();
+
+    assert_ancestors(&analysis_graph.items, |ancestors| {
+        assert!(
+            matches!(
+                ancestors[..],
+                [[
+                    ..,
+                    Node {
+                        id: "aa",
+                        name: "AA",
+                        purls: ["pkg:rpm/redhat/AA@0.0.0?arch=src"],
+                        ..
+                    }
+                ]]
+            ),
+            "doesn't match: {ancestors:#?}"
+        );
+    });
     assert_eq!(analysis_graph.total, 1);
 
-    // ensure we set implicit relationship on component with no defined relationships
+    // ensure we set implicit relationship on components with no defined relationships
     let analysis_graph = service
-        .retrieve_root_components(&Query::q("EE"), Paginated::default(), &ctx.db)
+        .retrieve(
+            &Query::q("EE"),
+            QueryOptions::ancestors(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
+
+    let analysis_graph = analysis_graph.root_traces();
+
     assert_eq!(analysis_graph.total, 1);
+
     Ok(())
 }
 
@@ -104,8 +134,15 @@ async fn test_simple_by_name_analysis_service(ctx: &TrustifyContext) -> Result<(
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_root_components(ComponentReference::Name("B"), Paginated::default(), &ctx.db)
+        .retrieve(
+            ComponentReference::Name("B"),
+            QueryOptions::ancestors(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
+
+    let analysis_graph = analysis_graph.root_traces();
 
     assert_ancestors(&analysis_graph.items, |ancestors| {
         assert_eq!(
@@ -144,8 +181,17 @@ async fn test_simple_by_purl_analysis_service(ctx: &TrustifyContext) -> Result<(
     let component_purl: Purl = Purl::from_str("pkg:rpm/redhat/B@0.0.0").map_err(Error::Purl)?;
 
     let analysis_graph = service
-        .retrieve_root_components(&component_purl, Paginated::default(), &ctx.db)
+        .retrieve(
+            &component_purl,
+            QueryOptions::ancestors(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
+
+    log::debug!("Before: {analysis_graph:#?}");
+    let analysis_graph = analysis_graph.root_traces();
+    log::debug!("After: {analysis_graph:#?}");
 
     assert_ancestors(&analysis_graph.items, |ancestors| {
         assert_eq!(
@@ -185,20 +231,23 @@ async fn test_quarkus_analysis_service(ctx: &TrustifyContext) -> Result<(), anyh
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_root_components(&Query::q("spymemcached"), Paginated::default(), &ctx.db)
+        .retrieve(
+            &Query::q("spymemcached"),
+            QueryOptions::ancestors(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
+
+    log::debug!("Before: {analysis_graph:#?}");
+    let analysis_graph = analysis_graph.root_traces();
+    log::debug!("After: {analysis_graph:#?}");
 
     assert_ancestors(&analysis_graph.items, |ancestors| {
         assert!(
             matches!(ancestors, [
                 [..],
                 [
-                   Node {
-                       id: "SPDXRef-DOCUMENT",
-                       name: "quarkus-bom-3.2.12.Final-redhat-00002",
-                       version: "",
-                       ..
-                   },
                    Node {
                        id: "SPDXRef-e24fec28-1001-499c-827f-2e2e5f2671b5",
                        name: "quarkus-bom",
@@ -210,9 +259,15 @@ async fn test_quarkus_analysis_service(ctx: &TrustifyContext) -> Result<(), anyh
                            "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?repository_url=https://maven.repository.redhat.com/ga/&type=pom"
                        ],
                    },
+                   Node {
+                       id: "SPDXRef-DOCUMENT",
+                       name: "quarkus-bom-3.2.12.Final-redhat-00002",
+                       version: "",
+                       ..
+                   },
                 ]
             ]),
-            "must match: {ancestors:#?}"
+            "doesn't match: {ancestors:#?}"
         );
     });
 
@@ -257,15 +312,30 @@ async fn test_simple_deps_service(ctx: &TrustifyContext) -> Result<(), anyhow::E
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_deps(&Query::q("AA"), Paginated::default(), &ctx.db)
+        .retrieve(
+            &Query::q("AA"),
+            QueryOptions::descendants(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
 
     assert_eq!(analysis_graph.total, 1);
 
-    // ensure we set implicit relationship on component with no defined relationships
+    // ensure we set implicit relationship on components with no defined relationships
     let analysis_graph = service
-        .retrieve_root_components(&Query::q("EE"), Paginated::default(), &ctx.db)
+        .retrieve(
+            &Query::q("EE"),
+            QueryOptions::ancestors(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
+
+    log::debug!("Before: {analysis_graph:#?}");
+    let analysis_graph = analysis_graph.roots();
+    log::debug!("After: {analysis_graph:#?}");
+
     assert_eq!(analysis_graph.total, 1);
 
     Ok(())
@@ -279,15 +349,26 @@ async fn test_simple_deps_cyclonedx_service(ctx: &TrustifyContext) -> Result<(),
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_deps(&Query::q("AA"), Paginated::default(), &ctx.db)
+        .retrieve(
+            &Query::q("AA"),
+            QueryOptions::descendants(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
 
     assert_eq!(analysis_graph.total, 1);
 
     // ensure we set implicit relationship on component with no defined relationships
     let analysis_graph = service
-        .retrieve_root_components(&Query::q("EE"), Paginated::default(), &ctx.db)
-        .await?;
+        .retrieve(
+            &Query::q("EE"),
+            QueryOptions::ancestors(),
+            Paginated::default(),
+            &ctx.db,
+        )
+        .await?
+        .roots();
     assert_eq!(analysis_graph.total, 1);
 
     Ok(())
@@ -301,7 +382,12 @@ async fn test_simple_by_name_deps_service(ctx: &TrustifyContext) -> Result<(), a
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_deps(ComponentReference::Name("A"), Paginated::default(), &ctx.db)
+        .retrieve(
+            ComponentReference::Name("A"),
+            QueryOptions::descendants(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
 
     assert_eq!(analysis_graph.items.len(), 1);
@@ -330,7 +416,12 @@ async fn test_simple_by_purl_deps_service(ctx: &TrustifyContext) -> Result<(), a
         Purl::from_str("pkg:rpm/redhat/AA@0.0.0?arch=src").map_err(Error::Purl)?;
 
     let analysis_graph = service
-        .retrieve_deps(&component_purl, Paginated::default(), &ctx.db)
+        .retrieve(
+            &component_purl,
+            QueryOptions::descendants(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
 
     assert_eq!(
@@ -355,7 +446,12 @@ async fn test_quarkus_deps_service(ctx: &TrustifyContext) -> Result<(), anyhow::
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_deps(&Query::q("spymemcached"), Paginated::default(), &ctx.db)
+        .retrieve(
+            &Query::q("spymemcached"),
+            QueryOptions::descendants(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
 
     assert_eq!(analysis_graph.total, 2);
@@ -372,14 +468,16 @@ async fn test_circular_deps_cyclonedx_service(ctx: &TrustifyContext) -> Result<(
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_deps(
+        .retrieve(
             ComponentReference::Name("junit-bom"),
+            QueryOptions::descendants(),
             Paginated::default(),
             &ctx.db,
         )
         .await?;
 
-    assert_eq!(analysis_graph.total, 1);
+    // we should get zero, as we don't deal with circular dependencies and don't load such graphs
+    assert_eq!(analysis_graph.total, 0);
 
     Ok(())
 }
@@ -392,10 +490,16 @@ async fn test_circular_deps_spdx_service(ctx: &TrustifyContext) -> Result<(), an
     let service = AnalysisService::new();
 
     let analysis_graph = service
-        .retrieve_deps(ComponentReference::Name("A"), Paginated::default(), &ctx.db)
+        .retrieve(
+            ComponentReference::Name("A"),
+            QueryOptions::descendants(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
 
-    assert_eq!(analysis_graph.total, 1);
+    // we should get zero, as we don't deal with circular dependencies and don't load such graphs
+    assert_eq!(analysis_graph.total, 0);
 
     Ok(())
 }
@@ -410,8 +514,15 @@ async fn test_retrieve_all_sbom_roots_by_name(ctx: &TrustifyContext) -> Result<(
     let component_name = "quarkus-vertx-http".to_string();
 
     let analysis_graph = service
-        .retrieve_root_components(&Query::q(&component_name), Paginated::default(), &ctx.db)
+        .retrieve(
+            &Query::q(&component_name),
+            QueryOptions::ancestors(),
+            Paginated::default(),
+            &ctx.db,
+        )
         .await?;
+
+    let analysis_graph = analysis_graph.roots();
 
     log::debug!("Result: {analysis_graph:#?}");
 
@@ -423,13 +534,34 @@ async fn test_retrieve_all_sbom_roots_by_name(ctx: &TrustifyContext) -> Result<(
         .parse::<Uuid>()?;
 
     let roots = service
-        .retrieve_all_sbom_roots_by_name(sbom_id, component_name, &ctx.db)
+        .retrieve_single(
+            sbom_id,
+            ComponentReference::Name(&component_name),
+            QueryOptions::ancestors(),
+            Default::default(),
+            &ctx.db,
+        )
         .await?;
 
-    assert_eq!(
-        roots.last().unwrap().name,
-        "quarkus-bom-3.2.11.Final-redhat-00001"
-    );
+    log::debug!("Before: {roots:#?}");
+    let roots = roots.root_traces();
+    log::debug!("After: {roots:#?}");
+
+    assert_ancestors(&roots.items, |ancestors| {
+        assert!(
+            matches!(
+                ancestors,
+                [[
+                    ..,
+                    Node {
+                        name: "quarkus-bom-3.2.11.Final-redhat-00001",
+                        ..
+                    }
+                ]]
+            ),
+            "doesn't match: {ancestors:#?}"
+        );
+    });
 
     Ok(())
 }

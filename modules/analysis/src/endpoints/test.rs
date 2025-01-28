@@ -216,6 +216,7 @@ async fn test_simple_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::E
             }
         ]
     })));
+
     assert_eq!(&response["total"], 2);
 
     Ok(())
@@ -427,12 +428,16 @@ async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 
     // Find all deps of src rpm
     let src = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
-    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(src));
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode(src)
+    );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
+
     let deps = response.path(&format!(
-        "$.items[?(@.node_id=='{src}')].deps[?(@.relationship=='GeneratedFrom')]"
+        "$.items[?(@.node_id=='{src}')].descendants[?(@.relationship=='generated_from')]"
     ))?;
     assert_eq!(35, deps.as_array().unwrap().len());
 
@@ -505,18 +510,22 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .await?;
 
     // Find all deps of parent
-    let parent = "pkg:oci/openshift-ose-console@sha256:94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679";
-    let child = "pkg:oci/ose-console@sha256:c2d69e860b7457eb42f550ba2559a0452ec3e5c9ff6521d758c186266247678e?arch=s390x&os=linux&tag=v4.14.0-202412110104.p0.g350e1ea.assembly.stream.el8";
+    let parent = "pkg:oci/ose-console@sha256:c2d69e860b7457eb42f550ba2559a0452ec3e5c9ff6521d758c186266247678e?arch=s390x&os=linux&tag=v4.14.0-202412110104.p0.g350e1ea.assembly.stream.el8";
+    let child = "pkg:oci/openshift-ose-console@sha256:94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679";
 
-    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode(parent)
+    );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
+
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ parent ],
-            "deps": [{
-                "relationship": "VariantOf",
+            "descendants": [{
+                "relationship": "variant",
                 "purl": [ child ]
             }]
         }]
@@ -524,17 +533,18 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // Ensure child is variant of src
     let uri = format!(
-        "/api/v2/analysis/root-component/{}",
+        "/api/v2/analysis/component/{}?ancestors=10",
         urlencoding::encode(child)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{response:#?}");
+    tracing::debug!(test = "", "{response:#?}");
+
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ child ],
             "ancestors": [{
-                "relationship": "VariantOf",
+                "relationship": "variant",
                 "purl": [ parent ]
             }]
         }]
@@ -550,61 +560,66 @@ async fn spdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingest_documents(["ubi9-9.2-755.1697625012.json"])
         .await?;
 
-    let parent = "pkg:oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012";
-    let children = [
+    let parents = [
             "pkg:oci/ubi9-container@sha256:d4c5d9c980678267b81c3c197a4a0dd206382111c912875a6cdffc6ca319b769?arch=aarch64&repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
             "pkg:oci/ubi9-container@sha256:204383c3d96c0e6c7154c91d07764f92035738dd67aa8896679f7feb73f66bfd?arch=x86_64&repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
             "pkg:oci/ubi9-container@sha256:721ca837c80c8b98752010a17ffccbdf17a0d260ddd916b7097f04187f6aa3a8?arch=s390x&repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
             "pkg:oci/ubi9-container@sha256:9a6092cdd8e7f4361ea3f508ae6d6d3d9dbb9458a921ab09e4cc006c0a7f0a61?arch=ppc64le&repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012",
         ];
+    let child = "pkg:oci/ubi9-container@sha256:2f168398c538b287fd705519b83cd5b604dc277ef3d9f479c28a2adb4d830a49?repository_url=registry.redhat.io/ubi9&tag=9.2-755.1697625012";
 
-    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
-    let request: Request = TestRequest::get().uri(&uri).to_request();
-    let response: Value = app.call_and_read_body_json(request).await;
-    tracing::debug!(test = "", "{response:#?}");
-    assert!(response.contains_subset(json!({
-        "items": [{
-            "purl": [ parent ],
-            "deps": [
-                {
-                    "relationship": "VariantOf",
-                    "purl": [ children[0] ]
-                },
-                {
-                    "relationship": "VariantOf",
-                    "purl": [ children[1] ]
-                },
-                {
-                    "relationship": "VariantOf",
-                    "purl": [ children[2] ]
-                },
-                {
-                    "relationship": "VariantOf",
-                    "purl": [ children[3] ]
-                }
-            ]
-        }]
-    })));
-
-    // Ensure VariantOf relationships
-    for child in children {
+    // Ensure variant relationships
+    for parent in parents {
         let uri = format!(
-            "/api/v2/analysis/root-component/{}",
-            urlencoding::encode(child)
+            "/api/v2/analysis/component/{}?descendants=10",
+            urlencoding::encode(parent)
         );
         let request: Request = TestRequest::get().uri(&uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
         tracing::debug!(test = "", "{response:#?}");
+
         assert!(response.contains_subset(json!({
             "items": [{
-                "purl": [ child ],
-                "ancestors": [{
-                    "relationship": "VariantOf",
-                    "purl": [ parent ]
+                "purl": [ parent ],
+                "descendants": [{
+                    "relationship": "variant",
+                    "purl": [ child ]
                 }]
             }]
         })));
     }
+
+    let uri = format!(
+        "/api/v2/analysis/component/{}?ancestors=10",
+        urlencoding::encode(child)
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    tracing::debug!(test = "", "{response:#?}");
+
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ child ],
+            "ancestors": [
+                {
+                    "relationship": "variant",
+                    "purl": [ parents[0] ]
+                },
+                {
+                    "relationship": "variant",
+                    "purl": [ parents[1] ]
+                },
+                {
+                    "relationship": "variant",
+                    "purl": [ parents[2] ]
+                },
+                {
+                    "relationship": "variant",
+                    "purl": [ parents[3] ]
+                }
+            ]
+        }]
+    })));
 
     Ok(())
 }
@@ -616,37 +631,42 @@ async fn cdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingest_documents(["cyclonedx/openssl-3.0.7-18.el9_2.cdx_1.6.sbom.json"])
         .await?;
 
-    let parent = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
-    let child = "pkg:generic/openssl@3.0.7?checksum=SHA-512:1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e&download_url=https://pkgs.devel.redhat.com/repo/openssl/openssl-3.0.7-hobbled.tar.gz/sha512/1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e/openssl-3.0.7-hobbled.tar.gz";
+    let parent = "pkg:generic/openssl@3.0.7?checksum=SHA-512:1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e&download_url=https://pkgs.devel.redhat.com/repo/openssl/openssl-3.0.7-hobbled.tar.gz/sha512/1aea183b0b6650d9d5e7ba87b613bb1692c71720b0e75377b40db336b40bad780f7e8ae8dfb9f60841eeb4381f4b79c4c5043210c96e7cb51f90791b80c8285e/openssl-3.0.7-hobbled.tar.gz";
+    let child = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
 
-    // Ensure parent has deps that include the child
-    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
+    // Ensure parent has ancestors that include the child
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode(parent)
+    );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
+
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ parent ],
-            "deps": [{
-                "relationship": "AncestorOf",
+            "descendants": [{
+                "relationship": "ancestor_of",
                 "purl": [ child ]
             }]
         }]
     })));
 
-    // Ensure child has ancestors that include the parent
+    // Ensure parent has deps that include the child
     let uri = format!(
-        "/api/v2/analysis/root-component/{}",
+        "/api/v2/analysis/component/{}?ancestors=10",
         urlencoding::encode(child)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
+
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ child ],
             "ancestors": [{
-                "relationship": "AncestorOf",
+                "relationship": "ancestor_of",
                 "purl": [ parent ]
             }]
         }]
@@ -661,19 +681,23 @@ async fn spdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     ctx.ingest_documents(["spdx/1178.json"]).await?;
 
-    let parent = "pkg:rpm/redhat/B@0.0.0";
-    let child = "pkg:generic/upstream-component@0.0.0?arch=src";
+    let parent = "pkg:generic/upstream-component@0.0.0?arch=src";
+    let child = "pkg:rpm/redhat/B@0.0.0";
 
-    // Ensure parent has deps that include the child
-    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(parent));
+    // Ensure parent has ancestors that include the child
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode(parent)
+    );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
+
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ parent ],
-            "deps": [{
-                "relationship": "AncestorOf",
+            "descendants": [{
+                "relationship": "ancestor_of",
                 "purl": [ child ]
             }]
         }]
@@ -681,16 +705,18 @@ async fn spdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // Ensure child has ancestors that include the parent
     let uri = format!(
-        "/api/v2/analysis/root-component/{}",
+        "/api/v2/analysis/component/{}?ancestors=10",
         urlencoding::encode(child)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
+    tracing::debug!(test = "", "{response:#?}");
+
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ child ],
             "ancestors": [{
-                "relationship": "AncestorOf",
+                "relationship": "ancestor_of",
                 "purl": [ parent ]
             }]
         }]
@@ -711,25 +737,10 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let purl = "pkg:rpm/redhat/rubygem-google-cloud-compute@0.5.0-1.el8sat?arch=src";
 
-    // Ensure parent has deps that include the child
-    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(purl));
-    let request: Request = TestRequest::get().uri(&uri).to_request();
-    let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{}", serde_json::to_string_pretty(&response)?);
-
-    assert!(response.contains_subset(json!({
-        "items": [ {
-            "deps": [ {
-                "relationship": "PackageOf",
-                "name": "SATELLITE-6.15-RHEL-8",
-                "version": "6.15",
-            }]
-        }]
-    })));
-
+    // Ensure child has an ancestor that includes it
     let uri = format!(
-        "/api/v2/analysis/root-component?q={}",
-        urlencoding::encode("SATELLITE-6.15-RHEL-8")
+        "/api/v2/analysis/component/{}?ancestors=10",
+        urlencoding::encode(purl)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
@@ -738,7 +749,26 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(response.contains_subset(json!({
         "items": [ {
             "ancestors": [ {
-                "relationship": "PackageOf",
+                "relationship": "packages",
+                "name": "SATELLITE-6.15-RHEL-8",
+                "version": "6.15",
+            }]
+        }]
+    })));
+
+    // Ensure the product contains the component
+    let uri = format!(
+        "/api/v2/analysis/component?q={}&descendants=10",
+        urlencoding::encode("SATELLITE-6.15-RHEL-8")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    log::debug!("{}", serde_json::to_string_pretty(&response)?);
+
+    assert!(response.contains_subset(json!({
+        "items": [ {
+            "descendants": [ {
+                "relationship": "packages",
                 "name": "rubygem-google-cloud-compute",
                 "version": "0.5.0-1.el8sat"
             }]
