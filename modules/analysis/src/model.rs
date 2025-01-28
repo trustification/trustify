@@ -1,10 +1,11 @@
+mod roots;
+
+pub use roots::*;
+
 use petgraph::Graph;
 use serde::Serialize;
-use std::{
-    collections::HashMap,
-    fmt,
-    ops::{Deref, DerefMut},
-};
+use std::ops::{Deref, DerefMut};
+use std::{collections::HashMap, fmt};
 use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use utoipa::ToSchema;
@@ -36,30 +37,14 @@ pub struct PackageNode {
     pub product_name: String,
     pub product_version: String,
 }
+
 impl fmt::Display for PackageNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.purl)
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize)]
-pub struct AncNode {
-    pub sbom_id: String,
-    pub node_id: String,
-    pub relationship: String,
-    pub purl: Vec<Purl>,
-    pub cpe: Vec<Cpe>,
-    pub name: String,
-    pub version: String,
-}
-
-impl fmt::Display for AncNode {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.purl)
-    }
-}
-
-#[derive(Debug, Clone, Serialize, ToSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ToSchema)]
 pub struct BaseSummary {
     pub sbom_id: String,
     pub node_id: String,
@@ -90,54 +75,27 @@ impl From<&PackageNode> for BaseSummary {
     }
 }
 
-#[derive(Debug, Clone, Serialize, ToSchema)]
-pub struct AncestorSummary {
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, ToSchema)]
+pub struct Node {
     #[serde(flatten)]
     pub base: BaseSummary,
-    pub ancestors: Vec<AncNode>,
-}
 
-impl Deref for AncestorSummary {
-    type Target = BaseSummary;
+    /// The relationship the node has to it's containing node, if any.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub relationship: Option<Relationship>,
 
-    fn deref(&self) -> &Self::Target {
-        &self.base
-    }
-}
-
-impl DerefMut for AncestorSummary {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.base
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize)]
-pub struct DepNode {
-    pub sbom_id: String,
-    pub node_id: String,
-    pub relationship: String,
-    pub purl: Vec<Purl>,
-    pub cpe: Vec<Cpe>,
-    pub name: String,
-    pub version: String,
+    /// All ancestors of this node. [`None`] if not requested on this level.
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(no_recursion)]
-    pub deps: Vec<DepNode>,
+    pub ancestors: Option<Vec<Node>>,
+
+    /// All descendents of this node. [`None`] if not requested on this level.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[schema(no_recursion)]
+    pub descendants: Option<Vec<Node>>,
 }
 
-impl fmt::Display for DepNode {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.purl)
-    }
-}
-
-#[derive(Debug, Clone, Serialize, ToSchema)]
-pub struct DepSummary {
-    #[serde(flatten)]
-    pub base: BaseSummary,
-    pub deps: Vec<DepNode>,
-}
-
-impl Deref for DepSummary {
+impl Deref for Node {
     type Target = BaseSummary;
 
     fn deref(&self) -> &Self::Target {
@@ -145,7 +103,7 @@ impl Deref for DepSummary {
     }
 }
 
-impl DerefMut for DepSummary {
+impl DerefMut for Node {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.base
     }

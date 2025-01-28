@@ -98,9 +98,9 @@ impl<R> PaginatedResults<R> {
         })
     }
 
-    pub fn map<O, F: Fn(R) -> O>(mut self, f: F) -> PaginatedResults<O> {
+    pub fn map<O, F: Fn(R) -> O>(self, f: F) -> PaginatedResults<O> {
         PaginatedResults {
-            items: self.items.drain(..).map(f).collect(),
+            items: self.items.into_iter().map(f).collect(),
             total: self.total,
         }
     }

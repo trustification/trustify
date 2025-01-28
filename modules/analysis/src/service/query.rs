@@ -1,4 +1,7 @@
+use std::collections::HashSet;
 use trustify_common::{cpe::Cpe, db::query::Query, purl::Purl};
+use trustify_entity::relationship::Relationship;
+use utoipa::IntoParams;
 
 #[derive(Copy, Clone, Debug)]
 pub enum ComponentReference<'a> {
@@ -53,5 +56,46 @@ impl<'a> From<&'a Purl> for GraphQuery<'a> {
 impl<'a> From<&'a Query> for GraphQuery<'a> {
     fn from(query: &'a Query) -> Self {
         Self::Query(query)
+    }
+}
+
+/// Options when querying the graph.
+#[derive(Clone, Debug, Default, Eq, PartialEq, serde::Deserialize, IntoParams)]
+pub struct QueryOptions {
+    #[serde(default)]
+    pub ancestors: u64,
+    #[serde(default)]
+    pub descendants: u64,
+    #[serde(default)]
+    pub relationships: HashSet<Relationship>,
+}
+
+impl QueryOptions {
+    pub fn any() -> Self {
+        Self {
+            ancestors: u64::MAX,
+            descendants: u64::MAX,
+            ..Default::default()
+        }
+    }
+
+    pub fn ancestors() -> Self {
+        Self {
+            ancestors: u64::MAX,
+            ..Default::default()
+        }
+    }
+
+    pub fn descendants() -> Self {
+        Self {
+            descendants: u64::MAX,
+            ..Default::default()
+        }
+    }
+}
+
+impl From<()> for QueryOptions {
+    fn from(_: ()) -> Self {
+        Self::default()
     }
 }
