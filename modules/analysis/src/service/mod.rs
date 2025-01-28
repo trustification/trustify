@@ -56,11 +56,11 @@ pub fn dep_nodes(
             return;
         }
         visited.insert(node);
-        for neighbor in graph.neighbors_directed(node, Direction::Incoming) {
+        for neighbor in graph.neighbors_directed(node, Direction::Outgoing) {
             if let Some(dep_packagenode) = graph.node_weight(neighbor).cloned() {
                 // Attempt to find the edge and get the relationship in a more elegant way
                 if let Some(relationship) = graph
-                    .find_edge(neighbor, node)
+                    .find_edge(node, neighbor)
                     .and_then(|edge_index| graph.edge_weight(edge_index))
                 {
                     let dep_node = DepNode {
@@ -102,10 +102,10 @@ pub fn ancestor_nodes(
 
     while let Some(node) = stack.pop() {
         if discovered.visit(node) {
-            for succ in graph.neighbors_directed(node, Direction::Outgoing) {
+            for succ in graph.neighbors_directed(node, Direction::Incoming) {
                 if !discovered.is_visited(&succ) {
                     if let Some(anc_packagenode) = graph.node_weight(succ).cloned() {
-                        if let Some(edge) = graph.find_edge(node, succ) {
+                        if let Some(edge) = graph.find_edge(succ, node) {
                             if let Some(relationship) = graph.edge_weight(edge) {
                                 let anc_node = AncNode {
                                     sbom_id: anc_packagenode.sbom_id,
@@ -133,7 +133,7 @@ pub fn ancestor_nodes(
                     }
                 }
             }
-            if graph.neighbors_directed(node, Direction::Outgoing).count() == 0 {
+            if graph.neighbors_directed(node, Direction::Incoming).count() == 0 {
                 continue; // we are at the root
             }
         }
