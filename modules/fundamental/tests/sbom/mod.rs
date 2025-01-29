@@ -1,6 +1,7 @@
 #![allow(clippy::expect_used)]
 
 mod cyclonedx;
+mod details;
 mod graph;
 mod reingest;
 mod spdx;
