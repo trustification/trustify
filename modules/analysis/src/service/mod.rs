@@ -35,7 +35,7 @@ use trustify_common::{
 use trustify_entity::{relationship::Relationship, sbom};
 use uuid::Uuid;
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct AnalysisService {
     graph: Arc<RwLock<GraphMap>>,
 }
@@ -142,8 +142,22 @@ pub fn ancestor_nodes(
 }
 
 impl AnalysisService {
+    /// Create a new analysis service instance.
+    ///
+    /// ## Caching
+    ///
+    /// A new instance will have a new cache. Instanced cloned from it, will share that cache.
+    ///
+    /// Therefore, it is ok to create a new instance. However, if you want to make use of the
+    /// caching, it is necessary to re-use that instance.
+    ///
+    /// Also, we do not implement default because of this. As a new instance has the implication
+    /// of having its own cache. So creating a new instance should be a deliberate choice.
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            graph: Default::default(),
+        }
     }
 
     #[instrument(skip_all, err)]
