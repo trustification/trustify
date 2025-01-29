@@ -1,9 +1,9 @@
-use crate::service::AnalysisService;
 use crate::{
     endpoints::configure,
     model::{BaseSummary, Node as GraphNode},
+    service::AnalysisService,
 };
-use itertools::Itertools;
+use trustify_entity::relationship::Relationship;
 use trustify_test_context::{
     call::{self, CallService},
     TrustifyContext,
@@ -62,19 +62,15 @@ impl<'a> From<&'a BaseSummary> for OwnedNode<'a> {
     }
 }
 
-pub fn assert_ancestors<F>(ancestors: &[GraphNode], f: F)
+pub fn assert_ancestors<F>(ancestors: &[Vec<(&BaseSummary, Relationship)>], f: F)
 where
     F: for<'a> FnOnce(&'a [&'a [Node]]),
 {
     let ancestors = ancestors
         .iter()
-        .sorted_by_key(|a| &a.base.node_id)
         .map(|item| {
-            item.ancestor
-                .iter()
-                .flatten()
-                .map(OwnedNode::from)
-                .sorted_by_key(|n| n.id.to_string())
+            item.iter()
+                .map(|(base, _)| OwnedNode::from(*base))
                 .collect::<Vec<_>>()
         })
         .collect::<Vec<_>>();

@@ -31,7 +31,7 @@ impl AnalysisService {
             ) {
                 let _ = writeln!(
                     self.data,
-                    r#""{source}" -> "{target}"maybe  [label="{label}"]"#,
+                    r#""{source}" -> "{target}" [label="{label}"]"#,
                     source = escape(&source.node_id),
                     target = escape(&target.node_id),
                     label = escape(&relationship.to_string())
