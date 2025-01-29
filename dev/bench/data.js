@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1737523521225,
+  "lastUpdate": 1738161045019,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3160,6 +3160,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 0,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": false,
+          "id": "c350d71c0f285ef6bcc28c097400b4ca30f6afc2",
+          "message": "TC-2174 OSV Python ecosystem management (review fixes)\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-01-29T13:19:38Z",
+          "tree_id": "05d1624311fc1a019f17746314f8621a65a47677",
+          "url": "https://github.com/trustification/trustify/commit/c350d71c0f285ef6bcc28c097400b4ca30f6afc2"
+        },
+        "date": 1738161044399,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 1,
             "unit": "s"
           }
         ]
