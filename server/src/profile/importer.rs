@@ -29,7 +29,7 @@ use trustify_infrastructure::{
     },
     endpoint::Trustify,
     health::checks::{Local, Probe},
-    tracing::Tracing,
+    otel::Tracing,
     Infrastructure, InfrastructureConfig, InitContext, Metrics,
 };
 use trustify_module_graphql::RootQuery;

@@ -3,7 +3,7 @@ mod infra;
 pub mod app;
 pub mod endpoint;
 pub mod health;
-pub mod tracing;
+pub mod otel;
 
 pub use infra::*;
 

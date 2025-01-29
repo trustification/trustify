@@ -1,4 +1,12 @@
 services:
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml:z
+    ports:
+      - "9090:9090"
+      - "9464:9464"
   jaeger-all-in-one:
     hostname: jaeger-all-in-one
     image: jaegertracing/all-in-one:1.53.0 # Using this version to align with trustify-helm-charts

@@ -1,7 +1,7 @@
 use crate::{
     app::{new_app, AppOptions},
     endpoint::Endpoint,
-    tracing::Tracing,
+    otel::{Metrics as OtelMetrics, Tracing},
 };
 use actix_cors::Cors;
 use actix_tls::{accept::openssl::reexports::SslAcceptor, connect::openssl::reexports::SslMethod};
@@ -10,7 +10,7 @@ use actix_web::{
     web::{self, JsonConfig},
     App, HttpResponse, HttpServer,
 };
-use actix_web_opentelemetry::RequestTracing;
+use actix_web_opentelemetry::{RequestMetrics, RequestTracing};
 use actix_web_prom::{PrometheusMetrics, PrometheusMetricsBuilder};
 use anyhow::{anyhow, Context};
 use bytesize::ByteSize;
@@ -289,6 +289,7 @@ pub struct HttpServerBuilder {
     json_limit: Option<usize>,
     request_limit: Option<usize>,
     tracing: Tracing,
+    metrics: OtelMetrics,
 
     disable_log: bool,
 
@@ -329,6 +330,7 @@ impl HttpServerBuilder {
             json_limit: None,
             request_limit: None,
             tracing: Tracing::default(),
+            metrics: OtelMetrics::default(),
             openapi_info: None,
             disable_log: false,
         }
@@ -367,6 +369,11 @@ impl HttpServerBuilder {
 
     pub fn tracing(mut self, tracing: Tracing) -> Self {
         self.tracing = tracing;
+        self
+    }
+
+    pub fn metrics_otel(mut self, metrics: OtelMetrics) -> Self {
+        self.metrics = metrics;
         self
     }
 
@@ -488,6 +495,17 @@ impl HttpServerBuilder {
                 tracing_logger.is_some()
             );
 
+            let otel_metrics = match self.metrics {
+                OtelMetrics::Disabled => None,
+                OtelMetrics::Enabled => Some(RequestMetrics::default()),
+            };
+
+            log::debug!(
+                "Otel Metrics({}) - metrics: {}",
+                self.metrics,
+                otel_metrics.is_some()
+            );
+
             let mut app = new_app(AppOptions {
                 cors,
                 metrics: metrics.clone(),
@@ -498,6 +516,7 @@ impl HttpServerBuilder {
                     .unwrap_or_else(|| Authorizer::new(None)),
                 logger,
                 tracing_logger,
+                otel_metrics,
             })
             .app_data(json)
             .into_utoipa_app();

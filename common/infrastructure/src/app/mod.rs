@@ -9,7 +9,7 @@ use actix_web::{
 };
 use actix_web_extras::middleware::Condition;
 use actix_web_httpauth::{extractors::bearer::BearerAuth, middleware::HttpAuthentication};
-use actix_web_opentelemetry::RequestTracing;
+use actix_web_opentelemetry::{RequestMetrics, RequestTracing};
 use actix_web_prom::PrometheusMetrics;
 use futures::{future::LocalBoxFuture, FutureExt};
 use std::sync::Arc;
@@ -23,6 +23,7 @@ pub struct AppOptions {
     pub authorizer: Authorizer,
     pub logger: Option<Logger>,
     pub tracing_logger: Option<RequestTracing>,
+    pub otel_metrics: Option<RequestMetrics>,
 }
 
 /// create a new authenticator
@@ -78,6 +79,8 @@ pub fn new_app(
         .wrap(Condition::from_option(options.cors))
         // Next, record metrics for the request (should never fail)
         .wrap(Condition::from_option(options.metrics))
+        // Next, record otel metrics for the request (should never fail)
+        .wrap(Condition::from_option(options.otel_metrics))
         // Compress everything
         .wrap(Compress::default())
         // First log the request, so that we know what happens (can't fail)

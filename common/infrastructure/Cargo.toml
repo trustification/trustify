@@ -11,7 +11,7 @@ actix-tls = { workspace = true, features = ["openssl"] }
 actix-web = { workspace = true, features = ["openssl"] }
 actix-web-extras = { workspace = true }
 actix-web-httpauth = { workspace = true }
-actix-web-opentelemetry = { workspace = true }
+actix-web-opentelemetry = { workspace = true, features = ["metrics"] }
 actix-web-prom = { workspace = true }
 anyhow = { workspace = true }
 bytesize = { workspace = true }
