@@ -1,12 +1,36 @@
 use core::fmt;
-use opentelemetry::{propagation::Injector, trace::TracerProvider, Context, KeyValue};
-use opentelemetry_otlp::SpanExporter;
-use opentelemetry_sdk::{trace as sdktrace, Resource};
+use opentelemetry::{
+    global::{
+        get_text_map_propagator, set_meter_provider, set_text_map_propagator, set_tracer_provider,
+    },
+    propagation::Injector,
+    trace::TracerProvider,
+    Context, KeyValue,
+};
+use opentelemetry_otlp::{MetricExporter, SpanExporter};
+use opentelemetry_sdk::{
+    metrics::{PeriodicReader, SdkMeterProvider},
+    propagation::TraceContextPropagator,
+    runtime::TokioCurrentThread,
+    trace::{
+        self as sdktrace,
+        Sampler::{self, ParentBased},
+    },
+    Resource,
+};
 use reqwest::RequestBuilder;
 use std::sync::Once;
 use tracing_subscriber::{
     field::MakeExt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter,
 };
+
+#[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq)]
+pub enum Metrics {
+    #[clap(name = "disabled")]
+    Disabled,
+    #[clap(name = "enabled")]
+    Enabled,
+}
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq)]
 pub enum Tracing {
@@ -16,9 +40,24 @@ pub enum Tracing {
     Enabled,
 }
 
+impl Default for Metrics {
+    fn default() -> Self {
+        Self::Disabled
+    }
+}
+
 impl Default for Tracing {
     fn default() -> Self {
         Self::Disabled
+    }
+}
+
+impl fmt::Display for Metrics {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Metrics::Disabled => write!(f, "disabled"),
+            Metrics::Enabled => write!(f, "enabled"),
+        }
     }
 }
 
@@ -53,7 +92,7 @@ pub trait WithTracing {
 
 impl WithTracing for RequestBuilder {
     fn propagate_context(self, cx: &Context) -> Self {
-        let headers = opentelemetry::global::get_text_map_propagator(|prop| {
+        let headers = get_text_map_propagator(|prop| {
             let mut injector = HeaderInjector::new();
             prop.inject_context(cx, &mut injector);
             injector.0
@@ -87,11 +126,11 @@ fn sampling_from_env() -> Option<f64> {
         .and_then(|s| s.to_str().and_then(|s| s.parse::<f64>().ok()))
 }
 
-fn sampler() -> opentelemetry_sdk::trace::Sampler {
+fn sampler() -> Sampler {
     if let Some(p) = sampling_from_env() {
-        opentelemetry_sdk::trace::Sampler::TraceIdRatioBased(p)
+        Sampler::TraceIdRatioBased(p)
     } else {
-        opentelemetry_sdk::trace::Sampler::TraceIdRatioBased(0.001)
+        Sampler::TraceIdRatioBased(0.001)
     }
 }
 
@@ -107,26 +146,56 @@ pub fn init_tracing(name: &str, tracing: Tracing) {
     }
 }
 
+pub fn init_metrics(name: &str, metrics: Metrics) {
+    match metrics {
+        Metrics::Disabled => {
+            INIT.call_once(init_no_tracing);
+        }
+        Metrics::Enabled => {
+            init_otlp_metrics(name);
+        }
+    }
+}
+
+fn init_otlp_metrics(name: &str) {
+    #[allow(clippy::expect_used)]
+    let exporter = MetricExporter::builder()
+        .with_tonic()
+        .build()
+        .expect("Unable to build metrics exporter.");
+
+    let reader = PeriodicReader::builder(exporter, TokioCurrentThread).build();
+
+    let provider = SdkMeterProvider::builder()
+        .with_reader(reader)
+        .with_resource(Resource::new(vec![KeyValue::new(
+            "service.name",
+            name.to_string(),
+        )]))
+        .build();
+
+    println!("Using OTEL Collector with Prometheus as the back-end.");
+    println!("{:#?}", provider);
+
+    set_meter_provider(provider.clone());
+}
+
 fn init_otlp(name: &str) {
-    opentelemetry::global::set_text_map_propagator(
-        opentelemetry_sdk::propagation::TraceContextPropagator::new(),
-    );
+    set_text_map_propagator(TraceContextPropagator::new());
 
     #[allow(clippy::expect_used)]
     let exporter = SpanExporter::builder()
         .with_tonic()
         .build()
-        .expect("Unable to build OTEL exporter");
+        .expect("Unable to build tracing exporter");
 
     let provider = sdktrace::TracerProvider::builder()
         .with_resource(Resource::new(vec![KeyValue::new(
             "service.name",
             name.to_string(),
         )]))
-        .with_batch_exporter(exporter, opentelemetry_sdk::runtime::TokioCurrentThread)
-        .with_sampler(opentelemetry_sdk::trace::Sampler::ParentBased(Box::new(
-            sampler(),
-        )))
+        .with_batch_exporter(exporter, TokioCurrentThread)
+        .with_sampler(ParentBased(Box::new(sampler())))
         .build();
 
     println!("Using OTEL Collector with Jaeger as the back-end.");
@@ -142,7 +211,7 @@ fn init_otlp(name: &str) {
     {
         eprintln!("Error initializing tracing: {:?}", e);
     }
-    opentelemetry::global::set_tracer_provider(provider);
+    set_tracer_provider(provider);
 }
 
 fn init_no_tracing() {

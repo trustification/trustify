@@ -11,7 +11,7 @@ use futures::future::select_all;
 use prometheus::{Registry, TextEncoder};
 use tokio::signal;
 
-use crate::tracing::{init_tracing, Tracing};
+use crate::otel::{init_metrics, init_tracing, Metrics as OtelMetrics, Tracing};
 
 use crate::health::{Checks, HealthChecks};
 #[cfg(unix)]
@@ -39,6 +39,9 @@ pub struct InfrastructureConfig {
     /// Enable tracing
     #[arg(long, env, default_value_t = Tracing::Disabled)]
     pub tracing: Tracing,
+    /// Enable metrics
+    #[arg(long, env, default_value_t = OtelMetrics::Disabled)]
+    pub metrics: OtelMetrics,
 }
 
 impl Default for InfrastructureConfig {
@@ -48,6 +51,7 @@ impl Default for InfrastructureConfig {
             infrastructure_bind: DEFAULT_BIND_ADDR.into(),
             infrastructure_workers: 1,
             tracing: Tracing::Disabled,
+            metrics: OtelMetrics::Disabled,
         }
     }
 }
@@ -222,6 +226,7 @@ impl Infrastructure {
         MFut: Future<Output = anyhow::Result<()>>,
     {
         init_tracing(id, self.config.tracing);
+        init_metrics(id, self.config.metrics);
 
         let init_data = init(InitContext {
             metrics: self.metrics.clone(),

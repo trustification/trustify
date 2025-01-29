@@ -31,7 +31,7 @@ use trustify_infrastructure::{
     },
     endpoint::Trustify,
     health::checks::{Local, Probe},
-    tracing::Tracing,
+    otel::{Metrics as OtelMetrics, Tracing},
     Infrastructure, InfrastructureConfig, InitContext, Metrics,
 };
 use trustify_module_analysis::service::AnalysisService;
@@ -162,6 +162,7 @@ struct InitData {
     storage: DispatchBackend,
     http: HttpServerConfig<Trustify>,
     tracing: Tracing,
+    metrics: OtelMetrics,
     swagger_oidc: Option<Arc<SwaggerUiOidc>>,
     #[cfg(feature = "garage-door")]
     embedded_oidc: Option<embedded_oidc::EmbeddedOidc>,
@@ -294,6 +295,7 @@ impl InitData {
             config,
             http: run.http,
             tracing: run.infra.tracing,
+            metrics: run.infra.metrics,
             swagger_oidc,
             storage,
             #[cfg(feature = "garage-door")]
@@ -312,6 +314,7 @@ impl InitData {
         let http = {
             HttpServerBuilder::try_from(self.http)?
                 .tracing(self.tracing)
+                .metrics_otel(self.metrics)
                 .metrics(metrics.registry().clone(), SERVICE_ID)
                 .authorizer(self.authorizer)
                 .swagger_ui_oidc(self.swagger_oidc.clone())
