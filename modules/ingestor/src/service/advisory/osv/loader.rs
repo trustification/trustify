@@ -173,6 +173,26 @@ impl<'g> OsvLoader<'g> {
                                 )
                                 .await?;
                             }
+                            (RangeType::Ecosystem, Ecosystem::PyPI) => {
+                                create_package_status(
+                                    &advisory_vuln,
+                                    &purl,
+                                    range,
+                                    &VersionScheme::Python,
+                                    &tx,
+                                )
+                                .await?;
+                            }
+                            (RangeType::Ecosystem, Ecosystem::Python) => {
+                                create_package_status(
+                                    &advisory_vuln,
+                                    &purl,
+                                    range,
+                                    &VersionScheme::Python,
+                                    &tx,
+                                )
+                                .await?;
+                            }
                             (_, _) => {
                                 create_package_status_versions(
                                     &advisory_vuln,
@@ -493,6 +513,37 @@ mod test {
             .get_vulnerability("CVE-8675309", &ctx.db)
             .await?
             .is_none());
+
+        Ok(())
+    }
+
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn loader_pypi(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let db = &ctx.db;
+        let graph = Graph::new(db.clone());
+
+        let (osv, digests): (Vulnerability, _) = document("osv/GHSA-45c4-8wx5-qw6w.json").await?;
+
+        let loaded_vulnerability = graph.get_vulnerability("CVE-2023-37276", &ctx.db).await?;
+        assert!(loaded_vulnerability.is_none());
+
+        let loaded_advisory = graph
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), &ctx.db)
+            .await?;
+        assert!(loaded_advisory.is_none());
+
+        let loader = OsvLoader::new(&graph);
+        loader
+            .load(("file", "GHSA-45c4-8wx5-qw6w.json"), osv, &digests, None)
+            .await?;
+        let loaded_vulnerability = graph.get_vulnerability("CVE-2023-37276", &ctx.db).await?;
+        assert!(loaded_vulnerability.is_some());
+
+        let loaded_advisory = graph
+            .get_advisory_by_digest(&digests.sha256.encode_hex::<String>(), &ctx.db)
+            .await?;
+        assert!(loaded_advisory.is_some());
 
         Ok(())
     }
