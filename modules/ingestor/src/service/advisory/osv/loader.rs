@@ -173,17 +173,7 @@ impl<'g> OsvLoader<'g> {
                                 )
                                 .await?;
                             }
-                            (RangeType::Ecosystem, Ecosystem::PyPI) => {
-                                create_package_status(
-                                    &advisory_vuln,
-                                    &purl,
-                                    range,
-                                    &VersionScheme::Python,
-                                    &tx,
-                                )
-                                .await?;
-                            }
-                            (RangeType::Ecosystem, Ecosystem::Python) => {
+                            (RangeType::Ecosystem, Ecosystem::PyPI | Ecosystem::Python) => {
                                 create_package_status(
                                     &advisory_vuln,
                                     &purl,

@@ -9,13 +9,13 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
 
-        db.execute_unprepared(
-            &Query::update()
-                .table(VersionScheme::Table)
-                .value(VersionScheme::Id, "python")
-                .and_where(Expr::col(VersionScheme::Id).eq("pypi"))
-                .to_owned()
-                .to_string(PostgresQueryBuilder),
+        db.execute(
+            db.get_database_backend().build(
+                Query::update()
+                    .table(VersionScheme::Table)
+                    .value(VersionScheme::Id, "python")
+                    .and_where(Expr::col(VersionScheme::Id).eq("pypi")),
+            ),
         )
         .await?;
 
