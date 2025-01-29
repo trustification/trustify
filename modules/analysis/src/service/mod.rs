@@ -10,7 +10,7 @@ pub use walk::*;
 mod test;
 
 use crate::{
-    model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageNode, Roots},
+    model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageNode},
     Error,
 };
 use fixedbitset::FixedBitSet;
@@ -53,7 +53,7 @@ fn collect(
     depth: u64,
     discovered: &mut FixedBitSet,
 ) -> Option<Vec<Node>> {
-    log::debug!("Direction: {direction:?}");
+    tracing::debug!(direction = ?direction, "collecting for {node:?}");
 
     if depth == 0 {
         log::debug!("depth is zero");
@@ -70,18 +70,25 @@ fn collect(
     let mut result = Vec::new();
 
     for edge in graph.edges_directed(node, direction) {
-        let relationship = edge.weight();
-        let neighbor = edge.target();
+        log::debug!("edge {edge:?}");
 
-        let Some(package_node) = graph.node_weight(neighbor) else {
-            continue;
+        // we only recurse in one direction
+        let (ancestor, descendent, package_node) = match direction {
+            Direction::Incoming => (
+                collect(graph, edge.source(), direction, depth - 1, discovered),
+                None,
+                graph.node_weight(edge.source()),
+            ),
+            Direction::Outgoing => (
+                None,
+                collect(graph, edge.target(), direction, depth - 1, discovered),
+                graph.node_weight(edge.target()),
+            ),
         };
 
-        let related = collect(graph, neighbor, direction, depth - 1, discovered);
-        // we only recurse in one direction
-        let (ancestor, descendent) = match direction {
-            Direction::Incoming => (related, None),
-            Direction::Outgoing => (None, related),
+        let relationship = edge.weight();
+        let Some(package_node) = package_node else {
+            continue;
         };
 
         result.push(Node {
@@ -210,11 +217,13 @@ impl AnalysisService {
         F: FnMut(&Graph<PackageNode, Relationship>, NodeIndex, &PackageNode, &mut FixedBitSet),
     {
         let Some(graph) = graph.get(sbom_id) else {
+            // FIXME: we need a better strategy handling such errors
             log::warn!("Unable to find SBOM: {sbom_id}");
             return;
         };
 
         if is_cyclic_directed(graph) {
+            // FIXME: we need a better strategy handling such errors
             log::warn!(
                 "analysis graph of sbom {} has circular references!",
                 sbom_id
@@ -230,7 +239,6 @@ impl AnalysisService {
             .node_indices()
             .filter(|&i| Self::filter(graph, &query, i))
             .for_each(|node_index| {
-                log::debug!("matched!");
                 if visited.insert(node_index) {
                     if let Some(find_match_package_node) = graph.node_weight(node_index) {
                         f(graph, node_index, find_match_package_node, &mut discovered);
@@ -278,24 +286,25 @@ impl AnalysisService {
         )
     }
 
-    /// This function searches for a component(s) by name in a specific sbom, then returns that
-    /// component's root components.
-    pub async fn retrieve_all_sbom_roots_by_name<C: ConnectionTrait>(
+    /// locate components, retrieve dependency information, from a single SBOM
+    #[instrument(skip(self, connection), err)]
+    pub async fn retrieve_single<C: ConnectionTrait>(
         &self,
         sbom_id: Uuid,
-        component_name: String,
+        query: impl Into<GraphQuery<'_>> + Debug,
+        options: impl Into<QueryOptions> + Debug,
+        paginated: Paginated,
         connection: &C,
-    ) -> Result<Vec<Node>, Error> {
+    ) -> Result<PaginatedResults<Node>, Error> {
         let distinct_sbom_ids = vec![sbom_id.to_string()];
+
+        let query = query.into();
+        let options = options.into();
+
         self.load_graphs(connection, &distinct_sbom_ids).await?;
+        let components = self.run_graph_query(query, options, distinct_sbom_ids);
 
-        let components = self.run_graph_query(
-            GraphQuery::Component(ComponentReference::Name(&component_name)),
-            QueryOptions::ancestors(),
-            distinct_sbom_ids,
-        );
-
-        Ok(components.roots())
+        Ok(paginated.paginate_array(&components))
     }
 
     /// locate components, retrieve dependency information

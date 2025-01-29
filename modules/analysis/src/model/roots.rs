@@ -1,6 +1,7 @@
-use crate::model::Node;
+use crate::model::{BaseSummary, Node};
 use std::collections::HashMap;
 use trustify_common::model::PaginatedResults;
+use trustify_entity::relationship::Relationship;
 
 pub trait Roots {
     /// Collect all top level ancestors.
@@ -20,12 +21,12 @@ impl Roots for PaginatedResults<Node> {
 
 impl Roots for Vec<Node> {
     fn roots(self) -> Vec<Node> {
-        fn root_into(
+        fn roots_into(
             nodes: impl IntoIterator<Item = Node>,
             result: &mut HashMap<(String, String), Node>,
         ) {
             for node in nodes.into_iter() {
-                root_into(node.ancestor.clone().into_iter().flatten(), result);
+                roots_into(node.ancestor.clone().into_iter().flatten(), result);
 
                 if let Some(true) = node.ancestor.as_ref().map(|a| a.is_empty()) {
                     result.insert((node.base.sbom_id.clone(), node.base.node_id.clone()), node);
@@ -34,9 +35,62 @@ impl Roots for Vec<Node> {
         }
 
         let mut result = HashMap::new();
-        root_into(self, &mut result);
+        roots_into(self, &mut result);
 
         result.into_values().collect()
+    }
+}
+
+pub trait RootTraces {
+    type Result;
+
+    /// Collect all traces to the root nodes
+    fn root_traces(self) -> Self::Result;
+}
+
+impl<'a> RootTraces for &'a PaginatedResults<Node> {
+    type Result = PaginatedResults<Vec<(&'a BaseSummary, Relationship)>>;
+
+    fn root_traces(self) -> Self::Result {
+        let items = self.items.root_traces();
+        let total = items.len();
+        Self::Result {
+            items,
+            total: total as _,
+        }
+    }
+}
+
+impl<'a> RootTraces for &'a Vec<Node> {
+    type Result = Vec<Vec<(&'a BaseSummary, Relationship)>>;
+
+    fn root_traces(self) -> Self::Result {
+        fn roots_into<'a>(
+            nodes: impl IntoIterator<Item = &'a Node>,
+            parents: &Vec<(&'a BaseSummary, Relationship)>,
+            result: &mut Vec<Vec<(&'a BaseSummary, Relationship)>>,
+        ) {
+            for node in nodes.into_iter() {
+                let mut next = parents.clone();
+
+                // if we don't have a relationship to the parent node, we are the initial node
+                // and will be skipped
+                if let Some(relationship) = node.relationship {
+                    next.push((&node.base, relationship));
+                };
+
+                if let Some(true) = node.ancestor.as_ref().map(|a| a.is_empty()) {
+                    result.push(next);
+                } else {
+                    roots_into(node.ancestor.iter().flatten(), &next, result);
+                }
+            }
+        }
+
+        let mut result = Vec::new();
+        roots_into(self, &Vec::new(), &mut result);
+
+        result
     }
 }
 
@@ -71,7 +125,7 @@ mod test {
     }
 
     #[test]
-    fn simple() {
+    fn simple_roots() {
         let result = vec![Node {
             base: base("AA"),
             relationship: None,
@@ -96,7 +150,7 @@ mod test {
     }
 
     #[test]
-    fn nested() {
+    fn nested_roots() {
         let result = vec![Node {
             ancestor: Some(vec![Node {
                 base: base("AA"),
@@ -120,6 +174,32 @@ mod test {
                 ancestor: Some(vec![]),
                 descendent: None,
             }]
+        );
+    }
+
+    #[test]
+    fn nested_root_traces() {
+        let result = vec![Node {
+            ancestor: Some(vec![Node {
+                base: base("AA"),
+                relationship: Some(Relationship::DependencyOf),
+                ancestor: Some(vec![Node {
+                    ancestor: Some(vec![]),
+                    relationship: Some(Relationship::DependencyOf),
+                    ..node("A")
+                }]),
+                descendent: None,
+            }]),
+            ..node("AAA")
+        }];
+        let result = result.root_traces();
+
+        assert_eq!(
+            result,
+            vec![vec![
+                (&base("AA"), Relationship::DependencyOf),
+                (&base("A"), Relationship::DependencyOf),
+            ]]
         );
     }
 }

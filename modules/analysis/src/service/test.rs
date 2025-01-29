@@ -1,6 +1,6 @@
 use super::*;
 use crate::{
-    model::Roots,
+    model::*,
     test::{Node, *},
 };
 use std::{str::FromStr, time::SystemTime};
@@ -26,35 +26,28 @@ async fn test_simple_analysis_service(ctx: &TrustifyContext) -> Result<(), anyho
             Paginated::default(),
             &ctx.db,
         )
-        .await?
-        .roots();
+        .await?;
 
-    assert_eq!(
-        analysis_graph
-            .items
-            .last()
-            .unwrap()
-            .ancestor
-            .iter()
-            .flatten()
-            .last()
-            .unwrap()
-            .purl,
-        vec![Purl::from_str("pkg:rpm/redhat/AA@0.0.0?arch=src")?]
-    );
-    assert_eq!(
-        analysis_graph
-            .items
-            .last()
-            .unwrap()
-            .ancestor
-            .iter()
-            .flatten()
-            .last()
-            .unwrap()
-            .node_id,
-        "SPDXRef-AA".to_string()
-    );
+    log::debug!("Before: {analysis_graph:#?}");
+    let analysis_graph = analysis_graph.root_traces();
+    log::debug!("After: {analysis_graph:#?}");
+
+    assert_ancestors(&analysis_graph.items, |ancestors| {
+        assert!(
+            matches!(
+                ancestors[..],
+                [[
+                    ..,
+                    Node {
+                        id: "SPDXRef-AA",
+                        purls: ["pkg:rpm/redhat/AA@0.0.0?arch=src"],
+                        ..
+                    }
+                ]]
+            ),
+            "doesn't match: {ancestors:#?}"
+        );
+    });
     assert_eq!(analysis_graph.total, 1);
 
     // ensure we set implicit relationship on components with no defined relationships
@@ -65,8 +58,11 @@ async fn test_simple_analysis_service(ctx: &TrustifyContext) -> Result<(), anyho
             Paginated::default(),
             &ctx.db,
         )
-        .await?
-        .roots();
+        .await?;
+
+    log::debug!("Before: {analysis_graph:#?}");
+    let analysis_graph = analysis_graph.roots();
+    log::debug!("After: {analysis_graph:#?}");
 
     assert_eq!(analysis_graph.total, 1);
 
@@ -90,33 +86,27 @@ async fn test_simple_analysis_cyclonedx_service(
             Paginated::default(),
             &ctx.db,
         )
-        .await?
-        .roots();
+        .await?;
 
-    assert_eq!(
-        analysis_graph
-            .items
-            .last()
-            .unwrap()
-            .ancestor
-            .iter()
-            .flatten()
-            .last()
-            .unwrap()
-            .purl,
-        vec![Purl::from_str("pkg:rpm/redhat/AA@0.0.0?arch=src")?]
-    );
-    let node = analysis_graph
-        .items
-        .last()
-        .unwrap()
-        .ancestor
-        .iter()
-        .flatten()
-        .last()
-        .unwrap();
-    assert_eq!(node.node_id, "aa".to_string());
-    assert_eq!(node.name, "AA".to_string());
+    let analysis_graph = analysis_graph.root_traces();
+
+    assert_ancestors(&analysis_graph.items, |ancestors| {
+        assert!(
+            matches!(
+                ancestors[..],
+                [[
+                    ..,
+                    Node {
+                        id: "aa",
+                        name: "AA",
+                        purls: ["pkg:rpm/redhat/AA@0.0.0?arch=src"],
+                        ..
+                    }
+                ]]
+            ),
+            "doesn't match: {ancestors:#?}"
+        );
+    });
     assert_eq!(analysis_graph.total, 1);
 
     // ensure we set implicit relationship on components with no defined relationships
@@ -127,8 +117,9 @@ async fn test_simple_analysis_cyclonedx_service(
             Paginated::default(),
             &ctx.db,
         )
-        .await?
-        .roots();
+        .await?;
+
+    let analysis_graph = analysis_graph.root_traces();
 
     assert_eq!(analysis_graph.total, 1);
 
@@ -149,8 +140,9 @@ async fn test_simple_by_name_analysis_service(ctx: &TrustifyContext) -> Result<(
             Paginated::default(),
             &ctx.db,
         )
-        .await?
-        .roots();
+        .await?;
+
+    let analysis_graph = analysis_graph.root_traces();
 
     assert_ancestors(&analysis_graph.items, |ancestors| {
         assert_eq!(
@@ -195,10 +187,11 @@ async fn test_simple_by_purl_analysis_service(ctx: &TrustifyContext) -> Result<(
             Paginated::default(),
             &ctx.db,
         )
-        .await?
-        .roots();
+        .await?;
 
-    println!("{analysis_graph:#?}");
+    log::debug!("Before: {analysis_graph:#?}");
+    let analysis_graph = analysis_graph.root_traces();
+    log::debug!("After: {analysis_graph:#?}");
 
     assert_ancestors(&analysis_graph.items, |ancestors| {
         assert_eq!(
@@ -247,7 +240,7 @@ async fn test_quarkus_analysis_service(ctx: &TrustifyContext) -> Result<(), anyh
         .await?;
 
     log::debug!("Before: {analysis_graph:#?}");
-    let analysis_graph = analysis_graph.roots();
+    let analysis_graph = analysis_graph.root_traces();
     log::debug!("After: {analysis_graph:#?}");
 
     assert_ancestors(&analysis_graph.items, |ancestors| {
@@ -255,12 +248,6 @@ async fn test_quarkus_analysis_service(ctx: &TrustifyContext) -> Result<(), anyh
             matches!(ancestors, [
                 [..],
                 [
-                   Node {
-                       id: "SPDXRef-DOCUMENT",
-                       name: "quarkus-bom-3.2.12.Final-redhat-00002",
-                       version: "",
-                       ..
-                   },
                    Node {
                        id: "SPDXRef-e24fec28-1001-499c-827f-2e2e5f2671b5",
                        name: "quarkus-bom",
@@ -271,6 +258,12 @@ async fn test_quarkus_analysis_service(ctx: &TrustifyContext) -> Result<(), anyh
                        purls: [
                            "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?repository_url=https://maven.repository.redhat.com/ga/&type=pom"
                        ],
+                   },
+                   Node {
+                       id: "SPDXRef-DOCUMENT",
+                       name: "quarkus-bom-3.2.12.Final-redhat-00002",
+                       version: "",
+                       ..
                    },
                 ]
             ]),
@@ -483,7 +476,8 @@ async fn test_circular_deps_cyclonedx_service(ctx: &TrustifyContext) -> Result<(
         )
         .await?;
 
-    assert_eq!(analysis_graph.total, 1);
+    // we should get zero, as we don't deal with circular dependencies and don't load such graphs
+    assert_eq!(analysis_graph.total, 0);
 
     Ok(())
 }
@@ -504,7 +498,8 @@ async fn test_circular_deps_spdx_service(ctx: &TrustifyContext) -> Result<(), an
         )
         .await?;
 
-    assert_eq!(analysis_graph.total, 1);
+    // we should get zero, as we don't deal with circular dependencies and don't load such graphs
+    assert_eq!(analysis_graph.total, 0);
 
     Ok(())
 }
@@ -525,8 +520,9 @@ async fn test_retrieve_all_sbom_roots_by_name(ctx: &TrustifyContext) -> Result<(
             Paginated::default(),
             &ctx.db,
         )
-        .await?
-        .roots();
+        .await?;
+
+    let analysis_graph = analysis_graph.roots();
 
     log::debug!("Result: {analysis_graph:#?}");
 
@@ -538,13 +534,34 @@ async fn test_retrieve_all_sbom_roots_by_name(ctx: &TrustifyContext) -> Result<(
         .parse::<Uuid>()?;
 
     let roots = service
-        .retrieve_all_sbom_roots_by_name(sbom_id, component_name, &ctx.db)
+        .retrieve_single(
+            sbom_id,
+            ComponentReference::Name(&component_name),
+            QueryOptions::ancestors(),
+            Default::default(),
+            &ctx.db,
+        )
         .await?;
 
-    assert_eq!(
-        roots.last().unwrap().name,
-        "quarkus-bom-3.2.11.Final-redhat-00001"
-    );
+    log::debug!("Before: {roots:#?}");
+    let roots = roots.root_traces();
+    log::debug!("After: {roots:#?}");
+
+    assert_ancestors(&roots.items, |ancestors| {
+        assert!(
+            matches!(
+                ancestors,
+                [[
+                    ..,
+                    Node {
+                        name: "quarkus-bom-3.2.11.Final-redhat-00001",
+                        ..
+                    }
+                ]]
+            ),
+            "doesn't match: {ancestors:#?}"
+        );
+    });
 
     Ok(())
 }
