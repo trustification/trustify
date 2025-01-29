@@ -38,6 +38,7 @@ fn translate<'a>(ecosystem: &Ecosystem, name: &'a str) -> Option<PackageUrl<'a>>
                 None
             }
         }
+        Ecosystem::PyPI => PackageUrl::new("pypi", name).ok(),
         _ => None,
     }
 }
@@ -59,6 +60,7 @@ mod test {
         "groupid:artifactid",
         Some("pkg:maven/groupid/artifactid?repository_url=http://other/repo")
     )]
+    #[case(Ecosystem::PyPI, "aiohttp", Some("pkg:pypi/aiohttp"))]
     fn test_translate(
         #[case] ecosystem: Ecosystem,
         #[case] name: &str,
