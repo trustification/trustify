@@ -67,7 +67,9 @@ async fn test_simple_analysis_service(ctx: &TrustifyContext) -> Result<(), anyho
         )
         .await?
         .roots();
+
     assert_eq!(analysis_graph.total, 1);
+
     Ok(())
 }
 
@@ -88,7 +90,8 @@ async fn test_simple_analysis_cyclonedx_service(
             Paginated::default(),
             &ctx.db,
         )
-        .await?;
+        .await?
+        .roots();
 
     assert_eq!(
         analysis_graph
@@ -124,8 +127,11 @@ async fn test_simple_analysis_cyclonedx_service(
             Paginated::default(),
             &ctx.db,
         )
-        .await?;
+        .await?
+        .roots();
+
     assert_eq!(analysis_graph.total, 1);
+
     Ok(())
 }
 
@@ -143,7 +149,8 @@ async fn test_simple_by_name_analysis_service(ctx: &TrustifyContext) -> Result<(
             Paginated::default(),
             &ctx.db,
         )
-        .await?;
+        .await?
+        .roots();
 
     assert_ancestors(&analysis_graph.items, |ancestors| {
         assert_eq!(
@@ -332,11 +339,9 @@ async fn test_simple_deps_service(ctx: &TrustifyContext) -> Result<(), anyhow::E
         )
         .await?;
 
-    println!("Before: {analysis_graph:#?}");
-
+    log::debug!("Before: {analysis_graph:#?}");
     let analysis_graph = analysis_graph.roots();
-
-    println!("After: {analysis_graph:#?}");
+    log::debug!("After: {analysis_graph:#?}");
 
     assert_eq!(analysis_graph.total, 1);
 
@@ -520,7 +525,8 @@ async fn test_retrieve_all_sbom_roots_by_name(ctx: &TrustifyContext) -> Result<(
             Paginated::default(),
             &ctx.db,
         )
-        .await?;
+        .await?
+        .roots();
 
     log::debug!("Result: {analysis_graph:#?}");
 
