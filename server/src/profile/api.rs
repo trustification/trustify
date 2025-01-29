@@ -307,6 +307,7 @@ impl InitData {
         let ui = Arc::new(UiResources::new(&self.ui)?);
         let db = self.db.clone();
         let storage = self.storage.clone();
+        let analysis = AnalysisService::new();
 
         let http = {
             HttpServerBuilder::try_from(self.http)?
@@ -323,6 +324,7 @@ impl InitData {
                             db: self.db.clone(),
                             storage: self.storage.clone(),
                             auth: self.authenticator.clone(),
+                            analysis: analysis.clone(),
 
                             with_graphql: self.with_graphql,
                         },
@@ -369,6 +371,7 @@ pub(crate) struct Config {
     pub(crate) config: ModuleConfig,
     pub(crate) db: db::Database,
     pub(crate) storage: DispatchBackend,
+    pub(crate) analysis: AnalysisService,
     pub(crate) auth: Option<Arc<Authenticator>>,
     pub(crate) with_graphql: bool,
 }
@@ -382,6 +385,7 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
         db,
         storage,
         auth,
+        analysis,
 
         with_graphql,
     } = config;
@@ -413,8 +417,6 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
 
     // register REST API & UI
 
-    let analysis = AnalysisService::new();
-
     svc.app_data(graph)
         .configure(|svc| {
             endpoints::configure(svc, auth.clone());
@@ -436,9 +438,9 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
                         fundamental,
                         db.clone(),
                         storage,
-                        analysis,
+                        analysis.clone(),
                     );
-                    trustify_module_analysis::endpoints::configure(svc, db.clone());
+                    trustify_module_analysis::endpoints::configure(svc, db.clone(), analysis);
                     trustify_module_user::endpoints::configure(svc, db.clone());
                 }),
         );
@@ -497,6 +499,7 @@ mod test {
         let db = ctx.db;
         let (storage, _) = FileSystemBackend::for_test().await?;
         let ui = Arc::new(UiResources::new(&UI::default())?);
+        let analysis = AnalysisService::new();
         let app = actix_web::test::init_service(
             App::new()
                 .into_utoipa_app()
@@ -509,6 +512,7 @@ mod test {
                             db,
                             storage: DispatchBackend::Filesystem(storage),
                             auth: None,
+                            analysis,
                             with_graphql: true,
                         },
                     );

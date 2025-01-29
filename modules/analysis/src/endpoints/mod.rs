@@ -20,9 +20,7 @@ use trustify_common::{
 };
 use utoipa_actix_web::service_config::ServiceConfig;
 
-pub fn configure(config: &mut ServiceConfig, db: Database) {
-    let analysis = AnalysisService::new();
-
+pub fn configure(config: &mut ServiceConfig, db: Database, analysis: AnalysisService) {
     config
         .app_data(web::Data::new(analysis))
         .app_data(web::Data::new(db))
