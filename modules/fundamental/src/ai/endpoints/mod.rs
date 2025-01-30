@@ -1,3 +1,4 @@
+#[cfg(feature = "ai")]
 #[cfg(test)]
 mod test;
 

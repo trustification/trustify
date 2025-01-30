@@ -1,4 +1,5 @@
 pub mod advisory;
+#[cfg(feature = "ai")]
 pub mod ai;
 pub mod endpoints;
 pub mod error;

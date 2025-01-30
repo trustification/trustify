@@ -5,6 +5,10 @@ edition.workspace = true
 publish.workspace = true
 license.workspace = true
 
+[features]
+default = []
+ai = [ "trustify-common/ai", "trustify-module-fundamental/ai" ]
+
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
