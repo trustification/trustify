@@ -27,6 +27,7 @@ pub fn configure(config: &mut ServiceConfig, db: Database, analysis: AnalysisSer
         .service(search_component_root_components)
         .service(get_component_root_components)
         .service(get_component)
+        .service(search_component)
         .service(analysis_status)
         .service(search_component_deps)
         .service(get_component_deps)
@@ -135,6 +136,34 @@ pub async fn get_component(
     Ok(HttpResponse::Ok().json(
         service
             .retrieve(&query, options, paginated, db.as_ref())
+            .await?,
+    ))
+}
+
+#[utoipa::path(
+    tag = "analysis",
+    operation_id = "searchComponent",
+    params(
+        Query,
+        Paginated,
+        QueryOptions,
+    ),
+    responses(
+        (status = 200, description = "Retrieve component(s) root components by name, pURL, or CPE.", body = PaginatedResults<BaseSummary>),
+    ),
+)]
+#[get("/v2/analysis/component")]
+pub async fn search_component(
+    service: web::Data<AnalysisService>,
+    db: web::Data<Database>,
+    web::Query(search): web::Query<Query>,
+    web::Query(options): web::Query<QueryOptions>,
+    web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadSbom>,
+) -> actix_web::Result<impl Responder> {
+    Ok(HttpResponse::Ok().json(
+        service
+            .retrieve(&search, options, paginated, db.as_ref())
             .await?,
     ))
 }

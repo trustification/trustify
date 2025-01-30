@@ -428,12 +428,16 @@ async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 
     // Find all deps of src rpm
     let src = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
-    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(src));
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode(src)
+    );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
+
     let deps = response.path(&format!(
-        "$.items[?(@.node_id=='{src}')].deps[?(@.relationship=='GeneratedFrom')]"
+        "$.items[?(@.node_id=='{src}')].descendants[?(@.relationship=='generated_from')]"
     ))?;
     assert_eq!(35, deps.as_array().unwrap().len());
 
@@ -754,7 +758,7 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // Ensure the product contains the component
     let uri = format!(
-        "/api/v2/analysis/component?q={}&vdescendants=10",
+        "/api/v2/analysis/component?q={}&descendants=10",
         urlencoding::encode("SATELLITE-6.15-RHEL-8")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
