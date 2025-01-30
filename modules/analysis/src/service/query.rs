@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 use trustify_common::{cpe::Cpe, db::query::Query, purl::Purl};
 use trustify_entity::relationship::Relationship;
+use utoipa::IntoParams;
 
 #[derive(Copy, Clone, Debug)]
 pub enum ComponentReference<'a> {
@@ -59,7 +60,7 @@ impl<'a> From<&'a Query> for GraphQuery<'a> {
 }
 
 /// Options when querying the graph.
-#[derive(Clone, Debug, Default, Eq, PartialEq, serde::Deserialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, serde::Deserialize, IntoParams)]
 pub struct QueryOptions {
     #[serde(default)]
     pub ancestors: u64,
