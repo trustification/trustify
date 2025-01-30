@@ -67,11 +67,11 @@ impl<'a> RootTraces for &'a Vec<Node> {
     fn root_traces(self) -> Self::Result {
         fn roots_into<'a>(
             nodes: impl IntoIterator<Item = &'a Node>,
-            parents: &Vec<(&'a BaseSummary, Relationship)>,
+            parents: &[(&'a BaseSummary, Relationship)],
             result: &mut Vec<Vec<(&'a BaseSummary, Relationship)>>,
         ) {
             for node in nodes.into_iter() {
-                let mut next = parents.clone();
+                let mut next = parents.to_owned();
 
                 // if we don't have a relationship to the parent node, we are the initial node
                 // and will be skipped
