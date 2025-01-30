@@ -1,7 +1,6 @@
 use crate::test::caller;
 use actix_http::Request;
 use actix_web::test::TestRequest;
-use itertools::Itertools;
 use serde_json::{json, Value};
 use test_context::test_context;
 use test_log::test;
@@ -19,36 +18,29 @@ async fn test_simple_retrieve_analysis_endpoint(
     let uri = "/api/v2/analysis/root-component?q=B";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-
-    if response["items"][0]["purl"]
-        .as_array()
-        .unwrap()
-        .contains(&Value::from("pkg:rpm/redhat/BB@0.0.0"))
-        || response["items"][1]["purl"]
-            .as_array()
-            .unwrap()
-            .contains(&Value::from("pkg:rpm/redhat/BB@0.0.0"))
-    {
-        assert_eq!(&response["total"], 2);
-    } else {
-        panic!("one of the items component should have matched.");
-    }
-    log::info!("{:?}", response);
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ "pkg:rpm/redhat/BB@0.0.0" ]
+        }]
+    })));
+    assert_eq!(&response["total"], 2);
 
     //should match a single component
     let uri = "/api/v2/analysis/root-component?q=BB";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(
-        response["items"][0]["purl"],
-        Value::from(["pkg:rpm/redhat/BB@0.0.0"])
-    );
-    assert_eq!(
-        response["items"][0]["ancestors"][0]["purl"],
-        Value::from(["pkg:rpm/redhat/AA@0.0.0?arch=src"])
-    );
-
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ "pkg:rpm/redhat/BB@0.0.0" ],
+            "ancestors": [{
+                "purl": [ "pkg:rpm/redhat/AA@0.0.0?arch=src" ]
+            }]
+        }]
+    })));
     assert_eq!(&response["total"], 1);
+
     Ok(())
 }
 
@@ -61,20 +53,19 @@ async fn test_simple_retrieve_by_name_analysis_endpoint(
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
     let uri = "/api/v2/analysis/root-component/B";
-
     let request: Request = TestRequest::get().uri(uri).to_request();
-
     let response: Value = app.call_and_read_body_json(request).await;
-
-    assert_eq!(
-        response["items"][0]["purl"],
-        Value::from(["pkg:rpm/redhat/B@0.0.0"])
-    );
-    assert_eq!(
-        response["items"][0]["ancestors"][0]["purl"],
-        Value::from(["pkg:rpm/redhat/A@0.0.0?arch=src"])
-    );
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ "pkg:rpm/redhat/B@0.0.0" ],
+            "ancestors": [{
+                "purl": [ "pkg:rpm/redhat/A@0.0.0?arch=src" ]
+            }]
+        }]
+    })));
     assert_eq!(&response["total"], 1);
+
     Ok(())
 }
 
@@ -86,21 +77,23 @@ async fn test_simple_retrieve_by_purl_analysis_endpoint(
     let app = caller(ctx).await?;
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-    let uri = "/api/v2/analysis/root-component/pkg%3A%2F%2Frpm%2Fredhat%2FB%400.0.0";
-
-    let request: Request = TestRequest::get().uri(uri).to_request();
-
+    let uri = format!(
+        "/api/v2/analysis/root-component/{}",
+        urlencoding::encode("pkg:rpm/redhat/B@0.0.0")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-
-    assert_eq!(
-        response["items"][0]["purl"],
-        Value::from(["pkg:rpm/redhat/B@0.0.0"])
-    );
-    assert_eq!(
-        response["items"][0]["ancestors"][0]["purl"],
-        Value::from(["pkg:rpm/redhat/A@0.0.0?arch=src"])
-    );
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ "pkg:rpm/redhat/B@0.0.0" ],
+            "ancestors": [{
+                "purl": [ "pkg:rpm/redhat/A@0.0.0?arch=src" ]
+            }]
+        }]
+    })));
     assert_eq!(&response["total"], 1);
+
     Ok(())
 }
 
@@ -116,26 +109,31 @@ async fn test_quarkus_retrieve_analysis_endpoint(
     ])
     .await?;
 
+    let purl = "pkg:maven/net.spy/spymemcached@2.12.1?type=jar";
     let uri = "/api/v2/analysis/root-component?q=spymemcached";
-
     let request: Request = TestRequest::get().uri(uri).to_request();
-
     let response: Value = app.call_and_read_body_json(request).await;
-
-    assert_eq!(
-        response["items"][0]["purl"],
-        Value::from(["pkg:maven/net.spy/spymemcached@2.12.1?type=jar"])
-    );
-    assert_eq!(
-        response["items"][0]["document_id"],
-        "https://access.redhat.com/security/data/sbom/spdx/quarkus-bom-3.2.11.Final-redhat-00001"
-    );
-    assert_eq!(
-        response["items"][0]["ancestors"][0]["purl"],
-        Value::from(["pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom"])
-    );
-
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [
+            {
+                "purl": [ purl ],
+                "document_id": "https://access.redhat.com/security/data/sbom/spdx/quarkus-bom-3.2.11.Final-redhat-00001",
+                "ancestors": [{
+                    "purl": [ "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom" ]
+                }]
+            },
+            {
+                "purl": [ purl ],
+                "document_id": "https://access.redhat.com/security/data/sbom/spdx/quarkus-bom-3.2.12.Final-redhat-00002",
+                "ancestors": [{
+                    "purl": [ "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?repository_url=https://maven.repository.redhat.com/ga/&type=pom" ]
+                }]
+            }
+        ]
+    })));
     assert_eq!(&response["total"], 2);
+
     Ok(())
 }
 
@@ -180,27 +178,45 @@ async fn test_simple_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::E
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
-    assert_eq!(
-        response["items"][0]["purl"],
-        Value::from(["pkg:rpm/redhat/A@0.0.0?arch=src"]),
-    );
-
-    let purls = response["items"][0]["deps"]
-        .as_array()
-        .iter()
-        .flat_map(|deps| *deps)
-        .flat_map(|dep| dep["purl"].as_array())
-        .flatten()
-        .flat_map(|purl| purl.as_str().map(|s| s.to_string()))
-        .sorted()
-        .collect::<Vec<_>>();
-
-    assert_eq!(
-        purls,
-        &["pkg:rpm/redhat/B@0.0.0", "pkg:rpm/redhat/EE@0.0.0?arch=src"]
-    );
-
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [
+            {
+                "purl": [ "pkg:rpm/redhat/A@0.0.0?arch=src" ],
+                "deps": [
+                    {
+                        "purl": [ "pkg:rpm/redhat/B@0.0.0" ]
+                    },
+                    {
+                        "purl": [ "pkg:rpm/redhat/EE@0.0.0?arch=src" ]
+                    }
+                ]
+            },
+            {
+                "purl": [ "pkg:rpm/redhat/AA@0.0.0?arch=src" ],
+                "deps": [
+                    {
+                        "purl": [ "pkg:rpm/redhat/BB@0.0.0" ],
+                        "deps": [
+                            {
+                                "purl": [ "pkg:rpm/redhat/DD@0.0.0" ],
+                                "deps": [{
+                                    "name": "FF",
+                                    "relationship": "ContainedBy",
+                                    "purl": []
+                                }]
+                            },
+                            {
+                                "purl": [ "pkg:rpm/redhat/CC@0.0.0" ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    })));
     assert_eq!(&response["total"], 2);
+
     Ok(())
 }
 
@@ -211,24 +227,24 @@ async fn test_simple_dep_by_name_endpoint(ctx: &TrustifyContext) -> Result<(), a
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
     let uri = "/api/v2/analysis/dep/A";
-
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-
-    assert_eq!(
-        response["items"][0]["purl"],
-        Value::from(["pkg:rpm/redhat/A@0.0.0?arch=src"]),
-    );
-    assert_eq!(
-        response["items"][0]["deps"][0]["purl"],
-        Value::from(["pkg:rpm/redhat/EE@0.0.0?arch=src"]),
-    );
-    assert_eq!(
-        response["items"][0]["deps"][1]["purl"],
-        Value::from(["pkg:rpm/redhat/B@0.0.0"]),
-    );
-
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ "pkg:rpm/redhat/A@0.0.0?arch=src" ],
+            "deps": [
+                {
+                    "purl": [ "pkg:rpm/redhat/EE@0.0.0?arch=src" ]
+                },
+                {
+                    "purl": [ "pkg:rpm/redhat/B@0.0.0" ]
+                }
+            ]
+        }]
+    })));
     assert_eq!(&response["total"], 1);
+
     Ok(())
 }
 
@@ -238,20 +254,21 @@ async fn test_simple_dep_by_purl_endpoint(ctx: &TrustifyContext) -> Result<(), a
     let app = caller(ctx).await?;
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-    let uri = "/api/v2/analysis/dep/pkg%3A%2F%2Frpm%2Fredhat%2FAA%400.0.0%3Farch%3Dsrc";
-
-    let request: Request = TestRequest::get().uri(uri).to_request();
+    let purl = "pkg:rpm/redhat/AA@0.0.0?arch=src";
+    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(purl));
+    let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-
-    assert_eq!(
-        response["items"][0]["purl"],
-        Value::from(["pkg:rpm/redhat/AA@0.0.0?arch=src"]),
-    );
-    assert_eq!(
-        response["items"][0]["deps"][0]["purl"],
-        Value::from(["pkg:rpm/redhat/BB@0.0.0"]),
-    );
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ purl ],
+            "deps": [{
+                "purl": [ "pkg:rpm/redhat/BB@0.0.0" ]
+            }]
+        }]
+    })));
     assert_eq!(&response["total"], 1);
+
     Ok(())
 }
 
@@ -265,17 +282,25 @@ async fn test_quarkus_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::
     ])
     .await?;
 
+    let purl = "pkg:maven/net.spy/spymemcached@2.12.1?type=jar";
     let uri = "/api/v2/analysis/dep?q=spymemcached";
-
     let request: Request = TestRequest::get().uri(uri).to_request();
-
     let response: Value = app.call_and_read_body_json(request).await;
-
-    assert_eq!(
-        response["items"][0]["purl"],
-        Value::from(["pkg:maven/net.spy/spymemcached@2.12.1?type=jar"]),
-    );
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [
+            {
+                "purl": [ purl ],
+                "document_id": "https://access.redhat.com/security/data/sbom/spdx/quarkus-bom-3.2.11.Final-redhat-00001"
+            },
+            {
+                "purl": [ purl ],
+                "document_id": "https://access.redhat.com/security/data/sbom/spdx/quarkus-bom-3.2.12.Final-redhat-00002"
+            }
+        ]
+    })));
     assert_eq!(&response["total"], 2);
+
     Ok(())
 }
 
@@ -290,23 +315,17 @@ async fn quarkus_component_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::
     ])
     .await?;
 
-    let uri = format!(
-        "/api/v2/analysis/component/{}",
-        urlencoding::encode("pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom")
-    );
-
+    let purl = "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom";
+    let uri = format!("/api/v2/analysis/component/{}", urlencoding::encode(purl));
     let request: Request = TestRequest::get().uri(&uri).to_request();
-
     let response: Value = app.call_and_read_body_json(request).await;
-
-    assert_eq!(
-        response["items"][0]["purl"],
-        json!(["pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom"]),
-    );
-    assert_eq!(
-        response["items"][0]["cpe"],
-        json!(["cpe:/a:redhat:quarkus:3.2:*:el8:*"]),
-    );
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ purl ],
+            "cpe": ["cpe:/a:redhat:quarkus:3.2:*:el8:*"]
+        }]
+    })));
     assert_eq!(&response["total"], 1);
 
     Ok(())
@@ -323,23 +342,26 @@ async fn quarkus_component_by_cpe(ctx: &TrustifyContext) -> Result<(), anyhow::E
     ])
     .await?;
 
+    let cpe = "cpe:/a:redhat:quarkus:3.2:*:el8:*";
     let uri = format!(
         "/api/v2/analysis/component/{}",
         urlencoding::encode("cpe:/a:redhat:quarkus:3.2::el8")
     );
-
     let request: Request = TestRequest::get().uri(&uri).to_request();
-
     let response: Value = app.call_and_read_body_json(request).await;
-
-    assert_eq!(
-        response["items"][0]["cpe"],
-        json!(["cpe:/a:redhat:quarkus:3.2:*:el8:*"]),
-    );
-    assert_eq!(
-        response["items"][0]["purl"],
-        json!(["pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom"]),
-    );
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [
+            {
+                "purl": [ "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom" ],
+                "cpe": [ cpe ]
+            },
+            {
+                "purl": [ "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?repository_url=https://maven.repository.redhat.com/ga/&type=pom" ],
+                "cpe": [ cpe ]
+            }
+        ]
+    })));
     assert_eq!(&response["total"], 2);
 
     Ok(())
@@ -415,7 +437,7 @@ async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
             .as_array()
             .unwrap()
             .iter()
-            .filter(|i| i["node_id"] == "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src")
+            .filter(|i| i["node_id"] == src)
             .flat_map(|i| i["deps"].as_array().unwrap().iter())
             .filter(|d| d["relationship"] == "GeneratedFrom")
             .count()
