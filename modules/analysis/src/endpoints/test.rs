@@ -1,6 +1,7 @@
 use crate::test::caller;
 use actix_http::Request;
 use actix_web::test::TestRequest;
+use jsonpath_rust::JsonPathQuery;
 use serde_json::{json, Value};
 use test_context::test_context;
 use test_log::test;
@@ -430,18 +431,10 @@ async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
-
-    assert_eq!(
-        35,
-        response["items"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .filter(|i| i["node_id"] == src)
-            .flat_map(|i| i["deps"].as_array().unwrap().iter())
-            .filter(|d| d["relationship"] == "GeneratedFrom")
-            .count()
-    );
+    let deps = response.path(&format!(
+        "$.items[?(@.node_id=='{src}')].deps[?(@.relationship=='GeneratedFrom')]"
+    ))?;
+    assert_eq!(35, deps.as_array().unwrap().len());
 
     // Ensure binary rpm GeneratedFrom src rpm
     let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
@@ -478,18 +471,9 @@ async fn spdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
-
-    assert_eq!(
-        35,
-        response["items"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .filter(|i| i["node_id"] == "SPDXRef-SRPM")
-            .flat_map(|i| i["deps"].as_array().unwrap().iter())
-            .filter(|d| d["relationship"] == "GeneratedFrom")
-            .count()
-    );
+    let deps = response
+        .path("$.items[?(@.node_id=='SPDXRef-SRPM')].deps[?(@.relationship=='GeneratedFrom')]")?;
+    assert_eq!(35, deps.as_array().unwrap().len());
 
     // Ensure binary rpm GeneratedFrom src rpm
     let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
