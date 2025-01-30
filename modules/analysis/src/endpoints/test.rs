@@ -216,6 +216,7 @@ async fn test_simple_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::E
             }
         ]
     })));
+
     assert_eq!(&response["total"], 2);
 
     Ok(())
@@ -565,7 +566,7 @@ async fn spdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ parent ],
-            "deps": [
+            "descendant": [
                 {
                     "relationship": "VariantOf",
                     "purl": [ children[0] ]
@@ -624,6 +625,7 @@ async fn cdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
+
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ parent ],
@@ -672,7 +674,7 @@ async fn spdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ parent ],
-            "deps": [{
+            "descendant": [{
                 "relationship": "AncestorOf",
                 "purl": [ child ]
             }]
@@ -719,7 +721,7 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert!(response.contains_subset(json!({
         "items": [ {
-            "deps": [ {
+            "descendant": [ {
                 "relationship": "PackageOf",
                 "name": "SATELLITE-6.15-RHEL-8",
                 "version": "6.15",

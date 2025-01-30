@@ -6,7 +6,7 @@ mod test;
 use super::service::{AnalysisService, QueryOptions};
 use crate::{
     endpoints::query::OwnedComponentReference,
-    model::{AnalysisStatus, BaseSummary, Node, Roots},
+    model::{AnalysisStatus, BaseSummary, Node, RootTraces},
 };
 use actix_web::{get, web, HttpResponse, Responder};
 use trustify_auth::{
@@ -73,17 +73,9 @@ pub async fn search_component_root_components(
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(
         service
-            .retrieve(
-                &search,
-                QueryOptions {
-                    ancestors: u64::MAX,
-                    ..Default::default()
-                },
-                paginated,
-                db.as_ref(),
-            )
+            .retrieve(&search, QueryOptions::ancestors(), paginated, db.as_ref())
             .await?
-            .roots(),
+            .root_traces(),
     ))
 }
 
@@ -109,17 +101,9 @@ pub async fn get_component_root_components(
 
     Ok(HttpResponse::Ok().json(
         service
-            .retrieve(
-                &query,
-                QueryOptions {
-                    ancestors: u64::MAX,
-                    ..Default::default()
-                },
-                paginated,
-                db.as_ref(),
-            )
+            .retrieve(&query, QueryOptions::ancestors(), paginated, db.as_ref())
             .await?
-            .roots(),
+            .root_traces(),
     ))
 }
 
@@ -178,15 +162,7 @@ pub async fn search_component_deps(
 ) -> actix_web::Result<impl Responder> {
     Ok(HttpResponse::Ok().json(
         service
-            .retrieve(
-                &search,
-                QueryOptions {
-                    descendants: 1,
-                    ..Default::default()
-                },
-                paginated,
-                db.as_ref(),
-            )
+            .retrieve(&search, QueryOptions::descendants(), paginated, db.as_ref())
             .await?,
     ))
 }
@@ -212,15 +188,7 @@ pub async fn get_component_deps(
     let query = OwnedComponentReference::try_from(key.as_str())?;
     Ok(HttpResponse::Ok().json(
         service
-            .retrieve(
-                &query,
-                QueryOptions {
-                    descendants: 1,
-                    ..Default::default()
-                },
-                paginated,
-                db.as_ref(),
-            )
+            .retrieve(&query, QueryOptions::descendants(), paginated, db.as_ref())
             .await?,
     ))
 }
