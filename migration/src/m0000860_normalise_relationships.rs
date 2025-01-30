@@ -3,20 +3,20 @@ use sea_orm_migration::prelude::*;
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 const DATA: [(i32, &str); 14] = [
-    (16, "Contains"),
-    (17, "Dependency"),
-    (18, "DevDependency"),
-    (19, "OptionalDependency"),
-    (20, "ProvidedDependency"),
-    (21, "TestDependency"),
-    (22, "RuntimeDependency"),
-    (23, "Example"),
-    (24, "Generates"),
-    (25, "Variant"),
-    (26, "BuildTool"),
-    (27, "DevTool"),
-    (28, "Describes"),
-    (29, "Packages"),
+    (0, "Contains"),
+    (1, "Dependency"),
+    (2, "DevDependency"),
+    (3, "OptionalDependency"),
+    (4, "ProvidedDependency"),
+    (5, "TestDependency"),
+    (6, "RuntimeDependency"),
+    (7, "Example"),
+    (8, "Generates"),
+    (10, "Variant"),
+    (11, "BuildTool"),
+    (12, "DevTool"),
+    (13, "Describes"),
+    (14, "Packages"),
 ];
 
 #[async_trait::async_trait]

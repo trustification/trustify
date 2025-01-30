@@ -20,64 +20,36 @@ use std::fmt;
 // When adding a new variant, also add this to the "relationship" table.
 pub enum Relationship {
     #[sea_orm(num_value = 0)]
-    ContainedBy,
+    Contains,
     #[sea_orm(num_value = 1)]
-    DependencyOf,
+    Dependency,
     #[sea_orm(num_value = 2)]
-    DevDependencyOf,
+    DevDependency,
     #[sea_orm(num_value = 3)]
-    OptionalDependencyOf,
+    OptionalDependency,
     #[sea_orm(num_value = 4)]
-    ProvidedDependencyOf,
+    ProvidedDependency,
     #[sea_orm(num_value = 5)]
-    TestDependencyOf,
+    TestDependency,
     #[sea_orm(num_value = 6)]
-    RuntimeDependencyOf,
+    RuntimeDependency,
     #[sea_orm(num_value = 7)]
-    ExampleOf,
+    Example,
     #[sea_orm(num_value = 8)]
-    GeneratedFrom,
+    Generates,
     #[sea_orm(num_value = 9)]
     AncestorOf,
     #[sea_orm(num_value = 10)]
-    VariantOf,
-    #[sea_orm(num_value = 11)]
-    BuildToolOf,
-    #[sea_orm(num_value = 12)]
-    DevToolOf,
-    #[sea_orm(num_value = 13)]
-    DescribedBy,
-    #[sea_orm(num_value = 14)]
-    PackageOf,
-    #[sea_orm(num_value = 15)]
-    Contains,
-    #[sea_orm(num_value = 16)]
-    Dependency,
-    #[sea_orm(num_value = 17)]
-    DevDependency,
-    #[sea_orm(num_value = 18)]
-    OptionalDependency,
-    #[sea_orm(num_value = 19)]
-    ProvidedDependency,
-    #[sea_orm(num_value = 20)]
-    TestDependency,
-    #[sea_orm(num_value = 21)]
-    RuntimeDependency,
-    #[sea_orm(num_value = 22)]
-    Example,
-    #[sea_orm(num_value = 23)]
-    Generates,
-    #[sea_orm(num_value = 24)]
     Variant,
-    #[sea_orm(num_value = 25)]
+    #[sea_orm(num_value = 11)]
     BuildTool,
-    #[sea_orm(num_value = 26)]
+    #[sea_orm(num_value = 12)]
     DevTool,
-    #[sea_orm(num_value = 27)]
+    #[sea_orm(num_value = 13)]
     Describes,
-    #[sea_orm(num_value = 28)]
-    Packages,
-    #[sea_orm(num_value = 29)]
+    #[sea_orm(num_value = 14)]
+    Package,
+    #[sea_orm(num_value = 15)]
     Undefined,
 }
 
