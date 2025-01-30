@@ -226,239 +226,6 @@ paths:
                 format: binary
         '404':
           description: The document could not be found
-  /api/v2/ai/completions:
-    post:
-      tags:
-      - ai
-      operationId: completions
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ChatState'
-        required: true
-      responses:
-        '200':
-          description: The resulting completion
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ChatState'
-        '400':
-          description: The request was invalid
-        '404':
-          description: The AI service is not enabled
-  /api/v2/ai/conversations:
-    get:
-      tags:
-      - ai
-      operationId: listConversations
-      parameters:
-      - name: q
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: sort
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: offset
-        in: query
-        description: |-
-          The first item to return, skipping all that come before it.
-
-          NOTE: The order of items is defined by the API being called.
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      - name: limit
-        in: query
-        description: |-
-          The maximum number of entries to return.
-
-          Zero means: no limit
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      responses:
-        '200':
-          description: The resulting list of conversation summaries
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResults_ConversationSummary'
-        '404':
-          description: The AI service is not enabled
-    post:
-      tags:
-      - ai
-      operationId: createConversation
-      responses:
-        '200':
-          description: The resulting conversation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Conversation'
-        '400':
-          description: The request was invalid
-        '404':
-          description: The AI service is not enabled
-  /api/v2/ai/conversations/{id}:
-    get:
-      tags:
-      - ai
-      operationId: getConversation
-      parameters:
-      - name: id
-        in: path
-        description: Opaque ID of the conversation
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: The resulting conversation
-          headers:
-            etag:
-              schema:
-                type: string
-              description: Sequence ID
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Conversation'
-        '400':
-          description: The request was invalid
-        '404':
-          description: The AI service is not enabled
-    put:
-      tags:
-      - ai
-      operationId: updateConversation
-      parameters:
-      - name: id
-        in: path
-        description: Opaque ID of the conversation
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: if-match
-        in: header
-        description: The revision to update
-        required: false
-        schema:
-          type:
-          - string
-          - 'null'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/ChatMessage'
-        required: true
-      responses:
-        '200':
-          description: The resulting conversation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Conversation'
-        '400':
-          description: The request was invalid
-        '404':
-          description: The AI service is not enabled or the conversation was not found
-    delete:
-      tags:
-      - ai
-      operationId: deleteConversation
-      parameters:
-      - name: id
-        in: path
-        description: Opaque ID of the conversation
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: The resulting conversation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Conversation'
-        '400':
-          description: The request was invalid
-        '404':
-          description: The AI service is not enabled or the conversation was not found
-  /api/v2/ai/flags:
-    get:
-      tags:
-      - ai
-      operationId: aiFlags
-      responses:
-        '200':
-          description: The resulting Flags
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AiFlags'
-        '404':
-          description: The AI service is not enabled
-  /api/v2/ai/tools:
-    get:
-      tags:
-      - ai
-      operationId: aiTools
-      responses:
-        '200':
-          description: The resulting list of tools
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AiTool'
-        '404':
-          description: The AI service is not enabled
-  /api/v2/ai/tools/{name}:
-    post:
-      tags:
-      - ai
-      operationId: aiToolCall
-      parameters:
-      - name: name
-        in: path
-        description: Name of the tool to call
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema: {}
-        required: true
-      responses:
-        '200':
-          description: The result of the tool call
-          content:
-            text/plain:
-              schema:
-                type: string
-        '400':
-          description: The tool request was invalid
-        '404':
-          description: The tool was not found
   /api/v2/analysis/component/{key}:
     get:
       tags:
@@ -2367,25 +2134,6 @@ components:
               All CVSS3 scores from the advisory for the given vulnerability.
               May include several, varying by minor version of the CVSS3 vector.
       description: Summary of information from this advisory regarding a single specific vulnerability.
-    AiFlags:
-      type: object
-      required:
-      - completions
-      properties:
-        completions:
-          type: boolean
-    AiTool:
-      type: object
-      required:
-      - name
-      - description
-      - parameters
-      properties:
-        description:
-          type: string
-        name:
-          type: string
-        parameters: {}
     AnalysisStatus:
       type: object
       required:
@@ -2509,33 +2257,6 @@ components:
           type: string
     BinaryByteSize:
       type: string
-    ChatMessage:
-      type: object
-      required:
-      - message_type
-      - content
-      - timestamp
-      properties:
-        content:
-          type: string
-        message_type:
-          $ref: '#/components/schemas/MessageType'
-        timestamp:
-          type: string
-          format: date-time
-    ChatState:
-      type: object
-      required:
-      - messages
-      properties:
-        internal_state:
-          type:
-          - string
-          - 'null'
-        messages:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChatMessage'
     ClearlyDefinedCurationImporter:
       allOf:
       - $ref: '#/components/schemas/CommonImporter'
@@ -2593,42 +2314,6 @@ components:
         period:
           type: string
           description: The period the importer should be run.
-    Conversation:
-      type: object
-      required:
-      - id
-      - messages
-      - updated_at
-      - seq
-      properties:
-        id:
-          type: string
-          format: uuid
-        messages:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChatMessage'
-        seq:
-          type: integer
-          format: int32
-        updated_at:
-          type: string
-          format: date-time
-    ConversationSummary:
-      type: object
-      required:
-      - id
-      - updated_at
-      - summary
-      properties:
-        id:
-          type: string
-          format: uuid
-        summary:
-          type: string
-        updated_at:
-          type: string
-          format: date-time
     Cpe:
       type: string
       format: uri
@@ -2921,13 +2606,6 @@ components:
         severity:
           $ref: '#/components/schemas/Severity'
           description: The severity of the message
-    MessageType:
-      type: string
-      enum:
-      - human
-      - system
-      - ai
-      - tool
     OrganizationDetails:
       allOf:
       - $ref: '#/components/schemas/OrganizationHead'
@@ -3129,33 +2807,6 @@ components:
                 type: string
               version:
                 type: string
-        total:
-          type: integer
-          format: int64
-          minimum: 0
-    PaginatedResults_ConversationSummary:
-      type: object
-      required:
-      - items
-      - total
-      properties:
-        items:
-          type: array
-          items:
-            type: object
-            required:
-            - id
-            - updated_at
-            - summary
-            properties:
-              id:
-                type: string
-                format: uuid
-              summary:
-                type: string
-              updated_at:
-                type: string
-                format: date-time
         total:
           type: integer
           format: int64

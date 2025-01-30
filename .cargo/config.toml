@@ -1,5 +1,6 @@
 [alias]
 xtask = "run --package xtask --"
+xtask-ai = "run --features ai --package xtask --"
 
 [env]
 CARGO_WORKSPACE_ROOT = { value = "", relative = true }
