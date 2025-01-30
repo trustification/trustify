@@ -181,12 +181,14 @@ async fn test_simple_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::E
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
+    log::debug!("Response: {:#?}", response);
+
     assert_eq!(
         response["items"][0]["purl"],
         Value::from(["pkg:rpm/redhat/A@0.0.0?arch=src"]),
     );
 
-    let purls = response["items"][0]["deps"]
+    let purls = response["items"][0]["descendent"]
         .as_array()
         .iter()
         .flat_map(|deps| *deps)
@@ -606,7 +608,7 @@ async fn cdx_ancestor_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         // we're only looking for the parent node
         .filter(|m| m["node_id"] == parent)
         // flatten all dependencies of that parent node
-        .flat_map(|m| m["deps"].as_array().into_iter().flatten())
+        .flat_map(|m| m["descendent"].as_array().into_iter().flatten())
         // filter out all non-AncestorOf dependencies
         .filter(|m| m["relationship"] == "AncestorOf")
         .collect();
