@@ -26,9 +26,9 @@ impl Roots for Vec<Node> {
             result: &mut HashMap<(String, String), Node>,
         ) {
             for node in nodes.into_iter() {
-                roots_into(node.ancestor.clone().into_iter().flatten(), result);
+                roots_into(node.ancestors.clone().into_iter().flatten(), result);
 
-                if let Some(true) = node.ancestor.as_ref().map(|a| a.is_empty()) {
+                if let Some(true) = node.ancestors.as_ref().map(|a| a.is_empty()) {
                     result.insert((node.base.sbom_id.clone(), node.base.node_id.clone()), node);
                 }
             }
@@ -79,10 +79,10 @@ impl<'a> RootTraces for &'a Vec<Node> {
                     next.push((&node.base, relationship));
                 };
 
-                if let Some(true) = node.ancestor.as_ref().map(|a| a.is_empty()) {
+                if let Some(true) = node.ancestors.as_ref().map(|a| a.is_empty()) {
                     result.push(next);
                 } else {
-                    roots_into(node.ancestor.iter().flatten(), &next, result);
+                    roots_into(node.ancestors.iter().flatten(), &next, result);
                 }
             }
         }
@@ -119,8 +119,8 @@ mod test {
         Node {
             base: base(node_id),
             relationship: None,
-            ancestor: None,
-            descendent: None,
+            ancestors: None,
+            descendants: None,
         }
     }
 
@@ -129,12 +129,12 @@ mod test {
         let result = vec![Node {
             base: base("AA"),
             relationship: None,
-            ancestor: Some(vec![Node {
-                ancestor: Some(vec![]),
+            ancestors: Some(vec![Node {
+                ancestors: Some(vec![]),
                 relationship: Some(Relationship::DependencyOf),
                 ..node("A")
             }]),
-            descendent: None,
+            descendants: None,
         }]
         .roots();
 
@@ -143,8 +143,8 @@ mod test {
             vec![Node {
                 base: base("A"),
                 relationship: Some(Relationship::DependencyOf),
-                ancestor: Some(vec![]),
-                descendent: None,
+                ancestors: Some(vec![]),
+                descendants: None,
             }]
         );
     }
@@ -152,15 +152,15 @@ mod test {
     #[test]
     fn nested_roots() {
         let result = vec![Node {
-            ancestor: Some(vec![Node {
+            ancestors: Some(vec![Node {
                 base: base("AA"),
                 relationship: Some(Relationship::DependencyOf),
-                ancestor: Some(vec![Node {
-                    ancestor: Some(vec![]),
+                ancestors: Some(vec![Node {
+                    ancestors: Some(vec![]),
                     relationship: Some(Relationship::DependencyOf),
                     ..node("A")
                 }]),
-                descendent: None,
+                descendants: None,
             }]),
             ..node("AAA")
         }]
@@ -171,8 +171,8 @@ mod test {
             vec![Node {
                 base: base("A"),
                 relationship: Some(Relationship::DependencyOf),
-                ancestor: Some(vec![]),
-                descendent: None,
+                ancestors: Some(vec![]),
+                descendants: None,
             }]
         );
     }
@@ -180,15 +180,15 @@ mod test {
     #[test]
     fn nested_root_traces() {
         let result = vec![Node {
-            ancestor: Some(vec![Node {
+            ancestors: Some(vec![Node {
                 base: base("AA"),
                 relationship: Some(Relationship::DependencyOf),
-                ancestor: Some(vec![Node {
-                    ancestor: Some(vec![]),
+                ancestors: Some(vec![Node {
+                    ancestors: Some(vec![]),
                     relationship: Some(Relationship::DependencyOf),
                     ..node("A")
                 }]),
-                descendent: None,
+                descendants: None,
             }]),
             ..node("AAA")
         }];

@@ -94,8 +94,8 @@ fn collect(
         result.push(Node {
             base: BaseSummary::from(package_node),
             relationship: Some(*relationship),
-            ancestor,
-            descendent,
+            ancestors: ancestor,
+            descendants: descendent,
         });
     }
 
@@ -267,14 +267,14 @@ impl AnalysisService {
                 components.push(Node {
                     base: node.into(),
                     relationship: None,
-                    ancestor: collect(
+                    ancestors: collect(
                         graph,
                         node_index,
                         Direction::Incoming,
                         options.ancestors,
                         &mut graph.visit_map(),
                     ),
-                    descendent: collect(
+                    descendants: collect(
                         graph,
                         node_index,
                         Direction::Outgoing,

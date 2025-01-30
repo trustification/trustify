@@ -380,7 +380,7 @@ impl<'a> ComponentCreator<'a> {
             creator.create(variant);
 
             self.relationships
-                .relate(target, Relationship::VariantOf, node_id.clone());
+                .relate(node_id.clone(), Relationship::Variant, target);
         }
     }
 

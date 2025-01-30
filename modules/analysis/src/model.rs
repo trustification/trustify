@@ -87,12 +87,12 @@ pub struct Node {
     /// All ancestors of this node. [`None`] if not requested on this level.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(no_recursion)]
-    pub ancestor: Option<Vec<Node>>,
+    pub ancestors: Option<Vec<Node>>,
 
     /// All descendents of this node. [`None`] if not requested on this level.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schema(no_recursion)]
-    pub descendent: Option<Vec<Node>>,
+    pub descendants: Option<Vec<Node>>,
 }
 
 impl Deref for Node {
