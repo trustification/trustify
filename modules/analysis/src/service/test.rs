@@ -227,13 +227,14 @@ async fn test_status_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
     let service = AnalysisService::new();
-    let _load_all_graphs = service.load_all_graphs(&ctx.db).await;
-    let analysis_status = service.status(&ctx.db).await?;
+    let all_graphs = service.load_all_graphs(&ctx.db).await?;
+    assert_eq!(all_graphs.len(), 1);
 
+    let analysis_status = service.status(&ctx.db).await?;
     assert_eq!(analysis_status.sbom_count, 1);
     assert_eq!(analysis_status.graph_count, 1);
 
-    let _clear_all_graphs = service.clear_all_graphs();
+    service.clear_all_graphs()?;
 
     ctx.ingest_documents([
         "spdx/quarkus-bom-3.2.11.Final-redhat-00001.json",
@@ -245,6 +246,44 @@ async fn test_status_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     assert_eq!(analysis_status.sbom_count, 3);
     assert_eq!(analysis_status.graph_count, 0);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn test_cache_size_used(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ctx.ingest_documents(["spdx/simple.json"]).await?;
+
+    let service = AnalysisService::new();
+    assert_eq!(service.cache_size_used(), 0u64);
+
+    let all_graphs = service.load_all_graphs(&ctx.db).await?;
+    assert_eq!(all_graphs.len(), 1);
+
+    // Does 3.4 KB sound right?
+    let small_sbom_size = service.cache_size_used();
+    assert_eq!(small_sbom_size, 3505u64);
+
+    ctx.ingest_documents(["spdx/quarkus-bom-3.2.11.Final-redhat-00001.json"])
+        .await?;
+    let all_graphs = service.load_all_graphs(&ctx.db).await?;
+    assert_eq!(all_graphs.len(), 2);
+
+    // Does 676.7 KB sound right?
+    let big_sbom_size = service.cache_size_used() - small_sbom_size;
+    assert_eq!(big_sbom_size, 693006u64);
+
+    // Now lets try it with small cache that can at least fit the small bom
+    let service = AnalysisService::new_sized(small_sbom_size * 2);
+
+    let all_graphs = service.load_all_graphs(&ctx.db).await?;
+    // we should be able to load all the graphs even if they can't fit in the cache.
+    assert_eq!(all_graphs.len(), 2);
+
+    // but the cache should only contain the first sbom
+    assert_eq!(small_sbom_size, service.cache_size_used());
+    assert_eq!(1u64, service.cache_len());
 
     Ok(())
 }
