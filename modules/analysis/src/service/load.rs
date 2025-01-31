@@ -1,3 +1,4 @@
+use crate::model::PackageGraph;
 use crate::{
     model::PackageNode,
     service::{AnalysisService, ComponentReference, GraphQuery},
@@ -11,6 +12,7 @@ use sea_orm::{
 use sea_query::{JoinType, Order, SelectStatement};
 use serde_json::Value;
 use std::collections::HashSet;
+use std::sync::Arc;
 use std::{collections::hash_map::Entry, collections::HashMap};
 use tracing::{instrument, Level};
 use trustify_common::{cpe::Cpe, db::query::Filtering, purl::Purl};
@@ -149,7 +151,7 @@ impl AnalysisService {
         &self,
         connection: &C,
         query: GraphQuery<'_>,
-    ) -> Result<Vec<String>, Error> {
+    ) -> Result<HashMap<String, Arc<PackageGraph>>, Error> {
         let search_sbom_subquery = match query {
             GraphQuery::Component(ComponentReference::Id(name)) => sbom_node::Entity::find()
                 .filter(sbom_node::Column::NodeId.eq(name))
@@ -196,7 +198,7 @@ impl AnalysisService {
         &self,
         connection: &C,
         subquery: SelectStatement,
-    ) -> Result<Vec<String>, Error> {
+    ) -> Result<HashMap<String, Arc<PackageGraph>>, Error> {
         let distinct_sbom_ids: Vec<String> = sbom::Entity::find()
             .filter(sbom::Column::SbomId.in_subquery(subquery))
             .select()
@@ -208,30 +210,33 @@ impl AnalysisService {
             .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
             .collect();
 
-        self.load_graphs(connection, &distinct_sbom_ids).await?;
-
-        Ok(distinct_sbom_ids)
+        Ok(self.load_graphs(connection, &distinct_sbom_ids).await?)
     }
 
     /// Load the SBOM matching the provided ID
     #[instrument(skip(self, connection))]
-    pub async fn load_graph<C: ConnectionTrait>(&self, connection: &C, distinct_sbom_id: &str) {
-        if self.graph.contains_key(distinct_sbom_id) {
+    pub async fn load_graph<C: ConnectionTrait>(
+        &self,
+        connection: &C,
+        distinct_sbom_id: &str,
+    ) -> Result<Arc<PackageGraph>, DbErr> {
+        if let Some(g) = self.graph.get(distinct_sbom_id) {
             // early return if we already loaded it
-            return;
+            return Ok(g);
         }
 
         let distinct_sbom_id = match Uuid::parse_str(distinct_sbom_id) {
             Ok(uuid) => uuid,
             Err(err) => {
-                log::warn!("Unable to parse SBOM ID {distinct_sbom_id}: {err}");
-                return;
+                return Err(DbErr::Custom(format!(
+                    "Unable to parse SBOM ID {distinct_sbom_id}: {err}"
+                )));
             }
         };
 
         // lazy load graphs
 
-        let mut g: Graph<PackageNode, Relationship, petgraph::Directed> = Graph::new();
+        let mut g: PackageGraph = Graph::new();
         let mut nodes = HashMap::new();
         let mut detected_nodes = HashSet::new();
 
@@ -240,8 +245,7 @@ impl AnalysisService {
         let packages = match get_nodes(connection, distinct_sbom_id).await {
             Ok(nodes) => nodes,
             Err(err) => {
-                log::error!("Error fetching graph nodes: {}", err);
-                return;
+                return Err(err);
             }
         };
 
@@ -280,8 +284,7 @@ impl AnalysisService {
         let edges = match get_relationships(connection, distinct_sbom_id).await {
             Ok(edges) => edges,
             Err(err) => {
-                log::error!("Error fetching graph relationships: {}", err);
-                return;
+                return Err(err);
             }
         };
 
@@ -327,7 +330,9 @@ impl AnalysisService {
         // Set the result. A parallel call might have done the same. We wasted some time, but the
         // state is still correct.
 
-        self.graph.insert(distinct_sbom_id.to_string(), g);
+        let g = Arc::new(g);
+        self.graph.insert(distinct_sbom_id.to_string(), g.clone());
+        Ok(g)
     }
 
     /// Load all SBOMs by the provided IDs
@@ -335,11 +340,14 @@ impl AnalysisService {
         &self,
         connection: &C,
         distinct_sbom_ids: &Vec<String>,
-    ) -> Result<(), DbErr> {
+    ) -> Result<HashMap<String, Arc<PackageGraph>>, DbErr> {
+        let mut results = HashMap::new();
         for distinct_sbom_id in distinct_sbom_ids {
-            self.load_graph(connection, distinct_sbom_id).await;
+            results.insert(
+                distinct_sbom_id.clone(),
+                self.load_graph(connection, distinct_sbom_id).await?,
+            );
         }
-
-        Ok(())
+        Ok(results)
     }
 }

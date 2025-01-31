@@ -181,12 +181,14 @@ impl DerefMut for DepSummary {
     }
 }
 
+pub type PackageGraph = Graph<PackageNode, Relationship, petgraph::Directed>;
+
 pub struct GraphMap {
-    map: Cache<String, Arc<Graph<PackageNode, Relationship, petgraph::Directed>>>,
+    map: Cache<String, Arc<PackageGraph>>,
 }
 
 #[allow(clippy::ptr_arg)] // &String is required by Cache::builder().weigher() method
-fn weigher(key: &String, value: &Arc<Graph<PackageNode, Relationship, petgraph::Directed>>) -> u32 {
+fn weigher(key: &String, value: &Arc<PackageGraph>) -> u32 {
     let mut result = key.len();
     for n in value.raw_nodes() {
         result += n.weight.approximate_memory_size as usize;
@@ -219,16 +221,13 @@ impl GraphMap {
     }
 
     // Add a new graph with the given key (write access)
-    pub fn insert(&self, key: String, graph: Graph<PackageNode, Relationship, petgraph::Directed>) {
-        self.map.insert(key, Arc::new(graph));
+    pub fn insert(&self, key: String, graph: Arc<PackageGraph>) {
+        self.map.insert(key, graph);
         self.map.run_pending_tasks();
     }
 
     // Retrieve a reference to a graph by its key (read access)
-    pub fn get(
-        &self,
-        key: &str,
-    ) -> Option<Arc<Graph<PackageNode, Relationship, petgraph::Directed>>> {
+    pub fn get(&self, key: &str) -> Option<Arc<PackageGraph>> {
         self.map.get(key)
     }
 

@@ -14,6 +14,7 @@ use crate::{
     Error,
 };
 
+use crate::model::PackageGraph;
 use petgraph::{
     algo::is_cyclic_directed,
     graph::{Graph, NodeIndex},
@@ -42,13 +43,13 @@ pub struct AnalysisService {
 }
 
 pub fn dep_nodes(
-    graph: &Graph<PackageNode, Relationship, petgraph::Directed>,
+    graph: &PackageGraph,
     node: NodeIndex,
     visited: &mut HashSet<NodeIndex>,
 ) -> Vec<DepNode> {
     let mut depnodes = Vec::new();
     fn dfs(
-        graph: &Graph<PackageNode, Relationship, petgraph::Directed>,
+        graph: &PackageGraph,
         node: NodeIndex,
         depnodes: &mut Vec<DepNode>,
         visited: &mut HashSet<NodeIndex>,
@@ -91,10 +92,7 @@ pub fn dep_nodes(
     depnodes
 }
 
-pub fn ancestor_nodes(
-    graph: &Graph<PackageNode, Relationship, petgraph::Directed>,
-    node: NodeIndex,
-) -> Vec<AncNode> {
+pub fn ancestor_nodes(graph: &PackageGraph, node: NodeIndex) -> Vec<AncNode> {
     let mut discovered = graph.visit_map();
     let mut ancestor_nodes = Vec::new();
     let mut stack = Vec::new();
@@ -209,7 +207,7 @@ impl AnalysisService {
     fn collect_graph<'a, T, I, C>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
-        distinct_sbom_ids: Vec<String>,
+        graphs: HashMap<String, Arc<PackageGraph>>,
         init: I,
         collector: C,
     ) -> T
@@ -219,7 +217,7 @@ impl AnalysisService {
     {
         let mut value = init();
 
-        self.query_graph(query, distinct_sbom_ids, |graph, index, node| {
+        self.query_graph(query, graphs, |graph, index, node| {
             collector(&mut value, graph, index, node);
         });
 
@@ -231,7 +229,7 @@ impl AnalysisService {
     fn query_graph<'a, F>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
-        distinct_sbom_ids: Vec<String>,
+        graphs: HashMap<String, Arc<PackageGraph>>,
         mut f: F,
     ) where
         F: FnMut(&Graph<PackageNode, Relationship>, NodeIndex, &PackageNode),
@@ -239,32 +237,30 @@ impl AnalysisService {
         let query = query.into();
 
         // RwLock for reading hashmap<graph>
-        for distinct_sbom_id in &distinct_sbom_ids {
-            if let Some(graph) = self.graph.get(distinct_sbom_id.to_string().as_str()) {
-                if is_cyclic_directed(graph.deref()) {
-                    log::warn!(
-                        "analysis graph of sbom {} has circular references!",
-                        distinct_sbom_id
-                    );
-                }
-
-                let mut visited = HashSet::new();
-
-                // Iterate over matching node indices and process them directly
-                graph
-                    .node_indices()
-                    .filter(|&i| Self::filter(graph.deref(), &query, i))
-                    .for_each(|node_index| {
-                        if !visited.contains(&node_index) {
-                            visited.insert(node_index);
-
-                            if let Some(find_match_package_node) = graph.node_weight(node_index) {
-                                log::debug!("matched!");
-                                f(graph.deref(), node_index, find_match_package_node);
-                            }
-                        }
-                    });
+        for (distinct_sbom_id, graph) in &graphs {
+            if is_cyclic_directed(graph.deref()) {
+                log::warn!(
+                    "analysis graph of sbom {} has circular references!",
+                    distinct_sbom_id
+                );
             }
+
+            let mut visited = HashSet::new();
+
+            // Iterate over matching node indices and process them directly
+            graph
+                .node_indices()
+                .filter(|&i| Self::filter(graph.deref(), &query, i))
+                .for_each(|node_index| {
+                    if !visited.contains(&node_index) {
+                        visited.insert(node_index);
+
+                        if let Some(find_match_package_node) = graph.node_weight(node_index) {
+                            log::debug!("matched!");
+                            f(graph.deref(), node_index, find_match_package_node);
+                        }
+                    }
+                });
         }
     }
 
@@ -272,11 +268,11 @@ impl AnalysisService {
     pub fn query_ancestor_graph<'a>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
-        distinct_sbom_ids: Vec<String>,
+        graphs: HashMap<String, Arc<PackageGraph>>,
     ) -> Vec<AncestorSummary> {
         self.collect_graph(
             query,
-            distinct_sbom_ids,
+            graphs,
             Vec::new,
             |components, graph, node_index, node| {
                 components.push(AncestorSummary {
@@ -291,11 +287,11 @@ impl AnalysisService {
     pub async fn query_deps_graph(
         &self,
         query: impl Into<GraphQuery<'_>> + Debug,
-        distinct_sbom_ids: Vec<String>,
+        graphs: HashMap<String, Arc<PackageGraph>>,
     ) -> Vec<DepSummary> {
         self.collect_graph(
             query,
-            distinct_sbom_ids,
+            graphs,
             Vec::new,
             |components, graph, node_index, node| {
                 components.push(DepSummary {
@@ -316,11 +312,11 @@ impl AnalysisService {
         // root components.
 
         let distinct_sbom_ids = vec![sbom_id.to_string()];
-        self.load_graphs(connection, &distinct_sbom_ids).await?;
+        let graphs = self.load_graphs(connection, &distinct_sbom_ids).await?;
 
         let components = self.query_ancestor_graph(
             GraphQuery::Component(ComponentReference::Name(&component_name)),
-            distinct_sbom_ids,
+            graphs,
         );
 
         let mut root_components = Vec::new();
