@@ -152,13 +152,15 @@ impl SbomContext {
 
         for left in sbom.dependencies.iter().flatten() {
             for target in left.depends_on.iter().flatten() {
+                log::debug!("Adding dependency - left: {}, right: {}", left.ref_, target);
                 creator.relate(left.ref_.clone(), Relationship::Dependency, target.clone());
             }
 
             // https://github.com/trustification/trustify/issues/1131
             // Do we need to qualify this so that only "arch=src" refs
             // get the GeneratedFrom relationship?
-            for target in left.depends_on.iter().flatten() {
+            for target in left.provides.iter().flatten() {
+                log::debug!("Adding generates - left: {}, right: {}", left.ref_, target);
                 creator.relate(left.ref_.clone(), Relationship::Generates, target.clone());
             }
         }
@@ -355,6 +357,32 @@ impl<'a> ComponentCreator<'a> {
             // and store a relationship
             self.relationships
                 .relate(target, Relationship::AncestorOf, node_id.clone());
+        }
+
+        for variant in comp
+            .pedigree
+            .iter()
+            .flat_map(|pedigree| pedigree.variants.iter().flatten())
+        {
+            let target = variant
+                .bom_ref
+                .clone()
+                .unwrap_or_else(|| Uuid::new_v4().to_string());
+
+            // create the component
+
+            let creator = ComponentCreator::new(
+                self.cpes,
+                self.purls,
+                self.licenses,
+                self.packages,
+                self.relationships,
+            );
+
+            creator.create(variant);
+
+            self.relationships
+                .relate(node_id.clone(), Relationship::Variant, target);
         }
 
         for variant in comp
