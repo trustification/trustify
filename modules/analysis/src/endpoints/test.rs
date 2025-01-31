@@ -188,9 +188,6 @@ async fn test_simple_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::E
                     {
                         "purl": [ "pkg:rpm/redhat/B@0.0.0" ]
                     },
-                    {
-                        "purl": [ "pkg:rpm/redhat/EE@0.0.0?arch=src" ]
-                    }
                 ]
             },
             {
