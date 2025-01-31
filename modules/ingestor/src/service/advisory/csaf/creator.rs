@@ -27,7 +27,7 @@ use uuid::Uuid;
 struct PurlStatus {
     cpe: Option<Cpe>,
     purl: Purl,
-    status: &'static str,
+    status: String,
     info: VersionInfo,
 }
 
@@ -105,16 +105,18 @@ impl<'a> StatusCreator<'a> {
         connection: &C,
     ) -> Result<(), Error> {
         let mut checked = HashMap::new();
-        let mut product_statuses = Vec::new();
+        let mut product_status_models = Vec::new();
         let mut purls = PurlCreator::new();
         let mut cpes = CpeCreator::new();
 
-        let mut org_cache: HashMap<&String, organization::Model> = HashMap::new();
-        let mut products = Vec::new();
+        let mut org_cache: HashMap<String, organization::Model> = HashMap::new();
+        let mut product_models = Vec::new();
         let mut version_ranges = Vec::new();
         let mut product_version_ranges = Vec::new();
 
-        for product in &self.products {
+        let product_statuses = self.products.clone();
+
+        for product in product_statuses {
             // ensure a correct status, and get id
             if let Entry::Vacant(entry) = checked.entry(product.status) {
                 entry.insert(Self::check_status(product.status, connection).await?);
@@ -130,21 +132,26 @@ impl<'a> StatusCreator<'a> {
             // so simple caching should work here.
             // If we find examples where this is not a case, we can switch to
             // batch ingesting of organizations as well.
-            let org_id = match &product.vendor {
-                Some(vendor) => match org_cache.get(vendor) {
+            let org_id = match product.vendor.clone() {
+                Some(vendor) => match org_cache.get(&vendor) {
                     Some(entry) => Some(entry.id),
                     None => {
                         let organization_cpe_key = product
                             .cpe
                             .clone()
                             .map(|cpe| cpe.vendor().as_ref().to_string());
+
                         let org = OrganizationInformation {
                             cpe_key: organization_cpe_key,
                             website: None,
                         };
+
                         let org: OrganizationContext<'_> =
-                            graph.ingest_organization(vendor, org, connection).await?;
-                        org_cache.entry(vendor).or_insert(org.organization.clone());
+                            graph.ingest_organization(&vendor, org, connection).await?;
+                        org_cache
+                            .entry(vendor.clone())
+                            .or_insert(org.organization.clone());
+
                         Some(org.organization.id)
                     }
                 },
@@ -165,7 +172,7 @@ impl<'a> StatusCreator<'a> {
                 vendor_id: Set(org_id),
                 cpe_key: Set(product_cpe_key),
             };
-            products.push(product_entity.clone());
+            product_models.push(product_entity.clone());
 
             // Create all product ranges for batch ingesting
             let product_version_range = match product.version {
@@ -220,32 +227,51 @@ impl<'a> StatusCreator<'a> {
                         cpes.add(cpe.clone());
                     }
 
-                    product_statuses.push(base_product);
+                    product_status_models.push(base_product);
                 }
             }
 
             for purl in &product.purls {
-                let purl = purl.clone();
-                // Ingest purl status
-                let info = match purl.version.clone() {
-                    Some(version) => VersionInfo {
-                        scheme: VersionScheme::Generic,
-                        spec: VersionSpec::Exact(version),
-                    },
-                    None => VersionInfo {
-                        spec: VersionSpec::Range(Version::Unbounded, Version::Unbounded),
-                        scheme: VersionScheme::Semver,
-                    },
-                };
+                let scheme = Self::from_purl_version_scheme(purl);
 
-                let purl_status = PurlStatus {
-                    cpe: product.cpe.clone(),
-                    purl: purl.clone(),
-                    status: product.status,
-                    info,
+                // Insert purl status
+                let spec = match &purl.version {
+                    Some(version) => VersionSpec::Exact(version.clone()),
+                    None => VersionSpec::Range(Version::Unbounded, Version::Unbounded),
                 };
+                self.create_purl_status(&product, purl, scheme, spec, product.status.to_string());
 
-                self.entries.insert(purl_status);
+                // For "fixed" status and Red Hat CSAF advisories,
+                // insert "affected" status up until this version.
+                // Let's keep this here for now as a special case. If more exceptions arise,
+                // we can refactor and provide support for vendor-specific parsing.
+                if product.status == "fixed" {
+                    if let Some(cpe_vendor) = product
+                        .cpe
+                        .as_ref()
+                        .map(|cpe| cpe.vendor().as_ref().to_string())
+                    {
+                        if cpe_vendor == "redhat" {
+                            if let Some(version) = &purl.version {
+                                //TODO improve status checking as we call db way too often for this simple task
+                                if let Entry::Vacant(entry) = checked.entry("affected") {
+                                    entry.insert(Self::check_status("affected", connection).await?);
+                                };
+                                let spec = VersionSpec::Range(
+                                    Version::Unbounded,
+                                    Version::Exclusive(version.clone()),
+                                );
+                                self.create_purl_status(
+                                    &product,
+                                    purl,
+                                    scheme,
+                                    spec,
+                                    "affected".to_string(),
+                                );
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -265,7 +291,7 @@ impl<'a> StatusCreator<'a> {
 
         self.create_status(connection, checked).await?;
 
-        for batch in &products.chunked() {
+        for batch in &product_models.chunked() {
             product::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
                 .exec(connection)
@@ -286,7 +312,7 @@ impl<'a> StatusCreator<'a> {
                 .await?;
         }
 
-        for batch in &product_statuses.chunked() {
+        for batch in &product_status_models.chunked() {
             product_status::Entity::insert_many(batch)
                 .exec(connection)
                 .await?;
@@ -295,6 +321,34 @@ impl<'a> StatusCreator<'a> {
         // done
 
         Ok(())
+    }
+
+    fn from_purl_version_scheme(purl: &Purl) -> VersionScheme {
+        match purl.ty.as_str() {
+            "maven" => VersionScheme::Maven,
+            "npm" => VersionScheme::Semver,
+            "python" => VersionScheme::Python,
+            "rpm" => VersionScheme::Rpm,
+            "semver" => VersionScheme::Semver,
+            _ => VersionScheme::Generic,
+        }
+    }
+
+    fn create_purl_status(
+        &mut self,
+        product: &ProductStatus,
+        purl: &Purl,
+        scheme: VersionScheme,
+        spec: VersionSpec,
+        status: String,
+    ) {
+        let purl_status = PurlStatus {
+            cpe: product.cpe.clone(),
+            purl: purl.clone(),
+            status,
+            info: VersionInfo { scheme, spec },
+        };
+        self.entries.insert(purl_status);
     }
 
     #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
@@ -307,7 +361,7 @@ impl<'a> StatusCreator<'a> {
         let mut package_statuses = Vec::new();
 
         for ps in &self.entries {
-            let status = checked.get(&ps.status).ok_or_else(|| {
+            let status = checked.get(&ps.status.as_str()).ok_or_else(|| {
                 Error::Graph(crate::graph::error::Error::InvalidStatus(
                     ps.status.to_string(),
                 ))
