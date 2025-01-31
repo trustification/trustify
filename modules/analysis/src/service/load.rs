@@ -216,7 +216,7 @@ impl AnalysisService {
     /// Load the SBOM matching the provided ID
     #[instrument(skip(self, connection))]
     pub async fn load_graph<C: ConnectionTrait>(&self, connection: &C, distinct_sbom_id: &str) {
-        if self.graph.read().contains_key(distinct_sbom_id) {
+        if self.graph.contains_key(distinct_sbom_id) {
             // early return if we already loaded it
             return;
         }
@@ -327,7 +327,7 @@ impl AnalysisService {
         // Set the result. A parallel call might have done the same. We wasted some time, but the
         // state is still correct.
 
-        self.graph.write().insert(distinct_sbom_id.to_string(), g);
+        self.graph.insert(distinct_sbom_id.to_string(), g);
     }
 
     /// Load all SBOMs by the provided IDs

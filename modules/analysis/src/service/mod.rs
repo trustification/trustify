@@ -13,7 +13,7 @@ use crate::{
     },
     Error,
 };
-use parking_lot::RwLock;
+
 use petgraph::{
     algo::is_cyclic_directed,
     graph::{Graph, NodeIndex},
@@ -38,7 +38,7 @@ use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct AnalysisService {
-    graph: Arc<RwLock<GraphMap>>,
+    graph: Arc<GraphMap>,
 }
 
 pub fn dep_nodes(
@@ -157,7 +157,7 @@ impl AnalysisService {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self {
-            graph: Arc::new(RwLock::new(GraphMap::new(1024 * 1024 * 100))),
+            graph: Arc::new(GraphMap::new(1024 * 1024 * 100)),
         }
     }
 
@@ -181,8 +181,7 @@ impl AnalysisService {
     }
 
     pub fn clear_all_graphs(&self) -> Result<(), Error> {
-        let mut manager = self.graph.write();
-        manager.clear();
+        self.graph.clear();
         Ok(())
     }
 
@@ -197,10 +196,9 @@ impl AnalysisService {
             .all(connection)
             .await?;
 
-        let manager = self.graph.read();
         Ok(AnalysisStatus {
             sbom_count: distinct_sbom_ids.len() as u32,
-            graph_count: manager.len() as u32,
+            graph_count: self.graph.len() as u32,
         })
     }
 
@@ -241,9 +239,8 @@ impl AnalysisService {
         let query = query.into();
 
         // RwLock for reading hashmap<graph>
-        let graph_read_guard = self.graph.read();
         for distinct_sbom_id in &distinct_sbom_ids {
-            if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
+            if let Some(graph) = self.graph.get(distinct_sbom_id.to_string().as_str()) {
                 if is_cyclic_directed(graph.deref()) {
                     log::warn!(
                         "analysis graph of sbom {} has circular references!",

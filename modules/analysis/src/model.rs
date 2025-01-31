@@ -219,12 +219,9 @@ impl GraphMap {
     }
 
     // Add a new graph with the given key (write access)
-    pub fn insert(
-        &mut self,
-        key: String,
-        graph: Graph<PackageNode, Relationship, petgraph::Directed>,
-    ) {
+    pub fn insert(&self, key: String, graph: Graph<PackageNode, Relationship, petgraph::Directed>) {
         self.map.insert(key, Arc::new(graph));
+        self.map.run_pending_tasks();
     }
 
     // Retrieve a reference to a graph by its key (read access)
@@ -236,13 +233,8 @@ impl GraphMap {
     }
 
     // Clear all graphs from the map
-    pub fn clear(&mut self) {
+    pub fn clear(&self) {
         self.map.invalidate_all();
+        self.map.run_pending_tasks();
     }
 }
-
-// impl Default for GraphMap {
-//     fn default() -> Self {
-//         Self::new()
-//     }
-// }
