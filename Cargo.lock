@@ -8462,6 +8462,7 @@ dependencies = [
  "cpe",
  "criterion",
  "csaf",
+ "fixedbitset 0.5.7",
  "hex",
  "humantime",
  "itertools 0.13.0",

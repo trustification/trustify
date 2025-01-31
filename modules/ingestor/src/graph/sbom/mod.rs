@@ -492,7 +492,7 @@ impl SbomContext {
     fn query_describes_packages(&self) -> Select<sbom_package::Entity> {
         sbom_package::Entity::find()
             .filter(sbom::Column::SbomId.eq(self.sbom.sbom_id))
-            .filter(package_relates_to_package::Column::Relationship.eq(Relationship::DescribedBy))
+            .filter(package_relates_to_package::Column::Relationship.eq(Relationship::Describes))
             .select_only()
             .join(JoinType::Join, sbom_package::Relation::Sbom.def())
             .join(JoinType::Join, sbom_package::Relation::Node.def())
@@ -662,9 +662,9 @@ impl SbomContext {
         connection: &C,
     ) -> anyhow::Result<()> {
         self.ingest_package_relates_to_package(
-            RelationshipReference::Root,
-            Relationship::DescribedBy,
             RelationshipReference::Purl(package),
+            Relationship::Describes,
+            RelationshipReference::Root,
             connection,
         )
         .await?;
@@ -678,9 +678,9 @@ impl SbomContext {
         connection: &C,
     ) -> anyhow::Result<()> {
         self.ingest_package_relates_to_package(
-            RelationshipReference::Root,
-            Relationship::DescribedBy,
             RelationshipReference::Cpe(cpe),
+            Relationship::Describes,
+            RelationshipReference::Root,
             connection,
         )
         .await?;

@@ -9,7 +9,7 @@ use crate::graph::{
 };
 use sea_orm::ConnectionTrait;
 use serde_cyclonedx::cyclonedx::v_1_6::{
-    Component, ComponentEvidenceIdentity, CycloneDx, LicenseChoiceUrl, RefLinkType,
+    Component, ComponentEvidenceIdentity, CycloneDx, LicenseChoiceUrl,
 };
 use std::str::FromStr;
 use time::{format_description::well_known::Iso8601, OffsetDateTime};
@@ -138,7 +138,7 @@ impl SbomContext {
 
                 creator.relate(
                     bom_ref,
-                    Relationship::DescribedBy,
+                    Relationship::Describes,
                     CYCLONEDX_DOC_REF.to_string(),
                 );
             }
@@ -151,12 +151,15 @@ impl SbomContext {
         // create relationships
 
         for left in sbom.dependencies.iter().flatten() {
-            creator.relate_all(&left.ref_, Relationship::DependencyOf, &left.depends_on);
+            for target in left.depends_on.iter().flatten() {
+                log::debug!("Adding dependency - left: {}, right: {}", left.ref_, target);
+                creator.relate(left.ref_.clone(), Relationship::Dependency, target.clone());
+            }
 
-            // https://github.com/trustification/trustify/issues/1131
-            // Do we need to qualify this so that only "arch=src" refs
-            // get the GeneratedFrom relationship?
-            creator.relate_all(&left.ref_, Relationship::GeneratedFrom, &left.provides);
+            for target in left.provides.iter().flatten() {
+                log::debug!("Adding generates - left: {}, right: {}", left.ref_, target);
+                creator.relate(left.ref_.clone(), Relationship::Generates, target.clone());
+            }
         }
 
         // create
@@ -206,17 +209,6 @@ impl<'a> Creator<'a> {
 
     pub fn relate(&mut self, left: String, rel: Relationship, right: String) {
         self.relations.push((left, rel, right));
-    }
-
-    pub fn relate_all(
-        &mut self,
-        source: &RefLinkType,
-        rel: Relationship,
-        targets: &Option<Vec<RefLinkType>>,
-    ) {
-        for target in targets.iter().flatten() {
-            self.relate(target.clone(), rel, source.clone());
-        }
     }
 
     pub async fn create(self, db: &impl ConnectionTrait) -> anyhow::Result<()> {
@@ -387,7 +379,33 @@ impl<'a> ComponentCreator<'a> {
             creator.create(variant);
 
             self.relationships
-                .relate(target, Relationship::VariantOf, node_id.clone());
+                .relate(node_id.clone(), Relationship::Variant, target);
+        }
+
+        for variant in comp
+            .pedigree
+            .iter()
+            .flat_map(|pedigree| pedigree.variants.iter().flatten())
+        {
+            let target = variant
+                .bom_ref
+                .clone()
+                .unwrap_or_else(|| Uuid::new_v4().to_string());
+
+            // create the component
+
+            let creator = ComponentCreator::new(
+                self.cpes,
+                self.purls,
+                self.licenses,
+                self.packages,
+                self.relationships,
+            );
+
+            creator.create(variant);
+
+            self.relationships
+                .relate(node_id.clone(), Relationship::Variant, target);
         }
     }
 

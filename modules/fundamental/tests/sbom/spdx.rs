@@ -57,7 +57,7 @@ async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
             let contains = service
                 .related_packages(
                     sbom.sbom.sbom_id,
-                    Relationship::ContainedBy,
+                    Relationship::Contains,
                     first,
                     &ctx.db,
                 )
@@ -91,9 +91,9 @@ async fn test_parse_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                     sbom.sbom.sbom_id,
                     Default::default(),
                     Default::default(),
-                    Which::Right,
+                    Which::Left,
                     first,
-                    Some(Relationship::ContainedBy),
+                    Some(Relationship::Contains),
                     &ctx.db,
                 )
                 .await?

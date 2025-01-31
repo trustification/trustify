@@ -102,6 +102,7 @@ mod m0000820_create_conversation;
 mod m0000830_perf_indexes;
 mod m0000840_add_relationship_14_15;
 mod m0000850_python_version;
+mod m0000860_normalise_relationships;
 
 pub struct Migrator;
 
@@ -211,6 +212,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000830_perf_indexes::Migration),
             Box::new(m0000840_add_relationship_14_15::Migration),
             Box::new(m0000850_python_version::Migration),
+            Box::new(m0000860_normalise_relationships::Migration),
         ]
     }
 }
