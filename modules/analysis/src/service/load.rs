@@ -220,7 +220,7 @@ impl AnalysisService {
         connection: &C,
         distinct_sbom_id: &str,
     ) -> Result<Arc<PackageGraph>, DbErr> {
-        if let Some(g) = self.graph.get(distinct_sbom_id) {
+        if let Some(g) = self.graph_cache.get(distinct_sbom_id) {
             // early return if we already loaded it
             return Ok(g);
         }
@@ -331,7 +331,8 @@ impl AnalysisService {
         // state is still correct.
 
         let g = Arc::new(g);
-        self.graph.insert(distinct_sbom_id.to_string(), g.clone());
+        self.graph_cache
+            .insert(distinct_sbom_id.to_string(), g.clone());
         Ok(g)
     }
 

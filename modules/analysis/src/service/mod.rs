@@ -21,7 +21,7 @@ use petgraph::{
     visit::{NodeIndexable, VisitMap, Visitable},
     Direction,
 };
-use sea_orm::{prelude::ConnectionTrait, EntityOrSelect, EntityTrait, QueryOrder};
+use sea_orm::{prelude::ConnectionTrait, DbErr, EntityOrSelect, EntityTrait, QueryOrder};
 use sea_query::Order;
 use std::ops::Deref;
 use std::{
@@ -39,7 +39,7 @@ use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct AnalysisService {
-    graph: Arc<GraphMap>,
+    graph_cache: Arc<GraphMap>,
 }
 
 pub fn dep_nodes(
@@ -147,6 +147,8 @@ impl AnalysisService {
     ///
     /// A new instance will have a new cache. Instanced cloned from it, will share that cache.
     ///
+    /// Default cache size is 100MB.
+    ///
     /// Therefore, it is ok to create a new instance. However, if you want to make use of the
     /// caching, it is necessary to re-use that instance.
     ///
@@ -154,13 +156,39 @@ impl AnalysisService {
     /// of having its own cache. So creating a new instance should be a deliberate choice.
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
+        Self::new_sized(1024 * 1024 * 100)
+    }
+
+    /// Create a new analysis service instance with the configured cache size.
+    ///
+    /// ## Caching
+    ///
+    /// A new instance will have a new cache. Instanced cloned from it, will share that cache.
+    ///
+    /// Therefore, it is ok to create a new instance. However, if you want to make use of the
+    /// caching, it is necessary to re-use that instance.
+    ///
+    /// Also, we do not implement default because of this. As a new instance has the implication
+    /// of having its own cache. So creating a new instance should be a deliberate choice.
+    pub fn new_sized(cache_size: u64) -> Self {
         Self {
-            graph: Arc::new(GraphMap::new(1024 * 1024 * 100)),
+            graph_cache: Arc::new(GraphMap::new(cache_size)),
         }
     }
 
+    pub fn cache_size_used(&self) -> u64 {
+        self.graph_cache.size_used()
+    }
+
+    pub fn cache_len(&self) -> u64 {
+        self.graph_cache.len()
+    }
+
     #[instrument(skip_all, err)]
-    pub async fn load_all_graphs<C: ConnectionTrait>(&self, connection: &C) -> Result<(), Error> {
+    pub async fn load_all_graphs<C: ConnectionTrait>(
+        &self,
+        connection: &C,
+    ) -> Result<HashMap<String, Arc<PackageGraph>>, DbErr> {
         // retrieve all sboms in trustify
 
         let distinct_sbom_ids = sbom::Entity::find()
@@ -173,13 +201,11 @@ impl AnalysisService {
             .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
             .collect();
 
-        self.load_graphs(connection, &distinct_sbom_ids).await?;
-
-        Ok(())
+        self.load_graphs(connection, &distinct_sbom_ids).await
     }
 
     pub fn clear_all_graphs(&self) -> Result<(), Error> {
-        self.graph.clear();
+        self.graph_cache.clear();
         Ok(())
     }
 
@@ -196,7 +222,7 @@ impl AnalysisService {
 
         Ok(AnalysisStatus {
             sbom_count: distinct_sbom_ids.len() as u32,
-            graph_count: self.graph.len() as u32,
+            graph_count: self.graph_cache.len() as u32,
         })
     }
 

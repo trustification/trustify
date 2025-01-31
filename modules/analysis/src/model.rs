@@ -220,6 +220,10 @@ impl GraphMap {
         self.len() == 0
     }
 
+    pub fn size_used(&self) -> u64 {
+        self.map.weighted_size()
+    }
+
     // Add a new graph with the given key (write access)
     pub fn insert(&self, key: String, graph: Arc<PackageGraph>) {
         self.map.insert(key, graph);
