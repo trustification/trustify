@@ -442,14 +442,14 @@ async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     tracing::debug!(test = "", "{response:#?}");
 
     let deps = response.path(&format!(
-        "$.items[?(@.node_id=='{src}')].descendants[?(@.relationship=='generated_from')]"
+        "$.items[?(@.node_id=='{src}')].descendants[?(@.relationship=='generates')]"
     ))?;
     assert_eq!(35, deps.as_array().unwrap().len());
 
     // Ensure binary rpm GeneratedFrom src rpm
     let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
     let uri = format!(
-        "/api/v2/analysis/root-component/{}",
+        "/api/v2/analysis/component/{}?ancestors=10",
         urlencoding::encode(x86)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
@@ -459,7 +459,7 @@ async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         "items": [{
             "purl": [ x86 ],
             "ancestors": [{
-                "relationship": "GeneratedFrom",
+                "relationship": "geneartes",
                 "purl": [ src ]
             }]
         }]
@@ -477,30 +477,34 @@ async fn spdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     // Find all deps of src rpm
     let src = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
-    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(src));
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode(src)
+    );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
 
     let deps = response.path(
-        "$.items[?(@.node_id=='SPDXRef-SRPM')].descendants[?(@.relationship=='GeneratedFrom')]",
+        "$.items[?(@.node_id=='SPDXRef-SRPM')].descendants[?(@.relationship=='generates')]",
     )?;
     assert_eq!(35, deps.as_array().unwrap().len());
 
     // Ensure binary rpm GeneratedFrom src rpm
     let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
     let uri = format!(
-        "/api/v2/analysis/root-component/{}",
+        "/api/v2/analysis/component/{}?ancestors=10",
         urlencoding::encode(x86)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
+
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ x86 ],
             "ancestors": [{
-                "relationship": "GeneratedFrom",
+                "relationship": "generates",
                 "purl": [ src ]
             }]
         }]
@@ -521,7 +525,7 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let child = "pkg:oci/openshift-ose-console@sha256:94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679";
 
     let uri = format!(
-        "/api/v2/analysis/component/{}?descendants=10",
+        "/api/v2/analysis/component/{}?ancestors=10",
         urlencoding::encode(parent)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
@@ -531,7 +535,7 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ parent ],
-            "descendants": [{
+            "ancestors": [{
                 "relationship": "variant",
                 "purl": [ child ]
             }]
@@ -540,7 +544,7 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // Ensure child is variant of src
     let uri = format!(
-        "/api/v2/analysis/component/{}?ancestors=10",
+        "/api/v2/analysis/component/{}?descendants=10",
         urlencoding::encode(child)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
@@ -550,7 +554,7 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ child ],
-            "ancestors": [{
+            "descendants": [{
                 "relationship": "variant",
                 "purl": [ parent ]
             }]
@@ -756,7 +760,7 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(response.contains_subset(json!({
         "items": [ {
             "ancestors": [ {
-                "relationship": "packages",
+                "relationship": "package",
                 "name": "SATELLITE-6.15-RHEL-8",
                 "version": "6.15",
             }]
@@ -775,7 +779,7 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(response.contains_subset(json!({
         "items": [ {
             "descendants": [ {
-                "relationship": "packages",
+                "relationship": "package",
                 "name": "rubygem-google-cloud-compute",
                 "version": "0.5.0-1.el8sat"
             }]
