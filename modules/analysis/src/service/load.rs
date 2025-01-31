@@ -261,7 +261,8 @@ impl AnalysisService {
                         document_id: package.document_id.clone().unwrap_or_default(),
                         product_name: package.product_name.clone().unwrap_or_default(),
                         product_version: package.product_version.clone().unwrap_or_default(),
-                    });
+                        approximate_memory_size: 0,
+                    }.set_approximate_memory_size());
 
                     log::debug!("Inserting - id: {}, index: {index:?}", entry.key());
 

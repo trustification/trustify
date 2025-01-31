@@ -27,6 +27,7 @@ use std::{
     fmt::Debug,
     sync::Arc,
 };
+use std::num::NonZeroUsize;
 use tracing::instrument;
 use trustify_common::{
     db::query::Value,
@@ -154,9 +155,9 @@ impl AnalysisService {
     /// Also, we do not implement default because of this. As a new instance has the implication
     /// of having its own cache. So creating a new instance should be a deliberate choice.
     #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
+    pub fn new(cap: NonZeroUsize) -> Self {
         Self {
-            graph: Default::default(),
+            graph: Arc::new(RwLock::new(GraphMap::new(cap))),
         }
     }
 

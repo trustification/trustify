@@ -1,10 +1,13 @@
 use petgraph::Graph;
 use serde::Serialize;
 use std::{
-    collections::HashMap,
     fmt,
     ops::{Deref, DerefMut},
 };
+use std::hash::RandomState;
+use std::num::NonZeroUsize;
+use clru::{CLruCache, CLruCacheConfig, WeightScale};
+use petgraph::graph::Edge;
 use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use utoipa::ToSchema;
@@ -35,7 +38,39 @@ pub struct PackageNode {
     pub document_id: String,
     pub product_name: String,
     pub product_version: String,
+    pub approximate_memory_size: usize,
 }
+
+impl PackageNode {
+    pub(crate) fn set_approximate_memory_size(&self) -> PackageNode {
+
+        // Is there a better way to do this?  I think this will under-estimate the memory size
+        let approximate_memory_size =
+            size_of::<PackageNode>() +
+            self.sbom_id.len() +
+            self.node_id.len() +
+            self.purl.iter().fold(0, |acc, purl|
+                // use the json string length as an approximation of the memory size
+                acc + serde_json::to_string(purl).unwrap_or_else(|_| "".to_string()).len()
+            ) +
+            self.cpe.iter().fold(0, |acc, cpe|
+                // use the json string length as an approximation of the memory size
+                acc + serde_json::to_string(cpe).unwrap_or_else(|_| "".to_string()).len()
+            ) +
+            self.name.len() +
+            self.version.len() +
+            self.published.len() +
+            self.document_id.len() +
+            self.product_name.len() +
+            self.product_version.len();
+
+        PackageNode {
+            approximate_memory_size,
+            ..self.clone()
+        }
+    }
+}
+
 impl fmt::Display for PackageNode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.purl)
@@ -151,22 +186,38 @@ impl DerefMut for DepSummary {
     }
 }
 
-#[derive(Debug)]
 pub struct GraphMap {
-    map: HashMap<String, Graph<PackageNode, Relationship, petgraph::Directed>>,
+    map: CLruCache<String, Graph<PackageNode, Relationship, petgraph::Directed>, RandomState, GraphMapWeightScale>,
 }
+
+struct GraphMapWeightScale;
+
+impl WeightScale<String, Graph<PackageNode, Relationship, petgraph::Directed>> for GraphMapWeightScale {
+    fn weight(&self, key: &String, value: &Graph<PackageNode, Relationship, petgraph::Directed>) -> usize {
+        let mut result = key.len();
+        for n in value.raw_nodes() {
+            result + n.weight.approximate_memory_size;
+        }
+        result = value.raw_edges().len() * size_of::<Edge<Relationship>>();
+        result
+    }
+}
+
 
 impl GraphMap {
     // Create a new instance of GraphMap
-    pub fn new() -> Self {
+    pub fn new(cap: NonZeroUsize) -> Self {
+        let x = CLruCache::with_config(
+            CLruCacheConfig::new(cap).with_scale(GraphMapWeightScale {}),
+        );
         GraphMap {
-            map: HashMap::new(),
+            map: x,
         }
     }
 
     // Check if the map contains a key
     pub fn contains_key(&self, key: &str) -> bool {
-        self.map.contains_key(key)
+        self.map.contains(key)
     }
 
     // Get the number of graphs in the map
@@ -185,17 +236,12 @@ impl GraphMap {
         key: String,
         graph: Graph<PackageNode, Relationship, petgraph::Directed>,
     ) {
-        self.map.insert(key, graph);
+        self.map.put_with_weight(key, graph);
     }
 
     // Retrieve a reference to a graph by its key (read access)
-    pub fn get(&self, key: &str) -> Option<&Graph<PackageNode, Relationship, petgraph::Directed>> {
+    pub fn get(&mut self, key: &str) -> Option<&Graph<PackageNode, Relationship, petgraph::Directed>> {
         self.map.get(key)
-    }
-
-    // Retrieve all sbom ids(read access)
-    pub fn sbom_ids(&self) -> Vec<String> {
-        self.map.keys().cloned().collect()
     }
 
     // Clear all graphs from the map
@@ -204,8 +250,8 @@ impl GraphMap {
     }
 }
 
-impl Default for GraphMap {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// impl Default for GraphMap {
+//     fn default() -> Self {
+//         Self::new()
+//     }
+// }
