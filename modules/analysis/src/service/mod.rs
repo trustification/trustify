@@ -22,12 +22,12 @@ use petgraph::{
 };
 use sea_orm::{prelude::ConnectionTrait, EntityOrSelect, EntityTrait, QueryOrder};
 use sea_query::Order;
+use std::ops::Deref;
 use std::{
     collections::{HashMap, HashSet},
     fmt::Debug,
     sync::Arc,
 };
-use std::num::NonZeroUsize;
 use tracing::instrument;
 use trustify_common::{
     db::query::Value,
@@ -155,9 +155,9 @@ impl AnalysisService {
     /// Also, we do not implement default because of this. As a new instance has the implication
     /// of having its own cache. So creating a new instance should be a deliberate choice.
     #[allow(clippy::new_without_default)]
-    pub fn new(cap: NonZeroUsize) -> Self {
+    pub fn new() -> Self {
         Self {
-            graph: Arc::new(RwLock::new(GraphMap::new(cap))),
+            graph: Arc::new(RwLock::new(GraphMap::new(1024 * 1024 * 100))),
         }
     }
 
@@ -244,7 +244,7 @@ impl AnalysisService {
         let graph_read_guard = self.graph.read();
         for distinct_sbom_id in &distinct_sbom_ids {
             if let Some(graph) = graph_read_guard.get(distinct_sbom_id.to_string().as_str()) {
-                if is_cyclic_directed(graph) {
+                if is_cyclic_directed(graph.deref()) {
                     log::warn!(
                         "analysis graph of sbom {} has circular references!",
                         distinct_sbom_id
@@ -256,14 +256,14 @@ impl AnalysisService {
                 // Iterate over matching node indices and process them directly
                 graph
                     .node_indices()
-                    .filter(|&i| Self::filter(graph, &query, i))
+                    .filter(|&i| Self::filter(graph.deref(), &query, i))
                     .for_each(|node_index| {
                         if !visited.contains(&node_index) {
                             visited.insert(node_index);
 
                             if let Some(find_match_package_node) = graph.node_weight(node_index) {
                                 log::debug!("matched!");
-                                f(graph, node_index, find_match_package_node);
+                                f(graph.deref(), node_index, find_match_package_node);
                             }
                         }
                     });

@@ -15,7 +15,7 @@ actix-web = { workspace = true }
 anyhow = { workspace = true }
 cpe = { workspace = true }
 log = { workspace = true }
-clru = { workspace = true }
+moka = { workspace = true, features = ["sync"] }
 parking_lot = { workspace = true }
 petgraph = { workspace = true }
 sea-orm = { workspace = true }

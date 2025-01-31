@@ -4,10 +4,9 @@ use std::{
     fmt,
     ops::{Deref, DerefMut},
 };
-use std::hash::RandomState;
-use std::num::NonZeroUsize;
-use clru::{CLruCache, CLruCacheConfig, WeightScale};
-use petgraph::graph::Edge;
+
+use moka::sync::Cache;
+use std::sync::Arc;
 use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use utoipa::ToSchema;
@@ -38,34 +37,30 @@ pub struct PackageNode {
     pub document_id: String,
     pub product_name: String,
     pub product_version: String,
-    pub approximate_memory_size: usize,
+    pub approximate_memory_size: u32,
 }
 
 impl PackageNode {
     pub(crate) fn set_approximate_memory_size(&self) -> PackageNode {
-
-        // Is there a better way to do this?  I think this will under-estimate the memory size
-        let approximate_memory_size =
-            size_of::<PackageNode>() +
-            self.sbom_id.len() +
-            self.node_id.len() +
-            self.purl.iter().fold(0, |acc, purl|
+        // Is there a better way to do this?
+        let size = size_of::<PackageNode>()
+            + self.sbom_id.len()
+            + self.node_id.len()
+            + self.purl.iter().fold(0, |acc, purl|
                 // use the json string length as an approximation of the memory size
-                acc + serde_json::to_string(purl).unwrap_or_else(|_| "".to_string()).len()
-            ) +
-            self.cpe.iter().fold(0, |acc, cpe|
+                acc + serde_json::to_string(purl).unwrap_or_else(|_| "".to_string()).len())
+            + self.cpe.iter().fold(0, |acc, cpe|
                 // use the json string length as an approximation of the memory size
-                acc + serde_json::to_string(cpe).unwrap_or_else(|_| "".to_string()).len()
-            ) +
-            self.name.len() +
-            self.version.len() +
-            self.published.len() +
-            self.document_id.len() +
-            self.product_name.len() +
-            self.product_version.len();
+                acc + serde_json::to_string(cpe).unwrap_or_else(|_| "".to_string()).len())
+            + self.name.len()
+            + self.version.len()
+            + self.published.len()
+            + self.document_id.len()
+            + self.product_name.len()
+            + self.product_version.len();
 
         PackageNode {
-            approximate_memory_size,
+            approximate_memory_size: size.try_into().unwrap_or(u32::MAX),
             ..self.clone()
         }
     }
@@ -187,47 +182,40 @@ impl DerefMut for DepSummary {
 }
 
 pub struct GraphMap {
-    map: CLruCache<String, Graph<PackageNode, Relationship, petgraph::Directed>, RandomState, GraphMapWeightScale>,
+    map: Cache<String, Arc<Graph<PackageNode, Relationship, petgraph::Directed>>>,
 }
 
-struct GraphMapWeightScale;
-
-impl WeightScale<String, Graph<PackageNode, Relationship, petgraph::Directed>> for GraphMapWeightScale {
-    fn weight(&self, key: &String, value: &Graph<PackageNode, Relationship, petgraph::Directed>) -> usize {
-        let mut result = key.len();
-        for n in value.raw_nodes() {
-            result + n.weight.approximate_memory_size;
-        }
-        result = value.raw_edges().len() * size_of::<Edge<Relationship>>();
-        result
+#[allow(clippy::ptr_arg)] // &String is required by Cache::builder().weigher() method
+fn weigher(key: &String, value: &Arc<Graph<PackageNode, Relationship, petgraph::Directed>>) -> u32 {
+    let mut result = key.len();
+    for n in value.raw_nodes() {
+        result += n.weight.approximate_memory_size as usize;
     }
+    result += size_of_val(value.raw_edges());
+    result.try_into().unwrap_or(u32::MAX)
 }
-
 
 impl GraphMap {
     // Create a new instance of GraphMap
-    pub fn new(cap: NonZeroUsize) -> Self {
-        let x = CLruCache::with_config(
-            CLruCacheConfig::new(cap).with_scale(GraphMapWeightScale {}),
-        );
+    pub fn new(cap: u64) -> Self {
         GraphMap {
-            map: x,
+            map: Cache::builder().weigher(weigher).max_capacity(cap).build(),
         }
     }
 
     // Check if the map contains a key
     pub fn contains_key(&self, key: &str) -> bool {
-        self.map.contains(key)
+        self.map.contains_key(key)
     }
 
     // Get the number of graphs in the map
-    pub fn len(&self) -> usize {
-        self.map.len()
+    pub fn len(&self) -> u64 {
+        self.map.entry_count()
     }
 
     // Check if the map is empty
     pub fn is_empty(&self) -> bool {
-        self.map.is_empty()
+        self.len() == 0
     }
 
     // Add a new graph with the given key (write access)
@@ -236,17 +224,20 @@ impl GraphMap {
         key: String,
         graph: Graph<PackageNode, Relationship, petgraph::Directed>,
     ) {
-        self.map.put_with_weight(key, graph);
+        self.map.insert(key, Arc::new(graph));
     }
 
     // Retrieve a reference to a graph by its key (read access)
-    pub fn get(&mut self, key: &str) -> Option<&Graph<PackageNode, Relationship, petgraph::Directed>> {
+    pub fn get(
+        &self,
+        key: &str,
+    ) -> Option<Arc<Graph<PackageNode, Relationship, petgraph::Directed>>> {
         self.map.get(key)
     }
 
     // Clear all graphs from the map
     pub fn clear(&mut self) {
-        self.map.clear();
+        self.map.invalidate_all();
     }
 }
 

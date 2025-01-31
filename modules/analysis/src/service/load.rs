@@ -250,19 +250,22 @@ impl AnalysisService {
 
             match nodes.entry(package.node_id.clone()) {
                 Entry::Vacant(entry) => {
-                    let index = g.add_node(PackageNode {
-                        sbom_id: distinct_sbom_id.to_string(),
-                        node_id: package.node_id,
-                        purl: to_purls(package.purls),
-                        cpe: to_cpes(package.cpes),
-                        name: package.node_name,
-                        version: package.node_version.clone().unwrap_or_default(),
-                        published: package.published.clone(),
-                        document_id: package.document_id.clone().unwrap_or_default(),
-                        product_name: package.product_name.clone().unwrap_or_default(),
-                        product_version: package.product_version.clone().unwrap_or_default(),
-                        approximate_memory_size: 0,
-                    }.set_approximate_memory_size());
+                    let index = g.add_node(
+                        PackageNode {
+                            sbom_id: distinct_sbom_id.to_string(),
+                            node_id: package.node_id,
+                            purl: to_purls(package.purls),
+                            cpe: to_cpes(package.cpes),
+                            name: package.node_name,
+                            version: package.node_version.clone().unwrap_or_default(),
+                            published: package.published.clone(),
+                            document_id: package.document_id.clone().unwrap_or_default(),
+                            product_name: package.product_name.clone().unwrap_or_default(),
+                            product_version: package.product_version.clone().unwrap_or_default(),
+                            approximate_memory_size: 0,
+                        }
+                        .set_approximate_memory_size(),
+                    );
 
                     log::debug!("Inserting - id: {}, index: {index:?}", entry.key());
 
