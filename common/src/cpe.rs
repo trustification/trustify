@@ -2,6 +2,7 @@ use cpe::{
     cpe::Cpe as _,
     uri::{OwnedUri, Uri},
 };
+use deepsize::DeepSizeOf;
 use serde::{
     de::{Error, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
@@ -17,7 +18,7 @@ use utoipa::{
 };
 use uuid::Uuid;
 
-#[derive(Clone, Hash, Eq, PartialEq)]
+#[derive(Clone, Hash, Eq, PartialEq, DeepSizeOf)]
 pub struct Cpe {
     uri: OwnedUri,
 }

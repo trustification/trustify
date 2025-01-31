@@ -146,9 +146,9 @@ pub async fn render_sbom_graph(
         return Ok(HttpResponse::UnsupportedMediaType().finish());
     };
 
-    service.load_graph(db.as_ref(), &sbom).await;
+    let graph = service.load_graph(db.as_ref(), &sbom).await?;
 
-    if let Some((data, content_type)) = service.render(&sbom, ext) {
+    if let Some((data, content_type)) = service.render(graph.as_ref(), ext) {
         Ok(HttpResponse::Ok().content_type(content_type).body(data))
     } else {
         Ok(HttpResponse::NotFound().finish())

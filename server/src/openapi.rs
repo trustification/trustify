@@ -1,6 +1,7 @@
 use crate::profile::api::{configure, default_openapi_info, Config, ModuleConfig};
 use actix_web::App;
 use trustify_common::{config::Database, db};
+use trustify_module_analysis::config::AnalysisConfig;
 use trustify_module_analysis::service::AnalysisService;
 use trustify_module_storage::service::{dispatch::DispatchBackend, fs::FileSystemBackend};
 use utoipa::{
@@ -12,7 +13,7 @@ use utoipa_actix_web::AppExt;
 pub async fn create_openapi() -> anyhow::Result<utoipa::openapi::OpenApi> {
     let (db, postgresql) = db::embedded::create().await?;
     let (storage, _temp) = FileSystemBackend::for_test().await?;
-    let analysis = AnalysisService::new();
+    let analysis = AnalysisService::new(AnalysisConfig::default());
 
     let (_, mut openapi) = App::new()
         .into_utoipa_app()

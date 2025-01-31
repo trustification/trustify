@@ -26,13 +26,10 @@ impl AnalysisService {
     ///
     /// Otherwise, the visitor will be called, and it will return the output of the
     /// [`Visitor::complete`] function.
-    pub fn walk<V>(&self, sbom: &str, mut v: V) -> Option<V::Output>
+    pub fn walk<V>(&self, graph: &PackageGraph, mut v: V) -> Option<V::Output>
     where
         V: Visitor,
     {
-        let graph = self.graph.read();
-        let graph = graph.get(sbom)?;
-
         for node in graph.node_weights() {
             v.node(node);
         }

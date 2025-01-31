@@ -50,7 +50,7 @@ impl Precommit {
 
         println!("Running: cargo check");
         if !Command::new("cargo")
-            .args(["check"])
+            .args(["check", "--all-targets", "--all-features"])
             .status()
             .map_err(|_| anyhow!("cargo check failed"))?
             .success()

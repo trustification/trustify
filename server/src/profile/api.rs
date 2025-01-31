@@ -34,6 +34,7 @@ use trustify_infrastructure::{
     otel::{Metrics as OtelMetrics, Tracing},
     Infrastructure, InfrastructureConfig, InitContext, Metrics,
 };
+use trustify_module_analysis::config::AnalysisConfig;
 use trustify_module_analysis::service::AnalysisService;
 use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
@@ -94,6 +95,10 @@ pub struct Run {
 
     // flattened commands must go last
     //
+    /// Analysis configuration
+    #[command(flatten)]
+    pub analysis: AnalysisConfig,
+
     /// Database configuration
     #[command(flatten)]
     pub database: Database,
@@ -169,6 +174,7 @@ struct InitData {
     ui: UI,
     with_graphql: bool,
     config: ModuleConfig,
+    analysis: AnalysisService,
 }
 
 /// Groups all module configurations.
@@ -289,6 +295,7 @@ impl InitData {
         };
 
         Ok(InitData {
+            analysis: AnalysisService::new(run.analysis),
             authenticator,
             authorizer,
             db,
@@ -309,7 +316,6 @@ impl InitData {
         let ui = Arc::new(UiResources::new(&self.ui)?);
         let db = self.db.clone();
         let storage = self.storage.clone();
-        let analysis = AnalysisService::new();
 
         let http = {
             HttpServerBuilder::try_from(self.http)?
@@ -327,7 +333,7 @@ impl InitData {
                             db: self.db.clone(),
                             storage: self.storage.clone(),
                             auth: self.authenticator.clone(),
-                            analysis: analysis.clone(),
+                            analysis: self.analysis.clone(),
 
                             with_graphql: self.with_graphql,
                         },
@@ -502,7 +508,7 @@ mod test {
         let db = ctx.db;
         let (storage, _) = FileSystemBackend::for_test().await?;
         let ui = Arc::new(UiResources::new(&UI::default())?);
-        let analysis = AnalysisService::new();
+        let analysis = AnalysisService::new(AnalysisConfig::default());
         let app = actix_web::test::init_service(
             App::new()
                 .into_utoipa_app()

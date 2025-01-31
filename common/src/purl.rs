@@ -1,3 +1,4 @@
+use deepsize::DeepSizeOf;
 use packageurl::PackageUrl;
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
 use serde::{
@@ -25,7 +26,7 @@ pub enum PurlErr {
     Package(#[from] packageurl::Error),
 }
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash, DeepSizeOf)]
 pub struct Purl {
     pub ty: String,
     pub namespace: Option<String>,

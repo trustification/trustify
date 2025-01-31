@@ -13,9 +13,13 @@ trustify-entity = { workspace = true }
 actix-http = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
+bytesize = { workspace = true }
+clap = { workspace = true }
 cpe = { workspace = true }
+deepsize = { workspace = true, features = ["cpe", "petgraph"] }
 fixedbitset = { workspace = true }
 log = { workspace = true }
+moka = { workspace = true, features = ["sync"] }
 parking_lot = { workspace = true }
 petgraph = { workspace = true }
 sea-orm = { workspace = true }

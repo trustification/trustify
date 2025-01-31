@@ -6,16 +6,16 @@ pub use query::*;
 pub use walk::*;
 
 pub mod render;
-
 #[cfg(test)]
 mod test;
 
+use crate::config::AnalysisConfig;
+use crate::model::PackageGraph;
 use crate::{
     model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageNode},
     Error,
 };
 use fixedbitset::FixedBitSet;
-use parking_lot::RwLock;
 use petgraph::{
     graph::{Graph, NodeIndex},
     prelude::EdgeRef,
@@ -39,7 +39,7 @@ use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct AnalysisService {
-    graph: Arc<RwLock<GraphMap>>,
+    graph_cache: Arc<GraphMap>,
 }
 
 /// Collect related nodes in the provided direction.
@@ -124,7 +124,7 @@ fn collect(
 }
 
 impl AnalysisService {
-    /// Create a new analysis service instance.
+    /// Create a new analysis service instance with the configured cache size.
     ///
     /// ## Caching
     ///
@@ -135,15 +135,25 @@ impl AnalysisService {
     ///
     /// Also, we do not implement default because of this. As a new instance has the implication
     /// of having its own cache. So creating a new instance should be a deliberate choice.
-    #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
+    pub fn new(config: AnalysisConfig) -> Self {
         Self {
-            graph: Default::default(),
+            graph_cache: Arc::new(GraphMap::new(config.max_cache_size.as_u64())),
         }
     }
 
+    pub fn cache_size_used(&self) -> u64 {
+        self.graph_cache.size_used()
+    }
+
+    pub fn cache_len(&self) -> u64 {
+        self.graph_cache.len()
+    }
+
     #[instrument(skip_all, err)]
-    pub async fn load_all_graphs<C: ConnectionTrait>(&self, connection: &C) -> Result<(), Error> {
+    pub async fn load_all_graphs<C: ConnectionTrait>(
+        &self,
+        connection: &C,
+    ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
         // retrieve all sboms in trustify
 
         let distinct_sbom_ids = sbom::Entity::find()
@@ -156,14 +166,11 @@ impl AnalysisService {
             .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
             .collect();
 
-        self.load_graphs(connection, &distinct_sbom_ids).await?;
-
-        Ok(())
+        self.load_graphs(connection, &distinct_sbom_ids).await
     }
 
     pub fn clear_all_graphs(&self) -> Result<(), Error> {
-        let mut manager = self.graph.write();
-        manager.clear();
+        self.graph_cache.clear();
         Ok(())
     }
 
@@ -178,10 +185,9 @@ impl AnalysisService {
             .all(connection)
             .await?;
 
-        let manager = self.graph.read();
         Ok(AnalysisStatus {
             sbom_count: distinct_sbom_ids.len() as u32,
-            graph_count: manager.len() as u32,
+            graph_count: self.graph_cache.len() as u32,
         })
     }
 
@@ -192,7 +198,7 @@ impl AnalysisService {
     fn collect_graph<'a, T, I, C>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
-        distinct_sbom_ids: Vec<String>,
+        graphs: &[(String, Arc<PackageGraph>)],
         init: I,
         collector: C,
     ) -> T
@@ -202,13 +208,9 @@ impl AnalysisService {
     {
         let mut value = init();
 
-        self.query_graphs(
-            query,
-            distinct_sbom_ids,
-            |graph, index, node, discovered| {
-                collector(&mut value, graph, index, node, discovered);
-            },
-        );
+        self.query_graphs(query, graphs, |graph, index, node, discovered| {
+            collector(&mut value, graph, index, node, discovered);
+        });
 
         value
     }
@@ -218,31 +220,22 @@ impl AnalysisService {
     fn query_graphs<'a, F>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
-        distinct_sbom_ids: Vec<String>,
+        graphs: &[(String, Arc<PackageGraph>)],
         mut f: F,
     ) where
         F: FnMut(&Graph<PackageNode, Relationship>, NodeIndex, &PackageNode, &mut FixedBitSet),
     {
         let query = query.into();
-
-        // RwLock for reading hashmap<graph>
-        let graph_read_guard = self.graph.read();
-        for distinct_sbom_id in &distinct_sbom_ids {
-            self.query_graph(&graph_read_guard, query, distinct_sbom_id, &mut f);
+        for (distinct_sbom_id, graph) in graphs {
+            self.query_graph(distinct_sbom_id, graph.as_ref(), query, &mut f);
         }
     }
 
     #[instrument(skip(self, graph, f))]
-    fn query_graph<F>(&self, graph: &GraphMap, query: GraphQuery<'_>, sbom_id: &str, f: &mut F)
+    fn query_graph<F>(&self, sbom_id: &str, graph: &PackageGraph, query: GraphQuery<'_>, f: &mut F)
     where
         F: FnMut(&Graph<PackageNode, Relationship>, NodeIndex, &PackageNode, &mut FixedBitSet),
     {
-        let Some(graph) = graph.get(sbom_id) else {
-            // FIXME: we need a better strategy handling such errors
-            log::warn!("Unable to find SBOM: {sbom_id}");
-            return;
-        };
-
         if let Some((start, end)) = detect_cycle(graph) {
             // FIXME: we need a better strategy handling such errors
             let start = graph.node_weight(start);
@@ -275,13 +268,13 @@ impl AnalysisService {
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
         options: QueryOptions,
-        distinct_sbom_ids: Vec<String>,
+        graphs: &[(String, Arc<PackageGraph>)],
     ) -> Vec<Node> {
         let relationships = options.relationships;
 
         self.collect_graph(
             query,
-            distinct_sbom_ids,
+            graphs,
             Vec::new,
             |components, graph, node_index, node, _| {
                 log::debug!(
@@ -328,8 +321,8 @@ impl AnalysisService {
         let query = query.into();
         let options = options.into();
 
-        self.load_graphs(connection, &distinct_sbom_ids).await?;
-        let components = self.run_graph_query(query, options, distinct_sbom_ids);
+        let graphs = self.load_graphs(connection, &distinct_sbom_ids).await?;
+        let components = self.run_graph_query(query, options, &graphs);
 
         Ok(paginated.paginate_array(&components))
     }
@@ -346,8 +339,8 @@ impl AnalysisService {
         let query = query.into();
         let options = options.into();
 
-        let distinct_sbom_ids = self.load_graphs_query(connection, query).await?;
-        let components = self.run_graph_query(query, options, distinct_sbom_ids);
+        let graphs = self.load_graphs_query(connection, query).await?;
+        let components = self.run_graph_query(query, options, &graphs);
 
         Ok(paginated.paginate_array(&components))
     }

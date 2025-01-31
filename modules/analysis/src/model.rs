@@ -4,8 +4,14 @@ pub use roots::*;
 
 use petgraph::Graph;
 use serde::Serialize;
-use std::ops::{Deref, DerefMut};
-use std::{collections::HashMap, fmt};
+use std::{
+    fmt,
+    ops::{Deref, DerefMut},
+    sync::Arc,
+};
+
+use deepsize::DeepSizeOf;
+use moka::sync::Cache;
 use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use utoipa::ToSchema;
@@ -24,7 +30,7 @@ impl fmt::Display for AnalysisStatus {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize, DeepSizeOf)]
 pub struct PackageNode {
     pub sbom_id: String,
     pub node_id: String,
@@ -109,16 +115,33 @@ impl DerefMut for Node {
     }
 }
 
-#[derive(Debug)]
+pub type PackageGraph = Graph<PackageNode, Relationship, petgraph::Directed>;
+
 pub struct GraphMap {
-    map: HashMap<String, Graph<PackageNode, Relationship, petgraph::Directed>>,
+    map: Cache<String, Arc<PackageGraph>>,
+}
+
+#[allow(clippy::ptr_arg)] // &String is required by Cache::builder().weigher() method
+fn size_of_graph_entry(key: &String, value: &Arc<PackageGraph>) -> u32 {
+    (
+        key.deep_size_of()
+            + value.as_ref().deep_size_of()
+            // Also add in some entry overhead of the cache entry
+            + 20
+        // todo: find a better estimate for the the moka ValueEntry
+    )
+    .try_into()
+    .unwrap_or(u32::MAX)
 }
 
 impl GraphMap {
     // Create a new instance of GraphMap
-    pub fn new() -> Self {
+    pub fn new(cap: u64) -> Self {
         GraphMap {
-            map: HashMap::new(),
+            map: Cache::builder()
+                .weigher(size_of_graph_entry)
+                .max_capacity(cap)
+                .build(),
         }
     }
 
@@ -128,42 +151,33 @@ impl GraphMap {
     }
 
     // Get the number of graphs in the map
-    pub fn len(&self) -> usize {
-        self.map.len()
+    pub fn len(&self) -> u64 {
+        self.map.entry_count()
     }
 
     // Check if the map is empty
     pub fn is_empty(&self) -> bool {
-        self.map.is_empty()
+        self.len() == 0
+    }
+
+    pub fn size_used(&self) -> u64 {
+        self.map.weighted_size()
     }
 
     // Add a new graph with the given key (write access)
-    pub fn insert(
-        &mut self,
-        key: String,
-        graph: Graph<PackageNode, Relationship, petgraph::Directed>,
-    ) {
+    pub fn insert(&self, key: String, graph: Arc<PackageGraph>) {
         self.map.insert(key, graph);
+        self.map.run_pending_tasks();
     }
 
     // Retrieve a reference to a graph by its key (read access)
-    pub fn get(&self, key: &str) -> Option<&Graph<PackageNode, Relationship, petgraph::Directed>> {
+    pub fn get(&self, key: &str) -> Option<Arc<PackageGraph>> {
         self.map.get(key)
     }
 
-    // Retrieve all sbom ids(read access)
-    pub fn sbom_ids(&self) -> Vec<String> {
-        self.map.keys().cloned().collect()
-    }
-
     // Clear all graphs from the map
-    pub fn clear(&mut self) {
-        self.map.clear();
-    }
-}
-
-impl Default for GraphMap {
-    fn default() -> Self {
-        Self::new()
+    pub fn clear(&self) {
+        self.map.invalidate_all();
+        self.map.run_pending_tasks();
     }
 }

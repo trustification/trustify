@@ -12,9 +12,9 @@ pub enum Renderer {
 }
 
 impl AnalysisService {
-    pub fn render(&self, sbom: &str, renderer: Renderer) -> Option<(String, String)> {
+    pub fn render(&self, graph: &PackageGraph, renderer: Renderer) -> Option<(String, String)> {
         match renderer {
-            Renderer::Graphviz => self.walk(sbom, graphviz::Renderer::new()),
+            Renderer::Graphviz => self.walk(graph, graphviz::Renderer::new()),
         }
     }
 }

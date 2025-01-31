@@ -3,6 +3,7 @@ use itertools::Itertools;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::id::Id;
+use trustify_module_analysis::config::AnalysisConfig;
 use trustify_module_analysis::service::{AnalysisService, ComponentReference};
 use trustify_test_context::TrustifyContext;
 
@@ -18,7 +19,7 @@ async fn cpe_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         bail!("must be an id")
     };
 
-    let service = AnalysisService::new();
+    let service = AnalysisService::new(AnalysisConfig::default());
 
     let result = service
         .retrieve(
