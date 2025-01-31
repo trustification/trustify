@@ -16,10 +16,9 @@ use crate::{
 use fixedbitset::FixedBitSet;
 use parking_lot::RwLock;
 use petgraph::{
-    algo::is_cyclic_directed,
     graph::{Graph, NodeIndex},
     prelude::EdgeRef,
-    visit::{VisitMap, Visitable},
+    visit::{IntoNeighbors, IntoNodeIdentifiers, VisitMap, Visitable},
     Direction,
 };
 use sea_orm::{prelude::ConnectionTrait, EntityOrSelect, EntityTrait, QueryOrder};
@@ -222,10 +221,12 @@ impl AnalysisService {
             return;
         };
 
-        if is_cyclic_directed(graph) {
+        if let Some((start, end)) = detect_cycle(graph) {
             // FIXME: we need a better strategy handling such errors
+            let start = graph.node_weight(start);
+            let end = graph.node_weight(end);
             log::warn!(
-                "analysis graph of sbom {} has circular references!",
+                "analysis graph of sbom {} has circular references (detected: {start:?} -> {end:?})!",
                 sbom_id
             );
             return;
@@ -363,4 +364,18 @@ impl AnalysisService {
                 .unwrap_or(false),
         }
     }
+}
+
+/// A custom way to detect cycles, but get the information which node triggered it
+fn detect_cycle<G>(g: G) -> Option<(G::NodeId, G::NodeId)>
+where
+    G: IntoNodeIdentifiers + IntoNeighbors + Visitable,
+{
+    use petgraph::visit::{depth_first_search, DfsEvent};
+
+    depth_first_search(g, g.node_identifiers(), |event| match event {
+        DfsEvent::BackEdge(source, target) => Err((source, target)),
+        _ => Ok(()),
+    })
+    .err()
 }
