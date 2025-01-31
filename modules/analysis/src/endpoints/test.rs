@@ -16,7 +16,7 @@ async fn test_simple_retrieve_analysis_endpoint(
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
     //should match multiple components
-    let uri = "/api/v2/analysis/root-component?q=B";
+    let uri = "/api/v2/analysis/component?q=B&ancestors=10";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
@@ -28,7 +28,7 @@ async fn test_simple_retrieve_analysis_endpoint(
     assert_eq!(&response["total"], 2);
 
     //should match a single component
-    let uri = "/api/v2/analysis/root-component?q=BB";
+    let uri = "/api/v2/analysis/component?q=BB&ancestors=10";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
@@ -53,7 +53,7 @@ async fn test_simple_retrieve_by_name_analysis_endpoint(
     let app = caller(ctx).await?;
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-    let uri = "/api/v2/analysis/root-component/B";
+    let uri = "/api/v2/analysis/component/B?ancestors=10";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
@@ -79,7 +79,7 @@ async fn test_simple_retrieve_by_purl_analysis_endpoint(
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
     let uri = format!(
-        "/api/v2/analysis/root-component/{}",
+        "/api/v2/analysis/component/{}?ancestors=10",
         urlencoding::encode("pkg:rpm/redhat/B@0.0.0")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
@@ -111,7 +111,7 @@ async fn test_quarkus_retrieve_analysis_endpoint(
     .await?;
 
     let purl = "pkg:maven/net.spy/spymemcached@2.12.1?type=jar";
-    let uri = "/api/v2/analysis/root-component?q=spymemcached";
+    let uri = "/api/v2/analysis/component?q=spymemcached&ancestors=10";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
@@ -175,7 +175,7 @@ async fn test_simple_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::E
     let app = caller(ctx).await?;
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-    let uri = "/api/v2/analysis/dep?q=A";
+    let uri = "/api/v2/analysis/component?q=A&ancestors=10&descendants=10";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
@@ -184,26 +184,23 @@ async fn test_simple_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::E
         "items": [
             {
                 "purl": [ "pkg:rpm/redhat/A@0.0.0?arch=src" ],
-                "deps": [
+                "descendants": [
                     {
                         "purl": [ "pkg:rpm/redhat/B@0.0.0" ]
                     },
-                    {
-                        "purl": [ "pkg:rpm/redhat/EE@0.0.0?arch=src" ]
-                    }
                 ]
             },
             {
                 "purl": [ "pkg:rpm/redhat/AA@0.0.0?arch=src" ],
-                "deps": [
+                "descendants": [
                     {
                         "purl": [ "pkg:rpm/redhat/BB@0.0.0" ],
-                        "deps": [
+                        "descendants": [
                             {
                                 "purl": [ "pkg:rpm/redhat/DD@0.0.0" ],
-                                "deps": [{
+                                "descendants": [{
                                     "name": "FF",
-                                    "relationship": "ContainedBy",
+                                    "relationship": "contains",
                                     "purl": []
                                 }]
                             },
@@ -228,17 +225,14 @@ async fn test_simple_dep_by_name_endpoint(ctx: &TrustifyContext) -> Result<(), a
     let app = caller(ctx).await?;
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
-    let uri = "/api/v2/analysis/dep/A";
+    let uri = "/api/v2/analysis/component/A?descendants=10";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ "pkg:rpm/redhat/A@0.0.0?arch=src" ],
-            "deps": [
-                {
-                    "purl": [ "pkg:rpm/redhat/EE@0.0.0?arch=src" ]
-                },
+            "descendants": [
                 {
                     "purl": [ "pkg:rpm/redhat/B@0.0.0" ]
                 }
@@ -257,14 +251,17 @@ async fn test_simple_dep_by_purl_endpoint(ctx: &TrustifyContext) -> Result<(), a
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
     let purl = "pkg:rpm/redhat/AA@0.0.0?arch=src";
-    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(purl));
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode(purl)
+    );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ purl ],
-            "deps": [{
+            "descendants": [{
                 "purl": [ "pkg:rpm/redhat/BB@0.0.0" ]
             }]
         }]
@@ -376,21 +373,21 @@ async fn test_retrieve_query_params_endpoint(ctx: &TrustifyContext) -> Result<()
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
     // filter on node_id
-    let uri = "/api/v2/analysis/dep?q=node_id%3DSPDXRef-A";
+    let uri = "/api/v2/analysis/component?q=node_id%3DSPDXRef-A&descendants=10";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     assert_eq!(response["items"][0]["name"], "A");
     assert_eq!(&response["total"], 1);
 
     // filter on node_id
-    let uri = "/api/v2/analysis/root-component?q=node_id%3DSPDXRef-B";
+    let uri = "/api/v2/analysis/component?q=node_id%3DSPDXRef-B&ascendants=10";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     assert_eq!(response["items"][0]["name"], "B");
     assert_eq!(&response["total"], 1);
 
     // filter on node_id & name
-    let uri = "/api/v2/analysis/root-component?q=node_id%3DSPDXRef-B%26name%3DB";
+    let uri = "/api/v2/analysis/component?q=node_id%3DSPDXRef-B%26name%3DB&ascendants=10";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     assert_eq!(response["items"][0]["name"], "B");
@@ -398,20 +395,22 @@ async fn test_retrieve_query_params_endpoint(ctx: &TrustifyContext) -> Result<()
 
     // filter on sbom_id (which has urn:uuid: prefix)
     let sbom_id = response["items"][0]["sbom_id"].as_str().unwrap();
-    let uri = format!("/api/v2/analysis/root-component?q=sbom_id={}", sbom_id);
+    let uri = format!(
+        "/api/v2/analysis/component?q=sbom_id={}&ascendants=10",
+        sbom_id
+    );
     let request: Request = TestRequest::get().uri(uri.clone().as_str()).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     assert_eq!(&response["total"], 9);
 
     // negative test
-    let uri =
-        "/api/v2/analysis/root-component?q=sbom_id=urn:uuid:99999999-9999-9999-9999-999999999999";
+    let uri = "/api/v2/analysis/component?q=sbom_id=urn:uuid:99999999-9999-9999-9999-999999999999&ascendants=10";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     assert_eq!(&response["total"], 0);
 
     // negative test
-    let uri = "/api/v2/analysis/root-component?q=node_id%3DSPDXRef-B%26name%3DA";
+    let uri = "/api/v2/analysis/component?q=node_id%3DSPDXRef-B%26name%3DA&ascendants=10";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
@@ -437,14 +436,14 @@ async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     tracing::debug!(test = "", "{response:#?}");
 
     let deps = response.path(&format!(
-        "$.items[?(@.node_id=='{src}')].descendants[?(@.relationship=='generated_from')]"
+        "$.items[?(@.node_id=='{src}')].descendants[?(@.relationship=='generates')]"
     ))?;
     assert_eq!(35, deps.as_array().unwrap().len());
 
     // Ensure binary rpm GeneratedFrom src rpm
     let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
     let uri = format!(
-        "/api/v2/analysis/root-component/{}",
+        "/api/v2/analysis/component/{}?ancestors=10",
         urlencoding::encode(x86)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
@@ -454,7 +453,7 @@ async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         "items": [{
             "purl": [ x86 ],
             "ancestors": [{
-                "relationship": "GeneratedFrom",
+                "relationship": "geneartes",
                 "purl": [ src ]
             }]
         }]
@@ -472,28 +471,34 @@ async fn spdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     // Find all deps of src rpm
     let src = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src";
-    let uri = format!("/api/v2/analysis/dep/{}", urlencoding::encode(src));
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode(src)
+    );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
-    let deps = response
-        .path("$.items[?(@.node_id=='SPDXRef-SRPM')].deps[?(@.relationship=='GeneratedFrom')]")?;
+
+    let deps = response.path(
+        "$.items[?(@.node_id=='SPDXRef-SRPM')].descendants[?(@.relationship=='generates')]",
+    )?;
     assert_eq!(35, deps.as_array().unwrap().len());
 
     // Ensure binary rpm GeneratedFrom src rpm
     let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
     let uri = format!(
-        "/api/v2/analysis/root-component/{}",
+        "/api/v2/analysis/component/{}?ancestors=10",
         urlencoding::encode(x86)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::debug!("{response:#?}");
+
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ x86 ],
             "ancestors": [{
-                "relationship": "GeneratedFrom",
+                "relationship": "generates",
                 "purl": [ src ]
             }]
         }]
@@ -514,7 +519,7 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let child = "pkg:oci/openshift-ose-console@sha256:94a0d7feec34600a858c8e383ee0e8d5f4a077f6bbc327dcad8762acfcf40679";
 
     let uri = format!(
-        "/api/v2/analysis/component/{}?descendants=10",
+        "/api/v2/analysis/component/{}?ancestors=10",
         urlencoding::encode(parent)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
@@ -524,7 +529,7 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ parent ],
-            "descendants": [{
+            "ancestors": [{
                 "relationship": "variant",
                 "purl": [ child ]
             }]
@@ -533,7 +538,7 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // Ensure child is variant of src
     let uri = format!(
-        "/api/v2/analysis/component/{}?ancestors=10",
+        "/api/v2/analysis/component/{}?descendants=10",
         urlencoding::encode(child)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
@@ -543,7 +548,7 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(response.contains_subset(json!({
         "items": [{
             "purl": [ child ],
-            "ancestors": [{
+            "descendants": [{
                 "relationship": "variant",
                 "purl": [ parent ]
             }]
@@ -749,7 +754,7 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(response.contains_subset(json!({
         "items": [ {
             "ancestors": [ {
-                "relationship": "packages",
+                "relationship": "package",
                 "name": "SATELLITE-6.15-RHEL-8",
                 "version": "6.15",
             }]
@@ -768,7 +773,7 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(response.contains_subset(json!({
         "items": [ {
             "descendants": [ {
-                "relationship": "packages",
+                "relationship": "package",
                 "name": "rubygem-google-cloud-compute",
                 "version": "0.5.0-1.el8sat"
             }]

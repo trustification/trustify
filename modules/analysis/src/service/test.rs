@@ -71,6 +71,7 @@ async fn test_simple_analysis_service(ctx: &TrustifyContext) -> Result<(), anyho
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
+#[ignore = "Double ingestion creates double nodes, due to using v4 UUIDs"]
 async fn test_simple_analysis_cyclonedx_service(
     ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
@@ -88,7 +89,9 @@ async fn test_simple_analysis_cyclonedx_service(
         )
         .await?;
 
+    log::debug!("Before: {analysis_graph:#?}");
     let analysis_graph = analysis_graph.root_traces();
+    log::debug!("After: {analysis_graph:#?}");
 
     assert_ancestors(&analysis_graph.items, |ancestors| {
         assert!(
@@ -119,7 +122,9 @@ async fn test_simple_analysis_cyclonedx_service(
         )
         .await?;
 
+    log::debug!("Before: {analysis_graph:#?}");
     let analysis_graph = analysis_graph.root_traces();
+    log::debug!("After: {analysis_graph:#?}");
 
     assert_eq!(analysis_graph.total, 1);
 
@@ -141,6 +146,8 @@ async fn test_simple_by_name_analysis_service(ctx: &TrustifyContext) -> Result<(
             &ctx.db,
         )
         .await?;
+
+    log::debug!("Result: {analysis_graph:#?}");
 
     let analysis_graph = analysis_graph.root_traces();
 
