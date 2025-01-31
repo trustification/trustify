@@ -459,7 +459,7 @@ async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         "items": [{
             "purl": [ x86 ],
             "ancestors": [{
-                "relationship": "geneartes",
+                "relationship": "generates",
                 "purl": [ src ]
             }]
         }]
