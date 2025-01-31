@@ -173,12 +173,17 @@ async fn conversation_crud(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // Verify that there are no conversations
     let request = TestRequest::get()
-        .uri("/api/v1/ai/conversations")
+        .uri("/api/v2/ai/conversations")
         .to_request()
         .test_auth("user-a");
 
     let response = app.call_service(request).await;
-    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        response.status(),
+        StatusCode::OK,
+        "response: {:?}",
+        read_text(response).await
+    );
 
     let result: PaginatedResults<ConversationSummary> = read_body_json(response).await;
     assert_eq!(result.total, 0);
@@ -186,7 +191,7 @@ async fn conversation_crud(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // Create a conversation
     let request = TestRequest::post()
-        .uri("/api/v1/ai/conversations")
+        .uri("/api/v2/ai/conversations")
         .to_request()
         .test_auth("user-a");
 
@@ -208,7 +213,7 @@ async fn conversation_crud(ctx: &TrustifyContext) -> anyhow::Result<()> {
     ));
 
     let request = TestRequest::put()
-        .uri(format!("/api/v1/ai/conversations/{}", conversation_v1.id).as_str())
+        .uri(format!("/api/v2/ai/conversations/{}", conversation_v1.id).as_str())
         .set_json(update1.clone())
         .to_request()
         .test_auth("user-a");
@@ -225,7 +230,7 @@ async fn conversation_crud(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // Verify that the conversation can be listed
     let request = TestRequest::get()
-        .uri("/api/v1/ai/conversations")
+        .uri("/api/v2/ai/conversations")
         .to_request()
         .test_auth("user-a");
 
@@ -239,7 +244,7 @@ async fn conversation_crud(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // Verify that we can retrieve the conversation by ID
     let request = TestRequest::get()
-        .uri(format!("/api/v1/ai/conversations/{}", conversation_v1.id).as_str())
+        .uri(format!("/api/v2/ai/conversations/{}", conversation_v1.id).as_str())
         .to_request()
         .test_auth("user-a");
 
@@ -256,7 +261,7 @@ async fn conversation_crud(ctx: &TrustifyContext) -> anyhow::Result<()> {
     ));
 
     let request = TestRequest::put()
-        .uri(format!("/api/v1/ai/conversations/{}", conversation_v1.id).as_str())
+        .uri(format!("/api/v2/ai/conversations/{}", conversation_v1.id).as_str())
         .append_header(("if-match", format!("\"{}\"", conversation_v2.seq).as_str()))
         .set_json(update2.clone())
         .to_request()
@@ -274,7 +279,7 @@ async fn conversation_crud(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // Verify that we can retrieve the updated conversation by ID
     let request = TestRequest::get()
-        .uri(format!("/api/v1/ai/conversations/{}", conversation_v1.id).as_str())
+        .uri(format!("/api/v2/ai/conversations/{}", conversation_v1.id).as_str())
         .to_request()
         .test_auth("user-a");
 
@@ -286,7 +291,7 @@ async fn conversation_crud(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // Verify that we can delete the conversation
     let request = TestRequest::delete()
-        .uri(format!("/api/v1/ai/conversations/{}", conversation_v1.id).as_str())
+        .uri(format!("/api/v2/ai/conversations/{}", conversation_v1.id).as_str())
         .to_request()
         .test_auth("user-a");
 
@@ -295,7 +300,7 @@ async fn conversation_crud(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // Verify that the conversation is deleted
     let request = TestRequest::get()
-        .uri("/api/v1/ai/conversations")
+        .uri("/api/v2/ai/conversations")
         .to_request()
         .test_auth("user-a");
 

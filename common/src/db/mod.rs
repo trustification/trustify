@@ -47,6 +47,8 @@ impl Database {
     pub async fn migrate(&self) -> Result<(), anyhow::Error> {
         log::debug!("applying migrations");
         Migrator::up(&self.db, None).await?;
+        #[cfg(feature = "ai")]
+        migration::ai::Migrator::up(&self.db, None).await?;
         log::debug!("applied migrations");
 
         Ok(())
@@ -56,6 +58,8 @@ impl Database {
     pub async fn refresh(&self) -> Result<(), anyhow::Error> {
         log::warn!("refreshing database schema...");
         Migrator::refresh(&self.db).await?;
+        #[cfg(feature = "ai")]
+        migration::ai::Migrator::refresh(&self.db).await?;
         log::warn!("refreshing database schema... done!");
 
         Ok(())

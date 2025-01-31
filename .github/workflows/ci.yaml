@@ -53,7 +53,7 @@ jobs:
           key: ${{ runner.os }}-theseus-postgresql-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Test
-        run: cargo test -- --nocapture
+        run: cargo test --all-features -- --nocapture
         env:
           RUST_LOG: warn,sqlx=error,sea_orm=error
       - name: Export and Validate Generated Openapi Spec

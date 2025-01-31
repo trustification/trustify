@@ -5,6 +5,9 @@ edition.workspace = true
 publish.workspace = true
 license.workspace = true
 
+[features]
+ai = ["trustify-module-fundamental/ai"]
+
 [dependencies]
 trustify-auth = { workspace = true }
 trustify-common = { workspace = true }
