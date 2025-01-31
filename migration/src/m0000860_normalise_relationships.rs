@@ -16,7 +16,7 @@ const DATA: [(i32, &str); 14] = [
     (11, "BuildTool"),
     (12, "DevTool"),
     (13, "Describes"),
-    (14, "Packages"),
+    (14, "Package"),
 ];
 
 #[async_trait::async_trait]
@@ -27,6 +27,11 @@ impl MigrationTrait for Migration {
                 .into_table(Relationship::Table)
                 .columns([Relationship::Id, Relationship::Description])
                 .values_panic([id.into(), description.into()])
+                .on_conflict(
+                    OnConflict::columns([Relationship::Id])
+                        .update_columns([Relationship::Description])
+                        .to_owned(),
+                )
                 .to_owned();
 
             manager.exec_stmt(insert).await?;

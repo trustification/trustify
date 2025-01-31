@@ -208,9 +208,9 @@ impl SbomService {
             sbom_id,
             Default::default(),
             paginated,
-            Which::Right,
+            Which::Left,
             SbomNodeReference::All,
-            Some(Relationship::DescribedBy),
+            Some(Relationship::Describes),
             db,
         )
         .await

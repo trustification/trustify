@@ -72,10 +72,10 @@ impl SbomContext {
 
         let mut product_packages = vec![];
 
-        for described in sbom_data.document_creation_information.document_describes {
+        for describes in sbom_data.document_creation_information.document_describes {
             relationships.relate(
-                described,
-                Relationship::DescribedBy,
+                describes,
+                Relationship::Describes,
                 sbom_data
                     .document_creation_information
                     .spdx_identifier
@@ -96,8 +96,8 @@ impl SbomContext {
 
             relationships.relate(left.to_string(), rel, right.to_string());
 
-            if rel == Relationship::DescribedBy {
-                product_packages.push(left.to_string());
+            if rel == Relationship::Describes {
+                product_packages.push(right.to_string());
             }
         }
 
@@ -267,7 +267,7 @@ impl<'spdx> TryFrom<(&'spdx str, &'spdx RelationshipType, &'spdx str)> for SpdxR
             RelationshipType::OptionalDependencyOf => {
                 Ok((right, Relationship::OptionalDependency, left))
             }
-            RelationshipType::PackageOf => Ok((right, Relationship::Packages, left)),
+            RelationshipType::PackageOf => Ok((right, Relationship::Package, left)),
             RelationshipType::ProvidedDependencyOf => {
                 Ok((right, Relationship::ProvidedDependency, left))
             }

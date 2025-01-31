@@ -131,7 +131,7 @@ mod test {
             relationship: None,
             ancestors: Some(vec![Node {
                 ancestors: Some(vec![]),
-                relationship: Some(Relationship::DependencyOf),
+                relationship: Some(Relationship::Dependency),
                 ..node("A")
             }]),
             descendants: None,
@@ -142,7 +142,7 @@ mod test {
             result,
             vec![Node {
                 base: base("A"),
-                relationship: Some(Relationship::DependencyOf),
+                relationship: Some(Relationship::Dependency),
                 ancestors: Some(vec![]),
                 descendants: None,
             }]
@@ -154,10 +154,10 @@ mod test {
         let result = vec![Node {
             ancestors: Some(vec![Node {
                 base: base("AA"),
-                relationship: Some(Relationship::DependencyOf),
+                relationship: Some(Relationship::Dependency),
                 ancestors: Some(vec![Node {
                     ancestors: Some(vec![]),
-                    relationship: Some(Relationship::DependencyOf),
+                    relationship: Some(Relationship::Dependency),
                     ..node("A")
                 }]),
                 descendants: None,
@@ -170,7 +170,7 @@ mod test {
             result,
             vec![Node {
                 base: base("A"),
-                relationship: Some(Relationship::DependencyOf),
+                relationship: Some(Relationship::Dependency),
                 ancestors: Some(vec![]),
                 descendants: None,
             }]
@@ -182,10 +182,10 @@ mod test {
         let result = vec![Node {
             ancestors: Some(vec![Node {
                 base: base("AA"),
-                relationship: Some(Relationship::DependencyOf),
+                relationship: Some(Relationship::Dependency),
                 ancestors: Some(vec![Node {
                     ancestors: Some(vec![]),
-                    relationship: Some(Relationship::DependencyOf),
+                    relationship: Some(Relationship::Dependency),
                     ..node("A")
                 }]),
                 descendants: None,
@@ -197,8 +197,8 @@ mod test {
         assert_eq!(
             result,
             vec![vec![
-                (&base("AA"), Relationship::DependencyOf),
-                (&base("A"), Relationship::DependencyOf),
+                (&base("AA"), Relationship::Dependency),
+                (&base("A"), Relationship::Dependency),
             ]]
         );
     }
