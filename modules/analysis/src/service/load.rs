@@ -282,7 +282,7 @@ impl AnalysisService {
         };
 
         // the nodes describing the document
-        let mut describedby_node_id: Vec<NodeIndex> = Default::default();
+        let mut describedby_node_id: HashSet<NodeIndex> = Default::default();
 
         for edge in edges {
             log::debug!("Adding edge {:?}", edge);
@@ -292,8 +292,8 @@ impl AnalysisService {
                 nodes.get(&edge.left_node_id),
                 nodes.get(&edge.right_node_id),
             ) {
-                if edge.relationship == Relationship::DescribedBy {
-                    describedby_node_id.push(*left);
+                if edge.relationship == Relationship::Describes {
+                    describedby_node_id.insert(*left);
                 }
 
                 // remove all node IDs we somehow connected
@@ -314,8 +314,8 @@ impl AnalysisService {
                 let Some(id) = nodes.get(&id) else { continue };
                 // add "undefined" relationship
                 for from in &describedby_node_id {
-                    log::debug!("Creating undefined relationship - left: {id:?}, right: {from:?}");
-                    g.add_edge(*id, *from, Relationship::Undefined);
+                    log::debug!("Creating undefined relationship - left: {from:?}, right: {id:?}");
+                    g.add_edge(*from, *id, Relationship::Undefined);
                 }
             }
         }
