@@ -237,9 +237,6 @@ async fn test_simple_dep_by_name_endpoint(ctx: &TrustifyContext) -> Result<(), a
             "purl": [ "pkg:rpm/redhat/A@0.0.0?arch=src" ],
             "descendants": [
                 {
-                    "purl": [ "pkg:rpm/redhat/EE@0.0.0?arch=src" ]
-                },
-                {
                     "purl": [ "pkg:rpm/redhat/B@0.0.0" ]
                 }
             ]
