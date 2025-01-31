@@ -56,7 +56,7 @@ async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
     log::info!("ingest: {}", humantime::Duration::from(ingest_time));
 
     assert!(result.warnings.is_empty());
-    assert_eq!(result.files.len(), 66);
+    assert_eq!(result.files.len(), 67);
 
     // get a document
 
@@ -109,7 +109,24 @@ async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
                 .any(|sbom_status| sbom_status.status == "affected")
         })
         .collect::<Vec<_>>();
-    assert_eq!(advisories_affected.len(), 11);
+    assert_eq!(advisories_affected.len(), 13);
+
+    //TODO convert this test in e2e test for ds3
+    // ubi
+    let ubi = &result.files["spdx/ubi8-8.8-1067.json.bz2"];
+
+    let ubi_details = service
+        .fetch_sbom_details(ubi.id.clone(), vec![], &ctx.db)
+        .await?;
+    assert!(ubi_details.is_some());
+    let ubi_details = ubi_details.unwrap();
+    let ubi_advisories = ubi_details.advisories;
+    assert_eq!(ubi_advisories.len(), 2);
+    assert!(ubi_advisories
+        .iter()
+        .map(|adv| adv.head.document_id.clone())
+        .collect::<Vec<_>>()
+        .contains(&"CVE-2024-50602".to_string()));
 
     // done
 
