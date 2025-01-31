@@ -151,7 +151,7 @@ impl AnalysisService {
         &self,
         connection: &C,
         query: GraphQuery<'_>,
-    ) -> Result<HashMap<String, Arc<PackageGraph>>, Error> {
+    ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
         let search_sbom_subquery = match query {
             GraphQuery::Component(ComponentReference::Id(name)) => sbom_node::Entity::find()
                 .filter(sbom_node::Column::NodeId.eq(name))
@@ -198,7 +198,7 @@ impl AnalysisService {
         &self,
         connection: &C,
         subquery: SelectStatement,
-    ) -> Result<HashMap<String, Arc<PackageGraph>>, Error> {
+    ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
         let distinct_sbom_ids: Vec<String> = sbom::Entity::find()
             .filter(sbom::Column::SbomId.in_subquery(subquery))
             .select()
@@ -341,13 +341,13 @@ impl AnalysisService {
         &self,
         connection: &C,
         distinct_sbom_ids: &Vec<String>,
-    ) -> Result<HashMap<String, Arc<PackageGraph>>, DbErr> {
-        let mut results = HashMap::new();
+    ) -> Result<Vec<(String, Arc<PackageGraph>)>, DbErr> {
+        let mut results = Vec::new();
         for distinct_sbom_id in distinct_sbom_ids {
-            results.insert(
+            results.push((
                 distinct_sbom_id.clone(),
                 self.load_graph(connection, distinct_sbom_id).await?,
-            );
+            ));
         }
         Ok(results)
     }

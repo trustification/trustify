@@ -188,7 +188,7 @@ impl AnalysisService {
     pub async fn load_all_graphs<C: ConnectionTrait>(
         &self,
         connection: &C,
-    ) -> Result<HashMap<String, Arc<PackageGraph>>, DbErr> {
+    ) -> Result<Vec<(String, Arc<PackageGraph>)>, DbErr> {
         // retrieve all sboms in trustify
 
         let distinct_sbom_ids = sbom::Entity::find()
@@ -233,7 +233,7 @@ impl AnalysisService {
     fn collect_graph<'a, T, I, C>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
-        graphs: HashMap<String, Arc<PackageGraph>>,
+        graphs: Vec<(String, Arc<PackageGraph>)>,
         init: I,
         collector: C,
     ) -> T
@@ -255,7 +255,7 @@ impl AnalysisService {
     fn query_graph<'a, F>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
-        graphs: HashMap<String, Arc<PackageGraph>>,
+        graphs: Vec<(String, Arc<PackageGraph>)>,
         mut f: F,
     ) where
         F: FnMut(&Graph<PackageNode, Relationship>, NodeIndex, &PackageNode),
@@ -294,7 +294,7 @@ impl AnalysisService {
     pub fn query_ancestor_graph<'a>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
-        graphs: HashMap<String, Arc<PackageGraph>>,
+        graphs: Vec<(String, Arc<PackageGraph>)>,
     ) -> Vec<AncestorSummary> {
         self.collect_graph(
             query,
@@ -313,7 +313,7 @@ impl AnalysisService {
     pub async fn query_deps_graph(
         &self,
         query: impl Into<GraphQuery<'_>> + Debug,
-        graphs: HashMap<String, Arc<PackageGraph>>,
+        graphs: Vec<(String, Arc<PackageGraph>)>,
     ) -> Vec<DepSummary> {
         self.collect_graph(
             query,
