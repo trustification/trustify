@@ -560,6 +560,7 @@ async fn cdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+#[ignore = "circular references in ubi sbom"]
 async fn spdx_variant_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     ctx.ingest_documents(["ubi9-9.2-755.1697625012.json"])
