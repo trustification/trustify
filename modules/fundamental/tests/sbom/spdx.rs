@@ -91,7 +91,7 @@ async fn test_parse_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
                     sbom.sbom.sbom_id,
                     Default::default(),
                     Default::default(),
-                    Which::Right,
+                    Which::Left,
                     first,
                     Some(Relationship::Contains),
                     &ctx.db,

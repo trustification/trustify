@@ -458,7 +458,7 @@ impl SbomService {
                 sbom_id,
                 Default::default(),
                 Default::default(),
-                Which::Right,
+                Which::Left,
                 pkg,
                 relationship.into(),
                 tx,
