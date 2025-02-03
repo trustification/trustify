@@ -41,7 +41,7 @@ pub enum Relation {
         belongs_to = "super::package_relates_to_package::Entity",
         from = "Column::SbomId",
         to = "super::package_relates_to_package::Column::SbomId",
-        on_condition = r#"super::package_relates_to_package::Column::Relationship.eq(13)"#
+        on_condition = r#"super::package_relates_to_package::Column::Relationship.eq(crate::relationship::Relationship::Describes)"#
     )]
     DescribesSbom,
 }
