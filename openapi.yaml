@@ -226,6 +226,73 @@ paths:
                 format: binary
         '404':
           description: The document could not be found
+  /api/v2/analysis/component:
+    get:
+      tags:
+      - analysis
+      operationId: searchComponent
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: offset
+        in: query
+        description: |-
+          The first item to return, skipping all that come before it.
+
+          NOTE: The order of items is defined by the API being called.
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: limit
+        in: query
+        description: |-
+          The maximum number of entries to return.
+
+          Zero means: no limit
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: ancestors
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: descendants
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: relationships
+        in: query
+        required: false
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/Relationship'
+          uniqueItems: true
+      responses:
+        '200':
+          description: Retrieve component(s) root components by name, pURL, or CPE.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResults_BaseSummary'
   /api/v2/analysis/component/{key}:
     get:
       tags:
@@ -238,6 +305,60 @@ paths:
         required: true
         schema:
           type: string
+      - name: q
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: sort
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: offset
+        in: query
+        description: |-
+          The first item to return, skipping all that come before it.
+
+          NOTE: The order of items is defined by the API being called.
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: limit
+        in: query
+        description: |-
+          The maximum number of entries to return.
+
+          Zero means: no limit
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: ancestors
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: descendants
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: relationships
+        in: query
+        required: false
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/Relationship'
+          uniqueItems: true
       responses:
         '200':
           description: Retrieve component(s) root components by name, pURL, or CPE.
@@ -245,134 +366,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResults_BaseSummary'
-  /api/v2/analysis/dep:
+  /api/v2/analysis/sbom/{sbom}/render:
     get:
       tags:
       - analysis
-      operationId: searchComponentDeps
+      operationId: renderSbomGraph
       parameters:
-      - name: q
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: sort
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: offset
-        in: query
-        description: |-
-          The first item to return, skipping all that come before it.
-
-          NOTE: The order of items is defined by the API being called.
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      - name: limit
-        in: query
-        description: |-
-          The maximum number of entries to return.
-
-          Zero means: no limit
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      responses:
-        '200':
-          description: Search component(s) and return their deps.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResults_DepSummary'
-  /api/v2/analysis/dep/{key}:
-    get:
-      tags:
-      - analysis
-      operationId: getComponentDeps
-      parameters:
-      - name: key
+      - name: sbom
         in: path
-        description: provide component name or URL-encoded pURL itself
+        description: ID of the SBOM
         required: true
         schema:
           type: string
       responses:
         '200':
-          description: Retrieve component(s) dep components by name or pURL.
+          description: A graphwiz dot file of the SBOM graph
           content:
-            application/json:
+            text/plain:
               schema:
-                $ref: '#/components/schemas/PaginatedResults_DepSummary'
-  /api/v2/analysis/root-component:
-    get:
-      tags:
-      - analysis
-      operationId: searchComponentRootComponents
-      parameters:
-      - name: q
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: sort
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: offset
-        in: query
-        description: |-
-          The first item to return, skipping all that come before it.
-
-          NOTE: The order of items is defined by the API being called.
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      - name: limit
-        in: query
-        description: |-
-          The maximum number of entries to return.
-
-          Zero means: no limit
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      responses:
-        '200':
-          description: Search component(s) and return their root components.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResults_AncestorSummary'
-  /api/v2/analysis/root-component/{key}:
-    get:
-      tags:
-      - analysis
-      operationId: getComponentRootComponents
-      parameters:
-      - name: key
-        in: path
-        description: provide component name, URL-encoded pURL, or CPE itself
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Retrieve component(s) root components by name, pURL, or CPE.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResults_AncestorSummary'
+                type: string
+        '404':
+          description: The SBOM was not found
   /api/v2/analysis/status:
     get:
       tags:
@@ -2150,46 +2164,6 @@ components:
           format: int32
           description: The number of SBOMs found in the database
           minimum: 0
-    AncNode:
-      type: object
-      required:
-      - sbom_id
-      - node_id
-      - relationship
-      - purl
-      - cpe
-      - name
-      - version
-      properties:
-        cpe:
-          type: array
-          items:
-            $ref: '#/components/schemas/Cpe'
-        name:
-          type: string
-        node_id:
-          type: string
-        purl:
-          type: array
-          items:
-            $ref: '#/components/schemas/Purl'
-        relationship:
-          type: string
-        sbom_id:
-          type: string
-        version:
-          type: string
-    AncestorSummary:
-      allOf:
-      - $ref: '#/components/schemas/BaseSummary'
-      - type: object
-        required:
-        - ancestors
-        properties:
-          ancestors:
-            type: array
-            items:
-              $ref: '#/components/schemas/AncNode'
     BasePurlDetails:
       allOf:
       - $ref: '#/components/schemas/BasePurlHead'
@@ -2366,51 +2340,6 @@ components:
         properties:
           source:
             type: string
-    DepNode:
-      type: object
-      required:
-      - sbom_id
-      - node_id
-      - relationship
-      - purl
-      - cpe
-      - name
-      - version
-      - deps
-      properties:
-        cpe:
-          type: array
-          items:
-            $ref: '#/components/schemas/Cpe'
-        deps:
-          type: array
-          items:
-            $ref: '#/components/schemas/DepNode'
-        name:
-          type: string
-        node_id:
-          type: string
-        purl:
-          type: array
-          items:
-            $ref: '#/components/schemas/Purl'
-        relationship:
-          type: string
-        sbom_id:
-          type: string
-        version:
-          type: string
-    DepSummary:
-      allOf:
-      - $ref: '#/components/schemas/BaseSummary'
-      - type: object
-        required:
-        - deps
-        properties:
-          deps:
-            type: array
-            items:
-              $ref: '#/components/schemas/DepNode'
     ExternalReferenceQuery:
       type: object
       properties:
@@ -2723,29 +2652,6 @@ components:
           type: integer
           format: int64
           minimum: 0
-    PaginatedResults_AncestorSummary:
-      type: object
-      required:
-      - items
-      - total
-      properties:
-        items:
-          type: array
-          items:
-            allOf:
-            - $ref: '#/components/schemas/BaseSummary'
-            - type: object
-              required:
-              - ancestors
-              properties:
-                ancestors:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/AncNode'
-        total:
-          type: integer
-          format: int64
-          minimum: 0
     PaginatedResults_BasePurlSummary:
       type: object
       required:
@@ -2807,29 +2713,6 @@ components:
                 type: string
               version:
                 type: string
-        total:
-          type: integer
-          format: int64
-          minimum: 0
-    PaginatedResults_DepSummary:
-      type: object
-      required:
-      - items
-      - total
-      properties:
-        items:
-          type: array
-          items:
-            allOf:
-            - $ref: '#/components/schemas/BaseSummary'
-            - type: object
-              required:
-              - deps
-              properties:
-                deps:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/DepNode'
         total:
           type: integer
           format: int64
@@ -3336,21 +3219,21 @@ components:
     Relationship:
       type: string
       enum:
-      - contained_by
-      - dependency_of
-      - dev_dependency_of
-      - optional_dependency_of
-      - provided_dependency_of
-      - test_dependency_of
-      - runtime_dependency_of
-      - example_of
-      - generated_from
+      - contains
+      - dependency
+      - dev_dependency
+      - optional_dependency
+      - provided_dependency
+      - test_dependency
+      - runtime_dependency
+      - example
+      - generates
       - ancestor_of
-      - variant_of
-      - build_tool_of
-      - dev_tool_of
-      - described_by
-      - package_of
+      - variant
+      - build_tool
+      - dev_tool
+      - describes
+      - package
       - undefined
     Report:
       type: object

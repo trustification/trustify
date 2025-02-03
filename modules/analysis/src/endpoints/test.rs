@@ -145,7 +145,7 @@ async fn test_status_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
     // prime the graph hashmap
-    let uri = "/api/v2/analysis/root-component?q=BB";
+    let uri = "/api/v2/analysis/component?q=BB";
     let load1 = TestRequest::get().uri(uri).to_request();
     let _response: Value = app.call_and_read_body_json(load1).await;
 
@@ -282,7 +282,7 @@ async fn test_quarkus_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::
     .await?;
 
     let purl = "pkg:maven/net.spy/spymemcached@2.12.1?type=jar";
-    let uri = "/api/v2/analysis/dep?q=spymemcached";
+    let uri = "/api/v2/analysis/component?q=spymemcached&descendants=10";
     let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
