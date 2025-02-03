@@ -6,7 +6,7 @@ mod test;
 use super::service::{AnalysisService, QueryOptions};
 use crate::{
     endpoints::query::OwnedComponentReference,
-    model::{AnalysisStatus, BaseSummary, Node, RootTraces},
+    model::{AnalysisStatus, BaseSummary},
 };
 use actix_web::{get, web, HttpResponse, Responder};
 use trustify_auth::{
@@ -24,13 +24,9 @@ pub fn configure(config: &mut ServiceConfig, db: Database, analysis: AnalysisSer
     config
         .app_data(web::Data::new(analysis))
         .app_data(web::Data::new(db))
-        .service(search_component_root_components)
-        .service(get_component_root_components)
         .service(get_component)
         .service(search_component)
         .service(analysis_status)
-        .service(search_component_deps)
-        .service(get_component_deps)
         .service(render_sbom_graph);
 }
 
@@ -51,62 +47,6 @@ pub async fn analysis_status(
 ) -> actix_web::Result<impl Responder> {
     authorizer.require(&user, Permission::ReadSbom)?;
     Ok(HttpResponse::Ok().json(service.status(db.as_ref()).await?))
-}
-
-#[utoipa::path(
-    tag = "analysis",
-    operation_id = "searchComponentRootComponents",
-    params(
-        Query,
-        Paginated,
-    ),
-    responses(
-        (status = 200, description = "Search component(s) and return their root components.", body = PaginatedResults<Node>),
-    ),
-)]
-#[get("/v2/analysis/root-component")]
-pub async fn search_component_root_components(
-    service: web::Data<AnalysisService>,
-    db: web::Data<Database>,
-    web::Query(search): web::Query<Query>,
-    web::Query(paginated): web::Query<Paginated>,
-    _: Require<ReadSbom>,
-) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(
-        service
-            .retrieve(&search, QueryOptions::ancestors(), paginated, db.as_ref())
-            .await?
-            .root_traces(),
-    ))
-}
-
-#[utoipa::path(
-    tag = "analysis",
-    operation_id = "getComponentRootComponents",
-    params(
-        ("key" = String, Path, description = "provide component name, URL-encoded pURL, or CPE itself"),
-        Paginated,
-    ),
-    responses(
-        (status = 200, description = "Retrieve component(s) root components by name, pURL, or CPE.", body = PaginatedResults<Node>),
-    ),
-)]
-#[get("/v2/analysis/root-component/{key}")]
-pub async fn get_component_root_components(
-    service: web::Data<AnalysisService>,
-    db: web::Data<Database>,
-    key: web::Path<String>,
-    web::Query(paginated): web::Query<Paginated>,
-    _: Require<ReadSbom>,
-) -> actix_web::Result<impl Responder> {
-    let query = OwnedComponentReference::try_from(key.as_str())?;
-
-    Ok(HttpResponse::Ok().json(
-        service
-            .retrieve(&query, QueryOptions::ancestors(), paginated, db.as_ref())
-            .await?
-            .root_traces(),
-    ))
 }
 
 #[utoipa::path(
@@ -164,58 +104,6 @@ pub async fn search_component(
     Ok(HttpResponse::Ok().json(
         service
             .retrieve(&search, options, paginated, db.as_ref())
-            .await?,
-    ))
-}
-
-#[utoipa::path(
-    tag = "analysis",
-    operation_id = "searchComponentDeps",
-    params(
-        Query,
-        Paginated,
-    ),
-    responses(
-        (status = 200, description = "Search component(s) and return their deps.", body = PaginatedResults<Node>),
-    ),
-)]
-#[get("/v2/analysis/dep")]
-pub async fn search_component_deps(
-    service: web::Data<AnalysisService>,
-    db: web::Data<Database>,
-    web::Query(search): web::Query<Query>,
-    web::Query(paginated): web::Query<Paginated>,
-    _: Require<ReadSbom>,
-) -> actix_web::Result<impl Responder> {
-    Ok(HttpResponse::Ok().json(
-        service
-            .retrieve(&search, QueryOptions::descendants(), paginated, db.as_ref())
-            .await?,
-    ))
-}
-
-#[utoipa::path(
-    tag = "analysis",
-    operation_id = "getComponentDeps",
-    params(
-        ("key" = String, Path, description = "provide component name or URL-encoded pURL itself")
-    ),
-    responses(
-        (status = 200, description = "Retrieve component(s) dep components by name or pURL.", body = PaginatedResults<Node>),
-    ),
-)]
-#[get("/v2/analysis/dep/{key}")]
-pub async fn get_component_deps(
-    service: web::Data<AnalysisService>,
-    db: web::Data<Database>,
-    key: web::Path<String>,
-    web::Query(paginated): web::Query<Paginated>,
-    _: Require<ReadSbom>,
-) -> actix_web::Result<impl Responder> {
-    let query = OwnedComponentReference::try_from(key.as_str())?;
-    Ok(HttpResponse::Ok().json(
-        service
-            .retrieve(&query, QueryOptions::descendants(), paginated, db.as_ref())
             .await?,
     ))
 }
