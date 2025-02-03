@@ -115,7 +115,7 @@ pub async fn search_component(
         ("sbom" = String, Path, description = "ID of the SBOM")
     ),
     responses(
-        (status = 200, description = "A graphwiz dot file of the SBOM graph", body = String),
+        (status = 200, description = "A graphviz dot file of the SBOM graph", body = String),
         (status = 404, description = "The SBOM was not found"),
     ),
 )]
@@ -129,7 +129,9 @@ pub async fn render_sbom_graph(
     service.load_graph(db.as_ref(), &sbom).await;
 
     if let Some(data) = service.render_dot(&sbom) {
-        Ok(HttpResponse::Ok().body(data))
+        Ok(HttpResponse::Ok()
+            .content_type("text/vnd.graphviz")
+            .body(data))
     } else {
         Ok(HttpResponse::NotFound().finish())
     }
