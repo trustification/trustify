@@ -7,8 +7,10 @@ use super::service::{AnalysisService, QueryOptions};
 use crate::{
     endpoints::query::OwnedComponentReference,
     model::{AnalysisStatus, BaseSummary},
+    service::render::Renderer,
 };
 use actix_web::{get, web, HttpResponse, Responder};
+use serde_json::json;
 use trustify_auth::{
     authenticator::user::UserInformation,
     authorizer::{Authorizer, Require},
@@ -112,26 +114,32 @@ pub async fn search_component(
     tag = "analysis",
     operation_id = "renderSbomGraph",
     params(
-        ("sbom" = String, Path, description = "ID of the SBOM")
+        ("sbom" = String, Path, description = "ID of the SBOM"),
+        ("ext" = Renderer, Path, description = "Renderer to use")
     ),
     responses(
-        (status = 200, description = "A graphviz dot file of the SBOM graph", body = String),
+        (status = 200, description = "A rendered version of the SBOM graph in the format requested", body = String),
         (status = 404, description = "The SBOM was not found"),
+        (status = 415, description = "Unsupported rendering format"),
     ),
 )]
-#[get("/v2/analysis/sbom/{sbom}/render")]
+#[get("/v2/analysis/sbom/{sbom}/render.{ext}")]
 pub async fn render_sbom_graph(
     service: web::Data<AnalysisService>,
     db: web::Data<Database>,
-    sbom: web::Path<String>,
+    path: web::Path<(String, String)>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
+    let (sbom, ext) = path.into_inner();
+
+    let Ok(ext) = serde_json::from_value::<Renderer>(json!(ext)) else {
+        return Ok(HttpResponse::UnsupportedMediaType().finish());
+    };
+
     service.load_graph(db.as_ref(), &sbom).await;
 
-    if let Some(data) = service.render_dot(&sbom) {
-        Ok(HttpResponse::Ok()
-            .content_type("text/vnd.graphviz")
-            .body(data))
+    if let Some((data, content_type)) = service.render(&sbom, ext) {
+        Ok(HttpResponse::Ok().content_type(content_type).body(data))
     } else {
         Ok(HttpResponse::NotFound().finish())
     }

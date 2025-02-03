@@ -1,10 +1,11 @@
 mod load;
 mod query;
-mod render;
 mod walk;
 
 pub use query::*;
 pub use walk::*;
+
+pub mod render;
 
 #[cfg(test)]
 mod test;
