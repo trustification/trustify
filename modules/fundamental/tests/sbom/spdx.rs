@@ -2,6 +2,7 @@ mod aliases;
 mod corner_cases;
 mod issue_552;
 mod perf;
+mod reingest;
 
 use super::*;
 use serde_json::Value;

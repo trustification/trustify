@@ -23,11 +23,9 @@ use entity::{product, product_version};
 use hex::ToHex;
 use sea_orm::{
     prelude::Uuid, ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait,
-    QueryFilter, QuerySelect, QueryTrait, RelationTrait, Select, SelectColumns, Set,
+    QueryFilter, QuerySelect, RelationTrait, Select, Set,
 };
-use sea_query::{
-    extension::postgres::PgExpr, Alias, Condition, Expr, Func, JoinType, Query, SimpleExpr,
-};
+use sea_query::{extension::postgres::PgExpr, Condition, Expr, Func, JoinType, Query, SimpleExpr};
 use std::{
     fmt::{Debug, Formatter},
     iter,
@@ -37,9 +35,8 @@ use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, hashing::Digests, purl::Purl, sbom::SbomLocator};
 use trustify_entity::{
-    self as entity, labels::Labels, license, package_relates_to_package, purl_license_assertion,
-    relationship::Relationship, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
-    sbom_package_purl_ref, source_document,
+    self as entity, labels::Labels, license, purl_license_assertion, relationship::Relationship,
+    sbom, sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, source_document,
 };
 
 #[derive(Clone, Default)]
@@ -484,65 +481,6 @@ impl SbomContext {
         }
 
         Ok(())
-    }
-
-    /// Get the packages which describe an SBOM
-    ///
-    /// This is supposed to return a query, returning all sbom_packages which describe an SBOM.
-    fn query_describes_packages(&self) -> Select<sbom_package::Entity> {
-        sbom_package::Entity::find()
-            .filter(sbom::Column::SbomId.eq(self.sbom.sbom_id))
-            .filter(package_relates_to_package::Column::Relationship.eq(Relationship::Describes))
-            .select_only()
-            .join(JoinType::Join, sbom_package::Relation::Sbom.def())
-            .join(JoinType::Join, sbom_package::Relation::Node.def())
-            .join_rev(
-                JoinType::Join,
-                package_relates_to_package::Relation::Right.def(),
-            )
-            .join_as(
-                JoinType::Join,
-                package_relates_to_package::Relation::Left.def(),
-                Alias::new("source"),
-            )
-    }
-
-    /// Get the PURLs which describe an SBOM
-    #[instrument(skip(connection), err)]
-    pub async fn describes_purls<C: ConnectionTrait>(
-        &self,
-        connection: &C,
-    ) -> Result<Vec<QualifiedPackageContext>, Error> {
-        let describes = self.query_describes_packages();
-
-        self.graph
-            .get_qualified_packages_by_query(
-                describes
-                    .join(JoinType::Join, sbom_package::Relation::Purl.def())
-                    .select_column(sbom_package_purl_ref::Column::QualifiedPurlId)
-                    .into_query(),
-                connection,
-            )
-            .await
-    }
-
-    /// Get the CPEs which describe an SBOM
-    #[instrument(skip(connection), err)]
-    pub async fn describes_cpe22s<C: ConnectionTrait>(
-        &self,
-        connection: &C,
-    ) -> Result<Vec<CpeContext>, Error> {
-        let describes = self.query_describes_packages();
-
-        self.graph
-            .get_cpe_by_query(
-                describes
-                    .join(JoinType::Join, sbom_package::Relation::Cpe.def())
-                    .select_column(sbom_package_cpe_ref::Column::CpeId)
-                    .into_query(),
-                connection,
-            )
-            .await
     }
 
     /// Within the context of *this* SBOM, ingest a relationship between
