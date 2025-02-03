@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738574787358,
+  "lastUpdate": 1738576551829,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3242,6 +3242,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/8735ebda4b89b83e410dbc67ceee67dce24a319c"
         },
         "date": 1738574786545,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": false,
+          "id": "0073fa2ee1678d1c4dbfe0f0b6919849d0ad4304",
+          "message": "TC-2216 OSV crates.io: add test\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-02-03T09:37:14Z",
+          "tree_id": "217cec0d7843f3ff0f17cbd5f7d815c5add83b9c",
+          "url": "https://github.com/trustification/trustify/commit/0073fa2ee1678d1c4dbfe0f0b6919849d0ad4304"
+        },
+        "date": 1738576551133,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
