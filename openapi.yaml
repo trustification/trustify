@@ -380,7 +380,7 @@ paths:
           type: string
       responses:
         '200':
-          description: A graphwiz dot file of the SBOM graph
+          description: A graphviz dot file of the SBOM graph
           content:
             text/plain:
               schema:
