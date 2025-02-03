@@ -21,7 +21,7 @@ impl<'g> SpdxLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, json), ret)]
+    #[instrument(skip(self, json), ret(level = tracing::Level::DEBUG))]
     pub async fn load(
         &self,
         labels: Labels,
