@@ -25,6 +25,13 @@
       "version": "4.3-alpha-10",
       "description": "no vulnerabilities",
       "purl": "pkg:maven/org.opencrx/opencrx-core-models@4.3-alpha-10"
+    },
+    {
+      "type": "library",
+      "name": "Deno",
+      "version": "1.32.0",
+      "description": "1 vulnerabilities",
+      "purl": "pkg:cargo/Deno@1.32.0"
     }
   ]
 }
