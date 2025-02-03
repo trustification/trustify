@@ -51,6 +51,7 @@ fn collect(
     direction: Direction,
     depth: u64,
     discovered: &mut FixedBitSet,
+    relationships: &HashSet<Relationship>,
 ) -> Option<Vec<Node>> {
     tracing::debug!(direction = ?direction, "collecting for {node:?}");
 
@@ -74,18 +75,38 @@ fn collect(
         // we only recurse in one direction
         let (ancestor, descendent, package_node) = match direction {
             Direction::Incoming => (
-                collect(graph, edge.source(), direction, depth - 1, discovered),
+                collect(
+                    graph,
+                    edge.source(),
+                    direction,
+                    depth - 1,
+                    discovered,
+                    relationships,
+                ),
                 None,
                 graph.node_weight(edge.source()),
             ),
             Direction::Outgoing => (
                 None,
-                collect(graph, edge.target(), direction, depth - 1, discovered),
+                collect(
+                    graph,
+                    edge.target(),
+                    direction,
+                    depth - 1,
+                    discovered,
+                    relationships,
+                ),
                 graph.node_weight(edge.target()),
             ),
         };
 
         let relationship = edge.weight();
+
+        if !relationships.is_empty() && !relationships.contains(relationship) {
+            // if we have entries, and no match, continue with the next
+            continue;
+        }
+
         let Some(package_node) = package_node else {
             continue;
         };
@@ -255,6 +276,8 @@ impl AnalysisService {
         options: QueryOptions,
         distinct_sbom_ids: Vec<String>,
     ) -> Vec<Node> {
+        let relationships = options.relationships;
+
         self.collect_graph(
             query,
             distinct_sbom_ids,
@@ -274,6 +297,7 @@ impl AnalysisService {
                         Direction::Incoming,
                         options.ancestors,
                         &mut graph.visit_map(),
+                        &relationships,
                     ),
                     descendants: collect(
                         graph,
@@ -281,6 +305,7 @@ impl AnalysisService {
                         Direction::Outgoing,
                         options.descendants,
                         &mut graph.visit_map(),
+                        &relationships,
                     ),
                 });
             },

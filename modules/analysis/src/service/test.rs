@@ -180,6 +180,49 @@ async fn test_simple_by_name_analysis_service(ctx: &TrustifyContext) -> Result<(
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
+async fn simple_by_name_analysis_service_filter_rel(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    ctx.ingest_documents(["spdx/simple.json"]).await?;
+
+    let service = AnalysisService::new();
+
+    let analysis_graph = service
+        .retrieve(
+            ComponentReference::Name("B"),
+            QueryOptions {
+                relationships: HashSet::from_iter([Relationship::Contains]),
+                ..QueryOptions::ancestors()
+            },
+            Paginated::default(),
+            &ctx.db,
+        )
+        .await?;
+
+    log::debug!("Result: {analysis_graph:#?}");
+
+    let analysis_graph = analysis_graph.root_traces();
+
+    assert_ancestors(&analysis_graph.items, |ancestors| {
+        assert_eq!(
+            ancestors,
+            &[&[Node {
+                id: "SPDXRef-A",
+                name: "A",
+                version: "1",
+                cpes: &["cpe:/a:redhat:simple:1:*:el9:*"],
+                purls: &["pkg:rpm/redhat/A@0.0.0?arch=src"],
+            },]]
+        );
+    });
+
+    assert_eq!(analysis_graph.total, 1);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
 async fn test_simple_by_purl_analysis_service(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
