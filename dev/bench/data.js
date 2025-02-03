@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738576551829,
+  "lastUpdate": 1738599919525,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3271,6 +3271,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/0073fa2ee1678d1c4dbfe0f0b6919849d0ad4304"
         },
         "date": 1738576551133,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "a7e2855368841cd6e667b35aab5608d411330749",
+          "message": "chore: implement the relationship type filter, with a test",
+          "timestamp": "2025-02-03T16:03:21Z",
+          "tree_id": "01c4333adf7db94baf7fb80a8a136d625afbc394",
+          "url": "https://github.com/trustification/trustify/commit/a7e2855368841cd6e667b35aab5608d411330749"
+        },
+        "date": 1738599918853,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
