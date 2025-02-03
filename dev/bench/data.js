@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738338988370,
+  "lastUpdate": 1738574787358,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3218,6 +3218,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 6,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "8735ebda4b89b83e410dbc67ceee67dce24a319c",
+          "message": "fix: add an ai feature so that ai features are not compiled by default.\n\nFixes #1219\n\nSigned-off-by: Hiram Chirino <hiram@hiramchirino.com>",
+          "timestamp": "2025-02-03T08:40:45Z",
+          "tree_id": "639bdcc36999510db19b81f99135b5e9984efbac",
+          "url": "https://github.com/trustification/trustify/commit/8735ebda4b89b83e410dbc67ceee67dce24a319c"
+        },
+        "date": 1738574786545,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
