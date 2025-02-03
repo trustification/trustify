@@ -137,9 +137,9 @@ impl SbomContext {
                 // create a relationship
 
                 creator.relate(
-                    bom_ref,
-                    Relationship::Describes,
                     CYCLONEDX_DOC_REF.to_string(),
+                    Relationship::Describes,
+                    bom_ref,
                 );
             }
         }

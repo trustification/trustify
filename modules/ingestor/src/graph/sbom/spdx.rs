@@ -70,26 +70,29 @@ impl SbomContext {
         let mut relationships =
             RelationshipCreator::with_capacity(self.sbom.sbom_id, sbom_data.relationships.len());
 
-        let mut product_packages = vec![];
-
-        for describes in sbom_data.document_creation_information.document_describes {
+        for described in sbom_data.document_creation_information.document_describes {
+            log::debug!("Adding 'document_describes': {described}");
             relationships.relate(
-                describes,
+                sbom_data
+                    .document_creation_information
+                    .spdx_identifier
+                    .clone(),
                 Relationship::Describes,
-                sbom_data
-                    .document_creation_information
-                    .spdx_identifier
-                    .clone(),
-            );
-            product_packages.push(
-                sbom_data
-                    .document_creation_information
-                    .spdx_identifier
-                    .clone(),
+                described,
             );
         }
 
+        let mut product_packages = vec![];
+        product_packages.push(
+            sbom_data
+                .document_creation_information
+                .spdx_identifier
+                .clone(),
+        );
+
         for rel in &sbom_data.relationships {
+            log::debug!("Relationship: {rel:?}");
+
             let Ok(SpdxRelationship(left, rel, right)) = rel.try_into() else {
                 continue;
             };
