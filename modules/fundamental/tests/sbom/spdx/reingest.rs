@@ -4,11 +4,11 @@ use anyhow::bail;
 use sea_orm::EntityTrait;
 use test_context::test_context;
 use test_log::test;
-use trustify_common::{cpe::Cpe, id::Id};
-use trustify_entity::{cpe::CpeDto, sbom};
+use trustify_common::id::Id;
+use trustify_entity::sbom;
+use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::model::IngestResult;
 use trustify_test_context::TrustifyContext;
-use uuid::Uuid;
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
@@ -23,26 +23,36 @@ async fn reingest(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             .await?
             .expect("must be found");
 
+        let service = SbomService::new(ctx.db.clone());
+
+        let packages = service
+            .describes_packages(sbom.sbom.sbom_id, Default::default(), &ctx.db)
+            .await?;
+
         // check CPEs
 
-        let cpes = sbom.describes_cpe22s(&ctx.db).await?;
         assert_eq!(
-            cpes.into_iter()
-                .map(|cpe| CpeDto::from(cpe.cpe))
-                .filter_map(|cpe| Cpe::try_from(cpe).ok())
-                .collect::<Vec<_>>(),
-            vec![]
+            packages
+                .items
+                .iter()
+                .map(|p| p.cpe.clone())
+                .collect::<Vec<Vec<_>>>(),
+            vec![vec!["cpe:/a:redhat:quarkus:2.13:*:el8:*".to_string()]]
         );
 
         // check purls
 
-        let purls = sbom.describes_purls(&ctx.db).await?;
         assert_eq!(
-            purls
-                .into_iter()
-                .map(|purl| purl.qualified_package.id)
-                .collect::<Vec<_>>(),
-            Vec::<Uuid>::new()
+            packages
+                .items
+                .iter()
+                .map(|p| p
+                    .purl
+                    .iter()
+                    .map(|purl| purl.head.purl.to_string())
+                    .collect())
+                .collect::<Vec<Vec<_>>>(),
+            vec![vec!["pkg:maven/com.redhat.quarkus.platform/quarkus-bom@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=pom".to_string()]]
         );
 
         // get product
