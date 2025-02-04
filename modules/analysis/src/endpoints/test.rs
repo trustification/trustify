@@ -783,3 +783,37 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+#[ignore = "currently throws query serialize error"]
+async fn spdx_only_contains_relationships(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    // test case for the simple case of filtering descendants "relationshipType": "CONTAINS" spdx relationships:
+    // https://github.com/trustification/trustify/issues/1232
+
+    let app = caller(ctx).await?;
+    ctx.ingest_document("spdx/SATELLITE-6.15-RHEL-8.json")
+        .await?;
+
+    let purl = "pkg:rpm/redhat/rubygem-google-cloud-compute@0.5.0-1.el8sat?arch=src";
+
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10&relationships=contains",
+        urlencoding::encode(purl)
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    log::debug!("{}", serde_json::to_string_pretty(&response)?);
+
+    assert!(response.contains_subset(json!({
+        "items": [ {
+            "descendants": [ {
+                "relationship": "contains",
+                "name": "rubygem-google-cloud-compute-doc",
+                "version": "0.5.0-1.el8sat",
+            }]
+        }]
+    })));
+
+    Ok(())
+}
