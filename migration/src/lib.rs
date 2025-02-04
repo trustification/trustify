@@ -105,6 +105,7 @@ mod m0000850_python_version;
 mod m0000860_normalise_relationships;
 mod m0000870_source_doc_indexes;
 mod m0000880_org_name_index;
+mod m0000890_create_sbom_external_node;
 
 #[cfg(feature = "ai")]
 pub mod ai;
@@ -219,6 +220,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000860_normalise_relationships::Migration),
             Box::new(m0000870_source_doc_indexes::Migration),
             Box::new(m0000880_org_name_index::Migration),
+            Box::new(m0000890_create_sbom_external_node::Migration),
         ]
     }
 }
