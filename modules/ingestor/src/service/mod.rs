@@ -242,7 +242,7 @@ impl IngestorService {
     }
 
     /// Ingest a dataset archive
-    #[instrument(skip(self, bytes), ret, err)]
+    #[instrument(skip(self, bytes), err(level=tracing::Level::INFO))]
     pub async fn ingest_dataset(
         &self,
         bytes: &[u8],

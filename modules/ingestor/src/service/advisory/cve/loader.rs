@@ -40,7 +40,7 @@ impl<'g> CveLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, cve), ret)]
+    #[instrument(skip(self, cve), err(level=tracing::Level::INFO))]
     pub async fn load(
         &self,
         labels: impl Into<Labels> + Debug,

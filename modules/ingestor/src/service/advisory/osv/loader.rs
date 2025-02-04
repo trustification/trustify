@@ -33,7 +33,7 @@ impl<'g> OsvLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, osv), ret)]
+    #[instrument(skip(self, osv), err(level=tracing::Level::INFO))]
     pub async fn load(
         &self,
         labels: impl Into<Labels> + Debug,
