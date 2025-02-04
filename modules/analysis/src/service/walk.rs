@@ -1,5 +1,13 @@
 use super::*;
 
+/// A visitor for a graph nodes.
+///
+/// The visitor is called for each node and each edge, in no particular order. Finally, it is
+/// guaranteed to have [`Self::complete`] called exactly once. Unless the graph was not found or
+/// an error occurred.
+///
+/// **Note:** It may be that nodes are actually from multiple SBOMs. Each node will have an SBOM ID,
+/// which identifies the SBOM the node belongs to.
 pub trait Visitor {
     type Output;
 
