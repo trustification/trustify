@@ -22,7 +22,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 publish = false
 license = "Apache-2.0"
@@ -204,3 +204,6 @@ osv = { git = "https://github.com/ctron/osv", rev = "b53f1590bbbdc663e3efe405f1f
 # to pickup fix: https://github.com/Abraxas-365/langchain-rust/pull/246
 #       and fix: https://github.com/Abraxas-365/langchain-rust/pull/250
 langchain-rust = { git = "https://github.com/chirino/langchain-rust", branch = "main" }
+
+# to pickup fix: https://github.com/eikendev/sectxt/issues/21
+sectxtlib = { git = "https://github.com/ctron/sectxt", branch = "feature/fix_deps_1" }
