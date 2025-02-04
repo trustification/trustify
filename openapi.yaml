@@ -230,6 +230,7 @@ paths:
     get:
       tags:
       - analysis
+      summary: Retrieve SBOM components (packages) by a complex search.
       operationId: searchComponent
       parameters:
       - name: q
@@ -266,6 +267,10 @@ paths:
           minimum: 0
       - name: ancestors
         in: query
+        description: |-
+          The level of ancestors to return.
+
+          Zero, the default, meaning none.
         required: false
         schema:
           type: integer
@@ -273,6 +278,10 @@ paths:
           minimum: 0
       - name: descendants
         in: query
+        description: |-
+          The level of descendants to return.
+
+          Zero, the default, meaning none.
         required: false
         schema:
           type: integer
@@ -280,6 +289,10 @@ paths:
           minimum: 0
       - name: relationships
         in: query
+        description: |-
+          A set of relationships to filter for.
+
+          An empty set, the default, meaning all relationships.
         required: false
         schema:
           type: array
@@ -288,15 +301,20 @@ paths:
           uniqueItems: true
       responses:
         '200':
-          description: Retrieve component(s) root components by name, pURL, or CPE.
+          description: Retrieved component(s) located by search
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedResults_BaseSummary'
+                $ref: '#/components/schemas/PaginatedResults_Node'
+        '401':
+          description: The user did not provide valid authentication credentials
+        '403':
+          description: The user lacks the required permission
   /api/v2/analysis/component/{key}:
     get:
       tags:
       - analysis
+      summary: Retrieve SBOM components (packages) by name, Package URL, or CPE.
       operationId: getComponent
       parameters:
       - name: key
@@ -339,6 +357,10 @@ paths:
           minimum: 0
       - name: ancestors
         in: query
+        description: |-
+          The level of ancestors to return.
+
+          Zero, the default, meaning none.
         required: false
         schema:
           type: integer
@@ -346,6 +368,10 @@ paths:
           minimum: 0
       - name: descendants
         in: query
+        description: |-
+          The level of descendants to return.
+
+          Zero, the default, meaning none.
         required: false
         schema:
           type: integer
@@ -353,6 +379,10 @@ paths:
           minimum: 0
       - name: relationships
         in: query
+        description: |-
+          A set of relationships to filter for.
+
+          An empty set, the default, meaning all relationships.
         required: false
         schema:
           type: array
@@ -361,15 +391,20 @@ paths:
           uniqueItems: true
       responses:
         '200':
-          description: Retrieve component(s) root components by name, pURL, or CPE.
+          description: Retrieved component(s) located by name, pURL, or CPE
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedResults_BaseSummary'
+                $ref: '#/components/schemas/PaginatedResults_Node'
+        '401':
+          description: The user did not provide valid authentication credentials
+        '403':
+          description: The user lacks the required permission
   /api/v2/analysis/sbom/{sbom}/render.{ext}:
     get:
       tags:
       - analysis
+      summary: Render an SBOM graph
       operationId: renderSbomGraph
       parameters:
       - name: sbom
@@ -393,6 +428,10 @@ paths:
             text/plain:
               schema:
                 type: string
+        '401':
+          description: The user did not provide valid authentication credentials
+        '403':
+          description: The user lacks the required permission
         '404':
           description: The SBOM was not found
         '415':
@@ -401,14 +440,19 @@ paths:
     get:
       tags:
       - analysis
+      summary: Get the status of the analysis service.
       operationId: status
       responses:
         '200':
-          description: Analysis status.
+          description: Analysis status
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AnalysisStatus'
+        '401':
+          description: The user did not provide valid authentication credentials
+        '403':
+          description: The user lacks the required permission
   /api/v2/dataset:
     post:
       tags:
@@ -2545,6 +2589,30 @@ components:
         severity:
           $ref: '#/components/schemas/Severity'
           description: The severity of the message
+    Node:
+      allOf:
+      - $ref: '#/components/schemas/BaseSummary'
+      - type: object
+        properties:
+          ancestors:
+            type:
+            - array
+            - 'null'
+            items:
+              $ref: '#/components/schemas/Node'
+            description: All ancestors of this node. [`None`] if not requested on this level.
+          descendants:
+            type:
+            - array
+            - 'null'
+            items:
+              $ref: '#/components/schemas/Node'
+            description: All descendents of this node. [`None`] if not requested on this level.
+          relationship:
+            oneOf:
+            - type: 'null'
+            - $ref: '#/components/schemas/Relationship'
+              description: The relationship the node has to it's containing node, if any.
     OrganizationDetails:
       allOf:
       - $ref: '#/components/schemas/OrganizationHead'
@@ -2677,56 +2745,6 @@ components:
           type: integer
           format: int64
           minimum: 0
-    PaginatedResults_BaseSummary:
-      type: object
-      required:
-      - items
-      - total
-      properties:
-        items:
-          type: array
-          items:
-            type: object
-            required:
-            - sbom_id
-            - node_id
-            - purl
-            - cpe
-            - name
-            - version
-            - published
-            - document_id
-            - product_name
-            - product_version
-            properties:
-              cpe:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Cpe'
-              document_id:
-                type: string
-              name:
-                type: string
-              node_id:
-                type: string
-              product_name:
-                type: string
-              product_version:
-                type: string
-              published:
-                type: string
-              purl:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Purl'
-              sbom_id:
-                type: string
-              version:
-                type: string
-        total:
-          type: integer
-          format: int64
-          minimum: 0
     PaginatedResults_ImporterReport:
       type: object
       required:
@@ -2799,6 +2817,42 @@ components:
                 type: array
                 items:
                   type: string
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+    PaginatedResults_Node:
+      type: object
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/BaseSummary'
+            - type: object
+              properties:
+                ancestors:
+                  type:
+                  - array
+                  - 'null'
+                  items:
+                    $ref: '#/components/schemas/Node'
+                  description: All ancestors of this node. [`None`] if not requested on this level.
+                descendants:
+                  type:
+                  - array
+                  - 'null'
+                  items:
+                    $ref: '#/components/schemas/Node'
+                  description: All descendents of this node. [`None`] if not requested on this level.
+                relationship:
+                  oneOf:
+                  - type: 'null'
+                  - $ref: '#/components/schemas/Relationship'
+                    description: The relationship the node has to it's containing node, if any.
         total:
           type: integer
           format: int64

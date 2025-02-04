@@ -9,3 +9,6 @@ pub mod devmode;
 
 #[cfg(feature = "swagger")]
 pub mod swagger_ui;
+
+#[cfg(feature = "utoipa")]
+pub mod utoipa;

@@ -6,7 +6,7 @@ mod test;
 use super::service::{AnalysisService, QueryOptions};
 use crate::{
     endpoints::query::OwnedComponentReference,
-    model::{AnalysisStatus, BaseSummary},
+    model::{AnalysisStatus, Node},
     service::render::Renderer,
 };
 use actix_web::{get, web, HttpResponse, Responder};
@@ -14,6 +14,7 @@ use serde_json::json;
 use trustify_auth::{
     authenticator::user::UserInformation,
     authorizer::{Authorizer, Require},
+    utoipa::AuthResponse,
     Permission, ReadSbom,
 };
 use trustify_common::{
@@ -36,10 +37,12 @@ pub fn configure(config: &mut ServiceConfig, db: Database, analysis: AnalysisSer
     tag = "analysis",
     operation_id = "status",
     responses(
-        (status = 200, description = "Analysis status.", body = AnalysisStatus),
+        AuthResponse,
+        (status = 200, description = "Analysis status", body = AnalysisStatus),
     ),
 )]
 #[get("/v2/analysis/status")]
+/// Get the status of the analysis service.
 pub async fn analysis_status(
     service: web::Data<AnalysisService>,
     db: web::Data<Database>,
@@ -47,7 +50,8 @@ pub async fn analysis_status(
     authorizer: web::Data<Authorizer>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
-    authorizer.require(&user, Permission::ReadSbom)?;
+    // TODO: Replace with a more "admin" style permission when revisiting the permission system
+    authorizer.require(&user, Permission::CreateSbom)?;
     Ok(HttpResponse::Ok().json(service.status(db.as_ref()).await?))
 }
 
@@ -61,10 +65,12 @@ pub async fn analysis_status(
         QueryOptions,
     ),
     responses(
-        (status = 200, description = "Retrieve component(s) root components by name, pURL, or CPE.", body = PaginatedResults<BaseSummary>),
+        AuthResponse,
+        (status = 200, description = "Retrieved component(s) located by name, pURL, or CPE", body = PaginatedResults<Node>),
     ),
 )]
 #[get("/v2/analysis/component/{key}")]
+/// Retrieve SBOM components (packages) by name, Package URL, or CPE.
 pub async fn get_component(
     service: web::Data<AnalysisService>,
     db: web::Data<Database>,
@@ -91,10 +97,12 @@ pub async fn get_component(
         QueryOptions,
     ),
     responses(
-        (status = 200, description = "Retrieve component(s) root components by name, pURL, or CPE.", body = PaginatedResults<BaseSummary>),
+        AuthResponse,
+        (status = 200, description = "Retrieved component(s) located by search", body = PaginatedResults<Node>),
     ),
 )]
 #[get("/v2/analysis/component")]
+/// Retrieve SBOM components (packages) by a complex search.
 pub async fn search_component(
     service: web::Data<AnalysisService>,
     db: web::Data<Database>,
@@ -118,12 +126,14 @@ pub async fn search_component(
         ("ext" = inline(Renderer), Path, description = "Renderer to use")
     ),
     responses(
+        AuthResponse,
         (status = 200, description = "A rendered version of the SBOM graph in the format requested", body = String),
         (status = 404, description = "The SBOM was not found"),
         (status = 415, description = "Unsupported rendering format"),
     ),
 )]
 #[get("/v2/analysis/sbom/{sbom}/render.{ext}")]
+/// Render an SBOM graph
 pub async fn render_sbom_graph(
     service: web::Data<AnalysisService>,
     db: web::Data<Database>,
