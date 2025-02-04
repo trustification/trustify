@@ -103,6 +103,7 @@ mod m0000830_perf_indexes;
 mod m0000840_add_relationship_14_15;
 mod m0000850_python_version;
 mod m0000860_normalise_relationships;
+mod m0000870_source_doc_indexes;
 
 #[cfg(feature = "ai")]
 pub mod ai;
@@ -215,6 +216,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000840_add_relationship_14_15::Migration),
             Box::new(m0000850_python_version::Migration),
             Box::new(m0000860_normalise_relationships::Migration),
+            Box::new(m0000870_source_doc_indexes::Migration),
         ]
     }
 }
