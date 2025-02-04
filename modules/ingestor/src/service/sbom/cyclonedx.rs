@@ -1,5 +1,8 @@
 use crate::{
-    graph::{sbom::cyclonedx, Graph},
+    graph::{
+        sbom::{cyclonedx, Outcome},
+        Graph,
+    },
     model::IngestResult,
     service::Error,
 };
@@ -25,40 +28,45 @@ impl<'g> CyclonedxLoader<'g> {
         value: Value,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
-        let sbom: serde_cyclonedx::cyclonedx::v_1_6::CycloneDx = serde_json::from_value(value)
+        let cdx: serde_cyclonedx::cyclonedx::v_1_6::CycloneDx = serde_json::from_value(value)
             .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
         let labels = labels.add("type", "cyclonedx");
 
         log::info!(
             "Storing - version: {:?}, serialNumber: {:?}",
-            sbom.version,
-            sbom.serial_number,
+            cdx.version,
+            cdx.serial_number,
         );
 
         let tx = self.graph.db.begin().await?;
 
-        let document_id = sbom
+        let document_id = cdx
             .serial_number
             .clone()
-            .or_else(|| sbom.version.map(|v| v.to_string()));
+            .or_else(|| cdx.version.map(|v| v.to_string()));
 
-        let ctx = self
+        let ctx = match self
             .graph
             .ingest_sbom(
                 labels,
                 digests,
                 document_id.clone(),
-                cyclonedx::Information(&sbom),
+                cyclonedx::Information(&cdx),
                 &tx,
             )
-            .await?;
+            .await?
+        {
+            Outcome::Existed(sbom) => sbom,
+            Outcome::Added(sbom) => {
+                sbom.ingest_cyclonedx(cdx, &tx)
+                    .await
+                    .map_err(Error::Generic)?;
+                tx.commit().await?;
 
-        ctx.ingest_cyclonedx(sbom, &tx)
-            .await
-            .map_err(Error::Generic)?;
-
-        tx.commit().await?;
+                sbom
+            }
+        };
 
         Ok(IngestResult {
             id: Id::Uuid(ctx.sbom.sbom_id),

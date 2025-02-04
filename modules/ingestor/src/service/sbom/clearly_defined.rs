@@ -1,4 +1,11 @@
-use crate::{graph::sbom::SbomInformation, graph::Graph, model::IngestResult, service::Error};
+use crate::{
+    graph::{
+        sbom::{Outcome, SbomInformation},
+        Graph,
+    },
+    model::IngestResult,
+    service::Error,
+};
 use anyhow::anyhow;
 use hex::ToHex;
 use jsonpath_rust::JsonPath;
@@ -67,7 +74,7 @@ impl<'g> ClearlyDefinedLoader<'g> {
         if let Some(document_id) = document_id {
             let tx = self.graph.db.begin().await?;
 
-            let sbom = self
+            let sbom = match self
                 .graph
                 .ingest_sbom(
                     labels,
@@ -82,18 +89,24 @@ impl<'g> ClearlyDefinedLoader<'g> {
                     },
                     &tx,
                 )
-                .await?;
+                .await?
+            {
+                Outcome::Existed(sbom) => sbom,
+                Outcome::Added(sbom) => {
+                    if let Some(license) = license {
+                        sbom.ingest_purl_license_assertion(
+                            &coordinates_to_purl(document_id)?,
+                            license,
+                            &tx,
+                        )
+                        .await?;
+                    }
 
-            if let Some(license) = license {
-                sbom.ingest_purl_license_assertion(
-                    &coordinates_to_purl(document_id)?,
-                    license,
-                    &tx,
-                )
-                .await?;
-            }
+                    tx.commit().await?;
 
-            tx.commit().await?;
+                    sbom
+                }
+            };
 
             Ok(IngestResult {
                 id: Id::Uuid(sbom.sbom.sbom_id),

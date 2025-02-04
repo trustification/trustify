@@ -1,5 +1,10 @@
 use crate::{
-    graph::sbom::clearly_defined::Curation, graph::Graph, model::IngestResult, service::Error,
+    graph::{
+        sbom::{clearly_defined::Curation, Outcome},
+        Graph,
+    },
+    model::IngestResult,
+    service::Error,
 };
 use sea_orm::TransactionTrait;
 use tracing::instrument;
@@ -24,7 +29,7 @@ impl<'g> ClearlyDefinedCurationLoader<'g> {
     ) -> Result<IngestResult, Error> {
         let tx = self.graph.db.begin().await?;
 
-        let sbom = self
+        let sbom = match self
             .graph
             .ingest_sbom(
                 labels,
@@ -33,13 +38,19 @@ impl<'g> ClearlyDefinedCurationLoader<'g> {
                 &curation,
                 &tx,
             )
-            .await?;
+            .await?
+        {
+            Outcome::Existed(sbom) => sbom,
+            Outcome::Added(sbom) => {
+                sbom.ingest_clearly_defined_curation(curation, &tx)
+                    .await
+                    .map_err(Error::Generic)?;
 
-        sbom.ingest_clearly_defined_curation(curation, &tx)
-            .await
-            .map_err(Error::Generic)?;
+                tx.commit().await?;
 
-        tx.commit().await?;
+                sbom
+            }
+        };
 
         Ok(IngestResult {
             id: Id::Uuid(sbom.sbom.sbom_id),

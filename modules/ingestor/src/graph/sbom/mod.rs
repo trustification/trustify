@@ -29,6 +29,7 @@ use sea_query::{extension::postgres::PgExpr, Condition, Expr, Func, JoinType, Qu
 use std::{
     fmt::{Debug, Formatter},
     iter,
+    ops::{Deref, DerefMut},
     str::FromStr,
 };
 use time::OffsetDateTime;
@@ -58,6 +59,41 @@ impl From<()> for SbomInformation {
 }
 
 type SelectEntity<E> = Select<E>;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Outcome<T> {
+    Existed(T),
+    Added(T),
+}
+
+impl<T> Outcome<T> {
+    pub fn into_inner(self) -> T {
+        match self {
+            Outcome::Existed(value) => value,
+            Outcome::Added(value) => value,
+        }
+    }
+}
+
+impl<T> Deref for Outcome<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Outcome::Existed(value) => value,
+            Outcome::Added(value) => value,
+        }
+    }
+}
+
+impl<T> DerefMut for Outcome<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        match self {
+            Outcome::Existed(value) => value,
+            Outcome::Added(value) => value,
+        }
+    }
+}
 
 impl Graph {
     pub async fn get_sbom_by_id<C: ConnectionTrait>(
@@ -98,11 +134,11 @@ impl Graph {
         document_id: Option<String>,
         info: impl Into<SbomInformation>,
         connection: &C,
-    ) -> Result<SbomContext, Error> {
+    ) -> Result<Outcome<SbomContext>, Error> {
         let sha256 = digests.sha256.encode_hex::<String>();
 
         if let Some(found) = self.get_sbom_by_digest(&sha256, connection).await? {
-            return Ok(found);
+            return Ok(Outcome::Existed(found));
         }
 
         let SbomInformation {
@@ -149,7 +185,7 @@ impl Graph {
         let result = model.insert(connection).await?;
         node_model.insert(connection).await?;
 
-        Ok(SbomContext::new(self, result))
+        Ok(Outcome::Added(SbomContext::new(self, result)))
     }
 
     /// Fetch a single SBOM located via internal `id`, external `location` (URL),
