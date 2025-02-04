@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738679790291,
+  "lastUpdate": 1738687989757,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3416,6 +3416,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/106ee32185925cb367dd61a0046c85b8f8df0c73"
         },
         "date": 1738679789172,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 6,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "committer": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "distinct": true,
+          "id": "0b70b91f408f723daa8210ede6a856ee78434e3e",
+          "message": "Replace GraphMap’s map with a moka::sync::Cache\n\nFixes issue #1218\n\nSigned-off-by: Hiram Chirino <hiram@hiramchirino.com>",
+          "timestamp": "2025-02-04T10:38:00-05:00",
+          "tree_id": "99e6ba109f138a350753bd8995feb88ac7ea4dc6",
+          "url": "https://github.com/trustification/trustify/commit/0b70b91f408f723daa8210ede6a856ee78434e3e"
+        },
+        "date": 1738687989075,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
