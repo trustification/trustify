@@ -15,7 +15,7 @@ use crate::{
         cpe::CpeContext,
         product::{product_version::ProductVersionContext, ProductContext},
         purl::{creator::PurlCreator, qualified_package::QualifiedPackageContext},
-        Graph,
+        Graph, Outcome,
     },
 };
 use cpe::uri::OwnedUri;
@@ -29,7 +29,6 @@ use sea_query::{extension::postgres::PgExpr, Condition, Expr, Func, JoinType, Qu
 use std::{
     fmt::{Debug, Formatter},
     iter,
-    ops::{Deref, DerefMut},
     str::FromStr,
 };
 use time::OffsetDateTime;
@@ -59,41 +58,6 @@ impl From<()> for SbomInformation {
 }
 
 type SelectEntity<E> = Select<E>;
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum Outcome<T> {
-    Existed(T),
-    Added(T),
-}
-
-impl<T> Outcome<T> {
-    pub fn into_inner(self) -> T {
-        match self {
-            Outcome::Existed(value) => value,
-            Outcome::Added(value) => value,
-        }
-    }
-}
-
-impl<T> Deref for Outcome<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        match self {
-            Outcome::Existed(value) => value,
-            Outcome::Added(value) => value,
-        }
-    }
-}
-
-impl<T> DerefMut for Outcome<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        match self {
-            Outcome::Existed(value) => value,
-            Outcome::Added(value) => value,
-        }
-    }
-}
 
 impl Graph {
     pub async fn get_sbom_by_id<C: ConnectionTrait>(

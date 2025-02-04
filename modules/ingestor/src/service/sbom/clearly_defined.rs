@@ -1,8 +1,5 @@
 use crate::{
-    graph::{
-        sbom::{Outcome, SbomInformation},
-        Graph,
-    },
+    graph::{sbom::SbomInformation, Graph, Outcome},
     model::IngestResult,
     service::Error,
 };
