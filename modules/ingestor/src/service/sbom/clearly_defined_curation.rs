@@ -20,7 +20,7 @@ impl<'g> ClearlyDefinedCurationLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, curation), ret)]
+    #[instrument(skip(self, curation), err(level=tracing::Level::INFO))]
     pub async fn load(
         &self,
         labels: Labels,

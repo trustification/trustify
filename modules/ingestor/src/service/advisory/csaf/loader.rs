@@ -82,7 +82,7 @@ impl<'g> CsafLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, csaf), ret)]
+    #[instrument(skip(self, csaf), err(level=tracing::Level::INFO))]
     pub async fn load(
         &self,
         labels: impl Into<Labels> + Debug,

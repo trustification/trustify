@@ -21,7 +21,7 @@ impl<'g> CyclonedxLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, value), ret)]
+    #[instrument(skip(self, value), err(level=tracing::Level::INFO))]
     pub async fn load(
         &self,
         labels: Labels,
