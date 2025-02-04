@@ -6,6 +6,7 @@ use utoipa::ToSchema;
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, ToSchema)]
 pub enum Renderer {
+    /// Graphviz
     #[serde(rename = "gv", alias = "dot")]
     Graphviz,
 }

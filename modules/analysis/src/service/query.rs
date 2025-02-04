@@ -62,10 +62,19 @@ impl<'a> From<&'a Query> for GraphQuery<'a> {
 /// Options when querying the graph.
 #[derive(Clone, Debug, Default, Eq, PartialEq, serde::Deserialize, IntoParams)]
 pub struct QueryOptions {
+    /// The level of ancestors to return.
+    ///
+    /// Zero, the default, meaning none.
     #[serde(default)]
     pub ancestors: u64,
+    /// The level of descendants to return.
+    ///
+    /// Zero, the default, meaning none.
     #[serde(default)]
     pub descendants: u64,
+    /// A set of relationships to filter for.
+    ///
+    /// An empty set, the default, meaning all relationships.
     #[serde(default)]
     pub relationships: HashSet<Relationship>,
 }
