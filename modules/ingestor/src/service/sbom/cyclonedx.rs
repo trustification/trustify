@@ -1,8 +1,5 @@
 use crate::{
-    graph::{
-        sbom::{cyclonedx, Outcome},
-        Graph,
-    },
+    graph::{sbom::cyclonedx, Graph, Outcome},
     model::IngestResult,
     service::Error,
 };

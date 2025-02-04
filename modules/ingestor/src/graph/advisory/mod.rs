@@ -2,7 +2,10 @@
 
 use crate::{
     common::{Deprecation, DeprecationExt},
-    graph::{advisory::advisory_vulnerability::AdvisoryVulnerabilityContext, error::Error, Graph},
+    graph::{
+        advisory::advisory_vulnerability::AdvisoryVulnerabilityContext, error::Error, Graph,
+        Outcome,
+    },
 };
 use hex::ToHex;
 use sea_orm::{
@@ -111,7 +114,7 @@ impl Graph {
         digests: &Digests,
         information: impl Into<AdvisoryInformation>,
         connection: &C,
-    ) -> Result<AdvisoryContext, Error> {
+    ) -> Result<Outcome<AdvisoryContext>, Error> {
         let identifier = identifier.into();
         let labels = labels.into();
         let sha256 = digests.sha256.encode_hex::<String>();
@@ -127,7 +130,7 @@ impl Graph {
 
         if let Some(found) = self.get_advisory_by_digest(&sha256, connection).await? {
             // we already have the exact same document.
-            return Ok(found);
+            return Ok(Outcome::Existed(found));
         }
 
         let organization = if let Some(issuer) = issuer {
@@ -173,7 +176,7 @@ impl Graph {
 
         // done
 
-        Ok(AdvisoryContext::new(self, result))
+        Ok(Outcome::Added(AdvisoryContext::new(self, result)))
     }
 }
 

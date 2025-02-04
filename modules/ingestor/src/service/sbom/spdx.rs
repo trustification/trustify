@@ -1,10 +1,7 @@
 use crate::{
     graph::{
-        sbom::{
-            spdx::{self},
-            Outcome,
-        },
-        Graph,
+        sbom::spdx::{self},
+        Graph, Outcome,
     },
     model::IngestResult,
     service::{Error, Warnings},

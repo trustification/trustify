@@ -14,7 +14,7 @@ use trustify_module_ingestor::graph::advisory::{
     advisory_vulnerability::{VersionInfo, VersionSpec},
     AdvisoryContext, AdvisoryInformation,
 };
-
+use trustify_module_ingestor::graph::Outcome;
 use trustify_test_context::TrustifyContext;
 
 pub async fn ingest_sample_advisory<'a>(
@@ -39,6 +39,7 @@ pub async fn ingest_sample_advisory<'a>(
             &ctx.db,
         )
         .await
+        .map(Outcome::into_inner)
 }
 
 pub async fn ingest_and_link_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
