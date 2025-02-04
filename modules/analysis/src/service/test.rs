@@ -71,7 +71,6 @@ async fn test_simple_analysis_service(ctx: &TrustifyContext) -> Result<(), anyho
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
-#[ignore = "Double ingestion creates double nodes, due to using v4 UUIDs"]
 async fn test_simple_analysis_cyclonedx_service(
     ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
