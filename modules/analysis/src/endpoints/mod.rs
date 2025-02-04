@@ -115,7 +115,7 @@ pub async fn search_component(
     operation_id = "renderSbomGraph",
     params(
         ("sbom" = String, Path, description = "ID of the SBOM"),
-        ("ext" = Renderer, Path, description = "Renderer to use")
+        ("ext" = inline(Renderer), Path, description = "Renderer to use")
     ),
     responses(
         (status = 200, description = "A rendered version of the SBOM graph in the format requested", body = String),

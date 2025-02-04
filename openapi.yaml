@@ -366,7 +366,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResults_BaseSummary'
-  /api/v2/analysis/sbom/{sbom}/render:
+  /api/v2/analysis/sbom/{sbom}/render.{ext}:
     get:
       tags:
       - analysis
@@ -378,15 +378,25 @@ paths:
         required: true
         schema:
           type: string
+      - name: ext
+        in: path
+        description: Renderer to use
+        required: true
+        schema:
+          type: string
+          enum:
+          - gv
       responses:
         '200':
-          description: A graphviz dot file of the SBOM graph
+          description: A rendered version of the SBOM graph in the format requested
           content:
             text/plain:
               schema:
                 type: string
         '404':
           description: The SBOM was not found
+        '415':
+          description: Unsupported rendering format
   /api/v2/analysis/status:
     get:
       tags:
