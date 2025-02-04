@@ -77,7 +77,8 @@ where
             c(&sbom),
             &tx,
         )
-        .await?;
+        .await?
+        .into_inner();
     let ingest_time_1 = start.elapsed();
 
     let start = Instant::now();

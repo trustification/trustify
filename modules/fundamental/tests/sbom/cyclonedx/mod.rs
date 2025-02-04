@@ -1,14 +1,13 @@
 mod cpe;
 mod purl;
+mod reingest;
 
 use super::*;
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
-use trustify_common::model::Paginated;
-use trustify_common::purl::Purl;
-use trustify_module_fundamental::purl::model::summary::purl::PurlSummary;
-use trustify_module_fundamental::purl::model::PurlHead;
+use trustify_common::{model::Paginated, purl::Purl};
+use trustify_module_fundamental::purl::model::{summary::purl::PurlSummary, PurlHead};
 use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext)]

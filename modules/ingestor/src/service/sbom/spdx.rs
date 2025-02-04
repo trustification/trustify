@@ -1,6 +1,9 @@
 use crate::{
     graph::{
-        sbom::spdx::{self},
+        sbom::{
+            spdx::{self},
+            Outcome,
+        },
         Graph,
     },
     model::IngestResult,
@@ -46,7 +49,7 @@ impl<'g> SpdxLoader<'g> {
             .spdx_document_namespace
             .clone();
 
-        let sbom = self
+        let sbom = match self
             .graph
             .ingest_sbom(
                 labels,
@@ -55,11 +58,15 @@ impl<'g> SpdxLoader<'g> {
                 spdx::Information(&spdx),
                 &tx,
             )
-            .await?;
-
-        sbom.ingest_spdx(spdx, &warnings, &tx).await?;
-
-        tx.commit().await?;
+            .await?
+        {
+            Outcome::Existed(sbom) => sbom,
+            Outcome::Added(sbom) => {
+                sbom.ingest_spdx(spdx, &warnings, &tx).await?;
+                tx.commit().await?;
+                sbom
+            }
+        };
 
         Ok(IngestResult {
             id: Id::Uuid(sbom.sbom.sbom_id),
