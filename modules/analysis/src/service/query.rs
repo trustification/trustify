@@ -1,3 +1,4 @@
+use serde::{Deserialize, Deserializer};
 use std::collections::HashSet;
 use trustify_common::{cpe::Cpe, db::query::Query, purl::Purl};
 use trustify_entity::relationship::Relationship;
@@ -60,7 +61,7 @@ impl<'a> From<&'a Query> for GraphQuery<'a> {
 }
 
 /// Options when querying the graph.
-#[derive(Clone, Debug, Default, Eq, PartialEq, serde::Deserialize, IntoParams)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize, IntoParams)]
 pub struct QueryOptions {
     /// The level of ancestors to return.
     ///
@@ -75,8 +76,19 @@ pub struct QueryOptions {
     /// A set of relationships to filter for.
     ///
     /// An empty set, the default, meaning all relationships.
-    #[serde(default)]
+    #[serde(default, deserialize_with = "deserialize_relationships")]
     pub relationships: HashSet<Relationship>,
+}
+
+fn deserialize_relationships<'de, D>(deserializer: D) -> Result<HashSet<Relationship>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let buf = String::deserialize(deserializer)?;
+    Ok(buf
+        .split_terminator(',')
+        .map(Relationship::from)
+        .collect::<HashSet<_>>())
 }
 
 impl QueryOptions {
