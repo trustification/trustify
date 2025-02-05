@@ -316,21 +316,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "actix-web-prom"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56a34f1825c3ae06567a9d632466809bbf34963c86002e8921b64f32d48d289d"
-dependencies = [
- "actix-web",
- "futures-core",
- "log",
- "pin-project-lite",
- "prometheus",
- "regex",
- "strfmt",
-]
-
-[[package]]
 name = "actix-web-static-files"
 version = "4.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5549,21 +5534,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "prometheus"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d33c28a30771f7f96db69893f78b857f7450d7e0237e9c8fc6427a81bae7ed1"
-dependencies = [
- "cfg-if",
- "fnv",
- "lazy_static",
- "memchr",
- "parking_lot 0.12.3",
- "protobuf",
- "thiserror 1.0.69",
-]
-
-[[package]]
 name = "prost"
 version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5585,12 +5555,6 @@ dependencies = [
  "quote",
  "syn 2.0.98",
 ]
-
-[[package]]
-name = "protobuf"
-version = "2.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "106dd99e98437432fed6519dedecfade6a06a73bb7b2a1e019fdd2bee5778d94"
 
 [[package]]
 name = "ptr_meta"
@@ -7543,12 +7507,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7beae5182595e9a8b683fa98c4317f956c9a2dec3b9716990d20023cc60c766"
 
 [[package]]
-name = "strfmt"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a8348af2d9fc3258c8733b8d9d8db2e56f54b2363a4b5b81585c7875ed65e65"
-
-[[package]]
 name = "strict"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8468,7 +8426,6 @@ dependencies = [
  "actix-web-extras",
  "actix-web-httpauth",
  "actix-web-opentelemetry",
- "actix-web-prom",
  "anyhow",
  "bytesize",
  "clap",
@@ -8481,7 +8438,6 @@ dependencies = [
  "opentelemetry-otlp",
  "opentelemetry_sdk",
  "parking_lot 0.12.3",
- "prometheus",
  "reqwest 0.12.12",
  "serde",
  "serde_json",
@@ -8536,6 +8492,7 @@ dependencies = [
  "jsonpath-rust",
  "log",
  "moka",
+ "opentelemetry",
  "packageurl",
  "parking_lot 0.12.3",
  "petgraph 0.7.1",

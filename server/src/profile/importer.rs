@@ -82,7 +82,7 @@ impl Run {
             .run(
                 SERVICE_ID,
                 { |context| async move { InitData::new(context, self).await } },
-                |context| async move { context.init_data.run(&context.metrics).await },
+                |context| async move { context.init_data.run().await },
             )
             .await?;
 
@@ -129,7 +129,7 @@ impl InitData {
         })
     }
 
-    async fn run(mut self, metrics: &Metrics) -> anyhow::Result<()> {
+    async fn run(mut self) -> anyhow::Result<()> {
         let db = self.db;
         let storage = self.storage;
 

@@ -1,19 +1,17 @@
-use std::sync::Arc;
-use std::{future::Future, pin::Pin};
-
-use actix_web::web::ServiceConfig;
+use crate::{
+    health::{Checks, HealthChecks},
+    otel::{init_metrics, init_tracing, Metrics as OtelMetrics, Tracing},
+};
 use actix_web::{
-    http::uri::Builder, middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer,
-    Responder,
+    http::uri::Builder, middleware::Logger, web, web::ServiceConfig, App, HttpRequest,
+    HttpResponse, HttpServer, Responder,
 };
 use anyhow::Context;
 use futures::future::select_all;
-use prometheus::{Registry, TextEncoder};
+use opentelemetry::metrics::Meter;
+use std::{future::Future, pin::Pin, sync::Arc};
 use tokio::signal;
 
-use crate::otel::{init_metrics, init_tracing, Metrics as OtelMetrics, Tracing};
-
-use crate::health::{Checks, HealthChecks};
 #[cfg(unix)]
 use tokio::signal::unix::{signal, SignalKind};
 
@@ -59,12 +57,10 @@ impl Default for InfrastructureConfig {
 pub type Task = Box<dyn Future<Output = anyhow::Result<()>>>;
 
 pub struct InitContext {
-    pub metrics: Arc<Metrics>,
     pub health: Arc<HealthChecks>,
 }
 
 pub struct MainContext<T> {
-    pub metrics: Arc<Metrics>,
     pub health: Arc<HealthChecks>,
     pub init_data: T,
 }
@@ -72,23 +68,18 @@ pub struct MainContext<T> {
 pub async fn index(req: HttpRequest) -> HttpResponse {
     let conn = req.connection_info();
 
-    let apis = [
-        "/health/live",
-        "/health/ready",
-        "/health/startup",
-        "/metrics",
-    ]
-    .into_iter()
-    .filter_map(|api| {
-        Builder::new()
-            .authority(conn.host())
-            .scheme(conn.scheme())
-            .path_and_query(api)
-            .build()
-            .ok()
-            .map(|uri| uri.to_string())
-    })
-    .collect::<Vec<_>>();
+    let apis = ["/health/live", "/health/ready", "/health/startup"]
+        .into_iter()
+        .filter_map(|api| {
+            Builder::new()
+                .authority(conn.host())
+                .scheme(conn.scheme())
+                .path_and_query(api)
+                .build()
+                .ok()
+                .map(|uri| uri.to_string())
+        })
+        .collect::<Vec<_>>();
 
     HttpResponse::Ok().json(apis)
 }
@@ -118,21 +109,8 @@ async fn run_checks(checks: &Checks) -> impl Responder {
     result.json(checks.results)
 }
 
-async fn metrics(metrics: web::Data<Metrics>) -> HttpResponse {
-    let encoder = TextEncoder::new();
-    let metric_families = metrics.registry().gather();
-    match encoder.encode_to_string(&metric_families) {
-        Ok(data) => HttpResponse::Ok().content_type("text/plain").body(data),
-        Err(e) => {
-            HttpResponse::InternalServerError().body(format!("Error retrieving metrics: {:?}", e))
-        }
-    }
-}
-
-#[derive(Default)]
 pub struct Infrastructure {
     config: InfrastructureConfig,
-    metrics: Arc<Metrics>,
     health: Arc<HealthChecks>,
 }
 
@@ -140,18 +118,12 @@ impl From<InfrastructureConfig> for Infrastructure {
     fn from(config: InfrastructureConfig) -> Self {
         Self {
             config,
-            metrics: Default::default(),
             health: Default::default(),
         }
     }
 }
 
 impl Infrastructure {
-    /// create a new instance, with default settings.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     pub async fn start(self) -> anyhow::Result<InfrastructureRunner> {
         Ok(InfrastructureRunner {
             runner: Box::pin(self.start_internal(|_| {}).await?),
@@ -174,12 +146,10 @@ impl Infrastructure {
         log::info!("Setting up infrastructure endpoint");
 
         let mut http = HttpServer::new(move || {
-            let metrics_registry = self.metrics.clone();
             let health = self.health.clone();
             let configurator = configurator.clone();
             App::new()
                 .wrap(Logger::default())
-                .app_data(web::Data::from(metrics_registry))
                 .app_data(web::Data::from(health))
                 .service(web::resource("/").to(index))
                 .service(
@@ -188,7 +158,6 @@ impl Infrastructure {
                         .service(web::resource("/ready").to(readiness))
                         .service(web::resource("/startup").to(startup)),
                 )
-                .service(web::resource("/metrics").to(metrics))
                 .configure(|c| configurator(c))
         });
 
@@ -214,7 +183,7 @@ impl Infrastructure {
 
     pub async fn run_with_config<I, IFut, M, MFut, D>(
         self,
-        id: &str,
+        id: &'static str,
         init: I,
         main: M,
         configurator: impl FnOnce(&mut ServiceConfig) + Clone + Send + Sync + 'static,
@@ -229,14 +198,12 @@ impl Infrastructure {
         init_metrics(id, self.config.metrics);
 
         let init_data = init(InitContext {
-            metrics: self.metrics.clone(),
             health: self.health.clone(),
         })
         .await?;
 
         let main = Box::pin(main(MainContext {
             init_data,
-            metrics: self.metrics.clone(),
             health: self.health.clone(),
         })) as Pin<Box<dyn Future<Output = anyhow::Result<()>>>>;
         let runner = Box::pin(self.start_internal(configurator).await?);
@@ -263,7 +230,12 @@ impl Infrastructure {
     /// If configured, this will enable infrastructure services, such as metrics and health checks.
     /// It will then run the `main` application until it exits. The `init` function is guaranteed to
     /// be executed before the `main` function, allowing for some initialization.
-    pub async fn run<I, IFut, M, MFut, D>(self, id: &str, init: I, main: M) -> anyhow::Result<()>
+    pub async fn run<I, IFut, M, MFut, D>(
+        self,
+        id: &'static str,
+        init: I,
+        main: M,
+    ) -> anyhow::Result<()>
     where
         I: FnOnce(InitContext) -> IFut,
         IFut: Future<Output = anyhow::Result<D>>,
@@ -274,13 +246,16 @@ impl Infrastructure {
     }
 }
 
-#[derive(Default)]
 pub struct Metrics {
-    registry: Registry,
+    registry: Meter,
 }
 
 impl Metrics {
-    pub fn registry(&self) -> &Registry {
+    pub fn new(meter: Meter) -> Self {
+        Self { registry: meter }
+    }
+
+    pub fn registry(&self) -> &Meter {
         &self.registry
     }
 }
