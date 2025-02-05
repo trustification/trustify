@@ -142,3 +142,18 @@ workflow in your personal repository, and create a release there. If that's ok f
 push tags as you like, to fix and test the release process.
 
 
+## Branches and Cargo.toml
+
+When branching off a "release branch" change the `Cargo.toml` files as follows: 
+
+Replace:
+
+```cargo
+trustify-ui = { git = "https://github.com/trustification/trustify-ui.git", branch = "publish/main" }
+```
+
+by:
+
+```cargo
+trustify-ui = { git = "https://github.com/trustification/trustify-ui.git", branch = "release/x.y.z" }
+```
