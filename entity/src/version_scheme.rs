@@ -27,4 +27,5 @@ pub enum VersionScheme {
     Rpm,
     Python,
     Maven,
+    Golang,
 }

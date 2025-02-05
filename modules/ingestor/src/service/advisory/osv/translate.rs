@@ -39,6 +39,25 @@ fn translate<'a>(ecosystem: &Ecosystem, name: &'a str) -> Option<PackageUrl<'a>>
             }
         }
         Ecosystem::PyPI => PackageUrl::new("pypi", name).ok(),
+        Ecosystem::Go => {
+            let ty = "golang";
+            let separator = "/";
+            let split = name.split(separator).collect::<Vec<_>>();
+            match split.len() {
+                0 => None,
+                1 => PackageUrl::new(ty, split[0]).ok(),
+                _ => {
+                    let namespace = split[0];
+                    let name = split[1..].join(separator);
+                    PackageUrl::new(ty, name)
+                        .map(|mut purl| {
+                            purl.with_namespace(namespace);
+                            purl
+                        })
+                        .ok()
+                }
+            }
+        }
         _ => None,
     }
 }
@@ -61,6 +80,17 @@ mod test {
         Some("pkg:maven/groupid/artifactid?repository_url=http://other/repo")
     )]
     #[case(Ecosystem::PyPI, "aiohttp", Some("pkg:pypi/aiohttp"))]
+    #[case(Ecosystem::Go, "tailscale.com", Some("pkg:golang/tailscale.com"))]
+    #[case(
+        Ecosystem::Go,
+        "code.gitea.io/gitea",
+        Some("pkg:golang/code.gitea.io/gitea")
+    )]
+    #[case(
+        Ecosystem::Go,
+        "github.com/minio/minio",
+        Some("pkg:golang/github.com/minio/minio")
+    )]
     fn test_translate(
         #[case] ecosystem: Ecosystem,
         #[case] name: &str,
