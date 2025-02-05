@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738687989757,
+  "lastUpdate": 1738754922882,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3450,6 +3450,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 6,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "1c9ba5ba9f4ac3518a0aae2c256ed1d2af1b083f",
+          "message": "chore: reduce amount of logs on info level",
+          "timestamp": "2025-02-05T11:46:28+01:00",
+          "tree_id": "a6a2a4c9f6d680169ea3de22f14af6b8c4e3a0f9",
+          "url": "https://github.com/trustification/trustify/commit/1c9ba5ba9f4ac3518a0aae2c256ed1d2af1b083f"
+        },
+        "date": 1738754922159,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
