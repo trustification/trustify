@@ -73,10 +73,12 @@ pub struct QueryOptions {
     /// Zero, the default, meaning none.
     #[serde(default)]
     pub descendants: u64,
-    /// A set of relationships to filter for.
+    /// A set of relationships to filter for, deserialized from a
+    /// comma-delimited string
     ///
     /// An empty set, the default, meaning all relationships.
     #[serde(default, deserialize_with = "deserialize_relationships")]
+    #[param(value_type = String)]
     pub relationships: HashSet<Relationship>,
 }
 
