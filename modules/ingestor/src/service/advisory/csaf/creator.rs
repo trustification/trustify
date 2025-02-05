@@ -98,7 +98,7 @@ impl<'a> StatusCreator<'a> {
             .ok_or_else(|| crate::graph::error::Error::InvalidStatus(status.to_string()))?)
     }
 
-    #[instrument(skip_all, ret)]
+    #[instrument(skip_all, err(level=tracing::Level::INFO))]
     pub async fn create<C: ConnectionTrait>(
         &mut self,
         graph: &Graph,
@@ -297,7 +297,7 @@ impl<'a> StatusCreator<'a> {
         Ok(())
     }
 
-    #[instrument(skip(self, connection), ret)]
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
     async fn create_status(
         &self,
         connection: &impl ConnectionTrait,
