@@ -32,13 +32,16 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         Some("GHSA-c25x-cm9x-qqgx".to_string())
     );
 
+    let go = ctx.ingest_document("osv/GHSA-4h4p-553m-46qh.json").await?;
+    assert_eq!(go.document_id, Some("GHSA-4h4p-553m-46qh".to_string()));
+
     let sbom1 = sbom
         .fetch_sbom_details(result1.id, vec![], &ctx.db)
         .await?
         .expect("SBOM details must be found");
     log::info!("SBOM1: {sbom1:?}");
 
-    assert_eq!(2, sbom1.advisories.len());
+    assert_eq!(3, sbom1.advisories.len());
     check_advisory(
         &sbom1,
         "GHSA-45c4-8wx5-qw6w",
@@ -49,6 +52,12 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         &sbom1,
         "GHSA-c25x-cm9x-qqgx",
         "CVE-2023-28445",
+        Severity::Critical,
+    );
+    check_advisory(
+        &sbom1,
+        "GHSA-4h4p-553m-46qh",
+        "CVE-2024-6886",
         Severity::Critical,
     );
     Ok(())
@@ -69,7 +78,7 @@ fn check_advisory(
     assert_eq!(
         1,
         advisories.len(),
-        "Found multiple advisories with ID {}",
+        "Found none or too many advisories with ID {}",
         advisory_id
     );
     let advisory = advisories[0].clone();
