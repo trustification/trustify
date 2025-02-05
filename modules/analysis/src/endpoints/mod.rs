@@ -60,7 +60,6 @@ pub async fn analysis_status(
     operation_id = "getComponent",
     params(
         ("key" = String, Path, description = "provide component name, URL-encoded pURL, or CPE itself"),
-        Query,
         Paginated,
         QueryOptions,
     ),

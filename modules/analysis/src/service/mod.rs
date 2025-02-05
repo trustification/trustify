@@ -270,7 +270,8 @@ impl AnalysisService {
         options: QueryOptions,
         graphs: &[(String, Arc<PackageGraph>)],
     ) -> Vec<Node> {
-        let relationships = options.relationships;
+        let mut relationships = options.relationships;
+        relationships.extend(options.relationship.iter());
 
         self.collect_graph(
             query,

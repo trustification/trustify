@@ -299,6 +299,15 @@ paths:
           items:
             $ref: '#/components/schemas/Relationship'
           uniqueItems: true
+      - name: relationship
+        in: query
+        description: |
+          A relationship to filter for.
+        required: false
+        schema:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/Relationship'
       responses:
         '200':
           description: Retrieved component(s) located by search
@@ -320,16 +329,6 @@ paths:
       - name: key
         in: path
         description: provide component name, URL-encoded pURL, or CPE itself
-        required: true
-        schema:
-          type: string
-      - name: q
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: sort
-        in: path
         required: true
         schema:
           type: string
@@ -389,6 +388,15 @@ paths:
           items:
             $ref: '#/components/schemas/Relationship'
           uniqueItems: true
+      - name: relationship
+        in: query
+        description: |
+          A relationship to filter for.
+        required: false
+        schema:
+          oneOf:
+          - type: 'null'
+          - $ref: '#/components/schemas/Relationship'
       responses:
         '200':
           description: Retrieved component(s) located by name, pURL, or CPE

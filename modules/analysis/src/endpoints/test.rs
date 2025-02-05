@@ -786,7 +786,6 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-#[ignore = "currently throws query serialize error"]
 async fn spdx_only_contains_relationships(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // test case for the simple case of filtering descendants "relationshipType": "CONTAINS" spdx relationships:
     // https://github.com/trustification/trustify/issues/1232
@@ -798,7 +797,7 @@ async fn spdx_only_contains_relationships(ctx: &TrustifyContext) -> Result<(), a
     let purl = "pkg:rpm/redhat/rubygem-google-cloud-compute@0.5.0-1.el8sat?arch=src";
 
     let uri = format!(
-        "/api/v2/analysis/component/{}?descendants=10&relationships=contains",
+        "/api/v2/analysis/component/{}?descendants=10&relationship=contains",
         urlencoding::encode(purl)
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();

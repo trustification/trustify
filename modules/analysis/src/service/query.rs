@@ -77,6 +77,10 @@ pub struct QueryOptions {
     /// An empty set, the default, meaning all relationships.
     #[serde(default)]
     pub relationships: HashSet<Relationship>,
+    /// A relationship to filter for.
+    ///
+    #[serde(default)]
+    pub relationship: Option<Relationship>,
 }
 
 impl QueryOptions {
