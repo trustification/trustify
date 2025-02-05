@@ -1,5 +1,6 @@
 use crate::purl_status;
 use sea_orm::entity::prelude::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "status")]
@@ -24,3 +25,24 @@ impl Related<purl_status::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+#[derive(
+    Copy,
+    Clone,
+    Eq,
+    Hash,
+    Debug,
+    PartialEq,
+    strum::EnumString,
+    strum::Display,
+    Serialize,
+    Deserialize,
+)]
+#[strum(serialize_all = "camelCase")]
+pub enum Status {
+    Affected,
+    Fixed,
+    NotAffected,
+    UnderInvestigation,
+    Recommended,
+}
