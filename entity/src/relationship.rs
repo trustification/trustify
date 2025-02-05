@@ -12,12 +12,14 @@ use std::fmt;
     EnumIter,
     DeriveActiveEnum,
     strum::VariantArray,
+    strum::EnumString,
     serde::Serialize,
     serde::Deserialize,
     utoipa::ToSchema,
 )]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
 #[serde(rename_all = "snake_case")]
+#[strum(serialize_all = "snake_case")]
 #[derive(DeepSizeOf)]
 // When adding a new variant, also add this to the "relationship" table.
 pub enum Relationship {
@@ -58,28 +60,5 @@ pub enum Relationship {
 impl fmt::Display for Relationship {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
-    }
-}
-
-impl From<&str> for Relationship {
-    fn from(s: &str) -> Self {
-        match s.to_lowercase().as_str() {
-            "contains" => Self::Contains,
-            "dependency" => Self::Dependency,
-            "devdependency" => Self::DevDependency,
-            "optionaldependency" => Self::OptionalDependency,
-            "provideddependency" => Self::ProvidedDependency,
-            "testdependency" => Self::TestDependency,
-            "runtimedependency" => Self::RuntimeDependency,
-            "example" => Self::Example,
-            "generates" => Self::Generates,
-            "ancestorof" => Self::AncestorOf,
-            "variant" => Self::Variant,
-            "buildtool" => Self::BuildTool,
-            "devtool" => Self::DevTool,
-            "describes" => Self::Describes,
-            "package" => Self::Package,
-            _ => Self::Undefined,
-        }
     }
 }
