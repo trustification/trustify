@@ -143,7 +143,7 @@ push tags as you like, to fix and test the release process.
 
 ## Branches and Cargo.toml
 
-When branching off a "release branch" change the `Cargo.toml` files as follows:
+When branching off a "release branch" change the `Cargo.toml` files as follows: 
 
 Replace:
 
