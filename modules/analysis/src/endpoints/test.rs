@@ -786,7 +786,6 @@ async fn spdx_package_of(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-#[ignore = "currently throws query serialize error"]
 async fn spdx_only_contains_relationships(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // test case for the simple case of filtering descendants "relationshipType": "CONTAINS" spdx relationships:
     // https://github.com/trustification/trustify/issues/1232
