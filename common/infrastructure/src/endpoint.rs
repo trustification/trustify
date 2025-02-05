@@ -1,4 +1,13 @@
-use std::fmt::Debug;
+use clap::{
+    value_parser, Arg, ArgMatches, Args, Command, CommandFactory, Error, FromArgMatches, Parser,
+};
+use std::{
+    ffi::OsString,
+    fmt::Debug,
+    marker::PhantomData,
+    net::{AddrParseError, SocketAddr},
+    str::FromStr,
+};
 use url::Url;
 
 pub trait Endpoint: Debug {
@@ -15,15 +24,6 @@ pub trait Endpoint: Debug {
             .expect("default value must parse")
     }
 }
-
-use std::ffi::OsString;
-use std::marker::PhantomData;
-use std::net::{AddrParseError, SocketAddr};
-use std::str::FromStr;
-
-use clap::{
-    value_parser, Arg, ArgMatches, Args, Command, CommandFactory, Error, FromArgMatches, Parser,
-};
 
 #[derive(Clone, Debug)]
 pub struct EndpointServerConfig<E: Endpoint> {
