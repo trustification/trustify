@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738756462575,
+  "lastUpdate": 1738768133876,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3508,6 +3508,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "ade3bc9032621058d4e84260e8679beb93212e3d",
+          "message": "fix: add index for organizations by name\n\nA primary way of finding Organizations is \"by name\". I think we should\nhave an index for that.",
+          "timestamp": "2025-02-05T13:40:21+01:00",
+          "tree_id": "eeaff8dbb696b7c3ac83275389b02368260671f9",
+          "url": "https://github.com/trustification/trustify/commit/ade3bc9032621058d4e84260e8679beb93212e3d"
+        },
+        "date": 1738768133064,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 6,
             "unit": "s"
           }
         ]
