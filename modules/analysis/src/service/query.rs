@@ -1,5 +1,6 @@
 use serde::{Deserialize, Deserializer};
 use std::collections::HashSet;
+use std::str::FromStr;
 use trustify_common::{cpe::Cpe, db::query::Query, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use utoipa::IntoParams;
@@ -87,10 +88,10 @@ where
     D: Deserializer<'de>,
 {
     let buf = String::deserialize(deserializer)?;
-    Ok(buf
-        .split_terminator(',')
-        .map(Relationship::from)
-        .collect::<HashSet<_>>())
+    buf.split_terminator(',')
+        .map(Relationship::from_str)
+        .collect::<Result<HashSet<_>, _>>()
+        .map_err(serde::de::Error::custom)
 }
 
 impl QueryOptions {
