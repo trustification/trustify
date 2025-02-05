@@ -9,13 +9,13 @@ pub mod render;
 #[cfg(test)]
 mod test;
 
-use crate::config::AnalysisConfig;
-use crate::model::PackageGraph;
 use crate::{
-    model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageNode},
+    config::AnalysisConfig,
+    model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph, PackageNode},
     Error,
 };
 use fixedbitset::FixedBitSet;
+use opentelemetry::global;
 use petgraph::{
     graph::{Graph, NodeIndex},
     prelude::EdgeRef,
@@ -136,9 +136,25 @@ impl AnalysisService {
     /// Also, we do not implement default because of this. As a new instance has the implication
     /// of having its own cache. So creating a new instance should be a deliberate choice.
     pub fn new(config: AnalysisConfig) -> Self {
-        Self {
-            graph_cache: Arc::new(GraphMap::new(config.max_cache_size.as_u64())),
-        }
+        let graph_cache = Arc::new(GraphMap::new(config.max_cache_size.as_u64()));
+
+        let meter = global::meter("AnalysisService");
+        {
+            let graph_cache = graph_cache.clone();
+            meter
+                .u64_observable_gauge("cache_size")
+                .with_callback(move |inst| inst.observe(graph_cache.size_used(), &[]))
+                .build();
+        };
+        {
+            let graph_cache = graph_cache.clone();
+            meter
+                .u64_observable_gauge("cache_items")
+                .with_callback(move |inst| inst.observe(graph_cache.len(), &[]))
+                .build();
+        };
+
+        Self { graph_cache }
     }
 
     pub fn cache_size_used(&self) -> u64 {

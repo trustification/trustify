@@ -24,32 +24,22 @@ use tracing_subscriber::{
     field::MakeExt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter,
 };
 
-#[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq)]
+#[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq, Default)]
 pub enum Metrics {
     #[clap(name = "disabled")]
+    #[default]
     Disabled,
     #[clap(name = "enabled")]
     Enabled,
 }
 
-#[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq)]
+#[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq, Default)]
 pub enum Tracing {
     #[clap(name = "disabled")]
+    #[default]
     Disabled,
     #[clap(name = "enabled")]
     Enabled,
-}
-
-impl Default for Metrics {
-    fn default() -> Self {
-        Self::Disabled
-    }
-}
-
-impl Default for Tracing {
-    fn default() -> Self {
-        Self::Disabled
-    }
 }
 
 impl fmt::Display for Metrics {
@@ -76,7 +66,7 @@ pub trait PropagateCurrentContext {
         Self: Sized;
 }
 
-impl PropagateCurrentContext for reqwest::RequestBuilder {
+impl PropagateCurrentContext for RequestBuilder {
     #[inline]
     fn propagate_current_context(self) -> Self
     where
@@ -141,19 +131,14 @@ pub fn init_tracing(name: &str, tracing: Tracing) {
             INIT.call_once(init_no_tracing);
         }
         Tracing::Enabled => {
-            init_otlp(name);
+            init_otlp_tracing(name);
         }
     }
 }
 
-pub fn init_metrics(name: &str, metrics: Metrics) {
-    match metrics {
-        Metrics::Disabled => {
-            INIT.call_once(init_no_tracing);
-        }
-        Metrics::Enabled => {
-            init_otlp_metrics(name);
-        }
+pub fn init_metrics(name: &'static str, metrics: Metrics) {
+    if let Metrics::Enabled = metrics {
+        init_otlp_metrics(name);
     }
 }
 
@@ -180,7 +165,7 @@ fn init_otlp_metrics(name: &str) {
     set_meter_provider(provider.clone());
 }
 
-fn init_otlp(name: &str) {
+fn init_otlp_tracing(name: &str) {
     set_text_map_propagator(TraceContextPropagator::new());
 
     #[allow(clippy::expect_used)]
@@ -204,7 +189,7 @@ fn init_otlp(name: &str) {
     let formatting_layer = tracing_subscriber::fmt::Layer::default();
 
     if let Err(e) = tracing_subscriber::Registry::default()
-        .with(tracing_subscriber::EnvFilter::from_default_env())
+        .with(EnvFilter::from_default_env())
         .with(tracing_opentelemetry::layer().with_tracer(provider.tracer(name.to_string())))
         .with(formatting_layer)
         .try_init()

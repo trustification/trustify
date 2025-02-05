@@ -12,7 +12,6 @@ actix-web = { workspace = true, features = ["openssl"] }
 actix-web-extras = { workspace = true }
 actix-web-httpauth = { workspace = true }
 actix-web-opentelemetry = { workspace = true, features = ["metrics"] }
-actix-web-prom = { workspace = true }
 anyhow = { workspace = true }
 bytesize = { workspace = true }
 clap = { workspace = true, features = ["derive", "env", "string"] }
@@ -23,9 +22,8 @@ mime = { workspace = true }
 openssl = { workspace = true }
 opentelemetry = { workspace = true }
 opentelemetry-otlp = { workspace = true }
-opentelemetry_sdk = { workspace = true, features = ["rt-tokio-current-thread"] }
+opentelemetry_sdk = { workspace = true, features = ["rt-tokio-current-thread", "metrics"] }
 parking_lot = { workspace = true }
-prometheus = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true, features = ["derive", "rc"] }
 serde_json = { workspace = true }

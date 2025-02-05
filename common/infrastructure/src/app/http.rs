@@ -1,7 +1,7 @@
 use crate::{
     app::{new_app, AppOptions},
     endpoint::Endpoint,
-    otel::{Metrics as OtelMetrics, Tracing},
+    otel::{Metrics, Tracing},
 };
 use actix_cors::Cors;
 use actix_tls::{accept::openssl::reexports::SslAcceptor, connect::openssl::reexports::SslMethod};
@@ -11,12 +11,10 @@ use actix_web::{
     App, HttpResponse, HttpServer,
 };
 use actix_web_opentelemetry::{RequestMetrics, RequestTracing};
-use actix_web_prom::{PrometheusMetrics, PrometheusMetricsBuilder};
 use anyhow::{anyhow, Context};
 use bytesize::ByteSize;
 use clap::{value_parser, Arg, ArgMatches, Args, Command, Error, FromArgMatches};
 use openssl::ssl::SslFiletype;
-use prometheus::Registry;
 use std::{
     fmt::Debug,
     marker::PhantomData,
@@ -279,7 +277,6 @@ pub struct HttpServerBuilder {
     bind: Bind,
     tls: Option<TlsConfiguration>,
 
-    metrics_factory: Option<Arc<dyn Fn() -> anyhow::Result<PrometheusMetrics> + Send + Sync>>,
     cors_factory: Option<Arc<dyn Fn() -> Cors + Send + Sync>>,
     authenticator: Option<Arc<Authenticator>>,
     authorizer: Option<Authorizer>,
@@ -289,7 +286,7 @@ pub struct HttpServerBuilder {
     json_limit: Option<usize>,
     request_limit: Option<usize>,
     tracing: Tracing,
-    metrics: OtelMetrics,
+    metrics: Metrics,
 
     disable_log: bool,
 
@@ -321,7 +318,6 @@ impl HttpServerBuilder {
             post_configurator: None,
             bind: Bind::Address(DEFAULT_ADDR),
             tls: None,
-            metrics_factory: None,
             cors_factory: Some(Arc::new(Cors::permissive)),
             authenticator: None,
             authorizer: None,
@@ -330,7 +326,7 @@ impl HttpServerBuilder {
             json_limit: None,
             request_limit: None,
             tracing: Tracing::default(),
-            metrics: OtelMetrics::default(),
+            metrics: Metrics::default(),
             openapi_info: None,
             disable_log: false,
         }
@@ -372,7 +368,7 @@ impl HttpServerBuilder {
         self
     }
 
-    pub fn metrics_otel(mut self, metrics: OtelMetrics) -> Self {
+    pub fn metrics(mut self, metrics: Metrics) -> Self {
         self.metrics = metrics;
         self
     }
@@ -395,31 +391,6 @@ impl HttpServerBuilder {
         F: Fn(&mut web::ServiceConfig) + Send + Sync + 'static,
     {
         self.post_configurator = Some(Arc::new(post_configurator));
-        self
-    }
-
-    pub fn metrics(mut self, registry: impl Into<Registry>, namespace: impl AsRef<str>) -> Self {
-        let metrics = PrometheusMetricsBuilder::new(namespace.as_ref())
-            .registry(registry.into())
-            .build();
-
-        self.metrics_factory = Some(Arc::new(move || {
-            metrics.as_ref().cloned().map_err(|err| anyhow!("{err}"))
-        }));
-
-        self
-    }
-
-    pub fn metrics_factory<F>(mut self, metrics_factory: F) -> Self
-    where
-        F: Fn() -> Result<PrometheusMetrics, Box<dyn std::error::Error + Send + Sync>>
-            + Send
-            + Sync
-            + 'static,
-    {
-        self.metrics_factory = Some(Arc::new(move || {
-            metrics_factory().map_err(|err| anyhow!("Failed to create prometheus registry: {err}"))
-        }));
         self
     }
 
@@ -459,12 +430,6 @@ impl HttpServerBuilder {
     }
 
     pub async fn run(self) -> anyhow::Result<()> {
-        let metrics = self
-            .metrics_factory
-            .as_ref()
-            .map(|factory| factory())
-            .transpose()?;
-
         if let Some(limit) = self.request_limit {
             log::info!("JSON limit: {}", BinaryByteSize::from(limit));
         }
@@ -495,20 +460,19 @@ impl HttpServerBuilder {
                 tracing_logger.is_some()
             );
 
-            let otel_metrics = match self.metrics {
-                OtelMetrics::Disabled => None,
-                OtelMetrics::Enabled => Some(RequestMetrics::default()),
+            let metrics = match self.metrics {
+                Metrics::Disabled => None,
+                Metrics::Enabled => Some(RequestMetrics::default()),
             };
 
             log::debug!(
-                "Otel Metrics({}) - metrics: {}",
+                "OTELMetrics({}) - metrics: {}",
                 self.metrics,
-                otel_metrics.is_some()
+                metrics.is_some()
             );
 
             let mut app = new_app(AppOptions {
                 cors,
-                metrics: metrics.clone(),
                 authenticator: self.authenticator.clone(),
                 authorizer: self
                     .authorizer
@@ -516,7 +480,7 @@ impl HttpServerBuilder {
                     .unwrap_or_else(|| Authorizer::new(None)),
                 logger,
                 tracing_logger,
-                otel_metrics,
+                metrics,
             })
             .app_data(json)
             .into_utoipa_app();

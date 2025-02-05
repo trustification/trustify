@@ -1,5 +1,6 @@
 #[cfg(feature = "garage-door")]
 use crate::embedded_oidc;
+
 use crate::{endpoints, sample_data};
 use actix_web::{
     body::MessageBody,
@@ -34,8 +35,7 @@ use trustify_infrastructure::{
     otel::{Metrics as OtelMetrics, Tracing},
     Infrastructure, InfrastructureConfig, InitContext, Metrics,
 };
-use trustify_module_analysis::config::AnalysisConfig;
-use trustify_module_analysis::service::AnalysisService;
+use trustify_module_analysis::{config::AnalysisConfig, service::AnalysisService};
 use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
 use trustify_module_ingestor::graph::Graph;
@@ -191,7 +191,7 @@ impl Run {
             .run(
                 SERVICE_ID,
                 { |context| async move { InitData::new(context, self).await } },
-                |context| async move { context.init_data.run(&context.metrics).await },
+                |context| async move { context.init_data.run().await },
             )
             .await?;
 
@@ -312,7 +312,7 @@ impl InitData {
         })
     }
 
-    async fn run(mut self, metrics: &Metrics) -> anyhow::Result<()> {
+    async fn run(mut self) -> anyhow::Result<()> {
         let ui = Arc::new(UiResources::new(&self.ui)?);
         let db = self.db.clone();
         let storage = self.storage.clone();
@@ -320,8 +320,7 @@ impl InitData {
         let http = {
             HttpServerBuilder::try_from(self.http)?
                 .tracing(self.tracing)
-                .metrics_otel(self.metrics)
-                .metrics(metrics.registry().clone(), SERVICE_ID)
+                .metrics(self.metrics)
                 .authorizer(self.authorizer)
                 .swagger_ui_oidc(self.swagger_oidc.clone())
                 .openapi_info(default_openapi_info())
