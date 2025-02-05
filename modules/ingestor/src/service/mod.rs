@@ -4,6 +4,7 @@ pub mod sbom;
 pub mod weakness;
 
 mod format;
+use advisory::StatusCache;
 pub use format::Format;
 
 use crate::service::dataset::{DatasetIngestResult, DatasetLoader};
@@ -141,9 +142,10 @@ impl ResponseError for Error {
 
 #[derive(Clone)]
 pub struct IngestorService {
-    graph: Graph,
-    storage: DispatchBackend,
-    analysis: Option<AnalysisService>,
+    pub graph: Graph,
+    pub storage: DispatchBackend,
+    pub analysis: Option<AnalysisService>,
+    pub status_cache: StatusCache,
 }
 
 impl IngestorService {
@@ -156,6 +158,7 @@ impl IngestorService {
             graph,
             storage: storage.into(),
             analysis,
+            status_cache: StatusCache::new(),
         }
     }
 
@@ -199,7 +202,14 @@ impl IngestorService {
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
 
         let result = fmt
-            .load(&self.graph, labels.into(), issuer, &result.digests, bytes)
+            .load(
+                &self.graph,
+                labels.into(),
+                issuer,
+                &result.digests,
+                bytes,
+                self.status_cache.clone(),
+            )
             .await?;
 
         if let Some(analysis) = &self.analysis {

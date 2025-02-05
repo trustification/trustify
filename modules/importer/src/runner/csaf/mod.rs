@@ -12,6 +12,7 @@ use crate::{
     },
     server::context::WalkerProgress,
 };
+use anyhow::anyhow;
 use csaf_walker::{
     metadata::MetadataRetriever,
     retrieve::RetrievingVisitor,
@@ -24,7 +25,10 @@ use reqwest::StatusCode;
 use std::collections::HashSet;
 use std::{sync::Arc, time::SystemTime};
 use tracing::instrument;
-use trustify_module_ingestor::{graph::Graph, service::IngestorService};
+use trustify_module_ingestor::{
+    graph::Graph,
+    service::{advisory::StatusCache, IngestorService},
+};
 use url::Url;
 use walker_common::fetcher::{Fetcher, FetcherOptions};
 
@@ -64,11 +68,19 @@ impl super::ImportRunner {
 
         // storage (called by validator)
 
-        let ingestor = IngestorService::new(
-            Graph::new(self.db.clone()),
-            self.storage.clone(),
-            self.analysis.clone(),
-        );
+        let mut status_cache = StatusCache::new();
+        status_cache
+            .load_statuses(&self.db)
+            .await
+            .map_err(|_| anyhow!("Failed to load statuses"))?;
+
+        let ingestor = IngestorService {
+            graph: Graph::new(self.db.clone()),
+            storage: self.storage.clone(),
+            analysis: self.analysis.clone(),
+            status_cache,
+        };
+
         let storage = storage::StorageVisitor {
             context,
             ingestor,

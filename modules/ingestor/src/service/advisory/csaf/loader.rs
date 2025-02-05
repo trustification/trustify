@@ -8,7 +8,10 @@ use crate::{
     },
     model::IngestResult,
     service::{
-        advisory::csaf::{util::gen_identifier, StatusCreator},
+        advisory::{
+            csaf::{util::gen_identifier, StatusCreator},
+            StatusCache,
+        },
         Error, Warnings,
     },
 };
@@ -88,6 +91,7 @@ impl<'g> CsafLoader<'g> {
         labels: impl Into<Labels> + Debug,
         csaf: Csaf,
         digests: &Digests,
+        status_cache: StatusCache,
     ) -> Result<IngestResult, Error> {
         let warnings = Warnings::new();
 
@@ -112,7 +116,7 @@ impl<'g> CsafLoader<'g> {
             .await?;
 
         for vuln in csaf.vulnerabilities.iter().flatten() {
-            self.ingest_vulnerability(&csaf, &advisory, vuln, &warnings, &tx)
+            self.ingest_vulnerability(&csaf, &advisory, vuln, &warnings, &tx, status_cache.clone())
                 .await?;
         }
 
@@ -138,6 +142,7 @@ impl<'g> CsafLoader<'g> {
         vulnerability: &Vulnerability,
         report: &dyn ReportSink,
         connection: &C,
+        status_cache: StatusCache,
     ) -> Result<(), Error> {
         let Some(cve_id) = &vulnerability.cve else {
             return Ok(());
@@ -168,8 +173,14 @@ impl<'g> CsafLoader<'g> {
             .await?;
 
         if let Some(product_status) = &vulnerability.product_status {
-            self.ingest_product_statuses(csaf, &advisory_vulnerability, product_status, connection)
-                .await?;
+            self.ingest_product_statuses(
+                csaf,
+                &advisory_vulnerability,
+                product_status,
+                connection,
+                status_cache,
+            )
+            .await?;
         }
 
         for score in vulnerability.scores.iter().flatten() {
@@ -200,6 +211,7 @@ impl<'g> CsafLoader<'g> {
         advisory_vulnerability: &AdvisoryVulnerabilityContext<'_>,
         product_status: &ProductStatus,
         connection: &C,
+        status_cache: StatusCache,
     ) -> Result<(), Error> {
         let mut creator = StatusCreator::new(
             csaf,
@@ -214,7 +226,7 @@ impl<'g> CsafLoader<'g> {
         creator.add_all(&product_status.known_not_affected, "not_affected");
         creator.add_all(&product_status.known_affected, "affected");
 
-        creator.create(self.graph, connection).await?;
+        creator.create(self.graph, connection, status_cache).await?;
 
         Ok(())
     }
@@ -238,7 +250,12 @@ mod test {
         let (csaf, digests): (Csaf, _) = document("csaf/CVE-2023-20862.json").await?;
         let loader = CsafLoader::new(&graph);
         loader
-            .load(("file", "CVE-2023-20862.json"), csaf, &digests)
+            .load(
+                ("file", "CVE-2023-20862.json"),
+                csaf,
+                &digests,
+                StatusCache::default(),
+            )
             .await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2023-20862", &ctx.db).await?;
@@ -312,7 +329,9 @@ mod test {
         let loader = CsafLoader::new(&graph);
 
         let (csaf, digests): (Csaf, _) = document("csaf/rhsa-2024_3666.json").await?;
-        loader.load(("source", "test"), csaf, &digests).await?;
+        loader
+            .load(("source", "test"), csaf, &digests, StatusCache::default())
+            .await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2024-23672", &ctx.db).await?;
         assert!(loaded_vulnerability.is_some());
@@ -353,7 +372,9 @@ mod test {
         let loader = CsafLoader::new(&graph);
 
         let (csaf, digests): (Csaf, _) = document("csaf/cve-2023-0044.json").await?;
-        loader.load(("source", "test"), csaf, &digests).await?;
+        loader
+            .load(("source", "test"), csaf, &digests, StatusCache::default())
+            .await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2023-0044", &ctx.db).await?;
         assert!(loaded_vulnerability.is_some());

@@ -4,14 +4,8 @@ use csaf::{
     Csaf,
 };
 use packageurl::PackageUrl;
-use sea_orm::ConnectionTrait;
-use sea_orm::EntityTrait;
 use std::collections::HashMap;
 use tracing::instrument;
-use trustify_entity::status;
-use uuid::Uuid;
-
-use crate::service::Error;
 
 #[instrument(skip(cache))]
 pub fn resolve_identifier<'a>(
@@ -173,50 +167,4 @@ pub fn gen_identifier(csaf: &Csaf) -> String {
     }
 
     format!("{}#{file_name}", csaf.document.publisher.namespace)
-}
-
-pub struct StatusCache {
-    pub cache: HashMap<String, Uuid>,
-}
-
-impl StatusCache {
-    pub fn new() -> Self {
-        Self {
-            cache: HashMap::new(),
-        }
-    }
-
-    pub async fn load_statuses(&mut self, connection: &impl ConnectionTrait) -> Result<(), Error> {
-        self.cache.clear();
-        let statuses = status::Entity::find().all(connection).await?;
-        statuses
-            .iter()
-            .map(|s| self.cache.insert(s.slug.clone(), s.id))
-            .for_each(drop);
-
-        // Print all key-value pairs in the cache
-        for (key, value) in self.cache.iter() {
-            println!("Key: {}, Value: {}", key, value);
-        }
-
-        Ok(())
-    }
-
-    pub async fn get_status_id(
-        &mut self,
-        status: &str,
-        connection: &impl ConnectionTrait,
-    ) -> Result<Uuid, Error> {
-        if let Some(s) = self.cache.get(status) {
-            return Ok(*s);
-        }
-
-        // If not found, reload the cache and check again
-        self.load_statuses(connection).await?;
-
-        self.cache
-            .get(status)
-            .cloned()
-            .ok_or_else(|| crate::graph::error::Error::InvalidStatus(status.to_string()).into())
-    }
 }

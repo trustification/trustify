@@ -8,7 +8,10 @@ use crate::{
         Graph,
     },
     service::{
-        advisory::csaf::{product_status::ProductStatus, util::ResolveProductIdCache},
+        advisory::{
+            csaf::{product_status::ProductStatus, util::ResolveProductIdCache},
+            StatusCache,
+        },
         Error,
     },
 };
@@ -23,8 +26,6 @@ use trustify_entity::{
     version_range, version_scheme::VersionScheme,
 };
 use uuid::Uuid;
-
-use super::util::StatusCache;
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 struct PurlStatus {
@@ -95,8 +96,8 @@ impl<'a> StatusCreator<'a> {
         &mut self,
         graph: &Graph,
         connection: &C,
+        mut status_cache: StatusCache,
     ) -> Result<(), Error> {
-        let mut status_cache = StatusCache::new();
         let mut product_status_models = Vec::new();
         let mut purls = PurlCreator::new();
         let mut cpes = CpeCreator::new();
@@ -325,7 +326,6 @@ impl<'a> StatusCreator<'a> {
         spec: VersionSpec,
         status: Uuid,
     ) {
-        println!("Ovaj {}", status);
         let purl_status = PurlStatus {
             cpe: product.cpe.clone(),
             purl: purl.clone(),
@@ -348,8 +348,6 @@ impl<'a> StatusCreator<'a> {
             let version_range_id = Uuid::now_v7();
             version_range.id = Set(version_range_id);
             version_ranges.push(version_range);
-
-            println!("Status {:}", ps.status);
 
             let package_status = purl_status::ActiveModel {
                 id: Default::default(),
