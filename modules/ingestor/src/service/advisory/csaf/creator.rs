@@ -13,21 +13,24 @@ use crate::{
     },
 };
 use csaf::{definitions::ProductIdT, Csaf};
-use sea_orm::{ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
-use std::collections::{hash_map::Entry, HashMap, HashSet};
+use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait};
+use std::collections::{HashMap, HashSet};
+use std::str::FromStr;
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, db::chunk::EntityChunkedIter, purl::Purl};
 use trustify_entity::{
-    organization, product, product_status, product_version_range, purl_status, status,
+    organization, product, product_status, product_version_range, purl_status, status::Status,
     version_range, version_scheme::VersionScheme,
 };
 use uuid::Uuid;
+
+use super::util::StatusCache;
 
 #[derive(Debug, Eq, Hash, PartialEq)]
 struct PurlStatus {
     cpe: Option<Cpe>,
     purl: Purl,
-    status: String,
+    status: Uuid,
     info: VersionInfo,
 }
 
@@ -87,24 +90,13 @@ impl<'a> StatusCreator<'a> {
         }
     }
 
-    async fn check_status(
-        status: &str,
-        connection: &impl ConnectionTrait,
-    ) -> Result<status::Model, Error> {
-        Ok(status::Entity::find()
-            .filter(status::Column::Slug.eq(status))
-            .one(connection)
-            .await?
-            .ok_or_else(|| crate::graph::error::Error::InvalidStatus(status.to_string()))?)
-    }
-
     #[instrument(skip_all, err(level=tracing::Level::INFO))]
     pub async fn create<C: ConnectionTrait>(
         &mut self,
         graph: &Graph,
         connection: &C,
     ) -> Result<(), Error> {
-        let mut checked = HashMap::new();
+        let mut status_cache = StatusCache::new();
         let mut product_status_models = Vec::new();
         let mut purls = PurlCreator::new();
         let mut cpes = CpeCreator::new();
@@ -117,16 +109,9 @@ impl<'a> StatusCreator<'a> {
         let product_statuses = self.products.clone();
 
         for product in product_statuses {
-            // ensure a correct status, and get id
-            if let Entry::Vacant(entry) = checked.entry(product.status) {
-                entry.insert(Self::check_status(product.status, connection).await?);
-            };
-
-            let status_id = checked.get(&product.status).ok_or_else(|| {
-                Error::Graph(crate::graph::error::Error::InvalidStatus(
-                    product.status.to_string(),
-                ))
-            })?;
+            let status_id = status_cache
+                .get_status_id(product.status, connection)
+                .await?;
 
             // There should be only a few organizations per document,
             // so simple caching should work here.
@@ -220,7 +205,7 @@ impl<'a> StatusCreator<'a> {
                         vulnerability_id: Set(self.vulnerability_id.clone()),
                         package: Set(package),
                         context_cpe_id: Set(product.cpe.as_ref().map(Cpe::uuid)),
-                        status_id: Set(status_id.id),
+                        status_id: Set(status_id),
                     };
 
                     if let Some(cpe) = &product.cpe {
@@ -239,13 +224,13 @@ impl<'a> StatusCreator<'a> {
                     Some(version) => VersionSpec::Exact(version.clone()),
                     None => VersionSpec::Range(Version::Unbounded, Version::Unbounded),
                 };
-                self.create_purl_status(&product, purl, scheme, spec, product.status.to_string());
+                self.create_purl_status(&product, purl, scheme, spec, status_id);
 
                 // For "fixed" status and Red Hat CSAF advisories,
                 // insert "affected" status up until this version.
                 // Let's keep this here for now as a special case. If more exceptions arise,
                 // we can refactor and provide support for vendor-specific parsing.
-                if product.status == "fixed" {
+                if let Ok(Status::Fixed) = Status::from_str(product.status) {
                     if let Some(cpe_vendor) = product
                         .cpe
                         .as_ref()
@@ -253,10 +238,6 @@ impl<'a> StatusCreator<'a> {
                     {
                         if cpe_vendor == "redhat" {
                             if let Some(version) = &purl.version {
-                                //TODO improve status checking as we call db way too often for this simple task
-                                if let Entry::Vacant(entry) = checked.entry("affected") {
-                                    entry.insert(Self::check_status("affected", connection).await?);
-                                };
                                 let spec = VersionSpec::Range(
                                     Version::Unbounded,
                                     Version::Exclusive(version.clone()),
@@ -266,7 +247,9 @@ impl<'a> StatusCreator<'a> {
                                     purl,
                                     scheme,
                                     spec,
-                                    "affected".to_string(),
+                                    status_cache
+                                        .get_status_id(&Status::Affected.to_string(), connection)
+                                        .await?,
                                 );
                             }
                         }
@@ -289,7 +272,7 @@ impl<'a> StatusCreator<'a> {
 
         // round two, status is checked, purls exist
 
-        self.create_status(connection, checked).await?;
+        self.create_status(connection).await?;
 
         for batch in &product_models.chunked() {
             product::Entity::insert_many(batch)
@@ -340,8 +323,9 @@ impl<'a> StatusCreator<'a> {
         purl: &Purl,
         scheme: VersionScheme,
         spec: VersionSpec,
-        status: String,
+        status: Uuid,
     ) {
+        println!("Ovaj {}", status);
         let purl_status = PurlStatus {
             cpe: product.cpe.clone(),
             purl: purl.clone(),
@@ -352,21 +336,11 @@ impl<'a> StatusCreator<'a> {
     }
 
     #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
-    async fn create_status(
-        &self,
-        connection: &impl ConnectionTrait,
-        checked: HashMap<&str, status::Model>,
-    ) -> Result<(), Error> {
+    async fn create_status(&self, connection: &impl ConnectionTrait) -> Result<(), Error> {
         let mut version_ranges = Vec::new();
         let mut package_statuses = Vec::new();
 
         for ps in &self.entries {
-            let status = checked.get(&ps.status.as_str()).ok_or_else(|| {
-                Error::Graph(crate::graph::error::Error::InvalidStatus(
-                    ps.status.to_string(),
-                ))
-            })?;
-
             let package_id = ps.purl.package_uuid();
             let cpe_id = ps.cpe.as_ref().map(Cpe::uuid);
 
@@ -375,11 +349,13 @@ impl<'a> StatusCreator<'a> {
             version_range.id = Set(version_range_id);
             version_ranges.push(version_range);
 
+            println!("Status {:}", ps.status);
+
             let package_status = purl_status::ActiveModel {
                 id: Default::default(),
                 advisory_id: Set(self.advisory_id),
                 vulnerability_id: Set(self.vulnerability_id.clone()),
-                status_id: Set(status.id),
+                status_id: Set(ps.status),
                 base_purl_id: Set(package_id),
                 context_cpe_id: Set(cpe_id),
                 version_range_id: Set(version_range_id),
