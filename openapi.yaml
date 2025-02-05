@@ -290,15 +290,13 @@ paths:
       - name: relationships
         in: query
         description: |-
-          A set of relationships to filter for.
+          A set of relationships to filter for, deserialized from a
+          comma-delimited string
 
           An empty set, the default, meaning all relationships.
         required: false
         schema:
-          type: array
-          items:
-            $ref: '#/components/schemas/Relationship'
-          uniqueItems: true
+          type: string
       responses:
         '200':
           description: Retrieved component(s) located by search
@@ -380,15 +378,13 @@ paths:
       - name: relationships
         in: query
         description: |-
-          A set of relationships to filter for.
+          A set of relationships to filter for, deserialized from a
+          comma-delimited string
 
           An empty set, the default, meaning all relationships.
         required: false
         schema:
-          type: array
-          items:
-            $ref: '#/components/schemas/Relationship'
-          uniqueItems: true
+          type: string
       responses:
         '200':
           description: Retrieved component(s) located by name, pURL, or CPE
