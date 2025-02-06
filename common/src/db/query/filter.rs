@@ -229,7 +229,7 @@ impl Display for Operator {
             LessThan => write!(f, "<"),
             LessThanOrEqual => write!(f, "<="),
             And => write!(f, "&"),
-            Or => write!(f, "!"),
+            Or => write!(f, "|"),
         }
     }
 }
