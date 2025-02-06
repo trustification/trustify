@@ -28,4 +28,5 @@ pub enum VersionScheme {
     Python,
     Maven,
     Golang,
+    Npm,
 }

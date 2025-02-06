@@ -20,7 +20,7 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         Some("urn:uuid:a5ddee00-4b86-498c-b7fd-b001b77479d1".to_string())
     );
 
-    // ingest the advisory
+    // ingest the advisories
     let pypi = ctx.ingest_document("osv/GHSA-45c4-8wx5-qw6w.json").await?;
 
     assert_eq!(pypi.document_id, Some("GHSA-45c4-8wx5-qw6w".to_string()));
@@ -35,13 +35,16 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
     let go = ctx.ingest_document("osv/GHSA-4h4p-553m-46qh.json").await?;
     assert_eq!(go.document_id, Some("GHSA-4h4p-553m-46qh".to_string()));
 
+    let npm = ctx.ingest_document("osv/GHSA-2ccf-ffrj-m4qw.json").await?;
+    assert_eq!(npm.document_id, Some("GHSA-2ccf-ffrj-m4qw".to_string()));
+
     let sbom1 = sbom
         .fetch_sbom_details(result1.id, vec![], &ctx.db)
         .await?
         .expect("SBOM details must be found");
     log::info!("SBOM1: {sbom1:?}");
 
-    assert_eq!(3, sbom1.advisories.len());
+    assert_eq!(4, sbom1.advisories.len());
     check_advisory(
         &sbom1,
         "GHSA-45c4-8wx5-qw6w",
@@ -59,6 +62,12 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         "GHSA-4h4p-553m-46qh",
         "CVE-2024-6886",
         Severity::Critical,
+    );
+    check_advisory(
+        &sbom1,
+        "GHSA-2ccf-ffrj-m4qw",
+        "CVE-2023-29020",
+        Severity::High,
     );
     Ok(())
 }
