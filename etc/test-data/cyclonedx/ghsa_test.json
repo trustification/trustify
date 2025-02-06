@@ -39,6 +39,13 @@
       "version": "1.1.0",
       "description": "1 vulnerability",
       "purl": "pkg:golang/code.gitea.io/gitea@1.1.0"
+    },
+    {
+      "type": "library",
+      "name": "passport",
+      "version": "2.1.0",
+      "description": "1 vulnerability",
+      "purl": "pkg:npm/%40fastify/passport@2.1.0"
     }
   ]
 }

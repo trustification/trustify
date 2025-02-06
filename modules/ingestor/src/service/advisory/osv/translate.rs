@@ -19,7 +19,7 @@ fn translate<'a>(ecosystem: &Ecosystem, name: &'a str) -> Option<PackageUrl<'a>>
     match ecosystem {
         Ecosystem::CRAN => PackageUrl::new("cran", name).ok(),
         Ecosystem::CratesIO => PackageUrl::new("cargo", name).ok(),
-        Ecosystem::Npm => PackageUrl::new("npm", name).ok(),
+        Ecosystem::Npm => split_name(name, "npm", "/"),
         Ecosystem::Maven(repo) => {
             let split = name.split(':').collect::<Vec<_>>();
             if split.len() == 2 {
@@ -39,26 +39,26 @@ fn translate<'a>(ecosystem: &Ecosystem, name: &'a str) -> Option<PackageUrl<'a>>
             }
         }
         Ecosystem::PyPI => PackageUrl::new("pypi", name).ok(),
-        Ecosystem::Go => {
-            let ty = "golang";
-            let separator = "/";
-            let split = name.split(separator).collect::<Vec<_>>();
-            match split.len() {
-                0 => None,
-                1 => PackageUrl::new(ty, split[0]).ok(),
-                _ => {
-                    let namespace = split[0];
-                    let name = split[1..].join(separator);
-                    PackageUrl::new(ty, name)
-                        .map(|mut purl| {
-                            purl.with_namespace(namespace);
-                            purl
-                        })
-                        .ok()
-                }
-            }
-        }
+        Ecosystem::Go => split_name(name, "golang", "/"),
         _ => None,
+    }
+}
+
+fn split_name<'a>(name: &'a str, ty: &'a str, separator: &str) -> Option<PackageUrl<'a>> {
+    let split = name.split(separator).collect::<Vec<_>>();
+    match split.len() {
+        0 => None,
+        1 => PackageUrl::new(ty, split[0]).ok(),
+        _ => {
+            let namespace = split[0];
+            let name = split[1..].join(separator);
+            PackageUrl::new(ty, name)
+                .map(|mut purl| {
+                    purl.with_namespace(namespace);
+                    purl
+                })
+                .ok()
+        }
     }
 }
 
@@ -90,6 +90,11 @@ mod test {
         Ecosystem::Go,
         "github.com/minio/minio",
         Some("pkg:golang/github.com/minio/minio")
+    )]
+    #[case(
+        Ecosystem::Npm,
+        "@fastify/passport",
+        Some("pkg:npm/%40fastify/passport")
     )]
     fn test_translate(
         #[case] ecosystem: Ecosystem,
