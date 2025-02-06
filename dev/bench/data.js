@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738773135104,
+  "lastUpdate": 1738831831703,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3561,6 +3561,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/d9cd95618710103c2a389a2daf1074457c3f586f"
         },
         "date": 1738773133697,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "110c7db68b9e475aee56d4861dd0faeff07af914",
+          "message": "feat: add custom metrics, and an initial cache size metric",
+          "timestamp": "2025-02-06T08:26:47Z",
+          "tree_id": "7e080b6a8c588c4fa14b11b7caf9bc07078c0b23",
+          "url": "https://github.com/trustification/trustify/commit/110c7db68b9e475aee56d4861dd0faeff07af914"
+        },
+        "date": 1738831830976,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
