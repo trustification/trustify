@@ -20,6 +20,12 @@ Trustify with traces:
 OTEL_TRACES_SAMPLER_ARG=1 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" cargo run --bin trustd api --db-password trustify --auth-disabled --tracing enabled
 ```
 
+Importer with traces:
+
+```shell
+RUST_LOG=info OTEL_TRACES_SAMPLER_ARG=1 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" cargo run --bin trustd importer --db-port 5432 --tracing enabled
+```
+
 Access Trustify at [localhost:8080](http://localhost:8080) and analyze the traces using the [Jaeger UI](http://localhost:16686/)
 
 ## Gathering metrics at development time
