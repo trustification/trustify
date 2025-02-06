@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738831831703,
+  "lastUpdate": 1738832357272,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3590,6 +3590,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/110c7db68b9e475aee56d4861dd0faeff07af914"
         },
         "date": 1738831830976,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "2582866+carlosthe19916@users.noreply.github.com",
+            "name": "Carlos Feria",
+            "username": "carlosthe19916"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "a0746067808c9931a6c49b3a00f73416dcc1605c",
+          "message": "docs: RELEASE.md add note about branches for trustify-ui",
+          "timestamp": "2025-02-06T08:29:02Z",
+          "tree_id": "f26030f3ef821b24106001143f35182fcaef78ca",
+          "url": "https://github.com/trustification/trustify/commit/a0746067808c9931a6c49b3a00f73416dcc1605c"
+        },
+        "date": 1738832356633,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
