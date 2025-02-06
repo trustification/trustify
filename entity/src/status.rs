@@ -38,7 +38,7 @@ impl ActiveModelBehavior for ActiveModel {}
     Serialize,
     Deserialize,
 )]
-#[strum(serialize_all = "camelCase")]
+#[strum(serialize_all = "snake_case")]
 pub enum Status {
     Affected,
     Fixed,
