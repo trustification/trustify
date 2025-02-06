@@ -19,7 +19,7 @@ use opentelemetry::global;
 use petgraph::{
     graph::{Graph, NodeIndex},
     prelude::EdgeRef,
-    visit::{IntoNeighbors, IntoNodeIdentifiers, VisitMap, Visitable},
+    visit::{IntoNodeIdentifiers, VisitMap, Visitable},
     Direction,
 };
 use sea_orm::{prelude::ConnectionTrait, EntityOrSelect, EntityTrait, QueryOrder};
@@ -208,75 +208,28 @@ impl AnalysisService {
     }
 
     /// Collect nodes from the graph
-    ///
-    /// Similar to [`Self::query_graphs`], but manages the state of collecting.
-    #[instrument(skip(self, init, collector))]
-    fn collect_graph<'a, T, I, C>(
+    #[instrument(skip(self, create))]
+    fn collect_graph<'a, C>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
         graphs: &[(String, Arc<PackageGraph>)],
-        init: I,
-        collector: C,
-    ) -> T
+        create: C,
+    ) -> Vec<Node>
     where
-        I: FnOnce() -> T,
-        C: Fn(&mut T, &Graph<PackageNode, Relationship>, NodeIndex, &PackageNode, &mut FixedBitSet),
-    {
-        let mut value = init();
-
-        self.query_graphs(query, graphs, |graph, index, node, discovered| {
-            collector(&mut value, graph, index, node, discovered);
-        });
-
-        value
-    }
-
-    /// Traverse the graph, call the function for every matching node.
-    #[instrument(skip(self, f))]
-    fn query_graphs<'a, F>(
-        &self,
-        query: impl Into<GraphQuery<'a>> + Debug,
-        graphs: &[(String, Arc<PackageGraph>)],
-        mut f: F,
-    ) where
-        F: FnMut(&Graph<PackageNode, Relationship>, NodeIndex, &PackageNode, &mut FixedBitSet),
+        C: Fn(&Graph<PackageNode, Relationship>, NodeIndex, &PackageNode) -> Node,
     {
         let query = query.into();
-        for (distinct_sbom_id, graph) in graphs {
-            self.query_graph(distinct_sbom_id, graph.as_ref(), query, &mut f);
-        }
-    }
-
-    #[instrument(skip(self, graph, f))]
-    fn query_graph<F>(&self, sbom_id: &str, graph: &PackageGraph, query: GraphQuery<'_>, f: &mut F)
-    where
-        F: FnMut(&Graph<PackageNode, Relationship>, NodeIndex, &PackageNode, &mut FixedBitSet),
-    {
-        if let Some((start, end)) = detect_cycle(graph) {
-            // FIXME: we need a better strategy handling such errors
-            let start = graph.node_weight(start);
-            let end = graph.node_weight(end);
-            log::warn!(
-                "analysis graph of sbom {} has circular references (detected: {start:?} -> {end:?})!",
-                sbom_id
-            );
-            return;
-        }
-
-        let mut visited = HashSet::new();
-        let mut discovered = graph.visit_map();
-
-        // Iterate over matching node indices and process them directly
-        graph
-            .node_indices()
-            .filter(|&i| Self::filter(graph, &query, i))
-            .for_each(|node_index| {
-                if visited.insert(node_index) {
-                    if let Some(find_match_package_node) = graph.node_weight(node_index) {
-                        f(graph, node_index, find_match_package_node, &mut discovered);
-                    }
-                }
-            });
+        graphs
+            .iter()
+            .filter(|(sbom_id, graph)| acyclic(sbom_id, graph))
+            .flat_map(|(_, graph)| {
+                graph
+                    .node_indices()
+                    .filter(|&i| Self::filter(graph, &query, i))
+                    .filter_map(|i| graph.node_weight(i).map(|w| (i, w)))
+                    .map(|(node_index, package_node)| create(graph, node_index, package_node))
+            })
+            .collect()
     }
 
     #[instrument(skip(self))]
@@ -288,38 +241,33 @@ impl AnalysisService {
     ) -> Vec<Node> {
         let relationships = options.relationships;
 
-        self.collect_graph(
-            query,
-            graphs,
-            Vec::new,
-            |components, graph, node_index, node, _| {
-                log::debug!(
-                    "Discovered node - sbom: {}, node: {}",
-                    node.sbom_id,
-                    node.node_id
-                );
-                components.push(Node {
-                    base: node.into(),
-                    relationship: None,
-                    ancestors: collect(
-                        graph,
-                        node_index,
-                        Direction::Incoming,
-                        options.ancestors,
-                        &mut graph.visit_map(),
-                        &relationships,
-                    ),
-                    descendants: collect(
-                        graph,
-                        node_index,
-                        Direction::Outgoing,
-                        options.descendants,
-                        &mut graph.visit_map(),
-                        &relationships,
-                    ),
-                });
-            },
-        )
+        self.collect_graph(query, graphs, |graph, node_index, node| {
+            log::debug!(
+                "Discovered node - sbom: {}, node: {}",
+                node.sbom_id,
+                node.node_id
+            );
+            Node {
+                base: node.into(),
+                relationship: None,
+                ancestors: collect(
+                    graph,
+                    node_index,
+                    Direction::Incoming,
+                    options.ancestors,
+                    &mut graph.visit_map(),
+                    &relationships,
+                ),
+                descendants: collect(
+                    graph,
+                    node_index,
+                    Direction::Outgoing,
+                    options.descendants,
+                    &mut graph.visit_map(),
+                    &relationships,
+                ),
+            }
+        })
     }
 
     /// locate components, retrieve dependency information, from a single SBOM
@@ -366,51 +314,43 @@ impl AnalysisService {
         match query {
             GraphQuery::Component(ComponentReference::Id(component_id)) => graph
                 .node_weight(i)
-                .map(|node| node.node_id.eq(component_id))
-                .unwrap_or(false),
+                .is_some_and(|node| node.node_id.eq(component_id)),
             GraphQuery::Component(ComponentReference::Name(component_name)) => graph
                 .node_weight(i)
-                .map(|node| node.name.eq(component_name))
-                .unwrap_or(false),
-            GraphQuery::Component(ComponentReference::Purl(component_purl)) => {
-                if let Some(node) = graph.node_weight(i) {
-                    node.purl.contains(component_purl)
-                } else {
-                    false // Return false if the node does not exist
-                }
-            }
-            GraphQuery::Component(ComponentReference::Cpe(component_cpe)) => {
-                if let Some(node) = graph.node_weight(i) {
-                    node.cpe.contains(component_cpe)
-                } else {
-                    false // Return false if the node does not exist
-                }
-            }
-            GraphQuery::Query(query) => graph
+                .is_some_and(|node| node.name.eq(component_name)),
+            GraphQuery::Component(ComponentReference::Purl(purl)) => graph
                 .node_weight(i)
-                .map(|node| {
-                    query.apply(&HashMap::from([
-                        ("sbom_id", Value::String(&node.sbom_id)),
-                        ("node_id", Value::String(&node.node_id)),
-                        ("name", Value::String(&node.name)),
-                        ("version", Value::String(&node.version)),
-                    ]))
-                })
-                .unwrap_or(false),
+                .is_some_and(|node| node.purl.contains(purl)),
+            GraphQuery::Component(ComponentReference::Cpe(cpe)) => graph
+                .node_weight(i)
+                .is_some_and(|node| node.cpe.contains(cpe)),
+            GraphQuery::Query(query) => graph.node_weight(i).is_some_and(|node| {
+                query.apply(&HashMap::from([
+                    ("sbom_id", Value::String(&node.sbom_id)),
+                    ("node_id", Value::String(&node.node_id)),
+                    ("name", Value::String(&node.name)),
+                    ("version", Value::String(&node.version)),
+                ]))
+            }),
         }
     }
 }
 
-/// A custom way to detect cycles, but get the information which node triggered it
-fn detect_cycle<G>(g: G) -> Option<(G::NodeId, G::NodeId)>
-where
-    G: IntoNodeIdentifiers + IntoNeighbors + Visitable,
-{
+fn acyclic(id: &str, graph: &Arc<PackageGraph>) -> bool {
     use petgraph::visit::{depth_first_search, DfsEvent};
-
-    depth_first_search(g, g.node_identifiers(), |event| match event {
+    let g = graph.as_ref();
+    let result = depth_first_search(g, g.node_identifiers(), |event| match event {
         DfsEvent::BackEdge(source, target) => Err((source, target)),
         _ => Ok(()),
     })
-    .err()
+    .err();
+    if let Some((start, end)) = result {
+        // FIXME: we need a better strategy handling such errors
+        let start = graph.node_weight(start);
+        let end = graph.node_weight(end);
+        log::warn!(
+            "analysis graph of sbom {id} has circular references (detected: {start:?} -> {end:?})!",
+        );
+    }
+    result.is_none()
 }
