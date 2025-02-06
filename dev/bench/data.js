@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738851040063,
+  "lastUpdate": 1738869791899,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3677,6 +3677,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/c84890bdaa494e81a3a3c414e5097a5089dd9fc8"
         },
         "date": 1738851039368,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "b6ea31654a8165bb374053378447988b52ba35ce",
+          "message": "chore: Remove actix_web_prom from RUST_LOG",
+          "timestamp": "2025-02-06T14:15:53-03:00",
+          "tree_id": "a7af097c7bdd394c89b66b4b44ad9d8c293e4704",
+          "url": "https://github.com/trustification/trustify/commit/b6ea31654a8165bb374053378447988b52ba35ce"
+        },
+        "date": 1738869791087,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
