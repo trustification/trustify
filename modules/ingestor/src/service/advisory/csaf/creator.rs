@@ -218,7 +218,7 @@ impl<'a> StatusCreator<'a> {
             }
 
             for purl in &product.purls {
-                let scheme = Self::from_purl_version_scheme(purl);
+                let scheme = VersionScheme::from(purl.ty.as_str());
 
                 // Insert purl status
                 let spec = match &purl.version {
@@ -305,17 +305,6 @@ impl<'a> StatusCreator<'a> {
         // done
 
         Ok(())
-    }
-
-    fn from_purl_version_scheme(purl: &Purl) -> VersionScheme {
-        match purl.ty.as_str() {
-            "maven" => VersionScheme::Maven,
-            "npm" => VersionScheme::Semver,
-            "python" => VersionScheme::Python,
-            "rpm" => VersionScheme::Rpm,
-            "semver" => VersionScheme::Semver,
-            _ => VersionScheme::Generic,
-        }
     }
 
     fn create_purl_status(
