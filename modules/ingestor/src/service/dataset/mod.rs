@@ -21,8 +21,6 @@ use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
 use trustify_module_storage::{service::dispatch::DispatchBackend, service::StorageBackend};
 
-use super::advisory::StatusCache;
-
 pub struct DatasetLoader<'g> {
     graph: &'g Graph,
     storage: &'g DispatchBackend,
@@ -44,9 +42,6 @@ impl<'g> DatasetLoader<'g> {
         let mut results = BTreeMap::new();
 
         let mut zip = zip::ZipArchive::new(Cursor::new(buffer))?;
-
-        let mut status_cache = StatusCache::new();
-        status_cache.load_statuses(&self.graph.db).await?;
 
         for i in 0..zip.len() {
             let mut file = zip.by_index(i)?;
@@ -111,20 +106,11 @@ impl<'g> DatasetLoader<'g> {
                             .await
                             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
 
-                        let sc = status_cache.clone();
-
                         // We need to box it, to work around async recursion limits
                         let result = Box::pin({
                             async move {
                                 format
-                                    .load(
-                                        self.graph,
-                                        labels,
-                                        None,
-                                        &Digests::digest(&data),
-                                        &data,
-                                        sc,
-                                    )
+                                    .load(self.graph, labels, None, &Digests::digest(&data), &data)
                                     .await
                             }
                         })
