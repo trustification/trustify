@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738832357272,
+  "lastUpdate": 1738836244308,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3619,6 +3619,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/a0746067808c9931a6c49b3a00f73416dcc1605c"
         },
         "date": 1738832356633,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": false,
+          "id": "8c8c3672f29cdb5d898de53533b07a1364b901ef",
+          "message": "create some perf indexes - note we may drop the ones we add to sbom_node and sbom_package as final db perf will adjust column statistics",
+          "timestamp": "2025-02-06T10:02:40+01:00",
+          "tree_id": "569f056860c44639a105564c2a37cd4d0e03a88d",
+          "url": "https://github.com/trustification/trustify/commit/8c8c3672f29cdb5d898de53533b07a1364b901ef"
+        },
+        "date": 1738836242909,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
