@@ -8,10 +8,7 @@ use crate::{
         Graph,
     },
     service::{
-        advisory::{
-            csaf::{product_status::ProductStatus, util::ResolveProductIdCache},
-            StatusCache,
-        },
+        advisory::csaf::{product_status::ProductStatus, util::ResolveProductIdCache},
         Error,
     },
 };
@@ -96,7 +93,6 @@ impl<'a> StatusCreator<'a> {
         &mut self,
         graph: &Graph,
         connection: &C,
-        mut status_cache: StatusCache,
     ) -> Result<(), Error> {
         let mut product_status_models = Vec::new();
         let mut purls = PurlCreator::new();
@@ -108,11 +104,10 @@ impl<'a> StatusCreator<'a> {
         let mut product_version_ranges = Vec::new();
 
         let product_statuses = self.products.clone();
+        let mut db_context = graph.db_context.lock().await;
 
         for product in product_statuses {
-            let status_id = status_cache
-                .get_status_id(product.status, connection)
-                .await?;
+            let status_id = db_context.get_status_id(product.status, connection).await?;
 
             // There should be only a few organizations per document,
             // so simple caching should work here.
@@ -248,7 +243,7 @@ impl<'a> StatusCreator<'a> {
                                     purl,
                                     scheme,
                                     spec,
-                                    status_cache
+                                    db_context
                                         .get_status_id(&Status::Affected.to_string(), connection)
                                         .await?,
                                 );

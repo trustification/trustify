@@ -1,5 +1,6 @@
 pub mod advisory;
 pub mod cpe;
+pub mod db_context;
 pub mod error;
 pub mod organization;
 pub mod product;
@@ -7,13 +8,17 @@ pub mod purl;
 pub mod sbom;
 pub mod vulnerability;
 
+use db_context::DbContext;
 use sea_orm::DbErr;
 use std::fmt::Debug;
 use std::ops::{Deref, DerefMut};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[derive(Debug, Clone)]
 pub struct Graph {
     pub(crate) db: trustify_common::db::Database,
+    pub(crate) db_context: Arc<Mutex<DbContext>>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -26,7 +31,10 @@ pub enum Error<E: Send> {
 
 impl Graph {
     pub fn new(db: trustify_common::db::Database) -> Self {
-        Self { db }
+        Self {
+            db,
+            db_context: Arc::new(Mutex::new(DbContext::new())),
+        }
     }
 }
 

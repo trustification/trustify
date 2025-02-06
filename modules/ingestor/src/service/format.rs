@@ -22,8 +22,6 @@ use tracing::instrument;
 use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
 
-use super::advisory::StatusCache;
-
 #[derive(Clone, Copy, Debug, strum::EnumString)]
 #[strum(serialize_all = "camelCase")]
 pub enum Format {
@@ -50,14 +48,13 @@ impl Format {
         issuer: Option<String>,
         digests: &Digests,
         buffer: &[u8],
-        status_cache: StatusCache,
     ) -> Result<IngestResult, Error> {
         match self {
             Format::CSAF => {
                 // issuer is internal as publisher of the document.
                 let loader = CsafLoader::new(graph);
                 let csaf: Csaf = serde_json::from_slice(buffer)?;
-                loader.load(labels, csaf, digests, status_cache).await
+                loader.load(labels, csaf, digests).await
             }
             Format::OSV => {
                 // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
