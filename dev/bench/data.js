@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738836244308,
+  "lastUpdate": 1738851040063,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3648,6 +3648,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/8c8c3672f29cdb5d898de53533b07a1364b901ef"
         },
         "date": 1738836242909,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "c84890bdaa494e81a3a3c414e5097a5089dd9fc8",
+          "message": "TC-2223 OSV GHSA - Ecosystem npm\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-02-06T11:48:08+01:00",
+          "tree_id": "1ba08297ebf81797702415c0dfd1b43a2c3b1189",
+          "url": "https://github.com/trustification/trustify/commit/c84890bdaa494e81a3a3c414e5097a5089dd9fc8"
+        },
+        "date": 1738851039368,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
