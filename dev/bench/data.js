@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738920923114,
+  "lastUpdate": 1738924130163,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3735,6 +3735,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/0e2d39596ec4957aff19d6921eee8202440022bd"
         },
         "date": 1738920922754,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "c6fc1fdb08c74a0931ce8994d9b9d0c710cfacbf",
+          "message": "TC-2224 OSV GHSA - Ecosystem Packagist (PHP)\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-02-07T10:09:50Z",
+          "tree_id": "3187bc5c907ef19dc6d01f8b92513588da94b659",
+          "url": "https://github.com/trustification/trustify/commit/c6fc1fdb08c74a0931ce8994d9b9d0c710cfacbf"
+        },
+        "date": 1738924128906,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
