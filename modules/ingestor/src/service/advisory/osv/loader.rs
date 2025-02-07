@@ -213,6 +213,16 @@ impl<'g> OsvLoader<'g> {
                                 )
                                 .await?;
                             }
+                            (RangeType::Ecosystem, Ecosystem::NuGet) => {
+                                create_package_status(
+                                    &advisory_vuln,
+                                    &purl,
+                                    range,
+                                    &VersionScheme::NuGet,
+                                    &tx,
+                                )
+                                .await?;
+                            }
                             (_, _) => {
                                 create_package_status_versions(
                                     &advisory_vuln,
