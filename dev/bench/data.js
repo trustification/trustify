@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738941946646,
+  "lastUpdate": 1738946003269,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3856,6 +3856,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "726d855bf113042e8a0ee046dccf46b894293156",
+          "message": "docs: add example for attaching to an RDS DB",
+          "timestamp": "2025-02-07T16:56:07+01:00",
+          "tree_id": "6b23e73eb557f5cfc94c460e3146e9f18faac20a",
+          "url": "https://github.com/trustification/trustify/commit/726d855bf113042e8a0ee046dccf46b894293156"
+        },
+        "date": 1738946002002,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 6,
             "unit": "s"
           }
         ]
