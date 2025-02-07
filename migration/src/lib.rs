@@ -108,6 +108,7 @@ mod m0000880_org_name_index;
 mod m0000890_create_sbom_external_node;
 mod m0000900_perf_indexes;
 mod m0000910_insert_packagist_version_scheme;
+mod m0000920_perf_indexes;
 
 #[cfg(feature = "ai")]
 pub mod ai;
@@ -225,6 +226,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000890_create_sbom_external_node::Migration),
             Box::new(m0000900_perf_indexes::Migration),
             Box::new(m0000910_insert_packagist_version_scheme::Migration),
+            Box::new(m0000920_perf_indexes::Migration),
         ]
     }
 }
