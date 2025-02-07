@@ -40,6 +40,7 @@ fn translate<'a>(ecosystem: &Ecosystem, name: &'a str) -> Option<PackageUrl<'a>>
         }
         Ecosystem::PyPI => PackageUrl::new("pypi", name).ok(),
         Ecosystem::Go => split_name(name, "golang", "/"),
+        Ecosystem::Packagist => split_name(name, "composer", "/"),
         _ => None,
     }
 }
@@ -95,6 +96,11 @@ mod test {
         Ecosystem::Npm,
         "@fastify/passport",
         Some("pkg:npm/%40fastify/passport")
+    )]
+    #[case(
+        Ecosystem::Packagist,
+        "typo3/cms-backend",
+        Some("pkg:composer/typo3/cms-backend")
     )]
     fn test_translate(
         #[case] ecosystem: Ecosystem,

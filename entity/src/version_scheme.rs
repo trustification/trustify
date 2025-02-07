@@ -29,4 +29,5 @@ pub enum VersionScheme {
     Maven,
     Golang,
     Npm,
+    Packagist,
 }
