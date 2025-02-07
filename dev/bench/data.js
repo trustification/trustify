@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738927016521,
+  "lastUpdate": 1738938540490,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3793,6 +3793,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/e42de02117be1e896016d5a46671c15a21e2b743"
         },
         "date": 1738927015697,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "f9472119ecef57a3de830c3ee791ce5cd1bb7714",
+          "message": "docs: update RDS recommendations",
+          "timestamp": "2025-02-07T13:42:46Z",
+          "tree_id": "5a0fa638f9edbf0e117205adbb3e57da2bff1a52",
+          "url": "https://github.com/trustification/trustify/commit/f9472119ecef57a3de830c3ee791ce5cd1bb7714"
+        },
+        "date": 1738938539828,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
