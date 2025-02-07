@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: psql
+spec:
+  containers:
+    - name: run
+      image: docker.io/library/postgres:17
+      stdin: true
+      tty: true
+      command:
+        - psql
+      env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-credentials
+              key: db.password
+        - name: PGUSER
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-credentials
+              key: db.user
+        - name: PGDATABASE
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-credentials
+              key: db.name
+        - name: PGPORT
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-credentials
+              key: db.port
+        - name: PGHOST
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-credentials
+              key: db.host
