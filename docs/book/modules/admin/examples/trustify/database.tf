@@ -109,8 +109,8 @@ resource "aws_db_instance" "trustify" {
 
   apply_immediately = true
 
-  allocated_storage     = 10
-  max_allocated_storage = 100
+  allocated_storage     = 250
+  max_allocated_storage = 1000
 
   db_name             = "postgres"
   engine              = "postgres"
