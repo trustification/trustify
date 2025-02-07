@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738946003269,
+  "lastUpdate": 1738962398346,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3880,6 +3880,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/726d855bf113042e8a0ee046dccf46b894293156"
         },
         "date": 1738946002002,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 6,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "e448dc63802eb28964404cc25019dd2f1a2b845e",
+          "message": "Use strum for the Relationship string deserialization\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2025-02-07T20:48:20Z",
+          "tree_id": "3145fb38f2f6521cf72b8cc34124dc709cae91d4",
+          "url": "https://github.com/trustification/trustify/commit/e448dc63802eb28964404cc25019dd2f1a2b845e"
+        },
+        "date": 1738962397020,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
