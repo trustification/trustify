@@ -17,9 +17,9 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(
     rs_type = "String",
     db_type = "String(StringLen::None)",
-    rename_all = "camelCase"
+    rename_all = "lowercase"
 )]
-#[strum(serialize_all = "camelCase")]
+#[strum(serialize_all = "lowercase")]
 pub enum VersionScheme {
     Generic,
     Git,
@@ -30,4 +30,5 @@ pub enum VersionScheme {
     Golang,
     Npm,
     Packagist,
+    NuGet,
 }

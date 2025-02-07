@@ -41,6 +41,7 @@ fn translate<'a>(ecosystem: &Ecosystem, name: &'a str) -> Option<PackageUrl<'a>>
         Ecosystem::PyPI => PackageUrl::new("pypi", name).ok(),
         Ecosystem::Go => split_name(name, "golang", "/"),
         Ecosystem::Packagist => split_name(name, "composer", "/"),
+        Ecosystem::NuGet => PackageUrl::new("nuget", name).ok(),
         _ => None,
     }
 }
@@ -102,6 +103,12 @@ mod test {
         "typo3/cms-backend",
         Some("pkg:composer/typo3/cms-backend")
     )]
+    #[case(
+        Ecosystem::NuGet,
+        "Microsoft.NETCore.App.Runtime.win-x86",
+        Some("pkg:nuget/Microsoft.NETCore.App.Runtime.win-x86")
+    )]
+    #[case(Ecosystem::NuGet, "PowerShell", Some("pkg:nuget/PowerShell"))]
     fn test_translate(
         #[case] ecosystem: Ecosystem,
         #[case] name: &str,
