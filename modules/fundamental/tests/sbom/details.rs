@@ -54,6 +54,7 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
     log::info!("SBOM1: {sbom1:?}");
 
     assert_eq!(6, sbom1.advisories.len());
+
     check_advisory(
         &sbom1,
         "GHSA-45c4-8wx5-qw6w",
