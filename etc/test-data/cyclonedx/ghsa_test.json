@@ -46,6 +46,13 @@
       "version": "2.1.0",
       "description": "1 vulnerability",
       "purl": "pkg:npm/%40fastify/passport@2.1.0"
+    },
+    {
+      "type": "library",
+      "name": "cms-backend",
+      "version": "4.2.2",
+      "description": "1 vulnerability",
+      "purl": "pkg:composer/typo3/cms-backend@4.2.4"
     }
   ]
 }
