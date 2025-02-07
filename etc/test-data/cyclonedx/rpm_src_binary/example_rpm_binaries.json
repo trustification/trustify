@@ -1,0 +1,1129 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "rpm-manifest-generator",
+          "type": "application",
+          "version": "0.0.1",
+          "manufacturer": {
+            "url": [
+              "https://www.redhat.com"
+            ],
+            "name": "Red Hat"
+          }
+        }
+      ]
+    },
+    "licenses": [
+      {
+        "expression": "NOASSERTION"
+      }
+    ],
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
+    "component": {
+      "name": "iperf3",
+      "purl": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-ppc64le-appstream-e4s-source-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c1850436c0547c7ee0f45b75f513aa1348e289d84b2ebcc22221f59189106f4f"
+        }
+      ],
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-ppc64le-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-x86_64-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-aarch64-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-s390x-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-x86_64-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-ppc64le-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-aarch64-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-s390x-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-x86_64-appstream-aus-source-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "ac6fa5161911081347bf075d6f79e57a"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "ea57ccf24bda70807df1da06ddba19f087d4a885c975319ad065e395e63f063b"
+        }
+      ],
+      "description": "Iperf is a tool to measure maximum TCP bandwidth, allowing the tuning of various parameters and UDP characteristics. Iperf reports bandwidth, delay jitter, data-gram loss."
+    },
+    "timestamp": "2025-01-20T15:11:16Z"
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "iperf3",
+      "purl": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-ppc64le-appstream-e4s-source-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c1850436c0547c7ee0f45b75f513aa1348e289d84b2ebcc22221f59189106f4f"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-ppc64le-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-x86_64-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-aarch64-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-s390x-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-x86_64-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-ppc64le-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-aarch64-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-s390x-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src&repository_id=rhel-9-for-x86_64-appstream-aus-source-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "ac6fa5161911081347bf075d6f79e57a"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "ea57ccf24bda70807df1da06ddba19f087d4a885c975319ad065e395e63f063b"
+        }
+      ],
+      "description": "Iperf is a tool to measure maximum TCP bandwidth, allowing the tuning of various parameters and UDP characteristics. Iperf reports bandwidth, delay jitter, data-gram loss.",
+      "externalReferences": [
+        {
+          "url": "https://brewweb.engineering.redhat.com/brew/buildinfo?buildID=3472180",
+          "type": "build-system",
+          "comment": "brew-build-id"
+        }
+      ]
+    },
+    {
+      "name": "iperf3-debuginfo",
+      "purl": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=aarch64&repository_id=rhel-9-for-aarch64-appstream-e4s-debug-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b3f9a7485c4f915a00e5934a5482559b8a5933067222d294f1669dd8256d92ce"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=aarch64",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=aarch64&repository_id=rhel-9-for-aarch64-appstream-e4s-debug-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=aarch64&repository_id=rhel-9-for-aarch64-appstream-eus-debug-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "c5022e97dfc7b5181aa8b2f568d11756"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "1a2e37b24a56dee41d12704233804b57fb0ed7d3d3d548afcdd2549285c0c519"
+        }
+      ],
+      "description": "This package provides debug information for package iperf3. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "iperf3-devel",
+      "purl": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=aarch64&repository_id=rhel-9-for-aarch64-appstream-eus-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "280f8e0601229eefb388e3f248f3e8b640d13bb1c1b0f8aa659a6f7f7deebdd6"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=aarch64",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=aarch64&repository_id=rhel-9-for-aarch64-appstream-eus-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=aarch64&repository_id=rhel-9-for-aarch64-appstream-e4s-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "802ceb4002a7b6f3cc11955f69925071"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "38215091bc81797ef9dde044671a890e09b36f7350838357f8f198a413ac9af5"
+        }
+      ],
+      "description": "The iperf3-devel package contains libraries and header files for developing applications that use iperf3."
+    },
+    {
+      "name": "iperf3",
+      "purl": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=aarch64&repository_id=rhel-9-for-aarch64-appstream-e4s-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "39ab943a581b21425eb6047ea30785ff441cf7d91172db87bfeefb0841927e52"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=aarch64",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=aarch64&repository_id=rhel-9-for-aarch64-appstream-e4s-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=aarch64&repository_id=rhel-9-for-aarch64-appstream-eus-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "a655d56263dfab5fe72380514ebc4fb8"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "8ae8355dbdf0b45b7da6b198ac3903b0d8f7849c459c52926032184ab390aa58"
+        }
+      ],
+      "description": "Iperf is a tool to measure maximum TCP bandwidth, allowing the tuning of various parameters and UDP characteristics. Iperf reports bandwidth, delay jitter, data-gram loss."
+    },
+    {
+      "name": "iperf3-debugsource",
+      "purl": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=aarch64&repository_id=rhel-9-for-aarch64-appstream-e4s-source-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "74661119b81438eb345c36506290fc27f469baacdaa8fb767e6eef0fdca9b199"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=aarch64",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=aarch64&repository_id=rhel-9-for-aarch64-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=aarch64&repository_id=rhel-9-for-aarch64-appstream-eus-source-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "40b2ecdb5732e9d80503fcbce2544fbc"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "72e47f434e8f9ad599b28b0249ddae4b0a0339d58060a2e815d5ae84f8bb6eed"
+        }
+      ],
+      "description": "This package provides debug sources for package iperf3. Debug sources are useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "iperf3",
+      "purl": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=ppc64le&repository_id=rhel-9-for-ppc64le-appstream-eus-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "57b5d90c2e42dfc69f457b7b11d7d929d6107ea1748a99a15d6d70c3e9e58d0c"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=ppc64le",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=ppc64le&repository_id=rhel-9-for-ppc64le-appstream-eus-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=ppc64le&repository_id=rhel-9-for-ppc64le-appstream-e4s-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "3dadeba2016002c7a241836ef01b3335"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "1ead8b2c373b3ec7ebf571dce56af0e329e0ab86ad10a0b4eba664b18f81502d"
+        }
+      ],
+      "description": "Iperf is a tool to measure maximum TCP bandwidth, allowing the tuning of various parameters and UDP characteristics. Iperf reports bandwidth, delay jitter, data-gram loss."
+    },
+    {
+      "name": "iperf3-devel",
+      "purl": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=ppc64le&repository_id=rhel-9-for-ppc64le-appstream-e4s-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d6fe1b69bf13cf38e442de437717c2ce2c6f4f6e78b83abf30842484fd027cdf"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=ppc64le",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=ppc64le&repository_id=rhel-9-for-ppc64le-appstream-e4s-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=ppc64le&repository_id=rhel-9-for-ppc64le-appstream-eus-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "81d9acf0173ead49cdae768ed932a558"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "06089955c2355fe645440b5fa7e8693c6e031aeb146a359c84fb5d2270620e20"
+        }
+      ],
+      "description": "The iperf3-devel package contains libraries and header files for developing applications that use iperf3."
+    },
+    {
+      "name": "iperf3-debugsource",
+      "purl": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=ppc64le&repository_id=rhel-9-for-ppc64le-appstream-eus-source-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1745c731a4741c860da9872ec6c836640fb95f2d01288310bbb185691bd5779a"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=ppc64le",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=ppc64le&repository_id=rhel-9-for-ppc64le-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=ppc64le&repository_id=rhel-9-for-ppc64le-appstream-e4s-source-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "a050c1138562f1fefb2fa57ed3e14823"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "22f534c4f6246cb11b0f0ebfd45e3bd5fb73e70476326aa7b92b55b7dc93a5a8"
+        }
+      ],
+      "description": "This package provides debug sources for package iperf3. Debug sources are useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "iperf3-debuginfo",
+      "purl": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=ppc64le&repository_id=rhel-9-for-ppc64le-appstream-eus-debug-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "31b81482a609e2efb1795a2acc55d6aa19cc5e81acf1f01658aa0f1d8810b3da"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=ppc64le",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=ppc64le&repository_id=rhel-9-for-ppc64le-appstream-eus-debug-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=ppc64le&repository_id=rhel-9-for-ppc64le-appstream-e4s-debug-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "5761b6d8d26252f69005f6018f301919"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "36736af5e3ea7596051367e59914fb2a8afbc721192504db534d5a06e8c3505b"
+        }
+      ],
+      "description": "This package provides debug information for package iperf3. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "iperf3-debugsource",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "55296f601d417326d4196091bcb178b5b6ab076f36339288675e4f40a72e115f"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=i686",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "8c1f5de5cadc0cbadfb148ac60f74557"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "05c985937c6d3603c8c05277fdb3be513ff505769f323cc0d03bb0d464fae55d"
+        }
+      ],
+      "description": "This package provides debug sources for package iperf3. Debug sources are useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "iperf3-devel",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2d568797cdac3d7db33ec155e2bf06cdb2a5845f48f66ce8ef50107297e6a99a"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=i686",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "93254ccc363a6d961a544ee660f08dfe"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "b207275cdb9007a48e6a30717932d1967c630c0c2d390696d3a3a16b8a2119f5"
+        }
+      ],
+      "description": "The iperf3-devel package contains libraries and header files for developing applications that use iperf3."
+    },
+    {
+      "name": "iperf3-debuginfo",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "eea7c873d83a10e0376443931c06047dde2f6120d94cf81ee08655afedcefc74"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=i686",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "e22af326feeb00fb0574c61237642106"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "b5d9c4998c7c71d00f292ccfdffd3e76ab70e06bd73039bb3358e26a4c3557b0"
+        }
+      ],
+      "description": "This package provides debug information for package iperf3. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "iperf3",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "351ef009095dfe8f08c5c9cc5aa398b8bc0e19438ba1ce60b81e19261e340cf1"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=i686",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "09a13959f30f3b7fa16e13f419aa632d"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "be1ecd3c60380c317780b79c727cfe5299c5b5cf19e149753d6af1dcff0cb898"
+        }
+      ],
+      "description": "Iperf is a tool to measure maximum TCP bandwidth, allowing the tuning of various parameters and UDP characteristics. Iperf reports bandwidth, delay jitter, data-gram loss."
+    },
+    {
+      "name": "iperf3-debugsource",
+      "purl": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-aus-source-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "19f17139f70921dd45b66984fd9250f70d2f411a0613b13ea4ddd3c15b8231bb"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=x86_64",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-aus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-eus-source-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "1a9927b9fecdd0b306de9a1e378897bd"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "21f087b0b397945d3408df3b9261ebb78190d2d5fea796b40052b6589eb6820d"
+        }
+      ],
+      "description": "This package provides debug sources for package iperf3. Debug sources are useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "iperf3-devel",
+      "purl": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-aus-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "63c916637996def1486e95a135ec0fcb4f1ebeac4758f9eeb1a6cdeddf5792ab"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=x86_64",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-aus-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-eus-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-e4s-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "f7ebbe858644145fe289be3f225c375f"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "a4c85cd3fa9201408a6a40a16857dd333f049557e0bc8b4783dcac208a96994f"
+        }
+      ],
+      "description": "The iperf3-devel package contains libraries and header files for developing applications that use iperf3."
+    },
+    {
+      "name": "iperf3-debuginfo",
+      "purl": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-aus-debug-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4521ba578c1e65347e180d8716898a7a2789420aba8ba43760b35685663f7b77"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=x86_64",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-aus-debug-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-eus-debug-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-e4s-debug-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "f532e4717013a2663cef78af28a77b4d"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "98c0af947e144981634f5dbf7076634d8b2af13eb0018ab33e1e8cd7c02fe601"
+        }
+      ],
+      "description": "This package provides debug information for package iperf3. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "iperf3",
+      "purl": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-aus-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4a21503d09560fab7fb875cdf5fb0381cf6fc72dfe884c8353a4c1117bb62807"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=x86_64",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-aus-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-e4s-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=x86_64&repository_id=rhel-9-for-x86_64-appstream-eus-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "07305c381ba217fea91b328a3419168d"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "a04de3757c27d09b773158835d862fdfd2e2c256bf5ae641ef3749037886d489"
+        }
+      ],
+      "description": "Iperf is a tool to measure maximum TCP bandwidth, allowing the tuning of various parameters and UDP characteristics. Iperf reports bandwidth, delay jitter, data-gram loss."
+    },
+    {
+      "name": "iperf3-debugsource",
+      "purl": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=s390x&repository_id=rhel-9-for-s390x-appstream-e4s-source-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fc64478f5b052f0b67127a85aa3a0afafcb67f011b2dba040d918ee2980e2a42"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=s390x",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=s390x&repository_id=rhel-9-for-s390x-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=s390x&repository_id=rhel-9-for-s390x-appstream-eus-source-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "6a0fad6719282b7f752ed5b51bdfffa6"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "fdfc43c31c53e174109d983d824ca929379a19fb9e9cc1b32b6226d308c0cbef"
+        }
+      ],
+      "description": "This package provides debug sources for package iperf3. Debug sources are useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "iperf3-debuginfo",
+      "purl": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=s390x&repository_id=rhel-9-for-s390x-appstream-e4s-debug-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "79ed7fc894fd83502a5c0820ac7d6135d75acbdd3533d21456570dc4b40fe7e9"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=s390x",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=s390x&repository_id=rhel-9-for-s390x-appstream-e4s-debug-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=s390x&repository_id=rhel-9-for-s390x-appstream-eus-debug-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "9ad34fad008b87ab20d2731e70508d86"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "447cfb50f4cdfc8629a15ff99cfa243ebb5ac311ff44c0a5be29d4d970d0bd3a"
+        }
+      ],
+      "description": "This package provides debug information for package iperf3. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "iperf3-devel",
+      "purl": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=s390x&repository_id=rhel-9-for-s390x-appstream-eus-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8801d0ba99fd3419070a336fec854ec1d03261b1fcc5a725e482ee11390d25db"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=s390x",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=s390x&repository_id=rhel-9-for-s390x-appstream-eus-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=s390x&repository_id=rhel-9-for-s390x-appstream-e4s-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "dcad407845dedcc903ba55afe042c47a"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "0c4e3644328edbf8e1fa01fd10d9f0d96e5d4e3c0f76465b52572da499b5ed7d"
+        }
+      ],
+      "description": "The iperf3-devel package contains libraries and header files for developing applications that use iperf3."
+    },
+    {
+      "name": "iperf3",
+      "purl": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=s390x&repository_id=rhel-9-for-s390x-appstream-e4s-rpms__9_DOT_4",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "582fad32d336a1168d024192757bc672af95c9d2ccb8db5ebd1bc0f2f5c1f54a"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=s390x",
+      "version": "3.9-11.el9_4.1",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=s390x&repository_id=rhel-9-for-s390x-appstream-e4s-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=s390x&repository_id=rhel-9-for-s390x-appstream-eus-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "NOASSERTION"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "405a65802c9b4ef90ceba001b84af9b5"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "938003149095e23cf2e74331c64d074b0e2a5ebbe66d5a1326af4e478689c112"
+        }
+      ],
+      "description": "Iperf is a tool to measure maximum TCP bandwidth, allowing the tuning of various parameters and UDP characteristics. Iperf reports bandwidth, delay jitter, data-gram loss."
+    }
+  ],
+  "specVersion": "1.6",
+  "dependencies": [
+    {
+      "ref": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src",
+      "provides": [
+        "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=aarch64",
+        "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=aarch64",
+        "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=aarch64",
+        "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=aarch64",
+        "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=ppc64le",
+        "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=ppc64le",
+        "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=ppc64le",
+        "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=ppc64le",
+        "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=i686",
+        "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=i686",
+        "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=i686",
+        "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=i686",
+        "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=x86_64",
+        "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=x86_64",
+        "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=x86_64",
+        "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=x86_64",
+        "pkg:rpm/redhat/iperf3-debugsource@3.9-11.el9_4.1?arch=s390x",
+        "pkg:rpm/redhat/iperf3-debuginfo@3.9-11.el9_4.1?arch=s390x",
+        "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=s390x",
+        "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=s390x"
+      ],
+      "dependsOn": []
+    }
+  ],
+  "serialNumber": "urn:uuid:a8c83882-79a5-4b47-8ba3-3973ac4e4309"
+}

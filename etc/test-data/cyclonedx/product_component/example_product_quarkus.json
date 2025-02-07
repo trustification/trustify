@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "8a134a86"
+        }
+      ]
+    },
+    "component": {
+      "name": "Red Hat build of Quarkus",
+      "type": "framework",
+      "bom-ref": "Red Hat build of Quarkus 2.13.9.SP2",
+      "version": "Red Hat build of Quarkus 2.13.9.SP2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/a:redhat:quarkus:2.13"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      }
+    },
+    "timestamp": "2024-04-22T10:59:06Z"
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "quarkus-bom",
+      "purl": "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@2.13.9.SP2-redhat-00003?type=pom",
+      "type": "library",
+      "group": "com.redhat.quarkus.platform",
+      "bom-ref": "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@2.13.9.SP2-redhat-00003?type=pom",
+      "version": "2.13.9.SP2-redhat-00003",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@2.13.9.SP2-redhat-00003?repository_url=https%3A%2F%2Fmaven.repository.redhat.com%2Fga%2F&type=pom"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "description": "Quarkus Universe platform aggregates extensions from Quarkus Core and those developed by the community into a single compatible and versioned set that application developers can reference from their applications to align the dependency versions"
+    }
+  ],
+  "specVersion": "1.6",
+  "dependencies": [
+    {
+      "ref": "Red Hat build of Quarkus 2.13.9.SP2",
+      "provides": [
+        "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@2.13.9.SP2-redhat-00003?type=pom"
+      ],
+      "dependsOn": []
+    }
+  ],
+  "serialNumber": "urn:uuid:ed823a98-ef10-395b-a95d-eea9ef659984"
+}

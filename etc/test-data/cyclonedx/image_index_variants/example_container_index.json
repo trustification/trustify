@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "e8d1d2ca"
+        }
+      ]
+    },
+    "component": {
+      "name": "openshift/ose-openstack-cinder-csi-driver-operator",
+      "purl": "pkg:oci/openshift-ose-openstack-cinder-csi-driver-operator@sha256%3A4e1a8039dfcd2a1ae7672d99be63777b42f9fad3baca5e9273653b447ae72fe8",
+      "type": "container",
+      "description": "Image index manifest of pkg:oci/openshift-ose-openstack-cinder-csi-driver-operator@sha256%3A4e1a8039dfcd2a1ae7672d99be63777b42f9fad3baca5e9273653b447ae72fe8"
+    },
+    "timestamp": "2025-02-06T19:23:12Z"
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "openshift/ose-openstack-cinder-csi-driver-operator",
+      "purl": "pkg:oci/openshift-ose-openstack-cinder-csi-driver-operator@sha256%3A4e1a8039dfcd2a1ae7672d99be63777b42f9fad3baca5e9273653b447ae72fe8",
+      "type": "container",
+      "bom-ref": "ose-openstack-cinder-csi-driver-operator-container_image-index",
+      "version": "sha256:4e1a8039dfcd2a1ae7672d99be63777b42f9fad3baca5e9273653b447ae72fe8",
+      "pedigree": {
+        "variants": [
+          {
+            "name": "openshift/ose-openstack-cinder-csi-driver-operator",
+            "purl": "pkg:oci/ose-openstack-cinder-csi-driver-operator@sha256%3A601cc46bdc24d6c432f51ce4aa8745d1a18ff07e2b0a1bb8ecad6bc091e98285?arch=amd64&os=linux&tag=v4.15.0-202501280037.p0.gd0c2407.assembly.stream.el8",
+            "type": "container",
+            "bom-ref": "ose-openstack-cinder-csi-driver-operator-container_amd64",
+            "version": "sha256:601cc46bdc24d6c432f51ce4aa8745d1a18ff07e2b0a1bb8ecad6bc091e98285",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat"
+          },
+          {
+            "name": "openshift/ose-openstack-cinder-csi-driver-operator",
+            "purl": "pkg:oci/ose-openstack-cinder-csi-driver-operator@sha256%3A0e72df1e6f4b356282576efaed99915fa7fb8c22718b67b1f82f89be6722b24f?arch=arm64&os=linux&tag=v4.15.0-202501280037.p0.gd0c2407.assembly.stream.el8",
+            "type": "container",
+            "bom-ref": "ose-openstack-cinder-csi-driver-operator-container_arm64",
+            "version": "sha256:0e72df1e6f4b356282576efaed99915fa7fb8c22718b67b1f82f89be6722b24f",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat"
+          },
+          {
+            "name": "openshift/ose-openstack-cinder-csi-driver-operator",
+            "purl": "pkg:oci/ose-openstack-cinder-csi-driver-operator@sha256%3A64b4e6d6c18556f9f9dad1a9e6185c37d6ad07c72e515c475304a3a16b9eb51f?arch=ppc64le&os=linux&tag=v4.15.0-202501280037.p0.gd0c2407.assembly.stream.el8",
+            "type": "container",
+            "bom-ref": "ose-openstack-cinder-csi-driver-operator-container_ppc64le",
+            "version": "sha256:64b4e6d6c18556f9f9dad1a9e6185c37d6ad07c72e515c475304a3a16b9eb51f",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat"
+          },
+          {
+            "name": "openshift/ose-openstack-cinder-csi-driver-operator",
+            "purl": "pkg:oci/ose-openstack-cinder-csi-driver-operator@sha256%3Ad3d96f71664efb8c2bd9290b8e1ca9c9b93a54cecb266078c4d954a2e9c05d4d?arch=s390x&os=linux&tag=v4.15.0-202501280037.p0.gd0c2407.assembly.stream.el8",
+            "type": "container",
+            "bom-ref": "ose-openstack-cinder-csi-driver-operator-container_s390x",
+            "version": "sha256:d3d96f71664efb8c2bd9290b8e1ca9c9b93a54cecb266078c4d954a2e9c05d4d",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "properties": [
+        {
+          "name": "sbomer:image:labels:com.redhat.component",
+          "value": "ose-openstack-cinder-csi-driver-operator-container"
+        },
+        {
+          "name": "sbomer:image:labels:name",
+          "value": "openshift/ose-openstack-cinder-csi-driver-operator"
+        },
+        {
+          "name": "sbomer:image:labels:release",
+          "value": "202501280037.p0.gd0c2407.assembly.stream.el8"
+        },
+        {
+          "name": "sbomer:image:labels:version",
+          "value": "v4.15.0"
+        }
+      ]
+    }
+  ],
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:b3418a5d-8af8-3516-b9ac-5bc53628e803"
+}
