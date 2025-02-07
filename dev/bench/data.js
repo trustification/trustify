@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738869791899,
+  "lastUpdate": 1738920923114,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3706,6 +3706,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/b6ea31654a8165bb374053378447988b52ba35ce"
         },
         "date": 1738869791087,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "0e2d39596ec4957aff19d6921eee8202440022bd",
+          "message": "doc: adds importer",
+          "timestamp": "2025-02-06T19:11:56-03:00",
+          "tree_id": "e97f74af743c18fd1017906ddc7d95c62f752130",
+          "url": "https://github.com/trustification/trustify/commit/0e2d39596ec4957aff19d6921eee8202440022bd"
+        },
+        "date": 1738920922754,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
