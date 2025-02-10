@@ -8652,6 +8652,7 @@ dependencies = [
  "csaf",
  "csaf-walker",
  "cve",
+ "futures",
  "git2",
  "humantime",
  "humantime-serde",
