@@ -22,6 +22,9 @@ use trustify_entity::{self as entity, advisory, labels::Labels, source_document}
 use uuid::Uuid;
 
 pub mod advisory_vulnerability;
+pub mod product_status;
+pub mod purl_status;
+pub mod version;
 
 #[derive(Clone, Default)]
 pub struct AdvisoryInformation {

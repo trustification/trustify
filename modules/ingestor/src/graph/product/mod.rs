@@ -16,7 +16,7 @@ use crate::graph::{error::Error, organization::OrganizationInformation, Graph};
 
 use self::product_version::ProductVersionContext;
 
-use super::{advisory::advisory_vulnerability::VersionInfo, organization::OrganizationContext};
+use super::{advisory::version::VersionInfo, organization::OrganizationContext};
 
 #[derive(Clone)]
 pub struct ProductContext<'g> {
