@@ -1,6 +1,10 @@
 use crate::{
     graph::{
-        advisory::advisory_vulnerability::{Version, VersionInfo, VersionSpec},
+        advisory::{
+            product_status::ProductVersionRange,
+            purl_status::PurlStatus,
+            version::{Version, VersionInfo, VersionSpec},
+        },
         cpe::CpeCreator,
         organization::{OrganizationContext, OrganizationInformation},
         product::ProductInformation,
@@ -17,20 +21,12 @@ use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;
 use tracing::instrument;
-use trustify_common::{cpe::Cpe, db::chunk::EntityChunkedIter, purl::Purl};
+use trustify_common::{db::chunk::EntityChunkedIter, purl::Purl};
 use trustify_entity::{
     organization, product, product_status, product_version_range, purl_status, status::Status,
     version_range, version_scheme::VersionScheme,
 };
 use uuid::Uuid;
-
-#[derive(Debug, Eq, Hash, PartialEq)]
-struct PurlStatus {
-    cpe: Option<Cpe>,
-    purl: Purl,
-    status: Uuid,
-    info: VersionInfo,
-}
 
 #[derive(Debug)]
 pub struct StatusCreator<'a> {
@@ -103,6 +99,7 @@ impl<'a> StatusCreator<'a> {
         let mut version_ranges = Vec::new();
         let mut product_version_ranges = Vec::new();
 
+        let mut package_statuses = Vec::new();
         let product_statuses = self.products.clone();
         let mut db_context = graph.db_context.lock().await;
 
@@ -155,35 +152,20 @@ impl<'a> StatusCreator<'a> {
             };
             product_models.push(product_entity.clone());
 
-            // Create all product ranges for batch ingesting
-            let product_version_range = match product.version {
-                Some(ref ver) => {
-                    let version_range_id =
-                        Uuid::new_v5(&product_id, serde_json::to_string(ver)?.as_bytes());
-                    let mut version_range_entity = ver.clone().into_active_model();
-                    version_range_entity.id = Set(version_range_id);
-                    version_ranges.push(version_range_entity.clone());
+            if let Some(ref info) = product.version {
+                let range = ProductVersionRange {
+                    product_id,
+                    info: info.clone(),
+                    cpe: product.cpe.clone(),
+                };
 
-                    let version_cpe_key = product
-                        .cpe
-                        .clone()
-                        .map(|cpe| cpe.version().as_ref().to_string());
+                let (version_range_entity, product_version_range_entity) =
+                    range.clone().into_active_model();
+                version_ranges.push(version_range_entity.clone());
+                product_version_ranges.push(product_version_range_entity.clone());
 
-                    let product_version_range_entity = product_version_range::ActiveModel {
-                        id: Set(version_range_id),
-                        product_id: product_entity.id,
-                        version_range_id: Set(version_range_id),
-                        cpe_key: Set(version_cpe_key),
-                    };
-                    product_version_ranges.push(product_version_range_entity.clone());
-                    Some(product_version_range_entity)
-                }
-                None => None,
-            };
-
-            if let Some(range) = &product_version_range {
                 let packages = if product.packages.is_empty() {
-                    // If there are no components associated to this product, ingest just a product status
+                    // If there are no packages associated to this product, ingest just a product status
                     vec![None]
                 } else {
                     product
@@ -194,15 +176,15 @@ impl<'a> StatusCreator<'a> {
                 };
 
                 for package in packages {
-                    let base_product = product_status::ActiveModel {
-                        id: Default::default(),
-                        product_version_range_id: range.clone().id,
-                        advisory_id: Set(self.advisory_id),
-                        vulnerability_id: Set(self.vulnerability_id.clone()),
-                        package: Set(package),
-                        context_cpe_id: Set(product.cpe.as_ref().map(Cpe::uuid)),
-                        status_id: Set(status_id),
+                    let product_status = crate::graph::advisory::product_status::ProductStatus {
+                        cpe: product.cpe.clone(),
+                        package,
+                        status: status_id,
+                        product_version_range_id: range.uuid(),
                     };
+
+                    let base_product = product_status
+                        .into_active_model(self.advisory_id, self.vulnerability_id.clone());
 
                     if let Some(cpe) = &product.cpe {
                         cpes.add(cpe.clone());
@@ -266,9 +248,13 @@ impl<'a> StatusCreator<'a> {
         purls.create(connection).await?;
         cpes.create(connection).await?;
 
-        // round two, status is checked, purls exist
-
-        self.create_status(connection).await?;
+        for ps in &self.entries {
+            let (version_range, purl_status) = ps
+                .clone()
+                .into_active_model(self.advisory_id, self.vulnerability_id.clone());
+            version_ranges.push(version_range.clone());
+            package_statuses.push(purl_status);
+        }
 
         for batch in &product_models.chunked() {
             product::Entity::insert_many(batch)
@@ -284,6 +270,13 @@ impl<'a> StatusCreator<'a> {
                 .await?;
         }
 
+        for batch in &package_statuses.chunked() {
+            purl_status::Entity::insert_many(batch)
+                .on_conflict_do_nothing()
+                .exec(connection)
+                .await?;
+        }
+
         for batch in &product_version_ranges.chunked() {
             product_version_range::Entity::insert_many(batch)
                 .on_conflict_do_nothing()
@@ -293,11 +286,10 @@ impl<'a> StatusCreator<'a> {
 
         for batch in &product_status_models.chunked() {
             product_status::Entity::insert_many(batch)
+                .on_conflict_do_nothing()
                 .exec(connection)
                 .await?;
         }
-
-        // done
 
         Ok(())
     }
@@ -317,49 +309,5 @@ impl<'a> StatusCreator<'a> {
             info: VersionInfo { scheme, spec },
         };
         self.entries.insert(purl_status);
-    }
-
-    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
-    async fn create_status(&self, connection: &impl ConnectionTrait) -> Result<(), Error> {
-        let mut version_ranges = Vec::new();
-        let mut package_statuses = Vec::new();
-
-        for ps in &self.entries {
-            let package_id = ps.purl.package_uuid();
-            let cpe_id = ps.cpe.as_ref().map(Cpe::uuid);
-
-            let mut version_range = ps.info.clone().into_active_model();
-            let version_range_id = Uuid::now_v7();
-            version_range.id = Set(version_range_id);
-            version_ranges.push(version_range);
-
-            let package_status = purl_status::ActiveModel {
-                id: Default::default(),
-                advisory_id: Set(self.advisory_id),
-                vulnerability_id: Set(self.vulnerability_id.clone()),
-                status_id: Set(ps.status),
-                base_purl_id: Set(package_id),
-                context_cpe_id: Set(cpe_id),
-                version_range_id: Set(version_range_id),
-            };
-
-            package_statuses.push(package_status);
-        }
-
-        // batch insert
-
-        for batch in &version_ranges.chunked() {
-            version_range::Entity::insert_many(batch)
-                .exec(connection)
-                .await?;
-        }
-
-        for batch in &package_statuses.chunked() {
-            purl_status::Entity::insert_many(batch)
-                .exec(connection)
-                .await?;
-        }
-
-        Ok(())
     }
 }

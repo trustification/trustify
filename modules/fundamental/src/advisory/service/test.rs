@@ -11,7 +11,7 @@ use trustify_cvss::cvss3::{
 };
 use trustify_entity::version_scheme::VersionScheme;
 use trustify_module_ingestor::graph::advisory::{
-    advisory_vulnerability::{VersionInfo, VersionSpec},
+    version::{VersionInfo, VersionSpec},
     AdvisoryContext, AdvisoryInformation,
 };
 use trustify_module_ingestor::graph::Outcome;

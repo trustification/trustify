@@ -1,5 +1,5 @@
 use super::util::branch_purl;
-use crate::graph::advisory::advisory_vulnerability::{Version, VersionInfo, VersionSpec};
+use crate::graph::advisory::version::{Version, VersionInfo, VersionSpec};
 use cpe::cpe::Cpe;
 use csaf::definitions::{Branch, BranchCategory, FullProductName};
 use trustify_common::purl::Purl;

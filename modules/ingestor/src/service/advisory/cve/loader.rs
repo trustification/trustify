@@ -1,7 +1,7 @@
 use crate::{
     graph::{
         advisory::{
-            advisory_vulnerability::{Version, VersionInfo, VersionSpec},
+            version::{Version, VersionInfo, VersionSpec},
             AdvisoryInformation, AdvisoryVulnerabilityInformation,
         },
         vulnerability::VulnerabilityInformation,

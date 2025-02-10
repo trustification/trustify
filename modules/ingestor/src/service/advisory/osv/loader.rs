@@ -1,9 +1,8 @@
 use crate::{
     graph::{
         advisory::{
-            advisory_vulnerability::{
-                AdvisoryVulnerabilityContext, Version, VersionInfo, VersionSpec,
-            },
+            advisory_vulnerability::AdvisoryVulnerabilityContext,
+            version::{Version, VersionInfo, VersionSpec},
             AdvisoryInformation, AdvisoryVulnerabilityInformation,
         },
         purl::creator::PurlCreator,
