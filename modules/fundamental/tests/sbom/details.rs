@@ -47,14 +47,19 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
     let nuget = ctx.ingest_document("osv/GHSA-rh58-r7jh-xhx3.json").await?;
     assert_eq!(nuget.document_id, Some("GHSA-rh58-r7jh-xhx3".to_string()));
 
+    let rubygems = ctx.ingest_document("osv/GHSA-cvw2-xj8r-mjf7.json").await?;
+    assert_eq!(
+        rubygems.document_id,
+        Some("GHSA-cvw2-xj8r-mjf7".to_string())
+    );
+
     let sbom1 = sbom
         .fetch_sbom_details(result1.id, vec![], &ctx.db)
         .await?
         .expect("SBOM details must be found");
     log::info!("SBOM1: {sbom1:?}");
 
-    assert_eq!(6, sbom1.advisories.len());
-
+    assert_eq!(7, sbom1.advisories.len());
     check_advisory(
         &sbom1,
         "GHSA-45c4-8wx5-qw6w",
@@ -89,6 +94,12 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         &sbom1,
         "GHSA-rh58-r7jh-xhx3",
         "CVE-2021-26423",
+        Severity::High,
+    );
+    check_advisory(
+        &sbom1,
+        "GHSA-cvw2-xj8r-mjf7",
+        "CVE-2019-25025",
         Severity::High,
     );
     Ok(())
