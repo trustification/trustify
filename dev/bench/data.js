@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1738962398346,
+  "lastUpdate": 1739176873507,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3914,6 +3914,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 6,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "gdubreui@redhat.com",
+            "name": "Gilles Dubreuil",
+            "username": "gildub"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "d612fe0129c70ca7976c7ae7e8ac532d19748c3d",
+          "message": "Generated files are not committed to Repo",
+          "timestamp": "2025-02-10T08:22:28Z",
+          "tree_id": "298b3927ead4b0674982a74156e42d2c0f3aeaf1",
+          "url": "https://github.com/trustification/trustify/commit/d612fe0129c70ca7976c7ae7e8ac532d19748c3d"
+        },
+        "date": 1739176872660,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
