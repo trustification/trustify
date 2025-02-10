@@ -75,7 +75,7 @@ impl Run {
             ),
             ("random_page_cost".to_string(), "1.1".to_string()),
             (
-                " max_parallel_workers_per_gather".to_string(),
+                "max_parallel_workers_per_gather".to_string(),
                 "4".to_string(),
             ),
             ("max_connections".to_string(), "500".to_string()),
