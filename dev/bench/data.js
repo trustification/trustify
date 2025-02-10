@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739176873507,
+  "lastUpdate": 1739187787886,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3938,6 +3938,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/d612fe0129c70ca7976c7ae7e8ac532d19748c3d"
         },
         "date": 1739176872660,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": false,
+          "id": "4ac3ee5692c4e0abc8744786691ef74294dc3ff9",
+          "message": "chore: update rust to 1.84.1\n\n* https://blog.rust-lang.org/2025/01/30/Rust-1.84.1.html#whats-in-1841",
+          "timestamp": "2025-02-10T06:07:43-03:00",
+          "tree_id": "3f129b1ce546c5ab5609ccc89af1e3a26af6ce2c",
+          "url": "https://github.com/trustification/trustify/commit/4ac3ee5692c4e0abc8744786691ef74294dc3ff9"
+        },
+        "date": 1739187787123,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
