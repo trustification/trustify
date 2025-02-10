@@ -8345,6 +8345,7 @@ dependencies = [
  "deepsize",
  "hex",
  "human-date-parser",
+ "humantime",
  "itertools 0.13.0",
  "lenient_semver",
  "log",

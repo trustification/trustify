@@ -1,6 +1,8 @@
 use anyhow::anyhow;
 use clap::ValueEnum;
+use humantime::parse_duration;
 use std::env;
+use time::ext::NumericalStdDuration;
 
 const DB_NAME: &str = "trustify";
 const DB_USER: &str = "postgres";
@@ -9,6 +11,10 @@ const DB_HOST: &str = "localhost";
 const DB_PORT: u16 = 5432;
 const DB_MAX_CONN: u32 = 75;
 const DB_MIN_CONN: u32 = 25;
+const DB_CONNECT_TIMEOUT: u64 = 8;
+const DB_ACQUIRE_TIMEOUT: u64 = 8;
+const DB_MAX_LIFETIME: u64 = 7200;
+const DB_IDLE_TIMEOUT: u64 = 600;
 
 const ENV_DB_URL: &str = "TRUSTD_DB_URL";
 const ENV_DB_NAME: &str = "TRUSTD_DB_NAME";
@@ -18,6 +24,10 @@ const ENV_DB_HOST: &str = "TRUSTD_DB_HOST";
 const ENV_DB_PORT: &str = "TRUSTD_DB_PORT";
 const ENV_DB_MAX_CONN: &str = "TRUSTD_DB_MAX_CONN";
 const ENV_DB_MIN_CONN: &str = "TRUSTD_DB_MIN_CONN";
+const ENV_DB_CONNECT_TIMEOUT: &str = "TRUSTD_DB_MIN_CONN";
+const ENV_DB_ACQUIRE_TIMEOUT: &str = "TRUSTD_DB_ACQUIRE_TIMEOUT";
+const ENV_DB_MAX_LIFETIME: &str = "TRUSTD_DB_MAX_LIFETIME";
+const ENV_DB_IDLE_TIMEOUT: &str = "TRUSTD_DB_IDLE_TIMEOUT";
 const ENV_DB_SSLMODE: &str = "TRUSTD_DB_SSLMODE";
 
 /// PostgreSQL SSL mode
@@ -62,6 +72,15 @@ pub struct Database {
     pub min_conn: u32,
     #[arg(id="db-sslmode", long, env = ENV_DB_SSLMODE, default_value_t, conflicts_with = "db-url", value_enum)]
     pub sslmode: SslMode,
+
+    #[arg(id="db-conn-timeout", long, env = ENV_DB_CONNECT_TIMEOUT, default_value_t=DB_CONNECT_TIMEOUT.into(), conflicts_with = "db-url")]
+    pub connect_timeout: u64,
+    #[arg(id="db-acquire-timeout", long, env = ENV_DB_ACQUIRE_TIMEOUT, default_value_t=DB_ACQUIRE_TIMEOUT.into(), conflicts_with = "db-url")]
+    pub acquire_timeout: u64,
+    #[arg(id="db-max-lifetime", long, env = ENV_DB_MAX_LIFETIME, default_value_t=DB_MAX_LIFETIME.into(), conflicts_with = "db-url")]
+    pub max_lifetime: u64,
+    #[arg(id="db-idle-timeout", long, env = ENV_DB_IDLE_TIMEOUT, default_value_t=DB_IDLE_TIMEOUT.into(), conflicts_with = "db-url")]
+    pub idle_timeout: u64,
 }
 
 impl Database {
@@ -83,6 +102,30 @@ impl Database {
             min_conn: match env::var(ENV_DB_SSLMODE) {
                 Ok(s) => s.parse::<u32>()?,
                 _ => DB_MIN_CONN,
+            },
+            connect_timeout: match env::var(ENV_DB_CONNECT_TIMEOUT) {
+                Ok(s) => parse_duration(&s)
+                    .unwrap_or(DB_IDLE_TIMEOUT.std_seconds())
+                    .as_secs(),
+                _ => DB_CONNECT_TIMEOUT,
+            },
+            acquire_timeout: match env::var(ENV_DB_ACQUIRE_TIMEOUT) {
+                Ok(s) => parse_duration(&s)
+                    .unwrap_or(DB_ACQUIRE_TIMEOUT.std_seconds())
+                    .as_secs(),
+                _ => DB_ACQUIRE_TIMEOUT,
+            },
+            max_lifetime: match env::var(ENV_DB_MAX_LIFETIME) {
+                Ok(s) => parse_duration(&s)
+                    .unwrap_or(DB_MAX_LIFETIME.std_seconds())
+                    .as_secs(),
+                _ => DB_MAX_LIFETIME,
+            },
+            idle_timeout: match env::var(ENV_DB_IDLE_TIMEOUT) {
+                Ok(s) => parse_duration(&s)
+                    .unwrap_or(DB_IDLE_TIMEOUT.std_seconds())
+                    .as_secs(),
+                _ => DB_IDLE_TIMEOUT,
             },
             sslmode: match env::var(ENV_DB_SSLMODE) {
                 Ok(s) => SslMode::from_str(&s, false)
@@ -129,6 +172,10 @@ mod test {
                 name: DB_NAME.into(),
                 max_conn: DB_MAX_CONN,
                 min_conn: DB_MIN_CONN,
+                connect_timeout: DB_CONNECT_TIMEOUT,
+                acquire_timeout: DB_ACQUIRE_TIMEOUT,
+                max_lifetime: DB_MAX_LIFETIME,
+                idle_timeout: DB_IDLE_TIMEOUT,
                 sslmode: SslMode::default(),
             },
             result
@@ -150,6 +197,10 @@ mod test {
                 name: DB_NAME.into(),
                 max_conn: DB_MAX_CONN,
                 min_conn: DB_MIN_CONN,
+                connect_timeout: DB_CONNECT_TIMEOUT,
+                acquire_timeout: DB_ACQUIRE_TIMEOUT,
+                max_lifetime: DB_MAX_LIFETIME,
+                idle_timeout: DB_IDLE_TIMEOUT,
                 sslmode: SslMode::Disable,
             },
             result

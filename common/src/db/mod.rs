@@ -16,6 +16,7 @@ use sea_orm::{
 };
 use sqlx::error::ErrorKind;
 use std::ops::{Deref, DerefMut};
+use std::time::Duration;
 use tracing::instrument;
 
 #[derive(Clone, Debug)]
@@ -36,6 +37,11 @@ impl Database {
         opt.max_connections(database.max_conn);
         opt.min_connections(database.min_conn);
         opt.sqlx_logging_level(log::LevelFilter::Trace);
+
+        opt.connect_timeout(Duration::from_secs(database.connect_timeout));
+        opt.acquire_timeout(Duration::from_secs(database.acquire_timeout));
+        opt.max_lifetime(Duration::from_secs(database.max_lifetime));
+        opt.idle_timeout(Duration::from_secs(database.idle_timeout));
 
         let db = sea_orm::Database::connect(opt).await?;
         let name = database.name.clone();
