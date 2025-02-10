@@ -42,6 +42,7 @@ fn translate<'a>(ecosystem: &Ecosystem, name: &'a str) -> Option<PackageUrl<'a>>
         Ecosystem::Go => split_name(name, "golang", "/"),
         Ecosystem::Packagist => split_name(name, "composer", "/"),
         Ecosystem::NuGet => PackageUrl::new("nuget", name).ok(),
+        Ecosystem::RubyGems => PackageUrl::new("gem", name).ok(),
         _ => None,
     }
 }
@@ -109,6 +110,12 @@ mod test {
         Some("pkg:nuget/Microsoft.NETCore.App.Runtime.win-x86")
     )]
     #[case(Ecosystem::NuGet, "PowerShell", Some("pkg:nuget/PowerShell"))]
+    #[case(Ecosystem::RubyGems, "pwpush", Some("pkg:gem/pwpush"))]
+    #[case(
+        Ecosystem::RubyGems,
+        "activerecord-session_store",
+        Some("pkg:gem/activerecord-session_store")
+    )]
     fn test_translate(
         #[case] ecosystem: Ecosystem,
         #[case] name: &str,
