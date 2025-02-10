@@ -31,6 +31,10 @@
 | `TRUSTD_DB_HOST`                         | Database address                                                                    | `localhost`                             |
 | `TRUSTD_DB_MAX_CONN`                     | Database max connections                                                            | `75`                                    |
 | `TRUSTD_DB_MIN_CONN`                     | Database min connections                                                            | `25`                                    |
+| `TRUSTD_DB_CONNECT_TIMEOUT`              | Database connect timeout (humantime)                                                | `8s`                                    |
+| `TRUSTD_DB_ACQUIRE_TIMEOUT`              | Database acquire timeout (humantime)                                                | `8s`                                    |
+| `TRUSTD_DB_MAX_LIFETIME`                 | Database max lifetime (humantime)                                                   | `7200s`                                 |
+| `TRUSTD_DB_IDLE_TIMEOUT`                 | Database idle timeout (humantime)                                                   | `600s`                                  |
 | `TRUSTD_DB_NAME`                         | Database name                                                                       | `trustify`                              |
 | `TRUSTD_DB_PASSWORD`                     | Database password                                                                   | `trustify`                              |
 | `TRUSTD_DB_PORT`                         | Database port                                                                       | `5432`                                  |

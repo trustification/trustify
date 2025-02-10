@@ -49,6 +49,7 @@ tracing = { workspace = true }
 utoipa = { workspace = true, features = ["url"] }
 uuid = { workspace = true, features = ["v5", "serde"] }
 walker-common = { workspace = true, features = ["bzip2", "liblzma"]}
+humantime = "2.1.0"
 
 [dev-dependencies]
 chrono = { workspace = true }
