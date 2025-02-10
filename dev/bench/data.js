@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739187787886,
+  "lastUpdate": 1739188521961,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3967,6 +3967,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/4ac3ee5692c4e0abc8744786691ef74294dc3ff9"
         },
         "date": 1739187787123,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "5112b66b0179fbe060c370843042d609d5e29312",
+          "message": "add db conn env vars",
+          "timestamp": "2025-02-10T11:24:16Z",
+          "tree_id": "0e7c9f262db273ceff9228b2035eeeceb52d5a2b",
+          "url": "https://github.com/trustification/trustify/commit/5112b66b0179fbe060c370843042d609d5e29312"
+        },
+        "date": 1739188521264,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
