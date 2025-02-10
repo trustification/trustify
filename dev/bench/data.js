@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739188521961,
+  "lastUpdate": 1739200374448,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -3996,6 +3996,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/5112b66b0179fbe060c370843042d609d5e29312"
         },
         "date": 1739188521264,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": false,
+          "id": "38227dbf0bc1373d26e7fe77d7de9ffb51451e16",
+          "message": "TC-2239 OSV GHSA - Ecosystem NuGet (Microsoft)\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-02-10T14:32:45Z",
+          "tree_id": "c4f88dd0cbb59519cb5d2f38830b8391f7c516c9",
+          "url": "https://github.com/trustification/trustify/commit/38227dbf0bc1373d26e7fe77d7de9ffb51451e16"
+        },
+        "date": 1739200373042,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
