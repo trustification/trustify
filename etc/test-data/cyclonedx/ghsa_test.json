@@ -60,6 +60,13 @@
       "version": "3.1.11",
       "description": "1 vulnerability",
       "purl": "pkg:nuget/Microsoft.NETCore.App.Runtime.win-x86@3.1.11"
+    },
+    {
+      "type": "library",
+      "name": "activerecord-session_store",
+      "version": "0.1.1",
+      "description": "1 vulnerability",
+      "purl": "pkg:gem/activerecord-session_store@0.1.1"
     }
   ]
 }

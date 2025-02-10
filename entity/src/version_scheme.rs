@@ -31,4 +31,5 @@ pub enum VersionScheme {
     Npm,
     Packagist,
     NuGet,
+    Gem,
 }
