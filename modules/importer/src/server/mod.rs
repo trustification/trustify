@@ -8,7 +8,7 @@ use crate::{
         ImportRunner,
     },
     server::context::ServiceRunContext,
-    service::ImporterService,
+    service::{Error, ImporterService},
 };
 use std::{path::PathBuf, time::Duration};
 use time::OffsetDateTime;
@@ -70,70 +70,15 @@ impl Server {
 
         loop {
             interval.tick().await;
-            log::debug!("checking importers");
+            tracing::debug!(jim = "", "checking importers");
 
-            let importers = service.list().await?;
-            for importer in importers {
-                // FIXME: could add that to the query/list operation
-                if importer.data.configuration.disabled || can_wait(&importer) {
-                    continue;
-                }
-
-                log::debug!("  {}: {:?}", importer.name, importer.data.configuration);
-
-                service.update_start(&importer.name, None).await?;
-
-                // record timestamp before processing, so that we can use it as "since" marker
-                let last_run = OffsetDateTime::now_utc();
-
-                log::info!("Starting run: {}", importer.name);
-
-                let context = ServiceRunContext::new(service.clone(), importer.name.clone());
-
-                let runner = ImportRunner {
-                    db: self.db.clone(),
-                    storage: self.storage.clone(),
-                    working_dir: self.working_dir.clone(),
-                    analysis: self.analysis.clone(),
-                };
-
-                let (last_error, report, continuation) = match runner
-                    .run_once(
-                        context,
-                        importer.data.configuration,
-                        importer.data.last_success,
-                        importer.data.continuation,
-                    )
-                    .await
-                {
-                    Ok(RunOutput {
-                        report,
-                        continuation,
-                    }) => (None, Some(report), continuation),
-                    Err(ScannerError::Normal {
-                        err,
-                        output:
-                            RunOutput {
-                                report,
-                                continuation,
-                            },
-                    }) => (Some(err.to_string()), Some(report), continuation),
-                    Err(ScannerError::Critical(err)) => (Some(err.to_string()), None, None),
-                };
-
-                log::info!("Import run complete: {last_error:?}");
-
-                service
-                    .update_finish(
-                        &importer.name,
-                        None,
-                        last_run,
-                        last_error,
-                        continuation,
-                        report.and_then(|report| serde_json::to_value(report).ok()),
-                    )
-                    .await?;
-            }
+            let importers = service
+                .list()
+                .await?
+                .into_iter()
+                .filter(|i| !(i.data.configuration.disabled || can_wait(i)))
+                .map(|i| self.import(i, &service));
+            futures::future::join_all(importers).await;
         }
     }
 
@@ -164,6 +109,65 @@ impl Server {
                     .await?;
             }
         }
+
+        Ok(())
+    }
+
+    async fn import(&self, importer: Importer, service: &ImporterService) -> Result<(), Error> {
+        log::debug!("  {}: {:?}", importer.name, importer.data.configuration);
+
+        service.update_start(&importer.name, None).await?;
+
+        // record timestamp before processing, so that we can use it as "since" marker
+        let last_run = OffsetDateTime::now_utc();
+
+        log::info!("Starting run: {}", importer.name);
+
+        let context = ServiceRunContext::new(service.clone(), importer.name.clone());
+
+        let runner = ImportRunner {
+            db: self.db.clone(),
+            storage: self.storage.clone(),
+            working_dir: self.working_dir.clone(),
+            analysis: self.analysis.clone(),
+        };
+
+        let (last_error, report, continuation) = match runner
+            .run_once(
+                context,
+                importer.data.configuration,
+                importer.data.last_success,
+                importer.data.continuation,
+            )
+            .await
+        {
+            Ok(RunOutput {
+                report,
+                continuation,
+            }) => (None, Some(report), continuation),
+            Err(ScannerError::Normal {
+                err,
+                output:
+                    RunOutput {
+                        report,
+                        continuation,
+                    },
+            }) => (Some(err.to_string()), Some(report), continuation),
+            Err(ScannerError::Critical(err)) => (Some(err.to_string()), None, None),
+        };
+
+        log::info!("Import run complete: {last_error:?}");
+
+        service
+            .update_finish(
+                &importer.name,
+                None,
+                last_run,
+                last_error,
+                continuation,
+                report.and_then(|report| serde_json::to_value(report).ok()),
+            )
+            .await?;
 
         Ok(())
     }

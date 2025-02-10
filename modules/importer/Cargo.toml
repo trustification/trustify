@@ -19,6 +19,7 @@ chrono = { workspace = true }
 csaf = { workspace = true }
 csaf-walker = { workspace = true, features = ["crypto-openssl", "csaf"] }
 cve = { workspace = true }
+futures = { workspace = true }
 git2 = { workspace = true }
 humantime = { workspace = true }
 humantime-serde = { workspace = true }
