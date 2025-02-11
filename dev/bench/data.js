@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739284875885,
+  "lastUpdate": 1739292261777,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4199,6 +4199,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/c36983a31aa3dfe6255038bf81e4932bf4794d2e"
         },
         "date": 1739284875158,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "0daafff765f8b38c6e085855d2603e5e85118f2e",
+          "message": "chore: removes redundant clones",
+          "timestamp": "2025-02-11T13:10:14-03:00",
+          "tree_id": "7e5b4054c5ba9c799c06609a142427bbdfb679d1",
+          "url": "https://github.com/trustification/trustify/commit/0daafff765f8b38c6e085855d2603e5e85118f2e"
+        },
+        "date": 1739292259667,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
