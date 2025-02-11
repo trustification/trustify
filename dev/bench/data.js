@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739260588153,
+  "lastUpdate": 1739264904843,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4117,6 +4117,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "e1cdb11029bff05ec312c37dfb19728eac53667a",
+          "message": "chore: reducing the happy path logging",
+          "timestamp": "2025-02-11T08:48:13Z",
+          "tree_id": "2162a20b9254723215d336a12df98cdcb8e6405c",
+          "url": "https://github.com/trustification/trustify/commit/e1cdb11029bff05ec312c37dfb19728eac53667a"
+        },
+        "date": 1739264903531,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
