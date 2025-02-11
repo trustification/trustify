@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739226551281,
+  "lastUpdate": 1739260588153,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4083,6 +4083,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/b0eb7a654ff1f2e8ffad9d818b85523777bbcead"
         },
         "date": 1739226550548,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": false,
+          "id": "1be139dc1fd86417f83d15f594fa33fe87996bfb",
+          "message": "feat: Upgrade postgresql to 17\n\nRelated to https://github.com/trustification/trustify/issues/1275",
+          "timestamp": "2025-02-10T22:52:54-03:00",
+          "tree_id": "ca51961b9bb874145108e7893dd538fae13af647",
+          "url": "https://github.com/trustification/trustify/commit/1be139dc1fd86417f83d15f594fa33fe87996bfb"
+        },
+        "date": 1739260587428,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
