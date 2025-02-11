@@ -1,4 +1,4 @@
-use test_context::test_context;
+use test_context::AsyncTestContext;
 use test_log::test;
 use tracing::instrument;
 use trustify_cvss::cvss3::severity::Severity;
@@ -6,9 +6,26 @@ use trustify_module_fundamental::sbom::model::details::SbomDetails;
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_test_context::TrustifyContext;
 
-#[test_context(TrustifyContext)]
+// The sbom_details_cyclonedx_osv test started to fail due to the test thread having reached its limit, i.e. 2 MB
+// One option to fix it is to set RUST_MIN_STACK to 3 MB, but it would have been an impact on the whole test execution
+// requiring everyone to add it to run the tests.
+// With this alternative approach based upon manually creating the Tokio runtime for the test execution,
+// the test runs successfully and no changes are requested to anyone (neither contributors nor CI jobs).
 #[instrument]
-#[test(tokio::test)]
+#[test]
+fn test_sbom_details_cyclonedx_osv() {
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async {
+            let ctx = TrustifyContext::setup().await;
+            sbom_details_cyclonedx_osv(&ctx)
+                .await
+                .expect("sbom_details_cyclonedx_osv: test failed (panic)");
+        })
+}
+
 async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let sbom = SbomService::new(ctx.db.clone());
 
