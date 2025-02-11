@@ -81,7 +81,7 @@ impl Run {
             ("max_connections".to_string(), "500".to_string()),
         ]);
         let settings = postgresql_embedded::Settings {
-            version: VersionReq::parse("=16.3.0")?,
+            version: VersionReq::parse("=17.2.0")?,
             username: self.database.username.clone(),
             password: self.database.password.clone(),
             temporary: false,

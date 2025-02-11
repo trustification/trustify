@@ -6,7 +6,7 @@ use tracing::{info_span, Instrument};
 
 /// Create common default settings for the embedded database
 fn default_settings() -> anyhow::Result<Settings> {
-    let version = VersionReq::parse("=16.3.0").context("valid psql version")?;
+    let version = VersionReq::parse("=17.2.0").context("valid psql version")?;
     Ok(Settings {
         version,
         username: "postgres".to_string(),
