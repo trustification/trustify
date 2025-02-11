@@ -97,7 +97,7 @@ impl CpeCreator {
         self.cpes.insert(cpe.uuid(), cpe.into());
     }
 
-    #[instrument(skip(self, db), fields(num=self.cpes.len()), ret)]
+    #[instrument(skip(self, db), fields(num=self.cpes.len()), err(level=tracing::Level::INFO))]
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
         for batch in &self.cpes.into_values().chunked() {
             cpe::Entity::insert_many(batch)
