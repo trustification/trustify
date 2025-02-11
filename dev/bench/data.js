@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739264904843,
+  "lastUpdate": 1739267541747,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4146,6 +4146,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "dbddabb404db1f0b0e4d2973d1aecdc76fbd3cb6",
+          "message": "feat: add db parameter group, with current settings",
+          "timestamp": "2025-02-11T09:32:50Z",
+          "tree_id": "6e8b37400a51273be82db4e00730b988de2ca5b9",
+          "url": "https://github.com/trustification/trustify/commit/dbddabb404db1f0b0e4d2973d1aecdc76fbd3cb6"
+        },
+        "date": 1739267541095,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
