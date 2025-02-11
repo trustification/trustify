@@ -162,7 +162,7 @@ fn init_otlp_metrics(name: &str) {
     println!("Using OTEL Collector with Prometheus as the back-end.");
     println!("{:#?}", provider);
 
-    set_meter_provider(provider.clone());
+    set_meter_provider(provider);
 }
 
 fn init_otlp_tracing(name: &str) {

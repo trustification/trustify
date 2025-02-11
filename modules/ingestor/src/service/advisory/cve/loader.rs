@@ -288,7 +288,7 @@ impl<'g> CveLoader<'g> {
                 published,
                 modified,
                 withdrawn,
-                cwes: cwe.clone(),
+                cwes: cwe,
             },
         }
     }
