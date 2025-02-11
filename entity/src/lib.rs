@@ -22,6 +22,7 @@ pub mod purl_status;
 pub mod qualified_purl;
 pub mod relationship;
 pub mod sbom;
+pub mod sbom_external_node;
 pub mod sbom_file;
 pub mod sbom_node;
 pub mod sbom_package;
