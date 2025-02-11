@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739267541747,
+  "lastUpdate": 1739284875885,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4170,6 +4170,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/dbddabb404db1f0b0e4d2973d1aecdc76fbd3cb6"
         },
         "date": 1739267541095,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": false,
+          "id": "c36983a31aa3dfe6255038bf81e4932bf4794d2e",
+          "message": "TC-2240 Create Tokio runtime for sbom_details_cyclonedx_osv test execution\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-02-11T14:20:49Z",
+          "tree_id": "b9781f72dc9cf3c6cc80a47ed13eb57171156858",
+          "url": "https://github.com/trustification/trustify/commit/c36983a31aa3dfe6255038bf81e4932bf4794d2e"
+        },
+        "date": 1739284875158,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
