@@ -9,7 +9,7 @@ data "aws_vpc" "cluster" {
 
 data "aws_subnets" "cluster-private" {
   filter {
-    name   = "vpc-id"
+    name = "vpc-id"
     values = [data.aws_vpc.cluster.id]
   }
   tags = {
@@ -58,13 +58,13 @@ locals {
 }
 
 resource "random_password" "trustify-db-admin-password" {
-  length  = 32
+  length = 32
   # some special characters are limited
   special = false
 }
 
 resource "random_password" "trustify-db-user-password" {
-  length  = 32
+  length = 32
   # some special characters are limited
   special = false
 }
@@ -112,6 +112,8 @@ resource "aws_db_instance" "trustify" {
   allocated_storage     = 250
   max_allocated_storage = 1000
 
+  parameter_group_name = aws_db_parameter_group.trustify.name
+
   db_name             = "postgres"
   engine              = "postgres"
   engine_version      = "17.2"
@@ -124,4 +126,18 @@ resource "aws_db_instance" "trustify" {
   availability_zone = var.availability-zone
 
   performance_insights_enabled = true
+}
+
+resource "aws_db_parameter_group" "trustify" {
+  family = "postgres17"
+  name   = "trustify-${var.environment}"
+
+  parameter {
+    name         = "max_parallel_workers_per_gather"
+    value        = "4"
+  }
+  parameter {
+    name         = "random_page_cost"
+    value        = "1.1"
+  }
 }
