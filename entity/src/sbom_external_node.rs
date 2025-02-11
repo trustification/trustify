@@ -12,20 +12,30 @@ pub struct Model {
     pub external_node_ref: String,
     pub external_type: ExternalType,
     pub target_sbom_id: Option<Uuid>,
-
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    EnumIter,
+    DeriveActiveEnum,
+    serde::Serialize,
+    serde::Deserialize,
+    DeepSizeOf,
+)]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
 #[serde(rename_all = "snake_case")]
-#[derive(DeepSizeOf)]
+
 pub enum ExternalType {
     #[sea_orm(num_value = 0)]
     SPDX,
     #[sea_orm(num_value = 1)]
-    CDX,
+    CycloneDx,
     #[sea_orm(num_value = 2)]
-    RH_PRODUCT_COMPONENT,
+    RedHatProductComponent,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
