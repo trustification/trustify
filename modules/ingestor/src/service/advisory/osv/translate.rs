@@ -45,6 +45,7 @@ fn translate<'a>(ecosystem: &Ecosystem, name: &'a str) -> Option<PackageUrl<'a>>
         Ecosystem::RubyGems => PackageUrl::new("gem", name).ok(),
         Ecosystem::Hex => PackageUrl::new("hex", name).ok(),
         Ecosystem::SwiftURL => split_name(name, "swift", "/"),
+        Ecosystem::Pub => PackageUrl::new("pub", name).ok(),
         _ => None,
     }
 }
@@ -124,6 +125,7 @@ mod test {
         "github.com/sparkle-project/Sparkle",
         Some("pkg:swift/github.com/sparkle-project/Sparkle")
     )]
+    #[case(Ecosystem::Pub, "agent_dart", Some("pkg:pub/agent_dart"))]
     fn test_translate(
         #[case] ecosystem: Ecosystem,
         #[case] name: &str,

@@ -34,4 +34,5 @@ pub enum VersionScheme {
     Gem,
     Hex,
     Swift,
+    Pub,
 }

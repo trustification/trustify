@@ -81,6 +81,13 @@
       "version": "1.2.3",
       "description": "1 vulnerability",
       "purl": "pkg:swift/github.com/sparkle-project/Sparkle@1.2.3"
+    },
+    {
+      "type": "library",
+      "name": "agent_dart",
+      "version": "0.1.21",
+      "description": "1 vulnerability",
+      "purl": "pkg:pub/agent_dart@0.1.21"
     }
   ]
 }
