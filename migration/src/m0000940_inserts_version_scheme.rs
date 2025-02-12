@@ -17,8 +17,16 @@ impl MigrationTrait for Migration {
         )
         .await?;
 
+        insert(
+            db,
+            "swift",
+            "Swift",
+            Some("https://www.swift.org/documentation/package-manager/"),
+        )
+        .await?;
+
         db.execute_unprepared(include_str!(
-            "m0000940_insert_hex_version_scheme/version_matches.sql"
+            "m0000940_inserts_version_scheme/version_matches.sql"
         ))
         .await
         .map(|_| ())?;
@@ -35,6 +43,7 @@ impl MigrationTrait for Migration {
         .await
         .map(|_| ())?;
 
+        delete(db, "swift").await?;
         delete(db, "hex").await?;
 
         Ok(())

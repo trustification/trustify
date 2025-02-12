@@ -33,4 +33,5 @@ pub enum VersionScheme {
     NuGet,
     Gem,
     Hex,
+    Swift,
 }

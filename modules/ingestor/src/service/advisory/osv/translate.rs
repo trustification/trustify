@@ -44,6 +44,7 @@ fn translate<'a>(ecosystem: &Ecosystem, name: &'a str) -> Option<PackageUrl<'a>>
         Ecosystem::NuGet => PackageUrl::new("nuget", name).ok(),
         Ecosystem::RubyGems => PackageUrl::new("gem", name).ok(),
         Ecosystem::Hex => PackageUrl::new("hex", name).ok(),
+        Ecosystem::SwiftURL => split_name(name, "swift", "/"),
         _ => None,
     }
 }
@@ -54,8 +55,8 @@ fn split_name<'a>(name: &'a str, ty: &'a str, separator: &str) -> Option<Package
         0 => None,
         1 => PackageUrl::new(ty, split[0]).ok(),
         _ => {
-            let namespace = split[0];
-            let name = split[1..].join(separator);
+            let namespace = split[0..=split.len() - 2].join(separator);
+            let name = split[split.len() - 1];
             PackageUrl::new(ty, name)
                 .map(|mut purl| {
                     purl.with_namespace(namespace);
@@ -118,6 +119,11 @@ mod test {
         Some("pkg:gem/activerecord-session_store")
     )]
     #[case(Ecosystem::Hex, "mtproto_proxy", Some("pkg:hex/mtproto_proxy"))]
+    #[case(
+        Ecosystem::SwiftURL,
+        "github.com/sparkle-project/Sparkle",
+        Some("pkg:swift/github.com/sparkle-project/Sparkle")
+    )]
     fn test_translate(
         #[case] ecosystem: Ecosystem,
         #[case] name: &str,
