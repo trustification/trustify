@@ -12,6 +12,38 @@ pub struct Model {
     pub external_node_ref: String,
     pub external_type: ExternalType,
     pub target_sbom_id: Option<Uuid>,
+    pub discriminator_type: Option<DiscriminatorType>,
+    pub discriminator_value: Option<String>,
+}
+
+/// Type of the SBOM document discriminator, when using external references.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    EnumIter,
+    DeriveActiveEnum,
+    serde::Serialize,
+    serde::Deserialize,
+    DeepSizeOf,
+)]
+#[sea_orm(rs_type = "i32", db_type = "Integer")]
+#[serde(rename_all = "snake_case")]
+pub enum DiscriminatorType {
+    /// By using an SHA-256 digest
+    #[sea_orm(num_value = 0)]
+    Sha256,
+    /// By using an SHA-384 digest
+    #[sea_orm(num_value = 1)]
+    Sha384,
+    /// By using an SHA-512 digest
+    #[sea_orm(num_value = 2)]
+    Sha512,
+    /// By using an CycloneDX version
+    #[sea_orm(num_value = 3)]
+    CycloneDxVersion,
 }
 
 #[derive(
@@ -28,7 +60,6 @@ pub struct Model {
 )]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
 #[serde(rename_all = "snake_case")]
-
 pub enum ExternalType {
     #[sea_orm(num_value = 0)]
     SPDX,
