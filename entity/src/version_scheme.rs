@@ -32,4 +32,5 @@ pub enum VersionScheme {
     Packagist,
     NuGet,
     Gem,
+    Hex,
 }

@@ -67,6 +67,13 @@
       "version": "0.1.1",
       "description": "1 vulnerability",
       "purl": "pkg:gem/activerecord-session_store@0.1.1"
+    },
+    {
+      "type": "library",
+      "name": "mtproto_proxy",
+      "version": "0.5.6",
+      "description": "1 vulnerability",
+      "purl": "pkg:hex/mtproto_proxy@0.5.6"
     }
   ]
 }

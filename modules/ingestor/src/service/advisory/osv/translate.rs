@@ -43,6 +43,7 @@ fn translate<'a>(ecosystem: &Ecosystem, name: &'a str) -> Option<PackageUrl<'a>>
         Ecosystem::Packagist => split_name(name, "composer", "/"),
         Ecosystem::NuGet => PackageUrl::new("nuget", name).ok(),
         Ecosystem::RubyGems => PackageUrl::new("gem", name).ok(),
+        Ecosystem::Hex => PackageUrl::new("hex", name).ok(),
         _ => None,
     }
 }
@@ -116,6 +117,7 @@ mod test {
         "activerecord-session_store",
         Some("pkg:gem/activerecord-session_store")
     )]
+    #[case(Ecosystem::Hex, "mtproto_proxy", Some("pkg:hex/mtproto_proxy"))]
     fn test_translate(
         #[case] ecosystem: Ecosystem,
         #[case] name: &str,

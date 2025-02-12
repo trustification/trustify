@@ -70,13 +70,19 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         Some("GHSA-cvw2-xj8r-mjf7".to_string())
     );
 
+    let hex_erlang = ctx.ingest_document("osv/GHSA-738q-mc72-2q22.json").await?;
+    assert_eq!(
+        hex_erlang.document_id,
+        Some("GHSA-738q-mc72-2q22".to_string())
+    );
+
     let sbom1 = sbom
         .fetch_sbom_details(result1.id, vec![], &ctx.db)
         .await?
         .expect("SBOM details must be found");
     log::info!("SBOM1: {sbom1:?}");
 
-    assert_eq!(7, sbom1.advisories.len());
+    assert_eq!(8, sbom1.advisories.len());
     check_advisory(
         &sbom1,
         "GHSA-45c4-8wx5-qw6w",
@@ -117,6 +123,12 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         &sbom1,
         "GHSA-cvw2-xj8r-mjf7",
         "CVE-2019-25025",
+        Severity::High,
+    );
+    check_advisory(
+        &sbom1,
+        "GHSA-738q-mc72-2q22",
+        "CVE-2023-45312",
         Severity::High,
     );
     Ok(())
