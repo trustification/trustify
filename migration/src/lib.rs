@@ -110,6 +110,7 @@ mod m0000900_perf_indexes;
 mod m0000910_insert_packagist_version_scheme;
 mod m0000920_perf_indexes;
 mod m0000930_alter_sbom_external_node;
+mod m0000940_insert_hex_version_scheme;
 mod m0000940_perf_indexes_qualified_purl;
 
 #[cfg(feature = "ai")]
@@ -231,6 +232,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000920_perf_indexes::Migration),
             Box::new(m0000930_alter_sbom_external_node::Migration),
             Box::new(m0000940_perf_indexes_qualified_purl::Migration),
+            Box::new(m0000940_insert_hex_version_scheme::Migration),
         ]
     }
 }
