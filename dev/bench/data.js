@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739371037782,
+  "lastUpdate": 1739371512291,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4344,6 +4344,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/ec141f26d518ada8e43f4464b333074e77533918"
         },
         "date": 1739371037266,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "5db384f698b6318a220db04edbf18fa66d9d7f9c",
+          "message": "TC-2246 OSV GHSA - Ecosystem Pub Dart Flutter\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-02-12T14:12:14Z",
+          "tree_id": "333e4a1b9835f37f88938a4777b0a737e5a05bf7",
+          "url": "https://github.com/trustification/trustify/commit/5db384f698b6318a220db04edbf18fa66d9d7f9c"
+        },
+        "date": 1739371511397,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
