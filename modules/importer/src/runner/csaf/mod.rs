@@ -29,7 +29,7 @@ use url::Url;
 use walker_common::fetcher::{Fetcher, FetcherOptions};
 
 impl super::ImportRunner {
-    #[instrument(skip(self), ret)]
+    #[instrument(skip_all)]
     pub async fn run_once_csaf(
         &self,
         context: impl RunContext,

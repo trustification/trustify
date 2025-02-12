@@ -177,7 +177,7 @@ where
     }
 
     /// Sync version, as all git functions are sync
-    #[instrument(skip(self), ret)]
+    #[instrument(skip(self))]
     fn run_sync(mut self) -> Result<Continuation, Error> {
         log::debug!("Starting run for: {}", self.source);
 
@@ -188,16 +188,11 @@ where
 
         let path = working_dir.as_ref();
 
-        log::info!("Cloning {} into {}", self.source, path.display());
-
         // clone or open repository
-
         let repo = self.clone_or_update_repo(path)?;
-
         log::info!("Repository cloned or updated");
 
         // discover files between "then" and now
-
         let changes = self.find_changes(&repo)?;
 
         // discover and process files
@@ -240,11 +235,8 @@ where
                 let repo = info_span!("open repository").in_scope(|| Repository::open(path))?;
 
                 let repo = info_span!("fetching updates").in_scope(move || {
-                    log::info!("Fetching updates");
-
                     self.progress
                         .message_sync(format!("Fetching updates: {}", self.source));
-
                     {
                         let mut remote = repo.find_remote("origin")?;
                         let mut fo = Self::create_fetch_options();
@@ -294,7 +286,7 @@ where
         }
     }
 
-    #[instrument(skip(self), err)]
+    #[instrument(skip(self))]
     fn clone_repo(&self, path: &Path) -> Result<Repository, git2::Error> {
         self.progress
             .message_sync(format!("Cloning repository: {}", self.source));
@@ -318,7 +310,7 @@ where
             Some(commit) => {
                 log::info!("Continuing from: {commit}");
 
-                let files = info_span!("continue from", commit).in_scope(|| {
+                info_span!("continue from", commit).in_scope(|| {
                     let start = match repo.find_commit(repo.revparse_single(commit)?.id()) {
                         Ok(start) => start,
                         Err(err)
@@ -358,18 +350,9 @@ where
                     }
 
                     Ok(Some(files))
-                })?;
-
-                if let Some(files) = &files {
-                    log::info!("Detected {} changed files", files.len());
-                }
-
-                files
+                })?
             }
-            _ => {
-                log::debug!("Ingesting all files");
-                None
-            }
+            _ => None,
         };
 
         match &result {
@@ -377,7 +360,7 @@ where
                 log::info!("Detected {} changed files", result.len());
             }
             None => {
-                log::debug!("Ingesting all files");
+                log::info!("Ingesting all files");
             }
         }
 
