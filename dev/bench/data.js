@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739360568189,
+  "lastUpdate": 1739362967711,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4257,6 +4257,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/99e995e35b40e430bfcd8a10f3c92da895798174"
         },
         "date": 1739360566936,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "e66cbf319c7656218ecca03e4c83f0d84a7b5377",
+          "message": "feat: implement ingestion of SPDX and CDX external references",
+          "timestamp": "2025-02-12T11:57:22Z",
+          "tree_id": "c4deae3d2a30bb61e676b6f025588cb53e991914",
+          "url": "https://github.com/trustification/trustify/commit/e66cbf319c7656218ecca03e4c83f0d84a7b5377"
+        },
+        "date": 1739362966350,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
