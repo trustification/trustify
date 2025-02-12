@@ -3,8 +3,8 @@ use crate::graph::{
     product::ProductInformation,
     purl::creator::PurlCreator,
     sbom::{
-        LicenseCreator, LicenseInfo, PackageCreator, PackageReference, RelationshipCreator,
-        SbomContext, SbomInformation,
+        CycloneDx as CycloneDxProcessor, LicenseCreator, LicenseInfo, PackageCreator,
+        PackageReference, RelationshipCreator, SbomContext, SbomInformation,
     },
 };
 use sea_orm::ConnectionTrait;
@@ -218,8 +218,11 @@ impl<'a> Creator<'a> {
         let mut purls = PurlCreator::new();
         let mut cpes = CpeCreator::new();
         let mut packages = PackageCreator::with_capacity(self.sbom_id, self.components.len());
-        let mut relationships =
-            RelationshipCreator::with_capacity(self.sbom_id, self.relations.len());
+        let mut relationships = RelationshipCreator::with_capacity(
+            self.sbom_id,
+            self.relations.len(),
+            CycloneDxProcessor,
+        );
         let mut licenses = LicenseCreator::new();
 
         for comp in self.components {
@@ -253,7 +256,7 @@ struct ComponentCreator<'a> {
     purls: &'a mut PurlCreator,
     licenses: &'a mut LicenseCreator,
     packages: &'a mut PackageCreator,
-    relationships: &'a mut RelationshipCreator,
+    relationships: &'a mut RelationshipCreator<CycloneDxProcessor>,
 
     refs: Vec<PackageReference>,
     license_relations: Vec<LicenseInfo>,
@@ -265,7 +268,7 @@ impl<'a> ComponentCreator<'a> {
         purls: &'a mut PurlCreator,
         licenses: &'a mut LicenseCreator,
         packages: &'a mut PackageCreator,
-        relationships: &'a mut RelationshipCreator,
+        relationships: &'a mut RelationshipCreator<CycloneDxProcessor>,
     ) -> Self {
         Self {
             cpes,

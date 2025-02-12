@@ -1,5 +1,6 @@
 mod aliases;
 mod corner_cases;
+mod external;
 mod issue_552;
 mod perf;
 mod reingest;

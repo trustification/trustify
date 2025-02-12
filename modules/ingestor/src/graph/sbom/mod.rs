@@ -489,12 +489,17 @@ impl SbomContext {
     /// The packages will be created if they don't yet exist.
     ///
     /// **NOTE:** This is a convenience function, creating relationships for tests. It is terribly slow.
-    #[instrument(skip(connection), err)]
-    pub async fn ingest_package_relates_to_package<'a, C: ConnectionTrait>(
+    #[instrument(skip(connection, er), err)]
+    pub async fn ingest_package_relates_to_package<
+        'a,
+        C: ConnectionTrait,
+        ER: ExternalReferenceProcessor,
+    >(
         &'a self,
         left: impl Into<RelationshipReference> + Debug,
         relationship: Relationship,
         right: impl Into<RelationshipReference> + Debug,
+        er: ER,
         connection: &C,
     ) -> Result<(), Error> {
         let left = left.into();
@@ -567,39 +572,44 @@ impl SbomContext {
         let left_node_id = left_node_id.unwrap_or_else(|| self.sbom.node_id.clone());
         let right_node_id = right_node_id.unwrap_or_else(|| self.sbom.node_id.clone());
 
-        let mut relationships = RelationshipCreator::new(self.sbom.sbom_id);
+        // FIXME: this could also be SPDX
+        let mut relationships = RelationshipCreator::new(self.sbom.sbom_id, er);
         relationships.relate(left_node_id, relationship, right_node_id);
         relationships.create(connection).await?;
 
         Ok(())
     }
 
-    #[instrument(skip(self, connection), err)]
-    pub async fn ingest_describes_package<C: ConnectionTrait>(
+    #[instrument(skip(self, connection, er), err)]
+    pub async fn ingest_describes_package<C: ConnectionTrait, ER: ExternalReferenceProcessor>(
         &self,
         package: Purl,
+        er: ER,
         connection: &C,
     ) -> anyhow::Result<()> {
         self.ingest_package_relates_to_package(
             RelationshipReference::Purl(package),
             Relationship::Describes,
             RelationshipReference::Root,
+            er,
             connection,
         )
         .await?;
         Ok(())
     }
 
-    #[instrument(skip(self, connection), err)]
-    pub async fn ingest_describes_cpe22<C: ConnectionTrait>(
+    #[instrument(skip(self, connection, er), err)]
+    pub async fn ingest_describes_cpe22<C: ConnectionTrait, ER: ExternalReferenceProcessor>(
         &self,
         cpe: Cpe,
+        er: ER,
         connection: &C,
     ) -> anyhow::Result<()> {
         self.ingest_package_relates_to_package(
             RelationshipReference::Cpe(cpe),
             Relationship::Describes,
             RelationshipReference::Root,
+            er,
             connection,
         )
         .await?;

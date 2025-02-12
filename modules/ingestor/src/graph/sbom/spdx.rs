@@ -1,3 +1,4 @@
+use crate::graph::sbom::Spdx;
 use crate::{
     graph::{
         cpe::CpeCreator,
@@ -67,10 +68,17 @@ impl SbomContext {
 
         // prepare relationships
 
-        let mut relationships =
-            RelationshipCreator::with_capacity(self.sbom.sbom_id, sbom_data.relationships.len());
+        let mut relationships = RelationshipCreator::with_capacity(
+            self.sbom.sbom_id,
+            sbom_data.relationships.len(),
+            Spdx(
+                &sbom_data
+                    .document_creation_information
+                    .external_document_references,
+            ),
+        );
 
-        for described in sbom_data.document_creation_information.document_describes {
+        for described in &sbom_data.document_creation_information.document_describes {
             log::debug!("Adding 'document_describes': {described}");
             relationships.relate(
                 sbom_data
@@ -78,7 +86,7 @@ impl SbomContext {
                     .spdx_identifier
                     .clone(),
                 Relationship::Describes,
-                described,
+                described.clone(),
             );
         }
 
