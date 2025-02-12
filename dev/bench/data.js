@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739362967711,
+  "lastUpdate": 1739365020751,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4286,6 +4286,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/e66cbf319c7656218ecca03e4c83f0d84a7b5377"
         },
         "date": 1739362966350,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": false,
+          "id": "5016973d4d59657a5bcaa8a6a41d93be35ee730c",
+          "message": "add correct indexes for api/v2/purl?q=",
+          "timestamp": "2025-02-12T13:14:06+01:00",
+          "tree_id": "3986a665dc5893fdc51deff4939f6909db30327e",
+          "url": "https://github.com/trustification/trustify/commit/5016973d4d59657a5bcaa8a6a41d93be35ee730c"
+        },
+        "date": 1739365020042,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
