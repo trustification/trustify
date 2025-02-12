@@ -46,6 +46,9 @@ begin
         when range_p.version_scheme_id = 'swift'
             -- Swift Package Manager claims to be semver
             then semver_version_matches(version_p, range_p)
+        when range_p.version_scheme_id = 'pub'
+            -- Pub Dart Flutter claims to be semver
+            then semver_version_matches(version_p, range_p)
         else
             false
     end;

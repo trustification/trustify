@@ -25,8 +25,16 @@ impl MigrationTrait for Migration {
         )
         .await?;
 
+        insert(
+            db,
+            "pub",
+            "Pub Dart Flutter",
+            Some("https://dart.dev/tools/pub/versioning#semantic-versions"),
+        )
+        .await?;
+
         db.execute_unprepared(include_str!(
-            "m0000940_inserts_version_scheme/version_matches.sql"
+            "m0000950_inserts_version_scheme/version_matches.sql"
         ))
         .await
         .map(|_| ())?;
@@ -43,6 +51,7 @@ impl MigrationTrait for Migration {
         .await
         .map(|_| ())?;
 
+        delete(db, "pub").await?;
         delete(db, "swift").await?;
         delete(db, "hex").await?;
 

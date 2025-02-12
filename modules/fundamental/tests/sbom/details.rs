@@ -79,13 +79,19 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
     let swift = ctx.ingest_document("osv/GHSA-wc9m-r3v6-9p5h.json").await?;
     assert_eq!(swift.document_id, Some("GHSA-wc9m-r3v6-9p5h".to_string()));
 
+    let pub_dart = ctx.ingest_document("osv/GHSA-fmj7-7gfw-64pg.json").await?;
+    assert_eq!(
+        pub_dart.document_id,
+        Some("GHSA-fmj7-7gfw-64pg".to_string())
+    );
+
     let sbom1 = sbom
         .fetch_sbom_details(result1.id, vec![], &ctx.db)
         .await?
         .expect("SBOM details must be found");
     log::info!("SBOM1: {sbom1:?}");
 
-    assert_eq!(9, sbom1.advisories.len());
+    assert_eq!(10, sbom1.advisories.len());
     check_advisory(
         &sbom1,
         "GHSA-45c4-8wx5-qw6w",
@@ -139,6 +145,12 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         "GHSA-wc9m-r3v6-9p5h",
         "CVE-2025-0509",
         Severity::High,
+    );
+    check_advisory(
+        &sbom1,
+        "GHSA-fmj7-7gfw-64pg",
+        "CVE-2024-48915",
+        Severity::Medium,
     );
     Ok(())
 }
