@@ -43,6 +43,9 @@ begin
         when range_p.version_scheme_id = 'hex'
             -- Erlang Hex claims to be semver
             then semver_version_matches(version_p, range_p)
+        when range_p.version_scheme_id = 'swift'
+            -- Swift Package Manager claims to be semver
+            then semver_version_matches(version_p, range_p)
         else
             false
     end;

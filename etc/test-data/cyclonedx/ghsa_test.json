@@ -74,6 +74,13 @@
       "version": "0.5.6",
       "description": "1 vulnerability",
       "purl": "pkg:hex/mtproto_proxy@0.5.6"
+    },
+    {
+      "type": "library",
+      "name": "github.com/sparkle-project/Sparkle",
+      "version": "1.2.3",
+      "description": "1 vulnerability",
+      "purl": "pkg:swift/github.com/sparkle-project/Sparkle@1.2.3"
     }
   ]
 }
