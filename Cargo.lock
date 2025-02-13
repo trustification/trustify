@@ -1857,9 +1857,9 @@ dependencies = [
 
 [[package]]
 name = "csv-core"
-version = "0.1.11"
+version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5efa2b3d7902f4b634a20cae3c9c4e6209dc4779feb6863329607560143efa70"
+checksum = "7d02f3b0da4c6504f86e9cd789d8dbafab48c2321be74e9987593de5a894d93d"
 dependencies = [
  "memchr",
 ]
@@ -8886,7 +8886,7 @@ dependencies = [
 [[package]]
 name = "trustify-ui"
 version = "0.1.0"
-source = "git+https://github.com/trustification/trustify-ui.git?branch=publish%2Frelease%2F0.2.z#cd7827e5b8d2fe437298df7ae6174b614b465ac5"
+source = "git+https://github.com/trustification/trustify-ui.git?branch=publish%2Frelease%2F0.2.z#b10ece145be6497f4a34b2be1c0b82facd08f7e3"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
