@@ -14,7 +14,8 @@ use trustify_test_context::TrustifyContext;
 #[instrument]
 #[test]
 fn test_sbom_details_cyclonedx_osv() {
-    tokio::runtime::Builder::new_current_thread()
+    tokio::runtime::Builder::new_multi_thread()
+        .thread_stack_size(10 * 1024 * 1024)
         .enable_all()
         .build()
         .unwrap()
@@ -85,13 +86,16 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         Some("GHSA-fmj7-7gfw-64pg".to_string())
     );
 
+    let maven = ctx.ingest_document("osv/GHSA-qq9f-q439-2574.json").await?;
+    assert_eq!(maven.document_id, Some("GHSA-qq9f-q439-2574".to_string()));
+
     let sbom1 = sbom
         .fetch_sbom_details(result1.id, vec![], &ctx.db)
         .await?
         .expect("SBOM details must be found");
     log::info!("SBOM1: {sbom1:?}");
 
-    assert_eq!(10, sbom1.advisories.len());
+    assert_eq!(11, sbom1.advisories.len());
     check_advisory(
         &sbom1,
         "GHSA-45c4-8wx5-qw6w",
@@ -150,6 +154,12 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         &sbom1,
         "GHSA-fmj7-7gfw-64pg",
         "CVE-2024-48915",
+        Severity::Medium,
+    );
+    check_advisory(
+        &sbom1,
+        "GHSA-qq9f-q439-2574",
+        "CVE-2024-8447",
         Severity::Medium,
     );
     Ok(())
