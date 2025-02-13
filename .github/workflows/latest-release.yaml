@@ -10,7 +10,9 @@ on:
       - release/*
   workflow_dispatch:
 
-concurrency: latest-release
+concurrency:
+  cancel-in-progress: false
+  group: latest-release
 
 env:
   IMAGE_NAME: trustd
