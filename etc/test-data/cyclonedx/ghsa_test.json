@@ -88,6 +88,13 @@
       "version": "0.1.21",
       "description": "1 vulnerability",
       "purl": "pkg:pub/agent_dart@0.1.21"
+    },
+    {
+      "type": "library",
+      "name": "org.jboss.narayana.rts/lra-coordinator-jar",
+      "version": "5.13.1.Alpha1",
+      "description": "1 vulnerability",
+      "purl": "pkg:maven/org.jboss.narayana.rts/lra-coordinator-jar@5.13.1.Alpha1"
     }
   ]
 }

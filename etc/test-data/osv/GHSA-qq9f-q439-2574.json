@@ -1,0 +1,73 @@
+{
+  "schema_version": "1.4.0",
+  "id": "GHSA-qq9f-q439-2574",
+  "modified": "2025-01-02T22:05:33Z",
+  "published": "2025-01-02T21:31:42Z",
+  "aliases": [
+    "CVE-2024-8447"
+  ],
+  "summary": "Narayana deadlock via multiple join requests sent to LRA Coordinator",
+  "details": "A security issue was discovered in the LRA Coordinator component of Narayana. When Cancel is called in LRA, an execution time of approximately 2 seconds occurs. If Join is called with the same LRA ID within that timeframe, the application may crash or hang indefinitely, leading to a denial of service.",
+  "severity": [
+    {
+      "type": "CVSS_V3",
+      "score": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H"
+    }
+  ],
+  "affected": [
+    {
+      "package": {
+        "ecosystem": "Maven",
+        "name": "org.jboss.narayana.rts:lra-coordinator-jar"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "fixed": "7.1.0.Final"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "ADVISORY",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-8447"
+    },
+    {
+      "type": "WEB",
+      "url": "https://github.com/jbosstm/narayana/pull/2293"
+    },
+    {
+      "type": "WEB",
+      "url": "https://github.com/jbosstm/narayana/commit/eb778412de230afc4687a2df43641280494156c5"
+    },
+    {
+      "type": "WEB",
+      "url": "https://access.redhat.com/security/cve/CVE-2024-8447"
+    },
+    {
+      "type": "WEB",
+      "url": "https://bugzilla.redhat.com/show_bug.cgi?id=2335206"
+    },
+    {
+      "type": "PACKAGE",
+      "url": "https://github.com/jbosstm/narayana"
+    }
+  ],
+  "database_specific": {
+    "cwe_ids": [
+      "CWE-833"
+    ],
+    "severity": "MODERATE",
+    "github_reviewed": true,
+    "github_reviewed_at": "2025-01-02T22:05:33Z",
+    "nvd_published_at": "2025-01-02T21:15:10Z"
+  }
+}
