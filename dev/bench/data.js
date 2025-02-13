@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739455196906,
+  "lastUpdate": 1739468317999,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4605,6 +4605,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/ab5d5233b4e44fb0d1905b78aab0a53ffeda8143"
         },
         "date": 1739455196413,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "f8ee2afe0a5b4338fb35dd4a1c064995813dba0d",
+          "message": "feat: upgrade OTEL to 0.28\n\n* renamed from TraceProvider to SdkTracerProvider\n* grpc-tonic feature enabled for opentelemetry-otlp dependency as required\n* removed tokio from opentelemetry_sdk dependency (otel deps uses now a background thread)\n* resource identifier using service_name (trustify) instead of attributes\n* fix otel imports\n* prometheus - using the same helm-charts version\n* docs improvements\n* not related - ugraded thiserror crate to 2x",
+          "timestamp": "2025-02-13T17:15:50Z",
+          "tree_id": "41af91d9ea82ae84366e2d39f313bf2d494f2718",
+          "url": "https://github.com/trustification/trustify/commit/f8ee2afe0a5b4338fb35dd4a1c064995813dba0d"
+        },
+        "date": 1739468317264,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
