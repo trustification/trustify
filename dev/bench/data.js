@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739448380693,
+  "lastUpdate": 1739455196906,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4581,6 +4581,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "ab5d5233b4e44fb0d1905b78aab0a53ffeda8143",
+          "message": "fix: apply postgres config to compose file",
+          "timestamp": "2025-02-13T13:39:25Z",
+          "tree_id": "c40fb2f51d3d3315644c6b9feca6bd3bc39fd07e",
+          "url": "https://github.com/trustification/trustify/commit/ab5d5233b4e44fb0d1905b78aab0a53ffeda8143"
+        },
+        "date": 1739455196413,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
