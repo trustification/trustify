@@ -5,17 +5,13 @@ use opentelemetry::{
     },
     propagation::Injector,
     trace::TracerProvider,
-    Context, KeyValue,
+    Context,
 };
 use opentelemetry_otlp::{MetricExporter, SpanExporter};
 use opentelemetry_sdk::{
     metrics::{PeriodicReader, SdkMeterProvider},
     propagation::TraceContextPropagator,
-    runtime::TokioCurrentThread,
-    trace::{
-        self as sdktrace,
-        Sampler::{self, ParentBased},
-    },
+    trace::{Sampler, Sampler::ParentBased, SdkTracerProvider},
     Resource,
 };
 use reqwest::RequestBuilder;
@@ -149,14 +145,15 @@ fn init_otlp_metrics(name: &str) {
         .build()
         .expect("Unable to build metrics exporter.");
 
-    let reader = PeriodicReader::builder(exporter, TokioCurrentThread).build();
+    let reader = PeriodicReader::builder(exporter).build();
+
+    let resource = Resource::builder()
+        .with_service_name(name.to_string())
+        .build();
 
     let provider = SdkMeterProvider::builder()
         .with_reader(reader)
-        .with_resource(Resource::new(vec![KeyValue::new(
-            "service.name",
-            name.to_string(),
-        )]))
+        .with_resource(resource)
         .build();
 
     println!("Using OTEL Collector with Prometheus as the back-end.");
@@ -174,12 +171,13 @@ fn init_otlp_tracing(name: &str) {
         .build()
         .expect("Unable to build tracing exporter");
 
-    let provider = sdktrace::TracerProvider::builder()
-        .with_resource(Resource::new(vec![KeyValue::new(
-            "service.name",
-            name.to_string(),
-        )]))
-        .with_batch_exporter(exporter, TokioCurrentThread)
+    let resource = Resource::builder()
+        .with_service_name(name.to_string())
+        .build();
+
+    let provider = SdkTracerProvider::builder()
+        .with_resource(resource)
+        .with_batch_exporter(exporter)
         .with_sampler(ParentBased(Box::new(sampler())))
         .build();
 

@@ -21,8 +21,8 @@ log = { workspace = true }
 mime = { workspace = true }
 openssl = { workspace = true }
 opentelemetry = { workspace = true }
-opentelemetry-otlp = { workspace = true }
-opentelemetry_sdk = { workspace = true, features = ["rt-tokio-current-thread", "metrics"] }
+opentelemetry-otlp = { workspace = true, features = ["grpc-tonic"] }
+opentelemetry_sdk = { workspace = true, features = ["metrics"] }
 parking_lot = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true, features = ["derive", "rc"] }

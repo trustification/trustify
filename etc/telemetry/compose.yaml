@@ -1,7 +1,7 @@
 services:
   prometheus:
     container_name: prometheus
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.1.0 # Using this version to align with trustify-helm-charts
     volumes:
       - ./prometheus.yaml:/etc/prometheus/prometheus.yml:z
     ports:
