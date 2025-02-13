@@ -8,3 +8,5 @@ services:
       POSTGRES_DB: "trustify"
     restart: always
     shm_size: '1g'
+    command: >
+      postgres -c random_page_cost=1.1 -c max_parallel_workers_per_gather=4
