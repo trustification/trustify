@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739443180895,
+  "lastUpdate": 1739444546157,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4489,6 +4489,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/654157aba321b97fad873d138a38451345fdbdaf"
         },
         "date": 1739443180002,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "fd74a4964809c40d5af2a1875203a83de4546ecf",
+          "message": "fix: use predictable ids for all entities during csaf ingestion",
+          "timestamp": "2025-02-13T10:40:52Z",
+          "tree_id": "fda069ab9123543c1dc81700d68c8ce1bc3e3bcd",
+          "url": "https://github.com/trustification/trustify/commit/fd74a4964809c40d5af2a1875203a83de4546ecf"
+        },
+        "date": 1739444544862,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
