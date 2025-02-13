@@ -58,7 +58,7 @@ jobs:
   build:
     uses: ./.github/workflows/build-binary.yaml
     with:
-      version: latest
+      version: ${{ needs.init.outputs.version }}
 
   publish:
     needs: [ init, build ]
