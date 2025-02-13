@@ -24,12 +24,14 @@ pub async fn importer(
     storage: DispatchBackend,
     working_dir: Option<PathBuf>,
     analysis: Option<AnalysisService>,
+    concurrency: usize,
 ) -> anyhow::Result<()> {
     Server {
         db,
         storage,
         working_dir,
         analysis,
+        concurrency,
     }
     .run()
     .await
@@ -56,6 +58,7 @@ struct Server {
     storage: DispatchBackend,
     working_dir: Option<PathBuf>,
     analysis: Option<AnalysisService>,
+    concurrency: usize,
 }
 
 impl Server {
@@ -70,15 +73,16 @@ impl Server {
 
         loop {
             interval.tick().await;
-            tracing::debug!(jim = "", "checking importers");
-
-            let importers = service
-                .list()
-                .await?
-                .into_iter()
-                .filter(|i| !(i.data.configuration.disabled || can_wait(i)))
-                .map(|i| self.import(i, &service));
-            futures::future::join_all(importers).await;
+            futures::future::join_all(
+                service
+                    .list()
+                    .await?
+                    .into_iter()
+                    .filter(|i| !(i.data.configuration.disabled || can_wait(i)))
+                    .take(self.concurrency)
+                    .map(|i| self.import(i, &service)),
+            )
+            .await;
         }
     }
 

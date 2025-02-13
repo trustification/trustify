@@ -49,8 +49,17 @@ use utoipa_redoc::{Redoc, Servable};
 #[derive(clap::Args, Debug)]
 pub struct Run {
     /// The importer working directory
-    #[arg(long, env)]
+    #[arg(long, id = "working_dir", env = "IMPORTER_WORKING_DIR")]
     pub working_dir: Option<PathBuf>,
+
+    /// The max number of concurrent importer runs
+    #[arg(
+        long,
+        id = "concurrency",
+        env = "IMPORTER_CONCURRENCY",
+        default_value = "1"
+    )]
+    pub concurrency: usize,
 
     // flattened commands must go last
     //
@@ -73,6 +82,7 @@ struct InitData {
     storage: DispatchBackend,
     tracing: Tracing,
     working_dir: Option<PathBuf>,
+    concurrency: usize,
 }
 
 impl Run {
@@ -126,6 +136,7 @@ impl InitData {
             tracing: run.infra.tracing,
             storage,
             working_dir: run.working_dir,
+            concurrency: run.concurrency,
         })
     }
 
@@ -138,8 +149,8 @@ impl InitData {
                 db,
                 storage,
                 self.working_dir,
-                // Running the importer, we don't need an analysis graph update
-                None,
+                None, // Running the importer, we don't need an analysis graph update
+                self.concurrency,
             )
             .await
         }

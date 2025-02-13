@@ -110,7 +110,7 @@ impl ImporterService {
             .into_iter()
             .map(Importer::try_from)
             .collect::<Result<_, _>>()?;
-        result.sort_unstable_by_key(|i| (i.data.configuration.disabled, i.name.clone()));
+        result.sort_unstable_by_key(|i| (i.data.configuration.disabled, i.data.last_run));
         Ok(result)
     }
 
