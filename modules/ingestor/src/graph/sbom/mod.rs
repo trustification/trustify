@@ -572,7 +572,6 @@ impl SbomContext {
         let left_node_id = left_node_id.unwrap_or_else(|| self.sbom.node_id.clone());
         let right_node_id = right_node_id.unwrap_or_else(|| self.sbom.node_id.clone());
 
-        // FIXME: this could also be CDX
         let mut relationships = RelationshipCreator::new(self.sbom.sbom_id, er);
         relationships.relate(left_node_id, relationship, right_node_id);
         relationships.create(connection).await?;
