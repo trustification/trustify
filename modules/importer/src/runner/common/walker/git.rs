@@ -27,17 +27,13 @@ pub enum HandlerError<T> {
 pub trait Handler: Send + 'static {
     type Error: Display + Debug;
 
-    fn process(
-        &mut self,
-        path: &Path,
-        relative_path: &Path,
-    ) -> Result<(), HandlerError<Self::Error>>;
+    fn process(&self, path: &Path, relative_path: &Path) -> Result<(), HandlerError<Self::Error>>;
 }
 
 impl Handler for () {
     type Error = Infallible;
 
-    fn process(&mut self, _: &Path, _: &Path) -> Result<(), HandlerError<Self::Error>> {
+    fn process(&self, _: &Path, _: &Path) -> Result<(), HandlerError<Self::Error>> {
         Ok(())
     }
 }
@@ -173,12 +169,12 @@ where
     /// Run the walker
     #[instrument(skip(self), ret)]
     pub async fn run(self) -> Result<Continuation, Error> {
-        tokio::task::spawn_blocking(move || self.run_sync()).await?
+        tokio::task::spawn_blocking(|| self.run_sync()).await?
     }
 
     /// Sync version, as all git functions are sync
     #[instrument(skip(self))]
-    fn run_sync(mut self) -> Result<Continuation, Error> {
+    fn run_sync(self) -> Result<Continuation, Error> {
         log::debug!("Starting run for: {}", self.source);
 
         let working_dir = self
@@ -407,7 +403,7 @@ where
     }
 
     #[instrument(skip(self, changes), err)]
-    fn walk(&mut self, base: &Path, changes: &Option<HashSet<PathBuf>>) -> Result<(), Error> {
+    fn walk(&self, base: &Path, changes: &Option<HashSet<PathBuf>>) -> Result<(), Error> {
         let mut collected = vec![];
 
         for entry in WalkDir::new(base)
