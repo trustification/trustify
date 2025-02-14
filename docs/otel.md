@@ -13,6 +13,7 @@ enabling a clear separation of roles: developers focus on instrumenting applicat
 while DevOps manage its configuration, deployment, and backend integrations.
 
 > [What is Observability?](https://www.brendangregg.com/blog/2021-05-23/what-is-observability.html)
+
 > Observability: The ability to observe.
 
 We are focusing on the signals: traces and metrics.
@@ -39,14 +40,14 @@ podman compose -f etc/deploy/compose/compose.yaml up
 * Open a new terminal and run:
 
 ```shell
-RUST_LOG=info OTEL_TRACES_SAMPLER_ARG=1 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" cargo run --bin trustd api --db-password trustify --auth-disabled --tracing enabled
+RUST_LOG=info OTEL_TRACES_SAMPLER_ARG=1 cargo run --bin trustd api --db-password trustify --auth-disabled --tracing enabled
 ```
 
-> This will start trustify api with traces enabled, for the importer, use the command bellow:
+> This will start trustify api with traces enabled. For the importer, use the command bellow:
 
 
 ```shell
-RUST_LOG=info OTEL_TRACES_SAMPLER_ARG=1 OTEL_EXPORTER_OTLP_ENDPOINT="http://localhost:4317" cargo run --bin trustd importer --db-port 5432 --tracing enabled
+RUST_LOG=info OTEL_TRACES_SAMPLER_ARG=1 cargo run --bin trustd importer --db-port 5432 --tracing enabled
 ```
 
 Access Trustify at [localhost:8080](http://localhost:8080) and analyze the traces using the [Jaeger UI](http://localhost:16686/)
