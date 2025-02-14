@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739468317999,
+  "lastUpdate": 1739539710098,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4634,6 +4634,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/f8ee2afe0a5b4338fb35dd4a1c064995813dba0d"
         },
         "date": 1739468317264,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "049f6a70ea5b960d9f8d62370da3cc086633a314",
+          "message": "chore: otel updates\n\n* Fixed missing import adjustment\n* Minor doc updates\n* Update actix-web-opentelemetry for automatic HTTP* instrumentation",
+          "timestamp": "2025-02-14T13:07:42Z",
+          "tree_id": "0ba0980340dacb100675d7f2c3f0462d66b64ff5",
+          "url": "https://github.com/trustification/trustify/commit/049f6a70ea5b960d9f8d62370da3cc086633a314"
+        },
+        "date": 1739539709383,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
