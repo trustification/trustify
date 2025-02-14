@@ -4,7 +4,7 @@ use opentelemetry::{
         get_text_map_propagator, set_meter_provider, set_text_map_propagator, set_tracer_provider,
     },
     propagation::Injector,
-    trace::TracerProvider,
+    trace::TracerProvider as _,
     Context,
 };
 use opentelemetry_otlp::{MetricExporter, SpanExporter};
@@ -16,6 +16,7 @@ use opentelemetry_sdk::{
 };
 use reqwest::RequestBuilder;
 use std::sync::Once;
+use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::{
     field::MakeExt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter,
 };
@@ -185,10 +186,11 @@ fn init_otlp_tracing(name: &str) {
     println!("{:#?}", provider);
 
     let formatting_layer = tracing_subscriber::fmt::Layer::default();
+    let tracer = provider.tracer(name.to_string());
 
-    if let Err(e) = tracing_subscriber::Registry::default()
+    if let Err(e) = tracing_subscriber::registry()
         .with(EnvFilter::from_default_env())
-        .with(tracing_opentelemetry::layer().with_tracer(provider.tracer(name.to_string())))
+        .with(OpenTelemetryLayer::new(tracer))
         .with(formatting_layer)
         .try_init()
     {
