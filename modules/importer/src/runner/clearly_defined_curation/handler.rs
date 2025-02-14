@@ -24,11 +24,7 @@ where
 {
     type Error = Error;
 
-    fn process(
-        &mut self,
-        path: &Path,
-        relative_path: &Path,
-    ) -> Result<(), HandlerError<Self::Error>> {
+    fn process(&self, path: &Path, relative_path: &Path) -> Result<(), HandlerError<Self::Error>> {
         if let Some(head) = relative_path.components().next() {
             if let Some(head) = head.as_os_str().to_str() {
                 if self.types.iter().any(|e| e.matches(head)) {
@@ -58,7 +54,7 @@ impl<C> ClearlyDefinedHandler<C>
 where
     C: Callbacks<Vec<u8>> + Send + 'static,
 {
-    fn process_file(&mut self, path: &Path, rel_path: &Path) -> Result<(), ProcessingError> {
+    fn process_file(&self, path: &Path, rel_path: &Path) -> Result<(), ProcessingError> {
         let curation = match path.extension().map(|s| s.to_string_lossy()).as_deref() {
             Some("yaml") => {
                 let mut bytes = Vec::new();

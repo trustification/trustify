@@ -22,11 +22,7 @@ where
 {
     type Error = Error;
 
-    fn process(
-        &mut self,
-        path: &Path,
-        relative_path: &Path,
-    ) -> Result<(), HandlerError<Self::Error>> {
+    fn process(&self, path: &Path, relative_path: &Path) -> Result<(), HandlerError<Self::Error>> {
         // Get the year, as we walk with a base of `cves`, that must be the year folder.
         // If it is not, we skip it.
         let Some(year) = relative_path
@@ -69,7 +65,7 @@ impl<C> CveHandler<C>
 where
     C: Callbacks<Vec<u8>> + Send + 'static,
 {
-    fn process_file(&mut self, path: &Path, rel_path: &Path) -> Result<(), ProcessingError> {
+    fn process_file(&self, path: &Path, rel_path: &Path) -> Result<(), ProcessingError> {
         let cve = match path.extension().map(|s| s.to_string_lossy()).as_deref() {
             Some("json") => {
                 let mut data = Vec::new();

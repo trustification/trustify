@@ -79,13 +79,13 @@ impl<C: RunContext> Context<C> {
 }
 
 impl<C: RunContext> Callbacks<Vec<u8>> for Context<C> {
-    fn loading_error(&mut self, path: PathBuf, message: String) {
+    fn loading_error(&self, path: PathBuf, message: String) {
         self.report
             .lock()
             .add_error(Phase::Validation, path.to_string_lossy(), message);
     }
 
-    fn process(&mut self, path: &Path, osv: Vec<u8>) -> Result<(), CallbackError> {
+    fn process(&self, path: &Path, osv: Vec<u8>) -> Result<(), CallbackError> {
         if let Err(err) = self.store(path, osv) {
             self.report
                 .lock()
