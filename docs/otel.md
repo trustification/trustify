@@ -5,8 +5,9 @@ and exporting telemetry data (traces, metrics, and logs, aka [signals](https://o
 to improve system monitoring and performance. It is a [CNCF project](https://www.cncf.io/projects/opentelemetry/),
 ensuring vendor-neutral and standardized observability solutions for cloud-native applications.
 
-[Jaeger](https://www.jaegertracing.io/) and [Prometheus](https://prometheus.io/) are also CNCF projects for observability.
-Jaeger focuses on distributed tracing, while Prometheus handles metrics and monitoring.
+[Jaeger](https://www.jaegertracing.io/), [Grafana Tempo](https://grafana.com/oss/tempo/) and [Prometheus](https://prometheus.io/) are also CNCF projects for observability.
+Jaeger and Grafana Tempo focuses on distributed tracing, while Prometheus handles metrics and monitoring.
+
 The OpenTelemetry Collector (aka OTELCOL or OTEL collector) is a vendor-neutral service for
 processing and exporting telemetry data, that also acts as a facade for both Jaeger and Prometheus,
 enabling a clear separation of roles: developers focus on instrumenting applications and sending data to the Collector,
@@ -22,6 +23,16 @@ We are focusing on the signals: traces and metrics.
 
 * Clone trustify
 * Open a terminal and run:
+
+### Tempo
+
+```shell
+podman compose -f etc/telemetry/compose-tempo.yaml up
+```
+
+> This will start the OTEL Collector, and Tempo
+
+### Jaeger
 
 ```shell
 podman compose -f etc/telemetry/compose.yaml up
