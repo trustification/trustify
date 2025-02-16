@@ -10,9 +10,12 @@ use crate::{
     server::context::ServiceRunContext,
     service::{Error, ImporterService},
 };
-use std::{path::PathBuf, time::Duration};
+use std::{collections::HashMap, path::PathBuf, time::Duration};
 use time::OffsetDateTime;
-use tokio::time::MissedTickBehavior;
+use tokio::{
+    task::{spawn_local, JoinHandle, LocalSet},
+    time::MissedTickBehavior,
+};
 use tracing::instrument;
 use trustify_common::db::Database;
 use trustify_module_analysis::service::AnalysisService;
@@ -63,26 +66,51 @@ struct Server {
 
 impl Server {
     #[instrument(skip_all, ret)]
-    async fn run(&self) -> anyhow::Result<()> {
-        let service = ImporterService::new(self.db.clone());
+    async fn run(self) -> anyhow::Result<()> {
+        LocalSet::new().run_until(self.run_local()).await
+    }
 
+    async fn run_local(self) -> anyhow::Result<()> {
+        let service = ImporterService::new(self.db.clone());
+        let runner = ImportRunner {
+            db: self.db.clone(),
+            storage: self.storage.clone(),
+            working_dir: self.working_dir.clone(),
+            analysis: self.analysis.clone(),
+        };
         self.reset_all_jobs(&service).await?;
 
         let mut interval = tokio::time::interval(Duration::from_secs(1));
         interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
 
+        // Maintain a list of currently running jobs
+        let mut runs = HashMap::<String, JoinHandle<_>>::default();
+
         loop {
             interval.tick().await;
-            futures::future::join_all(
-                service
-                    .list()
-                    .await?
-                    .into_iter()
-                    .filter(|i| !(i.data.configuration.disabled || can_wait(i)))
-                    .take(self.concurrency)
-                    .map(|i| self.import(i, &service)),
-            )
-            .await;
+
+            // Remove jobs that are finished
+            runs.retain(|_, job| !job.is_finished());
+
+            // Asynchronously fire off new jobs subject to max concurrency
+            let todo: Vec<_> = service
+                .list()
+                .await?
+                .into_iter()
+                .filter(|i| {
+                    !(runs.contains_key(&i.name) || i.data.configuration.disabled || can_wait(i))
+                })
+                .take(self.concurrency - runs.len())
+                .map(|i| {
+                    (
+                        i.name.clone(),
+                        spawn_local(import(runner.clone(), i, service.clone())),
+                    )
+                })
+                .collect();
+
+            // Add them to our list of currently running jobs
+            runs.extend(todo.into_iter());
         }
     }
 
@@ -116,65 +144,61 @@ impl Server {
 
         Ok(())
     }
+}
 
-    async fn import(&self, importer: Importer, service: &ImporterService) -> Result<(), Error> {
-        log::debug!("  {}: {:?}", importer.name, importer.data.configuration);
+async fn import(
+    runner: ImportRunner,
+    importer: Importer,
+    service: ImporterService,
+) -> Result<(), Error> {
+    log::debug!("  {}: {:?}", importer.name, importer.data.configuration);
 
-        service.update_start(&importer.name, None).await?;
+    service.update_start(&importer.name, None).await?;
 
-        // record timestamp before processing, so that we can use it as "since" marker
-        let last_run = OffsetDateTime::now_utc();
+    // record timestamp before processing, so that we can use it as "since" marker
+    let last_run = OffsetDateTime::now_utc();
 
-        log::info!("Starting run: {}", importer.name);
+    log::info!("Starting run: {}", importer.name);
 
-        let context = ServiceRunContext::new(service.clone(), importer.name.clone());
+    let context = ServiceRunContext::new(service.clone(), importer.name.clone());
 
-        let runner = ImportRunner {
-            db: self.db.clone(),
-            storage: self.storage.clone(),
-            working_dir: self.working_dir.clone(),
-            analysis: self.analysis.clone(),
-        };
-
-        let (last_error, report, continuation) = match runner
-            .run_once(
-                context,
-                importer.data.configuration,
-                importer.data.last_success,
-                importer.data.continuation,
-            )
-            .await
-        {
-            Ok(RunOutput {
+    let (last_error, report, continuation) = match runner
+        .run_once(
+            context,
+            importer.data.configuration,
+            importer.data.last_success,
+            importer.data.continuation,
+        )
+        .await
+    {
+        Ok(RunOutput {
+            report,
+            continuation,
+        }) => (None, Some(report), continuation),
+        Err(ScannerError::Normal {
+            err,
+            output: RunOutput {
                 report,
                 continuation,
-            }) => (None, Some(report), continuation),
-            Err(ScannerError::Normal {
-                err,
-                output:
-                    RunOutput {
-                        report,
-                        continuation,
-                    },
-            }) => (Some(err.to_string()), Some(report), continuation),
-            Err(ScannerError::Critical(err)) => (Some(err.to_string()), None, None),
-        };
+            },
+        }) => (Some(err.to_string()), Some(report), continuation),
+        Err(ScannerError::Critical(err)) => (Some(err.to_string()), None, None),
+    };
 
-        log::info!("Import run complete: {last_error:?}");
+    log::info!("Import run complete: {last_error:?}");
 
-        service
-            .update_finish(
-                &importer.name,
-                None,
-                last_run,
-                last_error,
-                continuation,
-                report.and_then(|report| serde_json::to_value(report).ok()),
-            )
-            .await?;
+    service
+        .update_finish(
+            &importer.name,
+            None,
+            last_run,
+            last_error,
+            continuation,
+            report.and_then(|report| serde_json::to_value(report).ok()),
+        )
+        .await?;
 
-        Ok(())
-    }
+    Ok(())
 }
 
 /// check if we need to run or skip the importer
