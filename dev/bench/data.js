@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739787992394,
+  "lastUpdate": 1739788734495,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4692,6 +4692,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/eea05b05c23308c813609b4c819b4c4709982eb5"
         },
         "date": 1739787991660,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "45d00c455a24c9146035dd2ceb7a41141209381e",
+          "message": "add simple cdx external test",
+          "timestamp": "2025-02-17T10:16:07Z",
+          "tree_id": "09987194e0a9ae4169df44fe744d7a87d061d15a",
+          "url": "https://github.com/trustification/trustify/commit/45d00c455a24c9146035dd2ceb7a41141209381e"
+        },
+        "date": 1739788733567,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
