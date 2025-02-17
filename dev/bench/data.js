@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739539710098,
+  "lastUpdate": 1739787992394,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4663,6 +4663,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/049f6a70ea5b960d9f8d62370da3cc086633a314"
         },
         "date": 1739539709383,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": false,
+          "id": "eea05b05c23308c813609b4c819b4c4709982eb5",
+          "message": "Add additional podman compose support for tempo",
+          "timestamp": "2025-02-17T10:06:54Z",
+          "tree_id": "2a507a6b2d04d16141b2bdd9965efea1cb8b79c5",
+          "url": "https://github.com/trustification/trustify/commit/eea05b05c23308c813609b4c819b4c4709982eb5"
+        },
+        "date": 1739787991660,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
