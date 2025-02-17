@@ -247,7 +247,7 @@ impl ImporterService {
         .await
     }
 
-    #[instrument(skip(self, report, continuation))]
+    #[instrument(skip(self, report, continuation), err)]
     pub async fn update_finish(
         &self,
         name: &str,
