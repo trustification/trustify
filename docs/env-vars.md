@@ -20,6 +20,8 @@
 | `HTTP_SERVER_TLS_ENABLED`                | Enable TLS                                                                          | `false`                                 |
 | `HTTP_SERVER_TLS_KEY_FILE`               | Path to the TLS key file in PEM format                                              |                                         |
 | `HTTP_SERVER_WORKERS`                    | Number of worker threads, defaults to zero, which falls back to the number of cores | `0`                                     |
+| `IMPORTER_CONCURRENCY`                   | The maximum number of jobs run simultaneously by the importer                       | `1`                                     |
+| `IMPORTER_WORKING_DIR`                   | Where the importer downloads documents prior to ingesting them                      | `tempdir`                               |
 | `OIDC_PROVIDER_CLIENT_ID`                | OIDC client ID used for retrieving access tokens                                    |                                         |
 | `OIDC_PROVIDER_CLIENT_SECRET`            | Secret matching the OIDC client ID                                                  |                                         |
 | `OIDC_PROVIDER_ISSUER_URL`               | OIDC issuer to request access tokens from                                           |                                         |
