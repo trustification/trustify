@@ -173,7 +173,7 @@ where
     }
 
     /// Sync version, as all git functions are sync
-    #[instrument(skip(self))]
+    #[instrument(skip(self), err)]
     fn run_sync(self) -> Result<Continuation, Error> {
         log::debug!("Starting run for: {}", self.source);
 
@@ -282,7 +282,7 @@ where
         }
     }
 
-    #[instrument(skip(self))]
+    #[instrument(skip(self), err)]
     fn clone_repo(&self, path: &Path) -> Result<Repository, git2::Error> {
         self.progress
             .message_sync(format!("Cloning repository: {}", self.source));
