@@ -105,8 +105,7 @@ impl<'g> OsvLoader<'g> {
                             advisory_vuln.ingest_cvss3_score(cvss3, &tx).await?;
                         }
                         Err(err) => {
-                            let msg = format!("Unable to parse CVSS3: {:#?}", err);
-                            log::info!("{msg}");
+                            let msg = format!("Unable to parse CVSS3: {err}");
                             warnings.error(msg)
                         }
                     }
