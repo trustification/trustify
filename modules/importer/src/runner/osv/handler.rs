@@ -17,11 +17,7 @@ where
 {
     type Error = Error;
 
-    fn process(
-        &mut self,
-        path: &Path,
-        relative_path: &Path,
-    ) -> Result<(), HandlerError<Self::Error>> {
+    fn process(&self, path: &Path, relative_path: &Path) -> Result<(), HandlerError<Self::Error>> {
         match self.process_file(path, relative_path) {
             Ok(()) => Ok(()),
             Err(ProcessingError::Critical(err)) => {
@@ -41,7 +37,7 @@ impl<C> OsvHandler<C>
 where
     C: Callbacks<Vec<u8>> + Send + 'static,
 {
-    fn process_file(&mut self, path: &Path, rel_path: &Path) -> Result<(), ProcessingError> {
+    fn process_file(&self, path: &Path, rel_path: &Path) -> Result<(), ProcessingError> {
         let osv = match path.extension().map(|s| s.to_string_lossy()).as_deref() {
             Some("yaml") | Some("json") => {
                 let mut data = Vec::new();

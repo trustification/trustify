@@ -14,13 +14,13 @@ pub enum CallbackError {
 pub trait Callbacks<T>: Send + 'static {
     /// Handle an error while loading the file
     #[allow(unused)]
-    fn loading_error(&mut self, path: PathBuf, message: String) {}
+    fn loading_error(&self, path: PathBuf, message: String) {}
 
     /// Process the file.
     ///
     /// Any error returned will terminate the walk with a critical error.
     #[allow(unused)]
-    fn process(&mut self, path: &Path, document: T) -> Result<(), CallbackError> {
+    fn process(&self, path: &Path, document: T) -> Result<(), CallbackError> {
         Ok(())
     }
 }

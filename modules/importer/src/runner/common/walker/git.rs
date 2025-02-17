@@ -27,17 +27,13 @@ pub enum HandlerError<T> {
 pub trait Handler: Send + 'static {
     type Error: Display + Debug;
 
-    fn process(
-        &mut self,
-        path: &Path,
-        relative_path: &Path,
-    ) -> Result<(), HandlerError<Self::Error>>;
+    fn process(&self, path: &Path, relative_path: &Path) -> Result<(), HandlerError<Self::Error>>;
 }
 
 impl Handler for () {
     type Error = Infallible;
 
-    fn process(&mut self, _: &Path, _: &Path) -> Result<(), HandlerError<Self::Error>> {
+    fn process(&self, _: &Path, _: &Path) -> Result<(), HandlerError<Self::Error>> {
         Ok(())
     }
 }
@@ -173,12 +169,12 @@ where
     /// Run the walker
     #[instrument(skip(self), ret)]
     pub async fn run(self) -> Result<Continuation, Error> {
-        tokio::task::spawn_blocking(move || self.run_sync()).await?
+        tokio::task::spawn_blocking(|| self.run_sync()).await?
     }
 
     /// Sync version, as all git functions are sync
-    #[instrument(skip(self), ret)]
-    fn run_sync(mut self) -> Result<Continuation, Error> {
+    #[instrument(skip(self), err)]
+    fn run_sync(self) -> Result<Continuation, Error> {
         log::debug!("Starting run for: {}", self.source);
 
         let working_dir = self
@@ -188,16 +184,11 @@ where
 
         let path = working_dir.as_ref();
 
-        log::info!("Cloning {} into {}", self.source, path.display());
-
         // clone or open repository
-
         let repo = self.clone_or_update_repo(path)?;
-
         log::info!("Repository cloned or updated");
 
         // discover files between "then" and now
-
         let changes = self.find_changes(&repo)?;
 
         // discover and process files
@@ -240,11 +231,8 @@ where
                 let repo = info_span!("open repository").in_scope(|| Repository::open(path))?;
 
                 let repo = info_span!("fetching updates").in_scope(move || {
-                    log::info!("Fetching updates");
-
                     self.progress
                         .message_sync(format!("Fetching updates: {}", self.source));
-
                     {
                         let mut remote = repo.find_remote("origin")?;
                         let mut fo = Self::create_fetch_options();
@@ -318,7 +306,7 @@ where
             Some(commit) => {
                 log::info!("Continuing from: {commit}");
 
-                let files = info_span!("continue from", commit).in_scope(|| {
+                info_span!("continue from", commit).in_scope(|| {
                     let start = match repo.find_commit(repo.revparse_single(commit)?.id()) {
                         Ok(start) => start,
                         Err(err)
@@ -358,18 +346,9 @@ where
                     }
 
                     Ok(Some(files))
-                })?;
-
-                if let Some(files) = &files {
-                    log::info!("Detected {} changed files", files.len());
-                }
-
-                files
+                })?
             }
-            _ => {
-                log::debug!("Ingesting all files");
-                None
-            }
+            _ => None,
         };
 
         match &result {
@@ -377,7 +356,7 @@ where
                 log::info!("Detected {} changed files", result.len());
             }
             None => {
-                log::debug!("Ingesting all files");
+                log::info!("Ingesting all files");
             }
         }
 
@@ -424,7 +403,7 @@ where
     }
 
     #[instrument(skip(self, changes), err)]
-    fn walk(&mut self, base: &Path, changes: &Option<HashSet<PathBuf>>) -> Result<(), Error> {
+    fn walk(&self, base: &Path, changes: &Option<HashSet<PathBuf>>) -> Result<(), Error> {
         let mut collected = vec![];
 
         for entry in WalkDir::new(base)
