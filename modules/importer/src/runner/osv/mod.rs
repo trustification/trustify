@@ -97,7 +97,7 @@ impl<C: RunContext> Callbacks<Vec<u8>> for Context<C> {
 }
 
 impl super::ImportRunner {
-    #[instrument(skip(self, context))]
+    #[instrument(skip(self, context), err)]
     pub async fn run_once_osv(
         &self,
         context: impl RunContext + 'static,
