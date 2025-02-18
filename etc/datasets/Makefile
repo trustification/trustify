@@ -10,3 +10,8 @@ ds1.zip:
 ds3.zip:
 	-rm ds3.zip
 	cd ds3 && zip -r ../ds3.zip .
+
+.PHONY: ds3-sboms.zip
+ds3-sboms.zip:
+	-rm ds3-sbom.zip
+	cd ds3 && zip -r ../ds3-sboms.zip ./spdx
