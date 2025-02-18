@@ -92,9 +92,9 @@ impl ExternalReferenceProcessor for CycloneDx {
 // Creator of relationships.
 pub struct RelationshipCreator<ER: ExternalReferenceProcessor> {
     sbom_id: Uuid,
-    externals: ExternalNodeCreator,
 
-    rels: Vec<package_relates_to_package::ActiveModel>,
+    pub(crate) externals: ExternalNodeCreator,
+    pub(crate) rels: Vec<package_relates_to_package::ActiveModel>,
 
     external_references: ER,
 }
@@ -187,7 +187,7 @@ impl<ER: ExternalReferenceProcessor> RelationshipCreator<ER> {
         Ok(())
     }
 
-    #[instrument(skip_all, fields(num=self.rels.len()), ret)]
+    #[instrument(skip_all, fields(num=self.rels.len()), err(level=tracing::Level::INFO))]
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
         self.externals.create(db).await?;
 

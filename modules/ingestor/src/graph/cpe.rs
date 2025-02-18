@@ -85,7 +85,7 @@ pub struct CpeCreator {
     /// CPEs to insert.
     ///
     /// Uses a [`BTreeMap`] to ensure order, avoiding deadlocks on the database
-    cpes: BTreeMap<Uuid, cpe::ActiveModel>,
+    cpes: BTreeMap<Uuid, (Cpe, cpe::ActiveModel)>,
 }
 
 impl CpeCreator {
@@ -94,12 +94,12 @@ impl CpeCreator {
     }
 
     pub fn add(&mut self, cpe: Cpe) {
-        self.cpes.insert(cpe.uuid(), cpe.into());
+        self.cpes.insert(cpe.uuid(), (cpe.clone(), cpe.into()));
     }
 
     #[instrument(skip(self, db), fields(num=self.cpes.len()), err(level=tracing::Level::INFO))]
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
-        for batch in &self.cpes.into_values().chunked() {
+        for batch in &self.cpes.into_values().map(|(_, cpe)| cpe).chunked() {
             cpe::Entity::insert_many(batch)
                 .on_conflict(
                     OnConflict::columns([cpe::Column::Id])
@@ -112,6 +112,11 @@ impl CpeCreator {
         }
 
         Ok(())
+    }
+
+    // find CPEs matching that id
+    pub fn find(&self, id: Uuid) -> Option<&Cpe> {
+        self.cpes.get(&id).map(|(cpe, _)| cpe)
     }
 }
 

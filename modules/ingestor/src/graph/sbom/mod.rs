@@ -1,11 +1,12 @@
 //! Support for SBOMs.
 
+pub mod clearly_defined;
 pub mod cyclonedx;
+pub mod processor;
 pub mod spdx;
 
-pub mod clearly_defined;
-
 mod common;
+
 pub use common::*;
 
 use super::error::Error;
