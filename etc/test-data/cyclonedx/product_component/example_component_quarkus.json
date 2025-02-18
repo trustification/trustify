@@ -91903,7 +91903,7 @@
       ]
     },
     {
-      "ref": "pkg:maven/org.wildfly.security/wildfly-elytron-sasl-plain@1.20.1.Final-redhat-00001?type=jar",
+      "ref": "which also happens to be the purl",
       "dependsOn": [
         "pkg:maven/org.wildfly.common/wildfly-common@1.5.4.Final-format-001-redhat-00002?type=jar",
         "pkg:maven/org.wildfly.security/wildfly-elytron-auth-server@1.20.1.Final-redhat-00001?type=jar",

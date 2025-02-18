@@ -12,10 +12,10 @@ use uuid::Uuid;
 // Creator of packages and relationships.
 pub struct PackageCreator {
     sbom_id: Uuid,
-    nodes: Vec<sbom_node::ActiveModel>,
-    packages: Vec<sbom_package::ActiveModel>,
-    purl_refs: Vec<sbom_package_purl_ref::ActiveModel>,
-    cpe_refs: Vec<sbom_package_cpe_ref::ActiveModel>,
+    pub(crate) nodes: Vec<sbom_node::ActiveModel>,
+    pub(crate) packages: Vec<sbom_package::ActiveModel>,
+    pub(crate) purl_refs: Vec<sbom_package_purl_ref::ActiveModel>,
+    pub(crate) cpe_refs: Vec<sbom_package_cpe_ref::ActiveModel>,
     purl_license_assertions: Vec<purl_license_assertion::ActiveModel>,
     cpe_license_assertions: Vec<cpe_license_assertion::ActiveModel>,
 }
@@ -122,7 +122,7 @@ impl PackageCreator {
             num_purl_refs=self.purl_refs.len(),
             num_cpe_refs=self.cpe_refs.len(),
         ),
-        err
+        err(level=tracing::Level::INFO)
     )]
     pub async fn create(self, db: &impl ConnectionTrait) -> Result<(), DbErr> {
         for batch in &self.nodes.into_iter().chunked() {

@@ -1,4 +1,5 @@
 #![allow(clippy::expect_used)]
+#![allow(clippy::unwrap_used)]
 
 use test_context::test_context;
 use test_log::test;
