@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739902596690,
+  "lastUpdate": 1739908464646,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4779,6 +4779,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/7db1976e7b970880cb51698309092eb30b7db3e4"
         },
         "date": 1739902595353,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "e4ef7bdd87e5fdf551f6fd18e25314626e01835a",
+          "message": "chore: fix common/ build enabling cpe feature",
+          "timestamp": "2025-02-18T19:34:15Z",
+          "tree_id": "a09933f71442db01508fc94a28f5a6043630475d",
+          "url": "https://github.com/trustification/trustify/commit/e4ef7bdd87e5fdf551f6fd18e25314626e01835a"
+        },
+        "date": 1739908463803,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
