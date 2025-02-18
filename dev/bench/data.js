@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739899213875,
+  "lastUpdate": 1739902596690,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4750,6 +4750,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/0a421bf5a8b50fdafddb0d6df1fcaf123a98defe"
         },
         "date": 1739899212577,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "7db1976e7b970880cb51698309092eb30b7db3e4",
+          "message": "Add docs for importer service, per review\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2025-02-18T17:44:13Z",
+          "tree_id": "8ae2f499dcefc71e2d7605dd58854f9c7d237e50",
+          "url": "https://github.com/trustification/trustify/commit/7db1976e7b970880cb51698309092eb30b7db3e4"
+        },
+        "date": 1739902595353,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
