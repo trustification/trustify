@@ -90,7 +90,7 @@ impl LicenseCreator {
         });
     }
 
-    #[instrument(skip_all, fields(num = self.licenses.len()), err)]
+    #[instrument(skip_all, fields(num = self.licenses.len()), err(level=tracing::Level::INFO))]
     pub async fn create<'g, C>(self, db: &C) -> Result<(), DbErr>
     where
         C: ConnectionTrait,
