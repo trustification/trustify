@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739788734495,
+  "lastUpdate": 1739899213875,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4721,6 +4721,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/45d00c455a24c9146035dd2ceb7a41141209381e"
         },
         "date": 1739788733567,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "0a421bf5a8b50fdafddb0d6df1fcaf123a98defe",
+          "message": "feat: introduce new dataset (ds4)",
+          "timestamp": "2025-02-18T16:36:40Z",
+          "tree_id": "9227f4cfdbb333047ed3e37241a92e58edac592a",
+          "url": "https://github.com/trustification/trustify/commit/0a421bf5a8b50fdafddb0d6df1fcaf123a98defe"
+        },
+        "date": 1739899212577,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
