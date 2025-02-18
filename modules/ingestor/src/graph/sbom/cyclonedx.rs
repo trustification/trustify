@@ -1,8 +1,10 @@
+use crate::graph::sbom::processor::InitContext;
 use crate::graph::{
     cpe::CpeCreator,
     product::ProductInformation,
     purl::creator::PurlCreator,
     sbom::{
+        processor::{PostContext, Processor, RedHatProductComponentRelationships},
         CycloneDx as CycloneDxProcessor, LicenseCreator, LicenseInfo, PackageCreator,
         PackageReference, RelationshipCreator, SbomContext, SbomInformation,
     },
@@ -23,7 +25,7 @@ use uuid::Uuid;
 /// Similar to the SPDX doc id, which is attached to the document itself. CycloneDX doesn't have
 /// such a concept, but can still attach a component to the document via a dedicated metadata
 /// component.
-const CYCLONEDX_DOC_REF: &str = "CycloneDX-doc-ref";
+pub const CYCLONEDX_DOC_REF: &str = "CycloneDX-doc-ref";
 
 pub struct Information<'a>(pub &'a CycloneDx);
 
@@ -91,13 +93,27 @@ impl<'a> From<Information<'a>> for SbomInformation {
 }
 
 impl SbomContext {
-    #[instrument(skip(connection, sbom), ret)]
+    #[instrument(skip(connection, sbom), err(level=tracing::Level::INFO))]
     pub async fn ingest_cyclonedx<C: ConnectionTrait>(
         &self,
         mut sbom: CycloneDx,
         connection: &C,
     ) -> Result<(), anyhow::Error> {
         let mut creator = Creator::new(self.sbom.sbom_id);
+
+        // TODO: find a way to dynamically set up processors
+        let mut processors: Vec<Box<dyn Processor>> =
+            vec![Box::new(RedHatProductComponentRelationships::new())];
+
+        // init processors
+
+        let supplier = sbom
+            .metadata
+            .as_ref()
+            .and_then(|m| m.supplier.as_ref().and_then(|org| org.name.as_deref()));
+        for processor in &mut processors {
+            processor.init(InitContext { supplier })
+        }
 
         // extract "describes"
 
@@ -124,6 +140,15 @@ impl SbomContext {
                         connection,
                     )
                     .await?;
+
+                for processor in &mut processors {
+                    processor.init(InitContext {
+                        supplier: component
+                            .supplier
+                            .as_ref()
+                            .and_then(|org| org.name.as_deref()),
+                    })
+                }
 
                 if let Some(ver) = component.version.clone() {
                     pr.ingest_product_version(ver.to_string(), Some(self.sbom.sbom_id), connection)
@@ -167,7 +192,7 @@ impl SbomContext {
 
         // create
 
-        creator.create(connection).await?;
+        creator.create(connection, &processors).await?;
 
         // done
 
@@ -214,7 +239,12 @@ impl<'a> Creator<'a> {
         self.relations.push((left, rel, right));
     }
 
-    pub async fn create(self, db: &impl ConnectionTrait) -> anyhow::Result<()> {
+    #[instrument(skip(self, db, post), err(level=tracing::Level::INFO))]
+    pub async fn create(
+        self,
+        db: &impl ConnectionTrait,
+        post: &[Box<dyn Processor>],
+    ) -> anyhow::Result<()> {
         let mut purls = PurlCreator::new();
         let mut cpes = CpeCreator::new();
         let mut packages = PackageCreator::with_capacity(self.sbom_id, self.components.len());
@@ -240,12 +270,28 @@ impl<'a> Creator<'a> {
             relationships.relate(left, rel, right);
         }
 
+        // post process
+
+        for post in post {
+            post.post(PostContext {
+                cpes: &cpes,
+                purls: &purls,
+                packages: &mut packages,
+                relationships: &mut relationships.rels,
+                externals: &mut relationships.externals,
+            });
+        }
+
+        // create
+
         purls.create(db).await?;
         cpes.create(db).await?;
         licenses.create(db).await?;
 
         packages.create(db).await?;
         relationships.create(db).await?;
+
+        // done
 
         Ok(())
     }

@@ -9,6 +9,7 @@ use trustify_entity::{
     qualified_purl::{self, Qualifiers},
     versioned_purl,
 };
+use uuid::Uuid;
 
 /// Creator of PURLs.
 #[derive(Default)]
@@ -115,5 +116,13 @@ impl PurlCreator {
         // return
 
         Ok(())
+    }
+
+    /// find PURLs matching that qualified PURL id
+    pub fn find(&self, qualified_purl_id: Uuid) -> Option<String> {
+        self.purls
+            .iter()
+            .find(|purl| purl.qualifier_uuid() == qualified_purl_id)
+            .map(|purl| purl.to_string())
     }
 }
