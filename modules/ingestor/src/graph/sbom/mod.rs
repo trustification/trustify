@@ -720,22 +720,4 @@ impl SbomContext {
             Ok(None)
         }
     }
-
-    /*
-
-    pub async fn direct_dependencies(&self, tx: Transactional<'_>) -> Result<Vec<Purl>, Error> {
-        let found = package::Entity::find()
-            .join(
-                JoinType::LeftJoin,
-                sbom_dependency::Relation::Package.def().rev(),
-            )
-            .filter(sbom_dependency::Column::SbomId.eq(self.sbom.id))
-            .find_with_related(package_qualifier::Entity)
-            .all(&self.fetch.connection(tx))
-            .await?;
-
-        Ok(packages_to_purls(found)?)
-    }
-
-     */
 }
