@@ -40,7 +40,10 @@ impl<'g> CyclonedxLoader<'g> {
         let document_id = cdx
             .serial_number
             .clone()
-            .or_else(|| cdx.version.map(|v| v.to_string()));
+            .map(|sn| format!("{}/{}", sn, cdx.version.unwrap_or(0)))
+            .or_else(|| {
+                cdx.version.map(|v| v.to_string()) // If serial_number is None, just use version
+            });
 
         let ctx = match self
             .graph
