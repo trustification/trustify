@@ -62,10 +62,6 @@ jobs:
               vcpkg install openssl:x64-windows-static-md
 
     env:
-      # name of the binary output by the build
-      output_binary_name: "trustd"
-      # name of the binary available for download
-      download_binary_name: "trustd${{ matrix.edition }}"
       dirname: "trustd${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}"
 
     steps:
@@ -169,43 +165,62 @@ jobs:
         run: |
           cargo cyclonedx -v --spec-version 1.5 --format json --describe binaries --target "${{ matrix.target }}"
           
-          mv trustd/trustd_bin.cdx.json "upload/${{ env.dirname }}.cdx.json"
+          mv trustd/trustd_bin.cdx.json "upload/trustd${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}.cdx.json"
+          mv trustd/xtask_bin.cdx.json "upload/xtask${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}.cdx.json"
 
       - name: Move binary
         shell: bash
         run: |
-          mkdir -p "pack/$dirname"
+         
+          for output_binary_name in trustd xtask; do
           
-          # if we have an alternate target, there is a sub-directory
-          if [[ -f "target/release/${output_binary_name}${{ matrix.ext }}" ]]; then
-            SRC="target/release/${output_binary_name}${{ matrix.ext }}"
-          elif [[ -f "target/${{ matrix.target }}/release/${output_binary_name}${{ matrix.ext }}" ]]; then
-            SRC="target/${{ matrix.target }}/release/${output_binary_name}${{ matrix.ext }}"
-          else
-            echo "Unable to find output"
-            find target
-            false # stop build
-          fi
+            local download_binary_name="${output_binary_name}${{ matrix.edition }}"
+            local dirname="${output_binary_name}${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}"
           
-          # stage for upload
-          mv -v "${SRC}" "pack/${dirname}/${download_binary_name}${{ matrix.ext }}"
-          cp LICENSE "pack/${dirname}/"
+            mkdir -p "pack/$dirname"
+          
+            # if we have an alternate target, there is a sub-directory
+            if [[ -f "target/release/${output_binary_name}${{ matrix.ext }}" ]]; then
+              SRC="target/release/${output_binary_name}${{ matrix.ext }}"
+            elif [[ -f "target/${{ matrix.target }}/release/${output_binary_name}${{ matrix.ext }}" ]]; then
+              SRC="target/${{ matrix.target }}/release/${output_binary_name}${{ matrix.ext }}"
+            else
+              echo "Unable to find output"
+              find target
+              false # stop build
+            fi
+            
+            # stage for upload
+            mv -v "${SRC}" "pack/${dirname}/${download_binary_name}${{ matrix.ext }}"
+            cp LICENSE "pack/${dirname}/"
+          
+          done
 
-      - name: Archive (zip)
-        if: matrix.archive == 'zip'
+      - name: Archive
         working-directory: pack
         run: |
-          7z a ../upload/${{ env.dirname }}.zip .
+          for dir in */; do
+            # Remove trailing slash from directory name
+            dirname=${dir%/}
 
-      - name: Archive (tar.gz)
-        if: matrix.archive != 'zip'
-        working-directory: pack
-        run: |
-          tar czvf ../upload/${{ env.dirname }}.tar.gz .
+            # Create a zip file for the sub-directory
+            if [[ "${{matrix.archive}}" == "zip" ]]; then
+              7z a "../upload/${dirname}.zip" "$dir"
+            else
+              tar czvf ../upload/${dirname}.tar.gz "$dir"
+            fi
+          done
 
-      - name: Upload binary
+      - name: Upload binary (trustd)
         uses: actions/upload-artifact@v4
         with:
           name: trustd${{ matrix.edition }}-${{ matrix.target }}
-          path: upload/*
+          path: upload/trustd*
+          if-no-files-found: error
+
+      - name: Upload binary (xtask)
+        uses: actions/upload-artifact@v4
+        with:
+          name: xtask{{ matrix.edition }}-${{ matrix.target }}
+          path: upload/xtask*
           if-no-files-found: error
