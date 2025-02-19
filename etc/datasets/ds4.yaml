@@ -12,14 +12,14 @@ import:
     description: CVEs since 2020
     source: https://github.com/CVEProject/cvelistV5
     period: 1s
-    Years: 2020, 2021, 2022, 2023, 2024, 2025
+    years: [2020, 2021, 2022, 2023, 2024, 2025]
   - !osv
     description: GHSA since 2020
     period: 1s
     source: https://github.com/github/advisory-database
     path: advisories
     fetchRetries: 50
-    Years: 2020, 2021, 2022, 2023, 2024, 2025
+    years: [2020, 2021, 2022, 2023, 2024, 2025]
   - !csaf
     description: Red Hat CSAF advisories since 2020
     source: redhat.com
