@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739908464646,
+  "lastUpdate": 1739960276687,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4813,6 +4813,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "f5fd381c33bfa44321b200f01d2c46ef764acdd6",
+          "message": "chore: update csaf-walker",
+          "timestamp": "2025-02-19T09:55:13Z",
+          "tree_id": "96da2fbdc36009b347b27dd45192065f087d53a1",
+          "url": "https://github.com/trustification/trustify/commit/f5fd381c33bfa44321b200f01d2c46ef764acdd6"
+        },
+        "date": 1739960275897,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
