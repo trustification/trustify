@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739960276687,
+  "lastUpdate": 1739963433240,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4837,6 +4837,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/f5fd381c33bfa44321b200f01d2c46ef764acdd6"
         },
         "date": 1739960275897,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "389a7dfa1fb3f00bd3c70f4e89c5f4196172a745",
+          "message": "fix: years range in ds4 not properly configured",
+          "timestamp": "2025-02-19T10:49:05Z",
+          "tree_id": "a7fc5eafcd53d7f5c9f6a3bcaae6a1a064d7ab88",
+          "url": "https://github.com/trustification/trustify/commit/389a7dfa1fb3f00bd3c70f4e89c5f4196172a745"
+        },
+        "date": 1739963431936,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
