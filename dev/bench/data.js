@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739963433240,
+  "lastUpdate": 1739980592019,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4871,6 +4871,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "2b0963945968d14e34632499a22f235fa0f094c7",
+          "message": "feat: add RH processing for SPDX as well",
+          "timestamp": "2025-02-19T15:35:33Z",
+          "tree_id": "104d0789b05146bab4064f3df3adb8dffdf89eed",
+          "url": "https://github.com/trustification/trustify/commit/2b0963945968d14e34632499a22f235fa0f094c7"
+        },
+        "date": 1739980591303,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
