@@ -882,6 +882,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "backon"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "49fef586913a57ff189f25c9b3d034356a5bf6b3fa9a7f067588fe1698ba1f5d"
+dependencies = [
+ "fastrand",
+ "gloo-timers",
+ "tokio",
+]
+
+[[package]]
 name = "backtrace"
 version = "0.3.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1225,6 +1236,15 @@ checksum = "bdb116a6ef3f6c3698828873ad02c3014b3c85cadb88496095628e3ef1e347f8"
 dependencies = [
  "bzip2-sys",
  "libc",
+]
+
+[[package]]
+name = "bzip2"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75b89e7c29231c673a61a46e722602bcd138298f6b9e81e71119693534585f5c"
+dependencies = [
+ "bzip2-sys",
 ]
 
 [[package]]
@@ -1784,26 +1804,24 @@ dependencies = [
 
 [[package]]
 name = "csaf-walker"
-version = "0.10.2"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f645d22ce5a58187a2e351aa02f8c4d119263fa46a10379c6a30ac9ce8ff76f5"
+checksum = "be43a65d2ff7211c8162c5d4bbf38f2214e71d42d11d4aff8846f924c24949d9"
 dependencies = [
  "anyhow",
  "async-trait",
  "bytes",
  "chrono",
- "cpe",
  "csaf",
  "csv",
  "digest",
- "filetime",
  "fluent-uri 0.3.2",
  "futures",
  "hickory-resolver",
  "html-escape",
  "humantime",
- "lazy_static",
  "log",
+ "parking_lot 0.12.3",
  "percent-encoding",
  "reqwest 0.12.12",
  "sectxtlib",
@@ -2461,7 +2479,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74fef4569247a5f429d9156b9d0a2599914385dd189c539334c625d8099d90ab"
 dependencies = [
  "futures-core",
- "nom 7.1.3",
+ "nom",
  "pin-project-lite",
 ]
 
@@ -2901,6 +2919,18 @@ dependencies = [
  "bitflags 2.8.0",
  "ignore",
  "walkdir",
+]
+
+[[package]]
+name = "gloo-timers"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbb143cf96099802033e0d4f4963b19fd2e0b728bcf076cd9cf7f6634f092994"
+dependencies = [
+ "futures-channel",
+ "futures-core",
+ "js-sys",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -4483,15 +4513,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nom"
-version = "8.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df9761775871bdef83bee530e60050f7e54b1105350d6884eb0fb4f46c2f9405"
-dependencies = [
- "memchr",
-]
-
-[[package]]
 name = "nu-ansi-term"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4672,7 +4693,26 @@ dependencies = [
  "serde_json",
  "thiserror 1.0.69",
  "url",
- "validator",
+ "validator 0.18.1",
+]
+
+[[package]]
+name = "openid"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b5451f4eddd020a516f1a333f43112a62955935be5f78c02fde0bb701f36a1e"
+dependencies = [
+ "base64 0.22.1",
+ "biscuit",
+ "chrono",
+ "lazy_static",
+ "mime",
+ "reqwest 0.12.12",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "url",
+ "validator 0.19.0",
 ]
 
 [[package]]
@@ -6024,7 +6064,7 @@ dependencies = [
  "futures-core",
  "futures-timer",
  "mime",
- "nom 7.1.3",
+ "nom",
  "pin-project-lite",
  "reqwest 0.12.12",
  "thiserror 1.0.69",
@@ -6487,21 +6527,17 @@ dependencies = [
 
 [[package]]
 name = "sbom-walker"
-version = "0.10.2"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e1e856b4377f648057e6949c48c81d02c6b2cfc4c136dfb32c032a604d8763b"
+checksum = "c5153b34af24d46e232d93717ba3e8747be2ceeaadb97d2f605b872b312c78d3"
 dependencies = [
  "anyhow",
- "async-trait",
  "bytes",
- "chrono",
  "csv",
  "cyclonedx-bom",
  "digest",
- "filetime",
  "fluent-uri 0.3.2",
  "futures",
- "http 1.2.0",
  "humantime",
  "log",
  "parking_lot 0.12.3",
@@ -6798,12 +6834,13 @@ dependencies = [
 
 [[package]]
 name = "sectxtlib"
-version = "0.3.0"
-source = "git+https://github.com/ctron/sectxt?branch=feature%2Ffix_deps_1#9485a0988ee8ffb8a6418f7c90630f1c6e79df2a"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f3903cdffd3ff0a0d53c45ab619b75361c0ed4bed3f794fc7313af18d0b24ec8"
 dependencies = [
  "chrono",
  "iri-string",
- "nom 8.0.0",
+ "nom",
  "oxilangtag",
  "thiserror 2.0.11",
  "valuable",
@@ -7258,7 +7295,7 @@ version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "53d7ac03c67c572d85049d6db815e20a4a19b41b3d5cca732ac582342021ad77"
 dependencies = [
- "nom 7.1.3",
+ "nom",
  "serde",
  "thiserror 1.0.69",
  "tracing",
@@ -7272,7 +7309,7 @@ checksum = "990870190ec8d8c64ba66e4a6746243d6e57d99353991e0e6092334833f429b1"
 dependencies = [
  "chrono",
  "log",
- "nom 7.1.3",
+ "nom",
  "serde",
  "spdx-expression",
  "strum 0.24.1",
@@ -8347,7 +8384,7 @@ dependencies = [
  "humantime",
  "jsonpath-rust",
  "log",
- "openid",
+ "openid 0.15.0",
  "reqwest 0.12.12",
  "schemars",
  "serde",
@@ -9210,7 +9247,23 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "url",
- "validator_derive",
+ "validator_derive 0.18.2",
+]
+
+[[package]]
+name = "validator"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0b4a29d8709210980a09379f27ee31549b73292c87ab9899beee1c0d3be6303"
+dependencies = [
+ "idna 1.0.3",
+ "once_cell",
+ "regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "url",
+ "validator_derive 0.19.0",
 ]
 
 [[package]]
@@ -9222,6 +9275,20 @@ dependencies = [
  "darling 0.20.10",
  "once_cell",
  "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
+]
+
+[[package]]
+name = "validator_derive"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bac855a2ce6f843beb229757e6e570a42e837bcb15e5f449dd48d5747d41bf77"
+dependencies = [
+ "darling 0.20.10",
+ "once_cell",
+ "proc-macro-error2",
  "proc-macro2",
  "quote",
  "syn 2.0.98",
@@ -9280,15 +9347,16 @@ dependencies = [
 
 [[package]]
 name = "walker-common"
-version = "0.10.2"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb3abd79af5ca98c71031a3db1055166b2f25dd28f8b38a35b19e83cf7701b42"
+checksum = "fc7cdbc8bf7f9b6791f97961e35e4f1f655d3e444b961c89066e8b51a2c9ed07"
 dependencies = [
  "anyhow",
  "async-trait",
+ "backon",
  "base64 0.22.1",
  "bytes",
- "bzip2",
+ "bzip2 0.5.1",
  "chrono",
  "csv",
  "digest",
@@ -9299,10 +9367,9 @@ dependencies = [
  "humantime",
  "indicatif",
  "indicatif-log-bridge",
- "lazy_static",
  "liblzma",
  "log",
- "openid",
+ "openid 0.16.1",
  "pem",
  "reqwest 0.12.12",
  "sequoia-openpgp",
@@ -9991,7 +10058,7 @@ checksum = "ae9c1ea7b3a5e1f4b922ff856a129881167511563dc219869afe3787fc0c1a45"
 dependencies = [
  "aes",
  "arbitrary",
- "bzip2",
+ "bzip2 0.4.4",
  "constant_time_eq",
  "crc32fast",
  "crossbeam-utils",
