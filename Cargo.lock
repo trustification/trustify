@@ -8633,6 +8633,7 @@ dependencies = [
  "humantime-serde",
  "json-merge-patch",
  "log",
+ "num-traits",
  "osv",
  "parking_lot 0.12.3",
  "regex",

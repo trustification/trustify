@@ -1,7 +1,9 @@
+use sea_orm::DbErr;
 use tokio::task::JoinError;
 use trustify_common::id::IdError;
 
 pub mod filter;
+pub mod heartbeat;
 pub mod processing_error;
 pub mod storage;
 pub mod validation;
@@ -37,4 +39,6 @@ pub enum Error {
     Id(#[from] IdError),
     #[error("operation canceled")]
     Canceled,
+    #[error("failed to send heartbeat")]
+    Heartbeat(#[from] DbErr),
 }
