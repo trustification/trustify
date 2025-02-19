@@ -22,6 +22,9 @@ pub struct Model {
     pub continuation: Option<serde_json::Value>,
 
     pub configuration: serde_json::Value,
+
+    /// Unix time in nanos, for coordinating importer replicas
+    pub heartbeat: Option<Decimal>,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, EnumIter, DeriveActiveEnum)]

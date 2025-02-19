@@ -2,10 +2,11 @@ pub mod context;
 pub(crate) mod progress;
 
 use crate::{
-    model::{Importer, State},
+    model::Importer,
     runner::{
-        ImportRunner,
+        common::heartbeat::Heart,
         report::{Report, ScannerError},
+        ImportRunner,
     },
     server::context::ServiceRunContext,
     service::{Error, ImporterService},
@@ -13,7 +14,7 @@ use crate::{
 use std::{collections::HashMap, path::PathBuf, time::Duration};
 use time::OffsetDateTime;
 use tokio::{
-    task::{JoinHandle, LocalSet, spawn_local},
+    task::{spawn_local, JoinHandle, LocalSet},
     time::MissedTickBehavior,
 };
 use tracing::instrument;
@@ -78,8 +79,6 @@ impl Server {
             working_dir: self.working_dir.clone(),
             analysis: self.analysis.clone(),
         };
-        self.reset_all_jobs(&service).await?;
-
         let mut interval = tokio::time::interval(Duration::from_secs(1));
         interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
 
@@ -91,58 +90,26 @@ impl Server {
 
             // Remove jobs that are finished
             runs.retain(|_, job| !job.is_finished());
+            let count = runs.len();
 
             // Asynchronously fire off new jobs subject to max concurrency
-            let todo: Vec<_> = service
-                .list()
-                .await?
-                .into_iter()
-                .filter(|i| {
-                    !(runs.contains_key(&i.name) || i.data.configuration.disabled || can_wait(i))
-                })
-                .take(self.concurrency - runs.len())
-                .map(|i| {
-                    (
-                        i.name.clone(),
-                        spawn_local(import(runner.clone(), i, service.clone())),
-                    )
-                })
-                .collect();
-
-            // Add them to our list of currently running jobs
-            runs.extend(todo.into_iter());
-        }
-    }
-
-    /// Reset all jobs back into non-running state.
-    ///
-    /// This is intended when the application starts up, to reset stale job states. Making it
-    /// possible to re-run them when they are due.
-    ///
-    /// **NOTE:** we can only do this as we're intended to be a single-process worker.
-    async fn reset_all_jobs(&self, service: &ImporterService) -> anyhow::Result<()> {
-        for importer in service.list().await? {
-            if importer.data.state == State::Running {
-                log::info!(
-                    "Cleaning up stale importer job during startup: {} (since: {})",
-                    importer.name,
-                    importer.data.last_change
-                );
+            runs.extend(
                 service
-                    .update_finish(
-                        &importer.name,
-                        None,
-                        // either use the last run, or fall back to the last time the state changed
-                        importer.data.last_run.unwrap_or(importer.data.last_change),
-                        Some("Import cancelled".into()),
-                        None,
-                        None,
-                    )
-                    .await?;
-            }
+                    .list()
+                    .await?
+                    .into_iter()
+                    .filter(|i| {
+                        !(i.data.configuration.disabled || already_running(i) || can_wait(i))
+                    })
+                    .take(self.concurrency - count)
+                    .map(|i| {
+                        (
+                            i.name.clone(),
+                            spawn_local(import(runner.clone(), i, service.clone())),
+                        )
+                    }),
+            );
         }
-
-        Ok(())
     }
 }
 
@@ -151,6 +118,11 @@ async fn import(
     importer: Importer,
     service: ImporterService,
 ) -> Result<(), Error> {
+    let locked = Heart::beat(&importer, &runner.db)
+        .await
+        .map_err(|_| Error::MidAirCollision)?;
+    let _heartbeat = Heart::new(locked, runner.db.clone());
+
     log::debug!("  {}: {:?}", importer.name, importer.data.configuration);
 
     service.update_start(&importer.name, None).await?;
@@ -206,6 +178,13 @@ fn can_wait(importer: &Importer) -> bool {
     let Some(last) = importer.data.last_run else {
         return false;
     };
-
     (OffsetDateTime::now_utc() - last) < importer.data.configuration.period
+}
+
+/// check if another instance is running this importer
+fn already_running(importer: &Importer) -> bool {
+    importer
+        .heartbeat
+        .and_then(|t| OffsetDateTime::from_unix_timestamp_nanos(t).ok())
+        .is_some_and(|t| (OffsetDateTime::now_utc() - t) < Heart::RATE)
 }

@@ -7,6 +7,7 @@ mod cwe;
 mod osv;
 mod sbom;
 
+use crate::runner::report::Report;
 pub use clearly_defined::*;
 pub use clearly_defined_curation::*;
 pub use csaf::*;
@@ -15,7 +16,7 @@ pub use cwe::*;
 pub use osv::*;
 pub use sbom::*;
 
-use crate::runner::report::Report;
+use num_traits::cast::ToPrimitive;
 use std::{
     ops::{Deref, DerefMut},
     time::Duration,
@@ -33,6 +34,8 @@ use utoipa::ToSchema;
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct Importer {
     pub name: String,
+    #[schema(ignore)]
+    pub heartbeat: Option<i128>,
     #[serde(flatten)]
     pub data: ImporterData,
 }
@@ -239,11 +242,13 @@ impl TryFrom<Model> for Importer {
             progress_total,
             progress_message,
             continuation,
-            revision: _,
+            heartbeat,
+            ..
         }: Model,
     ) -> Result<Self, Self::Error> {
         Ok(Self {
             name,
+            heartbeat: heartbeat.and_then(|d| d.to_i128()),
             data: ImporterData {
                 state: state.into(),
                 last_change,
