@@ -1,0 +1,1749 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "2006-08-14T02:34:56Z",
+    "creators": [
+      "Tool: example SPDX document only",
+      "Organization: Red Hat"
+    ]
+  },
+  "name": "openssl-3.0.7-18.el9_2",
+  "documentNamespace": "https://www.redhat.com/openssl-3.0.7-18.el9_2.spdx.json",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-SRPM",
+      "name": "openssl",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-3.0.7-18.el9_2.src.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-aarch64-baseos-aus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-aarch64-baseos-e4s-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-aarch64-baseos-eus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-i686-baseos-aus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-i686-baseos-e4s-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-i686-baseos-eus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-ppc64le-baseos-aus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-ppc64le-baseos-e4s-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-ppc64le-baseos-eus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-s390x-baseos-aus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-s390x-baseos-e4s-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-s390x-baseos-eus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-x86_64-baseos-aus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-x86_64-baseos-e4s-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-x86_64-baseos-eus-source-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "31b5079268339cff7ba65a0aee77930560c5adef4b1b3f8f5927a43ee46a56d9"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 0da276f660b44ab5bd128db8aa3d8ce1"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Source0-origin",
+      "name": "openssl",
+      "versionInfo": "3.0.7",
+      "downloadLocation": "https://openssl.org/source/openssl-3.0.7.tar.gz",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "83049d042a260e696f62406ac5c08bf706fd84383f945cf21bd61e9ed95c396e"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/openssl@3.0.7?download_url=https://openssl.org/source/openssl-3.0.7.tar.gz&checksum=SHA256:83049d042a260e696f62406ac5c08bf706fd84383f945cf21bd61e9ed95c396e"
+        }
+      ],
+      "packageFileName": "openssl-3.0.7.tar.gz"
+    },
+    {
+      "SPDXID": "SPDXRef-Source0",
+      "name": "openssl",
+      "versionInfo": "3.0.7",
+      "downloadLocation": "https://github.com/(RH openssl midstream repo)/archive/refs/tags/3.0.7.tar.gz",
+      "packageFileName": "openssl-3.0.7-hobbled.tar.gz",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4105046836812ed422922f851a57500118a99cc0f009b7eff2b3436110393377"
+        }
+      ],
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:generic/openssl@3.0.7?download_url=https://github.com/(RH openssl midstream repo)/archive/refs/tags/3.0.7.tar.gz"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-aarch64-openssl-perl",
+      "name": "openssl-perl",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-perl-3.0.7-18.el9_2.aarch64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "96e53b2da90ce5ad109ba659ce3ed1b5a819b108c95fc493f84847429898b2ed"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 4cc665dd3173c8952184293588f9ee46"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-aarch64-openssl-debuginfo",
+      "name": "openssl-debuginfo",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-debuginfo-3.0.7-18.el9_2.aarch64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-aus-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-e4s-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-eus-debug-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8721bc9673ccc43f729485aba48fd75a927305980f48ee9d0b79d06937b68d16"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 8bf628bbb31e41bcc4139001ffca1fcb"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-aarch64-openssl-libs",
+      "name": "openssl-libs",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-libs-3.0.7-18.el9_2.aarch64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "cae5941219fd64e75c2b29509c6fe712bef77181a586702275a46a5e812d4dd4"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: a4815b267d59c43662d6ea94d6b32eba"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-aarch64-openssl-libs-debuginfo",
+      "name": "openssl-libs-debuginfo",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-libs-debuginfo-3.0.7-18.el9_2.aarch64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-aus-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-e4s-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-eus-debug-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "036985b5bd34712963e4a9009dd196e4f583479283d88b6e908a231aa5bddfae"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: f9e91d29b3e3b10cb1fe6b792d6ec3c6"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-aarch64-openssl",
+      "name": "openssl",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-3.0.7-18.el9_2.aarch64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "aaafa61c115ec37bb3895e124216ce46774069e49f6178248df085708ecb3878"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 2a8826422579bd43b49774d11a68e383"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-aarch64-openssl-debugsource",
+      "name": "openssl-debugsource",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-debugsource-3.0.7-18.el9_2.aarch64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-aus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-e4s-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-eus-source-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "036bd68632078d2b12e87f4541047823b5675d7e1141e56639cbc1e2e42c9f65"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: b6245825de11c602beff7870c7612542"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-aarch64-openssl-devel",
+      "name": "openssl-devel",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-devel-3.0.7-18.el9_2.aarch64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=aarch64&repository_id=rhel-9-for-aarch64-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "deff41d222f613c3292d1bd0256c793c7fc7d5a4d61a24fa81f23990123bd79d"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 728afe59ed2768caea0634737878e2b9"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ppc64le-openssl-perl",
+      "name": "openssl-perl",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-perl-3.0.7-18.el9_2.ppc64le.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7ae23594204f2688d5b16be98782d5456080f55e6baf76172d8cb4e100c2507e"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 2b8f23243dc5469c31a1d78fe817cc63"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ppc64le-openssl-libs",
+      "name": "openssl-libs",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-libs-3.0.7-18.el9_2.ppc64le.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6c35abfc44cc24048921fd519bbcdba0bc43cf45cdece57df99ede720600a686"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 0a8de436e7188fd6a2eae746d0afce1f"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ppc64le-openssl-devel",
+      "name": "openssl-devel",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-devel-3.0.7-18.el9_2.ppc64le.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b2e00a6e064e8efd9fac7b4633221ef5b3f49fb16e6eb2752cffae6965007cb7"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 8bc5175c12d9772a5dee1721f40f691e"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ppc64le-openssl",
+      "name": "openssl",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-3.0.7-18.el9_2.ppc64le.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "10135a468b85a35b0373609ad48c50e71499d034c6f7e7455691b63f87105f12"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: c8006421182838d0db0559f89121e14d"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ppc64le-openssl-debuginfo",
+      "name": "openssl-debuginfo",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-debuginfo-3.0.7-18.el9_2.ppc64le.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-aus-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-e4s-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-eus-debug-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8e14cfaf5ae8bf1858b8d262b6d891dfdcc31378b6805345b8c1e08e4f0ce442"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 7d0cccc64dfed49cf9954784fb52d6d8"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ppc64le-openssl-debugsource",
+      "name": "openssl-debugsource",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-debugsource-3.0.7-18.el9_2.ppc64le.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-aus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-e4s-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-eus-source-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d7de194a98e577ebaa0344c55002f83c2d22b52bf62cac22920759f2679e8124"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: df3c6c904df9135c5dbfb125be69cdb6"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-ppc64le-openssl-libs-debuginfo",
+      "name": "openssl-libs-debuginfo",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-libs-debuginfo-3.0.7-18.el9_2.ppc64le.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-aus-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-e4s-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=ppc64le&repository_id=rhel-9-for-ppc64le-baseos-eus-debug-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d6c29685fcd8a62504e223fcd4b520819118456cc65273e43c5fed19dd1d1a11"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 050d1106c338216f24cf1300b73e7647"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-i686-openssl-libs-debuginfo",
+      "name": "openssl-libs-debuginfo",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-libs-debuginfo-3.0.7-18.el9_2.i686.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-aus-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-e4s-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-eus-debug-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8897777ff03ce9308b8e7dd890e3c22c3b9f0da29d641d3844a52635ed926649"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: cc789f980e1db3b3b49106f09d94b459"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-i686-openssl-libs",
+      "name": "openssl-libs",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-libs-3.0.7-18.el9_2.i686.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ed85dfebb27dadf0d786da2aa15ce0dfbcb442ed38846360a82ab6abf7b71334"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 3ceb671050a402f897728066d844414e"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-i686-openssl-debugsource",
+      "name": "openssl-debugsource",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-debugsource-3.0.7-18.el9_2.i686.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-aus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-e4s-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-eus-source-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d13f9f85d90d4d0e4f39bdc743f42dc064a6ca16e2cb85fe1695e8a08b9163b4"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 4437626dedb09a7d5fefea71391d9666"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-i686-openssl-devel",
+      "name": "openssl-devel",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-devel-3.0.7-18.el9_2.i686.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "03d6054aafea54f4496f8c35550eec87f2ceb06566e3fd5eea0446bd91e3242e"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 427cd7fdea922cddcfbdd736b6bb8717"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-i686-openssl-debuginfo",
+      "name": "openssl-debuginfo",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-debuginfo-3.0.7-18.el9_2.i686.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-aus-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-e4s-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-eus-debug-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "02867d6b799b5ebc56f1f945a474f59c6b1a8430da4acf3fa35dae9cf992ea58"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 497871ca44f5dd4859c73c507f7c40f8"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-i686-openssl",
+      "name": "openssl",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-3.0.7-18.el9_2.i686.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b7b39d8d7a960d75da6347206927e5a9bf33642148a0d291b0205f70eac8bf42"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: eea71314fcc3f1be5af5d6773f82b6da"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-i686-openssl-perl",
+      "name": "openssl-perl",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-perl-3.0.7-18.el9_2.i686.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=i686&repository_id=rhel-9-for-i686-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d4732a4e60c831e1e8e4ddb89419a029accf2ee6dc1c2efe62e8bf20e97e2577"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 0c92f2f4cd6bd41361dc25ddd4ffbb21"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-x86_64-openssl-libs-debuginfo",
+      "name": "openssl-libs-debuginfo",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-libs-debuginfo-3.0.7-18.el9_2.x86_64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-aus-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-e4s-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-eus-debug-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "596206f99a50ede734b1f989977b210289debcfdd972666bd0d5ba03e7afbf19"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 62bc1369f326b14bfdb5450a59086c05"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-x86_64-openssl-debuginfo",
+      "name": "openssl-debuginfo",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-debuginfo-3.0.7-18.el9_2.x86_64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-aus-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-e4s-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-eus-debug-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7fbdc911663e437e7be7e30f5bd87450f4ff38551ecbb3de27e362bb9f2ac2aa"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 746bb9be1752b46631e55fc2e8c1d48e"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-x86_64-openssl-debugsource",
+      "name": "openssl-debugsource",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-debugsource-3.0.7-18.el9_2.x86_64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-aus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-e4s-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-eus-source-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "96e137f9561e7669417fe5998ec2aa6ba55a67aef0c2c205eede5a5a5941e8ac"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 94d964a9a930e8c914e7601b9df395a0"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-x86_64-openssl-perl",
+      "name": "openssl-perl",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-perl-3.0.7-18.el9_2.x86_64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "403624aed89502e17352b50f00c413104c9be31307477d02c3a7ae78cfcb1ca4"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 862b17959c237e619217fabcf9939212"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-x86_64-openssl-libs",
+      "name": "openssl-libs",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-libs-3.0.7-18.el9_2.x86_64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "73e869a62715910bdec02ee3f0275a81ca96f539a07aced314182b6f4dc8c828"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: cceaf391f5defa464df7bb55b6ad7486"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-x86_64-openssl",
+      "name": "openssl",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-3.0.7-18.el9_2.x86_64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "96045880ef4a2167abe9ea14f2b325402996a7671df8f594924dc24b6c2263e4"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: ebe25fb0a0033a8e0248869989e587e8"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-x86_64-openssl-devel",
+      "name": "openssl-devel",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-devel-3.0.7-18.el9_2.x86_64.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=x86_64&repository_id=rhel-9-for-x86_64-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "72f42e7c9ade55a24d3c53f4370d5d6d3b2fe99a4735d564825556ccd4cc1df3"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 94df67b3c5c8d3cb192ba79d6559b46f"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-s390x-openssl-libs-debuginfo",
+      "name": "openssl-libs-debuginfo",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-libs-debuginfo-3.0.7-18.el9_2.s390x.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-aus-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-e4s-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-eus-debug-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "bc5de92a3830cd99f7d291ccaafb5fd640127c8c1c925231e1e37d060a69563f"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 5ccbf569de20ef8c965993391c024832"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-s390x-openssl-libs",
+      "name": "openssl-libs",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-libs-3.0.7-18.el9_2.s390x.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0543b42f6491762fab8defbc6ec68a30d8e17e2f55e50b29095c382a6ad5baf1"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 349224e7170e1bcee0cf15c04164fe85"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-s390x-openssl-debugsource",
+      "name": "openssl-debugsource",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-debugsource-3.0.7-18.el9_2.s390x.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-aus-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-e4s-source-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-eus-source-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "90ca984f844882a5c0678887851cc58be90a187c65ef010b866791c40116f7fc"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 8ea0991914a7a90bccdee1264baaf74f"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-s390x-openssl-devel",
+      "name": "openssl-devel",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-devel-3.0.7-18.el9_2.s390x.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4a8588e587337d65cd2da98b0ba813a1e178a9b515c82bbc7fe96f1ba749b8fc"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 12e9fefcf812eaf6e727b53b613d7f88"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-s390x-openssl-debuginfo",
+      "name": "openssl-debuginfo",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-debuginfo-3.0.7-18.el9_2.s390x.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-aus-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-e4s-debug-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-eus-debug-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0a2a6b1409b045894d15c1b05ff5be2c1feba0b2b5f2d3bbac9d2e44c93f0583"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: fd189955871f77470c91193b845f755f"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-s390x-openssl",
+      "name": "openssl",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-3.0.7-18.el9_2.s390x.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "11c42421e6d07bca92122575ac023016471383f58575b2dd478a19e0ba7ce4db"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 5678f991a6d453ae482989fbe2ef5e51"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-s390x-openssl-perl",
+      "name": "openssl-perl",
+      "versionInfo": "3.0.7-18.el9_2",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "packageFileName": "openssl-perl-3.0.7-18.el9_2.s390x.rpm",
+      "licenseConcluded": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-aus-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-e4s-rpms"
+        },
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x&repository_id=rhel-9-for-s390x-baseos-eus-rpms"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6f885dd8acf32d367528f47f0289a04035fddc1eb83b720bc6889293b94892fc"
+        }
+      ],
+      "annotations": [
+        {
+          "annotationType": "OTHER",
+          "annotator": "Tool: example SPDX document only",
+          "annotationDate": "2006-08-14T02:34:56Z",
+          "comment": "sigmd5: 879e4c4ba7c890c9fba001534ea552b5"
+        }
+      ]
+    }
+  ],
+  "files": [],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-Source0",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-Source0-origin"
+    },
+    {
+      "spdxElementId": "SPDXRef-SRPM",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-Source0"
+    },
+    {
+      "spdxElementId": "SPDXRef-aarch64-openssl-perl",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-aarch64-openssl-debuginfo",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-aarch64-openssl-libs",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-aarch64-openssl-libs-debuginfo",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-aarch64-openssl",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-aarch64-openssl-debugsource",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-aarch64-openssl-devel",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-ppc64le-openssl-perl",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-ppc64le-openssl-libs",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-ppc64le-openssl-devel",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-ppc64le-openssl",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-ppc64le-openssl-debuginfo",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-ppc64le-openssl-debugsource",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-ppc64le-openssl-libs-debuginfo",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-i686-openssl-libs-debuginfo",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-i686-openssl-libs",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-i686-openssl-debugsource",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-i686-openssl-devel",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-i686-openssl-debuginfo",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-i686-openssl",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-i686-openssl-perl",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-x86_64-openssl-libs-debuginfo",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-x86_64-openssl-debuginfo",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-x86_64-openssl-debugsource",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-x86_64-openssl-perl",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-x86_64-openssl-libs",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-x86_64-openssl",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-x86_64-openssl-devel",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-s390x-openssl-libs-debuginfo",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-s390x-openssl-libs",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-s390x-openssl-debugsource",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-s390x-openssl-devel",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-s390x-openssl-debuginfo",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-s390x-openssl",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    },
+    {
+      "spdxElementId": "SPDXRef-s390x-openssl-perl",
+      "relationshipType": "GENERATED_FROM",
+      "relatedSpdxElement": "SPDXRef-SRPM"
+    }
+  ]
+}

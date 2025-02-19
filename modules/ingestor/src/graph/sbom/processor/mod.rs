@@ -11,14 +11,17 @@ pub use rh_prod_comp::RedHatProductComponentRelationships;
 
 /// A processor for the ingestion process. Allowing to intervene with the ingestion.
 pub trait Processor: Debug {
-    /// Called exactly once before all others
+    /// Called exactly once, before all others
     fn init(&mut self, _ctx: InitContext) {}
-    /// Called once all components have been processed, but before storing into the database.
-    fn post(&self, _ctx: PostContext) {}
+
+    /// Called once, after all components have been processed, but before storing into the database.
+    fn post(&self, _ctx: &mut PostContext) {}
 }
 
+#[derive(Copy, Clone)]
 pub struct InitContext<'a> {
-    pub supplier: Option<&'a str>,
+    pub suppliers: &'a [&'a str],
+    pub document_node_id: &'a str,
 }
 
 pub struct PostContext<'a> {
@@ -27,4 +30,25 @@ pub struct PostContext<'a> {
     pub packages: &'a mut PackageCreator,
     pub relationships: &'a mut Vec<package_relates_to_package::ActiveModel>,
     pub externals: &'a mut ExternalNodeCreator,
+}
+
+/// Helper running processors
+pub trait RunProcessors {
+    fn run(&mut self, processors: &mut [Box<dyn Processor>]);
+}
+
+impl RunProcessors for InitContext<'_> {
+    fn run(&mut self, processors: &mut [Box<dyn Processor>]) {
+        for processor in processors {
+            processor.init(*self);
+        }
+    }
+}
+
+impl RunProcessors for PostContext<'_> {
+    fn run(&mut self, processors: &mut [Box<dyn Processor>]) {
+        for processor in processors {
+            processor.post(self);
+        }
+    }
 }

@@ -1,5 +1,7 @@
 #![allow(clippy::expect_used)]
 
+mod rh;
+
 use test_context::test_context;
 use test_log::test;
 use trustify_test_context::TrustifyContext;

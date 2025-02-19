@@ -1,10 +1,11 @@
-use crate::graph::sbom::processor::InitContext;
 use crate::graph::{
     cpe::CpeCreator,
     product::ProductInformation,
     purl::creator::PurlCreator,
     sbom::{
-        processor::{PostContext, Processor, RedHatProductComponentRelationships},
+        processor::{
+            InitContext, PostContext, Processor, RedHatProductComponentRelationships, RunProcessors,
+        },
         CycloneDx as CycloneDxProcessor, LicenseCreator, LicenseInfo, PackageCreator,
         PackageReference, RelationshipCreator, SbomContext, SbomInformation,
     },
@@ -107,13 +108,17 @@ impl SbomContext {
 
         // init processors
 
-        let supplier = sbom
+        let suppliers = sbom
             .metadata
             .as_ref()
-            .and_then(|m| m.supplier.as_ref().and_then(|org| org.name.as_deref()));
-        for processor in &mut processors {
-            processor.init(InitContext { supplier })
+            .and_then(|m| m.supplier.as_ref().and_then(|org| org.name.as_deref()))
+            .into_iter()
+            .collect::<Vec<_>>();
+        InitContext {
+            document_node_id: CYCLONEDX_DOC_REF,
+            suppliers: &suppliers,
         }
+        .run(&mut processors);
 
         // extract "describes"
 
@@ -140,15 +145,6 @@ impl SbomContext {
                         connection,
                     )
                     .await?;
-
-                for processor in &mut processors {
-                    processor.init(InitContext {
-                        supplier: component
-                            .supplier
-                            .as_ref()
-                            .and_then(|org| org.name.as_deref()),
-                    })
-                }
 
                 if let Some(ver) = component.version.clone() {
                     pr.ingest_product_version(ver.to_string(), Some(self.sbom.sbom_id), connection)
@@ -192,7 +188,7 @@ impl SbomContext {
 
         // create
 
-        creator.create(connection, &processors).await?;
+        creator.create(connection, &mut processors).await?;
 
         // done
 
@@ -239,11 +235,11 @@ impl<'a> Creator<'a> {
         self.relations.push((left, rel, right));
     }
 
-    #[instrument(skip(self, db, post), err(level=tracing::Level::INFO))]
+    #[instrument(skip(self, db, processors), err(level=tracing::Level::INFO))]
     pub async fn create(
         self,
         db: &impl ConnectionTrait,
-        post: &[Box<dyn Processor>],
+        processors: &mut [Box<dyn Processor>],
     ) -> anyhow::Result<()> {
         let mut purls = PurlCreator::new();
         let mut cpes = CpeCreator::new();
@@ -272,15 +268,14 @@ impl<'a> Creator<'a> {
 
         // post process
 
-        for post in post {
-            post.post(PostContext {
-                cpes: &cpes,
-                purls: &purls,
-                packages: &mut packages,
-                relationships: &mut relationships.rels,
-                externals: &mut relationships.externals,
-            });
+        PostContext {
+            cpes: &cpes,
+            purls: &purls,
+            packages: &mut packages,
+            relationships: &mut relationships.rels,
+            externals: &mut relationships.externals,
         }
+        .run(processors);
 
         // create
 
