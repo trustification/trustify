@@ -1,6 +1,7 @@
 pub use sea_orm_migration::prelude::*;
 
 mod m0000010_init;
+mod m0000970_alter_importer_add_heartbeat;
 
 #[cfg(feature = "ai")]
 pub mod ai;
@@ -12,7 +13,10 @@ pub struct Migrator;
 #[async_trait::async_trait]
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
-        vec![Box::new(m0000010_init::Migration)]
+        vec![
+            Box::new(m0000010_init::Migration),
+            Box::new(m0000970_alter_importer_add_heartbeat::Migration),
+        ]
     }
 }
 
