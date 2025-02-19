@@ -2,9 +2,6 @@ name: Build container
 description: Build containers for trustify
 
 inputs:
-  image_name:
-    description: The name of the container image
-    required: true
   image_tag:
     description: The tag of the container image
     required: true
@@ -23,7 +20,7 @@ runs:
       id: build-image
       uses: redhat-actions/buildah-build@v2
       with:
-        image: ${{ inputs.image_name }}
+        image: trustd
         tags: ${{ inputs.image_tag }}
         envs: |
           TAG=${{ inputs.image_tag }}
@@ -33,17 +30,39 @@ runs:
         containerfiles: |
           .github/scripts/Containerfile
 
+    - name: Build Image
+      id: build-image
+      uses: redhat-actions/buildah-build@v2
+      with:
+        image: trustd
+        tags: ${{ inputs.image_tag }}
+        envs: |
+          TAG=${{ inputs.image_tag }}
+        build-args: |
+          tag=${{ inputs.image_tag }}
+        platforms: linux/amd64, linux/arm64
+        containerfiles: |
+          .github/scripts/Containerfile.xtask
+
     - name: Check images created
       shell: bash
-      run: buildah images | grep '${{ inputs.image_name }}'
+      run: buildah images
 
     # We save the container image here. But when loading it, the multi-arch aspect of it will be gone.
     - name: Save image
       shell: bash
-      run: podman save --multi-image-archive ${{ inputs.image_name }}:${{ inputs.image_tag }} > image.tar
+      run: |
+        podman save --multi-image-archive trustd:${{ inputs.image_tag }} > trustd.tar
+        podman save --multi-image-archive xtask:${{ inputs.image_tag }} > xtask.tar
 
     - uses: actions/upload-artifact@v4
       with:
-        name: container
-        path: image.tar
+        name: container-trustd
+        path: trustd.tar
+        if-no-files-found: error
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: container-xtask
+        path: xtask.tar
         if-no-files-found: error

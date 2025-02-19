@@ -91,7 +91,6 @@ jobs:
       attestations: write
 
     env:
-      IMAGE_NAME: trustd
       IMAGE_TAG: ${{ needs.init.outputs.version }}
 
     steps:
@@ -134,17 +133,25 @@ jobs:
 
       - uses: ./.github/actions/build-container
         with:
-          image_name: ${{ env.IMAGE_NAME }}
           image_tag: ${{ env.IMAGE_TAG }}
 
       # From here on, we start pushing artifacts
 
       # Push to ghcr.io
 
-      - name: Push to ghcr.io
+      - name: Push to ghcr.io (trustd)
         uses: redhat-actions/push-to-registry@v2
         with:
-          image: ${{ env.IMAGE_NAME }}
+          image: trustd
+          tags: ${{ needs.init.outputs.version }}
+          registry: ghcr.io/${{ github.repository_owner }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push to ghcr.io (xtask)
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: xtask
           tags: ${{ needs.init.outputs.version }}
           registry: ghcr.io/${{ github.repository_owner }}
           username: ${{ github.repository_owner }}

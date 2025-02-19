@@ -1,0 +1,43 @@
+FROM registry.access.redhat.com/ubi9/ubi:latest as builder
+
+ARG tag
+
+RUN uname -m
+
+# set up staging directory
+
+RUN mkdir /stage
+
+# install zlib and cleanup
+
+RUN dnf install --installroot /stage --setop install_weak_deps=false --nodocs -y zlib openssl krb5-libs libzstd lz4-libs libxml2
+RUN dnf clean all --installroot /stage
+
+# prepare our binary
+
+RUN mkdir /unpack/
+COPY download/ /unpack/
+RUN cd unpack && \
+    tar --strip-components 2 -xavf xtask-$(uname -m)-unknown-linux-gnu/xtask-${tag}-$(uname -m)-unknown-linux-gnu.tar.gz && \
+    find
+
+# copy binary to staging
+
+RUN cp -av /unpack/xtask /stage/usr/local/bin
+
+# dump staging
+
+RUN find /stage
+RUN du -h /stage
+
+FROM registry.access.redhat.com/ubi9/ubi-micro:latest
+
+LABEL \
+    org.opencontainers.image.description="Trustify - xtask binary" \
+    org.opencontainers.image.source="https://github.com/trustification/trustify"
+
+# copy staging over to actual image
+
+COPY --from=builder /stage/ .
+
+ENTRYPOINT ["/usr/local/bin/xtask"]
