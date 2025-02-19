@@ -1,12 +1,15 @@
-use crate::graph::sbom::Spdx;
 use crate::{
     graph::{
         cpe::CpeCreator,
         product::ProductInformation,
         purl::creator::PurlCreator,
         sbom::{
+            processor::{
+                InitContext, PostContext, Processor, RedHatProductComponentRelationships,
+                RunProcessors,
+            },
             FileCreator, LicenseCreator, LicenseInfo, PackageCreator, PackageReference, References,
-            RelationshipCreator, SbomContext, SbomInformation,
+            RelationshipCreator, SbomContext, SbomInformation, Spdx,
         },
     },
     service::Error,
@@ -60,6 +63,27 @@ impl SbomContext {
         // pre-flight checks
 
         check::spdx::all(warnings, &sbom_data);
+
+        // processors
+
+        // TODO: find a way to dynamically set up processors
+        let mut processors: Vec<Box<dyn Processor>> =
+            vec![Box::new(RedHatProductComponentRelationships::new())];
+
+        // init processors
+
+        let suppliers = sbom_data
+            .document_creation_information
+            .creation_info
+            .creators
+            .iter()
+            .map(|s| s.as_str())
+            .collect::<Vec<_>>();
+        InitContext {
+            document_node_id: &sbom_data.document_creation_information.spdx_identifier,
+            suppliers: &suppliers,
+        }
+        .run(&mut processors);
 
         // prepare packages
 
@@ -221,6 +245,17 @@ impl SbomContext {
         for file in sbom_data.file_information {
             files.add(file.file_spdx_identifier, file.file_name);
         }
+
+        // run post-processor
+
+        PostContext {
+            cpes: &cpes,
+            purls: &purls,
+            packages: &mut packages,
+            relationships: &mut relationships.rels,
+            externals: &mut relationships.externals,
+        }
+        .run(&mut processors);
 
         // create all purls and CPEs
 

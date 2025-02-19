@@ -11,8 +11,8 @@ use trustify_test_context::TrustifyContext;
 async fn prod_comp(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let mut result = ctx
         .ingest_documents([
-            "cyclonedx/product_component/example_product_quarkus.json",
-            "cyclonedx/product_component/example_component_quarkus.json",
+            "spdx/rh/product_component/rhel-9.2-eus.spdx.json",
+            "spdx/rh/product_component/openssl-3.0.7-18.el9_2.spdx.json",
         ])
         .await?;
 

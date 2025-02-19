@@ -1,7 +1,6 @@
 use crate::graph::{
     cpe::CpeCreator,
     sbom::{
-        cyclonedx::CYCLONEDX_DOC_REF,
         processor::{InitContext, PostContext},
         ExternalReference,
     },
@@ -17,6 +16,7 @@ use trustify_entity::{
 #[derive(Default, Debug)]
 pub struct RedHatProductComponentRelationships {
     active: bool,
+    document_node_id: String,
 }
 
 impl RedHatProductComponentRelationships {
@@ -25,14 +25,22 @@ impl RedHatProductComponentRelationships {
     }
 }
 
-impl super::Processor for RedHatProductComponentRelationships {
-    fn init(&mut self, InitContext { supplier }: InitContext) {
-        let Some(supplier) = supplier else {
-            return;
-        };
+const SUPPLIERS: &[&str] = &["Red Hat", "Organization: Red Hat"];
 
-        if supplier == "Red Hat" {
-            self.active = true;
+impl super::Processor for RedHatProductComponentRelationships {
+    fn init(
+        &mut self,
+        InitContext {
+            suppliers,
+            document_node_id,
+        }: InitContext,
+    ) {
+        self.document_node_id = document_node_id.to_string();
+
+        for supplier in suppliers {
+            if SUPPLIERS.contains(supplier) {
+                self.active = true;
+            }
         }
     }
 
@@ -45,7 +53,7 @@ impl super::Processor for RedHatProductComponentRelationships {
             packages,
             relationships,
             externals,
-        }: PostContext,
+        }: &mut PostContext,
     ) {
         if !self.active {
             return;
@@ -57,7 +65,15 @@ impl super::Processor for RedHatProductComponentRelationships {
         let top_level: HashSet<String> = packages
             .packages
             .iter()
-            .filter_map(|package| is_relevant(cpes, &packages.cpe_refs, package, relationships))
+            .filter_map(|package| {
+                is_relevant(
+                    &self.document_node_id,
+                    cpes,
+                    &packages.cpe_refs,
+                    package,
+                    relationships,
+                )
+            })
             .collect();
 
         log::debug!("Top-level components: {top_level:?}");
@@ -89,7 +105,10 @@ impl super::Processor for RedHatProductComponentRelationships {
 
             // if it is a top level component, described by the SBOM, packaging components,
             // then we process those
-            if !(relationship == &Relationship::Generates && top_level.contains(prod_node_id)) {
+            if !((relationship == &Relationship::Generates
+                || relationship == &Relationship::Package)
+                && top_level.contains(prod_node_id))
+            {
                 continue;
             }
 
@@ -121,6 +140,7 @@ impl super::Processor for RedHatProductComponentRelationships {
 }
 
 fn is_relevant(
+    document_node_id: &str,
     cpes: &CpeCreator,
     cpes_refs: &[sbom_package_cpe_ref::ActiveModel],
     package: &sbom_package::ActiveModel,
@@ -130,10 +150,11 @@ fn is_relevant(
         return None;
     };
 
-    // is top level: described by the SBOM
+    // is root: described by the SBOM
 
-    fn is_top_level(
+    fn is_root(
         node_id: &str,
+        document_node_id: &str,
         relationships: &[package_relates_to_package::ActiveModel],
     ) -> bool {
         for relationship in relationships {
@@ -152,7 +173,7 @@ fn is_relevant(
             );
 
             if relationship == &Relationship::Describes
-                && left_node_id == CYCLONEDX_DOC_REF
+                && (left_node_id == document_node_id)
                 && right_node_id == node_id
             {
                 return true;
@@ -162,7 +183,7 @@ fn is_relevant(
         false
     }
 
-    if !is_top_level(node_id, relationships) {
+    if !is_root(node_id, document_node_id, relationships) {
         return None;
     }
 
