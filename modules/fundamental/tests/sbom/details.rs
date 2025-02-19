@@ -15,6 +15,7 @@ use trustify_test_context::TrustifyContext;
 #[test]
 fn test_sbom_details_cyclonedx_osv() {
     tokio::runtime::Builder::new_current_thread()
+        .thread_stack_size(3 * 1024 * 1024)
         .enable_all()
         .build()
         .unwrap()
