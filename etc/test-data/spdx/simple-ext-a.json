@@ -234,8 +234,8 @@
       "relationshipType": "DESCRIBES"
     },
     {
-      "spdxElementId": "SPDXRef-A",
-      "relatedSpdxElement": "DocumentRef-ext-b:SPDXRef-A",
+      "spdxElementId": "DocumentRef-ext-b:SPDXRef-A",
+      "relatedSpdxElement": "SPDXRef-A",
       "relationshipType": "PACKAGE_OF"
     }
   ],
