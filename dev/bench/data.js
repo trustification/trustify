@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740065952080,
+  "lastUpdate": 1740067288603,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5156,6 +5156,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/009b7d9e1c37df6e2cff0a315a0281ca49ac577e"
         },
         "date": 1740065951444,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "d21ede02432ab724db29f256786f26df84b3012a",
+          "message": "ci: use dedicated IDs as well",
+          "timestamp": "2025-02-20T16:54:09+01:00",
+          "tree_id": "929a3b71b5304d7b5b03ab08d015705470b3f755",
+          "url": "https://github.com/trustification/trustify/commit/d21ede02432ab724db29f256786f26df84b3012a"
+        },
+        "date": 1740067287479,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
