@@ -94,7 +94,7 @@ jobs:
       # Push to ghcr.io
 
       - name: Push to ghcr.io (trustd)
-        id: push
+        id: push-trustd
         uses: redhat-actions/push-to-registry@v2
         with:
           image: trustd
@@ -104,7 +104,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push to ghcr.io (xtask)
-        id: push
+        id: push-xtask
         uses: redhat-actions/push-to-registry@v2
         with:
           image: xtask
