@@ -46,13 +46,14 @@ pub struct AnalysisService {
 ///
 /// If the depth is zero, or the node was already processed, it will return [`None`], indicating
 /// that the request was not processed.
-fn collect(
+async fn collect<C: ConnectionTrait>(
     graph: &Graph<PackageNode, Relationship, petgraph::Directed>,
     node: NodeIndex,
     direction: Direction,
     depth: u64,
     discovered: &mut FixedBitSet,
     relationships: &HashSet<Relationship>,
+    connection: &C,
 ) -> Option<Vec<Node>> {
     tracing::debug!(direction = ?direction, "collecting for {node:?}");
 
@@ -66,6 +67,43 @@ fn collect(
         log::debug!("node got visited already");
         // we've already seen this
         return None;
+    }
+
+    if node == external_node {
+        // there should be no 'in graph' edges from this node
+        let external_sbom_id = external_sbom_id(node);
+
+        let external_graph = get_graph(external_sbom_id);
+
+        let (ancestor, descendent, package_node) = match direction {
+            Direction::Incoming => (
+                collect(
+                    external_graph,
+                    edge.source(),
+                    direction,
+                    depth - 1,
+                    discovered,
+                    relationships,
+                    connection,
+                ),
+                None,
+                graph.node_weight(edge.source()),
+            ),
+            Direction::Outgoing => (
+                None,
+                collect(
+                    graph,
+                    external_graph.target(),
+                    direction,
+                    depth - 1,
+                    discovered,
+                    relationships,
+                    connection,
+                ),
+                graph.node_weight(edge.target()),
+            ),
+        };
+        
     }
 
     let mut result = Vec::new();
@@ -83,6 +121,7 @@ fn collect(
                     depth - 1,
                     discovered,
                     relationships,
+                    connection,
                 ),
                 None,
                 graph.node_weight(edge.source()),
@@ -96,6 +135,7 @@ fn collect(
                     depth - 1,
                     discovered,
                     relationships,
+                    connection,
                 ),
                 graph.node_weight(edge.target()),
             ),
@@ -232,12 +272,13 @@ impl AnalysisService {
             .collect()
     }
 
-    #[instrument(skip(self))]
-    pub fn run_graph_query<'a>(
+    #[instrument(skip(self, connection))]
+    pub async fn run_graph_query<'a, C: ConnectionTrait>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
         options: QueryOptions,
         graphs: &[(String, Arc<PackageGraph>)],
+        connection: &C,
     ) -> Vec<Node> {
         let relationships = options.relationships;
 
@@ -257,7 +298,9 @@ impl AnalysisService {
                     options.ancestors,
                     &mut graph.visit_map(),
                     &relationships,
-                ),
+                    connection,
+                )
+                .await,
                 descendants: collect(
                     graph,
                     node_index,
@@ -265,9 +308,12 @@ impl AnalysisService {
                     options.descendants,
                     &mut graph.visit_map(),
                     &relationships,
-                ),
+                    connection,
+                )
+                .await,
             }
         })
+        .await
     }
 
     /// locate components, retrieve dependency information, from a single SBOM
@@ -286,7 +332,7 @@ impl AnalysisService {
         let options = options.into();
 
         let graphs = self.load_graphs(connection, &distinct_sbom_ids).await?;
-        let components = self.run_graph_query(query, options, &graphs);
+        let components = self.run_graph_query(query, options, &graphs, connection);
 
         Ok(paginated.paginate_array(&components))
     }
@@ -304,7 +350,9 @@ impl AnalysisService {
         let options = options.into();
 
         let graphs = self.load_graphs_query(connection, query).await?;
-        let components = self.run_graph_query(query, options, &graphs);
+        let components = self
+            .run_graph_query(query, options, &graphs, connection)
+            .await;
 
         Ok(paginated.paginate_array(&components))
     }
