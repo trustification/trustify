@@ -221,6 +221,6 @@ jobs:
       - name: Upload binary (xtask)
         uses: actions/upload-artifact@v4
         with:
-          name: xtask{{ matrix.edition }}-${{ matrix.target }}
+          name: xtask${{ matrix.edition }}-${{ matrix.target }}
           path: upload/xtask*
           if-no-files-found: error
