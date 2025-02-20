@@ -4,19 +4,16 @@ pub(crate) mod progress;
 use crate::{
     model::Importer,
     runner::{
+        ImportRunner,
         common::heartbeat::Heart,
         report::{Report, ScannerError},
-        ImportRunner,
     },
     server::context::ServiceRunContext,
     service::{Error, ImporterService},
 };
 use std::{collections::HashMap, path::PathBuf, time::Duration};
 use time::OffsetDateTime;
-use tokio::{
-    task::{spawn_local, JoinHandle, LocalSet},
-    time::MissedTickBehavior,
-};
+use tokio::{task::LocalSet, time::MissedTickBehavior};
 use tracing::instrument;
 use trustify_common::db::Database;
 use trustify_module_analysis::service::AnalysisService;
@@ -68,6 +65,8 @@ struct Server {
 impl Server {
     #[instrument(skip_all, ret)]
     async fn run(self) -> anyhow::Result<()> {
+        // The Heart struct spawns locally because the import fn isn't
+        // Send, so we need a LocalSet
         LocalSet::new().run_until(self.run_local()).await
     }
 
@@ -83,13 +82,13 @@ impl Server {
         interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
 
         // Maintain a list of currently running jobs
-        let mut runs = HashMap::<String, JoinHandle<_>>::default();
+        let mut runs = HashMap::<String, Heart>::default();
 
         loop {
             interval.tick().await;
 
-            // Remove jobs that are finished
-            runs.retain(|_, job| !job.is_finished());
+            // Remove jobs that are finished; they're heartless ;)
+            runs.retain(|_, heart| heart.is_beating());
             let count = runs.len();
 
             // Asynchronously fire off new jobs subject to max concurrency
@@ -102,10 +101,14 @@ impl Server {
                         !(i.data.configuration.disabled || already_running(i) || can_wait(i))
                     })
                     .take(self.concurrency - count)
-                    .map(|i| {
+                    .map(|importer| {
                         (
-                            i.name.clone(),
-                            spawn_local(import(runner.clone(), i, service.clone())),
+                            importer.name.clone(),
+                            Heart::new(
+                                importer.clone(),
+                                runner.db.clone(),
+                                import(runner.clone(), importer, service.clone()),
+                            ),
                         )
                     }),
             );
@@ -118,11 +121,6 @@ async fn import(
     importer: Importer,
     service: ImporterService,
 ) -> Result<(), Error> {
-    let locked = Heart::beat(&importer, &runner.db)
-        .await
-        .map_err(|_| Error::MidAirCollision)?;
-    let _heartbeat = Heart::new(locked, runner.db.clone());
-
     log::debug!("  {}: {:?}", importer.name, importer.data.configuration);
 
     service.update_start(&importer.name, None).await?;
@@ -186,5 +184,5 @@ fn already_running(importer: &Importer) -> bool {
     importer
         .heartbeat
         .and_then(|t| OffsetDateTime::from_unix_timestamp_nanos(t).ok())
-        .is_some_and(|t| (OffsetDateTime::now_utc() - t) < Heart::RATE)
+        .is_some_and(|t| (OffsetDateTime::now_utc() - t) < (2 * Heart::RATE))
 }

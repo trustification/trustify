@@ -11,7 +11,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::sync::Mutex;
-use tracing::{instrument, Level};
+use tracing::{Level, instrument};
 
 /// Context for an import run
 #[derive(Debug)]
