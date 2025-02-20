@@ -18,7 +18,7 @@ RUN dnf clean all --installroot /stage
 RUN mkdir /unpack/
 COPY download/ /unpack/
 RUN cd unpack && \
-    tar --strip-components 2 -xavf trustd-$(uname -m)-unknown-linux-gnu/trustd-${tag}-$(uname -m)-unknown-linux-gnu.tar.gz && \
+    tar --strip-components 1 -xavf trustd-$(uname -m)-unknown-linux-gnu/trustd-${tag}-$(uname -m)-unknown-linux-gnu.tar.gz && \
     find
 
 # copy binary to staging
