@@ -243,7 +243,7 @@ impl TryFrom<Model> for Importer {
             progress_message,
             continuation,
             heartbeat,
-            ..
+            revision: _,
         }: Model,
     ) -> Result<Self, Self::Error> {
         Ok(Self {
