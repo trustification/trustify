@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740040795060,
+  "lastUpdate": 1740057552157,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4929,6 +4929,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "2d75ba23e8a85cb0b35486329cb79fc23283774a",
+          "message": "ci: the cache is required for cargo check as well",
+          "timestamp": "2025-02-20T12:40:58Z",
+          "tree_id": "2aec4adfff61b71f3eb31c4bc5bd1b945c51fdb8",
+          "url": "https://github.com/trustification/trustify/commit/2d75ba23e8a85cb0b35486329cb79fc23283774a"
+        },
+        "date": 1740057551478,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
