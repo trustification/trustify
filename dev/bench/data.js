@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740059771944,
+  "lastUpdate": 1740060797445,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5040,6 +5040,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/07e83e743e14e168366018ebfbb3f9ce7945a35f"
         },
         "date": 1740059770541,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "5bdacb577b6b0609739f7f8feb2f4aa4a79f3c5d",
+          "message": "ci: fix use of \"local\" in bash",
+          "timestamp": "2025-02-20T15:05:43+01:00",
+          "tree_id": "7539d2ab32a1a9f774d542b0bc13e5ecb73ee355",
+          "url": "https://github.com/trustification/trustify/commit/5bdacb577b6b0609739f7f8feb2f4aa4a79f3c5d"
+        },
+        "date": 1740060796547,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
