@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740068017053,
+  "lastUpdate": 1740070214440,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5214,6 +5214,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/ed1e2a46aa4cf345a092115fb076e28eebb14c20"
         },
         "date": 1740068016278,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "a090bf872a4e6670f74bdd65d2ac4f5e04a8b185",
+          "message": "ci: fix a few more build issues with xtask",
+          "timestamp": "2025-02-20T17:43:53+01:00",
+          "tree_id": "dcf031bcc5e76e5187435006ba92233c9e98d73b",
+          "url": "https://github.com/trustification/trustify/commit/a090bf872a4e6670f74bdd65d2ac4f5e04a8b185"
+        },
+        "date": 1740070213131,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
