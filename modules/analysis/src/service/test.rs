@@ -3,13 +3,18 @@ use crate::{
     model::*,
     test::{Node, *},
 };
+use anyhow::anyhow;
+use sea_orm::{ColumnTrait, QueryFilter};
 use std::{str::FromStr, time::SystemTime};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::model::BinaryByteSize;
+use trustify_common::sbom::SbomLocator;
 use trustify_common::{
     cpe::Cpe, db::query::Query, model::Paginated, purl::Purl, sbom::spdx::fix_license,
 };
+use trustify_entity::sbom_external_node;
+use trustify_entity::sbom_external_node::DiscriminatorType;
 use trustify_test_context::{document, spdx::fix_spdx_rels, TrustifyContext};
 
 #[test_context(TrustifyContext)]
@@ -680,6 +685,93 @@ async fn load_performance(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         "Loading took: {}",
         humantime::format_duration(start.elapsed()?)
     );
+
+    Ok(())
+}
+
+//TODO: this is puzzling out retrieving spdx external sbom_id which will get extruded to a func
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn spdx_external_reference(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ctx.ingest_document("spdx/simple-ext-a.json").await?;
+
+    let results = sbom_external_node::Entity::find()
+        .filter(sbom_external_node::Column::NodeId.eq("DocumentRef-ext-b:SPDXRef-A"))
+        .all(&ctx.db)
+        .await?;
+    let discriminator_type = results[0].discriminator_type;
+    let discriminator_value = results[0].discriminator_value.clone().unwrap();
+
+    if !discriminator_value.is_empty() {
+        let found = &ctx
+            .graph
+            .locate_sboms(
+                match discriminator_type {
+                    Some(DiscriminatorType::Sha256) => {
+                        SbomLocator::Sha256(discriminator_value.clone())
+                    }
+                    _ => return Err(anyhow!("Invalid discriminator")),
+                },
+                &ctx.db,
+            )
+            .await?;
+        assert!(found.is_empty());
+        log::debug!("{:?}", found);
+    }
+
+    ctx.ingest_document("spdx/simple-ext-b.json").await?;
+
+    if !discriminator_value.is_empty() {
+        let found = &ctx
+            .graph
+            .locate_sboms(SbomLocator::Sha256(discriminator_value), &ctx.db)
+            .await?;
+        assert!(!found.is_empty());
+        log::debug!("{:?}", found);
+    }
+
+    Ok(())
+}
+
+//TODO: this is puzzling out retrieving cdx external sbom_id which will get extruded to a func
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn cdx_external_reference(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ctx.ingest_document("cyclonedx/simple-ext-a.json").await?;
+
+    let results = sbom_external_node::Entity::find()
+        .filter(
+            sbom_external_node::Column::NodeId
+                .eq("urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#b"),
+        )
+        .all(&ctx.db)
+        .await?;
+
+    let discriminator_value = results[0].discriminator_value.clone().unwrap();
+    let external_doc_id = format!(
+        "urn:cdx:{}/{}",
+        results[0].external_doc_ref.clone(),
+        discriminator_value
+    );
+
+    if !discriminator_value.is_empty() {
+        let found = sbom::Entity::find()
+            .filter(sbom::Column::DocumentId.eq(external_doc_id.clone()))
+            .all(&ctx.db)
+            .await?;
+        assert!(found.is_empty());
+        log::warn!("{:?}", found);
+    }
+
+    ctx.ingest_document("cyclonedx/simple-ext-b.json").await?;
+    if !discriminator_value.is_empty() {
+        let found = sbom::Entity::find()
+            .filter(sbom::Column::DocumentId.eq(external_doc_id))
+            .all(&ctx.db)
+            .await?;
+        assert!(!found.is_empty());
+        log::warn!("{:?}", found);
+    }
 
     Ok(())
 }
