@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740067288603,
+  "lastUpdate": 1740068017053,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5185,6 +5185,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/d21ede02432ab724db29f256786f26df84b3012a"
         },
         "date": 1740067287479,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "ed1e2a46aa4cf345a092115fb076e28eebb14c20",
+          "message": "TC-2165 OSV GHSA - Ecosystem Maven: add test\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-02-20T15:39:34Z",
+          "tree_id": "a6ca8e480b60672a1689d4defa94ddd84c94b726",
+          "url": "https://github.com/trustification/trustify/commit/ed1e2a46aa4cf345a092115fb076e28eebb14c20"
+        },
+        "date": 1740068016278,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
