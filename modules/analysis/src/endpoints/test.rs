@@ -180,6 +180,7 @@ async fn test_simple_dep_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::E
     let response: Value = app.call_and_read_body_json(request).await;
 
     tracing::debug!(test = "", "{response:#?}");
+
     assert!(response.contains_subset(json!({
         "items": [
             {
@@ -835,7 +836,7 @@ async fn render_dot(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         response,
         r#"
 digraph {
-"SPDXRef-DOCUMENT" [label="simple / : SPDXRef-DOCUMENT"]
+"SPDXRef-DOCUMENT" [label="SPDXRef-DOCUMENT"]
 "SPDXRef-A" [label="A / 1: SPDXRef-A"]
 "SPDXRef-B" [label="B / 1: SPDXRef-B"]
 "SPDXRef-AA" [label="AA / 1: SPDXRef-AA"]
