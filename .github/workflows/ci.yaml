@@ -56,6 +56,7 @@ jobs:
         run: cargo test --all-features -- --nocapture
         env:
           RUST_LOG: warn,sqlx=error,sea_orm=error
+          RUST_MIN_STACK: 50000000 # 50 MB
       - name: Export and Validate Generated Openapi Spec
         run: |
           cargo xtask openapi
