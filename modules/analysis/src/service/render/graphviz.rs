@@ -1,4 +1,4 @@
-use crate::{model::graph::PackageNode, service::Visitor};
+use crate::service::Visitor;
 use trustify_entity::relationship::Relationship;
 
 fn escape(id: &str) -> String {
@@ -20,6 +20,8 @@ fn escape(id: &str) -> String {
     escaped
 }
 
+use crate::model::graph;
+use crate::model::graph::Node;
 use std::fmt::Write;
 
 pub struct Renderer {
@@ -40,21 +42,46 @@ digraph {
 impl Visitor for Renderer {
     type Output = (String, String);
 
-    fn node(&mut self, node: &PackageNode) {
-        let _ = writeln!(
-            self.data,
-            r#""{id}" [label="{label}"]"#,
-            id = escape(&node.node_id),
-            label = escape(&format!(
-                "{name} / {version}: {id}",
-                name = node.name,
-                version = node.version,
-                id = node.node_id
-            ))
-        );
+    fn node(&mut self, node: &graph::Node) {
+        match node {
+            Node::Package(package) => {
+                let _ = writeln!(
+                    self.data,
+                    r#""{id}" [label="{label}"]"#,
+                    id = escape(&package.node_id),
+                    label = escape(&format!(
+                        "{name} / {version}: {id}",
+                        name = package.name,
+                        version = package.version,
+                        id = package.node_id
+                    ))
+                );
+            }
+            Node::External(external) => {
+                let _ = writeln!(
+                    self.data,
+                    r#""{id}" [label="{label}"]"#,
+                    id = escape(&external.node_id),
+                    label = escape(&format!(
+                        "{doc} # {node}: {id}",
+                        doc = external.external_document_reference,
+                        node = external.external_node_id,
+                        id = external.node_id
+                    ))
+                );
+            }
+            Node::Unknown(base) => {
+                let _ = writeln!(
+                    self.data,
+                    r#""{id}" [label="{label}"]"#,
+                    id = escape(&base.node_id),
+                    label = escape(&format!("{id}", id = base.node_id))
+                );
+            }
+        }
     }
 
-    fn edge(&mut self, source: &PackageNode, relationship: Relationship, target: &PackageNode) {
+    fn edge(&mut self, source: &graph::Node, relationship: Relationship, target: &graph::Node) {
         let _ = writeln!(
             self.data,
             r#""{source}" -> "{target}" [label="{label}"]"#,

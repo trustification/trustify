@@ -1,6 +1,5 @@
-use crate::model::graph;
 use crate::{
-    model::PackageGraph,
+    model::{graph, PackageGraph},
     service::{AnalysisService, ComponentReference, GraphQuery},
     Error,
 };
@@ -15,15 +14,17 @@ use serde_json::Value;
 use std::{collections::hash_map::Entry, collections::HashMap, collections::HashSet, sync::Arc};
 use tracing::{instrument, Level};
 use trustify_common::{cpe::Cpe, db::query::Filtering, purl::Purl};
-use trustify_entity::sbom_external_node::ExternalType;
 use trustify_entity::{
-    cpe::CpeDto, package_relates_to_package, relationship::Relationship, sbom, sbom_node,
-    sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
+    cpe::CpeDto, package_relates_to_package, relationship::Relationship, sbom,
+    sbom_external_node::ExternalType, sbom_node, sbom_package, sbom_package_cpe_ref,
+    sbom_package_purl_ref,
 };
 use uuid::Uuid;
 
+/// A query result struct for fetching all node types
 #[derive(Debug, FromQueryResult)]
 pub struct Node {
+    pub sbom_id: Uuid,
     pub document_id: Option<String>,
     pub published: String,
 
@@ -42,6 +43,35 @@ pub struct Node {
 
     pub product_name: Option<String>,
     pub product_version: Option<String>,
+}
+
+impl From<Node> for graph::Node {
+    fn from(value: Node) -> Self {
+        let base = graph::BaseNode {
+            sbom_id: value.sbom_id.to_string(),
+            node_id: value.node_id,
+            published: value.published.clone(),
+            name: value.node_name,
+            document_id: value.document_id.clone().unwrap_or_default(),
+            product_name: value.product_name.clone().unwrap_or_default(),
+            product_version: value.product_version.clone().unwrap_or_default(),
+        };
+
+        match (value.package_node_id, value.ext_node_id) {
+            (Some(_), _) => graph::Node::Package(graph::PackageNode {
+                base,
+                purl: to_purls(value.purls),
+                cpe: to_cpes(value.cpes),
+                version: value.package_version.clone().unwrap_or_default(),
+            }),
+            (_, Some(_)) => graph::Node::External(graph::ExternalNode {
+                base,
+                external_document_reference: value.ext_external_document_ref.unwrap_or_default(),
+                external_node_id: value.ext_external_node_id.unwrap_or_default(),
+            }),
+            _ => graph::Node::Unknown(base),
+        }
+    }
 }
 
 #[derive(Debug, FromQueryResult)]
@@ -83,6 +113,7 @@ cpe_ref AS (
         node_id
 )
 SELECT
+    sbom.sbom_id,
     sbom.document_id,
     sbom.published::text,
 
@@ -262,30 +293,19 @@ impl AnalysisService {
 
         // populate packages/components
 
-        let packages = match get_nodes(connection, distinct_sbom_id).await {
+        let loaded_nodes = match get_nodes(connection, distinct_sbom_id).await {
             Ok(nodes) => nodes,
             Err(err) => {
                 return Err(err.into());
             }
         };
 
-        for package in packages {
-            detected_nodes.insert(package.node_id.clone());
+        for node in loaded_nodes {
+            detected_nodes.insert(node.node_id.clone());
 
-            match nodes.entry(package.node_id.clone()) {
+            match nodes.entry(node.node_id.clone()) {
                 Entry::Vacant(entry) => {
-                    let index = g.add_node(graph::PackageNode {
-                        sbom_id: distinct_sbom_id.to_string(),
-                        node_id: package.node_id,
-                        purl: to_purls(package.purls),
-                        cpe: to_cpes(package.cpes),
-                        name: package.node_name,
-                        version: package.package_version.clone().unwrap_or_default(),
-                        published: package.published.clone(),
-                        document_id: package.document_id.clone().unwrap_or_default(),
-                        product_name: package.product_name.clone().unwrap_or_default(),
-                        product_version: package.product_version.clone().unwrap_or_default(),
-                    });
+                    let index = g.add_node(node.into());
 
                     log::debug!("Inserting - id: {}, index: {index:?}", entry.key());
 
