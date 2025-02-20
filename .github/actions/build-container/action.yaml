@@ -17,7 +17,7 @@ runs:
         sudo apt-get install -y qemu-user-static
 
     - name: Build Image
-      id: build-image
+      id: build-image-trustd
       uses: redhat-actions/buildah-build@v2
       with:
         image: trustd
@@ -31,10 +31,10 @@ runs:
           .github/scripts/Containerfile
 
     - name: Build Image
-      id: build-image
+      id: build-image-xtask
       uses: redhat-actions/buildah-build@v2
       with:
-        image: trustd
+        image: xtask
         tags: ${{ inputs.image_tag }}
         envs: |
           TAG=${{ inputs.image_tag }}
