@@ -26,12 +26,73 @@ pub(crate) mod trustify_benches {
     use trustify_module_ingestor::service::Format;
     use trustify_test_context::{TrustifyContext, document};
 
+    use opentelemetry::trace::TracerProvider as _;
+    use opentelemetry_sdk::{
+        Resource,
+        trace::{Sampler, SdkTracerProvider},
+    };
+    use tracing_core::Level;
+    use tracing_opentelemetry::OpenTelemetryLayer;
+    use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+    fn resource() -> Resource {
+        Resource::builder()
+            .with_service_name("ingestion_csaf".to_string())
+            .build()
+    }
+
+    fn init_tracer_provider() -> SdkTracerProvider {
+        let exporter = opentelemetry_otlp::SpanExporter::builder()
+            .with_tonic()
+            .build()
+            .unwrap();
+
+        SdkTracerProvider::builder()
+            .with_sampler(Sampler::ParentBased(Box::new(Sampler::TraceIdRatioBased(
+                1.0,
+            ))))
+            .with_resource(resource())
+            .with_batch_exporter(exporter)
+            .build()
+    }
+
+    pub fn init_tracing_subscriber() {
+        let tracer_provider = init_tracer_provider();
+
+        let tracer = tracer_provider.tracer("tracing-opentelemetry");
+
+        tracing_subscriber::registry()
+            .with(tracing_subscriber::filter::LevelFilter::from_level(
+                Level::INFO,
+            ))
+            .with(tracing_subscriber::fmt::layer())
+            .with(OpenTelemetryLayer::new(tracer))
+            .init();
+    }
+
+    pub struct OtelGuard {
+        tracer_provider: SdkTracerProvider,
+    }
+
+    impl Drop for OtelGuard {
+        fn drop(&mut self) {
+            if let Err(err) = self.tracer_provider.shutdown() {
+                eprintln!("{err:?}");
+            }
+        }
+    }
+
+    use std::sync::Once;
+
+    static INIT: Once = Once::new();
+
     pub fn ingestion(c: &mut Criterion) {
         let (runtime, ctx) = setup_runtime_and_ctx();
         c.bench_function("ingestion_csaf", |b| {
             b.to_async(&runtime).iter_custom(|count| {
                 let ctx = ctx.clone();
                 async move {
+                    INIT.call_once(init_tracing_subscriber);
                     log::info!("db reset...");
                     reset_db(&ctx).await;
 
