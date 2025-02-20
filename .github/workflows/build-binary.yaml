@@ -166,7 +166,7 @@ jobs:
           cargo cyclonedx -v --spec-version 1.5 --format json --describe binaries --target "${{ matrix.target }}"
           
           mv trustd/trustd_bin.cdx.json "upload/trustd${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}.cdx.json"
-          mv trustd/xtask_bin.cdx.json "upload/xtask${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}.cdx.json"
+          mv xtask/xtask_bin.cdx.json "upload/xtask${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}.cdx.json"
 
       - name: Move binary
         shell: bash
