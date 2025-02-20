@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740059401068,
+  "lastUpdate": 1740059771944,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5011,6 +5011,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/bd6db4dea619b35007b749c40cc9acd3c3fb98c9"
         },
         "date": 1740059400453,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "07e83e743e14e168366018ebfbb3f9ce7945a35f",
+          "message": "ci: fix path to xtask SBOM",
+          "timestamp": "2025-02-20T14:44:49+01:00",
+          "tree_id": "a0618e534e1f52df987da941b46033ae11cd52d0",
+          "url": "https://github.com/trustification/trustify/commit/07e83e743e14e168366018ebfbb3f9ce7945a35f"
+        },
+        "date": 1740059770541,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
