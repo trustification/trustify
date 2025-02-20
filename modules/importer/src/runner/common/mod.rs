@@ -39,6 +39,6 @@ pub enum Error {
     Id(#[from] IdError),
     #[error("operation canceled")]
     Canceled,
-    #[error("failed to send heartbeat")]
+    #[error("failed to send heartbeat: {0}")]
     Heartbeat(#[from] DbErr),
 }

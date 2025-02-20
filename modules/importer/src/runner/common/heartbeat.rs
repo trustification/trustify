@@ -1,39 +1,29 @@
+use std::future::Future;
+
 use super::Error;
 use crate::model::Importer;
-use sea_orm::{entity::*, prelude::*, QueryFilter};
+use sea_orm::{QueryFilter, entity::*, prelude::*};
 use time::OffsetDateTime;
 use tokio::{
-    task::JoinHandle,
-    time::{interval, Duration},
+    task::{JoinHandle, spawn_local},
+    time::{Duration, interval},
 };
 use trustify_common::db::Database;
 use trustify_entity::importer;
 
 pub struct Heart {
-    name: String,
     handle: JoinHandle<()>,
 }
 
 impl Heart {
     pub const RATE: Duration = Duration::from_secs(10);
 
-    pub fn new(importer: Importer, db: Database) -> Self {
-        let name = importer.name.clone();
-        let handle = tokio::spawn(async move {
-            let mut interval = interval(Heart::RATE);
-            let mut importer = importer;
-            loop {
-                interval.tick().await;
-                match Self::beat(&importer, &db).await {
-                    Ok(i) => {
-                        log::debug!("{}: {:#?}", i.name, i.data.progress);
-                        importer = i;
-                    }
-                    Err(e) => log::error!("Failed to send heartbeat for '{}': {e}", importer.name),
-                }
-            }
-        });
-        Self { name, handle }
+    pub fn new<F>(importer: Importer, db: Database, future: F) -> Self
+    where
+        F: Future + 'static,
+    {
+        let handle = spawn_local(Heart::pump(importer, db, future));
+        Self { handle }
     }
 
     // Updates the importer record with the current time, but only if
@@ -52,18 +42,52 @@ impl Heart {
             None => Expr::col(Heartbeat).is_null(),
         };
         // We rely on the fact that `update` will return an error if
-        // no row is affected. This is contrary to how `update_many`
-        // behaves.
+        // no row is affected. This is not how `update_many` behaves.
         match importer::Entity::update(model).filter(lock).exec(db).await {
             Ok(model) => Importer::try_from(model).map_err(Error::Json),
             Err(e) => Err(Error::Heartbeat(e)),
+        }
+    }
+
+    pub fn is_beating(&self) -> bool {
+        !self.handle.is_finished()
+    }
+
+    async fn pump<F>(importer: Importer, db: Database, future: F)
+    where
+        F: Future + 'static,
+    {
+        let name = importer.name.clone();
+        if let Ok(importer) = Heart::beat(&importer, &db).await {
+            log::debug!("Acquired lock; running '{name}'");
+            let work = spawn_local(future);
+            let mut interval = interval(Heart::RATE);
+            let mut importer = importer;
+            loop {
+                interval.tick().await;
+                match Self::beat(&importer, &db).await {
+                    Ok(i) => {
+                        log::debug!("{name}: {:#?}", i.data.progress);
+                        importer = i;
+                    }
+                    Err(e) => {
+                        log::error!("Aborting '{name}': {e}");
+                        work.abort();
+                    }
+                }
+                if work.is_finished() {
+                    log::debug!("Releasing lock; finished '{name}'");
+                    break;
+                }
+            }
+        } else {
+            log::debug!("Unable to acquire lock to run '{name}'");
         }
     }
 }
 
 impl Drop for Heart {
     fn drop(&mut self) {
-        log::debug!("Shutting down heartbeat for {}", self.name);
-        self.handle.abort();
+        self.handle.abort()
     }
 }
