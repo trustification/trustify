@@ -174,8 +174,8 @@ jobs:
          
           for output_binary_name in trustd xtask; do
           
-            local download_binary_name="${output_binary_name}${{ matrix.edition }}"
-            local dirname="${output_binary_name}${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}"
+            download_binary_name="${output_binary_name}${{ matrix.edition }}"
+            dirname="${output_binary_name}${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}"
           
             mkdir -p "pack/$dirname"
           
