@@ -35,7 +35,7 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
 
     assert_eq!(
         result1.document_id,
-        Some("urn:uuid:a5ddee00-4b86-498c-b7fd-b001b77479d1".to_string())
+        Some("urn:uuid:a5ddee00-4b86-498c-b7fd-b001b77479d1/1".to_string())
     );
 
     // ingest the advisories
