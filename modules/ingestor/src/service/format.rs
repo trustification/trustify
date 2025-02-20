@@ -75,9 +75,7 @@ impl Format {
             }
             Format::CycloneDX => {
                 let loader = CyclonedxLoader::new(graph);
-                let v: Value = serde_json::from_slice(buffer)?;
-
-                loader.load(labels, v, digests).await
+                loader.load(labels, buffer, digests).await
             }
             Format::ClearlyDefined => {
                 let loader = ClearlyDefinedLoader::new(graph);
