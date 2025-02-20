@@ -11,7 +11,7 @@ mod test;
 
 use crate::{
     config::AnalysisConfig,
-    model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph, PackageNode},
+    model::{graph, AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph},
     Error,
 };
 use fixedbitset::FixedBitSet;
@@ -47,7 +47,7 @@ pub struct AnalysisService {
 /// If the depth is zero, or the node was already processed, it will return [`None`], indicating
 /// that the request was not processed.
 fn collect(
-    graph: &Graph<PackageNode, Relationship, petgraph::Directed>,
+    graph: &Graph<graph::PackageNode, Relationship, petgraph::Directed>,
     node: NodeIndex,
     direction: Direction,
     depth: u64,
@@ -216,7 +216,7 @@ impl AnalysisService {
         create: C,
     ) -> Vec<Node>
     where
-        C: Fn(&Graph<PackageNode, Relationship>, NodeIndex, &PackageNode) -> Node,
+        C: Fn(&Graph<graph::PackageNode, Relationship>, NodeIndex, &graph::PackageNode) -> Node,
     {
         let query = query.into();
         graphs
@@ -310,7 +310,11 @@ impl AnalysisService {
     }
 
     /// check if a node in the graph matches the provided query
-    fn filter(graph: &Graph<PackageNode, Relationship>, query: &GraphQuery, i: NodeIndex) -> bool {
+    fn filter(
+        graph: &Graph<graph::PackageNode, Relationship>,
+        query: &GraphQuery,
+        i: NodeIndex,
+    ) -> bool {
         match query {
             GraphQuery::Component(ComponentReference::Id(component_id)) => graph
                 .node_weight(i)
