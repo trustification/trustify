@@ -198,6 +198,7 @@ jobs:
 
       - name: Archive
         working-directory: pack
+        shell: bash
         run: |
           for dir in */; do
             # Remove trailing slash from directory name
