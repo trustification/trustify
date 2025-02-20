@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740070214440,
+  "lastUpdate": 1740078350145,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5243,6 +5243,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/a090bf872a4e6670f74bdd65d2ac4f5e04a8b185"
         },
         "date": 1740070213131,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "8ebe8b98c0bd8eb0b6483fa3a46940c703b8c282",
+          "message": "chore: adds a new criterion bench\n\nThis is more focused on our tests and to help to investigate\nsomething with jsn sync function.\n\nSending this PR now to share the code first.",
+          "timestamp": "2025-02-20T18:40:43Z",
+          "tree_id": "a0e5542c7545a4b38d071bc90c5c87ffd5fa7405",
+          "url": "https://github.com/trustification/trustify/commit/8ebe8b98c0bd8eb0b6483fa3a46940c703b8c282"
+        },
+        "date": 1740078349273,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
