@@ -1,4 +1,5 @@
 use super::*;
+use crate::model::graph::Node::Package;
 
 #[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize, DeepSizeOf)]
 pub enum Node {
@@ -14,7 +15,7 @@ impl Deref for Node {
         match self {
             Self::Package(package) => &package.base,
             Self::External(external) => &external.base,
-            Self::Unknown(base) => &base,
+            Self::Unknown(base) => base,
         }
     }
 }
@@ -68,6 +69,26 @@ impl Deref for ExternalNode {
 
     fn deref(&self) -> &Self::Target {
         &self.base
+    }
+}
+
+impl From<&graph::Node> for BaseSummary {
+    fn from(value: &graph::Node) -> Self {
+        match value {
+            Package(value) => BaseSummary::from(value),
+            _ => Self {
+                sbom_id: value.sbom_id.to_string(),
+                node_id: value.node_id.to_string(),
+                purl: vec![],
+                cpe: vec![],
+                name: value.name.to_string(),
+                version: "".to_string(),
+                published: value.published.to_string(),
+                document_id: value.document_id.to_string(),
+                product_name: value.product_name.to_string(),
+                product_version: value.product_version.to_string(),
+            },
+        }
     }
 }
 
