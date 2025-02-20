@@ -51,6 +51,9 @@ impl Heart {
             Some(t) => Expr::col(Heartbeat).eq(Decimal::from_i128_with_scale(t, 0)),
             None => Expr::col(Heartbeat).is_null(),
         };
+        // We rely on the fact that `update` will return an error if
+        // no row is affected. This is contrary to how `update_many`
+        // behaves.
         match importer::Entity::update(model).filter(lock).exec(db).await {
             Ok(model) => Importer::try_from(model).map_err(Error::Json),
             Err(e) => Err(Error::Heartbeat(e)),
