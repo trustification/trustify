@@ -1,4 +1,4 @@
-use crate::{model::PackageNode, service::Visitor};
+use crate::{model::graph::PackageNode, service::Visitor};
 use trustify_entity::relationship::Relationship;
 
 fn escape(id: &str) -> String {
