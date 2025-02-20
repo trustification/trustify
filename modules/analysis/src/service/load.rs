@@ -1,6 +1,5 @@
-use crate::model::PackageGraph;
 use crate::{
-    model::PackageNode,
+    model::{PackageGraph, PackageNode},
     service::{AnalysisService, ComponentReference, GraphQuery},
     Error,
 };
