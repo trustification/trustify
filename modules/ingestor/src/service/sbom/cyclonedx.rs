@@ -4,7 +4,6 @@ use crate::{
     service::Error,
 };
 use sea_orm::TransactionTrait;
-use serde_json::Value;
 use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
 use trustify_entity::labels::Labels;
@@ -18,14 +17,14 @@ impl<'g> CyclonedxLoader<'g> {
         Self { graph }
     }
 
-    #[instrument(skip(self, value), err(level=tracing::Level::INFO))]
+    #[instrument(skip(self, buffer), err(level=tracing::Level::INFO))]
     pub async fn load(
         &self,
         labels: Labels,
-        value: Value,
+        buffer: &[u8],
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
-        let cdx: serde_cyclonedx::cyclonedx::v_1_6::CycloneDx = serde_json::from_value(value)
+        let cdx: serde_cyclonedx::cyclonedx::v_1_6::CycloneDx = serde_json::from_slice(buffer)
             .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
         let labels = labels.add("type", "cyclonedx");
