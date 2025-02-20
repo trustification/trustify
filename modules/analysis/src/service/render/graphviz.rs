@@ -75,7 +75,7 @@ impl Visitor for Renderer {
                     self.data,
                     r#""{id}" [label="{label}"]"#,
                     id = escape(&base.node_id),
-                    label = escape(&format!("{id}", id = base.node_id))
+                    label = escape(&base.node_id.to_string())
                 );
             }
         }
