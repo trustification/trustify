@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1739980592019,
+  "lastUpdate": 1740040795060,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -4900,6 +4900,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "b8dc811545b3ab04423bdf39f15c12e4f18e7736",
+          "message": "fix: test_sbom_details_cyclonedx_osv set thread_stack_size\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-02-20T08:19:04Z",
+          "tree_id": "c8699d9bfbed701f68676c74fcad90be0ef584ef",
+          "url": "https://github.com/trustification/trustify/commit/b8dc811545b3ab04423bdf39f15c12e4f18e7736"
+        },
+        "date": 1740040793810,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
