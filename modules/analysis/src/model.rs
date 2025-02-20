@@ -79,7 +79,7 @@ impl DerefMut for Node {
     }
 }
 
-pub type PackageGraph = Graph<graph::PackageNode, Relationship, petgraph::Directed>;
+pub type PackageGraph = Graph<graph::Node, Relationship, petgraph::Directed>;
 
 pub struct GraphMap {
     map: Cache<String, Arc<PackageGraph>>,

@@ -47,7 +47,7 @@ pub struct AnalysisService {
 /// If the depth is zero, or the node was already processed, it will return [`None`], indicating
 /// that the request was not processed.
 fn collect(
-    graph: &Graph<graph::PackageNode, Relationship, petgraph::Directed>,
+    graph: &Graph<graph::Node, Relationship, petgraph::Directed>,
     node: NodeIndex,
     direction: Direction,
     depth: u64,
@@ -216,7 +216,7 @@ impl AnalysisService {
         create: C,
     ) -> Vec<Node>
     where
-        C: Fn(&Graph<graph::PackageNode, Relationship>, NodeIndex, &graph::PackageNode) -> Node,
+        C: Fn(&Graph<graph::Node, Relationship>, NodeIndex, &graph::Node) -> Node,
     {
         let query = query.into();
         graphs
@@ -310,11 +310,7 @@ impl AnalysisService {
     }
 
     /// check if a node in the graph matches the provided query
-    fn filter(
-        graph: &Graph<graph::PackageNode, Relationship>,
-        query: &GraphQuery,
-        i: NodeIndex,
-    ) -> bool {
+    fn filter(graph: &Graph<graph::Node, Relationship>, query: &GraphQuery, i: NodeIndex) -> bool {
         match query {
             GraphQuery::Component(ComponentReference::Id(component_id)) => graph
                 .node_weight(i)
@@ -322,19 +318,43 @@ impl AnalysisService {
             GraphQuery::Component(ComponentReference::Name(component_name)) => graph
                 .node_weight(i)
                 .is_some_and(|node| node.name.eq(component_name)),
-            GraphQuery::Component(ComponentReference::Purl(purl)) => graph
-                .node_weight(i)
-                .is_some_and(|node| node.purl.contains(purl)),
-            GraphQuery::Component(ComponentReference::Cpe(cpe)) => graph
-                .node_weight(i)
-                .is_some_and(|node| node.cpe.contains(cpe)),
+            GraphQuery::Component(ComponentReference::Purl(purl)) => {
+                graph.node_weight(i).is_some_and(|node| match node {
+                    graph::Node::Package(package) => package.purl.contains(purl),
+                    _ => false,
+                })
+            }
+            GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
+                graph.node_weight(i).is_some_and(|node| match node {
+                    graph::Node::Package(package) => package.cpe.contains(cpe),
+                    _ => false,
+                })
+            }
             GraphQuery::Query(query) => graph.node_weight(i).is_some_and(|node| {
-                query.apply(&HashMap::from([
+                let mut context = HashMap::from([
                     ("sbom_id", Value::String(&node.sbom_id)),
                     ("node_id", Value::String(&node.node_id)),
                     ("name", Value::String(&node.name)),
-                    ("version", Value::String(&node.version)),
-                ]))
+                ]);
+                match node {
+                    graph::Node::Package(package) => {
+                        context.extend([("version", Value::String(&package.version))]);
+                    }
+                    graph::Node::External(external) => {
+                        context.extend([
+                            (
+                                "external_document_reference",
+                                Value::String(&external.external_document_reference),
+                            ),
+                            (
+                                "external_node_id",
+                                Value::String(&external.external_node_id),
+                            ),
+                        ]);
+                    }
+                    _ => {}
+                }
+                query.apply(&context)
             }),
         }
     }
