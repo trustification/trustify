@@ -68,7 +68,7 @@ pub(crate) mod trustify_benches {
             "purl_license_assertion",
         ] {
             ctx.db
-                .execute_unprepared(format!("DELETE FROM {table} WHERE 1=1").as_str())
+                .execute_unprepared(format!("DELETE FROM {table}").as_str())
                 .await
                 .expect("DELETE ok");
         }
