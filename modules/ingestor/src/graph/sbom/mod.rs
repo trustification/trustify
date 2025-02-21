@@ -430,7 +430,6 @@ impl SbomContext {
 
         let license_info = LicenseInfo {
             license: license.to_string(),
-            refs: Default::default(),
         };
 
         let (spdx_licenses, spdx_exceptions) = license_info.spdx_info();

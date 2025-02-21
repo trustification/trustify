@@ -474,10 +474,7 @@ impl<'a> ComponentCreator<'a> {
                             continue 'l;
                         };
 
-                        let license = LicenseInfo {
-                            license,
-                            refs: Default::default(),
-                        };
+                        let license = LicenseInfo { license };
 
                         self.licenses.add(&license);
                         self.license_relations.push(license.clone());
@@ -487,7 +484,6 @@ impl<'a> ComponentCreator<'a> {
                     for license in licenses {
                         let license = LicenseInfo {
                             license: license.expression.clone(),
-                            refs: Default::default(),
                         };
 
                         self.licenses.add(&license);

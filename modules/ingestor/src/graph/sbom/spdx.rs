@@ -17,7 +17,7 @@ use crate::{
 use sbom_walker::report::{ReportSink, check};
 use sea_orm::ConnectionTrait;
 use spdx_rs::models::{RelationshipType, SPDX};
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, purl::Purl};
@@ -138,24 +138,16 @@ impl SbomContext {
 
         let mut licenses = LicenseCreator::new();
 
-        let license_refs = sbom_data
-            .other_licensing_information_detected
-            .iter()
-            .map(|e| (e.license_identifier.clone(), e.license_name.clone()))
-            .collect::<HashMap<_, _>>();
-
         let mut packages =
             PackageCreator::with_capacity(self.sbom.sbom_id, sbom_data.package_information.len());
 
         for package in sbom_data.package_information {
             let declared_license_info = package.declared_license.as_ref().map(|e| LicenseInfo {
                 license: e.to_string(),
-                refs: license_refs.clone(),
             });
 
             let concluded_license_info = package.concluded_license.as_ref().map(|e| LicenseInfo {
                 license: e.to_string(),
-                refs: license_refs.clone(),
             });
 
             let mut refs = Vec::new();

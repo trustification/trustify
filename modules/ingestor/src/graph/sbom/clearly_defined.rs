@@ -23,7 +23,6 @@ impl SbomContext {
         for (purl, license) in curation.iter() {
             let license_info = LicenseInfo {
                 license: license.clone(),
-                refs: Default::default(),
             };
 
             assertions.push(purl_license_assertion::ActiveModel {

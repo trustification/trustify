@@ -3,7 +3,7 @@
 use csaf::Csaf;
 use serde_json::Value;
 use spdx_rs::models::SPDX;
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 use test_context::{futures, test_context};
 use test_log::test;
 use tracing::instrument;
@@ -245,15 +245,9 @@ async fn license_creator(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
             for i in 0..ITEMS {
                 creator.add(&LicenseInfo {
                     license: format!("FOO-{i}"),
-                    refs: {
-                        let mut refs = HashMap::new();
-                        refs.insert(format!("FOO-{i}"), "License Text {i}".to_string());
-                        refs
-                    },
                 });
                 creator.add(&LicenseInfo {
                     license: format!("BAR-{i}"),
-                    refs: Default::default(),
                 });
             }
 
