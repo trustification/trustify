@@ -4,7 +4,9 @@ use crate::{
 };
 use actix_http::StatusCode;
 use actix_web::test::TestRequest;
+use flate2::bufread::GzDecoder;
 use serde_json::{Value, json};
+use std::io::Read;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::{id::Id, model::PaginatedResults};
@@ -12,6 +14,37 @@ use trustify_entity::labels::Labels;
 use trustify_module_ingestor::model::IngestResult;
 use trustify_test_context::{TrustifyContext, call::CallService, document_bytes};
 use uuid::Uuid;
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn license_export(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+    let id = ctx
+        .ingest_document("cyclonedx/application.cdx.json")
+        .await?
+        .id
+        .to_string();
+
+    let uri = format!("/api/v2/sbom/{id}/license-export");
+    let req = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(req).await;
+
+    assert!(response.status().is_success());
+    let content_type = response
+        .headers()
+        .get("Content-Type")
+        .expect("Content-Type header missing");
+    assert_eq!(content_type, "application/gzip");
+
+    let body = actix_web::test::read_body(response).await;
+    let mut decoder = GzDecoder::new(&body[..]);
+    let mut decompressed = String::new();
+    decoder.read_to_string(&mut decompressed)?;
+
+    assert!(decompressed.contains("spring-petclinic_license_ref.csv"));
+    assert!(decompressed.contains("spring-petclinic_sbom_licenses.csv"));
+
+    Ok(())
+}
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]

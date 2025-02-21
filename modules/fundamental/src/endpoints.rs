@@ -23,7 +23,7 @@ pub fn configure(
     svc.app_data(web::Data::new(ingestor_service));
 
     crate::advisory::endpoints::configure(svc, db.clone(), config.advisory_upload_limit);
-    crate::license::endpoints::configure(svc, db.clone());
+    crate::license::endpoints::configure(svc);
     #[cfg(feature = "ai")]
     crate::ai::endpoints::configure(svc, db.clone());
     crate::organization::endpoints::configure(svc, db.clone());

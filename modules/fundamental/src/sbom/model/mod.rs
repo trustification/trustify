@@ -14,7 +14,7 @@ use trustify_entity::{
 };
 use utoipa::ToSchema;
 
-#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema, Default)]
 pub struct SbomHead {
     #[serde(with = "uuid::serde::urn")]
     #[schema(value_type=String)]

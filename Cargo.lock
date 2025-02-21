@@ -6452,6 +6452,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "sanitize-filename"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc984f4f9ceb736a7bb755c3e3bd17dc56370af2600c9780dcc48c66453da34d"
+dependencies = [
+ "regex",
+]
+
+[[package]]
 name = "sbom-walker"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8556,7 +8565,9 @@ dependencies = [
  "cpe",
  "criterion",
  "csaf",
+ "csv",
  "cve",
+ "flate2",
  "futures-util",
  "hex",
  "humantime",
@@ -8573,6 +8584,7 @@ dependencies = [
  "regex",
  "reqwest 0.12.12",
  "roxmltree",
+ "sanitize-filename",
  "sea-orm",
  "sea-query",
  "semver",
@@ -8584,6 +8596,7 @@ dependencies = [
  "spdx",
  "spdx-rs",
  "strum 0.27.1",
+ "tar",
  "termimad",
  "test-context",
  "test-log",

@@ -1,141 +1,149 @@
 use crate::{
     Error,
     license::model::{
-        LicenseDetailsPurlSummary, LicenseSummary, SpdxLicenseDetails, SpdxLicenseSummary,
+        SpdxLicenseDetails, SpdxLicenseSummary,
+        sbom_license::{
+            ExtractedLicensingInfos, Purl, SbomNameId, SbomPackageLicense, SbomPackageLicenseBase,
+        },
     },
-    purl::model::VersionedPurlHead,
-    sbom::model::SbomHead,
 };
-use sea_orm::{
-    ColumnTrait, DbErr, EntityTrait, FromQueryResult, ModelTrait, PaginatorTrait, QueryFilter,
-    QueryResult, QuerySelect, RelationTrait, Select, TransactionTrait,
-};
-use sea_query::JoinType;
+use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait};
+use sea_query::{Condition, JoinType};
 use trustify_common::{
-    db::{
-        Database,
-        limiter::{LimiterAsModelTrait, LimiterTrait},
-        multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
-        query::{Filtering, Query},
-    },
+    db::query::Query,
+    id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},
 };
-use trustify_entity::{base_purl, license, purl_license_assertion, sbom, versioned_purl};
-use uuid::Uuid;
+use trustify_entity::{
+    license, licensing_infos, qualified_purl, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
+    sbom_package_license, sbom_package_license::LicenseCategory, sbom_package_purl_ref,
+};
 
-pub struct LicenseService {
-    db: Database,
+pub mod license_export;
+
+pub struct LicenseService {}
+
+pub struct LicenseExportResult {
+    pub sbom_package_license: Vec<SbomPackageLicense>,
+    pub extracted_licensing_infos: Vec<ExtractedLicensingInfos>,
+    pub sbom_name_group_version: Option<SbomNameId>,
+}
+
+impl Default for LicenseService {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl LicenseService {
-    pub fn new(db: Database) -> Self {
-        Self { db }
+    pub fn new() -> Self {
+        Self {}
     }
 
-    pub async fn list_licenses(
+    pub async fn license_export<C: ConnectionTrait>(
         &self,
-        search: Query,
-        paginated: Paginated,
-    ) -> Result<PaginatedResults<LicenseSummary>, Error> {
-        let tx = self.db.begin().await?;
+        id: Id,
+        connection: &C,
+    ) -> Result<LicenseExportResult, Error> {
+        let name_version_group = sbom::Entity::find()
+            .try_filter(id.clone())?
+            .join(JoinType::Join, sbom::Relation::SbomNode.def())
+            .select_only()
+            .column_as(sbom::Column::DocumentId, "sbom_id")
+            .column_as(sbom_node::Column::Name, "sbom_name")
+            .into_model::<SbomNameId>()
+            .one(connection)
+            .await?;
 
-        let limiter = license::Entity::find().filtering(search)?.limiting(
-            &self.db,
-            paginated.offset,
-            paginated.limit,
-        );
+        let package_license: Vec<SbomPackageLicenseBase> = sbom::Entity::find()
+            .try_filter(id.clone())?
+            .join(JoinType::LeftJoin, sbom::Relation::Packages.def())
+            .join(JoinType::InnerJoin, sbom_package::Relation::Node.def())
+            .join(
+                JoinType::LeftJoin,
+                sbom_package::Relation::PackageLicense.def(),
+            )
+            .join(
+                JoinType::InnerJoin,
+                sbom_package_license::Relation::License.def(),
+            )
+            .filter(
+                Condition::all()
+                    .add(sbom_package_license::Column::LicenseType.eq(LicenseCategory::Declared)),
+            )
+            .select_only()
+            .column_as(sbom::Column::SbomId, "sbom_id")
+            .column_as(sbom_package::Column::NodeId, "node_id")
+            .column_as(sbom_node::Column::Name, "name")
+            .column_as(sbom_package::Column::Group, "group")
+            .column_as(sbom_package::Column::Version, "version")
+            .column_as(license::Column::Text, "license_text")
+            .into_model::<SbomPackageLicenseBase>()
+            .all(connection)
+            .await?;
 
-        let total = limiter.total().await?;
-
-        Ok(PaginatedResults {
-            items: LicenseSummary::from_entities(&limiter.fetch().await?, &tx).await?,
-            total,
-        })
-    }
-
-    pub async fn get_license(&self, id: Uuid) -> Result<Option<LicenseSummary>, Error> {
-        let tx = self.db.begin().await?;
-
-        if let Some(license) = license::Entity::find_by_id(id).one(&tx).await? {
-            let purls = license
-                .find_related(purl_license_assertion::Entity)
-                .count(&tx)
+        let mut sbom_package_list = Vec::new();
+        for spl in package_license {
+            let result_purl: Vec<Purl> = sbom_package_purl_ref::Entity::find()
+                .join(JoinType::Join, sbom_package_purl_ref::Relation::Purl.def())
+                .filter(
+                    Condition::all()
+                        .add(sbom_package_purl_ref::Column::NodeId.eq(spl.node_id.clone()))
+                        .add(sbom_package_purl_ref::Column::SbomId.eq(spl.sbom_id)),
+                )
+                .select_only()
+                .column_as(qualified_purl::Column::Purl, "purl")
+                .into_model::<Purl>()
+                .all(connection)
                 .await?;
-            return Ok(Some(LicenseSummary::from_entity(&license, purls).await?));
+            let result_cpe: Vec<trustify_entity::cpe::Model> = sbom_package_cpe_ref::Entity::find()
+                .join(JoinType::Join, sbom_package_cpe_ref::Relation::Cpe.def())
+                .filter(
+                    Condition::all()
+                        .add(sbom_package_cpe_ref::Column::NodeId.eq(spl.node_id.clone()))
+                        .add(sbom_package_cpe_ref::Column::SbomId.eq(spl.sbom_id)),
+                )
+                .select_only()
+                .column_as(trustify_entity::cpe::Column::Id, "id")
+                .column_as(trustify_entity::cpe::Column::Part, "cpe")
+                .column_as(trustify_entity::cpe::Column::Vendor, "vendor")
+                .column_as(trustify_entity::cpe::Column::Product, "product")
+                .column_as(trustify_entity::cpe::Column::Version, "version")
+                .column_as(trustify_entity::cpe::Column::Update, "update")
+                .column_as(trustify_entity::cpe::Column::Edition, "edition")
+                .column_as(trustify_entity::cpe::Column::Language, "language")
+                .into_model::<trustify_entity::cpe::Model>()
+                .all(connection)
+                .await?;
+
+            sbom_package_list.push(SbomPackageLicense {
+                name: spl.name,
+                group: spl.group,
+                version: spl.version,
+                purl: result_purl,
+                cpe: result_cpe,
+                license_text: spl.license_text,
+            });
         }
-
-        Ok(None)
-    }
-
-    pub async fn get_license_purls(
-        &self,
-        id: Uuid,
-        query: Query,
-        pagination: Paginated,
-    ) -> Result<PaginatedResults<LicenseDetailsPurlSummary>, Error> {
-        #[derive(Debug)]
-        struct PurlLicenseCatcher {
-            base_purl: base_purl::Model,
-            versioned_purl: versioned_purl::Model,
-            sbom: sbom::Model,
-        }
-
-        impl FromQueryResult for PurlLicenseCatcher {
-            fn from_query_result(res: &QueryResult, _pre: &str) -> Result<Self, DbErr> {
-                Ok(Self {
-                    base_purl: Self::from_query_result_multi_model(res, "", base_purl::Entity)?,
-                    versioned_purl: Self::from_query_result_multi_model(
-                        res,
-                        "",
-                        versioned_purl::Entity,
-                    )?,
-                    sbom: Self::from_query_result_multi_model(res, "", sbom::Entity)?,
-                })
-            }
-        }
-
-        impl FromQueryResultMultiModel for PurlLicenseCatcher {
-            fn try_into_multi_model<E: EntityTrait>(select: Select<E>) -> Result<Select<E>, DbErr> {
-                select
-                    .try_model_columns(base_purl::Entity)?
-                    .try_model_columns(versioned_purl::Entity)?
-                    .try_model_columns(sbom::Entity)
-            }
-        }
-
-        let tx = self.db.begin().await?;
-
-        let licensed_purls = versioned_purl::Entity::find()
-            .join(JoinType::Join, versioned_purl::Relation::BasePurl.def())
-            .join(
-                JoinType::Join,
-                versioned_purl::Relation::LicenseAssertions.def(),
+        let license_info_list: Vec<ExtractedLicensingInfos> = licensing_infos::Entity::find()
+            .filter(
+                Condition::all()
+                    .add(licensing_infos::Column::SbomId.eq(id.try_as_uid().unwrap_or_default())),
             )
-            .join(
-                JoinType::Join,
-                purl_license_assertion::Relation::License.def(),
-            )
-            .join(JoinType::Join, purl_license_assertion::Relation::Sbom.def())
-            .filter(license::Column::Id.eq(id))
-            .filtering(query)?
-            .try_limiting_as_multi_model::<PurlLicenseCatcher>(
-                &tx,
-                pagination.offset,
-                pagination.limit,
-            )?;
+            .select_only()
+            .column_as(licensing_infos::Column::LicenseId, "license_id")
+            .column_as(licensing_infos::Column::Name, "name")
+            .column_as(licensing_infos::Column::ExtractedText, "extracted_text")
+            .column_as(licensing_infos::Column::Comment, "comment")
+            .into_model::<ExtractedLicensingInfos>()
+            .all(connection)
+            .await?;
 
-        let total = licensed_purls.total().await?;
-
-        let mut items = Vec::new();
-
-        for row in licensed_purls.fetch().await? {
-            items.push(LicenseDetailsPurlSummary {
-                purl: VersionedPurlHead::from_entity(&row.base_purl, &row.versioned_purl),
-                sbom: SbomHead::from_entity(&row.sbom, None, &tx).await?,
-            })
-        }
-
-        Ok(PaginatedResults { items, total })
+        Ok(LicenseExportResult {
+            sbom_package_license: sbom_package_list,
+            extracted_licensing_infos: license_info_list,
+            sbom_name_group_version: name_version_group,
+        })
     }
 
     pub async fn list_spdx_licenses(
@@ -201,6 +209,3 @@ impl LicenseService {
         Ok(None)
     }
 }
-
-#[cfg(test)]
-mod test;
