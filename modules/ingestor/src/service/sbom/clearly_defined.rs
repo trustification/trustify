@@ -11,7 +11,6 @@ use std::str::FromStr;
 use trustify_common::{
     hashing::Digests,
     id::{Id, TrySelectForId},
-    purl::Purl,
 };
 use trustify_entity::{labels::Labels, sbom};
 
@@ -91,12 +90,7 @@ impl<'g> ClearlyDefinedLoader<'g> {
                 Outcome::Existed(sbom) => sbom,
                 Outcome::Added(sbom) => {
                     if let Some(license) = license {
-                        sbom.ingest_purl_license_assertion(
-                            &coordinates_to_purl(document_id)?,
-                            license,
-                            &tx,
-                        )
-                        .await?;
+                        sbom.ingest_purl_license_assertion(license, &tx).await?;
                     }
 
                     tx.commit().await?;
@@ -116,38 +110,39 @@ impl<'g> ClearlyDefinedLoader<'g> {
     }
 }
 
-fn coordinates_to_purl(coords: &str) -> Result<Purl, Error> {
-    let parts = coords.split('/').collect::<Vec<_>>();
-
-    if parts.len() != 5 {
-        return Err(Error::Generic(anyhow!(
-            "Unable to derive pURL from {}",
-            coords
-        )));
-    }
-
-    Ok(Purl {
-        ty: parts[0].to_string(),
-        namespace: if parts[2] == "-" {
-            None
-        } else {
-            Some(parts[2].to_string())
-        },
-        name: parts[3].to_string(),
-        version: Some(parts[4].to_string()),
-        qualifiers: Default::default(),
-    })
-}
-
 #[cfg(test)]
 mod test {
     use crate::graph::Graph;
-    use crate::service::sbom::clearly_defined::coordinates_to_purl;
-    use crate::service::{Format, IngestorService};
+    use crate::service::{Error, Format, IngestorService};
+    use anyhow::anyhow;
     use test_context::test_context;
     use test_log::test;
+    use trustify_common::purl::Purl;
     use trustify_test_context::TrustifyContext;
     use trustify_test_context::document_bytes;
+
+    fn coordinates_to_purl(coords: &str) -> Result<Purl, Error> {
+        let parts = coords.split('/').collect::<Vec<_>>();
+
+        if parts.len() != 5 {
+            return Err(Error::Generic(anyhow!(
+                "Unable to derive pURL from {}",
+                coords
+            )));
+        }
+
+        Ok(Purl {
+            ty: parts[0].to_string(),
+            namespace: if parts[2] == "-" {
+                None
+            } else {
+                Some(parts[2].to_string())
+            },
+            name: parts[3].to_string(),
+            version: Some(parts[4].to_string()),
+            qualifiers: Default::default(),
+        })
+    }
 
     #[test]
     fn coords_conversion_no_namespace() {

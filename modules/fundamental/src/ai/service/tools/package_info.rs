@@ -239,9 +239,7 @@ mod tests {
   "name": "libsepol",
   "version": "3.5-1.el9",
   "advisories": [],
-  "licenses": [
-    "LGPLV2+"
-  ],
+  "licenses": [],
   "sboms": [
     {
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
@@ -263,9 +261,7 @@ mod tests {
   "name": "libsepol",
   "version": "3.5-1.el9",
   "advisories": [],
-  "licenses": [
-    "LGPLV2+"
-  ],
+  "licenses": [],
   "sboms": [
     {
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
@@ -287,9 +283,7 @@ mod tests {
   "name": "commons-logging-jboss-logging",
   "version": "1.0.0.Final-redhat-1",
   "advisories": [],
-  "licenses": [
-    "APACHE-2.0"
-  ],
+  "licenses": [],
   "sboms": [
     {
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
@@ -309,9 +303,7 @@ mod tests {
   "name": "commons-logging-jboss-logging",
   "version": "1.0.0.Final-redhat-1",
   "advisories": [],
-  "licenses": [
-    "APACHE-2.0"
-  ],
+  "licenses": [],
   "sboms": [
     {
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
