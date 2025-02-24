@@ -13,8 +13,8 @@ impl MigrationTrait for Migration {
                     .table(SbomNodeChecksum::Table)
                     .col(ColumnDef::new(SbomNodeChecksum::SbomId).uuid().not_null())
                     .col(ColumnDef::new(SbomNodeChecksum::NodeId).string().not_null())
-                    .col(ColumnDef::new(SbomNodeChecksum::Type).uuid().not_null())
-                    .col(ColumnDef::new(SbomNodeChecksum::Value).uuid().not_null())
+                    .col(ColumnDef::new(SbomNodeChecksum::Type).string().not_null())
+                    .col(ColumnDef::new(SbomNodeChecksum::Value).string().not_null())
                     .foreign_key(
                         ForeignKey::create()
                             .from(
