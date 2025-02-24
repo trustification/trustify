@@ -25,6 +25,7 @@ pub mod sbom;
 pub mod sbom_external_node;
 pub mod sbom_file;
 pub mod sbom_node;
+mod sbom_node_checksum;
 pub mod sbom_package;
 pub mod sbom_package_cpe_ref;
 pub mod sbom_package_purl_ref;
