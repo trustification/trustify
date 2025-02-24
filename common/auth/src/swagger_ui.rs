@@ -1,5 +1,6 @@
 use crate::devmode::{self, SWAGGER_UI_CLIENT_ID};
 use actix_web::dev::HttpServiceFactory;
+use anyhow::Context;
 use openid::{Client, Discovered, Provider, StandardClaims};
 use std::sync::Arc;
 use trustify_common::tls::ClientConfig;
@@ -87,7 +88,9 @@ impl SwaggerUiOidc {
             swagger_ui_oidc_client_id.clone(),
             None,
             None,
-            Url::parse(&issuer_url)?,
+            Url::parse(&issuer_url).with_context(|| {
+                format!("{} Failed to parse URL {}", "SwaggerUiOidc", issuer_url)
+            })?,
         )
         .await?;
 
