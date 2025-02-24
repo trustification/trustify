@@ -7,7 +7,7 @@ use langchain_rust::tools::Tool;
 use serde::Serialize;
 use serde_json::Value;
 use std::error::Error;
-use trustify_common::db::{query::Query, Database};
+use trustify_common::db::{Database, query::Query};
 use uuid::Uuid;
 
 pub struct ProductInfo {

@@ -5,8 +5,8 @@ use std::{
     ops::{Deref, DerefMut},
 };
 use utoipa::{
-    openapi::{schema::AdditionalProperties, Object, ObjectBuilder, RefOr, Schema, Type},
     PartialSchema, ToSchema,
+    openapi::{Object, ObjectBuilder, RefOr, Schema, Type, schema::AdditionalProperties},
 };
 
 #[derive(

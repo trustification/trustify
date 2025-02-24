@@ -6,11 +6,14 @@ use crate::{
 use std::{str::FromStr, time::SystemTime};
 use test_context::test_context;
 use test_log::test;
-use trustify_common::model::BinaryByteSize;
 use trustify_common::{
-    cpe::Cpe, db::query::Query, model::Paginated, purl::Purl, sbom::spdx::fix_license,
+    cpe::Cpe,
+    db::query::Query,
+    model::{BinaryByteSize, Paginated},
+    purl::Purl,
+    sbom::spdx::fix_license,
 };
-use trustify_test_context::{document, spdx::fix_spdx_rels, TrustifyContext};
+use trustify_test_context::{TrustifyContext, document, spdx::fix_spdx_rels};
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
@@ -295,28 +298,29 @@ async fn test_quarkus_analysis_service(ctx: &TrustifyContext) -> Result<(), anyh
 
     assert_ancestors(&analysis_graph.items, |ancestors| {
         assert!(
-            matches!(ancestors, [
-                [..],
+            matches!(
+                ancestors,
                 [
-                   Node {
-                       id: "SPDXRef-e24fec28-1001-499c-827f-2e2e5f2671b5",
-                       name: "quarkus-bom",
-                       version: "3.2.12.Final-redhat-00002",
-                       cpes: [
-                           "cpe:/a:redhat:quarkus:3.2:*:el8:*",
-                       ],
-                       purls: [
-                           "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?repository_url=https://maven.repository.redhat.com/ga/&type=pom"
-                       ],
-                   },
-                   Node {
-                       id: "SPDXRef-DOCUMENT",
-                       name: "quarkus-bom-3.2.12.Final-redhat-00002",
-                       version: "",
-                       ..
-                   },
+                    [..],
+                    [
+                        Node {
+                            id: "SPDXRef-e24fec28-1001-499c-827f-2e2e5f2671b5",
+                            name: "quarkus-bom",
+                            version: "3.2.12.Final-redhat-00002",
+                            cpes: ["cpe:/a:redhat:quarkus:3.2:*:el8:*",],
+                            purls: [
+                                "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.12.Final-redhat-00002?repository_url=https://maven.repository.redhat.com/ga/&type=pom"
+                            ],
+                        },
+                        Node {
+                            id: "SPDXRef-DOCUMENT",
+                            name: "quarkus-bom-3.2.12.Final-redhat-00002",
+                            version: "",
+                            ..
+                        },
+                    ]
                 ]
-            ]),
+            ),
             "doesn't match: {ancestors:#?}"
         );
     });

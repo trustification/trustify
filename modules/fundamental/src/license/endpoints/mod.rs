@@ -1,15 +1,15 @@
 use crate::{
+    Error,
     license::{
         endpoints::spdx::{get_spdx_license, list_spdx_licenses},
         model::LicenseSummary,
         service::LicenseService,
     },
-    Error,
 };
-use actix_web::{get, web, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, get, web};
 use std::str::FromStr;
 use trustify_common::{
-    db::{query::Query, Database},
+    db::{Database, query::Query},
     id::IdError,
     model::{Paginated, PaginatedResults},
 };

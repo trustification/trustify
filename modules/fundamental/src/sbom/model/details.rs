@@ -1,13 +1,13 @@
 use super::SbomSummary;
 use crate::{
+    Error,
     advisory::model::AdvisoryHead,
     purl::model::{details::purl::StatusContext, summary::purl::PurlSummary},
     sbom::{
         model::SbomPackage,
-        service::{sbom::QueryCatcher, SbomService},
+        service::{SbomService, sbom::QueryCatcher},
     },
     vulnerability::model::VulnerabilityHead,
-    Error,
 };
 use cpe::{cpe::Cpe, uri::OwnedUri};
 use sea_orm::{
@@ -20,12 +20,12 @@ use std::collections::HashMap;
 use trustify_common::{
     cpe::CpeCompare,
     db::{
-        multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
         VersionMatches,
+        multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
     },
     memo::Memo,
 };
-use trustify_cvss::cvss3::{score::Score, severity::Severity, Cvss3Base};
+use trustify_cvss::cvss3::{Cvss3Base, score::Score, severity::Severity};
 use trustify_entity::{
     advisory, base_purl, cvss3, product_status, product_version, purl_status, qualified_purl, sbom,
     sbom_node, sbom_package, sbom_package_purl_ref, status, version_range, versioned_purl,

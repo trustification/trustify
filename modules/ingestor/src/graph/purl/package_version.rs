@@ -2,7 +2,7 @@
 
 use crate::graph::{
     error::Error,
-    purl::{qualified_package::QualifiedPackageContext, PackageContext},
+    purl::{PackageContext, qualified_package::QualifiedPackageContext},
 };
 use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, Set};
 use std::fmt::{Debug, Formatter};

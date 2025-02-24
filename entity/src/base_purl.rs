@@ -1,4 +1,4 @@
-use sea_orm::{entity::prelude::*, FromQueryResult};
+use sea_orm::{FromQueryResult, entity::prelude::*};
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "base_purl")]

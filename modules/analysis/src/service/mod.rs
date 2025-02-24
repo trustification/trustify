@@ -15,6 +15,7 @@ use crate::{
     model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph, graph},
 };
 use fixedbitset::FixedBitSet;
+use futures::{StreamExt, stream};
 use opentelemetry::global;
 use petgraph::{
     Direction,
@@ -26,8 +27,6 @@ use sea_orm::{
     ColumnTrait, EntityOrSelect, EntityTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
     prelude::ConnectionTrait,
 };
-
-use futures::{StreamExt, stream};
 use sea_query::{JoinType, Order};
 use std::{
     collections::{HashMap, HashSet},
@@ -39,8 +38,12 @@ use trustify_common::{
     db::query::Value,
     model::{Paginated, PaginatedResults},
 };
-use trustify_entity::sbom_external_node::{DiscriminatorType, ExternalType};
-use trustify_entity::{relationship::Relationship, sbom, sbom_external_node, source_document};
+use trustify_entity::{
+    relationship::Relationship,
+    sbom, sbom_external_node,
+    sbom_external_node::{DiscriminatorType, ExternalType},
+    source_document,
+};
 use uuid::Uuid;
 
 #[derive(Clone)]

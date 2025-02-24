@@ -1,4 +1,4 @@
-use crate::graph::{error::Error, Graph};
+use crate::graph::{Graph, error::Error};
 use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, QueryFilter};
 use sea_query::{OnConflict, SelectStatement};
 use std::{

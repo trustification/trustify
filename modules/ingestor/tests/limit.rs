@@ -8,7 +8,7 @@ use std::io::{Cursor, Write};
 use test_context::test_context;
 use test_log::test;
 use trustify_module_ingestor::endpoints::Config;
-use trustify_test_context::{call::CallService, document_bytes_raw, TrustifyContext};
+use trustify_test_context::{TrustifyContext, call::CallService, document_bytes_raw};
 use zip::write::FileOptions;
 
 #[test_context(TrustifyContext)]

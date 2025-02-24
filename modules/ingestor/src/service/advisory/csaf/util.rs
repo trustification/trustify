@@ -1,7 +1,7 @@
 use csaf::{
+    Csaf,
     definitions::{Branch, BranchesT, ProductIdT},
     product_tree::{ProductTree, Relationship},
-    Csaf,
 };
 use packageurl::PackageUrl;
 use std::collections::HashMap;

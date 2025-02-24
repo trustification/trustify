@@ -2,10 +2,10 @@ mod walker;
 
 use crate::model::CweImporter;
 use crate::runner::{
+    RunOutput,
     context::RunContext,
     cwe::walker::CweWalker,
     report::{ReportBuilder, ScannerError},
-    RunOutput,
 };
 use std::sync::Arc;
 use tokio::sync::Mutex;

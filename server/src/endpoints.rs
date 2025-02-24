@@ -1,12 +1,11 @@
 use actix_web::{
-    get,
+    HttpRequest, HttpResponse, get,
     http::header::AUTHORIZATION,
     web::{self},
-    HttpRequest, HttpResponse,
 };
 use build_info::BuildInfo;
 use std::sync::Arc;
-use trustify_auth::authenticator::{user::UserInformation, Authenticator};
+use trustify_auth::authenticator::{Authenticator, user::UserInformation};
 use trustify_infrastructure::app::new_auth;
 use utoipa::OpenApi;
 use utoipa_actix_web::service_config::ServiceConfig;

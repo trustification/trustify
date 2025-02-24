@@ -1,6 +1,6 @@
 use crate::labels::Labels;
 use async_graphql::SimpleObject;
-use sea_orm::{entity::prelude::*, sea_query::IntoCondition, Condition, LinkDef};
+use sea_orm::{Condition, LinkDef, entity::prelude::*, sea_query::IntoCondition};
 use time::OffsetDateTime;
 use trustify_common::id::{Id, IdError, TryFilterForId};
 

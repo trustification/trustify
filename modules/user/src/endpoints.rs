@@ -1,8 +1,8 @@
 use crate::service::{Error, UserPreferenceService};
 use actix_web::{
-    delete, get,
+    HttpResponse, Responder, delete, get,
     http::header::{self, ETag, EntityTag, IfMatch},
-    put, web, HttpResponse, Responder,
+    put, web,
 };
 use trustify_auth::authenticator::user::UserDetails;
 use trustify_common::{db::Database, model::Revisioned};

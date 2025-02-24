@@ -2,7 +2,7 @@ pub mod advisory_vulnerability;
 
 use crate::advisory::service::AdvisoryCatcher;
 use crate::source_document::model::SourceDocument;
-use crate::{advisory::model::AdvisoryHead, Error};
+use crate::{Error, advisory::model::AdvisoryHead};
 use advisory_vulnerability::AdvisoryVulnerabilitySummary;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};

@@ -1,6 +1,6 @@
 use crate::{
-    organization::model::{OrganizationDetails, OrganizationSummary},
     Error,
+    organization::model::{OrganizationDetails, OrganizationSummary},
 };
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use trustify_common::{

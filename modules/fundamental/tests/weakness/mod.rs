@@ -8,7 +8,7 @@ use trustify_common::{hashing::HashingRead, model::Paginated};
 use trustify_entity::labels::Labels;
 use trustify_module_fundamental::weakness::service::WeaknessService;
 use trustify_module_ingestor::{graph::Graph, service::weakness::CweCatalogLoader};
-use trustify_test_context::{document_read, TrustifyContext};
+use trustify_test_context::{TrustifyContext, document_read};
 use zip::ZipArchive;
 
 #[test_context(TrustifyContext)]
@@ -57,7 +57,12 @@ async fn simple(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .await?
         .expect("must be found");
 
-    assert_eq!(w.head.description.as_deref(), Some("The product uses a cookie to store sensitive information, but the cookie is not marked with the HttpOnly flag."));
+    assert_eq!(
+        w.head.description.as_deref(),
+        Some(
+            "The product uses a cookie to store sensitive information, but the cookie is not marked with the HttpOnly flag."
+        )
+    );
 
     // now update (poor man's XML update)
 

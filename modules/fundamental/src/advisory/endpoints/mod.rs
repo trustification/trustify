@@ -4,15 +4,15 @@ mod label;
 mod test;
 
 use crate::{
+    Error,
     advisory::{
         model::{AdvisoryDetails, AdvisorySummary},
         service::AdvisoryService,
     },
     endpoints::Deprecation,
     purl::service::PurlService,
-    Error,
 };
-use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, delete, get, http::header, post, web};
 use config::Config;
 use futures_util::TryStreamExt;
 use sea_orm::TransactionTrait;
@@ -20,7 +20,7 @@ use std::str::FromStr;
 use trustify_auth::authorizer::Require;
 use trustify_auth::{CreateAdvisory, DeleteAdvisory, ReadAdvisory};
 use trustify_common::{
-    db::{query::Query, Database},
+    db::{Database, query::Query},
     decompress::decompress_async,
     id::Id,
     model::{BinaryData, Paginated, PaginatedResults},

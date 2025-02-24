@@ -4,17 +4,17 @@ use crate::{
         product::ProductInformation,
         purl::creator::PurlCreator,
         sbom::{
+            FileCreator, LicenseCreator, LicenseInfo, PackageCreator, PackageReference, References,
+            RelationshipCreator, SbomContext, SbomInformation, Spdx,
             processor::{
                 InitContext, PostContext, Processor, RedHatProductComponentRelationships,
                 RunProcessors,
             },
-            FileCreator, LicenseCreator, LicenseInfo, PackageCreator, PackageReference, References,
-            RelationshipCreator, SbomContext, SbomInformation, Spdx,
         },
     },
     service::Error,
 };
-use sbom_walker::report::{check, ReportSink};
+use sbom_walker::report::{ReportSink, check};
 use sea_orm::ConnectionTrait;
 use spdx_rs::models::{RelationshipType, SPDX};
 use std::{collections::HashMap, str::FromStr};

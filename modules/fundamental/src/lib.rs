@@ -12,7 +12,7 @@ pub mod source_document;
 pub mod vulnerability;
 pub mod weakness;
 
-pub use endpoints::{configure, Config};
+pub use endpoints::{Config, configure};
 pub use error::Error;
 
 #[cfg(test)]

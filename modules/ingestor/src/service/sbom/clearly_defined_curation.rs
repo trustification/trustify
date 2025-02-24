@@ -1,5 +1,5 @@
 use crate::{
-    graph::{sbom::clearly_defined::Curation, Graph, Outcome},
+    graph::{Graph, Outcome, sbom::clearly_defined::Curation},
     model::IngestResult,
     service::Error,
 };
@@ -63,8 +63,8 @@ mod test {
     use crate::service::{Format, IngestorService};
     use test_context::test_context;
     use test_log::test;
-    use trustify_test_context::document_bytes;
     use trustify_test_context::TrustifyContext;
+    use trustify_test_context::document_bytes;
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]

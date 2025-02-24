@@ -5,13 +5,13 @@ mod delete;
 mod reingest;
 
 use cve::{
+    Cve, Rejected,
     common::{self, Description},
     rejected::{CnaContainer, Containers, Metadata, State},
-    Cve, Rejected,
 };
 use time::macros::datetime;
 use trustify_module_ingestor::model::IngestResult;
-use trustify_test_context::{document_bytes, TrustifyContext};
+use trustify_test_context::{TrustifyContext, document_bytes};
 
 /// Ingest a document twice, mutating it using the provided closure.
 async fn twice<M1, M2>(

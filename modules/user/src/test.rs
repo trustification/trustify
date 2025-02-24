@@ -2,13 +2,13 @@
 
 use crate::service::{Error, UserPreferenceService};
 use actix_http::header;
-use actix_web::{http::StatusCode, test as actix, App};
+use actix_web::{App, http::StatusCode, test as actix};
 use serde_json::json;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::model::Revisioned;
-use trustify_test_context::auth::TestAuthentication;
 use trustify_test_context::TrustifyContext;
+use trustify_test_context::auth::TestAuthentication;
 use utoipa_actix_web::AppExt;
 
 #[test_context(TrustifyContext, skip_teardown)]

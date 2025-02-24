@@ -1,5 +1,5 @@
-use sea_orm::entity::prelude::*;
 use sea_orm::LinkDef;
+use sea_orm::entity::prelude::*;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "purl_status")]

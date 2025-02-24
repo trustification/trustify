@@ -1,16 +1,16 @@
 use crate::{
+    Error,
     purl::{
         model::{details::base_purl::BasePurlDetails, summary::base_purl::BasePurlSummary},
         service::PurlService,
     },
-    Error,
 };
-use actix_web::{get, web, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, get, web};
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
-use trustify_auth::{authorizer::Require, ReadSbom};
+use trustify_auth::{ReadSbom, authorizer::Require};
 use trustify_common::{
-    db::{query::Query, Database},
+    db::{Database, query::Query},
     id::IdError,
     model::{Paginated, PaginatedResults},
     purl::Purl,

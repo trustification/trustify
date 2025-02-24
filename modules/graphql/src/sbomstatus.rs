@@ -8,8 +8,8 @@ use trustify_module_fundamental::{
     purl::model::details::purl::StatusContext,
     sbom::{
         model::{
-            details::{SbomDetails, SbomStatus},
             SbomPackage,
+            details::{SbomDetails, SbomStatus},
         },
         service::SbomService,
     },

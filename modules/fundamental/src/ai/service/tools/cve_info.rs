@@ -9,7 +9,7 @@ use serde_json::Value;
 use std::{error::Error, fmt::Write};
 use time::OffsetDateTime;
 use trustify_common::{
-    db::{query::Query, Database},
+    db::{Database, query::Query},
     purl::Purl,
 };
 use trustify_module_ingestor::common::Deprecation;
@@ -164,7 +164,11 @@ The input should be the partial or full name of the Vulnerability to search for.
 
         let mut result = "".to_string();
         if item.head.identifier != input {
-            writeln!(result, "There is one match, but it had a different identifier.  Inform the user that that you are providing information on: {}\n", item.head.identifier)?;
+            writeln!(
+                result,
+                "There is one match, but it had a different identifier.  Inform the user that that you are providing information on: {}\n",
+                item.head.identifier
+            )?;
         }
         writeln!(result, "{}", json)?;
         Ok(result)

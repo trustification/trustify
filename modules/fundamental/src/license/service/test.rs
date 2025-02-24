@@ -1,7 +1,7 @@
 use crate::license::service::LicenseService;
 use test_context::test_context;
 use test_log::test;
-use trustify_common::db::query::{q, Query};
+use trustify_common::db::query::{Query, q};
 use trustify_common::model::Paginated;
 use trustify_test_context::TrustifyContext;
 
@@ -40,10 +40,12 @@ async fn list_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(3, results.total);
     assert_eq!(1, results.items.len());
 
-    assert!(results
-        .items
-        .iter()
-        .any(|e| e.license == "Apache License 1.0"));
+    assert!(
+        results
+            .items
+            .iter()
+            .any(|e| e.license == "Apache License 1.0")
+    );
 
     Ok(())
 }
@@ -150,10 +152,11 @@ async fn verify_clearly_defined(ctx: &TrustifyContext) -> Result<(), anyhow::Err
     let mut seen_versions = Vec::new();
 
     for each in license_details.items {
-        assert!(each
-            .sbom
-            .authors
-            .contains(&"ClearlyDefined: Community-Curated".to_string()));
+        assert!(
+            each.sbom
+                .authors
+                .contains(&"ClearlyDefined: Community-Curated".to_string())
+        );
         assert!(each.purl.purl.to_string().starts_with("pkg:crate/chrono@"));
         seen_versions.push(each.purl.version);
     }

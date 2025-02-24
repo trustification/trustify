@@ -2,7 +2,7 @@ use crate::db::Database;
 use anyhow::Context;
 use postgresql_embedded::{PostgreSQL, Settings, VersionReq};
 use std::path::Path;
-use tracing::{info_span, Instrument};
+use tracing::{Instrument, info_span};
 
 /// Create common default settings for the embedded database
 fn default_settings() -> anyhow::Result<Settings> {

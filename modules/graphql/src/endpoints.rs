@@ -1,6 +1,6 @@
 use crate::RootQuery;
-use actix_web::{guard, web, HttpResponse, Result};
-use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Schema};
+use actix_web::{HttpResponse, Result, guard, web};
+use async_graphql::{EmptyMutation, EmptySubscription, Schema, http::GraphiQLSource};
 use async_graphql_actix_web::GraphQL;
 use std::sync::Arc;
 use trustify_common::db::Database;

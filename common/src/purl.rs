@@ -1,9 +1,9 @@
 use deepsize::DeepSizeOf;
 use packageurl::PackageUrl;
-use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
+use percent_encoding::{AsciiSet, CONTROLS, utf8_percent_encode};
 use serde::{
-    de::{Error, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
+    de::{Error, Visitor},
 };
 use std::borrow::Cow;
 use std::{
@@ -13,8 +13,8 @@ use std::{
     str::FromStr,
 };
 use utoipa::{
-    openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, Type},
     PartialSchema, ToSchema,
+    openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, Type},
 };
 use uuid::Uuid;
 

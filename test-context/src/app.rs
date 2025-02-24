@@ -1,6 +1,7 @@
 use actix_web::{
+    App,
     dev::{ServiceFactory, ServiceRequest},
-    web, App,
+    web,
 };
 use trustify_auth::authorizer::Authorizer;
 use utoipa_actix_web::UtoipaApp;

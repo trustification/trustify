@@ -1,12 +1,12 @@
-use crate::profile::api::{configure, default_openapi_info, Config, ModuleConfig};
+use crate::profile::api::{Config, ModuleConfig, configure, default_openapi_info};
 use actix_web::App;
 use trustify_common::{config::Database, db};
 use trustify_module_analysis::config::AnalysisConfig;
 use trustify_module_analysis::service::AnalysisService;
 use trustify_module_storage::service::{dispatch::DispatchBackend, fs::FileSystemBackend};
 use utoipa::{
-    openapi::security::{OpenIdConnect, SecurityScheme},
     Modify, OpenApi,
+    openapi::security::{OpenIdConnect, SecurityScheme},
 };
 use utoipa_actix_web::AppExt;
 

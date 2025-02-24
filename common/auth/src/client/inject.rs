@@ -1,4 +1,4 @@
-use super::{error::Error, Credentials, TokenProvider};
+use super::{Credentials, TokenProvider, error::Error};
 use std::future::Future;
 use tracing::instrument;
 

@@ -8,7 +8,7 @@ mod reingest;
 use osv::schema::{Event, Vulnerability};
 use trustify_module_ingestor::model::IngestResult;
 use trustify_module_ingestor::service::advisory::osv::{from_yaml, to_yaml};
-use trustify_test_context::{document_bytes, TrustifyContext};
+use trustify_test_context::{TrustifyContext, document_bytes};
 
 /// Ingest a document twice, mutating it using the provided closure.
 async fn twice<M1, M2>(

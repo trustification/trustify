@@ -5,8 +5,8 @@ use utoipa::ToSchema;
 use crate::advisory::model::AdvisoryHead;
 use trustify_entity::{advisory, organization};
 
-use crate::organization::model::OrganizationHead;
 use crate::Error;
+use crate::organization::model::OrganizationHead;
 
 #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
 pub struct OrganizationDetails {

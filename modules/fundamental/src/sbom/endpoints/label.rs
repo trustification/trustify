@@ -1,6 +1,6 @@
 use crate::sbom::service::SbomService;
-use actix_web::{patch, put, web, HttpResponse, Responder};
-use trustify_auth::{authorizer::Require, UpdateSbom};
+use actix_web::{HttpResponse, Responder, patch, put, web};
+use trustify_auth::{UpdateSbom, authorizer::Require};
 use trustify_common::db::Database;
 use trustify_common::id::Id;
 use trustify_entity::labels::Labels;

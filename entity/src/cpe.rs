@@ -1,5 +1,5 @@
 use cpe::{error::CpeError, uri::Uri};
-use sea_orm::{entity::prelude::*, Set};
+use sea_orm::{Set, entity::prelude::*};
 use std::fmt::{Debug, Display, Formatter};
 use trustify_common::cpe::{Component, Cpe, CpeType, Language};
 use trustify_common::impl_try_into_cpe;

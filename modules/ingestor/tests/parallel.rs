@@ -16,7 +16,7 @@ use trustify_module_ingestor::{
     },
     service::{Discard, Format},
 };
-use trustify_test_context::{document_bytes, spdx::fix_spdx_rels, TrustifyContext};
+use trustify_test_context::{TrustifyContext, document_bytes, spdx::fix_spdx_rels};
 use uuid::Uuid;
 
 /// Ingest x SBOMs in parallel

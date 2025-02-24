@@ -1,5 +1,5 @@
-use crate::purl::model::{BasePurlHead, PurlHead, VersionedPurlHead};
 use crate::Error;
+use crate::purl::model::{BasePurlHead, PurlHead, VersionedPurlHead};
 use sea_orm::{ConnectionTrait, LoaderTrait};
 use serde::{Deserialize, Serialize};
 use trustify_entity::{base_purl, qualified_purl, versioned_purl};

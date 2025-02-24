@@ -1,6 +1,6 @@
 use crate::{
-    service::{ComponentReference, GraphQuery},
     Error,
+    service::{ComponentReference, GraphQuery},
 };
 use std::str::FromStr;
 use trustify_common::{cpe::Cpe, purl::Purl};

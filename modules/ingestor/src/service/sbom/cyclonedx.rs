@@ -1,5 +1,5 @@
 use crate::{
-    graph::{sbom::cyclonedx, Graph, Outcome},
+    graph::{Graph, Outcome, sbom::cyclonedx},
     model::IngestResult,
     service::Error,
 };
@@ -81,7 +81,7 @@ mod test {
     use crate::{graph::Graph, service::Format};
     use test_context::test_context;
     use test_log::test;
-    use trustify_test_context::{document_bytes, TrustifyContext};
+    use trustify_test_context::{TrustifyContext, document_bytes};
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]

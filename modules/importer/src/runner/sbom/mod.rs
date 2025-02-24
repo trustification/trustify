@@ -4,11 +4,11 @@ pub mod storage;
 use crate::{
     model::SbomImporter,
     runner::{
+        RunOutput,
         common::{filter::Filter, validation},
         context::RunContext,
         report::{ReportBuilder, ReportVisitor, ScannerError},
         sbom::report::SbomReportVisitor,
-        RunOutput,
     },
     server::context::WalkerProgress,
 };

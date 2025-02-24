@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use utoipa::{
-    openapi::{RefOr, Response, ResponseBuilder, ResponsesBuilder},
     IntoResponses,
+    openapi::{RefOr, Response, ResponseBuilder, ResponsesBuilder},
 };
 
 pub enum AuthResponse {

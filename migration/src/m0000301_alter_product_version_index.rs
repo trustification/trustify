@@ -1,6 +1,6 @@
 use sea_orm_migration::prelude::*;
 
-use crate::m0000300_create_product_version::{ProductVersion, INDEX_BY_PID_V};
+use crate::m0000300_create_product_version::{INDEX_BY_PID_V, ProductVersion};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;

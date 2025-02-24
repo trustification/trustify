@@ -1,5 +1,5 @@
 use crate::cvss3::Cvss3Error;
-use serde::{de, ser, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de, ser};
 use std::fmt;
 use std::str::FromStr;
 use utoipa::ToSchema;

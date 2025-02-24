@@ -4,11 +4,11 @@ pub mod storage;
 use crate::{
     model::CsafImporter,
     runner::{
+        RunOutput,
         common::{filter::Filter, validation},
         context::RunContext,
         csaf::report::CsafReportVisitor,
         report::{ReportBuilder, ReportVisitor, ScannerError},
-        RunOutput,
     },
     server::context::WalkerProgress,
 };

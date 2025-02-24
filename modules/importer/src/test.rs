@@ -4,14 +4,15 @@ use super::model::{
     CommonImporter, Importer, ImporterConfiguration, ImporterData, SbomImporter, State,
 };
 use actix_web::{
-    http::{header, StatusCode},
-    test as actix, App,
+    App,
+    http::{StatusCode, header},
+    test as actix,
 };
 use serde_json::json;
 use std::time::Duration;
 use test_context::test_context;
 use test_log::test;
-use trustify_test_context::{app::TestApp, TrustifyContext};
+use trustify_test_context::{TrustifyContext, app::TestApp};
 use utoipa_actix_web::AppExt;
 
 fn mock_configuration(source: impl Into<String>) -> ImporterConfiguration {

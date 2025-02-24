@@ -7,8 +7,8 @@ use std::{
     str::FromStr,
 };
 use utoipa::{
-    openapi::{RefOr, Schema},
     PartialSchema, ToSchema,
+    openapi::{RefOr, Schema},
 };
 
 #[derive(
@@ -72,7 +72,7 @@ impl From<usize> for BinaryByteSize {
 
 impl From<BinaryByteSize> for usize {
     fn from(value: BinaryByteSize) -> Self {
-        value.0 .0 as usize
+        value.0.0 as usize
     }
 }
 

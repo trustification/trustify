@@ -1,19 +1,18 @@
 use super::SbomService;
 use crate::{
+    Error,
     purl::model::summary::purl::PurlSummary,
     sbom::model::{
-        details::SbomDetails, SbomExternalPackageReference, SbomNodeReference, SbomPackage,
-        SbomPackageRelation, SbomSummary, Which,
+        SbomExternalPackageReference, SbomNodeReference, SbomPackage, SbomPackageRelation,
+        SbomSummary, Which, details::SbomDetails,
     },
-    Error,
 };
-use futures_util::{stream, StreamExt, TryStreamExt};
+use futures_util::{StreamExt, TryStreamExt, stream};
 use sea_orm::{
-    prelude::Uuid, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult,
-    IntoSimpleExpr, QueryFilter, QueryOrder, QueryResult, QuerySelect, RelationTrait, Select,
-    SelectColumns,
+    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
+    QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns, prelude::Uuid,
 };
-use sea_query::{extension::postgres::PgExpr, Expr, Func, JoinType, SimpleExpr};
+use sea_query::{Expr, Func, JoinType, SimpleExpr, extension::postgres::PgExpr};
 use serde::Deserialize;
 use serde_json::Value;
 use std::{collections::HashMap, fmt::Debug};
@@ -21,10 +20,10 @@ use tracing::instrument;
 use trustify_common::{
     cpe::Cpe,
     db::{
-        limiter::{limit_selector, LimiterTrait},
+        ArrayAgg, JsonBuildObject, ToJson,
+        limiter::{LimiterTrait, limit_selector},
         multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
         query::{Columns, Filtering, IntoColumns, Query},
-        ArrayAgg, JsonBuildObject, ToJson,
     },
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},

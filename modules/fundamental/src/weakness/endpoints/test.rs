@@ -4,7 +4,7 @@ use actix_web::test::TestRequest;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::model::PaginatedResults;
-use trustify_test_context::{call::CallService, document_read, TrustifyContext};
+use trustify_test_context::{TrustifyContext, call::CallService, document_read};
 use zip::ZipArchive;
 
 #[test_context(TrustifyContext)]

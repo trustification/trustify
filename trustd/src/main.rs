@@ -4,7 +4,7 @@ use clap::Parser;
 use std::env;
 use std::process::{ExitCode, Termination};
 use tokio::select;
-use tokio::task::{spawn_local, LocalSet};
+use tokio::task::{LocalSet, spawn_local};
 
 mod db;
 mod openapi;

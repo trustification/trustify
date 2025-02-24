@@ -1,6 +1,6 @@
 use sea_orm_migration::prelude::*;
 
-use crate::{m0000290_create_product::Product, UuidV4};
+use crate::{UuidV4, m0000290_create_product::Product};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;

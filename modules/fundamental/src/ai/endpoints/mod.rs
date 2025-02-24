@@ -3,22 +3,22 @@
 mod test;
 
 use crate::{
+    Error,
     ai::{
         model::{AiFlags, AiTool, ChatMessage, ChatState, Conversation, ConversationSummary},
         service::AiService,
     },
-    Error,
 };
 use actix_web::{
-    delete, get,
+    HttpResponse, Responder, delete, get,
     http::header::{self, ETag, EntityTag, IfMatch},
-    post, put, web, HttpResponse, Responder,
+    post, put, web,
 };
 use itertools::Itertools;
 use time::OffsetDateTime;
-use trustify_auth::{authenticator::user::UserDetails, authorizer::Require, Ai};
+use trustify_auth::{Ai, authenticator::user::UserDetails, authorizer::Require};
 use trustify_common::{
-    db::{query::Query, Database},
+    db::{Database, query::Query},
     model::{Paginated, PaginatedResults},
 };
 use uuid::Uuid;

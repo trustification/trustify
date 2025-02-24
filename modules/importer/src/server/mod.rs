@@ -4,8 +4,8 @@ pub(crate) mod progress;
 use crate::{
     model::{Importer, State},
     runner::{
-        report::{Report, ScannerError},
         ImportRunner,
+        report::{Report, ScannerError},
     },
     server::context::ServiceRunContext,
     service::{Error, ImporterService},
@@ -13,7 +13,7 @@ use crate::{
 use std::{collections::HashMap, path::PathBuf, time::Duration};
 use time::OffsetDateTime;
 use tokio::{
-    task::{spawn_local, JoinHandle, LocalSet},
+    task::{JoinHandle, LocalSet, spawn_local},
     time::MissedTickBehavior,
 };
 use tracing::instrument;

@@ -1,5 +1,5 @@
-use crate::m0000022_create_organization::Organization;
 use crate::UuidV4;
+use crate::m0000022_create_organization::Organization;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]

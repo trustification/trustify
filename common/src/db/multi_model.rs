@@ -27,10 +27,10 @@ impl<T: QuerySelect> ColumnsPrefixed for T {
                         self = self.column_as(col, prefixed);
                     }
                     ColumnRef::Asterisk => {
-                        return Err(DbErr::Custom("Unable to prefix asterisk".to_string()))
+                        return Err(DbErr::Custom("Unable to prefix asterisk".to_string()));
                     }
                     ColumnRef::TableAsterisk(_) => {
-                        return Err(DbErr::Custom("Unable to prefix asterisk".to_string()))
+                        return Err(DbErr::Custom("Unable to prefix asterisk".to_string()));
                     }
                 }
             } else {
@@ -79,10 +79,10 @@ impl<E: EntityTrait> SelectIntoMultiModel for Select<E> {
                             .column_as(Expr::col((table_alias.into_identity(), name)), prefixed);
                     }
                     ColumnRef::Asterisk => {
-                        return Err(DbErr::Custom("Unable to prefix asterisk".to_string()))
+                        return Err(DbErr::Custom("Unable to prefix asterisk".to_string()));
                     }
                     ColumnRef::TableAsterisk(_) => {
-                        return Err(DbErr::Custom("Unable to prefix asterisk".to_string()))
+                        return Err(DbErr::Custom("Unable to prefix asterisk".to_string()));
                     }
                 }
             } else {
