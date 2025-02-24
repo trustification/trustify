@@ -11,7 +11,10 @@ use sea_orm::{
 };
 use sea_query::{JoinType, Order, SelectStatement};
 use serde_json::Value;
-use std::{collections::HashMap, collections::HashSet, collections::hash_map::Entry, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet, hash_map::Entry},
+    sync::Arc,
+};
 use tracing::{Level, instrument};
 use trustify_common::{cpe::Cpe, db::query::Filtering, purl::Purl};
 use trustify_entity::{
