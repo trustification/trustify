@@ -113,6 +113,7 @@ mod m0000930_alter_sbom_external_node;
 mod m0000940_perf_indexes_qualified_purl;
 mod m0000950_inserts_version_scheme;
 mod m0000960_sort_indexes_qualified_purl;
+mod m0000970_add_sbom_node_checksum;
 
 #[cfg(feature = "ai")]
 pub mod ai;
@@ -235,6 +236,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000940_perf_indexes_qualified_purl::Migration),
             Box::new(m0000950_inserts_version_scheme::Migration),
             Box::new(m0000960_sort_indexes_qualified_purl::Migration),
+            Box::new(m0000970_add_sbom_node_checksum::Migration),
         ]
     }
 }
