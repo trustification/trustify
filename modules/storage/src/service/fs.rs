@@ -25,7 +25,7 @@ use tracing::instrument;
 ///
 /// The layout of the filesystem is as follows:
 ///
-/// ```ignore
+/// ```text
 /// <base>/
 ///   content/
 ///     <digest[0..2]>/
