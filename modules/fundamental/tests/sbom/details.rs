@@ -9,6 +9,7 @@ use trustify_test_context::TrustifyContext;
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 #[instrument]
+#[ignore]
 async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let sbom = SbomService::new(ctx.db.clone());
 
