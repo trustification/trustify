@@ -710,7 +710,7 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
             &ctx.db,
         )
         .await;
-    log::warn!("{:?}", get_external_sbom_id);
+    assert!(get_external_sbom_id.is_some());
 
     // now try spdx
     ctx.ingest_document("spdx/simple-ext-a.json").await?;
@@ -724,7 +724,7 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
     let get_external_sbom_id = service
         .resolve_external_sbom_id("DocumentRef-ext-b:SPDXRef-A".to_string(), &ctx.db)
         .await;
-    log::warn!("{:?}", get_external_sbom_id);
+    assert!(get_external_sbom_id.is_some());
 
     // ingest rh product "spdx/rh/product_component/rhel-9.2-eus.spdx.json"
     ctx.ingest_document("spdx/rh/product_component/rhel-9.2-eus.spdx.json")
@@ -746,7 +746,19 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
             &ctx.db,
         )
         .await;
-    log::warn!("{:?}", get_external_sbom_id);
+
+    if let Some(external_sbom_id) = get_external_sbom_id {
+        let sbom = sbom::Entity::find()
+            .filter(sbom::Column::SbomId.eq(external_sbom_id))
+            .one(&ctx.db)
+            .await;
+        assert_eq!(
+            sbom.unwrap().unwrap().document_id,
+            Some("https://www.redhat.com/openssl-3.0.7-18.el9_2.spdx.json".to_string()),
+        )
+    } else {
+        panic!("Could not find sbom_id.");
+    }
 
     Ok(())
 }
