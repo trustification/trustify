@@ -8,6 +8,7 @@ pub enum Value<'a> {
     Int(i32),
     Float(f64),
     Date(&'a OffsetDateTime),
+    Array(Vec<Value<'a>>),
 }
 
 impl Value<'_> {
@@ -15,7 +16,8 @@ impl Value<'_> {
         match self {
             Self::String(s) => s.contains(pat),
             Self::Date(d) => d.to_string().contains(pat),
-            _ => false,
+            Self::Int(_) | Self::Float(_) => false,
+            Self::Array(a) => a.iter().any(|v| v.contains(pat)),
         }
     }
 }
@@ -51,6 +53,7 @@ impl PartialEq<String> for Value<'_> {
                 },
                 _ => false,
             },
+            Self::Array(a) => a.iter().any(|v| v.eq(rhs)),
         }
     }
 }
@@ -86,7 +89,14 @@ impl PartialOrd<String> for Value<'_> {
                 },
                 _ => None,
             },
+            Self::Array(_) => None,
         }
+    }
+}
+
+impl<'a, T: AsRef<str>> From<&'a Vec<T>> for Value<'a> {
+    fn from(v: &'a Vec<T>) -> Self {
+        Value::Array(v.iter().map(|s| Value::String(s.as_ref())).collect())
     }
 }
 
@@ -117,7 +127,7 @@ pub(crate) mod tests {
         assert!(q("detected=1993-06-12").apply(&context));
         assert!(q("detected>13:20:00").apply(&context));
         assert!(q("detected~1993").apply(&context));
-        assert!(!q("1993").apply(&context));
+        assert!(q("1993").apply(&context));
 
         assert!(q(&format!("published={}", now)).apply(&context));
         assert!(q(&format!("published={}", now.date())).apply(&context));
@@ -126,6 +136,26 @@ pub(crate) mod tests {
         assert!(q(&format!("published>={}", now)).apply(&context));
         assert!(q(&format!("published<={}", now.date())).apply(&context));
         assert!(q(&format!("published~{}", now.time())).apply(&context));
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn filter_array_values() -> Result<(), anyhow::Error> {
+        let purls = vec!["pkg:x/foo", "pkg:x/bar"];
+        let context = HashMap::from([("purl", Value::from(&purls))]);
+
+        assert!(q("purl=pkg:x/foo").apply(&context));
+        assert!(!q("purl!=pkg:x/foo").apply(&context));
+        assert!(q("purl~pkg:x").apply(&context));
+        assert!(q("purl!~pkg:y").apply(&context));
+        assert!(q("purl~foo").apply(&context));
+        assert!(q("purl!~baz").apply(&context));
+
+        assert!(q("pkg:x/foo").apply(&context));
+        assert!(q("pkg:x/bar").apply(&context));
+        assert!(q("foo|bar").apply(&context));
+        assert!(!q("bizz|buzz").apply(&context));
 
         Ok(())
     }

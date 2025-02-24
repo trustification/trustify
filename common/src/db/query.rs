@@ -78,7 +78,7 @@ impl Query {
     /// Apply the query to a mapping of field names to values,
     /// returning true if the context is successfully matched by the
     /// query, by either a filter or a full-text search of all the
-    /// values of type Value::String.
+    /// values.
     pub fn apply(&self, context: &HashMap<&'static str, Value>) -> bool {
         use Operator::*;
         self.parse().iter().all(|c| match c {
@@ -103,7 +103,6 @@ impl Query {
                 ..
             } => context
                 .values()
-                .filter(|v| matches!(v, Value::String(_)))
                 .any(|field| vs.iter().any(|v| field.contains(v))),
             _ => false,
         })
