@@ -42,7 +42,7 @@ use trustify_entity::{
     relationship::Relationship,
     sbom,
     sbom_external_node::{self, DiscriminatorType, ExternalType},
-    source_document,
+    sbom_node_checksum, source_document,
 };
 use uuid::Uuid;
 
@@ -439,8 +439,19 @@ impl AnalysisService {
                 None
             }
 
-            // TBD
-            ExternalType::RedHatProductComponent => None,
+            ExternalType::RedHatProductComponent => {
+                let sbom_external_node_ref = sbom_external_node.external_node_ref;
+                match sbom_node_checksum::Entity::find()
+                    .filter(
+                        sbom_node_checksum::Column::Value.eq(sbom_external_node_ref.to_string()),
+                    )
+                    .one(connection)
+                    .await
+                {
+                    Ok(Some(entity)) => return Some(entity.sbom_id),
+                    _ => None,
+                }
+            }
         }
     }
 }

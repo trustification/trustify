@@ -726,5 +726,27 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
         .await;
     log::warn!("{:?}", get_external_sbom_id);
 
+    // ingest rh product "spdx/rh/product_component/rhel-9.2-eus.spdx.json"
+    ctx.ingest_document("spdx/rh/product_component/rhel-9.2-eus.spdx.json")
+        .await?;
+    let get_external_sbom_id = service
+        .resolve_external_sbom_id(
+            "SPDXRef-RHEL-9.2-EUS:SPDXRef-openssl-3.0.7-18.el9-2".to_string(),
+            &ctx.db,
+        )
+        .await;
+    assert_eq!(get_external_sbom_id, None);
+
+    // now ingest rh component spdx "spdx/rh/product_component/openssl-3.0.7-18.el9_2.spdx.json"
+    ctx.ingest_document("spdx/rh/product_component/openssl-3.0.7-18.el9_2.spdx.json")
+        .await?;
+    let get_external_sbom_id = service
+        .resolve_external_sbom_id(
+            "SPDXRef-RHEL-9.2-EUS:SPDXRef-openssl-3.0.7-18.el9-2".to_string(),
+            &ctx.db,
+        )
+        .await;
+    log::warn!("{:?}", get_external_sbom_id);
+
     Ok(())
 }
