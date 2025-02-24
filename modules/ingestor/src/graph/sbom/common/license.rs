@@ -1,7 +1,7 @@
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use spdx_expression::SpdxExpression;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use tracing::instrument;
 use trustify_common::db::chunk::EntityChunkedIter;
 use trustify_entity::license;
@@ -14,21 +14,12 @@ const NAMESPACE: Uuid = Uuid::from_bytes([
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct LicenseInfo {
     pub license: String,
-    pub refs: HashMap<String, String>,
 }
 
 impl LicenseInfo {
     pub fn uuid(&self) -> Uuid {
-        let mut text = self.license.clone();
-
-        for (user_ref, user_license) in &self.refs {
-            if &text == user_ref {
-                text = user_license.clone();
-            }
-        }
-
         // UUID based upon a hash of the lowercase de-ref'd license.
-        Uuid::new_v5(&NAMESPACE, text.to_lowercase().as_bytes())
+        Uuid::new_v5(&NAMESPACE, self.license.to_lowercase().as_bytes())
     }
 
     pub fn spdx_info(&self) -> (Vec<String>, Vec<String>) {
@@ -114,30 +105,12 @@ impl LicenseCreator {
 #[cfg(test)]
 mod test {
     use crate::graph::sbom::LicenseInfo;
-    use std::collections::HashMap;
 
     #[test]
     fn stable_uuid() {
         // create a new license, ensure a new random state of the hashmap
         let license = || LicenseInfo {
             license: "LicenseRef-1-2-3".to_string(),
-            refs: {
-                let mut refs = HashMap::new();
-                refs.insert("LicenseRef".to_string(), "CyberNeko License".to_string());
-                refs.insert(
-                    "LicenseRef-1".to_string(),
-                    "CyberNeko License 1".to_string(),
-                );
-                refs.insert(
-                    "LicenseRef-1-2".to_string(),
-                    "CyberNeko License 1-2".to_string(),
-                );
-                refs.insert(
-                    "LicenseRef-1-2-3".to_string(),
-                    "CyberNeko License 1-2-3".to_string(),
-                );
-                refs
-            },
         };
 
         // the original one we compare to
