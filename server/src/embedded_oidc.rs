@@ -64,7 +64,8 @@ fn create(enabled: bool) -> anyhow::Result<Option<Server>> {
 
     // take the devmode url and extract all information for building the server
 
-    let url = Url::parse(ISSUER_URL)?;
+    let url = Url::parse(ISSUER_URL)
+        .with_context(|| format!("{} Failed to parse URL {}", "EmbeddedOidc", ISSUER_URL))?;
     let port = url.port().unwrap_or(8090);
     let mut path = url
         .path_segments()
