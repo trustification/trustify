@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740078350145,
+  "lastUpdate": 1740390886397,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5272,6 +5272,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/8ebe8b98c0bd8eb0b6483fa3a46940c703b8c282"
         },
         "date": 1740078349273,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "2582866+carlosthe19916@users.noreply.github.com",
+            "name": "Carlos Feria",
+            "username": "carlosthe19916"
+          },
+          "committer": {
+            "email": "carlosthe19916@gmail.com",
+            "name": "Carlos Feria",
+            "username": "carlosthe19916"
+          },
+          "distinct": false,
+          "id": "49c790ad3ad98d6a5a533b84c60741b6c3eac7fa",
+          "message": "allow gh workflow openapi.yaml to support release/0.2.z",
+          "timestamp": "2025-02-24T09:31:06Z",
+          "tree_id": "0c32b6883ea6a32d6f3f799734d57be7b972eb60",
+          "url": "https://github.com/trustification/trustify/commit/49c790ad3ad98d6a5a533b84c60741b6c3eac7fa"
+        },
+        "date": 1740390885646,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
