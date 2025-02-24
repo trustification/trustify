@@ -9,6 +9,7 @@ pub mod render;
 #[cfg(test)]
 mod test;
 
+use crate::model::graph::Node::External;
 use crate::{
     Error,
     config::AnalysisConfig,
@@ -55,7 +56,7 @@ pub struct AnalysisService {
 ///
 /// If the depth is zero, or the node was already processed, it will return [`None`], indicating
 /// that the request was not processed.
-fn collect(
+async fn collect(
     graph: &Graph<graph::Node, Relationship, petgraph::Directed>,
     node: NodeIndex,
     direction: Direction,
@@ -64,6 +65,15 @@ fn collect(
     relationships: &HashSet<Relationship>,
 ) -> Option<Vec<Node>> {
     tracing::debug!(direction = ?direction, "collecting for {node:?}");
+
+    match graph.node_weight(node) {
+        Some(External(external_node)) => {
+            log::warn!("external node: {:?}", external_node);
+        }
+        _ => {
+            // Handle other cases
+        }
+    }
 
     if depth == 0 {
         log::debug!("depth is zero");
@@ -85,27 +95,29 @@ fn collect(
         // we only recurse in one direction
         let (ancestor, descendent, package_node) = match direction {
             Direction::Incoming => (
-                collect(
+                Box::pin(collect(
                     graph,
                     edge.source(),
                     direction,
                     depth - 1,
                     discovered,
                     relationships,
-                ),
+                ))
+                .await,
                 None,
                 graph.node_weight(edge.source()),
             ),
             Direction::Outgoing => (
                 None,
-                collect(
+                Box::pin(collect(
                     graph,
                     edge.target(),
                     direction,
                     depth - 1,
                     discovered,
                     relationships,
-                ),
+                ))
+                .await,
                 graph.node_weight(edge.target()),
             ),
         };
@@ -265,22 +277,24 @@ impl AnalysisService {
             Node {
                 base: node.into(),
                 relationship: None,
-                ancestors: collect(
+                ancestors: Box::pin(collect(
                     graph,
                     node_index,
                     Direction::Incoming,
                     options.ancestors,
                     &mut graph.visit_map(),
                     &relationships,
-                ),
-                descendants: collect(
+                ))
+                .await,
+                descendants: Box::pin(collect(
                     graph,
                     node_index,
                     Direction::Outgoing,
                     options.descendants,
                     &mut graph.visit_map(),
                     &relationships,
-                ),
+                ))
+                .await,
             }
         })
         .await
@@ -383,10 +397,6 @@ impl AnalysisService {
         external_node_ref: String,
         connection: &C,
     ) -> Option<Uuid> {
-        if !external_node_ref.contains(":") {
-            return None;
-        }
-
         // we first lookup in sbom_external_node
         let sbom_external_node = match sbom_external_node::Entity::find()
             .filter(sbom_external_node::Column::NodeId.eq(external_node_ref))
@@ -396,18 +406,19 @@ impl AnalysisService {
             Ok(Some(entity)) => entity,
             _ => return None,
         };
-        if sbom_external_node
-            .discriminator_value
-            .as_ref()
-            .map(|s| s.is_empty())
-            .unwrap_or(true)
-        {
-            return None;
-        }
+
         match sbom_external_node.external_type {
             ExternalType::SPDX => {
                 // for spdx, sbom_external_node discriminator_type and discriminator_value are used
                 // to lookup sbom_id via join to SourceDocument
+                if sbom_external_node
+                    .discriminator_value
+                    .as_ref()
+                    .map(|s| s.is_empty())
+                    .unwrap_or(true)
+                {
+                    return None;
+                }
                 if let Some(DiscriminatorType::Sha256) = sbom_external_node.discriminator_type {
                     if let Some(discriminator_value) = sbom_external_node.discriminator_value {
                         match sbom::Entity::find()
@@ -428,6 +439,14 @@ impl AnalysisService {
             ExternalType::CycloneDx => {
                 // for cyclonedx, sbom_external_node discriminator_type and discriminator_value are used
                 // we construct external_doc_id to lookup sbom_id directly from sbom entity
+                if sbom_external_node
+                    .discriminator_value
+                    .as_ref()
+                    .map(|s| s.is_empty())
+                    .unwrap_or(true)
+                {
+                    return None;
+                }
                 if let Some(discriminator_value) = sbom_external_node.discriminator_value {
                     let external_doc_ref = sbom_external_node.external_doc_ref;
                     let external_doc_id =
@@ -446,16 +465,29 @@ impl AnalysisService {
 
             ExternalType::RedHatProductComponent => {
                 // for RH variations we assume the sbom_external_node_ref is the package checksum
-                // which is used on sbom_node_checksum to lookup sbom_id
+                // which is used on sbom_node_checksum to lookup related value then
+                // perform another lookup on sbom_node_checksum (by value) to find resultant
+                // sbom_id
                 let sbom_external_node_ref = sbom_external_node.external_node_ref;
+
                 match sbom_node_checksum::Entity::find()
                     .filter(
-                        sbom_node_checksum::Column::Value.eq(sbom_external_node_ref.to_string()),
+                        sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.to_string()),
                     )
                     .one(connection)
                     .await
                 {
-                    Ok(Some(entity)) => return Some(entity.sbom_id),
+                    Ok(Some(entity)) => {
+                        match sbom_node_checksum::Entity::find()
+                            .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
+                            .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                            .one(connection)
+                            .await
+                        {
+                            Ok(Some(matched)) => return Some(matched.sbom_id),
+                            _ => None,
+                        }
+                    }
                     _ => None,
                 }
             }
