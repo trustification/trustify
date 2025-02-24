@@ -374,6 +374,7 @@ impl<'a> ComponentCreator<'a> {
             comp.version.as_ref().map(|v| v.to_string()),
             self.refs,
             self.license_relations,
+            comp.hashes.clone().into_iter().flatten(),
         );
 
         for ancestor in comp

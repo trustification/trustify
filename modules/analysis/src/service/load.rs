@@ -1,7 +1,6 @@
-use crate::model::PackageGraph;
 use crate::{
     Error,
-    model::PackageNode,
+    model::{PackageGraph, graph},
     service::{AnalysisService, ComponentReference, GraphQuery},
 };
 use anyhow::anyhow;
@@ -12,28 +11,70 @@ use sea_orm::{
 };
 use sea_query::{JoinType, Order, SelectStatement};
 use serde_json::Value;
-use std::collections::HashSet;
-use std::sync::Arc;
-use std::{collections::HashMap, collections::hash_map::Entry};
+use std::{
+    collections::{HashMap, HashSet, hash_map::Entry},
+    sync::Arc,
+};
 use tracing::{Level, instrument};
 use trustify_common::{cpe::Cpe, db::query::Filtering, purl::Purl};
 use trustify_entity::{
-    cpe::CpeDto, package_relates_to_package, relationship::Relationship, sbom, sbom_node,
-    sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref,
+    cpe::CpeDto, package_relates_to_package, relationship::Relationship, sbom,
+    sbom_external_node::ExternalType, sbom_node, sbom_package, sbom_package_cpe_ref,
+    sbom_package_purl_ref,
 };
 use uuid::Uuid;
 
+/// A query result struct for fetching all node types
 #[derive(Debug, FromQueryResult)]
 pub struct Node {
+    pub sbom_id: Uuid,
     pub document_id: Option<String>,
     pub published: String,
-    pub purls: Option<Vec<String>>,
-    pub cpes: Option<Vec<Value>>,
+
     pub node_id: String,
     pub node_name: String,
-    pub node_version: Option<String>,
+
+    pub package_node_id: Option<String>,
+    pub package_version: Option<String>,
+    pub purls: Option<Vec<String>>,
+    pub cpes: Option<Vec<Value>>,
+
+    pub ext_node_id: Option<String>,
+    pub ext_external_document_ref: Option<String>,
+    pub ext_external_node_id: Option<String>,
+    pub ext_external_type: Option<ExternalType>,
+
     pub product_name: Option<String>,
     pub product_version: Option<String>,
+}
+
+impl From<Node> for graph::Node {
+    fn from(value: Node) -> Self {
+        let base = graph::BaseNode {
+            sbom_id: value.sbom_id.to_string(),
+            node_id: value.node_id,
+            published: value.published.clone(),
+            name: value.node_name,
+            document_id: value.document_id.clone().unwrap_or_default(),
+            product_name: value.product_name.clone().unwrap_or_default(),
+            product_version: value.product_version.clone().unwrap_or_default(),
+        };
+
+        match (value.package_node_id, value.ext_node_id) {
+            (Some(_), _) => graph::Node::Package(graph::PackageNode {
+                base,
+                purl: to_purls(value.purls),
+                cpe: to_cpes(value.cpes),
+                version: value.package_version.clone().unwrap_or_default(),
+            }),
+            (_, Some(_)) => graph::Node::External(graph::ExternalNode {
+                base,
+                external_document_reference: value.ext_external_document_ref.unwrap_or_default(),
+                external_node_id: value.ext_external_node_id.unwrap_or_default(),
+            }),
+            _ => graph::Node::Unknown(base),
+        }
+    }
 }
 
 #[derive(Debug, FromQueryResult)]
@@ -75,13 +116,23 @@ cpe_ref AS (
         node_id
 )
 SELECT
+    sbom.sbom_id,
     sbom.document_id,
     sbom.published::text,
-    purl_ref.purls,
-    cpe_ref.cpes,
+
     t1_node.node_id AS node_id,
     t1_node.name AS node_name,
-    t1_package.version AS node_version,
+
+    t1_package.node_id AS package_node_id,
+    t1_package.version AS package_version,
+    purl_ref.purls,
+    cpe_ref.cpes,
+
+    t1_ext_node.node_id AS ext_node_id,
+    t1_ext_node.external_doc_ref AS ext_external_document_ref,
+    t1_ext_node.external_node_ref AS ext_external_node_id,
+    t1_ext_node.external_type AS ext_external_type,
+
     product.name AS product_name,
     product_version.version AS product_version
 FROM
@@ -98,6 +149,8 @@ LEFT JOIN
     purl_ref ON purl_ref.sbom_id = sbom.sbom_id AND purl_ref.node_id = t1_node.node_id
 LEFT JOIN
     cpe_ref ON cpe_ref.sbom_id = sbom.sbom_id AND cpe_ref.node_id = t1_node.node_id
+LEFT JOIN
+    sbom_external_node t1_ext_node ON t1_node.sbom_id = t1_ext_node.sbom_id AND t1_node.node_id = t1_ext_node.node_id
 WHERE
     sbom.sbom_id = $1
 "#;
@@ -243,30 +296,19 @@ impl AnalysisService {
 
         // populate packages/components
 
-        let packages = match get_nodes(connection, distinct_sbom_id).await {
+        let loaded_nodes = match get_nodes(connection, distinct_sbom_id).await {
             Ok(nodes) => nodes,
             Err(err) => {
                 return Err(err.into());
             }
         };
 
-        for package in packages {
-            detected_nodes.insert(package.node_id.clone());
+        for node in loaded_nodes {
+            detected_nodes.insert(node.node_id.clone());
 
-            match nodes.entry(package.node_id.clone()) {
+            match nodes.entry(node.node_id.clone()) {
                 Entry::Vacant(entry) => {
-                    let index = g.add_node(PackageNode {
-                        sbom_id: distinct_sbom_id.to_string(),
-                        node_id: package.node_id,
-                        purl: to_purls(package.purls),
-                        cpe: to_cpes(package.cpes),
-                        name: package.node_name,
-                        version: package.node_version.clone().unwrap_or_default(),
-                        published: package.published.clone(),
-                        document_id: package.document_id.clone().unwrap_or_default(),
-                        product_name: package.product_name.clone().unwrap_or_default(),
-                        product_version: package.product_version.clone().unwrap_or_default(),
-                    });
+                    let index = g.add_node(node.into());
 
                     log::debug!("Inserting - id: {}, index: {index:?}", entry.key());
 

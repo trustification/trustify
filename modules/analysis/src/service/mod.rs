@@ -12,9 +12,10 @@ mod test;
 use crate::{
     Error,
     config::AnalysisConfig,
-    model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph, PackageNode},
+    model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph, graph},
 };
 use fixedbitset::FixedBitSet;
+use futures::{StreamExt, stream};
 use opentelemetry::global;
 use petgraph::{
     Direction,
@@ -22,8 +23,11 @@ use petgraph::{
     prelude::EdgeRef,
     visit::{IntoNodeIdentifiers, VisitMap, Visitable},
 };
-use sea_orm::{EntityOrSelect, EntityTrait, QueryOrder, prelude::ConnectionTrait};
-use sea_query::Order;
+use sea_orm::{
+    ColumnTrait, EntityOrSelect, EntityTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+    prelude::ConnectionTrait,
+};
+use sea_query::{JoinType, Order};
 use std::{
     collections::{HashMap, HashSet},
     fmt::Debug,
@@ -34,7 +38,12 @@ use trustify_common::{
     db::query::Value,
     model::{Paginated, PaginatedResults},
 };
-use trustify_entity::{relationship::Relationship, sbom};
+use trustify_entity::{
+    relationship::Relationship,
+    sbom,
+    sbom_external_node::{self, DiscriminatorType, ExternalType},
+    sbom_node_checksum, source_document,
+};
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -47,7 +56,7 @@ pub struct AnalysisService {
 /// If the depth is zero, or the node was already processed, it will return [`None`], indicating
 /// that the request was not processed.
 fn collect(
-    graph: &Graph<PackageNode, Relationship, petgraph::Directed>,
+    graph: &Graph<graph::Node, Relationship, petgraph::Directed>,
     node: NodeIndex,
     direction: Direction,
     depth: u64,
@@ -209,31 +218,37 @@ impl AnalysisService {
 
     /// Collect nodes from the graph
     #[instrument(skip(self, create))]
-    fn collect_graph<'a, C>(
+    async fn collect_graph<'a, C>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
         graphs: &[(String, Arc<PackageGraph>)],
         create: C,
     ) -> Vec<Node>
     where
-        C: Fn(&Graph<PackageNode, Relationship>, NodeIndex, &PackageNode) -> Node,
+        C: AsyncFn(&Graph<graph::Node, Relationship>, NodeIndex, &graph::Node) -> Node,
     {
         let query = query.into();
-        graphs
-            .iter()
-            .filter(|(sbom_id, graph)| acyclic(sbom_id, graph))
-            .flat_map(|(_, graph)| {
+
+        stream::iter(
+            graphs
+                .iter()
+                .filter(|(sbom_id, graph)| acyclic(sbom_id, graph)),
+        )
+        .flat_map(|(_, graph)| {
+            stream::iter(
                 graph
                     .node_indices()
                     .filter(|&i| Self::filter(graph, &query, i))
-                    .filter_map(|i| graph.node_weight(i).map(|w| (i, w)))
-                    .map(|(node_index, package_node)| create(graph, node_index, package_node))
-            })
-            .collect()
+                    .filter_map(|i| graph.node_weight(i).map(|w| (i, w))),
+            )
+            .then(|(node_index, package_node)| create(graph, node_index, package_node))
+        })
+        .collect::<Vec<_>>()
+        .await
     }
 
     #[instrument(skip(self))]
-    pub fn run_graph_query<'a>(
+    pub async fn run_graph_query<'a>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
         options: QueryOptions,
@@ -241,7 +256,7 @@ impl AnalysisService {
     ) -> Vec<Node> {
         let relationships = options.relationships;
 
-        self.collect_graph(query, graphs, |graph, node_index, node| {
+        self.collect_graph(query, graphs, async |graph, node_index, node| {
             log::debug!(
                 "Discovered node - sbom: {}, node: {}",
                 node.sbom_id,
@@ -268,6 +283,7 @@ impl AnalysisService {
                 ),
             }
         })
+        .await
     }
 
     /// locate components, retrieve dependency information, from a single SBOM
@@ -286,7 +302,7 @@ impl AnalysisService {
         let options = options.into();
 
         let graphs = self.load_graphs(connection, &distinct_sbom_ids).await?;
-        let components = self.run_graph_query(query, options, &graphs);
+        let components = self.run_graph_query(query, options, &graphs).await;
 
         Ok(paginated.paginate_array(&components))
     }
@@ -304,13 +320,13 @@ impl AnalysisService {
         let options = options.into();
 
         let graphs = self.load_graphs_query(connection, query).await?;
-        let components = self.run_graph_query(query, options, &graphs);
+        let components = self.run_graph_query(query, options, &graphs).await;
 
         Ok(paginated.paginate_array(&components))
     }
 
     /// check if a node in the graph matches the provided query
-    fn filter(graph: &Graph<PackageNode, Relationship>, query: &GraphQuery, i: NodeIndex) -> bool {
+    fn filter(graph: &Graph<graph::Node, Relationship>, query: &GraphQuery, i: NodeIndex) -> bool {
         match query {
             GraphQuery::Component(ComponentReference::Id(component_id)) => graph
                 .node_weight(i)
@@ -318,20 +334,131 @@ impl AnalysisService {
             GraphQuery::Component(ComponentReference::Name(component_name)) => graph
                 .node_weight(i)
                 .is_some_and(|node| node.name.eq(component_name)),
-            GraphQuery::Component(ComponentReference::Purl(purl)) => graph
-                .node_weight(i)
-                .is_some_and(|node| node.purl.contains(purl)),
-            GraphQuery::Component(ComponentReference::Cpe(cpe)) => graph
-                .node_weight(i)
-                .is_some_and(|node| node.cpe.contains(cpe)),
+            GraphQuery::Component(ComponentReference::Purl(purl)) => {
+                graph.node_weight(i).is_some_and(|node| match node {
+                    graph::Node::Package(package) => package.purl.contains(purl),
+                    _ => false,
+                })
+            }
+            GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
+                graph.node_weight(i).is_some_and(|node| match node {
+                    graph::Node::Package(package) => package.cpe.contains(cpe),
+                    _ => false,
+                })
+            }
             GraphQuery::Query(query) => graph.node_weight(i).is_some_and(|node| {
-                query.apply(&HashMap::from([
+                let mut context = HashMap::from([
                     ("sbom_id", Value::String(&node.sbom_id)),
                     ("node_id", Value::String(&node.node_id)),
                     ("name", Value::String(&node.name)),
-                    ("version", Value::String(&node.version)),
-                ]))
+                ]);
+                match node {
+                    graph::Node::Package(package) => {
+                        context.extend([("version", Value::String(&package.version))]);
+                    }
+                    graph::Node::External(external) => {
+                        context.extend([
+                            (
+                                "external_document_reference",
+                                Value::String(&external.external_document_reference),
+                            ),
+                            (
+                                "external_node_id",
+                                Value::String(&external.external_node_id),
+                            ),
+                        ]);
+                    }
+                    _ => {}
+                }
+                query.apply(&context)
             }),
+        }
+    }
+
+    // Example of how we can resolve sbom_id given an external node reference.
+    // Note: This might better live on the entity or in common rather than specifically in analysis graph
+    #[instrument(skip(self, connection))]
+    pub async fn resolve_external_sbom_id<C: ConnectionTrait>(
+        &self,
+        external_node_ref: String,
+        connection: &C,
+    ) -> Option<Uuid> {
+        if !external_node_ref.contains(":") {
+            return None;
+        }
+
+        // we first lookup in sbom_external_node
+        let sbom_external_node = match sbom_external_node::Entity::find()
+            .filter(sbom_external_node::Column::NodeId.eq(external_node_ref))
+            .one(connection)
+            .await
+        {
+            Ok(Some(entity)) => entity,
+            _ => return None,
+        };
+        if sbom_external_node
+            .discriminator_value
+            .as_ref()
+            .map(|s| s.is_empty())
+            .unwrap_or(true)
+        {
+            return None;
+        }
+        match sbom_external_node.external_type {
+            ExternalType::SPDX => {
+                // for spdx, sbom_external_node discriminator_type and discriminator_value are used
+                // to lookup sbom_id via join to SourceDocument
+                if let Some(DiscriminatorType::Sha256) = sbom_external_node.discriminator_type {
+                    if let Some(discriminator_value) = sbom_external_node.discriminator_value {
+                        match sbom::Entity::find()
+                            .join(JoinType::Join, sbom::Relation::SourceDocument.def())
+                            .filter(
+                                source_document::Column::Sha256.eq(discriminator_value.to_string()),
+                            )
+                            .one(connection)
+                            .await
+                        {
+                            Ok(Some(entity)) => return Some(entity.sbom_id),
+                            _ => return None,
+                        }
+                    }
+                }
+                None
+            }
+            ExternalType::CycloneDx => {
+                // for cyclonedx, sbom_external_node discriminator_type and discriminator_value are used
+                // we construct external_doc_id to lookup sbom_id directly from sbom entity
+                if let Some(discriminator_value) = sbom_external_node.discriminator_value {
+                    let external_doc_ref = sbom_external_node.external_doc_ref;
+                    let external_doc_id =
+                        format!("urn:cdx:{}/{}", external_doc_ref, discriminator_value);
+                    match sbom::Entity::find()
+                        .filter(sbom::Column::DocumentId.eq(external_doc_id))
+                        .one(connection)
+                        .await
+                    {
+                        Ok(Some(entity)) => return Some(entity.sbom_id),
+                        _ => return None,
+                    }
+                }
+                None
+            }
+
+            ExternalType::RedHatProductComponent => {
+                // for RH variations we assume the sbom_external_node_ref is the package checksum
+                // which is used on sbom_node_checksum to lookup sbom_id
+                let sbom_external_node_ref = sbom_external_node.external_node_ref;
+                match sbom_node_checksum::Entity::find()
+                    .filter(
+                        sbom_node_checksum::Column::Value.eq(sbom_external_node_ref.to_string()),
+                    )
+                    .one(connection)
+                    .await
+                {
+                    Ok(Some(entity)) => return Some(entity.sbom_id),
+                    _ => None,
+                }
+            }
         }
     }
 }

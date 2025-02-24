@@ -11,8 +11,8 @@ use super::*;
 pub trait Visitor {
     type Output;
 
-    fn node(&mut self, node: &PackageNode);
-    fn edge(&mut self, source: &PackageNode, relationship: Relationship, target: &PackageNode);
+    fn node(&mut self, node: &graph::Node);
+    fn edge(&mut self, source: &graph::Node, relationship: Relationship, target: &graph::Node);
 
     fn complete(self) -> Self::Output;
 }
