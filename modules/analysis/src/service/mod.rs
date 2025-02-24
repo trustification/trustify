@@ -387,6 +387,7 @@ impl AnalysisService {
             return None;
         }
 
+        // we first lookup in sbom_external_node
         let sbom_external_node = match sbom_external_node::Entity::find()
             .filter(sbom_external_node::Column::NodeId.eq(external_node_ref))
             .one(connection)
@@ -405,6 +406,8 @@ impl AnalysisService {
         }
         match sbom_external_node.external_type {
             ExternalType::SPDX => {
+                // for spdx, sbom_external_node discriminator_type and discriminator_value are used
+                // to lookup sbom_id via join to SourceDocument
                 if let Some(DiscriminatorType::Sha256) = sbom_external_node.discriminator_type {
                     if let Some(discriminator_value) = sbom_external_node.discriminator_value {
                         match sbom::Entity::find()
@@ -423,6 +426,8 @@ impl AnalysisService {
                 None
             }
             ExternalType::CycloneDx => {
+                // for cyclonedx, sbom_external_node discriminator_type and discriminator_value are used
+                // we construct external_doc_id to lookup sbom_id directly from sbom entity
                 if let Some(discriminator_value) = sbom_external_node.discriminator_value {
                     let external_doc_ref = sbom_external_node.external_doc_ref;
                     let external_doc_id =
@@ -440,6 +445,8 @@ impl AnalysisService {
             }
 
             ExternalType::RedHatProductComponent => {
+                // for RH variations we assume the sbom_external_node_ref is the package checksum
+                // which is used on sbom_node_checksum to lookup sbom_id
                 let sbom_external_node_ref = sbom_external_node.external_node_ref;
                 match sbom_node_checksum::Entity::find()
                     .filter(
