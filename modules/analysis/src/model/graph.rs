@@ -1,5 +1,4 @@
 use super::*;
-use crate::model::graph::Node::Package;
 
 #[derive(Debug, Clone, PartialEq, Eq, ToSchema, serde::Serialize, DeepSizeOf)]
 pub enum Node {
@@ -72,10 +71,10 @@ impl Deref for ExternalNode {
     }
 }
 
-impl From<&graph::Node> for BaseSummary {
-    fn from(value: &graph::Node) -> Self {
+impl From<&Node> for BaseSummary {
+    fn from(value: &Node) -> Self {
         match value {
-            Package(value) => BaseSummary::from(value),
+            Node::Package(value) => BaseSummary::from(value),
             _ => Self {
                 sbom_id: value.sbom_id.to_string(),
                 node_id: value.node_id.to_string(),
