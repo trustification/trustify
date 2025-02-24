@@ -1,7 +1,7 @@
 use crate::license::{
     model::SpdxLicenseDetails, model::SpdxLicenseSummary, service::LicenseService,
 };
-use actix_web::{get, web, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, get, web};
 use trustify_common::{
     db::query::Query,
     model::{Paginated, PaginatedResults},

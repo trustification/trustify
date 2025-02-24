@@ -1,9 +1,9 @@
 use trustify_module_analysis::config::AnalysisConfig;
 use trustify_module_analysis::service::AnalysisService;
-use trustify_module_ingestor::endpoints::{configure, Config};
+use trustify_module_ingestor::endpoints::{Config, configure};
 use trustify_test_context::{
-    call::{self, CallService},
     TrustifyContext,
+    call::{self, CallService},
 };
 
 pub async fn caller_with(

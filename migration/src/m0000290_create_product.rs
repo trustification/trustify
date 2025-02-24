@@ -1,7 +1,7 @@
 use sea_orm_migration::prelude::*;
 
-use crate::m0000022_create_organization::Organization;
 use crate::UuidV4;
+use crate::m0000022_create_organization::Organization;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;

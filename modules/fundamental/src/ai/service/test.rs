@@ -89,8 +89,10 @@ async fn test_completions_sbom_info(ctx: &TrustifyContext) -> Result<(), anyhow:
         termimad::inline(last_message_content.as_str())
     );
     assert!(last_message_content.contains("quarkus-bom"));
-    assert!(last_message_content
-        .contains("5a370574a991aa42f7ecc5b7d88754b258f81c230a73bea247c0a6fcc6f608ab"));
+    assert!(
+        last_message_content
+            .contains("5a370574a991aa42f7ecc5b7d88754b258f81c230a73bea247c0a6fcc6f608ab")
+    );
 
     Ok(())
 }
@@ -119,8 +121,10 @@ async fn test_completions_package_info(ctx: &TrustifyContext) -> Result<(), anyh
         termimad::inline(last_message_content.as_str())
     );
     assert!(last_message_content.contains("httpclient@4.5.13.redhat-00002"));
-    assert!(last_message_content
-        .contains("quarkus-apache-httpclient-deployment@2.13.8.Final-redhat-00004"));
+    assert!(
+        last_message_content
+            .contains("quarkus-apache-httpclient-deployment@2.13.8.Final-redhat-00004")
+    );
     assert!(last_message_content.contains("quarkus-apache-httpclient@2.13.8.Final-redhat-00004"));
 
     Ok(())

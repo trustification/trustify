@@ -4,8 +4,8 @@ use cpe::{
 };
 use deepsize::DeepSizeOf;
 use serde::{
-    de::{Error, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
+    de::{Error, Visitor},
 };
 use std::{
     borrow::Cow,
@@ -13,8 +13,8 @@ use std::{
     str::FromStr,
 };
 use utoipa::{
-    openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, Type},
     PartialSchema, ToSchema,
+    openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, Type},
 };
 use uuid::Uuid;
 

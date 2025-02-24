@@ -6,7 +6,7 @@ use std::process::ExitCode;
 use std::time::Duration;
 use trustify_common::config::Database;
 use trustify_common::db;
-use trustify_infrastructure::otel::{init_tracing, Tracing};
+use trustify_infrastructure::otel::{Tracing, init_tracing};
 
 #[derive(clap::Args, Debug)]
 pub struct Run {

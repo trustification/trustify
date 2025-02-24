@@ -1,11 +1,11 @@
 use crate::{
-    purl::{model::details::versioned_purl::VersionedPurlDetails, service::PurlService},
     Error,
+    purl::{model::details::versioned_purl::VersionedPurlDetails, service::PurlService},
 };
-use actix_web::{get, web, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, get, web};
 use sea_orm::prelude::Uuid;
 use std::str::FromStr;
-use trustify_auth::{authorizer::Require, ReadSbom};
+use trustify_auth::{ReadSbom, authorizer::Require};
 use trustify_common::{db::Database, id::IdError, purl::Purl};
 
 #[utoipa::path(

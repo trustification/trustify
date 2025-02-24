@@ -5,8 +5,8 @@ pub use details::advisory_vulnerability::*;
 pub use details::*;
 pub use summary::*;
 
-use crate::{organization::model::OrganizationSummary, Error};
-use sea_orm::{prelude::Uuid, ConnectionTrait, LoaderTrait, ModelTrait};
+use crate::{Error, organization::model::OrganizationSummary};
+use sea_orm::{ConnectionTrait, LoaderTrait, ModelTrait, prelude::Uuid};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use trustify_common::memo::Memo;

@@ -1,5 +1,6 @@
 use crate::{
     graph::{
+        Graph,
         advisory::{
             product_status::ProductVersionRange,
             purl_status::PurlStatus,
@@ -9,14 +10,13 @@ use crate::{
         organization::{OrganizationContext, OrganizationInformation},
         product::ProductInformation,
         purl::creator::PurlCreator,
-        Graph,
     },
     service::{
-        advisory::csaf::{product_status::ProductStatus, util::ResolveProductIdCache},
         Error,
+        advisory::csaf::{product_status::ProductStatus, util::ResolveProductIdCache},
     },
 };
-use csaf::{definitions::ProductIdT, Csaf};
+use csaf::{Csaf, definitions::ProductIdT};
 use sea_orm::{ActiveValue::Set, ConnectionTrait, EntityTrait};
 use std::collections::{HashMap, HashSet};
 use std::str::FromStr;

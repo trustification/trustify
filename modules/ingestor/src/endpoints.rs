@@ -2,8 +2,8 @@ use crate::{
     graph::Graph,
     service::{Error, IngestorService},
 };
-use actix_web::{post, web, HttpResponse, Responder};
-use trustify_auth::{authorizer::Require, UploadDataset};
+use actix_web::{HttpResponse, Responder, post, web};
+use trustify_auth::{UploadDataset, authorizer::Require};
 use trustify_common::{db::Database, model::BinaryData};
 use trustify_entity::labels::Labels;
 use trustify_module_analysis::service::AnalysisService;

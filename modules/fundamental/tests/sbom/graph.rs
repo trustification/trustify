@@ -6,8 +6,8 @@ use trustify_common::hashing::Digests;
 use trustify_common::purl::Purl;
 use trustify_common::sbom::SbomLocator;
 use trustify_entity::relationship::Relationship;
-use trustify_module_fundamental::purl::model::summary::purl::PurlSummary;
 use trustify_module_fundamental::purl::model::PurlHead;
+use trustify_module_fundamental::purl::model::summary::purl::PurlSummary;
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_test_context::TrustifyContext;
 

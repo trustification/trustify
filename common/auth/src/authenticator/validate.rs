@@ -2,8 +2,8 @@ use crate::authenticator::claims::AccessTokenClaims;
 use biscuit::Empty;
 use chrono::{Duration, Utc};
 use openid::{
-    error::{Expiry, Mismatch, Missing, Validation},
     Client, Config, Configurable, Jws, Provider,
+    error::{Expiry, Mismatch, Missing, Validation},
 };
 
 pub type AccessToken = Jws<AccessTokenClaims, Empty>;

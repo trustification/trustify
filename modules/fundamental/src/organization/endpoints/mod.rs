@@ -5,10 +5,10 @@ use crate::organization::{
     model::{OrganizationDetails, OrganizationSummary},
     service::OrganizationService,
 };
-use actix_web::{get, web, HttpResponse, Responder};
-use trustify_auth::{authorizer::Require, ReadMetadata};
+use actix_web::{HttpResponse, Responder, get, web};
+use trustify_auth::{ReadMetadata, authorizer::Require};
 use trustify_common::{
-    db::{query::Query, Database},
+    db::{Database, query::Query},
     model::Paginated,
 };
 use uuid::Uuid;

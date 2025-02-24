@@ -1,4 +1,4 @@
-use crate::{sbom::service::SbomService, Error};
+use crate::{Error, sbom::service::SbomService};
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ConnectionTrait, DatabaseBackend, EntityTrait,
     IntoActiveModel, QueryTrait, TransactionTrait,

@@ -1,4 +1,4 @@
-use crate::{purl::model::VersionedPurlHead, sbom::model::SbomHead, Error};
+use crate::{Error, purl::model::VersionedPurlHead, sbom::model::SbomHead};
 use sea_orm::{ConnectionTrait, ModelTrait, PaginatorTrait};
 use serde::{Deserialize, Serialize};
 use trustify_entity::{license, purl_license_assertion};

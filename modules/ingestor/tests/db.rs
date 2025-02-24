@@ -3,7 +3,7 @@ use sea_orm::{ConnectionTrait, EntityTrait, QueryOrder};
 use std::fmt::Display;
 use test_context::test_context;
 use test_log::test;
-use time::{macros::datetime, Duration};
+use time::{Duration, macros::datetime};
 use trustify_common::hashing::Digests;
 use trustify_entity::{advisory, source_document};
 use trustify_module_ingestor::graph::advisory::AdvisoryInformation;

@@ -1,7 +1,7 @@
 use actix_web::web;
-use actix_web_static_files::{deps::static_files::Resource, ResourceFiles};
+use actix_web_static_files::{ResourceFiles, deps::static_files::Resource};
 use std::collections::HashMap;
-use trustify_ui::{trustify_ui, UI};
+use trustify_ui::{UI, trustify_ui};
 
 pub struct UiResources {
     resources: HashMap<&'static str, Resource>,

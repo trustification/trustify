@@ -6,8 +6,8 @@ use trustify_module_importer::model::{
 };
 use trustify_module_importer::{
     model::{
-        ClearlyDefinedCurationImporter, CommonImporter, CsafImporter, ImporterConfiguration,
-        OsvImporter, SbomImporter, DEFAULT_SOURCE_CLEARLY_DEFINED,
+        ClearlyDefinedCurationImporter, CommonImporter, CsafImporter,
+        DEFAULT_SOURCE_CLEARLY_DEFINED, ImporterConfiguration, OsvImporter, SbomImporter,
     },
     service::{Error, ImporterService},
 };

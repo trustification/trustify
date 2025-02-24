@@ -13,20 +13,20 @@ use super::error::Error;
 use crate::{
     db::{LeftPackageId, QualifiedPackageTransitive},
     graph::{
-        cpe::CpeContext,
-        product::{product_version::ProductVersionContext, ProductContext},
-        purl::{creator::PurlCreator, qualified_package::QualifiedPackageContext},
         Graph, Outcome,
+        cpe::CpeContext,
+        product::{ProductContext, product_version::ProductVersionContext},
+        purl::{creator::PurlCreator, qualified_package::QualifiedPackageContext},
     },
 };
 use cpe::uri::OwnedUri;
 use entity::{product, product_version};
 use hex::ToHex;
 use sea_orm::{
-    prelude::Uuid, ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait,
-    QueryFilter, QuerySelect, RelationTrait, Select, Set,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait, QueryFilter,
+    QuerySelect, RelationTrait, Select, Set, prelude::Uuid,
 };
-use sea_query::{extension::postgres::PgExpr, Condition, Expr, Func, JoinType, Query, SimpleExpr};
+use sea_query::{Condition, Expr, Func, JoinType, Query, SimpleExpr, extension::postgres::PgExpr};
 use std::{
     fmt::{Debug, Formatter},
     iter,

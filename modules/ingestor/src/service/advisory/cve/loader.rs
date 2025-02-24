@@ -1,18 +1,18 @@
 use crate::{
     graph::{
+        Graph,
         advisory::{
-            version::{Version, VersionInfo, VersionSpec},
             AdvisoryInformation, AdvisoryVulnerabilityInformation,
+            version::{Version, VersionInfo, VersionSpec},
         },
         vulnerability::VulnerabilityInformation,
-        Graph,
     },
     model::IngestResult,
-    service::{advisory::cve::divination::divine_purl, Error},
+    service::{Error, advisory::cve::divination::divine_purl},
 };
 use cve::{
-    common::{Description, Product, Status, VersionRange},
     Cve, Timestamp,
+    common::{Description, Product, Status, VersionRange},
 };
 use sea_orm::TransactionTrait;
 use std::fmt::Debug;
@@ -259,11 +259,7 @@ impl<'g> CveLoader<'g> {
                         .flat_map(|pt| pt.descriptions.iter())
                         .flat_map(|desc| desc.cwe_id.clone())
                         .collect::<Vec<_>>();
-                    if cwes.is_empty() {
-                        None
-                    } else {
-                        Some(cwes)
-                    }
+                    if cwes.is_empty() { None } else { Some(cwes) }
                 },
                 published
                     .containers
@@ -311,7 +307,7 @@ mod test {
     use test_log::test;
     use time::macros::datetime;
     use trustify_common::purl::Purl;
-    use trustify_test_context::{document, TrustifyContext};
+    use trustify_test_context::{TrustifyContext, document};
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
@@ -348,8 +344,10 @@ mod test {
 
         let descriptions = loaded_vulnerability.descriptions("en", &ctx.db).await?;
         assert_eq!(1, descriptions.len());
-        assert!(descriptions[0]
-            .starts_with("Canarytokens helps track activity and actions on a network"));
+        assert!(
+            descriptions[0]
+                .starts_with("Canarytokens helps track activity and actions on a network")
+        );
 
         Ok(())
     }

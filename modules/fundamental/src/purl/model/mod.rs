@@ -1,6 +1,6 @@
 use crate::Error;
-use sea_orm::prelude::Uuid;
 use sea_orm::ConnectionTrait;
+use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 use trustify_common::purl::Purl;
 use trustify_entity::{base_purl, qualified_purl, versioned_purl};

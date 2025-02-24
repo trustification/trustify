@@ -9,16 +9,16 @@ use crate::{
     model::{AnalysisStatus, Node},
     service::render::Renderer,
 };
-use actix_web::{get, web, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, get, web};
 use serde_json::json;
 use trustify_auth::{
+    Permission, ReadSbom,
     authenticator::user::UserInformation,
     authorizer::{Authorizer, Require},
     utoipa::AuthResponse,
-    Permission, ReadSbom,
 };
 use trustify_common::{
-    db::{query::Query, Database},
+    db::{Database, query::Query},
     model::{Paginated, PaginatedResults},
 };
 use utoipa_actix_web::service_config::ServiceConfig;

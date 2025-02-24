@@ -2,8 +2,8 @@ use crate::health::Check;
 use parking_lot::RwLock;
 use std::borrow::Cow;
 use std::future::Future;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 /// Monitor the outcome of some operation.

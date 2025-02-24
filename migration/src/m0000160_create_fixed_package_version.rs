@@ -1,7 +1,7 @@
+use crate::UuidV4;
 use crate::m0000040_create_vulnerability::Vulnerability;
 use crate::m0000060_create_advisory::Advisory;
 use crate::m0000120_create_package_version::PackageVersion;
-use crate::UuidV4;
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]

@@ -1,9 +1,9 @@
 use crate::{
+    Error,
     advisory::model::AdvisoryHead,
     purl::model::{BasePurlHead, PurlHead, VersionedPurlHead},
     sbom::model::SbomHead,
     vulnerability::model::VulnerabilityHead,
-    Error,
 };
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, LoaderTrait, ModelTrait,
@@ -11,15 +11,15 @@ use sea_orm::{
 };
 use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::{HashMap, hash_map::Entry};
 use strum::IntoEnumIterator;
 use trustify_common::{
-    db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
     db::VersionMatches,
+    db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
     memo::Memo,
     purl::Purl,
 };
-use trustify_cvss::cvss3::{score::Score, severity::Severity, Cvss3Base};
+use trustify_cvss::cvss3::{Cvss3Base, score::Score, severity::Severity};
 use trustify_entity::{
     advisory, base_purl, cpe, cvss3, license, organization, product, product_status,
     product_version, product_version_range, purl_license_assertion, purl_status, qualified_purl,

@@ -1,10 +1,10 @@
 use crate::{
+    Error,
     license::model::{
         LicenseDetailsPurlSummary, LicenseSummary, SpdxLicenseDetails, SpdxLicenseSummary,
     },
     purl::model::VersionedPurlHead,
     sbom::model::SbomHead,
-    Error,
 };
 use sea_orm::{
     ColumnTrait, DbErr, EntityTrait, FromQueryResult, ModelTrait, PaginatorTrait, QueryFilter,
@@ -13,10 +13,10 @@ use sea_orm::{
 use sea_query::JoinType;
 use trustify_common::{
     db::{
+        Database,
         limiter::{LimiterAsModelTrait, LimiterTrait},
         multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
         query::{Filtering, Query},
-        Database,
     },
     model::{Paginated, PaginatedResults},
 };

@@ -1,5 +1,5 @@
 use crate::{
-    graph::{sbom::SbomInformation, Graph, Outcome},
+    graph::{Graph, Outcome, sbom::SbomInformation},
     model::IngestResult,
     service::Error,
 };
@@ -146,8 +146,8 @@ mod test {
     use crate::service::{Format, IngestorService};
     use test_context::test_context;
     use test_log::test;
-    use trustify_test_context::document_bytes;
     use trustify_test_context::TrustifyContext;
+    use trustify_test_context::document_bytes;
 
     #[test]
     fn coords_conversion_no_namespace() {

@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 
 use sea_orm::entity::ColumnDef;
-use sea_orm::{sea_query, ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Iterable};
+use sea_orm::{ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Iterable, sea_query};
 use sea_query::extension::postgres::PgExpr;
 use sea_query::{Alias, ColumnRef, Expr, IntoColumnRef, IntoIden};
 

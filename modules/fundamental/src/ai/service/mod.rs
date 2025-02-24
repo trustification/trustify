@@ -2,13 +2,13 @@ pub mod tools;
 
 use crate::ai::model::{ChatMessage, ChatState, InternalState, LLMInfo, MessageType};
 
-use crate::ai::service::tools::remote::RemoteToolsProvider;
 use crate::Error;
-use base64::engine::general_purpose::STANDARD;
+use crate::ai::service::tools::remote::RemoteToolsProvider;
 use base64::engine::Engine as _;
+use base64::engine::general_purpose::STANDARD;
 
-use langchain_rust::chain::options::ChainCallOptions;
 use langchain_rust::chain::Chain;
+use langchain_rust::chain::options::ChainCallOptions;
 use langchain_rust::language_models::options::CallOptions;
 use langchain_rust::schemas::{BaseMemory, Message};
 use langchain_rust::tools::OpenAIConfig;
@@ -19,8 +19,8 @@ use langchain_rust::{
     prompt_args,
     tools::Tool,
 };
-use sea_orm::{prelude::Uuid, ColumnTrait, EntityTrait, QueryFilter, QueryOrder};
 use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter, QueryOrder, prelude::Uuid};
 
 use std::env;
 use std::sync::Arc;
@@ -29,8 +29,8 @@ use tokio::sync::OnceCell;
 
 use trustify_common::db::limiter::LimiterTrait;
 
-use trustify_common::db::query::{Filtering, Query};
 use trustify_common::db::Database;
+use trustify_common::db::query::{Filtering, Query};
 use trustify_common::model::{Paginated, PaginatedResults};
 use trustify_entity::conversation;
 

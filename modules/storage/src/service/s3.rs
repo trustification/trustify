@@ -1,14 +1,14 @@
 use crate::{
     config::S3Config,
     service::{
-        compression::Compression, temp::TempFile, StorageBackend, StorageKey, StorageResult,
-        StoreError,
+        StorageBackend, StorageKey, StorageResult, StoreError, compression::Compression,
+        temp::TempFile,
     },
 };
 use bytes::Bytes;
 use futures::{Stream, TryStreamExt};
-use http::{header::CONTENT_ENCODING, HeaderMap, HeaderValue};
-use s3::{creds::Credentials, error::S3Error, Bucket};
+use http::{HeaderMap, HeaderValue, header::CONTENT_ENCODING};
+use s3::{Bucket, creds::Credentials, error::S3Error};
 use std::{fmt::Debug, io, pin::pin, str::FromStr};
 use tokio_util::io::{ReaderStream, StreamReader};
 use tracing::instrument;

@@ -6,7 +6,7 @@ use actix_http::StatusCode;
 use actix_web::test::TestRequest;
 use hex::ToHex;
 use jsonpath_rust::JsonPathQuery;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use test_context::test_context;
 use test_log::test;
@@ -18,7 +18,7 @@ use trustify_cvss::cvss3::{
 };
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::{graph::advisory::AdvisoryInformation, model::IngestResult};
-use trustify_test_context::{call::CallService, document_bytes, TrustifyContext};
+use trustify_test_context::{TrustifyContext, call::CallService, document_bytes};
 use uuid::Uuid;
 
 #[test_context(TrustifyContext)]
@@ -100,10 +100,12 @@ async fn all_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let rhsa_1 = rhsa_1.unwrap();
 
-    assert!(rhsa_1
-        .vulnerabilities
-        .iter()
-        .any(|e| e.head.identifier == "CVE-123"));
+    assert!(
+        rhsa_1
+            .vulnerabilities
+            .iter()
+            .any(|e| e.head.identifier == "CVE-123")
+    );
 
     Ok(())
 }

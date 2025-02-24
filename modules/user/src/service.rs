@@ -1,7 +1,7 @@
-use actix_web::{body::BoxBody, HttpResponse, ResponseError};
+use actix_web::{HttpResponse, ResponseError, body::BoxBody};
 use sea_orm::{
-    prelude::Uuid, ActiveValue::Set, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter,
-    TransactionTrait,
+    ActiveValue::Set, ColumnTrait, EntityTrait, PaginatorTrait, QueryFilter, TransactionTrait,
+    prelude::Uuid,
 };
 use sea_query::{Alias, Expr, OnConflict};
 use trustify_common::{db::Database, error::ErrorInformation, model::Revisioned};

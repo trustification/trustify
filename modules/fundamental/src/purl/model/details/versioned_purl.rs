@@ -1,8 +1,8 @@
 use crate::{
+    Error,
     advisory::model::AdvisoryHead,
     purl::model::{BasePurlHead, PurlHead, VersionedPurlHead},
     vulnerability::model::VulnerabilityHead,
-    Error,
 };
 use sea_orm::{
     ColumnTrait, ConnectionTrait, EntityTrait, LoaderTrait, ModelTrait, QueryFilter, QuerySelect,

@@ -1,11 +1,11 @@
 use crate::{endpoints, sample_data};
 use actix_web::{
+    HttpRequest, HttpResponse, Responder, Result,
     body::MessageBody,
     dev::{ConnectionInfo, Url},
     error::UrlGenerationError,
     get, middleware, web,
     web::Json,
-    HttpRequest, HttpResponse, Responder, Result,
 };
 use anyhow::Context;
 use bytesize::ByteSize;
@@ -19,10 +19,11 @@ use trustify_auth::{
     authenticator::Authenticator,
     authorizer::Authorizer,
     devmode::{FRONTEND_CLIENT_ID, ISSUER_URL, PUBLIC_CLIENT_IDS},
-    swagger_ui::{swagger_ui_with_auth, SwaggerUiOidc, SwaggerUiOidcConfig},
+    swagger_ui::{SwaggerUiOidc, SwaggerUiOidcConfig, swagger_ui_with_auth},
 };
 use trustify_common::{config::Database, db, model::BinaryByteSize};
 use trustify_infrastructure::{
+    Infrastructure, InfrastructureConfig, InitContext, Metrics,
     app::{
         http::{HttpServerBuilder, HttpServerConfig},
         new_auth,
@@ -30,7 +31,6 @@ use trustify_infrastructure::{
     endpoint::Trustify,
     health::checks::{Local, Probe},
     otel::Tracing,
-    Infrastructure, InfrastructureConfig, InitContext, Metrics,
 };
 use trustify_module_graphql::RootQuery;
 use trustify_module_importer::server::importer;
@@ -39,9 +39,9 @@ use trustify_module_storage::{
     config::{StorageConfig, StorageStrategy},
     service::{dispatch::DispatchBackend, fs::FileSystemBackend, s3::S3Backend},
 };
-use trustify_module_ui::{endpoints::UiResources, UI};
-use utoipa::openapi::{Info, License};
+use trustify_module_ui::{UI, endpoints::UiResources};
 use utoipa::OpenApi;
+use utoipa::openapi::{Info, License};
 use utoipa_rapidoc::RapiDoc;
 use utoipa_redoc::{Redoc, Servable};
 

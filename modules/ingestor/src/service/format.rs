@@ -1,21 +1,21 @@
 use crate::service::sbom::clearly_defined::ClearlyDefinedLoader;
 use crate::{
-    graph::{sbom::clearly_defined::Curation, Graph},
+    graph::{Graph, sbom::clearly_defined::Curation},
     model::IngestResult,
     service::{
+        Error,
         advisory::{csaf::loader::CsafLoader, cve::loader::CveLoader, osv::loader::OsvLoader},
         sbom::{
             clearly_defined_curation::ClearlyDefinedCurationLoader, cyclonedx::CyclonedxLoader,
             spdx::SpdxLoader,
         },
         weakness::CweCatalogLoader,
-        Error,
     },
 };
 use csaf::Csaf;
 use cve::Cve;
-use jsn::{mask::*, Format as JsnFormat, TokenReader};
-use quick_xml::{events::Event, Reader};
+use jsn::{Format as JsnFormat, TokenReader, mask::*};
+use quick_xml::{Reader, events::Event};
 use serde_json::Value;
 use std::io::Cursor;
 use tracing::instrument;

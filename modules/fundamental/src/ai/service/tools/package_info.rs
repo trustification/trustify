@@ -6,7 +6,7 @@ use serde::Serialize;
 use serde_json::Value;
 use std::error::Error;
 use trustify_common::{
-    db::{query::Query, Database},
+    db::{Database, query::Query},
     purl::Purl,
 };
 use trustify_module_ingestor::common::Deprecation;

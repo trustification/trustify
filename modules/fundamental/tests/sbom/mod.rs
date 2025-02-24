@@ -8,17 +8,17 @@ mod spdx;
 
 use sea_orm::{DatabaseTransaction, TransactionTrait};
 use std::{future::Future, pin::Pin, time::Instant};
-use tracing::{info_span, instrument, Instrument};
+use tracing::{Instrument, info_span, instrument};
 use trustify_common::{db::Database, hashing::Digests};
 use trustify_module_fundamental::sbom::service::SbomService;
 use trustify_module_ingestor::{
     graph::{
-        sbom::{self, SbomContext, SbomInformation},
         Graph,
+        sbom::{self, SbomContext, SbomInformation},
     },
     service::Discard,
 };
-use trustify_test_context::{document_bytes, TrustifyContext};
+use trustify_test_context::{TrustifyContext, document_bytes};
 
 #[allow(dead_code)]
 pub struct WithContext {

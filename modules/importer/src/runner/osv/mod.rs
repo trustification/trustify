@@ -3,10 +3,10 @@ mod handler;
 use crate::{
     model::OsvImporter,
     runner::{
+        RunOutput,
         common::walker::{CallbackError, Callbacks, GitWalker},
         context::RunContext,
         report::{Phase, ReportBuilder, ScannerError},
-        RunOutput,
     },
 };
 use chrono::Datelike;
@@ -19,7 +19,7 @@ use tracing::instrument;
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::{
     graph::Graph,
-    service::{advisory::osv::parse, Format, IngestorService},
+    service::{Format, IngestorService, advisory::osv::parse},
 };
 
 struct Context<C: RunContext + 'static> {

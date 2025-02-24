@@ -107,7 +107,7 @@ impl<R: Read> Read for HashingRead<R> {
 mod test {
     use super::HashingRead;
     use rand::RngCore;
-    use ring::digest::{digest, SHA256, SHA384, SHA512};
+    use ring::digest::{SHA256, SHA384, SHA512, digest};
     use std::io::Read;
 
     fn rand_bytes() -> [u8; 1024] {

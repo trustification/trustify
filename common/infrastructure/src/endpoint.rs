@@ -1,5 +1,5 @@
 use clap::{
-    value_parser, Arg, ArgMatches, Args, Command, CommandFactory, Error, FromArgMatches, Parser,
+    Arg, ArgMatches, Args, Command, CommandFactory, Error, FromArgMatches, Parser, value_parser,
 };
 use std::{
     ffi::OsString,

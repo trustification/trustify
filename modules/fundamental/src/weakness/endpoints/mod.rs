@@ -1,8 +1,8 @@
 use crate::{license::model::LicenseSummary, weakness::service::WeaknessService};
-use actix_web::{get, web, HttpResponse, Responder};
-use trustify_auth::{authorizer::Require, ReadWeakness};
+use actix_web::{HttpResponse, Responder, get, web};
+use trustify_auth::{ReadWeakness, authorizer::Require};
 use trustify_common::{
-    db::{query::Query, Database},
+    db::{Database, query::Query},
     model::{Paginated, PaginatedResults},
 };
 

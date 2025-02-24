@@ -1,7 +1,7 @@
 use sea_orm_migration::prelude::*;
 
-use crate::m0000310_alter_advisory_primary_key::Advisory;
 use crate::ForeignKeyAction::Cascade;
+use crate::m0000310_alter_advisory_primary_key::Advisory;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;

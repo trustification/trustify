@@ -1,8 +1,8 @@
 use crate::runner::common::walker::WorkingDirectory;
 use anyhow::anyhow;
 use git2::{
-    build::RepoBuilder, Cred, ErrorClass, ErrorCode, FetchOptions, RemoteCallbacks, Repository,
-    ResetType,
+    Cred, ErrorClass, ErrorCode, FetchOptions, RemoteCallbacks, Repository, ResetType,
+    build::RepoBuilder,
 };
 use std::{
     borrow::Cow,

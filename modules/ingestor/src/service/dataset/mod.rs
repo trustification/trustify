@@ -19,7 +19,7 @@ use tokio_util::io::ReaderStream;
 use tracing::instrument;
 use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
-use trustify_module_storage::{service::dispatch::DispatchBackend, service::StorageBackend};
+use trustify_module_storage::{service::StorageBackend, service::dispatch::DispatchBackend};
 
 pub struct DatasetLoader<'g> {
     graph: &'g Graph,

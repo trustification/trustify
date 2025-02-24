@@ -4,8 +4,8 @@ use garage_door::{
     issuer::{Client, Issuer, RedirectUrl},
     server::{Server, StartupError},
 };
-use rand::distributions::Alphanumeric;
 use rand::Rng;
+use rand::distributions::Alphanumeric;
 use std::time::Duration;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;

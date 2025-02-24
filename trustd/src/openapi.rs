@@ -2,7 +2,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result, anyhow};
 use trustify_server::openapi::create_openapi;
 
 #[derive(clap::Args, Debug)]

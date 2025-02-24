@@ -197,8 +197,8 @@ mod test {
     use test_log::test;
     use trustify_common::hashing::HashingRead;
     use trustify_entity::labels::Labels;
-    use trustify_test_context::document_read;
     use trustify_test_context::TrustifyContext;
+    use trustify_test_context::document_read;
     use zip::ZipArchive;
 
     #[test_context(TrustifyContext)]

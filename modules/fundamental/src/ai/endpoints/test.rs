@@ -1,17 +1,17 @@
 use crate::ai::model::{ChatMessage, ChatState, Conversation, ConversationSummary};
-use crate::ai::service::test::{ingest_fixtures, sanitize_uuid_field, sanitize_uuid_urn};
 use crate::ai::service::AiService;
+use crate::ai::service::test::{ingest_fixtures, sanitize_uuid_field, sanitize_uuid_urn};
 use crate::test::caller;
 use actix_http::StatusCode;
 use actix_web::dev::ServiceResponse;
-use actix_web::test::{read_body_json, TestRequest};
+use actix_web::test::{TestRequest, read_body_json};
 use serde_json::json;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::model::PaginatedResults;
+use trustify_test_context::TrustifyContext;
 use trustify_test_context::auth::TestAuthentication;
 use trustify_test_context::call::CallService;
-use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
@@ -38,12 +38,14 @@ async fn configure(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let result: ChatState = actix_web::test::read_body_json(response).await;
     log::info!("result: {:?}", result);
-    assert!(result
-        .messages
-        .last()
-        .unwrap()
-        .content
-        .contains("quarkus-bom"));
+    assert!(
+        result
+            .messages
+            .last()
+            .unwrap()
+            .content
+            .contains("quarkus-bom")
+    );
 
     Ok(())
 }

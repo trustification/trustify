@@ -1,13 +1,13 @@
 use crate::{
-    weakness::model::{WeaknessDetails, WeaknessSummary},
     Error,
+    weakness::model::{WeaknessDetails, WeaknessSummary},
 };
 use sea_orm::EntityTrait;
 use trustify_common::{
     db::{
+        Database,
         limiter::LimiterTrait,
         query::{Filtering, Query},
-        Database,
     },
     model::{Paginated, PaginatedResults},
 };

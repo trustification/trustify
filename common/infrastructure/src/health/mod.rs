@@ -3,9 +3,9 @@ pub mod checks;
 use crate::health::checks::UninitializedCheck;
 use futures::{
     future::TryFutureExt,
-    stream::{iter, StreamExt},
+    stream::{StreamExt, iter},
 };
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;

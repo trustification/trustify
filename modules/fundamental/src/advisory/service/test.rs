@@ -6,15 +6,15 @@ use test_log::test;
 use time::OffsetDateTime;
 use trustify_common::{db::query::q, hashing::Digests, model::Paginated, purl::Purl};
 use trustify_cvss::cvss3::{
-    severity::Severity, AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base,
-    Integrity, PrivilegesRequired, Scope, UserInteraction,
+    AttackComplexity, AttackVector, Availability, Confidentiality, Cvss3Base, Integrity,
+    PrivilegesRequired, Scope, UserInteraction, severity::Severity,
 };
 use trustify_entity::version_scheme::VersionScheme;
-use trustify_module_ingestor::graph::advisory::{
-    version::{VersionInfo, VersionSpec},
-    AdvisoryContext, AdvisoryInformation,
-};
 use trustify_module_ingestor::graph::Outcome;
+use trustify_module_ingestor::graph::advisory::{
+    AdvisoryContext, AdvisoryInformation,
+    version::{VersionInfo, VersionSpec},
+};
 use trustify_test_context::TrustifyContext;
 
 pub async fn ingest_sample_advisory<'a>(

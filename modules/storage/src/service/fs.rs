@@ -1,5 +1,5 @@
 use crate::service::{
-    compression::Compression, temp::TempFile, StorageBackend, StorageKey, StorageResult, StoreError,
+    StorageBackend, StorageKey, StorageResult, StoreError, compression::Compression, temp::TempFile,
 };
 use anyhow::Context;
 use bytes::Bytes;
@@ -11,9 +11,9 @@ use std::{
     pin::pin,
 };
 use strum::IntoEnumIterator;
-use tempfile::{tempdir, TempDir};
+use tempfile::{TempDir, tempdir};
 use tokio::{
-    fs::{create_dir_all, File},
+    fs::{File, create_dir_all},
     io::AsyncWriteExt,
 };
 use tokio_util::io::ReaderStream;

@@ -2,13 +2,13 @@ use crate::test::caller;
 use actix_http::StatusCode;
 use actix_web::test::TestRequest;
 use jsonpath_rust::JsonPathQuery;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::db::query::Query;
 use trustify_common::model::Paginated;
 use trustify_module_ingestor::graph::product::ProductInformation;
-use trustify_test_context::{call::CallService, TrustifyContext};
+use trustify_test_context::{TrustifyContext, call::CallService};
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]

@@ -1,18 +1,18 @@
 use clap::Parser;
-use postgresql_commands::{pg_dump::PgDumpBuilder, CommandBuilder, CommandExecutor};
+use postgresql_commands::{CommandBuilder, CommandExecutor, pg_dump::PgDumpBuilder};
 use serde_json::Value;
 use std::{io::BufReader, path::PathBuf, time::Duration};
 use trustify_common::{db, model::BinaryByteSize};
 use trustify_module_importer::{
     model::{CommonImporter, CsafImporter, CveImporter, ImporterConfiguration, SbomImporter},
     runner::{
+        ImportRunner,
         context::RunContext,
         progress::{Progress, TracingProgress},
-        ImportRunner,
     },
 };
-use trustify_module_storage::service::fs::FileSystemBackend;
 use trustify_module_storage::service::Compression;
+use trustify_module_storage::service::fs::FileSystemBackend;
 
 #[derive(Debug, Parser)]
 pub struct GenerateDump {

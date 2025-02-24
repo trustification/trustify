@@ -1,20 +1,20 @@
 use crate::{
     graph::{
-        advisory::{
-            advisory_vulnerability::AdvisoryVulnerabilityContext, AdvisoryContext,
-            AdvisoryInformation, AdvisoryVulnerabilityInformation,
-        },
         Graph,
+        advisory::{
+            AdvisoryContext, AdvisoryInformation, AdvisoryVulnerabilityInformation,
+            advisory_vulnerability::AdvisoryVulnerabilityContext,
+        },
     },
     model::IngestResult,
     service::{
-        advisory::csaf::{util::gen_identifier, StatusCreator},
         Error, Warnings,
+        advisory::csaf::{StatusCreator, util::gen_identifier},
     },
 };
 use csaf::{
-    vulnerability::{ProductStatus, Vulnerability},
     Csaf,
+    vulnerability::{ProductStatus, Vulnerability},
 };
 use hex::ToHex;
 use sbom_walker::report::ReportSink;
@@ -228,7 +228,7 @@ mod test {
     use crate::graph::Graph;
     use test_context::test_context;
     use test_log::test;
-    use trustify_test_context::{document, TrustifyContext};
+    use trustify_test_context::{TrustifyContext, document};
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]

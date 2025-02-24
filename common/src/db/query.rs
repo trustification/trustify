@@ -227,7 +227,7 @@ pub(crate) mod tests {
     pub(crate) mod advisory {
         use std::collections::HashMap;
 
-        use sea_orm::{entity::prelude::*, FromJsonQueryResult};
+        use sea_orm::{FromJsonQueryResult, entity::prelude::*};
         use serde::{Deserialize, Serialize};
         use time::OffsetDateTime;
 
