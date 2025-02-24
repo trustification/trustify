@@ -147,7 +147,7 @@ impl SbomContext {
         let mut packages =
             PackageCreator::with_capacity(self.sbom.sbom_id, sbom_data.package_information.len());
 
-        for package in &sbom_data.package_information {
+        for package in sbom_data.package_information {
             let declared_license_info = package.declared_license.as_ref().map(|e| LicenseInfo {
                 license: e.to_string(),
                 refs: license_refs.clone(),
@@ -209,14 +209,6 @@ impl SbomContext {
                 }
             }
 
-            packages.add(
-                package.package_spdx_identifier.clone(),
-                package.package_name.clone(),
-                package.package_version.clone(),
-                refs,
-                license_refs,
-            );
-
             if product_packages.contains(&package.package_spdx_identifier) {
                 let pr = self
                     .graph
@@ -235,6 +227,15 @@ impl SbomContext {
                         .await?;
                 }
             }
+
+            packages.add(
+                package.package_spdx_identifier,
+                package.package_name,
+                package.package_version,
+                refs,
+                license_refs,
+                package.package_checksum,
+            );
         }
 
         // prepare files
@@ -243,7 +244,11 @@ impl SbomContext {
             FileCreator::with_capacity(self.sbom.sbom_id, sbom_data.file_information.len());
 
         for file in sbom_data.file_information {
-            files.add(file.file_spdx_identifier, file.file_name);
+            files.add(
+                file.file_spdx_identifier,
+                file.file_name,
+                file.file_checksum,
+            );
         }
 
         // run post-processor
