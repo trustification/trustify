@@ -137,6 +137,8 @@ impl ImporterService {
             continuation: Set(None),
 
             configuration: Set(serde_json::to_value(configuration)?),
+
+            heartbeat: Set(None),
         };
 
         match entity.insert(&self.db).await {

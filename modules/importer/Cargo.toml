@@ -24,6 +24,7 @@ humantime = { workspace = true }
 humantime-serde = { workspace = true }
 json-merge-patch = { workspace = true }
 log = { workspace = true }
+num-traits = { workspace = true }
 osv = { workspace = true, features = ["schema"] }
 parking_lot = { workspace = true }
 regex = { workspace = true }
