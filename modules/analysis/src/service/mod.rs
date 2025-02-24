@@ -15,6 +15,7 @@ use crate::{
     model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph, graph},
 };
 use fixedbitset::FixedBitSet;
+use log::warn;
 use opentelemetry::global;
 use petgraph::{
     Direction,
@@ -22,8 +23,11 @@ use petgraph::{
     prelude::EdgeRef,
     visit::{IntoNodeIdentifiers, VisitMap, Visitable},
 };
-use sea_orm::{EntityOrSelect, EntityTrait, QueryOrder, prelude::ConnectionTrait};
-use sea_query::Order;
+use sea_orm::{
+    ColumnTrait, EntityOrSelect, EntityTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+    prelude::ConnectionTrait,
+};
+use sea_query::{JoinType, Order};
 use std::{
     collections::{HashMap, HashSet},
     fmt::Debug,
@@ -34,7 +38,12 @@ use trustify_common::{
     db::query::Value,
     model::{Paginated, PaginatedResults},
 };
-use trustify_entity::{relationship::Relationship, sbom};
+use trustify_entity::{
+    relationship::Relationship,
+    sbom,
+    sbom_external_node::{self, DiscriminatorType, ExternalType},
+    source_document,
+};
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -356,6 +365,75 @@ impl AnalysisService {
                 }
                 query.apply(&context)
             }),
+        }
+    }
+
+    // Example of how we can resolve sbom_id given an external node reference.
+    // Note: This might better live on the entity or in common rather than specifically in analysis graph
+    #[instrument(skip(self, connection))]
+    pub async fn resolve_external_sbom_id<C: ConnectionTrait>(
+        &self,
+        external_node_ref: String,
+        connection: &C,
+    ) -> Option<Uuid> {
+        if !external_node_ref.contains(":") {
+            return None;
+        }
+
+        let sbom_external_node = match sbom_external_node::Entity::find()
+            .filter(sbom_external_node::Column::NodeId.eq(external_node_ref))
+            .one(connection)
+            .await
+        {
+            Ok(Some(entity)) => entity,
+            _ => return None,
+        };
+        if sbom_external_node
+            .discriminator_value
+            .as_ref()
+            .map(|s| s.is_empty())
+            .unwrap_or(true)
+        {
+            return None;
+        }
+        match sbom_external_node.external_type {
+            ExternalType::SPDX => {
+                if let Some(DiscriminatorType::Sha256) = sbom_external_node.discriminator_type {
+                    if let Some(discriminator_value) = sbom_external_node.discriminator_value {
+                        match sbom::Entity::find()
+                            .join(JoinType::Join, sbom::Relation::SourceDocument.def())
+                            .filter(
+                                source_document::Column::Sha256.eq(discriminator_value.to_string()),
+                            )
+                            .one(connection)
+                            .await
+                        {
+                            Ok(Some(entity)) => return Some(entity.sbom_id),
+                            _ => return None,
+                        }
+                    }
+                }
+                None
+            }
+            ExternalType::CycloneDx => {
+                if let Some(discriminator_value) = sbom_external_node.discriminator_value {
+                    let external_doc_ref = sbom_external_node.external_doc_ref;
+                    let external_doc_id =
+                        format!("urn:cdx:{}/{}", external_doc_ref, discriminator_value);
+                    match sbom::Entity::find()
+                        .filter(sbom::Column::DocumentId.eq(external_doc_id))
+                        .one(connection)
+                        .await
+                    {
+                        Ok(Some(entity)) => return Some(entity.sbom_id),
+                        _ => return None,
+                    }
+                }
+                None
+            }
+
+            // TBD
+            ExternalType::RedHatProductComponent => None,
         }
     }
 }
