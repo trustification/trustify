@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740394916370,
+  "lastUpdate": 1740417300090,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5335,6 +5335,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "committer": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "distinct": true,
+          "id": "69132f93b87c5254777d090bd23af8f7520869af",
+          "message": "Skip sbom_details_cyclonedx_osv test if RUST_MIN_STACK=50000000 is not set.\n\nSigned-off-by: Hiram Chirino <hiram@hiramchirino.com>",
+          "timestamp": "2025-02-24T16:55:00Z",
+          "tree_id": "2df9dd7a5eefcf1e5da70a00b520aaf0b0c9978a",
+          "url": "https://github.com/trustification/trustify/commit/69132f93b87c5254777d090bd23af8f7520869af"
+        },
+        "date": 1740417298868,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
