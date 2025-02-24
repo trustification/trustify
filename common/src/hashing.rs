@@ -112,7 +112,7 @@ mod test {
 
     fn rand_bytes() -> [u8; 1024] {
         let mut buf = [0u8; 1024];
-        rand::thread_rng().fill_bytes(&mut buf);
+        rand::rng().fill_bytes(&mut buf);
         buf
     }
 
