@@ -103,8 +103,8 @@ where
         buf: &mut ReadBuf<'_>,
     ) -> Poll<io::Result<()>> {
         match &mut self.inner {
-            InnerDecompression::None(ref mut r) => Pin::new(r).poll_read(cx, buf),
-            InnerDecompression::Zstd(ref mut r) => Pin::new(r).poll_read(cx, buf),
+            InnerDecompression::None(r) => Pin::new(r).poll_read(cx, buf),
+            InnerDecompression::Zstd(r) => Pin::new(r).poll_read(cx, buf),
         }
     }
 }
