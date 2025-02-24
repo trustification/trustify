@@ -10,24 +10,24 @@ pub mod render;
 mod test;
 
 use crate::{
-    config::AnalysisConfig,
-    model::{graph, AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph},
     Error,
+    config::AnalysisConfig,
+    model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph, graph},
 };
 use fixedbitset::FixedBitSet;
 use opentelemetry::global;
 use petgraph::{
+    Direction,
     graph::{Graph, NodeIndex},
     prelude::EdgeRef,
     visit::{IntoNodeIdentifiers, VisitMap, Visitable},
-    Direction,
 };
 use sea_orm::{
-    prelude::ConnectionTrait, ColumnTrait, EntityOrSelect, EntityTrait, QueryFilter, QueryOrder,
-    QuerySelect, RelationTrait,
+    ColumnTrait, EntityOrSelect, EntityTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+    prelude::ConnectionTrait,
 };
 
-use log::warn;
+use futures::{StreamExt, stream};
 use sea_query::{JoinType, Order};
 use std::{
     collections::{HashMap, HashSet},
@@ -215,31 +215,37 @@ impl AnalysisService {
 
     /// Collect nodes from the graph
     #[instrument(skip(self, create))]
-    fn collect_graph<'a, C>(
+    async fn collect_graph<'a, C>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
         graphs: &[(String, Arc<PackageGraph>)],
         create: C,
     ) -> Vec<Node>
     where
-        C: Fn(&Graph<graph::Node, Relationship>, NodeIndex, &graph::Node) -> Node,
+        C: AsyncFn(&Graph<graph::Node, Relationship>, NodeIndex, &graph::Node) -> Node,
     {
         let query = query.into();
-        graphs
-            .iter()
-            .filter(|(sbom_id, graph)| acyclic(sbom_id, graph))
-            .flat_map(|(_, graph)| {
+
+        stream::iter(
+            graphs
+                .iter()
+                .filter(|(sbom_id, graph)| acyclic(sbom_id, graph)),
+        )
+        .flat_map(|(_, graph)| {
+            stream::iter(
                 graph
                     .node_indices()
                     .filter(|&i| Self::filter(graph, &query, i))
-                    .filter_map(|i| graph.node_weight(i).map(|w| (i, w)))
-                    .map(|(node_index, package_node)| create(graph, node_index, package_node))
-            })
-            .collect()
+                    .filter_map(|i| graph.node_weight(i).map(|w| (i, w))),
+            )
+            .then(|(node_index, package_node)| create(graph, node_index, package_node))
+        })
+        .collect::<Vec<_>>()
+        .await
     }
 
     #[instrument(skip(self))]
-    pub fn run_graph_query<'a>(
+    pub async fn run_graph_query<'a>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
         options: QueryOptions,
@@ -247,7 +253,7 @@ impl AnalysisService {
     ) -> Vec<Node> {
         let relationships = options.relationships;
 
-        self.collect_graph(query, graphs, |graph, node_index, node| {
+        self.collect_graph(query, graphs, async |graph, node_index, node| {
             log::debug!(
                 "Discovered node - sbom: {}, node: {}",
                 node.sbom_id,
@@ -274,6 +280,7 @@ impl AnalysisService {
                 ),
             }
         })
+        .await
     }
 
     /// locate components, retrieve dependency information, from a single SBOM
@@ -292,7 +299,7 @@ impl AnalysisService {
         let options = options.into();
 
         let graphs = self.load_graphs(connection, &distinct_sbom_ids).await?;
-        let components = self.run_graph_query(query, options, &graphs);
+        let components = self.run_graph_query(query, options, &graphs).await;
 
         Ok(paginated.paginate_array(&components))
     }
@@ -310,7 +317,7 @@ impl AnalysisService {
         let options = options.into();
 
         let graphs = self.load_graphs_query(connection, query).await?;
-        let components = self.run_graph_query(query, options, &graphs);
+        let components = self.run_graph_query(query, options, &graphs).await;
 
         Ok(paginated.paginate_array(&components))
     }
@@ -436,7 +443,7 @@ impl AnalysisService {
 }
 
 fn acyclic(id: &str, graph: &Arc<PackageGraph>) -> bool {
-    use petgraph::visit::{depth_first_search, DfsEvent};
+    use petgraph::visit::{DfsEvent, depth_first_search};
     let g = graph.as_ref();
     let result = depth_first_search(g, g.node_identifiers(), |event| match event {
         DfsEvent::BackEdge(source, target) => Err((source, target)),
