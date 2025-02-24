@@ -1,10 +1,10 @@
 use crate::{
     health::{Checks, HealthChecks},
-    otel::{init_metrics, init_tracing, Metrics as OtelMetrics, Tracing},
+    otel::{Metrics as OtelMetrics, Tracing, init_metrics, init_tracing},
 };
 use actix_web::{
-    http::uri::Builder, middleware::Logger, web, web::ServiceConfig, App, HttpRequest,
-    HttpResponse, HttpServer, Responder,
+    App, HttpRequest, HttpResponse, HttpServer, Responder, http::uri::Builder, middleware::Logger,
+    web, web::ServiceConfig,
 };
 use anyhow::Context;
 use futures::future::select_all;
@@ -13,7 +13,7 @@ use std::{future::Future, pin::Pin, sync::Arc};
 use tokio::signal;
 
 #[cfg(unix)]
-use tokio::signal::unix::{signal, SignalKind};
+use tokio::signal::unix::{SignalKind, signal};
 
 const DEFAULT_BIND_ADDR: &str = "localhost:9010";
 
@@ -84,19 +84,19 @@ pub async fn index(req: HttpRequest) -> HttpResponse {
     HttpResponse::Ok().json(apis)
 }
 
-async fn startup(health: web::Data<HealthChecks>) -> impl Responder {
+async fn startup(health: web::Data<HealthChecks>) -> impl Responder + use<> {
     run_checks(&health.startup).await
 }
 
-async fn liveness(health: web::Data<HealthChecks>) -> impl Responder {
+async fn liveness(health: web::Data<HealthChecks>) -> impl Responder + use<> {
     run_checks(&health.liveness).await
 }
 
-async fn readiness(health: web::Data<HealthChecks>) -> impl Responder {
+async fn readiness(health: web::Data<HealthChecks>) -> impl Responder + use<> {
     run_checks(&health.readiness).await
 }
 
-async fn run_checks(checks: &Checks) -> impl Responder {
+async fn run_checks(checks: &Checks) -> impl Responder + use<> {
     let checks = checks.run().await;
 
     log::debug!("checks: {checks:?}");

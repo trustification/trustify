@@ -10,7 +10,7 @@ use trustify_common::purl::Purl;
 use trustify_module_fundamental::sbom::model::SbomExternalPackageReference;
 use trustify_module_fundamental::sbom::{model::details::SbomDetails, service::SbomService};
 use trustify_module_ingestor::service::Format;
-use trustify_test_context::{document_bytes, TrustifyContext};
+use trustify_test_context::{TrustifyContext, document_bytes};
 
 fn assert_sboms(sbom1: &SbomDetails, sbom2: &SbomDetails) {
     assert_eq!(sbom1.summary.head.name, "RHWA-NHC-0.4-RHEL-8");
@@ -223,19 +223,15 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     );
 
     // ingest the second version
+    let bytes = {
+        // re-serialize file (non-pretty)
+        let json: Value =
+            serde_json::from_slice(&document_bytes("nhc/v1/nhc-0.4.z.json.xz").await?)?;
+        &serde_json::to_vec(&json).map(Bytes::from)?
+    };
     let result2 = ctx
         .ingestor
-        .ingest(
-            {
-                // re-serialize file (non-pretty)
-                let json: Value =
-                    serde_json::from_slice(&document_bytes("nhc/v1/nhc-0.4.z.json.xz").await?)?;
-                &serde_json::to_vec(&json).map(Bytes::from)?
-            },
-            Format::SBOM,
-            ("source", "test"),
-            None,
-        )
+        .ingest(bytes, Format::SBOM, ("source", "test"), None)
         .await?;
 
     assert_eq!(

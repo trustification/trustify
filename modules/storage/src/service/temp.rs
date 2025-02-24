@@ -47,7 +47,7 @@ impl TempFile {
     }
 
     /// Return a clone of the temp file after resetting its position
-    pub async fn reader(&mut self) -> Result<impl AsyncBufRead, Error> {
+    pub async fn reader(&mut self) -> Result<impl AsyncBufRead + use<>, Error> {
         self.file.seek(SeekFrom::Start(0)).await?;
         Ok(BufReader::new(self.file.try_clone().await?))
     }
