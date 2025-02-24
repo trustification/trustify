@@ -49,38 +49,36 @@ impl<'a> StatusCreator<'a> {
         }
     }
 
-    pub fn add_all(&mut self, ps: &Option<Vec<ProductIdT>>, status: &'static str) {
-        for r in ps.iter().flatten() {
-            let mut product = ProductStatus {
-                status,
-                ..Default::default()
-            };
-            let mut product_ids = vec![];
-            match self.cache.get_relationship(&r.0) {
-                Some(rel) => {
-                    let inner_id: &ProductIdT = &rel.product_reference;
-                    let context = &rel.relates_to_product_reference;
+    pub fn add_all(&mut self, csaf_product_ids: &Option<Vec<ProductIdT>>, status: &'static str) {
+        if let Some(csaf_product_ids) = csaf_product_ids {
+            for csaf_product_id in csaf_product_ids.iter() {
+                let mut product_ids = vec![];
+                match self.cache.get_relationship(&csaf_product_id.0) {
+                    Some(rel) => {
+                        let inner_id: &ProductIdT = &rel.product_reference;
+                        let context = &rel.relates_to_product_reference;
 
-                    // Find all products
-                    product_ids.push(&context.0);
-                    // Find all components/packages within
-                    product_ids.push(&inner_id.0);
+                        // Find all products
+                        product_ids.push(&context.0);
+                        // Find all components/packages within
+                        product_ids.push(&inner_id.0);
+                    }
+                    None => {
+                        // If there's no relationship, find only products
+                        product_ids.push(&csaf_product_id.0);
+                    }
+                };
+                let mut product_status = ProductStatus {
+                    status,
+                    ..Default::default()
+                };
+                for pid in product_ids {
+                    for csaf_branch in self.cache.trace_product(pid).iter() {
+                        product_status.update_from_branch(csaf_branch);
+                    }
                 }
-                None => {
-                    // If there's no relationship, find only products
-                    product_ids.push(&r.0);
-                }
-            };
-            for product_id in product_ids {
-                product = self.cache.trace_product(product_id).iter().fold(
-                    product,
-                    |mut product, branch| {
-                        product.update_from_branch(branch);
-                        product
-                    },
-                );
+                self.products.insert(product_status);
             }
-            self.products.insert(product);
         }
     }
 

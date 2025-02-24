@@ -18,33 +18,33 @@ pub struct ProductStatus {
 
 impl ProductStatus {
     // Method to update ProductStatus from a branch
-    pub fn update_from_branch(&mut self, branch: &Branch) {
-        match branch.category {
+    pub fn update_from_branch(&mut self, csaf_branch: &Branch) {
+        match csaf_branch.category {
             // Get product related info
             BranchCategory::ProductName => {
-                self.product = branch.name.clone();
-                self.set_version(branch.product.clone());
+                self.product = csaf_branch.name.clone();
+                self.set_version(csaf_branch.product.clone());
             }
             // Get organisation info
             BranchCategory::Vendor => {
-                self.vendor = Some(branch.name.clone());
+                self.vendor = Some(csaf_branch.name.clone());
             }
             // Get package/purl info
             BranchCategory::ProductVersion => {
-                match branch.product.clone() {
+                match csaf_branch.product.clone() {
                     Some(full_name) => match full_name.product_identification_helper {
                         Some(id_helper) => match id_helper.purl {
                             Some(purl) => self.purls.push(purl.into()),
-                            None => self.packages.push(branch.name.clone()),
+                            None => self.packages.push(csaf_branch.name.clone()),
                         },
                         None => self.packages.push(full_name.product_id.0),
                     },
-                    None => self.packages.push(branch.name.clone()),
+                    None => self.packages.push(csaf_branch.name.clone()),
                 };
             }
             // For everything else, for now see if we can get any purls
             _ => {
-                if let Some(purl) = branch_purl(branch) {
+                if let Some(purl) = branch_purl(csaf_branch) {
                     let purl = Purl::from(purl.clone());
                     self.purls.push(purl);
                 }
