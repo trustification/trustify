@@ -4,11 +4,9 @@ use garage_door::{
     issuer::{Client, Issuer, RedirectUrl},
     server::{Server, StartupError},
 };
-use rand::Rng;
-use rand::distributions::Alphanumeric;
+use rand::{Rng, distr::Alphanumeric};
 use std::time::Duration;
-use tokio::sync::oneshot;
-use tokio::task::JoinHandle;
+use tokio::{sync::oneshot, task::JoinHandle};
 use trustify_auth::devmode::{
     CONFIDENTIAL_CLIENT_IDS, ISSUER_URL, PUBLIC_CLIENT_IDS, SSO_CLIENT_SECRET,
 };
@@ -26,7 +24,7 @@ fn create(enabled: bool) -> anyhow::Result<Option<Server>> {
     }
 
     let mut issuer = Issuer::new(
-        rand::thread_rng()
+        rand::rng()
             .sample_iter(&Alphanumeric)
             .take(64)
             .map(char::from)
