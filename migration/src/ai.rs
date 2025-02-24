@@ -14,6 +14,6 @@ impl MigratorTrait for Migrator {
     }
 
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
-        vec![Box::new(crate::m0000820_create_conversation::Migration)]
+        vec![Box::new(crate::ai_m0000010_create_conversation::Migration)]
     }
 }

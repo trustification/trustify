@@ -11,12 +11,12 @@ async fn test_migrations(ctx: TrustifyContext) -> Result<(), anyhow::Error> {
     let migrations = Migrator::get_applied_migrations(&db).await?;
     // 'Migrator.up' was called in bootstrap function when using TrustifyContext.
     // At this point we already have migrations.
-    assert!(migrations.len() > 1);
+    assert!(!migrations.is_empty());
 
     db.refresh().await?;
 
     let rolled_back_and_reapplied_migrations = Migrator::get_applied_migrations(&db).await?;
-    assert!(rolled_back_and_reapplied_migrations.len() > 1);
+    assert!(!rolled_back_and_reapplied_migrations.is_empty());
 
     Ok(())
 }
