@@ -26,6 +26,12 @@ pub enum Relation {
     )]
     File,
     #[sea_orm(
+        belongs_to = "super::sbom_node_checksum::Entity",
+        from = "(Column::SbomId, Column::NodeId)",
+        to = "(super::sbom_node_checksum::Column::SbomId, super::sbom_node_checksum::Column::NodeId)"
+    )]
+    Checksum,
+    #[sea_orm(
         belongs_to = "super::sbom::Entity",
         from = "Column::SbomId",
         to = "super::sbom::Column::SbomId"
@@ -55,6 +61,12 @@ impl Related<super::sbom_package::Entity> for Entity {
 impl Related<super::sbom_file::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::File.def()
+    }
+}
+
+impl Related<super::sbom_node_checksum::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Checksum.def()
     }
 }
 
