@@ -8555,6 +8555,7 @@ dependencies = [
  "csaf",
  "deepsize",
  "fixedbitset 0.5.7",
+ "futures",
  "hex",
  "humantime",
  "itertools 0.14.0",
