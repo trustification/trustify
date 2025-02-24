@@ -13,7 +13,6 @@ use trustify_common::{
     purl::Purl,
     sbom::spdx::fix_license,
 };
-use trustify_entity::sbom_external_node::{self, DiscriminatorType};
 use trustify_test_context::{TrustifyContext, document, spdx::fix_spdx_rels};
 
 #[test_context(TrustifyContext)]
