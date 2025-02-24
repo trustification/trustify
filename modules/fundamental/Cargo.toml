@@ -68,7 +68,7 @@ serde_yml = { workspace = true }
 sha2 = { workspace = true }
 spdx-rs = { workspace = true }
 strum = { workspace = true }
-termimad = "0.31.0"
+termimad = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 tokio-util = { workspace = true }
@@ -77,6 +77,14 @@ trustify-test-context = { workspace = true }
 urlencoding = { workspace = true }
 walkdir = { workspace = true }
 zip = { workspace = true }
+
+opentelemetry = { workspace = true }
+tracing-opentelemetry = { workspace = true }
+opentelemetry_sdk = { workspace = true }
+opentelemetry-otlp = { workspace = true, features = ["grpc-tonic"] }
+tracing = { workspace = true, features = ["std"]}
+tracing-core =  { workspace = true }
+tracing-subscriber = { workspace = true }
 
 [[bench]]
 name = "bench"
@@ -88,4 +96,8 @@ name = "bench-format"
 path = "benches/bench-format.rs"
 harness = false
 
+[[bench]]
+name = "bench-otel"
+path = "benches/bench-otel.rs"
+harness = false
 
