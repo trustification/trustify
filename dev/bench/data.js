@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740390886397,
+  "lastUpdate": 1740394916370,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5301,6 +5301,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/49c790ad3ad98d6a5a533b84c60741b6c3eac7fa"
         },
         "date": 1740390885646,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "12b73235b54ae22d7a02dbc5c96e0e1e0b74125a",
+          "message": "chore: apply cargo fmt for 2024",
+          "timestamp": "2025-02-24T10:20:02Z",
+          "tree_id": "b2040e29f42d5483e05e7d4d362ddbfdd75a47f9",
+          "url": "https://github.com/trustification/trustify/commit/12b73235b54ae22d7a02dbc5c96e0e1e0b74125a"
+        },
+        "date": 1740394915758,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
