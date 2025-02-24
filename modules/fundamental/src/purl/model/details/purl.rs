@@ -6,13 +6,13 @@ use crate::{
     vulnerability::model::VulnerabilityHead,
 };
 use sea_orm::{
-    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, LoaderTrait, ModelTrait,
-    QueryFilter, QueryOrder, QueryResult, QuerySelect, QueryTrait, RelationTrait, Select,
+    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, Iterable, LoaderTrait,
+    ModelTrait, QueryFilter, QueryOrder, QueryResult, QuerySelect, QueryTrait, RelationTrait,
+    Select,
 };
 use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, hash_map::Entry};
-use strum::IntoEnumIterator;
 use trustify_common::{
     db::VersionMatches,
     db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
