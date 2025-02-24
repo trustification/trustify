@@ -1,4 +1,4 @@
-use crate::version::common::{version_matches, Version, VersionRange};
+use crate::version::common::{Version, VersionRange, version_matches};
 use sea_orm::{ConnectionTrait, Statement};
 use test_context::test_context;
 use test_log::test;

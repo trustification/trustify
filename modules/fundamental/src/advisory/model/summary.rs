@@ -5,10 +5,10 @@ use trustify_cvss::cvss3::score::Score;
 use trustify_entity::{advisory_vulnerability, vulnerability};
 use utoipa::ToSchema;
 
+use crate::Error;
 use crate::advisory::model::{AdvisoryHead, AdvisoryVulnerabilityHead};
 use crate::advisory::service::AdvisoryCatcher;
 use crate::source_document::model::SourceDocument;
-use crate::Error;
 
 #[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct AdvisorySummary {

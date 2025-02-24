@@ -1,24 +1,24 @@
 use core::fmt;
 use opentelemetry::{
+    Context,
     global::{
         get_text_map_propagator, set_meter_provider, set_text_map_propagator, set_tracer_provider,
     },
     propagation::Injector,
     trace::TracerProvider as _,
-    Context,
 };
 use opentelemetry_otlp::{MetricExporter, SpanExporter};
 use opentelemetry_sdk::{
+    Resource,
     metrics::{PeriodicReader, SdkMeterProvider},
     propagation::TraceContextPropagator,
     trace::{Sampler, Sampler::ParentBased, SdkTracerProvider},
-    Resource,
 };
 use reqwest::RequestBuilder;
 use std::sync::Once;
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::{
-    field::MakeExt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter,
+    EnvFilter, field::MakeExt, layer::SubscriberExt, util::SubscriberInitExt,
 };
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq, Default)]

@@ -3,11 +3,11 @@ use crate::graph::{
     product::ProductInformation,
     purl::creator::PurlCreator,
     sbom::{
+        CycloneDx as CycloneDxProcessor, LicenseCreator, LicenseInfo, PackageCreator,
+        PackageReference, RelationshipCreator, SbomContext, SbomInformation,
         processor::{
             InitContext, PostContext, Processor, RedHatProductComponentRelationships, RunProcessors,
         },
-        CycloneDx as CycloneDxProcessor, LicenseCreator, LicenseInfo, PackageCreator,
-        PackageReference, RelationshipCreator, SbomContext, SbomInformation,
     },
 };
 use sea_orm::ConnectionTrait;
@@ -15,7 +15,7 @@ use serde_cyclonedx::cyclonedx::v_1_6::{
     Component, ComponentEvidenceIdentity, CycloneDx, LicenseChoiceUrl,
 };
 use std::str::FromStr;
-use time::{format_description::well_known::Iso8601, OffsetDateTime};
+use time::{OffsetDateTime, format_description::well_known::Iso8601};
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::relationship::Relationship;

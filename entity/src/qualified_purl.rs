@@ -1,7 +1,7 @@
-use sea_orm::{entity::prelude::*, FromJsonQueryResult, FromQueryResult};
+use sea_orm::{FromJsonQueryResult, FromQueryResult, entity::prelude::*};
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::BTreeMap;
 use std::fmt::{Display, Formatter};
 use trustify_common::purl::Purl;

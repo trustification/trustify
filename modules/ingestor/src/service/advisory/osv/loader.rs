@@ -1,17 +1,17 @@
 use crate::{
     graph::{
+        Graph,
         advisory::{
+            AdvisoryInformation, AdvisoryVulnerabilityInformation,
             advisory_vulnerability::AdvisoryVulnerabilityContext,
             version::{Version, VersionInfo, VersionSpec},
-            AdvisoryInformation, AdvisoryVulnerabilityInformation,
         },
         purl::creator::PurlCreator,
-        Graph,
     },
     model::IngestResult,
     service::{
-        advisory::osv::{prefix::get_well_known_prefixes, translate},
         Error, Warnings,
+        advisory::osv::{prefix::get_well_known_prefixes, translate},
     },
 };
 use osv::schema::{Ecosystem, Event, Range, RangeType, ReferenceType, SeverityType, Vulnerability};
@@ -523,7 +523,7 @@ mod test {
     use rstest::rstest;
     use test_context::test_context;
     use test_log::test;
-    use trustify_test_context::{document, TrustifyContext};
+    use trustify_test_context::{TrustifyContext, document};
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
@@ -577,10 +577,12 @@ mod test {
             "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H"
         );
 
-        assert!(loaded_advisory
-            .get_vulnerability("CVE-8675309", &ctx.db)
-            .await?
-            .is_none());
+        assert!(
+            loaded_advisory
+                .get_vulnerability("CVE-8675309", &ctx.db)
+                .await?
+                .is_none()
+        );
 
         Ok(())
     }

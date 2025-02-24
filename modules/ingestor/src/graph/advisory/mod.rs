@@ -3,8 +3,8 @@
 use crate::{
     common::{Deprecation, DeprecationExt},
     graph::{
-        advisory::advisory_vulnerability::AdvisoryVulnerabilityContext, error::Error, Graph,
-        Outcome,
+        Graph, Outcome, advisory::advisory_vulnerability::AdvisoryVulnerabilityContext,
+        error::Error,
     },
 };
 use hex::ToHex;
@@ -328,12 +328,12 @@ impl<'g> AdvisoryContext<'g> {
 #[cfg(test)]
 mod test {
     use crate::common::Deprecation;
-    use crate::graph::advisory::AdvisoryInformation;
     use crate::graph::Graph;
+    use crate::graph::advisory::AdvisoryInformation;
     use test_context::test_context;
     use test_log::test;
-    use time::macros::datetime;
     use time::OffsetDateTime;
+    use time::macros::datetime;
     use trustify_common::hashing::Digests;
     use trustify_entity::labels::Labels;
     use trustify_test_context::TrustifyContext;

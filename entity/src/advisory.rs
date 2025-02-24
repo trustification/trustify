@@ -1,6 +1,6 @@
 use crate::{advisory_vulnerability, cvss3, labels::Labels, organization, vulnerability};
 use async_graphql::*;
-use sea_orm::{entity::prelude::*, sea_query::IntoCondition, Condition};
+use sea_orm::{Condition, entity::prelude::*, sea_query::IntoCondition};
 use std::sync::Arc;
 use time::OffsetDateTime;
 use trustify_common::{

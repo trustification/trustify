@@ -4,11 +4,11 @@ pub mod creator;
 pub mod package_version;
 pub mod qualified_package;
 
-use crate::graph::{error::Error, Graph};
+use crate::graph::{Graph, error::Error};
 use package_version::PackageVersionContext;
 use qualified_package::QualifiedPackageContext;
 use sea_orm::{
-    prelude::Uuid, ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, Set,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, Set, prelude::Uuid,
 };
 use sea_query::SelectStatement;
 use std::fmt::{Debug, Formatter};
@@ -348,8 +348,8 @@ mod tests {
     use trustify_entity::qualified_purl::Qualifiers;
     use trustify_test_context::TrustifyContext;
 
-    use crate::graph::error::Error;
     use crate::graph::Graph;
+    use crate::graph::error::Error;
 
     #[test_context(TrustifyContext, skip_teardown)]
     #[test(tokio::test)]

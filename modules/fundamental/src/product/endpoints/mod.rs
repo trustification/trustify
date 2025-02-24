@@ -2,17 +2,17 @@
 mod test;
 
 use crate::{
+    Error,
     product::{
         model::{details::ProductDetails, summary::ProductSummary},
         service::ProductService,
     },
-    Error,
 };
-use actix_web::{delete, get, web, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, delete, get, web};
 use sea_orm::TransactionTrait;
-use trustify_auth::{authorizer::Require, DeleteMetadata, ReadMetadata};
+use trustify_auth::{DeleteMetadata, ReadMetadata, authorizer::Require};
 use trustify_common::{
-    db::{query::Query, Database},
+    db::{Database, query::Query},
     model::{Paginated, PaginatedResults},
 };
 use uuid::Uuid;

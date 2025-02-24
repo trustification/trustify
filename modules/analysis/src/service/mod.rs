@@ -10,19 +10,19 @@ pub mod render;
 mod test;
 
 use crate::{
+    Error,
     config::AnalysisConfig,
     model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph, PackageNode},
-    Error,
 };
 use fixedbitset::FixedBitSet;
 use opentelemetry::global;
 use petgraph::{
+    Direction,
     graph::{Graph, NodeIndex},
     prelude::EdgeRef,
     visit::{IntoNodeIdentifiers, VisitMap, Visitable},
-    Direction,
 };
-use sea_orm::{prelude::ConnectionTrait, EntityOrSelect, EntityTrait, QueryOrder};
+use sea_orm::{EntityOrSelect, EntityTrait, QueryOrder, prelude::ConnectionTrait};
 use sea_query::Order;
 use std::{
     collections::{HashMap, HashSet},
@@ -337,7 +337,7 @@ impl AnalysisService {
 }
 
 fn acyclic(id: &str, graph: &Arc<PackageGraph>) -> bool {
-    use petgraph::visit::{depth_first_search, DfsEvent};
+    use petgraph::visit::{DfsEvent, depth_first_search};
     let g = graph.as_ref();
     let result = depth_first_search(g, g.node_identifiers(), |event| match event {
         DfsEvent::BackEdge(source, target) => Err((source, target)),

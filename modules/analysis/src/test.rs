@@ -6,8 +6,8 @@ use crate::{
 };
 use trustify_entity::relationship::Relationship;
 use trustify_test_context::{
-    call::{self, CallService},
     TrustifyContext,
+    call::{self, CallService},
 };
 
 pub async fn caller(ctx: &TrustifyContext) -> anyhow::Result<impl CallService + '_> {

@@ -20,7 +20,7 @@ use biscuit::jws::Compact;
 use claims::AccessTokenClaims;
 use config::AuthenticatorClientConfig;
 use error::AuthenticationError;
-use futures_util::{stream, StreamExt, TryStreamExt};
+use futures_util::{StreamExt, TryStreamExt, stream};
 use jsonpath_rust::{JsonPath, JsonPathValue};
 use openid::{Client, Configurable, Discovered, Empty, Jws};
 use serde_json::Value;

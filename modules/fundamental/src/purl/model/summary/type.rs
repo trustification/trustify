@@ -1,5 +1,5 @@
-use crate::purl::model::TypeHead;
 use crate::Error;
+use crate::purl::model::TypeHead;
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DeriveColumn, EntityTrait, EnumIter, QueryFilter, QuerySelect,
 };

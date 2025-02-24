@@ -1,6 +1,6 @@
+use crate::Error;
 use crate::organization::model::OrganizationSummary;
 use crate::product::model::{ProductHead, ProductVersionHead};
-use crate::Error;
 use itertools::izip;
 use sea_orm::ModelTrait;
 use sea_orm::{ConnectionTrait, LoaderTrait};

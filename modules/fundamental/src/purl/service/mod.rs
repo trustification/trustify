@@ -1,15 +1,15 @@
 use crate::{
+    Error,
     purl::model::{
         details::{
             base_purl::BasePurlDetails, purl::PurlDetails, versioned_purl::VersionedPurlDetails,
         },
         summary::{base_purl::BasePurlSummary, purl::PurlSummary, r#type::TypeSummary},
     },
-    Error,
 };
 use sea_orm::{
-    prelude::Uuid, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, QueryFilter,
-    QueryOrder, QuerySelect,
+    ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
+    QuerySelect, prelude::Uuid,
 };
 use sea_query::Order;
 use tracing::instrument;

@@ -1,6 +1,6 @@
 use crate::{
-    advisory::model::{AdvisoryDetails, AdvisorySummary},
     Error,
+    advisory::model::{AdvisoryDetails, AdvisorySummary},
 };
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTypeTrait, ConnectionTrait, DatabaseBackend, DbErr,
@@ -10,10 +10,10 @@ use sea_orm::{
 use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, JoinType, SimpleExpr};
 use trustify_common::{
     db::{
+        Database, UpdateDeprecatedAdvisory,
         limiter::LimiterAsModelTrait,
         multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
         query::{Columns, Filtering, Query},
-        Database, UpdateDeprecatedAdvisory,
     },
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},

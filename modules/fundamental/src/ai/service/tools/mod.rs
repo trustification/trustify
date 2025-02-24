@@ -4,7 +4,7 @@ use crate::ai::service::tools::{
 };
 use langchain_rust::tools::Tool;
 use serde::Serialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::{error::Error, sync::Arc};
 use trustify_common::{db::Database, model::PaginatedResults};
 

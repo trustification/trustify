@@ -1,6 +1,6 @@
 use anyhow::Context;
 use tracing_subscriber::{
-    filter::LevelFilter, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter,
+    EnvFilter, filter::LevelFilter, layer::SubscriberExt, util::SubscriberInitExt,
 };
 
 pub fn init_log() -> anyhow::Result<()> {

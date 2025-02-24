@@ -9,7 +9,7 @@ use serde::Serialize;
 use serde_json::Value;
 use std::{error::Error, str::FromStr};
 use time::OffsetDateTime;
-use trustify_common::{db::query::Query, db::Database, id::Id};
+use trustify_common::{db::Database, db::query::Query, id::Id};
 use uuid::Uuid;
 
 pub struct SbomInfo {

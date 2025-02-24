@@ -8,11 +8,11 @@ pub mod query;
 
 pub use func::*;
 
-use anyhow::{ensure, Context};
+use anyhow::{Context, ensure};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{
-    prelude::async_trait, ConnectOptions, ConnectionTrait, DatabaseConnection, DbBackend, DbErr,
-    ExecResult, QueryResult, RuntimeErr, Statement,
+    ConnectOptions, ConnectionTrait, DatabaseConnection, DbBackend, DbErr, ExecResult, QueryResult,
+    RuntimeErr, Statement, prelude::async_trait,
 };
 use sqlx::error::ErrorKind;
 use std::ops::{Deref, DerefMut};

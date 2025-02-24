@@ -5,10 +5,10 @@ use crate::purl::{
     },
     service::PurlService,
 };
-use actix_web::{get, web, HttpResponse, Responder};
-use trustify_auth::{authorizer::Require, ReadSbom};
+use actix_web::{HttpResponse, Responder, get, web};
+use trustify_auth::{ReadSbom, authorizer::Require};
 use trustify_common::{
-    db::{query::Query, Database},
+    db::{Database, query::Query},
     model::{Paginated, PaginatedResults},
 };
 

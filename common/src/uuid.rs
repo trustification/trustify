@@ -2,7 +2,7 @@ pub mod serde {
 
     pub mod urn {
 
-        use serde::{de::Error, Deserialize, Deserializer, Serializer};
+        use serde::{Deserialize, Deserializer, Serializer, de::Error};
         use uuid::Uuid;
 
         pub fn serialize<S>(value: &Option<Uuid>, serializer: S) -> Result<S::Ok, S::Error>

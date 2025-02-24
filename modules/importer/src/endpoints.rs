@@ -1,10 +1,10 @@
 use super::service::{Error, ImporterService, PatchError};
 use crate::model::{Importer, ImporterConfiguration, ImporterReport};
 use actix_web::{
-    delete, get,
+    HttpResponse, Responder, delete, get,
     guard::{self, Guard, GuardContext},
     http::header::{self, ETag, EntityTag, IfMatch},
-    patch, post, put, web, HttpResponse, Responder,
+    patch, post, put, web,
 };
 use std::convert::Infallible;
 use trustify_auth::authorizer::Require;

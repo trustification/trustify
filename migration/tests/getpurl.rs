@@ -1,5 +1,5 @@
-use migration::sea_orm::{EntityTrait, Statement};
 use migration::ConnectionTrait;
+use migration::sea_orm::{EntityTrait, Statement};
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;

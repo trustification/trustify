@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 
 #[allow(clippy::expect_used, clippy::unwrap_used)]
 pub(crate) mod trustify_benches {
@@ -8,7 +8,7 @@ pub(crate) mod trustify_benches {
     use std::sync::Arc;
     use std::time::{Duration, Instant};
 
-    use criterion::{black_box, Criterion};
+    use criterion::{Criterion, black_box};
     use sea_orm::ConnectionTrait;
     use test_context::AsyncTestContext;
     use tokio::runtime::Runtime;

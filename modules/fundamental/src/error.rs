@@ -1,4 +1,4 @@
-use actix_web::{body::BoxBody, HttpResponse, ResponseError};
+use actix_web::{HttpResponse, ResponseError, body::BoxBody};
 use langchain_rust::{agent::AgentError, chain::ChainError};
 use sea_orm::DbErr;
 use trustify_common::{decompress, error::ErrorInformation, id::IdError, purl::PurlErr};

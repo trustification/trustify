@@ -2,14 +2,14 @@ use crate::health::Check;
 use anyhow::Context;
 use std::borrow::Cow;
 use std::future::Future;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use tokio::runtime::Builder;
 use tokio::select;
 use tokio::sync::oneshot;
 use tokio::task::LocalSet;
-use tokio::time::{interval, MissedTickBehavior};
+use tokio::time::{MissedTickBehavior, interval};
 
 pub struct Local<T = ()> {
     error: Cow<'static, str>,

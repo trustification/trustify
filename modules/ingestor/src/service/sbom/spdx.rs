@@ -1,7 +1,7 @@
 use crate::{
     graph::{
-        sbom::spdx::{self},
         Graph, Outcome,
+        sbom::spdx::{self},
     },
     model::IngestResult,
     service::{Error, Warnings},
@@ -79,7 +79,7 @@ mod test {
     use crate::{graph::Graph, service::Format};
     use test_context::test_context;
     use test_log::test;
-    use trustify_test_context::{document_bytes, TrustifyContext};
+    use trustify_test_context::{TrustifyContext, document_bytes};
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]

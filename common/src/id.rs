@@ -4,8 +4,8 @@ use ring::digest::Digest;
 use sea_orm::{EntityTrait, QueryFilter, Select, UpdateMany};
 use sea_query::Condition;
 use serde::{
-    de::{Error, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
+    de::{Error, Visitor},
 };
 use serde_json::Value;
 use std::{
@@ -14,8 +14,8 @@ use std::{
     str::FromStr,
 };
 use utoipa::{
-    openapi::{Object, RefOr, Schema, Type},
     PartialSchema, ToSchema,
+    openapi::{Object, RefOr, Schema, Type},
 };
 use uuid::Uuid;
 

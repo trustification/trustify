@@ -1,11 +1,11 @@
 use crate::model::PackageGraph;
 use crate::{
+    Error,
     model::PackageNode,
     service::{AnalysisService, ComponentReference, GraphQuery},
-    Error,
 };
 use anyhow::anyhow;
-use petgraph::{prelude::NodeIndex, Graph};
+use petgraph::{Graph, prelude::NodeIndex};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
     FromQueryResult, QueryFilter, QueryOrder, QuerySelect, QueryTrait, RelationTrait, Statement,
@@ -14,8 +14,8 @@ use sea_query::{JoinType, Order, SelectStatement};
 use serde_json::Value;
 use std::collections::HashSet;
 use std::sync::Arc;
-use std::{collections::hash_map::Entry, collections::HashMap};
-use tracing::{instrument, Level};
+use std::{collections::HashMap, collections::hash_map::Entry};
+use tracing::{Level, instrument};
 use trustify_common::{cpe::Cpe, db::query::Filtering, purl::Purl};
 use trustify_entity::{
     cpe::CpeDto, package_relates_to_package, relationship::Relationship, sbom, sbom_node,

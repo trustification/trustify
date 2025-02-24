@@ -1,5 +1,5 @@
-use crate::organization::model::OrganizationHead;
 use crate::Error;
+use crate::organization::model::OrganizationHead;
 use serde::{Deserialize, Serialize};
 use trustify_entity::organization;
 use utoipa::ToSchema;

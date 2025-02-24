@@ -7,7 +7,7 @@ use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::{
-    db::query::{q, Query},
+    db::query::{Query, q},
     id::Id,
     model::Paginated,
     purl::Purl,
@@ -121,15 +121,19 @@ async fn packages_for_type(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(packages.total, 2);
 
-    assert!(packages
-        .items
-        .iter()
-        .any(|e| e.head.purl.to_string() == "pkg:maven/org.apache/log4j"));
+    assert!(
+        packages
+            .items
+            .iter()
+            .any(|e| e.head.purl.to_string() == "pkg:maven/org.apache/log4j")
+    );
 
-    assert!(packages
-        .items
-        .iter()
-        .any(|e| e.head.purl.to_string() == "pkg:maven/org.myspace/tom"));
+    assert!(
+        packages
+            .items
+            .iter()
+            .any(|e| e.head.purl.to_string() == "pkg:maven/org.myspace/tom")
+    );
 
     Ok(())
 }
@@ -173,10 +177,12 @@ async fn packages_for_type_with_filtering(ctx: &TrustifyContext) -> Result<(), a
 
     assert_eq!(packages.total, 1);
 
-    assert!(packages
-        .items
-        .iter()
-        .any(|e| e.head.purl.to_string() == "pkg:maven/org.myspace/tom"));
+    assert!(
+        packages
+            .items
+            .iter()
+            .any(|e| e.head.purl.to_string() == "pkg:maven/org.myspace/tom")
+    );
 
     Ok(())
 }
@@ -335,15 +341,19 @@ async fn package_version(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(2, log4j_123.purls.len());
 
-    assert!(log4j_123
-        .purls
-        .iter()
-        .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=11"));
+    assert!(
+        log4j_123
+            .purls
+            .iter()
+            .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=11")
+    );
 
-    assert!(log4j_123
-        .purls
-        .iter()
-        .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=17"));
+    assert!(
+        log4j_123
+            .purls
+            .iter()
+            .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=17")
+    );
 
     Ok(())
 }
@@ -415,15 +425,19 @@ async fn package_version_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Er
 
     assert_eq!(2, log4j_123.purls.len());
 
-    assert!(log4j_123
-        .purls
-        .iter()
-        .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=11"));
+    assert!(
+        log4j_123
+            .purls
+            .iter()
+            .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=11")
+    );
 
-    assert!(log4j_123
-        .purls
-        .iter()
-        .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=17"));
+    assert!(
+        log4j_123
+            .purls
+            .iter()
+            .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=17")
+    );
 
     Ok(())
 }

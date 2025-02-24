@@ -1,5 +1,5 @@
 use super::model::summary::ProductSummary;
-use crate::{product::model::details::ProductDetails, Error};
+use crate::{Error, product::model::details::ProductDetails};
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use trustify_common::{
     db::{

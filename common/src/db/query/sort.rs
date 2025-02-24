@@ -65,22 +65,26 @@ pub(crate) mod tests {
         assert!(Sort::parse("location:asc:foo", &columns).is_err());
 
         // Good sorts with other columns
-        assert!(Sort::parse(
-            "foo",
-            &advisory::Entity
-                .columns()
-                .add_column("foo", ColumnType::String(StringLen::None).def())
-        )
-        .is_ok());
+        assert!(
+            Sort::parse(
+                "foo",
+                &advisory::Entity
+                    .columns()
+                    .add_column("foo", ColumnType::String(StringLen::None).def())
+            )
+            .is_ok()
+        );
 
         // Bad sorts with other columns
-        assert!(Sort::parse(
-            "bar",
-            &advisory::Entity
-                .columns()
-                .add_column("foo", ColumnType::String(StringLen::None).def())
-        )
-        .is_err());
+        assert!(
+            Sort::parse(
+                "bar",
+                &advisory::Entity
+                    .columns()
+                    .add_column("foo", ColumnType::String(StringLen::None).def())
+            )
+            .is_err()
+        );
 
         Ok(())
     }

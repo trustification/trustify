@@ -7,29 +7,28 @@ mod test;
 pub use query::*;
 
 use crate::{
+    Error::{self, Internal},
     purl::service::PurlService,
     sbom::{
         model::{
-            details::SbomAdvisory, SbomExternalPackageReference, SbomNodeReference, SbomPackage,
-            SbomPackageRelation, SbomSummary, Which,
+            SbomExternalPackageReference, SbomNodeReference, SbomPackage, SbomPackageRelation,
+            SbomSummary, Which, details::SbomAdvisory,
         },
         service::SbomService,
     },
-    Error::{self, Internal},
 };
-use actix_web::{delete, get, http::header, post, web, HttpResponse, Responder};
+use actix_web::{HttpResponse, Responder, delete, get, http::header, post, web};
 use config::Config;
 use futures_util::TryStreamExt;
-use sea_orm::{prelude::Uuid, TransactionTrait};
+use sea_orm::{TransactionTrait, prelude::Uuid};
 use std::str::FromStr;
 use trustify_auth::{
-    all,
+    CreateSbom, DeleteSbom, Permission, ReadAdvisory, ReadSbom, all,
     authenticator::user::UserInformation,
     authorizer::{Authorizer, Require},
-    CreateSbom, DeleteSbom, Permission, ReadAdvisory, ReadSbom,
 };
 use trustify_common::{
-    db::{query::Query, Database},
+    db::{Database, query::Query},
     decompress::decompress_async,
     id::Id,
     model::{BinaryData, Paginated, PaginatedResults},

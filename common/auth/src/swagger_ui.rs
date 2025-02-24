@@ -5,11 +5,11 @@ use std::sync::Arc;
 use trustify_common::tls::ClientConfig;
 use url::Url;
 use utoipa::openapi::{
+    OpenApi, SecurityRequirement,
     extensions::Extensions,
     security::{AuthorizationCode, Flow, OAuth2, Scopes, SecurityScheme},
-    OpenApi, SecurityRequirement,
 };
-use utoipa_swagger_ui::{oauth, Config, SwaggerUi};
+use utoipa_swagger_ui::{Config, SwaggerUi, oauth};
 
 #[derive(Clone, Debug, Default, clap::Args)]
 #[command(

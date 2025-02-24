@@ -1,13 +1,14 @@
 use actix_http::Request;
 use actix_web::{
+    App, Error,
     dev::{Service, ServiceResponse},
-    web, App, Error,
+    web,
 };
 use bytes::Bytes;
 use serde::de::DeserializeOwned;
 use std::future::Future;
 use trustify_auth::authorizer::Authorizer;
-use utoipa_actix_web::{service_config::ServiceConfig, AppExt};
+use utoipa_actix_web::{AppExt, service_config::ServiceConfig};
 
 /// A trait wrapping an `impl Service` in a way that we can pass it as a reference.
 pub trait CallService {

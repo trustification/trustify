@@ -4,13 +4,13 @@ use crate::{
 };
 use actix_http::StatusCode;
 use actix_web::test::TestRequest;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use test_context::test_context;
 use test_log::test;
 use trustify_common::{id::Id, model::PaginatedResults};
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::model::IngestResult;
-use trustify_test_context::{call::CallService, document_bytes, TrustifyContext};
+use trustify_test_context::{TrustifyContext, call::CallService, document_bytes};
 use uuid::Uuid;
 
 #[test_context(TrustifyContext)]

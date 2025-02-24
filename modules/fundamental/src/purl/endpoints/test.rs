@@ -14,7 +14,7 @@ use trustify_common::db::Database;
 use trustify_common::model::PaginatedResults;
 use trustify_common::purl::Purl;
 use trustify_module_ingestor::graph::Graph;
-use trustify_test_context::{call::CallService, TrustifyContext};
+use trustify_test_context::{TrustifyContext, call::CallService};
 use urlencoding::encode;
 use uuid::Uuid;
 
@@ -170,14 +170,18 @@ async fn type_package_version(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     let request = TestRequest::get().uri(uri).to_request();
     let response: VersionedPurlDetails = app.call_and_read_body_json(request).await;
     assert_eq!(2, response.purls.len());
-    assert!(response
-        .purls
-        .iter()
-        .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=11"));
-    assert!(response
-        .purls
-        .iter()
-        .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=17"));
+    assert!(
+        response
+            .purls
+            .iter()
+            .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=11")
+    );
+    assert!(
+        response
+            .purls
+            .iter()
+            .any(|e| e.purl.to_string() == "pkg:maven/org.apache/log4j@1.2.3?jdk=17")
+    );
 
     let uri = "/api/v2/purl/type/rpm/sendmail@4.4.4";
     let request = TestRequest::get().uri(uri).to_request();

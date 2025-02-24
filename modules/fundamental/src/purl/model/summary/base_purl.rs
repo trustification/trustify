@@ -1,5 +1,5 @@
-use crate::purl::model::BasePurlHead;
 use crate::Error;
+use crate::purl::model::BasePurlHead;
 use serde::{Deserialize, Serialize};
 use trustify_entity::base_purl;
 use utoipa::ToSchema;

@@ -1,8 +1,8 @@
 use sea_orm_migration::prelude::*;
 
+use crate::ForeignKeyAction::Cascade;
 use crate::m0000030_create_sbom::{Sbom, SbomNode};
 use crate::m0000220_create_package_relates_to_package::PackageRelatesToPackage;
-use crate::ForeignKeyAction::Cascade;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;

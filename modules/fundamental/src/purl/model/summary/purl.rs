@@ -1,5 +1,5 @@
-use crate::purl::model::{BasePurlHead, PurlHead, VersionedPurlHead};
 use crate::Error;
+use crate::purl::model::{BasePurlHead, PurlHead, VersionedPurlHead};
 use sea_orm::{ConnectionTrait, LoaderTrait, ModelTrait};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 
 #[allow(clippy::expect_used, clippy::unwrap_used)]
 pub(crate) mod trustify_benches {
@@ -13,18 +13,18 @@ pub(crate) mod trustify_benches {
     use bytes::Bytes;
     use cpe::cpe::Cpe;
     use cpe::uri::OwnedUri;
-    use criterion::{black_box, Criterion};
+    use criterion::{Criterion, black_box};
+    use csaf::Csaf;
     use csaf::definitions::{BranchesT, ProductIdentificationHelper};
     use csaf::product_tree::ProductTree;
     use csaf::vulnerability::Vulnerability;
-    use csaf::Csaf;
     use packageurl::PackageUrl;
     use sea_orm::ConnectionTrait;
     use test_context::AsyncTestContext;
     use tokio::runtime::Runtime;
     use trustify_entity::labels::Labels;
     use trustify_module_ingestor::service::Format;
-    use trustify_test_context::{document, TrustifyContext};
+    use trustify_test_context::{TrustifyContext, document};
 
     pub fn ingestion(c: &mut Criterion) {
         let (runtime, ctx) = setup_runtime_and_ctx();

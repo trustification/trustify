@@ -1,5 +1,5 @@
 use crate::model::{Importer, ImporterConfiguration, ImporterReport};
-use actix_web::{body::BoxBody, HttpResponse, ResponseError};
+use actix_web::{HttpResponse, ResponseError, body::BoxBody};
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait,
     QueryFilter, QueryOrder, TransactionTrait,
@@ -9,7 +9,7 @@ use std::fmt::{Debug, Display};
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{
-    db::{limiter::LimiterTrait, Database, DatabaseErrors},
+    db::{Database, DatabaseErrors, limiter::LimiterTrait},
     error::ErrorInformation,
     model::{Paginated, PaginatedResults, Revisioned},
 };

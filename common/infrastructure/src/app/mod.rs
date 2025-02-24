@@ -2,15 +2,15 @@ pub mod http;
 
 use actix_cors::Cors;
 use actix_web::{
+    App, Error,
     body::MessageBody,
     dev::{ServiceFactory, ServiceRequest, ServiceResponse},
     middleware::{Compress, Logger},
-    App, Error,
 };
 use actix_web_extras::middleware::Condition;
 use actix_web_httpauth::{extractors::bearer::BearerAuth, middleware::HttpAuthentication};
 use actix_web_opentelemetry::{RequestMetrics, RequestTracing};
-use futures::{future::LocalBoxFuture, FutureExt};
+use futures::{FutureExt, future::LocalBoxFuture};
 use std::sync::Arc;
 use trustify_auth::{authenticator::Authenticator, authorizer::Authorizer};
 

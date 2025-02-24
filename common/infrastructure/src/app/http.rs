@@ -1,19 +1,19 @@
 use crate::{
-    app::{new_app, AppOptions},
+    app::{AppOptions, new_app},
     endpoint::Endpoint,
     otel::{Metrics, Tracing},
 };
 use actix_cors::Cors;
 use actix_tls::{accept::openssl::reexports::SslAcceptor, connect::openssl::reexports::SslMethod};
 use actix_web::{
+    App, HttpResponse, HttpServer,
     dev::{ServiceFactory, ServiceRequest},
     web::{self, JsonConfig},
-    App, HttpResponse, HttpServer,
 };
 use actix_web_opentelemetry::{RequestMetrics, RequestTracing};
-use anyhow::{anyhow, Context};
+use anyhow::{Context, anyhow};
 use bytesize::ByteSize;
-use clap::{value_parser, Arg, ArgMatches, Args, Command, Error, FromArgMatches};
+use clap::{Arg, ArgMatches, Args, Command, Error, FromArgMatches, value_parser};
 use openssl::ssl::SslFiletype;
 use std::{
     fmt::Debug,
@@ -27,7 +27,7 @@ use std::{
 use trustify_auth::{
     authenticator::Authenticator,
     authorizer::Authorizer,
-    swagger_ui::{swagger_ui_with_auth, SwaggerUiOidc},
+    swagger_ui::{SwaggerUiOidc, swagger_ui_with_auth},
 };
 use trustify_common::model::BinaryByteSize;
 use utoipa::openapi::Info;
@@ -247,8 +247,8 @@ where
         let mut result = HttpServerBuilder::new()
             .workers(value.workers)
             .bind(addr)
-            .request_limit(value.request_limit.0 .0 as _)
-            .json_limit(value.json_limit.0 .0 as _);
+            .request_limit(value.request_limit.0.0 as _)
+            .json_limit(value.json_limit.0.0 as _);
 
         if value.tls_enabled {
             result = result.tls(TlsConfiguration {

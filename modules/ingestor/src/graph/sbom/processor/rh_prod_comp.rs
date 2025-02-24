@@ -1,8 +1,8 @@
 use crate::graph::{
     cpe::CpeCreator,
     sbom::{
-        processor::{InitContext, PostContext},
         ExternalReference,
+        processor::{InitContext, PostContext},
     },
 };
 use sea_orm::ActiveValue::Set;

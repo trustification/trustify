@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use tracing::instrument;
 use trustify_entity::organization;
 
-use crate::graph::{error::Error, Graph};
+use crate::graph::{Graph, error::Error};
 
 #[derive(Clone, Debug)]
 pub struct OrganizationInformation {

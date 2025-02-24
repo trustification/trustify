@@ -2,10 +2,10 @@ pub mod details;
 
 use super::service::SbomService;
 use crate::{
-    purl::model::summary::purl::PurlSummary, source_document::model::SourceDocument, Error,
+    Error, purl::model::summary::purl::PurlSummary, source_document::model::SourceDocument,
 };
 use async_graphql::SimpleObject;
-use sea_orm::{prelude::Uuid, ConnectionTrait, ModelTrait, PaginatorTrait};
+use sea_orm::{ConnectionTrait, ModelTrait, PaginatorTrait, prelude::Uuid};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 use trustify_common::{cpe::Cpe, model::Paginated, purl::Purl};

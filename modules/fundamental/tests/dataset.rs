@@ -122,11 +122,13 @@ async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
     let ubi_details = ubi_details.unwrap();
     let ubi_advisories = ubi_details.advisories;
     assert_eq!(ubi_advisories.len(), 2);
-    assert!(ubi_advisories
-        .iter()
-        .map(|adv| adv.head.document_id.clone())
-        .collect::<Vec<_>>()
-        .contains(&"CVE-2024-50602".to_string()));
+    assert!(
+        ubi_advisories
+            .iter()
+            .map(|adv| adv.head.document_id.clone())
+            .collect::<Vec<_>>()
+            .contains(&"CVE-2024-50602".to_string())
+    );
 
     // done
 

@@ -15,10 +15,10 @@ use tracing::instrument;
 use trustify_common::{id::Id, purl::Purl, sbom::spdx::parse_spdx};
 use trustify_entity::relationship::Relationship;
 use trustify_module_fundamental::{
-    purl::model::{summary::purl::PurlSummary, PurlHead},
+    purl::model::{PurlHead, summary::purl::PurlSummary},
     sbom::{model::Which, service::SbomService},
 };
-use trustify_test_context::{spdx::fix_spdx_rels, TrustifyContext};
+use trustify_test_context::{TrustifyContext, spdx::fix_spdx_rels};
 
 #[test_context(TrustifyContext)]
 #[instrument]

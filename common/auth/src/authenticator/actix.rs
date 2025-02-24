@@ -1,5 +1,5 @@
-use super::user::UserInformation;
 use super::Authenticator;
+use super::user::UserInformation;
 use actix_http::HttpMessage;
 use actix_web::dev::ServiceRequest;
 use actix_web_httpauth::extractors::bearer::BearerAuth;

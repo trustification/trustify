@@ -12,7 +12,7 @@ use trustify_entity as entity;
 use trustify_entity::product;
 use uuid::Uuid;
 
-use crate::graph::{error::Error, organization::OrganizationInformation, Graph};
+use crate::graph::{Graph, error::Error, organization::OrganizationInformation};
 
 use self::product_version::ProductVersionContext;
 

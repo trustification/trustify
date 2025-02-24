@@ -1,6 +1,6 @@
 use crate::advisory::service::AdvisoryService;
-use actix_web::{patch, put, web, HttpResponse, Responder};
-use trustify_auth::{authorizer::Require, UpdateAdvisory};
+use actix_web::{HttpResponse, Responder, patch, put, web};
+use trustify_auth::{UpdateAdvisory, authorizer::Require};
 use trustify_common::db::Database;
 use trustify_common::id::Id;
 use trustify_entity::labels::Labels;

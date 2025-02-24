@@ -4,7 +4,7 @@ mod pythonver;
 mod rpmver;
 mod semver;
 
-use crate::version::common::{version_matches, VersionRange};
+use crate::version::common::{VersionRange, version_matches};
 use rstest::rstest;
 use test_context::AsyncTestContext;
 use trustify_entity::version_scheme::VersionScheme;

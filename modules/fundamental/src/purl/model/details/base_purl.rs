@@ -1,6 +1,6 @@
-use crate::purl::model::summary::versioned_purl::VersionedPurlSummary;
-use crate::purl::model::BasePurlHead;
 use crate::Error;
+use crate::purl::model::BasePurlHead;
+use crate::purl::model::summary::versioned_purl::VersionedPurlSummary;
 use sea_orm::{ConnectionTrait, ModelTrait};
 use serde::{Deserialize, Serialize};
 use trustify_entity::{base_purl, versioned_purl};

@@ -1,2 +1,2 @@
-use crate::endpoints::{configure, Config};
+use crate::endpoints::{Config, configure};
 include!("common.rs");

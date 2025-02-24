@@ -6,7 +6,7 @@ use actix_web::test::TestRequest;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::model::PaginatedResults;
-use trustify_test_context::{call::CallService, TrustifyContext};
+use trustify_test_context::{TrustifyContext, call::CallService};
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]

@@ -8,7 +8,7 @@ pub use format::Format;
 
 use crate::service::dataset::{DatasetIngestResult, DatasetLoader};
 use crate::{graph::Graph, model::IngestResult};
-use actix_web::{body::BoxBody, HttpResponse, ResponseError};
+use actix_web::{HttpResponse, ResponseError, body::BoxBody};
 use anyhow::anyhow;
 use parking_lot::Mutex;
 use sbom_walker::report::ReportSink;
@@ -21,7 +21,7 @@ use tracing::instrument;
 use trustify_common::{error::ErrorInformation, id::IdError};
 use trustify_entity::labels::Labels;
 use trustify_module_analysis::service::AnalysisService;
-use trustify_module_storage::service::{dispatch::DispatchBackend, StorageBackend};
+use trustify_module_storage::service::{StorageBackend, dispatch::DispatchBackend};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

@@ -3,10 +3,10 @@ mod handler;
 use crate::{
     model::ClearlyDefinedCurationImporter,
     runner::{
+        RunOutput,
         common::walker::{CallbackError, Callbacks, GitWalker},
         context::RunContext,
         report::{Phase, ReportBuilder, ScannerError},
-        RunOutput,
     },
 };
 use handler::ClearlyDefinedHandler;
