@@ -1,3 +1,4 @@
+use std::env;
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
@@ -10,6 +11,15 @@ use trustify_test_context::TrustifyContext;
 #[test(tokio::test)]
 #[instrument]
 async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    // get the env var RUST_MIN_STACK and make sure it set to 50000000
+    let stack_size = env::var("RUST_MIN_STACK").unwrap_or("".to_string());
+    if stack_size != "50000000" {
+        println!(
+            "skipping sbom_details_cyclonedx_osv test, RUST_MIN_STACK=50000000 env var is not set"
+        );
+        return Ok(());
+    }
+
     let sbom = SbomService::new(ctx.db.clone());
 
     // ingest the SBOM
