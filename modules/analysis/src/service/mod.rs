@@ -52,28 +52,123 @@ pub struct AnalysisService {
     graph_cache: Arc<GraphMap>,
 }
 
+async fn resolve_external_sbom<C: ConnectionTrait>(
+    external_node_ref: String,
+    connection: &C,
+) -> Option<(Uuid, String)> {
+    // we first lookup in sbom_external_node
+    let sbom_external_node = match sbom_external_node::Entity::find()
+        .filter(sbom_external_node::Column::NodeId.eq(external_node_ref))
+        .one(connection)
+        .await
+    {
+        Ok(Some(entity)) => entity,
+        _ => return None,
+    };
+
+    match sbom_external_node.external_type {
+        ExternalType::SPDX => {
+            // for spdx, sbom_external_node discriminator_type and discriminator_value are used
+            // to lookup sbom_id via join to SourceDocument. The node_id is just the external_node_ref.
+            if sbom_external_node
+                .discriminator_value
+                .as_ref()
+                .map(|s| s.is_empty())
+                .unwrap_or(true)
+            {
+                return None;
+            }
+            if let Some(DiscriminatorType::Sha256) = sbom_external_node.discriminator_type {
+                if let Some(discriminator_value) = sbom_external_node.discriminator_value {
+                    match sbom::Entity::find()
+                        .join(JoinType::Join, sbom::Relation::SourceDocument.def())
+                        .filter(source_document::Column::Sha256.eq(discriminator_value.to_string()))
+                        .one(connection)
+                        .await
+                    {
+                        Ok(Some(entity)) => {
+                            return Some((entity.sbom_id, sbom_external_node.external_node_ref));
+                        }
+                        _ => return None,
+                    }
+                }
+            }
+            None
+        }
+        ExternalType::CycloneDx => {
+            // for cyclonedx, sbom_external_node discriminator_type and discriminator_value are used
+            // we construct external_doc_id to lookup sbom_id directly from sbom entity. The node_id
+            // is the external_node_ref
+            if sbom_external_node
+                .discriminator_value
+                .as_ref()
+                .map(|s| s.is_empty())
+                .unwrap_or(true)
+            {
+                return None;
+            }
+            if let Some(discriminator_value) = sbom_external_node.discriminator_value {
+                let external_doc_ref = sbom_external_node.external_doc_ref;
+                let external_doc_id =
+                    format!("urn:cdx:{}/{}", external_doc_ref, discriminator_value);
+                match sbom::Entity::find()
+                    .filter(sbom::Column::DocumentId.eq(external_doc_id))
+                    .one(connection)
+                    .await
+                {
+                    Ok(Some(entity)) => {
+                        return Some((entity.sbom_id, sbom_external_node.external_node_ref));
+                    }
+                    _ => return None,
+                }
+            }
+            None
+        }
+        ExternalType::RedHatProductComponent => {
+            // for RH variations we assume the sbom_external_node_ref is the package checksum
+            // which is used on sbom_node_checksum to lookup related value then
+            // perform another lookup on sbom_node_checksum (matching by value) to find resultant
+            // sbom_id/node_id
+            let sbom_external_node_ref = sbom_external_node.external_node_ref;
+
+            match sbom_node_checksum::Entity::find()
+                .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.to_string()))
+                .one(connection)
+                .await
+            {
+                Ok(Some(entity)) => {
+                    match sbom_node_checksum::Entity::find()
+                        .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
+                        .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                        .one(connection)
+                        .await
+                    {
+                        Ok(Some(matched)) => Some((matched.sbom_id, matched.node_id)),
+                        _ => None,
+                    }
+                }
+                _ => None,
+            }
+        }
+    }
+}
+
 /// Collect related nodes in the provided direction.
 ///
 /// If the depth is zero, or the node was already processed, it will return [`None`], indicating
 /// that the request was not processed.
-async fn collect(
+#[allow(clippy::too_many_arguments)]
+async fn collect<C: ConnectionTrait>(
+    graphs: &[(String, Arc<PackageGraph>)],
     graph: &Graph<graph::Node, Relationship, petgraph::Directed>,
     node: NodeIndex,
     direction: Direction,
     depth: u64,
     discovered: &mut FixedBitSet,
     relationships: &HashSet<Relationship>,
+    connection: &C,
 ) -> Option<Vec<Node>> {
     tracing::debug!(direction = ?direction, "collecting for {node:?}");
-
-    match graph.node_weight(node) {
-        Some(External(external_node)) => {
-            log::warn!("external node: {:?}", external_node);
-        }
-        _ => {
-            // Handle other cases
-        }
-    }
 
     if depth == 0 {
         log::debug!("depth is zero");
@@ -89,56 +184,153 @@ async fn collect(
 
     let mut result = Vec::new();
 
-    for edge in graph.edges_directed(node, direction) {
-        log::debug!("edge {edge:?}");
+    match graph.node_weight(node) {
+        // collect external sbom ref
+        Some(External(external_node)) => {
+            let external_sbom =
+                resolve_external_sbom(external_node.node_id.clone(), connection).await;
 
-        // we only recurse in one direction
-        let (ancestor, descendent, package_node) = match direction {
-            Direction::Incoming => (
-                Box::pin(collect(
-                    graph,
-                    edge.source(),
-                    direction,
-                    depth - 1,
-                    discovered,
-                    relationships,
-                ))
-                .await,
-                None,
-                graph.node_weight(edge.source()),
-            ),
-            Direction::Outgoing => (
-                None,
-                Box::pin(collect(
-                    graph,
-                    edge.target(),
-                    direction,
-                    depth - 1,
-                    discovered,
-                    relationships,
-                ))
-                .await,
-                graph.node_weight(edge.target()),
-            ),
-        };
+            if let Some((external_sbom_id, external_node_id)) = external_sbom {
+                log::warn!("external sbom id: {:?}", external_sbom_id);
+                log::warn!("external node id: {:?}", external_node_id);
 
-        let relationship = edge.weight();
+                // get external sbom graph
+                if let Some((_, external_graph)) = graphs
+                    .iter()
+                    .find(|(sbom_id, _)| sbom_id == &external_sbom_id.to_string())
+                {
+                    // now that we have the graph, find the external node reference in that graph
+                    // so we have a starting point.
+                    if let Some(external_node_index) = external_graph
+                        .node_indices()
+                        .find(|&node| external_graph[node].node_id.eq(&external_node_id))
+                    {
+                        // process as normal, which is just non-DRY of following code block which we
+                        // can optimise away.
+                        log::warn!("external node index: {:?}", external_node_index);
 
-        if !relationships.is_empty() && !relationships.contains(relationship) {
-            // if we have entries, and no match, continue with the next
-            continue;
+                        // for edge in external_graph.edges_directed(external_node_index, direction) {
+                        //     log::debug!("edge {edge:?}");
+                        //
+                        //     // we only recurse in one direction
+                        //     let (ancestor, descendent, package_node) = match direction {
+                        //         Direction::Incoming => (
+                        //             Box::pin(collect(
+                        //                 graphs,
+                        //                 external_graph,
+                        //                 edge.source(),
+                        //                 direction,
+                        //                 depth - 1,
+                        //                 discovered,
+                        //                 relationships,
+                        //                 connection,
+                        //             ))
+                        //             .await,
+                        //             None,
+                        //             external_graph.node_weight(edge.source()),
+                        //         ),
+                        //         Direction::Outgoing => (
+                        //             None,
+                        //             Box::pin(collect(
+                        //                 graphs,
+                        //                 external_graph,
+                        //                 edge.target(),
+                        //                 direction,
+                        //                 depth - 1,
+                        //                 discovered,
+                        //                 relationships,
+                        //                 connection,
+                        //             ))
+                        //             .await,
+                        //             external_graph.node_weight(edge.target()),
+                        //         ),
+                        //     };
+                        //
+                        //     let relationship = edge.weight();
+                        //
+                        //     if !relationships.is_empty() && !relationships.contains(relationship) {
+                        //         // if we have entries, and no match, continue with the next
+                        //         continue;
+                        //     }
+                        //
+                        //     let Some(package_node) = package_node else {
+                        //         continue;
+                        //     };
+                        //
+                        //     result.push(Node {
+                        //         base: BaseSummary::from(package_node),
+                        //         relationship: Some(*relationship),
+                        //         ancestors: ancestor,
+                        //         descendants: descendent,
+                        //     });
+                        // }
+                    } else {
+                        log::warn!("Node with ID {} not found", external_node_id);
+                        // You can return early, log an error, or take other actions as needed
+                    }
+                } else {
+                    log::warn!("Graph not found.");
+                }
+            }
         }
+        // collect
+        _ => {
+            for edge in graph.edges_directed(node, direction) {
+                log::debug!("edge {edge:?}");
 
-        let Some(package_node) = package_node else {
-            continue;
-        };
+                // we only recurse in one direction
+                let (ancestor, descendent, package_node) = match direction {
+                    Direction::Incoming => (
+                        Box::pin(collect(
+                            graphs,
+                            graph,
+                            edge.source(),
+                            direction,
+                            depth - 1,
+                            discovered,
+                            relationships,
+                            connection,
+                        ))
+                        .await,
+                        None,
+                        graph.node_weight(edge.source()),
+                    ),
+                    Direction::Outgoing => (
+                        None,
+                        Box::pin(collect(
+                            graphs,
+                            graph,
+                            edge.target(),
+                            direction,
+                            depth - 1,
+                            discovered,
+                            relationships,
+                            connection,
+                        ))
+                        .await,
+                        graph.node_weight(edge.target()),
+                    ),
+                };
 
-        result.push(Node {
-            base: BaseSummary::from(package_node),
-            relationship: Some(*relationship),
-            ancestors: ancestor,
-            descendants: descendent,
-        });
+                let relationship = edge.weight();
+
+                if !relationships.is_empty() && !relationships.contains(relationship) {
+                    // if we have entries, and no match, continue with the next
+                    continue;
+                }
+
+                let Some(package_node) = package_node else {
+                    continue;
+                };
+
+                result.push(Node {
+                    base: BaseSummary::from(package_node),
+                    relationship: Some(*relationship),
+                    ancestors: ancestor,
+                    descendants: descendent,
+                });
+            }
+        }
     }
 
     Some(result)
@@ -259,12 +451,13 @@ impl AnalysisService {
         .await
     }
 
-    #[instrument(skip(self))]
-    pub async fn run_graph_query<'a>(
+    #[instrument(skip(self, connection))]
+    pub async fn run_graph_query<'a, C: ConnectionTrait>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
         options: QueryOptions,
         graphs: &[(String, Arc<PackageGraph>)],
+        connection: &C,
     ) -> Vec<Node> {
         let relationships = options.relationships;
 
@@ -278,21 +471,25 @@ impl AnalysisService {
                 base: node.into(),
                 relationship: None,
                 ancestors: Box::pin(collect(
+                    graphs,
                     graph,
                     node_index,
                     Direction::Incoming,
                     options.ancestors,
                     &mut graph.visit_map(),
                     &relationships,
+                    connection,
                 ))
                 .await,
                 descendants: Box::pin(collect(
+                    graphs,
                     graph,
                     node_index,
                     Direction::Outgoing,
                     options.descendants,
                     &mut graph.visit_map(),
                     &relationships,
+                    connection,
                 ))
                 .await,
             }
@@ -316,7 +513,9 @@ impl AnalysisService {
         let options = options.into();
 
         let graphs = self.load_graphs(connection, &distinct_sbom_ids).await?;
-        let components = self.run_graph_query(query, options, &graphs).await;
+        let components = self
+            .run_graph_query(query, options, &graphs, connection)
+            .await;
 
         Ok(paginated.paginate_array(&components))
     }
@@ -334,7 +533,9 @@ impl AnalysisService {
         let options = options.into();
 
         let graphs = self.load_graphs_query(connection, query).await?;
-        let components = self.run_graph_query(query, options, &graphs).await;
+        let components = self
+            .run_graph_query(query, options, &graphs, connection)
+            .await;
 
         Ok(paginated.paginate_array(&components))
     }
@@ -386,111 +587,6 @@ impl AnalysisService {
                 }
                 query.apply(&context)
             }),
-        }
-    }
-
-    // Example of how we can resolve sbom_id given an external node reference.
-    // Note: This might better live on the entity or in common rather than specifically in analysis graph
-    #[instrument(skip(self, connection))]
-    pub async fn resolve_external_sbom_id<C: ConnectionTrait>(
-        &self,
-        external_node_ref: String,
-        connection: &C,
-    ) -> Option<Uuid> {
-        // we first lookup in sbom_external_node
-        let sbom_external_node = match sbom_external_node::Entity::find()
-            .filter(sbom_external_node::Column::NodeId.eq(external_node_ref))
-            .one(connection)
-            .await
-        {
-            Ok(Some(entity)) => entity,
-            _ => return None,
-        };
-
-        match sbom_external_node.external_type {
-            ExternalType::SPDX => {
-                // for spdx, sbom_external_node discriminator_type and discriminator_value are used
-                // to lookup sbom_id via join to SourceDocument
-                if sbom_external_node
-                    .discriminator_value
-                    .as_ref()
-                    .map(|s| s.is_empty())
-                    .unwrap_or(true)
-                {
-                    return None;
-                }
-                if let Some(DiscriminatorType::Sha256) = sbom_external_node.discriminator_type {
-                    if let Some(discriminator_value) = sbom_external_node.discriminator_value {
-                        match sbom::Entity::find()
-                            .join(JoinType::Join, sbom::Relation::SourceDocument.def())
-                            .filter(
-                                source_document::Column::Sha256.eq(discriminator_value.to_string()),
-                            )
-                            .one(connection)
-                            .await
-                        {
-                            Ok(Some(entity)) => return Some(entity.sbom_id),
-                            _ => return None,
-                        }
-                    }
-                }
-                None
-            }
-            ExternalType::CycloneDx => {
-                // for cyclonedx, sbom_external_node discriminator_type and discriminator_value are used
-                // we construct external_doc_id to lookup sbom_id directly from sbom entity
-                if sbom_external_node
-                    .discriminator_value
-                    .as_ref()
-                    .map(|s| s.is_empty())
-                    .unwrap_or(true)
-                {
-                    return None;
-                }
-                if let Some(discriminator_value) = sbom_external_node.discriminator_value {
-                    let external_doc_ref = sbom_external_node.external_doc_ref;
-                    let external_doc_id =
-                        format!("urn:cdx:{}/{}", external_doc_ref, discriminator_value);
-                    match sbom::Entity::find()
-                        .filter(sbom::Column::DocumentId.eq(external_doc_id))
-                        .one(connection)
-                        .await
-                    {
-                        Ok(Some(entity)) => return Some(entity.sbom_id),
-                        _ => return None,
-                    }
-                }
-                None
-            }
-
-            ExternalType::RedHatProductComponent => {
-                // for RH variations we assume the sbom_external_node_ref is the package checksum
-                // which is used on sbom_node_checksum to lookup related value then
-                // perform another lookup on sbom_node_checksum (by value) to find resultant
-                // sbom_id
-                let sbom_external_node_ref = sbom_external_node.external_node_ref;
-
-                match sbom_node_checksum::Entity::find()
-                    .filter(
-                        sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.to_string()),
-                    )
-                    .one(connection)
-                    .await
-                {
-                    Ok(Some(entity)) => {
-                        match sbom_node_checksum::Entity::find()
-                            .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
-                            .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
-                            .one(connection)
-                            .await
-                        {
-                            Ok(Some(matched)) => return Some(matched.sbom_id),
-                            _ => None,
-                        }
-                    }
-                    _ => None,
-                }
-            }
         }
     }
 }
