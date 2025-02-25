@@ -23,6 +23,10 @@ pub trait Callbacks<T>: Send + 'static {
     fn process(&self, path: &Path, document: T) -> Result<(), CallbackError> {
         Ok(())
     }
+
+    fn is_canceled(&self) -> bool {
+        false
+    }
 }
 
 impl<T> Callbacks<T> for () {}

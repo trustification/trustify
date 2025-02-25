@@ -11,6 +11,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::sync::Mutex;
+use tokio_util::sync::CancellationToken;
 use tracing::{Level, instrument};
 
 /// Context for an import run
@@ -23,13 +24,14 @@ pub struct ServiceRunContext {
 }
 
 impl ServiceRunContext {
-    pub fn new(service: ImporterService, name: String) -> Self {
+    pub fn new(service: ImporterService, name: String, token: CancellationToken) -> Self {
         Self {
             name: name.clone(),
             state: Mutex::new(CheckCancellation::new(
                 service.clone(),
                 name,
-                Duration::from_secs(60),
+                Duration::from_secs(20),
+                token,
             )),
             service,
         }
@@ -54,18 +56,22 @@ impl RunContext for ServiceRunContext {
 struct CheckCancellation {
     service: ImporterService,
     importer_name: String,
-
-    canceled: bool,
+    token: CancellationToken,
     last_check: Instant,
     period: Duration,
 }
 
 impl CheckCancellation {
-    pub fn new(service: ImporterService, importer_name: String, period: Duration) -> Self {
+    pub fn new(
+        service: ImporterService,
+        importer_name: String,
+        period: Duration,
+        token: CancellationToken,
+    ) -> Self {
         Self {
             service,
             importer_name,
-            canceled: false,
+            token,
             last_check: Instant::now(),
             period,
         }
@@ -75,14 +81,16 @@ impl CheckCancellation {
     ///
     /// Returns `true` if the reporter was canceled.
     pub async fn check(&mut self) -> bool {
-        if !self.canceled && self.last_check.elapsed() > self.period {
+        if !self.token.is_cancelled() && self.last_check.elapsed() > self.period {
             // If we are not canceled yet, and the check expired, we check again.
             // Also, if we encounter an error while checking, we abort, assuming we are canceled.
-            self.canceled = self.perform_check().await.unwrap_or(true);
+            if self.perform_check().await.unwrap_or(true) {
+                self.token.cancel();
+            }
+            self.last_check = Instant::now();
         }
-
         // return the last known state
-        self.canceled
+        self.token.is_cancelled()
     }
 
     #[instrument(

@@ -67,6 +67,10 @@ impl<C: RunContext> Callbacks<Vec<u8>> for Context<C> {
 
         self.context.check_canceled_sync(|| CallbackError::Canceled)
     }
+
+    fn is_canceled(&self) -> bool {
+        self.context.is_canceled_sync()
+    }
 }
 
 impl super::ImportRunner {

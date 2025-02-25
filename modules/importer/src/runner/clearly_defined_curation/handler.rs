@@ -24,6 +24,9 @@ where
 {
     type Error = Error;
 
+    fn is_canceled(&self) -> bool {
+        self.callbacks.is_canceled()
+    }
     fn process(&self, path: &Path, relative_path: &Path) -> Result<(), HandlerError<Self::Error>> {
         if let Some(head) = relative_path.components().next() {
             if let Some(head) = head.as_os_str().to_str() {

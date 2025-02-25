@@ -22,6 +22,10 @@ where
 {
     type Error = Error;
 
+    fn is_canceled(&self) -> bool {
+        self.callbacks.is_canceled()
+    }
+
     fn process(&self, path: &Path, relative_path: &Path) -> Result<(), HandlerError<Self::Error>> {
         // Get the year, as we walk with a base of `cves`, that must be the year folder.
         // If it is not, we skip it.

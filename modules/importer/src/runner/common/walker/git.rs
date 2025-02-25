@@ -28,6 +28,7 @@ pub trait Handler: Send + 'static {
     type Error: Display + Debug;
 
     fn process(&self, path: &Path, relative_path: &Path) -> Result<(), HandlerError<Self::Error>>;
+    fn is_canceled(&self) -> bool;
 }
 
 impl Handler for () {
@@ -35,6 +36,9 @@ impl Handler for () {
 
     fn process(&self, _: &Path, _: &Path) -> Result<(), HandlerError<Self::Error>> {
         Ok(())
+    }
+    fn is_canceled(&self) -> bool {
+        false
     }
 }
 
@@ -235,7 +239,7 @@ where
                         .message_sync(format!("Fetching updates: {}", self.source));
                     {
                         let mut remote = repo.find_remote("origin")?;
-                        let mut fo = Self::create_fetch_options();
+                        let mut fo = self.create_fetch_options();
 
                         match remote.fetch(&[] as &[&str], Some(&mut fo), None) {
                             Ok(()) => {}
@@ -293,7 +297,7 @@ where
             builder.branch(branch);
         }
 
-        let mut fo = Self::create_fetch_options();
+        let mut fo = self.create_fetch_options();
         if self.continuation.0.is_none() {
             fo.depth(self.depth);
         }
@@ -363,7 +367,7 @@ where
         Ok(result)
     }
 
-    fn create_fetch_options<'cb>() -> FetchOptions<'cb> {
+    fn create_fetch_options(&self) -> FetchOptions<'_> {
         let mut cb = RemoteCallbacks::new();
         cb.transfer_progress(|progress| {
             let received = progress.received_objects();
@@ -372,7 +376,7 @@ where
 
             log::trace!("Progress - objects: {received} of {total}, bytes: {bytes}");
 
-            true
+            !self.handler.is_canceled()
         });
         cb.update_tips(|refname, a, b| {
             if a.is_zero() {
@@ -380,8 +384,9 @@ where
             } else {
                 log::debug!("[updated] {:10}..{:10} {}", a, b, refname);
             }
-            true
+            !self.handler.is_canceled()
         });
+        cb.sideband_progress(|_| !self.handler.is_canceled());
 
         let home = env::var("HOME").ok();
         if let Some(home) = home {
