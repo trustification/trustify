@@ -36,10 +36,10 @@ async fn test_simple_analysis_service(ctx: &TrustifyContext) -> Result<(), anyho
     let analysis_graph = analysis_graph.root_traces();
     log::debug!("After: {analysis_graph:#?}");
 
-    assert_ancestors(&analysis_graph.items, |ancestors| {
+    assert_root_traces(&analysis_graph.items, |traces| {
         assert!(
             matches!(
-                ancestors[..],
+                traces[..],
                 [[
                     ..,
                     Node {
@@ -49,7 +49,7 @@ async fn test_simple_analysis_service(ctx: &TrustifyContext) -> Result<(), anyho
                     }
                 ]]
             ),
-            "doesn't match: {ancestors:#?}"
+            "doesn't match: {traces:#?}"
         );
     });
     assert_eq!(analysis_graph.total, 1);
@@ -96,10 +96,10 @@ async fn test_simple_analysis_cyclonedx_service(
     let analysis_graph = analysis_graph.root_traces();
     log::debug!("After: {analysis_graph:#?}");
 
-    assert_ancestors(&analysis_graph.items, |ancestors| {
+    assert_root_traces(&analysis_graph.items, |traces| {
         assert!(
             matches!(
-                ancestors[..],
+                traces[..],
                 [[
                     ..,
                     Node {
@@ -110,7 +110,7 @@ async fn test_simple_analysis_cyclonedx_service(
                     }
                 ]]
             ),
-            "doesn't match: {ancestors:#?}"
+            "doesn't match: {traces:#?}"
         );
     });
     assert_eq!(analysis_graph.total, 1);
@@ -154,9 +154,9 @@ async fn test_simple_by_name_analysis_service(ctx: &TrustifyContext) -> Result<(
 
     let analysis_graph = analysis_graph.root_traces();
 
-    assert_ancestors(&analysis_graph.items, |ancestors| {
+    assert_root_traces(&analysis_graph.items, |traces| {
         assert_eq!(
-            ancestors,
+            traces,
             &[&[
                 Node {
                     id: "SPDXRef-A",
@@ -206,9 +206,9 @@ async fn simple_by_name_analysis_service_filter_rel(
 
     let analysis_graph = analysis_graph.root_traces();
 
-    assert_ancestors(&analysis_graph.items, |ancestors| {
+    assert_root_traces(&analysis_graph.items, |traces| {
         assert_eq!(
-            ancestors,
+            traces,
             &[&[Node {
                 id: "SPDXRef-A",
                 name: "A",
@@ -246,9 +246,9 @@ async fn test_simple_by_purl_analysis_service(ctx: &TrustifyContext) -> Result<(
     let analysis_graph = analysis_graph.root_traces();
     log::debug!("After: {analysis_graph:#?}");
 
-    assert_ancestors(&analysis_graph.items, |ancestors| {
+    assert_root_traces(&analysis_graph.items, |traces| {
         assert_eq!(
-            ancestors,
+            traces,
             [[
                 Node {
                     id: "SPDXRef-A",
@@ -296,10 +296,10 @@ async fn test_quarkus_analysis_service(ctx: &TrustifyContext) -> Result<(), anyh
     let analysis_graph = analysis_graph.root_traces();
     log::debug!("After: {analysis_graph:#?}");
 
-    assert_ancestors(&analysis_graph.items, |ancestors| {
+    assert_root_traces(&analysis_graph.items, |traces| {
         assert!(
             matches!(
-                ancestors,
+                traces,
                 [
                     [..],
                     [
@@ -321,7 +321,7 @@ async fn test_quarkus_analysis_service(ctx: &TrustifyContext) -> Result<(), anyh
                     ]
                 ]
             ),
-            "doesn't match: {ancestors:#?}"
+            "doesn't match: {traces:#?}"
         );
     });
 
@@ -643,10 +643,10 @@ async fn test_retrieve_all_sbom_roots_by_name(ctx: &TrustifyContext) -> Result<(
     let roots = roots.root_traces();
     log::debug!("After: {roots:#?}");
 
-    assert_ancestors(&roots.items, |ancestors| {
+    assert_root_traces(&roots.items, |traces| {
         assert!(
             matches!(
-                ancestors,
+                traces,
                 [[
                     ..,
                     Node {
@@ -655,7 +655,7 @@ async fn test_retrieve_all_sbom_roots_by_name(ctx: &TrustifyContext) -> Result<(
                     }
                 ]]
             ),
-            "doesn't match: {ancestors:#?}"
+            "doesn't match: {traces:#?}"
         );
     });
 
