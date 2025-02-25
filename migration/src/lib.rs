@@ -1,6 +1,7 @@
 pub use sea_orm_migration::prelude::*;
 
 mod m0000010_init;
+mod m0000020_add_sbom_group;
 mod m0000970_alter_importer_add_heartbeat;
 
 #[cfg(feature = "ai")]
@@ -16,6 +17,7 @@ impl MigratorTrait for Migrator {
         vec![
             Box::new(m0000010_init::Migration),
             Box::new(m0000970_alter_importer_add_heartbeat::Migration),
+            Box::new(m0000020_add_sbom_group::Migration),
         ]
     }
 }

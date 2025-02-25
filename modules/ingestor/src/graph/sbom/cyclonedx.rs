@@ -4,8 +4,9 @@ use crate::{
         product::ProductInformation,
         purl::creator::PurlCreator,
         sbom::{
-            CycloneDx as CycloneDxProcessor, LicenseCreator, LicenseInfo, PackageCreator,
-            PackageReference, References, RelationshipCreator, SbomContext, SbomInformation,
+            CycloneDx as CycloneDxProcessor, LicenseCreator, LicenseInfo, NodeInfoParam,
+            PackageCreator, PackageReference, References, RelationshipCreator, SbomContext,
+            SbomInformation,
             processor::{
                 InitContext, PostContext, Processor, RedHatProductComponentRelationships,
                 RunProcessors,
@@ -385,9 +386,12 @@ impl<'a> ComponentCreator<'a> {
         }
 
         self.packages.add(
-            node_id.clone(),
-            comp.name.to_string(),
-            comp.version.as_ref().map(|v| v.to_string()),
+            NodeInfoParam {
+                node_id: node_id.clone(),
+                name: comp.name.to_string(),
+                group: comp.group.as_ref().map(|v| v.to_string()),
+                version: comp.version.as_ref().map(|v| v.to_string()),
+            },
             self.refs,
             self.license_relations,
             comp.hashes.clone().into_iter().flatten(),

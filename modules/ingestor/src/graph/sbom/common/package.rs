@@ -21,6 +21,13 @@ pub struct PackageCreator {
     cpe_license_assertions: Vec<cpe_license_assertion::ActiveModel>,
 }
 
+pub struct NodeInfoParam {
+    pub node_id: String,
+    pub name: String,
+    pub group: Option<String>,
+    pub version: Option<String>,
+}
+
 pub enum PackageReference {
     Purl {
         versioned_purl: Uuid,
@@ -56,9 +63,7 @@ impl PackageCreator {
 
     pub fn add<I, C>(
         &mut self,
-        node_id: String,
-        name: String,
-        version: Option<String>,
+        node_info: NodeInfoParam,
         refs: impl IntoIterator<Item = PackageReference>,
         license_refs: impl IntoIterator<Item = LicenseInfo> + Clone,
         checksums: I,
@@ -71,7 +76,7 @@ impl PackageCreator {
                 PackageReference::Cpe(cpe) => {
                     self.cpe_refs.push(sbom_package_cpe_ref::ActiveModel {
                         sbom_id: Set(self.sbom_id),
-                        node_id: Set(node_id.clone()),
+                        node_id: Set(node_info.node_id.clone()),
                         cpe_id: Set(cpe),
                     });
                     for license in license_refs.clone() {
@@ -90,7 +95,7 @@ impl PackageCreator {
                 } => {
                     self.purl_refs.push(sbom_package_purl_ref::ActiveModel {
                         sbom_id: Set(self.sbom_id),
-                        node_id: Set(node_id.clone()),
+                        node_id: Set(node_info.node_id.clone()),
                         qualified_purl_id: Set(qualified_purl),
                     });
                     for license in license_refs.clone() {
@@ -106,12 +111,14 @@ impl PackageCreator {
             }
         }
 
-        self.nodes.add(node_id.clone(), name, checksums);
+        self.nodes
+            .add(node_info.node_id.clone(), node_info.name, checksums);
 
         self.packages.push(sbom_package::ActiveModel {
             sbom_id: Set(self.sbom_id),
-            node_id: Set(node_id),
-            version: Set(version),
+            group: Set(node_info.group),
+            node_id: Set(node_info.node_id),
+            version: Set(node_info.version),
         });
     }
 

@@ -638,7 +638,17 @@ impl SbomContext {
                 qualified_purl,
             })
             .chain(cpes.into_iter().map(PackageReference::Cpe));
-        creator.add(node_id, name, version, refs, iter::empty(), Checksum::NONE);
+        creator.add(
+            NodeInfoParam {
+                node_id,
+                name,
+                group: None,
+                version,
+            },
+            refs,
+            iter::empty(),
+            Checksum::NONE,
+        );
 
         creator.create(connection).await?;
 
