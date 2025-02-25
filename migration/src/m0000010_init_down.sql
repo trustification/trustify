@@ -6,6 +6,7 @@ ALTER TABLE ONLY public.sbom_package_purl_ref DROP CONSTRAINT sbom_package_purl_
 ALTER TABLE ONLY public.sbom_package_cpe_ref DROP CONSTRAINT sbom_package_cpe_ref_sbom_id_node_id_fkey;
 ALTER TABLE ONLY public.sbom_package_cpe_ref DROP CONSTRAINT sbom_package_cpe_ref_cpe_id_fkey;
 ALTER TABLE ONLY public.sbom_node DROP CONSTRAINT sbom_node_sbom_id_fkey;
+ALTER TABLE ONLY public.sbom_node_checksum DROP CONSTRAINT sbom_node_checksum_sbom_id_node_id_fkey;
 ALTER TABLE ONLY public.sbom_file DROP CONSTRAINT sbom_file_sbom_id_fkey;
 ALTER TABLE ONLY public.qualified_purl DROP CONSTRAINT qualified_package_package_version_id_fkey;
 ALTER TABLE ONLY public.purl_status DROP CONSTRAINT purl_status_cpe_fk;
@@ -109,6 +110,7 @@ ALTER TABLE ONLY public.sbom_package_purl_ref DROP CONSTRAINT sbom_package_purl_
 ALTER TABLE ONLY public.sbom_package DROP CONSTRAINT sbom_package_pkey;
 ALTER TABLE ONLY public.sbom_package_cpe_ref DROP CONSTRAINT sbom_package_cpe_ref_pkey;
 ALTER TABLE ONLY public.sbom_node DROP CONSTRAINT sbom_node_pkey;
+ALTER TABLE ONLY public.sbom_node_checksum DROP CONSTRAINT sbom_node_checksum_pkey;
 ALTER TABLE ONLY public.sbom_file DROP CONSTRAINT sbom_file_pkey;
 ALTER TABLE ONLY public.sbom_external_node DROP CONSTRAINT sbom_external_node_pkey;
 ALTER TABLE ONLY public.relationship DROP CONSTRAINT relationship_pkey;
@@ -145,6 +147,7 @@ DROP TABLE public.source_document;
 DROP TABLE public.sbom_package_purl_ref;
 DROP TABLE public.sbom_package_cpe_ref;
 DROP TABLE public.sbom_package;
+DROP TABLE public.sbom_node_checksum;
 DROP TABLE public.sbom_node;
 DROP TABLE public.sbom_file;
 DROP TABLE public.sbom_external_node;
