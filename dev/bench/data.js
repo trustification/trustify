@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740499710604,
+  "lastUpdate": 1740500081200,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5509,6 +5509,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": false,
+          "id": "adb31f1457a9e0ffbaa761f3c3e7ab156e2c9eb1",
+          "message": "chore: csaf ingestion bech with otel",
+          "timestamp": "2025-02-25T15:47:24Z",
+          "tree_id": "648673cbf9b0046ed3d5354beb13e23fc0f7862c",
+          "url": "https://github.com/trustification/trustify/commit/adb31f1457a9e0ffbaa761f3c3e7ab156e2c9eb1"
+        },
+        "date": 1740500080566,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
