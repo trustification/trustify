@@ -885,7 +885,33 @@ async fn resolve_spdx_external_reference(ctx: &TrustifyContext) -> Result<(), an
     let app = caller(ctx).await?;
 
     ctx.ingest_document("spdx/simple-ext-a.json").await?;
+    let uri = "/api/v2/analysis/component/A?descendants=10".to_string();
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(200, response.response().status());
 
+    ctx.ingest_document("spdx/simple-ext-b.json").await?;
+    let uri = "/api/v2/analysis/component/A?descendants=10".to_string();
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(request).await;
+
+    assert_eq!(200, response.response().status());
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn resolve_cdx_external_reference(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_document("cdx/simple-ext-a.json").await?;
+    let uri = "/api/v2/analysis/component/A?descendants=10".to_string();
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(200, response.response().status());
+
+    ctx.ingest_document("cdx/simple-ext-b.json").await?;
     let uri = "/api/v2/analysis/component/A?descendants=10".to_string();
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response = app.call_service(request).await;
