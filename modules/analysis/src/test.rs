@@ -63,7 +63,7 @@ impl<'a> From<&'a BaseSummary> for OwnedNode<'a> {
     }
 }
 
-pub fn assert_ancestors<F>(ancestors: &[Vec<(&BaseSummary, Relationship)>], f: F)
+pub fn assert_root_traces<F>(ancestors: &[Vec<(&BaseSummary, Relationship)>], f: F)
 where
     F: for<'a> FnOnce(&'a [&'a [Node]]),
 {
