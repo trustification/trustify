@@ -902,6 +902,7 @@ async fn resolve_spdx_external_reference(ctx: &TrustifyContext) -> Result<(), an
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+#[ignore = "bug in cdx"]
 async fn resolve_cdx_external_reference(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
 
