@@ -270,8 +270,8 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                     node_id: external_node_id,
                 } = resolve_external_sbom(external_node.node_id.clone(), self.connection).await?;
 
-                log::warn!("external sbom id: {:?}", external_sbom_id);
-                log::warn!("external node id: {:?}", external_node_id);
+                log::debug!("external sbom id: {:?}", external_sbom_id);
+                log::debug!("external node id: {:?}", external_node_id);
 
                 // get external sbom graph
                 let Some((_, external_graph)) = self
@@ -289,14 +289,14 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                     .node_indices()
                     .find(|&node| external_graph[node].node_id.eq(&external_node_id))
                 else {
-                    log::warn!("Node with ID {} not found", external_node_id);
+                    log::debug!("Node with ID {} not found", external_node_id);
                     // You can return early, log an error, or take other actions as needed
                     return None;
                 };
 
                 // process as normal, which is just non-DRY of following code block which we
                 // can optimise away.
-                log::warn!("external node index: {:?}", external_node_index);
+                log::debug!("external node index: {:?}", external_node_index);
 
                 Some(
                     self.with(external_graph, external_node_index)
