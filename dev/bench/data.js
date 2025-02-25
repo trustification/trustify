@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740468024321,
+  "lastUpdate": 1740474122234,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5417,6 +5417,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/709fcb94118cdfd7d888ab83a114cee932fe7d18"
         },
         "date": 1740468023633,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "18aa0379cd5584509383e403033aa5e420293d8e",
+          "message": "fix: permission problem with containerized xtask dump",
+          "timestamp": "2025-02-25T08:41:06Z",
+          "tree_id": "f7dcec7eb493ea2802f32032c1d0582581efe0e3",
+          "url": "https://github.com/trustification/trustify/commit/18aa0379cd5584509383e403033aa5e420293d8e"
+        },
+        "date": 1740474120860,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
