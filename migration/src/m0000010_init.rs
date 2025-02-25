@@ -3,6 +3,9 @@ use sea_orm_migration::prelude::*;
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
+// This migration squashes MANY previous migrations.  If you need to write a new one,
+// and you would like to see some examples of how they were written, you can browse those previous migrations at:
+// https://github.com/trustification/trustify/tree/2f72e0efd3f84e69c068b087b86f909135e64eee/migration/src
 #[async_trait::async_trait]
 #[allow(deprecated)]
 impl MigrationTrait for Migration {
