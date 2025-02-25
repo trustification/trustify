@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740477584350,
+  "lastUpdate": 1740499710604,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5475,6 +5475,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/2f72e0efd3f84e69c068b087b86f909135e64eee"
         },
         "date": 1740477583646,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": false,
+          "id": "89b29c85a468f36718aa678e599a857a4496ebcc",
+          "message": "chore: extract collector to its own module",
+          "timestamp": "2025-02-25T15:41:07Z",
+          "tree_id": "131bf4755a50ec1957844225f9138db653f26d8d",
+          "url": "https://github.com/trustification/trustify/commit/89b29c85a468f36718aa678e599a857a4496ebcc"
+        },
+        "date": 1740499709195,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
