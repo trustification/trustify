@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740474122234,
+  "lastUpdate": 1740477584350,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5451,6 +5451,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "2f72e0efd3f84e69c068b087b86f909135e64eee",
+          "message": "ci: set the github token for embedded postgresql\n\nThe embedded postgresql dependency requires using the github API.\n\nNot having a github token makes this an unauthenticated request, which\nhas stricter API rate limits. Providing the github token show raise\nthose limits.",
+          "timestamp": "2025-02-25T09:34:00Z",
+          "tree_id": "a73525394203eaad6c635add1373e553f91e7029",
+          "url": "https://github.com/trustification/trustify/commit/2f72e0efd3f84e69c068b087b86f909135e64eee"
+        },
+        "date": 1740477583646,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
