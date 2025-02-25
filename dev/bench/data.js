@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740417300090,
+  "lastUpdate": 1740467265743,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5359,6 +5359,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/69132f93b87c5254777d090bd23af8f7520869af"
         },
         "date": 1740417298868,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "f26117c30462a69c14a7dd31add1d75bd4f671ce",
+          "message": "chore: adds rustfmt.toml with style_edition 2024",
+          "timestamp": "2025-02-25T08:00:35+01:00",
+          "tree_id": "4a4d3c88d322a585289e172e33475a443586449d",
+          "url": "https://github.com/trustification/trustify/commit/f26117c30462a69c14a7dd31add1d75bd4f671ce"
+        },
+        "date": 1740467265013,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
