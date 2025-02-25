@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740467265743,
+  "lastUpdate": 1740468024321,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5388,6 +5388,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/f26117c30462a69c14a7dd31add1d75bd4f671ce"
         },
         "date": 1740467265013,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "709fcb94118cdfd7d888ab83a114cee932fe7d18",
+          "message": "chore: adds context to URL without a base error",
+          "timestamp": "2025-02-25T07:01:19Z",
+          "tree_id": "56e12ad607ddee737bb495de7bede98d39c0669a",
+          "url": "https://github.com/trustification/trustify/commit/709fcb94118cdfd7d888ab83a114cee932fe7d18"
+        },
+        "date": 1740468023633,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
