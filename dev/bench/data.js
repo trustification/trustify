@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740502027316,
+  "lastUpdate": 1740505039508,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5567,6 +5567,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "committer": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "distinct": true,
+          "id": "5ddadd01af3043602f6a50a73074ee162220e853",
+          "message": "Rebase from main\n\nSigned-off-by: Hiram Chirino <hiram@hiramchirino.com>",
+          "timestamp": "2025-02-25T17:19:21Z",
+          "tree_id": "d41ae03b245de27059bdc3e472b68d3ebabb1963",
+          "url": "https://github.com/trustification/trustify/commit/5ddadd01af3043602f6a50a73074ee162220e853"
+        },
+        "date": 1740505038905,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
