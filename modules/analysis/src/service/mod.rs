@@ -19,6 +19,7 @@ use crate::{
 use fixedbitset::FixedBitSet;
 use futures::{StreamExt, stream};
 use opentelemetry::global;
+use parking_lot::Mutex;
 use petgraph::{
     Direction,
     graph::{Graph, NodeIndex},
@@ -154,168 +155,202 @@ async fn resolve_external_sbom<C: ConnectionTrait>(
     }
 }
 
-/// Collect related nodes in the provided direction.
-///
-/// If the depth is zero, or the node was already processed, it will return [`None`], indicating
-/// that the request was not processed.
-#[allow(clippy::too_many_arguments)]
-async fn collect<C: ConnectionTrait>(
-    graphs: &[(String, Arc<PackageGraph>)],
-    graph: &Graph<graph::Node, Relationship, petgraph::Directed>,
-    node: NodeIndex,
-    direction: Direction,
-    depth: u64,
-    discovered: &mut FixedBitSet,
-    relationships: &HashSet<Relationship>,
-    connection: &C,
-) -> Option<Vec<Node>> {
-    tracing::debug!(direction = ?direction, "collecting for {node:?}");
+/// Tracker for visited nodes, across graphs,
+#[derive(Default, Clone)]
+struct DiscoveredTracker {
+    cache: Arc<
+        Mutex<HashMap<*const Graph<graph::Node, Relationship, petgraph::Directed>, FixedBitSet>>,
+    >,
+}
 
-    if depth == 0 {
-        log::debug!("depth is zero");
-        // we ran out of depth
-        return None;
-    }
+impl DiscoveredTracker {
+    pub fn visit(
+        &self,
+        graph: &Graph<graph::Node, Relationship, petgraph::Directed>,
+        node: NodeIndex,
+    ) -> bool {
+        let mut maps = self.cache.lock();
+        let map = maps
+            .entry(graph as *const Graph<_, _> as *const _)
+            .or_insert_with(|| graph.visit_map());
 
-    if !discovered.visit(node) {
-        log::debug!("node got visited already");
-        // we've already seen this
-        return None;
-    }
-
-    match graph.node_weight(node) {
-        // collect external sbom ref
-        Some(External(external_node)) => {
-            let (external_sbom_id, external_node_id) =
-                resolve_external_sbom(external_node.node_id.clone(), connection).await?;
-
-            log::warn!("external sbom id: {:?}", external_sbom_id);
-            log::warn!("external node id: {:?}", external_node_id);
-
-            // get external sbom graph
-            let Some((_, external_graph)) = graphs
-                .iter()
-                .find(|(sbom_id, _)| sbom_id == &external_sbom_id.to_string())
-            else {
-                log::warn!("Graph not found.");
-                return None;
-            };
-
-            // now that we have the graph, find the external node reference in that graph
-            // so we have a starting point.
-            let Some(external_node_index) = external_graph
-                .node_indices()
-                .find(|&node| external_graph[node].node_id.eq(&external_node_id))
-            else {
-                log::warn!("Node with ID {} not found", external_node_id);
-                // You can return early, log an error, or take other actions as needed
-                return None;
-            };
-
-            // process as normal, which is just non-DRY of following code block which we
-            // can optimise away.
-            log::warn!("external node index: {:?}", external_node_index);
-
-            Some(
-                collect_graph(
-                    graphs,
-                    external_graph,
-                    node,
-                    direction,
-                    depth,
-                    discovered,
-                    relationships,
-                    connection,
-                )
-                .await,
-            )
-        }
-        // collect
-        _ => Some(
-            collect_graph(
-                graphs,
-                graph,
-                node,
-                direction,
-                depth,
-                discovered,
-                relationships,
-                connection,
-            )
-            .await,
-        ),
+        map.visit(node)
     }
 }
 
-async fn collect_graph<C: ConnectionTrait>(
-    graphs: &[(String, Arc<PackageGraph>)],
-    graph: &Graph<graph::Node, Relationship, petgraph::Directed>,
+/// Collector, helping on collector nodes from a graph.
+///
+/// Keeping track of all relevant information.
+struct Collector<'a, C: ConnectionTrait> {
+    graphs: &'a [(String, Arc<PackageGraph>)],
+    graph: &'a Graph<graph::Node, Relationship, petgraph::Directed>,
     node: NodeIndex,
     direction: Direction,
     depth: u64,
-    discovered: &mut FixedBitSet,
-    relationships: &HashSet<Relationship>,
-    connection: &C,
-) -> Vec<Node> {
-    let mut result = vec![];
+    discovered: DiscoveredTracker,
+    relationships: &'a HashSet<Relationship>,
+    connection: &'a C,
+}
 
-    for edge in graph.edges_directed(node, direction) {
-        log::debug!("edge {edge:?}");
-
-        // we only recurse in one direction
-        let (ancestor, descendent, package_node) = match direction {
-            Direction::Incoming => (
-                Box::pin(collect(
-                    graphs,
-                    graph,
-                    edge.source(),
-                    direction,
-                    depth - 1,
-                    discovered,
-                    relationships,
-                    connection,
-                ))
-                .await,
-                None,
-                graph.node_weight(edge.source()),
-            ),
-            Direction::Outgoing => (
-                None,
-                Box::pin(collect(
-                    graphs,
-                    graph,
-                    edge.target(),
-                    direction,
-                    depth - 1,
-                    discovered,
-                    relationships,
-                    connection,
-                ))
-                .await,
-                graph.node_weight(edge.target()),
-            ),
-        };
-
-        let relationship = edge.weight();
-
-        if !relationships.is_empty() && !relationships.contains(relationship) {
-            // if we have entries, and no match, continue with the next
-            continue;
+impl<'a, C: ConnectionTrait> Collector<'a, C> {
+    /// Create a new collector, with a new visited set.
+    fn new(
+        graphs: &'a [(String, Arc<PackageGraph>)],
+        graph: &'a Graph<graph::Node, Relationship, petgraph::Directed>,
+        node: NodeIndex,
+        direction: Direction,
+        depth: u64,
+        relationships: &'a HashSet<Relationship>,
+        connection: &'a C,
+    ) -> Self {
+        Self {
+            graphs,
+            graph,
+            node,
+            direction,
+            depth,
+            discovered: Default::default(),
+            relationships,
+            connection,
         }
-
-        let Some(package_node) = package_node else {
-            continue;
-        };
-
-        result.push(Node {
-            base: BaseSummary::from(package_node),
-            relationship: Some(*relationship),
-            ancestors: ancestor,
-            descendants: descendent,
-        });
     }
 
-    result
+    /// Continue with another graph and node as an entry point.
+    ///
+    /// Shares the visited set.
+    fn with(
+        self,
+        graph: &'a Graph<graph::Node, Relationship, petgraph::Directed>,
+        node: NodeIndex,
+    ) -> Self {
+        Self {
+            graph,
+            node,
+            ..self
+        }
+    }
+
+    /// Continue with a new node, but the same graph.
+    ///
+    /// Decreases depth by one and keeps the visited set.
+    fn continue_node(&self, node: NodeIndex) -> Self {
+        Self {
+            graphs: self.graphs,
+            graph: self.graph,
+            node,
+            direction: self.direction,
+            depth: self.depth - 1,
+            discovered: self.discovered.clone(),
+            relationships: self.relationships,
+            connection: self.connection,
+        }
+    }
+
+    /// Collect related nodes in the provided direction.
+    ///
+    /// If the depth is zero, or the node was already processed, it will return [`None`], indicating
+    /// that the request was not processed.
+    async fn collect(self) -> Option<Vec<Node>> {
+        tracing::debug!(direction = ?self.direction, "collecting for {:?}", self.node);
+
+        if self.depth == 0 {
+            log::debug!("depth is zero");
+            // we ran out of depth
+            return None;
+        }
+
+        if !self.discovered.visit(self.graph, self.node) {
+            log::debug!("node got visited already");
+            // we've already seen this
+            return None;
+        }
+
+        match self.graph.node_weight(self.node) {
+            // collect external sbom ref
+            Some(External(external_node)) => {
+                let (external_sbom_id, external_node_id) =
+                    resolve_external_sbom(external_node.node_id.clone(), self.connection).await?;
+
+                log::warn!("external sbom id: {:?}", external_sbom_id);
+                log::warn!("external node id: {:?}", external_node_id);
+
+                // get external sbom graph
+                let Some((_, external_graph)) = self
+                    .graphs
+                    .iter()
+                    .find(|(sbom_id, _)| sbom_id == &external_sbom_id.to_string())
+                else {
+                    log::warn!("Graph not found.");
+                    return None;
+                };
+
+                // now that we have the graph, find the external node reference in that graph
+                // so we have a starting point.
+                let Some(external_node_index) = external_graph
+                    .node_indices()
+                    .find(|&node| external_graph[node].node_id.eq(&external_node_id))
+                else {
+                    log::warn!("Node with ID {} not found", external_node_id);
+                    // You can return early, log an error, or take other actions as needed
+                    return None;
+                };
+
+                // process as normal, which is just non-DRY of following code block which we
+                // can optimise away.
+                log::warn!("external node index: {:?}", external_node_index);
+
+                Some(
+                    self.with(external_graph, external_node_index)
+                        .collect_graph()
+                        .await,
+                )
+            }
+            // collect
+            _ => Some(self.collect_graph().await),
+        }
+    }
+
+    async fn collect_graph(&self) -> Vec<Node> {
+        let mut result = vec![];
+
+        for edge in self.graph.edges_directed(self.node, self.direction) {
+            log::debug!("edge {edge:?}");
+
+            // we only recurse in one direction
+            let (ancestor, descendent, package_node) = match self.direction {
+                Direction::Incoming => (
+                    Box::pin(self.continue_node(edge.source()).collect()).await,
+                    None,
+                    self.graph.node_weight(edge.source()),
+                ),
+                Direction::Outgoing => (
+                    None,
+                    Box::pin(self.continue_node(edge.target()).collect()).await,
+                    self.graph.node_weight(edge.target()),
+                ),
+            };
+
+            let relationship = edge.weight();
+
+            if !self.relationships.is_empty() && !self.relationships.contains(relationship) {
+                // if we have entries, and no match, continue with the next
+                continue;
+            }
+
+            let Some(package_node) = package_node else {
+                continue;
+            };
+
+            result.push(Node {
+                base: BaseSummary::from(package_node),
+                relationship: Some(*relationship),
+                ancestors: ancestor,
+                descendants: descendent,
+            });
+        }
+
+        result
+    }
 }
 
 impl AnalysisService {
@@ -452,27 +487,31 @@ impl AnalysisService {
             Node {
                 base: node.into(),
                 relationship: None,
-                ancestors: Box::pin(collect(
-                    graphs,
-                    graph,
-                    node_index,
-                    Direction::Incoming,
-                    options.ancestors,
-                    &mut graph.visit_map(),
-                    &relationships,
-                    connection,
-                ))
+                ancestors: Box::pin(
+                    Collector::new(
+                        graphs,
+                        graph,
+                        node_index,
+                        Direction::Incoming,
+                        options.ancestors,
+                        &relationships,
+                        connection,
+                    )
+                    .collect(),
+                )
                 .await,
-                descendants: Box::pin(collect(
-                    graphs,
-                    graph,
-                    node_index,
-                    Direction::Outgoing,
-                    options.descendants,
-                    &mut graph.visit_map(),
-                    &relationships,
-                    connection,
-                ))
+                descendants: Box::pin(
+                    Collector::new(
+                        graphs,
+                        graph,
+                        node_index,
+                        Direction::Outgoing,
+                        options.descendants,
+                        &relationships,
+                        connection,
+                    )
+                    .collect(),
+                )
                 .await,
             }
         })
