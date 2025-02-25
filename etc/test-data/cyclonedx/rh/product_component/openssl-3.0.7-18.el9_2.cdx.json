@@ -59,23 +59,7 @@
           "name": "package:rpm:sha256header",
           "value": "96e53b2da90ce5ad109ba659ce3ed1b5a819b108c95fc493f84847429898b2ed"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=aarch64",
@@ -98,23 +82,7 @@
           "name": "package:rpm:sha256header",
           "value": "8721bc9673ccc43f729485aba48fd75a927305980f48ee9d0b79d06937b68d16"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=aarch64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=aarch64",
@@ -137,23 +105,7 @@
           "name": "package:rpm:sha256header",
           "value": "cae5941219fd64e75c2b29509c6fe712bef77181a586702275a46a5e812d4dd4"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=aarch64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=aarch64",
@@ -176,23 +128,7 @@
           "name": "package:rpm:sha256header",
           "value": "036985b5bd34712963e4a9009dd196e4f583479283d88b6e908a231aa5bddfae"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=aarch64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=aarch64",
@@ -215,23 +151,7 @@
           "name": "package:rpm:sha256header",
           "value": "aaafa61c115ec37bb3895e124216ce46774069e49f6178248df085708ecb3878"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=aarch64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=aarch64",
@@ -254,23 +174,7 @@
           "name": "package:rpm:sha256header",
           "value": "036bd68632078d2b12e87f4541047823b5675d7e1141e56639cbc1e2e42c9f65"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=aarch64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=aarch64",
@@ -293,23 +197,7 @@
           "name": "package:rpm:sha256header",
           "value": "deff41d222f613c3292d1bd0256c793c7fc7d5a4d61a24fa81f23990123bd79d"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=aarch64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=aarch64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=ppc64le",
@@ -332,23 +220,7 @@
           "name": "package:rpm:sha256header",
           "value": "7ae23594204f2688d5b16be98782d5456080f55e6baf76172d8cb4e100c2507e"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=ppc64le"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=ppc64le",
@@ -371,23 +243,7 @@
           "name": "package:rpm:sha256header",
           "value": "6c35abfc44cc24048921fd519bbcdba0bc43cf45cdece57df99ede720600a686"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=ppc64le"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=ppc64le",
@@ -410,23 +266,7 @@
           "name": "package:rpm:sha256header",
           "value": "b2e00a6e064e8efd9fac7b4633221ef5b3f49fb16e6eb2752cffae6965007cb7"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=ppc64le"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=ppc64le",
@@ -449,23 +289,7 @@
           "name": "package:rpm:sha256header",
           "value": "10135a468b85a35b0373609ad48c50e71499d034c6f7e7455691b63f87105f12"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=ppc64le"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=ppc64le",
@@ -488,23 +312,7 @@
           "name": "package:rpm:sha256header",
           "value": "8e14cfaf5ae8bf1858b8d262b6d891dfdcc31378b6805345b8c1e08e4f0ce442"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=ppc64le"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=ppc64le",
@@ -527,23 +335,7 @@
           "name": "package:rpm:sha256header",
           "value": "d7de194a98e577ebaa0344c55002f83c2d22b52bf62cac22920759f2679e8124"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=ppc64le"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=ppc64le",
@@ -566,23 +358,7 @@
           "name": "package:rpm:sha256header",
           "value": "d6c29685fcd8a62504e223fcd4b520819118456cc65273e43c5fed19dd1d1a11"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=ppc64le"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=ppc64le"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=i686",
@@ -605,23 +381,7 @@
           "name": "package:rpm:sha256header",
           "value": "8897777ff03ce9308b8e7dd890e3c22c3b9f0da29d641d3844a52635ed926649"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=i686"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=i686",
@@ -644,23 +404,7 @@
           "name": "package:rpm:sha256header",
           "value": "ed85dfebb27dadf0d786da2aa15ce0dfbcb442ed38846360a82ab6abf7b71334"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=i686"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=i686",
@@ -683,23 +427,7 @@
           "name": "package:rpm:sha256header",
           "value": "d13f9f85d90d4d0e4f39bdc743f42dc064a6ca16e2cb85fe1695e8a08b9163b4"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=i686"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=i686",
@@ -722,23 +450,7 @@
           "name": "package:rpm:sha256header",
           "value": "03d6054aafea54f4496f8c35550eec87f2ceb06566e3fd5eea0446bd91e3242e"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=i686"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=i686",
@@ -761,23 +473,7 @@
           "name": "package:rpm:sha256header",
           "value": "02867d6b799b5ebc56f1f945a474f59c6b1a8430da4acf3fa35dae9cf992ea58"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=i686"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=i686",
@@ -800,23 +496,7 @@
           "name": "package:rpm:sha256header",
           "value": "b7b39d8d7a960d75da6347206927e5a9bf33642148a0d291b0205f70eac8bf42"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=i686"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=i686",
@@ -839,23 +519,7 @@
           "name": "package:rpm:sha256header",
           "value": "d4732a4e60c831e1e8e4ddb89419a029accf2ee6dc1c2efe62e8bf20e97e2577"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=i686"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=i686"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=x86_64",
@@ -878,23 +542,7 @@
           "name": "package:rpm:sha256header",
           "value": "596206f99a50ede734b1f989977b210289debcfdd972666bd0d5ba03e7afbf19"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=x86_64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=x86_64",
@@ -917,23 +565,7 @@
           "name": "package:rpm:sha256header",
           "value": "7fbdc911663e437e7be7e30f5bd87450f4ff38551ecbb3de27e362bb9f2ac2aa"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=x86_64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=x86_64",
@@ -956,23 +588,7 @@
           "name": "package:rpm:sha256header",
           "value": "96e137f9561e7669417fe5998ec2aa6ba55a67aef0c2c205eede5a5a5941e8ac"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=x86_64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=x86_64",
@@ -995,23 +611,7 @@
           "name": "package:rpm:sha256header",
           "value": "403624aed89502e17352b50f00c413104c9be31307477d02c3a7ae78cfcb1ca4"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=x86_64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=x86_64",
@@ -1034,23 +634,7 @@
           "name": "package:rpm:sha256header",
           "value": "73e869a62715910bdec02ee3f0275a81ca96f539a07aced314182b6f4dc8c828"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=x86_64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64",
@@ -1073,23 +657,7 @@
           "name": "package:rpm:sha256header",
           "value": "96045880ef4a2167abe9ea14f2b325402996a7671df8f594924dc24b6c2263e4"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=x86_64",
@@ -1112,23 +680,7 @@
           "name": "package:rpm:sha256header",
           "value": "72f42e7c9ade55a24d3c53f4370d5d6d3b2fe99a4735d564825556ccd4cc1df3"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=x86_64"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=x86_64"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=s390x",
@@ -1151,23 +703,7 @@
           "name": "package:rpm:sha256header",
           "value": "bc5de92a3830cd99f7d291ccaafb5fd640127c8c1c925231e1e37d060a69563f"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs-debuginfo@3.0.7-18.el9_2?arch=s390x"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=s390x",
@@ -1190,23 +726,7 @@
           "name": "package:rpm:sha256header",
           "value": "0543b42f6491762fab8defbc6ec68a30d8e17e2f55e50b29095c382a6ad5baf1"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-libs@3.0.7-18.el9_2?arch=s390x"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=s390x",
@@ -1229,23 +749,7 @@
           "name": "package:rpm:sha256header",
           "value": "90ca984f844882a5c0678887851cc58be90a187c65ef010b866791c40116f7fc"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debugsource@3.0.7-18.el9_2?arch=s390x"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=s390x",
@@ -1268,23 +772,7 @@
           "name": "package:rpm:sha256header",
           "value": "4a8588e587337d65cd2da98b0ba813a1e178a9b515c82bbc7fe96f1ba749b8fc"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=s390x"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=s390x",
@@ -1307,23 +795,7 @@
           "name": "package:rpm:sha256header",
           "value": "0a2a6b1409b045894d15c1b05ff5be2c1feba0b2b5f2d3bbac9d2e44c93f0583"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=s390x"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x",
@@ -1346,23 +818,7 @@
           "name": "package:rpm:sha256header",
           "value": "11c42421e6d07bca92122575ac023016471383f58575b2dd478a19e0ba7ce4db"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x",
@@ -1385,23 +841,7 @@
           "name": "package:rpm:sha256header",
           "value": "6f885dd8acf32d367528f47f0289a04035fddc1eb83b720bc6889293b94892fc"
         }
-      ],
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x"
-          }
-        ]
-      }
+      ]
     },
     {
       "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
@@ -1456,70 +896,6 @@
                 }
               ]
             }
-          }
-        ]
-      },
-      "evidence": {
-        "identity": [
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
-          },
-          {
-            "field": "purl",
-            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
           }
         ]
       }
