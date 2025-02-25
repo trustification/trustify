@@ -12,9 +12,7 @@ mod test;
 use crate::{
     Error,
     config::AnalysisConfig,
-    model::{
-        AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph, graph, graph::Node::External,
-    },
+    model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph, graph},
 };
 use fixedbitset::FixedBitSet;
 use futures::{StreamExt, stream};
@@ -157,7 +155,7 @@ async fn resolve_external_sbom<C: ConnectionTrait>(
 
 type NodeGraph = Graph<graph::Node, Relationship, petgraph::Directed>;
 
-/// Tracker for visited nodes, across graphs,
+/// Tracker for visited nodes, across graphs.
 #[derive(Default, Clone)]
 struct DiscoveredTracker {
     cache: Arc<Mutex<HashMap<*const NodeGraph, FixedBitSet>>>,
@@ -259,7 +257,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
 
         match self.graph.node_weight(self.node) {
             // collect external sbom ref
-            Some(External(external_node)) => {
+            Some(graph::Node::External(external_node)) => {
                 let (external_sbom_id, external_node_id) =
                     resolve_external_sbom(external_node.node_id.clone(), self.connection).await?;
 
