@@ -14,6 +14,7 @@ use crate::{
 use std::{collections::HashMap, path::PathBuf, time::Duration};
 use time::OffsetDateTime;
 use tokio::{task::LocalSet, time::MissedTickBehavior};
+use tokio_util::sync::CancellationToken;
 use tracing::instrument;
 use trustify_common::db::Database;
 use trustify_module_analysis::service::AnalysisService;
@@ -102,12 +103,14 @@ impl Server {
                     })
                     .take(self.concurrency - count)
                     .map(|importer| {
+                        let token = CancellationToken::new();
                         (
                             importer.name.clone(),
                             Heart::new(
                                 importer.clone(),
                                 runner.db.clone(),
-                                import(runner.clone(), importer, service.clone()),
+                                import(runner.clone(), importer, service.clone(), token.clone()),
+                                token,
                             ),
                         )
                     }),
@@ -120,6 +123,7 @@ async fn import(
     runner: ImportRunner,
     importer: Importer,
     service: ImporterService,
+    cancel: CancellationToken,
 ) -> Result<(), Error> {
     log::debug!("  {}: {:?}", importer.name, importer.data.configuration);
 
@@ -130,7 +134,7 @@ async fn import(
 
     log::info!("Starting run: {}", importer.name);
 
-    let context = ServiceRunContext::new(service.clone(), importer.name.clone());
+    let context = ServiceRunContext::new(service.clone(), importer.name.clone(), cancel);
 
     let (last_error, report, continuation) = match runner
         .run_once(

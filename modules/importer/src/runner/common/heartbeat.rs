@@ -8,22 +8,24 @@ use tokio::{
     task::{JoinHandle, spawn_local},
     time::{Duration, interval},
 };
+use tokio_util::sync::CancellationToken;
 use trustify_common::db::Database;
 use trustify_entity::importer;
 
 pub struct Heart {
     handle: JoinHandle<()>,
+    token: CancellationToken,
 }
 
 impl Heart {
     pub const RATE: Duration = Duration::from_secs(10);
 
-    pub fn new<F>(importer: Importer, db: Database, future: F) -> Self
+    pub fn new<F>(importer: Importer, db: Database, future: F, token: CancellationToken) -> Self
     where
         F: Future + 'static,
     {
-        let handle = spawn_local(Heart::pump(importer, db, future));
-        Self { handle }
+        let handle = spawn_local(Heart::pump(importer, db, future, token.clone()));
+        Self { handle, token }
     }
 
     // Updates the importer record with the current time, but only if
@@ -53,7 +55,7 @@ impl Heart {
         !self.handle.is_finished()
     }
 
-    async fn pump<F>(importer: Importer, db: Database, future: F)
+    async fn pump<F>(importer: Importer, db: Database, future: F, token: CancellationToken)
     where
         F: Future + 'static,
     {
@@ -72,7 +74,7 @@ impl Heart {
                     }
                     Err(e) => {
                         log::error!("Aborting '{name}': {e}");
-                        work.abort();
+                        token.cancel();
                     }
                 }
                 if work.is_finished() {
@@ -88,6 +90,7 @@ impl Heart {
 
 impl Drop for Heart {
     fn drop(&mut self) {
-        self.handle.abort()
+        self.token.cancel();
+        self.handle.abort();
     }
 }

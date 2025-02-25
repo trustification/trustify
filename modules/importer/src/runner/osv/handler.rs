@@ -17,6 +17,10 @@ where
 {
     type Error = Error;
 
+    fn is_canceled(&self) -> bool {
+        self.0.is_canceled()
+    }
+
     fn process(&self, path: &Path, relative_path: &Path) -> Result<(), HandlerError<Self::Error>> {
         match self.process_file(path, relative_path) {
             Ok(()) => Ok(()),
