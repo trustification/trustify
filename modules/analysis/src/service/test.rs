@@ -662,6 +662,7 @@ async fn test_retrieve_all_sbom_roots_by_name(ctx: &TrustifyContext) -> Result<(
     Ok(())
 }
 
+/// Run a standard scenario with a larger file, to check the performance.
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn load_performance(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {

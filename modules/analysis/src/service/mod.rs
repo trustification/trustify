@@ -52,10 +52,18 @@ pub struct AnalysisService {
     graph_cache: Arc<GraphMap>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct ResolvedSbom {
+    // The ID of the SBOM the node was found in
+    pub sbom_id: Uuid,
+    // The ID of the node
+    pub node_id: String,
+}
+
 async fn resolve_external_sbom<C: ConnectionTrait>(
     external_node_ref: String,
     connection: &C,
-) -> Option<(Uuid, String)> {
+) -> Option<ResolvedSbom> {
     // we first lookup in sbom_external_node
     let sbom_external_node = match sbom_external_node::Entity::find()
         .filter(sbom_external_node::Column::NodeId.eq(external_node_ref))
@@ -68,61 +76,58 @@ async fn resolve_external_sbom<C: ConnectionTrait>(
 
     match sbom_external_node.external_type {
         ExternalType::SPDX => {
-            // for spdx, sbom_external_node discriminator_type and discriminator_value are used
+            // For spdx, sbom_external_node discriminator_type and discriminator_value are used
             // to lookup sbom_id via join to SourceDocument. The node_id is just the external_node_ref.
-            if sbom_external_node
-                .discriminator_value
-                .as_ref()
-                .map(|s| s.is_empty())
-                .unwrap_or(true)
-            {
+
+            let discriminator_value = sbom_external_node.discriminator_value?;
+
+            if discriminator_value.is_empty() {
                 return None;
             }
-            if let Some(DiscriminatorType::Sha256) = sbom_external_node.discriminator_type {
-                if let Some(discriminator_value) = sbom_external_node.discriminator_value {
-                    match sbom::Entity::find()
-                        .join(JoinType::Join, sbom::Relation::SourceDocument.def())
-                        .filter(source_document::Column::Sha256.eq(discriminator_value.to_string()))
-                        .one(connection)
-                        .await
-                    {
-                        Ok(Some(entity)) => {
-                            return Some((entity.sbom_id, sbom_external_node.external_node_ref));
-                        }
-                        _ => return None,
-                    }
+
+            let query =
+                sbom::Entity::find().join(JoinType::Join, sbom::Relation::SourceDocument.def());
+
+            let query = match sbom_external_node.discriminator_type? {
+                DiscriminatorType::Sha256 => {
+                    query.filter(source_document::Column::Sha256.eq(&discriminator_value))
                 }
+                _ => return None,
+            };
+
+            match query.one(connection).await {
+                Ok(Some(entity)) => Some(ResolvedSbom {
+                    sbom_id: entity.sbom_id,
+                    node_id: sbom_external_node.external_node_ref,
+                }),
+                _ => None,
             }
-            None
         }
         ExternalType::CycloneDx => {
-            // for cyclonedx, sbom_external_node discriminator_type and discriminator_value are used
+            // For cyclonedx, sbom_external_node discriminator_type and discriminator_value are used
             // we construct external_doc_id to lookup sbom_id directly from sbom entity. The node_id
             // is the external_node_ref
-            if sbom_external_node
-                .discriminator_value
-                .as_ref()
-                .map(|s| s.is_empty())
-                .unwrap_or(true)
-            {
+
+            let discriminator_value = sbom_external_node.discriminator_value?;
+
+            if discriminator_value.is_empty() {
                 return None;
             }
-            if let Some(discriminator_value) = sbom_external_node.discriminator_value {
-                let external_doc_ref = sbom_external_node.external_doc_ref;
-                let external_doc_id =
-                    format!("urn:cdx:{}/{}", external_doc_ref, discriminator_value);
-                match sbom::Entity::find()
-                    .filter(sbom::Column::DocumentId.eq(external_doc_id))
-                    .one(connection)
-                    .await
-                {
-                    Ok(Some(entity)) => {
-                        return Some((entity.sbom_id, sbom_external_node.external_node_ref));
-                    }
-                    _ => return None,
-                }
+
+            let external_doc_ref = sbom_external_node.external_doc_ref;
+            let external_doc_id = format!("urn:cdx:{}/{}", external_doc_ref, discriminator_value);
+
+            match sbom::Entity::find()
+                .filter(sbom::Column::DocumentId.eq(external_doc_id))
+                .one(connection)
+                .await
+            {
+                Ok(Some(entity)) => Some(ResolvedSbom {
+                    sbom_id: entity.sbom_id,
+                    node_id: sbom_external_node.external_node_ref,
+                }),
+                _ => None,
             }
-            None
         }
         ExternalType::RedHatProductComponent => {
             // for RH variations we assume the sbom_external_node_ref is the package checksum
@@ -131,22 +136,24 @@ async fn resolve_external_sbom<C: ConnectionTrait>(
             // sbom_id/node_id
             let sbom_external_node_ref = sbom_external_node.external_node_ref;
 
-            match sbom_node_checksum::Entity::find()
+            let Ok(Some(entity)) = sbom_node_checksum::Entity::find()
                 .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.to_string()))
                 .one(connection)
                 .await
+            else {
+                return None;
+            };
+
+            match sbom_node_checksum::Entity::find()
+                .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
+                .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                .one(connection)
+                .await
             {
-                Ok(Some(entity)) => {
-                    match sbom_node_checksum::Entity::find()
-                        .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
-                        .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
-                        .one(connection)
-                        .await
-                    {
-                        Ok(Some(matched)) => Some((matched.sbom_id, matched.node_id)),
-                        _ => None,
-                    }
-                }
+                Ok(Some(matched)) => Some(ResolvedSbom {
+                    sbom_id: matched.sbom_id,
+                    node_id: matched.node_id,
+                }),
                 _ => None,
             }
         }
@@ -258,8 +265,10 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
         match self.graph.node_weight(self.node) {
             // collect external sbom ref
             Some(graph::Node::External(external_node)) => {
-                let (external_sbom_id, external_node_id) =
-                    resolve_external_sbom(external_node.node_id.clone(), self.connection).await?;
+                let ResolvedSbom {
+                    sbom_id: external_sbom_id,
+                    node_id: external_node_id,
+                } = resolve_external_sbom(external_node.node_id.clone(), self.connection).await?;
 
                 log::warn!("external sbom id: {:?}", external_sbom_id);
                 log::warn!("external node id: {:?}", external_node_id);
