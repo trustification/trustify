@@ -167,7 +167,7 @@ impl DiscoveredTracker {
     pub fn visit(&self, graph: &NodeGraph, node: NodeIndex) -> bool {
         let mut maps = self.cache.lock();
         let map = maps
-            .entry(graph as *const Graph<_, _> as *const _)
+            .entry(graph as *const Graph<_, _>)
             .or_insert_with(|| graph.visit_map());
 
         map.visit(node)
