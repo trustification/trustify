@@ -4,8 +4,8 @@ use crate::{
         product::ProductInformation,
         purl::creator::PurlCreator,
         sbom::{
-            FileCreator, LicenseCreator, LicenseInfo, PackageCreator, PackageReference, References,
-            RelationshipCreator, SbomContext, SbomInformation, Spdx,
+            FileCreator, LicenseCreator, LicenseInfo, NodeInfoParam, PackageCreator,
+            PackageReference, References, RelationshipCreator, SbomContext, SbomInformation, Spdx,
             processor::{
                 InitContext, PostContext, Processor, RedHatProductComponentRelationships,
                 RunProcessors,
@@ -221,9 +221,12 @@ impl SbomContext {
             }
 
             packages.add(
-                package.package_spdx_identifier,
-                package.package_name,
-                package.package_version,
+                NodeInfoParam {
+                    node_id: package.package_spdx_identifier,
+                    name: package.package_name,
+                    group: None,
+                    version: package.package_version,
+                },
                 refs,
                 license_refs,
                 package.package_checksum,
