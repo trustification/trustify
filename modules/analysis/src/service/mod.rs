@@ -9,11 +9,12 @@ pub mod render;
 #[cfg(test)]
 mod test;
 
-use crate::model::graph::Node::External;
 use crate::{
     Error,
     config::AnalysisConfig,
-    model::{AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph, graph},
+    model::{
+        AnalysisStatus, BaseSummary, GraphMap, Node, PackageGraph, graph, graph::Node::External,
+    },
 };
 use fixedbitset::FixedBitSet;
 use futures::{StreamExt, stream};
@@ -182,158 +183,139 @@ async fn collect<C: ConnectionTrait>(
         return None;
     }
 
-    let mut result = Vec::new();
-
     match graph.node_weight(node) {
         // collect external sbom ref
         Some(External(external_node)) => {
-            let external_sbom =
-                resolve_external_sbom(external_node.node_id.clone(), connection).await;
+            let (external_sbom_id, external_node_id) =
+                resolve_external_sbom(external_node.node_id.clone(), connection).await?;
 
-            if let Some((external_sbom_id, external_node_id)) = external_sbom {
-                log::warn!("external sbom id: {:?}", external_sbom_id);
-                log::warn!("external node id: {:?}", external_node_id);
+            log::warn!("external sbom id: {:?}", external_sbom_id);
+            log::warn!("external node id: {:?}", external_node_id);
 
-                // get external sbom graph
-                if let Some((_, external_graph)) = graphs
-                    .iter()
-                    .find(|(sbom_id, _)| sbom_id == &external_sbom_id.to_string())
-                {
-                    // now that we have the graph, find the external node reference in that graph
-                    // so we have a starting point.
-                    if let Some(external_node_index) = external_graph
-                        .node_indices()
-                        .find(|&node| external_graph[node].node_id.eq(&external_node_id))
-                    {
-                        // process as normal, which is just non-DRY of following code block which we
-                        // can optimise away.
-                        log::warn!("external node index: {:?}", external_node_index);
+            // get external sbom graph
+            let Some((_, external_graph)) = graphs
+                .iter()
+                .find(|(sbom_id, _)| sbom_id == &external_sbom_id.to_string())
+            else {
+                log::warn!("Graph not found.");
+                return None;
+            };
 
-                        // for edge in external_graph.edges_directed(external_node_index, direction) {
-                        //     log::debug!("edge {edge:?}");
-                        //
-                        //     // we only recurse in one direction
-                        //     let (ancestor, descendent, package_node) = match direction {
-                        //         Direction::Incoming => (
-                        //             Box::pin(collect(
-                        //                 graphs,
-                        //                 external_graph,
-                        //                 edge.source(),
-                        //                 direction,
-                        //                 depth - 1,
-                        //                 discovered,
-                        //                 relationships,
-                        //                 connection,
-                        //             ))
-                        //             .await,
-                        //             None,
-                        //             external_graph.node_weight(edge.source()),
-                        //         ),
-                        //         Direction::Outgoing => (
-                        //             None,
-                        //             Box::pin(collect(
-                        //                 graphs,
-                        //                 external_graph,
-                        //                 edge.target(),
-                        //                 direction,
-                        //                 depth - 1,
-                        //                 discovered,
-                        //                 relationships,
-                        //                 connection,
-                        //             ))
-                        //             .await,
-                        //             external_graph.node_weight(edge.target()),
-                        //         ),
-                        //     };
-                        //
-                        //     let relationship = edge.weight();
-                        //
-                        //     if !relationships.is_empty() && !relationships.contains(relationship) {
-                        //         // if we have entries, and no match, continue with the next
-                        //         continue;
-                        //     }
-                        //
-                        //     let Some(package_node) = package_node else {
-                        //         continue;
-                        //     };
-                        //
-                        //     result.push(Node {
-                        //         base: BaseSummary::from(package_node),
-                        //         relationship: Some(*relationship),
-                        //         ancestors: ancestor,
-                        //         descendants: descendent,
-                        //     });
-                        // }
-                    } else {
-                        log::warn!("Node with ID {} not found", external_node_id);
-                        // You can return early, log an error, or take other actions as needed
-                    }
-                } else {
-                    log::warn!("Graph not found.");
-                }
-            }
+            // now that we have the graph, find the external node reference in that graph
+            // so we have a starting point.
+            let Some(external_node_index) = external_graph
+                .node_indices()
+                .find(|&node| external_graph[node].node_id.eq(&external_node_id))
+            else {
+                log::warn!("Node with ID {} not found", external_node_id);
+                // You can return early, log an error, or take other actions as needed
+                return None;
+            };
+
+            // process as normal, which is just non-DRY of following code block which we
+            // can optimise away.
+            log::warn!("external node index: {:?}", external_node_index);
+
+            Some(
+                collect_graph(
+                    graphs,
+                    external_graph,
+                    node,
+                    direction,
+                    depth,
+                    discovered,
+                    relationships,
+                    connection,
+                )
+                .await,
+            )
         }
         // collect
-        _ => {
-            for edge in graph.edges_directed(node, direction) {
-                log::debug!("edge {edge:?}");
+        _ => Some(
+            collect_graph(
+                graphs,
+                graph,
+                node,
+                direction,
+                depth,
+                discovered,
+                relationships,
+                connection,
+            )
+            .await,
+        ),
+    }
+}
 
-                // we only recurse in one direction
-                let (ancestor, descendent, package_node) = match direction {
-                    Direction::Incoming => (
-                        Box::pin(collect(
-                            graphs,
-                            graph,
-                            edge.source(),
-                            direction,
-                            depth - 1,
-                            discovered,
-                            relationships,
-                            connection,
-                        ))
-                        .await,
-                        None,
-                        graph.node_weight(edge.source()),
-                    ),
-                    Direction::Outgoing => (
-                        None,
-                        Box::pin(collect(
-                            graphs,
-                            graph,
-                            edge.target(),
-                            direction,
-                            depth - 1,
-                            discovered,
-                            relationships,
-                            connection,
-                        ))
-                        .await,
-                        graph.node_weight(edge.target()),
-                    ),
-                };
+async fn collect_graph<C: ConnectionTrait>(
+    graphs: &[(String, Arc<PackageGraph>)],
+    graph: &Graph<graph::Node, Relationship, petgraph::Directed>,
+    node: NodeIndex,
+    direction: Direction,
+    depth: u64,
+    discovered: &mut FixedBitSet,
+    relationships: &HashSet<Relationship>,
+    connection: &C,
+) -> Vec<Node> {
+    let mut result = vec![];
 
-                let relationship = edge.weight();
+    for edge in graph.edges_directed(node, direction) {
+        log::debug!("edge {edge:?}");
 
-                if !relationships.is_empty() && !relationships.contains(relationship) {
-                    // if we have entries, and no match, continue with the next
-                    continue;
-                }
+        // we only recurse in one direction
+        let (ancestor, descendent, package_node) = match direction {
+            Direction::Incoming => (
+                Box::pin(collect(
+                    graphs,
+                    graph,
+                    edge.source(),
+                    direction,
+                    depth - 1,
+                    discovered,
+                    relationships,
+                    connection,
+                ))
+                .await,
+                None,
+                graph.node_weight(edge.source()),
+            ),
+            Direction::Outgoing => (
+                None,
+                Box::pin(collect(
+                    graphs,
+                    graph,
+                    edge.target(),
+                    direction,
+                    depth - 1,
+                    discovered,
+                    relationships,
+                    connection,
+                ))
+                .await,
+                graph.node_weight(edge.target()),
+            ),
+        };
 
-                let Some(package_node) = package_node else {
-                    continue;
-                };
+        let relationship = edge.weight();
 
-                result.push(Node {
-                    base: BaseSummary::from(package_node),
-                    relationship: Some(*relationship),
-                    ancestors: ancestor,
-                    descendants: descendent,
-                });
-            }
+        if !relationships.is_empty() && !relationships.contains(relationship) {
+            // if we have entries, and no match, continue with the next
+            continue;
         }
+
+        let Some(package_node) = package_node else {
+            continue;
+        };
+
+        result.push(Node {
+            base: BaseSummary::from(package_node),
+            relationship: Some(*relationship),
+            ancestors: ancestor,
+            descendants: descendent,
+        });
     }
 
-    Some(result)
+    result
 }
 
 impl AnalysisService {
