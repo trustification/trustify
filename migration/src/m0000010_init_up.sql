@@ -1938,6 +1938,18 @@ CREATE TABLE public.sbom_node (
 
 
 --
+-- Name: sbom_node_checksum; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sbom_node_checksum (
+    sbom_id uuid NOT NULL,
+    node_id character varying NOT NULL,
+    type character varying NOT NULL,
+    value character varying NOT NULL
+);
+
+
+--
 -- Name: sbom_package; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2894,6 +2906,12 @@ INSERT INTO public.relationship VALUES (15, 'Undefined');
 
 
 --
+-- Data for Name: sbom_node_checksum; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
 -- Data for Name: sbom_package; Type: TABLE DATA; Schema: public; Owner: -
 --
 
@@ -2921,12 +2939,12 @@ INSERT INTO public.relationship VALUES (15, 'Undefined');
 -- Data for Name: status; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.status VALUES ('f3053177-cdc9-4f93-9240-41cf2ded0fc1', 'affected', 'Affected', 'Vulnerabililty affects');
-INSERT INTO public.status VALUES ('6f684f4f-bb17-4515-9fd6-889231bf3ddd', 'not_affected', 'Not Affected', 'Vulnerabililty does not affect');
-INSERT INTO public.status VALUES ('1d7c43a9-f16c-4ed8-ad70-e48f11214a9d', 'fixed', 'Fixed', 'Vulnerabililty is fixed');
-INSERT INTO public.status VALUES ('fffe2bdf-9005-402c-927b-75f5f28e8536', 'under_investigation', 'Under Investigation', 'Vulnerabililty is under investigation');
-INSERT INTO public.status VALUES ('42c35e3d-31cb-4240-8a7b-8b34e7e10821', 'fixed', 'Fixed', 'Vulnerabililty is fixed');
-INSERT INTO public.status VALUES ('5647b96a-e7de-41d4-b2ee-75ffac82be84', 'recommended', 'Recommended', 'Vulnerabililty is fixed & recommended');
+INSERT INTO public.status VALUES ('85b912db-fc1b-4e75-8b27-68b68c0ed828', 'affected', 'Affected', 'Vulnerabililty affects');
+INSERT INTO public.status VALUES ('619aba21-abba-4220-9e3e-110cf87e5393', 'not_affected', 'Not Affected', 'Vulnerabililty does not affect');
+INSERT INTO public.status VALUES ('c0273e43-2b0c-4dae-a3b3-c4f9733fbfa7', 'fixed', 'Fixed', 'Vulnerabililty is fixed');
+INSERT INTO public.status VALUES ('23613500-86a4-4cdb-bc92-8c74e18764da', 'under_investigation', 'Under Investigation', 'Vulnerabililty is under investigation');
+INSERT INTO public.status VALUES ('2bb0325b-0948-44ea-bab7-46af9fc834eb', 'fixed', 'Fixed', 'Vulnerabililty is fixed');
+INSERT INTO public.status VALUES ('858a3f17-d864-4be8-932e-4a634de47b8b', 'recommended', 'Recommended', 'Vulnerabililty is fixed & recommended');
 
 
 --
@@ -3188,6 +3206,14 @@ ALTER TABLE ONLY public.sbom_external_node
 
 ALTER TABLE ONLY public.sbom_file
     ADD CONSTRAINT sbom_file_pkey PRIMARY KEY (sbom_id, node_id);
+
+
+--
+-- Name: sbom_node_checksum sbom_node_checksum_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sbom_node_checksum
+    ADD CONSTRAINT sbom_node_checksum_pkey PRIMARY KEY (sbom_id, node_id, type);
 
 
 --
@@ -3958,6 +3984,14 @@ ALTER TABLE ONLY public.sbom_file
 
 
 --
+-- Name: sbom_node_checksum sbom_node_checksum_sbom_id_node_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sbom_node_checksum
+    ADD CONSTRAINT sbom_node_checksum_sbom_id_node_id_fkey FOREIGN KEY (sbom_id, node_id) REFERENCES public.sbom_node(sbom_id, node_id) ON DELETE CASCADE;
+
+
+--
 -- Name: sbom_node sbom_node_sbom_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -4024,3 +4058,4 @@ ALTER TABLE ONLY public.version_range
 --
 -- PostgreSQL database dump complete
 --
+
