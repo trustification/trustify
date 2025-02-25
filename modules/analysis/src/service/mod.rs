@@ -155,20 +155,16 @@ async fn resolve_external_sbom<C: ConnectionTrait>(
     }
 }
 
+type NodeGraph = Graph<graph::Node, Relationship, petgraph::Directed>;
+
 /// Tracker for visited nodes, across graphs,
 #[derive(Default, Clone)]
 struct DiscoveredTracker {
-    cache: Arc<
-        Mutex<HashMap<*const Graph<graph::Node, Relationship, petgraph::Directed>, FixedBitSet>>,
-    >,
+    cache: Arc<Mutex<HashMap<*const NodeGraph, FixedBitSet>>>,
 }
 
 impl DiscoveredTracker {
-    pub fn visit(
-        &self,
-        graph: &Graph<graph::Node, Relationship, petgraph::Directed>,
-        node: NodeIndex,
-    ) -> bool {
+    pub fn visit(&self, graph: &NodeGraph, node: NodeIndex) -> bool {
         let mut maps = self.cache.lock();
         let map = maps
             .entry(graph as *const Graph<_, _> as *const _)
@@ -183,7 +179,7 @@ impl DiscoveredTracker {
 /// Keeping track of all relevant information.
 struct Collector<'a, C: ConnectionTrait> {
     graphs: &'a [(String, Arc<PackageGraph>)],
-    graph: &'a Graph<graph::Node, Relationship, petgraph::Directed>,
+    graph: &'a NodeGraph,
     node: NodeIndex,
     direction: Direction,
     depth: u64,
@@ -196,7 +192,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
     /// Create a new collector, with a new visited set.
     fn new(
         graphs: &'a [(String, Arc<PackageGraph>)],
-        graph: &'a Graph<graph::Node, Relationship, petgraph::Directed>,
+        graph: &'a NodeGraph,
         node: NodeIndex,
         direction: Direction,
         depth: u64,
@@ -218,11 +214,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
     /// Continue with another graph and node as an entry point.
     ///
     /// Shares the visited set.
-    fn with(
-        self,
-        graph: &'a Graph<graph::Node, Relationship, petgraph::Directed>,
-        node: NodeIndex,
-    ) -> Self {
+    fn with(self, graph: &'a NodeGraph, node: NodeIndex) -> Self {
         Self {
             graph,
             node,
