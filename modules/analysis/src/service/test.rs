@@ -708,7 +708,11 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
     )
     .await;
     assert!(get_external_sbom.is_some());
-    if let Some((_, external_node_id)) = get_external_sbom {
+    if let Some(ResolvedSbom {
+        sbom_id: _,
+        node_id: external_node_id,
+    }) = get_external_sbom
+    {
         assert_eq!(external_node_id, "b");
     }
 
@@ -722,7 +726,11 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
     let get_external_sbom =
         resolve_external_sbom("DocumentRef-ext-b:SPDXRef-A".to_string(), &ctx.db).await;
     assert!(get_external_sbom.is_some());
-    if let Some((_, external_node_id)) = get_external_sbom {
+    if let Some(ResolvedSbom {
+        sbom_id: _,
+        node_id: external_node_id,
+    }) = get_external_sbom
+    {
         assert_eq!(external_node_id, "SPDXRef-A");
     }
 
@@ -745,7 +753,11 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
     )
     .await;
 
-    if let Some((external_sbom_id, external_node_id)) = get_external_sbom {
+    if let Some(ResolvedSbom {
+        sbom_id: external_sbom_id,
+        node_id: external_node_id,
+    }) = get_external_sbom
+    {
         assert_eq!(external_node_id, "SPDXRef-SRPM".to_string());
         let sbom = sbom::Entity::find()
             .filter(sbom::Column::SbomId.eq(external_sbom_id))
