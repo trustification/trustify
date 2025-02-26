@@ -174,12 +174,12 @@ impl<ER: ExternalReferenceProcessor> RelationshipCreator<ER> {
         for rel in &self.rels {
             if let Set(left) = &rel.left_node_id {
                 if !sources.refs.contains(left.as_str()) {
-                    bail!("Invalid SPDX reference: {left}");
+                    bail!("Invalid reference: {left}");
                 }
             }
             if let Set(right) = &rel.right_node_id {
                 if !sources.refs.contains(right.as_str()) {
-                    bail!("Invalid SPDX reference: {right}");
+                    bail!("Invalid reference: {right}");
                 }
             }
         }

@@ -123,7 +123,7 @@ async fn ingest_spdx_broken_refs(ctx: &TrustifyContext) -> Result<(), anyhow::Er
 
     assert_eq!(
         err.to_string(),
-        "Invalid SPDX reference: SPDXRef-0068e307-de91-4e82-b407-7a41217f9758"
+        "Invalid reference: SPDXRef-0068e307-de91-4e82-b407-7a41217f9758"
     );
 
     let result = sbom

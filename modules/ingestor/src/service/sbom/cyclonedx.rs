@@ -1,7 +1,7 @@
 use crate::{
     graph::{Graph, Outcome, sbom::cyclonedx},
     model::IngestResult,
-    service::Error,
+    service::{Error, Warnings},
 };
 use sea_orm::TransactionTrait;
 use tracing::instrument;
@@ -24,6 +24,8 @@ impl<'g> CyclonedxLoader<'g> {
         buffer: &[u8],
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
+        let warnings = Warnings::default();
+
         let cdx: serde_cyclonedx::cyclonedx::v_1_6::CycloneDx = serde_json::from_slice(buffer)
             .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
@@ -58,7 +60,7 @@ impl<'g> CyclonedxLoader<'g> {
         {
             Outcome::Existed(sbom) => sbom,
             Outcome::Added(sbom) => {
-                sbom.ingest_cyclonedx(cdx, &tx)
+                sbom.ingest_cyclonedx(cdx, &warnings, &tx)
                     .await
                     .map_err(Error::Generic)?;
                 tx.commit().await?;
@@ -70,7 +72,7 @@ impl<'g> CyclonedxLoader<'g> {
         Ok(IngestResult {
             id: Id::Uuid(ctx.sbom.sbom_id),
             document_id,
-            warnings: vec![],
+            warnings: warnings.into(),
         })
     }
 }
