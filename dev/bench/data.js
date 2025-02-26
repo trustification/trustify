@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740505039508,
+  "lastUpdate": 1740559808295,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5596,6 +5596,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "87e2e664b6f00089fd3b495c24c9c5a39d8372a4",
+          "message": "chore: update bytesize",
+          "timestamp": "2025-02-26T08:23:49Z",
+          "tree_id": "b4154fa1ff0acd8130d2802bdd0dfeb2b9842bd7",
+          "url": "https://github.com/trustification/trustify/commit/87e2e664b6f00089fd3b495c24c9c5a39d8372a4"
+        },
+        "date": 1740559807578,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
