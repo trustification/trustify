@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740559808295,
+  "lastUpdate": 1740582041509,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5620,6 +5620,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/87e2e664b6f00089fd3b495c24c9c5a39d8372a4"
         },
         "date": 1740559807578,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "805f6719aa20ff5f492b73d870300b98ea07cda1",
+          "message": "fix(sbom): validate CDX files during ingestion\n\nThis allows to catch some errors, which might lead to internal errors.\nInstead of failing with a DB error, we now return a more user friendly\nexplanation of what went wrong. We also return warnings, if they don't\nprevent the ingestion of the document.\n\nCloses: #551",
+          "timestamp": "2025-02-26T14:30:45Z",
+          "tree_id": "755322dc86a9f2db73b53f7add6683c8f5f7f7c6",
+          "url": "https://github.com/trustification/trustify/commit/805f6719aa20ff5f492b73d870300b98ea07cda1"
+        },
+        "date": 1740582040515,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
