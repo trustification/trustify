@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740582041509,
+  "lastUpdate": 1740582750818,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5654,6 +5654,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "committer": {
+            "email": "hiram@hiramchirino.com",
+            "name": "Hiram Chirino",
+            "username": "chirino"
+          },
+          "distinct": true,
+          "id": "24901e7e04163bcc2f9657da6ddf7c54933e3529",
+          "message": "Simplify the LicenseInfo type, the refs: HashMap fields is not needed.\n\nSigned-off-by: Hiram Chirino <hiram@hiramchirino.com>",
+          "timestamp": "2025-02-26T14:51:26Z",
+          "tree_id": "640351194e33f8a5c804a8739c3ded99c9103ce7",
+          "url": "https://github.com/trustification/trustify/commit/24901e7e04163bcc2f9657da6ddf7c54933e3529"
+        },
+        "date": 1740582749936,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
