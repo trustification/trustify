@@ -12,8 +12,9 @@ data "aws_subnets" "cluster-private" {
     name = "vpc-id"
     values = [data.aws_vpc.cluster.id]
   }
-  tags = {
-    "kubernetes.io/role/internal-elb" = ""
+  filter {
+    name   = "tag-key"
+    values = ["kubernetes.io/role/internal-elb"]
   }
 }
 
