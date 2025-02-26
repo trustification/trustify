@@ -2,7 +2,7 @@ use bytesize::ByteSize;
 use serde::{Serialize, Serializer};
 use std::{
     borrow::Cow,
-    fmt::{Display, Formatter},
+    fmt::{Debug, Display, Formatter},
     ops::{Deref, DerefMut},
     str::FromStr,
 };
@@ -43,11 +43,11 @@ impl Serialize for BinaryByteSize {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.to_string_as(true))
+        serializer.serialize_str(&self.to_string())
     }
 }
 
-// This is a copy of [`bytesize::ByteSize`] in order to generate a schema for it.
+// This is a copy of [`bytesize::ByteSize`] to generate a schema for it.
 #[derive(schemars::JsonSchema)]
 #[schemars(remote = "ByteSize")]
 struct ByteSizeDef(#[allow(unused)] pub String);
@@ -92,7 +92,7 @@ impl DerefMut for BinaryByteSize {
 
 impl Display for BinaryByteSize {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0.to_string_as(true))
+        Display::fmt(&self.0, f)
     }
 }
 
@@ -101,5 +101,15 @@ impl FromStr for BinaryByteSize {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         ByteSize::from_str(s).map(BinaryByteSize)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn to_string() {
+        assert_eq!("4.0 GiB", &BinaryByteSize(ByteSize::gib(4)).to_string());
     }
 }
