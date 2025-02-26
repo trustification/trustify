@@ -7,7 +7,7 @@ mod cwe;
 mod osv;
 mod sbom;
 
-use crate::runner::report::Report;
+use crate::runner::{common::heartbeat::Heart, report::Report};
 pub use clearly_defined::*;
 pub use clearly_defined_curation::*;
 pub use csaf::*;
@@ -47,6 +47,26 @@ impl Importer {
             value: value.try_into()?,
             revision,
         })
+    }
+
+    /// check if we need to run or skip the importer
+    pub fn is_due(&self) -> bool {
+        match self.data.last_run {
+            Some(t) => (OffsetDateTime::now_utc() - t) > self.data.configuration.period,
+            None => true,
+        }
+    }
+
+    /// check if any instance is running this importer
+    pub fn is_running(&self) -> bool {
+        self.heartbeat
+            .and_then(|t| OffsetDateTime::from_unix_timestamp_nanos(t).ok())
+            .is_some_and(|t| (OffsetDateTime::now_utc() - t) < (2 * Heart::RATE))
+    }
+
+    /// check if enabled to run
+    pub fn is_enabled(&self) -> bool {
+        !self.data.configuration.disabled
     }
 }
 

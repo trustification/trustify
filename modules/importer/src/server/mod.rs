@@ -11,7 +11,7 @@ use crate::{
     server::context::ServiceRunContext,
     service::{Error, ImporterService},
 };
-use std::{collections::HashMap, path::PathBuf, time::Duration};
+use std::{path::PathBuf, time::Duration};
 use time::OffsetDateTime;
 use tokio::{task::LocalSet, time::MissedTickBehavior};
 use tokio_util::sync::CancellationToken;
@@ -83,13 +83,13 @@ impl Server {
         interval.set_missed_tick_behavior(MissedTickBehavior::Skip);
 
         // Maintain a list of currently running jobs
-        let mut runs = HashMap::<String, Heart>::default();
+        let mut runs: Vec<Heart> = Vec::new();
 
         loop {
             interval.tick().await;
 
             // Remove jobs that are finished; they're heartless ;)
-            runs.retain(|_, heart| heart.is_beating());
+            runs.retain(|heart| heart.is_beating());
             let count = runs.len();
 
             // Asynchronously fire off new jobs subject to max concurrency
@@ -98,20 +98,15 @@ impl Server {
                     .list()
                     .await?
                     .into_iter()
-                    .filter(|i| {
-                        !(i.data.configuration.disabled || already_running(i) || can_wait(i))
-                    })
+                    .filter(|i| i.is_enabled() && i.is_due() && !i.is_running())
                     .take(self.concurrency - count)
                     .map(|importer| {
                         let token = CancellationToken::new();
-                        (
-                            importer.name.clone(),
-                            Heart::new(
-                                importer.clone(),
-                                runner.db.clone(),
-                                import(runner.clone(), importer, service.clone(), token.clone()),
-                                token,
-                            ),
+                        Heart::new(
+                            importer.clone(),
+                            runner.db.clone(),
+                            import(runner.clone(), importer, service.clone(), token.clone()),
+                            token,
                         )
                     }),
             );
@@ -173,20 +168,4 @@ async fn import(
         .await?;
 
     Ok(())
-}
-
-/// check if we need to run or skip the importer
-fn can_wait(importer: &Importer) -> bool {
-    let Some(last) = importer.data.last_run else {
-        return false;
-    };
-    (OffsetDateTime::now_utc() - last) < importer.data.configuration.period
-}
-
-/// check if another instance is running this importer
-fn already_running(importer: &Importer) -> bool {
-    importer
-        .heartbeat
-        .and_then(|t| OffsetDateTime::from_unix_timestamp_nanos(t).ok())
-        .is_some_and(|t| (OffsetDateTime::now_utc() - t) < (2 * Heart::RATE))
 }
