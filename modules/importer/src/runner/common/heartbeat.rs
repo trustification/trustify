@@ -28,33 +28,13 @@ impl Heart {
         Self { handle, token }
     }
 
-    // Updates the importer record with the current time, but only if
-    // the db matches our previous update, i.e. optimistic
-    // locking. Returns the updated record on success.
-    pub async fn beat(importer: &Importer, db: &Database) -> Result<Importer, Error> {
-        let t = OffsetDateTime::now_utc().unix_timestamp_nanos();
-        let model = importer::ActiveModel {
-            name: Set(importer.name.to_owned()),
-            heartbeat: Set(Some(t.into())),
-            ..Default::default()
-        };
-        use importer::Column::Heartbeat;
-        let lock = match importer.heartbeat {
-            Some(t) => Expr::col(Heartbeat).eq(Decimal::from_i128_with_scale(t, 0)),
-            None => Expr::col(Heartbeat).is_null(),
-        };
-        // We rely on the fact that `update` will return an error if
-        // no row is affected. This is not how `update_many` behaves.
-        match importer::Entity::update(model).filter(lock).exec(db).await {
-            Ok(model) => Importer::try_from(model).map_err(Error::Json),
-            Err(e) => Err(Error::Heartbeat(e)),
-        }
-    }
-
     pub fn is_beating(&self) -> bool {
         !self.handle.is_finished()
     }
 
+    // Attempts to acquire exclusive optimistic lock. Upon success,
+    // spawns the future, and regularly updates the lock until the
+    // future completes.
     async fn pump<F>(importer: Importer, db: Database, future: F, token: CancellationToken)
     where
         F: Future + 'static,
@@ -80,10 +60,36 @@ impl Heart {
                 if work.is_finished() {
                     log::debug!("Releasing lock; finished '{name}'");
                     break;
+                } else if token.is_cancelled() {
+                    log::warn!("Importer '{name}' not responding to cancel");
                 }
             }
         } else {
             log::debug!("Unable to acquire lock to run '{name}'");
+        }
+    }
+
+    // Employs an optimistic locking strategy to update the importer
+    // record with the current time, but only if the db matches the
+    // state of the &Importer parameter, otherwise an error is
+    // returned. Upon success, the updated Importer is returned.
+    async fn beat(importer: &Importer, db: &Database) -> Result<Importer, Error> {
+        let t = OffsetDateTime::now_utc().unix_timestamp_nanos();
+        let model = importer::ActiveModel {
+            name: Set(importer.name.to_owned()),
+            heartbeat: Set(Some(t.into())),
+            ..Default::default()
+        };
+        use importer::Column::Heartbeat;
+        let lock = match importer.heartbeat {
+            Some(t) => Expr::col(Heartbeat).eq(Decimal::from_i128_with_scale(t, 0)),
+            None => Expr::col(Heartbeat).is_null(),
+        };
+        // We rely on the fact that `update` will return an error if
+        // no row is affected, as opposed to how `update_many` works
+        match importer::Entity::update(model).filter(lock).exec(db).await {
+            Ok(model) => Importer::try_from(model).map_err(Error::Json),
+            Err(e) => Err(Error::Heartbeat(e)),
         }
     }
 }
