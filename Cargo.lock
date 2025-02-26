@@ -1804,9 +1804,9 @@ dependencies = [
 
 [[package]]
 name = "csaf-walker"
-version = "0.11.0"
+version = "0.12.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be43a65d2ff7211c8162c5d4bbf38f2214e71d42d11d4aff8846f924c24949d9"
+checksum = "770289bae0180fe1591840e3d0b2a7bc867d480387e5eeddbcb224bdfabe2921"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1815,7 +1815,7 @@ dependencies = [
  "csaf",
  "csv",
  "digest",
- "fluent-uri 0.3.2",
+ "fluent-uri",
  "futures",
  "hickory-resolver",
  "html-escape",
@@ -1929,41 +1929,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ec6a2f799b0e3103192800872de17ee1d39fe0c598628277b9b012f09b4010f"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "cyclonedx-bom"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce2ec98a191e17f63b92b132f6852462de9eaee03ca8dbf2df401b9fd809bcac"
-dependencies = [
- "base64 0.21.7",
- "cyclonedx-bom-macros",
- "fluent-uri 0.1.4",
- "indexmap 2.7.1",
- "once_cell",
- "ordered-float 4.6.0",
- "purl",
- "regex",
- "serde",
- "serde_json",
- "spdx",
- "strum 0.26.3",
- "thiserror 1.0.69",
- "time",
- "uuid",
- "xml-rs",
-]
-
-[[package]]
-name = "cyclonedx-bom-macros"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c50341f21df64b412b4f917e34b7aa786c092d64f3f905f478cb76950c7e980c"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.98",
 ]
 
 [[package]]
@@ -2576,15 +2541,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0a9a50dc1d06d264964cb7d080d4142e1e1b134e9aacac1226ea024e6ed7a7cc"
 dependencies = [
  "time",
-]
-
-[[package]]
-name = "fluent-uri"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17c704e9dbe1ddd863da1e6ff3567795087b1eb201ce80d8fa81162e1516500d"
-dependencies = [
- "bitflags 1.3.2",
 ]
 
 [[package]]
@@ -4876,15 +4832,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ordered-float"
-version = "4.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bb71e1b3fa6ca1c61f383464aaf2bb0e2f8e772a1f01d486832464de363b951"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
 name = "ordered-multimap"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5612,17 +5559,6 @@ dependencies = [
  "bitflags 2.8.0",
  "memchr",
  "unicase",
-]
-
-[[package]]
-name = "purl"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f112b0e2a9bca03924c39166775b74fec9a831f7d4d8fa539dee0e565f403a0e"
-dependencies = [
- "hex",
- "percent-encoding",
- "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -6512,16 +6448,15 @@ dependencies = [
 
 [[package]]
 name = "sbom-walker"
-version = "0.11.0"
+version = "0.12.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5153b34af24d46e232d93717ba3e8747be2ceeaadb97d2f605b872b312c78d3"
+checksum = "9d5bde5fff6917da8111e5f1e6ddeaa8df20d2c482e48f7a6088d6d4e0bb8ca9"
 dependencies = [
  "anyhow",
  "bytes",
  "csv",
- "cyclonedx-bom",
  "digest",
- "fluent-uri 0.3.2",
+ "fluent-uri",
  "futures",
  "humantime",
  "log",
@@ -6529,6 +6464,7 @@ dependencies = [
  "reqwest 0.12.12",
  "sequoia-openpgp",
  "serde",
+ "serde-cyclonedx",
  "serde_json",
  "sha2",
  "spdx-rs",
@@ -9331,9 +9267,9 @@ dependencies = [
 
 [[package]]
 name = "walker-common"
-version = "0.11.0"
+version = "0.12.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc7cdbc8bf7f9b6791f97961e35e4f1f655d3e444b961c89066e8b51a2c9ed07"
+checksum = "1cbd6b49616bc63f8b0fe28c8603b848bdfecf6fba0ffcbb23ab9a00d92eef77"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -9866,12 +9802,6 @@ dependencies = [
  "linux-raw-sys",
  "rustix",
 ]
-
-[[package]]
-name = "xml-rs"
-version = "0.8.25"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5b940ebc25896e71dd073bad2dbaa2abfe97b0a391415e22ad1326d9c54e3c4"
 
 [[package]]
 name = "xml5ever"

@@ -1,15 +1,20 @@
-use crate::graph::{
-    cpe::CpeCreator,
-    product::ProductInformation,
-    purl::creator::PurlCreator,
-    sbom::{
-        CycloneDx as CycloneDxProcessor, LicenseCreator, LicenseInfo, PackageCreator,
-        PackageReference, RelationshipCreator, SbomContext, SbomInformation,
-        processor::{
-            InitContext, PostContext, Processor, RedHatProductComponentRelationships, RunProcessors,
+use crate::{
+    graph::{
+        cpe::CpeCreator,
+        product::ProductInformation,
+        purl::creator::PurlCreator,
+        sbom::{
+            CycloneDx as CycloneDxProcessor, LicenseCreator, LicenseInfo, PackageCreator,
+            PackageReference, References, RelationshipCreator, SbomContext, SbomInformation,
+            processor::{
+                InitContext, PostContext, Processor, RedHatProductComponentRelationships,
+                RunProcessors,
+            },
         },
     },
+    service::Error,
 };
+use sbom_walker::report::{ReportSink, check};
 use sea_orm::ConnectionTrait;
 use serde_cyclonedx::cyclonedx::v_1_6::{
     Component, ComponentEvidenceIdentity, CycloneDx, LicenseChoiceUrl,
@@ -94,12 +99,17 @@ impl<'a> From<Information<'a>> for SbomInformation {
 }
 
 impl SbomContext {
-    #[instrument(skip(connection, sbom), err(level=tracing::Level::INFO))]
+    #[instrument(skip(connection, sbom, warnings), err(level=tracing::Level::INFO))]
     pub async fn ingest_cyclonedx<C: ConnectionTrait>(
         &self,
         mut sbom: CycloneDx,
+        warnings: &dyn ReportSink,
         connection: &C,
     ) -> Result<(), anyhow::Error> {
+        // pre-flight checks
+
+        check::serde_cyclonedx::all(warnings, &(&sbom).into());
+
         let mut creator = Creator::new(self.sbom.sbom_id);
 
         // TODO: find a way to dynamically set up processors
@@ -277,12 +287,18 @@ impl<'a> Creator<'a> {
         }
         .run(processors);
 
+        // validate relationships before inserting
+
+        let sources = References::new()
+            .add_source(&[CYCLONEDX_DOC_REF])
+            .add_source(&packages);
+        relationships.validate(sources).map_err(Error::Generic)?;
+
         // create
 
         purls.create(db).await?;
         cpes.create(db).await?;
         licenses.create(db).await?;
-
         packages.create(db).await?;
         relationships.create(db).await?;
 

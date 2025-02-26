@@ -1,3 +1,4 @@
+mod corner_cases;
 mod cpe;
 mod external;
 mod purl;
@@ -146,7 +147,9 @@ where
                 serde_cyclonedx::cyclonedx::v_1_6::CycloneDx,
             >(data)?)
         },
-        |ctx, sbom, tx| Box::pin(async move { ctx.ingest_cyclonedx(sbom.clone(), tx).await }),
+        |ctx, sbom, tx| {
+            Box::pin(async move { ctx.ingest_cyclonedx(sbom.clone(), &Discard, tx).await })
+        },
         |sbom| sbom::cyclonedx::Information(sbom).into(),
         f,
     )
