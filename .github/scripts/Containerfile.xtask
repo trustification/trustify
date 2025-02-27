@@ -20,14 +20,25 @@ LABEL \
     org.opencontainers.image.description="Trustify - xtask binary" \
     org.opencontainers.image.source="https://github.com/trustification/trustify"
 
-RUN dnf install --nodocs -y zlib openssl krb5-libs libzstd lz4-libs libxml2
+RUN dnf install --nodocs -y zlib openssl krb5-libs libzstd lz4-libs libxml2 unzip
 
 COPY --from=builder /unpack/xtask /usr/local/bin
+
+RUN \
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && \
+  unzip awscliv2.zip && \
+  ./aws/install && \
+  rm -Rf aws
+
+# create a dedicated user
 
 RUN useradd -ms /bin/bash trustify
 RUN chown -R trustify /usr/local/bin
 RUN chmod -R u+rwx /usr/local/bin
+
 USER trustify
+
+# set the entrypoint
 
 WORKDIR /usr/local/bin
 ENTRYPOINT ["./xtask"]
