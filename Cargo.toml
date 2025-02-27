@@ -54,7 +54,7 @@ clap = "4"
 cpe = "0.1.5"
 criterion = "0.5.1"
 csaf = { version = "0.5.0", default-features = false }
-csaf-walker = { version = "0.12.0-rc.2", default-features = false }
+csaf-walker = { version = "0.12.0", default-features = false }
 cve = "0.3.1"
 deepsize = "0.2.0"
 env_logger = "0.11.0"
@@ -105,7 +105,7 @@ ring = "0.17.8"
 roxmltree = "0.20.0"
 rstest = "0.24.0"
 rust-s3 = "0.35"
-sbom-walker = { version = "0.12.0-rc.2", default-features = false, features = ["crypto-openssl", "serde-cyclonedx", "spdx-rs"] }
+sbom-walker = { version = "0.12.0", default-features = false, features = ["crypto-openssl", "serde-cyclonedx", "spdx-rs"] }
 schemars = "0.8"
 sea-orm = { version = "1", features = ["debug-print"] }
 sea-orm-migration = "1"
@@ -147,8 +147,8 @@ utoipa-redoc = { version = "6.0.0", features = ["actix-web"] }
 utoipa-swagger-ui = "9.0.0"
 uuid = "1.7.0"
 walkdir = "2.5"
-walker-common = "0.12.0-rc.2"
-walker-extras = "0.12.0-rc.2"
+walker-common = "0.12.0"
+walker-extras = "0.12.0"
 zip = "2.2.0"
 
 trustify-auth = { path = "common/auth", features = ["actix", "swagger"] }

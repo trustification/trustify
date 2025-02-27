@@ -1804,9 +1804,9 @@ dependencies = [
 
 [[package]]
 name = "csaf-walker"
-version = "0.12.0-rc.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "770289bae0180fe1591840e3d0b2a7bc867d480387e5eeddbcb224bdfabe2921"
+checksum = "ba5bb797b5e4f885e864aaff15e5ec4933728a51bbe150fae6a06ed03908103e"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -6448,9 +6448,9 @@ dependencies = [
 
 [[package]]
 name = "sbom-walker"
-version = "0.12.0-rc.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d5bde5fff6917da8111e5f1e6ddeaa8df20d2c482e48f7a6088d6d4e0bb8ca9"
+checksum = "ca821b58d56809b2b5decdb305a4e390059ee4c9b7f11015ebcc5df2ae607d1e"
 dependencies = [
  "anyhow",
  "bytes",
@@ -9267,9 +9267,9 @@ dependencies = [
 
 [[package]]
 name = "walker-common"
-version = "0.12.0-rc.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cbd6b49616bc63f8b0fe28c8603b848bdfecf6fba0ffcbb23ab9a00d92eef77"
+checksum = "f1476398945b2790d1f60cf303e01de0fd548f328add4c279f9230cdff43098b"
 dependencies = [
  "anyhow",
  "async-trait",
