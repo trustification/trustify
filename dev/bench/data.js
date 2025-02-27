@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740645608903,
+  "lastUpdate": 1740662749581,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5741,6 +5741,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "ee4818a1735f4cca5f9c4eda9e5f6e9c93b03ff4",
+          "message": "build: add the AWS client to the xtask image\n\nThe rationale behind that is, that we do create a dump with xtask,\nwhich we then upload to S3. Instead of having two pods run, and\norchestrating a handover between those two, we simply install the AWS\nCLI into the image, so that we can use the S3 client.",
+          "timestamp": "2025-02-27T13:05:20Z",
+          "tree_id": "ed17c67a389cca62216bd0fe0c62ca271fd44cc0",
+          "url": "https://github.com/trustification/trustify/commit/ee4818a1735f4cca5f9c4eda9e5f6e9c93b03ff4"
+        },
+        "date": 1740662748844,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
