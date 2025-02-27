@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740666547312,
+  "lastUpdate": 1740668529307,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5794,6 +5794,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/ba149cbbd2aee18bf93fb8265b1b6a4daabdafe6"
         },
         "date": 1740666546593,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "c79963855708b28e5afcdbfbd8467c3113319ef5",
+          "message": "ci: have a concurrency group per branch",
+          "timestamp": "2025-02-27T14:43:52Z",
+          "tree_id": "ba6a5eedf064199606d4a739888ee0a2a64bf2dc",
+          "url": "https://github.com/trustification/trustify/commit/c79963855708b28e5afcdbfbd8467c3113319ef5"
+        },
+        "date": 1740668528549,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
