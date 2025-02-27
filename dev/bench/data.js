@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740592935799,
+  "lastUpdate": 1740645608903,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5712,6 +5712,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "f6cda9d359cb202feb3c3c1f2f60b4a6a437a8f3",
+          "message": "build: use default Rust 2024 resolver\n\nThe Rust 2024 default resolver is \"3\". And it has the\nability to consider the Rust version in dependency requirements.\n\nThis will help when dependencies update their MSRV, but we don't yet.",
+          "timestamp": "2025-02-27T08:13:21Z",
+          "tree_id": "3c1c0de09cb3532def258a03f3d298694a25fe68",
+          "url": "https://github.com/trustification/trustify/commit/f6cda9d359cb202feb3c3c1f2f60b4a6a437a8f3"
+        },
+        "date": 1740645608145,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
