@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
 
 concurrency:
+  group: latest-release-${{ github.ref }}
   cancel-in-progress: false
-  group: latest-release
 
 env:
   OPENSHIFT_NAMESPACE: trustify-latest

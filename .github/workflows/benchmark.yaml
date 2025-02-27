@@ -8,7 +8,9 @@ on:
     branches:
       - "main"
 
-concurrency: benchmark
+concurrency:
+  group: benchmark-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
 
