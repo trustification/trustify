@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740662749581,
+  "lastUpdate": 1740666547312,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5770,6 +5770,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "ba149cbbd2aee18bf93fb8265b1b6a4daabdafe6",
+          "message": "minor refactoring to better convey logic\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2025-02-27T14:06:47Z",
+          "tree_id": "1c87e85206fe33e17dc96098a499eb41de8e3576",
+          "url": "https://github.com/trustification/trustify/commit/ba149cbbd2aee18bf93fb8265b1b6a4daabdafe6"
+        },
+        "date": 1740666546593,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
