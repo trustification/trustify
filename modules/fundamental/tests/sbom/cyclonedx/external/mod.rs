@@ -20,7 +20,7 @@ async fn simple_ext_1(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let results = sbom_external_node::Entity::find()
         .filter(
             sbom_external_node::Column::NodeId
-                .eq("urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#b"),
+                .eq("urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#a"),
         )
         .all(&ctx.db)
         .await?;
@@ -33,7 +33,7 @@ async fn simple_ext_1(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         results[0].external_doc_ref,
         "a4f16b62-fea9-42c1-8365-d72d3cef37d1".to_string()
     );
-    assert_eq!(results[0].external_node_ref, "b".to_string());
+    assert_eq!(results[0].external_node_ref, "a".to_string());
     assert_eq!(results[0].discriminator_value, Some("2".to_string()));
 
     Ok(())

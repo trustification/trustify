@@ -91,7 +91,7 @@
     },
     {
       "ref": "a",
-      "dependsOn": ["urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#b"]
+      "dependsOn": ["urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#a"]
     }
   ]
 }

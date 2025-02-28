@@ -893,31 +893,66 @@ async fn resolve_spdx_external_reference(ctx: &TrustifyContext) -> Result<(), an
     ctx.ingest_document("spdx/simple-ext-b.json").await?;
     let uri = "/api/v2/analysis/component/A?descendants=10".to_string();
     let request: Request = TestRequest::get().uri(&uri).to_request();
-    let response = app.call_service(request).await;
+    let response: Value = app.call_and_read_body_json(request).await;
 
-    assert_eq!(200, response.response().status());
+    //ensure we match on external node DocumentRef-ext-b:SPDXRef-A
+    assert!(response.contains_subset(json!({
+        "items": [ {
+            "descendants": [ {
+                "node_id": "DocumentRef-ext-b:SPDXRef-A",
+                "name":"SPDXRef-A",
+                "document_id":"uri:simple-ext-a",
+                "relationship":"package",
+                "descendants":[
+                    {
+                        "node_id":"SPDXRef-B",
+                        "name":"B",
+                        "relationship":"contains",
+                        "document_id":"uri:simple-ext-b"
+                    }
+                ]
+            }]
+        }]
+    })));
 
     Ok(())
 }
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-#[ignore = "bug in cdx"]
 async fn resolve_cdx_external_reference(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
 
-    ctx.ingest_document("cdx/simple-ext-a.json").await?;
+    ctx.ingest_document("cyclonedx/simple-ext-a.json").await?;
     let uri = "/api/v2/analysis/component/A?descendants=10".to_string();
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response = app.call_service(request).await;
     assert_eq!(200, response.response().status());
 
-    ctx.ingest_document("cdx/simple-ext-b.json").await?;
+    ctx.ingest_document("cyclonedx/simple-ext-b.json").await?;
     let uri = "/api/v2/analysis/component/A?descendants=10".to_string();
     let request: Request = TestRequest::get().uri(&uri).to_request();
-    let response = app.call_service(request).await;
+    let response: Value = app.call_and_read_body_json(request).await;
 
-    assert_eq!(200, response.response().status());
+    //ensure we match on external node urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#a
+    assert!(response.contains_subset(json!({
+        "items": [ {
+            "descendants": [ {
+                "node_id": "urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#a",
+                "name":"a",
+                "document_id":"urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/1",
+                "relationship":"dependency",
+                "descendants":[
+                    {
+                        "node_id":"b",
+                        "name":"B",
+                        "relationship":"dependency",
+                        "document_id":"urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2"
+                    }
+                ]
+            }]
+        }]
+    })));
 
     Ok(())
 }

@@ -695,7 +695,7 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
     // ingest cdx example
     ctx.ingest_document("cyclonedx/simple-ext-a.json").await?;
     let get_external_sbom = resolve_external_sbom(
-        "urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#b".to_string(),
+        "urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#a".to_string(),
         &ctx.db,
     )
     .await;
@@ -703,7 +703,7 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
     // now ingest cdx sbom referred in "cyclonedx/simple-ext-b.json"
     ctx.ingest_document("cyclonedx/simple-ext-b.json").await?;
     let get_external_sbom = resolve_external_sbom(
-        "urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#b".to_string(),
+        "urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#a".to_string(),
         &ctx.db,
     )
     .await;
@@ -713,7 +713,7 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
         node_id: external_node_id,
     }) = get_external_sbom
     {
-        assert_eq!(external_node_id, "b");
+        assert_eq!(external_node_id, "a");
     }
 
     // now try spdx example
