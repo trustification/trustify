@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740668529307,
+  "lastUpdate": 1740728073941,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5823,6 +5823,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/c79963855708b28e5afcdbfbd8467c3113319ef5"
         },
         "date": 1740668528549,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "a8370b5828a0c8a649df4ca83505b7f8df86947b",
+          "message": "fix: find analysis components by q=purl\n\nFixes #1280\n\nThis introduces a new variant of `Value` that may be used to apply\nqueries to local structs containing _arrays_ of queryable terms.\n\nSigned-off-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2025-02-28T07:13:53Z",
+          "tree_id": "9bfbe9a36ae630c416e58df779221a66d13060cc",
+          "url": "https://github.com/trustification/trustify/commit/a8370b5828a0c8a649df4ca83505b7f8df86947b"
+        },
+        "date": 1740728073256,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
