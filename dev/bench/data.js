@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740728073941,
+  "lastUpdate": 1740749106149,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5857,6 +5857,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "4fd6dfdc557871ade30cfd009933bbf562085d99",
+          "message": "fix: external sbom cdx example and tightened related tests",
+          "timestamp": "2025-02-28T13:05:59Z",
+          "tree_id": "34a039f70cd8c65fa978c49e99092d3387d42904",
+          "url": "https://github.com/trustification/trustify/commit/4fd6dfdc557871ade30cfd009933bbf562085d99"
+        },
+        "date": 1740749104813,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
