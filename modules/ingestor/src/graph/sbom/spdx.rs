@@ -4,7 +4,7 @@ use crate::{
         product::ProductInformation,
         purl::creator::PurlCreator,
         sbom::{
-            ExtractedLicensingInfoCreator, ExtratedLicensingInfo, FileCreator, LicenseCreator,
+            LicensingInfoCreator, LicensingInfo, FileCreator, LicenseCreator,
             LicenseInfo, PackageCreator, PackageReference, References, RelationshipCreator,NodeInfoParam,
             SbomContext, SbomInformation, Spdx,
             processor::{
@@ -138,10 +138,10 @@ impl SbomContext {
         }
 
         let mut licenses = LicenseCreator::new();
-        let mut license_extracted_refs = ExtractedLicensingInfoCreator::new();
+        let mut license_extracted_refs = LicensingInfoCreator::new();
 
         for license_ref in sbom_data.other_licensing_information_detected.clone() {
-            let extracted_licensing_info = &ExtratedLicensingInfo::with_sbom_id(
+            let extracted_licensing_info = &LicensingInfo::with_sbom_id(
                 self.sbom.sbom_id,
                 license_ref.license_identifier.clone(),
                 license_ref.license_name,
@@ -242,13 +242,13 @@ impl SbomContext {
                     name: package.package_name,
                     group: None,
                     version: package.package_version,
+                    declared_licenses: declared_license_ref,
+                    concluded_licenses: concluded_license_ref,
+                    cyclonedx_licenses: None,
                 },
                 refs,
                 license_refs,
                 package.package_checksum,
-                declared_license_ref,
-                concluded_license_ref,
-                None,
             );
         }
 

@@ -4,10 +4,12 @@ use sea_orm::entity::prelude::*;
 #[sea_orm(table_name = "sbom_package_license")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: Uuid,
     pub sbom_id: Uuid,
+    #[sea_orm(primary_key)]
     pub node_id: String,
+    #[sea_orm(primary_key)]
     pub license_id: Uuid,
+    #[sea_orm(primary_key)]
     pub license_type: LicenseCategory,
 }
 
@@ -25,15 +27,11 @@ pub enum Relation {
     License,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
-#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "license_category")]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, EnumIter, DeriveActiveEnum)]
+#[sea_orm(rs_type = "i32", db_type = "Integer")]
 pub enum LicenseCategory {
-    #[sea_orm(string_value = "slc")]
-    SpdxDeclared,
-    #[sea_orm(string_value = "sld")]
-    SpdxConcluded,
-    #[sea_orm(string_value = "o")]
-    Other,
+    Declared = 0,
+    Concluded = 1,
 }
 
 impl Related<super::sbom::Entity> for Entity {

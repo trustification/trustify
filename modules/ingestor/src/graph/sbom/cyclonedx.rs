@@ -391,13 +391,13 @@ impl<'a> ComponentCreator<'a> {
                 name: comp.name.to_string(),
                 group: comp.group.as_ref().map(|v| v.to_string()),
                 version: comp.version.as_ref().map(|v| v.to_string()),
+                declared_licenses: None,
+                concluded_licenses: None,
+                cyclonedx_licenses: Some(self.licenses.clone()),
             },
             self.refs,
             self.license_relations,
             comp.hashes.clone().into_iter().flatten(),
-            None,
-            None,
-            Some(self.licenses.clone()),
         );
 
         for ancestor in comp

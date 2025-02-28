@@ -27,6 +27,9 @@ pub struct NodeInfoParam {
     pub name: String,
     pub group: Option<String>,
     pub version: Option<String>,
+    pub declared_licenses: Option<LicenseInfo>,
+    pub concluded_licenses: Option<LicenseInfo>,
+    pub cyclonedx_licenses: Option<LicenseCreator>,
 }
 
 pub enum PackageReference {
@@ -70,9 +73,6 @@ impl PackageCreator {
         refs: impl IntoIterator<Item = PackageReference>,
         license_refs: impl IntoIterator<Item = LicenseInfo> + Clone,
         checksums: I,
-        declared_licenses: Option<LicenseInfo>,
-        concluded_licenses: Option<LicenseInfo>,
-        cyclonedx_licenses: Option<LicenseCreator>,
     ) where
         I: IntoIterator<Item = C>,
         C: Into<Checksum>,
@@ -127,37 +127,34 @@ impl PackageCreator {
             version: Set(node_info.version),
         });
 
-        if let Some(declared) = declared_licenses {
+        if let Some(declared) = node_info.declared_licenses {
             self.sbom_packge_licenses
                 .push(sbom_package_license::ActiveModel {
-                    id: Default::default(),
                     sbom_id: Set(self.sbom_id),
                     node_id: Set(node_info.node_id.clone()),
                     license_id: Set(declared.uuid()),
-                    license_type: Set(sbom_package_license::LicenseCategory::SpdxDeclared),
+                    license_type: Set(sbom_package_license::LicenseCategory::Declared),
                 });
         }
 
-        if let Some(concluded) = concluded_licenses {
+        if let Some(concluded) = node_info.concluded_licenses {
             self.sbom_packge_licenses
                 .push(sbom_package_license::ActiveModel {
-                    id: Default::default(),
                     sbom_id: Set(self.sbom_id),
                     node_id: Set(node_info.node_id.clone()),
                     license_id: Set(concluded.uuid()),
-                    license_type: Set(sbom_package_license::LicenseCategory::SpdxConcluded),
+                    license_type: Set(sbom_package_license::LicenseCategory::Concluded),
                 });
         }
 
-        if let Some(cyclonedx) = cyclonedx_licenses {
+        if let Some(cyclonedx) = node_info.cyclonedx_licenses {
             for (uuid, _v) in cyclonedx.licenses {
                 self.sbom_packge_licenses
                     .push(sbom_package_license::ActiveModel {
-                        id: Default::default(),
                         sbom_id: Set(self.sbom_id),
                         node_id: Set(node_info.node_id.clone()),
                         license_id: Set(uuid),
-                        license_type: Set(sbom_package_license::LicenseCategory::Other),
+                        license_type: Set(sbom_package_license::LicenseCategory::Declared),
                     });
             }
         }
@@ -256,16 +253,16 @@ impl PackageCreator {
 
         for batch in &self.sbom_packge_licenses.into_iter().chunked() {
             sbom_package_license::Entity::insert_many(batch)
-                // .on_conflict(
-                //     OnConflict::columns([
-                //         sbom_packge_license::Column::SbomId,
-                //         sbom_packge_license::Column::NodeId,
-                //         sbom_packge_license::Column::LicenseId,
-                //         sbom_packge_license::Column::LicenseType,
-                //     ])
-                //     .do_nothing()
-                //     .to_owned(),
-                // )
+                .on_conflict(
+                    OnConflict::columns([
+                        sbom_package_license::Column::SbomId,
+                        sbom_package_license::Column::NodeId,
+                        sbom_package_license::Column::LicenseId,
+                        sbom_package_license::Column::LicenseType,
+                    ])
+                    .do_nothing()
+                    .to_owned(),
+                )
                 .do_nothing()
                 .exec(db)
                 .await?;

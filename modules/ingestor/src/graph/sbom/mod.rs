@@ -642,8 +642,11 @@ impl SbomContext {
             node_id,
             name,
             group: None,
-            version,
-        }, refs, iter::empty(), Checksum::NONE, None, None, None);
+            version,declared_licenses: None,
+            concluded_licenses: None,
+            cyclonedx_licenses: None,
+        }, refs, iter::empty(), Checksum::NONE);
+
         creator.create(connection).await?;
 
         // done

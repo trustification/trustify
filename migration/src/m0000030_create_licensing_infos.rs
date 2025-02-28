@@ -9,33 +9,25 @@ impl MigrationTrait for Migration {
         manager
             .create_table(
                 Table::create()
-                    .table(ExtractedLicensingInfos::Table)
+                    .table(LicensingInfos::Table)
                     .col(
-                        ColumnDef::new(ExtractedLicensingInfos::Id)
+                        ColumnDef::new(LicensingInfos::Id)
                             .uuid()
                             .not_null()
                             .primary_key(),
                     )
+                    .col(ColumnDef::new(LicensingInfos::Name).string().not_null())
                     .col(
-                        ColumnDef::new(ExtractedLicensingInfos::Name)
+                        ColumnDef::new(LicensingInfos::LicenseId)
                             .string()
                             .not_null(),
                     )
-                    .col(
-                        ColumnDef::new(ExtractedLicensingInfos::LicenseId)
-                            .string()
-                            .not_null(),
-                    )
-                    .col(
-                        ColumnDef::new(ExtractedLicensingInfos::SbomId)
-                            .uuid()
-                            .not_null(),
-                    )
-                    .col(ColumnDef::new(ExtractedLicensingInfos::ExtractedText).string())
-                    .col(ColumnDef::new(ExtractedLicensingInfos::Comment).string())
+                    .col(ColumnDef::new(LicensingInfos::SbomId).uuid().not_null())
+                    .col(ColumnDef::new(LicensingInfos::ExtractedText).string())
+                    .col(ColumnDef::new(LicensingInfos::Comment).string())
                     .foreign_key(
                         ForeignKey::create()
-                            .from_col(ExtractedLicensingInfos::SbomId)
+                            .from_col(LicensingInfos::SbomId)
                             .to(Sbom::Table, Sbom::SbomId)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
@@ -48,17 +40,13 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_table(
-                Table::drop()
-                    .table(ExtractedLicensingInfos::Table)
-                    .to_owned(),
-            )
+            .drop_table(Table::drop().table(LicensingInfos::Table).to_owned())
             .await
     }
 }
 
 #[derive(DeriveIden)]
-pub enum ExtractedLicensingInfos {
+pub enum LicensingInfos {
     Table,
     Id,
     SbomId,

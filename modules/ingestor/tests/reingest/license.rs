@@ -1,34 +1,33 @@
 #![allow(clippy::all)]
 use sea_orm::FromQueryResult;
 use sea_orm::query::*;
-use sea_orm::{
-    Condition, DatabaseConnection, DbBackend, EntityTrait, QueryFilter, QuerySelect, RelationTrait,
-    sea_query,
-};
+use sea_orm::{EntityTrait, QuerySelect, RelationTrait};
+// use sea_orm::{
+//     Condition, DatabaseConnection, DbBackend, EntityTrait, QueryFilter, QuerySelect, RelationTrait,
+//     sea_query,
+// };
 use test_context::test_context;
 use test_log::test;
-use trustify_entity::{
-    license, qualified_purl, sbom, sbom_node, sbom_package, sbom_package_license,
-};
+use trustify_entity::{license, sbom, sbom_node, sbom_package, sbom_package_license};
 use trustify_test_context::TrustifyContext;
 use uuid::Uuid;
 
-#[derive(Debug, FromQueryResult)]
-pub struct SbomLicenseBase {
-    pub sbom_name: Option<String>,
-    pub sbom_namespace: Option<String>,
-    pub component_group: Option<String>,
-    pub component_version: Option<String>,
-    pub node_id: String,
-    pub sbom_id: Uuid,
-    pub package_name: String,
-    pub version: String,
-    pub purl: serde_json::Value,
-    pub cpe: Option<Vec<String>>,
-    pub text: Option<String>,
-    pub spdx_licenses: Option<Vec<String>>,
-    pub spdx_license_exceptions: Option<Vec<String>>,
-}
+// #[derive(Debug, FromQueryResult)]
+// pub struct SbomLicenseBase {
+//     pub sbom_name: Option<String>,
+//     pub sbom_namespace: Option<String>,
+//     pub component_group: Option<String>,
+//     pub component_version: Option<String>,
+//     pub node_id: String,
+//     pub sbom_id: Uuid,
+//     pub package_name: String,
+//     pub version: String,
+//     pub purl: serde_json::Value,
+//     pub cpe: Option<Vec<String>>,
+//     pub text: Option<String>,
+//     pub spdx_licenses: Option<Vec<String>>,
+//     pub spdx_license_exceptions: Option<Vec<String>>,
+// }
 
 #[derive(Debug, FromQueryResult)]
 pub struct SbomPackageLicenseBase {
@@ -80,7 +79,7 @@ async fn test_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
 async fn test_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let result = ctx
+    let _result = ctx
         .ingest_document("cyclonedx/openssl-3.0.7-18.el9_2.cdx_1.6.sbom.json")
         .await?;
     let sbom_license_base: Vec<SbomPackageLicenseBase> = sbom::Entity::find()
