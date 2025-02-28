@@ -129,7 +129,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                     .node_indices()
                     .find(|&node| external_graph[node].node_id.eq(&external_node_id))
                 else {
-                    log::debug!("Node with ID {} not found", external_node_id);
+                    log::warn!("Node with ID {} not found", external_node_id);
                     // You can return early, log an error, or take other actions as needed
                     return None;
                 };
@@ -137,6 +137,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                 // process as normal, which is just non-DRY of following code block which we
                 // can optimise away.
                 log::debug!("external node index: {:?}", external_node_index);
+                log::debug!("external graph {:?}", external_graph);
 
                 Some(
                     self.with(external_graph, external_node_index)
@@ -151,7 +152,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
 
     pub async fn collect_graph(&self) -> Vec<Node> {
         let mut result = vec![];
-
+        log::debug!("Collecting graph for {:?}", self.node);
         for edge in self.graph.edges_directed(self.node, self.direction) {
             log::debug!("edge {edge:?}");
 
