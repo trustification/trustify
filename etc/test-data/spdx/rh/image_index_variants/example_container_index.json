@@ -1,0 +1,168 @@
+{
+    "spdxVersion": "SPDX-2.3",
+    "dataLicense": "CC0-1.0",
+    "documentNamespace": "https://konflux-ci.dev/spdxdocs/flowlogs-pipeline-55327dba8decea2c512966182520b50b24a5a279-03c1d21d-aaec-4881-87db-8f58f0c852d7",
+    "SPDXID": "SPDXRef-DOCUMENT",
+    "creationInfo": {
+        "created": "2025-02-12T09:39:44+00:00",
+        "creators": [
+            "Tool: Konflux"
+        ],
+        "licenseListVersion": "3.25"
+    },
+    "name": "quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline@sha256:df416b77ce2e24110e23c0d0478e916fcf249a889f4be855e1834d0dd5d51af1",
+    "packages": [
+        {
+            "SPDXID": "SPDXRef-image-index",
+            "name": "flowlogs-pipeline",
+            "versionInfo": "55327dba8decea2c512966182520b50b24a5a279",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NOASSERTION",
+            "licenseDeclared": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:oci/flowlogs-pipeline@sha256:df416b77ce2e24110e23c0d0478e916fcf249a889f4be855e1834d0dd5d51af1?repository_url=quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline"
+                }
+            ],
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "df416b77ce2e24110e23c0d0478e916fcf249a889f4be855e1834d0dd5d51af1"
+                }
+            ]
+        },
+        {
+            "SPDXID": "SPDXRef-image-flowlogs-pipeline-c8303c90e6251c9ec7aee41dc9eca0f8b68606da0b7db23a5ecca24fe9006fc4",
+            "name": "flowlogs-pipeline_amd64",
+            "versionInfo": "55327dba8decea2c512966182520b50b24a5a279",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NOASSERTION",
+            "licenseDeclared": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:oci/flowlogs-pipeline@sha256:df416b77ce2e24110e23c0d0478e916fcf249a889f4be855e1834d0dd5d51af1?arch=amd64&repository_url=quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:oci/flowlogs-pipeline@sha256:82e9c4b4f19460ac39d0fd63a47da58020f6b19b5d1d975af0eaf2b36941ab6a?repository_url=quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline"
+                }
+            ],
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "82e9c4b4f19460ac39d0fd63a47da58020f6b19b5d1d975af0eaf2b36941ab6a"
+                }
+            ]
+        },
+        {
+            "SPDXID": "SPDXRef-image-flowlogs-pipeline-8e0e6fed19c0ef742ba270f0def35b42dd40e7d0d10d962d6ff78990782d8159",
+            "name": "flowlogs-pipeline_arm64",
+            "versionInfo": "55327dba8decea2c512966182520b50b24a5a279",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NOASSERTION",
+            "licenseDeclared": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:oci/flowlogs-pipeline@sha256:df416b77ce2e24110e23c0d0478e916fcf249a889f4be855e1834d0dd5d51af1?arch=arm64&repository_url=quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:oci/flowlogs-pipeline@sha256:efaf14fbb07a5e3b716c518d9ca47f2c405f7ff73c2dae3c143e3ab2af28a6cb?repository_url=quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline"
+                }
+            ],
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "efaf14fbb07a5e3b716c518d9ca47f2c405f7ff73c2dae3c143e3ab2af28a6cb"
+                }
+            ]
+        },
+        {
+            "SPDXID": "SPDXRef-image-flowlogs-pipeline-01449d6424070d2daa65277a4819471aee9df03528d2e7d36ef644f9519a74e9",
+            "name": "flowlogs-pipeline_ppc64le",
+            "versionInfo": "55327dba8decea2c512966182520b50b24a5a279",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NOASSERTION",
+            "licenseDeclared": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:oci/flowlogs-pipeline@sha256:df416b77ce2e24110e23c0d0478e916fcf249a889f4be855e1834d0dd5d51af1?arch=ppc64le&repository_url=quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:oci/flowlogs-pipeline@sha256:0f4340160660361a777ab20c2c7154cd480d477e262142113f2b92a91e9086e5?repository_url=quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline"
+                }
+            ],
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "0f4340160660361a777ab20c2c7154cd480d477e262142113f2b92a91e9086e5"
+                }
+            ]
+        },
+        {
+            "SPDXID": "SPDXRef-image-flowlogs-pipeline-efe79f3a6985733a7d1f1157ebb002e2486278a0d1c28cba559842a5bf6cad69",
+            "name": "flowlogs-pipeline_s390x",
+            "versionInfo": "55327dba8decea2c512966182520b50b24a5a279",
+            "supplier": "NOASSERTION",
+            "downloadLocation": "NOASSERTION",
+            "licenseDeclared": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:oci/flowlogs-pipeline@sha256:df416b77ce2e24110e23c0d0478e916fcf249a889f4be855e1834d0dd5d51af1?arch=s390x&repository_url=quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline"
+                },
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:oci/flowlogs-pipeline@sha256:e9cb95d238f3560534b1e4bf732a7c847e8ba426911729ecd910e833b781a41d?repository_url=quay.io/redhat-user-workloads/ocp-network-observab-tenant/netobserv-operator/flowlogs-pipeline"
+                }
+            ],
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "e9cb95d238f3560534b1e4bf732a7c847e8ba426911729ecd910e833b781a41d"
+                }
+            ]
+        }
+    ],
+    "relationships": [
+        {
+            "spdxElementId": "SPDXRef-DOCUMENT",
+            "relationshipType": "DESCRIBES",
+            "relatedSpdxElement": "SPDXRef-image-index"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-flowlogs-pipeline-c8303c90e6251c9ec7aee41dc9eca0f8b68606da0b7db23a5ecca24fe9006fc4",
+            "relationshipType": "VARIANT_OF",
+            "relatedSpdxElement": "SPDXRef-image-index"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-flowlogs-pipeline-8e0e6fed19c0ef742ba270f0def35b42dd40e7d0d10d962d6ff78990782d8159",
+            "relationshipType": "VARIANT_OF",
+            "relatedSpdxElement": "SPDXRef-image-index"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-flowlogs-pipeline-01449d6424070d2daa65277a4819471aee9df03528d2e7d36ef644f9519a74e9",
+            "relationshipType": "VARIANT_OF",
+            "relatedSpdxElement": "SPDXRef-image-index"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-flowlogs-pipeline-efe79f3a6985733a7d1f1157ebb002e2486278a0d1c28cba559842a5bf6cad69",
+            "relationshipType": "VARIANT_OF",
+            "relatedSpdxElement": "SPDXRef-image-index"
+        }
+    ]
+}

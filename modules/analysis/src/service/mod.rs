@@ -26,10 +26,10 @@ use petgraph::{
     visit::{IntoNodeIdentifiers, VisitMap, Visitable},
 };
 use sea_orm::{
-    ColumnTrait, EntityOrSelect, EntityTrait, QueryFilter, QueryOrder, QuerySelect, RelationTrait,
+    ColumnTrait, EntityOrSelect, EntityTrait, QueryFilter, QuerySelect, RelationTrait,
     prelude::ConnectionTrait,
 };
-use sea_query::{JoinType, Order};
+use sea_query::JoinType;
 use std::{
     collections::{HashMap, HashSet},
     fmt::Debug,
@@ -214,8 +214,6 @@ impl AnalysisService {
 
         let distinct_sbom_ids = sbom::Entity::find()
             .select()
-            .order_by(sbom::Column::DocumentId, Order::Asc)
-            .order_by(sbom::Column::Published, Order::Desc)
             .all(connection)
             .await?
             .into_iter()
@@ -234,12 +232,7 @@ impl AnalysisService {
         &self,
         connection: &C,
     ) -> Result<AnalysisStatus, Error> {
-        let distinct_sbom_ids = sbom::Entity::find()
-            .select()
-            .order_by(sbom::Column::DocumentId, Order::Asc)
-            .order_by(sbom::Column::Published, Order::Desc)
-            .all(connection)
-            .await?;
+        let distinct_sbom_ids = sbom::Entity::find().select().all(connection).await?;
 
         Ok(AnalysisStatus {
             sbom_count: distinct_sbom_ids.len() as u32,
@@ -278,13 +271,14 @@ impl AnalysisService {
         .await
     }
 
-    #[instrument(skip(self, connection))]
+    #[instrument(skip(self, connection, graph_cache))]
     pub async fn run_graph_query<'a, C: ConnectionTrait>(
         &self,
         query: impl Into<GraphQuery<'a>> + Debug,
         options: QueryOptions,
         graphs: &[(String, Arc<PackageGraph>)],
         connection: &C,
+        graph_cache: Arc<GraphMap>,
     ) -> Vec<Node> {
         let relationships = options.relationships;
 
@@ -299,6 +293,7 @@ impl AnalysisService {
                 relationship: None,
                 ancestors: Box::pin(
                     Collector::new(
+                        &graph_cache,
                         graphs,
                         graph,
                         node_index,
@@ -312,6 +307,7 @@ impl AnalysisService {
                 .await,
                 descendants: Box::pin(
                     Collector::new(
+                        &graph_cache,
                         graphs,
                         graph,
                         node_index,
@@ -345,7 +341,13 @@ impl AnalysisService {
 
         let graphs = self.load_graphs(connection, &distinct_sbom_ids).await?;
         let components = self
-            .run_graph_query(query, options, &graphs, connection)
+            .run_graph_query(
+                query,
+                options,
+                &graphs,
+                connection,
+                self.graph_cache.clone(),
+            )
             .await;
 
         Ok(paginated.paginate_array(&components))
@@ -364,8 +366,15 @@ impl AnalysisService {
         let options = options.into();
 
         let graphs = self.load_graphs_query(connection, query).await?;
+
         let components = self
-            .run_graph_query(query, options, &graphs, connection)
+            .run_graph_query(
+                query,
+                options,
+                &graphs,
+                connection,
+                self.graph_cache.clone(),
+            )
             .await;
 
         Ok(paginated.paginate_array(&components))
