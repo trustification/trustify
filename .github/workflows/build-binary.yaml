@@ -130,9 +130,9 @@ jobs:
             export SDKROOT=$(xcrun -sdk macosx --show-sdk-path)
             export MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version)
           fi
-          
+
           CMD="cargo"
-          
+
           if [[ -n "${{ matrix.cross }}" ]]; then
             CMD="cross"
           fi
@@ -144,9 +144,9 @@ jobs:
           if [[ "${{ matrix.edition }}" == "-pm" ]]; then
             OPTS="$OPTS --features pm"
           fi
-          
+
           OPTS="$OPTS ${{ matrix.args }}"
-          
+
           if [[ -n "${{ matrix.target }}" ]]; then
             OPTS="$OPTS --target=${{ matrix.target }}"
           fi
@@ -164,21 +164,21 @@ jobs:
         shell: bash
         run: |
           cargo cyclonedx -v --spec-version 1.5 --format json --describe binaries --target "${{ matrix.target }}"
-          
+
           mv trustd/trustd_bin.cdx.json "upload/trustd${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}.cdx.json"
           mv xtask/xtask_bin.cdx.json "upload/xtask${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}.cdx.json"
 
       - name: Move binary
         shell: bash
         run: |
-         
+
           for output_binary_name in trustd xtask; do
-          
+
             download_binary_name="${output_binary_name}${{ matrix.edition }}"
             dirname="${output_binary_name}${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}"
-          
+
             mkdir -p "pack/$dirname"
-          
+
             # if we have an alternate target, there is a sub-directory
             if [[ -f "target/release/${output_binary_name}${{ matrix.ext }}" ]]; then
               SRC="target/release/${output_binary_name}${{ matrix.ext }}"
@@ -189,11 +189,11 @@ jobs:
               find target
               false # stop build
             fi
-            
+
             # stage for upload
             mv -v "${SRC}" "pack/${dirname}/${download_binary_name}${{ matrix.ext }}"
             cp LICENSE "pack/${dirname}/"
-          
+
           done
 
       - name: Archive
