@@ -4,6 +4,12 @@
   "version": 1,
   "serialNumber": "urn:uuid:337d9115-4e7c-4e76-b389-51f7aed6eba8",
   "metadata": {
+    "supplier": {
+      "name": "Red Hat",
+      "url": [
+        "https://www.redhat.com"
+      ]
+    },
     "component": {
       "type": "operating-system",
       "name": "Red Hat Enterprise Linux",

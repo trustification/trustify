@@ -920,6 +920,47 @@ async fn resolve_spdx_external_reference(ctx: &TrustifyContext) -> Result<(), an
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+async fn resolve_rh_variant_prod_comp_spdx_external_reference(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_document("spdx/rh/product_component/rhel-9.2-eus.spdx.json")
+        .await?;
+    let uri =
+        "/api/v2/analysis/component/SPDXRef-openssl-3.0.7-18.el9-2?descendants=10".to_string();
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(200, response.response().status());
+
+    ctx.ingest_document("spdx/rh/product_component/openssl-3.0.7-18.el9_2.spdx.json")
+        .await?;
+    let uri =
+        "/api/v2/analysis/component/SPDXRef-openssl-3.0.7-18.el9-2?descendants=10".to_string();
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+
+    //ensure we match on external node DocumentRef-ext-b:SPDXRef-A
+    assert!(response.contains_subset(json!({
+        "items": [ {
+          "node_id": "SPDXRef-RHEL-9.2-EUS:SPDXRef-openssl-3.0.7-18.el9-2",
+          "name": "SPDXRef-openssl-3.0.7-18.el9-2",
+          "document_id": "https://www.redhat.com/rhel-9.2-eus.spdx.json",
+          "descendants":[
+                {
+                    "name":"openssl-perl",
+                    "document_id": "https://www.redhat.com/openssl-3.0.7-18.el9_2.spdx.json",
+                    "relationship": "generates",
+                }
+            ]
+        }]
+    })));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
 async fn resolve_cdx_external_reference(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
 
@@ -951,6 +992,47 @@ async fn resolve_cdx_external_reference(ctx: &TrustifyContext) -> Result<(), any
                     }
                 ]
             }]
+        }]
+    })));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+#[ignore = "need to fix"]
+async fn resolve_rh_variant_prod_comp_cdx_external_reference(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_document("cyclonedx/rh/product_component/rhel-9.2-eus.cdx.json")
+        .await?;
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode("pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(200, response.response().status());
+
+    ctx.ingest_document("cyclonedx/rh/product_component/openssl-3.0.7-18.el9_2.cdx.json")
+        .await?;
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode("pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+
+    log::warn!("{:?}", response);
+    //TODO: ensure we match on external node urn:cdx:a4f16b62-fea9-42c1-8365-d72d3cef37d1/2#a
+    //      and test it returns the correct descendants.
+    assert!(response.contains_subset(json!({
+        "items": [ {
+            "document_id":"urn:uuid:337d9115-4e7c-4e76-b389-51f7aed6eba8/1",
+            "product_name":"Red Hat Enterprise Linux",
+            "descendants": []
         }]
     })));
 

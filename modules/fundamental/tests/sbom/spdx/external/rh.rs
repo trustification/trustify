@@ -8,7 +8,7 @@ use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
-async fn prod_comp(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn spdx_prod_comp(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let mut result = ctx
         .ingest_documents([
             "spdx/rh/product_component/rhel-9.2-eus.spdx.json",

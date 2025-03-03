@@ -691,7 +691,7 @@ async fn load_performance(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
-async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn resolve_sbom_cdx_external_node_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // ingest cdx example
     ctx.ingest_document("cyclonedx/simple-ext-a.json").await?;
     let get_external_sbom = resolve_external_sbom(
@@ -714,8 +714,15 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
     }) = get_external_sbom
     {
         assert_eq!(external_node_id, "a");
+    } else {
+        panic!("failed getting node_id from external sbom.");
     }
+    Ok(())
+}
 
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn resolve_sbom_spdx_external_node_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // now try spdx example
     ctx.ingest_document("spdx/simple-ext-a.json").await?;
     let get_external_sbom =
@@ -732,8 +739,17 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
     }) = get_external_sbom
     {
         assert_eq!(external_node_id, "SPDXRef-A");
+    } else {
+        panic!("failed getting node_id from external sbom.");
     }
+    Ok(())
+}
 
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn resolve_sbom_spdx_rh_variant_external_node_sbom(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
     // now ingest rh product example "spdx/rh/product_component/rhel-9.2-eus.spdx.json"
     ctx.ingest_document("spdx/rh/product_component/rhel-9.2-eus.spdx.json")
         .await?;
@@ -746,6 +762,52 @@ async fn resolve_sbom_external_node_sbom(ctx: &TrustifyContext) -> Result<(), an
 
     // now ingest rh component spdx "spdx/rh/product_component/openssl-3.0.7-18.el9_2.spdx.json"
     ctx.ingest_document("spdx/rh/product_component/openssl-3.0.7-18.el9_2.spdx.json")
+        .await?;
+    let get_external_sbom = resolve_external_sbom(
+        "SPDXRef-RHEL-9.2-EUS:SPDXRef-openssl-3.0.7-18.el9-2".to_string(),
+        &ctx.db,
+    )
+    .await;
+
+    if let Some(ResolvedSbom {
+        sbom_id: external_sbom_id,
+        node_id: external_node_id,
+    }) = get_external_sbom
+    {
+        assert_eq!(external_node_id, "SPDXRef-SRPM".to_string());
+        let sbom = sbom::Entity::find()
+            .filter(sbom::Column::SbomId.eq(external_sbom_id))
+            .one(&ctx.db)
+            .await;
+        assert_eq!(
+            sbom.unwrap().unwrap().document_id,
+            Some("https://www.redhat.com/openssl-3.0.7-18.el9_2.spdx.json".to_string()),
+        )
+    } else {
+        panic!("failed getting node_id from external sbom.");
+    }
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+#[ignore = "need to fix"]
+async fn resolve_sbom_cdx_rh_variant_external_node_sbom(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    // now ingest rh product example "cyclonedx/rh/product_component/rhel-9.2-eus.cdx.json"
+    ctx.ingest_document("cyclonedx/rh/product_component/rhel-9.2-eus.cdx.json")
+        .await?;
+    let get_external_sbom = resolve_external_sbom(
+        "SPDXRef-RHEL-9.2-EUS:SPDXRef-openssl-3.0.7-18.el9-2".to_string(),
+        &ctx.db,
+    )
+    .await;
+    assert_eq!(get_external_sbom, None);
+
+    // now ingest rh component spdx "cyclonedx/rh/product_component/openssl-3.0.7-18.el9_2.cdx.json"
+    ctx.ingest_document("cyclonedx/rh/product_component/openssl-3.0.7-18.el9_2.cdx.json")
         .await?;
     let get_external_sbom = resolve_external_sbom(
         "SPDXRef-RHEL-9.2-EUS:SPDXRef-openssl-3.0.7-18.el9-2".to_string(),
