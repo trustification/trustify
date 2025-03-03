@@ -166,7 +166,7 @@ jobs:
           cargo cyclonedx -v --spec-version 1.5 --format json --describe binaries --target "${{ matrix.target }}"
 
           mv trustd/trustd_bin.cdx.json "upload/trustd${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}.cdx.json"
-          mv xtask/xtask_bin.cdx.json "upload/xtask${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}.cdx.json"
+          mv xtask/xtask_bin.cdx.json "upload/xtask${{ inputs.version }}-${{ matrix.target }}.cdx.json"
 
       - name: Move binary
         shell: bash
@@ -174,8 +174,13 @@ jobs:
 
           for output_binary_name in trustd xtask; do
 
-            download_binary_name="${output_binary_name}${{ matrix.edition }}"
-            dirname="${output_binary_name}${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}"
+            if [[ "$output_binary_name" == "xtask" ]]; then
+              dirname="${output_binary_name}${{ inputs.version }}-${{ matrix.target }}"
+              download_binary_name="${output_binary_name}"
+            else
+              dirname="${output_binary_name}${{ matrix.edition }}-${{ inputs.version }}-${{ matrix.target }}"
+              download_binary_name="${output_binary_name}${{ matrix.edition }}"
+            fi
 
             mkdir -p "pack/$dirname"
 
@@ -222,6 +227,6 @@ jobs:
       - name: Upload binary (xtask)
         uses: actions/upload-artifact@v4
         with:
-          name: xtask${{ matrix.edition }}-${{ matrix.target }}
+          name: xtask-${{ matrix.target }}
           path: upload/xtask*
           if-no-files-found: error
