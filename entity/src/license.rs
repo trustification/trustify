@@ -14,6 +14,19 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::purl_license_assertion::Entity")]
     PurlAssertions,
+
+    #[sea_orm(
+        belongs_to = "super::sbom_package_license::Entity",
+        from = "(Column::Id)",
+        to = "(super::sbom_package_license::Column::LicenseId)"
+    )]
+    PackageLicense,
+}
+
+impl Related<super::sbom_package_license::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::PackageLicense.def()
+    }
 }
 
 impl Related<super::purl_license_assertion::Entity> for Entity {

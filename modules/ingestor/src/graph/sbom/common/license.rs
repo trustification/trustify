@@ -44,13 +44,13 @@ impl LicenseInfo {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct LicenseCreator {
     /// The licenses to create.
     ///
     /// Uses a [`BTreeMap`] to ensure we have a stable insertion order, avoiding deadlocks on the
     /// database.
-    licenses: BTreeMap<Uuid, license::ActiveModel>,
+    pub licenses: BTreeMap<Uuid, license::ActiveModel>,
 }
 
 impl LicenseCreator {
