@@ -8,11 +8,11 @@ use trustify_test_context::TrustifyContext;
 
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
-async fn prod_comp(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn cdx_prod_comp(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let mut result = ctx
         .ingest_documents([
-            "cyclonedx/product_component/example_product_quarkus.json",
-            "cyclonedx/product_component/example_component_quarkus.json",
+            "cyclonedx/rh/product_component/example_product_quarkus.json",
+            "cyclonedx/rh/product_component/example_component_quarkus.json",
         ])
         .await?;
 

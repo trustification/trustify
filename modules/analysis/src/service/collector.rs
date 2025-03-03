@@ -23,6 +23,7 @@ impl DiscoveredTracker {
 ///
 /// Keeping track of all relevant information.
 pub struct Collector<'a, C: ConnectionTrait> {
+    graph_cache: &'a Arc<GraphMap>,
     graphs: &'a [(String, Arc<PackageGraph>)],
     graph: &'a NodeGraph,
     node: NodeIndex,
@@ -35,7 +36,9 @@ pub struct Collector<'a, C: ConnectionTrait> {
 
 impl<'a, C: ConnectionTrait> Collector<'a, C> {
     /// Create a new collector, with a new visited set.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
+        graph_cache: &'a Arc<GraphMap>,
         graphs: &'a [(String, Arc<PackageGraph>)],
         graph: &'a NodeGraph,
         node: NodeIndex,
@@ -45,6 +48,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
         connection: &'a C,
     ) -> Self {
         Self {
+            graph_cache,
             graphs,
             graph,
             node,
@@ -72,6 +76,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
     /// Decreases depth by one and keeps the visited set.
     pub fn continue_node(&self, node: NodeIndex) -> Self {
         Self {
+            graph_cache: self.graph_cache,
             graphs: self.graphs,
             graph: self.graph,
             node,
@@ -113,16 +118,13 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                 log::debug!("external sbom id: {:?}", external_sbom_id);
                 log::debug!("external node id: {:?}", external_node_id);
 
-                // get external sbom graph
-                let Some((_, external_graph)) = self
-                    .graphs
-                    .iter()
-                    .find(|(sbom_id, _)| sbom_id == &external_sbom_id.to_string())
+                // get external sbom graph from graph_cache
+                // TODO: decide if we use graph_cache as illustrated
+                let Some(external_graph) = self.graph_cache.get(&external_sbom_id.to_string())
                 else {
                     log::warn!("Graph not found.");
                     return None;
                 };
-
                 // now that we have the graph, find the external node reference in that graph
                 // so we have a starting point.
                 let Some(external_node_index) = external_graph
@@ -140,7 +142,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                 log::debug!("external graph {:?}", external_graph);
 
                 Some(
-                    self.with(external_graph, external_node_index)
+                    self.with(external_graph.as_ref(), external_node_index)
                         .collect_graph()
                         .await,
                 )

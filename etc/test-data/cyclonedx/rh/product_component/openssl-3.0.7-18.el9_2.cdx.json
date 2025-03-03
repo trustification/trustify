@@ -4,6 +4,12 @@
   "version": 1,
   "serialNumber": "urn:uuid:223234df-bb5b-49af-a896-143736f7d806",
   "metadata": {
+    "supplier": {
+      "name": "Red Hat",
+      "url": [
+        "https://www.redhat.com"
+      ]
+    },
     "component": {
       "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
       "type": "library",
@@ -939,8 +945,7 @@
         "pkg:rpm/redhat/openssl-devel@3.0.7-18.el9_2?arch=s390x",
         "pkg:rpm/redhat/openssl-debuginfo@3.0.7-18.el9_2?arch=s390x",
         "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=s390x",
-        "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x",
-        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
+        "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x"
       ]
     }
   ]
