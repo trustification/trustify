@@ -1,7 +1,7 @@
 mod query;
 
 #[cfg(test)]
-mod test;
+mod tests;
 
 use super::service::{AnalysisService, QueryOptions};
 use crate::{

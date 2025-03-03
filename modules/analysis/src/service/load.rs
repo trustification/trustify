@@ -1,3 +1,4 @@
+use crate::service::resolve_external_sbom;
 use crate::{
     Error,
     model::{PackageGraph, graph},
@@ -18,7 +19,7 @@ use std::{
 use tracing::{Level, instrument};
 use trustify_common::{cpe::Cpe, db::query::Filtering, purl::Purl};
 use trustify_entity::{
-    cpe::CpeDto, package_relates_to_package, relationship::Relationship, sbom,
+    cpe::CpeDto, package_relates_to_package, relationship::Relationship, sbom, sbom_external_node,
     sbom_external_node::ExternalType, sbom_node, sbom_package, sbom_package_cpe_ref,
     sbom_package_purl_ref,
 };
@@ -383,6 +384,37 @@ impl AnalysisService {
     ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
         let mut results = Vec::new();
         for distinct_sbom_id in distinct_sbom_ids {
+            let distinct_sbom_uuid = match Uuid::parse_str(distinct_sbom_id) {
+                Ok(uuid) => uuid, // Successfully parsed UUID
+                Err(e) => {
+                    log::error!(
+                        "Invalid UUID format for distinct_sbom_id {}: {:?}",
+                        distinct_sbom_id,
+                        e
+                    );
+                    return Err(Error::Internal("Invalid UUID format.".to_string()));
+                }
+            };
+            // ensure any external sboms are loaded
+            let external_sboms = sbom_external_node::Entity::find()
+                .filter(sbom_external_node::Column::SbomId.eq(distinct_sbom_uuid))
+                .all(connection)
+                .await?;
+            for external_sbom in &external_sboms {
+                let resolved_external_sbom =
+                    resolve_external_sbom(external_sbom.node_id.to_string(), connection).await;
+                log::debug!("resolved external sbom: {:?}", resolved_external_sbom);
+                if let Some(resolved_external_sbom) = resolved_external_sbom {
+                    let resolved_external_sbom_id = resolved_external_sbom.clone().sbom_id;
+                    results.push((
+                        resolved_external_sbom_id.clone().to_string(),
+                        self.load_graph(connection, &resolved_external_sbom_id.to_string())
+                            .await?,
+                    ));
+                } else {
+                    log::warn!("Cannot find external sbom.");
+                }
+            }
             results.push((
                 distinct_sbom_id.clone(),
                 self.load_graph(connection, distinct_sbom_id).await?,

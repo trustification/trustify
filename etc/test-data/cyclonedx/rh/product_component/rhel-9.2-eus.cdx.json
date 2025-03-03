@@ -4,7 +4,14 @@
   "version": 1,
   "serialNumber": "urn:uuid:337d9115-4e7c-4e76-b389-51f7aed6eba8",
   "metadata": {
+    "supplier": {
+      "name": "Red Hat",
+      "url": [
+        "https://www.redhat.com"
+      ]
+    },
     "component": {
+      "bom-ref": "Red Hat Enterprise Linux 9.2 EUS",
       "type": "operating-system",
       "name": "Red Hat Enterprise Linux",
       "version": "9.2 EUS",
@@ -148,6 +155,15 @@
           }
         ]
       }
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "Red Hat Enterprise Linux 9.2 EUS",
+      "provides": [
+        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
+      ],
+      "dependsOn": []
     }
   ]
 }

@@ -97686,5 +97686,6 @@
         "pkg:maven/io.quarkus/quarkus-websockets-client-deployment@2.13.9.Final-redhat-00003?type=jar"
       ]
     }
-  ]
+  ],
+  "serialNumber": "urn:uuid:3a98ed82-ef10-395b-a95d-f659984eea9e"
 }
