@@ -8870,8 +8870,6 @@ dependencies = [
  "tokio",
  "trustify-common",
  "trustify-infrastructure",
- "trustify-module-analysis",
- "trustify-module-importer",
  "trustify-server",
 ]
 
