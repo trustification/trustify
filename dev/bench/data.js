@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1740749106149,
+  "lastUpdate": 1741002019500,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5886,6 +5886,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "bxf12315@gmail.com",
+            "name": "Xiaofeng Bai",
+            "username": "bxf12315"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "24f1e459535bf7014fc5ef0c49be758d87fd0c9f",
+          "message": "add group field into sbom_package entity",
+          "timestamp": "2025-03-03T11:21:18Z",
+          "tree_id": "f21fa3900331a11c9b18579b7a8cc6224dab26c4",
+          "url": "https://github.com/trustification/trustify/commit/24f1e459535bf7014fc5ef0c49be758d87fd0c9f"
+        },
+        "date": 1741002018220,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
