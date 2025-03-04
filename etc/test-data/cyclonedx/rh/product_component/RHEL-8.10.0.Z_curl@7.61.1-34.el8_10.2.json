@@ -1,0 +1,2611 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "rpm-manifest-generator",
+          "type": "application",
+          "version": "0.0.1",
+          "manufacturer": {
+            "url": [
+              "https://www.redhat.com"
+            ],
+            "name": "Red Hat"
+          }
+        }
+      ]
+    },
+    "licenses": [
+      {
+        "expression": "MIT"
+      }
+    ],
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
+    "component": {
+      "bom-ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src",
+      "name": "curl",
+      "purl": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-aarch64-baseos-source-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "60b7f4b4138acb235b6231ace4ccead99ee456a846bd35fcde5238358dedc9e9"
+        }
+      ],
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-s390x-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-x86_64-baseos-source-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-aarch64-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-aarch64-baseos-source-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-x86_64-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-s390x-baseos-source-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-ppc64le-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-ppc64le-baseos-source-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "eaf7b0d9ae1a80afa785ef97a22da7e8"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "c02401760561cbc6d9af51b25c9bffb06b7aa3ed2467552626798597dc406d27"
+        }
+      ],
+      "description": "curl is a command line tool for transferring data with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, SCP, SFTP, TFTP, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3 and RTSP. curl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, cookies, user+password authentication (Basic, Digest, NTLM, Negotiate, kerberos...), file transfer resume, proxy tunneling and a busload of other useful tricks."
+    },
+    "timestamp": "2025-02-24T00:53:45Z"
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "curl",
+      "purl": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-aarch64-baseos-source-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "60b7f4b4138acb235b6231ace4ccead99ee456a846bd35fcde5238358dedc9e9"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-s390x-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-x86_64-baseos-source-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-aarch64-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-aarch64-baseos-source-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-x86_64-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-s390x-baseos-source-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-ppc64le-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src&repository_id=rhel-8-for-ppc64le-baseos-source-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "pedigree": {
+        "ancestors": [
+          {
+            "name": "curl",
+            "purl": "pkg:generic/curl@7.61.1?download_url=https://pkgs.devel.redhat.com/repo/curl/curl-7.61.1.tar.xz/sha512/e6f82a7292c70841162480c8880d25046bcfa64058f4ff76f7d398c85da569af1c244442c9c58a3478d59264365ff8e39eed2fb564cb137118588f7862e64e9a/curl-7.61.1.tar.xz&checksum=SHA-512:e6f82a7292c70841162480c8880d25046bcfa64058f4ff76f7d398c85da569af1c244442c9c58a3478d59264365ff8e39eed2fb564cb137118588f7862e64e9a",
+            "type": "library",
+            "hashes": [
+              {
+                "alg": "SHA-512",
+                "content": "e6f82a7292c70841162480c8880d25046bcfa64058f4ff76f7d398c85da569af1c244442c9c58a3478d59264365ff8e39eed2fb564cb137118588f7862e64e9a"
+              }
+            ],
+            "bom-ref": "pkg:generic/curl@7.61.1?download_url=https://pkgs.devel.redhat.com/repo/curl/curl-7.61.1.tar.xz/sha512/e6f82a7292c70841162480c8880d25046bcfa64058f4ff76f7d398c85da569af1c244442c9c58a3478d59264365ff8e39eed2fb564cb137118588f7862e64e9a/curl-7.61.1.tar.xz&checksum=SHA-512:e6f82a7292c70841162480c8880d25046bcfa64058f4ff76f7d398c85da569af1c244442c9c58a3478d59264365ff8e39eed2fb564cb137118588f7862e64e9a",
+            "version": "7.61.1",
+            "evidence": {
+              "identity": [
+                {
+                  "field": "purl",
+                  "concludedValue": "pkg:generic/curl@7.61.1?download_url=https://pkgs.devel.redhat.com/repo/curl/curl-7.61.1.tar.xz/sha512/e6f82a7292c70841162480c8880d25046bcfa64058f4ff76f7d398c85da569af1c244442c9c58a3478d59264365ff8e39eed2fb564cb137118588f7862e64e9a/curl-7.61.1.tar.xz&checksum=SHA-512:e6f82a7292c70841162480c8880d25046bcfa64058f4ff76f7d398c85da569af1c244442c9c58a3478d59264365ff8e39eed2fb564cb137118588f7862e64e9a"
+                }
+              ]
+            },
+            "pedigree": {
+              "ancestors": [
+                {
+                  "name": "curl",
+                  "purl": "pkg:generic/curl@7.61.1?download_url=https://curl.haxx.se/download/curl-7.61.1.tar.xz&checksum=SHA-256:3d5913d6a39bd22e68e34dff697fd6e4c3c81563f580c76fca2009315cd81891",
+                  "type": "library",
+                  "hashes": [
+                    {
+                      "alg": "SHA-256",
+                      "content": "3d5913d6a39bd22e68e34dff697fd6e4c3c81563f580c76fca2009315cd81891"
+                    }
+                  ],
+                  "bom-ref": "pkg:generic/curl@7.61.1?download_url=https://curl.haxx.se/download/curl-7.61.1.tar.xz&checksum=SHA-256:3d5913d6a39bd22e68e34dff697fd6e4c3c81563f580c76fca2009315cd81891",
+                  "version": "7.61.1",
+                  "evidence": {
+                    "identity": [
+                      {
+                        "field": "purl",
+                        "concludedValue": "pkg:generic/curl@7.61.1?download_url=https://curl.haxx.se/download/curl-7.61.1.tar.xz&checksum=SHA-256:3d5913d6a39bd22e68e34dff697fd6e4c3c81563f580c76fca2009315cd81891"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "eaf7b0d9ae1a80afa785ef97a22da7e8"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "c02401760561cbc6d9af51b25c9bffb06b7aa3ed2467552626798597dc406d27"
+        }
+      ],
+      "description": "curl is a command line tool for transferring data with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, SCP, SFTP, TFTP, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3 and RTSP. curl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, cookies, user+password authentication (Basic, Digest, NTLM, Negotiate, kerberos...), file transfer resume, proxy tunneling and a busload of other useful tricks.",
+      "externalReferences": [
+        {
+          "url": "https://brewweb.engineering.redhat.com/brew/buildinfo?buildID=3226551",
+          "type": "build-system",
+          "comment": "brew-build-id"
+        }
+      ]
+    },
+    {
+      "name": "curl",
+      "purl": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5b8f471c4c1791345dd774d7832cf2ac538443184ebeb69a1fca2f6e87dc3586"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=aarch64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "25655fb7b8a62ae01d317aa183e4d7f6"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "e6c68437239efc1c8bbd77979def8cb4eaef9e6b8acb2a542abbad0272a95124"
+        }
+      ],
+      "description": "curl is a command line tool for transferring data with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, SCP, SFTP, TFTP, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3 and RTSP. curl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, cookies, user+password authentication (Basic, Digest, NTLM, Negotiate, kerberos...), file transfer resume, proxy tunneling and a busload of other useful tricks."
+    },
+    {
+      "name": "libcurl",
+      "purl": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ac0c587aed94685376e90d89d76c88ad2904eb1df938eb4babd832e99e11c6c7"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=aarch64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "74edd4b6b6df30bfd6cd0d094317a021"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "7a27986893f7c8345e1f1ec02965f96c55cf69b638226fe3554e9b7c7413b5cf"
+        }
+      ],
+      "description": "libcurl is a free and easy-to-use client-side URL transfer library, supporting FTP, FTPS, HTTP, HTTPS, SCP, SFTP, TFTP, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3 and RTSP. libcurl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, cookies, user+password authentication (Basic, Digest, NTLM, Negotiate, Kerberos4), file transfer resume, http proxy tunneling and more."
+    },
+    {
+      "name": "libcurl-devel",
+      "purl": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "206ec7d678b479a0a280fe373b4a0616f39b6211e84b5ba7961ee44dbacd8160"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=aarch64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "7a6df1f7a3aa9304b343d70ef98c9512"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "cefe2e822dc76583f5fd2c2d8bc9a6a10d9f348257c372e0dc786a1bb556e9c9"
+        }
+      ],
+      "description": "The libcurl-devel package includes header files and libraries necessary for developing programs which use the libcurl library. It contains the API documentation of the library, too."
+    },
+    {
+      "name": "curl-minimal",
+      "purl": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fdadb86cb4385cff77d153a6e9d1ff8a105499552e01fd302946078ffed9cbbe"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=aarch64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "da8531fe9814f728132f4f491fd14613"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "7780a9bd6ea65283e7a96d6ccdb56f613ef61c212b63265e64abda1e729465fd"
+        }
+      ],
+      "description": "This is a replacement of the 'curl' package for minimal installations. It comes with a limited set of features compared to the 'curl' package. On the other hand, the package is smaller and requires fewer run-time dependencies to be installed."
+    },
+    {
+      "name": "libcurl-minimal",
+      "purl": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8baa07d6cdf7f3c7adddd31bb2664841db1adc9fec54cc6d6613b22a13cf8d34"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=aarch64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "401c649f2c7b12fae98e2fa8bb7caca2"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "68336cdf1f9590e89a500bfdc5c54577a57823b9d4df24676d55a137939e63f7"
+        }
+      ],
+      "description": "This is a replacement of the 'libcurl' package for minimal installations. It comes with a limited set of features compared to the 'libcurl' package. On the other hand, the package is smaller and requires fewer run-time dependencies to be installed."
+    },
+    {
+      "name": "curl-debugsource",
+      "purl": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-source-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "44a88f9d497431e46c10224127cd985733a98fe78750c13523e4ff4a81fbd1fb"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=aarch64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-source-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "329b37bce01a28d91a7a31dcad79439a"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "955b77b7fbc47e242ec22be3c72a30ca965d877283dc448cff3ce6551a9265b6"
+        }
+      ],
+      "description": "This package provides debug sources for package curl. Debug sources are useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl-debuginfo",
+      "purl": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "289e91f50480757881ce23273561e8aa50640f9746aac5dd1b63b4996718e4b3"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=aarch64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-debug-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-debug-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "20d09115443bb77158e4a9e75d1497c9"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "9991b3e76efe3fdb9972b74dea29d24f7f53f9fa6ac9f52b379d7c2ae54b5ffd"
+        }
+      ],
+      "description": "This package provides debug information for package curl. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "libcurl-debuginfo",
+      "purl": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b28343933da1161625093b12826cfea848cbb662455559cb3cf8d7cf10c75db8"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=aarch64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-debug-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-debug-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "7869e27caf9bf9c4d45ef0b386d5bbc0"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "2d74697105ccfed9246145c839feca775fcb8fb66ef6ba5119711048624badc4"
+        }
+      ],
+      "description": "This package provides debug information for package libcurl. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl-minimal-debuginfo",
+      "purl": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "211403d173b477c7f2d1f4c3dc6c532ac6b6a6704b32c811956e87d5c7a37f42"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=aarch64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-debug-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-debug-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "5650b5190b702ded0fe96c84423cdbcc"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "f59944203b14d4b1f6b87717481aefb4296eae4c8cd795c9984df7b4ea87f23f"
+        }
+      ],
+      "description": "This package provides debug information for package curl-minimal. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "libcurl-minimal-debuginfo",
+      "purl": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e539378d5e96a90dc32d188798ebbf55e0769da421ee424c5240841e905ebc0e"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=aarch64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-debug-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=aarch64&repository_id=rhel-8-for-aarch64-baseos-debug-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "419d2641708c9b0517db066bea751ae5"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "79c83f4bca46b1c8da8fac679e452f82907e05d2248693e4fe0360bbc530c229"
+        }
+      ],
+      "description": "This package provides debug information for package libcurl-minimal. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl",
+      "purl": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f1a72a0b5076a2390dce8d37a8b42a15a47af2399545e12bf6c963fe849239c6"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=ppc64le",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "bab1d95a157efafe91a8b289ac6825ff"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "5748e62d519785539400f26d2f6471a4faf31d95a4ecc204e5bd1865960d0a54"
+        }
+      ],
+      "description": "curl is a command line tool for transferring data with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, SCP, SFTP, TFTP, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3 and RTSP. curl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, cookies, user+password authentication (Basic, Digest, NTLM, Negotiate, kerberos...), file transfer resume, proxy tunneling and a busload of other useful tricks."
+    },
+    {
+      "name": "libcurl",
+      "purl": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "46ff2343d854d6807af09872fe65d917e31d2cd000a5639a1910f279f8bcd3ce"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=ppc64le",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "aa21549f4b5e95e10f87db74f5e7a737"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "d85d176df22865aad0a594cd7a5ca57865cd600375af249542e8f9663a6ac143"
+        }
+      ],
+      "description": "libcurl is a free and easy-to-use client-side URL transfer library, supporting FTP, FTPS, HTTP, HTTPS, SCP, SFTP, TFTP, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3 and RTSP. libcurl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, cookies, user+password authentication (Basic, Digest, NTLM, Negotiate, Kerberos4), file transfer resume, http proxy tunneling and more."
+    },
+    {
+      "name": "libcurl-devel",
+      "purl": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c382598cfdf9dc59d42125aefef63e11df2af01770bca8d6635ed0b34b0a8903"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=ppc64le",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "5640a72056b78f0e33ca55b6efc580a2"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "9abc68f19c6eb2918d97f96879204e67b3b1e8f3b1b308d2c3d6100faa6e8c79"
+        }
+      ],
+      "description": "The libcurl-devel package includes header files and libraries necessary for developing programs which use the libcurl library. It contains the API documentation of the library, too."
+    },
+    {
+      "name": "curl-minimal",
+      "purl": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "233e99f8662f2c3a064280910fe122dd18823c34b4716fb0a2a1e7c73f7b1765"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=ppc64le",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "4d593ffae2c364f400d258d51daaf371"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "b3aacac656360e32d6b79e15a5057bb384805c8b856181070632f3c1ad6009b8"
+        }
+      ],
+      "description": "This is a replacement of the 'curl' package for minimal installations. It comes with a limited set of features compared to the 'curl' package. On the other hand, the package is smaller and requires fewer run-time dependencies to be installed."
+    },
+    {
+      "name": "libcurl-minimal",
+      "purl": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "423d099330f2201d80861f41a3f78b70b334a65de13c8a004f42378a3f335668"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=ppc64le",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "0631313057af65830acc04f92e503302"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "ba49fbf9b482e6e177aa42cf2d32ebd077c2746f26e510dea2fe8afdc9bd0ed2"
+        }
+      ],
+      "description": "This is a replacement of the 'libcurl' package for minimal installations. It comes with a limited set of features compared to the 'libcurl' package. On the other hand, the package is smaller and requires fewer run-time dependencies to be installed."
+    },
+    {
+      "name": "curl-debugsource",
+      "purl": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-source-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "541f4557028c8e31646e07d8cfd3cc467abe8ac3eca4f2b155655ddac48e3b34"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=ppc64le",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-source-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "7bc4333c46354ebcfecb8de3c5afd907"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "918100a8947cab7f683babf540ee12cba8a52361b09e5af538de9c6d422bf10d"
+        }
+      ],
+      "description": "This package provides debug sources for package curl. Debug sources are useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl-debuginfo",
+      "purl": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "66dd147bc4eb86bfe15e833be74388a446092b8fbf9e955aae181666b0a10a59"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-debug-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-debug-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "b034919ded5cbc19f500dabdebadede1"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "5a3e9ac88054e0710d73afafef67c1e812c611c97a8d70fabead731676b602ed"
+        }
+      ],
+      "description": "This package provides debug information for package curl. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "libcurl-debuginfo",
+      "purl": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7d9aee9bf137753ed383a1462e28fa9f7f7e7485fbb58e09ec01731ba03a6363"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-debug-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-debug-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "2a12b51ac960bbcd764a04f11cd6d565"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "579fcd2eaf473284ac346da681beb7318b1984b9c8393aefc3351f796893adbd"
+        }
+      ],
+      "description": "This package provides debug information for package libcurl. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl-minimal-debuginfo",
+      "purl": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "089a438a3cbbc448b04afe8f35b9b074379e428eaeac09b26a7018b9a844ed28"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-debug-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-debug-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "6ab23a96a8b6664ac0cc632f8ad18ed5"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "d8add6d824b42388f410f98b8c03a3602d45d9f9f098b6e41fe245ed2681da23"
+        }
+      ],
+      "description": "This package provides debug information for package curl-minimal. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "libcurl-minimal-debuginfo",
+      "purl": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "a86fd8b3a8b153f954a0b455c29e878b1055d7ab5c129e8d49ef41eee652c3ab"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-debug-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le&repository_id=rhel-8-for-ppc64le-baseos-debug-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "56c5be0ac46ee96c5eaa7e5788db539a"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "6908340aaa3676d73a01d5e37eabafa0fa88e20f04fe67d11b0a186b48b0f191"
+        }
+      ],
+      "description": "This package provides debug information for package libcurl-minimal. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "edca3965e129e21cd5df584dc1b21e690444df7c4d201304bb6630ac50fc1a18"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=i686",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "44c434669a68478dd6db680f0475afc4"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "683785ca5679bcad83a17809a502ac3781403db55cfb41f7241a8f7b23a1da5a"
+        }
+      ],
+      "description": "curl is a command line tool for transferring data with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, SCP, SFTP, TFTP, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3 and RTSP. curl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, cookies, user+password authentication (Basic, Digest, NTLM, Negotiate, kerberos...), file transfer resume, proxy tunneling and a busload of other useful tricks."
+    },
+    {
+      "name": "libcurl",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9acd8ca6d7ccd08fb7422a0cb983944f3e7f0305f9d1258c6de75d95cf0a1e29"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=i686",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "8b6266808d5abca89fbe833c6a9a31f6"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "17a218b1228ca648bd711acf5cef5a64dac775409cb7abd04b57db343b03c6e2"
+        }
+      ],
+      "description": "libcurl is a free and easy-to-use client-side URL transfer library, supporting FTP, FTPS, HTTP, HTTPS, SCP, SFTP, TFTP, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3 and RTSP. libcurl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, cookies, user+password authentication (Basic, Digest, NTLM, Negotiate, Kerberos4), file transfer resume, http proxy tunneling and more."
+    },
+    {
+      "name": "libcurl-devel",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "39b31346e2175712c2b53ee7f20176216f30f9b1e670b398cdd60fe86b73ed01"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=i686",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "9ad279c0a0f5dedffc366f13c210ae38"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "40950a1a65ad60e720777e7fc862291ba0e695a89a02f0aeea74e1d8aa2d31b7"
+        }
+      ],
+      "description": "The libcurl-devel package includes header files and libraries necessary for developing programs which use the libcurl library. It contains the API documentation of the library, too."
+    },
+    {
+      "name": "curl-minimal",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fb893ed92f8bf20c7f5fba61ffe48afd799833637d5d95b5431bb5d4e1cb22a4"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=i686",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "380041c32ea01410e08b3efb56cd5488"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "6ff281d0db4ea493f3614fa1627a5a8ff87ed3427257df56b54f3e75877d85f5"
+        }
+      ],
+      "description": "This is a replacement of the 'curl' package for minimal installations. It comes with a limited set of features compared to the 'curl' package. On the other hand, the package is smaller and requires fewer run-time dependencies to be installed."
+    },
+    {
+      "name": "libcurl-minimal",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b0f59c5c28ab8a45e87577e0b53ccbc60c4da70a6922817e5ad3eb0816edec87"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=i686",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "3d8198798f4f12498e48435c5b052438"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "35b143ecd30d903e3c011747bfa5b38dfa4beca7e782a2082fc98669ffc1747d"
+        }
+      ],
+      "description": "This is a replacement of the 'libcurl' package for minimal installations. It comes with a limited set of features compared to the 'libcurl' package. On the other hand, the package is smaller and requires fewer run-time dependencies to be installed."
+    },
+    {
+      "name": "curl-debugsource",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2b98555a225f139f27c4ddd2620bf372c3ce38d9c3ad56d9f0e4746818f8d732"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=i686",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "7efe28a498459041f3dfbf090e0abac3"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "c7d499a989368894056a5d32592bcb445a92796ee22666b50de805c567ac6f7b"
+        }
+      ],
+      "description": "This package provides debug sources for package curl. Debug sources are useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl-debuginfo",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "15f9ffa75a841b7130bc6cdff6c1dd358e9eceba377cff602458208d196a9d8e"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=i686",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "d872a3d4385dc7e4f43dff1cd7c69439"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "040d57a8b818544308326536a19a34eb33ff2d2b7bc81557b08c07caccd76951"
+        }
+      ],
+      "description": "This package provides debug information for package curl. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "libcurl-debuginfo",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4b273c7e7e203a7c7764c638e9fb0832f6db80746161f125cb079ca47896687e"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=i686",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "ed514035d7fac8124c9c5b262d00763f"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "0cb6f3d1398dacd251b94414ed783c8e9a573f0ae826684ecb4151a125b6ab9f"
+        }
+      ],
+      "description": "This package provides debug information for package libcurl. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl-minimal-debuginfo",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9e6c92f962db51724fc20efa495d40736c5e61718fdb078f398694d2f28be7cf"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=i686",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "bd56ab20c954a698170fe2b413229912"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "4d332ab167426a3335867589e5745de0490c33cb747e2c7a9b060cbb46abfeeb"
+        }
+      ],
+      "description": "This package provides debug information for package curl-minimal. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "libcurl-minimal-debuginfo",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "837f6b1979c42311c6543b9292a30e91306a9124728be36baeba1b47df8c7832"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=i686",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {},
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "d3e776feaacb675fa970256480b9ae14"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "ffed14e0a22607103421be1088479f17c4a2c38c7b13e11594a2bfa78ae092bb"
+        }
+      ],
+      "description": "This package provides debug information for package libcurl-minimal. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl",
+      "purl": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1db56d3251c7f0333f9d251ed50078fd8f8a13eec41582f039df3b16c716d37f"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=x86_64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "81d440433a79fa1b39900a2088925390"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "5bf93b116fa122706a33bc151875c2322fa5aff27a4498cdbb0ada4c19507b91"
+        }
+      ],
+      "description": "curl is a command line tool for transferring data with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, SCP, SFTP, TFTP, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3 and RTSP. curl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, cookies, user+password authentication (Basic, Digest, NTLM, Negotiate, kerberos...), file transfer resume, proxy tunneling and a busload of other useful tricks."
+    },
+    {
+      "name": "libcurl",
+      "purl": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8091c757dcfd01c09b87ab45bd2d0bade53404c3ca83ec8304f1bda643a6a3de"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=x86_64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "49cd62a7baebe7b25e6b77b547a19cc9"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "8b0fd79ba1c19b4241c83dd65c2f3b93b02243d7f17485efbd247f3974a015ea"
+        }
+      ],
+      "description": "libcurl is a free and easy-to-use client-side URL transfer library, supporting FTP, FTPS, HTTP, HTTPS, SCP, SFTP, TFTP, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3 and RTSP. libcurl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, cookies, user+password authentication (Basic, Digest, NTLM, Negotiate, Kerberos4), file transfer resume, http proxy tunneling and more."
+    },
+    {
+      "name": "libcurl-devel",
+      "purl": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4f2792aea4daf383a2566e9623001329865819680ec32a993e1e105017576fa2"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=x86_64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "1cde35994ba3f13b0b02115c61517d6f"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "8584e7a125a645f9b863a38fb1afad3e018258245c08ec7d83843ae73d790ed0"
+        }
+      ],
+      "description": "The libcurl-devel package includes header files and libraries necessary for developing programs which use the libcurl library. It contains the API documentation of the library, too."
+    },
+    {
+      "name": "curl-minimal",
+      "purl": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "260f10ee978a1d05657e00696982c7beb3f35d240c383df7b95797d1266d5ac0"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=x86_64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "b7c1eec5eef9989a63e8febfabd0ca0a"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "ca5ac94675255b6da39453bdfd172585b9eb2f6546c7ff3a68196f14bddcbd01"
+        }
+      ],
+      "description": "This is a replacement of the 'curl' package for minimal installations. It comes with a limited set of features compared to the 'curl' package. On the other hand, the package is smaller and requires fewer run-time dependencies to be installed."
+    },
+    {
+      "name": "libcurl-minimal",
+      "purl": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "b6b26432b9fd413ea4d3c4fe4e5168d3b08bd2554249852841548644d51a5f85"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=x86_64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "a23168448272172a3d69a17621079de7"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "aed094770c0f07166e67a5d8b8723fd3b26a2545e8b7a05ff10bfde738f3ef2f"
+        }
+      ],
+      "description": "This is a replacement of the 'libcurl' package for minimal installations. It comes with a limited set of features compared to the 'libcurl' package. On the other hand, the package is smaller and requires fewer run-time dependencies to be installed."
+    },
+    {
+      "name": "curl-debugsource",
+      "purl": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-source-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fb2568bf19282c6aa05b5765f2612ba7ec462ad8e9ea24c746a057d571e6c92c"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=x86_64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-source-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "37bc34047cf35d6399f4ccf35ffea711"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "a9bc15f8daedc371055cf3c4d2b9a86f795ef61b51021db87a6125e017942314"
+        }
+      ],
+      "description": "This package provides debug sources for package curl. Debug sources are useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl-debuginfo",
+      "purl": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ad251797264e1be92400cf26036a627bb71af2cc77fd127403986e3f727d47ee"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=x86_64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-debug-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-debug-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "f4511ace6abf9c4360366939ceae7607"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "dc401a358789e13514b0e858e08c9883a39118ddb686945091237d824252c0ce"
+        }
+      ],
+      "description": "This package provides debug information for package curl. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "libcurl-debuginfo",
+      "purl": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ff919c02a3f8341831077d7602cfcbab06e348507e7c4da86b82929cf6027e52"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=x86_64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-debug-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-debug-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "6c6ef16de3a3add349652cf3a7d2c562"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "fc15a55977feac643a0e369bd24ee9fad8340223d1b5b2e6be8efb4472eca269"
+        }
+      ],
+      "description": "This package provides debug information for package libcurl. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl-minimal-debuginfo",
+      "purl": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2055a23f7a79b645cf422c3a9acd207b5d523d13edf50b0117dac4e57666b52b"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=x86_64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-debug-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-debug-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "96f4d59701f11a55070f50d62507cba8"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "731fa8e41de74c4cdc7ee82cd2e29af6099ea72fa97892a7b92ff0ad2069eb41"
+        }
+      ],
+      "description": "This package provides debug information for package curl-minimal. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "libcurl-minimal-debuginfo",
+      "purl": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5df3f2d55be430dc1d9a2108376e026bec389be1b402329e7510506d6d5aa0d0"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=x86_64",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-debug-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=x86_64&repository_id=rhel-8-for-x86_64-baseos-debug-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "6e0ee7344915ac762d776fd09114b9a5"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "e1b2d0c6059e0f3405b8ec14e272fcd3b318b19d018086fb358b072044d5e5d3"
+        }
+      ],
+      "description": "This package provides debug information for package libcurl-minimal. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl",
+      "purl": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f198df8a31863445ad391bd4122ac0f43047dc2090a1b84687ba9bc1a157dea7"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=s390x",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "a67ef0e6ad53678a427a8a1f210a3995"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "f682b2494f448ef0e7cf7ed62688a7e82baf9bec22183621d220d2ce6a903856"
+        }
+      ],
+      "description": "curl is a command line tool for transferring data with URL syntax, supporting FTP, FTPS, HTTP, HTTPS, SCP, SFTP, TFTP, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3 and RTSP. curl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, cookies, user+password authentication (Basic, Digest, NTLM, Negotiate, kerberos...), file transfer resume, proxy tunneling and a busload of other useful tricks."
+    },
+    {
+      "name": "libcurl",
+      "purl": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "fc39c31e98f7d93268a0e6d422ae65fb02cbccd248aea093adadad9d0e2087e7"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=s390x",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "7059fe82033352f24467fc3b8f59c0f5"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "a8485d4e182edc422cd49dae7d84cdd139ac1b5b2a798af2096da9f6554d8160"
+        }
+      ],
+      "description": "libcurl is a free and easy-to-use client-side URL transfer library, supporting FTP, FTPS, HTTP, HTTPS, SCP, SFTP, TFTP, TELNET, DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3 and RTSP. libcurl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, cookies, user+password authentication (Basic, Digest, NTLM, Negotiate, Kerberos4), file transfer resume, http proxy tunneling and more."
+    },
+    {
+      "name": "libcurl-devel",
+      "purl": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5708522dde0fc61a242780d314bffd50888d54e2c8faa3cd5cff2119f9a79422"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=s390x",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "5341a716362f02a4ff1e324ff78addd1"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "02c45916fd15e8f176ee92ee56c1c1dc7d713ceced5b39a658ede16c55ab8f84"
+        }
+      ],
+      "description": "The libcurl-devel package includes header files and libraries necessary for developing programs which use the libcurl library. It contains the API documentation of the library, too."
+    },
+    {
+      "name": "curl-minimal",
+      "purl": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "896af0cfec5264aaa95f96cd6dc41cbae2ef7c20c199be0833513dae820b2489"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=s390x",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "b7c1263f24249b44611279451e139597"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "d6abc750773d52c1514d4829b9d868adce02fb9d8e4137ef72c0ed708f5a4e82"
+        }
+      ],
+      "description": "This is a replacement of the 'curl' package for minimal installations. It comes with a limited set of features compared to the 'curl' package. On the other hand, the package is smaller and requires fewer run-time dependencies to be installed."
+    },
+    {
+      "name": "libcurl-minimal",
+      "purl": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bf96d2a17c80f46fbad6706f9a5d15738630fd981a4c6a87e065ca9d36281278"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=s390x",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "76709ab06087c851ac6badb0ef52f0ff"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "7fac786079cf5081f30dcf1f2318720b9a4c2b0982a3db8e434051d72974403f"
+        }
+      ],
+      "description": "This is a replacement of the 'libcurl' package for minimal installations. It comes with a limited set of features compared to the 'libcurl' package. On the other hand, the package is smaller and requires fewer run-time dependencies to be installed."
+    },
+    {
+      "name": "curl-debugsource",
+      "purl": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-source-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f451b399276fa8cc29ddbc13d78a1be4ccbbdc6dd7b8aa8334eb3e730afdff46"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=s390x",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-source-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "4127af48e560d903fff8e1a139ba2302"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "5eae846316bcf983a76f8dd5fd38b4d17bd5fd404b78515cab4cbaf916351812"
+        }
+      ],
+      "description": "This package provides debug sources for package curl. Debug sources are useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl-debuginfo",
+      "purl": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "47884798a21176c60c7eb23576dba451db136a3b106683182be6e8a335c2c3eb"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=s390x",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-debug-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-debug-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "491c867303d0c7f03eb656b55cbb31a7"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "5b50a610b2df30dc0667a2977e5011a9c9a1b8965e4ca67bb339243e8ff6efd2"
+        }
+      ],
+      "description": "This package provides debug information for package curl. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "libcurl-debuginfo",
+      "purl": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7ded8fad337f85a18218dab687de66ed57991a22fc62d907af52d5d00bcc5f02"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=s390x",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-debug-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-debug-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "019a6c1b78b80d2cd356a71a7c3aedec"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "b1fcd10da774980414f478f30b56ea10bb54561b5457cb1f6f38c64566373e13"
+        }
+      ],
+      "description": "This package provides debug information for package libcurl. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl-minimal-debuginfo",
+      "purl": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3542794418aabb22f97045020684638908d1f9e846ad64e1b1176e90a421581f"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=s390x",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-debug-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-debug-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "b43f40c1f5bbbb1db29ed44538eba577"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "f6b3f9ad55760acfcba067ea62c2c5cb1e83c6856420da44344fd9de7c56eb7f"
+        }
+      ],
+      "description": "This package provides debug information for package curl-minimal. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "libcurl-minimal-debuginfo",
+      "purl": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-debug-rpms__8_DOT_10",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9e21f9088441303af279a118ed2699c3e212b34ef4eb1ec7f6a2db49bcf457fd"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=s390x",
+      "version": "7.61.1-34.el8_10.2",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-debug-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=s390x&repository_id=rhel-8-for-s390x-baseos-debug-rpms__8_DOT_10"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "properties": [
+        {
+          "name": "package:rpm:sigmd5",
+          "value": "179b9172f8cdcfa75a254272b508182b"
+        },
+        {
+          "name": "package:rpm:sha256header",
+          "value": "94e96dc295c670baef6019dd3307dde12cf4f4f7abbcf3a720e9cf55790103b0"
+        }
+      ],
+      "description": "This package provides debug information for package libcurl-minimal. Debug information is useful when developing applications that use this package or when debugging this package."
+    },
+    {
+      "name": "curl",
+      "type": "application",
+      "bom-ref": "pkg:generic/curl@7.61.1?package-id=280bddaa84121415",
+      "version": "7.61.1",
+      "evidence": {},
+      "properties": [
+        {
+          "name": "syft:package:foundBy",
+          "value": "binary-classifier-cataloger"
+        },
+        {
+          "name": "syft:location:0:path",
+          "value": "/usr/bin/curl"
+        }
+      ]
+    }
+  ],
+  "specVersion": "1.6",
+  "dependencies": [
+    {
+      "ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=src",
+      "provides": [
+        "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=aarch64",
+        "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=aarch64",
+        "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=aarch64",
+        "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=aarch64",
+        "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=aarch64",
+        "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=aarch64",
+        "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=aarch64",
+        "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=aarch64",
+        "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=aarch64",
+        "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=aarch64",
+        "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=ppc64le",
+        "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=ppc64le",
+        "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=ppc64le",
+        "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=ppc64le",
+        "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=ppc64le",
+        "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=ppc64le",
+        "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le",
+        "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le",
+        "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le",
+        "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=ppc64le",
+        "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=i686",
+        "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=i686",
+        "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=i686",
+        "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=i686",
+        "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=i686",
+        "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=i686",
+        "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=i686",
+        "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=i686",
+        "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=i686",
+        "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=i686",
+        "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=x86_64",
+        "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=x86_64",
+        "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=x86_64",
+        "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=x86_64",
+        "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=x86_64",
+        "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=x86_64",
+        "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=x86_64",
+        "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=x86_64",
+        "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=x86_64",
+        "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=x86_64",
+        "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=s390x",
+        "pkg:rpm/redhat/libcurl@7.61.1-34.el8_10.2?arch=s390x",
+        "pkg:rpm/redhat/libcurl-devel@7.61.1-34.el8_10.2?arch=s390x",
+        "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=s390x",
+        "pkg:rpm/redhat/libcurl-minimal@7.61.1-34.el8_10.2?arch=s390x",
+        "pkg:rpm/redhat/curl-debugsource@7.61.1-34.el8_10.2?arch=s390x",
+        "pkg:rpm/redhat/curl-debuginfo@7.61.1-34.el8_10.2?arch=s390x",
+        "pkg:rpm/redhat/libcurl-debuginfo@7.61.1-34.el8_10.2?arch=s390x",
+        "pkg:rpm/redhat/curl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=s390x",
+        "pkg:rpm/redhat/libcurl-minimal-debuginfo@7.61.1-34.el8_10.2?arch=s390x"
+      ],
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=aarch64",
+      "provides": [
+        "pkg:generic/curl@7.61.1?package-id=280bddaa84121415"
+      ],
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=aarch64",
+      "provides": [
+        "pkg:generic/curl@7.61.1?package-id=280bddaa84121415"
+      ],
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=ppc64le",
+      "provides": [
+        "pkg:generic/curl@7.61.1?package-id=280bddaa84121415"
+      ],
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=ppc64le",
+      "provides": [
+        "pkg:generic/curl@7.61.1?package-id=280bddaa84121415"
+      ],
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=i686",
+      "provides": [
+        "pkg:generic/curl@7.61.1?package-id=280bddaa84121415"
+      ],
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=i686",
+      "provides": [
+        "pkg:generic/curl@7.61.1?package-id=280bddaa84121415"
+      ],
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=x86_64",
+      "provides": [
+        "pkg:generic/curl@7.61.1?package-id=280bddaa84121415"
+      ],
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=x86_64",
+      "provides": [
+        "pkg:generic/curl@7.61.1?package-id=280bddaa84121415"
+      ],
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.2?arch=s390x",
+      "provides": [
+        "pkg:generic/curl@7.61.1?package-id=280bddaa84121415"
+      ],
+      "dependsOn": []
+    },
+    {
+      "ref": "pkg:rpm/redhat/curl-minimal@7.61.1-34.el8_10.2?arch=s390x",
+      "provides": [
+        "pkg:generic/curl@7.61.1?package-id=280bddaa84121415"
+      ],
+      "dependsOn": []
+    }
+  ],
+  "serialNumber": "urn:uuid:33f47544-25b0-4441-959b-a82d7b9a41a3"
+}
