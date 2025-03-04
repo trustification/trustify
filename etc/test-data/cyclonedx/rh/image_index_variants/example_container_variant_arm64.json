@@ -1,6 +1,12 @@
 {
   "version": 1,
   "metadata": {
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
     "tools": {
       "components": [
         {
@@ -12,6 +18,7 @@
       ]
     },
     "component": {
+      "bom-ref": "ose-openstack-cinder-csi-driver-operator-container_arm64",
       "name": "openshift/ose-openstack-cinder-csi-driver-operator",
       "purl": "pkg:oci/ose-openstack-cinder-csi-driver-operator@sha256%3A0e72df1e6f4b356282576efaed99915fa7fb8c22718b67b1f82f89be6722b24f?arch=arm64&os=linux&tag=v4.15.0-202501280037.p0.gd0c2407.assembly.stream.el8",
       "type": "container"
