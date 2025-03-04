@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741016600330,
+  "lastUpdate": 1741085860197,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -5944,6 +5944,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": false,
+          "id": "5949cff01cd8e69fe141502a88c4de1d5b338f8d",
+          "message": "fix: analysis graph needs to consult graph_cache for external sboms, added tests",
+          "timestamp": "2025-03-04T10:39:46Z",
+          "tree_id": "5980315441c9ff2dc671ec933b0e2e0a2a1a9fdd",
+          "url": "https://github.com/trustification/trustify/commit/5949cff01cd8e69fe141502a88c4de1d5b338f8d"
+        },
+        "date": 1741085859775,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
