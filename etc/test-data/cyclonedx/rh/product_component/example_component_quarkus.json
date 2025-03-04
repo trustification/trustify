@@ -1,6 +1,12 @@
 {
   "version": 1,
   "metadata": {
+    "supplier": {
+      "name": "Red Hat",
+      "url": [
+        "https://www.redhat.com"
+      ]
+    },
     "tools": [
       {
         "name": "Domino 0.0.104 SBOM Generator",
@@ -42,7 +48,8 @@
         "version": "0.0.104"
       }
     ],
-    "component": {
+    "cpkg:maven/com.redhat.quarkus.platform/quarkus-bom@2.13.9.SP2-redhat-00003?type=pomomponent": {
+      "bom-ref": "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@2.13.9.SP2-redhat-00003?type=pom",
       "name": "quarkus-bom",
       "purl": "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@2.13.9.SP2-redhat-00003?repository_url=https%3A%2F%2Fmaven.repository.redhat.com%2Fga%2F&type=pom",
       "type": "framework",

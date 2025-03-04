@@ -1,6 +1,12 @@
 {
   "version": 1,
   "metadata": {
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
     "tools": {
       "components": [
         {

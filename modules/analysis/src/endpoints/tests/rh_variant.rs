@@ -136,7 +136,7 @@ async fn resolve_rh_variant_prod_comp_cdx_external_reference_curl(
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
-    log::warn!("{:?}", response);
+    log::debug!("{:?}", response);
 
     assert!(response.contains_subset(json!({
       "items": [
@@ -153,6 +153,68 @@ async fn resolve_rh_variant_prod_comp_cdx_external_reference_curl(
             }]
         }
       ]
+    })));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn resolve_rh_variant_source_binary_cdx_external_reference(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_document("cyclonedx/rh/rpm_src_binary/example_rpm_source.json")
+        .await?;
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode("cpe:/a:redhat:rhel_eus:9.4::appstream")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(200, response.response().status());
+
+    ctx.ingest_document("cyclonedx/rh/rpm_src_binary/example_rpm_binaries.json")
+        .await?;
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode("cpe:/a:redhat:rhel_eus:9.4::appstream")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+
+    log::debug!("{:?}", response);
+
+    assert!(response.contains_subset(json!({
+      "items": [
+        {
+            "node_id": "RHEL-9.4.0.Z.EUS",
+            "name": "Red Hat Enterprise Linux 9.4 Extended Update Support",
+            "version": "RHEL-9.4.0.Z.EUS",
+            "published": "2025-01-21 12:32:48+00",
+            "document_id": "urn:uuid:f8afe2b2-c3d6-39fa-b9fc-92e5c76516ff/1",
+            "descendants": [
+            {
+                "node_id": "pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src",
+                "name": "iperf3",
+                "version": "3.9-11.el9_4.1",
+                "published": "2025-01-21 12:32:48+00",
+                "document_id": "urn:uuid:f8afe2b2-c3d6-39fa-b9fc-92e5c76516ff/1",
+                "relationship": "generates",
+                "descendants": [
+                {
+                    "node_id": "RHEL-9.4.0.Z.EUS:pkg:rpm/redhat/iperf3@3.9-11.el9_4.1?arch=src",
+                    "relationship": "package",
+                     "descendants": [
+                        {
+                          "node_id": "pkg:rpm/redhat/iperf3-devel@3.9-11.el9_4.1?arch=x86_64",
+                          "document_id": "urn:uuid:a8c83882-79a5-4b47-8ba3-3973ac4e4309/1",
+                          "relationship": "generates",
+                        }]
+                }]
+            }]
+        }]
     })));
 
     Ok(())
