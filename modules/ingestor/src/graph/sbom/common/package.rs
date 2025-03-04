@@ -1,12 +1,12 @@
 use crate::graph::sbom::common::node::NodeCreator;
-use crate::graph::sbom::{Checksum, LicenseInfo, ReferenceSource};
+use crate::graph::sbom::{Checksum, LicenseCreator, LicenseInfo, ReferenceSource};
 use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use tracing::instrument;
 use trustify_common::db::chunk::EntityChunkedIter;
 use trustify_entity::{
     cpe_license_assertion, purl_license_assertion, sbom_package, sbom_package_cpe_ref,
-    sbom_package_purl_ref,
+    sbom_package_license, sbom_package_purl_ref,
 };
 use uuid::Uuid;
 
@@ -19,6 +19,7 @@ pub struct PackageCreator {
     pub(crate) cpe_refs: Vec<sbom_package_cpe_ref::ActiveModel>,
     purl_license_assertions: Vec<purl_license_assertion::ActiveModel>,
     cpe_license_assertions: Vec<cpe_license_assertion::ActiveModel>,
+    sbom_packge_licenses: Vec<sbom_package_license::ActiveModel>,
 }
 
 pub struct NodeInfoParam {
@@ -26,6 +27,9 @@ pub struct NodeInfoParam {
     pub name: String,
     pub group: Option<String>,
     pub version: Option<String>,
+    pub declared_licenses: Option<LicenseInfo>,
+    pub concluded_licenses: Option<LicenseInfo>,
+    pub cyclonedx_licenses: Option<LicenseCreator>,
 }
 
 pub enum PackageReference {
@@ -46,6 +50,7 @@ impl PackageCreator {
             cpe_refs: Vec::new(),
             purl_license_assertions: Vec::new(),
             cpe_license_assertions: Vec::new(),
+            sbom_packge_licenses: Vec::new(),
         }
     }
 
@@ -58,6 +63,7 @@ impl PackageCreator {
             cpe_refs: Vec::new(), // most packages won't have a CPE, so we start with a low number
             purl_license_assertions: Vec::new(),
             cpe_license_assertions: Vec::new(),
+            sbom_packge_licenses: Vec::new(),
         }
     }
 
@@ -117,9 +123,41 @@ impl PackageCreator {
         self.packages.push(sbom_package::ActiveModel {
             sbom_id: Set(self.sbom_id),
             group: Set(node_info.group),
-            node_id: Set(node_info.node_id),
+            node_id: Set(node_info.node_id.clone()),
             version: Set(node_info.version),
         });
+
+        if let Some(declared) = node_info.declared_licenses {
+            self.sbom_packge_licenses
+                .push(sbom_package_license::ActiveModel {
+                    sbom_id: Set(self.sbom_id),
+                    node_id: Set(node_info.node_id.clone()),
+                    license_id: Set(declared.uuid()),
+                    license_type: Set(sbom_package_license::LicenseCategory::Declared),
+                });
+        }
+
+        if let Some(concluded) = node_info.concluded_licenses {
+            self.sbom_packge_licenses
+                .push(sbom_package_license::ActiveModel {
+                    sbom_id: Set(self.sbom_id),
+                    node_id: Set(node_info.node_id.clone()),
+                    license_id: Set(concluded.uuid()),
+                    license_type: Set(sbom_package_license::LicenseCategory::Concluded),
+                });
+        }
+
+        if let Some(cyclonedx) = node_info.cyclonedx_licenses {
+            for (uuid, _v) in cyclonedx.licenses {
+                self.sbom_packge_licenses
+                    .push(sbom_package_license::ActiveModel {
+                        sbom_id: Set(self.sbom_id),
+                        node_id: Set(node_info.node_id.clone()),
+                        license_id: Set(uuid),
+                        license_type: Set(sbom_package_license::LicenseCategory::Declared),
+                    });
+            }
+        }
     }
 
     #[instrument(
@@ -204,6 +242,23 @@ impl PackageCreator {
                         cpe_license_assertion::Column::SbomId,
                         cpe_license_assertion::Column::LicenseId,
                         cpe_license_assertion::Column::CpeId,
+                    ])
+                    .do_nothing()
+                    .to_owned(),
+                )
+                .do_nothing()
+                .exec(db)
+                .await?;
+        }
+
+        for batch in &self.sbom_packge_licenses.into_iter().chunked() {
+            sbom_package_license::Entity::insert_many(batch)
+                .on_conflict(
+                    OnConflict::columns([
+                        sbom_package_license::Column::SbomId,
+                        sbom_package_license::Column::NodeId,
+                        sbom_package_license::Column::LicenseId,
+                        sbom_package_license::Column::LicenseType,
                     ])
                     .do_nothing()
                     .to_owned(),
