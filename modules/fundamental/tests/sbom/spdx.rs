@@ -2,6 +2,7 @@ mod aliases;
 mod corner_cases;
 mod external;
 mod issue_552;
+mod parallel;
 mod perf;
 mod reingest;
 

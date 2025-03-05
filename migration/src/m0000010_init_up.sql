@@ -3688,21 +3688,21 @@ CREATE INDEX sbomnodenameginidx ON public.sbom_node USING gin (((name)::text) pu
 -- Name: sha256_index; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX sha256_index ON public.source_document USING btree (sha256);
+CREATE UNIQUE INDEX sha256_index ON public.source_document USING btree (sha256);
 
 
 --
 -- Name: sha384_index; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX sha384_index ON public.source_document USING btree (sha384);
+CREATE UNIQUE INDEX sha384_index ON public.source_document USING btree (sha384);
 
 
 --
 -- Name: sha512_index; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX sha512_index ON public.source_document USING btree (sha512);
+CREATE UNIQUE INDEX sha512_index ON public.source_document USING btree (sha512);
 
 
 --
