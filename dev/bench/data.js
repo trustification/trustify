@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741155899963,
+  "lastUpdate": 1741200911627,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6026,6 +6026,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/513d1aeb9460eb4e41c9e66bb123affaeecd392f"
         },
         "date": 1741155899093,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "snyk-bot@snyk.io",
+            "name": "snyk-bot",
+            "username": "snyk-bot"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "03eb218fdb90ce814f909a9436a21ecafb36db6e",
+          "message": "fix: upgrade antora from 3.1.9 to 3.1.10\n\nSnyk has created this PR to upgrade antora from 3.1.9 to 3.1.10.\n\nSee this package in npm:\nantora\n\nSee this project in Snyk:\nhttps://app.snyk.io/org/application-services-red-hat-trusted-profile-analyzer/project/7586d7d5-aee5-4704-9716-8b5eed9a308b?utm_source=github&utm_medium=referral&page=upgrade-pr",
+          "timestamp": "2025-03-05T18:35:54Z",
+          "tree_id": "d536a85699a6ee85b3904e0d2b4a185ef1ab70bf",
+          "url": "https://github.com/trustification/trustify/commit/03eb218fdb90ce814f909a9436a21ecafb36db6e"
+        },
+        "date": 1741200910852,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
