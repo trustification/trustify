@@ -17,7 +17,11 @@ use std::{
     sync::Arc,
 };
 use tracing::{Level, instrument};
-use trustify_common::{cpe::Cpe, db::query::Filtering, purl::Purl};
+use trustify_common::{
+    cpe::Cpe,
+    db::query::{Filtering, IntoColumns},
+    purl::Purl,
+};
 use trustify_entity::{
     cpe::CpeDto, package_relates_to_package, relationship::Relationship, sbom, sbom_external_node,
     sbom_external_node::ExternalType, sbom_node, sbom_package, sbom_package_cpe_ref,
@@ -237,7 +241,22 @@ impl AnalysisService {
                 .distinct()
                 .into_query(),
             GraphQuery::Query(query) => sbom_node::Entity::find()
-                .filtering(query.clone())?
+                // TODO: The following translation effectively ignores
+                // any fields named 'purl' or 'cpe', potentially
+                // selecting every SbomId in the db, without any other
+                // fields in the query. We need help constructing the
+                // SELECT statement that would enable us to find
+                // partial matches of the purl's stored within
+                // entity::qualified_purl::Column::Purl, i.e. the
+                // 'PURL' column of the 'QUALIFIED_PURL' table.
+                .filtering_with(
+                    query.clone(),
+                    sbom_node::Entity.columns().translator(|f, _, _| match f {
+                        "purl" => Some(String::default()),
+                        "cpe" => Some(String::default()),
+                        _ => None,
+                    }),
+                )?
                 .select_only()
                 .column(sbom_node::Column::SbomId)
                 .distinct()
