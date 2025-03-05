@@ -110,6 +110,65 @@ async fn resolve_rh_variant_prod_comp_cdx_external_reference(
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+async fn resolve_rh_variant_prod_comp_cdx_external_reference_ancestors(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    let _load = ctx
+        .ingest_documents([
+            "cyclonedx/rh/product_component/openssl-3.0.7-18.el9_2.cdx.json",
+            "cyclonedx/rh/product_component/rhel-9.2-eus.cdx.json",
+        ])
+        .await?;
+
+    // search for a dependency "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64"
+    let uri = format!(
+        "/api/v2/analysis/component/{}?ancestors=10",
+        urlencoding::encode("pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+
+    log::debug!("test result {:?}", response);
+
+    assert!(response.contains_subset(json!({
+      "items": [
+        {
+            "node_id": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64",
+            "document_id": "urn:uuid:223234df-bb5b-49af-a896-143736f7d806/1",
+            "ancestors": [
+            {
+                "node_id": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
+                "document_id": "urn:uuid:223234df-bb5b-49af-a896-143736f7d806/1",
+                "relationship": "generates",
+                "ancestors": [
+                {
+                    "node_id": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
+                    "document_id": "urn:uuid:337d9115-4e7c-4e76-b389-51f7aed6eba8/1",
+                    "relationship": "package",
+                    "ancestors":[
+                    {
+                        "node_id": "Red Hat Enterprise Linux 9.2 EUS",
+                        "document_id": "urn:uuid:337d9115-4e7c-4e76-b389-51f7aed6eba8/1",
+                        "relationship": "generates",
+                        "ancestors": [
+                        {
+                            "node_id": "CycloneDX-doc-ref",
+                            "document_id": "urn:uuid:337d9115-4e7c-4e76-b389-51f7aed6eba8/1",
+                            "relationship": "describes",
+                        }]
+                    }]
+                }]
+            }]
+        }]
+    })));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
 async fn resolve_rh_variant_prod_comp_cdx_external_reference_curl(
     ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
