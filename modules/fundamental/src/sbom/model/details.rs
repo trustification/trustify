@@ -11,9 +11,10 @@ use crate::{
 };
 use cpe::{cpe::Cpe, uri::OwnedUri};
 use sea_orm::{
-    ConnectionTrait, DbBackend, DbErr, EntityTrait, FromQueryResult, JoinType, ModelTrait,
-    QueryFilter, QueryResult, QuerySelect, RelationTrait, Select, Statement,
+    Condition, ConnectionTrait, DbBackend, DbErr, EntityTrait, FromQueryResult, JoinType,
+    ModelTrait, QueryFilter, QueryResult, QuerySelect, RelationTrait, Select, Statement,
 };
+use sea_query::Query;
 use sea_query::{Asterisk, Expr, Func, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -28,8 +29,8 @@ use trustify_common::{
 use trustify_cvss::cvss3::{Cvss3Base, score::Score, severity::Severity};
 use trustify_entity::{
     advisory, base_purl, cvss3, product_status, product_version, purl_status, qualified_purl, sbom,
-    sbom_node, sbom_package, sbom_package_purl_ref, status, version_range, versioned_purl,
-    vulnerability,
+    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, status, version_range,
+    versioned_purl, vulnerability,
 };
 use utoipa::ToSchema;
 
@@ -69,6 +70,22 @@ impl SbomDetails {
             query = query
                 .filter(Expr::col((status::Entity, status::Column::Slug)).is_in(statuses.clone()));
         }
+
+        let subquery = Query::select()
+            .column(sbom_package_cpe_ref::Column::CpeId)
+            .from(sbom_package_cpe_ref::Entity)
+            .and_where(Expr::col(sbom_package_cpe_ref::Column::SbomId).eq(sbom.sbom_id))
+            .distinct()
+            .to_owned();
+
+        query = query.filter(
+            Condition::any()
+                .add(Expr::col((purl_status::Entity, purl_status::Column::ContextCpeId)).is_null())
+                .add(
+                    Expr::col((purl_status::Entity, purl_status::Column::ContextCpeId))
+                        .in_subquery(subquery),
+                ),
+        );
 
         let mut relevant_advisory_info = query
             .join(
