@@ -227,4 +227,3 @@ DROP TYPE public.cvss3_c;
 DROP TYPE public.cvss3_av;
 DROP TYPE public.cvss3_ac;
 DROP TYPE public.cvss3_a;
-DROP EXTENSION pg_trgm;
