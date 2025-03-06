@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741200911627,
+  "lastUpdate": 1741235361225,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6055,6 +6055,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/03eb218fdb90ce814f909a9436a21ecafb36db6e"
         },
         "date": 1741200910852,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": false,
+          "id": "0ed6e7b166756bbc08993f1994421247155488a4",
+          "message": "fix: don't create duplicate documents when ingesting in parallel\n\nCloses: #1395",
+          "timestamp": "2025-03-06T04:11:58Z",
+          "tree_id": "6fe8449327b9b8b86ef8d2f35a9bf9ba0edc269e",
+          "url": "https://github.com/trustification/trustify/commit/0ed6e7b166756bbc08993f1994421247155488a4"
+        },
+        "date": 1741235359906,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
