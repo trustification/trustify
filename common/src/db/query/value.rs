@@ -3,6 +3,7 @@ use human_date_parser::{ParseResult, from_human_time};
 use std::cmp::Ordering;
 use time::OffsetDateTime;
 
+#[derive(Debug)]
 pub enum Value<'a> {
     String(&'a str),
     Int(i32),

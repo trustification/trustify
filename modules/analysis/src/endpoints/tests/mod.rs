@@ -335,6 +335,37 @@ async fn quarkus_component_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::
     Ok(())
 }
 
+/// find a component by purl
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn find_component_by_purl_in_query(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+    ctx.ingest_documents(["spdx/quarkus-bom-3.2.11.Final-redhat-00001.json"])
+        .await?;
+
+    // The '&type=pom" needs to be escaped else 'type' will be
+    // interpreted as a field to be queried
+    let purl = r#"pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/\&type=pom"#;
+
+    let query = format!("purl={purl}");
+    let uri = format!(
+        "/api/v2/analysis/component?q={}",
+        urlencoding::encode(&query)
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    tracing::debug!(test = "", "{response:#?}");
+    assert!(response.contains_subset(json!({
+        "items": [{
+            "purl": [ purl.replace(r"\&", "&") ],
+            "cpe": ["cpe:/a:redhat:quarkus:3.2:*:el8:*"]
+        }]
+    })));
+    assert_eq!(&response["total"], 1);
+
+    Ok(())
+}
+
 /// find a component by cpe
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
