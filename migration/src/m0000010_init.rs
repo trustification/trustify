@@ -15,12 +15,18 @@ impl MigrationTrait for Migration {
         // Delete the SET statements at the start of the file
         // Move the drop statements at the start to m0000010_init_down.sql
 
-        let x = manager
+        manager
+            .get_connection()
+            .execute_unprepared(include_str!("m0000005_db_init.sql"))
+            .await
+            .map(|_| ())?;
+
+        manager
             .get_connection()
             .execute_unprepared(include_str!("m0000010_init_up.sql"))
             .await
-            .map(|_| ());
-        x?;
+            .map(|_| ())?;
+
         Ok(())
     }
 
@@ -30,6 +36,13 @@ impl MigrationTrait for Migration {
             .execute_unprepared(include_str!("m0000010_init_down.sql"))
             .await
             .map(|_| ())?;
+
+        manager
+            .get_connection()
+            .execute_unprepared(include_str!("m0000005_db_down.sql"))
+            .await
+            .map(|_| ())?;
+
         Ok(())
     }
 }
