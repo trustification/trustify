@@ -13,7 +13,7 @@ use super::error::Error;
 use crate::{
     db::{LeftPackageId, QualifiedPackageTransitive},
     graph::{
-        Graph, Outcome,
+        CreateOutcome, Graph, Outcome,
         cpe::CpeContext,
         product::{ProductContext, product_version::ProductVersionContext},
         purl::{creator::PurlCreator, qualified_package::QualifiedPackageContext},
@@ -21,14 +21,11 @@ use crate::{
 };
 use cpe::uri::OwnedUri;
 use entity::{product, product_version};
-use hex::ToHex;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DbErr, EntityTrait, ModelTrait, QueryFilter,
-    QuerySelect, RelationTrait, Select, Set, TryInsertResult, prelude::Uuid,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait, QueryFilter,
+    QuerySelect, RelationTrait, Select, Set, prelude::Uuid,
 };
-use sea_query::{
-    Condition, Expr, Func, JoinType, OnConflict, Query, SimpleExpr, extension::postgres::PgExpr,
-};
+use sea_query::{Condition, Expr, Func, JoinType, Query, SimpleExpr, extension::postgres::PgExpr};
 use std::{
     fmt::{Debug, Formatter},
     iter,
@@ -342,55 +339,6 @@ impl Graph {
             Ok(vec![])
         }
     }
-
-    #[instrument(skip(self, connection, f), err(level=tracing::Level::INFO))]
-    async fn create_doc<C: ConnectionTrait, T, F>(
-        &self,
-        digests: &Digests,
-        connection: &C,
-        f: F,
-    ) -> Result<CreateOutcome<T>, Error>
-    where
-        F: AsyncFnOnce(String) -> Result<Option<T>, Error>,
-    {
-        let doc_model = source_document::ActiveModel {
-            id: Default::default(),
-            sha256: Set(digests.sha256.encode_hex()),
-            sha384: Set(digests.sha384.encode_hex()),
-            sha512: Set(digests.sha512.encode_hex()),
-            size: Set(digests.size as i64),
-            ingested: Set(OffsetDateTime::now_utc()),
-        };
-
-        let doc = source_document::Entity::insert(doc_model)
-            .on_conflict(
-                OnConflict::column(source_document::Column::Sha256)
-                    .do_nothing()
-                    .to_owned(),
-            )
-            .do_nothing()
-            .exec(connection)
-            .await?;
-
-        match doc {
-            TryInsertResult::Empty => Err(Error::Database(DbErr::Custom(
-                "empty insert data".to_string(),
-            ))),
-            TryInsertResult::Conflicted => match f(digests.sha256.encode_hex()).await? {
-                Some(doc) => Ok(CreateOutcome::Exists(doc)),
-                None => Err(Error::Database(DbErr::Custom(
-                    "document vanished".to_string(),
-                ))),
-            },
-            TryInsertResult::Inserted(doc) => Ok(CreateOutcome::Created(doc.last_insert_id)),
-        }
-    }
-}
-
-#[derive(Debug)]
-enum CreateOutcome<T> {
-    Created(Uuid),
-    Exists(T),
 }
 
 #[derive(Clone, Debug)]
