@@ -46,6 +46,8 @@ impl Graph {
         }
     }
 
+    /// Create a new source document, or return an existing sha256 digest if a document with that
+    /// already sha256 digest already exists.
     #[instrument(skip(self, connection, f), err(level=tracing::Level::INFO))]
     async fn create_doc<C: ConnectionTrait, T, F>(
         &self,
