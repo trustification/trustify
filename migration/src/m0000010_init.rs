@@ -17,7 +17,7 @@ impl MigrationTrait for Migration {
 
         manager
             .get_connection()
-            .execute_unprepared(include_str!("m0000005_db_init.sql"))
+            .execute_unprepared(include_str!("m0000005_admin_up.sql"))
             .await
             .map(|_| ())?;
 
@@ -39,7 +39,7 @@ impl MigrationTrait for Migration {
 
         manager
             .get_connection()
-            .execute_unprepared(include_str!("m0000005_db_down.sql"))
+            .execute_unprepared(include_str!("m0000005_admin_down.sql"))
             .await
             .map(|_| ())?;
 
