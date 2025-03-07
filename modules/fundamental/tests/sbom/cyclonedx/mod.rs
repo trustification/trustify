@@ -1,6 +1,7 @@
 mod corner_cases;
 mod cpe;
 mod external;
+mod parallel;
 mod purl;
 mod reingest;
 

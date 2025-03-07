@@ -13,7 +13,9 @@ use trustify_test_context::TrustifyContext;
 async fn ingest_10(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let mut f = vec![];
     for _ in 0..10 {
-        f.push(ctx.ingest_document("spdx/OCP-TOOLS-4.11-RHEL-8.json"));
+        f.push(ctx.ingest_document(
+            "cyclonedx/rh/image_index_variants/example_container_variant_amd64.json",
+        ));
     }
 
     futures_util::future::try_join_all(f).await?;
