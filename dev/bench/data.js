@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741235361225,
+  "lastUpdate": 1741339491558,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6089,6 +6089,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "994c7012fab84bd0e74c1e41ad2a6789da4263f4",
+          "message": "fix: ancestor query so that any external parent sboms are returned",
+          "timestamp": "2025-03-07T09:06:33Z",
+          "tree_id": "98d12488b878fa5af0475435d6b52f112d44573e",
+          "url": "https://github.com/trustification/trustify/commit/994c7012fab84bd0e74c1e41ad2a6789da4263f4"
+        },
+        "date": 1741339490260,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
