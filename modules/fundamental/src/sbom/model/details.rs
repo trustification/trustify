@@ -102,7 +102,9 @@ impl SbomDetails {
             ))
             .join(JoinType::LeftJoin, purl_status::Relation::ContextCpe.def())
             .join(JoinType::Join, purl_status::Relation::Advisory.def())
+            .join(JoinType::Join, advisory::Relation::Issuer.def())
             .join(JoinType::Join, purl_status::Relation::Vulnerability.def())
+            .join(JoinType::Join, vulnerability::Relation::Descriptions.def())
             .select_only()
             .try_into_multi_model::<QueryCatcher>()?
             .all(tx)
@@ -163,7 +165,11 @@ impl SbomDetails {
                 "cpe"."version" AS "cpe$version",
                 "cpe"."update" AS "cpe$update",
                 "cpe"."edition" AS "cpe$edition",
-                "cpe"."language" AS "cpe$language"
+                "cpe"."language" AS "cpe$language",
+                "organization"."id" AS "organization$id",
+                "organization"."name" AS "organization$name",
+                "organization"."cpe_key" AS "organization$cpe_key",
+                "organization"."website" AS "organization$website"
             FROM "sbom"
             -- find statuses that matches SBOMs
             JOIN "product_version" ON "product_version"."sbom_id" = "sbom"."sbom_id"
@@ -184,6 +190,7 @@ impl SbomDetails {
             -- get basic status info
             JOIN "status" ON "product_status"."status_id" = "status"."id"
             JOIN "advisory" ON "product_status"."advisory_id" = "advisory"."id"
+            JOIN "organization" ON "advisory"."issuer_id" = "organization"."id"
             JOIN "vulnerability" ON "product_status"."vulnerability_id" = "vulnerability"."id"
             WHERE
             "sbom"."sbom_id" = $1
@@ -281,8 +288,12 @@ impl SbomAdvisory {
                 advisories.insert(
                     each.advisory.id,
                     SbomAdvisory {
-                        head: AdvisoryHead::from_advisory(&each.advisory, Memo::NotProvided, tx)
-                            .await?,
+                        head: AdvisoryHead::from_advisory(
+                            &each.advisory,
+                            Memo::Provided(Some(each.organization.clone())),
+                            tx,
+                        )
+                        .await?,
                         status: vec![],
                     },
                 );

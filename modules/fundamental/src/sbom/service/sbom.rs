@@ -32,7 +32,7 @@ use trustify_entity::{
     advisory, base_purl,
     cpe::{self, CpeDto},
     labels::Labels,
-    package_relates_to_package,
+    organization, package_relates_to_package,
     qualified_purl::{self, CanonicalPurl, Qualifiers},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
@@ -663,6 +663,7 @@ pub struct QueryCatcher {
     pub vulnerability: vulnerability::Model,
     pub context_cpe: Option<cpe::Model>,
     pub status: status::Model,
+    pub organization: organization::Model,
 }
 
 impl FromQueryResult for QueryCatcher {
@@ -677,6 +678,7 @@ impl FromQueryResult for QueryCatcher {
             sbom_node: Self::from_query_result_multi_model(res, "", sbom_node::Entity)?,
             context_cpe: Self::from_query_result_multi_model_optional(res, "", cpe::Entity)?,
             status: Self::from_query_result_multi_model(res, "", status::Entity)?,
+            organization: Self::from_query_result_multi_model(res, "", organization::Entity)?,
         })
     }
 }
@@ -692,7 +694,8 @@ impl FromQueryResultMultiModel for QueryCatcher {
             .try_model_columns(sbom_package::Entity)?
             .try_model_columns(sbom_node::Entity)?
             .try_model_columns(status::Entity)?
-            .try_model_columns(cpe::Entity)
+            .try_model_columns(cpe::Entity)?
+            .try_model_columns(organization::Entity)
     }
 }
 
