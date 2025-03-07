@@ -1,6 +1,7 @@
 #![allow(clippy::expect_used)]
 
 mod delete;
+mod parallel;
 mod reingest;
 
 use csaf::Csaf;

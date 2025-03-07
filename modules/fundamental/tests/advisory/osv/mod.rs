@@ -3,6 +3,7 @@
 
 mod delete;
 mod ingest;
+mod parallel;
 mod reingest;
 
 use osv::schema::{Event, Vulnerability};
