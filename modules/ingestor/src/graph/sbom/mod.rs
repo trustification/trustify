@@ -28,15 +28,16 @@ use sea_orm::{
 use sea_query::{Condition, Expr, Func, JoinType, Query, SimpleExpr, extension::postgres::PgExpr};
 use std::{
     fmt::{Debug, Formatter},
-    iter,
+    // iter,
     str::FromStr,
 };
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, hashing::Digests, purl::Purl, sbom::SbomLocator};
 use trustify_entity::{
-    self as entity, labels::Labels, license, purl_license_assertion, relationship::Relationship,
-    sbom, sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, source_document,
+    self as entity, labels::Labels, license, relationship::Relationship, sbom, sbom_node,
+    sbom_package, sbom_package_cpe_ref, sbom_package_license, sbom_package_purl_ref,
+    source_document,
 };
 
 #[derive(Clone, Default)]
@@ -411,14 +412,14 @@ impl SbomContext {
 
     pub async fn ingest_purl_license_assertion<C: ConnectionTrait>(
         &self,
-        purl: &Purl,
+        _purl: &Purl,
         license: &str,
         connection: &C,
     ) -> Result<(), Error> {
-        let purl = self
-            .graph
-            .ingest_qualified_package(purl, connection)
-            .await?;
+        // let purl = self
+        //     .graph
+        //     .ingest_qualified_package(purl, connection)
+        //     .await?;
 
         let license_info = LicenseInfo {
             license: license.to_string(),
@@ -451,26 +452,28 @@ impl SbomContext {
             .await?
         };
 
-        let assertion = purl_license_assertion::Entity::find()
-            .filter(purl_license_assertion::Column::LicenseId.eq(license.id))
-            .filter(
-                purl_license_assertion::Column::VersionedPurlId
-                    .eq(purl.package_version.package_version.id),
-            )
-            .filter(purl_license_assertion::Column::SbomId.eq(self.sbom.sbom_id))
-            .one(connection)
-            .await?;
+        // let assertion = sbom_package_license::Entity::find()
+        //     .filter(sbom_package_license::Column::LicenseId.eq(license.id))
+        //     .filter(
+        //         purl_license_assertion::Column::VersionedPurlId
+        //             .eq(purl.package_version.package_version.id),
+        //     )
+        //     .filter(purl_license_assertion::Column::SbomId.eq(self.sbom.sbom_id))
+        //     .one(connection)
+        //     .await?;
+        // sbom_id: Set(self.sbom_id),
+        // node_id: Set(node_info.node_id.clone()),
+        // license_id: Set(declared.uuid()),
+        // license_type: Set(sbom_package_license::LicenseCategory::Declared),
 
-        if assertion.is_none() {
-            purl_license_assertion::ActiveModel {
-                id: Default::default(),
-                license_id: Set(license.id),
-                versioned_purl_id: Set(purl.package_version.package_version.id),
-                sbom_id: Set(self.sbom.sbom_id),
-            }
-            .insert(connection)
-            .await?;
+        sbom_package_license::ActiveModel {
+            sbom_id: Set(self.sbom.sbom_id),
+            node_id: Set(self.sbom.node_id.clone()),
+            license_id: Set(license.id),
+            license_type: Set(sbom_package_license::LicenseCategory::Declared),
         }
+        .insert(connection)
+        .await?;
 
         Ok(())
     }
@@ -636,9 +639,11 @@ impl SbomContext {
                 name,
                 group: None,
                 version,
+                declared_licenses: None,
+                concluded_licenses: None,
+                cyclonedx_licenses: None,
             },
             refs,
-            iter::empty(),
             Checksum::NONE,
         );
 

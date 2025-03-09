@@ -44,6 +44,10 @@ tracing = { workspace = true }
 utoipa = { workspace = true, features = ["actix_extras", "uuid", "time"] }
 utoipa-actix-web = { workspace = true }
 uuid = { workspace = true }
+csv = { workspace = true }
+flate2 ={ workspace = true }
+tar = { workspace = true }
+sanitize-filename = { workspace = true }
 
 [dev-dependencies]
 actix-http = { workspace = true }
@@ -85,6 +89,11 @@ opentelemetry-otlp = { workspace = true, features = ["grpc-tonic"] }
 tracing = { workspace = true, features = ["std"]}
 tracing-core =  { workspace = true }
 tracing-subscriber = { workspace = true }
+
+csv = { workspace = true }
+flate2 ={ workspace = true }
+tar = { workspace = true }
+sanitize-filename = { workspace = true }
 
 [[bench]]
 name = "bench"

@@ -4,8 +4,9 @@ use crate::{
         product::ProductInformation,
         purl::creator::PurlCreator,
         sbom::{
-            FileCreator, LicenseCreator, LicenseInfo, NodeInfoParam, PackageCreator,
-            PackageReference, References, RelationshipCreator, SbomContext, SbomInformation, Spdx,
+            FileCreator, LicenseCreator, LicenseInfo, LicensingInfo, LicensingInfoCreator,
+            NodeInfoParam, PackageCreator, PackageReference, References, RelationshipCreator,
+            SbomContext, SbomInformation, Spdx,
             processor::{
                 InitContext, PostContext, Processor, RedHatProductComponentRelationships,
                 RunProcessors,
@@ -137,6 +138,18 @@ impl SbomContext {
         }
 
         let mut licenses = LicenseCreator::new();
+        let mut license_extracted_refs = LicensingInfoCreator::new();
+
+        for license_ref in sbom_data.other_licensing_information_detected.clone() {
+            let extracted_licensing_info = &LicensingInfo::with_sbom_id(
+                self.sbom.sbom_id,
+                license_ref.license_name,
+                license_ref.license_identifier.clone(),
+                license_ref.extracted_text,
+                license_ref.license_comment,
+            );
+            license_extracted_refs.add(extracted_licensing_info);
+        }
 
         let mut packages =
             PackageCreator::with_capacity(self.sbom.sbom_id, sbom_data.package_information.len());
@@ -151,20 +164,23 @@ impl SbomContext {
             });
 
             let mut refs = Vec::new();
-            let mut license_refs = Vec::new();
-
+            // let mut license_refs = Vec::new();
+            let mut declared_license_ref = None;
+            let mut concluded_license_ref = None;
             if let Some(declared_license) = declared_license_info {
-                if declared_license.license != "NOASSERTION" {
-                    licenses.add(&declared_license);
-                    license_refs.push(declared_license);
-                }
+                // if declared_license.license != "NOASSERTION" {
+                let _ = declared_license_ref.insert(declared_license.clone());
+                licenses.add(&declared_license);
+                // license_refs.push(declared_license);
+                // }
             }
 
             if let Some(concluded_license) = concluded_license_info {
-                if concluded_license.license != "NOASSERTION" {
-                    licenses.add(&concluded_license);
-                    license_refs.push(concluded_license);
-                }
+                // if concluded_license.license != "NOASSERTION" {
+                let _ = concluded_license_ref.insert(concluded_license.clone());
+                licenses.add(&concluded_license);
+                // license_refs.push(concluded_license);
+                // }
             }
 
             let mut product_cpe = None;
@@ -226,9 +242,12 @@ impl SbomContext {
                     name: package.package_name,
                     group: None,
                     version: package.package_version,
+                    declared_licenses: declared_license_ref,
+                    concluded_licenses: concluded_license_ref,
+                    cyclonedx_licenses: None,
                 },
                 refs,
-                license_refs,
+                // license_refs,
                 package.package_checksum,
             );
         }
@@ -259,6 +278,7 @@ impl SbomContext {
 
         // create all purls and CPEs
 
+        license_extracted_refs.create(db).await?;
         licenses.create(db).await?;
         purls.create(db).await?;
         cpes.create(db).await?;

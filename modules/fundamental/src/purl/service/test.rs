@@ -899,30 +899,30 @@ async fn versioned_base_purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow
     Ok(())
 }
 
-#[test_context(TrustifyContext)]
-#[test(actix_web::test)]
-async fn license_information(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let service = PurlService::new();
-
-    ctx.ingest_document("ubi9-9.2-755.1697625012.json").await?;
-
-    let result = service
-        .purl_by_purl(
-            &Purl::try_from("pkg:rpm/redhat/libsepol@3.5-1.el9?arch=s390x")?,
-            Default::default(),
-            &ctx.db,
-        )
-        .await?;
-
-    log::debug!("{:#?}", result);
-
-    assert!(result.is_some());
-
-    let details = result.unwrap();
-
-    assert_eq!(1, details.licenses.len());
-    assert_eq!(1, details.licenses[0].licenses.len());
-    assert_eq!("LGPLV2+", details.licenses[0].licenses[0]);
-
-    Ok(())
-}
+// #[test_context(TrustifyContext)]
+// #[test(actix_web::test)]
+// async fn license_information(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+//     let service = PurlService::new();
+//
+//     ctx.ingest_document("ubi9-9.2-755.1697625012.json").await?;
+//
+//     let result = service
+//         .purl_by_purl(
+//             &Purl::try_from("pkg:rpm/redhat/libsepol@3.5-1.el9?arch=s390x")?,
+//             Default::default(),
+//             &ctx.db,
+//         )
+//         .await?;
+//
+//     log::debug!("{:#?}", result);
+//
+//     assert!(result.is_some());
+//
+//     let details = result.unwrap();
+//
+//     assert_eq!(1, details.licenses.len());
+//     assert_eq!(1, details.licenses[0].licenses.len());
+//     assert_eq!("LGPLV2+", details.licenses[0].licenses[0]);
+//
+//     Ok(())
+// }

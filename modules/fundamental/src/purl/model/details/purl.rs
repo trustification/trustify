@@ -22,9 +22,8 @@ use trustify_common::{
 use trustify_cvss::cvss3::{Cvss3Base, score::Score, severity::Severity};
 use trustify_entity::{
     advisory, base_purl, cpe, cvss3, license, organization, product, product_status,
-    product_version, product_version_range, purl_license_assertion, purl_status, qualified_purl,
-    sbom, sbom_package, sbom_package_purl_ref, status, version_range, versioned_purl,
-    vulnerability,
+    product_version, product_version_range, purl_status, qualified_purl, sbom, sbom_package,
+    sbom_package_purl_ref, status, version_range, versioned_purl, vulnerability,
 };
 use trustify_module_ingestor::common::{Deprecation, DeprecationForExt};
 use utoipa::ToSchema;
@@ -96,30 +95,30 @@ impl PurlDetails {
         )
         .await?;
 
-        let licenses = purl_license_assertion::Entity::find()
-            .join(
-                JoinType::LeftJoin,
-                purl_license_assertion::Relation::VersionedPurl.def(),
-            )
-            .join(
-                JoinType::LeftJoin,
-                purl_license_assertion::Relation::License.def(),
-            )
-            .join(
-                JoinType::LeftJoin,
-                purl_license_assertion::Relation::Sbom.def(),
-            )
-            .filter(versioned_purl::Column::Id.eq(package_version.id))
-            .try_into_multi_model::<LicenseCatcher>()?
-            .all(tx)
-            .await?;
+        // let licenses = purl_license_assertion::Entity::find()
+        //     .join(
+        //         JoinType::LeftJoin,
+        //         purl_license_assertion::Relation::VersionedPurl.def(),
+        //     )
+        //     .join(
+        //         JoinType::LeftJoin,
+        //         purl_license_assertion::Relation::License.def(),
+        //     )
+        //     .join(
+        //         JoinType::LeftJoin,
+        //         purl_license_assertion::Relation::Sbom.def(),
+        //     )
+        //     .filter(versioned_purl::Column::Id.eq(package_version.id))
+        //     .try_into_multi_model::<LicenseCatcher>()?
+        //     .all(tx)
+        //     .await?;
 
         Ok(PurlDetails {
             head: PurlHead::from_entity(&package, &package_version, qualified_package, tx).await?,
             version: VersionedPurlHead::from_entity(&package, &package_version, tx).await?,
             base: BasePurlHead::from_entity(&package).await?,
             advisories: PurlAdvisory::from_entities(purl_statuses, product_statuses, tx).await?,
-            licenses: PurlLicenseSummary::from_entities(&licenses, tx).await?,
+            licenses: vec![],
         })
     }
 }
@@ -343,7 +342,7 @@ impl PurlStatus {
     }
 }
 
-#[derive(Serialize, Clone, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Clone, Deserialize, Debug, ToSchema, Default)]
 pub struct PurlLicenseSummary {
     pub sbom: SbomHead,
     pub licenses: Vec<String>,

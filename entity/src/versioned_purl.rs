@@ -25,16 +25,15 @@ pub enum Relation {
 
     #[sea_orm(has_many = "super::purl_status::Entity")]
     PurlStatus,
-
-    #[sea_orm(has_many = "super::purl_license_assertion::Entity")]
-    LicenseAssertions,
+    // #[sea_orm(has_many = "super::purl_license_assertion::Entity")]
+    // LicenseAssertions,
 }
 
-impl Related<super::purl_license_assertion::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::LicenseAssertions.def()
-    }
-}
+// impl Related<super::purl_license_assertion::Entity> for Entity {
+//     fn to() -> RelationDef {
+//         Relation::LicenseAssertions.def()
+//     }
+// }
 
 impl Related<super::base_purl::Entity> for Entity {
     fn to() -> RelationDef {
