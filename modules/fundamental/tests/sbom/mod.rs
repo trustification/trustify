@@ -7,7 +7,7 @@ mod reingest;
 mod spdx;
 
 use sea_orm::{DatabaseTransaction, TransactionTrait};
-use std::{future::Future, pin::Pin, time::Instant};
+use std::time::Instant;
 use tracing::{Instrument, info_span, instrument};
 use trustify_common::{db::Database, hashing::Digests};
 use trustify_module_fundamental::sbom::service::SbomService;
@@ -29,7 +29,7 @@ pub struct WithContext {
 }
 
 #[instrument(skip(ctx, p, i, c, f))]
-pub async fn test_with<B, P, I, C, F, FFut>(
+pub async fn test_with<B, P, I, C, F>(
     ctx: &TrustifyContext,
     sbom: &str,
     p: P,
@@ -39,14 +39,9 @@ pub async fn test_with<B, P, I, C, F, FFut>(
 ) -> anyhow::Result<()>
 where
     P: FnOnce(&[u8]) -> anyhow::Result<B>,
-    for<'a> I: FnOnce(
-        &'a SbomContext,
-        B,
-        &'a DatabaseTransaction,
-    ) -> Pin<Box<dyn Future<Output = anyhow::Result<()>> + 'a>>,
+    for<'a> I: AsyncFnOnce(&'a SbomContext, B, &'a DatabaseTransaction) -> anyhow::Result<()>,
     C: FnOnce(&B) -> SbomInformation,
-    F: FnOnce(WithContext) -> FFut,
-    FFut: Future<Output = anyhow::Result<()>>,
+    F: AsyncFnOnce(WithContext) -> anyhow::Result<()>,
 {
     // The `ctx` must live until the end of this function. Otherwise, it will tear down the database
     // while we're testing. So we take the `db` and offer it to the test, but we hold on the `ctx`
