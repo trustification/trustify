@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741351545347,
+  "lastUpdate": 1741595711075,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6171,6 +6171,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/c24361b504e6de8f92d20479a65f5261626b60c6"
         },
         "date": 1741351544008,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "6c78c45df64ff04c9ce5ebb4a1032bb5fdcd50e0",
+          "message": "fix(terraform): only ensure the tag exists, don't require a value\n\nBefore this change, we did check for the internal subnet by filtering\nfor kubernetes.io/role/internal-elb having an empty value. That worked\nfor cluster we set up in the past. However, it looks like newer clusters\nto have a value of \"1\" for this tag. This might come from openshift\ninstallers of a newer version.\n\nAs we don't require a specific value, but only look for the existence\nof the tag, this change perform this change. Allowing both variants.",
+          "timestamp": "2025-03-10T09:29:21+01:00",
+          "tree_id": "282b9c7c08337a34a192768062bdbb5135405baa",
+          "url": "https://github.com/trustification/trustify/commit/6c78c45df64ff04c9ce5ebb4a1032bb5fdcd50e0"
+        },
+        "date": 1741595710061,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
