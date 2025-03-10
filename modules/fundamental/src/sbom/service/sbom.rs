@@ -29,10 +29,10 @@ use trustify_common::{
     model::{Paginated, PaginatedResults},
 };
 use trustify_entity::{
-    advisory, base_purl,
+    advisory, advisory_vulnerability, base_purl,
     cpe::{self, CpeDto},
     labels::Labels,
-    package_relates_to_package,
+    organization, package_relates_to_package,
     qualified_purl::{self, CanonicalPurl, Qualifiers},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
@@ -660,15 +660,22 @@ pub struct QueryCatcher {
     pub qualified_purl: qualified_purl::Model,
     pub sbom_package: sbom_package::Model,
     pub sbom_node: sbom_node::Model,
+    pub advisory_vulnerability: advisory_vulnerability::Model,
     pub vulnerability: vulnerability::Model,
     pub context_cpe: Option<cpe::Model>,
     pub status: status::Model,
+    pub organization: organization::Model,
 }
 
 impl FromQueryResult for QueryCatcher {
     fn from_query_result(res: &QueryResult, _pre: &str) -> Result<Self, DbErr> {
         Ok(Self {
             advisory: Self::from_query_result_multi_model(res, "", advisory::Entity)?,
+            advisory_vulnerability: Self::from_query_result_multi_model(
+                res,
+                "",
+                advisory_vulnerability::Entity,
+            )?,
             vulnerability: Self::from_query_result_multi_model(res, "", vulnerability::Entity)?,
             base_purl: Self::from_query_result_multi_model(res, "", base_purl::Entity)?,
             versioned_purl: Self::from_query_result_multi_model(res, "", versioned_purl::Entity)?,
@@ -677,6 +684,7 @@ impl FromQueryResult for QueryCatcher {
             sbom_node: Self::from_query_result_multi_model(res, "", sbom_node::Entity)?,
             context_cpe: Self::from_query_result_multi_model_optional(res, "", cpe::Entity)?,
             status: Self::from_query_result_multi_model(res, "", status::Entity)?,
+            organization: Self::from_query_result_multi_model(res, "", organization::Entity)?,
         })
     }
 }
@@ -685,6 +693,7 @@ impl FromQueryResultMultiModel for QueryCatcher {
     fn try_into_multi_model<E: EntityTrait>(select: Select<E>) -> Result<Select<E>, DbErr> {
         select
             .try_model_columns(advisory::Entity)?
+            .try_model_columns(advisory_vulnerability::Entity)?
             .try_model_columns(vulnerability::Entity)?
             .try_model_columns(base_purl::Entity)?
             .try_model_columns(versioned_purl::Entity)?
@@ -692,7 +701,8 @@ impl FromQueryResultMultiModel for QueryCatcher {
             .try_model_columns(sbom_package::Entity)?
             .try_model_columns(sbom_node::Entity)?
             .try_model_columns(status::Entity)?
-            .try_model_columns(cpe::Entity)
+            .try_model_columns(cpe::Entity)?
+            .try_model_columns(organization::Entity)
     }
 }
 
