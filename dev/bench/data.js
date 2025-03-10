@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741595711075,
+  "lastUpdate": 1741602492847,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6200,6 +6200,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/6c78c45df64ff04c9ce5ebb4a1032bb5fdcd50e0"
         },
         "date": 1741595710061,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": false,
+          "id": "250160cb2353e2d56ce271c8c3bc5c1902b69add",
+          "message": "fix: prevent stack overflow\n\nInstead of keeping the CycloneDX structure on the stack, we move it to\nthe heap (using Box). This prevents the stack overflow.\n\nThis is done both for the deserialized struct, as well as of the\nrecursively created component creators.\n\nCloses: #1322",
+          "timestamp": "2025-03-10T10:08:37Z",
+          "tree_id": "125fcc4933d97efc459716f2d4760fb94d2aac8a",
+          "url": "https://github.com/trustification/trustify/commit/250160cb2353e2d56ce271c8c3bc5c1902b69add"
+        },
+        "date": 1741602492054,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
