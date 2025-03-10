@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741602492847,
+  "lastUpdate": 1741612832090,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6234,6 +6234,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "92f223c22804a95503a728de7fd285f7570bed93",
+          "message": "fix: ensure we always detect a duplicate source document\n\nHaving multiple unique indices on the source document table, it might\nhappen that the sha256 is not the first one being reported. This may\nlead to the issue that the \"on conflict\" statement will not be respected\nand that we still get an internal error reported. As, right now, it is\nnot possible to use \"on conflict\" with multiple constraints\nindependently, we need to manually check for this error and also use\nnested transactions, in order to continue with the transaction.\n\nCloses: #1405",
+          "timestamp": "2025-03-10T13:02:02Z",
+          "tree_id": "5e939fd18c67caf3c0bab0c5f8614f4e3738fc05",
+          "url": "https://github.com/trustification/trustify/commit/92f223c22804a95503a728de7fd285f7570bed93"
+        },
+        "date": 1741612831296,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
