@@ -1,5 +1,6 @@
 use anyhow::anyhow;
 use clap::ValueEnum;
+use hide::Hide;
 use humantime::parse_duration;
 use std::env;
 use time::ext::NumericalStdDuration;
@@ -57,9 +58,9 @@ pub struct Database {
         id = "db-password",
         long,
         env = ENV_DB_PASS,
-        default_value_t = DB_PASS.into(),
+        default_value = DB_PASS,
     )]
-    pub password: String,
+    pub password: Hide<String>,
     #[arg(id = "db-host", long, env = ENV_DB_HOST, default_value_t = DB_HOST.into(), conflicts_with = "db-url")]
     pub host: String,
     #[arg(id = "db-port", long, env = ENV_DB_PORT, default_value_t = DB_PORT.into(), conflicts_with = "db-url")]
@@ -88,7 +89,7 @@ impl Database {
         Ok(Database {
             url: env::var(ENV_DB_URL).ok(),
             username: env::var(ENV_DB_USER).unwrap_or(DB_USER.into()),
-            password: env::var(ENV_DB_PASS).unwrap_or(DB_PASS.into()),
+            password: env::var(ENV_DB_PASS).unwrap_or(DB_PASS.into()).into(),
             name: env::var(ENV_DB_NAME).unwrap_or(DB_NAME.into()),
             host: env::var(ENV_DB_HOST).unwrap_or(DB_HOST.into()),
             port: match env::var(ENV_DB_PORT) {
@@ -143,7 +144,7 @@ impl Database {
         format!(
             "postgres://{username}:{password}@{host}:{port}/{db_name}?sslmode={sslmode}",
             username = &self.username,
-            password = &self.password,
+            password = &self.password.0,
             host = &self.host,
             port = self.port,
             db_name = &self.name,
