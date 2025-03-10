@@ -209,9 +209,12 @@ async fn resolve_rh_variant_prod_comp_cdx_external_reference_curl(
               "name": "curl",
               "document_id": "urn:uuid:6895f8e0-2bfd-331c-97f9-97369ef1f3ee/1",
               "relationship": "generates",
+              "descendants":[
+                {
+                    "relationship": "package",
+                }]
             }]
-        }
-      ]
+        }]
     })));
 
     Ok(())
@@ -276,5 +279,38 @@ async fn resolve_rh_variant_source_binary_cdx_external_reference(
         }]
     })));
 
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn resolve_rh_variant_image_index_cdx_external_reference(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_documents([
+        "cyclonedx/rh/image_index_variants/imagevariant_quarkus_mandrel_arm64.json",
+        "cyclonedx/rh/image_index_variants/imagevariant_quarkus_mandrel_amd64.json",
+        "cyclonedx/rh/image_index_variants/imageindex_quarkus_mandrel.json",
+    ])
+    .await?;
+
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode("quarkus/mandrel-for-jdk-21-rhel8")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+
+    assert!(response.contains_subset(json!({
+      "items": [
+        {
+            "node_id":"quarkus-mandrel-231-rhel8-container_image-index",
+            "name": "quarkus/mandrel-for-jdk-21-rhel8",
+            "document_id": "urn:uuid:8262934b-6d8f-30a7-a216-d933ded97451/1",
+
+        }]
+    })));
     Ok(())
 }
