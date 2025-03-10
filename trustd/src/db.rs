@@ -83,7 +83,7 @@ impl Run {
         let settings = postgresql_embedded::Settings {
             version: VersionReq::parse("=17.2.0")?,
             username: self.database.username.clone(),
-            password: self.database.password.clone(),
+            password: self.database.password.clone().into(),
             temporary: false,
             installation_dir: db_dir.clone(),
             timeout: Some(Duration::from_secs(30)),

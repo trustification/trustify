@@ -10,6 +10,7 @@ pub use func::*;
 
 use anyhow::{Context, ensure};
 use migration::{Migrator, MigratorTrait};
+use reqwest::Url;
 use sea_orm::{
     AccessMode, ConnectOptions, ConnectionTrait, DatabaseConnection, DatabaseTransaction,
     DbBackend, DbErr, ExecResult, IsolationLevel, QueryResult, RuntimeErr, Statement,
@@ -36,7 +37,10 @@ impl Database {
     #[instrument(err)]
     pub async fn new(database: &crate::config::Database) -> Result<Self, anyhow::Error> {
         let url = database.to_url();
-        log::debug!("connect to {}", url);
+
+        if log::log_enabled!(log::Level::Debug) {
+            log::debug!("connect to {}", strip_password(url.clone()));
+        }
 
         let mut opt = ConnectOptions::new(url);
         opt.max_connections(database.max_conn);
@@ -274,5 +278,53 @@ impl DatabaseErrors for DbErr {
             }
             _ => false,
         }
+    }
+}
+
+/// Remove the password from the URL and replace it with `***`, if present.
+///
+/// If this is not a URL, or does not contain a password, this is a no-op.
+fn strip_password(url: String) -> String {
+    match Url::parse(&url) {
+        Ok(mut url) => {
+            if url.password().is_some() {
+                let _ = url.set_password(Some("***"));
+            }
+            url.to_string()
+        }
+        Err(_) => url,
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    /// ensure that the password is not present, but not necessarily removing the string itself
+    #[test]
+    fn url_strip_password() {
+        assert_eq!(
+            "postgres://trustify:***@infrastructure-postgresql:5432/trustify?sslmode=allow&other=trustify1234",
+            strip_password(
+                "postgres://trustify:trustify1234@infrastructure-postgresql:5432/trustify?sslmode=allow&other=trustify1234".to_string()
+            )
+        )
+    }
+
+    /// if there's no password, this shouldn't change anything
+    #[test]
+    fn url_strip_no_password() {
+        assert_eq!(
+            "postgres://trustify@infrastructure-postgresql:5432/trustify?sslmode=allow&other=trustify1234",
+            strip_password(
+                "postgres://trustify@infrastructure-postgresql:5432/trustify?sslmode=allow&other=trustify1234".to_string()
+            )
+        )
+    }
+
+    /// if this is not a URL, then it should not panic
+    #[test]
+    fn url_strip_password_not_a_url() {
+        assert_eq!("foo-bar-baz", strip_password("foo-bar-baz".to_string()))
     }
 }
