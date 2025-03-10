@@ -11,8 +11,8 @@ use crate::{
 };
 use cpe::{cpe::Cpe, uri::OwnedUri};
 use sea_orm::{
-    Condition, ConnectionTrait, DbBackend, DbErr, EntityTrait, FromQueryResult, JoinType,
-    ModelTrait, QueryFilter, QueryResult, QuerySelect, RelationTrait, Select, Statement,
+    Condition, ConnectionTrait, DbBackend, FromQueryResult, JoinType,
+    ModelTrait, QueryFilter, QueryResult, QuerySelect, RelationTrait, Statement,
 };
 use sea_query::Query;
 use sea_query::{Asterisk, Expr, Func, SimpleExpr};
@@ -22,15 +22,15 @@ use trustify_common::{
     cpe::CpeCompare,
     db::{
         VersionMatches,
-        multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
+        multi_model::SelectIntoMultiModel,
     },
     memo::Memo,
 };
 use trustify_cvss::cvss3::{Cvss3Base, score::Score, severity::Severity};
 use trustify_entity::{
-    advisory, base_purl, cvss3, product_status, product_version, purl_status, qualified_purl, sbom,
-    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, status, version_range,
-    versioned_purl, vulnerability,
+    advisory, advisory_vulnerability, base_purl, cvss3,
+    purl_status, qualified_purl, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
+    sbom_package_purl_ref, status, version_range, versioned_purl, vulnerability,
 };
 use utoipa::ToSchema;
 
@@ -103,8 +103,14 @@ impl SbomDetails {
             .join(JoinType::LeftJoin, purl_status::Relation::ContextCpe.def())
             .join(JoinType::Join, purl_status::Relation::Advisory.def())
             .join(JoinType::Join, advisory::Relation::Issuer.def())
-            .join(JoinType::Join, purl_status::Relation::Vulnerability.def())
-            .join(JoinType::Join, vulnerability::Relation::Descriptions.def())
+            .join(
+                JoinType::Join,
+                purl_status::Relation::AdvisoryVulnerability.def(),
+            )
+            .join(
+                JoinType::Join,
+                advisory_vulnerability::Relation::Vulnerability.def(),
+            )
             .select_only()
             .try_into_multi_model::<QueryCatcher>()?
             .all(tx)
@@ -130,6 +136,15 @@ impl SbomDetails {
                 "advisory"."title" AS "advisory$title",
                 "advisory"."labels" AS "advisory$labels",
                 "advisory"."source_document_id" AS "advisory$source_document_id",
+                "advisory_vulnerability"."advisory_id" AS "advisory_vulnerability$advisory_id",
+                "advisory_vulnerability"."vulnerability_id" AS "advisory_vulnerability$vulnerability_id",
+                "advisory_vulnerability"."title" AS "advisory_vulnerability$title",
+                "advisory_vulnerability"."summary" AS "advisory_vulnerability$summary",
+                "advisory_vulnerability"."description" AS "advisory_vulnerability$description",
+                "advisory_vulnerability"."reserved_date" AS "advisory_vulnerability$reserved_date",
+                "advisory_vulnerability"."discovery_date" AS "advisory_vulnerability$discovery_date",
+                "advisory_vulnerability"."release_date" AS "advisory_vulnerability$release_date",
+                "advisory_vulnerability"."cwes" AS "advisory_vulnerability$cwes",
                 "vulnerability"."id" AS "vulnerability$id",
                 "vulnerability"."title" AS "vulnerability$title",
                 "vulnerability"."reserved" AS "vulnerability$reserved",
@@ -191,7 +206,9 @@ impl SbomDetails {
             JOIN "status" ON "product_status"."status_id" = "status"."id"
             JOIN "advisory" ON "product_status"."advisory_id" = "advisory"."id"
             JOIN "organization" ON "advisory"."issuer_id" = "organization"."id"
-            JOIN "vulnerability" ON "product_status"."vulnerability_id" = "vulnerability"."id"
+            JOIN "advisory_vulnerability" ON "product_status"."advisory_id" = "advisory_vulnerability"."advisory_id"
+            AND "product_status"."vulnerability_id" = "advisory_vulnerability"."vulnerability_id"
+            JOIN "vulnerability" ON "advisory_vulnerability"."vulnerability_id" = "vulnerability"."id"
             WHERE
             "sbom"."sbom_id" = $1
             AND ($2::text[] = ARRAY[]::text[] OR "status"."slug" = ANY($2::text[]))
@@ -321,6 +338,7 @@ impl SbomAdvisory {
                 status
             } else {
                 let status = SbomStatus::new(
+                    &each.advisory_vulnerability,
                     &each.vulnerability,
                     each.status.slug.clone(),
                     status_cpe,
@@ -369,21 +387,23 @@ pub struct SbomStatus {
 
 impl SbomStatus {
     pub async fn new<C: ConnectionTrait>(
+        advisory_vulnerability: &advisory_vulnerability::Model,
         vulnerability: &vulnerability::Model,
         status: String,
         cpe: Option<OwnedUri>,
         packages: Vec<SbomPackage>,
         tx: &C,
     ) -> Result<Self, Error> {
-        let cvss3 = vulnerability.find_related(cvss3::Entity).all(tx).await?;
+        let cvss3 = advisory_vulnerability
+            .find_related(cvss3::Entity)
+            .all(tx)
+            .await?;
         let average_severity = Score::from_iter(cvss3.iter().map(Cvss3Base::from)).severity();
         Ok(Self {
-            vulnerability: VulnerabilityHead::from_vulnerability_entity(
+            vulnerability: VulnerabilityHead::from_advisory_vulnerability_entity(
+                advisory_vulnerability,
                 vulnerability,
-                Memo::NotProvided,
-                tx,
-            )
-            .await?,
+            ),
             context: cpe.as_ref().map(|e| StatusContext::Cpe(e.to_string())),
             average_severity,
             status,
@@ -392,60 +412,5 @@ impl SbomStatus {
     }
     pub fn identifier(&self) -> &str {
         &self.vulnerability.identifier
-    }
-}
-
-#[derive(Debug)]
-#[allow(dead_code)] //TODO sbom field is not used at the moment, but we will probably need it for graph search
-pub struct ProductStatusCatcher {
-    advisory: advisory::Model,
-    vulnerability: trustify_entity::vulnerability::Model,
-    product_status: product_status::Model,
-    cpe: trustify_entity::cpe::Model,
-    status: status::Model,
-    sbom: Option<sbom::Model>,
-    base_purl: base_purl::Model,
-    versioned_purl: versioned_purl::Model,
-    qualified_purl: qualified_purl::Model,
-    sbom_package: sbom_package::Model,
-    sbom_node: sbom_node::Model,
-}
-
-impl FromQueryResult for ProductStatusCatcher {
-    fn from_query_result(res: &QueryResult, _pre: &str) -> Result<Self, DbErr> {
-        Ok(Self {
-            advisory: Self::from_query_result_multi_model(res, "", advisory::Entity)?,
-            vulnerability: Self::from_query_result_multi_model(
-                res,
-                "",
-                trustify_entity::vulnerability::Entity,
-            )?,
-            product_status: Self::from_query_result_multi_model(res, "", product_status::Entity)?,
-            cpe: Self::from_query_result_multi_model(res, "", trustify_entity::cpe::Entity)?,
-            status: Self::from_query_result_multi_model(res, "", status::Entity)?,
-            sbom: Self::from_query_result_multi_model_optional(res, "", sbom::Entity)?,
-            base_purl: Self::from_query_result_multi_model(res, "", base_purl::Entity)?,
-            versioned_purl: Self::from_query_result_multi_model(res, "", versioned_purl::Entity)?,
-            qualified_purl: Self::from_query_result_multi_model(res, "", qualified_purl::Entity)?,
-            sbom_package: Self::from_query_result_multi_model(res, "", sbom_package::Entity)?,
-            sbom_node: Self::from_query_result_multi_model(res, "", sbom_node::Entity)?,
-        })
-    }
-}
-
-impl FromQueryResultMultiModel for ProductStatusCatcher {
-    fn try_into_multi_model<E: EntityTrait>(select: Select<E>) -> Result<Select<E>, DbErr> {
-        select
-            .try_model_columns(advisory::Entity)?
-            .try_model_columns(trustify_entity::vulnerability::Entity)?
-            .try_model_columns(product_status::Entity)?
-            .try_model_columns(trustify_entity::cpe::Entity)?
-            .try_model_columns(status::Entity)?
-            .try_model_columns(product_version::Entity)?
-            .try_model_columns(base_purl::Entity)?
-            .try_model_columns(versioned_purl::Entity)?
-            .try_model_columns(qualified_purl::Entity)?
-            .try_model_columns(sbom_package::Entity)?
-            .try_model_columns(sbom_node::Entity)
     }
 }
