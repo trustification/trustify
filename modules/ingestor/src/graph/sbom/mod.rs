@@ -23,7 +23,7 @@ use cpe::uri::OwnedUri;
 use entity::{product, product_version};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, ModelTrait, QueryFilter,
-    QuerySelect, RelationTrait, Select, Set, prelude::Uuid,
+    QuerySelect, RelationTrait, Select, Set, TransactionTrait, prelude::Uuid,
 };
 use sea_query::{Condition, Expr, Func, JoinType, Query, SimpleExpr, extension::postgres::PgExpr};
 use std::{
@@ -91,14 +91,17 @@ impl Graph {
     }
 
     #[instrument(skip(connection, info), err(level=tracing::Level::INFO))]
-    pub async fn ingest_sbom<C: ConnectionTrait>(
+    pub async fn ingest_sbom<C>(
         &self,
         labels: impl Into<Labels> + Debug,
         digests: &Digests,
         document_id: Option<String>,
         info: impl Into<SbomInformation>,
         connection: &C,
-    ) -> Result<Outcome<SbomContext>, Error> {
+    ) -> Result<Outcome<SbomContext>, Error>
+    where
+        C: ConnectionTrait + TransactionTrait,
+    {
         let SbomInformation {
             node_id,
             name,

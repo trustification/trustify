@@ -10,8 +10,9 @@ pub mod vulnerability;
 
 use db_context::DbContext;
 use hex::ToHex;
-use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait, TryInsertResult};
-use sea_query::OnConflict;
+use sea_orm::{
+    ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait, TransactionError, TransactionTrait,
+};
 use std::{
     fmt::Debug,
     ops::{Deref, DerefMut},
@@ -49,13 +50,15 @@ impl Graph {
     /// Create a new source document, or return an existing sha256 digest if a document with that
     /// already sha256 digest already exists.
     #[instrument(skip(self, connection, f), err(level=tracing::Level::INFO))]
-    async fn create_doc<C: ConnectionTrait, T, F>(
+    async fn create_doc<C, T, F>(
         &self,
         digests: &Digests,
         connection: &C,
         f: F,
     ) -> Result<CreateOutcome<T>, error::Error>
     where
+        C: ConnectionTrait + TransactionTrait,
+        T: Send,
         F: AsyncFnOnce(String) -> Result<Option<T>, error::Error>,
     {
         let doc_model = source_document::ActiveModel {
@@ -67,27 +70,34 @@ impl Graph {
             ingested: Set(OffsetDateTime::now_utc()),
         };
 
-        let doc = source_document::Entity::insert(doc_model)
-            .on_conflict(
-                OnConflict::column(source_document::Column::Sha256)
-                    .do_nothing()
-                    .to_owned(),
-            )
-            .do_nothing()
-            .exec(connection)
-            .await?;
+        // Run in a nested transaction, so that an error will not abort the transaction we got
+        // from the caller.
 
-        match doc {
-            TryInsertResult::Empty => Err(error::Error::Database(DbErr::Custom(
-                "empty insert data".to_string(),
-            ))),
-            TryInsertResult::Conflicted => match f(digests.sha256.encode_hex()).await? {
-                Some(doc) => Ok(CreateOutcome::Exists(doc)),
-                None => Err(error::Error::Database(DbErr::Custom(
-                    "document vanished".to_string(),
-                ))),
-            },
-            TryInsertResult::Inserted(doc) => Ok(CreateOutcome::Created(doc.last_insert_id)),
+        let result = connection
+            .transaction::<_, _, DbErr>(|txn| {
+                Box::pin(async move { source_document::Entity::insert(doc_model).exec(txn).await })
+            })
+            .await;
+
+        match result {
+            Ok(doc) => Ok(CreateOutcome::Created(doc.last_insert_id)),
+            Err(TransactionError::Transaction(DbErr::Query(err)))
+                if err
+                    .to_string()
+                    .contains("duplicate key value violates unique constraint") =>
+            {
+                // evaluate the replacement value
+                match f(digests.sha256.encode_hex()).await? {
+                    // and return it
+                    Some(doc) => Ok(CreateOutcome::Exists(doc)),
+                    // and report that it vanished
+                    None => Err(error::Error::Database(DbErr::Custom(
+                        "document vanished".to_string(),
+                    ))),
+                }
+            }
+            Err(TransactionError::Transaction(err)) => Err(err.into()),
+            Err(TransactionError::Connection(err)) => Err(err.into()),
         }
     }
 }

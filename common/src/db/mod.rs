@@ -11,12 +11,17 @@ pub use func::*;
 use anyhow::{Context, ensure};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{
-    ConnectOptions, ConnectionTrait, DatabaseConnection, DbBackend, DbErr, ExecResult, QueryResult,
-    RuntimeErr, Statement, prelude::async_trait,
+    AccessMode, ConnectOptions, ConnectionTrait, DatabaseConnection, DatabaseTransaction,
+    DbBackend, DbErr, ExecResult, IsolationLevel, QueryResult, RuntimeErr, Statement,
+    TransactionError, TransactionTrait, prelude::async_trait,
 };
 use sqlx::error::ErrorKind;
-use std::ops::{Deref, DerefMut};
-use std::time::Duration;
+use std::{
+    error::Error,
+    ops::{Deref, DerefMut},
+    pin::Pin,
+    time::Duration,
+};
 use tracing::instrument;
 
 #[derive(Clone, Debug)]
@@ -173,6 +178,54 @@ impl ConnectionTrait for Database {
 
     fn support_returning(&self) -> bool {
         self.db.support_returning()
+    }
+}
+
+#[async_trait::async_trait]
+impl TransactionTrait for Database {
+    async fn begin(&self) -> Result<DatabaseTransaction, DbErr> {
+        self.db.begin().await
+    }
+
+    async fn begin_with_config(
+        &self,
+        isolation_level: Option<IsolationLevel>,
+        access_mode: Option<AccessMode>,
+    ) -> Result<DatabaseTransaction, DbErr> {
+        self.db
+            .begin_with_config(isolation_level, access_mode)
+            .await
+    }
+
+    async fn transaction<F, T, E>(&self, callback: F) -> Result<T, TransactionError<E>>
+    where
+        F: for<'c> FnOnce(
+                &'c DatabaseTransaction,
+            ) -> Pin<Box<dyn Future<Output = Result<T, E>> + Send + 'c>>
+            + Send,
+        T: Send,
+        E: Error + Send,
+    {
+        self.db.transaction(callback).await
+    }
+
+    async fn transaction_with_config<F, T, E>(
+        &self,
+        callback: F,
+        isolation_level: Option<IsolationLevel>,
+        access_mode: Option<AccessMode>,
+    ) -> Result<T, TransactionError<E>>
+    where
+        F: for<'c> FnOnce(
+                &'c DatabaseTransaction,
+            ) -> Pin<Box<dyn Future<Output = Result<T, E>> + Send + 'c>>
+            + Send,
+        T: Send,
+        E: Error + Send,
+    {
+        self.db
+            .transaction_with_config(callback, isolation_level, access_mode)
+            .await
     }
 }
 

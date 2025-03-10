@@ -9,7 +9,7 @@ use crate::{
 };
 use sea_orm::{
     ActiveModelTrait, ActiveValue::Set, ColumnTrait, ConnectionTrait, EntityTrait, IntoActiveModel,
-    ModelTrait, QueryFilter, QuerySelect, RelationTrait,
+    ModelTrait, QueryFilter, QuerySelect, RelationTrait, TransactionTrait,
 };
 use sea_query::{Condition, JoinType, OnConflict};
 use semver::Version;
@@ -109,14 +109,17 @@ impl Graph {
     }
 
     #[instrument(skip(self, labels, information, connection), err(level=tracing::Level::INFO))]
-    pub async fn ingest_advisory<C: ConnectionTrait>(
+    pub async fn ingest_advisory<C>(
         &self,
         identifier: impl Into<String> + Debug,
         labels: impl Into<Labels>,
         digests: &Digests,
         information: impl Into<AdvisoryInformation>,
         connection: &C,
-    ) -> Result<Outcome<AdvisoryContext>, Error> {
+    ) -> Result<Outcome<AdvisoryContext>, Error>
+    where
+        C: ConnectionTrait + TransactionTrait,
+    {
         let identifier = identifier.into();
         let labels = labels.into();
 
