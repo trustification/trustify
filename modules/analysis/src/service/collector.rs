@@ -121,17 +121,20 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
             // we've already seen this
             return None;
         }
-
         match self.graph.node_weight(self.node) {
-            // collect external sbom ref
             Some(graph::Node::External(external_node)) => {
+                // collect external sbom ref
+
                 let ResolvedSbom {
                     sbom_id: external_sbom_id,
                     node_id: external_node_id,
                 } = resolve_external_sbom(external_node.node_id.clone(), self.connection).await?;
 
-                log::debug!("external sbom id: {:?}", external_sbom_id);
-                log::debug!("external node id: {:?}", external_node_id);
+                log::debug!(
+                    "external sbom id: {:?} node_id {:?}",
+                    external_sbom_id,
+                    external_node_id
+                );
 
                 // get external sbom graph from graph_cache
                 let Some(external_graph) = self.graph_cache.get(&external_sbom_id.to_string())
@@ -170,14 +173,12 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
 
                 log::debug!("current node node_id: {:?}", current_node_id);
 
-                // attempt to find any sbom external nodes that refer to this node
+                // Attempt to find any sbom external nodes that refer to this node (eg. ancestor queries)
                 let find_sbom_external_nodes = sbom_external_node::Entity::find()
                     .filter(sbom_external_node::Column::ExternalNodeRef.eq(current_node_id))
                     .one(self.connection)
                     .await;
-
                 let mut resolved_external_nodes: Vec<Node> = vec![];
-
                 match find_sbom_external_nodes {
                     Ok(sbom_external_nodes) => {
                         #[allow(for_loops_over_fallibles)]

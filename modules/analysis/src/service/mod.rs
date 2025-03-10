@@ -44,7 +44,7 @@ use trustify_entity::{
     relationship::Relationship,
     sbom,
     sbom_external_node::{self, DiscriminatorType, ExternalType},
-    sbom_node_checksum, source_document,
+    sbom_node_checksum, sbom_package, source_document,
 };
 use uuid::Uuid;
 
@@ -64,12 +64,12 @@ struct ResolvedSbom {
 }
 
 async fn resolve_external_sbom<C: ConnectionTrait>(
-    external_node_ref: String,
+    node_id: String,
     connection: &C,
 ) -> Option<ResolvedSbom> {
     // we first lookup in sbom_external_node
     let sbom_external_node = match sbom_external_node::Entity::find()
-        .filter(sbom_external_node::Column::NodeId.eq(external_node_ref))
+        .filter(sbom_external_node::Column::NodeId.eq(node_id.as_str()))
         .one(connection)
         .await
     {
@@ -139,25 +139,48 @@ async fn resolve_external_sbom<C: ConnectionTrait>(
             // sbom_id/node_id
             let sbom_external_node_ref = sbom_external_node.external_node_ref;
 
-            let Ok(Some(entity)) = sbom_node_checksum::Entity::find()
+            match sbom_node_checksum::Entity::find()
                 .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.to_string()))
                 .one(connection)
                 .await
-            else {
-                return None;
-            };
-
-            match sbom_node_checksum::Entity::find()
-                .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
-                .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
-                .one(connection)
-                .await
             {
-                Ok(Some(matched)) => Some(ResolvedSbom {
-                    sbom_id: matched.sbom_id,
-                    node_id: matched.node_id,
-                }),
-                _ => None,
+                Ok(Some(entity)) => {
+                    match sbom_node_checksum::Entity::find()
+                        .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
+                        .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                        .one(connection)
+                        .await
+                    {
+                        Ok(Some(matched)) => Some(ResolvedSbom {
+                            sbom_id: matched.sbom_id,
+                            node_id: matched.node_id,
+                        }),
+                        _ => None,
+                    }
+                }
+                _ => {
+                    match sbom_package::Entity::find()
+                        .filter(sbom_package::Column::NodeId.eq(sbom_external_node_ref.clone()))
+                        .one(connection)
+                        .await
+                    {
+                        Ok(Some(imagevariant)) => {
+                            match sbom_package::Entity::find()
+                                .filter(sbom_package::Column::SbomId.ne(imagevariant.sbom_id))
+                                .filter(sbom_package::Column::Version.eq(imagevariant.version))
+                                .one(connection)
+                                .await
+                            {
+                                Ok(Some(matched_imagevariant)) => Some(ResolvedSbom {
+                                    sbom_id: matched_imagevariant.sbom_id,
+                                    node_id: matched_imagevariant.node_id,
+                                }),
+                                _ => None,
+                            }
+                        }
+                        _ => None,
+                    }
+                }
             }
         }
     }

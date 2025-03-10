@@ -209,9 +209,12 @@ async fn resolve_rh_variant_prod_comp_cdx_external_reference_curl(
               "name": "curl",
               "document_id": "urn:uuid:6895f8e0-2bfd-331c-97f9-97369ef1f3ee/1",
               "relationship": "generates",
+              "descendants":[
+                {
+                    "relationship": "package",
+                }]
             }]
-        }
-      ]
+        }]
     })));
 
     Ok(())
@@ -271,6 +274,212 @@ async fn resolve_rh_variant_source_binary_cdx_external_reference(
                           "document_id": "urn:uuid:a8c83882-79a5-4b47-8ba3-3973ac4e4309/1",
                           "relationship": "generates",
                         }]
+                }]
+            }]
+        }]
+    })));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn resolve_rh_variant_image_index_cdx_external_reference(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_documents([
+        "cyclonedx/rh/image_index_variants/imagevariant_quarkus_mandrel_arm64.json",
+        "cyclonedx/rh/image_index_variants/imagevariant_quarkus_mandrel_amd64.json",
+        "cyclonedx/rh/image_index_variants/imageindex_quarkus_mandrel.json",
+    ])
+    .await?;
+
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode(
+            "pkg:oci/quarkus-mandrel-for-jdk-21-rhel8@sha256%3A04b6da7bed65d56e14bd50a119b6fa9b46b534fedafb623af7c95b1a046bb66a"
+        )
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+
+    assert!(response.contains_subset(json!({
+      "items": [
+        {
+            "node_id":"quarkus-mandrel-231-rhel8-container_image-index",
+            "name": "quarkus/mandrel-for-jdk-21-rhel8",
+            "document_id": "urn:uuid:8262934b-6d8f-30a7-a216-d933ded97451/1",
+            "descendants": [
+            {
+              "node_id": "quarkus-mandrel-231-rhel8-container_arm64",
+              "purl": [
+                "pkg:oci/mandrel-for-jdk-21-rhel8@sha256:0dba39e3c6db8f7a097798d7898bb0362c32c642561b819cb02a475d596ff2a2?arch=arm64&os=linux&tag=23.1-19.1739757566"
+              ],
+              "name": "quarkus/mandrel-for-jdk-21-rhel8",
+              "version": "sha256:0dba39e3c6db8f7a097798d7898bb0362c32c642561b819cb02a475d596ff2a2",
+              "document_id": "urn:uuid:8262934b-6d8f-30a7-a216-d933ded97451/1",
+              "relationship": "variant",
+              "descendants": [
+                {
+                  "node_id": "quarkus-mandrel-231-rhel8-container_image-index:quarkus-mandrel-231-rhel8-container_arm64",
+                  "name": "quarkus-mandrel-231-rhel8-container_arm64",
+                  "published": "2025-02-17 02:40:50+00",
+                  "document_id": "urn:uuid:8262934b-6d8f-30a7-a216-d933ded97451/1",
+                  "relationship": "package",
+                  "descendants": [
+                    {
+                      "node_id": "pkg:rpm/redhat/zlib-devel@1.2.11-25.el8?arch=aarch64&distro=rhel-8.10&package-id=a7258f3c94d69023&upstream=zlib-1.2.11-25.el8.src.rpm",
+                      "name": "zlib-devel",
+                      "version": "1.2.11-25.el8",
+                      "published": "2025-02-17 02:40:27+00",
+                      "document_id": "urn:uuid:38200326-3211-458c-8084-f24670a78ce4/1",
+                      "relationship": "dependency",
+                    }]
+                }]
+            }]
+        }]
+    })));
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn resolve_rh_variant_image_index_cdx_external_reference2(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_documents([
+        "cyclonedx/rh/image_index_variants/example_container_variant_s390x.json",
+        "cyclonedx/rh/image_index_variants/example_container_variant_ppc.json",
+        "cyclonedx/rh/image_index_variants/example_container_variant_arm64.json",
+        "cyclonedx/rh/image_index_variants/example_container_variant_amd64.json",
+        "cyclonedx/rh/image_index_variants/example_container_index.json",
+    ])
+    .await?;
+
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode(
+            "pkg:oci/openshift-ose-openstack-cinder-csi-driver-operator@sha256%3A4e1a8039dfcd2a1ae7672d99be63777b42f9fad3baca5e9273653b447ae72fe8"
+        )
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+
+    assert!(response.contains_subset(json!({
+      "items": [
+        {
+            "name": "openshift/ose-openstack-cinder-csi-driver-operator",
+            "document_id": "urn:uuid:b3418a5d-8af8-3516-b9ac-5bc53628e803/1",
+            "descendants": [
+            {
+                "node_id": "ose-openstack-cinder-csi-driver-operator-container_ppc64le",
+                "purl": [
+                "pkg:oci/ose-openstack-cinder-csi-driver-operator@sha256:64b4e6d6c18556f9f9dad1a9e6185c37d6ad07c72e515c475304a3a16b9eb51f?arch=ppc64le&os=linux&tag=v4.15.0-202501280037.p0.gd0c2407.assembly.stream.el8"
+                ],
+                "name": "openshift/ose-openstack-cinder-csi-driver-operator",
+                "version": "sha256:64b4e6d6c18556f9f9dad1a9e6185c37d6ad07c72e515c475304a3a16b9eb51f",
+                "published": "2025-02-06 19:23:12+00",
+                "document_id": "urn:uuid:b3418a5d-8af8-3516-b9ac-5bc53628e803/1",
+                "relationship": "variant",
+                "descendants": [
+                {
+                    "node_id": "ose-openstack-cinder-csi-driver-operator-container_image-index:ose-openstack-cinder-csi-driver-operator-container_ppc64le",
+                    "name": "ose-openstack-cinder-csi-driver-operator-container_ppc64le",
+                    "document_id": "urn:uuid:b3418a5d-8af8-3516-b9ac-5bc53628e803/1",
+                    "relationship": "package",
+                    "descendants": [
+                    {
+                        "node_id": "pkg:rpm/redhat/zlib@1.2.11-25.el8?arch=ppc64le&distro=rhel-8.10&package-id=e4ec995f2956806f&upstream=zlib-1.2.11-25.el8.src.rpm",
+                        "purl": [
+                        "pkg:rpm/redhat/zlib@1.2.11-25.el8?arch=ppc64le"
+                        ],
+                        "name": "zlib",
+                        "version": "1.2.11-25.el8",
+                        "published": "2025-02-06 19:21:42+00",
+                        "document_id": "urn:uuid:7e5ef761-ab77-460c-bf89-34a772842352/1",
+                        "relationship": "dependency",
+                    }]
+                }]
+            }]
+        }]
+    })));
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+#[ignore = "wait for data change"]
+async fn resolve_rh_variant_image_variant_cdx_external_reference_ancestors(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_documents([
+        "cyclonedx/rh/image_index_variants/example_container_variant_s390x.json",
+        "cyclonedx/rh/image_index_variants/example_container_variant_ppc.json",
+        "cyclonedx/rh/image_index_variants/example_container_variant_arm64.json",
+        "cyclonedx/rh/image_index_variants/example_container_variant_amd64.json",
+        "cyclonedx/rh/image_index_variants/example_container_index.json",
+    ])
+    .await?;
+
+    // search for a dependency "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64"
+    let uri = format!(
+        "/api/v2/analysis/component/{}?ancestors=10",
+        urlencoding::encode("pkg:rpm/redhat/zlib@1.2.11-25.el8?arch=s390x")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+
+    log::warn!("test result {:?}", response);
+
+    assert!(response.contains_subset(json!({
+      "items": [
+        {
+            "node_id": "pkg:rpm/redhat/zlib@1.2.11-25.el8?arch=s390x&distro=rhel-8.10&package-id=ca5c659108941f26&upstream=zlib-1.2.11-25.el8.src.rpm",
+            "name": "zlib",
+            "version": "1.2.11-25.el8",
+            "published": "2025-02-06 19:22:37+00",
+            "document_id": "urn:uuid:aa6b5176-94f2-4c73-90bd-613fb1e560e8/1",
+            "ancestors": [
+            {
+                "node_id": "2b8dc6da540ea58f",
+                "purl": [
+                "pkg:oci/ose-openstack-cinder-csi-driver-operator@sha256:d3d96f71664efb8c2bd9290b8e1ca9c9b93a54cecb266078c4d954a2e9c05d4d?arch=s390x&os=linux&tag=v4.15.0-202501280037.p0.gd0c2407.assembly.stream.el8"
+                ],
+                "cpe": [],
+                "name": "openshift/ose-openstack-cinder-csi-driver-operator",
+                "version": "sha256:d3d96f71664efb8c2bd9290b8e1ca9c9b93a54cecb266078c4d954a2e9c05d4d",
+                "published": "2025-02-06 19:22:37+00",
+                "document_id": "urn:uuid:aa6b5176-94f2-4c73-90bd-613fb1e560e8/1",
+                "relationship": "dependency",
+                "ancestors":[
+                {
+                    "node_id": "ose-openstack-cinder-csi-driver-operator-container_s390x",
+                    "purl": [
+                    "pkg:oci/ose-openstack-cinder-csi-driver-operator@sha256:d3d96f71664efb8c2bd9290b8e1ca9c9b93a54cecb266078c4d954a2e9c05d4d?arch=s390x&os=linux&tag=v4.15.0-202501280037.p0.gd0c2407.assembly.stream.el8"
+                    ],
+                    "name": "openshift/ose-openstack-cinder-csi-driver-operator",
+                    "version": "sha256:d3d96f71664efb8c2bd9290b8e1ca9c9b93a54cecb266078c4d954a2e9c05d4d",
+                    "published": "2025-02-06 19:23:12+00",
+                    "document_id": "urn:uuid:b3418a5d-8af8-3516-b9ac-5bc53628e803/1",
+                    "relationship": "package",
+                    "ancestors":[
+                    {
+                        "node_id": "ose-openstack-cinder-csi-driver-operator-container_image-index",
+                        "purl": [
+                        "pkg:oci/openshift-ose-openstack-cinder-csi-driver-operator@sha256:4e1a8039dfcd2a1ae7672d99be63777b42f9fad3baca5e9273653b447ae72fe8"
+                        ],
+                        "name": "openshift/ose-openstack-cinder-csi-driver-operator",
+                        "version": "sha256:4e1a8039dfcd2a1ae7672d99be63777b42f9fad3baca5e9273653b447ae72fe8",
+                        "published": "2025-02-06 19:23:12+00",
+                        "document_id": "urn:uuid:b3418a5d-8af8-3516-b9ac-5bc53628e803/1",
+                        "relationship": "variant"
+                    }]
                 }]
             }]
         }]
