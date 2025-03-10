@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741612832090,
+  "lastUpdate": 1741625425494,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6263,6 +6263,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "14acaa4bcc1fdeb0e0015d6758ac3642e6d4bea8",
+          "message": "feat: adds metric of running importers",
+          "timestamp": "2025-03-10T16:14:18Z",
+          "tree_id": "a2d83f0fc38fb1bed9ee5b3546d28a627ec9cb38",
+          "url": "https://github.com/trustification/trustify/commit/14acaa4bcc1fdeb0e0015d6758ac3642e6d4bea8"
+        },
+        "date": 1741625424766,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
