@@ -8650,6 +8650,7 @@ dependencies = [
  "json-merge-patch",
  "log",
  "num-traits",
+ "opentelemetry",
  "osv",
  "parking_lot 0.12.3",
  "regex",
