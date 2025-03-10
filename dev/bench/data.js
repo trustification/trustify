@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741625425494,
+  "lastUpdate": 1741625970832,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6292,6 +6292,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "541ad105254bc4db4fbfe9f0635ce267d381a025",
+          "message": "fix: prevent database passwords being logged\n\nCloses: #1409",
+          "timestamp": "2025-03-10T16:29:57Z",
+          "tree_id": "58092ea0e2bc263e95a1d4d2695835cb4c2e3513",
+          "url": "https://github.com/trustification/trustify/commit/541ad105254bc4db4fbfe9f0635ce267d381a025"
+        },
+        "date": 1741625969463,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
