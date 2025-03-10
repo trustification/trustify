@@ -1,7 +1,8 @@
+pub mod sbom_license;
+
 use crate::{Error, purl::model::VersionedPurlHead, sbom::model::SbomHead};
-use sea_orm::{ConnectionTrait, ModelTrait, PaginatorTrait};
 use serde::{Deserialize, Serialize};
-use trustify_entity::{license, purl_license_assertion};
+use trustify_entity::license;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -29,23 +30,6 @@ impl LicenseSummary {
                 .unwrap_or_default(),
             purls,
         })
-    }
-
-    pub async fn from_entities<C: ConnectionTrait>(
-        licenses: &[license::Model],
-        connection: &C,
-    ) -> Result<Vec<Self>, Error> {
-        let mut summaries = Vec::new();
-
-        for license in licenses {
-            let purls = license
-                .find_related(purl_license_assertion::Entity)
-                .count(connection)
-                .await?;
-            summaries.push(Self::from_entity(license, purls).await?)
-        }
-
-        Ok(summaries)
     }
 }
 

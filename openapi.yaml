@@ -717,52 +717,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResults_ImporterReport'
-  /api/v2/license:
-    get:
-      tags:
-      - license
-      summary: List licenses
-      operationId: listLicenses
-      parameters:
-      - name: q
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: sort
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: offset
-        in: query
-        description: |-
-          The first item to return, skipping all that come before it.
-
-          NOTE: The order of items is defined by the API being called.
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      - name: limit
-        in: query
-        description: |-
-          The maximum number of entries to return.
-
-          Zero means: no limit
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      responses:
-        '200':
-          description: Matching licenses
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResults_LicenseSummary'
   /api/v2/license/spdx/license:
     get:
       tags:
@@ -828,77 +782,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SpdxLicenseDetails'
-  /api/v2/license/{uuid}:
-    get:
-      tags:
-      - license
-      summary: Retrieve license details
-      operationId: getLicenses
-      parameters:
-      - name: uuid
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      responses:
-        '200':
-          description: The license
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LicenseSummary'
-  /api/v2/license/{uuid}/purl:
-    get:
-      tags:
-      - license
-      summary: Retrieve pURLs covered by a license
-      operationId: getLicensePurls
-      parameters:
-      - name: q
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: sort
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: offset
-        in: query
-        description: |-
-          The first item to return, skipping all that come before it.
-
-          NOTE: The order of items is defined by the API being called.
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      - name: limit
-        in: query
-        description: |-
-          The maximum number of entries to return.
-
-          Zero means: no limit
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      - name: uuid
-        in: path
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: The versioned pURLs allowing the license
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LicenseSummary'
   /api/v2/organization:
     get:
       tags:
@@ -1646,6 +1529,31 @@ paths:
           description: Modified the labels of the SBOM
         '404':
           description: The SBOM could not be found
+  /api/v2/sbom/{id}/license-export:
+    get:
+      tags:
+      - sbom
+      operationId: getLicenseExport
+      parameters:
+      - name: id
+        in: path
+        description: Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: license zip file
+          content:
+            application/octet-stream:
+              schema:
+                type: array
+                items:
+                  type: integer
+                  format: int32
+                  minimum: 0
+        '404':
+          description: The document could not be found
   /api/v2/sbom/{id}/packages:
     get:
       tags:
