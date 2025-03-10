@@ -138,10 +138,9 @@ async fn ingest_spdx_broken_refs(ctx: &TrustifyContext) -> Result<(), anyhow::Er
 }
 
 #[instrument(skip(ctx, f))]
-pub async fn test_with_spdx<F, Fut>(ctx: &TrustifyContext, sbom: &str, f: F) -> anyhow::Result<()>
+pub async fn test_with_spdx<F>(ctx: &TrustifyContext, sbom: &str, f: F) -> anyhow::Result<()>
 where
-    F: FnOnce(WithContext) -> Fut,
-    Fut: Future<Output = anyhow::Result<()>>,
+    F: AsyncFnOnce(WithContext) -> anyhow::Result<()>,
 {
     test_with(
         ctx,
@@ -151,11 +150,9 @@ where
             let (sbom, _) = parse_spdx(&Discard, json)?;
             Ok(fix_spdx_rels(sbom))
         },
-        |ctx, sbom, tx| {
-            Box::pin(async move {
-                ctx.ingest_spdx(sbom.clone(), &Discard, tx).await?;
-                Ok(())
-            })
+        async move |ctx, sbom, tx| {
+            ctx.ingest_spdx(sbom.clone(), &Discard, tx).await?;
+            Ok(())
         },
         |sbom| sbom::spdx::Information(sbom).into(),
         f,

@@ -15,12 +15,15 @@ use crate::{
     },
     service::Error,
 };
-use sbom_walker::report::{ReportSink, check};
+use sbom_walker::{
+    model::sbom::serde_cyclonedx::Sbom,
+    report::{ReportSink, check},
+};
 use sea_orm::ConnectionTrait;
 use serde_cyclonedx::cyclonedx::v_1_6::{
     Component, ComponentEvidenceIdentity, CycloneDx, LicenseChoiceUrl,
 };
-use std::str::FromStr;
+use std::{borrow::Cow, str::FromStr};
 use time::{OffsetDateTime, format_description::well_known::Iso8601};
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, purl::Purl};
@@ -103,13 +106,13 @@ impl SbomContext {
     #[instrument(skip(connection, sbom, warnings), err(level=tracing::Level::INFO))]
     pub async fn ingest_cyclonedx<C: ConnectionTrait>(
         &self,
-        mut sbom: CycloneDx,
+        mut sbom: Box<CycloneDx>,
         warnings: &dyn ReportSink,
         connection: &C,
     ) -> Result<(), anyhow::Error> {
         // pre-flight checks
 
-        check::serde_cyclonedx::all(warnings, &(&sbom).into());
+        check::serde_cyclonedx::all(warnings, &Sbom::V1_6(Cow::Borrowed(&sbom)));
 
         let mut creator = Creator::new(self.sbom.sbom_id);
 
@@ -409,13 +412,13 @@ impl<'a> ComponentCreator<'a> {
 
             // create the component
 
-            let creator = ComponentCreator::new(
+            let creator = Box::new(ComponentCreator::new(
                 self.cpes,
                 self.purls,
                 self.licenses,
                 self.packages,
                 self.relationships,
-            );
+            ));
 
             creator.create(ancestor);
 
@@ -436,13 +439,13 @@ impl<'a> ComponentCreator<'a> {
 
             // create the component
 
-            let creator = ComponentCreator::new(
+            let creator = Box::new(ComponentCreator::new(
                 self.cpes,
                 self.purls,
                 self.licenses,
                 self.packages,
                 self.relationships,
-            );
+            ));
 
             creator.create(variant);
 

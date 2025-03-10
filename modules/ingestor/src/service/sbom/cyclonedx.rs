@@ -26,7 +26,7 @@ impl<'g> CyclonedxLoader<'g> {
     ) -> Result<IngestResult, Error> {
         let warnings = Warnings::default();
 
-        let cdx: serde_cyclonedx::cyclonedx::v_1_6::CycloneDx = serde_json::from_slice(buffer)
+        let cdx: Box<serde_cyclonedx::cyclonedx::v_1_6::CycloneDx> = serde_json::from_slice(buffer)
             .map_err(|err| Error::UnsupportedFormat(format!("Failed to parse: {err}")))?;
 
         let labels = labels.add("type", "cyclonedx");
