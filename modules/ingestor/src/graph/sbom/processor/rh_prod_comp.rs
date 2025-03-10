@@ -103,13 +103,15 @@ impl super::Processor for RedHatProductComponentRelationships {
                 );
             }
 
-            // if it is a top level component, described by the SBOM, packaging components,
-            // then we process those
-            if !((relationship == &Relationship::Generates
-                || relationship == &Relationship::Package)
-                && top_level.contains(prod_node_id))
-            {
-                continue;
+            if relationship != &Relationship::Variant {
+                // if it is a top level component, described by the SBOM, packaging components,
+                // then we process those
+                if !((relationship == &Relationship::Generates
+                    || relationship == &Relationship::Package)
+                    && top_level.contains(prod_node_id))
+                {
+                    continue;
+                }
             }
 
             // artificial external node ID
@@ -187,9 +189,16 @@ fn is_relevant(
         return None;
     }
 
-    // it must have CPEs
+    //check if we have imageindex variant
+    let mut has_imageindex_variant: bool = false;
+    for relationship in relationships {
+        if let sea_orm::ActiveValue::Set(Relationship::Variant) = relationship.relationship {
+            has_imageindex_variant = true;
+        }
+    }
 
-    if find_cpes(cpes, cpes_refs, node_id).is_empty() {
+    // it must have CPEs if not imageindex
+    if !has_imageindex_variant && find_cpes(cpes, cpes_refs, node_id).is_empty() {
         return None;
     }
 

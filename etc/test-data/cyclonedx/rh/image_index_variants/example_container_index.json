@@ -18,6 +18,7 @@
       ]
     },
     "component": {
+      "bom-ref": "pkg:oci/openshift-ose-openstack-cinder-csi-driver-operator@sha256%3A4e1a8039dfcd2a1ae7672d99be63777b42f9fad3baca5e9273653b447ae72fe8",
       "name": "openshift/ose-openstack-cinder-csi-driver-operator",
       "purl": "pkg:oci/openshift-ose-openstack-cinder-csi-driver-operator@sha256%3A4e1a8039dfcd2a1ae7672d99be63777b42f9fad3baca5e9273653b447ae72fe8",
       "type": "container",

@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "metadata": {
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "b6cff18d"
+        }
+      ]
+    },
+    "component": {
+      "name": "quarkus/mandrel-for-jdk-21-rhel8",
+      "purl": "pkg:oci/quarkus-mandrel-for-jdk-21-rhel8@sha256%3A04b6da7bed65d56e14bd50a119b6fa9b46b534fedafb623af7c95b1a046bb66a",
+      "type": "container",
+      "description": "Image index manifest of pkg:oci/quarkus-mandrel-for-jdk-21-rhel8@sha256%3A04b6da7bed65d56e14bd50a119b6fa9b46b534fedafb623af7c95b1a046bb66a"
+    },
+    "timestamp": "2025-02-17T02:40:50Z"
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "quarkus/mandrel-for-jdk-21-rhel8",
+      "purl": "pkg:oci/quarkus-mandrel-for-jdk-21-rhel8@sha256%3A04b6da7bed65d56e14bd50a119b6fa9b46b534fedafb623af7c95b1a046bb66a",
+      "type": "container",
+      "bom-ref": "quarkus-mandrel-231-rhel8-container_image-index",
+      "version": "sha256:04b6da7bed65d56e14bd50a119b6fa9b46b534fedafb623af7c95b1a046bb66a",
+      "pedigree": {
+        "variants": [
+          {
+            "name": "quarkus/mandrel-for-jdk-21-rhel8",
+            "purl": "pkg:oci/mandrel-for-jdk-21-rhel8@sha256%3A6545d1ae562899d6eb902f81be46a9fc6a8bd60f2b6b874f470722bca25fc0da?arch=amd64&os=linux&tag=23.1-19.1739757566",
+            "type": "container",
+            "bom-ref": "quarkus-mandrel-231-rhel8-container_amd64",
+            "version": "sha256:6545d1ae562899d6eb902f81be46a9fc6a8bd60f2b6b874f470722bca25fc0da",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat"
+          },
+          {
+            "name": "quarkus/mandrel-for-jdk-21-rhel8",
+            "purl": "pkg:oci/mandrel-for-jdk-21-rhel8@sha256%3A0dba39e3c6db8f7a097798d7898bb0362c32c642561b819cb02a475d596ff2a2?arch=arm64&os=linux&tag=23.1-19.1739757566",
+            "type": "container",
+            "bom-ref": "quarkus-mandrel-231-rhel8-container_arm64",
+            "version": "sha256:0dba39e3c6db8f7a097798d7898bb0362c32c642561b819cb02a475d596ff2a2",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "properties": [
+        {
+          "name": "sbomer:image:labels:com.redhat.component",
+          "value": "quarkus-mandrel-231-rhel8-container"
+        },
+        {
+          "name": "sbomer:image:labels:name",
+          "value": "quarkus/mandrel-for-jdk-21-rhel8"
+        },
+        {
+          "name": "sbomer:image:labels:release",
+          "value": "19.1739757566"
+        },
+        {
+          "name": "sbomer:image:labels:version",
+          "value": "23.1"
+        }
+      ]
+    }
+  ],
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:8262934b-6d8f-30a7-a216-d933ded97451"
+}
