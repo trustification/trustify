@@ -11,6 +11,7 @@ use crate::{
     server::context::ServiceRunContext,
     service::{Error, ImporterService},
 };
+use opentelemetry::global;
 use std::{path::PathBuf, time::Duration};
 use time::OffsetDateTime;
 use tokio::{task::LocalSet, time::MissedTickBehavior};
@@ -72,6 +73,9 @@ impl Server {
     }
 
     async fn run_local(self) -> anyhow::Result<()> {
+        let meter = global::meter("importer::Server");
+        let running_importers = meter.u64_gauge("running_importers").build();
+
         let service = ImporterService::new(self.db.clone());
         let runner = ImportRunner {
             db: self.db.clone(),
@@ -91,6 +95,9 @@ impl Server {
             // Remove jobs that are finished; they're heartless ;)
             runs.retain(|heart| heart.is_beating());
             let count = runs.len();
+
+            // Update metrics
+            running_importers.record(count as _, &[]);
 
             // Asynchronously fire off new jobs subject to max concurrency
             runs.extend(
