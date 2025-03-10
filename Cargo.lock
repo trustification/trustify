@@ -8362,6 +8362,7 @@ dependencies = [
  "cpe",
  "deepsize",
  "hex",
+ "hide",
  "human-date-parser",
  "humantime",
  "itertools 0.14.0",

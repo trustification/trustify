@@ -20,6 +20,7 @@ clap = { workspace = true, features = ["derive", "env"] }
 cpe = { workspace = true }
 deepsize = { workspace = true, features = ["cpe"] }
 hex = { workspace = true }
+hide = { workspace = true }
 human-date-parser = { workspace = true }
 itertools = { workspace = true }
 lenient_semver = { workspace = true }
