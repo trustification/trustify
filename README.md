@@ -263,3 +263,15 @@ All package/product relationships exist only within the context of an SBOM makin
 ### Describes
 
 CPE (Product?) and/or pURLs described by the SBOM
+
+## Related Projects
+
+* [Trustify user interface](https://github.com/trustification/trustify-ui)
+* [Helm charts used for the Trustify deployment](https://github.com/trustification/trustify-helm-charts)
+* [OpenShift Operator used for the Trustify deployment](https://github.com/trustification/trustify-operator)
+* [Ansible playbooks used for the Trustify deployment](https://github.com/trustification/trustify-ansible)
+* [Trustify API & user interface test suite](https://github.com/trustification/trustify-tests)
+* [Trustify load tests runner](https://github.com/trustification/trustify-load-test-runs)
+* [Trustify load test suite](https://github.com/trustification/scale-testing)
+* [Trustify GitHub CI helpers](https://github.com/trustification/trustify-ci)
+* [Trustify release tools](https://github.com/trustification/release-tools)
