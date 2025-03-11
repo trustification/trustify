@@ -85,7 +85,7 @@ pub async fn all(
     tag = "advisory",
     operation_id = "getAdvisory",
     params(
-        ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("key" = Id, Path),
     ),
     responses(
         (status = 200, description = "Matching advisory", body = AdvisoryDetails),
@@ -114,7 +114,7 @@ pub async fn get(
     tag = "advisory",
     operation_id = "deleteAdvisory",
     params(
-        ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("key" = Id, Path),
     ),
     responses(
         (status = 200, description = "Matching advisory", body = AdvisoryDetails),
@@ -197,7 +197,7 @@ pub async fn upload(
     tag = "advisory",
     operation_id = "downloadAdvisory",
     params(
-        ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
+        ("key" = Id, Path),
     ),
     responses(
         (status = 200, description = "Download a an advisory", body = inline(BinaryData)),
