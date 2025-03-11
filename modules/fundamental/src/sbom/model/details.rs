@@ -11,8 +11,8 @@ use crate::{
 };
 use cpe::{cpe::Cpe, uri::OwnedUri};
 use sea_orm::{
-    Condition, ConnectionTrait, DbBackend, FromQueryResult, JoinType,
-    ModelTrait, QueryFilter, QueryResult, QuerySelect, RelationTrait, Statement,
+    Condition, ConnectionTrait, DbBackend, FromQueryResult, JoinType, ModelTrait, QueryFilter,
+    QueryResult, QuerySelect, RelationTrait, Statement,
 };
 use sea_query::Query;
 use sea_query::{Asterisk, Expr, Func, SimpleExpr};
@@ -20,17 +20,14 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use trustify_common::{
     cpe::CpeCompare,
-    db::{
-        VersionMatches,
-        multi_model::SelectIntoMultiModel,
-    },
+    db::{VersionMatches, multi_model::SelectIntoMultiModel},
     memo::Memo,
 };
 use trustify_cvss::cvss3::{Cvss3Base, score::Score, severity::Severity};
 use trustify_entity::{
-    advisory, advisory_vulnerability, base_purl, cvss3,
-    purl_status, qualified_purl, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
-    sbom_package_purl_ref, status, version_range, versioned_purl, vulnerability,
+    advisory, advisory_vulnerability, base_purl, cvss3, purl_status, qualified_purl, sbom,
+    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, status, version_range,
+    versioned_purl, vulnerability,
 };
 use utoipa::ToSchema;
 
@@ -71,6 +68,7 @@ impl SbomDetails {
                 .filter(Expr::col((status::Entity, status::Column::Slug)).is_in(statuses.clone()));
         }
 
+        // find all the CPEs associated with this SBOM
         let subquery = Query::select()
             .column(sbom_package_cpe_ref::Column::CpeId)
             .from(sbom_package_cpe_ref::Entity)
@@ -394,10 +392,7 @@ impl SbomStatus {
         packages: Vec<SbomPackage>,
         tx: &C,
     ) -> Result<Self, Error> {
-        let cvss3 = advisory_vulnerability
-            .find_related(cvss3::Entity)
-            .all(tx)
-            .await?;
+        let cvss3 = vulnerability.find_related(cvss3::Entity).all(tx).await?;
         let average_severity = Score::from_iter(cvss3.iter().map(Cvss3Base::from)).severity();
         Ok(Self {
             vulnerability: VulnerabilityHead::from_advisory_vulnerability_entity(
