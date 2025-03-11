@@ -7,7 +7,7 @@ use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{Error, Visitor},
 };
-use serde_json::Value;
+use serde_json::json;
 use std::{
     borrow::Cow,
     fmt::{Display, Formatter},
@@ -122,10 +122,16 @@ impl ToSchema for Id {
 impl PartialSchema for Id {
     fn schema() -> RefOr<Schema> {
         let mut obj = Object::with_type(Type::String);
-        obj.description = Some("A hash/digest prefixed with its type.".to_string());
-        obj.example = Some(Value::String(
-            "sha256:dc60aeb735c16a71b6fc56e84ddb8193e3a6d1ef0b7e958d77e78fc039a5d04e".to_string(),
-        ));
+        obj.description = Some(
+            r#"Identifier to a document, prefixed with the ID type.
+
+Either an internal ID of the document with the `urn:uuid:` scheme. Or using a digest, with the digest prefix. For example, `sha256:`."#
+            .to_string(),
+        );
+        obj.examples = vec![
+            json!("urn:uuid:018123ef-a791-40d8-b62a-f70a350245d4"),
+            json!("sha256:dc60aeb735c16a71b6fc56e84ddb8193e3a6d1ef0b7e958d77e78fc039a5d04e"),
+        ];
 
         RefOr::T(Schema::Object(obj))
     }

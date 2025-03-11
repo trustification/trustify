@@ -67,6 +67,7 @@ pub fn configure(
         .service(label::update);
 }
 
+/// Search for SBOMs
 #[utoipa::path(
     tag = "sbom",
     operation_id = "listSboms",
@@ -164,11 +165,12 @@ pub async fn count_related(
     Ok(HttpResponse::Ok().json(result))
 }
 
+/// Get information about an SBOM
 #[utoipa::path(
     tag = "sbom",
     operation_id = "getSbom",
     params(
-        ("id" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("id" = Id, Path),
     ),
     responses(
         (status = 200, description = "Matching SBOM", body = SbomSummary),
@@ -189,11 +191,12 @@ pub async fn get(
     }
 }
 
+/// Get advisories for an SBOM
 #[utoipa::path(
     tag = "sbom",
     operation_id = "getSbomAdvisories",
     params(
-        ("id" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("id" = Id, Path),
     ),
     responses(
         (status = 200, description = "Matching SBOM", body = Vec<SbomAdvisory>),
@@ -220,11 +223,12 @@ pub async fn get_sbom_advisories(
 
 all!(GetSbomAdvisories -> ReadSbom, ReadAdvisory);
 
+/// Delete an SBOM
 #[utoipa::path(
     tag = "sbom",
     operation_id = "deleteSbom",
     params(
-        ("id" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
+        ("id" = Id, Path),
     ),
     responses(
         (status = 200, description = "Matching SBOM", body = SbomSummary),
@@ -360,7 +364,6 @@ struct UploadQuery {
     request_body = Vec <u8>,
     params(
         UploadQuery,
-        ("location" = String, Query, description = "Source the document came from"),
     ),
     responses(
         (status = 201, description = "Upload an SBOM", body = IngestResult),
@@ -383,11 +386,12 @@ pub async fn upload(
     Ok(HttpResponse::Created().json(result))
 }
 
+/// Download an SBOM
 #[utoipa::path(
     tag = "sbom",
     operation_id = "downloadSbom",
     params(
-        ("key" = String, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'"),
+        ("key" = Id, Path),
     ),
     responses(
         (status = 200, description = "Download a an SBOM", body = inline(BinaryData)),

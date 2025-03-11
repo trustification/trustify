@@ -169,10 +169,9 @@ paths:
       parameters:
       - name: key
         in: path
-        description: Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'
         required: true
         schema:
-          type: string
+          $ref: '#/components/schemas/Id'
       responses:
         '200':
           description: Matching advisory
@@ -190,10 +189,9 @@ paths:
       parameters:
       - name: key
         in: path
-        description: Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'
         required: true
         schema:
-          type: string
+          $ref: '#/components/schemas/Id'
       responses:
         '200':
           description: Matching advisory
@@ -212,10 +210,9 @@ paths:
       parameters:
       - name: key
         in: path
-        description: Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'
         required: true
         schema:
-          type: string
+          $ref: '#/components/schemas/Id'
       responses:
         '200':
           description: Download a an advisory
@@ -1345,6 +1342,7 @@ paths:
     get:
       tags:
       - sbom
+      summary: Search for SBOMs
       operationId: listSboms
       parameters:
       - name: q
@@ -1401,12 +1399,6 @@ paths:
         required: true
         schema:
           $ref: '#/components/schemas/Labels'
-      - name: location
-        in: query
-        description: Source the document came from
-        required: true
-        schema:
-          type: string
       requestBody:
         content:
           application/octet-stream:
@@ -1539,14 +1531,14 @@ paths:
     get:
       tags:
       - sbom
+      summary: Get information about an SBOM
       operationId: getSbom
       parameters:
       - name: id
         in: path
-        description: Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'
         required: true
         schema:
-          type: string
+          $ref: '#/components/schemas/Id'
       responses:
         '200':
           description: Matching SBOM
@@ -1559,14 +1551,14 @@ paths:
     delete:
       tags:
       - sbom
+      summary: Delete an SBOM
       operationId: deleteSbom
       parameters:
       - name: id
         in: path
-        description: Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'
         required: true
         schema:
-          type: string
+          $ref: '#/components/schemas/Id'
       responses:
         '200':
           description: Matching SBOM
@@ -1580,14 +1572,14 @@ paths:
     get:
       tags:
       - sbom
+      summary: Get advisories for an SBOM
       operationId: getSbomAdvisories
       parameters:
       - name: id
         in: path
-        description: Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'
         required: true
         schema:
-          type: string
+          $ref: '#/components/schemas/Id'
       responses:
         '200':
           description: Matching SBOM
@@ -1781,14 +1773,14 @@ paths:
     get:
       tags:
       - sbom
+      summary: Download an SBOM
       operationId: downloadSbom
       parameters:
       - name: key
         in: path
-        description: Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>'
         required: true
         schema:
-          type: string
+          $ref: '#/components/schemas/Id'
       responses:
         '200':
           description: Download a an SBOM
@@ -2405,8 +2397,13 @@ components:
             description: Find by PURL
     Id:
       type: string
-      description: A hash/digest prefixed with its type.
-      example: sha256:dc60aeb735c16a71b6fc56e84ddb8193e3a6d1ef0b7e958d77e78fc039a5d04e
+      description: |-
+        Identifier to a document, prefixed with the ID type.
+
+        Either an internal ID of the document with the `urn:uuid:` scheme. Or using a digest, with the digest prefix. For example, `sha256:`.
+      examples:
+      - urn:uuid:018123ef-a791-40d8-b62a-f70a350245d4
+      - sha256:dc60aeb735c16a71b6fc56e84ddb8193e3a6d1ef0b7e958d77e78fc039a5d04e
     Importer:
       allOf:
       - $ref: '#/components/schemas/ImporterData'
