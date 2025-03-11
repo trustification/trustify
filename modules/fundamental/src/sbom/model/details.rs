@@ -102,7 +102,7 @@ impl SbomDetails {
             ))
             .join(JoinType::LeftJoin, purl_status::Relation::ContextCpe.def())
             .join(JoinType::Join, purl_status::Relation::Advisory.def())
-            .join(JoinType::Join, advisory::Relation::Issuer.def())
+            .join(JoinType::LeftJoin, advisory::Relation::Issuer.def())
             .join(
                 JoinType::Join,
                 purl_status::Relation::AdvisoryVulnerability.def(),
@@ -205,7 +205,7 @@ impl SbomDetails {
             -- get basic status info
             JOIN "status" ON "product_status"."status_id" = "status"."id"
             JOIN "advisory" ON "product_status"."advisory_id" = "advisory"."id"
-            JOIN "organization" ON "advisory"."issuer_id" = "organization"."id"
+            LEFT JOIN "organization" ON "advisory"."issuer_id" = "organization"."id"
             JOIN "advisory_vulnerability" ON "product_status"."advisory_id" = "advisory_vulnerability"."advisory_id"
             AND "product_status"."vulnerability_id" = "advisory_vulnerability"."vulnerability_id"
             JOIN "vulnerability" ON "advisory_vulnerability"."vulnerability_id" = "vulnerability"."id"
@@ -307,7 +307,7 @@ impl SbomAdvisory {
                     SbomAdvisory {
                         head: AdvisoryHead::from_advisory(
                             &each.advisory,
-                            Memo::Provided(Some(each.organization.clone())),
+                            Memo::Provided(each.organization.clone()),
                             tx,
                         )
                         .await?,
