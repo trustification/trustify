@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741683737409,
+  "lastUpdate": 1741713985586,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6350,6 +6350,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "2aa3d2117f89133e21b0d86923028dcd0c1481d4",
+          "message": "fix: dataset test",
+          "timestamp": "2025-03-11T17:08:37Z",
+          "tree_id": "34b6d89d111179ba4ea778be9431f694578e0472",
+          "url": "https://github.com/trustification/trustify/commit/2aa3d2117f89133e21b0d86923028dcd0c1481d4"
+        },
+        "date": 1741713984244,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
