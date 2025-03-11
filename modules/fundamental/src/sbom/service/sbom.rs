@@ -664,7 +664,7 @@ pub struct QueryCatcher {
     pub vulnerability: vulnerability::Model,
     pub context_cpe: Option<cpe::Model>,
     pub status: status::Model,
-    pub organization: organization::Model,
+    pub organization: Option<organization::Model>,
 }
 
 impl FromQueryResult for QueryCatcher {
@@ -684,7 +684,7 @@ impl FromQueryResult for QueryCatcher {
             sbom_node: Self::from_query_result_multi_model(res, "", sbom_node::Entity)?,
             context_cpe: Self::from_query_result_multi_model_optional(res, "", cpe::Entity)?,
             status: Self::from_query_result_multi_model(res, "", status::Entity)?,
-            organization: Self::from_query_result_multi_model(res, "", organization::Entity)?,
+            organization: Self::from_query_result_multi_model_optional(res, "", organization::Entity)?,
         })
     }
 }
