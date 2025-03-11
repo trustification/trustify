@@ -56,7 +56,7 @@ async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
     log::info!("ingest: {}", humantime::Duration::from(ingest_time));
 
     assert!(result.warnings.is_empty());
-    assert_eq!(result.files.len(), 67);
+    assert_eq!(result.files.len(), 68);
 
     // get a document
 
@@ -121,13 +121,13 @@ async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
     assert!(ubi_details.is_some());
     let ubi_details = ubi_details.unwrap();
     let ubi_advisories = ubi_details.advisories;
-    assert_eq!(ubi_advisories.len(), 2);
+    assert_eq!(ubi_advisories.len(), 1);
     assert!(
         ubi_advisories
             .iter()
             .map(|adv| adv.head.document_id.clone())
             .collect::<Vec<_>>()
-            .contains(&"CVE-2024-50602".to_string())
+            .contains(&"CVE-2024-28834".to_string())
     );
 
     // done
