@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741625970832,
+  "lastUpdate": 1741683737409,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6321,6 +6321,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "ad79c1bf9825f063163ca649734ead27abe83b48",
+          "message": "docs: improve documentation of SBOM APIs",
+          "timestamp": "2025-03-11T08:44:26Z",
+          "tree_id": "4dba3ca32613deb0970adf80c138d2c14b377030",
+          "url": "https://github.com/trustification/trustify/commit/ad79c1bf9825f063163ca649734ead27abe83b48"
+        },
+        "date": 1741683736062,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
