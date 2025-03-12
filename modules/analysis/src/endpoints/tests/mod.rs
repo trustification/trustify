@@ -364,15 +364,15 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
     // qualifiers in the query using the LIKE operator,
     // e.g. q=purl~BASE&purl~Q1&purl~Q2
 
-    // This won't work, due to the presence of qualifiers
+    // This won't work:
+    // You can't assume the order of qualifiers returned by get_url()
     // query(&app, format!("purl={}", PURL.replace("&", r"\&"))).await;
 
-    // This will work, but I was unable to include the
-    // `repository_url` qualifier in the query due to unexpected
-    // urlencoding, either in the database or the get_purl function.
+    // This should work:
+    // Note that qualifier values should be urlencoded *twice*
     query(
         &app,
-        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl~type=pom",
+        format!("purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl~type=pom&purl~repository_url={}", encode("https://maven.repository.redhat.com/ga/")),
     )
     .await;
 
