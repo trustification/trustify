@@ -7,17 +7,22 @@ use crate::{
 use anyhow::anyhow;
 use petgraph::{Graph, prelude::NodeIndex};
 use sea_orm::{
-    ColumnTrait, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
-    FromQueryResult, QueryFilter, QueryOrder, QuerySelect, QueryTrait, RelationTrait, Statement,
+    ColumnTrait, ColumnType, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
+    FromQueryResult, IntoIdentity, QueryFilter, QueryOrder, QuerySelect, QueryTrait, RelationTrait,
+    Statement,
 };
-use sea_query::{JoinType, Order, SelectStatement};
+use sea_query::{Expr, Func, JoinType, Order, SelectStatement, SimpleExpr};
 use serde_json::Value;
 use std::{
     collections::{HashMap, HashSet, hash_map::Entry},
     sync::Arc,
 };
 use tracing::{Level, instrument};
-use trustify_common::{cpe::Cpe, db::query::Filtering, purl::Purl};
+use trustify_common::{
+    cpe::Cpe,
+    db::query::{Filtering, IntoColumns},
+    purl::Purl,
+};
 use trustify_entity::{
     cpe::CpeDto, package_relates_to_package, relationship::Relationship, sbom, sbom_external_node,
     sbom_external_node::ExternalType, sbom_node, sbom_package, sbom_package_cpe_ref,
@@ -237,9 +242,27 @@ impl AnalysisService {
                 .distinct()
                 .into_query(),
             GraphQuery::Query(query) => sbom_node::Entity::find()
-                .filtering(query.clone())?
+                .join(JoinType::Join, sbom_node::Relation::Package.def())
+                .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
                 .select_only()
                 .column(sbom_node::Column::SbomId)
+                .filtering_with(
+                    query.clone(),
+                    sbom_node::Entity
+                        .columns()
+                        .translator(|f, _, _| match f {
+                            "cpe" => Some(String::default()),
+                            _ => None,
+                        })
+                        .add_expr(
+                            "purl",
+                            SimpleExpr::FunctionCall(
+                                Func::cust("get_purl".into_identity())
+                                    .arg(Expr::col(sbom_package_purl_ref::Column::QualifiedPurlId)),
+                            ),
+                            ColumnType::Text,
+                        ),
+                )?
                 .distinct()
                 .into_query(),
         };
