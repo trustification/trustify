@@ -7,7 +7,7 @@ use sea_orm::{
     EntityTrait, FromQueryResult, IntoActiveModel, IntoIdentity, QueryResult, QuerySelect,
     QueryTrait, RelationTrait, Select, Statement, TransactionTrait,
 };
-use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, JoinType, SimpleExpr};
+use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use trustify_common::{
     db::{
         Database, UpdateDeprecatedAdvisory,
@@ -50,18 +50,10 @@ impl AdvisoryService {
         let inner_query = advisory::Entity::find()
             .with_deprecation(deprecation)
             .left_join(cvss3::Entity)
-            .expr_as_(
-                SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
-                    cvss3::Column::Score.into_column_ref(),
-                ))),
-                "average_score",
-            )
-            .expr_as_(
-                SimpleExpr::FunctionCall(Func::cust("cvss3_severity".into_identity()).arg(
-                    SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
-                        cvss3::Column::Score.into_column_ref(),
-                    ))),
-                )),
+            .expr_as(Func::avg(Expr::col(cvss3::Column::Score)), "average_score")
+            .expr_as(
+                Func::cust("cvss3_severity".into_identity())
+                    .arg(Func::avg(Expr::col(cvss3::Column::Score))),
                 "average_severity",
             )
             .group_by(advisory::Column::Id);
@@ -143,18 +135,10 @@ impl AdvisoryService {
         // the original underlying table it expects the entity to live in.
         let inner_query = advisory::Entity::find()
             .left_join(cvss3::Entity)
-            .expr_as_(
-                SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
-                    cvss3::Column::Score.into_column_ref(),
-                ))),
-                "average_score",
-            )
-            .expr_as_(
-                SimpleExpr::FunctionCall(Func::cust("cvss3_severity".into_identity()).arg(
-                    SimpleExpr::FunctionCall(Func::avg(SimpleExpr::Column(
-                        cvss3::Column::Score.into_column_ref(),
-                    ))),
-                )),
+            .expr_as(Func::avg(Expr::col(cvss3::Column::Score)), "average_score")
+            .expr_as(
+                Func::cust("cvss3_severity".into_identity())
+                    .arg(Func::avg(Expr::col(cvss3::Column::Score))),
                 "average_severity",
             )
             .group_by(advisory::Column::Id);
