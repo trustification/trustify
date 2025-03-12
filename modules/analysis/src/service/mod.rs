@@ -425,31 +425,22 @@ impl AnalysisService {
                 })
             }
             GraphQuery::Query(query) => graph.node_weight(i).is_some_and(|node| {
-                let purls: Vec<_> = match node {
-                    graph::Node::Package(p) => p.purl.iter().map(|p| p.to_string()).collect(),
-                    _ => vec![],
-                };
-                let mut context = HashMap::from([
-                    ("sbom_id", Value::String(&node.sbom_id)),
-                    ("node_id", Value::String(&node.node_id)),
-                    ("name", Value::String(&node.name)),
-                    ("purl", Value::from(&purls)),
-                ]);
+                let mut context: HashMap<&str, Box<&dyn Value>> = HashMap::new();
+                context.insert("sbom_id", Box::new(&node.sbom_id));
+                context.insert("node_id", Box::new(&node.node_id));
+                context.insert("name", Box::new(&node.name));
                 match node {
                     graph::Node::Package(package) => {
-                        context.extend([("version", Value::String(&package.version))]);
+                        context.insert("version", Box::new(&package.version));
+                        context.insert("purl", Box::new(&package.purl));
+                        context.insert("cpe", Box::new(&package.cpe));
                     }
                     graph::Node::External(external) => {
-                        context.extend([
-                            (
-                                "external_document_reference",
-                                Value::String(&external.external_document_reference),
-                            ),
-                            (
-                                "external_node_id",
-                                Value::String(&external.external_node_id),
-                            ),
-                        ]);
+                        context.insert(
+                            "external_document_reference",
+                            Box::new(&external.external_document_reference),
+                        );
+                        context.insert("external_node_id", Box::new(&external.external_node_id));
                     }
                     _ => {}
                 }

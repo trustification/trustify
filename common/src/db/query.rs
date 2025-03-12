@@ -16,6 +16,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::OnceLock;
 use utoipa::{IntoParams, ToSchema};
+use value::OrderedValue;
 
 /// Convenience function for creating a search Query
 ///
@@ -79,23 +80,26 @@ impl Query {
     /// returning true if the context is successfully matched by the
     /// query, by either a filter or a full-text search of all the
     /// values.
-    pub fn apply(&self, context: &HashMap<&'static str, Value>) -> bool {
+    pub fn apply(&self, context: &HashMap<&str, Box<&dyn Value>>) -> bool {
         use Operator::*;
         self.parse().iter().all(|c| match c {
             Constraint {
                 field: Some(f),
                 op: Some(o),
                 value: vs,
-            } => context.get(f.as_str()).is_some_and(|field| match o {
-                Equal => vs.iter().any(|v| field.eq(v)),
-                NotEqual => vs.iter().all(|v| field.ne(v)),
-                Like => vs.iter().any(|v| field.contains(v)),
-                NotLike => vs.iter().all(|v| !field.contains(v)),
-                GreaterThan => vs.iter().all(|v| field.gt(v)),
-                GreaterThanOrEqual => vs.iter().all(|v| field.ge(v)),
-                LessThan => vs.iter().all(|v| field.lt(v)),
-                LessThanOrEqual => vs.iter().all(|v| field.le(v)),
-                _ => false,
+            } => context.get(f.as_str()).is_some_and(|field| {
+                let field = OrderedValue(**field);
+                match o {
+                    Equal => vs.iter().any(|v| field.eq(v)),
+                    NotEqual => vs.iter().all(|v| field.ne(v)),
+                    Like => vs.iter().any(|v| field.0.like(v)),
+                    NotLike => vs.iter().all(|v| !field.0.like(v)),
+                    GreaterThan => vs.iter().all(|v| field.gt(v)),
+                    GreaterThanOrEqual => vs.iter().all(|v| field.ge(v)),
+                    LessThan => vs.iter().all(|v| field.lt(v)),
+                    LessThanOrEqual => vs.iter().all(|v| field.le(v)),
+                    _ => false,
+                }
             }),
             Constraint {
                 field: None,
@@ -103,7 +107,7 @@ impl Query {
                 ..
             } => context
                 .values()
-                .any(|field| vs.iter().any(|v| field.contains(v))),
+                .any(|field| vs.iter().any(|v| field.like(v))),
             _ => false,
         })
     }

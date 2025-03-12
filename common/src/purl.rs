@@ -6,7 +6,7 @@ use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{Error, Visitor},
 };
-use std::borrow::Cow;
+use std::{borrow::Cow, cmp::Ordering};
 use std::{
     collections::BTreeMap,
     fmt::{Debug, Display, Formatter},
@@ -147,6 +147,27 @@ impl<'de> Deserialize<'de> for Purl {
         D: Deserializer<'de>,
     {
         deserializer.deserialize_str(PurlVisitor)
+    }
+}
+
+impl crate::db::query::Value for Purl {
+    fn like(&self, pat: &str) -> bool {
+        match urlencoding::decode(pat) {
+            Ok(s) => self.to_string().contains(&s.into_owned()),
+            _ => false,
+        }
+    }
+    fn compare(&self, other: &str) -> Option<Ordering> {
+        match Purl::from_str(other) {
+            Ok(purl) => {
+                if self.eq(&purl) {
+                    Some(Ordering::Equal)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
     }
 }
 

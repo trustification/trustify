@@ -10,6 +10,7 @@ use serde_json::{Value, json};
 use test_context::test_context;
 use test_log::test;
 use trustify_test_context::{TrustifyContext, call::CallService, subset::ContainsSubset};
+use urlencoding::encode;
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
@@ -84,7 +85,7 @@ async fn test_simple_retrieve_by_purl_analysis_endpoint(
 
     let uri = format!(
         "/api/v2/analysis/component/{}?ancestors=10",
-        urlencoding::encode("pkg:rpm/redhat/B@0.0.0")
+        encode("pkg:rpm/redhat/B@0.0.0")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
@@ -256,10 +257,7 @@ async fn test_simple_dep_by_purl_endpoint(ctx: &TrustifyContext) -> Result<(), a
     ctx.ingest_documents(["spdx/simple.json"]).await?;
 
     let purl = "pkg:rpm/redhat/AA@0.0.0?arch=src";
-    let uri = format!(
-        "/api/v2/analysis/component/{}?descendants=10",
-        urlencoding::encode(purl)
-    );
+    let uri = format!("/api/v2/analysis/component/{}?descendants=10", encode(purl));
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
@@ -320,7 +318,7 @@ async fn quarkus_component_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::
     .await?;
 
     let purl = "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom";
-    let uri = format!("/api/v2/analysis/component/{}", urlencoding::encode(purl));
+    let uri = format!("/api/v2/analysis/component/{}", encode(purl));
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
@@ -331,6 +329,50 @@ async fn quarkus_component_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::
         }]
     })));
     assert_eq!(&response["total"], 1);
+
+    Ok(())
+}
+
+/// find a component by query
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ctx.ingest_documents(["spdx/quarkus-bom-3.2.11.Final-redhat-00001.json"])
+        .await?;
+
+    // NOTE: Testing for qualified purls is tricky, because the order
+    // of the qualifiers isn't predictable. One workaround is to "and"
+    // the qualifiers in the query using the LIKE operator,
+    // e.g. q=purl~BASE&purl~QUALIFIER_ONE&purl~QUALIFIER_TWO
+    const PURL: &str = "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom";
+
+    async fn by_query(app: &impl CallService, query: &str) -> Value {
+        let uri = format!("/api/v2/analysis/component?q={}&limit=0", encode(query));
+        let request: Request = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        tracing::debug!(test = "", "{response:#?}");
+        response
+    }
+
+    let app = caller(ctx).await?;
+
+    for each in [
+        "purl=pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?type=pom\\&repository_url=https%3a%2f%2fmaven.repository.redhat.com%2fga%2f",
+        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl~type=pom&purl~repository_url=https%3A%2F%2Fmaven.repository.redhat.com%2Fga%2F",
+        "purl~quarkus-bom",
+        "cpe=cpe:/a:redhat:quarkus:3.2::el8",
+        "cpe~cpe:/a:redhat:quarkus:3.2::el8",
+        "cpe~cpe:/a:redhat:quarkus:3.2",
+        "cpe~cpe:/a::quarkus",
+        "cpe~redhat",
+    ] {
+        assert!(by_query(&app, each).await.contains_subset(json!({
+            "items": [{
+                "purl": [ PURL ],
+                "cpe": ["cpe:/a:redhat:quarkus:3.2:*:el8:*"]
+            }]
+        })));
+    }
 
     Ok(())
 }
@@ -349,7 +391,7 @@ async fn quarkus_component_by_cpe(ctx: &TrustifyContext) -> Result<(), anyhow::E
     let cpe = "cpe:/a:redhat:quarkus:3.2:*:el8:*";
     let uri = format!(
         "/api/v2/analysis/component/{}",
-        urlencoding::encode("cpe:/a:redhat:quarkus:3.2::el8")
+        encode("cpe:/a:redhat:quarkus:3.2::el8")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;

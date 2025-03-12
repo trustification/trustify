@@ -9,6 +9,7 @@ use serde::{
 };
 use std::{
     borrow::Cow,
+    cmp::Ordering,
     fmt::{Debug, Display, Formatter},
     str::FromStr,
 };
@@ -59,6 +60,27 @@ impl<'de> Deserialize<'de> for Cpe {
         D: Deserializer<'de>,
     {
         deserializer.deserialize_str(CpeVisitor)
+    }
+}
+
+impl crate::db::query::Value for Cpe {
+    fn like(&self, other: &str) -> bool {
+        match Cpe::from_str(other) {
+            Ok(cpe) => cpe.uri.is_superset(&self.uri),
+            _ => self.to_string().contains(other),
+        }
+    }
+    fn compare(&self, other: &str) -> Option<Ordering> {
+        match Cpe::from_str(other) {
+            Ok(cpe) => {
+                if self.eq(&cpe) {
+                    Some(Ordering::Equal)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
     }
 }
 

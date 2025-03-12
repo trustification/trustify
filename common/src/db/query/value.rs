@@ -1,102 +1,108 @@
-use chrono::{Local, NaiveDateTime};
-use human_date_parser::{ParseResult, from_human_time};
 use std::cmp::Ordering;
 use time::OffsetDateTime;
 
-pub enum Value<'a> {
-    String(&'a str),
-    Int(i32),
-    Float(f64),
-    Date(&'a OffsetDateTime),
-    Array(Vec<Value<'a>>),
+pub trait Value {
+    fn like(&self, pat: &str) -> bool;
+    fn compare(&self, other: &str) -> Option<Ordering>;
 }
 
-impl Value<'_> {
-    pub fn contains(&self, pat: &str) -> bool {
-        match self {
-            Self::String(s) => s.contains(pat),
-            Self::Date(d) => d.to_string().contains(pat),
-            Self::Int(_) | Self::Float(_) => false,
-            Self::Array(a) => a.iter().any(|v| v.contains(pat)),
+impl Value for &str {
+    fn like(&self, pat: &str) -> bool {
+        str::contains(self, pat)
+    }
+    fn compare(&self, other: &str) -> Option<Ordering> {
+        (*self).partial_cmp(other)
+    }
+}
+
+impl Value for String {
+    fn like(&self, pat: &str) -> bool {
+        self.as_str().contains(pat)
+    }
+    fn compare(&self, other: &str) -> Option<Ordering> {
+        self.as_str().partial_cmp(other)
+    }
+}
+
+impl<T: Value> Value for Vec<T> {
+    fn like(&self, pat: &str) -> bool {
+        self.iter().any(|v| v.like(pat))
+    }
+    fn compare(&self, other: &str) -> Option<Ordering> {
+        if self
+            .iter()
+            .any(|v| matches!(v.compare(other), Some(Ordering::Equal)))
+        {
+            Some(Ordering::Equal)
+        } else {
+            None
         }
     }
 }
 
-impl PartialEq<String> for Value<'_> {
-    fn eq(&self, rhs: &String) -> bool {
-        match self {
-            Self::String(s) => s.eq(rhs),
-            Self::Int(v) => match rhs.parse::<i32>() {
-                Ok(i) => v.eq(&i),
-                _ => false,
-            },
-            Self::Float(v) => match rhs.parse::<f64>() {
-                Ok(i) => v.eq(&i),
-                _ => false,
-            },
-            Self::Date(v) => match from_human_time(&v.to_string()) {
-                Ok(ParseResult::DateTime(field)) => match from_human_time(rhs) {
-                    Ok(ParseResult::DateTime(other)) => field.eq(&other),
-                    Ok(ParseResult::Date(d)) => {
-                        let other = NaiveDateTime::new(d, field.time())
-                            .and_local_timezone(Local)
-                            .unwrap();
-                        field.eq(&other)
-                    }
-                    Ok(ParseResult::Time(t)) => {
-                        let other = NaiveDateTime::new(field.date_naive(), t)
-                            .and_local_timezone(Local)
-                            .unwrap();
-                        field.eq(&other)
-                    }
-                    _ => false,
-                },
-                _ => false,
-            },
-            Self::Array(a) => a.iter().any(|v| v.eq(rhs)),
+impl Value for i32 {
+    fn like(&self, _: &str) -> bool {
+        false
+    }
+    fn compare(&self, other: &str) -> Option<Ordering> {
+        match other.parse::<i32>() {
+            Ok(i) => self.partial_cmp(&i),
+            _ => None,
         }
     }
 }
 
-impl PartialOrd<String> for Value<'_> {
-    fn partial_cmp(&self, rhs: &String) -> Option<Ordering> {
-        match self {
-            Self::String(s) => s.partial_cmp(&rhs.as_str()),
-            Self::Int(v) => match rhs.parse::<i32>() {
-                Ok(i) => v.partial_cmp(&i),
-                _ => None,
-            },
-            Self::Float(v) => match rhs.parse::<f64>() {
-                Ok(i) => v.partial_cmp(&i),
-                _ => None,
-            },
-            Self::Date(v) => match from_human_time(&v.to_string()) {
-                Ok(ParseResult::DateTime(field)) => match from_human_time(rhs) {
-                    Ok(ParseResult::DateTime(other)) => field.partial_cmp(&other),
-                    Ok(ParseResult::Date(d)) => {
-                        let other = NaiveDateTime::new(d, field.time())
-                            .and_local_timezone(Local)
-                            .unwrap();
-                        field.partial_cmp(&other)
-                    }
-                    Ok(ParseResult::Time(t)) => {
-                        let other = NaiveDateTime::new(field.date_naive(), t)
-                            .and_local_timezone(Local)
-                            .unwrap();
-                        field.partial_cmp(&other)
-                    }
-                    _ => None,
-                },
-                _ => None,
-            },
-            Self::Array(_) => None,
+impl Value for f64 {
+    fn like(&self, _: &str) -> bool {
+        false
+    }
+    fn compare(&self, other: &str) -> Option<Ordering> {
+        match other.parse::<f64>() {
+            Ok(i) => self.partial_cmp(&i),
+            _ => None,
         }
     }
 }
 
-impl<'a, T: AsRef<str>> From<&'a Vec<T>> for Value<'a> {
-    fn from(v: &'a Vec<T>) -> Self {
-        Value::Array(v.iter().map(|s| Value::String(s.as_ref())).collect())
+impl Value for OffsetDateTime {
+    fn like(&self, pat: &str) -> bool {
+        self.to_string().contains(pat)
+    }
+    fn compare(&self, rhs: &str) -> Option<Ordering> {
+        use chrono::{Local, NaiveDateTime};
+        use human_date_parser::{ParseResult, from_human_time};
+        match from_human_time(&self.to_string()) {
+            Ok(ParseResult::DateTime(field)) => match from_human_time(rhs) {
+                Ok(ParseResult::DateTime(other)) => field.partial_cmp(&other),
+                Ok(ParseResult::Date(d)) => {
+                    let other = NaiveDateTime::new(d, field.time())
+                        .and_local_timezone(Local)
+                        .unwrap();
+                    field.partial_cmp(&other)
+                }
+                Ok(ParseResult::Time(t)) => {
+                    let other = NaiveDateTime::new(field.date_naive(), t)
+                        .and_local_timezone(Local)
+                        .unwrap();
+                    field.partial_cmp(&other)
+                }
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+}
+
+pub(crate) struct OrderedValue<'a>(pub &'a dyn Value);
+
+impl PartialEq<String> for OrderedValue<'_> {
+    fn eq(&self, other: &String) -> bool {
+        matches!(self.0.compare(other), Some(Ordering::Equal))
+    }
+}
+impl PartialOrd<String> for OrderedValue<'_> {
+    fn partial_cmp(&self, other: &String) -> Option<Ordering> {
+        self.0.compare(other)
     }
 }
 
@@ -106,19 +112,23 @@ pub(crate) mod tests {
     use super::*;
     use std::collections::HashMap;
     use test_log::test;
+    use time::OffsetDateTime;
 
     #[test(tokio::test)]
     async fn filter_values() -> Result<(), anyhow::Error> {
         use time::format_description::well_known::Rfc2822;
-        let now = time::OffsetDateTime::now_utc();
+        let now = OffsetDateTime::now_utc();
         let then = OffsetDateTime::parse("Sat, 12 Jun 1993 13:25:19 GMT", &Rfc2822)?;
-        let context = HashMap::from([
-            ("id", Value::String("foo")),
-            ("count", Value::Int(42)),
-            ("score", Value::Float(6.66)),
-            ("detected", Value::Date(&then)),
-            ("published", Value::Date(&now)),
-        ]);
+
+        // To avoid heap allocation and simplify lifetimes, every type
+        // is by reference, even &str's and primitives
+        let mut context: HashMap<&str, Box<&dyn Value>> = HashMap::new();
+        context.insert("id", Box::new(&"foo"));
+        context.insert("count", Box::new(&42));
+        context.insert("score", Box::new(&6.66));
+        context.insert("detected", Box::new(&then));
+        context.insert("published", Box::new(&now));
+
         assert!(q("oo|aa|bb&count<100&count>10&id=foo").apply(&context));
         assert!(q("score=6.66").apply(&context));
         assert!(q("count>=42&count<=42").apply(&context));
@@ -143,7 +153,8 @@ pub(crate) mod tests {
     #[test(tokio::test)]
     async fn filter_array_values() -> Result<(), anyhow::Error> {
         let purls = vec!["pkg:x/foo", "pkg:x/bar"];
-        let context = HashMap::from([("purl", Value::from(&purls))]);
+        let mut context: HashMap<&str, Box<&dyn Value>> = HashMap::new();
+        context.insert("purl", Box::new(&purls));
 
         assert!(q("purl=pkg:x/foo").apply(&context));
         assert!(!q("purl!=pkg:x/foo").apply(&context));
