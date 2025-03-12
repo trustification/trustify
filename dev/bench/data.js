@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741713985586,
+  "lastUpdate": 1741767418322,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6374,6 +6374,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/2aa3d2117f89133e21b0d86923028dcd0c1481d4"
         },
         "date": 1741713984244,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "2cb286daa96166e2547b3945573f15e11ecf0b30",
+          "message": "fix: imageindex>imagevariant external sboms",
+          "timestamp": "2025-03-12T07:57:42Z",
+          "tree_id": "204ad4b4839d1336e51449c56c9f04aed7f90702",
+          "url": "https://github.com/trustification/trustify/commit/2cb286daa96166e2547b3945573f15e11ecf0b30"
+        },
+        "date": 1741767417573,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
