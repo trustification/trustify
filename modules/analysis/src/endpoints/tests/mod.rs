@@ -372,7 +372,7 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
     // Note that qualifier values should be urlencoded *twice*
     query(
         &app,
-        format!("purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl~type=pom&purl~repository_url={}", encode("https://maven.repository.redhat.com/ga/")),
+        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl~type=pom"
     )
     .await;
 
