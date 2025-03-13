@@ -22,7 +22,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.2.9"
+version = "0.2.10"
 edition = "2024"
 publish = false
 license = "Apache-2.0"
@@ -90,7 +90,7 @@ openssl = "0.10"
 opentelemetry = "0.28"
 opentelemetry-otlp = "0.28"
 opentelemetry_sdk = "0.28"
-osv = { version = "0.2.0", default-features = false }
+osv = { version = "0.2.1", default-features = false, features = [] }
 packageurl = "0.3.0"
 parking_lot = "0.12"
 peak_alloc = "0.2.0"
@@ -200,8 +200,8 @@ postgresql_commands = { version = "0.18.0", default-features = false, features =
 #cpe = { git = "https://github.com/ctron/cpe-rs", rev = "c3c05e637f6eff7dd4933c2f56d070ee2ddfb44b" }
 # required due to https://github.com/voteblake/csaf-rs/pull/29
 csaf = { git = "https://github.com/chirino/csaf-rs", rev = "414896904bc5e5287fd88b1daef5c27f70503d01" }
-# required due to https://github.com/gcmurphy/osv/pull/51
-osv = { git = "https://github.com/ctron/osv", rev = "b53f1590bbbdc663e3efe405f1fa2603e71e8680" }
+# required due to https://github.com/gcmurphy/osv/pull/58
+osv = { git = "https://github.com/ctron/osv", branch = "feature/drop_deps_1" }
 
 # to pickup fix: https://github.com/Abraxas-365/langchain-rust/pull/246
 #       and fix: https://github.com/Abraxas-365/langchain-rust/pull/250
