@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741879118162,
+  "lastUpdate": 1741881243389,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6490,6 +6490,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/57b5f751720d824289afd1a3a3000573d6986437"
         },
         "date": 1741879116786,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "636e8d0cd00c7ae6c2b650b262cb560fc07cce01",
+          "message": "perf: advisory and vuln endpoints - change cvss related pg funcs to immutable parallel safe, a few more key indexes",
+          "timestamp": "2025-03-13T15:36:05Z",
+          "tree_id": "b83bf8d7eb07826daf904f2d23d44c1255888638",
+          "url": "https://github.com/trustification/trustify/commit/636e8d0cd00c7ae6c2b650b262cb560fc07cce01"
+        },
+        "date": 1741881241963,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
