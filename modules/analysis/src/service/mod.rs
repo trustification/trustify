@@ -429,11 +429,16 @@ impl AnalysisService {
                     graph::Node::Package(p) => p.purl.iter().map(|p| p.to_string()).collect(),
                     _ => vec![],
                 };
+                let cpes: Vec<_> = match node {
+                    graph::Node::Package(p) => p.cpe.iter().map(|u| u.to_string()).collect(),
+                    _ => vec![],
+                };
                 let mut context = HashMap::from([
                     ("sbom_id", Value::String(&node.sbom_id)),
                     ("node_id", Value::String(&node.node_id)),
                     ("name", Value::String(&node.name)),
                     ("purl", Value::from(&purls)),
+                    ("cpe", Value::from(&cpes)),
                 ]);
                 match node {
                     graph::Node::Package(package) => {
