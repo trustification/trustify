@@ -16,7 +16,7 @@ impl BasePurlSummary {
 
         for entity in entities {
             summaries.push(BasePurlSummary {
-                head: BasePurlHead::from_entity(entity).await?,
+                head: BasePurlHead::from_entity(entity),
             })
         }
 

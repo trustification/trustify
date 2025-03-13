@@ -29,10 +29,9 @@ impl VersionedPurlSummary {
             package_versions.iter().zip(qualified_packages.iter())
         {
             summaries.push(Self {
-                head: VersionedPurlHead::from_entity(package, package_version, tx).await?,
-                base: BasePurlHead::from_entity(package).await?,
-                purls: PurlHead::from_entities(package, package_version, qualified_packages, tx)
-                    .await?,
+                head: VersionedPurlHead::from_entity(package, package_version),
+                base: BasePurlHead::from_entity(package),
+                purls: PurlHead::from_entities(package, package_version, qualified_packages),
             })
         }
 
@@ -42,11 +41,10 @@ impl VersionedPurlSummary {
     pub async fn from_entity<C: ConnectionTrait>(
         base_purl: &base_purl::Model,
         versioned_purl: &versioned_purl::Model,
-        tx: &C,
     ) -> Result<Self, Error> {
         Ok(Self {
-            head: VersionedPurlHead::from_entity(base_purl, versioned_purl, tx).await?,
-            base: BasePurlHead::from_entity(base_purl).await?,
+            head: VersionedPurlHead::from_entity(base_purl, versioned_purl),
+            base: BasePurlHead::from_entity(base_purl),
             purls: vec![],
         })
     }

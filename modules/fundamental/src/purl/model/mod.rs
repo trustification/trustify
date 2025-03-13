@@ -1,5 +1,4 @@
 use crate::Error;
-use sea_orm::ConnectionTrait;
 use sea_orm::prelude::Uuid;
 use serde::{Deserialize, Serialize};
 use trustify_common::purl::Purl;
@@ -18,8 +17,8 @@ pub struct BasePurlHead {
 }
 
 impl BasePurlHead {
-    pub async fn from_entity(entity: &base_purl::Model) -> Result<Self, Error> {
-        Ok(BasePurlHead {
+    pub fn from_entity(entity: &base_purl::Model) -> Self {
+        BasePurlHead {
             uuid: entity.id,
             purl: Purl {
                 ty: entity.r#type.clone(),
@@ -28,7 +27,7 @@ impl BasePurlHead {
                 version: None,
                 qualifiers: Default::default(),
             },
-        })
+        }
     }
 
     pub async fn from_package_entities(
@@ -37,7 +36,7 @@ impl BasePurlHead {
         let mut heads = Vec::new();
 
         for entity in entities {
-            heads.push(Self::from_entity(entity).await?)
+            heads.push(Self::from_entity(entity))
         }
 
         Ok(heads)
@@ -55,12 +54,11 @@ pub struct VersionedPurlHead {
 }
 
 impl VersionedPurlHead {
-    pub async fn from_entity<C: ConnectionTrait>(
+    pub fn from_entity(
         package: &base_purl::Model,
         package_version: &versioned_purl::Model,
-        _db: &C,
-    ) -> Result<Self, Error> {
-        Ok(Self {
+    ) -> Self {
+        Self {
             uuid: package_version.id,
             purl: Purl {
                 ty: package.r#type.clone(),
@@ -70,7 +68,7 @@ impl VersionedPurlHead {
                 qualifiers: Default::default(),
             },
             version: package_version.version.clone(),
-        })
+        }
     }
 }
 
@@ -83,13 +81,12 @@ pub struct PurlHead {
 }
 
 impl PurlHead {
-    pub async fn from_entity<C: ConnectionTrait>(
+    pub fn from_entity(
         package: &base_purl::Model,
         package_version: &versioned_purl::Model,
         qualified_package: &qualified_purl::Model,
-        _db: &C,
-    ) -> Result<Self, Error> {
-        Ok(Self {
+    ) -> Self {
+        Self {
             uuid: qualified_package.id,
             purl: Purl {
                 ty: package.r#type.clone(),
@@ -98,30 +95,25 @@ impl PurlHead {
                 version: Some(package_version.version.clone()),
                 qualifiers: qualified_package.qualifiers.0.clone(),
             },
-        })
+        }
     }
 
-    pub async fn from_entities<C: ConnectionTrait>(
+    pub fn from_entities(
         package: &base_purl::Model,
         package_version: &versioned_purl::Model,
         qualified_packages: &Vec<qualified_purl::Model>,
-        tx: &C,
-    ) -> Result<Vec<Self>, Error> {
+    ) -> Vec<Self> {
         let mut heads = Vec::new();
 
         for qualified_package in qualified_packages {
-            heads.push(
-                Self::from_entity(
-                    &package.clone(),
-                    &package_version.clone(),
-                    qualified_package,
-                    tx,
-                )
-                .await?,
-            )
+            heads.push(Self::from_entity(
+                &package.clone(),
+                &package_version.clone(),
+                qualified_package,
+            ))
         }
 
-        Ok(heads)
+        heads
     }
 }
 

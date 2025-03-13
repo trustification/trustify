@@ -2903,6 +2903,7 @@ components:
                     type: string
                   propertyNames:
                     type: string
+                  deprecated: true
                 version:
                   $ref: '#/components/schemas/VersionedPurlHead'
         total:
@@ -3271,6 +3272,7 @@ components:
               type: string
             propertyNames:
               type: string
+            deprecated: true
           version:
             $ref: '#/components/schemas/VersionedPurlHead'
     Relationship:
