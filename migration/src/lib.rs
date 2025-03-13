@@ -9,6 +9,7 @@ mod m0000020_add_sbom_group;
 mod m0000030_perf_adv_vuln;
 mod m0000040_create_license_export;
 mod m0000050_perf_adv_vuln2;
+mod m0000060_perf_adv_vuln3;
 mod m0000970_alter_importer_add_heartbeat;
 
 pub struct Migrator;
@@ -23,6 +24,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000030_perf_adv_vuln::Migration),
             Box::new(m0000040_create_license_export::Migration),
             Box::new(m0000050_perf_adv_vuln2::Migration),
+            Box::new(m0000060_perf_adv_vuln3::Migration),
         ]
     }
 }
