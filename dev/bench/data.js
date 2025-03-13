@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741874327826,
+  "lastUpdate": 1741879118162,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6461,6 +6461,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/123348a00aa0ae141578d23d93854656df4b91e8"
         },
         "date": 1741874327308,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "bxf12315@gmail.com",
+            "name": "Xiaofeng Bai",
+            "username": "bxf12315"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "57b5f751720d824289afd1a3a3000573d6986437",
+          "message": "TC-2176 Enable Downloading of licenses from single SBOM",
+          "timestamp": "2025-03-13T14:58:40Z",
+          "tree_id": "7df53237ec4b9881fe877aefdb9d83b579e17292",
+          "url": "https://github.com/trustification/trustify/commit/57b5f751720d824289afd1a3a3000573d6986437"
+        },
+        "date": 1741879116786,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
