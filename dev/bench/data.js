@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741853871946,
+  "lastUpdate": 1741874327826,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6437,6 +6437,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "123348a00aa0ae141578d23d93854656df4b91e8",
+          "message": "fix: prevent duplicate PURLs or CPEs being returned\n\nThe query of encoding a list of PURLs (and CPEs) into a single field\ndid create duplicates. This is now properly being aggregated. One\nrequirement of this the ability to compare PURLs, which isn't possible\nusing the JSON type in PSQL. It works with strings or rows though.\n\nTherefore, and also because it was overdue, this PR switches to\nextracting the PURL from the `purl` field, instead of the three layer\ntable structure. Which might have a positive performance effect too.\n\nCloses: #1417",
+          "timestamp": "2025-03-13T13:41:10Z",
+          "tree_id": "ca17d7baf74707dd99a9e8a8b6b1911d009d6f73",
+          "url": "https://github.com/trustification/trustify/commit/123348a00aa0ae141578d23d93854656df4b91e8"
+        },
+        "date": 1741874327308,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
