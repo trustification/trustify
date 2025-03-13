@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741767418322,
+  "lastUpdate": 1741853871946,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6408,6 +6408,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "16a680765eea4a2a0d2cd3f523dde4d5c6e0f605",
+          "message": "perf: advisory and vuln endpoints",
+          "timestamp": "2025-03-13T07:58:27Z",
+          "tree_id": "b5750da6ec0579418cfb5ddf0bf76507f5fa8478",
+          "url": "https://github.com/trustification/trustify/commit/16a680765eea4a2a0d2cd3f523dde4d5c6e0f605"
+        },
+        "date": 1741853871024,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
