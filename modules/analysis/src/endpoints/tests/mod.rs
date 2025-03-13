@@ -341,40 +341,62 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
         .await?;
     const PURL: &str = "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom";
 
-    async fn query<T: AsRef<str>>(app: &impl CallService, query: T) {
+    async fn query<T: AsRef<str>>(app: &impl CallService, query: T) -> Value {
         let uri = format!("/api/v2/analysis/component?q={}", encode(query.as_ref()));
         let request: Request = TestRequest::get().uri(&uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
         tracing::debug!(test = "", "{response:#?}");
-        assert!(response.contains_subset(json!({
-            "items": [{
-                "purl": [ PURL ],
-                "cpe": ["cpe:/a:redhat:quarkus:3.2:*:el8:*"]
-            }]
-        })));
+        response
     }
 
     let app = caller(ctx).await?;
-    query(&app, "purl~quarkus-bom").await;
-    query(&app, "cpe=cpe:/a:redhat:quarkus:3.2:*:el8:*").await;
-    query(&app, "cpe~cpe:/a:redhat:quarkus:3.2").await;
+    let expected = json!({
+        "items": [{
+            "purl": [ PURL ],
+            "cpe": ["cpe:/a:redhat:quarkus:3.2:*:el8:*"]
+        }]
+    });
 
+    assert!(
+        query(&app, "purl~quarkus-bom")
+            .await
+            .contains_subset(expected.clone())
+    );
+    assert!(
+        query(&app, "cpe~cpe:/a:redhat:quarkus:3.2")
+            .await
+            .contains_subset(expected.clone())
+    );
+
+    // Note that qualifier values should be urlencoded *twice* due to
+    // how the SQL function, get_purl() works
+    assert!(
+        query(
+            &app,
+            "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl~type=pom"
+        )
+            .await
+            .contains_subset(expected.clone())
+    );
+
+    // TODO: This won't work:
     // Testing for qualified purls is tricky, because the order of the
     // qualifiers isn't predictable. One workaround is to "and" the
     // qualifiers in the query using the LIKE operator,
     // e.g. q=purl~BASE&purl~Q1&purl~Q2
+    assert!(
+        !query(&app, format!("purl={}", PURL.replace("&", r"\&")))
+            .await
+            .contains_subset(expected.clone())
+    );
 
-    // This won't work:
-    // You can't assume the order of qualifiers returned by get_url()
-    // query(&app, format!("purl={}", PURL.replace("&", r"\&"))).await;
-
-    // This should work:
-    // Note that qualifier values should be urlencoded *twice*
-    query(
-        &app,
-        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl~type=pom"
-    )
-    .await;
+    // TODO: This won't work:
+    // Cpe::to_string() isn't predictable wrt '*'
+    assert!(
+        !query(&app, "cpe=cpe:/a:redhat:quarkus:3.2::el8")
+            .await
+            .contains_subset(expected.clone())
+    );
 
     Ok(())
 }
