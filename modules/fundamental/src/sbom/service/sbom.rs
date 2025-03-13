@@ -1,7 +1,6 @@
 use super::SbomService;
 use crate::{
     Error,
-    purl::model::summary::purl::PurlSummary,
     sbom::model::{
         SbomExternalPackageReference, SbomNodeReference, SbomPackage, SbomPackageRelation,
         SbomSummary, Which, details::SbomDetails,
@@ -12,15 +11,13 @@ use sea_orm::{
     ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
     QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns, prelude::Uuid,
 };
-use sea_query::{Expr, Func, JoinType, SimpleExpr, extension::postgres::PgExpr};
-use serde::Deserialize;
+use sea_query::{Expr, JoinType, extension::postgres::PgExpr};
 use serde_json::Value;
 use std::{collections::HashMap, fmt::Debug};
 use tracing::instrument;
 use trustify_common::{
     cpe::Cpe,
     db::{
-        ArrayAgg, JsonBuildObject, ToJson,
         limiter::{LimiterTrait, limit_selector},
         multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
         query::{Columns, Filtering, IntoColumns, Query},
@@ -33,7 +30,7 @@ use trustify_entity::{
     cpe::{self, CpeDto},
     labels::Labels,
     organization, package_relates_to_package,
-    qualified_purl::{self, CanonicalPurl, Qualifiers},
+    qualified_purl::{self, CanonicalPurl},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
     sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, source_document, status,
@@ -189,7 +186,7 @@ impl SbomService {
         let mut items = Vec::new();
 
         for row in packages {
-            items.push(package_from_row(row, connection).await?);
+            items.push(package_from_row(row));
         }
 
         Ok(PaginatedResults { items, total })
@@ -434,7 +431,7 @@ impl SbomService {
             if let Some(relationship) = row.relationship {
                 items.push(SbomPackageRelation {
                     relationship,
-                    package: package_from_row(row, db).await?,
+                    package: package_from_row(row),
                 });
             }
         }
@@ -501,33 +498,12 @@ where
             qualified_purl::Relation::VersionedPurl.def(),
         )
         .join(JoinType::LeftJoin, versioned_purl::Relation::BasePurl.def())
-        // aggregate the q -> v -> p hierarchy into an array of json objects
+        // aggregate the purls
         .select_column_as(
             Expr::cust_with_exprs(
-                "coalesce($1 filter (where $2), '{}')",
+                "coalesce(array_agg(distinct $1) filter (where $2), '{}')",
                 [
-                    SimpleExpr::from(
-                        Func::cust(ArrayAgg).arg(
-                            Func::cust(JsonBuildObject)
-                                // must match with PurlDto struct
-                                .arg("base_purl_id")
-                                .arg(base_purl::Column::Id.into_expr())
-                                .arg("type")
-                                .arg(base_purl::Column::Type.into_expr())
-                                .arg("name")
-                                .arg(base_purl::Column::Name.into_expr())
-                                .arg("namespace")
-                                .arg(base_purl::Column::Namespace.into_expr())
-                                .arg("versioned_purl_id")
-                                .arg(versioned_purl::Column::Id.into_expr())
-                                .arg("version")
-                                .arg(versioned_purl::Column::Version.into_expr())
-                                .arg("qualified_purl_id")
-                                .arg(qualified_purl::Column::Id.into_expr())
-                                .arg("qualifiers")
-                                .arg(qualified_purl::Column::Qualifiers.into_expr()),
-                        ),
-                    ),
+                    qualified_purl::Column::Purl.into_simple_expr(),
                     sbom_package_purl_ref::Column::QualifiedPurlId
                         .is_not_null()
                         .into_simple_expr(),
@@ -539,14 +515,12 @@ where
             JoinType::LeftJoin,
             sbom_package_cpe_ref::Relation::Cpe.def(),
         )
-        // aggregate the cpe rows into an array of json objects
+        // aggregate the cpes
         .select_column_as(
             Expr::cust_with_exprs(
-                "coalesce($1 filter (where $2), '{}')",
+                "to_json(coalesce(array_agg(distinct $1) filter (where $2), '{}'))",
                 [
-                    SimpleExpr::from(
-                        Func::cust(ArrayAgg).arg(Func::cust(ToJson).arg(Expr::col(cpe::Entity))),
-                    ),
+                    Expr::col(cpe::Entity).into_simple_expr(),
                     sbom_package_cpe_ref::Column::CpeId.is_not_null(),
                 ],
             ),
@@ -560,96 +534,55 @@ struct PackageCatcher {
     name: String,
     version: Option<String>,
     purls: Vec<Value>,
-    cpes: Vec<Value>,
+    cpes: Value,
     relationship: Option<Relationship>,
 }
 
 /// Convert values from a "package row" into an SBOM package
-async fn package_from_row<C: ConnectionTrait>(
-    row: PackageCatcher,
-    db: &C,
-) -> Result<SbomPackage, Error> {
-    let mut purls = Vec::new();
+fn package_from_row(row: PackageCatcher) -> SbomPackage {
+    let purl = row
+        .purls
+        .into_iter()
+        .flat_map(|purl| {
+            serde_json::from_value::<CanonicalPurl>(purl.clone())
+                .inspect_err(|err| {
+                    log::warn!("Failed to deserialize PURL: {err}");
+                })
+                .ok()
+        })
+        .map(|purl| purl.into())
+        .collect();
 
-    for purl in row.purls {
-        if let Ok(dto) = serde_json::from_value::<PurlDto>(purl) {
-            let cp = CanonicalPurl {
-                ty: dto.clone().r#type,
-                namespace: dto.clone().namespace,
-                name: dto.clone().name,
-                version: if dto.version.is_empty() {
-                    Some("".to_string())
-                } else {
-                    Some(dto.clone().version)
-                },
-                qualifiers: dto.clone().qualifiers.0,
-            };
+    let cpe = row
+        .cpes
+        .as_array()
+        .into_iter()
+        .flatten()
+        .flat_map(|cpe| {
+            serde_json::from_value::<CpeDto>(cpe.clone())
+                .inspect_err(|err| {
+                    log::warn!("Failed to deserialize CPE: {err}");
+                })
+                .ok()
+        })
+        .flat_map(|cpe| {
+            log::debug!("CPE: {cpe:?}");
+            Cpe::try_from(cpe)
+                .inspect_err(|err| {
+                    log::warn!("Failed to build CPE: {err}");
+                })
+                .ok()
+        })
+        .map(|cpe| cpe.to_string())
+        .collect();
 
-            purls.push(
-                PurlSummary::from_entity(
-                    &base_purl::Model {
-                        id: dto.base_purl_id,
-                        r#type: dto.r#type,
-                        namespace: dto.namespace,
-                        name: dto.name,
-                    },
-                    &versioned_purl::Model {
-                        id: dto.versioned_purl_id,
-                        base_purl_id: dto.base_purl_id,
-                        version: dto.version,
-                    },
-                    &qualified_purl::Model {
-                        id: dto.qualified_purl_id,
-                        versioned_purl_id: dto.versioned_purl_id,
-                        qualifiers: dto.qualifiers,
-                        purl: cp,
-                    },
-                    db,
-                )
-                .await?,
-            );
-        }
-    }
-
-    Ok(SbomPackage {
+    SbomPackage {
         id: row.id,
         name: row.name,
         version: row.version,
-        purl: purls,
-        cpe: row
-            .cpes
-            .into_iter()
-            .flat_map(|cpe| {
-                serde_json::from_value::<CpeDto>(cpe)
-                    .inspect_err(|err| {
-                        log::warn!("Failed to deserialize CPE: {err}");
-                    })
-                    .ok()
-            })
-            .flat_map(|cpe| {
-                log::debug!("CPE: {cpe:?}");
-                Cpe::try_from(cpe)
-                    .inspect_err(|err| {
-                        log::warn!("Failed to build CPE: {err}");
-                    })
-                    .ok()
-            })
-            .map(|cpe| cpe.to_string())
-            .collect(),
-    })
-}
-
-#[derive(Clone, Debug, Deserialize)]
-struct PurlDto {
-    base_purl_id: Uuid,
-    r#type: String,
-    name: String,
-    #[serde(default)]
-    namespace: Option<String>,
-    versioned_purl_id: Uuid,
-    version: String,
-    qualified_purl_id: Uuid,
-    qualifiers: Qualifiers,
+        purl,
+        cpe,
+    }
 }
 
 #[derive(Debug)]

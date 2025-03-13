@@ -97,6 +97,17 @@ impl Purl {
         let qualified = self.then_qualifier_uuid(&version);
         (package, version, qualified)
     }
+
+    /// Create a new instance with only the base information
+    pub fn to_base(&self) -> Self {
+        Self {
+            ty: self.ty.clone(),
+            name: self.name.clone(),
+            namespace: self.namespace.clone(),
+            version: None,
+            qualifiers: Default::default(),
+        }
+    }
 }
 
 impl Serialize for Purl {

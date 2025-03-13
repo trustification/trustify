@@ -115,9 +115,9 @@ impl PurlDetails {
             .await?;
 
         Ok(PurlDetails {
-            head: PurlHead::from_entity(&package, &package_version, qualified_package, tx).await?,
-            version: VersionedPurlHead::from_entity(&package, &package_version, tx).await?,
-            base: BasePurlHead::from_entity(&package).await?,
+            head: PurlHead::from_entity(&package, &package_version, qualified_package),
+            version: VersionedPurlHead::from_entity(&package, &package_version),
+            base: BasePurlHead::from_entity(&package),
             advisories: PurlAdvisory::from_entities(purl_statuses, product_statuses, tx).await?,
             licenses: PurlLicenseSummary::from_entities(&licenses, tx).await?,
         })

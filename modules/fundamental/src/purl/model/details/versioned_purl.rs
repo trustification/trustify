@@ -48,7 +48,7 @@ impl VersionedPurlDetails {
             .await?;
 
         let qualified_packages =
-            PurlHead::from_entities(&package, package_version, &qualified_packages, tx).await?;
+            PurlHead::from_entities(&package, package_version, &qualified_packages);
 
         let statuses = purl_status::Entity::find()
             .columns([
@@ -74,8 +74,8 @@ impl VersionedPurlDetails {
             .await?;
 
         Ok(Self {
-            head: VersionedPurlHead::from_entity(&package, package_version, tx).await?,
-            base: BasePurlHead::from_entity(&package).await?,
+            head: VersionedPurlHead::from_entity(&package, package_version),
+            base: BasePurlHead::from_entity(&package),
             purls: qualified_packages,
             advisories: VersionedPurlAdvisory::from_entities(statuses, tx).await?,
         })

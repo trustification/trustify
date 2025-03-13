@@ -78,6 +78,7 @@ async fn change_ps_num_advisories(ctx: &TrustifyContext) -> anyhow::Result<()> {
 /// Ingest the same document twice. First having an affected, then fixed state.
 #[test_context(TrustifyContext)]
 #[test(tokio::test)]
+
 async fn change_ps_list_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
     let (r1, r2) = prepare_ps_state_change(ctx).await?;
 
@@ -97,25 +98,36 @@ async fn change_ps_list_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
         .items
         .iter()
         .find(|purl| {
-            purl.base.purl.name == "eap7-bouncycastle-util"
-                && purl.version.version == "1.76.0-4.redhat_00001.1.el9eap"
+            purl.head.purl.name == "eap7-bouncycastle-util"
+                && purl.head.purl.version.as_deref() == Some("1.76.0-4.redhat_00001.1.el9eap")
         })
         .expect("must find one");
 
+    #[allow(deprecated)]
+    {
+        assert_eq!(
+            purl.base.purl,
+            Purl {
+                ty: "rpm".to_string(),
+                namespace: Some("redhat".to_string()),
+                name: "eap7-bouncycastle-util".to_string(),
+                version: None,
+                qualifiers: Default::default(),
+            }
+        );
+    }
     assert_eq!(
-        purl.base.purl,
-        Purl {
-            ty: "rpm".to_string(),
-            namespace: Some("redhat".to_string()),
-            name: "eap7-bouncycastle-util".to_string(),
-            version: None,
-            qualifiers: Default::default(),
-        }
+        purl.head.purl.version.as_deref(),
+        Some("1.76.0-4.redhat_00001.1.el9eap")
     );
-    assert_eq!(purl.version.version, "1.76.0-4.redhat_00001.1.el9eap");
 
     assert_eq!(
-        purl.qualifiers.clone().into_iter().collect::<Vec<_>>(),
+        purl.head
+            .purl
+            .qualifiers
+            .clone()
+            .into_iter()
+            .collect::<Vec<_>>(),
         vec![("arch".to_string(), "noarch".to_string())]
     );
 
@@ -179,25 +191,36 @@ async fn change_ps_list_vulns_all(ctx: &TrustifyContext) -> anyhow::Result<()> {
         .items
         .iter()
         .find(|purl| {
-            purl.base.purl.name == "eap7-bouncycastle-util"
-                && purl.version.version == "1.76.0-4.redhat_00001.1.el9eap"
+            purl.head.purl.name == "eap7-bouncycastle-util"
+                && purl.head.purl.version.as_deref() == Some("1.76.0-4.redhat_00001.1.el9eap")
         })
         .expect("must find one");
 
+    #[allow(deprecated)]
+    {
+        assert_eq!(
+            purl.base.purl,
+            Purl {
+                ty: "rpm".to_string(),
+                namespace: Some("redhat".to_string()),
+                name: "eap7-bouncycastle-util".to_string(),
+                version: None,
+                qualifiers: Default::default(),
+            }
+        );
+    }
     assert_eq!(
-        purl.base.purl,
-        Purl {
-            ty: "rpm".to_string(),
-            namespace: Some("redhat".to_string()),
-            name: "eap7-bouncycastle-util".to_string(),
-            version: None,
-            qualifiers: Default::default(),
-        }
+        purl.head.purl.version.as_deref(),
+        Some("1.76.0-4.redhat_00001.1.el9eap")
     );
-    assert_eq!(purl.version.version, "1.76.0-4.redhat_00001.1.el9eap");
 
     assert_eq!(
-        purl.qualifiers.clone().into_iter().collect::<Vec<_>>(),
+        purl.head
+            .purl
+            .qualifiers
+            .clone()
+            .into_iter()
+            .collect::<Vec<_>>(),
         vec![("arch".to_string(), "noarch".to_string())]
     );
 

@@ -21,7 +21,7 @@ impl BasePurlDetails {
         let package_versions = package.find_related(versioned_purl::Entity).all(tx).await?;
 
         Ok(Self {
-            head: BasePurlHead::from_entity(package).await?,
+            head: BasePurlHead::from_entity(package),
             versions: VersionedPurlSummary::from_entities_with_common_package(
                 package,
                 &package_versions,

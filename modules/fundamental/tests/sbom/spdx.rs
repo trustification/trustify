@@ -1,6 +1,7 @@
 mod aliases;
 mod corner_cases;
 mod external;
+mod issue_1417;
 mod issue_552;
 mod parallel;
 mod perf;

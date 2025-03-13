@@ -86,22 +86,28 @@ async fn delete_check_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
         .items
         .iter()
         .find(|purl| {
-            purl.base.purl.name == "eap7-bouncycastle-util"
-                && purl.version.version == "1.76.0-4.redhat_00001.1.el9eap"
+            purl.head.purl.name == "eap7-bouncycastle-util"
+                && purl.head.purl.version.as_deref() == Some("1.76.0-4.redhat_00001.1.el9eap")
         })
         .expect("must find one");
 
+    #[allow(deprecated)]
+    {
+        assert_eq!(
+            purl.base.purl,
+            Purl {
+                ty: "rpm".to_string(),
+                namespace: Some("redhat".to_string()),
+                name: "eap7-bouncycastle-util".to_string(),
+                version: None,
+                qualifiers: Default::default(),
+            }
+        );
+    }
     assert_eq!(
-        purl.base.purl,
-        Purl {
-            ty: "rpm".to_string(),
-            namespace: Some("redhat".to_string()),
-            name: "eap7-bouncycastle-util".to_string(),
-            version: None,
-            qualifiers: Default::default(),
-        }
+        purl.head.purl.version.as_deref(),
+        Some("1.76.0-4.redhat_00001.1.el9eap")
     );
-    assert_eq!(purl.version.version, "1.76.0-4.redhat_00001.1.el9eap");
 
     // get vuln by purl
 

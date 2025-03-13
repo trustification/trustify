@@ -3,6 +3,8 @@ use crate::purl::model::{BasePurlHead, PurlHead, VersionedPurlHead};
 use sea_orm::{ConnectionTrait, LoaderTrait, ModelTrait};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+use trustify_common::purl::Purl;
+use trustify_entity::qualified_purl::{CanonicalPurl, Qualifiers};
 use trustify_entity::{base_purl, qualified_purl, versioned_purl};
 use utoipa::ToSchema;
 
@@ -10,12 +12,46 @@ use utoipa::ToSchema;
 pub struct PurlSummary {
     #[serde(flatten)]
     pub head: PurlHead,
+    #[deprecated]
     pub base: BasePurlHead,
+    #[deprecated]
     pub version: VersionedPurlHead,
+    #[deprecated]
     pub qualifiers: BTreeMap<String, String>,
 }
 
+impl From<CanonicalPurl> for PurlSummary {
+    fn from(value: CanonicalPurl) -> Self {
+        let purl = Purl::from(value.clone());
+
+        let base_purl_id = purl.package_uuid();
+        let versioned_purl_id = purl.version_uuid();
+        let qualified_purl_id = purl.qualifier_uuid();
+
+        PurlSummary::from_entity(
+            &base_purl::Model {
+                id: base_purl_id,
+                r#type: purl.ty.clone(),
+                namespace: purl.namespace.clone(),
+                name: purl.name.clone(),
+            },
+            &versioned_purl::Model {
+                id: purl.version_uuid(),
+                base_purl_id,
+                version: purl.version.clone().unwrap_or_default(),
+            },
+            &qualified_purl::Model {
+                id: qualified_purl_id,
+                versioned_purl_id,
+                qualifiers: Qualifiers(purl.qualifiers),
+                purl: value,
+            },
+        )
+    }
+}
+
 impl PurlSummary {
+    #[allow(deprecated)]
     pub async fn from_entities<C: ConnectionTrait>(
         qualified_packages: &Vec<qualified_purl::Model>,
         tx: &C,
@@ -37,16 +73,9 @@ impl PurlSummary {
                     .await?
                 {
                     summaries.push(PurlSummary {
-                        head: PurlHead::from_entity(
-                            &package,
-                            package_version,
-                            qualified_package,
-                            tx,
-                        )
-                        .await?,
-                        base: BasePurlHead::from_entity(&package).await?,
-                        version: VersionedPurlHead::from_entity(&package, package_version, tx)
-                            .await?,
+                        head: PurlHead::from_entity(&package, package_version, qualified_package),
+                        base: BasePurlHead::from_entity(&package),
+                        version: VersionedPurlHead::from_entity(&package, package_version),
                         qualifiers: qualified_package.qualifiers.0.clone(),
                     })
                 }
@@ -56,17 +85,17 @@ impl PurlSummary {
         Ok(summaries)
     }
 
-    pub async fn from_entity<C: ConnectionTrait>(
+    #[allow(deprecated)]
+    pub fn from_entity(
         base_purl: &base_purl::Model,
         versioned_purl: &versioned_purl::Model,
         purl: &qualified_purl::Model,
-        db: &C,
-    ) -> Result<Self, Error> {
-        Ok(PurlSummary {
-            head: PurlHead::from_entity(base_purl, versioned_purl, purl, db).await?,
-            base: BasePurlHead::from_entity(base_purl).await?,
-            version: VersionedPurlHead::from_entity(base_purl, versioned_purl, db).await?,
+    ) -> Self {
+        PurlSummary {
+            head: PurlHead::from_entity(base_purl, versioned_purl, purl),
+            base: BasePurlHead::from_entity(base_purl),
+            version: VersionedPurlHead::from_entity(base_purl, versioned_purl),
             qualifiers: purl.qualifiers.0.clone(),
-        })
+        }
     }
 }

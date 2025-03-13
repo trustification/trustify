@@ -130,8 +130,7 @@ impl LicenseService {
 
         for row in licensed_purls.fetch().await? {
             items.push(LicenseDetailsPurlSummary {
-                purl: VersionedPurlHead::from_entity(&row.base_purl, &row.versioned_purl, &tx)
-                    .await?,
+                purl: VersionedPurlHead::from_entity(&row.base_purl, &row.versioned_purl),
                 sbom: SbomHead::from_entity(&row.sbom, None, &tx).await?,
             })
         }
