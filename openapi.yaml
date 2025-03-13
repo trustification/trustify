@@ -982,6 +982,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResults_PurlSummary'
+    post:
+      tags:
+      - purl
+      summary: Retrieve details for multiple qualified PURLs
+      operationId: getPurls
+      parameters:
+      - name: deprecated
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - Ignore
+          - Consider
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurlsRequest'
+        required: true
+      responses:
+        '200':
+          description: Details for the qualified PURLs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurlsResponse'
   /api/v2/purl/base:
     get:
       tags:
@@ -3182,6 +3209,21 @@ components:
             deprecated: true
           version:
             $ref: '#/components/schemas/VersionedPurlHead'
+    PurlsRequest:
+      type: object
+      required:
+      - items
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+    PurlsResponse:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/PurlDetails'
+      propertyNames:
+        type: string
     Relationship:
       type: string
       enum:

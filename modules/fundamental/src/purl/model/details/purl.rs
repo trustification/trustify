@@ -12,7 +12,10 @@ use sea_orm::{
 };
 use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, hash_map::Entry};
+use std::{
+    collections::{HashMap, hash_map::Entry},
+    ops::Deref,
+};
 use trustify_common::{
     db::VersionMatches,
     db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
@@ -161,6 +164,22 @@ async fn get_product_statuses_for_purl<C: ConnectionTrait>(
         .await?;
 
     Ok(product_statuses)
+}
+
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+pub struct PurlsRequest {
+    pub items: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
+pub struct PurlsResponse(HashMap<String, PurlDetails>);
+
+impl Deref for PurlsResponse {
+    type Target = HashMap<String, PurlDetails>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq)]
