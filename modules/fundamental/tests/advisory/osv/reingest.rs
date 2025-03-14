@@ -100,7 +100,7 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let results = service
         .fetch_purl_details(
-            &[purl.head.uuid.to_string().as_str()],
+            &[purl.head.uuid.to_string()],
             Deprecation::Consider,
             &ctx.db,
         )

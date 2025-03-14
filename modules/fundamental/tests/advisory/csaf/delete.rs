@@ -106,11 +106,7 @@ async fn delete_check_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
     // get vuln by purl
 
     let purls = service
-        .fetch_purl_details(
-            &[purl.head.uuid.to_string().as_str()],
-            Deprecation::Ignore,
-            &ctx.db,
-        )
+        .fetch_purl_details(&[&purl.head.uuid.to_string()], Deprecation::Ignore, &ctx.db)
         .await
         .expect("must find something");
 
