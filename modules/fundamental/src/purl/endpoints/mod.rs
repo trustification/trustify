@@ -6,12 +6,8 @@ use crate::{
     },
 };
 use actix_web::{HttpResponse, Responder, get, post, web};
-use sea_orm::prelude::Uuid;
-use std::{collections::HashMap, str::FromStr};
 use trustify_auth::{ReadSbom, authorizer::Require};
-use trustify_common::{
-    db::Database, db::query::Query, model::Paginated, model::PaginatedResults, purl::Purl,
-};
+use trustify_common::{db::Database, db::query::Query, model::Paginated, model::PaginatedResults};
 
 use super::model::details::purl::{PurlsRequest, PurlsResponse};
 
@@ -37,41 +33,6 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
         .service(all);
 }
 
-async fn fetch_purl_details(
-    service: &PurlService,
-    db: &Database,
-    deprecated: trustify_module_ingestor::common::Deprecation,
-    identifiers: &[String],
-) -> Result<HashMap<String, PurlDetails>, String> {
-    let mut purls: Vec<Purl> = Vec::new();
-    let mut uuids: Vec<Uuid> = Vec::new();
-    for key in identifiers {
-        if key.starts_with("pkg:") {
-            let purl = Purl::from_str(key).map_err(|e| format!("Invalid purl '{}': {}", key, e))?;
-            purls.push(purl);
-        } else {
-            let id = Uuid::from_str(key).map_err(|e| format!("Invalid UUID '{}': {}", key, e))?;
-            uuids.push(id);
-        }
-    }
-    let mut result: HashMap<String, PurlDetails> = HashMap::new();
-    let purl_details = service
-        .purls_by_purl(purls, deprecated, db)
-        .await
-        .map_err(|e| format!("Failed to fetch purl details by purl: {}", e))?;
-    for detail in purl_details {
-        result.insert(detail.head.purl.to_string(), detail);
-    }
-    let uuid_details = service
-        .purls_by_uuid(uuids, deprecated, db)
-        .await
-        .map_err(|e| format!("Failed to fetch purl details by uuid: {}", e))?;
-    for detail in uuid_details {
-        result.insert(detail.head.uuid.to_string(), detail);
-    }
-    Ok(result)
-}
-
 #[utoipa::path(
     operation_id = "getPurl",
     tag = "purl",
@@ -94,7 +55,10 @@ pub async fn get(
 ) -> actix_web::Result<impl Responder> {
     let result_key = key.into_inner();
     let identifiers = vec![result_key.clone()];
-    match fetch_purl_details(&service, &db, deprecated, &identifiers).await {
+    match service
+        .fetch_purl_details(&identifiers, deprecated, db.as_ref())
+        .await
+    {
         Ok(details) => match details.get(&result_key) {
             Some(detail) => Ok(HttpResponse::Ok().json(detail)),
             None => Ok(HttpResponse::NotFound().body("Identifier not found")),
@@ -124,7 +88,10 @@ pub async fn get_multiple(
     web::Query(Deprecation { deprecated }): web::Query<Deprecation>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
-    match fetch_purl_details(&service, &db, deprecated, &request.items).await {
+    match service
+        .fetch_purl_details(&request.items, deprecated, db.as_ref())
+        .await
+    {
         Ok(details) => Ok(HttpResponse::Ok().json(details)),
         Err(error) => Ok(
             HttpResponse::InternalServerError().body(format!("Error fetching purls: {}", error))

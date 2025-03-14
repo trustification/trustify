@@ -32,7 +32,7 @@ use trustify_module_ingestor::common::{Deprecation, DeprecationForExt};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
 pub struct PurlDetails {
     #[serde(flatten)]
     pub head: PurlHead,
@@ -182,7 +182,7 @@ impl Deref for PurlsResponse {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq, Clone)]
 pub struct PurlAdvisory {
     #[serde(flatten)]
     pub head: AdvisoryHead,
@@ -284,7 +284,7 @@ impl PurlAdvisory {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq, Clone)]
 pub struct PurlStatus {
     pub vulnerability: VulnerabilityHead,
     pub average_severity: Severity,

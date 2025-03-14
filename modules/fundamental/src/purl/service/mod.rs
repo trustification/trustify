@@ -7,11 +7,13 @@ use crate::{
         summary::{base_purl::BasePurlSummary, purl::PurlSummary, r#type::TypeSummary},
     },
 };
+use itertools::{Either, Itertools};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
     QuerySelect, prelude::Uuid,
 };
 use sea_query::Order;
+use std::{collections::HashMap, str::FromStr};
 use tracing::instrument;
 use trustify_common::{
     db::{
@@ -230,7 +232,50 @@ impl PurlService {
         }
     }
 
-    pub async fn purls_by_purl<C: ConnectionTrait>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn fetch_purl_details<C: ConnectionTrait>(
+        &self,
+        identifiers: &[String],
+        deprecated: Deprecation,
+        connection: &C,
+    ) -> Result<HashMap<String, PurlDetails>, String> {
+        let mapped: Result<Vec<_>, String> = identifiers
+            .iter()
+            .map(|key| {
+                if key.starts_with("pkg:") {
+                    Purl::from_str(key)
+                        .map(|purl| Either::Left(purl))
+                        .map_err(|e| format!("Invalid purl '{}': {}", key, e))
+                } else {
+                    Uuid::from_str(key)
+                        .map(|uuid| Either::Right(uuid))
+                        .map_err(|e| format!("Invalid UUID '{}': {}", key, e))
+                }
+            })
+            .collect();
+        let (purls, uuids) = mapped?.into_iter().partition_map(|either| either);
+
+        let purl_details = self
+            .purls_by_purl(purls, deprecated, connection)
+            .await
+            .map_err(|e| format!("Failed to fetch purl details by purl: {}", e))?;
+        let purls = purl_details
+            .into_iter()
+            .map(|detail| (detail.head.purl.to_string(), detail));
+
+        let uuid_details = self
+            .purls_by_uuid(uuids, deprecated, connection)
+            .await
+            .map_err(|e| format!("Failed to fetch purl details by uuid: {}", e))?;
+        let uuids = uuid_details
+            .into_iter()
+            .map(|detail| (detail.head.uuid.to_string(), detail));
+
+        let result: HashMap<String, PurlDetails> = purls.chain(uuids).collect();
+        Ok(result)
+    }
+
+    async fn purls_by_purl<C: ConnectionTrait>(
         &self,
         purls: Vec<Purl>,
         deprecation: Deprecation,
@@ -254,26 +299,7 @@ impl PurlService {
         Ok(details)
     }
 
-    pub async fn purl_by_purl<C: ConnectionTrait>(
-        &self,
-        purl: &Purl,
-        deprecation: Deprecation,
-        connection: &C,
-    ) -> Result<Option<PurlDetails>, Error> {
-        let canonical = CanonicalPurl::from(purl.clone());
-        match qualified_purl::Entity::find()
-            .filter(qualified_purl::Column::Purl.eq(canonical))
-            .one(connection)
-            .await?
-        {
-            Some(purl) => Ok(Some(
-                PurlDetails::from_entity(None, None, &purl, deprecation, connection).await?,
-            )),
-            None => Ok(None),
-        }
-    }
-
-    pub async fn purls_by_uuid<C: ConnectionTrait>(
+    async fn purls_by_uuid<C: ConnectionTrait>(
         &self,
         uuids: Vec<Uuid>,
         deprecation: Deprecation,
@@ -290,24 +316,6 @@ impl PurlService {
                 .push(PurlDetails::from_entity(None, None, &purl, deprecation, connection).await?);
         }
         Ok(details)
-    }
-
-    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
-    pub async fn purl_by_uuid<C: ConnectionTrait>(
-        &self,
-        purl_uuid: &Uuid,
-        deprecation: Deprecation,
-        connection: &C,
-    ) -> Result<Option<PurlDetails>, Error> {
-        match qualified_purl::Entity::find_by_id(*purl_uuid)
-            .one(connection)
-            .await?
-        {
-            Some(pkg) => Ok(Some(
-                PurlDetails::from_entity(None, None, &pkg, deprecation, connection).await?,
-            )),
-            None => Ok(None),
-        }
     }
 
     pub async fn base_purls<C: ConnectionTrait>(
