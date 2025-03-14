@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741939131589,
+  "lastUpdate": 1741946798632,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6577,6 +6577,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/0a24c388013e619641e22a191ae2f223f7c7c99a"
         },
         "date": 1741939130141,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "f4e6cdcef2d3d6ad273ac7c35fb8a4eb7eb006c6",
+          "message": "refactor: remove three later PURL processing in more places\n\nInstead of using the three PURL layers (base, version, qualifier) for\nbuilding result PURLs, we only use the `purl` field from the qualified\nresult, and evaluate the rest inline.\n\nThe allows us to reduce load on the database even more.",
+          "timestamp": "2025-03-14T09:46:53Z",
+          "tree_id": "1f141bc1ffd83af9924983bc245cafed3f4f7183",
+          "url": "https://github.com/trustification/trustify/commit/f4e6cdcef2d3d6ad273ac7c35fb8a4eb7eb006c6"
+        },
+        "date": 1741946797702,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
