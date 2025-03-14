@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741961837179,
+  "lastUpdate": 1741966889482,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6635,6 +6635,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/54d88148e0c57a42a3f7e0a7a76d1fe37601aee2"
         },
         "date": 1741961836300,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": false,
+          "id": "d3d56416e82a283d22921871073f359a95babc4b",
+          "message": "chore: ensure spdx coverage on prod_comp, src_binary and imageindex_imagevariant relationships",
+          "timestamp": "2025-03-14T15:22:50Z",
+          "tree_id": "70a334f87006f928d3818c123a9478f99ec7c295",
+          "url": "https://github.com/trustification/trustify/commit/d3d56416e82a283d22921871073f359a95babc4b"
+        },
+        "date": 1741966888673,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
