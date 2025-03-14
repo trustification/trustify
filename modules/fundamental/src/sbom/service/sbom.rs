@@ -15,6 +15,7 @@ use sea_query::{Expr, JoinType, extension::postgres::PgExpr};
 use serde_json::Value;
 use std::{collections::HashMap, fmt::Debug};
 use tracing::instrument;
+use trustify_common::purl::Purl;
 use trustify_common::{
     cpe::Cpe,
     db::{
@@ -550,7 +551,7 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
                 })
                 .ok()
         })
-        .map(|purl| purl.into())
+        .map(|purl| Purl::from(purl).into())
         .collect();
 
     let cpe = row
@@ -588,8 +589,6 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
 #[derive(Debug)]
 pub struct QueryCatcher {
     pub advisory: advisory::Model,
-    pub base_purl: base_purl::Model,
-    pub versioned_purl: versioned_purl::Model,
     pub qualified_purl: qualified_purl::Model,
     pub sbom_package: sbom_package::Model,
     pub sbom_node: sbom_node::Model,
@@ -610,8 +609,6 @@ impl FromQueryResult for QueryCatcher {
                 advisory_vulnerability::Entity,
             )?,
             vulnerability: Self::from_query_result_multi_model(res, "", vulnerability::Entity)?,
-            base_purl: Self::from_query_result_multi_model(res, "", base_purl::Entity)?,
-            versioned_purl: Self::from_query_result_multi_model(res, "", versioned_purl::Entity)?,
             qualified_purl: Self::from_query_result_multi_model(res, "", qualified_purl::Entity)?,
             sbom_package: Self::from_query_result_multi_model(res, "", sbom_package::Entity)?,
             sbom_node: Self::from_query_result_multi_model(res, "", sbom_node::Entity)?,

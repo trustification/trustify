@@ -1,9 +1,7 @@
 use sea_orm::{FromJsonQueryResult, FromQueryResult, entity::prelude::*};
-use serde::ser::SerializeStruct;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, ser::SerializeStruct};
 use serde_json::{Value, json};
 use std::collections::BTreeMap;
-use std::fmt::{Display, Formatter};
 use trustify_common::purl::Purl;
 
 // TODO: some day we might 'collapse' all the purl structs to this one, that day is not today.
@@ -11,6 +9,11 @@ use trustify_common::purl::Purl;
 // Instead of using composition or directly relating to any existing purl struct we will implement
 // to & from impl and in places we may invalidate DRY principle by copying across required code blocks.
 
+/// A purl struct for storing in the database.
+///
+/// The difference between [`Self`] and [`Purl`] is the serialization format. [`Self`] is intended
+/// to be serialized into a JSON structure, so that it is possible to use JSON queries on this
+/// field.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, FromJsonQueryResult)]
 pub struct CanonicalPurl {
     pub ty: String,
@@ -18,35 +21,6 @@ pub struct CanonicalPurl {
     pub name: String,
     pub version: Option<String>,
     pub qualifiers: BTreeMap<String, String>,
-}
-
-// inspired by common/src/purl.rs#135 but avoids any temporary strings for speed
-impl Display for CanonicalPurl {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "pkg:{}", self.ty)?;
-
-        if let Some(ns) = &self.namespace {
-            write!(f, "/{}", ns)?;
-        }
-
-        write!(f, "/{}", self.name)?;
-
-        if let Some(version) = &self.version {
-            write!(f, "@{}", version)?;
-        }
-
-        if !self.qualifiers.is_empty() {
-            write!(f, "?")?;
-            for (i, (k, v)) in self.qualifiers.iter().enumerate() {
-                if i > 0 {
-                    write!(f, "&")?;
-                }
-                write!(f, "{}={}", k, v)?;
-            }
-        }
-
-        Ok(())
-    }
 }
 
 impl Serialize for CanonicalPurl {
@@ -219,7 +193,7 @@ mod test {
         assert_eq!(Some("redhat".to_string()), cp.namespace);
         assert_eq!(Some("3.8-6.el8".to_string()), cp.version);
 
-        let model = crate::qualified_purl::ActiveModel {
+        let model = ActiveModel {
             id: Default::default(),
             versioned_purl_id: Default::default(),
             qualifiers: Default::default(),
@@ -234,7 +208,7 @@ mod test {
         )
         .unwrap();
         let cp = purl.clone().into();
-        let model = crate::qualified_purl::ActiveModel {
+        let model = ActiveModel {
             id: Default::default(),
             versioned_purl_id: Default::default(),
             qualifiers: Default::default(),
@@ -244,12 +218,12 @@ mod test {
         assert_eq!(cp.qualifiers.get("arch"), Some(&"aarch64".to_string()));
         // check we can serialize CanonicalPurl to url string
         assert_eq!(
-            model.clone().purl.unwrap().to_string(),
+            Purl::from(model.purl.clone().unwrap()).to_string(),
             "pkg:rpm/redhat/filesystem@3.8-6.el8?arch=aarch64",
         );
 
         // check we can serialize CanonicalPurl to json value
-        let json_value: serde_json::Value = model.purl.unwrap().into();
+        let json_value: Value = model.purl.unwrap().into();
         assert_eq!(
             json_value,
             json!({"ty": "rpm", "namespace": "redhat", "name": "filesystem", "version": "3.8-6.el8", "qualifiers": {"arch": "aarch64"}})

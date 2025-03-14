@@ -9,6 +9,7 @@ use core::time::Duration;
 use csv::{Writer, WriterBuilder};
 use flate2::{Compression, write::GzEncoder};
 use tar::Builder;
+use trustify_common::purl::Purl;
 
 type CSVs = (Writer<Vec<u8>>, Writer<Vec<u8>>);
 
@@ -34,7 +35,9 @@ impl LicenseExporter {
         }
     }
 
-    pub fn generate(&self) -> Result<Vec<u8>, Error> {
+    pub fn generate(self) -> Result<Vec<u8>, Error> {
+        let prefix = get_sanitize_filename(String::from(&self.sbom_name));
+
         let (wtr_sbom, wtr_license_ref) = self.generate_csvs()?;
 
         let sbom_csv = wtr_sbom
@@ -62,10 +65,7 @@ impl LicenseExporter {
             );
             archive.append_data(
                 &mut header,
-                format!(
-                    "{}_sbom_licenses.csv",
-                    &get_sanitize_filename(String::from(&self.sbom_name))
-                ),
+                format!("{prefix}_sbom_licenses.csv"),
                 &*sbom_csv,
             )?;
 
@@ -81,10 +81,7 @@ impl LicenseExporter {
             );
             archive.append_data(
                 &mut header,
-                format!(
-                    "{}_license_ref.csv",
-                    &get_sanitize_filename(String::from(&self.sbom_name))
-                ),
+                format!("{prefix}_license_ref.csv",),
                 &*license_ref_csv,
             )?;
 
@@ -93,7 +90,7 @@ impl LicenseExporter {
         Ok(compressed_data)
     }
 
-    fn generate_csvs(&self) -> Result<CSVs, Error> {
+    fn generate_csvs(self) -> Result<CSVs, Error> {
         let mut wtr_sbom = WriterBuilder::new()
             .delimiter(b'\t')
             .quote_style(csv::QuoteStyle::Always)
@@ -117,16 +114,16 @@ impl LicenseExporter {
             "license",
         ])?;
 
-        for extracted_licensing_info in &self.extracted_licensing_infos {
+        for extracted_licensing_info in self.extracted_licensing_infos {
             wtr_license_ref.write_record([
-                extracted_licensing_info.license_id.as_str(),
-                extracted_licensing_info.name.as_str(),
-                extracted_licensing_info.extracted_text.as_str(),
-                extracted_licensing_info.comment.as_str(),
+                &extracted_licensing_info.license_id,
+                &extracted_licensing_info.name,
+                &extracted_licensing_info.extracted_text,
+                &extracted_licensing_info.comment,
             ])?;
         }
 
-        for package in &self.sbom_license {
+        for package in self.sbom_license {
             let alternate_package_reference = package
                 .cpe
                 .iter()
@@ -136,22 +133,23 @@ impl LicenseExporter {
 
             let purl_list = package
                 .purl
-                .iter()
-                .map(|p| format!("{}", p.purl))
+                .into_iter()
+                .map(|purl| format!("{}", Purl::from(purl.purl)))
                 .collect::<Vec<_>>()
                 .join("\n");
 
             wtr_sbom.write_record([
-                &self.sbom_name.clone(),
-                &self.sbom_id.clone(),
+                &self.sbom_name,
+                &self.sbom_id,
                 &package.name,
-                &package.group.clone().unwrap_or_default(),
-                &package.version.clone().unwrap_or_default(),
+                &package.group.unwrap_or_default(),
+                &package.version.unwrap_or_default(),
                 &purl_list,
                 &alternate_package_reference,
-                &package.license_text.clone().unwrap_or_else(String::default),
+                &package.license_text.unwrap_or_else(String::default),
             ])?;
         }
+
         Ok((wtr_sbom, wtr_license_ref))
     }
 }

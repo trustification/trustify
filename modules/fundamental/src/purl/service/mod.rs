@@ -311,7 +311,7 @@ impl PurlService {
         let total = limiter.total().await?;
 
         Ok(PaginatedResults {
-            items: PurlSummary::from_entities(&limiter.fetch().await?, connection).await?,
+            items: PurlSummary::from_entities(&limiter.fetch().await?),
             total,
         })
     }
