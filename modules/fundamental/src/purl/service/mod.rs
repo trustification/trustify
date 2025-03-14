@@ -7,13 +7,12 @@ use crate::{
         summary::{base_purl::BasePurlSummary, purl::PurlSummary, r#type::TypeSummary},
     },
 };
-use itertools::{Either, Itertools};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
     QuerySelect, prelude::Uuid,
 };
 use sea_query::Order;
-use std::{collections::HashMap, str::FromStr};
+use std::{collections::HashMap, fmt::Debug, str::FromStr};
 use tracing::instrument;
 use trustify_common::{
     db::{
@@ -233,47 +232,40 @@ impl PurlService {
     }
 
     #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
-    pub async fn fetch_purl_details<C: ConnectionTrait>(
+    pub async fn fetch_purl_details<C: ConnectionTrait, I: AsRef<str> + Debug>(
         &self,
-        identifiers: &[&str],
+        identifiers: &[I],
         deprecated: Deprecation,
         connection: &C,
-    ) -> Result<HashMap<String, PurlDetails>, String> {
-        let mapped: Result<Vec<_>, String> = identifiers
+    ) -> Result<HashMap<String, PurlDetails>, Error> {
+        let (purls, uuids): (Vec<_>, Vec<_>) = identifiers
             .iter()
-            .map(|key| {
-                if key.starts_with("pkg:") {
-                    Purl::from_str(key)
-                        .map(|purl| Either::Left(purl))
-                        .map_err(|e| format!("Invalid purl '{}': {}", key, e))
-                } else {
-                    Uuid::from_str(key)
-                        .map(|uuid| Either::Right(uuid))
-                        .map_err(|e| format!("Invalid UUID '{}': {}", key, e))
-                }
-            })
-            .collect();
-        let (purls, uuids): (Vec<Purl>, Vec<Uuid>) =
-            mapped?.into_iter().partition_map(|either| either);
+            .partition(|key| key.as_ref().starts_with("pkg:"));
 
-        let purl_details = self
+        let purls: Vec<_> = purls
+            .iter()
+            .map(|k| Purl::from_str(k.as_ref()).map_err(Error::Purl))
+            .collect::<Result<_, _>>()?;
+
+        let uuids: Vec<_> = uuids
+            .iter()
+            .map(|k| Uuid::from_str(k.as_ref()).map_err(Error::Uuid))
+            .collect::<Result<_, _>>()?;
+
+        let details = self
             .purls_by_purl(&purls, deprecated, connection)
-            .await
-            .map_err(|e| format!("Failed to fetch purl details by purl: {}", e))?;
-        let purls = purl_details
+            .await?
             .into_iter()
-            .map(|detail| (detail.head.purl.to_string(), detail));
+            .map(|detail| (detail.head.purl.to_string(), detail))
+            .chain(
+                self.purls_by_uuid(&uuids, deprecated, connection)
+                    .await?
+                    .into_iter()
+                    .map(|detail| (detail.head.uuid.to_string(), detail)),
+            )
+            .collect();
 
-        let uuid_details = self
-            .purls_by_uuid(&uuids, deprecated, connection)
-            .await
-            .map_err(|e| format!("Failed to fetch purl details by uuid: {}", e))?;
-        let uuids = uuid_details
-            .into_iter()
-            .map(|detail| (detail.head.uuid.to_string(), detail));
-
-        let result: HashMap<String, PurlDetails> = purls.chain(uuids).collect();
-        Ok(result)
+        Ok(details)
     }
 
     async fn purls_by_purl<C: ConnectionTrait>(
