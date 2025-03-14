@@ -113,7 +113,7 @@ async fn delete_check_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let purls = service
         .fetch_purl_details(
-            &vec![purl.head.uuid.to_string()],
+            &[purl.head.uuid.to_string().as_str()],
             Deprecation::Ignore,
             &ctx.db,
         )

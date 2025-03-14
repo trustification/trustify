@@ -642,7 +642,7 @@ async fn statuses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let uuid = &expected_uuid.to_string();
 
     let results = service
-        .fetch_purl_details(&vec![uuid.clone()], Default::default(), &ctx.db)
+        .fetch_purl_details(&[uuid.as_str()], Default::default(), &ctx.db)
         .await;
 
     assert!(results.is_ok());
@@ -678,7 +678,7 @@ async fn contextual_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let uuid = &tomcat_jsp.head.uuid.to_string();
 
     let result = service
-        .fetch_purl_details(&vec![uuid.clone()], Default::default(), &ctx.db)
+        .fetch_purl_details(&[uuid.as_str()], Default::default(), &ctx.db)
         .await;
 
     assert!(result.is_ok());
@@ -857,7 +857,7 @@ async fn unqualified_purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::E
     let purl = "pkg:maven/org.apache/log4j@1.2.3";
 
     let results = service
-        .fetch_purl_details(&vec![purl.to_string()], Default::default(), &ctx.db)
+        .fetch_purl_details(&[purl], Default::default(), &ctx.db)
         .await
         .unwrap();
 
