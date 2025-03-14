@@ -150,13 +150,6 @@ impl SbomDetails {
                 "vulnerability"."modified" AS "vulnerability$modified",
                 "vulnerability"."withdrawn" AS "vulnerability$withdrawn",
                 "vulnerability"."cwes" AS "vulnerability$cwes",
-                "base_purl"."id" AS "base_purl$id",
-                "base_purl"."type" AS "base_purl$type",
-                "base_purl"."namespace" AS "base_purl$namespace",
-                "base_purl"."name" AS "base_purl$name",
-                "versioned_purl"."id" AS "versioned_purl$id",
-                "versioned_purl"."base_purl_id" AS "versioned_purl$base_purl_id",
-                "versioned_purl"."version" AS "versioned_purl$version",
                 "qualified_purl"."id" AS "qualified_purl$id",
                 "qualified_purl"."versioned_purl_id" AS "qualified_purl$versioned_purl_id",
                 "qualified_purl"."qualifiers" AS "qualified_purl$qualifiers",
@@ -356,11 +349,7 @@ impl SbomAdvisory {
                 id: each.sbom_package.node_id.clone(),
                 name: each.sbom_node.name.clone(),
                 version: each.sbom_package.version.clone(),
-                purl: vec![PurlSummary::from_entity(
-                    &each.base_purl,
-                    &each.versioned_purl,
-                    &each.qualified_purl,
-                )],
+                purl: vec![PurlSummary::from_entity(&each.qualified_purl)],
                 cpe: vec![],
             });
         }

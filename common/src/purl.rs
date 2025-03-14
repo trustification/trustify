@@ -1,6 +1,7 @@
 use deepsize::DeepSizeOf;
 use packageurl::PackageUrl;
 use percent_encoding::{AsciiSet, CONTROLS, utf8_percent_encode};
+use sea_orm::FromJsonQueryResult;
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{Error, Visitor},
@@ -26,7 +27,7 @@ pub enum PurlErr {
     Package(#[from] packageurl::Error),
 }
 
-#[derive(Clone, PartialEq, Eq, Hash, DeepSizeOf)]
+#[derive(Clone, PartialEq, Eq, Hash, DeepSizeOf, FromJsonQueryResult)]
 pub struct Purl {
     pub ty: String,
     pub namespace: Option<String>,
@@ -105,6 +106,17 @@ impl Purl {
             name: self.name.clone(),
             namespace: self.namespace.clone(),
             version: None,
+            qualifiers: Default::default(),
+        }
+    }
+
+    /// Create a new instance with only the version information
+    pub fn to_version(&self) -> Self {
+        Self {
+            ty: self.ty.clone(),
+            name: self.name.clone(),
+            namespace: self.namespace.clone(),
+            version: self.version.clone(),
             qualifiers: Default::default(),
         }
     }
