@@ -638,13 +638,19 @@ async fn statuses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(1, results.items.len());
 
-    let uuid = results.items[0].head.uuid;
+    let expected_uuid = results.items[0].head.uuid;
+    let uuid = &expected_uuid.to_string();
 
     let results = service
-        .purl_by_uuid(&uuid, Default::default(), &ctx.db)
-        .await?;
+        .fetch_purl_details(&vec![uuid.clone()], Default::default(), &ctx.db)
+        .await;
 
-    assert_eq!(uuid, results.unwrap().head.uuid);
+    assert!(results.is_ok());
+    let purls = results.unwrap();
+    assert!(purls.contains_key(uuid));
+
+    let details = purls.get(uuid).unwrap();
+    assert_eq!(expected_uuid, details.head.uuid);
 
     Ok(())
 }
@@ -669,16 +675,17 @@ async fn contextual_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let tomcat_jsp = tomcat_jsp.unwrap();
 
-    let uuid = tomcat_jsp.head.uuid;
+    let uuid = &tomcat_jsp.head.uuid.to_string();
 
-    let tomcat_jsp = service
-        .purl_by_uuid(&uuid, Default::default(), &ctx.db)
-        .await?;
+    let result = service
+        .fetch_purl_details(&vec![uuid.clone()], Default::default(), &ctx.db)
+        .await;
 
-    assert!(tomcat_jsp.is_some());
+    assert!(result.is_ok());
+    let details = result.unwrap();
+    assert!(details.contains_key(uuid));
 
-    let tomcat_jsp = tomcat_jsp.unwrap();
-
+    let tomcat_jsp = details.get(uuid).unwrap();
     assert_eq!(1, tomcat_jsp.advisories.len());
 
     let advisory = &tomcat_jsp.advisories[0];
@@ -850,13 +857,13 @@ async fn unqualified_purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::E
     let purl = "pkg:maven/org.apache/log4j@1.2.3";
 
     let results = service
-        .purl_by_purl(&Purl::from_str(purl)?, Default::default(), &ctx.db)
-        .await?
+        .fetch_purl_details(&vec![purl.to_string()], Default::default(), &ctx.db)
+        .await
         .unwrap();
 
     log::debug!("{results:#?}");
-    assert_eq!(results.head.purl.to_string(), purl);
-    assert_eq!(results.version.version, "1.2.3");
+    assert_eq!(results.get(purl).unwrap().head.purl.to_string(), purl);
+    assert_eq!(results.get(purl).unwrap().version.version, "1.2.3");
 
     Ok(())
 }
@@ -903,23 +910,22 @@ async fn versioned_base_purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow
 #[test(actix_web::test)]
 async fn license_information(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let service = PurlService::new();
+    let purl = "pkg:rpm/redhat/libsepol@3.5-1.el9?arch=s390x";
 
     ctx.ingest_document("ubi9-9.2-755.1697625012.json").await?;
 
     let result = service
-        .purl_by_purl(
-            &Purl::try_from("pkg:rpm/redhat/libsepol@3.5-1.el9?arch=s390x")?,
-            Default::default(),
-            &ctx.db,
-        )
-        .await?;
+        .fetch_purl_details(&vec![purl.to_string()], Default::default(), &ctx.db)
+        .await;
 
     log::debug!("{:#?}", result);
 
-    assert!(result.is_some());
+    assert!(result.is_ok());
 
-    let details = result.unwrap();
+    let purls = result.unwrap();
+    assert!(purls.contains_key(purl));
 
+    let details = purls.get(purl).unwrap();
     assert_eq!(1, details.licenses.len());
     assert_eq!(1, details.licenses[0].licenses.len());
     assert_eq!("LGPLV2+", details.licenses[0].licenses[0]);
