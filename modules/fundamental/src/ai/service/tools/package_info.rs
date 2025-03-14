@@ -67,19 +67,13 @@ Input: The package name, its Identifier URI, or UUID.
             .ok_or("Input should be a string")?
             .to_string();
 
-        // Try lookup as a PURL
-        let mut purl_details = match Purl::try_from(input.clone()) {
+        let mut purl_details = match service
+            .fetch_purl_details(&vec![input.clone()], Deprecation::Ignore, db)
+            .await
+        {
             Err(_) => None,
-            Ok(purl) => service.purl_by_purl(&purl, Deprecation::Ignore, db).await?,
+            Ok(details) => details.get(&input.clone()).cloned(),
         };
-
-        // Try lookup as a UUID
-        if purl_details.is_none() {
-            purl_details = match Uuid::parse_str(input.as_str()) {
-                Err(_) => None,
-                Ok(uuid) => service.purl_by_uuid(&uuid, Deprecation::Ignore, db).await?,
-            };
-        }
 
         // Fallback to search
         if purl_details.is_none() {
@@ -98,9 +92,16 @@ Input: The package name, its Identifier URI, or UUID.
             purl_details = match results.items.len() {
                 0 => None,
                 1 => {
-                    service
-                        .purl_by_uuid(&results.items[0].head.uuid, Deprecation::Ignore, db)
-                        .await?
+                    let details = service
+                        .fetch_purl_details(
+                            &vec![results.items[0].head.uuid.to_string()],
+                            Deprecation::Ignore,
+                            db,
+                        )
+                        .await?;
+                    details
+                        .get(&results.items[0].head.uuid.to_string())
+                        .cloned()
                 }
                 _ => {
                     #[derive(Serialize)]
