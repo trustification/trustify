@@ -230,6 +230,30 @@ impl PurlService {
         }
     }
 
+    pub async fn purls_by_purl<C: ConnectionTrait>(
+        &self,
+        purls: Vec<Purl>,
+        deprecation: Deprecation,
+        connection: &C,
+    ) -> Result<Vec<PurlDetails>, Error> {
+        let canonical: Vec<CanonicalPurl> = purls
+            .iter()
+            .map(|purl| CanonicalPurl::from(purl.clone()))
+            .collect();
+
+        let items = qualified_purl::Entity::find()
+            .filter(qualified_purl::Column::Purl.is_in(canonical))
+            .all(connection)
+            .await?;
+
+        let mut details = Vec::with_capacity(items.len());
+        for purl in items {
+            details
+                .push(PurlDetails::from_entity(None, None, &purl, deprecation, connection).await?);
+        }
+        Ok(details)
+    }
+
     pub async fn purl_by_purl<C: ConnectionTrait>(
         &self,
         purl: &Purl,
@@ -247,6 +271,25 @@ impl PurlService {
             )),
             None => Ok(None),
         }
+    }
+
+    pub async fn purls_by_uuid<C: ConnectionTrait>(
+        &self,
+        uuids: Vec<Uuid>,
+        deprecation: Deprecation,
+        connection: &C,
+    ) -> Result<Vec<PurlDetails>, Error> {
+        let items = qualified_purl::Entity::find()
+            .filter(qualified_purl::Column::Id.is_in(uuids))
+            .all(connection)
+            .await?;
+
+        let mut details = Vec::with_capacity(items.len());
+        for purl in items {
+            details
+                .push(PurlDetails::from_entity(None, None, &purl, deprecation, connection).await?);
+        }
+        Ok(details)
     }
 
     #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
