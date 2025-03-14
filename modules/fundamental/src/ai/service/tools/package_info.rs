@@ -68,7 +68,7 @@ Input: The package name, its Identifier URI, or UUID.
             .to_string();
 
         let mut purl_details = match service
-            .fetch_purl_details(&vec![input.clone()], Deprecation::Ignore, db)
+            .fetch_purl_details(&[input.as_str()], Deprecation::Ignore, db)
             .await
         {
             Err(_) => None,
@@ -94,7 +94,7 @@ Input: The package name, its Identifier URI, or UUID.
                 1 => {
                     let details = service
                         .fetch_purl_details(
-                            &vec![results.items[0].head.uuid.to_string()],
+                            &[results.items[0].head.uuid.to_string().as_str()],
                             Deprecation::Ignore,
                             db,
                         )
