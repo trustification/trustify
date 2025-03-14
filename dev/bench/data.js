@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741881243389,
+  "lastUpdate": 1741937512422,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6519,6 +6519,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/636e8d0cd00c7ae6c2b650b262cb560fc07cce01"
         },
         "date": 1741881241963,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "125f484fe361a8087a9613fa67e69ba48fa54bba",
+          "message": "perf: advisory and vuln endpoints - change version related pg funcs to immutable parallel safe",
+          "timestamp": "2025-03-14T07:13:13Z",
+          "tree_id": "171f1b04ba619b0860156729a4e2241680ad3500",
+          "url": "https://github.com/trustification/trustify/commit/125f484fe361a8087a9613fa67e69ba48fa54bba"
+        },
+        "date": 1741937511627,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
