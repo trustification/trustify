@@ -112,18 +112,16 @@ async fn delete_check_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
     // get vuln by purl
 
     let purls = service
-        .fetch_purl_details(
-            &[purl.head.uuid.to_string().as_str()],
-            Deprecation::Ignore,
-            &ctx.db,
-        )
+        .fetch_purl_details(&[&purl.head.uuid.to_string()], Deprecation::Ignore, &ctx.db)
         .await
         .expect("must find something");
 
     // must be 1, as we deleted the latter one
     assert!(purls.contains_key(&purl.head.uuid.to_string()));
 
-    let purl_details = purls.get(&purl.head.uuid.to_string()).unwrap();
+    let purl_details = purls
+        .get(&purl.head.uuid.to_string())
+        .expect("must find one");
 
     assert_eq!(purl_details.advisories.len(), 1);
     let mut advisories = purl_details.advisories.iter().collect::<Vec<_>>();

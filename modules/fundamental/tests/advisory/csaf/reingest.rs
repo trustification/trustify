@@ -134,15 +134,14 @@ async fn change_ps_list_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
     // get vuln by purl
 
     let results = service
-        .fetch_purl_details(
-            &[purl.head.uuid.to_string().as_str()],
-            Deprecation::Ignore,
-            &ctx.db,
-        )
+        .fetch_purl_details(&[purl.head.uuid.to_string()], Deprecation::Ignore, &ctx.db)
         .await
         .expect("must find something");
 
-    let purl = results.get(&purl.head.uuid.to_string()).unwrap();
+    let purl = results
+        .get(&purl.head.uuid.to_string())
+        .expect("must find one");
+
     assert_eq!(purl.advisories.len(), 1);
     let adv = &purl.advisories[0];
 
@@ -233,7 +232,7 @@ async fn change_ps_list_vulns_all(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     let results = service
         .fetch_purl_details(
-            &[purl.head.uuid.to_string().as_str()],
+            &[purl.head.uuid.to_string()],
             Deprecation::Consider,
             &ctx.db,
         )
@@ -241,7 +240,9 @@ async fn change_ps_list_vulns_all(ctx: &TrustifyContext) -> anyhow::Result<()> {
         .expect("must find something");
 
     // must be 2, as we consider deprecated ones too
-    let purl = results.get(&purl.head.uuid.to_string()).unwrap();
+    let purl = results
+        .get(&purl.head.uuid.to_string())
+        .expect("must find one");
     assert_eq!(purl.advisories.len(), 2);
     let mut advisories = purl.advisories.iter().collect::<Vec<_>>();
     advisories.sort_unstable_by(|a, b| a.head.modified.cmp(&b.head.modified));
