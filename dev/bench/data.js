@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741946798632,
+  "lastUpdate": 1741961837179,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6606,6 +6606,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/f4e6cdcef2d3d6ad273ac7c35fb8a4eb7eb006c6"
         },
         "date": 1741946797702,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "54d88148e0c57a42a3f7e0a7a76d1fe37601aee2",
+          "message": "perf: drop advisory_vulnerability_vulnerability_id_gist index for now",
+          "timestamp": "2025-03-14T13:55:49Z",
+          "tree_id": "01801a13b791e1344de31eb5edbd3ef39a7dd182",
+          "url": "https://github.com/trustification/trustify/commit/54d88148e0c57a42a3f7e0a7a76d1fe37601aee2"
+        },
+        "date": 1741961836300,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
