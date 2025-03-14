@@ -1,0 +1,121 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "creationInfo": {
+    "created": "2006-08-14T02:34:56Z",
+    "creators": [
+      "Tool: example SPDX document only"
+    ]
+  },
+  "name": "kernel-module-management-operator-container-1.1.2-25",
+  "documentNamespace": "https://www.redhat.com/kernel-module-management-operator-container-1.1.2-25.spdx.json",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-image-index",
+      "name": "kernel-module-management-operator-container",
+      "versionInfo": "1.1.2-25",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:oci/kernel-module-management-rhel9-operator@sha256%3Ad845f0bd93dad56c92c47e8c116a11a0cc5924c0b99aed912b4f8b54178efa98?repository_url=registry.access.redhat.com/kmm/kernel-module-management-rhel9-operator&tag=1.1.2-25"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d845f0bd93dad56c92c47e8c116a11a0cc5924c0b99aed912b4f8b54178efa98"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-kernel-module-management-operator-container-amd64",
+      "name": "kernel-module-management-operator-container_amd64",
+      "versionInfo": "1.1.2-25",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:oci/kernel-module-management-rhel9-operator@sha256%3Ad845f0bd93dad56c92c47e8c116a11a0cc5924c0b99aed912b4f8b54178efa98?arch=amd64&repository_url=registry.access.redhat.com/kmm/kernel-module-management-rhel9-operator&tag=1.1.2-25"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ed976a0ba418a498b05a56cb05afa0cb36a65e750771f3840b12e9bae3afb22d"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-kernel-module-management-operator-container-arm64",
+      "name": "kernel-module-management-operator-container_arm64",
+      "versionInfo": "1.1.2-25",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:oci/kernel-module-management-rhel9-operator@sha256%3Ad845f0bd93dad56c92c47e8c116a11a0cc5924c0b99aed912b4f8b54178efa98?arch=arm64&repository_url=registry.access.redhat.com/kmm/kernel-module-management-rhel9-operator&tag=1.1.2-25"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9e74a91f532b7550ee909c6ce1636122982a5c5e32859c40c3bfe68231d31100"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-kernel-module-management-operator-container-ppc64le",
+      "name": "kernel-module-management-operator-container_ppc64le",
+      "versionInfo": "1.1.2-25",
+      "supplier": "Organization: Red Hat",
+      "downloadLocation": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:oci/kernel-module-management-rhel9-operator@sha256%3Ad845f0bd93dad56c92c47e8c116a11a0cc5924c0b99aed912b4f8b54178efa98?arch=ppc64le&repository_url=registry.access.redhat.com/kmm/kernel-module-management-rhel9-operator&tag=1.1.2-25"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "32a9929e6f11dfefb7a339d6767d1050cec2b24d397856cbd9b46a1bbc3f8827"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-image-index"
+    },
+    {
+      "spdxElementId": "SPDXRef-kernel-module-management-operator-container-amd64",
+      "relationshipType": "VARIANT_OF",
+      "relatedSpdxElement": "SPDXRef-image-index"
+    },
+    {
+      "spdxElementId": "SPDXRef-kernel-module-management-operator-container-arm64",
+      "relationshipType": "VARIANT_OF",
+      "relatedSpdxElement": "SPDXRef-image-index"
+    },
+    {
+      "spdxElementId": "SPDXRef-kernel-module-management-operator-container-ppc64le",
+      "relationshipType": "VARIANT_OF",
+      "relatedSpdxElement": "SPDXRef-image-index"
+    }
+  ]
+}

@@ -8,7 +8,7 @@ use trustify_test_context::{TrustifyContext, call::CallService, subset::Contains
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn resolve_rh_variant_prod_comp_spdx_external_reference(
+async fn resolve_rh_variant_prod_comp_src_binary_spdx_external_reference(
     ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
@@ -23,24 +23,54 @@ async fn resolve_rh_variant_prod_comp_spdx_external_reference(
 
     ctx.ingest_document("spdx/rh/product_component/openssl-3.0.7-18.el9_2.spdx.json")
         .await?;
-    let uri =
-        "/api/v2/analysis/component/SPDXRef-openssl-3.0.7-18.el9-2?descendants=10".to_string();
+
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode("cpe:/a:redhat:rhel_eus:9.2::appstream")
+    );
+
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
-    //ensure we match on external node DocumentRef-ext-b:SPDXRef-A
     assert!(response.contains_subset(json!({
         "items": [ {
-          "node_id": "SPDXRef-RHEL-9.2-EUS:SPDXRef-openssl-3.0.7-18.el9-2",
-          "name": "SPDXRef-openssl-3.0.7-18.el9-2",
-          "document_id": "https://www.redhat.com/rhel-9.2-eus.spdx.json",
-          "descendants":[
+            "node_id": "SPDXRef-RHEL-9.2-EUS",
+            "name": "Red Hat Enterprise Linux",
+            "version": "9.2 EUS",
+            "published": "2006-08-14 02:34:56+00",
+            "document_id": "https://www.redhat.com/rhel-9.2-eus.spdx.json",
+            "product_name": "Red Hat Enterprise Linux",
+            "product_version": "9.2 EUS",
+            "descendants": [
+            {
+                "node_id": "SPDXRef-openssl-3.0.7-18.el9-2",
+                "name": "openssl",
+                "version": "3.0.7-18.el9_2",
+                "published": "2006-08-14 02:34:56+00",
+                "document_id": "https://www.redhat.com/rhel-9.2-eus.spdx.json",
+                "product_name": "Red Hat Enterprise Linux",
+                "product_version": "9.2 EUS",
+                "relationship": "package",
+                "descendants": [
                 {
-                    "name":"openssl-perl",
-                    "document_id": "https://www.redhat.com/openssl-3.0.7-18.el9_2.spdx.json",
-                    "relationship": "generates",
-                }
-            ]
+                  "node_id": "SPDXRef-RHEL-9.2-EUS:SPDXRef-openssl-3.0.7-18.el9-2",
+                  "name": "SPDXRef-openssl-3.0.7-18.el9-2",
+                  "published": "2006-08-14 02:34:56+00",
+                  "document_id": "https://www.redhat.com/rhel-9.2-eus.spdx.json",
+                  "product_name": "Red Hat Enterprise Linux",
+                  "product_version": "9.2 EUS",
+                  "relationship": "package",
+                  "descendants": [
+                    {
+                      "node_id": "SPDXRef-s390x-openssl-perl",
+                      "name": "openssl-perl",
+                      "version": "3.0.7-18.el9_2",
+                      "published": "2006-08-14 02:34:56+00",
+                      "document_id": "https://www.redhat.com/openssl-3.0.7-18.el9_2.spdx.json",
+                      "relationship": "generates",
+                    }]
+                }]
+            }]
         }]
     })));
 
