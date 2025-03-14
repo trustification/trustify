@@ -235,7 +235,7 @@ impl PurlService {
     #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
     pub async fn fetch_purl_details<C: ConnectionTrait>(
         &self,
-        identifiers: &[String],
+        identifiers: &[&str],
         deprecated: Deprecation,
         connection: &C,
     ) -> Result<HashMap<String, PurlDetails>, String> {
@@ -253,10 +253,11 @@ impl PurlService {
                 }
             })
             .collect();
-        let (purls, uuids) = mapped?.into_iter().partition_map(|either| either);
+        let (purls, uuids): (Vec<Purl>, Vec<Uuid>) =
+            mapped?.into_iter().partition_map(|either| either);
 
         let purl_details = self
-            .purls_by_purl(purls, deprecated, connection)
+            .purls_by_purl(&purls, deprecated, connection)
             .await
             .map_err(|e| format!("Failed to fetch purl details by purl: {}", e))?;
         let purls = purl_details
@@ -264,7 +265,7 @@ impl PurlService {
             .map(|detail| (detail.head.purl.to_string(), detail));
 
         let uuid_details = self
-            .purls_by_uuid(uuids, deprecated, connection)
+            .purls_by_uuid(&uuids, deprecated, connection)
             .await
             .map_err(|e| format!("Failed to fetch purl details by uuid: {}", e))?;
         let uuids = uuid_details
@@ -277,7 +278,7 @@ impl PurlService {
 
     async fn purls_by_purl<C: ConnectionTrait>(
         &self,
-        purls: Vec<Purl>,
+        purls: &[Purl],
         deprecation: Deprecation,
         connection: &C,
     ) -> Result<Vec<PurlDetails>, Error> {
@@ -301,12 +302,12 @@ impl PurlService {
 
     async fn purls_by_uuid<C: ConnectionTrait>(
         &self,
-        uuids: Vec<Uuid>,
+        uuids: &[Uuid],
         deprecation: Deprecation,
         connection: &C,
     ) -> Result<Vec<PurlDetails>, Error> {
         let items = qualified_purl::Entity::find()
-            .filter(qualified_purl::Column::Id.is_in(uuids))
+            .filter(qualified_purl::Column::Id.is_in(uuids.to_vec()))
             .all(connection)
             .await?;
 

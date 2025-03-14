@@ -54,12 +54,12 @@ pub async fn get(
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
     let result_key = key.into_inner();
-    let identifiers = vec![result_key.clone()];
+    let identifiers = vec![result_key.as_str()];
     match service
         .fetch_purl_details(&identifiers, deprecated, db.as_ref())
         .await
     {
-        Ok(details) => match details.get(&result_key) {
+        Ok(details) => match details.get(result_key.as_str()) {
             Some(detail) => Ok(HttpResponse::Ok().json(detail)),
             None => Ok(HttpResponse::NotFound().body("Identifier not found")),
         },
@@ -88,8 +88,9 @@ pub async fn get_multiple(
     web::Query(Deprecation { deprecated }): web::Query<Deprecation>,
     _: Require<ReadSbom>,
 ) -> actix_web::Result<impl Responder> {
+    let items: Vec<&str> = request.items.iter().map(|s| s.as_str()).collect();
     match service
-        .fetch_purl_details(&request.items, deprecated, db.as_ref())
+        .fetch_purl_details(&items, deprecated, db.as_ref())
         .await
     {
         Ok(details) => Ok(HttpResponse::Ok().json(details)),
