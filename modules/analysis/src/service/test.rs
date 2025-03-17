@@ -774,7 +774,10 @@ async fn resolve_sbom_spdx_rh_variant_external_node_sbom(
         node_id: external_node_id,
     }) = get_external_sbom
     {
-        assert_eq!(external_node_id, "SPDXRef-SRPM".to_string());
+        assert_eq!(
+            external_node_id,
+            "SPDXRef-openssl-3.0.7-18.el9-2".to_string()
+        );
         let sbom = sbom::Entity::find()
             .filter(sbom::Column::SbomId.eq(external_sbom_id))
             .one(&ctx.db)
