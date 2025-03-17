@@ -371,6 +371,57 @@ async fn quarkus_component_by_cpe(ctx: &TrustifyContext) -> Result<(), anyhow::E
     Ok(())
 }
 
+/// find a component by query
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ctx.ingest_documents(["spdx/quarkus-bom-3.2.11.Final-redhat-00001.json"])
+        .await?;
+
+    // NOTE: Testing for qualified purls is tricky, because the order
+    // of the qualifiers isn't predictable, and the qualifer values
+    // should be urlencoded, doubly so if used in a query. One
+    // workaround is to "and" the qualifiers in the query using the
+    // LIKE operator,
+    // e.g. q=purl~BASE&purl~QUALIFIER_ONE&purl~QUALIFIER_TWO
+    const PURL: &str = "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom";
+
+    async fn by_query(app: &impl CallService, query: &str) -> Value {
+        let uri = format!(
+            "/api/v2/analysis/component?q={}&limit=0",
+            urlencoding::encode(query)
+        );
+        let request: Request = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        tracing::debug!(test = "", "{response:#?}");
+        response
+    }
+
+    let app = caller(ctx).await?;
+
+    for each in [
+        "purl=pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?type=pom\\&repository_url=https%3a%2f%2fmaven.repository.redhat.com%2fga%2f",
+        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl~type=pom&purl~repository_url=https%3A%2F%2Fmaven.repository.redhat.com%2Fga%2F",
+        "purl~quarkus-bom",
+        "cpe=cpe:/a:redhat:quarkus:3.2::el8",
+        "cpe~cpe:/a:redhat:quarkus:3.2::el8",
+        "cpe~cpe:/a:redhat:quarkus:3.2",
+        "cpe~cpe:/a::quarkus",
+        "cpe~redhat",                  // invalid CPE results in a full-text search
+        "purl~quarkus-bom&cpe~redhat", // essentially the same as `quarkus|redhat`
+        "purl~quarkus-bom&cpe~cpe:/a:redhat", // valid CPE so no full-text search
+    ] {
+        assert!(by_query(&app, each).await.contains_subset(json!({
+            "items": [{
+                "purl": [ PURL ],
+                "cpe": ["cpe:/a:redhat:quarkus:3.2:*:el8:*"]
+            }]
+        })));
+    }
+
+    Ok(())
+}
+
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn test_retrieve_query_params_endpoint(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
