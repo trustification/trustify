@@ -79,6 +79,87 @@ async fn resolve_rh_variant_prod_comp_src_binary_spdx_external_reference(
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+async fn resolve_rh_variant_prod_comp_src_binary_spdx_external_reference_ancestors(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_document("spdx/rh/product_component/rhel-9.2-eus.spdx.json")
+        .await?;
+    let uri =
+        "/api/v2/analysis/component/SPDXRef-openssl-3.0.7-18.el9-2?descendants=10".to_string();
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(200, response.response().status());
+
+    ctx.ingest_document("spdx/rh/product_component/openssl-3.0.7-18.el9_2.spdx.json")
+        .await?;
+
+    let uri = format!(
+        "/api/v2/analysis/component/{}?ancestors=10",
+        urlencoding::encode("openssl-perl")
+    );
+
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+
+    assert!(response.contains_subset(json!({
+        "items": [ {
+            "node_id": "SPDXRef-aarch64-openssl-perl",
+            "name": "openssl-perl",
+            "version": "3.0.7-18.el9_2",
+            "published": "2006-08-14 02:34:56+00",
+            "document_id": "https://www.redhat.com/openssl-3.0.7-18.el9_2.spdx.json",
+            "ancestors":[
+                {
+                "node_id": "SPDXRef-openssl-3.0.7-18.el9-2",
+                "name": "openssl",
+                "version": "3.0.7-18.el9_2",
+                "published": "2006-08-14 02:34:56+00",
+                "document_id": "https://www.redhat.com/openssl-3.0.7-18.el9_2.spdx.json",
+                "product_name": "openssl",
+                "product_version": "3.0.7-18.el9_2",
+                "relationship": "generates",
+                "ancestors": [
+                    {
+                        "node_id": "SPDXRef-DOCUMENT",
+                        "name": "openssl-3.0.7-18.el9_2",
+                        "version": "",
+                        "published": "2006-08-14 02:34:56+00",
+                        "document_id": "https://www.redhat.com/openssl-3.0.7-18.el9_2.spdx.json",
+                        "product_name": "openssl",
+                        "product_version": "3.0.7-18.el9_2",
+                        "relationship": "describes"
+                    },
+                    {
+                    "node_id": "SPDXRef-openssl-3.0.7-18.el9-2",
+                    "cpe": [],
+                    "name": "openssl",
+                    "version": "3.0.7-18.el9_2",
+                    "published": "2006-08-14 02:34:56+00",
+                    "document_id": "https://www.redhat.com/rhel-9.2-eus.spdx.json",
+                    "product_name": "Red Hat Enterprise Linux",
+                    "product_version": "9.2 EUS",
+                    "relationship": "package",
+                    "ancestors":[{
+                        "node_id": "SPDXRef-RHEL-9.2-EUS",
+                        "document_id": "https://www.redhat.com/rhel-9.2-eus.spdx.json",
+                        "product_name": "Red Hat Enterprise Linux",
+                        "product_version": "9.2 EUS",
+                        "relationship": "package",
+                    }]
+
+                    }]
+                }]
+            }]
+
+    })));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
 async fn resolve_rh_variant_prod_comp_cdx_external_reference(
     ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
