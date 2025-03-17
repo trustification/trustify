@@ -1,6 +1,34 @@
-# trustify
+# Trustify
 
 [![ci](https://github.com/trustification/trustify/actions/workflows/ci.yaml/badge.svg)](https://github.com/trustification/trustify/actions/workflows/ci.yaml)
+
+Welcome to Trustify, an open-source platform bringing together Software Bills of Materials (SBOMs) and security advisories to ensure software supply chain security threats and vulnerabilities are minimized and caught promptly.
+
+## How Trustify Helps
+Trustify tackles some of the problems developers and companies face when keeping software safe and organized. Here’s how it helps:
+- Meet compliance regulations for SBOM management and archiving
+- Deploy applications with fewer vulnerabilities
+- Know that trusted components are in use as early as possible
+- Reduce alert fatigue with fewer false positive by getting vendor vulnerability information from the actual vendor (VEX) 
+- Analyze applications without downloading and installing
+
+## Architecture
+Trustify is the next evolution of the [Trustification](https://github.com/trustification) project.
+We changed the architecture to modulith approach, to build a simpler-to-deploy more responsive system that can flexibly meet the needs of the company and our customers going forward.
+
+The general architecture is as follows:
+
+### The System 
+- REST APIs to support operations for ingesting and retrieving supply-chain data.
+- Actively loads vulnerability/advisory information from a variety of sources as it becomes available, regardless of components currently-known.
+
+### A single SQL database
+- PostgreSQL.
+- Expandable data-model to support all aspects of supply-chain data.
+- OIDC provider 
+
+
+![image](https://github.com/user-attachments/assets/f251c0ef-9693-485c-9ebd-8deefe2c244c)
 
 ## Quick start
 
