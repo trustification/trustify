@@ -274,6 +274,9 @@ impl PurlService {
         deprecation: Deprecation,
         connection: &C,
     ) -> Result<Vec<PurlDetails>, Error> {
+        if purls.is_empty() {
+            return Ok(Default::default());
+        }
         let canonical: Vec<CanonicalPurl> = purls
             .iter()
             .map(|purl| CanonicalPurl::from(purl.clone()))
@@ -298,6 +301,9 @@ impl PurlService {
         deprecation: Deprecation,
         connection: &C,
     ) -> Result<Vec<PurlDetails>, Error> {
+        if uuids.is_empty() {
+            return Ok(Default::default());
+        }
         let items = qualified_purl::Entity::find()
             .filter(qualified_purl::Column::Id.is_in(uuids.to_vec()))
             .all(connection)
