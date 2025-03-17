@@ -9,6 +9,7 @@ use serde::{
 };
 use std::{
     borrow::Cow,
+    cmp::Ordering,
     fmt::{Debug, Display, Formatter},
     str::FromStr,
 };
@@ -17,6 +18,8 @@ use utoipa::{
     openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, Type},
 };
 use uuid::Uuid;
+
+use crate::db::query::Valuable;
 
 #[derive(Clone, Hash, Eq, PartialEq, DeepSizeOf)]
 pub struct Cpe {
@@ -59,6 +62,31 @@ impl<'de> Deserialize<'de> for Cpe {
         D: Deserializer<'de>,
     {
         deserializer.deserialize_str(CpeVisitor)
+    }
+}
+
+impl Valuable for Cpe {
+    fn like(&self, other: &str) -> bool {
+        match Cpe::from_str(other) {
+            Ok(cpe) => cpe.uri.is_superset(&self.uri),
+            _ => self.to_string().contains(other),
+        }
+    }
+}
+impl PartialOrd<String> for Cpe {
+    fn partial_cmp(&self, other: &String) -> Option<Ordering> {
+        match Cpe::from_str(other) {
+            Ok(cpe) if self.eq(&cpe) => Some(Ordering::Equal),
+            _ => self.to_string().partial_cmp(other),
+        }
+    }
+}
+impl PartialEq<String> for Cpe {
+    fn eq(&self, other: &String) -> bool {
+        match Cpe::from_str(other) {
+            Ok(p) => self.eq(&p),
+            _ => self.to_string().eq(other),
+        }
     }
 }
 
