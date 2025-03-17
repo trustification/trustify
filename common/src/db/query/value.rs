@@ -8,7 +8,7 @@ pub trait Value {
 
 impl Value for &str {
     fn like(&self, pat: &str) -> bool {
-        str::contains(self, pat)
+        (*self).contains(pat)
     }
     fn compare(&self, other: &str) -> Option<Ordering> {
         (*self).partial_cmp(other)
@@ -93,6 +93,9 @@ impl Value for OffsetDateTime {
     }
 }
 
+// We use a "newtype" instead of making Value a subtrait of PartialOrd
+// because the latter refers to Self, which would prevent its use as a
+// trait object.
 pub(crate) struct OrderedValue<'a>(pub &'a dyn Value);
 
 impl PartialEq<String> for OrderedValue<'_> {
@@ -129,6 +132,11 @@ pub(crate) mod tests {
         context.insert("detected", Box::new(&then));
         context.insert("published", Box::new(&now));
 
+        assert!(q("id~foo").apply(&context));
+        assert!(q("id~oo").apply(&context));
+        assert!(q("id!~xxx").apply(&context));
+        assert!(q("id<goo").apply(&context));
+        assert!(q("id>doo").apply(&context));
         assert!(q("oo|aa|bb&count<100&count>10&id=foo").apply(&context));
         assert!(q("score=6.66").apply(&context));
         assert!(q("count>=42&count<=42").apply(&context));
