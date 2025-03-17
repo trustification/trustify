@@ -237,6 +237,6 @@ mod test {
         )
         .unwrap();
         let cp1: CanonicalPurl = purl.clone().into();
-        assert_eq!(purl, cp1.into());
+        assert_eq!(purl, Purl::from(cp1));
     }
 }
