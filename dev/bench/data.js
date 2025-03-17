@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1741966889482,
+  "lastUpdate": 1742229470078,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6664,6 +6664,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/d3d56416e82a283d22921871073f359a95babc4b"
         },
         "date": 1741966888673,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "discolo@gmail.com",
+            "name": "Ruben Romero Montes",
+            "username": "ruromero"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "053d4412837445565bb2c45c9b437925e2f91fea",
+          "message": "Apply suggestions from code review\r\n\r\nrefactor: apply suggestions\n\nCo-authored-by: Jim Crossley <jim@crossleys.org>",
+          "timestamp": "2025-03-17T15:53:48Z",
+          "tree_id": "c5f7465bb8848d4316b454185809743dd58cf374",
+          "url": "https://github.com/trustification/trustify/commit/053d4412837445565bb2c45c9b437925e2f91fea"
+        },
+        "date": 1742229468691,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
