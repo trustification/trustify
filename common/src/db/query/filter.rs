@@ -41,8 +41,8 @@ impl TryFrom<(&str, Operator, &Vec<String>, &Columns)> for Filter {
                     .map(
                         |s| match columns.translate(field, &operator.to_string(), s) {
                             Some(x) => q(&x).filter_for(columns),
-                            None => columns.for_field(field).and_then(|(expr, col_def)| {
-                                Arg::parse(s, col_def.get_column_type()).map(|v| Filter {
+                            None => columns.for_field(field).and_then(|(expr, ref ty)| {
+                                Arg::parse(s, ty).map(|v| Filter {
                                     operands: Operand::Simple(expr, v),
                                     operator,
                                 })

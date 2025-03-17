@@ -4,21 +4,22 @@ use std::fmt::{Display, Formatter};
 use sea_orm::entity::ColumnDef;
 use sea_orm::{ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Iterable, sea_query};
 use sea_query::extension::postgres::PgExpr;
-use sea_query::{Alias, ColumnRef, Expr, IntoColumnRef, IntoIden};
+use sea_query::{Alias, ColumnRef, Expr, IntoColumnRef, IntoIden, SimpleExpr};
 
 use super::Error;
 
 /// Context of columns which can be used for filtering and sorting.
 #[derive(Default, Debug, Clone)]
 pub struct Columns {
-    columns: Vec<(ColumnRef, ColumnDef)>,
+    columns: Vec<(ColumnRef, ColumnType)>,
     translator: Option<Translator>,
     json_keys: BTreeMap<&'static str, &'static str>,
+    exprs: BTreeMap<&'static str, (Expr, ColumnType)>,
 }
 
 impl Display for Columns {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        for (r, d) in &self.columns {
+        for (r, ty) in &self.columns {
             writeln!(f)?;
             match r {
                 ColumnRef::SchemaTableColumn(_, t, c) | ColumnRef::TableColumn(t, c) => {
@@ -28,7 +29,7 @@ impl Display for Columns {
                 _ => write!(f, "  {r:?}")?,
             }
             write!(f, " : ")?;
-            match d.get_column_type() {
+            match ty {
                 ColumnType::Text | ColumnType::String(_) | ColumnType::Char(_) => {
                     write!(f, "String")?
                 }
@@ -70,21 +71,24 @@ impl Columns {
             .map(|c| {
                 let (t, u) = c.as_column_ref();
                 let column_ref = ColumnRef::TableColumn(t, u);
-                let column_def = c.def();
-                (column_ref, column_def)
+                let column_type = c.def().get_column_type().clone();
+                (column_ref, column_type)
             })
             .collect();
         Self {
             columns,
             translator: None,
             json_keys: BTreeMap::new(),
+            exprs: BTreeMap::new(),
         }
     }
 
     /// Add an arbitrary column into the context.
     pub fn add_column<I: IntoIdentity>(mut self, name: I, def: ColumnDef) -> Self {
-        self.columns
-            .push((name.into_identity().into_column_ref(), def));
+        self.columns.push((
+            name.into_identity().into_column_ref(),
+            def.get_column_type().clone(),
+        ));
         self
     }
 
@@ -105,6 +109,12 @@ impl Columns {
             }
         }
 
+        self
+    }
+
+    /// Add an arbitrary expression into the context.
+    pub fn add_expr(mut self, name: &'static str, expr: SimpleExpr, ty: ColumnType) -> Self {
+        self.exprs.insert(name, (Expr::expr(expr), ty));
         self
     }
 
@@ -141,18 +151,22 @@ impl Columns {
     pub(crate) fn strings(&self) -> impl Iterator<Item = Expr> + '_ {
         self.columns
             .iter()
-            .filter_map(|(col_ref, col_def)| match col_def.get_column_type() {
+            .filter_map(|(col_ref, col_type)| match col_type {
                 ColumnType::String(_) | ColumnType::Text => Some(Expr::col(col_ref.clone())),
                 _ => None,
             })
+            .chain(self.exprs.iter().filter_map(|(_, (ex, ty))| match ty {
+                ColumnType::String(_) | ColumnType::Text => Some(ex.clone()),
+                _ => None,
+            }))
             .chain(self.json_keys.iter().map(|(field, column)| {
                 Expr::expr(Expr::col(column.into_identity()).cast_json_field(*field))
             }))
     }
 
     /// Look up the column context for a given simple field name.
-    pub(crate) fn for_field(&self, field: &str) -> Result<(Expr, ColumnDef), Error> {
-        fn name_match(tgt: &str) -> impl Fn(&&(ColumnRef, ColumnDef)) -> bool + '_ {
+    pub(crate) fn for_field(&self, field: &str) -> Result<(Expr, ColumnType), Error> {
+        fn name_match(tgt: &str) -> impl Fn(&&(ColumnRef, ColumnType)) -> bool + '_ {
             |(col, _)| {
                 matches!(col,
                          ColumnRef::Column(name)
@@ -168,20 +182,16 @@ impl Columns {
             .or_else(|| {
                 self.columns
                     .iter()
-                    .filter(|(_, def)| {
-                        matches!(
-                            def.get_column_type(),
-                            ColumnType::Json | ColumnType::JsonBinary
-                        )
-                    })
+                    .filter(|(_, ty)| matches!(ty, ColumnType::Json | ColumnType::JsonBinary))
                     .find(name_match(self.json_keys.get(field)?))
-                    .map(|(r, d)| {
+                    .map(|(r, ty)| {
                         (
                             Expr::expr(Expr::col(r.clone()).cast_json_field(field)),
-                            d.clone(),
+                            ty.clone(),
                         )
                     })
             })
+            .or_else(|| self.exprs.get(field).cloned())
             .ok_or(Error::SearchSyntax(format!(
                 "Invalid field name: '{field}'"
             )))
@@ -201,7 +211,7 @@ mod tests {
     use super::super::*;
     use super::*;
     use sea_orm::{ColumnType, ColumnTypeTrait, QuerySelect, QueryTrait};
-    use sea_query::{Expr, Func};
+    use sea_query::{Expr, Func, SimpleExpr};
     use test_log::test;
 
     #[test(tokio::test)]
@@ -209,7 +219,7 @@ mod tests {
         let query = advisory::Entity::find()
             .select_only()
             .column(advisory::Column::Id)
-            .expr_as_(
+            .expr_as(
                 Func::char_length(Expr::col("location".into_identity())),
                 "location_len",
             );
@@ -372,6 +382,43 @@ mod tests {
         assert!(clause(q("").sort("name")).is_ok());
         assert!(clause(q("").sort("nope")).is_err());
         assert!(clause(q("q=x")).is_err());
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn columns_with_expr() -> Result<(), anyhow::Error> {
+        let test = |s: &str, expected: &str, ty: ColumnType| {
+            let stmt = advisory::Entity::find()
+                .select_only()
+                .column(advisory::Column::Id)
+                .filtering_with(
+                    q(s),
+                    advisory::Entity.columns().add_expr(
+                        "pearl",
+                        SimpleExpr::FunctionCall(
+                            Func::cust("get_purl".into_identity())
+                                .arg(Expr::col(advisory::Column::Purl)),
+                        ),
+                        ty,
+                    ),
+                )
+                .unwrap()
+                .build(sea_orm::DatabaseBackend::Postgres)
+                .to_string()
+                .split("WHERE ")
+                .last()
+                .unwrap()
+                .to_string();
+            assert_eq!(stmt, expected);
+        };
+
+        test(
+            "pearl=pkg:rpm/redhat/foo",
+            r#"get_purl("purl") = 'pkg:rpm/redhat/foo'"#,
+            ColumnType::Text,
+        );
+        test("pearl=42", r#"get_purl("purl") = 42"#, ColumnType::Integer);
 
         Ok(())
     }
