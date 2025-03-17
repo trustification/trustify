@@ -20,7 +20,7 @@ The general architecture is as follows:
 
 ### The System 
 - REST APIs to support operations for ingesting and retrieving supply-chain data.
-- Comes with a set of default importers to public available vulnerability
+- Comes with a set of default importers to public available vulnerability data
 
 ### A single SQL database
 - PostgreSQL.
