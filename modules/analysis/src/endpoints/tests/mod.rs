@@ -364,7 +364,9 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
         "cpe~cpe:/a:redhat:quarkus:3.2::el8",
         "cpe~cpe:/a:redhat:quarkus:3.2",
         "cpe~cpe:/a::quarkus",
-        "cpe~redhat",
+        "cpe~redhat",                  // invalid CPE results in a full-text search
+        "purl~quarkus-bom&cpe~redhat", // essentially the same as `quarkus|redhat`
+        "purl~quarkus-bom&cpe~cpe:/a:redhat", // valid CPE so no full-text search
     ] {
         assert!(by_query(&app, each).await.contains_subset(json!({
             "items": [{
