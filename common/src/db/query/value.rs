@@ -3,58 +3,34 @@ use human_date_parser::{ParseResult, from_human_time};
 use std::cmp::Ordering;
 use time::OffsetDateTime;
 
+pub trait Valuable: PartialOrd<String> {
+    fn like(&self, pat: &str) -> bool;
+}
+
 pub enum Value<'a> {
     String(&'a str),
     Int(i32),
     Float(f64),
     Date(&'a OffsetDateTime),
     Array(Vec<Value<'a>>),
+    Custom(&'a dyn Valuable),
 }
 
-impl Value<'_> {
-    pub fn contains(&self, pat: &str) -> bool {
+impl Valuable for Value<'_> {
+    fn like(&self, pat: &str) -> bool {
         match self {
             Self::String(s) => s.contains(pat),
             Self::Date(d) => d.to_string().contains(pat),
+            Self::Array(a) => a.iter().any(|v| v.like(pat)),
+            Self::Custom(v) => v.like(pat),
             Self::Int(_) | Self::Float(_) => false,
-            Self::Array(a) => a.iter().any(|v| v.contains(pat)),
         }
     }
 }
 
 impl PartialEq<String> for Value<'_> {
-    fn eq(&self, rhs: &String) -> bool {
-        match self {
-            Self::String(s) => s.eq(rhs),
-            Self::Int(v) => match rhs.parse::<i32>() {
-                Ok(i) => v.eq(&i),
-                _ => false,
-            },
-            Self::Float(v) => match rhs.parse::<f64>() {
-                Ok(i) => v.eq(&i),
-                _ => false,
-            },
-            Self::Date(v) => match from_human_time(&v.to_string()) {
-                Ok(ParseResult::DateTime(field)) => match from_human_time(rhs) {
-                    Ok(ParseResult::DateTime(other)) => field.eq(&other),
-                    Ok(ParseResult::Date(d)) => {
-                        let other = NaiveDateTime::new(d, field.time())
-                            .and_local_timezone(Local)
-                            .unwrap();
-                        field.eq(&other)
-                    }
-                    Ok(ParseResult::Time(t)) => {
-                        let other = NaiveDateTime::new(field.date_naive(), t)
-                            .and_local_timezone(Local)
-                            .unwrap();
-                        field.eq(&other)
-                    }
-                    _ => false,
-                },
-                _ => false,
-            },
-            Self::Array(a) => a.iter().any(|v| v.eq(rhs)),
-        }
+    fn eq(&self, other: &String) -> bool {
+        matches!(self.partial_cmp(other), Some(Ordering::Equal))
     }
 }
 
@@ -89,14 +65,25 @@ impl PartialOrd<String> for Value<'_> {
                 },
                 _ => None,
             },
-            Self::Array(_) => None,
+            Self::Array(arr) => {
+                if arr.iter().any(|v| v.eq(rhs)) {
+                    Some(Ordering::Equal)
+                } else if arr.iter().all(|v| v.gt(rhs)) {
+                    Some(Ordering::Greater)
+                } else if arr.iter().all(|v| v.lt(rhs)) {
+                    Some(Ordering::Less)
+                } else {
+                    None
+                }
+            }
+            Self::Custom(v) => v.partial_cmp(&rhs),
         }
     }
 }
 
-impl<'a, T: AsRef<str>> From<&'a Vec<T>> for Value<'a> {
+impl<'a, T: Valuable> From<&'a Vec<T>> for Value<'a> {
     fn from(v: &'a Vec<T>) -> Self {
-        Value::Array(v.iter().map(|s| Value::String(s.as_ref())).collect())
+        Value::Array(v.iter().map(|v| Value::Custom(v)).collect())
     }
 }
 
@@ -142,8 +129,11 @@ pub(crate) mod tests {
 
     #[test(tokio::test)]
     async fn filter_array_values() -> Result<(), anyhow::Error> {
-        let purls = vec!["pkg:x/foo", "pkg:x/bar"];
-        let context = HashMap::from([("purl", Value::from(&purls))]);
+        use crate::purl::Purl;
+
+        let purl = Purl::from_str("pkg:x/foo").unwrap();
+        let purls = vec![Value::Custom(&purl), Value::String("pkg:x/bar")];
+        let context = HashMap::from([("purl", Value::Array(purls))]);
 
         assert!(q("purl=pkg:x/foo").apply(&context));
         assert!(!q("purl!=pkg:x/foo").apply(&context));
@@ -151,6 +141,10 @@ pub(crate) mod tests {
         assert!(q("purl!~pkg:y").apply(&context));
         assert!(q("purl~foo").apply(&context));
         assert!(q("purl!~baz").apply(&context));
+        assert!(q("purl<pkg:y/foo").apply(&context));
+        assert!(q("purl>pkg:w/foo").apply(&context));
+        assert!(q("purl<pkg:y").apply(&context));
+        assert!(q("purl>pkg:w").apply(&context));
 
         assert!(q("pkg:x/foo").apply(&context));
         assert!(q("pkg:x/bar").apply(&context));

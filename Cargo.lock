@@ -8392,6 +8392,7 @@ dependencies = [
  "tracing",
  "trustify-migration",
  "trustify-test-context",
+ "urlencoding",
  "utoipa",
  "uuid",
  "walker-common",

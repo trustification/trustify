@@ -6,7 +6,7 @@ mod value;
 
 pub use columns::{Columns, IntoColumns};
 pub use filtering::Filtering;
-pub use value::Value;
+pub use value::{Valuable, Value};
 
 use filter::{Filter, Operator};
 use regex::Regex;
@@ -89,8 +89,8 @@ impl Query {
             } => context.get(f.as_str()).is_some_and(|field| match o {
                 Equal => vs.iter().any(|v| field.eq(v)),
                 NotEqual => vs.iter().all(|v| field.ne(v)),
-                Like => vs.iter().any(|v| field.contains(v)),
-                NotLike => vs.iter().all(|v| !field.contains(v)),
+                Like => vs.iter().any(|v| field.like(v)),
+                NotLike => vs.iter().all(|v| !field.like(v)),
                 GreaterThan => vs.iter().all(|v| field.gt(v)),
                 GreaterThanOrEqual => vs.iter().all(|v| field.ge(v)),
                 LessThan => vs.iter().all(|v| field.lt(v)),
@@ -103,7 +103,7 @@ impl Query {
                 ..
             } => context
                 .values()
-                .any(|field| vs.iter().any(|v| field.contains(v))),
+                .any(|field| vs.iter().any(|v| field.like(v))),
             _ => false,
         })
     }
