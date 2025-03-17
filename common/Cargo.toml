@@ -47,6 +47,7 @@ thiserror = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
+urlencoding = { workspace = true }
 utoipa = { workspace = true, features = ["url"] }
 uuid = { workspace = true, features = ["v5", "serde"] }
 walker-common = { workspace = true, features = ["bzip2", "liblzma"]}

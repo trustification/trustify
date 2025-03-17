@@ -6,7 +6,7 @@ use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{Error, Visitor},
 };
-use std::borrow::Cow;
+use std::{borrow::Cow, cmp::Ordering};
 use std::{
     collections::BTreeMap,
     fmt::{Debug, Display, Formatter},
@@ -18,6 +18,8 @@ use utoipa::{
     openapi::{KnownFormat, ObjectBuilder, RefOr, Schema, SchemaFormat, Type},
 };
 use uuid::Uuid;
+
+use crate::db::query::Valuable;
 
 #[derive(Debug, thiserror::Error)]
 pub enum PurlErr {
@@ -34,6 +36,31 @@ pub struct Purl {
     pub name: String,
     pub version: Option<String>,
     pub qualifiers: BTreeMap<String, String>,
+}
+
+impl Valuable for Purl {
+    fn like(&self, pat: &str) -> bool {
+        match urlencoding::decode(pat) {
+            Ok(s) => self.to_string().contains(&s.into_owned()),
+            _ => false,
+        }
+    }
+}
+impl PartialOrd<String> for Purl {
+    fn partial_cmp(&self, other: &String) -> Option<Ordering> {
+        match Purl::from_str(other) {
+            Ok(purl) if self.eq(&purl) => Some(Ordering::Equal),
+            _ => self.to_string().partial_cmp(other),
+        }
+    }
+}
+impl PartialEq<String> for Purl {
+    fn eq(&self, other: &String) -> bool {
+        match Purl::from_str(other) {
+            Ok(p) => self.eq(&p),
+            _ => self.to_string().eq(other),
+        }
+    }
 }
 
 impl ToSchema for Purl {
