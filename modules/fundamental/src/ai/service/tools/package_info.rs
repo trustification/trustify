@@ -68,11 +68,11 @@ Input: The package name, its Identifier URI, or UUID.
             .to_string();
 
         let mut purl_details = match service
-            .fetch_purl_details(&[input.as_str()], Deprecation::Ignore, db)
+            .fetch_purl_details(&[&input], Deprecation::Ignore, db)
             .await
         {
             Err(_) => None,
-            Ok(details) => details.get(&input.clone()).cloned(),
+            Ok(details) => details.get(&input).cloned(),
         };
 
         // Fallback to search
@@ -94,7 +94,7 @@ Input: The package name, its Identifier URI, or UUID.
                 1 => {
                     let details = service
                         .fetch_purl_details(
-                            &[results.items[0].head.uuid.to_string().as_str()],
+                            &[results.items[0].head.uuid.to_string()],
                             Deprecation::Ignore,
                             db,
                         )
