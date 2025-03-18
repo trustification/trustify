@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742272273629,
+  "lastUpdate": 1742290540469,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6756,6 +6756,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "772b053b8f7e40682d7bd9e7657fa9a845aebbde",
+          "message": "chore: add analysis graph spdx ancestor test",
+          "timestamp": "2025-03-18T09:15:26Z",
+          "tree_id": "f3d9cc9a7afa3b4326f197e2fbb94ea96e07075f",
+          "url": "https://github.com/trustification/trustify/commit/772b053b8f7e40682d7bd9e7657fa9a845aebbde"
+        },
+        "date": 1742290539092,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
