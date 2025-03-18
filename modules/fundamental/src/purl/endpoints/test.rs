@@ -341,11 +341,16 @@ async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     let request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
+    tracing::debug!(test = "", "{response:#?}");
 
     assert_eq!(uuid, Uuid::parse_str(response["uuid"].as_str().unwrap())?);
     assert_eq!(
         "critical",
         response["advisories"][0]["status"][0]["average_severity"]
+    );
+    assert_eq!(
+        "CVE-2021-32714",
+        response["advisories"][0]["status"][0]["vulnerability"]["identifier"]
     );
 
     Ok(())
