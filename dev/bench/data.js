@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742290540469,
+  "lastUpdate": 1742337265753,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6780,6 +6780,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/772b053b8f7e40682d7bd9e7657fa9a845aebbde"
         },
         "date": 1742290539092,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "f52f95b0340d768e444711f138aa692af8f2b965",
+          "message": "make it clear we can get vulnerability info from purl details",
+          "timestamp": "2025-03-18T22:16:53Z",
+          "tree_id": "d69292038effa381f49d7735bf6ddc00fad9d3fa",
+          "url": "https://github.com/trustification/trustify/commit/f52f95b0340d768e444711f138aa692af8f2b965"
+        },
+        "date": 1742337264946,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
