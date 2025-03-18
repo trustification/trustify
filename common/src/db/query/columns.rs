@@ -175,26 +175,30 @@ impl Columns {
                          if name.to_string().eq_ignore_ascii_case(tgt))
             }
         }
-        self.columns
-            .iter()
-            .find(name_match(field))
-            .map(|(r, d)| (Expr::col(r.clone()), d.clone()))
-            .or_else(|| {
-                self.columns
-                    .iter()
-                    .filter(|(_, ty)| matches!(ty, ColumnType::Json | ColumnType::JsonBinary))
-                    .find(name_match(self.json_keys.get(field)?))
-                    .map(|(r, ty)| {
-                        (
-                            Expr::expr(Expr::col(r.clone()).cast_json_field(field)),
-                            ty.clone(),
-                        )
-                    })
-            })
-            .or_else(|| self.exprs.get(field).cloned())
-            .ok_or(Error::SearchSyntax(format!(
-                "Invalid field name: '{field}'"
-            )))
+        if let Some(v) = self.exprs.get(field) {
+            // expressions take precedence over matching column names, if any
+            Ok(v.clone())
+        } else {
+            self.columns
+                .iter()
+                .find(name_match(field))
+                .map(|(r, d)| (Expr::col(r.clone()), d.clone()))
+                .or_else(|| {
+                    self.columns
+                        .iter()
+                        .filter(|(_, ty)| matches!(ty, ColumnType::Json | ColumnType::JsonBinary))
+                        .find(name_match(self.json_keys.get(field)?))
+                        .map(|(r, ty)| {
+                            (
+                                Expr::expr(Expr::col(r.clone()).cast_json_field(field)),
+                                ty.clone(),
+                            )
+                        })
+                })
+                .ok_or(Error::SearchSyntax(format!(
+                    "Invalid field name: '{field}'"
+                )))
+        }
     }
 
     pub(crate) fn translate(&self, field: &str, op: &str, value: &str) -> Option<String> {
