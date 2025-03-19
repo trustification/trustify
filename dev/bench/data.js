@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742337265753,
+  "lastUpdate": 1742345851402,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6814,6 +6814,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "cd9ce84980732d7b5ecebc33815cc1b18f3c868c",
+          "message": "feat: allow purl's to be included in purl queries\n\nSeems kinda obvious in hindsight, huh?",
+          "timestamp": "2025-03-19T00:38:22Z",
+          "tree_id": "7ac6dcf0618ddbbc11ed6b188225ca9944bcd32c",
+          "url": "https://github.com/trustification/trustify/commit/cd9ce84980732d7b5ecebc33815cc1b18f3c868c"
+        },
+        "date": 1742345849996,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
