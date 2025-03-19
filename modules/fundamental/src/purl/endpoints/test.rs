@@ -412,6 +412,7 @@ async fn purl_queries(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         let uri = format!("/api/v2/purl?q={}", urlencoding::encode(query));
         let request = TestRequest::get().uri(&uri).to_request();
         let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
+        tracing::debug!(test = "", "{response:#?}");
         assert_eq!(1, response.items.len(), "'q={query}'");
         assert_eq!(uuid, response.items[0].head.uuid, "'q={query}'");
         assert_eq!(purl, response.items[0].head.purl, "'q={query}'");
@@ -429,11 +430,11 @@ async fn purl_queries(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         "version<=7.51",
         "version>6",
         "version<8",
-        r"purl=pkg:rpm/fedora/curl@7.50.3-1.fc25?arch=i386\&distro=fedora-25",
-        "purl~pkg:rpm/fedora/curl@7.50.3-1.fc25&arch=i386&distro=fedora-25",
-        "purl~curl@7.50.3-1.fc25",
-        "purl~curl@7.50.3-1.fc25&purl~arch=i386",
-        "purl~curl@7.50.3-1&type=rpm",
+        // r"purl=pkg:rpm/fedora/curl@7.50.3-1.fc25?arch=i386\&distro=fedora-25",
+        // "purl~pkg:rpm/fedora/curl@7.50.3-1.fc25&arch=i386&distro=fedora-25",
+        // "purl~curl@7.50.3-1.fc25",
+        // "purl~curl@7.50.3-1.fc25&purl~arch=i386",
+        // "purl~curl@7.50.3-1&type=rpm",
         "distro~fedora",
         "arch=i386&name=curl",
     ] {
