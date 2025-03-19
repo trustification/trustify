@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742396192399,
+  "lastUpdate": 1742400838839,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6867,6 +6867,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/2d3fd5881c43b612ee0b27701b5d838fe76f2d2f"
         },
         "date": 1742396191362,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "5e1075324e8821c8a636725c7da004127882cd2f",
+          "message": "account for null namespace when textifying a qualified purl\n\nfixes #1440",
+          "timestamp": "2025-03-19T15:50:53Z",
+          "tree_id": "b86e8ab00076fb48ee6f380cc04ba56650322ef6",
+          "url": "https://github.com/trustification/trustify/commit/5e1075324e8821c8a636725c7da004127882cd2f"
+        },
+        "date": 1742400837919,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
