@@ -8,10 +8,10 @@ use crate::{
     },
 };
 use sea_orm::{
-    ColumnTrait, ColumnType, ConnectionTrait, EntityTrait, FromQueryResult, IntoIdentity,
-    QueryFilter, QueryOrder, QuerySelect, prelude::Uuid,
+    ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
+    QuerySelect, prelude::Uuid,
 };
-use sea_query::{Expr, Func, Order, SimpleExpr};
+use sea_query::Order;
 use std::{collections::HashMap, fmt::Debug, str::FromStr};
 use tracing::instrument;
 use trustify_common::{
@@ -344,6 +344,8 @@ impl PurlService {
         paginated: Paginated,
         connection: &C,
     ) -> Result<PaginatedResults<PurlSummary>, Error> {
+        // use sea_orm::{ColumnType, IntoIdentity};
+        // use sea_query::{Expr, Func, SimpleExpr};
         let limiter = qualified_purl::Entity::find()
             .filtering_with(
                 query,
@@ -354,15 +356,15 @@ impl PurlService {
                     .translator(|f, op, v| match f {
                         "type" => Some(format!("ty{op}{v}")),
                         _ => None,
-                    })
-                    .add_expr(
-                        "purl",
-                        SimpleExpr::FunctionCall(
-                            Func::cust("get_purl".into_identity())
-                                .arg(Expr::col(qualified_purl::Column::Id)),
-                        ),
-                        ColumnType::Text,
-                    ),
+                    }),
+                // .add_expr(
+                //     "purl",
+                //     SimpleExpr::FunctionCall(
+                //         Func::cust("get_purl".into_identity())
+                //             .arg(Expr::col(qualified_purl::Column::Id)),
+                //     ),
+                //     ColumnType::Text,
+                // ),
             )?
             .limiting(connection, paginated.offset, paginated.limit);
 
