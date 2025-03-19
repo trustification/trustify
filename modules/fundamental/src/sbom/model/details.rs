@@ -349,7 +349,7 @@ impl SbomAdvisory {
                 id: each.sbom_package.node_id.clone(),
                 name: each.sbom_node.name.clone(),
                 version: each.sbom_package.version.clone(),
-                purl: vec![PurlSummary::from_entity(&each.qualified_purl)],
+                purl: vec![PurlSummary::from_entity(&each.qualified_purl)?],
                 cpe: vec![],
             });
         }

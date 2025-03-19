@@ -40,10 +40,7 @@ pub struct Purl {
 
 impl Valuable for Purl {
     fn like(&self, pat: &str) -> bool {
-        match urlencoding::decode(pat) {
-            Ok(s) => self.to_string().contains(&s.into_owned()),
-            _ => false,
-        }
+        self.to_string().contains(pat)
     }
 }
 impl PartialOrd<String> for Purl {

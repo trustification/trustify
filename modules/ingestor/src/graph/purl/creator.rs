@@ -42,7 +42,7 @@ impl PurlCreator {
         let mut qualifieds = BTreeMap::new();
 
         for purl in self.purls {
-            let cp = purl.clone().into();
+            let cp = purl.to_string();
             let (package, version, qualified) = purl.uuids();
             packages
                 .entry(package)

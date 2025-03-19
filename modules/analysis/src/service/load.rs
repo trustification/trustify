@@ -12,11 +12,10 @@ use ::cpe::{
 use anyhow::anyhow;
 use petgraph::{Graph, prelude::NodeIndex};
 use sea_orm::{
-    ColumnTrait, ColumnType, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
-    FromQueryResult, IntoIdentity, QueryFilter, QueryOrder, QuerySelect, QueryTrait, RelationTrait,
-    Statement,
+    ColumnTrait, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
+    FromQueryResult, QueryFilter, QueryOrder, QuerySelect, QueryTrait, RelationTrait, Statement,
 };
-use sea_query::{Expr, Func, JoinType, Order, SelectStatement, SimpleExpr};
+use sea_query::{JoinType, Order, SelectStatement};
 use serde_json::Value;
 use std::str::FromStr;
 use std::{
@@ -26,6 +25,7 @@ use std::{
 use tracing::{Level, instrument};
 use trustify_common::db::query::IntoColumns;
 use trustify_common::{cpe::Cpe as TrustifyCpe, db::query::Filtering, purl::Purl};
+use trustify_entity::qualified_purl;
 use trustify_entity::{
     cpe, cpe::CpeDto, package_relates_to_package, relationship::Relationship, sbom,
     sbom_external_node, sbom_external_node::ExternalType, sbom_node, sbom_package,
@@ -104,9 +104,11 @@ purl_ref AS (
     SELECT
         sbom_id,
         node_id,
-        array_agg(get_purl(qualified_purl_id)) AS purls
+        array_agg(qualified_purl.purl) AS purls
     FROM
         sbom_package_purl_ref
+    LEFT JOIN
+        qualified_purl ON (sbom_package_purl_ref.qualified_purl_id = qualified_purl.id)
     GROUP BY
         sbom_id,
         node_id
@@ -247,6 +249,10 @@ impl AnalysisService {
             GraphQuery::Query(query) => sbom_node::Entity::find()
                 .join(JoinType::Join, sbom_node::Relation::Package.def())
                 .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
+                .join(
+                    JoinType::LeftJoin,
+                    sbom_package_purl_ref::Relation::Purl.def(),
+                )
                 .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                 .join(
                     JoinType::LeftJoin,
@@ -259,6 +265,7 @@ impl AnalysisService {
                     sbom_node::Entity
                         .columns()
                         .add_columns(cpe::Entity.columns())
+                        .add_columns(qualified_purl::Entity.columns())
                         .translator(|f, op, v| {
                             match (f, op, OwnedUri::from_str(v)) {
                                 ("cpe", "=" | "~", Ok(cpe)) => {
@@ -288,15 +295,7 @@ impl AnalysisService {
                                 ("cpe", _, _) => Some("illegal operation for cpe".into()),
                                 _ => None,
                             }
-                        })
-                        .add_expr(
-                            "purl",
-                            SimpleExpr::FunctionCall(
-                                Func::cust("get_purl".into_identity())
-                                    .arg(Expr::col(sbom_package_purl_ref::Column::QualifiedPurlId)),
-                            ),
-                            ColumnType::Text,
-                        ),
+                        }),
                 )?
                 .distinct()
                 .into_query(),

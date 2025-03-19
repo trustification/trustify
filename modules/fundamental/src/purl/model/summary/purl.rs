@@ -1,6 +1,9 @@
-use crate::purl::model::{BasePurlHead, PurlHead, VersionedPurlHead};
+use crate::{
+    Error,
+    purl::model::{BasePurlHead, PurlHead, VersionedPurlHead},
+};
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, str::FromStr};
 use trustify_common::purl::Purl;
 use trustify_entity::qualified_purl;
 use utoipa::ToSchema;
@@ -44,11 +47,11 @@ impl From<Purl> for PurlSummary {
 }
 
 impl PurlSummary {
-    pub fn from_entities(qualified_packages: &[qualified_purl::Model]) -> Vec<Self> {
+    pub fn from_entities(qualified_packages: &[qualified_purl::Model]) -> Result<Vec<Self>, Error> {
         qualified_packages.iter().map(Self::from_entity).collect()
     }
 
-    pub fn from_entity(purl: &qualified_purl::Model) -> Self {
-        Purl::from(purl.purl.clone()).into()
+    pub fn from_entity(purl: &qualified_purl::Model) -> Result<Self, Error> {
+        Ok(Purl::from_str(&purl.purl)?.into())
     }
 }

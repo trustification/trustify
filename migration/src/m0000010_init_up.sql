@@ -622,46 +622,6 @@ $$;
 
 
 --
--- Name: get_purl(uuid); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.get_purl(qualified_purl_id uuid) RETURNS text
-    LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE
-    AS $$
-DECLARE
-result TEXT;
-BEGIN
-SELECT
-    COALESCE(
-            'pkg:' || bp.type ||
-            replace(('/' || COALESCE(bp.namespace, '') || '/'), '//', '/') ||
-            bp.name ||
-            '@' || vp.version ||
-            CASE
-                WHEN qp.qualifiers IS NOT NULL AND qp.qualifiers <> '{}'::jsonb THEN
-                    '?' || (
-                        SELECT string_agg(key || '=' || encode_uri_component(value), '&')
-                        FROM jsonb_each_text(qp.qualifiers)
-                    )
-                ELSE
-                    ''
-                END,
-            qualified_purl_id::text
-    )
-INTO result
-FROM
-    qualified_purl qp
-        LEFT JOIN versioned_purl vp ON vp.id = qp.versioned_purl_id
-        LEFT JOIN base_purl bp ON bp.id = vp.base_purl_id
-WHERE
-    qp.id = qualified_purl_id;
-
-RETURN result;
-END;
-$$;
-
-
---
 -- Name: gitver_version_matches(text, public.version_range); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1870,7 +1830,7 @@ CREATE TABLE public.qualified_purl (
     "timestamp" timestamp with time zone DEFAULT now(),
     versioned_purl_id uuid NOT NULL,
     qualifiers jsonb NOT NULL,
-    purl jsonb
+    purl character varying
 );
 
 
@@ -3489,75 +3449,6 @@ CREATE INDEX qualified_purl_id_idx ON public.qualified_purl USING btree (id);
 
 
 --
--- Name: qualifiedpurlnamejsongistidx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX qualifiedpurlnamejsongistidx ON public.qualified_purl USING gist (((purl ->> 'name'::text)) public.gist_trgm_ops);
-
-
---
--- Name: qualifiedpurlnamespacejsongistidx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX qualifiedpurlnamespacejsongistidx ON public.qualified_purl USING gist (((purl ->> 'namespace'::text)) public.gist_trgm_ops);
-
-
---
--- Name: qualifiedpurlpurlnamejsonginidx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX qualifiedpurlpurlnamejsonginidx ON public.qualified_purl USING gin (((purl ->> 'name'::text)) public.gin_trgm_ops);
-
-
---
--- Name: qualifiedpurlpurlnamejsonsortidx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX qualifiedpurlpurlnamejsonsortidx ON public.qualified_purl USING btree (((purl ->> 'name'::text)));
-
-
---
--- Name: qualifiedpurlpurlnamespacejsonginidx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX qualifiedpurlpurlnamespacejsonginidx ON public.qualified_purl USING gin (((purl ->> 'namespace'::text)) public.gin_trgm_ops);
-
-
---
--- Name: qualifiedpurlpurlnamespacejsonsortidx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX qualifiedpurlpurlnamespacejsonsortidx ON public.qualified_purl USING btree (((purl ->> 'namespace'::text)));
-
-
---
--- Name: qualifiedpurlpurltyjsonginidx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX qualifiedpurlpurltyjsonginidx ON public.qualified_purl USING gin (((purl ->> 'ty'::text)) public.gin_trgm_ops);
-
-
---
--- Name: qualifiedpurlpurltyjsonsortidx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX qualifiedpurlpurltyjsonsortidx ON public.qualified_purl USING btree (((purl ->> 'ty'::text)));
-
-
---
--- Name: qualifiedpurlpurlversionjsonginidx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX qualifiedpurlpurlversionjsonginidx ON public.qualified_purl USING gin (((purl ->> 'version'::text)) public.gin_trgm_ops);
-
-
---
--- Name: qualifiedpurlpurlversionjsonsortidx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX qualifiedpurlpurlversionjsonsortidx ON public.qualified_purl USING btree (((purl ->> 'version'::text)));
-
-
 --
 -- Name: qualifiedpurlqualifierarchjsonginidx; Type: INDEX; Schema: public; Owner: -
 --
@@ -3591,20 +3482,6 @@ CREATE INDEX qualifiedpurlqualifierdistrojsonsortidx ON public.qualified_purl US
 --
 
 CREATE INDEX qualifiedpurlqualifierrepositoryurljsonginidx ON public.qualified_purl USING gin (((qualifiers ->> 'repository_url'::text)) public.gin_trgm_ops);
-
-
---
--- Name: qualifiedpurltypejsongistidx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX qualifiedpurltypejsongistidx ON public.qualified_purl USING gist (((purl ->> 'ty'::text)) public.gist_trgm_ops);
-
-
---
--- Name: qualifiedpurlversionjsongistidx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX qualifiedpurlversionjsongistidx ON public.qualified_purl USING gist (((purl ->> 'version'::text)) public.gist_trgm_ops);
 
 
 --

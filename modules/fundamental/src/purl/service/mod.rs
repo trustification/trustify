@@ -24,7 +24,7 @@ use trustify_common::{
 };
 use trustify_entity::{
     base_purl,
-    qualified_purl::{self, CanonicalPurl},
+    qualified_purl::{self},
     versioned_purl,
 };
 use trustify_module_ingestor::common::Deprecation;
@@ -277,10 +277,7 @@ impl PurlService {
         if purls.is_empty() {
             return Ok(Default::default());
         }
-        let canonical: Vec<CanonicalPurl> = purls
-            .iter()
-            .map(|purl| CanonicalPurl::from(purl.clone()))
-            .collect();
+        let canonical: Vec<String> = purls.iter().map(Purl::to_string).collect();
 
         let items = qualified_purl::Entity::find()
             .filter(qualified_purl::Column::Purl.is_in(canonical))
@@ -344,34 +341,24 @@ impl PurlService {
         paginated: Paginated,
         connection: &C,
     ) -> Result<PaginatedResults<PurlSummary>, Error> {
-        // use sea_orm::{ColumnType, IntoIdentity};
-        // use sea_query::{Expr, Func, SimpleExpr};
         let limiter = qualified_purl::Entity::find()
             .filtering_with(
                 query,
                 qualified_purl::Entity
                     .columns()
-                    .json_keys("purl", &["ty", "namespace", "name", "version"])
                     .json_keys("qualifiers", &["arch", "distro", "repository_url"])
-                    .translator(|f, op, v| match f {
-                        "type" => Some(format!("ty{op}{v}")),
+                    .translator(|f, op, v| match (f, op, v) {
+                        ("type", "=", v) => Some(format!("purl~pkg:{v}/")),
+                        ("type", op, "") => Some(format!("purl:{op}")), // sorting
                         _ => None,
                     }),
-                // .add_expr(
-                //     "purl",
-                //     SimpleExpr::FunctionCall(
-                //         Func::cust("get_purl".into_identity())
-                //             .arg(Expr::col(qualified_purl::Column::Id)),
-                //     ),
-                //     ColumnType::Text,
-                // ),
             )?
             .limiting(connection, paginated.offset, paginated.limit);
 
         let total = limiter.total().await?;
 
         Ok(PaginatedResults {
-            items: PurlSummary::from_entities(&limiter.fetch().await?),
+            items: PurlSummary::from_entities(&limiter.fetch().await?)?,
             total,
         })
     }

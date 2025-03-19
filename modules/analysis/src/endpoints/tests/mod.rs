@@ -400,8 +400,7 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
     let app = caller(ctx).await?;
 
     for each in [
-        "purl=pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?type=pom\\&repository_url=https%3a%2f%2fmaven.repository.redhat.com%2fga%2f",
-        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl~type=pom&purl~repository_url=https%3A%2F%2Fmaven.repository.redhat.com%2Fga%2F",
+        r"purl=pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/\&type=pom",
         "purl~quarkus-bom",
         "cpe=cpe:/a:redhat:quarkus:3.2::el8",
         "cpe~cpe:/a:redhat:quarkus:3.2::el8",

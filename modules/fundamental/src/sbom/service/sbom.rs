@@ -13,7 +13,7 @@ use sea_orm::{
 };
 use sea_query::{Expr, JoinType, extension::postgres::PgExpr};
 use serde_json::Value;
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, str::FromStr};
 use tracing::instrument;
 use trustify_common::purl::Purl;
 use trustify_common::{
@@ -31,7 +31,7 @@ use trustify_entity::{
     cpe::{self, CpeDto},
     labels::Labels,
     organization, package_relates_to_package,
-    qualified_purl::{self, CanonicalPurl},
+    qualified_purl::{self},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
     sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, source_document, status,
@@ -534,7 +534,7 @@ struct PackageCatcher {
     id: String,
     name: String,
     version: Option<String>,
-    purls: Vec<Value>,
+    purls: Vec<String>,
     cpes: Value,
     relationship: Option<Relationship>,
 }
@@ -543,15 +543,9 @@ struct PackageCatcher {
 fn package_from_row(row: PackageCatcher) -> SbomPackage {
     let purl = row
         .purls
-        .into_iter()
-        .flat_map(|purl| {
-            serde_json::from_value::<CanonicalPurl>(purl.clone())
-                .inspect_err(|err| {
-                    log::warn!("Failed to deserialize PURL: {err}");
-                })
-                .ok()
-        })
-        .map(|purl| Purl::from(purl).into())
+        .iter()
+        .flat_map(|purl| Purl::from_str(purl).ok())
+        .map(|purl| purl.into())
         .collect();
 
     let cpe = row
