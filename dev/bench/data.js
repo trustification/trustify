@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742345851402,
+  "lastUpdate": 1742396192399,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6838,6 +6838,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/cd9ce84980732d7b5ecebc33815cc1b18f3c868c"
         },
         "date": 1742345849996,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "2d3fd5881c43b612ee0b27701b5d838fe76f2d2f",
+          "message": "reverting the query-purl-by-purl feature to test perf impact",
+          "timestamp": "2025-03-19T14:13:43Z",
+          "tree_id": "21a5e183e295df2aa4c6a1861e716c91eaecdbdd",
+          "url": "https://github.com/trustification/trustify/commit/2d3fd5881c43b612ee0b27701b5d838fe76f2d2f"
+        },
+        "date": 1742396191362,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
