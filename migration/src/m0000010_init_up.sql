@@ -634,7 +634,7 @@ BEGIN
 SELECT
     COALESCE(
             'pkg:' || bp.type ||
-            replace(('/' || COALESCE(bp.namespace, '') || '/'), '//', '/') ||
+            '/' || COALESCE(bp.namespace, '') || '/' ||
             bp.name ||
             '@' || vp.version ||
             CASE
