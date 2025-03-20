@@ -137,51 +137,100 @@ async fn resolve_external_sbom<C: ConnectionTrait>(
             // which is used on sbom_node_checksum to lookup related value then
             // perform another lookup on sbom_node_checksum (matching by value) to find resultant
             // sbom_id/node_id
-            let sbom_external_node_ref = sbom_external_node.external_node_ref;
+            resolve_rh_external_sbom_descendants(sbom_external_node.external_node_ref, connection)
+                .await
+        }
+    }
+}
 
+async fn resolve_rh_external_sbom_descendants<C: ConnectionTrait>(
+    sbom_external_node_ref: String,
+    connection: &C,
+) -> Option<ResolvedSbom> {
+    // find checksum value for the node
+    match sbom_node_checksum::Entity::find()
+        .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.clone()))
+        .one(connection)
+        .await
+    {
+        Ok(Some(entity)) => {
+            // now find if there are any other other nodes with the same checksums
             match sbom_node_checksum::Entity::find()
-                .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.to_string()))
+                .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
                 .one(connection)
                 .await
             {
-                Ok(Some(entity)) => {
-                    match sbom_node_checksum::Entity::find()
-                        .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
-                        .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                Ok(Some(matched)) => Some(ResolvedSbom {
+                    sbom_id: matched.sbom_id,
+                    node_id: matched.node_id,
+                }),
+                _ => None,
+            }
+        }
+        _ => {
+            // Now handle imageindex>imagevariant specially
+            // TODO: remove this once data changes https://github.com/trustification/trustify/issues/1459
+            match sbom_package::Entity::find()
+                .filter(sbom_package::Column::NodeId.eq(sbom_external_node_ref.clone()))
+                .one(connection)
+                .await
+            {
+                Ok(Some(imagevariant)) => {
+                    match sbom_package::Entity::find()
+                        .filter(sbom_package::Column::Version.eq(imagevariant.version))
+                        .filter(sbom_package::Column::SbomId.ne(imagevariant.sbom_id))
                         .one(connection)
                         .await
                     {
-                        Ok(Some(matched)) => Some(ResolvedSbom {
-                            sbom_id: matched.sbom_id,
-                            node_id: matched.node_id,
+                        Ok(Some(matched_imagevariant)) => Some(ResolvedSbom {
+                            sbom_id: matched_imagevariant.sbom_id,
+                            node_id: matched_imagevariant.node_id,
                         }),
                         _ => None,
                     }
                 }
-                _ => {
-                    match sbom_package::Entity::find()
-                        .filter(sbom_package::Column::NodeId.eq(sbom_external_node_ref.clone()))
-                        .one(connection)
-                        .await
-                    {
-                        Ok(Some(imagevariant)) => {
-                            match sbom_package::Entity::find()
-                                .filter(sbom_package::Column::SbomId.ne(imagevariant.sbom_id))
-                                .filter(sbom_package::Column::Version.eq(imagevariant.version))
-                                .one(connection)
-                                .await
-                            {
-                                Ok(Some(matched_imagevariant)) => Some(ResolvedSbom {
-                                    sbom_id: matched_imagevariant.sbom_id,
-                                    node_id: matched_imagevariant.node_id,
-                                }),
-                                _ => None,
-                            }
-                        }
-                        _ => None,
-                    }
-                }
+                _ => None,
             }
+        }
+    }
+}
+
+async fn resolve_rh_external_sbom_ancestors<C: ConnectionTrait>(
+    sbom_external_node_ref: String,
+    connection: &C,
+) -> Vec<ResolvedSbom> {
+    // find related checksum value(s) for the node, because any single component can be referred to by multiple
+    // sboms, this function returns a Vec<ResolvedSbom>.
+    match sbom_node_checksum::Entity::find()
+        .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.clone()))
+        .one(connection)
+        .await
+    {
+        Ok(Some(entity)) => {
+            // now find if there are any other other nodes with the same checksums
+            match sbom_node_checksum::Entity::find()
+                .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
+                .all(connection)
+                .await
+            {
+                Ok(matches) => {
+                    let mut resolved_sboms: Vec<ResolvedSbom> = vec![];
+                    for matched in matches {
+                        resolved_sboms.push(ResolvedSbom {
+                            sbom_id: matched.sbom_id,
+                            node_id: matched.node_id,
+                        })
+                    }
+                    resolved_sboms
+                }
+
+                _ => vec![],
+            }
+        }
+        _ => {
+            vec![]
         }
     }
 }
