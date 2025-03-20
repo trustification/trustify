@@ -123,20 +123,13 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
         }
         match self.graph.node_weight(self.node) {
             Some(graph::Node::External(external_node)) => {
-                // collect external sbom ref
-
+                // we know this is an external node, so retrieve external sbom descendant nodes
                 let ResolvedSbom {
                     sbom_id: external_sbom_id,
                     node_id: external_node_id,
                 } = resolve_external_sbom(external_node.node_id.clone(), self.connection).await?;
 
-                log::debug!(
-                    "external sbom id: {:?} node_id {:?}",
-                    external_sbom_id,
-                    external_node_id
-                );
-
-                // get external sbom graph from graph_cache
+                // retrieve external sbom graph from graph_cache
                 let Some(external_graph) = self.graph_cache.get(&external_sbom_id.to_string())
                 else {
                     log::warn!(
@@ -145,8 +138,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                     );
                     return None;
                 };
-                // now that we have the graph, find the external node reference in that graph
-                // so we have a starting point.
+                // find the node in retrieved external graph
                 let Some(external_node_index) = external_graph
                     .node_indices()
                     .find(|&node| external_graph[node].node_id.eq(&external_node_id))
@@ -157,10 +149,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                     );
                     return None;
                 };
-
-                log::debug!("external node index: {:?}", external_node_index);
-                log::debug!("external graph {:?}", external_graph);
-
+                // recurse into those descendent nodes
                 Some(
                     self.with(external_graph.as_ref(), external_node_index)
                         .collect_graph()
@@ -168,65 +157,66 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                 )
             }
             Some(graph::Node::Package(current_node)) => {
-                let current_sbom_id = &current_node.sbom_id;
+                // collect external sbom ancestor nodes
                 let current_node_id = &current_node.node_id;
-
-                log::debug!("current node node_id: {:?}", current_node_id);
-
-                // Attempt to find any sbom external nodes that refer to this node (eg. ancestor queries)
-                let find_sbom_external_nodes = sbom_external_node::Entity::find()
-                    .filter(sbom_external_node::Column::ExternalNodeRef.eq(current_node_id))
-                    .one(self.connection)
-                    .await;
                 let mut resolved_external_nodes: Vec<Node> = vec![];
-                match find_sbom_external_nodes {
-                    Ok(sbom_external_nodes) => {
-                        #[allow(for_loops_over_fallibles)]
-                        for sbom_external_node in sbom_external_nodes {
-                            // do not process if current node sbom_id is equal to external sbom
-                            if !current_sbom_id
-                                .clone()
-                                .to_string()
-                                .eq(&sbom_external_node.sbom_id.clone().to_string())
-                            {
-                                // get the external sbom graph
-                                let Some(external_graph) = self
-                                    .graph_cache
-                                    .clone()
-                                    .get(&sbom_external_node.sbom_id.to_string())
-                                else {
-                                    log::warn!(
-                                        "external sbom graph {:?} not found in graph cache.",
-                                        &sbom_external_node.sbom_id.to_string()
-                                    );
-                                    return None;
-                                };
-                                // find the node in external graph
-                                let Some(external_node_index) =
-                                    external_graph.node_indices().find(|&node| {
-                                        external_graph[node].node_id.eq(&sbom_external_node.node_id)
-                                    })
-                                else {
-                                    log::warn!(
-                                        "Node with ID {} not found in external sbom",
-                                        current_node_id
-                                    );
-                                    continue;
-                                };
-                                // collect external sbom nodes
-                                resolved_external_nodes.extend(
-                                    Box::pin(
-                                        self.clone()
-                                            .with(external_graph.as_ref(), external_node_index)
-                                            .collect_graph(),
-                                    )
-                                    .await,
+                let find_sbom_externals = resolve_rh_external_sbom_ancestors(
+                    current_node.node_id.clone().to_string(),
+                    self.connection,
+                )
+                .await;
+
+                for sbom_external_node in find_sbom_externals {
+                    // check this is a valid external relationship
+                    match sbom_external_node::Entity::find()
+                        .filter(
+                            sbom_external_node::Column::SbomId
+                                .eq(sbom_external_node.clone().sbom_id),
+                        )
+                        .filter(
+                            sbom_external_node::Column::ExternalNodeRef
+                                .eq(sbom_external_node.clone().node_id),
+                        )
+                        .one(self.connection)
+                        .await
+                    {
+                        Ok(Some(matched)) => {
+                            // get the external sbom graph
+                            let Some(external_graph) =
+                                self.graph_cache.clone().get(&matched.sbom_id.to_string())
+                            else {
+                                log::warn!(
+                                    "external sbom graph {:?} not found in graph cache.",
+                                    &matched.sbom_id.to_string()
                                 );
-                            }
+                                return None;
+                            };
+                            // find the node in retrieved external graph
+                            let Some(external_node_index) = external_graph
+                                .node_indices()
+                                .find(|&node| external_graph[node].node_id.eq(&matched.node_id))
+                            else {
+                                log::warn!(
+                                    "Node with ID {} not found in external sbom",
+                                    current_node_id
+                                );
+                                continue;
+                            };
+                            // recurse into those external sbom nodes and save
+                            resolved_external_nodes.extend(
+                                Box::pin(
+                                    self.clone()
+                                        .with(external_graph.as_ref(), external_node_index)
+                                        .collect_graph(),
+                                )
+                                .await,
+                            );
                         }
-                    }
-                    Err(err) => {
-                        log::warn!("failed to find sbom external nodes: {:?}", err);
+                        Err(_) => {
+                            log::warn!("Problem looking up sbom external node.");
+                            continue;
+                        }
+                        _ => continue,
                     }
                 }
 

@@ -95,12 +95,9 @@ async fn resolve_rh_variant_prod_comp_src_binary_spdx_external_reference_ancesto
     ctx.ingest_document("spdx/rh/product_component/openssl-3.0.7-18.el9_2.spdx.json")
         .await?;
 
-    let uri = format!(
-        "/api/v2/analysis/component/{}?ancestors=10",
-        urlencoding::encode("openssl-perl")
-    );
+    let uri = "/api/v2/analysis/component/openssl-perl?ancestors=10";
 
-    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let request: Request = TestRequest::get().uri(uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
     assert!(response.contains_subset(json!({
@@ -112,7 +109,7 @@ async fn resolve_rh_variant_prod_comp_src_binary_spdx_external_reference_ancesto
             "document_id": "https://www.redhat.com/openssl-3.0.7-18.el9_2.spdx.json",
             "ancestors":[
                 {
-                "node_id": "SPDXRef-openssl-3.0.7-18.el9-2",
+                "node_id": "SPDXRef-SRPM",
                 "name": "openssl",
                 "version": "3.0.7-18.el9_2",
                 "published": "2006-08-14 02:34:56+00",
@@ -133,7 +130,23 @@ async fn resolve_rh_variant_prod_comp_src_binary_spdx_external_reference_ancesto
                     },
                     {
                     "node_id": "SPDXRef-openssl-3.0.7-18.el9-2",
-                    "cpe": [],
+                    "purl": [
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-aarch64-baseos-eus-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-s390x-baseos-eus-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-ppc64le-baseos-eus-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-i686-baseos-eus-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-x86_64-baseos-eus-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-aarch64-baseos-aus-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-s390x-baseos-aus-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-ppc64le-baseos-aus-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-i686-baseos-aus-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-x86_64-baseos-aus-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-aarch64-baseos-e4s-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-s390x-baseos-e4s-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-ppc64le-baseos-e4s-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-i686-baseos-e4s-source-rpms",
+                        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-x86_64-baseos-e4s-source-rpms"
+                    ],
                     "name": "openssl",
                     "version": "3.0.7-18.el9_2",
                     "published": "2006-08-14 02:34:56+00",
@@ -141,14 +154,6 @@ async fn resolve_rh_variant_prod_comp_src_binary_spdx_external_reference_ancesto
                     "product_name": "Red Hat Enterprise Linux",
                     "product_version": "9.2 EUS",
                     "relationship": "package",
-                    "ancestors":[{
-                        "node_id": "SPDXRef-RHEL-9.2-EUS",
-                        "document_id": "https://www.redhat.com/rhel-9.2-eus.spdx.json",
-                        "product_name": "Red Hat Enterprise Linux",
-                        "product_version": "9.2 EUS",
-                        "relationship": "package",
-                    }]
-
                     }]
                 }]
             }]
@@ -221,6 +226,67 @@ async fn resolve_rh_variant_prod_comp_cdx_external_reference(
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+#[ignore = "wait for data change"]
+async fn resolve_rh_variant_prod_comp_product_b_cdx_external_reference(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    // make sure when multiple products refer to the same component
+    // that both descendant and ancestors work properly
+
+    let app = caller(ctx).await?;
+
+    let _load = ctx
+        .ingest_documents([
+            "cyclonedx/rh/product_component/openssl-3.0.7-18.el9_2.cdx.json",
+            "cyclonedx/rh/product_component/rhel-9.2-eus.cdx.json",
+            "cyclonedx/rh/product_component/product-b.cdx.json",
+        ])
+        .await?;
+
+    let uri = format!(
+        "/api/v2/analysis/component/{}?descendants=10",
+        urlencoding::encode("cpe:/a:redhat:rhel_eus:9.2::appstream")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+
+    assert!(response.contains_subset(json!({
+      "items": [
+        {
+          "node_id": "Red Hat Enterprise Linux 9.2 EUS",
+          "document_id": "urn:uuid:337d9115-4e7c-4e76-b389-51f7aed6eba8/1",
+          "name": "Red Hat Enterprise Linux",
+          "descendants": [
+            {
+              "node_id": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
+              "name": "openssl",
+              "document_id": "urn:uuid:337d9115-4e7c-4e76-b389-51f7aed6eba8/1",
+              "product_name": "Red Hat Enterprise Linux",
+              "product_version": "9.2 EUS",
+              "relationship": "generates",
+              "descendants": [
+                {
+                    "node_id": "Red Hat Enterprise Linux 9.2 EUS:pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
+                    "document_id": "urn:uuid:337d9115-4e7c-4e76-b389-51f7aed6eba8/1",
+                    "relationship": "package",
+                    "descendants": [{
+                        "node_id": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=s390x",
+                        "name": "openssl-perl",
+                        "document_id": "urn:uuid:223234df-bb5b-49af-a896-143736f7d806/1"
+                    }]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    })));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
 async fn resolve_rh_variant_prod_comp_cdx_external_reference_ancestors(
     ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
@@ -240,8 +306,6 @@ async fn resolve_rh_variant_prod_comp_cdx_external_reference_ancestors(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-
-    log::debug!("test result {:?}", response);
 
     assert!(response.contains_subset(json!({
       "items": [
