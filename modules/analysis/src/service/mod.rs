@@ -137,50 +137,63 @@ async fn resolve_external_sbom<C: ConnectionTrait>(
             // which is used on sbom_node_checksum to lookup related value then
             // perform another lookup on sbom_node_checksum (matching by value) to find resultant
             // sbom_id/node_id
-            let sbom_external_node_ref = sbom_external_node.external_node_ref;
+            resolve_rh_external_sbom(
+                sbom_external_node.sbom_id.to_string(),
+                sbom_external_node.external_node_ref,
+                connection,
+            )
+            .await
+        }
+    }
+}
 
+async fn resolve_rh_external_sbom<C: ConnectionTrait>(
+    sbom_external_sbom_id: String,
+    sbom_external_node_ref: String,
+    connection: &C,
+) -> Option<ResolvedSbom> {
+    match sbom_node_checksum::Entity::find()
+        .filter(sbom_node_checksum::Column::SbomId.ne(sbom_external_sbom_id))
+        .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.to_string()))
+        .one(connection)
+        .await
+    {
+        Ok(Some(entity)) => {
             match sbom_node_checksum::Entity::find()
-                .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.to_string()))
+                .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
+                .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
                 .one(connection)
                 .await
             {
-                Ok(Some(entity)) => {
-                    match sbom_node_checksum::Entity::find()
-                        .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
-                        .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                Ok(Some(matched)) => Some(ResolvedSbom {
+                    sbom_id: matched.sbom_id,
+                    node_id: matched.node_id,
+                }),
+                _ => None,
+            }
+        }
+        _ => {
+            // TODO: remove this once data changes
+            match sbom_package::Entity::find()
+                .filter(sbom_package::Column::NodeId.eq(sbom_external_node_ref.clone()))
+                .one(connection)
+                .await
+            {
+                Ok(Some(imagevariant)) => {
+                    match sbom_package::Entity::find()
+                        .filter(sbom_package::Column::SbomId.ne(imagevariant.sbom_id))
+                        .filter(sbom_package::Column::Version.eq(imagevariant.version))
                         .one(connection)
                         .await
                     {
-                        Ok(Some(matched)) => Some(ResolvedSbom {
-                            sbom_id: matched.sbom_id,
-                            node_id: matched.node_id,
+                        Ok(Some(matched_imagevariant)) => Some(ResolvedSbom {
+                            sbom_id: matched_imagevariant.sbom_id,
+                            node_id: matched_imagevariant.node_id,
                         }),
                         _ => None,
                     }
                 }
-                _ => {
-                    match sbom_package::Entity::find()
-                        .filter(sbom_package::Column::NodeId.eq(sbom_external_node_ref.clone()))
-                        .one(connection)
-                        .await
-                    {
-                        Ok(Some(imagevariant)) => {
-                            match sbom_package::Entity::find()
-                                .filter(sbom_package::Column::SbomId.ne(imagevariant.sbom_id))
-                                .filter(sbom_package::Column::Version.eq(imagevariant.version))
-                                .one(connection)
-                                .await
-                            {
-                                Ok(Some(matched_imagevariant)) => Some(ResolvedSbom {
-                                    sbom_id: matched_imagevariant.sbom_id,
-                                    node_id: matched_imagevariant.node_id,
-                                }),
-                                _ => None,
-                            }
-                        }
-                        _ => None,
-                    }
-                }
+                _ => None,
             }
         }
     }
