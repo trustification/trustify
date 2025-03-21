@@ -8,6 +8,7 @@ use async_graphql::SimpleObject;
 use sea_orm::{ConnectionTrait, ModelTrait, PaginatorTrait, prelude::Uuid};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
+use tracing::instrument;
 use trustify_common::{cpe::Cpe, model::Paginated, purl::Purl};
 use trustify_entity::{
     labels::Labels, relationship::Relationship, sbom, sbom_node, sbom_package, source_document,
@@ -70,6 +71,7 @@ pub struct SbomSummary {
 }
 
 impl SbomSummary {
+    #[instrument(skip(service, db), err(level=tracing::Level::INFO))]
     pub async fn from_entity<C: ConnectionTrait>(
         (sbom, node): (sbom::Model, Option<sbom_node::Model>),
         service: &SbomService,
@@ -86,11 +88,7 @@ impl SbomSummary {
         Ok(match node {
             Some(_) => Some(SbomSummary {
                 head: SbomHead::from_entity(&sbom, node, db).await?,
-                source_document: if let Some(doc) = &source_document {
-                    Some(SourceDocument::from_entity(doc).await?)
-                } else {
-                    None
-                },
+                source_document: source_document.as_ref().map(SourceDocument::from_entity),
                 described_by,
             }),
             None => None,

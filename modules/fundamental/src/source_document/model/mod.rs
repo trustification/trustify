@@ -1,4 +1,3 @@
-use crate::Error;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use time::OffsetDateTime;
@@ -19,14 +18,14 @@ pub struct SourceDocument {
 }
 
 impl SourceDocument {
-    pub async fn from_entity(source_document: &source_document::Model) -> Result<Self, Error> {
-        Ok(Self {
+    pub fn from_entity(source_document: &source_document::Model) -> Self {
+        Self {
             sha256: format!("sha256:{}", source_document.sha256),
             sha384: format!("sha384:{}", source_document.sha384),
             sha512: format!("sha512:{}", source_document.sha512),
             size: source_document.size as u64,
             ingested: source_document.ingested,
-        })
+        }
     }
 }
 

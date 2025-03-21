@@ -10,14 +10,15 @@ use crate::{
     vulnerability::model::VulnerabilityHead,
 };
 use cpe::{cpe::Cpe, uri::OwnedUri};
+use futures_util::{Stream, pin_mut, stream::StreamExt};
 use sea_orm::{
-    Condition, ConnectionTrait, DbBackend, FromQueryResult, JoinType, ModelTrait, QueryFilter,
-    QueryResult, QuerySelect, RelationTrait, Statement,
+    Condition, ConnectionTrait, DbBackend, DbErr, FromQueryResult, JoinType, ModelTrait,
+    QueryFilter, QuerySelect, RelationTrait, Statement, StreamTrait,
 };
-use sea_query::Query;
-use sea_query::{Asterisk, Expr, Func, SimpleExpr};
+use sea_query::{Asterisk, Expr, Func, Query, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::instrument;
 use trustify_common::{
     cpe::CpeCompare,
     db::{VersionMatches, multi_model::SelectIntoMultiModel},
@@ -41,12 +42,21 @@ pub struct SbomDetails {
 
 impl SbomDetails {
     /// turn an (sbom, sbom_node) row into an [`SbomDetails`], if possible
-    pub async fn from_entity<C: ConnectionTrait>(
+    #[instrument(skip(service, tx), err(level=tracing::Level::INFO))]
+    pub async fn from_entity<C>(
         (sbom, node): (sbom::Model, Option<sbom_node::Model>),
         service: &SbomService,
         tx: &C,
         statuses: Vec<String>,
-    ) -> Result<Option<SbomDetails>, Error> {
+    ) -> Result<Option<SbomDetails>, Error>
+    where
+        C: ConnectionTrait + StreamTrait,
+    {
+        let summary = match SbomSummary::from_entity((sbom.clone(), node), service, tx).await? {
+            Some(summary) => summary,
+            None => return Ok(None),
+        };
+
         let mut query = sbom
             .find_related(sbom_package::Entity)
             .join(JoinType::Join, sbom_package::Relation::Node.def())
@@ -85,7 +95,7 @@ impl SbomDetails {
                 ),
         );
 
-        let mut relevant_advisory_info = query
+        let relevant_advisory_info = query
             .join(
                 JoinType::LeftJoin,
                 purl_status::Relation::VersionRange.def(),
@@ -111,8 +121,10 @@ impl SbomDetails {
             )
             .select_only()
             .try_into_multi_model::<QueryCatcher>()?
-            .all(tx)
+            .stream(tx)
             .await?;
+
+        log::info!("Result: {:?}", relevant_advisory_info.size_hint());
 
         // The query for now is in the raw form for couple of reasons
         // First some of the join are not easily (or at all) doable using sea-orm concepts
@@ -205,35 +217,27 @@ impl SbomDetails {
             AND ($2::text[] = ARRAY[]::text[] OR "status"."slug" = ANY($2::text[]))
             "#;
 
-        let result: Vec<QueryResult> = tx
-            .query_all(Statement::from_sql_and_values(
+        let result = tx
+            .stream(Statement::from_sql_and_values(
                 DbBackend::Postgres,
                 product_advisory_info,
                 [sbom.sbom_id.into(), statuses.into()],
             ))
-            .await?;
+            .await?
+            .map(|row| match row {
+                Ok(row) => QueryCatcher::from_query_result(&row, ""),
+                Err(err) => Err(err),
+            });
 
-        relevant_advisory_info.extend(
-            result
-                .iter()
-                .map(|row| QueryCatcher::from_query_result(row, ""))
-                .collect::<Result<Vec<_>, _>>()?,
-        );
+        let relevant_advisory_info = relevant_advisory_info.chain(result);
 
-        let summary = SbomSummary::from_entity((sbom, node), service, tx).await?;
+        let advisories =
+            SbomAdvisory::from_models(&summary.described_by, relevant_advisory_info, tx).await?;
 
-        Ok(match summary {
-            Some(summary) => Some(SbomDetails {
-                summary: summary.clone(),
-                advisories: SbomAdvisory::from_models(
-                    &summary.described_by,
-                    &relevant_advisory_info,
-                    tx,
-                )
-                .await?,
-            }),
-            None => None,
-        })
+        Ok(Some(SbomDetails {
+            summary,
+            advisories,
+        }))
     }
 }
 
@@ -245,11 +249,19 @@ pub struct SbomAdvisory {
 }
 
 impl SbomAdvisory {
+    #[instrument(skip_all, err(level=tracing::Level::INFO))]
     pub async fn from_models<C: ConnectionTrait>(
         described_by: &[SbomPackage],
-        statuses: &[QueryCatcher],
+        // statuses: &[QueryCatcher],
+        statuses: impl Stream<Item = Result<QueryCatcher, DbErr>>,
         tx: &C,
     ) -> Result<Vec<Self>, Error> {
+        log::info!(
+            "Packages: {}, Statuses: {:?}",
+            described_by.len(),
+            statuses.size_hint()
+        );
+
         let mut advisories = HashMap::new();
 
         let sbom_cpes = described_by
@@ -263,7 +275,11 @@ impl SbomAdvisory {
             })
             .collect::<Vec<_>>();
 
-        'status: for each in statuses {
+        log::info!("CPEs: {}", sbom_cpes.len());
+
+        pin_mut!(statuses);
+
+        'status: while let Some(each) = statuses.next().await.transpose()? {
             let status_cpe = if let Some(status_cpe) = &each.context_cpe {
                 let status_cpe: Result<OwnedUri, _> = status_cpe.try_into();
                 if let Ok(status_cpe) = status_cpe {
@@ -331,7 +347,7 @@ impl SbomAdvisory {
                 let status = SbomStatus::new(
                     &each.advisory_vulnerability,
                     &each.vulnerability,
-                    each.status.slug.clone(),
+                    each.status.slug,
                     status_cpe,
                     vec![],
                     tx,
@@ -346,15 +362,31 @@ impl SbomAdvisory {
             };
 
             sbom_status.packages.push(SbomPackage {
-                id: each.sbom_package.node_id.clone(),
-                name: each.sbom_node.name.clone(),
-                version: each.sbom_package.version.clone(),
+                id: each.sbom_package.node_id,
+                name: each.sbom_node.name,
+                version: each.sbom_package.version,
                 purl: vec![PurlSummary::from_entity(&each.qualified_purl)],
                 cpe: vec![],
             });
         }
 
-        Ok(advisories.values().cloned().collect::<Vec<_>>())
+        if log::log_enabled!(log::Level::Info) {
+            log::info!("Advisories: {}", advisories.len());
+            log::info!(
+                "  Statuses: {}",
+                advisories.values().map(|v| v.status.len()).sum::<usize>()
+            );
+            log::info!(
+                "  Packages: {}",
+                advisories
+                    .values()
+                    .flat_map(|v| &v.status)
+                    .map(|v| v.packages.len())
+                    .sum::<usize>()
+            );
+        }
+
+        Ok(advisories.into_values().collect::<Vec<_>>())
     }
 }
 

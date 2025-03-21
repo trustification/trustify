@@ -62,11 +62,10 @@ impl AdvisorySummary {
                     tx,
                 )
                 .await?,
-                source_document: if let Some(doc) = &each.source_document {
-                    Some(SourceDocument::from_entity(doc).await?)
-                } else {
-                    None
-                },
+                source_document: each
+                    .source_document
+                    .as_ref()
+                    .map(SourceDocument::from_entity),
                 average_severity: each
                     .average_severity
                     .as_ref()

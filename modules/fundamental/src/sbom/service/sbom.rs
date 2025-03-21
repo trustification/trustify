@@ -9,13 +9,13 @@ use crate::{
 use futures_util::{StreamExt, TryStreamExt, stream};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
-    QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns, prelude::Uuid,
+    QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns, StreamTrait,
+    prelude::Uuid,
 };
 use sea_query::{Expr, JoinType, extension::postgres::PgExpr};
 use serde_json::Value;
 use std::{collections::HashMap, fmt::Debug};
 use tracing::instrument;
-use trustify_common::purl::Purl;
 use trustify_common::{
     cpe::Cpe,
     db::{
@@ -25,6 +25,7 @@ use trustify_common::{
     },
     id::{Id, TrySelectForId},
     model::{Paginated, PaginatedResults},
+    purl::Purl,
 };
 use trustify_entity::{
     advisory, advisory_vulnerability, base_purl,
@@ -39,6 +40,7 @@ use trustify_entity::{
 };
 
 impl SbomService {
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
     async fn fetch_sbom<C: ConnectionTrait>(
         &self,
         id: Id,
@@ -55,12 +57,16 @@ impl SbomService {
     }
 
     /// fetch one sbom
-    pub async fn fetch_sbom_details<C: ConnectionTrait>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn fetch_sbom_details<C>(
         &self,
         id: Id,
         statuses: Vec<String>,
         connection: &C,
-    ) -> Result<Option<SbomDetails>, Error> {
+    ) -> Result<Option<SbomDetails>, Error>
+    where
+        C: ConnectionTrait + StreamTrait,
+    {
         Ok(match self.fetch_sbom(id, connection).await? {
             Some(row) => SbomDetails::from_entity(row, self, connection, statuses).await?,
             None => None,
