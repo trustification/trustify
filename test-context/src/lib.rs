@@ -128,7 +128,10 @@ impl AsyncTestContext for TrustifyContext {
             log::warn!("Using external database from 'DB_*' env vars");
             let config = common::config::Database::from_env().expect("DB config from env");
 
-            let db = if env::var("EXTERNAL_TEST_DB_BOOTSTRAP").is_ok() {
+            let db = if matches!(
+                env::var("EXTERNAL_TEST_DB_BOOTSTRAP").as_deref(),
+                Ok("1" | "true")
+            ) {
                 common::db::Database::bootstrap(&config).await
             } else {
                 common::db::Database::new(&config).await

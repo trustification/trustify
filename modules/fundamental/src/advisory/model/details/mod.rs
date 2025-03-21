@@ -57,11 +57,10 @@ impl AdvisoryDetails {
                 tx,
             )
             .await?,
-            source_document: if let Some(doc) = &advisory.source_document {
-                Some(SourceDocument::from_entity(doc).await?)
-            } else {
-                None
-            },
+            source_document: advisory
+                .source_document
+                .as_ref()
+                .map(SourceDocument::from_entity),
             vulnerabilities,
             average_severity: advisory.average_severity.map(|sev| sev.into()),
             average_score: advisory.average_score,

@@ -13,7 +13,7 @@ use migration::{Migrator, MigratorTrait};
 use reqwest::Url;
 use sea_orm::{
     AccessMode, ConnectOptions, ConnectionTrait, DatabaseConnection, DatabaseTransaction,
-    DbBackend, DbErr, ExecResult, IsolationLevel, QueryResult, RuntimeErr, Statement,
+    DbBackend, DbErr, ExecResult, IsolationLevel, QueryResult, RuntimeErr, Statement, StreamTrait,
     TransactionError, TransactionTrait, prelude::async_trait,
 };
 use sqlx::error::ErrorKind;
@@ -261,6 +261,33 @@ impl ConnectionTrait for &Database {
 
     fn support_returning(&self) -> bool {
         self.db.support_returning()
+    }
+}
+
+#[async_trait::async_trait]
+impl StreamTrait for Database {
+    type Stream<'a> = <DatabaseConnection as StreamTrait>::Stream<'a>;
+
+    fn stream<'a>(
+        &'a self,
+        stmt: Statement,
+    ) -> Pin<Box<dyn Future<Output = Result<Self::Stream<'a>, DbErr>> + 'a + Send>> {
+        self.db.stream(stmt)
+    }
+}
+
+#[async_trait::async_trait]
+impl<'b> StreamTrait for &'b Database {
+    type Stream<'a>
+        = <DatabaseConnection as StreamTrait>::Stream<'a>
+    where
+        'b: 'a;
+
+    fn stream<'a>(
+        &'a self,
+        stmt: Statement,
+    ) -> Pin<Box<dyn Future<Output = Result<Self::Stream<'a>, DbErr>> + 'a + Send>> {
+        self.db.stream(stmt)
     }
 }
 
