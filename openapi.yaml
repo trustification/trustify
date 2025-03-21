@@ -1009,217 +1009,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PurlsResponse'
-  /api/v2/purl/base:
-    get:
-      tags:
-      - base purl
-      summary: List base versionless pURLs
-      operationId: listBasePurls
-      parameters:
-      - name: q
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: sort
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: offset
-        in: query
-        description: |-
-          The first item to return, skipping all that come before it.
-
-          NOTE: The order of items is defined by the API being called.
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      - name: limit
-        in: query
-        description: |-
-          The maximum number of entries to return.
-
-          Zero means: no limit
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      responses:
-        '200':
-          description: All relevant matching versionless base PURL
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResults_BasePurlSummary'
-  /api/v2/purl/base/{key}:
-    get:
-      tags:
-      - base purl
-      summary: Retrieve details about a base versionless pURL
-      operationId: getBasePurl
-      parameters:
-      - name: key
-        in: path
-        description: opaque identifier for a base PURL, or a URL-encoded pURL itself
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Details for the versionless base PURL
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BasePurlDetails'
-  /api/v2/purl/type:
-    get:
-      tags:
-      - purl type
-      summary: List known pURL types
-      operationId: listPurlTypes
-      responses:
-        '200':
-          description: List of all known PURL types
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TypeSummary'
-  /api/v2/purl/type/{type}:
-    get:
-      tags:
-      - purl type
-      summary: Retrieve details about a pURL type
-      operationId: getPurlType
-      parameters:
-      - name: q
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: sort
-        in: query
-        required: false
-        schema:
-          type: string
-      - name: offset
-        in: query
-        description: |-
-          The first item to return, skipping all that come before it.
-
-          NOTE: The order of items is defined by the API being called.
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      - name: limit
-        in: query
-        description: |-
-          The maximum number of entries to return.
-
-          Zero means: no limit
-        required: false
-        schema:
-          type: integer
-          format: int64
-          minimum: 0
-      - name: type
-        in: path
-        description: PURL identifier of a type
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Information regarding PURLs within an type
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedResults_BasePurlSummary'
-  /api/v2/purl/type/{type}/{namespace_and_name}:
-    get:
-      tags:
-      - purl type
-      summary: Retrieve base pURL details of a type
-      operationId: getBasePurlOfType
-      parameters:
-      - name: type
-        in: path
-        description: PURL identifier of a type
-        required: true
-        schema:
-          type: string
-      - name: namespace_and_name
-        in: path
-        description: name of the package optionally preceded by its namespace
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Matching vulnerabilities
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BasePurlDetails'
-  /api/v2/purl/type/{type}/{namespace_and_name}@{version}:
-    get:
-      tags:
-      - purl
-      summary: Retrieve versioned pURL details of a type
-      operationId: getVersionedPurlOfType
-      parameters:
-      - name: type
-        in: path
-        description: PURL identifier of a type
-        required: true
-        schema:
-          type: string
-      - name: namespace_and_name
-        in: path
-        description: name of the package optionally preceded by its namespace
-        required: true
-        schema:
-          type: string
-      - name: version
-        in: path
-        description: version of the package
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Matching vulnerabilities
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VersionedPurlDetails'
-  /api/v2/purl/version/{key}:
-    get:
-      tags:
-      - versioned purl
-      summary: Retrieve details of a versioned, non-qualified pURL
-      operationId: getVersionedPurl
-      parameters:
-      - name: key
-        in: path
-        description: opaque ID identifier for a package version, or URL-ecnoded pURL itself
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: Details for the version of a PURL
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VersionedPurlDetails'
   /api/v2/purl/{key}:
     get:
       tags:
@@ -2140,17 +1929,6 @@ components:
           format: int32
           description: The number of SBOMs found in the database
           minimum: 0
-    BasePurlDetails:
-      allOf:
-      - $ref: '#/components/schemas/BasePurlHead'
-      - type: object
-        required:
-        - versions
-        properties:
-          versions:
-            type: array
-            items:
-              $ref: '#/components/schemas/VersionedPurlSummary'
     BasePurlHead:
       type: object
       required:
@@ -2164,9 +1942,6 @@ components:
           type: string
           format: uuid
           description: The ID of the base PURL
-    BasePurlSummary:
-      allOf:
-      - $ref: '#/components/schemas/BasePurlHead'
     BaseSummary:
       type: object
       required:
@@ -2653,21 +2428,6 @@ components:
                   items:
                     $ref: '#/components/schemas/AdvisoryVulnerabilityHead'
                   description: Vulnerabilities addressed within this advisory.
-        total:
-          type: integer
-          format: int64
-          minimum: 0
-    PaginatedResults_BasePurlSummary:
-      type: object
-      required:
-      - items
-      - total
-      properties:
-        items:
-          type: array
-          items:
-            allOf:
-            - $ref: '#/components/schemas/BasePurlHead'
         total:
           type: integer
           format: int64
@@ -3552,68 +3312,6 @@ components:
         properties:
           cpe:
             type: string
-    TypeCounts:
-      type: object
-      required:
-      - base
-      - version
-      - package
-      properties:
-        base:
-          type: integer
-          format: int64
-        package:
-          type: integer
-          format: int64
-        version:
-          type: integer
-          format: int64
-    TypeHead:
-      type: object
-      required:
-      - name
-      properties:
-        name:
-          type: string
-    TypeSummary:
-      allOf:
-      - $ref: '#/components/schemas/TypeHead'
-      - type: object
-        required:
-        - counts
-        properties:
-          counts:
-            $ref: '#/components/schemas/TypeCounts'
-    VersionedPurlAdvisory:
-      allOf:
-      - $ref: '#/components/schemas/AdvisoryHead'
-      - type: object
-        required:
-        - status
-        properties:
-          status:
-            type: array
-            items:
-              $ref: '#/components/schemas/VersionedPurlStatus'
-    VersionedPurlDetails:
-      allOf:
-      - $ref: '#/components/schemas/VersionedPurlHead'
-      - type: object
-        required:
-        - base
-        - purls
-        - advisories
-        properties:
-          advisories:
-            type: array
-            items:
-              $ref: '#/components/schemas/VersionedPurlAdvisory'
-          base:
-            $ref: '#/components/schemas/BasePurlHead'
-          purls:
-            type: array
-            items:
-              $ref: '#/components/schemas/PurlHead'
     VersionedPurlHead:
       type: object
       required:
@@ -3631,30 +3329,6 @@ components:
         version:
           type: string
           description: The version from the PURL
-    VersionedPurlStatus:
-      type: object
-      required:
-      - vulnerability
-      - status
-      properties:
-        status:
-          type: string
-        vulnerability:
-          $ref: '#/components/schemas/VulnerabilityHead'
-    VersionedPurlSummary:
-      allOf:
-      - $ref: '#/components/schemas/VersionedPurlHead'
-      - type: object
-        required:
-        - base
-        - purls
-        properties:
-          base:
-            $ref: '#/components/schemas/BasePurlHead'
-          purls:
-            type: array
-            items:
-              $ref: '#/components/schemas/PurlHead'
     VulnerabilityAdvisoryHead:
       allOf:
       - $ref: '#/components/schemas/AdvisoryHead'
