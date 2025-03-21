@@ -301,7 +301,7 @@ impl<'g> PackageContext<'g> {
             .filter(entity::versioned_purl::Column::BasePurlId.eq(self.base_purl.id))
             .all(connection)
             .await?
-            .drain(0..)
+            .into_iter()
             .map(|each| PackageVersionContext::new(self, each))
             .collect())
     }
