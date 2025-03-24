@@ -1,5 +1,7 @@
 //! Helpers to try to divine pURLs from arbitrary bits of information.
 
+use std::str::FromStr;
+
 use cve::common::Product;
 use trustify_common::purl::Purl;
 
@@ -17,17 +19,9 @@ fn divine_maven(product: &Product) -> Option<Purl> {
             if parts.len() == 2 {
                 let group_id = parts[0];
                 let artifact_id = parts[1];
-
-                return Some(Purl {
-                    ty: "maven".to_string(),
-                    namespace: Some(group_id.to_string()),
-                    name: artifact_id.to_string(),
-                    version: None,
-                    qualifiers: Default::default(),
-                });
+                return Purl::from_str(&format!("pkg:maven/{group_id}/{artifact_id}")).ok();
             }
         }
     }
-
     None
 }
