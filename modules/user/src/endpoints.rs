@@ -16,7 +16,7 @@ pub fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfig, db: 
 }
 
 #[utoipa::path(
-    tag = "userPreferences",
+    tag = "admin",
     operation_id = "getUserPreferences",
     params(
         ("key", Path, description = "The key to the user preferences"),
@@ -49,7 +49,7 @@ async fn get(
 }
 
 #[utoipa::path(
-    tag = "userPreferences",
+    tag = "admin",
     operation_id = "setUserPreferences",
     request_body = serde_json::Value,
     params(
@@ -94,7 +94,7 @@ async fn set(
 }
 
 #[utoipa::path(
-    tag = "userPreferences",
+    tag = "admin",
     operation_id = "deleteUserPreferences",
     request_body = serde_json::Value,
     params(

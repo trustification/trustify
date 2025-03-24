@@ -8,7 +8,7 @@ use trustify_common::{
 };
 
 #[utoipa::path(
-    tag = "spdx license",
+    tag = "licenses",
     operation_id = "listSpdxLicenses",
     params(
         Query,
@@ -31,7 +31,7 @@ pub async fn list_spdx_licenses(
 }
 
 #[utoipa::path(
-    tag = "spdx license",
+    tag = "licenses",
     operation_id = "getSpdxLicense",
     responses(
         (status = 200, description = "SPDX license details", body = SpdxLicenseDetails),

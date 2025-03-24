@@ -16,7 +16,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
 }
 
 #[utoipa::path(
-    tag = "weakness",
+    tag = "licenses",
     operation_id = "listWeaknesses",
     params(
         Query,
@@ -38,7 +38,7 @@ pub async fn list_weaknesses(
 }
 
 #[utoipa::path(
-    tag = "weakness",
+    tag = "licenses",
     operation_id = "getWeakness",
     responses(
         (status = 200, description = "The weakness", body = LicenseSummary),

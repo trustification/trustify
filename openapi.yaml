@@ -449,7 +449,7 @@ paths:
   /api/v2/dataset:
     post:
       tags:
-      - dataset
+      - admin
       summary: Upload a new dataset
       operationId: uploadDataset
       parameters:
@@ -717,7 +717,7 @@ paths:
   /api/v2/license/spdx/license:
     get:
       tags:
-      - spdx license
+      - licenses
       summary: List SPDX licenses
       operationId: listSpdxLicenses
       parameters:
@@ -763,7 +763,7 @@ paths:
   /api/v2/license/spdx/license/{id}:
     get:
       tags:
-      - spdx license
+      - licenses
       summary: Get SPDX license details
       operationId: getSpdxLicense
       parameters:
@@ -782,7 +782,7 @@ paths:
   /api/v2/organization:
     get:
       tags:
-      - organization
+      - admin
       summary: List organizations
       operationId: listOrganizations
       parameters:
@@ -828,7 +828,7 @@ paths:
   /api/v2/organization/{id}:
     get:
       tags:
-      - organization
+      - admin
       summary: Retrieve organization details
       operationId: getOrganization
       parameters:
@@ -1517,7 +1517,7 @@ paths:
   /api/v2/userPreference/{key}:
     get:
       tags:
-      - userPreferences
+      - admin
       summary: Get user preferences
       operationId: getUserPreferences
       parameters:
@@ -1542,7 +1542,7 @@ paths:
           description: Unknown user preference key
     put:
       tags:
-      - userPreferences
+      - admin
       summary: Set user preferences
       operationId: setUserPreferences
       parameters:
@@ -1577,7 +1577,7 @@ paths:
           description: The provided If-Match revision did not match the actual revision
     delete:
       tags:
-      - userPreferences
+      - admin
       summary: Delete user preferences
       operationId: deleteUserPreferences
       parameters:
@@ -1697,7 +1697,7 @@ paths:
   /api/v2/weakness:
     get:
       tags:
-      - weakness
+      - licenses
       summary: List weaknesses
       operationId: listWeaknesses
       parameters:
@@ -1743,7 +1743,7 @@ paths:
   /api/v2/weakness/{id}:
     get:
       tags:
-      - weakness
+      - licenses
       summary: Retrieve weakness details
       operationId: getWeakness
       parameters:
