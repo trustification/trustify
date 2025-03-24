@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742836574444,
+  "lastUpdate": 1742853166967,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7012,6 +7012,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/0a3f9e101d2d703480e010d81e916f9bc4b04aed"
         },
         "date": 1742836573461,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "648f2e38d11e400a656eed30ae423a3d89c933a7",
+          "message": "update openapi spec",
+          "timestamp": "2025-03-24T21:34:02Z",
+          "tree_id": "977f79ee36e110ee12390702bd0cc179953db18c",
+          "url": "https://github.com/trustification/trustify/commit/648f2e38d11e400a656eed30ae423a3d89c933a7"
+        },
+        "date": 1742853166008,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
