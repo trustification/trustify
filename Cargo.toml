@@ -152,7 +152,7 @@ uuid = "1.7.0"
 walkdir = "2.5"
 walker-common = "0.12.0"
 walker-extras = "0.12.0"
-zip = "2.2.0"
+zip = { version = "2.4.0", default-features = false, features = ["aes-crypto", "bzip2", "deflate64", "deflate", "lzma", "time", "zstd"] }
 
 
 trustify-auth = { path = "common/auth", features = ["actix", "swagger"] }
