@@ -134,9 +134,7 @@ impl<'g> OsvLoader<'g> {
                 for purl in purls {
                     // iterate through the known versions, apply the version, and create them
                     for version in affected.versions.iter().flatten() {
-                        let mut purl = purl.clone();
-                        purl.version = Some(version.clone());
-                        purl_creator.add(purl);
+                        purl_creator.add(purl.with_version(version));
                     }
 
                     for range in affected.ranges.iter().flatten() {

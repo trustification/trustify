@@ -69,8 +69,7 @@ impl Curation {
     pub fn iter(&self) -> impl Iterator<Item = (Purl, String)> + '_ {
         self.revisions.iter().flat_map(|(version, details)| {
             if let Some(licensed) = &details.licensed {
-                let mut purl = self.coordinates.base_purl();
-                purl.version = Some(version.clone());
+                let purl = self.coordinates.base_purl().with_version(version);
                 Some((purl, licensed.declared.clone()))
             } else {
                 None
