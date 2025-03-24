@@ -25,6 +25,7 @@ async fn ingest_spdx_medium(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
                 SbomPackage {
                     id: "SPDXRef-5fbf9e8d-2f8f-4cfe-a145-b69a1f7d73cc".to_string(),
                     name: "RHEL-8-RHOCS-4.8".to_string(),
+                    group: None,
                     version: Some("4.8.z".to_string()),
                     purl: vec![],
                     cpe: vec!["cpe:/a:redhat:openshift_container_storage:4.8:*:el8:*".into()],
@@ -95,6 +96,7 @@ async fn ingest_spdx_medium_cpes(ctx: &TrustifyContext) -> Result<(), anyhow::Er
                 SbomPackage {
                     id: "SPDXRef-59713547-8cb2-4cf4-a310-1e28c7a7b35a".to_string(),
                     name: "RHEL-BR-9.2.0".to_string(),
+                    group: None,
                     version: Some("9.2.0".to_string()),
                     purl: vec![],
                     cpe: vec![],

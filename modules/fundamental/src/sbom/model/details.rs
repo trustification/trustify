@@ -364,6 +364,7 @@ impl SbomAdvisory {
             sbom_status.packages.push(SbomPackage {
                 id: each.sbom_package.node_id,
                 name: each.sbom_node.name,
+                group: each.sbom_package.group,
                 version: each.sbom_package.version,
                 purl: vec![PurlSummary::from_entity(&each.qualified_purl)],
                 cpe: vec![],

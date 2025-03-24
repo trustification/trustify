@@ -2864,18 +2864,28 @@ components:
                 type: array
                 items:
                   type: string
+                description: CPEs identifying the package
+              group:
+                type:
+                - string
+                - 'null'
+                description: An optional group/namespace for an SBOM package
               id:
                 type: string
+                description: The SBOM internal ID of a package
               name:
                 type: string
+                description: The name of the package in the SBOM
               purl:
                 type: array
                 items:
                   $ref: '#/components/schemas/PurlSummary'
+                description: PURLs identifying the package
               version:
                 type:
                 - string
                 - 'null'
+                description: An optional version for an SBOM package
         total:
           type: integer
           format: int64
@@ -3398,18 +3408,28 @@ components:
           type: array
           items:
             type: string
+          description: CPEs identifying the package
+        group:
+          type:
+          - string
+          - 'null'
+          description: An optional group/namespace for an SBOM package
         id:
           type: string
+          description: The SBOM internal ID of a package
         name:
           type: string
+          description: The name of the package in the SBOM
         purl:
           type: array
           items:
             $ref: '#/components/schemas/PurlSummary'
+          description: PURLs identifying the package
         version:
           type:
           - string
           - 'null'
+          description: An optional version for an SBOM package
     SbomPackageRelation:
       type: object
       required:
