@@ -99,11 +99,18 @@ impl SbomSummary {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, SimpleObject, Default)]
 #[graphql(concrete(name = "SbomPackage", params()))]
 pub struct SbomPackage {
+    /// The SBOM internal ID of a package
     pub id: String,
+    /// The name of the package in the SBOM
     pub name: String,
+    /// An optional group/namespace for an SBOM package
+    pub group: Option<String>,
+    /// An optional version for an SBOM package
     pub version: Option<String>,
+    /// PURLs identifying the package
     #[graphql(skip)]
     pub purl: Vec<PurlSummary>,
+    /// CPEs identifying the package
     pub cpe: Vec<String>,
 }
 

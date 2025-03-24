@@ -383,6 +383,8 @@ impl SbomService {
                 "relationship",
             )
             .group_by(package_relates_to_package::Column::Relationship)
+            .select_column_as(sbom_package::Column::Group, "group")
+            .group_by(sbom_package::Column::Group)
             .select_column_as(sbom_package::Column::Version, "version")
             .group_by(sbom_package::Column::Version)
             // join the other side
@@ -539,6 +541,7 @@ where
 struct PackageCatcher {
     id: String,
     name: String,
+    group: Option<String>,
     version: Option<String>,
     purls: Vec<Value>,
     cpes: Value,
@@ -586,6 +589,7 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
     SbomPackage {
         id: row.id,
         name: row.name,
+        group: row.group,
         version: row.version,
         purl,
         cpe,
