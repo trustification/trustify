@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742568730927,
+  "lastUpdate": 1742825081975,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6925,6 +6925,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/45f3427ac23b4c565d9d1163553e321ccff918c5"
         },
         "date": 1742568730297,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "91dbfff5c97a85e8f71752f3af807a8b7d62528d",
+          "message": "chore:refactor external sbom resolving and update spdx test",
+          "timestamp": "2025-03-24T13:44:16Z",
+          "tree_id": "7a329f46b9ccd52f1f74abb687fd01cc730273fb",
+          "url": "https://github.com/trustification/trustify/commit/91dbfff5c97a85e8f71752f3af807a8b7d62528d"
+        },
+        "date": 1742825081022,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
