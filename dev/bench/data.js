@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742825081975,
+  "lastUpdate": 1742835862073,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -6954,6 +6954,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/91dbfff5c97a85e8f71752f3af807a8b7d62528d"
         },
         "date": 1742825081022,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "4cccd4f05c5a3331c1a5f37595165c35ef5a7242",
+          "message": "feat: expose the group of an SBOM package",
+          "timestamp": "2025-03-24T16:25:42Z",
+          "tree_id": "a6f607e0ffa43bc26bac8f8952c6330047f20e11",
+          "url": "https://github.com/trustification/trustify/commit/4cccd4f05c5a3331c1a5f37595165c35ef5a7242"
+        },
+        "date": 1742835861219,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
