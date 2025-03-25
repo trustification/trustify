@@ -638,19 +638,13 @@ async fn statuses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     assert_eq!(1, results.items.len());
 
-    let expected_uuid = results.items[0].head.uuid;
-    let uuid = &expected_uuid.to_string();
+    let uuid = results.items[0].head.uuid;
 
     let results = service
-        .fetch_purl_details(&[uuid], Default::default(), &ctx.db)
-        .await;
+        .purl_by_uuid(&uuid, Default::default(), &ctx.db)
+        .await?;
 
-    assert!(results.is_ok());
-    let purls = results.unwrap();
-    assert!(purls.contains_key(uuid));
-
-    let details = purls.get(uuid).unwrap();
-    assert_eq!(expected_uuid, details.head.uuid);
+    assert_eq!(uuid, results.unwrap().head.uuid);
 
     Ok(())
 }
@@ -675,17 +669,16 @@ async fn contextual_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let tomcat_jsp = tomcat_jsp.unwrap();
 
-    let uuid = &tomcat_jsp.head.uuid.to_string();
+    let uuid = tomcat_jsp.head.uuid;
 
-    let result = service
-        .fetch_purl_details(&[uuid], Default::default(), &ctx.db)
-        .await;
+    let tomcat_jsp = service
+        .purl_by_uuid(&uuid, Default::default(), &ctx.db)
+        .await?;
 
-    assert!(result.is_ok());
-    let details = result.unwrap();
-    assert!(details.contains_key(uuid));
+    assert!(tomcat_jsp.is_some());
 
-    let tomcat_jsp = details.get(uuid).unwrap();
+    let tomcat_jsp = tomcat_jsp.unwrap();
+
     assert_eq!(1, tomcat_jsp.advisories.len());
 
     let advisory = &tomcat_jsp.advisories[0];
@@ -857,13 +850,13 @@ async fn unqualified_purl_by_purl(ctx: &TrustifyContext) -> Result<(), anyhow::E
     let purl = "pkg:maven/org.apache/log4j@1.2.3";
 
     let results = service
-        .fetch_purl_details(&[purl], Default::default(), &ctx.db)
-        .await
+        .purl_by_purl(&Purl::from_str(purl)?, Default::default(), &ctx.db)
+        .await?
         .unwrap();
 
     log::debug!("{results:#?}");
-    assert_eq!(results.get(purl).unwrap().head.purl.to_string(), purl);
-    assert_eq!(results.get(purl).unwrap().version.version, "1.2.3");
+    assert_eq!(results.head.purl.to_string(), purl);
+    assert_eq!(results.version.version, "1.2.3");
 
     Ok(())
 }

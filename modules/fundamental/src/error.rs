@@ -18,8 +18,6 @@ pub enum Error {
     Ingestor(#[from] trustify_module_ingestor::service::Error),
     #[error(transparent)]
     Purl(#[from] PurlErr),
-    #[error(transparent)]
-    Uuid(#[from] uuid::Error),
     #[error("Bad request: {0}")]
     BadRequest(String),
     #[error("Not found: {0}")]
