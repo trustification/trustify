@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742853166967,
+  "lastUpdate": 1742885384392,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7041,6 +7041,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/648f2e38d11e400a656eed30ae423a3d89c933a7"
         },
         "date": 1742853166008,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "72f189f6ee03fc5b1a57cc93d5c1827c784f4105",
+          "message": "Revert \"account for null namespace when textifying a qualified purl\"\n\nfixes #1447\n\nThis reverts commit 5e1075324e8821c8a636725c7da004127882cd2f.",
+          "timestamp": "2025-03-25T06:30:07Z",
+          "tree_id": "d1532366a17d425d5184a6c57bf9c2563641256d",
+          "url": "https://github.com/trustification/trustify/commit/72f189f6ee03fc5b1a57cc93d5c1827c784f4105"
+        },
+        "date": 1742885383445,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
