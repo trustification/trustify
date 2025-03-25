@@ -1,3 +1,5 @@
+use crate::purl::model::details::base_purl::BasePurlDetails;
+use crate::purl::model::summary::base_purl::BasePurlSummary;
 use crate::purl::model::summary::purl::PurlSummary;
 use crate::test::caller;
 use actix_web::test::TestRequest;
@@ -61,6 +63,26 @@ async fn setup(db: &Database, graph: &Graph) -> Result<(), anyhow::Error> {
     let _sendmail_444 = sendmail
         .ingest_package_version(&Purl::from_str("pkg:rpm/sendmail@4.4.4")?, db)
         .await?;
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn base_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    setup(&ctx.db, &ctx.graph).await?;
+    let app = caller(ctx).await?;
+
+    let uri = "/api/v2/purl/base?q=log4j";
+    let request = TestRequest::get().uri(uri).to_request();
+    let log4j: PaginatedResults<BasePurlSummary> = app.call_and_read_body_json(request).await;
+
+    assert_eq!(1, log4j.items.len());
+
+    let uri = format!("/api/v2/purl/base/{}", log4j.items[0].head.uuid);
+    let request = TestRequest::get().uri(&uri).to_request();
+    let response: BasePurlDetails = app.call_and_read_body_json(request).await;
+    assert_eq!(log4j.items[0].head.uuid, response.head.uuid);
 
     Ok(())
 }
