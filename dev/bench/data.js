@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742885384392,
+  "lastUpdate": 1742885827010,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7075,6 +7075,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rromerom@redhat.com",
+            "name": "Ruben Romero Montes",
+            "username": "ruromero"
+          },
+          "committer": {
+            "email": "rromerom@redhat.com",
+            "name": "Ruben Romero Montes",
+            "username": "ruromero"
+          },
+          "distinct": true,
+          "id": "2b40968860373fdef8f54c5849a7f2a316d90f8a",
+          "message": "Revert \"feat: add endpoint to process multiple purls\"\n\nSigned-off-by: Ruben Romero Montes <rromerom@redhat.com>",
+          "timestamp": "2025-03-25T06:37:33Z",
+          "tree_id": "4e075d95965ededa3d8548a040c09f6af4c46532",
+          "url": "https://github.com/trustification/trustify/commit/2b40968860373fdef8f54c5849a7f2a316d90f8a"
+        },
+        "date": 1742885826057,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
