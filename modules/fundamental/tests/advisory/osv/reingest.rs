@@ -98,21 +98,16 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
 
     // get vuln by purl
 
-    let results = service
-        .fetch_purl_details(
-            &[purl.head.uuid.to_string()],
-            Deprecation::Consider,
-            &ctx.db,
-        )
-        .await
+    let mut purl = service
+        .purl_by_uuid(&purl.head.uuid, Deprecation::Consider, &ctx.db)
+        .await?
         .expect("must find something");
 
     // must be 2, as we consider deprecated ones too
 
-    let purl = results.get(&purl.head.uuid.to_string()).unwrap();
     assert_eq!(purl.advisories.len(), 2);
-    let mut advisories = purl.advisories.iter().collect::<Vec<_>>();
-    advisories.sort_unstable_by(|a, b| a.head.modified.cmp(&b.head.modified));
+    purl.advisories
+        .sort_unstable_by(|a, b| a.head.modified.cmp(&b.head.modified));
     let adv1 = &purl.advisories[0];
     let adv2 = &purl.advisories[1];
 

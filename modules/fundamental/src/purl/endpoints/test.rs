@@ -1,5 +1,3 @@
-use crate::purl::model::details::purl::PurlsRequest;
-use crate::purl::model::details::purl::PurlsResponse;
 use crate::purl::model::summary::purl::PurlSummary;
 use crate::test::caller;
 use actix_web::test::TestRequest;
@@ -144,46 +142,6 @@ async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
         "CVE-2021-32714",
         response["advisories"][0]["status"][0]["vulnerability"]["identifier"]
     );
-
-    Ok(())
-}
-
-#[test_context(TrustifyContext)]
-#[test(actix_web::test)]
-async fn multiple_purls(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    ctx.ingestor
-        .graph()
-        .ingest_qualified_package(&Purl::from_str("pkg:cargo/hyper@0.14.1")?, &ctx.db)
-        .await?;
-
-    ctx.ingest_documents(["osv/RUSTSEC-2021-0079.json", "cve/CVE-2021-32714.json"])
-        .await?;
-
-    let app = caller(ctx).await?;
-    let uri = "/api/v2/purl?q=hyper";
-    let request = TestRequest::get().uri(uri).to_request();
-    let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
-
-    let purls = vec![
-        response.items[0].head.uuid.to_string(),
-        response.items[0].head.purl.to_string(),
-        String::from("pkg:maven/org.example/notfound@1.2.3?jdk=11"),
-    ];
-
-    let uri = "/api/v2/purl";
-    let request_body = PurlsRequest {
-        items: purls.clone(),
-    };
-    let request = TestRequest::post()
-        .set_json(request_body)
-        .uri(uri)
-        .to_request();
-    let response: PurlsResponse = app.call_and_read_body_json(request).await;
-
-    assert_eq!(2, response.len());
-    assert!(response.get(purls[0].as_str()).is_some());
-    assert!(response.get(purls[1].as_str()).is_some());
-    assert!(response.get(purls[2].as_str()).is_none());
 
     Ok(())
 }

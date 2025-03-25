@@ -12,7 +12,6 @@ use sea_orm::{
     QuerySelect, prelude::Uuid,
 };
 use sea_query::Order;
-use std::{collections::HashMap, fmt::Debug, str::FromStr};
 use tracing::instrument;
 use trustify_common::{
     db::{
@@ -231,90 +230,41 @@ impl PurlService {
         }
     }
 
-    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
-    pub async fn fetch_purl_details<C: ConnectionTrait, I: AsRef<str> + Debug>(
+    pub async fn purl_by_purl<C: ConnectionTrait>(
         &self,
-        identifiers: &[I],
-        deprecated: Deprecation,
+        purl: &Purl,
+        deprecation: Deprecation,
         connection: &C,
-    ) -> Result<HashMap<String, PurlDetails>, Error> {
-        let (purls, uuids): (Vec<_>, Vec<_>) = identifiers
-            .iter()
-            .partition(|key| key.as_ref().starts_with("pkg:"));
-
-        let purls: Vec<_> = purls
-            .iter()
-            .map(|k| Purl::from_str(k.as_ref()).map_err(Error::Purl))
-            .collect::<Result<_, _>>()?;
-
-        let uuids: Vec<_> = uuids
-            .iter()
-            .map(|k| Uuid::from_str(k.as_ref()).map_err(Error::Uuid))
-            .collect::<Result<_, _>>()?;
-
-        let details = self
-            .purls_by_purl(&purls, deprecated, connection)
+    ) -> Result<Option<PurlDetails>, Error> {
+        let canonical = CanonicalPurl::from(purl.clone());
+        match qualified_purl::Entity::find()
+            .filter(qualified_purl::Column::Purl.eq(canonical))
+            .one(connection)
             .await?
-            .into_iter()
-            .map(|detail| (detail.head.purl.to_string(), detail))
-            .chain(
-                self.purls_by_uuid(&uuids, deprecated, connection)
-                    .await?
-                    .into_iter()
-                    .map(|detail| (detail.head.uuid.to_string(), detail)),
-            )
-            .collect();
-
-        Ok(details)
+        {
+            Some(purl) => Ok(Some(
+                PurlDetails::from_entity(None, None, &purl, deprecation, connection).await?,
+            )),
+            None => Ok(None),
+        }
     }
 
-    async fn purls_by_purl<C: ConnectionTrait>(
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn purl_by_uuid<C: ConnectionTrait>(
         &self,
-        purls: &[Purl],
+        purl_uuid: &Uuid,
         deprecation: Deprecation,
         connection: &C,
-    ) -> Result<Vec<PurlDetails>, Error> {
-        if purls.is_empty() {
-            return Ok(Default::default());
+    ) -> Result<Option<PurlDetails>, Error> {
+        match qualified_purl::Entity::find_by_id(*purl_uuid)
+            .one(connection)
+            .await?
+        {
+            Some(pkg) => Ok(Some(
+                PurlDetails::from_entity(None, None, &pkg, deprecation, connection).await?,
+            )),
+            None => Ok(None),
         }
-        let canonical: Vec<CanonicalPurl> = purls
-            .iter()
-            .map(|purl| CanonicalPurl::from(purl.clone()))
-            .collect();
-
-        let items = qualified_purl::Entity::find()
-            .filter(qualified_purl::Column::Purl.is_in(canonical))
-            .all(connection)
-            .await?;
-
-        let mut details = Vec::with_capacity(items.len());
-        for purl in items {
-            details
-                .push(PurlDetails::from_entity(None, None, &purl, deprecation, connection).await?);
-        }
-        Ok(details)
-    }
-
-    async fn purls_by_uuid<C: ConnectionTrait>(
-        &self,
-        uuids: &[Uuid],
-        deprecation: Deprecation,
-        connection: &C,
-    ) -> Result<Vec<PurlDetails>, Error> {
-        if uuids.is_empty() {
-            return Ok(Default::default());
-        }
-        let items = qualified_purl::Entity::find()
-            .filter(qualified_purl::Column::Id.is_in(uuids.to_vec()))
-            .all(connection)
-            .await?;
-
-        let mut details = Vec::with_capacity(items.len());
-        for purl in items {
-            details
-                .push(PurlDetails::from_entity(None, None, &purl, deprecation, connection).await?);
-        }
-        Ok(details)
     }
 
     pub async fn base_purls<C: ConnectionTrait>(

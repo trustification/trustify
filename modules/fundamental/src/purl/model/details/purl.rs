@@ -12,10 +12,7 @@ use sea_orm::{
 };
 use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{HashMap, hash_map::Entry},
-    ops::Deref,
-};
+use std::collections::{HashMap, hash_map::Entry};
 use trustify_common::{
     db::VersionMatches,
     db::multi_model::{FromQueryResultMultiModel, SelectIntoMultiModel},
@@ -32,7 +29,7 @@ use trustify_module_ingestor::common::{Deprecation, DeprecationForExt};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct PurlDetails {
     #[serde(flatten)]
     pub head: PurlHead,
@@ -166,23 +163,7 @@ async fn get_product_statuses_for_purl<C: ConnectionTrait>(
     Ok(product_statuses)
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct PurlsRequest {
-    pub items: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct PurlsResponse(HashMap<String, PurlDetails>);
-
-impl Deref for PurlsResponse {
-    type Target = HashMap<String, PurlDetails>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq)]
 pub struct PurlAdvisory {
     #[serde(flatten)]
     pub head: AdvisoryHead,
@@ -284,7 +265,7 @@ impl PurlAdvisory {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq, Clone)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq)]
 pub struct PurlStatus {
     pub vulnerability: VulnerabilityHead,
     pub average_severity: Severity,
