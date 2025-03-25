@@ -152,7 +152,7 @@ uuid = "1.7.0"
 walkdir = "2.5"
 walker-common = "0.12.0"
 walker-extras = "0.12.0"
-zip = { version = "2.4.0", default-features = false, features = ["aes-crypto", "bzip2", "deflate64", "deflate", "lzma", "time", "zstd"] } # default-features false required due to: https://github.com/zip-rs/zip2/issues/326
+zip = { version = "~2.4.0", default-features = false, features = ["aes-crypto", "bzip2", "deflate64", "deflate", "lzma", "time", "zstd"] } # default-features false required due to: https://github.com/zip-rs/zip2/issues/326 # tilde version due to: https://github.com/zip-rs/zip2/issues/328
 
 trustify-auth = { path = "common/auth", features = ["actix", "swagger"] }
 trustify-common = { path = "common" }
