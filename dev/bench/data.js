@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742885827010,
+  "lastUpdate": 1742912716373,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7104,6 +7104,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "d2f77f28c53d4b1371c8501eb1236b70d91b046a",
+          "message": "wouldn't be a PR without forgetting to update openapi",
+          "timestamp": "2025-03-25T14:05:59Z",
+          "tree_id": "f666e300015609d651d1162c9dcfa124e0cbb302",
+          "url": "https://github.com/trustification/trustify/commit/d2f77f28c53d4b1371c8501eb1236b70d91b046a"
+        },
+        "date": 1742912715758,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
