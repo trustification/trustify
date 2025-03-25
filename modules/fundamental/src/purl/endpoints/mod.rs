@@ -14,6 +14,7 @@ use trustify_common::{
     db::Database, db::query::Query, id::IdError, model::Paginated, model::PaginatedResults,
     purl::Purl,
 };
+mod base;
 
 pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, db: Database) {
     let purl_service = PurlService::new();
@@ -21,6 +22,8 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
     config
         .app_data(web::Data::new(db))
         .app_data(web::Data::new(purl_service))
+        .service(base::get_base_purl)
+        .service(base::all_base_purls)
         .service(get)
         .service(all);
 }

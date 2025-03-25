@@ -982,6 +982,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResults_PurlSummary'
+  /api/v2/purl/base:
+    get:
+      tags:
+      - base purl
+      summary: List base versionless pURLs
+      operationId: listBasePurls
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: sort
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: offset
+        in: query
+        description: |-
+          The first item to return, skipping all that come before it.
+
+          NOTE: The order of items is defined by the API being called.
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: limit
+        in: query
+        description: |-
+          The maximum number of entries to return.
+
+          Zero means: no limit
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      responses:
+        '200':
+          description: All relevant matching versionless base PURL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResults_BasePurlSummary'
+  /api/v2/purl/base/{key}:
+    get:
+      tags:
+      - base purl
+      summary: Retrieve details about a base versionless pURL
+      operationId: getBasePurl
+      parameters:
+      - name: key
+        in: path
+        description: opaque identifier for a base PURL, or a URL-encoded pURL itself
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Details for the versionless base PURL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BasePurlDetails'
   /api/v2/purl/{key}:
     get:
       tags:
@@ -1902,6 +1968,17 @@ components:
           format: int32
           description: The number of SBOMs found in the database
           minimum: 0
+    BasePurlDetails:
+      allOf:
+      - $ref: '#/components/schemas/BasePurlHead'
+      - type: object
+        required:
+        - versions
+        properties:
+          versions:
+            type: array
+            items:
+              $ref: '#/components/schemas/VersionedPurlSummary'
     BasePurlHead:
       type: object
       required:
@@ -1915,6 +1992,9 @@ components:
           type: string
           format: uuid
           description: The ID of the base PURL
+    BasePurlSummary:
+      allOf:
+      - $ref: '#/components/schemas/BasePurlHead'
     BaseSummary:
       type: object
       required:
@@ -2401,6 +2481,21 @@ components:
                   items:
                     $ref: '#/components/schemas/AdvisoryVulnerabilityHead'
                   description: Vulnerabilities addressed within this advisory.
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+    PaginatedResults_BasePurlSummary:
+      type: object
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            allOf:
+            - $ref: '#/components/schemas/BasePurlHead'
         total:
           type: integer
           format: int64
@@ -3287,6 +3382,20 @@ components:
         version:
           type: string
           description: The version from the PURL
+    VersionedPurlSummary:
+      allOf:
+      - $ref: '#/components/schemas/VersionedPurlHead'
+      - type: object
+        required:
+        - base
+        - purls
+        properties:
+          base:
+            $ref: '#/components/schemas/BasePurlHead'
+          purls:
+            type: array
+            items:
+              $ref: '#/components/schemas/PurlHead'
     VulnerabilityAdvisoryHead:
       allOf:
       - $ref: '#/components/schemas/AdvisoryHead'
