@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742990477423,
+  "lastUpdate": 1742996462097,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7215,6 +7215,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/671886903ad6970954876834774c2c69f1ac8634"
         },
         "date": 1742990476263,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rromerom@redhat.com",
+            "name": "Ruben Romero Montes",
+            "username": "ruromero"
+          },
+          "committer": {
+            "email": "rromerom@redhat.com",
+            "name": "Ruben Romero Montes",
+            "username": "ruromero"
+          },
+          "distinct": false,
+          "id": "0709de35508406d0f28c583a1c1043251fa1daf2",
+          "message": "feat: add analyze endpoint for purl-based vulnerability scan\n\nSigned-off-by: Ruben Romero Montes <rromerom@redhat.com>",
+          "timestamp": "2025-03-26T13:21:05Z",
+          "tree_id": "0a7530001ca8c178f4204843caa246883ab21ed4",
+          "url": "https://github.com/trustification/trustify/commit/0709de35508406d0f28c583a1c1043251fa1daf2"
+        },
+        "date": 1742996461250,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
