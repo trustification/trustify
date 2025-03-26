@@ -125,6 +125,7 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 ..Default::default()
             },
             average_severity: Severity::None,
+            average_score: 0f64,
             status: "affected".to_string(),
             context: None,
         }]
@@ -138,6 +139,7 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 ..Default::default()
             },
             average_severity: Severity::None,
+            average_score: 0f64,
             status: "affected".to_string(),
             context: None,
         }]

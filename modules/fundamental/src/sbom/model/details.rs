@@ -18,7 +18,8 @@ use sea_orm::{
 use sea_query::{Asterisk, Expr, Func, Query, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::instrument;
+use tracing::{debug_span, instrument};
+use tracing_futures::Instrument;
 use trustify_common::{
     cpe::CpeCompare,
     db::{VersionMatches, multi_model::SelectIntoMultiModel},
@@ -252,7 +253,6 @@ impl SbomAdvisory {
     #[instrument(skip_all, err(level=tracing::Level::INFO))]
     pub async fn from_models<C: ConnectionTrait>(
         described_by: &[SbomPackage],
-        // statuses: &[QueryCatcher],
         statuses: impl Stream<Item = Result<QueryCatcher, DbErr>>,
         tx: &C,
     ) -> Result<Vec<Self>, Error> {
@@ -277,6 +277,7 @@ impl SbomAdvisory {
 
         log::info!("CPEs: {}", sbom_cpes.len());
 
+        let statuses = statuses.instrument(debug_span!("consuming statuses"));
         pin_mut!(statuses);
 
         'status: while let Some(each) = statuses.next().await.transpose()? {
@@ -396,12 +397,22 @@ pub struct SbomStatus {
     #[serde(flatten)]
     pub vulnerability: VulnerabilityHead,
     pub average_severity: Severity,
+    pub average_score: f64,
     pub status: String,
     pub context: Option<StatusContext>,
     pub packages: Vec<SbomPackage>,
 }
 
 impl SbomStatus {
+    #[instrument(
+        skip(
+            advisory_vulnerability,
+            vulnerability,
+            packages,
+            tx
+        ),
+        err(level=tracing::Level::INFO)
+    )]
     pub async fn new<C: ConnectionTrait>(
         advisory_vulnerability: &advisory_vulnerability::Model,
         vulnerability: &vulnerability::Model,
@@ -411,18 +422,21 @@ impl SbomStatus {
         tx: &C,
     ) -> Result<Self, Error> {
         let cvss3 = vulnerability.find_related(cvss3::Entity).all(tx).await?;
-        let average_severity = Score::from_iter(cvss3.iter().map(Cvss3Base::from)).severity();
+        let average = Score::from_iter(cvss3.iter().map(Cvss3Base::from));
+
         Ok(Self {
             vulnerability: VulnerabilityHead::from_advisory_vulnerability_entity(
                 advisory_vulnerability,
                 vulnerability,
             ),
             context: cpe.as_ref().map(|e| StatusContext::Cpe(e.to_string())),
-            average_severity,
+            average_severity: average.severity(),
+            average_score: average.value(),
             status,
             packages,
         })
     }
+
     pub fn identifier(&self) -> &str {
         &self.vulnerability.identifier
     }

@@ -163,7 +163,7 @@ async fn get_product_statuses_for_purl<C: ConnectionTrait>(
     Ok(product_statuses)
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq)]
 pub struct PurlAdvisory {
     #[serde(flatten)]
     pub head: AdvisoryHead,
@@ -265,10 +265,11 @@ impl PurlAdvisory {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, ToSchema, PartialEq)]
 pub struct PurlStatus {
     pub vulnerability: VulnerabilityHead,
     pub average_severity: Severity,
+    pub average_score: f64,
     pub status: String,
     #[schema(required)]
     pub context: Option<StatusContext>,
@@ -289,7 +290,7 @@ impl PurlStatus {
         tx: &C,
     ) -> Result<Self, Error> {
         let cvss3 = vuln.find_related(cvss3::Entity).all(tx).await?;
-        let average_severity = Score::from_iter(cvss3.iter().map(Cvss3Base::from)).severity();
+        let average_score = Score::from_iter(cvss3.iter().map(Cvss3Base::from));
         Ok(Self {
             vulnerability: VulnerabilityHead::from_vulnerability_entity(
                 vuln,
@@ -297,7 +298,8 @@ impl PurlStatus {
                 tx,
             )
             .await?,
-            average_severity,
+            average_severity: average_score.severity(),
+            average_score: average_score.value(),
             status,
             context: cpe.map(StatusContext::Cpe),
         })

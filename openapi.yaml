@@ -3014,9 +3014,13 @@ components:
       required:
       - vulnerability
       - average_severity
+      - average_score
       - status
       - context
       properties:
+        average_score:
+          type: number
+          format: double
         average_severity:
           $ref: '#/components/schemas/Severity'
         context:
@@ -3259,9 +3263,13 @@ components:
       - type: object
         required:
         - average_severity
+        - average_score
         - status
         - packages
         properties:
+          average_score:
+            type: number
+            format: double
           average_severity:
             $ref: '#/components/schemas/Severity'
           context:
