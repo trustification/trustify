@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742912716373,
+  "lastUpdate": 1742979908447,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7128,6 +7128,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/d2f77f28c53d4b1371c8501eb1236b70d91b046a"
         },
         "date": 1742912715758,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "9a2efbc2ecce0ca138f417aa7dcaca091b5dc449",
+          "message": "feat: add pg_stats to the compose database",
+          "timestamp": "2025-03-26T08:47:11Z",
+          "tree_id": "539eb8c8550680931ff7be366cb760d832394079",
+          "url": "https://github.com/trustification/trustify/commit/9a2efbc2ecce0ca138f417aa7dcaca091b5dc449"
+        },
+        "date": 1742979907340,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
