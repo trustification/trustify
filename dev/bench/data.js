@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742998084815,
+  "lastUpdate": 1743001081520,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7273,6 +7273,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/9d404661e5f170aab694041ebfa4efbbafa29dfa"
         },
         "date": 1742998083867,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "19973495e18c5710c90241d4572de882df67157d",
+          "message": "fix: purl components now properly encoded in Display impl\n\nAlso added a with_version() helper to avoid some mutability. I'd like\nto hide all the public fields at some point, as their pub-ness still\nallows improper encoding, but that's a bigger change.",
+          "timestamp": "2025-03-26T10:51:57-04:00",
+          "tree_id": "282752440894459a689759428c453d7383c635cc",
+          "url": "https://github.com/trustification/trustify/commit/19973495e18c5710c90241d4572de882df67157d"
+        },
+        "date": 1743001080116,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
