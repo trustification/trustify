@@ -45,10 +45,10 @@ thiserror = { workspace = true }
 time = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 tracing = { workspace = true }
+tracing-futures = { workspace = true, features = ["futures-03"] }
 utoipa = { workspace = true, features = ["actix_extras", "uuid", "time"] }
 utoipa-actix-web = { workspace = true }
 uuid = { workspace = true }
-
 
 [dev-dependencies]
 actix-http = { workspace = true }
@@ -57,13 +57,16 @@ bytesize = { workspace = true }
 chrono = { workspace = true }
 criterion = { workspace = true, features = ["html_reports", "async_tokio"] }
 csaf = { workspace = true }
-cve = { workspace = true }
 csv = { workspace = true }
-flate2 ={ workspace = true }
+cve = { workspace = true }
+flate2 = { workspace = true }
 hex = { workspace = true }
 humantime = { workspace = true }
 jsonpath-rust = { workspace = true }
 log = { workspace = true }
+opentelemetry = { workspace = true }
+opentelemetry-otlp = { workspace = true, features = ["grpc-tonic"] }
+opentelemetry_sdk = { workspace = true }
 osv = { workspace = true }
 packageurl = { workspace = true }
 regex = { workspace = true }
@@ -81,19 +84,16 @@ termimad = { workspace = true }
 test-context = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 tokio-util = { workspace = true }
+tracing = { workspace = true, features = ["std"]}
+tracing-core =  { workspace = true }
+tracing-flame =  { workspace = true }
+tracing-opentelemetry = { workspace = true }
+tracing-subscriber = { workspace = true }
 trustify-cvss = { workspace = true }
 trustify-test-context = { workspace = true }
 urlencoding = { workspace = true }
 walkdir = { workspace = true }
 zip = { workspace = true }
-
-opentelemetry = { workspace = true }
-tracing-opentelemetry = { workspace = true }
-opentelemetry_sdk = { workspace = true }
-opentelemetry-otlp = { workspace = true, features = ["grpc-tonic"] }
-tracing = { workspace = true, features = ["std"]}
-tracing-core =  { workspace = true }
-tracing-subscriber = { workspace = true }
 
 [[bench]]
 name = "bench"
