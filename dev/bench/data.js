@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742996462097,
+  "lastUpdate": 1742998084815,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7244,6 +7244,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/0709de35508406d0f28c583a1c1043251fa1daf2"
         },
         "date": 1742996461250,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "9d404661e5f170aab694041ebfa4efbbafa29dfa",
+          "message": "chore: final set of perf improvements before upcoming release",
+          "timestamp": "2025-03-26T13:48:32Z",
+          "tree_id": "f9b168eb81ec876b79c256db619df043f1e3e7d6",
+          "url": "https://github.com/trustification/trustify/commit/9d404661e5f170aab694041ebfa4efbbafa29dfa"
+        },
+        "date": 1742998083867,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
