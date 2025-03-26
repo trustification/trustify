@@ -1690,6 +1690,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResults_VulnerabilitySummary'
+  /api/v2/vulnerability/analyze:
+    post:
+      tags:
+      - vulnerability
+      summary: Analyze the provided purls for the known vulnerabilities
+      operationId: analyze
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalysisRequest'
+        required: true
+      responses:
+        '200':
+          description: Analyze the provided purls to search for known vulnerabilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
   /api/v2/vulnerability/{id}:
     get:
       tags:
@@ -1952,6 +1971,23 @@ components:
               All CVSS3 scores from the advisory for the given vulnerability.
               May include several, varying by minor version of the CVSS3 vector.
       description: Summary of information from this advisory regarding a single specific vulnerability.
+    AnalysisRequest:
+      type: object
+      required:
+      - purls
+      properties:
+        purls:
+          type: array
+          items:
+            type: string
+    AnalysisResponse:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          $ref: '#/components/schemas/VulnerabilityDetails'
+      propertyNames:
+        type: string
     AnalysisStatus:
       type: object
       required:
