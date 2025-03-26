@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1742979908447,
+  "lastUpdate": 1742988786405,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7162,6 +7162,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": false,
+          "id": "4308d26cb3893c96a52dfc1d135a3a09376f7b0f",
+          "message": "chore: incremental refactor of get_purl",
+          "timestamp": "2025-03-26T10:56:06Z",
+          "tree_id": "f8ef4bcd03bff4af623929cdfa47e4273ea307f0",
+          "url": "https://github.com/trustification/trustify/commit/4308d26cb3893c96a52dfc1d135a3a09376f7b0f"
+        },
+        "date": 1742988785012,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
