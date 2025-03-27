@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743081334303,
+  "lastUpdate": 1743086353934,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7389,6 +7389,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/6a8b3c77a77a6a0f3245834ecddca52cb7b94200"
         },
         "date": 1743081333495,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "0f1f780790463225c21138f478cdab2b71e4d8c9",
+          "message": "fix: add vulnerability details in purl details for product statuses",
+          "timestamp": "2025-03-27T14:17:09Z",
+          "tree_id": "34e22c6d54036ac995966416a8033ffcd9e53db4",
+          "url": "https://github.com/trustification/trustify/commit/0f1f780790463225c21138f478cdab2b71e4d8c9"
+        },
+        "date": 1743086352526,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
