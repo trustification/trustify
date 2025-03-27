@@ -717,7 +717,7 @@ paths:
   /api/v2/license/spdx/license:
     get:
       tags:
-      - licenses
+      - license
       summary: List SPDX licenses
       operationId: listSpdxLicenses
       parameters:
@@ -763,7 +763,7 @@ paths:
   /api/v2/license/spdx/license/{id}:
     get:
       tags:
-      - licenses
+      - license
       summary: Get SPDX license details
       operationId: getSpdxLicense
       parameters:
@@ -1517,7 +1517,7 @@ paths:
   /api/v2/userPreference/{key}:
     get:
       tags:
-      - admin
+      - user
       summary: Get user preferences
       operationId: getUserPreferences
       parameters:
@@ -1542,7 +1542,7 @@ paths:
           description: Unknown user preference key
     put:
       tags:
-      - admin
+      - user
       summary: Set user preferences
       operationId: setUserPreferences
       parameters:
@@ -1577,7 +1577,7 @@ paths:
           description: The provided If-Match revision did not match the actual revision
     delete:
       tags:
-      - admin
+      - user
       summary: Delete user preferences
       operationId: deleteUserPreferences
       parameters:
@@ -1697,7 +1697,7 @@ paths:
   /api/v2/weakness:
     get:
       tags:
-      - licenses
+      - license
       summary: List weaknesses
       operationId: listWeaknesses
       parameters:
@@ -1743,7 +1743,7 @@ paths:
   /api/v2/weakness/{id}:
     get:
       tags:
-      - licenses
+      - license
       summary: Retrieve weakness details
       operationId: getWeakness
       parameters:
