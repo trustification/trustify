@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743001081520,
+  "lastUpdate": 1743075579810,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7302,6 +7302,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/19973495e18c5710c90241d4572de882df67157d"
         },
         "date": 1743001080116,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "d94f5a022b11208ec9a9d3b228711aae04e54800",
+          "message": "chore: simplify the internal API, add instrumentation\n\nThis drops a bunch of \"async\" functions and Result returns, which aren't\nbeing used anyway.\n\nIt also adds a bit more instrumentation, and some test tooling, allowing\none to enable flamechart traces for tests.",
+          "timestamp": "2025-03-27T11:15:33Z",
+          "tree_id": "493c2a354c357588f9a9701013cf35dd342caf23",
+          "url": "https://github.com/trustification/trustify/commit/d94f5a022b11208ec9a9d3b228711aae04e54800"
+        },
+        "date": 1743075579037,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
