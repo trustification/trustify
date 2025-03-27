@@ -15,7 +15,7 @@ use sea_orm::{
     Condition, ConnectionTrait, DbBackend, DbErr, FromQueryResult, JoinType, ModelTrait,
     QueryFilter, QuerySelect, RelationTrait, Statement, StreamTrait,
 };
-use sea_query::{Asterisk, Expr, Func, Query, SimpleExpr};
+use sea_query::{Alias, Asterisk, Expr, Func, Query, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::{debug_span, instrument};
@@ -25,10 +25,10 @@ use trustify_common::{
     db::{VersionMatches, multi_model::SelectIntoMultiModel},
     memo::Memo,
 };
-use trustify_cvss::cvss3::{Cvss3Base, score::Score, severity::Severity};
+use trustify_cvss::cvss3::severity::Severity;
 use trustify_entity::{
-    advisory, advisory_vulnerability, base_purl, cvss3, purl_status, qualified_purl, sbom,
-    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, status, version_range,
+    advisory, advisory_vulnerability, base_purl, purl_status, qualified_purl, sbom, sbom_node,
+    sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, status, version_range,
     versioned_purl, vulnerability,
 };
 use utoipa::ToSchema;
@@ -121,6 +121,22 @@ impl SbomDetails {
                 advisory_vulnerability::Relation::Vulnerability.def(),
             )
             .select_only()
+            .expr_as(
+                Expr::col((
+                    trustify_entity::vulnerability::Entity,
+                    trustify_entity::vulnerability::Column::AverageSeverity,
+                ))
+                .cast_as(Alias::new("TEXT")),
+                "vulnerability$average_severity",
+            )
+            .expr_as(
+                Expr::col((
+                    trustify_entity::advisory::Entity,
+                    trustify_entity::advisory::Column::AverageSeverity,
+                ))
+                .cast_as(Alias::new("TEXT")),
+                "advisory$average_severity",
+            )
             .try_into_multi_model::<QueryCatcher>()?
             .stream(tx)
             .await?;
@@ -163,6 +179,8 @@ impl SbomDetails {
                 "vulnerability"."modified" AS "vulnerability$modified",
                 "vulnerability"."withdrawn" AS "vulnerability$withdrawn",
                 "vulnerability"."cwes" AS "vulnerability$cwes",
+                "vulnerability"."average_score" AS "vulnerability$average_score",
+                CAST("vulnerability"."average_severity" AS TEXT) AS "vulnerability$average_severity",
                 "qualified_purl"."id" AS "qualified_purl$id",
                 "qualified_purl"."versioned_purl_id" AS "qualified_purl$versioned_purl_id",
                 "qualified_purl"."qualifiers" AS "qualified_purl$qualifiers",
@@ -351,7 +369,6 @@ impl SbomAdvisory {
                     each.status.slug,
                     status_cpe,
                     vec![],
-                    tx,
                 )
                 .await?;
                 advisory.status.push(status);
@@ -408,30 +425,29 @@ impl SbomStatus {
         skip(
             advisory_vulnerability,
             vulnerability,
-            packages,
-            tx
+            packages
         ),
         err(level=tracing::Level::INFO)
     )]
-    pub async fn new<C: ConnectionTrait>(
+    pub async fn new(
         advisory_vulnerability: &advisory_vulnerability::Model,
         vulnerability: &vulnerability::Model,
         status: String,
         cpe: Option<OwnedUri>,
         packages: Vec<SbomPackage>,
-        tx: &C,
     ) -> Result<Self, Error> {
-        let cvss3 = vulnerability.find_related(cvss3::Entity).all(tx).await?;
-        let average = Score::from_iter(cvss3.iter().map(Cvss3Base::from));
-
         Ok(Self {
             vulnerability: VulnerabilityHead::from_advisory_vulnerability_entity(
                 advisory_vulnerability,
                 vulnerability,
             ),
             context: cpe.as_ref().map(|e| StatusContext::Cpe(e.to_string())),
-            average_severity: average.severity(),
-            average_score: average.value(),
+            average_severity: Severity::from(
+                vulnerability
+                    .average_severity
+                    .unwrap_or(trustify_entity::cvss3::Severity::None),
+            ),
+            average_score: vulnerability.average_score.unwrap_or(0.0),
             status,
             packages,
         })

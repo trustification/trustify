@@ -62,8 +62,8 @@ impl AdvisoryDetails {
                 .as_ref()
                 .map(SourceDocument::from_entity),
             vulnerabilities,
-            average_severity: advisory.average_severity.map(|sev| sev.into()),
-            average_score: advisory.average_score,
+            average_severity: advisory.advisory.average_severity.map(|sev| sev.into()),
+            average_score: advisory.advisory.average_score,
         })
     }
 }

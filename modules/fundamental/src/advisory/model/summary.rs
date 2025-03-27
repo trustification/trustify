@@ -1,7 +1,6 @@
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect};
 use serde::{Deserialize, Serialize};
 use trustify_common::memo::Memo;
-use trustify_cvss::cvss3::score::Score;
 use trustify_entity::{advisory_vulnerability, vulnerability};
 use utoipa::ToSchema;
 
@@ -53,8 +52,6 @@ impl AdvisorySummary {
                 AdvisoryVulnerabilityHead::from_entities(&each.advisory, &vulnerabilities, tx)
                     .await?;
 
-            let average_score = each.average_score.map(|score| Score::new(score).roundup());
-
             summaries.push(AdvisorySummary {
                 head: AdvisoryHead::from_advisory(
                     &each.advisory,
@@ -67,10 +64,11 @@ impl AdvisorySummary {
                     .as_ref()
                     .map(SourceDocument::from_entity),
                 average_severity: each
+                    .advisory
                     .average_severity
                     .as_ref()
                     .map(|severity| severity.to_string()),
-                average_score: average_score.map(|score| score.value()),
+                average_score: each.advisory.average_score,
                 vulnerabilities,
             })
         }

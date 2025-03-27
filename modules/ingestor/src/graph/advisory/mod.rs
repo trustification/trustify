@@ -165,6 +165,8 @@ impl Graph {
             withdrawn: Set(withdrawn),
             labels: Set(labels),
             source_document_id: Set(Some(new_id)),
+            average_score: Set(None),
+            average_severity: Set(None),
         };
 
         let result = model.insert(connection).await?;
