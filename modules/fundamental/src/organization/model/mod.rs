@@ -1,14 +1,13 @@
 use serde::{Deserialize, Serialize};
+use trustify_entity::organization;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 mod details;
 mod summary;
 
-use crate::Error;
 pub use details::*;
 pub use summary::*;
-use trustify_entity::organization;
 
 /// An organization who may issue advisories, product SBOMs, or
 /// otherwise be involved in supply-chain evidence.
@@ -30,12 +29,12 @@ pub struct OrganizationHead {
 }
 
 impl OrganizationHead {
-    pub async fn from_entity(organization: &organization::Model) -> Result<Self, Error> {
-        Ok(OrganizationHead {
+    pub fn from_entity(organization: &organization::Model) -> Self {
+        OrganizationHead {
             id: organization.id,
             name: organization.name.clone(),
             cpe_key: organization.cpe_key.clone(),
             website: organization.website.clone(),
-        })
+        }
     }
 }

@@ -28,6 +28,8 @@ test-context = { workspace = true }
 tokio = { workspace = true }
 tokio-util = { workspace = true }
 tracing = { workspace = true }
+tracing-flame =  { workspace = true }
+tracing-subscriber = { workspace = true }
 utoipa-actix-web = { workspace = true }
 
 [dev-dependencies]

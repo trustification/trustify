@@ -2,22 +2,22 @@
 
 use std::str::FromStr;
 use test_context::test_context;
-use test_log::test;
-use tracing::instrument;
 use trustify_common::id::Id;
 use trustify_module_fundamental::sbom::service::SbomService;
-use trustify_test_context::TrustifyContext;
+use trustify_test_context::{TrustifyContext, flame::setup_global_subscriber};
 
 #[test_context(TrustifyContext, skip_teardown)]
-#[test(tokio::test)]
-#[instrument]
+#[tokio::test]
 #[ignore = "Only works with a pre-existing database and a specific dump"]
 async fn fetch(ctx: TrustifyContext) -> anyhow::Result<()> {
+    let _guard = setup_global_subscriber();
+
     // this requires an imported dataset
 
     let service = SbomService::new(ctx.db.clone());
+    // update this digest to point to a "large SBOM"
     let id =
-        Id::from_str("sha256:e2fba0cf6d3c79cf6994b31e172b5f11ee5e3f9dd7629ac0f1a5ae5cae2d6135")?;
+        Id::from_str("sha256:f293eb898192085804419f9dd40a738f20d67dd81846e88c6720f692ec5f3081")?;
     let statuses: Vec<String> = vec!["affected".to_string()];
 
     let result = service.fetch_sbom_details(id, statuses, &ctx.db).await?;
