@@ -1,0 +1,116 @@
+name: scale-test
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  scale-test:
+    if: github.event.comment.body == '/scale-test' && github.event.issue.pull_request != null
+    runs-on: ubuntu-24.04
+
+    steps:
+
+      - name: Check if Commenter is a Collaborator
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+          REPO: ${{ github.repository }}
+        run: |
+          PERMISSIONS=$(gh api repos/$REPO/collaborators/$COMMENTER/permission --jq '.permission')
+          echo "User Permission: $PERMISSIONS"
+
+          if [[ "$PERMISSIONS" != "admin" && "$PERMISSIONS" != "write" && "$PERMISSIONS" != "maintain" ]]; then
+            echo "❌ User does not have permission to trigger this action."
+            exit 1
+          fi
+
+      - name: Maximize build space
+        run: |
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          sudo rm -Rf ${JAVA_HOME_8_X64}
+          sudo rm -Rf ${JAVA_HOME_11_X64}
+          sudo rm -Rf ${JAVA_HOME_17_X64}
+          sudo rm -Rf ${RUBY_PATH}
+          df -h
+
+      - uses: actions/checkout@v4
+        with:
+          repository: "trustification/trustify-load-test-runs"
+
+      - run: |
+          mkdir report
+          mkdir baseline
+
+      - name: Provide baseline
+        run: |
+          cp publish/baseline.json baseline/
+
+      - name: Build Containers
+        run: |
+          docker compose -f compose.yaml build --build-arg rev=${{ github.event.pull_request.head.sha }}
+
+      - name: Run
+        run: |
+          docker compose -f compose.yaml run loadtests
+
+      - if: always()
+        run: |
+          docker compose -f compose.yaml logs > containers.log
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose -f compose.yaml down
+
+      - name: Upload container logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: logs
+          path: |
+            containers.log
+          if-no-files-found: error
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: report
+          path: |
+            report/report.html
+            report/report.json
+            report/report.md
+          if-no-files-found: error
+
+      - name: Get Artifact Download URL
+        id: artifact-url
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ARTIFACT_ID=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts --jq '.artifacts[] | select(.name=="report") | .id')
+          echo "Found Artifact ID: $ARTIFACT_ID"
+
+          if [ -z "$ARTIFACT_ID" ]; then
+            echo "❌ No artifact found!"
+            exit 1
+          fi
+
+          ARTIFACT_URL="https://github.com/${{ github.repository }}/suites/${{ github.run_id }}/artifacts/$ARTIFACT_ID"
+          echo "artifact_url=$ARTIFACT_URL" >> $GITHUB_ENV
+
+      - name: Post comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMENT_BODY=$(printf "<details><summary>Goose Report</summary>\n\n\n\n")
+          COMMENT_BODY+="$(cat report/report.md)"
+          COMMENT_BODY+=$(printf "\n\n</details>")
+          COMMENT_BODY+=$(printf "\n\n📄 **[Full Report](${{ env.artifact_url }})**")
+          gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
+            -f body="$COMMENT_BODY"
