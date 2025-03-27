@@ -18,5 +18,11 @@ GET http://localhost:8080/api/v2/sbom/{{ubi8_sbom_id}}/advisory
 HTTP 200
 
 [Asserts]
-jsonpath "$[?(@.document_id == 'CVE-2023-44487')].status[?(@.context.cpe == 'cpe:/a:redhat:enterprise_linux:8:*:crb:*')]" count == 1
-jsonpath "$[?(@.document_id == 'CVE-2023-44487')].status[?(@.context.cpe == 'cpe:/o:redhat:enterprise_linux:8:*:baseos:*')]" count == 1
+jsonpath "$[?(@.document_id == 'CVE-2024-28834')].status[?(@.context.cpe == 'cpe:/a:redhat:enterprise_linux:8:*:appstream:*')]" count == 1
+
+# Check purl vulnerability date
+GET http://localhost:8080/api/v2/purl/3a5c8e1e-17c4-5715-b74c-f8b61c4d7d8c
+HTTP 200
+
+[Asserts]
+jsonpath "$.advisories[*].status[*].vulnerability.published" not isEmpty
