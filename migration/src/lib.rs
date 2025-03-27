@@ -13,6 +13,7 @@ mod m0000060_perf_adv_vuln3;
 mod m0000070_perf_adv_vuln4;
 mod m0000080_get_purl_refactor;
 mod m0000090_release_perf;
+mod m0000100_perf_adv_vuln5;
 mod m0000970_alter_importer_add_heartbeat;
 
 pub struct Migrator;
@@ -31,6 +32,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000070_perf_adv_vuln4::Migration),
             Box::new(m0000080_get_purl_refactor::Migration),
             Box::new(m0000090_release_perf::Migration),
+            Box::new(m0000100_perf_adv_vuln5::Migration),
         ]
     }
 }
