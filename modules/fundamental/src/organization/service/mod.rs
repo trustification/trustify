@@ -37,7 +37,7 @@ impl OrganizationService {
 
         Ok(PaginatedResults {
             total,
-            items: OrganizationSummary::from_entities(&limiter.fetch().await?).await?,
+            items: OrganizationSummary::from_entities(&limiter.fetch().await?),
         })
     }
     pub async fn fetch_organization<C: ConnectionTrait>(

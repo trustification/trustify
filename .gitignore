@@ -7,8 +7,9 @@
 .envrc
 
 *.cdx.json
+*.folded
 
-/flamegraph*.svg
+/flame*.svg
 /perf.data*
 /dump.sql
 .ai_history.txt

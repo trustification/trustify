@@ -22,11 +22,7 @@ impl ProductSummary {
         org: Option<organization::Model>,
         versions: &[product_version::Model],
     ) -> Result<Self, Error> {
-        let vendor = if let Some(org) = org {
-            Some(OrganizationSummary::from_entity(&org).await?)
-        } else {
-            None
-        };
+        let vendor = org.map(|org| OrganizationSummary::from_entity(&org));
         Ok(ProductSummary {
             head: ProductHead::from_entity(product).await?,
             versions: ProductVersionHead::from_entities(versions).await?,

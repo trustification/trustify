@@ -3,6 +3,7 @@
 pub mod app;
 pub mod auth;
 pub mod call;
+pub mod flame;
 pub mod spdx;
 pub mod subset;
 

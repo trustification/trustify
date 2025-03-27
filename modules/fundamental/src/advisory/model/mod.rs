@@ -9,6 +9,7 @@ use crate::{Error, organization::model::OrganizationSummary};
 use sea_orm::{ConnectionTrait, LoaderTrait, ModelTrait, prelude::Uuid};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
+use tracing::instrument;
 use trustify_common::memo::Memo;
 use trustify_entity::{advisory, labels::Labels, organization};
 use utoipa::ToSchema;
@@ -54,21 +55,20 @@ pub struct AdvisoryHead {
 }
 
 impl AdvisoryHead {
+    #[instrument(skip_all, fields(advisory.id = ?advisory.id), err(level=tracing::Level::INFO))]
     pub async fn from_advisory<C: ConnectionTrait>(
         advisory: &advisory::Model,
         issuer: Memo<organization::Model>,
         tx: &C,
     ) -> Result<Self, Error> {
         let issuer = match &issuer {
-            Memo::Provided(Some(issuer)) => Some(OrganizationSummary::from_entity(issuer).await?),
+            Memo::Provided(Some(issuer)) => Some(OrganizationSummary::from_entity(issuer)),
             Memo::Provided(None) => None,
-            Memo::NotProvided => {
-                if let Some(issuer) = advisory.find_related(organization::Entity).one(tx).await? {
-                    Some(OrganizationSummary::from_entity(&issuer).await?)
-                } else {
-                    None
-                }
-            }
+            Memo::NotProvided => advisory
+                .find_related(organization::Entity)
+                .one(tx)
+                .await?
+                .map(|issuer| OrganizationSummary::from_entity(&issuer)),
         };
 
         Ok(Self {
@@ -93,11 +93,7 @@ impl AdvisoryHead {
         let issuers = entities.load_one(organization::Entity, tx).await?;
 
         for (advisory, issuer) in entities.iter().zip(issuers) {
-            let issuer = if let Some(issuer) = issuer {
-                Some(OrganizationSummary::from_entity(&issuer).await?)
-            } else {
-                None
-            };
+            let issuer = issuer.map(|issuer| OrganizationSummary::from_entity(&issuer));
 
             heads.push(Self {
                 uuid: advisory.id,
