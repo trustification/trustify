@@ -135,6 +135,10 @@ async fn get_product_statuses_for_purl<C: ConnectionTrait>(
         .join(JoinType::LeftJoin, product::Relation::ProductVersion.def())
         .join(JoinType::Join, product_status::Relation::Status.def())
         .join(JoinType::Join, product_status::Relation::Advisory.def())
+        .join(
+            JoinType::Join,
+            product_status::Relation::Vulnerability.def(),
+        )
         .filter(product_version::Column::SbomId.in_subquery(sbom_ids_query))
         .filter(Expr::col(product_status::Column::Package).eq(purl_name).or(
             namespace_name.map_or(Expr::value(false), |ns| {
@@ -220,17 +224,8 @@ impl PurlAdvisory {
         }
 
         for product_status in product_statuses {
-            let vuln = vulnerability::Model {
-                id: product_status.product_status.vulnerability_id.clone(),
-                title: None,
-                reserved: None,
-                published: None,
-                modified: None,
-                withdrawn: None,
-                cwes: None,
-            };
             let purl_status = PurlStatus::new(
-                &vuln,
+                &product_status.vulnerability,
                 product_status.status.slug,
                 Some(product_status.cpe.to_string()),
                 tx,
@@ -387,7 +382,7 @@ impl FromQueryResultMultiModel for LicenseCatcher {
 #[derive(Debug)]
 pub struct ProductStatusCatcher {
     advisory: advisory::Model,
-    product_status: product_status::Model,
+    vulnerability: vulnerability::Model,
     cpe: trustify_entity::cpe::Model,
     status: status::Model,
 }
@@ -396,7 +391,7 @@ impl FromQueryResult for ProductStatusCatcher {
     fn from_query_result(res: &QueryResult, _pre: &str) -> Result<Self, DbErr> {
         Ok(Self {
             advisory: Self::from_query_result_multi_model(res, "", advisory::Entity)?,
-            product_status: Self::from_query_result_multi_model(res, "", product_status::Entity)?,
+            vulnerability: Self::from_query_result_multi_model(res, "", vulnerability::Entity)?,
             cpe: Self::from_query_result_multi_model(res, "", trustify_entity::cpe::Entity)?,
             status: Self::from_query_result_multi_model(res, "", status::Entity)?,
         })
@@ -407,7 +402,7 @@ impl FromQueryResultMultiModel for ProductStatusCatcher {
     fn try_into_multi_model<E: EntityTrait>(select: Select<E>) -> Result<Select<E>, DbErr> {
         select
             .try_model_columns(advisory::Entity)?
-            .try_model_columns(product_status::Entity)?
+            .try_model_columns(vulnerability::Entity)?
             .try_model_columns(trustify_entity::cpe::Entity)?
             .try_model_columns(status::Entity)
     }
