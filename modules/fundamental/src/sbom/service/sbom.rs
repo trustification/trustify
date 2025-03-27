@@ -321,7 +321,12 @@ impl SbomService {
                 .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid())),
         };
 
-        let query = select.filtering(query)?.find_also_linked(SbomNodeLink);
+        let query = select.find_also_linked(SbomNodeLink).filtering_with(
+            query,
+            Columns::from_entity::<sbom::Entity>()
+                .add_columns(sbom_node::Entity)
+                .alias("sbom_node", "r0"),
+        )?;
 
         // limit and execute
 

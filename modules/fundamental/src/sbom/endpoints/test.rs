@@ -13,7 +13,9 @@ use trustify_common::{id::Id, model::PaginatedResults};
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::model::IngestResult;
 use trustify_test_context::{TrustifyContext, call::CallService, document_bytes};
+use urlencoding::encode;
 use uuid::Uuid;
+
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn license_export(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
@@ -300,6 +302,42 @@ async fn query_sboms_by_ingested_time(ctx: &TrustifyContext) -> Result<(), anyho
     assert_eq!(ubi["items"][0]["name"], json!("ubi9-container"));
     assert_eq!(zoo["total"], 1);
     assert_eq!(zoo["items"][0]["name"], json!("zookeeper"));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn query_sboms_by_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let query = async |purl, sort| {
+        let app = caller(ctx).await.unwrap();
+        let uri = format!(
+            "/api/v2/sbom/by-package?purl={}&sort={}",
+            encode(purl),
+            encode(sort)
+        );
+        let request = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        tracing::debug!(test = "", "{response:#?}");
+        response
+    };
+
+    // Ingest 2 SBOM's that depend on the same purl
+    ctx.ingest_documents(["spdx/simple-ext-a.json", "spdx/simple-ext-b.json"])
+        .await?;
+
+    assert_eq!(
+        2,
+        query("pkg:rpm/redhat/A@0.0.0?arch=src", "").await["total"]
+    );
+    assert_eq!(
+        "simple-a",
+        query("pkg:rpm/redhat/A@0.0.0?arch=src", "name:asc").await["items"][0]["name"]
+    );
+    assert_eq!(
+        "simple-b",
+        query("pkg:rpm/redhat/A@0.0.0?arch=src", "name:desc").await["items"][0]["name"]
+    );
 
     Ok(())
 }
