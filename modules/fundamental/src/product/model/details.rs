@@ -29,11 +29,7 @@ impl ProductDetails {
             .find_related(product_version::Entity)
             .all(tx)
             .await?;
-        let vendor = if let Some(org) = org {
-            Some(OrganizationSummary::from_entity(&org).await?)
-        } else {
-            None
-        };
+        let vendor = org.map(|org| OrganizationSummary::from_entity(&org));
         Ok(ProductDetails {
             head: ProductHead::from_entity(product).await?,
             versions: ProductVersionDetails::from_entities(&product_versions, tx).await?,

@@ -1,4 +1,3 @@
-use crate::Error;
 use crate::organization::model::OrganizationHead;
 use serde::{Deserialize, Serialize};
 use trustify_entity::organization;
@@ -11,21 +10,16 @@ pub struct OrganizationSummary {
 }
 
 impl OrganizationSummary {
-    pub async fn from_entity(organization: &organization::Model) -> Result<Self, Error> {
-        Ok(OrganizationSummary {
-            head: OrganizationHead::from_entity(organization).await?,
-        })
+    pub fn from_entity(organization: &organization::Model) -> Self {
+        Self {
+            head: OrganizationHead::from_entity(organization),
+        }
     }
 
-    pub async fn from_entities(organizations: &[organization::Model]) -> Result<Vec<Self>, Error> {
-        let mut summaries = Vec::new();
-
-        for org in organizations {
-            summaries.push(OrganizationSummary {
-                head: OrganizationHead::from_entity(org).await?,
-            });
-        }
-
-        Ok(summaries)
+    pub fn from_entities(organizations: &[organization::Model]) -> Vec<Self> {
+        organizations
+            .iter()
+            .map(OrganizationSummary::from_entity)
+            .collect()
     }
 }
