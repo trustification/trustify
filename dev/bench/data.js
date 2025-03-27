@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743079253147,
+  "lastUpdate": 1743081334303,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7360,6 +7360,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/91cf5ce0f674585f9a369294523a05570fc4be9d"
         },
         "date": 1743079252275,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "6a8b3c77a77a6a0f3245834ecddca52cb7b94200",
+          "message": "chore: add back advisory_vuln index",
+          "timestamp": "2025-03-27T12:54:41Z",
+          "tree_id": "c22576bd18325ec29880b64a55c0c9569ee818d4",
+          "url": "https://github.com/trustification/trustify/commit/6a8b3c77a77a6a0f3245834ecddca52cb7b94200"
+        },
+        "date": 1743081333495,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
