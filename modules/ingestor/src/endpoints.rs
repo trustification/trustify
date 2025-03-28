@@ -43,7 +43,7 @@ struct UploadParams {
 }
 
 #[utoipa::path(
-    tag = "dataset",
+    tag = "admin",
     operation_id = "uploadDataset",
     request_body = inline(BinaryData),
     params(UploadParams),

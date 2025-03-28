@@ -23,7 +23,7 @@ pub fn configure(config: &mut utoipa_actix_web::service_config::ServiceConfig, d
 }
 
 #[utoipa::path(
-    tag = "organization",
+    tag = "admin",
     operation_id = "listOrganizations",
     params(
         Query,
@@ -50,7 +50,7 @@ pub async fn all(
 }
 
 #[utoipa::path(
-    tag = "organization",
+    tag = "admin",
     operation_id = "getOrganization",
     params(
         ("id", Path, description = "Opaque ID of the organization")
