@@ -8,7 +8,7 @@ use trustify_common::{
     id::{Id, IdError, TryFilterForId},
 };
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, SimpleObject)]
+#[derive(Clone, Debug, PartialEq, DeriveEntityModel, SimpleObject)]
 #[graphql(complex)]
 #[graphql(concrete(name = "Advisory", params()))]
 #[sea_orm(table_name = "advisory")]
@@ -30,6 +30,8 @@ pub struct Model {
     pub title: Option<String>,
     pub labels: Labels,
     pub source_document_id: Option<Uuid>,
+    pub average_score: Option<f64>,
+    pub average_severity: Option<super::cvss3::Severity>,
 }
 
 #[ComplexObject]

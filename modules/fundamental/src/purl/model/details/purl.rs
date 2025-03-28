@@ -10,7 +10,7 @@ use sea_orm::{
     ModelTrait, QueryFilter, QueryOrder, QueryResult, QuerySelect, QueryTrait, RelationTrait,
     Select,
 };
-use sea_query::{Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
+use sea_query::{Alias, Asterisk, ColumnRef, Expr, Func, IntoIden, JoinType, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, hash_map::Entry};
 use trustify_common::{
@@ -139,6 +139,22 @@ async fn get_product_statuses_for_purl<C: ConnectionTrait>(
             JoinType::Join,
             product_status::Relation::Vulnerability.def(),
         )
+        .expr_as(
+            Expr::col((
+                trustify_entity::advisory::Entity,
+                trustify_entity::advisory::Column::AverageSeverity,
+            ))
+            .cast_as(Alias::new("TEXT")),
+            "advisory$average_severity",
+        )
+        .expr_as(
+            Expr::col((
+                trustify_entity::vulnerability::Entity,
+                trustify_entity::vulnerability::Column::AverageSeverity,
+            ))
+            .cast_as(Alias::new("TEXT")),
+            "vulnerability$average_severity",
+        )
         .filter(product_version::Column::SbomId.in_subquery(sbom_ids_query))
         .filter(Expr::col(product_status::Column::Package).eq(purl_name).or(
             namespace_name.map_or(Expr::value(false), |ns| {
@@ -199,6 +215,8 @@ impl PurlAdvisory {
                 modified: None,
                 withdrawn: None,
                 cwes: None,
+                average_score: None,
+                average_severity: None,
             });
 
             if let Some(advisory) = advisory {
@@ -401,8 +419,11 @@ impl FromQueryResult for ProductStatusCatcher {
 impl FromQueryResultMultiModel for ProductStatusCatcher {
     fn try_into_multi_model<E: EntityTrait>(select: Select<E>) -> Result<Select<E>, DbErr> {
         select
-            .try_model_columns(advisory::Entity)?
-            .try_model_columns(vulnerability::Entity)?
+            .try_model_columns_excluding(advisory::Entity, &[advisory::Column::AverageSeverity])?
+            .try_model_columns_excluding(
+                vulnerability::Entity,
+                &[vulnerability::Column::AverageSeverity],
+            )?
             .try_model_columns(trustify_entity::cpe::Entity)?
             .try_model_columns(status::Entity)
     }

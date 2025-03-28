@@ -1,3 +1,4 @@
+use migration::IntoIden;
 use sea_orm::{
     ColumnTrait, DbErr, EntityTrait, FromQueryResult, IntoIdentity, IntoSimpleExpr, Iterable,
     QueryResult, QuerySelect, Select, SelectModel, Selector,
@@ -44,6 +45,12 @@ impl<T: QuerySelect> ColumnsPrefixed for T {
 pub trait SelectIntoMultiModel: Sized {
     fn try_model_columns<E: EntityTrait>(self, entity: E) -> Result<Self, DbErr>;
 
+    fn try_model_columns_excluding<O: EntityTrait>(
+        self,
+        entity: O,
+        excluded: &[O::Column],
+    ) -> Result<Self, DbErr>;
+
     fn try_model_columns_from_alias<E: EntityTrait>(
         self,
         entity: E,
@@ -60,6 +67,27 @@ impl<E: EntityTrait> SelectIntoMultiModel for Select<E> {
         let name = entity.module_name();
         let prefix = format!("{name}$");
         self.try_columns_prefixed(&prefix, O::Column::iter())
+    }
+
+    fn try_model_columns_excluding<O: EntityTrait>(
+        self,
+        entity: O,
+        excluded: &[O::Column],
+    ) -> Result<Self, DbErr> {
+        let excluded_names: Vec<_> = excluded
+            .iter()
+            .map(|col| (*col).into_iden().to_string())
+            .collect();
+
+        let columns: Vec<_> = O::Column::iter()
+            .filter(|col| {
+                let col_name = (*col).into_iden().to_string();
+                !excluded_names.contains(&col_name)
+            })
+            .collect();
+
+        let prefix = format!("{}$", entity.module_name());
+        self.try_columns_prefixed(&prefix, columns)
     }
 
     fn try_model_columns_from_alias<O: EntityTrait>(
