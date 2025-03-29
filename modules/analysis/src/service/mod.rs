@@ -211,7 +211,6 @@ async fn resolve_rh_external_sbom_ancestors<C: ConnectionTrait>(
             // now find if there are any other other nodes with the same checksums
             match sbom_node_checksum::Entity::find()
                 .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
-                .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
                 .all(connection)
                 .await
             {
