@@ -1,0 +1,161 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "serialNumber": "urn:uuid:d9115337-4e7c-764e-89b3-eba851f7aed6",
+  "metadata": {
+    "supplier": {
+      "name": "Red Hat",
+      "url": [
+        "https://www.redhat.com"
+      ]
+    },
+    "component": {
+      "bom-ref": "productb",
+      "type": "operating-system",
+      "name": "Red Hat productb",
+      "version": "1",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "evidence": {
+        "identity": [
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/a:redhat:productb:1"
+          }
+        ]
+      }
+    },
+    "timestamp": "2006-08-14T02:34:56Z",
+    "tools": [
+      {
+        "name": "example tool2",
+        "version": "1.2.4"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "operating-system",
+      "name": "Red Hat productb",
+      "version": "1",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "evidence": {
+        "identity": [
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/a:redhat:productb:1"
+          }
+        ]
+      }
+    },
+    {
+      "type": "library",
+      "name": "openssl",
+      "version": "3.0.7-18.el9_2",
+      "purl": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
+      "bom-ref": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
+      "supplier": {
+        "name": "Red Hat",
+        "url": [
+          "https://www.redhat.com"
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9215c64e7289a058248728089e4d98ed1cc392bb5eb9b8fcbe661d57e8145bbd"
+        }
+      ],
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-aarch64-baseos-eus-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-s390x-baseos-eus-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-ppc64le-baseos-eus-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-i686-baseos-eus-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-x86_64-baseos-eus-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-aarch64-baseos-aus-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-s390x-baseos-aus-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-ppc64le-baseos-aus-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-i686-baseos-aus-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-x86_64-baseos-aus-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-aarch64-baseos-e4s-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-s390x-baseos-e4s-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-ppc64le-baseos-e4s-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-i686-baseos-e4s-source-rpms"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src&repository_id=rhel-9-for-x86_64-baseos-e4s-source-rpms"
+          }
+        ]
+      }
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "productb",
+      "provides": [
+        "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
+      ],
+      "dependsOn": []
+    }
+  ]
+}
