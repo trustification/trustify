@@ -158,6 +158,7 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
             }
             Some(graph::Node::Package(current_node)) => {
                 // collect external sbom ancestor nodes
+                let current_sbom_id = &current_node.sbom_id;
                 let current_node_id = &current_node.node_id;
                 let mut resolved_external_nodes: Vec<Node> = vec![];
                 let find_sbom_externals = resolve_rh_external_sbom_ancestors(
@@ -167,6 +168,9 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                 .await;
 
                 for sbom_external_node in find_sbom_externals {
+                    if &sbom_external_node.sbom_id.to_string() == current_sbom_id {
+                        continue;
+                    }
                     // check this is a valid external relationship
                     match sbom_external_node::Entity::find()
                         .filter(
@@ -216,7 +220,13 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
                             log::warn!("Problem looking up sbom external node.");
                             continue;
                         }
-                        _ => continue,
+                        _ => {
+                            log::debug!(
+                                "not external sbom sbom_external_node {:?}",
+                                sbom_external_node
+                            );
+                            continue;
+                        }
                     }
                 }
 
