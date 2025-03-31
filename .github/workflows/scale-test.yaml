@@ -101,16 +101,23 @@ jobs:
             exit 1
           fi
 
-          ARTIFACT_URL="https://github.com/${{ github.repository }}/suites/${{ github.run_id }}/artifacts/$ARTIFACT_ID"
+          ARTIFACT_URL=$(gh api repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID/zip --jq '.archive_download_url')
           echo "artifact_url=$ARTIFACT_URL" >> $GITHUB_ENV
 
       - name: Post comment
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMENT_BODY=$(printf "<details><summary>Goose Report</summary>\n\n\n\n")
-          COMMENT_BODY+="$(cat report/report.md)"
-          COMMENT_BODY+=$(printf "\n\n</details>")
-          COMMENT_BODY+=$(printf "\n\n📄 **[Full Report](${{ env.artifact_url }})**")
+          COMMENT_BODY=$(cat <<__EOF__)
+          <details><summary>Goose Report</summary>
+          
+          $(cat report/report.md)
+          
+          </details>
+          
+          📄 **[Full Report](${{ env.artifact_url }})**
+          
+          __EOF__
+          )
           gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
             -f body="$COMMENT_BODY"
