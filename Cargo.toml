@@ -210,3 +210,6 @@ langchain-rust = { git = "https://github.com/chirino/langchain-rust", branch = "
 
 # to pickup feat: https://github.com/Aeledfyr/deepsize/pull/41
 deepsize = { git = "https://github.com/chirino/deepsize", branch = "main" }
+
+# required due to https://github.com/doubleopen-project/spdx-rs/pull/35
+spdx-rs = { git = "https://github.com/ctron/spdx-rs", branch = "feature/add_alias_2" }
