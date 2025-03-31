@@ -17,8 +17,7 @@ use config::Config;
 use futures_util::TryStreamExt;
 use sea_orm::TransactionTrait;
 use std::str::FromStr;
-use trustify_auth::authorizer::Require;
-use trustify_auth::{CreateAdvisory, DeleteAdvisory, ReadAdvisory};
+use trustify_auth::{CreateAdvisory, DeleteAdvisory, ReadAdvisory, authorizer::Require};
 use trustify_common::{
     db::{Database, query::Query},
     decompress::decompress_async,
