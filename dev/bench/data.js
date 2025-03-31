@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743421083799,
+  "lastUpdate": 1743425133154,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7568,6 +7568,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "8f1cab6448841626fa4b3614e85ebe719cf6a91f",
+          "message": "fix: use patched version of spdx-rs until the fix is merged and released\n\nAlso see: https://github.com/doubleopen-project/spdx-rs/pull/35\n\nCloses: #1492",
+          "timestamp": "2025-03-31T12:06:37Z",
+          "tree_id": "a518b0e17fb9dcf18c6fd397d3c3cdfbe1f57cf1",
+          "url": "https://github.com/trustification/trustify/commit/8f1cab6448841626fa4b3614e85ebe719cf6a91f"
+        },
+        "date": 1743425132376,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
