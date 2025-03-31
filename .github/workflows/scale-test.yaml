@@ -25,6 +25,15 @@ jobs:
             exit 1
           fi
 
+      - name: Acknowledge Command
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMENT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments \
+            -f body="🛠️ Scale test has started! Follow the progress here: [Workflow Run]($COMMENT_URL)"
+
       - name: Maximize build space
         run: |
           df -h
