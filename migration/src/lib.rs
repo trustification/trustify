@@ -15,6 +15,7 @@ mod m0000080_get_purl_refactor;
 mod m0000090_release_perf;
 mod m0000100_perf_adv_vuln5;
 mod m0000970_alter_importer_add_heartbeat;
+mod m0000980_get_purl_fix;
 
 pub struct Migrator;
 
@@ -23,7 +24,6 @@ impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
             Box::new(m0000010_init::Migration),
-            Box::new(m0000970_alter_importer_add_heartbeat::Migration),
             Box::new(m0000020_add_sbom_group::Migration),
             Box::new(m0000030_perf_adv_vuln::Migration),
             Box::new(m0000040_create_license_export::Migration),
@@ -33,6 +33,8 @@ impl MigratorTrait for Migrator {
             Box::new(m0000080_get_purl_refactor::Migration),
             Box::new(m0000090_release_perf::Migration),
             Box::new(m0000100_perf_adv_vuln5::Migration),
+            Box::new(m0000970_alter_importer_add_heartbeat::Migration),
+            Box::new(m0000980_get_purl_fix::Migration),
         ]
     }
 }
