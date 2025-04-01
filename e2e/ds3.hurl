@@ -26,3 +26,11 @@ HTTP 200
 
 [Asserts]
 jsonpath "$.advisories[*].status[*].vulnerability.published" not isEmpty
+
+
+# Check vulnerability title
+GET http://localhost:8080/api/v2/vulnerability/CVE-2023-21971
+HTTP 200
+
+[Asserts]
+jsonpath "$.title" not isEmpty

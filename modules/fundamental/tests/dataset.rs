@@ -56,7 +56,7 @@ async fn ingest(ctx: TrustifyContext) -> anyhow::Result<()> {
     log::info!("ingest: {}", humantime::Duration::from(ingest_time));
 
     assert!(result.warnings.is_empty());
-    assert_eq!(result.files.len(), 68);
+    assert_eq!(result.files.len(), 72);
 
     // get a document
 
