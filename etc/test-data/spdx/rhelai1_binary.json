@@ -1,0 +1,161 @@
+{
+    "spdxVersion": "SPDX-2.3",
+    "dataLicense": "CC0-1.0",
+    "SPDXID": "SPDXRef-DOCUMENT",
+    "name": "registry.redhat.io/rhelai1@sha256:2b494fd0c17ddb5ba3f0e805c7e9a3e2699f9bc51cd15aba7ec708b4eff8758a",
+    "documentNamespace": "https://anchore.com/syft/dir/var/workdir/source-acf734d0-7b97-4050-8580-c588d2ca6eb5",
+    "creationInfo": {
+        "licenseListVersion": "3.25",
+        "creators": [
+            "Organization: Red Hat",
+            "Tool: syft-1.19.0"
+        ],
+        "created": "2025-03-27T15:35:27Z"
+    },
+    "packages": [
+        {
+            "SPDXID": "SPDXRef-image-binary",
+            "name": "nvidia-bootc-1-4",
+            "versionInfo": "abccf1662c34f22cf75cca88fb3d7f82e2980bb3",
+            "downloadLocation": "NOASSERTION",
+            "licenseConcluded": "NOASSERTION",
+            "supplier": "NOASSERTION",
+            "externalRefs": [
+                {
+                    "referenceCategory": "PACKAGE-MANAGER",
+                    "referenceType": "purl",
+                    "referenceLocator": "pkg:oci/bootc-nvidia-rhel9@sha256%3A2b494fd0c17ddb5ba3f0e805c7e9a3e2699f9bc51cd15aba7ec708b4eff8758a?arch=amd64&repository_url=registry.redhat.io/rhelai1&tag=1.4.3-1743086940"
+                }
+            ],
+            "checksums": [
+                {
+                    "algorithm": "SHA256",
+                    "checksumValue": "2b494fd0c17ddb5ba3f0e805c7e9a3e2699f9bc51cd15aba7ec708b4eff8758a"
+                }
+            ]
+        },
+        {
+                "name": "CharLS",
+                "SPDXID": "SPDXRef-Package-rpm-CharLS-2c58fbecd4f35bb2",
+                "versionInfo": "2.0.0-8.el9ai",
+                "supplier": "Organization: Red Hat, Inc.",
+                "originator": "Organization: Red Hat, Inc.",
+                "downloadLocation": "NOASSERTION",
+                "filesAnalyzed": false,
+                "sourceInfo": "acquired package info from RPM DB: /usr/lib/containers/storage/overlay/f5fd809a8f035e4ba4bd4e7c1d71c2a62a30dd45acdb9de5e2b6028b3841a23b/diff/var/lib/rpm/rpmdb.sqlite",
+                "licenseConcluded": "NOASSERTION",
+                "licenseDeclared": "LicenseRef-BSD",
+                "copyrightText": "NOASSERTION",
+                "externalRefs": [
+                    {
+                        "referenceCategory": "SECURITY",
+                        "referenceType": "cpe23Type",
+                        "referenceLocator": "cpe:2.3:a:CharLS:CharLS:2.0.0-8.el9ai:*:*:*:*:*:*:*"
+                    },
+                    {
+                        "referenceCategory": "SECURITY",
+                        "referenceType": "cpe23Type",
+                        "referenceLocator": "cpe:2.3:a:redhat:CharLS:2.0.0-8.el9ai:*:*:*:*:*:*:*"
+                    },
+                    {
+                        "referenceCategory": "PACKAGE-MANAGER",
+                        "referenceType": "purl",
+                        "referenceLocator": "pkg:rpm/redhat/CharLS@2.0.0-8.el9ai?arch=x86_64&distro=rhel-9.4&upstream=CharLS-2.0.0-8.el9ai.src.rpm"
+                    }
+                ]
+            },
+            {
+                "name": "NGX",
+                "SPDXID": "SPDXRef-Package-dotnet-NGX-9771880ff96d2793",
+                "versionInfo": "31.0.15.5356",
+                "supplier": "Organization: NVIDIA Corporation",
+                "originator": "Organization: NVIDIA Corporation",
+                "downloadLocation": "NOASSERTION",
+                "filesAnalyzed": false,
+                "sourceInfo": "acquired package info from dotnet project assets file: /usr/lib64/nvidia/wine/_nvngx.dll",
+                "licenseConcluded": "NOASSERTION",
+                "licenseDeclared": "NOASSERTION",
+                "copyrightText": "NOASSERTION",
+                "externalRefs": [
+                    {
+                        "referenceCategory": "SECURITY",
+                        "referenceType": "cpe23Type",
+                        "referenceLocator": "cpe:2.3:a:NGX:NGX:31.0.15.5356:*:*:*:*:*:*:*"
+                    },
+                    {
+                        "referenceCategory": "PACKAGE-MANAGER",
+                        "referenceType": "purl",
+                        "referenceLocator": "pkg:nuget/NGX@31.0.15.5356"
+                    }
+                ]
+            },
+            {
+                "SPDXID": "SPDXRef-image-registry.stage.redhat.io/rhelai1/driver-toolkit-rhel9-cec10e171217f30b09ec081acafeeda26889a83cb213fdc178ab03110ee9e874",
+                "name": "registry.stage.redhat.io/rhelai1/driver-toolkit-rhel9",
+                "downloadLocation": "NOASSERTION",
+                "externalRefs": [
+                    {
+                        "referenceCategory": "PACKAGE-MANAGER",
+                        "referenceType": "purl",
+                        "referenceLocator": "pkg:oci/driver-toolkit-rhel9@sha256:b1980d01f2367f6df15705e454ddf8965174a1c9e765888ec9540e7b03f2d92a?repository_url=registry.stage.redhat.io/rhelai1/driver-toolkit-rhel9"
+                    }
+                ],
+                "annotations": [
+                    {
+                        "annotator": "Tool: konflux:jsonencoded",
+                        "comment": "{\"name\":\"konflux:container:is_builder_image:for_stage\",\"value\":\"0\"}",
+                        "annotationDate": "2025-03-27T15:40:01Z",
+                        "annotationType": "OTHER"
+                    }
+                ]
+            },
+            {
+                "SPDXID": "SPDXRef-image-registry.redhat.io/rhel9-eus/rhel-9.4-bootc-3df9f8e44755a34ee535865a2d1366b4fe6ecb0104413e685f084557ae49ae51",
+                "name": "registry.redhat.io/rhel9-eus/rhel-9.4-bootc",
+                "downloadLocation": "NOASSERTION",
+                "externalRefs": [
+                    {
+                        "referenceCategory": "PACKAGE-MANAGER",
+                        "referenceType": "purl",
+                        "referenceLocator": "pkg:oci/rhel-9.4-bootc@sha256:a2d192b4684a07ba06cc3219c9deca2fb7bdaaefdae44e03cdd70ca2dcb90cab?repository_url=registry.redhat.io/rhel9-eus/rhel-9.4-bootc"
+                    }
+                ],
+                "annotations": [
+                    {
+                        "annotator": "Tool: konflux:jsonencoded",
+                        "comment": "{\"name\":\"konflux:container:is_base_image\",\"value\":\"true\"}",
+                        "annotationDate": "2025-03-27T15:40:01Z",
+                        "annotationType": "OTHER"
+                    }
+                ]
+            }
+    ],
+    "relationships": [
+        {
+
+            "spdxElementId": "SPDXRef-DOCUMENT",
+            "relationshipType": "DESCRIBES",
+            "relatedSpdxElement": "SPDXRef-image-binary"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-binary",
+            "relatedSpdxElement": "SPDXRef-Package-rpm-CharLS-2c58fbecd4f35bb2",
+            "relationshipType": "CONTAINS"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-binary",
+            "relatedSpdxElement": "SPDXRef-Package-dotnet-NGX-9771880ff96d2793",
+            "relationshipType": "CONTAINS"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-registry.stage.redhat.io/rhelai1/driver-toolkit-rhel9-cec10e171217f30b09ec081acafeeda26889a83cb213fdc178ab03110ee9e874",
+            "relationshipType": "BUILD_TOOL_OF",
+            "relatedSpdxElement": "SPDXRef-image-binary"
+        },
+        {
+            "spdxElementId": "SPDXRef-image-registry.redhat.io/rhel9-eus/rhel-9.4-bootc-3df9f8e44755a34ee535865a2d1366b4fe6ecb0104413e685f084557ae49ae51",
+            "relationshipType": "BUILD_TOOL_OF",
+            "relatedSpdxElement": "SPDXRef-image-binary"
+        }
+    ]
+}

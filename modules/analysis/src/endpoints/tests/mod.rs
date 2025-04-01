@@ -10,6 +10,7 @@ use serde_json::{Value, json};
 use test_context::test_context;
 use test_log::test;
 use trustify_test_context::{TrustifyContext, call::CallService, subset::ContainsSubset};
+use urlencoding::encode;
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
@@ -386,18 +387,14 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
     // e.g. q=purl~BASE&purl~QUALIFIER_ONE&purl~QUALIFIER_TWO
     const PURL: &str = "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom";
 
-    async fn by_query(app: &impl CallService, query: &str) -> Value {
-        let uri = format!(
-            "/api/v2/analysis/component?q={}&limit=0",
-            urlencoding::encode(query)
-        );
-        let request: Request = TestRequest::get().uri(&uri).to_request();
+    let query = async |query| {
+        let app = caller(ctx).await.unwrap();
+        let uri = format!("/api/v2/analysis/component?q={}&limit=0", encode(query));
+        let request = TestRequest::get().uri(&uri).to_request();
         let response: Value = app.call_and_read_body_json(request).await;
         tracing::debug!(test = "", "{response:#?}");
         response
-    }
-
-    let app = caller(ctx).await?;
+    };
 
     for each in [
         "purl=pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?type=pom\\&repository_url=https%3a%2f%2fmaven.repository.redhat.com%2fga%2f",
@@ -411,10 +408,42 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
         "purl~quarkus-bom&cpe~redhat", // essentially the same as `quarkus|redhat`
         "purl~quarkus-bom&cpe~cpe:/a:redhat", // valid CPE so no full-text search
     ] {
-        assert!(by_query(&app, each).await.contains_subset(json!({
+        assert!(query(each).await.contains_subset(json!({
             "items": [{
                 "purl": [ PURL ],
                 "cpe": ["cpe:/a:redhat:quarkus:3.2:*:el8:*"]
+            }]
+        })));
+    }
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn find_components_without_namespace(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ctx.ingest_documents(["spdx/rhelai1_binary.json"]).await?;
+
+    const PURL: &str = "pkg:nuget/NGX@31.0.15.5356";
+
+    let query = async |query| {
+        let app = caller(ctx).await.unwrap();
+        let uri = format!("/api/v2/analysis/component?q={}&limit=0", encode(query));
+        let request = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(request).await;
+        tracing::debug!(test = "", "{response:#?}");
+        response
+    };
+
+    for each in [
+        "purl~pkg:nuget/NGX",
+        "purl~pkg:nuget/NGX@",
+        "purl=pkg:nuget/NGX@31.0.15.5356",
+        "pkg:nuget/NGX@31.0.15.5356",
+    ] {
+        assert!(query(each).await.contains_subset(json!({
+            "items": [{
+                "purl": [ PURL ],
             }]
         })));
     }
