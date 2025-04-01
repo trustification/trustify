@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743495036372,
+  "lastUpdate": 1743520229436,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7679,6 +7679,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/e0a37b5f16074ae65344bafdea06b7eba088ad8a"
         },
         "date": 1743495035532,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "a0de6e145bfd18c02019bfd55097e7f8e62a35d7",
+          "message": "fix: set title for vunerabilities with non typical description language code",
+          "timestamp": "2025-04-01T14:50:14Z",
+          "tree_id": "ead879ea361aa836ad666e0828ce7fcfb6fc57cf",
+          "url": "https://github.com/trustification/trustify/commit/a0de6e145bfd18c02019bfd55097e7f8e62a35d7"
+        },
+        "date": 1743520227973,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
