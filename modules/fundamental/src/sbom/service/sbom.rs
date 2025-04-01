@@ -641,9 +641,12 @@ impl FromQueryResult for QueryCatcher {
 impl FromQueryResultMultiModel for QueryCatcher {
     fn try_into_multi_model<E: EntityTrait>(select: Select<E>) -> Result<Select<E>, DbErr> {
         select
-            .try_model_columns(advisory::Entity)?
+            .try_model_columns_excluding(advisory::Entity, &[advisory::Column::AverageSeverity])?
             .try_model_columns(advisory_vulnerability::Entity)?
-            .try_model_columns(vulnerability::Entity)?
+            .try_model_columns_excluding(
+                vulnerability::Entity,
+                &[vulnerability::Column::AverageSeverity],
+            )?
             .try_model_columns(base_purl::Entity)?
             .try_model_columns(versioned_purl::Entity)?
             .try_model_columns(qualified_purl::Entity)?

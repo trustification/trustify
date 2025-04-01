@@ -30,6 +30,8 @@ impl AdvisoryQuery {
                 title: advisory.advisory.title,
                 source_document_id: advisory.advisory.source_document_id,
                 document_id: advisory.advisory.document_id,
+                average_score: advisory.advisory.average_score,
+                average_severity: advisory.advisory.average_severity,
             }),
             Ok(None) => Err(FieldError::new("Advisory not found")),
             Err(err) => Err(FieldError::from(err)),
@@ -61,6 +63,8 @@ impl AdvisoryQuery {
                     title: advisory.advisory.title,
                     source_document_id: advisory.advisory.source_document_id,
                     document_id: advisory.advisory.document_id,
+                    average_score: advisory.advisory.average_score,
+                    average_severity: advisory.advisory.average_severity,
                 })
             })
             .collect()

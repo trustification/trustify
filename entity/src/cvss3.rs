@@ -1,4 +1,5 @@
 use crate::{advisory, advisory_vulnerability, vulnerability};
+use async_graphql::Enum;
 use sea_orm::entity::prelude::*;
 use std::fmt::{Display, Formatter};
 use trustify_cvss::cvss3;
@@ -331,7 +332,7 @@ impl From<cvss3::Availability> for Availability {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Enum)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "cvss3_severity")]
 pub enum Severity {
     #[sea_orm(string_value = "none")]
@@ -388,6 +389,21 @@ impl From<Severity> for cvss3::severity::Severity {
             Severity::Medium => Self::Medium,
             Severity::High => Self::High,
             Severity::Critical => Self::Critical,
+        }
+    }
+}
+
+impl std::str::FromStr for Severity {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "none" => Ok(Severity::None),
+            "low" => Ok(Severity::Low),
+            "medium" => Ok(Severity::Medium),
+            "high" => Ok(Severity::High),
+            "critical" => Ok(Severity::Critical),
+            _ => Err(()),
         }
     }
 }
