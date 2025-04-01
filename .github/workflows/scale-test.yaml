@@ -97,20 +97,10 @@ jobs:
             report/report.md
           if-no-files-found: error
 
-      - name: Get Artifact Download URL
+      - name: Get Artifact Page URL
         id: artifact-url
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ARTIFACT_ID=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts --jq '.artifacts[] | select(.name=="report") | .id')
-          echo "Found Artifact ID: $ARTIFACT_ID"
-
-          if [ -z "$ARTIFACT_ID" ]; then
-            echo "❌ No artifact found!"
-            exit 1
-          fi
-
-          ARTIFACT_URL=$(gh api repos/${{ github.repository }}/actions/artifacts/$ARTIFACT_ID/zip --jq '.archive_download_url')
+          $ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo "artifact_url=$ARTIFACT_URL" >> $GITHUB_ENV
 
       - name: Post comment
@@ -124,7 +114,7 @@ jobs:
           
           </details>
           
-          📄 **[Full Report](${{ env.artifact_url }})**
+          📄 **[Full Report](${{ env.artifact_url }})** (Go to "Artifacts" and download **report**)
           
           __EOF__
           )
