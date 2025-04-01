@@ -33,8 +33,6 @@ pub struct CveLoader<'g> {
     graph: &'g Graph,
 }
 
-const DESCRIPTION_EN: &str = "en";
-
 impl<'g> CveLoader<'g> {
     pub fn new(graph: &'g Graph) -> Self {
         Self { graph }
@@ -80,7 +78,8 @@ impl<'g> CveLoader<'g> {
             .ingest_vulnerability(id, information, &tx)
             .await?;
 
-        let (entries, english_description) = Self::build_descriptions(descriptions);
+        let entries = Self::build_descriptions(descriptions);
+        let english_description = Self::find_best_description_for_title(descriptions);
 
         let advisory = self
             .graph
@@ -177,28 +176,21 @@ impl<'g> CveLoader<'g> {
         })
     }
 
-    /// Build descriptions,
-    fn build_descriptions(descriptions: &[Description]) -> (Vec<(&str, &str)>, Option<&str>) {
-        let mut english_description = None;
-        let mut entries = Vec::<(&str, &str)>::new();
-
-        for description in descriptions {
-            entries.push((&description.language, &description.value));
-            if description.language == DESCRIPTION_EN {
-                english_description = Some(&*description.value);
-            }
-        }
-
-        (entries, english_description)
+    /// Build descriptions
+    fn build_descriptions(descriptions: &[Description]) -> Vec<(&str, &str)> {
+        descriptions
+            .iter()
+            .map(|desc| (desc.language.as_str(), desc.value.as_str()))
+            .collect()
     }
 
     /// Quicker version to find the best description as an alternative when not having a title.
     fn find_best_description_for_title(descriptions: &[Description]) -> Option<&str> {
-        // Currently, we simply choose the first english description.
         descriptions
             .iter()
-            .find(|desc| desc.language == DESCRIPTION_EN)
-            .map(|desc| &*desc.value)
+            .find(|desc| matches!(desc.language.as_str(), "en-US" | "en_US"))
+            .or_else(|| descriptions.iter().find(|desc| desc.language == "en"))
+            .map(|desc| desc.value.as_str())
     }
 
     fn extract_vuln_info(cve: &Cve) -> VulnerabilityDetails {
