@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743596328264,
+  "lastUpdate": 1743601266819,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7795,6 +7795,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/b7416b33a5777da31c60fd82557da64ff025f8d1"
         },
         "date": 1743596327493,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "26c0bf251e7112b649b2a5a6ea1819b13d5b83af",
+          "message": "feat: collect and report SBOM supplier information",
+          "timestamp": "2025-04-02T13:20:53Z",
+          "tree_id": "4f76bf5857013a1fe652e54f933abea5b4b2a76b",
+          "url": "https://github.com/trustification/trustify/commit/26c0bf251e7112b649b2a5a6ea1819b13d5b83af"
+        },
+        "date": 1743601266177,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
