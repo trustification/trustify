@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743612296596,
+  "lastUpdate": 1743616999764,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7882,6 +7882,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/564ec8984e879de9e13c938f15079aee92ccd63f"
         },
         "date": 1743612295668,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "55bb20de273d4951dc8ebf7a43fcb02559b2b9c4",
+          "message": "fix: ensure load order does not impact analysis graph dependency queries",
+          "timestamp": "2025-04-02T17:44:39Z",
+          "tree_id": "7779ebd25a6d1d06d1cb4184ffc1be509e90e2f6",
+          "url": "https://github.com/trustification/trustify/commit/55bb20de273d4951dc8ebf7a43fcb02559b2b9c4"
+        },
+        "date": 1743616998911,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
