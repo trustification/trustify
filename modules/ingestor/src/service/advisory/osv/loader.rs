@@ -433,13 +433,21 @@ async fn create_package_status<C: ConnectionTrait>(
             Version::Inclusive(start.clone()),
             Version::Unbounded,
         )),
-        (None, Some(end)) => Some(VersionSpec::Range(
+        (None, Some((end, false))) => Some(VersionSpec::Range(
             Version::Unbounded,
             Version::Exclusive(end.clone()),
         )),
-        (Some(start), Some(end)) => Some(VersionSpec::Range(
+        (None, Some((end, true))) => Some(VersionSpec::Range(
+            Version::Unbounded,
+            Version::Inclusive(end.clone()),
+        )),
+        (Some(start), Some((end, false))) => Some(VersionSpec::Range(
             Version::Inclusive(start.clone()),
             Version::Exclusive(end.clone()),
+        )),
+        (Some(start), Some((end, true))) => Some(VersionSpec::Range(
+            Version::Inclusive(start.clone()),
+            Version::Inclusive(end.clone()),
         )),
         (None, None) => None,
     };
@@ -459,7 +467,7 @@ async fn create_package_status<C: ConnectionTrait>(
             .await?;
     }
 
-    if let (_, Some(fixed)) = &parsed_range {
+    if let (_, Some((fixed, false))) = &parsed_range {
         advisory_vuln
             .ingest_package_status(
                 None,
@@ -491,7 +499,7 @@ fn detect_organization(osv: &Vulnerability) -> Option<String> {
     None
 }
 
-fn events_to_range(events: &[Event]) -> (Option<String>, Option<String>) {
+fn events_to_range(events: &[Event]) -> (Option<String>, Option<(String, bool)>) {
     let start = events.iter().find_map(|e| {
         if let Event::Introduced(version) = e {
             Some(version.clone())
@@ -502,7 +510,9 @@ fn events_to_range(events: &[Event]) -> (Option<String>, Option<String>) {
 
     let end = events.iter().find_map(|e| {
         if let Event::Fixed(version) = e {
-            Some(version.clone())
+            Some((version.clone(), false))
+        } else if let Event::LastAffected(version) = e {
+            Some((version.clone(), true))
         } else {
             None
         }
