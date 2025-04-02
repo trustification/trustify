@@ -100,7 +100,7 @@ jobs:
       - name: Get Artifact Page URL
         id: artifact-url
         run: |
-          $ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          ARTIFACT_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           echo "artifact_url=$ARTIFACT_URL" >> $GITHUB_ENV
 
       - name: Post comment
