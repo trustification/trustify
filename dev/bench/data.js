@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743606210614,
+  "lastUpdate": 1743612296596,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7853,6 +7853,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/bea4305cd568d0d44595612ee7d8267a1fef4d81"
         },
         "date": 1743606209627,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "564ec8984e879de9e13c938f15079aee92ccd63f",
+          "message": "fix: TC-2388 OSV range with last_affected\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-04-02T16:12:16Z",
+          "tree_id": "ca48a3eeaaf35fdd28b2879e4e3ce264aaa5e4bc",
+          "url": "https://github.com/trustification/trustify/commit/564ec8984e879de9e13c938f15079aee92ccd63f"
+        },
+        "date": 1743612295668,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
