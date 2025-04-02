@@ -23,6 +23,7 @@ impl SbomQuery {
                 document_id: sbom_context.sbom.document_id,
                 published: sbom_context.sbom.published,
                 authors: sbom_context.sbom.authors,
+                suppliers: sbom_context.sbom.suppliers,
                 source_document_id: sbom_context.sbom.source_document_id,
                 data_licenses: sbom_context.sbom.data_licenses,
             }),
@@ -64,6 +65,7 @@ impl SbomQuery {
                     document_id: sbom.sbom.document_id,
                     published: sbom.sbom.published,
                     authors: sbom.sbom.authors,
+                    suppliers: sbom.sbom.suppliers,
                     source_document_id: sbom.sbom.source_document_id,
                     data_licenses: sbom.sbom.data_licenses,
                 })

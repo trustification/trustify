@@ -7,6 +7,14 @@
     "component": {
       "name": "simple",
       "type": "application"
+    },
+    "authors": [
+      {
+        "name": "Some Author"
+      }
+    ],
+    "supplier": {
+      "name": "Some Supplier"
     }
   },
   "components": [

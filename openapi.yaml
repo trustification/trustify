@@ -3151,6 +3151,7 @@ components:
       - data_licenses
       - published
       - authors
+      - suppliers
       - name
       - number_of_packages
       properties:
@@ -3158,6 +3159,7 @@ components:
           type: array
           items:
             type: string
+          description: Authors of the SBOM
         data_licenses:
           type: array
           items:
@@ -3182,6 +3184,11 @@ components:
           - string
           - 'null'
           format: date-time
+        suppliers:
+          type: array
+          items:
+            type: string
+          description: Suppliers of the SBOMs content
     SbomImporter:
       allOf:
       - $ref: '#/components/schemas/CommonImporter'

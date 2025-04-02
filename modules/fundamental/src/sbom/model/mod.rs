@@ -29,7 +29,10 @@ pub struct SbomHead {
     #[serde(with = "time::serde::rfc3339::option")]
     pub published: Option<OffsetDateTime>,
 
+    /// Authors of the SBOM
     pub authors: Vec<String>,
+    /// Suppliers of the SBOMs content
+    pub suppliers: Vec<String>,
 
     pub name: String,
 
@@ -50,6 +53,7 @@ impl SbomHead {
             labels: sbom.labels.clone(),
             published: sbom.published,
             authors: sbom.authors.clone(),
+            suppliers: sbom.suppliers.clone(),
             name: sbom_node
                 .map(|node| node.name.clone())
                 .unwrap_or("".to_string()),

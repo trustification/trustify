@@ -16,6 +16,7 @@ mod m0000090_release_perf;
 mod m0000100_perf_adv_vuln5;
 mod m0000970_alter_importer_add_heartbeat;
 mod m0000980_get_purl_fix;
+mod m0000990_sbom_add_suppliers;
 
 pub struct Migrator;
 
@@ -35,6 +36,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000100_perf_adv_vuln5::Migration),
             Box::new(m0000970_alter_importer_add_heartbeat::Migration),
             Box::new(m0000980_get_purl_fix::Migration),
+            Box::new(m0000990_sbom_add_suppliers::Migration),
         ]
     }
 }

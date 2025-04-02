@@ -81,6 +81,7 @@ impl<'g> ClearlyDefinedLoader<'g> {
                         name: document_id.to_string(),
                         published: None,
                         authors: vec!["ClearlyDefined Definitions".to_string()],
+                        suppliers: vec![],
                         data_licenses: vec![],
                     },
                     &tx,

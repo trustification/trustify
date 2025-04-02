@@ -71,6 +71,9 @@ async fn parse_spdx_quarkus(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
 
             assert!(contains.len() > 500);
 
+            assert_eq!(sbom.sbom.authors, vec!["Organization: Red Hat Product Security (secalert@redhat.com)".to_string()]);
+            assert_eq!(sbom.sbom.suppliers, vec!["Organization: Red Hat".to_string()]);
+
             Ok(())
         },
     ).await
