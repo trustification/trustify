@@ -137,19 +137,25 @@ async fn resolve_external_sbom<C: ConnectionTrait>(
             // which is used on sbom_node_checksum to lookup related value then
             // perform another lookup on sbom_node_checksum (matching by value) to find resultant
             // sbom_id/node_id
-            resolve_rh_external_sbom_descendants(sbom_external_node.external_node_ref, connection)
-                .await
+            resolve_rh_external_sbom_descendants(
+                sbom_external_node.sbom_id,
+                sbom_external_node.external_node_ref,
+                connection,
+            )
+            .await
         }
     }
 }
 
 async fn resolve_rh_external_sbom_descendants<C: ConnectionTrait>(
+    sbom_external_sbom_id: Uuid,
     sbom_external_node_ref: String,
     connection: &C,
 ) -> Option<ResolvedSbom> {
     // find checksum value for the node
     match sbom_node_checksum::Entity::find()
         .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.clone()))
+        .filter(sbom_node_checksum::Column::SbomId.eq(sbom_external_sbom_id))
         .one(connection)
         .await
     {
