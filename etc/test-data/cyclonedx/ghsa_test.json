@@ -95,6 +95,13 @@
       "version": "5.13.1.Alpha1",
       "description": "1 vulnerability",
       "purl": "pkg:maven/org.jboss.narayana.rts/lra-coordinator-jar@5.13.1.Alpha1"
+    },
+    {
+      "type": "library",
+      "name": "org.keycloak/keycloak-parent",
+      "version": "11.0.0",
+      "description": "1 vulnerability",
+      "purl": "pkg:maven/org.keycloak/keycloak-parent@11.0.0"
     }
   ]
 }

@@ -70,6 +70,12 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
     let maven = ctx.ingest_document("osv/GHSA-qq9f-q439-2574.json").await?;
     assert_eq!(maven.document_id, Some("GHSA-qq9f-q439-2574".to_string()));
 
+    let maven_not_affecting = ctx.ingest_document("osv/GHSA-458h-wv48-fq75.json").await?;
+    assert_eq!(
+        maven_not_affecting.document_id,
+        Some("GHSA-458h-wv48-fq75".to_string())
+    );
+
     let sbom1 = sbom
         .fetch_sbom_details(result1.id, vec![], &ctx.db)
         .await?
