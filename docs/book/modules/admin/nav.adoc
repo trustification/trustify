@@ -3,3 +3,4 @@
 *** xref:infrastructure.adoc[Preparing the infrastructure]
 *** Performing the installation
 *** xref:aws-rds-cli.adoc[Attaching to an AWS RDS instance]
+*** xref:resources.adoc[Resource requirements]
