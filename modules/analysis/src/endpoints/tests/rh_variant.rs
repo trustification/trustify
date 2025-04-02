@@ -170,22 +170,15 @@ async fn resolve_rh_variant_prod_comp_cdx_external_reference(
 ) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
 
-    ctx.ingest_document("cyclonedx/rh/product_component/rhel-9.2-eus.cdx.json")
-        .await?;
-    let uri = format!(
-        "/api/v2/analysis/component/{}?descendants=10",
-        urlencoding::encode("cpe:/a:redhat:rhel_eus:9.2::appstream")
-    );
-    let request: Request = TestRequest::get().uri(&uri).to_request();
-    let response = app.call_service(request).await;
-    assert_eq!(200, response.response().status());
-
     ctx.ingest_document("cyclonedx/rh/product_component/openssl-3.0.7-18.el9_2.cdx.json")
         .await?;
     let uri = format!(
         "/api/v2/analysis/component/{}?descendants=10",
         urlencoding::encode("cpe:/a:redhat:rhel_eus:9.2::appstream")
     );
+    ctx.ingest_document("cyclonedx/rh/product_component/rhel-9.2-eus.cdx.json")
+        .await?;
+
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
@@ -337,6 +330,12 @@ async fn resolve_rh_variant_prod_comp_cdx_external_reference_ancestors(
         ])
         .await?;
 
+    // prime graph
+    let uri = "/api/v2/analysis/component";
+    let request: Request = TestRequest::get().uri(uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(200, response.response().status());
+
     // search for a dependency "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64"
     let uri = format!(
         "/api/v2/analysis/component/{}?ancestors=10",
@@ -348,30 +347,39 @@ async fn resolve_rh_variant_prod_comp_cdx_external_reference_ancestors(
     assert!(response.contains_subset(json!({
       "items": [
         {
-            "node_id": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64",
+             "node_id": "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64",
+            "purl": [
+                "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64"
+            ],
+            "name": "openssl-perl",
+            "version": "3.0.7-18.el9_2",
+            "published": "2006-08-14 02:34:56+00",
             "document_id": "urn:uuid:223234df-bb5b-49af-a896-143736f7d806/1",
-            "ancestors": [
+            "product_name": "openssl",
+            "product_version": "3.0.7-18.el9_2",
+            "ancestors":[
             {
                 "node_id": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
+                "purl": [
+                "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src"
+                ],
+                "name": "openssl",
+                "version": "3.0.7-18.el9_2",
+                "published": "2006-08-14 02:34:56+00",
                 "document_id": "urn:uuid:223234df-bb5b-49af-a896-143736f7d806/1",
+                "product_name": "openssl",
+                "product_version": "3.0.7-18.el9_2",
                 "relationship": "generates",
-                "ancestors": [
+                "ancestors":[
                 {
                     "node_id": "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=src",
+                    "name": "openssl",
+                    "version": "3.0.7-18.el9_2",
+                    "published": "2006-08-14 02:34:56+00",
                     "document_id": "urn:uuid:337d9115-4e7c-4e76-b389-51f7aed6eba8/1",
-                    "relationship": "package",
-                    "ancestors":[
-                    {
-                        "node_id": "Red Hat Enterprise Linux 9.2 EUS",
-                        "document_id": "urn:uuid:337d9115-4e7c-4e76-b389-51f7aed6eba8/1",
-                        "relationship": "generates",
-                        "ancestors": [
-                        {
-                            "node_id": "CycloneDX-doc-ref",
-                            "document_id": "urn:uuid:337d9115-4e7c-4e76-b389-51f7aed6eba8/1",
-                            "relationship": "describes",
-                        }]
-                    }]
+                    "product_name": "Red Hat Enterprise Linux",
+                    "product_version": "9.2 EUS",
+                    "relationship": "package"
                 }]
             }]
         }]
