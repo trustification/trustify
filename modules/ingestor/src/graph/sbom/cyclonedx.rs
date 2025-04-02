@@ -22,7 +22,7 @@ use sbom_walker::{
 };
 use sea_orm::ConnectionTrait;
 use serde_cyclonedx::cyclonedx::v_1_6::{
-    Component, ComponentEvidenceIdentity, CycloneDx, LicenseChoiceUrl,
+    Component, ComponentEvidenceIdentity, CycloneDx, LicenseChoiceUrl, OrganizationalContact,
 };
 use std::{borrow::Cow, str::FromStr};
 use time::{OffsetDateTime, format_description::well_known::Iso8601};
@@ -39,6 +39,15 @@ use uuid::Uuid;
 pub const CYCLONEDX_DOC_REF: &str = "CycloneDX-doc-ref";
 
 pub struct Information<'a>(pub &'a CycloneDx);
+
+fn from_contact(contact: &OrganizationalContact) -> Option<String> {
+    match (&contact.name, &contact.email) {
+        (Some(name), Some(email)) => Some(format!("{name} <{email}>")),
+        (Some(name), None) => Some(name.to_string()),
+        (None, Some(email)) => Some(email.to_string()),
+        (None, None) => None,
+    }
+}
 
 impl<'a> From<Information<'a>> for SbomInformation {
     fn from(value: Information<'a>) -> Self {
@@ -58,12 +67,31 @@ impl<'a> From<Information<'a>> for SbomInformation {
             .and_then(|metadata| metadata.authors.as_ref())
             .into_iter()
             .flatten()
-            .filter_map(|author| match (&author.name, &author.email) {
-                (Some(name), Some(email)) => Some(format!("{name} <{email}>")),
-                (Some(name), None) => Some(name.to_string()),
-                (None, Some(email)) => Some(email.to_string()),
-                (None, None) => None,
+            .filter_map(from_contact)
+            .collect();
+
+        // supplier
+
+        let suppliers = sbom
+            .metadata
+            .as_ref()
+            .and_then(|metadata| metadata.supplier.as_ref())
+            .into_iter()
+            .flat_map(|oe| {
+                // try name first
+                oe.name
+                    .clone()
+                    .map(|name| vec![name])
+                    .or_else(|| {
+                        // then contact
+                        oe.contact
+                            .as_ref()
+                            .map(|c| c.iter().filter_map(from_contact).collect())
+                    })
+                    // last URL
+                    .or_else(|| oe.url.clone())
             })
+            .flatten()
             .collect();
 
         let name = sbom
@@ -98,6 +126,7 @@ impl<'a> From<Information<'a>> for SbomInformation {
             name,
             published,
             authors,
+            suppliers,
             data_licenses,
         }
     }
