@@ -18,6 +18,7 @@ use crate::{
 use sbom_walker::report::{ReportSink, check};
 use sea_orm::ConnectionTrait;
 use spdx_rs::models::{RelationshipType, SPDX};
+use std::collections::HashSet;
 use std::str::FromStr;
 use time::OffsetDateTime;
 use tracing::instrument;
@@ -25,6 +26,51 @@ use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::{relationship::Relationship, sbom_package_license::LicenseCategory};
 
 pub struct Information<'a>(pub &'a SPDX);
+
+/// get the describing packages
+fn describing_packages(sbom: &SPDX) -> HashSet<&str> {
+    let mut packages = HashSet::<&str>::new();
+
+    for rel in &sbom.relationships {
+        match rel.relationship_type {
+            RelationshipType::Describes => {
+                packages.insert(&rel.spdx_element_id);
+            }
+            RelationshipType::DescribedBy => {
+                packages.insert(&rel.related_spdx_element);
+            }
+            _ => continue,
+        }
+    }
+
+    packages.extend(
+        sbom.document_creation_information
+            .document_describes
+            .iter()
+            .map(|s| s.as_str()),
+    );
+
+    packages
+}
+
+/// Extract suppliers for a SPDX SBOM by collecting suppliers of describing packages
+fn suppliers(sbom: &SPDX) -> Vec<String> {
+    // packages describing the SBOM
+    let describing = describing_packages(sbom);
+
+    // collect suppliers for matching packages
+    let mut result = HashSet::new();
+    for p in &sbom.package_information {
+        if !describing.contains(p.package_spdx_identifier.as_str()) {
+            continue;
+        }
+        if let Some(supplier) = &p.package_supplier {
+            result.insert(supplier.clone());
+        }
+    }
+
+    Vec::from_iter(result)
+}
 
 impl<'a> From<Information<'a>> for SbomInformation {
     fn from(value: Information<'a>) -> Self {
@@ -48,6 +94,7 @@ impl<'a> From<Information<'a>> for SbomInformation {
                 .creation_info
                 .creators
                 .clone(),
+            suppliers: suppliers(sbom),
             data_licenses: vec![value.0.document_creation_information.data_license.clone()],
         }
     }

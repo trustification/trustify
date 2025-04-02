@@ -47,6 +47,7 @@ pub struct SbomInformation {
     pub name: String,
     pub published: Option<OffsetDateTime>,
     pub authors: Vec<String>,
+    pub suppliers: Vec<String>,
     /// The licenses of the data itself, if known.
     pub data_licenses: Vec<String>,
 }
@@ -107,6 +108,7 @@ impl Graph {
             name,
             published,
             authors,
+            suppliers,
             data_licenses,
         } = info.into();
 
@@ -130,6 +132,7 @@ impl Graph {
 
             published: Set(published),
             authors: Set(authors),
+            suppliers: Set(suppliers),
 
             source_document_id: Set(Some(new_id)),
             labels: Set(labels.into()),
