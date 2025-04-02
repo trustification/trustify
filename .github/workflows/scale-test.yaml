@@ -107,7 +107,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          COMMENT_BODY=$(cat <<__EOF__)
+          COMMENT_BODY=$(cat <<__EOF__
           <details><summary>Goose Report</summary>
           
           $(cat report/report.md)
