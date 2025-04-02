@@ -933,9 +933,9 @@ checksum = "89e25b6adfb930f02d1981565a6e5d9c547ac15a96606256d3b59040e5cd4ca3"
 
 [[package]]
 name = "bigdecimal"
-version = "0.4.7"
+version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f31f3af01c5c65a07985c804d3366560e6fa7883d640a122819b14ec327482c"
+checksum = "1a22f228ab7a1b23027ccc6c350b72868017af7ea8356fbdf19f8d991c690013"
 dependencies = [
  "autocfg",
  "libm",
@@ -1393,9 +1393,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.34"
+version = "4.5.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e958897981290da2a852763fe9cdb89cd36977a5d729023127095fa94d95e2ff"
+checksum = "d8aa86934b44c19c50f87cc2790e19f54f7a67aedb64101c2e1a2e5ecfb73944"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -1403,9 +1403,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.34"
+version = "4.5.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83b0f35019843db2160b5bb19ae09b4e6411ac33fc6a712003c33e03090e2489"
+checksum = "2414dbb2dd0695280da6ea9261e327479e9d37b0630f6b53ba2a11c60c679fd9"
 dependencies = [
  "anstream",
  "anstyle",
@@ -2366,9 +2366,9 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.11.7"
+version = "0.11.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3716d7a920fb4fac5d84e9d4bce8ceb321e9414b4409da61b07b75c1e3d0697"
+checksum = "13c863f0904021b108aa8b2f55046443e6b1ebde8fd4a15c399893aae4fa069f"
 dependencies = [
  "anstream",
  "anstyle",
@@ -2467,7 +2467,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ce92ff622d6dadf7349484f42c93271a0d49b7cc4d466a936405bacbe10aa78"
 dependencies = [
  "cfg-if",
- "rustix 1.0.3",
+ "rustix 1.0.5",
  "windows-sys 0.59.0",
 ]
 
@@ -2513,9 +2513,9 @@ checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
 
 [[package]]
 name = "flate2"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11faaf5a5236997af9848be0bef4db95824b1d534ebc64d0f0c6cf3e67bd38dc"
+checksum = "7ced92e76e966ca2fd84c8f7aa01a4aea65b0eb6648d72f7c8f3e2764a67fece"
 dependencies = [
  "crc32fast",
  "miniz_oxide",
@@ -3353,9 +3353,9 @@ dependencies = [
 
 [[package]]
 name = "hyper-util"
-version = "0.1.10"
+version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df2dcfbe0677734ab2f3ffa7fa7bfd4706bfdc1ef393f2ee30184aed67e631b4"
+checksum = "497bbc33a26fdd4af9ed9c70d63f61cf56a938375fbb32df34db9b1cd6d643f2"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -3363,6 +3363,7 @@ dependencies = [
  "http 1.3.1",
  "http-body 1.0.1",
  "hyper 1.6.0",
+ "libc",
  "pin-project-lite",
  "socket2",
  "tokio",
@@ -3372,9 +3373,9 @@ dependencies = [
 
 [[package]]
 name = "iana-time-zone"
-version = "0.1.62"
+version = "0.1.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2fd658b06e56721792c5df4475705b6cda790e9298d19d2f8af083457bcd127"
+checksum = "b0c919e5debc312ad217002b8048a17b7d83f80703865bbfcfebb0458b0b27d8"
 dependencies = [
  "android_system_properties",
  "core-foundation-sys",
@@ -3382,7 +3383,7 @@ dependencies = [
  "js-sys",
  "log",
  "wasm-bindgen",
- "windows-core 0.52.0",
+ "windows-core 0.61.0",
 ]
 
 [[package]]
@@ -3727,10 +3728,11 @@ checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 
 [[package]]
 name = "jobserver"
-version = "0.1.32"
+version = "0.1.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48d1dbcbbeb6a7fec7e059840aa538bd62aaccf972c7346c4d9d2059312853d0"
+checksum = "38f262f097c174adebe41eb73d66ae9c06b2844fb0da69969647bbddd9b0538a"
 dependencies = [
+ "getrandom 0.3.2",
  "libc",
 ]
 
@@ -5554,9 +5556,9 @@ dependencies = [
 
 [[package]]
 name = "quick-xml"
-version = "0.37.3"
+version = "0.37.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf763ab1c7a3aa408be466efc86efe35ed1bd3dd74173ed39d6b0d0a6f0ba148"
+checksum = "a4ce8c88de324ff838700f36fb6ab86c96df0e3c4ab6ef3a9b2044465cce1369"
 dependencies = [
  "memchr",
 ]
@@ -6327,9 +6329,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "1.0.3"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e56a18552996ac8d29ecc3b190b4fdbb2d91ca4ec396de7bbffaf43f3d637e96"
+checksum = "d97817398dd4bb2e6da002002db259209759911da105da92bec29ccb12cf58bf"
 dependencies = [
  "bitflags 2.9.0",
  "errno",
@@ -7761,7 +7763,7 @@ dependencies = [
  "fastrand",
  "getrandom 0.3.2",
  "once_cell",
- "rustix 1.0.3",
+ "rustix 1.0.5",
  "windows-sys 0.59.0",
 ]
 
@@ -8328,7 +8330,7 @@ checksum = "343e926fc669bc8cde4fa3129ab681c63671bae288b1f1081ceee6d9d37904fc"
 
 [[package]]
 name = "trustify-auth"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8363,7 +8365,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-common"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8416,7 +8418,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-cvss"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "serde",
  "test-log",
@@ -8426,7 +8428,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-entity"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "anyhow",
  "async-graphql",
@@ -8451,7 +8453,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-infrastructure"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "actix-cors",
  "actix-tls",
@@ -8487,7 +8489,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-migration"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "anyhow",
  "sea-orm-migration",
@@ -8505,7 +8507,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-analysis"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8555,7 +8557,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-fundamental"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8631,7 +8633,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-graphql"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8654,7 +8656,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-importer"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8708,7 +8710,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-ingestor"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8726,7 +8728,7 @@ dependencies = [
  "osv",
  "packageurl",
  "parking_lot 0.12.3",
- "quick-xml 0.37.3",
+ "quick-xml 0.37.4",
  "rand 0.9.0",
  "roxmltree",
  "rstest",
@@ -8763,7 +8765,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-storage"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "anyhow",
  "async-compression",
@@ -8790,7 +8792,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-ui"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "actix-web",
  "actix-web-static-files",
@@ -8801,7 +8803,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-module-user"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8823,7 +8825,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-server"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "actix-web",
  "anyhow",
@@ -8862,7 +8864,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-test-context"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "actix-http",
  "actix-web",
@@ -8895,7 +8897,7 @@ dependencies = [
 
 [[package]]
 name = "trustify-trustd"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "anyhow",
  "clap",
@@ -9572,11 +9574,24 @@ version = "0.58.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ba6d44ec8c2591c134257ce647b7ea6b20335bf6379a27dac5f1641fcf59f99"
 dependencies = [
- "windows-implement",
- "windows-interface",
+ "windows-implement 0.58.0",
+ "windows-interface 0.58.0",
  "windows-result 0.2.0",
  "windows-strings 0.1.0",
  "windows-targets 0.52.6",
+]
+
+[[package]]
+name = "windows-core"
+version = "0.61.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4763c1de310c86d75a878046489e2e5ba02c649d185f21c67d4cf8a56d098980"
+dependencies = [
+ "windows-implement 0.60.0",
+ "windows-interface 0.59.1",
+ "windows-link",
+ "windows-result 0.3.2",
+ "windows-strings 0.4.0",
 ]
 
 [[package]]
@@ -9591,10 +9606,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "windows-implement"
+version = "0.60.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a47fddd13af08290e67f4acabf4b459f647552718f683a7b415d290ac744a836"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.100",
+]
+
+[[package]]
 name = "windows-interface"
 version = "0.58.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "053c4c462dc91d3b1504c6fe5a726dd15e216ba718e84a0e46a88fbe5ded3515"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.100",
+]
+
+[[package]]
+name = "windows-interface"
+version = "0.59.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd9211b69f8dcdfa817bfd14bf1c97c9188afa36f4750130fcdf3f400eca9fa8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9651,6 +9688,15 @@ name = "windows-strings"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87fa48cc5d406560701792be122a10132491cff9d0aeb23583cc2dcafc847319"
+dependencies = [
+ "windows-link",
+]
+
+[[package]]
+name = "windows-strings"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a2ba9642430ee452d5a7aa78d72907ebe8cfda358e8cb7918a2050581322f97"
 dependencies = [
  "windows-link",
 ]
@@ -9923,7 +9969,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d65cbf2f12c15564212d48f4e3dfb87923d25d611f2aed18f4cb23f0413d89e"
 dependencies = [
  "libc",
- "rustix 1.0.3",
+ "rustix 1.0.5",
 ]
 
 [[package]]
@@ -9939,7 +9985,7 @@ dependencies = [
 
 [[package]]
 name = "xtask"
-version = "0.2.13"
+version = "0.2.14"
 dependencies = [
  "anyhow",
  "async-trait",
