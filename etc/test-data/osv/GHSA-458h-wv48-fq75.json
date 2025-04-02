@@ -1,0 +1,202 @@
+{
+  "id": "GHSA-458h-wv48-fq75",
+  "summary": "Keycloak vulnerable to cross-site scripting via the state parameter",
+  "details": "A flaw was found in Keycloak 3.4.3.Final, 4.0.0.Beta2, 4.3.0.Final. When using `response_mode=form_post` it is possible to inject arbitrary Javascript-Code via the 'state'-parameter in the authentication URL. This allows an XSS-Attack upon succesfully login.",
+  "aliases": [
+    "CVE-2018-14655"
+  ],
+  "modified": "2024-02-16T07:53:36.176967Z",
+  "published": "2022-05-13T01:34:29Z",
+  "database_specific": {
+    "github_reviewed_at": "2023-07-21T22:47:11Z",
+    "github_reviewed": true,
+    "severity": "MODERATE",
+    "cwe_ids": [
+      "CWE-79"
+    ],
+    "nvd_published_at": "2018-11-13T19:29:00Z"
+  },
+  "references": [
+    {
+      "type": "ADVISORY",
+      "url": "https://nvd.nist.gov/vuln/detail/CVE-2018-14655"
+    },
+    {
+      "type": "WEB",
+      "url": "https://access.redhat.com/errata/RHSA-2018:3592"
+    },
+    {
+      "type": "WEB",
+      "url": "https://access.redhat.com/errata/RHSA-2018:3593"
+    },
+    {
+      "type": "WEB",
+      "url": "https://access.redhat.com/errata/RHSA-2018:3595"
+    },
+    {
+      "type": "WEB",
+      "url": "https://bugzilla.redhat.com/show_bug.cgi?id=CVE-2018-14655"
+    },
+    {
+      "type": "PACKAGE",
+      "url": "https://github.com/keycloak/keycloak"
+    }
+  ],
+  "affected": [
+    {
+      "package": {
+        "name": "org.keycloak:keycloak-parent",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/org.keycloak/keycloak-parent"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "0"
+            },
+            {
+              "last_affected": "3.4.3.Final"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "1.0-alpha-1",
+        "1.0-alpha-1-12062013",
+        "1.0-alpha-2",
+        "1.0-alpha-3",
+        "1.0-alpha-4",
+        "1.0-beta-1",
+        "1.0-beta-1-20150521",
+        "1.0-beta-1-20150523",
+        "1.0-beta-2",
+        "1.0-beta-3",
+        "1.0-beta-4",
+        "1.0-final",
+        "1.0-rc-1",
+        "1.0-rc-2",
+        "1.0.1.Final",
+        "1.0.2.Final",
+        "1.0.3.Final",
+        "1.0.4.Final",
+        "1.0.5.Final",
+        "1.1.0.Beta1",
+        "1.1.0.Beta2",
+        "1.1.0.Final",
+        "1.1.1.Final",
+        "1.2.0.Beta1",
+        "1.2.0.CR1",
+        "1.2.0.Final",
+        "1.3.0.Final",
+        "1.3.1.Final",
+        "1.4.0.Final",
+        "1.5.0-Final",
+        "1.5.0.Final",
+        "1.5.1.Final",
+        "1.6.0.Final",
+        "1.6.1.Final",
+        "1.7.0.CR1",
+        "1.7.0.Final",
+        "1.8.0.Alpha1",
+        "1.8.0.CR1",
+        "1.8.0.CR2",
+        "1.8.0.CR3",
+        "1.8.0.Final",
+        "1.8.1.Final",
+        "1.9.0.CR1",
+        "1.9.0.Final",
+        "1.9.1.Final",
+        "1.9.2.Final",
+        "1.9.3.Final",
+        "1.9.4.Final",
+        "1.9.5.Final",
+        "1.9.7.Final",
+        "1.9.8.Final",
+        "2.0.0.CR1",
+        "2.0.0.Final",
+        "2.1.0.CR1",
+        "2.1.0.Final",
+        "2.2.0.CR1",
+        "2.2.0.Final",
+        "2.2.1.Final",
+        "2.3.0.CR1",
+        "2.3.0.Final",
+        "2.4.0.CR1",
+        "2.4.0.Final",
+        "2.5.0.CR1",
+        "2.5.0.Final",
+        "2.5.1.Final",
+        "2.5.4.Final",
+        "2.5.5.Final",
+        "3.0.0.CR1",
+        "3.0.0.Final",
+        "3.1.0.CR1",
+        "3.1.0.Final",
+        "3.2.0.CR1",
+        "3.2.0.Final",
+        "3.2.1.Final",
+        "3.3.0.CR1",
+        "3.3.0.CR2",
+        "3.3.0.Final",
+        "3.4.0.CR1",
+        "3.4.0.Final",
+        "3.4.1.CR1",
+        "3.4.1.Final",
+        "3.4.2.Final",
+        "3.4.3.Final"
+      ],
+      "database_specific": {
+        "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2022/05/GHSA-458h-wv48-fq75/GHSA-458h-wv48-fq75.json"
+      }
+    },
+    {
+      "package": {
+        "name": "org.keycloak:keycloak-parent",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/org.keycloak/keycloak-parent"
+      },
+      "ranges": [
+        {
+          "type": "ECOSYSTEM",
+          "events": [
+            {
+              "introduced": "4.0.0.Beta1"
+            },
+            {
+              "last_affected": "4.0.0.Beta2"
+            }
+          ]
+        }
+      ],
+      "versions": [
+        "4.0.0.Beta1",
+        "4.0.0.Beta2"
+      ],
+      "database_specific": {
+        "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2022/05/GHSA-458h-wv48-fq75/GHSA-458h-wv48-fq75.json"
+      }
+    },
+    {
+      "package": {
+        "name": "org.keycloak:keycloak-parent",
+        "ecosystem": "Maven",
+        "purl": "pkg:maven/org.keycloak/keycloak-parent"
+      },
+      "versions": [
+        "4.3.0.Final"
+      ],
+      "database_specific": {
+        "source": "https://github.com/github/advisory-database/blob/main/advisories/github-reviewed/2022/05/GHSA-458h-wv48-fq75/GHSA-458h-wv48-fq75.json"
+      }
+    }
+  ],
+  "schema_version": "1.6.0",
+  "severity": [
+    {
+      "type": "CVSS_V3",
+      "score": "CVSS:3.0/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N"
+    }
+  ]
+}
