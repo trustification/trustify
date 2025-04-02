@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743601266819,
+  "lastUpdate": 1743606210614,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7824,6 +7824,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/26c0bf251e7112b649b2a5a6ea1819b13d5b83af"
         },
         "date": 1743601266177,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "rromerom@redhat.com",
+            "name": "Ruben Romero Montes",
+            "username": "ruromero"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "bea4305cd568d0d44595612ee7d8267a1fef4d81",
+          "message": "docs: add external keycloak instructions\n\nSigned-off-by: Ruben Romero Montes <rromerom@redhat.com>",
+          "timestamp": "2025-04-02T14:35:33Z",
+          "tree_id": "8210918fb3ae6f19ec2b44f27a12f45c06071f83",
+          "url": "https://github.com/trustification/trustify/commit/bea4305cd568d0d44595612ee7d8267a1fef4d81"
+        },
+        "date": 1743606209627,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
