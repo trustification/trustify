@@ -21,6 +21,7 @@ env:
 
 jobs:
   init:
+    if: github.repository == 'trustification/trustify'
     runs-on: ubuntu-22.04
     outputs:
       version: ${{steps.version.outputs.version}}
@@ -55,12 +56,14 @@ jobs:
           echo "Pre-release: $prerelease"
 
   build:
+    if: github.repository == 'trustification/trustify'
     needs: [ init ]
     uses: ./.github/workflows/build-binary.yaml
     with:
       version: ${{ needs.init.outputs.version }}
 
   publish:
+    if: github.repository == 'trustification/trustify'
     needs: [ init, build ]
     runs-on: ubuntu-22.04
 
@@ -114,6 +117,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
   e2e-test:
+    if: github.repository == 'trustification/trustify'
     needs: publish
     uses: trustification/trustify-ci/.github/workflows/global-ci.yml@main
     with:
