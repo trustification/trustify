@@ -1531,6 +1531,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResults_SbomPackageRelation'
+  /api/v2/sbom/{id}/sbom-status:
+    get:
+      tags:
+      - sbom
+      operationId: getSbomStatus
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: sbom status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResults_SbomStatus'
+        '404':
+          description: The sbom status could not be found
   /api/v2/sbom/{key}/download:
     get:
       tags:
@@ -2776,6 +2796,30 @@ components:
           type: integer
           format: int64
           minimum: 0
+    PaginatedResults_SbomStatus:
+      type: object
+      required:
+      - items
+      - total
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            required:
+            - total_packages
+            - total_licenses
+            properties:
+              total_licenses:
+                type: integer
+                minimum: 0
+              total_packages:
+                type: integer
+                minimum: 0
+        total:
+          type: integer
+          format: int64
+          minimum: 0
     PaginatedResults_SbomSummary:
       type: object
       required:
@@ -3294,30 +3338,17 @@ components:
         relationship:
           $ref: '#/components/schemas/Relationship'
     SbomStatus:
-      allOf:
-      - $ref: '#/components/schemas/VulnerabilityHead'
-      - type: object
-        required:
-        - average_severity
-        - average_score
-        - status
-        - packages
-        properties:
-          average_score:
-            type: number
-            format: double
-          average_severity:
-            $ref: '#/components/schemas/Severity'
-          context:
-            oneOf:
-            - type: 'null'
-            - $ref: '#/components/schemas/StatusContext'
-          packages:
-            type: array
-            items:
-              $ref: '#/components/schemas/SbomPackage'
-          status:
-            type: string
+      type: object
+      required:
+      - total_packages
+      - total_licenses
+      properties:
+        total_licenses:
+          type: integer
+          minimum: 0
+        total_packages:
+          type: integer
+          minimum: 0
     SbomSummary:
       allOf:
       - $ref: '#/components/schemas/SbomHead'

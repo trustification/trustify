@@ -18,6 +18,25 @@ use uuid::Uuid;
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+async fn sbom_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+    let id = ctx
+        .ingest_document("spdx/OCP-TOOLS-4.11-RHEL-8.json")
+        .await?
+        .id
+        .to_string();
+
+    let uri = format!("/api/v2/sbom/{id}/sbom-status");
+    let req = TestRequest::get().uri(&uri).to_request();
+    let sbom: Value = app.call_and_read_body_json(req).await;
+    assert_eq!(3274, sbom["total_packages"]);
+    assert_eq!(10, sbom["total_licenses"]);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
 async fn license_export(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     let id = ctx
