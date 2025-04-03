@@ -70,6 +70,38 @@ async fn test_mavenver_cmp(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert_eq!(Some(-1), mavenver_cmp(&ctx.db, "1.8-1", "1.8.0-3").await?);
     assert_eq!(Some(1), mavenver_cmp(&ctx.db, "1.8-3", "1.8.0-1").await?);
 
+    assert_eq!(
+        Some(-1),
+        mavenver_cmp(&ctx.db, "4.1.108.Final", "4.1.108.Final-redhat-0001").await?
+    );
+    assert_eq!(
+        Some(-1),
+        mavenver_cmp(
+            &ctx.db,
+            "4.1.108.Alpha-redhat-0001",
+            "4.1.108.Final-redhat-0001"
+        )
+        .await?
+    );
+    assert_eq!(
+        Some(0),
+        mavenver_cmp(
+            &ctx.db,
+            "4.1.108.Final-redhat-0001",
+            "4.1.108.Final-redhat-0001"
+        )
+        .await?
+    );
+    assert_eq!(
+        Some(-1),
+        mavenver_cmp(
+            &ctx.db,
+            "4.1.108.Final-redhat-0001",
+            "4.1.108.Final-redhat-0002"
+        )
+        .await?
+    );
+
     Ok(())
 }
 

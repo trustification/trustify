@@ -14,11 +14,11 @@ mod m0000070_perf_adv_vuln4;
 mod m0000080_get_purl_refactor;
 mod m0000090_release_perf;
 mod m0000100_perf_adv_vuln5;
-mod m00001010_alter_mavenver_cmp;
 mod m0000970_alter_importer_add_heartbeat;
 mod m0000980_get_purl_fix;
 mod m0000990_sbom_add_suppliers;
 mod m0001000_sbom_non_null_suppliers;
+mod m0001010_alter_mavenver_cmp;
 
 pub struct Migrator;
 
@@ -40,7 +40,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0000980_get_purl_fix::Migration),
             Box::new(m0000990_sbom_add_suppliers::Migration),
             Box::new(m0001000_sbom_non_null_suppliers::Migration),
-            Box::new(m00001010_alter_mavenver_cmp::Migration),
+            Box::new(m0001010_alter_mavenver_cmp::Migration),
         ]
     }
 }
