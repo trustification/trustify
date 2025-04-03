@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743685846612,
+  "lastUpdate": 1743693608443,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7974,6 +7974,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "6992b4e466b5f18b1814b1bfa657205d213ec2f1",
+          "message": "fix: mavenver_cmp add logic to compare builds",
+          "timestamp": "2025-04-03T14:58:59Z",
+          "tree_id": "6ed8eca2337bfa640524e44ca651806998a525a4",
+          "url": "https://github.com/trustification/trustify/commit/6992b4e466b5f18b1814b1bfa657205d213ec2f1"
+        },
+        "date": 1743693608013,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
