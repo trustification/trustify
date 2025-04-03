@@ -70,6 +70,14 @@ end if;
         return -1;
 end if;
 
+    for cur in 4..array_length(left_parts, 1) loop
+        if left_parts[cur] > right_parts[cur] then
+            return +1;
+        elsif left_parts[cur] < right_parts[cur] then
+            return -1;
+        end if;
+    end loop;
+
     if left_qualifier_or_build is null and right_qualifier_or_build is null then
         return 0;
 end if;
