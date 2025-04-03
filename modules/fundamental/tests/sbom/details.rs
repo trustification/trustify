@@ -105,7 +105,7 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         &sbom1,
         "GHSA-2ccf-ffrj-m4qw",
         "CVE-2023-29020",
-        Severity::High,
+        Severity::Medium,
     );
     check_advisory(
         &sbom1,
@@ -123,7 +123,7 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         &sbom1,
         "GHSA-cvw2-xj8r-mjf7",
         "CVE-2019-25025",
-        Severity::High,
+        Severity::Medium,
     );
     check_advisory(
         &sbom1,
@@ -141,7 +141,7 @@ async fn sbom_details_cyclonedx_osv(ctx: &TrustifyContext) -> Result<(), anyhow:
         &sbom1,
         "GHSA-fmj7-7gfw-64pg",
         "CVE-2024-48915",
-        Severity::Medium,
+        Severity::None,
     );
     check_advisory(
         &sbom1,
@@ -176,6 +176,9 @@ fn check_advisory(
         vulnerability_id,
         advisory.status[0].vulnerability.identifier
     );
-    assert_eq!(severity, advisory.status[0].average_severity);
+    assert_eq!(
+        severity, advisory.status[0].average_severity,
+        "advisory={advisory_id}, vulnerability={vulnerability_id}"
+    );
     assert_eq!("affected", advisory.status[0].status);
 }
