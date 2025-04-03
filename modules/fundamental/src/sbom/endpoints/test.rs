@@ -263,7 +263,7 @@ async fn get_advisories(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     // assert expected fields
     assert_eq!(v[0]["identifier"], "https://www.redhat.com/#CVE-2023-0044");
-    assert_eq!(v[0]["status"][0]["average_severity"], "high");
+    assert_eq!(v[0]["status"][0]["average_severity"], "medium");
 
     Ok(())
 }

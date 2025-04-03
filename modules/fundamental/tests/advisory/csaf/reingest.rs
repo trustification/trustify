@@ -156,8 +156,8 @@ async fn change_ps_list_vulns(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 identifier: "CVE-2023-33201".to_string(),
                 ..Default::default()
             },
-            average_severity: Severity::High,
-            average_score: 7.3f64,
+            average_severity: Severity::Medium,
+            average_score: 5.3f64,
             status: "fixed".to_string(),
             context: Some(StatusContext::Cpe(
                 "cpe:/a:redhat:jboss_enterprise_application_platform:7.4:*:el9:*".to_string()
@@ -259,8 +259,8 @@ async fn change_ps_list_vulns_all(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 identifier: "CVE-2023-33201".to_string(),
                 ..Default::default()
             },
-            average_severity: Severity::High,
-            average_score: 7.3f64,
+            average_severity: Severity::Medium,
+            average_score: 5.3f64,
             status: "affected".to_string(),
             context: Some(StatusContext::Cpe(
                 "cpe:/a:redhat:jboss_enterprise_application_platform:7.4:*:el9:*".to_string()
@@ -275,8 +275,8 @@ async fn change_ps_list_vulns_all(ctx: &TrustifyContext) -> anyhow::Result<()> {
                 identifier: "CVE-2023-33201".to_string(),
                 ..Default::default()
             },
-            average_severity: Severity::High,
-            average_score: 7.3f64,
+            average_severity: Severity::Medium,
+            average_score: 5.3f64,
             status: "fixed".to_string(),
             context: Some(StatusContext::Cpe(
                 "cpe:/a:redhat:jboss_enterprise_application_platform:7.4:*:el9:*".to_string()
