@@ -9,7 +9,7 @@ impl MigrationTrait for Migration {
         manager
             .get_connection()
             .execute_unprepared(include_str!(
-                "m00001010_alter_mavenver_cmp_fns/mavenver_cmp_up.sql"
+                "m0001010_alter_mavenver_cmp_fns/mavenver_cmp_up.sql"
             ))
             .await
             .map(|_| ())?;
@@ -21,7 +21,7 @@ impl MigrationTrait for Migration {
         manager
             .get_connection()
             .execute_unprepared(include_str!(
-                "m00001010_alter_mavenver_cmp_fns/mavenver_cmp_down.sql"
+                "m0001010_alter_mavenver_cmp_fns/mavenver_cmp_down.sql"
             ))
             .await
             .map(|_| ())?;
