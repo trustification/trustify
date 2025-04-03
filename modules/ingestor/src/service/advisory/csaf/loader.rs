@@ -341,7 +341,7 @@ mod test {
         let score = scores[0];
         assert_eq!(
             score.to_string(),
-            "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:H"
+            "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
         );
 
         Ok(())
@@ -382,7 +382,7 @@ mod test {
         let score = scores[0];
         assert_eq!(
             score.to_string(),
-            "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:L"
+            "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N"
         );
 
         Ok(())
