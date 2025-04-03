@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743665075607,
+  "lastUpdate": 1743685846612,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -7940,6 +7940,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/f0adb5354e36e5a2b9147c81a83275078d516e18"
         },
         "date": 1743665074408,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "8b0d1febcd2746fd59312e004ea80c1970597e2b",
+          "message": "fix: add a migration to fix null values for suppliers",
+          "timestamp": "2025-04-03T12:49:53Z",
+          "tree_id": "2e8ffefb4865fb0d7cdcb820cb5ead25256cd6ed",
+          "url": "https://github.com/trustification/trustify/commit/8b0d1febcd2746fd59312e004ea80c1970597e2b"
+        },
+        "date": 1743685845781,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
