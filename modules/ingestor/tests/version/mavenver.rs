@@ -225,6 +225,19 @@ async fn test_version_matches_netty_codec(ctx: TrustifyContext) -> Result<(), an
         .await?
     );
 
+    assert!(
+        !version_matches(
+            &db,
+            "4.1.108.Final-redhat-0001",
+            VersionRange::Range(
+                Version::Inclusive("0.0"),
+                Version::Exclusive("4.1.108.Final")
+            ),
+            "maven"
+        )
+        .await?
+    );
+
     Ok(())
 }
 
