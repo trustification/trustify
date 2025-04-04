@@ -633,7 +633,6 @@ async fn resolve_rh_variant_image_index_cdx_external_reference2(
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-#[ignore = "wait for data change"]
 async fn resolve_rh_variant_image_variant_cdx_external_reference_ancestors(
     ctx: &TrustifyContext,
 ) -> Result<(), anyhow::Error> {
@@ -648,6 +647,12 @@ async fn resolve_rh_variant_image_variant_cdx_external_reference_ancestors(
     ])
     .await?;
 
+    // ensure analysis graphs are primed
+    let uri = "/api/v2/analysis/component";
+    let request: Request = TestRequest::get().uri(uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(200, response.response().status());
+
     // search for a dependency "pkg:rpm/redhat/openssl-perl@3.0.7-18.el9_2?arch=aarch64"
     let uri = format!(
         "/api/v2/analysis/component/{}?ancestors=10",
@@ -656,23 +661,24 @@ async fn resolve_rh_variant_image_variant_cdx_external_reference_ancestors(
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
 
-    log::warn!("test result {:?}", response);
-
     assert!(response.contains_subset(json!({
       "items": [
         {
             "node_id": "pkg:rpm/redhat/zlib@1.2.11-25.el8?arch=s390x&distro=rhel-8.10&package-id=ca5c659108941f26&upstream=zlib-1.2.11-25.el8.src.rpm",
+            "purl": [
+            "pkg:rpm/redhat/zlib@1.2.11-25.el8?arch=s390x"
+            ],
+            "cpe": [],
             "name": "zlib",
             "version": "1.2.11-25.el8",
             "published": "2025-02-06 19:22:37+00",
             "document_id": "urn:uuid:aa6b5176-94f2-4c73-90bd-613fb1e560e8/1",
-            "ancestors": [
+            "ancestors":[
             {
                 "node_id": "2b8dc6da540ea58f",
                 "purl": [
                 "pkg:oci/ose-openstack-cinder-csi-driver-operator@sha256:d3d96f71664efb8c2bd9290b8e1ca9c9b93a54cecb266078c4d954a2e9c05d4d?arch=s390x&os=linux&tag=v4.15.0-202501280037.p0.gd0c2407.assembly.stream.el8"
                 ],
-                "cpe": [],
                 "name": "openshift/ose-openstack-cinder-csi-driver-operator",
                 "version": "sha256:d3d96f71664efb8c2bd9290b8e1ca9c9b93a54cecb266078c4d954a2e9c05d4d",
                 "published": "2025-02-06 19:22:37+00",
@@ -699,7 +705,7 @@ async fn resolve_rh_variant_image_variant_cdx_external_reference_ancestors(
                         "version": "sha256:4e1a8039dfcd2a1ae7672d99be63777b42f9fad3baca5e9273653b447ae72fe8",
                         "published": "2025-02-06 19:23:12+00",
                         "document_id": "urn:uuid:b3418a5d-8af8-3516-b9ac-5bc53628e803/1",
-                        "relationship": "variant"
+                        "relationship": "variant",
                     }]
                 }]
             }]

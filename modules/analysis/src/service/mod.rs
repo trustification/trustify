@@ -44,7 +44,7 @@ use trustify_entity::{
     relationship::Relationship,
     sbom,
     sbom_external_node::{self, DiscriminatorType, ExternalType},
-    sbom_node_checksum, sbom_package, source_document,
+    sbom_node_checksum, source_document,
 };
 use uuid::Uuid;
 
@@ -174,35 +174,12 @@ async fn resolve_rh_external_sbom_descendants<C: ConnectionTrait>(
                 _ => None,
             }
         }
-        _ => {
-            // Now handle imageindex>imagevariant specially
-            // TODO: remove this once data changes https://github.com/trustification/trustify/issues/1459
-            match sbom_package::Entity::find()
-                .filter(sbom_package::Column::NodeId.eq(sbom_external_node_ref.clone()))
-                .one(connection)
-                .await
-            {
-                Ok(Some(imagevariant)) => {
-                    match sbom_package::Entity::find()
-                        .filter(sbom_package::Column::Version.eq(imagevariant.version))
-                        .filter(sbom_package::Column::SbomId.ne(imagevariant.sbom_id))
-                        .one(connection)
-                        .await
-                    {
-                        Ok(Some(matched_imagevariant)) => Some(ResolvedSbom {
-                            sbom_id: matched_imagevariant.sbom_id,
-                            node_id: matched_imagevariant.node_id,
-                        }),
-                        _ => None,
-                    }
-                }
-                _ => None,
-            }
-        }
+        _ => None,
     }
 }
 
 async fn resolve_rh_external_sbom_ancestors<C: ConnectionTrait>(
+    sbom_external_sbom_id: Uuid,
     sbom_external_node_ref: String,
     connection: &C,
 ) -> Vec<ResolvedSbom> {
@@ -210,6 +187,7 @@ async fn resolve_rh_external_sbom_ancestors<C: ConnectionTrait>(
     // sboms, this function returns a Vec<ResolvedSbom>.
     match sbom_node_checksum::Entity::find()
         .filter(sbom_node_checksum::Column::NodeId.eq(sbom_external_node_ref.clone()))
+        .filter(sbom_node_checksum::Column::SbomId.eq(sbom_external_sbom_id))
         .one(connection)
         .await
     {
@@ -217,6 +195,7 @@ async fn resolve_rh_external_sbom_ancestors<C: ConnectionTrait>(
             // now find if there are any other other nodes with the same checksums
             match sbom_node_checksum::Entity::find()
                 .filter(sbom_node_checksum::Column::Value.eq(entity.value.to_string()))
+                .filter(sbom_node_checksum::Column::SbomId.ne(entity.sbom_id))
                 .all(connection)
                 .await
             {
