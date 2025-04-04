@@ -159,9 +159,14 @@ impl<'a, C: ConnectionTrait> Collector<'a, C> {
             Some(graph::Node::Package(current_node)) => {
                 // collect external sbom ancestor nodes
                 let current_sbom_id = &current_node.sbom_id;
+                let current_sbom_uuid = Uuid::parse_str(current_sbom_id).unwrap_or_else(|err| {
+                    log::warn!("Error parsing UUID: {}", err);
+                    Uuid::nil()
+                });
                 let current_node_id = &current_node.node_id;
                 let mut resolved_external_nodes: Vec<Node> = vec![];
                 let find_sbom_externals = resolve_rh_external_sbom_ancestors(
+                    current_sbom_uuid,
                     current_node.node_id.clone().to_string(),
                     self.connection,
                 )

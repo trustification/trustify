@@ -34,6 +34,13 @@
       "type": "container",
       "bom-ref": "ose-openstack-cinder-csi-driver-operator-container_image-index",
       "version": "sha256:4e1a8039dfcd2a1ae7672d99be63777b42f9fad3baca5e9273653b447ae72fe8",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "4e1a8039dfcd2a1ae7672d99be63777b42f9fad3baca5e9273653b447ae72fe8"
+        }
+      ],
+
       "pedigree": {
         "variants": [
           {
@@ -42,6 +49,12 @@
             "type": "container",
             "bom-ref": "ose-openstack-cinder-csi-driver-operator-container_amd64",
             "version": "sha256:601cc46bdc24d6c432f51ce4aa8745d1a18ff07e2b0a1bb8ecad6bc091e98285",
+            "hashes": [
+              {
+                "alg": "SHA-256",
+                "content": "601cc46bdc24d6c432f51ce4aa8745d1a18ff07e2b0a1bb8ecad6bc091e98285"
+              }
+            ],
             "supplier": {
               "url": [
                 "https://www.redhat.com"
@@ -56,6 +69,12 @@
             "type": "container",
             "bom-ref": "ose-openstack-cinder-csi-driver-operator-container_arm64",
             "version": "sha256:0e72df1e6f4b356282576efaed99915fa7fb8c22718b67b1f82f89be6722b24f",
+            "hashes": [
+              {
+                "alg": "SHA-256",
+                "content": "0e72df1e6f4b356282576efaed99915fa7fb8c22718b67b1f82f89be6722b24f"
+              }
+            ],
             "supplier": {
               "url": [
                 "https://www.redhat.com"
@@ -70,6 +89,12 @@
             "type": "container",
             "bom-ref": "ose-openstack-cinder-csi-driver-operator-container_ppc64le",
             "version": "sha256:64b4e6d6c18556f9f9dad1a9e6185c37d6ad07c72e515c475304a3a16b9eb51f",
+            "hashes": [
+              {
+                "alg": "SHA-256",
+                "content": "64b4e6d6c18556f9f9dad1a9e6185c37d6ad07c72e515c475304a3a16b9eb51f"
+              }
+            ],
             "supplier": {
               "url": [
                 "https://www.redhat.com"
@@ -84,6 +109,12 @@
             "type": "container",
             "bom-ref": "ose-openstack-cinder-csi-driver-operator-container_s390x",
             "version": "sha256:d3d96f71664efb8c2bd9290b8e1ca9c9b93a54cecb266078c4d954a2e9c05d4d",
+            "hashes": [
+              {
+                "alg": "SHA-256",
+                "content": "d3d96f71664efb8c2bd9290b8e1ca9c9b93a54cecb266078c4d954a2e9c05d4d"
+              }
+            ],
             "supplier": {
               "url": [
                 "https://www.redhat.com"
