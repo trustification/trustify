@@ -32,6 +32,12 @@
       "type": "container",
       "bom-ref": "fb61cd6dd75398fb",
       "version": "sha256:0e72df1e6f4b356282576efaed99915fa7fb8c22718b67b1f82f89be6722b24f",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0e72df1e6f4b356282576efaed99915fa7fb8c22718b67b1f82f89be6722b24f"
+        }
+      ],
       "pedigree": {
         "commits": [
           {

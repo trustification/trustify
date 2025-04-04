@@ -33,6 +33,12 @@
       "type": "container",
       "bom-ref": "quarkus-mandrel-231-rhel8-container_image-index",
       "version": "sha256:04b6da7bed65d56e14bd50a119b6fa9b46b534fedafb623af7c95b1a046bb66a",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "04b6da7bed65d56e14bd50a119b6fa9b46b534fedafb623af7c95b1a046bb66a"
+        }
+      ],
       "pedigree": {
         "variants": [
           {
@@ -41,6 +47,12 @@
             "type": "container",
             "bom-ref": "quarkus-mandrel-231-rhel8-container_amd64",
             "version": "sha256:6545d1ae562899d6eb902f81be46a9fc6a8bd60f2b6b874f470722bca25fc0da",
+            "hashes": [
+              {
+                "alg": "SHA-256",
+                "content": "6545d1ae562899d6eb902f81be46a9fc6a8bd60f2b6b874f470722bca25fc0da"
+              }
+            ],
             "supplier": {
               "url": [
                 "https://www.redhat.com"
@@ -55,6 +67,12 @@
             "type": "container",
             "bom-ref": "quarkus-mandrel-231-rhel8-container_arm64",
             "version": "sha256:0dba39e3c6db8f7a097798d7898bb0362c32c642561b819cb02a475d596ff2a2",
+            "hashes": [
+              {
+                "alg": "SHA-256",
+                "content": "0dba39e3c6db8f7a097798d7898bb0362c32c642561b819cb02a475d596ff2a2"
+              }
+            ],
             "supplier": {
               "url": [
                 "https://www.redhat.com"

@@ -46,6 +46,13 @@
       "type": "container",
       "bom-ref": "1c4abceaa349a8c2",
       "version": "sha256:6545d1ae562899d6eb902f81be46a9fc6a8bd60f2b6b874f470722bca25fc0da",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6545d1ae562899d6eb902f81be46a9fc6a8bd60f2b6b874f470722bca25fc0da"
+        }
+      ],
+
       "pedigree": {
         "commits": [
           {
