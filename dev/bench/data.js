@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743763463661,
+  "lastUpdate": 1743770509639,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8114,6 +8114,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/63368f08ca4612ae5364b3a4d994848faadbbb69"
         },
         "date": 1743763462446,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "12fb17e96985b288e15ad4d36665f5df372c6da2",
+          "message": "fix: pythonver_cmp function to properly handle local versions",
+          "timestamp": "2025-04-04T12:20:51Z",
+          "tree_id": "df434c119f6079b077ed8835c058d653d846651f",
+          "url": "https://github.com/trustification/trustify/commit/12fb17e96985b288e15ad4d36665f5df372c6da2"
+        },
+        "date": 1743770508820,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
