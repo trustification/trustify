@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743703892464,
+  "lastUpdate": 1743752936563,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8032,6 +8032,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "7c3119e69e18540d2f7c934913252445853155f1",
+          "message": "docs: add documentation for pod's resources\n\nCo-authored-by: Aron Gunn <agunn@redhat.com>",
+          "timestamp": "2025-04-04T07:27:50Z",
+          "tree_id": "0ee0a0bd40722e73c2151b382b060a8ba2663cfb",
+          "url": "https://github.com/trustification/trustify/commit/7c3119e69e18540d2f7c934913252445853155f1"
+        },
+        "date": 1743752935069,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
