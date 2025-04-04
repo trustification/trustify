@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743754052263,
+  "lastUpdate": 1743763463661,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8085,6 +8085,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/971378d6b1cc0624b303eec261f11a90870e291a"
         },
         "date": 1743754051312,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "63368f08ca4612ae5364b3a4d994848faadbbb69",
+          "message": "chore: update otel dependencies",
+          "timestamp": "2025-04-04T10:13:11Z",
+          "tree_id": "bd723dd26565a0d65eb983f2389431de78c5542e",
+          "url": "https://github.com/trustification/trustify/commit/63368f08ca4612ae5364b3a4d994848faadbbb69"
+        },
+        "date": 1743763462446,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
