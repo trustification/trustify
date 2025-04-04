@@ -64,6 +64,19 @@ async fn test_pythonver_cmp(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
         Some(-1),
         pythonver_cmp(&ctx.db, "1.2.3.dev1", "1.2.3").await?
     );
+    assert_eq!(
+        Some(-1),
+        pythonver_cmp(&ctx.db, "1.2.3", "1.2.3+abc").await?
+    );
+    assert_eq!(Some(1), pythonver_cmp(&ctx.db, "1.2.3+abc", "1.2.3").await?);
+    assert_eq!(
+        Some(1),
+        pythonver_cmp(&ctx.db, "1.2.3+def", "1.2.3+abc").await?
+    );
+    assert_eq!(
+        Some(-1),
+        pythonver_cmp(&ctx.db, "1.2.3+abc", "1.2.3+def").await?
+    );
     Ok(())
 }
 
