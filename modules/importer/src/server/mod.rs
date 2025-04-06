@@ -2,7 +2,7 @@ pub mod context;
 pub(crate) mod progress;
 
 use crate::{
-    model::Importer,
+    model::{Importer, State},
     runner::{
         ImportRunner,
         common::heartbeat::Heart,
@@ -99,11 +99,14 @@ impl Server {
             // Update metrics
             running_importers.record(count as _, &[]);
 
+            let importers = service.list().await?;
+
+            // Update any importers that we assume have crashed
+            reap(&importers, &service).await?;
+
             // Asynchronously fire off new jobs subject to max concurrency
             runs.extend(
-                service
-                    .list()
-                    .await?
+                importers
                     .into_iter()
                     .filter(|i| i.is_enabled() && i.is_due() && !i.is_running())
                     .take(self.concurrency - count)
@@ -174,5 +177,29 @@ async fn import(
         )
         .await?;
 
+    Ok(())
+}
+
+async fn reap(importers: &[Importer], service: &ImporterService) -> anyhow::Result<()> {
+    for importer in importers
+        .iter()
+        .filter(|i| i.data.state == State::Running && !i.is_running())
+    {
+        log::info!(
+            "Reaping stale importer job: {} (since: {})",
+            importer.name,
+            importer.data.last_change
+        );
+        service
+            .update_finish(
+                &importer.name,
+                None,
+                importer.data.last_run.unwrap_or(importer.data.last_change),
+                Some("Import aborted".into()),
+                None,
+                None,
+            )
+            .await?;
+    }
     Ok(())
 }
