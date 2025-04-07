@@ -96,7 +96,7 @@ parking_lot = "0.12"
 peak_alloc = "0.2.0"
 pem = "3"
 percent-encoding = "2.3.1"
-petgraph = { version = "0.7.1", features = ["serde-1"] }
+petgraph = { version = "0.8.0", features = ["serde-1"] }
 quick-xml = "0.37.0"
 rand = "0.9.0"
 reedline = "0.39.0"
@@ -207,9 +207,6 @@ osv = { git = "https://github.com/ctron/osv", branch = "feature/drop_deps_1" }
 # to pickup fix: https://github.com/Abraxas-365/langchain-rust/pull/246
 #       and fix: https://github.com/Abraxas-365/langchain-rust/pull/250
 langchain-rust = { git = "https://github.com/chirino/langchain-rust", branch = "main" }
-
-# to pickup feat: https://github.com/Aeledfyr/deepsize/pull/41
-deepsize = { git = "https://github.com/chirino/deepsize", branch = "main" }
 
 # required due to https://github.com/doubleopen-project/spdx-rs/pull/35
 spdx-rs = { git = "https://github.com/ctron/spdx-rs", branch = "feature/add_alias_2" }

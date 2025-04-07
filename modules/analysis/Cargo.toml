@@ -16,7 +16,7 @@ anyhow = { workspace = true }
 bytesize = { workspace = true }
 clap = { workspace = true }
 cpe = { workspace = true }
-deepsize = { workspace = true, features = ["cpe", "petgraph"] }
+deepsize = { workspace = true }
 fixedbitset = { workspace = true }
 futures = { workspace = true }
 log = { workspace = true }

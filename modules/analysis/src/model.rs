@@ -3,6 +3,8 @@ pub mod graph;
 mod roots;
 pub use roots::*;
 
+use deepsize::{Context, DeepSizeOf};
+use moka::sync::Cache;
 use petgraph::Graph;
 use serde::Serialize;
 use std::{
@@ -10,9 +12,6 @@ use std::{
     ops::{Deref, DerefMut},
     sync::Arc,
 };
-
-use deepsize::DeepSizeOf;
-use moka::sync::Cache;
 use trustify_common::{cpe::Cpe, purl::Purl};
 use trustify_entity::relationship::Relationship;
 use utoipa::ToSchema;
@@ -89,13 +88,31 @@ pub struct GraphMap {
 fn size_of_graph_entry(key: &String, value: &Arc<PackageGraph>) -> u32 {
     (
         key.deep_size_of()
-            + value.as_ref().deep_size_of()
+            + DeepSizeGraph(value.as_ref()).deep_size_of()
             // Also add in some entry overhead of the cache entry
             + 20
         // todo: find a better estimate for the the moka ValueEntry
     )
     .try_into()
     .unwrap_or(u32::MAX)
+}
+
+pub struct DeepSizeGraph<'a>(&'a PackageGraph);
+
+impl DeepSizeOf for DeepSizeGraph<'_> {
+    fn deep_size_of_children(&self, ctx: &mut Context) -> usize {
+        let mut result = 0;
+
+        for n in self.0.raw_nodes() {
+            result += n.weight.deep_size_of_children(ctx);
+        }
+
+        for e in self.0.raw_edges() {
+            result += e.weight.deep_size_of_children(ctx);
+        }
+
+        result
+    }
 }
 
 impl GraphMap {
