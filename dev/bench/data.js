@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1743770509639,
+  "lastUpdate": 1744021726263,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8148,6 +8148,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "c2bf03ace401df2079fe2cd5289f3c3f75c3a007",
+          "message": "refactor: Update jsonpath parser library\n\nBREAKING-CHANGE: The upgraded parser aligns with RFC 9535, and not\nlonger supports the `$.[]` notation. It must be converted into `$[]`.\nThis is important for the group extraction with OIDC, specifically\nwith AWS Cognito.",
+          "timestamp": "2025-04-07T09:52:06Z",
+          "tree_id": "0c6bddb3e73eb14e42bae9bf65b5dda8ebb23868",
+          "url": "https://github.com/trustification/trustify/commit/c2bf03ace401df2079fe2cd5289f3c3f75c3a007"
+        },
+        "date": 1744021725250,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
             "unit": "s"
           }
         ]
