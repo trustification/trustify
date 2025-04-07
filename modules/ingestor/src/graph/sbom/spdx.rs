@@ -230,10 +230,7 @@ impl SbomContext {
                 match &*r.reference_type {
                     "purl" => match Purl::from_str(&r.reference_locator) {
                         Ok(purl) => {
-                            refs.push(PackageReference::Purl {
-                                versioned_purl: purl.version_uuid(),
-                                qualified_purl: purl.qualifier_uuid(),
-                            });
+                            refs.push(PackageReference::Purl(purl.clone()));
                             purls.add(purl);
                         }
                         Err(err) => {

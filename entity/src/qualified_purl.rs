@@ -1,71 +1,31 @@
 use sea_orm::{FromJsonQueryResult, FromQueryResult, entity::prelude::*};
-use serde::{Deserialize, Deserializer, Serialize, Serializer, ser::SerializeStruct};
-use serde_json::{Value, json};
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use trustify_common::purl::Purl;
 
-// TODO: some day we might 'collapse' all the purl structs to this one, that day is not today.
-//
-// Instead of using composition or directly relating to any existing purl struct we will implement
-// to & from impl and in places we may invalidate DRY principle by copying across required code blocks.
+#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
+#[sea_orm(table_name = "qualified_purl")]
+pub struct Model {
+    #[sea_orm(primary_key)]
+    pub id: Uuid,
+    pub versioned_purl_id: Uuid,
+    pub qualifiers: Qualifiers,
+    #[sea_orm(column_type = "JsonBinary")]
+    pub purl: CanonicalPurl,
+}
 
 /// A purl struct for storing in the database.
 ///
 /// The difference between [`Self`] and [`Purl`] is the serialization format. [`Self`] is intended
 /// to be serialized into a JSON structure, so that it is possible to use JSON queries on this
 /// field.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, FromJsonQueryResult)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, FromJsonQueryResult, Serialize, Deserialize)]
 pub struct CanonicalPurl {
     pub ty: String,
     pub namespace: Option<String>,
     pub name: String,
     pub version: Option<String>,
     pub qualifiers: BTreeMap<String, String>,
-}
-
-impl Serialize for CanonicalPurl {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        // Start a new struct serialization
-        let mut state = serializer.serialize_struct("CanonicalPurl", 5)?;
-
-        // Serialize each field
-        state.serialize_field("ty", &self.ty)?;
-        state.serialize_field("namespace", &self.namespace)?;
-        state.serialize_field("name", &self.name)?;
-        state.serialize_field("version", &self.version)?;
-        state.serialize_field("qualifiers", &self.qualifiers)?;
-
-        // End the struct serialization
-        state.end()
-    }
-}
-
-impl<'de> Deserialize<'de> for CanonicalPurl {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        struct Helper {
-            ty: String,
-            namespace: Option<String>,
-            name: String,
-            version: Option<String>,
-            qualifiers: BTreeMap<String, String>,
-        }
-
-        let helper = Helper::deserialize(deserializer)?;
-        Ok(CanonicalPurl {
-            ty: helper.ty,
-            namespace: helper.namespace,
-            name: helper.name,
-            version: helper.version,
-            qualifiers: helper.qualifiers,
-        })
-    }
 }
 
 impl From<Purl> for CanonicalPurl {
@@ -89,37 +49,6 @@ impl From<CanonicalPurl> for Purl {
             qualifiers: purl.qualifiers,
         }
     }
-}
-
-impl From<CanonicalPurl> for Value {
-    fn from(canonical_purl: CanonicalPurl) -> Self {
-        json!({
-            "ty": canonical_purl.ty,
-            "namespace": canonical_purl.namespace,
-            "name": canonical_purl.name,
-            "version": canonical_purl.version,
-            "qualifiers": canonical_purl.qualifiers,
-        })
-    }
-}
-
-impl TryFrom<Value> for CanonicalPurl {
-    type Error = serde_json::Error;
-
-    fn try_from(value: Value) -> Result<Self, Self::Error> {
-        serde_json::from_value(value)
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
-#[sea_orm(table_name = "qualified_purl")]
-pub struct Model {
-    #[sea_orm(primary_key)]
-    pub id: Uuid,
-    pub versioned_purl_id: Uuid,
-    pub qualifiers: Qualifiers,
-    #[sea_orm(column_type = "JsonBinary")]
-    pub purl: CanonicalPurl,
 }
 
 #[derive(
@@ -176,8 +105,8 @@ pub struct PackageNamespace {
 #[cfg(test)]
 mod test {
     use super::*;
+    use serde_json::{from_str, json, to_string};
     use test_log::test;
-    use trustify_common::purl::Purl;
 
     #[test]
     fn test_canonical_purl() {
@@ -194,12 +123,10 @@ mod test {
         assert_eq!(Some("3.8-6.el8".to_string()), cp.version);
 
         let model = ActiveModel {
-            id: Default::default(),
-            versioned_purl_id: Default::default(),
-            qualifiers: Default::default(),
             purl: sea_orm::ActiveValue::Set(cp.clone()),
+            ..Default::default()
         };
-        assert_eq!(model.clone().purl.unwrap(), cp,);
+        assert_eq!(model.clone().purl.unwrap(), cp);
 
         let purl: Purl = serde_json::from_str(
             r#"
@@ -209,13 +136,12 @@ mod test {
         .unwrap();
         let cp = purl.clone().into();
         let model = ActiveModel {
-            id: Default::default(),
-            versioned_purl_id: Default::default(),
-            qualifiers: Default::default(),
             purl: sea_orm::ActiveValue::Set(purl.into()),
+            ..Default::default()
         };
         assert_eq!(model.clone().purl.unwrap(), cp);
         assert_eq!(cp.qualifiers.get("arch"), Some(&"aarch64".to_string()));
+
         // check we can serialize CanonicalPurl to url string
         assert_eq!(
             Purl::from(model.purl.clone().unwrap()).to_string(),
@@ -223,7 +149,7 @@ mod test {
         );
 
         // check we can serialize CanonicalPurl to json value
-        let json_value: Value = model.purl.unwrap().into();
+        let json_value: serde_json::Value = from_str(&to_string(&cp).unwrap()).unwrap();
         assert_eq!(
             json_value,
             json!({"ty": "rpm", "namespace": "redhat", "name": "filesystem", "version": "3.8-6.el8", "qualifiers": {"arch": "aarch64"}})

@@ -37,7 +37,7 @@ use std::{
 };
 use tracing::instrument;
 use trustify_common::{
-    db::query::Value,
+    db::query::{Value, ValueContext},
     model::{Paginated, PaginatedResults},
 };
 use trustify_entity::{
@@ -633,30 +633,35 @@ impl AnalysisService {
                 })
             }
             GraphQuery::Query(query) => graph.node_weight(i).is_some_and(|node| {
-                let mut context = HashMap::from([
-                    ("sbom_id", Value::String(&node.sbom_id)),
-                    ("node_id", Value::String(&node.node_id)),
-                    ("name", Value::String(&node.name)),
-                ]);
+                let mut context = ValueContext::default();
+                context.put_string("sbom_id", &node.sbom_id);
+                context.put_string("node_id", &node.node_id);
+                context.put_string("name", &node.name);
                 match node {
                     graph::Node::Package(package) => {
-                        context.extend([
-                            ("version", Value::String(&package.version)),
-                            ("purl", Value::from(&package.purl)),
-                            ("cpe", Value::from(&package.cpe)),
-                        ]);
+                        context.put_string("version", &package.version);
+                        context.put_value("purl", Value::from(&package.purl));
+                        for p in &package.purl {
+                            let parts = HashMap::from(
+                                [
+                                    ("ty", p.ty.clone()),
+                                    ("name", p.name.clone()),
+                                    ("version", p.version.clone().unwrap_or_default()),
+                                    ("namespace", p.namespace.clone().unwrap_or_default()),
+                                ]
+                                .map(|(k, v)| (k.to_string(), v)),
+                            );
+                            context.put_nested("purl", parts.into_iter());
+                            context.put_nested("qualifiers", p.qualifiers.clone().into_iter());
+                        }
+                        context.put_value("cpe", Value::from(&package.cpe));
                     }
                     graph::Node::External(external) => {
-                        context.extend([
-                            (
-                                "external_document_reference",
-                                Value::String(&external.external_document_reference),
-                            ),
-                            (
-                                "external_node_id",
-                                Value::String(&external.external_node_id),
-                            ),
-                        ]);
+                        context.put_string(
+                            "external_document_reference",
+                            &external.external_document_reference,
+                        );
+                        context.put_string("external_node_id", &external.external_node_id);
                     }
                     _ => {}
                 }
