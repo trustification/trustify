@@ -291,3 +291,41 @@ helm upgrade --install --repo https://trustification.io/trustify-helm-charts/ --
 ----
 
 NOTE: The `--devel` flag is currently necessary as the Helm chart has a pre-release version.
+
+=== Keycloak
+
+Trustify requires an OIDC issuer.
+The recommended setup to use Keycloak as OIDC issuer.
+For this, you will need to:
+
+* Install Keycloak
+* Create a new realm
+* Create the following roles for this realm
+** `chicken-user`
+** `chicken-manager`
+** `chicken-admin`
+* Make the `chicken-user` a default role
+* Create the following scopes for this realm
+** `read:document`
+** `create:document`
+** `delete:document`
+* Add the `create:document` and `delete:document` scope to the `chicken-manager` role
+* Create two clients
+** One public client
+*** Set `standardFlowEnabled` to `true`
+*** Set `fullScopedAllowed` to `true`
+*** Set the following `defaultClientScopes`
+**** `read:document`
+**** `create:document`
+**** `delete:document`
+** One protected client
+*** Set `publicClient` to `false`
+*** Set `serviecAccountsEnabled` to `true`
+*** Set `fullScopedAllowed` to `true`
+*** Set the following `defaultClientScopes`
+**** `read:document`
+**** `create:document`
+*** Add role `chicken-manager` to the service account of this client
+** Increase the token timeout for both clients to at least 5 minutes
+* Create a user, acting as administrator
+** Add the `chicken-manager` and `chicken-admin` role to this user
