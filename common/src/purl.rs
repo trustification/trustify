@@ -153,6 +153,28 @@ impl Purl {
             qualifiers: Default::default(),
         }
     }
+
+    /// Query translator for purl components
+    pub fn translate(op: &str, v: &str) -> Option<String> {
+        match (op, Purl::from_str(v)) {
+            ("=" | "~", Ok(p)) => {
+                let mut q = format!("purl:ty={}&purl:name={}", p.ty, p.name);
+                if let Some(ns) = p.namespace {
+                    q.push_str(&format!("&purl:namespace={ns}"));
+                }
+                if let Some(version) = p.version {
+                    q.push_str(&format!("&purl:version={version}"));
+                }
+                for (k, v) in p.qualifiers {
+                    q.push_str(&format!("&qualifiers:{k}={v}"));
+                }
+                Some(q)
+            }
+            ("~", Err(_)) => Some(v.into()),
+            (_, Err(e)) => Some(e.to_string()),
+            (_, _) => Some("illegal operation for purl field".into()),
+        }
+    }
 }
 
 impl Serialize for Purl {
