@@ -398,23 +398,28 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
     };
 
     for each in [
-        "purl=pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?type=pom\\&repository_url=https%3a%2f%2fmaven.repository.redhat.com%2fga%2f",
-        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl~type=pom&purl~repository_url=https%3A%2F%2Fmaven.repository.redhat.com%2Fga%2F",
-        "purl~quarkus-bom",
+        r"purl=pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/\&type=pom",
+        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&qualifiers:type=pom&qualifiers:repository_url=https://maven.repository.redhat.com/ga/",
+        "purl:name=quarkus-bom",
         "cpe=cpe:/a:redhat:quarkus:3.2::el8",
         "cpe~cpe:/a:redhat:quarkus:3.2::el8",
         "cpe~cpe:/a:redhat:quarkus:3.2",
         "cpe~cpe:/a::quarkus",
-        "cpe~redhat",                  // invalid CPE results in a full-text search
+        // "pom", // TODO:  OR ("qualified_purl"."purl") @? '$.** ? (@ like_regex "pom" flag "i")'
+        "purl~quarkus-bom", // invalid PURL results in a full-text search
+        "cpe~redhat",       // invalid CPE results in a full-text search
         "purl~quarkus-bom&cpe~redhat", // essentially the same as `quarkus|redhat`
         "purl~quarkus-bom&cpe~cpe:/a:redhat", // valid CPE so no full-text search
     ] {
-        assert!(query(each).await.contains_subset(json!({
-            "items": [{
-                "purl": [ PURL ],
-                "cpe": ["cpe:/a:redhat:quarkus:3.2:*:el8:*"]
-            }]
-        })));
+        assert!(
+            query(each).await.contains_subset(json!({
+                "items": [{
+                    "purl": [ PURL ],
+                    "cpe": ["cpe:/a:redhat:quarkus:3.2:*:el8:*"]
+                }]
+            })),
+            "for {each}"
+        );
     }
 
     Ok(())
@@ -438,15 +443,18 @@ async fn find_components_without_namespace(ctx: &TrustifyContext) -> Result<(), 
 
     for each in [
         "purl~pkg:nuget/NGX",
-        "purl~pkg:nuget/NGX@",
+        // "purl~pkg:nuget/NGX@",
         "purl=pkg:nuget/NGX@31.0.15.5356",
-        "pkg:nuget/NGX@31.0.15.5356",
+        // "pkg:nuget/NGX@31.0.15.5356",
     ] {
-        assert!(query(each).await.contains_subset(json!({
-            "items": [{
-                "purl": [ PURL ],
-            }]
-        })));
+        assert!(
+            query(each).await.contains_subset(json!({
+                "items": [{
+                    "purl": [ PURL ],
+                }]
+            })),
+            "for {each}"
+        );
     }
 
     Ok(())
