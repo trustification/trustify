@@ -34,7 +34,7 @@ pub enum Error {
     #[error(transparent)]
     Json(#[from] serde_json::Error),
     #[error(transparent)]
-    JsonPath(#[from] jsonpath_rust::parser::JsonPathParserError),
+    JsonPath(#[from] jsonpath_rust::parser::errors::JsonPathError),
     #[error(transparent)]
     Xml(#[from] roxmltree::Error),
     #[error(transparent)]
