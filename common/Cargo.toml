@@ -18,7 +18,7 @@ bytesize = { workspace = true, features = ["serde"] }
 chrono = { workspace = true }
 clap = { workspace = true, features = ["derive", "env"] }
 cpe = { workspace = true }
-deepsize = { workspace = true, features = ["cpe"] }
+deepsize = { workspace = true }
 hex = { workspace = true }
 hide = { workspace = true }
 human-date-parser = { workspace = true }

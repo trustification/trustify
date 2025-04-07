@@ -2,7 +2,7 @@ use cpe::{
     cpe::Cpe as _,
     uri::{OwnedUri, Uri},
 };
-use deepsize::DeepSizeOf;
+use deepsize::{Context, DeepSizeOf};
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{Error, Visitor},
@@ -21,9 +21,39 @@ use uuid::Uuid;
 
 use crate::db::query::Valuable;
 
-#[derive(Clone, Hash, Eq, PartialEq, DeepSizeOf)]
+#[derive(Clone, Hash, Eq, PartialEq)]
 pub struct Cpe {
     uri: OwnedUri,
+}
+
+impl DeepSizeOf for Cpe {
+    fn deep_size_of_children(&self, context: &mut Context) -> usize {
+        fn comp(value: cpe::component::Component, ctx: &mut Context) -> usize {
+            if let cpe::component::Component::Value(v) = value {
+                v.deep_size_of_children(ctx)
+            } else {
+                0
+            }
+        }
+
+        fn lang(lang: &cpe::cpe::Language, ctx: &mut Context) -> usize {
+            if let cpe::cpe::Language::Language(v) = lang {
+                v.as_str().deep_size_of_children(ctx)
+            } else {
+                0
+            }
+        }
+
+        comp(self.uri.vendor(), context)
+            + comp(self.uri.product(), context)
+            + comp(self.uri.version(), context)
+            + comp(self.uri.update(), context)
+            + comp(self.uri.edition(), context)
+            + comp(self.uri.sw_edition(), context)
+            + comp(self.uri.target_sw(), context)
+            + comp(self.uri.other(), context)
+            + lang(self.uri.language(), context)
+    }
 }
 
 impl ToSchema for Cpe {
