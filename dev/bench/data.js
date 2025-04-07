@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744022986602,
+  "lastUpdate": 1744031548887,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8230,6 +8230,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/8f150ceefc2008a985ab2af90d3a4624cb9d8a32"
         },
         "date": 1744022985829,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "8428b2329274d5dbcb5198e4003b7b6058036da2",
+          "message": "chore: update petgraph and drop forked deepsize",
+          "timestamp": "2025-04-07T12:53:00Z",
+          "tree_id": "d0e5106ccd89983b9f98de2a40d4bcc43916d1f7",
+          "url": "https://github.com/trustification/trustify/commit/8428b2329274d5dbcb5198e4003b7b6058036da2"
+        },
+        "date": 1744031547415,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
