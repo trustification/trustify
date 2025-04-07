@@ -1,7 +1,7 @@
 use crate::test::caller;
 use actix_http::Request;
 use actix_web::test::TestRequest;
-use jsonpath_rust::JsonPathQuery;
+use jsonpath_rust::JsonPath;
 use serde_json::{Value, json};
 use test_context::test_context;
 use test_log::test;
@@ -24,10 +24,10 @@ async fn cdx_generated_from(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     let response: Value = app.call_and_read_body_json(request).await;
     tracing::debug!(test = "", "{response:#?}");
 
-    let deps = response.path(&format!(
+    let deps = response.query(&format!(
         "$.items[?(@.node_id=='{src}')].descendants[?(@.relationship=='generates')]"
     ))?;
-    assert_eq!(35, deps.as_array().unwrap().len());
+    assert_eq!(35, deps.len());
 
     // Ensure binary rpm GeneratedFrom src rpm
     let x86 = "pkg:rpm/redhat/openssl@3.0.7-18.el9_2?arch=x86_64";
