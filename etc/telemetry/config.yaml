@@ -10,7 +10,7 @@ exporters:
     tls:
       insecure: true
   debug:
-    verbosity: detailed
+    verbosity: basic
   prometheus:
     endpoint: "0.0.0.0:9464"
 
