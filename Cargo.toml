@@ -68,7 +68,7 @@ git2 = { version = "0.20.0", features = ["ssh"] }
 hex = "0.4.3"
 hide = "0.1.5"
 http = "1"
-human-date-parser = "0.2"
+human-date-parser = "0.3"
 humantime = "2"
 humantime-serde = "1"
 itertools = "0.14"

@@ -46,25 +46,24 @@ impl PartialOrd<String> for Value<'_> {
                 Ok(i) => v.partial_cmp(&i),
                 _ => None,
             },
-            Self::Date(v) => match from_human_time(&v.to_string()) {
-                Ok(ParseResult::DateTime(field)) => match from_human_time(rhs) {
-                    Ok(ParseResult::DateTime(other)) => field.partial_cmp(&other),
-                    Ok(ParseResult::Date(d)) => {
-                        let other = NaiveDateTime::new(d, field.time())
-                            .and_local_timezone(Local)
-                            .unwrap();
-                        field.partial_cmp(&other)
-                    }
-                    Ok(ParseResult::Time(t)) => {
-                        let other = NaiveDateTime::new(field.date_naive(), t)
-                            .and_local_timezone(Local)
-                            .unwrap();
-                        field.partial_cmp(&other)
-                    }
+            Self::Date(v) => {
+                let now = Local::now().naive_local();
+                match from_human_time(&v.to_string(), now) {
+                    Ok(ParseResult::DateTime(field)) => match from_human_time(rhs, now) {
+                        Ok(ParseResult::DateTime(other)) => field.partial_cmp(&other),
+                        Ok(ParseResult::Date(d)) => {
+                            let other = NaiveDateTime::new(d, field.time());
+                            field.partial_cmp(&other)
+                        }
+                        Ok(ParseResult::Time(t)) => {
+                            let other = NaiveDateTime::new(field.date(), t);
+                            field.partial_cmp(&other)
+                        }
+                        _ => None,
+                    },
                     _ => None,
-                },
-                _ => None,
-            },
+                }
+            }
             Self::Array(arr) => {
                 if arr.iter().any(|v| v.eq(rhs)) {
                     Some(Ordering::Equal)
