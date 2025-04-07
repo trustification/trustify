@@ -2673,9 +2673,9 @@ dependencies = [
 
 [[package]]
 name = "garage-door"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9891a8a90ed8e3f9d0c324841a5847f8b37723f246853bf3ab7573042e4bf733"
+checksum = "5c71ac905560463938ee290a1b69657a1dde5ca5709035f8017c266493a37c5f"
 dependencies = [
  "actix-cors",
  "actix-web",
@@ -2692,8 +2692,8 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
- "strum 0.26.3",
- "thiserror 1.0.69",
+ "strum 0.27.1",
+ "thiserror 2.0.12",
  "tokio",
  "tracing",
  "url",
