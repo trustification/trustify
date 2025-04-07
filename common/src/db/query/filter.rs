@@ -1,13 +1,18 @@
 use super::{Columns, Error, q};
+use chrono::Local;
 use human_date_parser::{ParseResult, from_human_time};
-use sea_orm::sea_query::{ConditionExpression, IntoCondition, extension::postgres::PgExpr};
-use sea_orm::{ColumnType, Condition, IntoSimpleExpr, Value as SeaValue, sea_query};
+use sea_orm::{
+    ColumnType, Condition, IntoSimpleExpr, Value as SeaValue, sea_query,
+    sea_query::{ConditionExpression, IntoCondition, extension::postgres::PgExpr},
+};
 use sea_query::{BinOper, Expr, Keyword, SimpleExpr};
-use std::fmt::{Display, Formatter};
-use std::str::FromStr;
-use time::format_description::well_known::Rfc3339;
-use time::macros::format_description;
-use time::{Date, OffsetDateTime};
+use std::{
+    fmt::{Display, Formatter},
+    str::FromStr,
+};
+use time::{
+    Date, OffsetDateTime, format_description::well_known::Rfc3339, macros::format_description,
+};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -177,7 +182,7 @@ impl Arg {
                     Arg::Value(SeaValue::from(odt))
                 } else if let Ok(d) = Date::parse(s, &format_description!("[year]-[month]-[day]")) {
                     Arg::Value(SeaValue::from(d))
-                } else if let Ok(human) = from_human_time(s) {
+                } else if let Ok(human) = from_human_time(s, Local::now().naive_local()) {
                     match human {
                         ParseResult::DateTime(dt) => Arg::Value(SeaValue::from(dt)),
                         ParseResult::Date(d) => Arg::Value(SeaValue::from(d)),
