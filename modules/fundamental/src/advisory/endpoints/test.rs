@@ -5,7 +5,7 @@ use crate::{
 use actix_http::StatusCode;
 use actix_web::test::TestRequest;
 use hex::ToHex;
-use jsonpath_rust::JsonPathQuery;
+use jsonpath_rust::JsonPath;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use test_context::test_context;
@@ -180,19 +180,17 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let response: Value = app.call_and_read_body_json(request).await;
 
     assert_eq!(
-        response.clone().path("$.issuer.name").unwrap(),
-        json!(["Red Hat Product Security"])
+        response.clone().query("$.issuer.name")?,
+        [&json!("Red Hat Product Security")]
     );
 
-    let cvss3_scores = response
-        .path("$.vulnerabilities[*].cvss3_scores.*")
-        .unwrap();
+    let cvss3_scores = response.query("$.vulnerabilities[*].cvss3_scores.*")?;
 
     log::debug!("{:#?}", cvss3_scores);
 
     assert_eq!(
         cvss3_scores,
-        json!(["CVSS:3.0/AV:N/AC:L/PR:H/UI:N/S:C/C:H/I:N/A:N"])
+        [&json!("CVSS:3.0/AV:N/AC:L/PR:H/UI:N/S:C/C:H/I:N/A:N")]
     );
 
     let uri = format!("/api/v2/advisory/urn:uuid:{}", advisory1.advisory.id);
@@ -201,9 +199,9 @@ async fn one_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let response: Value = app.call_and_read_body_json(request).await;
 
-    let vulns = response.path("$.vulnerabilities").unwrap();
+    let vulns = response.query("$.vulnerabilities")?;
 
-    assert_eq!(vulns, json!([[]]));
+    assert_eq!(vulns, [&json!([])]);
 
     Ok(())
 }
@@ -281,19 +279,17 @@ async fn one_advisory_by_uuid(ctx: &TrustifyContext) -> Result<(), anyhow::Error
     log::debug!("{:#?}", response);
 
     assert_eq!(
-        response.clone().path("$.issuer.name").unwrap(),
-        json!(["Red Hat Product Security"])
+        response.clone().query("$.issuer.name")?,
+        [&json!("Red Hat Product Security")]
     );
 
-    let cvss3_scores = response
-        .path("$.vulnerabilities[*].cvss3_scores.*")
-        .unwrap();
+    let cvss3_scores = response.query("$.vulnerabilities[*].cvss3_scores.*")?;
 
     log::debug!("{:#?}", cvss3_scores);
 
     assert_eq!(
         cvss3_scores,
-        json!(["CVSS:3.0/AV:N/AC:L/PR:H/UI:N/S:C/C:H/I:N/A:N"])
+        [&json!("CVSS:3.0/AV:N/AC:L/PR:H/UI:N/S:C/C:H/I:N/A:N")]
     );
 
     Ok(())

@@ -7,7 +7,6 @@ use anyhow::anyhow;
 use hex::ToHex;
 use jsonpath_rust::JsonPath;
 use sea_orm::{EntityTrait, TransactionTrait};
-use std::str::FromStr;
 use trustify_common::{
     hashing::Digests,
     id::{Id, TrySelectForId},
@@ -42,30 +41,14 @@ impl<'g> ClearlyDefinedLoader<'g> {
             });
         }
 
-        let id_path = JsonPath::from_str("$._id")?;
-        let license_path = JsonPath::from_str("$.licensed.declared")?;
-
-        let document_id = id_path.find(&item);
-        let license = license_path.find(&item);
-
-        let document_id = document_id.as_array();
-        let license = license.as_array();
-
-        let document_id = document_id.and_then(|inner| {
-            if !inner.is_empty() {
-                inner.first().and_then(|inner| inner.as_str())
-            } else {
-                None
-            }
-        });
-
-        let license = license.and_then(|inner| {
-            if !inner.is_empty() {
-                inner.first().and_then(|inner| inner.as_str())
-            } else {
-                None
-            }
-        });
+        let document_id = item
+            .query("$._id")?
+            .first()
+            .and_then(|inner| inner.as_str());
+        let license = item
+            .query("$.licensed.declared")?
+            .first()
+            .and_then(|inner| inner.as_str());
 
         if let Some(document_id) = document_id {
             let tx = self.graph.db.begin().await?;

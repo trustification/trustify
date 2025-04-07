@@ -1,7 +1,7 @@
 use crate::test::caller;
 use actix_http::StatusCode;
 use actix_web::test::TestRequest;
-use jsonpath_rust::JsonPathQuery;
+use jsonpath_rust::JsonPath;
 use serde_json::{Value, json};
 use test_context::test_context;
 use test_log::test;
@@ -43,9 +43,12 @@ async fn all_products(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let response: Value = app.call_and_read_body_json(request).await;
 
-    let names = response.path("$.items[*].name").unwrap();
+    let names = response.query("$.items[*].name").unwrap();
 
-    assert_eq!(names, json!(["AMQ Broker", "Trusted Profile Analyzer",]));
+    assert_eq!(
+        names,
+        [&json!("AMQ Broker"), &json!("Trusted Profile Analyzer"),]
+    );
 
     Ok(())
 }
@@ -83,9 +86,9 @@ async fn one_product(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let response: Value = app.call_and_read_body_json(request).await;
 
-    let name = response.clone().path("$.name").unwrap();
+    let name = response.query("$.name")?;
 
-    assert_eq!(name, json!(["Trusted Profile Analyzer"]));
+    assert_eq!(name, [&json!("Trusted Profile Analyzer")]);
 
     Ok(())
 }

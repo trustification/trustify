@@ -1,7 +1,7 @@
 use crate::test::caller;
 use actix_web::cookie::time::OffsetDateTime;
 use actix_web::test::TestRequest;
-use jsonpath_rust::JsonPathQuery;
+use jsonpath_rust::JsonPath;
 use serde_json::{Value, json};
 use test_context::test_context;
 use test_log::test;
@@ -58,14 +58,14 @@ async fn all_organizations(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let response: Value = app.call_and_read_body_json(request).await;
 
-    let names = response.path("$.items[*].name").unwrap();
+    let names = response.query("$.items[*].name").unwrap();
 
     assert_eq!(
         names,
-        json!([
-            "Capt Pickles Boutique Emporium",
-            "Capt Pickles Industrial Conglomerate",
-        ])
+        [
+            &json!("Capt Pickles Boutique Emporium"),
+            &json!("Capt Pickles Industrial Conglomerate")
+        ]
     );
 
     Ok(())
@@ -116,9 +116,9 @@ async fn one_organization(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let response: Value = app.call_and_read_body_json(request).await;
 
-    let name = response.clone().path("$.name").unwrap();
+    let name = response.query("$.name")?;
 
-    assert_eq!(name, json!(["Capt Pickles Industrial Conglomerate"]));
+    assert_eq!(name, [&json!("Capt Pickles Industrial Conglomerate")]);
 
     Ok(())
 }
