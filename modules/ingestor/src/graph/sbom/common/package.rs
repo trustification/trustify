@@ -4,6 +4,7 @@ use sea_orm::{ActiveValue::Set, ConnectionTrait, DbErr, EntityTrait};
 use sea_query::OnConflict;
 use tracing::instrument;
 use trustify_common::db::chunk::EntityChunkedIter;
+use trustify_common::purl::Purl;
 use trustify_entity::{
     sbom_package, sbom_package_cpe_ref, sbom_package_license,
     sbom_package_license::LicenseCategory, sbom_package_purl_ref,
@@ -34,10 +35,7 @@ pub struct PackageLicensenInfo {
 }
 
 pub enum PackageReference {
-    Purl {
-        versioned_purl: Uuid,
-        qualified_purl: Uuid,
-    },
+    Purl(Purl),
     Cpe(Uuid),
 }
 
@@ -82,14 +80,11 @@ impl PackageCreator {
                         cpe_id: Set(cpe),
                     });
                 }
-                PackageReference::Purl {
-                    qualified_purl,
-                    versioned_purl: _,
-                } => {
+                PackageReference::Purl(purl) => {
                     self.purl_refs.push(sbom_package_purl_ref::ActiveModel {
                         sbom_id: Set(self.sbom_id),
                         node_id: Set(node_info.node_id.clone()),
-                        qualified_purl_id: Set(qualified_purl),
+                        qualified_purl_id: Set(purl.qualifier_uuid()),
                     });
                 }
             }

@@ -500,10 +500,7 @@ impl<'a> ComponentCreator<'a> {
     }
 
     pub fn add_purl(&mut self, purl: Purl) {
-        self.refs.push(PackageReference::Purl {
-            versioned_purl: purl.version_uuid(),
-            qualified_purl: purl.qualifier_uuid(),
-        });
+        self.refs.push(PackageReference::Purl(purl.clone()));
         self.purls.add(purl);
     }
 
