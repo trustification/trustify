@@ -1950,17 +1950,17 @@ checksum = "575f75dfd25738df5b91b8e43e14d44bda14637a58fae779fd2b064f8bf3e010"
 [[package]]
 name = "deepsize"
 version = "0.2.0"
-source = "git+https://github.com/chirino/deepsize?branch=main#c6a982656a57cf32efa345372c2955f1b8f68f92"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1cdb987ec36f6bf7bfbea3f928b75590b736fc42af8e54d97592481351b2b96c"
 dependencies = [
- "cpe",
  "deepsize_derive",
- "petgraph 0.7.1",
 ]
 
 [[package]]
 name = "deepsize_derive"
 version = "0.1.2"
-source = "git+https://github.com/chirino/deepsize?branch=main#c6a982656a57cf32efa345372c2955f1b8f68f92"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "990101d41f3bc8c1a45641024377ee284ecc338e5ecf3ea0f0e236d897c72796"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5092,11 +5092,12 @@ dependencies = [
 
 [[package]]
 name = "petgraph"
-version = "0.7.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3672b37090dbd86368a4145bc067582552b29c27377cad4e0a306c97f9bd7772"
+checksum = "c96dc3f2709da98e228764d8f4c01c39a101dcc441547e8036372ee0522eb108"
 dependencies = [
  "fixedbitset 0.5.7",
+ "hashbrown 0.15.2",
  "indexmap 2.8.0",
  "serde",
  "serde_derive",
@@ -8495,7 +8496,7 @@ dependencies = [
  "opentelemetry",
  "packageurl",
  "parking_lot 0.12.3",
- "petgraph 0.7.1",
+ "petgraph 0.8.0",
  "sea-orm",
  "sea-query",
  "serde",
