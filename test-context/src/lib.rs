@@ -119,6 +119,22 @@ impl TrustifyContext {
     pub fn absolute_path(&self, path: impl AsRef<Path>) -> anyhow::Result<PathBuf> {
         absolute(path)
     }
+
+    pub async fn ingest_parallel<const N: usize>(
+        &self,
+        paths: [&str; N],
+    ) -> Result<[IngestResult; N], anyhow::Error> {
+        let mut f = vec![];
+
+        for path in paths {
+            f.push(self.ingest_document(path));
+        }
+
+        let r = futures::future::try_join_all(f).await?;
+        let r = r.try_into().expect("Unexpected number of results");
+
+        Ok(r)
+    }
 }
 
 impl AsyncTestContext for TrustifyContext {
