@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744035151158,
+  "lastUpdate": 1744104246271,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8288,6 +8288,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/3458975dea1099dd4bb4c39d29e9a96615d8226a"
         },
         "date": 1744035149811,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "e61c202518157d6376d7a1755f0544acfebc3054",
+          "message": "chore: lowered otel-collector logs\n\nlevel detailed was useful during development but is causing span drops\n\nI wasn't caring about this warning:\n\n```\n2025-04-07T19:01:33.028587Z  WARN\nget:fetch_vulnerability:from_entity:from_entities:from_query_result:from_query_result_multi_model:\nopentelemetry_sdk:  name=\"BatchSpanProcessor.SpanDroppingStarted\"\nBatchSpanProcessor dropped a Span due to queue full/internal errors. No\nfurther internal log will be emitted for further drops until Shutdown.\nDuring Shutdown time, a log will be emitted with exact count of total\nSpans dropped.\n```\n\nUntil notice the difference of half the spans being dropped",
+          "timestamp": "2025-04-08T09:04:56Z",
+          "tree_id": "d0d1557fe5827727706aeacc1f676f3af091a7c4",
+          "url": "https://github.com/trustification/trustify/commit/e61c202518157d6376d7a1755f0544acfebc3054"
+        },
+        "date": 1744104245488,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
