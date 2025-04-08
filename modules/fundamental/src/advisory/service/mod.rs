@@ -3,9 +3,9 @@ use crate::{
     advisory::model::{AdvisoryDetails, AdvisorySummary},
 };
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTypeTrait, ConnectionTrait, DatabaseBackend, DbErr,
-    EntityTrait, FromQueryResult, IntoActiveModel, IntoIdentity, QueryResult, QuerySelect,
-    QueryTrait, RelationTrait, Select, Statement, TransactionTrait,
+    ActiveModelTrait, ActiveValue::Set, ColumnTrait, ColumnTypeTrait, ConnectionTrait,
+    DatabaseBackend, DbErr, EntityTrait, FromQueryResult, IntoActiveModel, IntoIdentity,
+    QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Statement, TransactionTrait,
 };
 use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, JoinType, SimpleExpr};
 use trustify_common::{
@@ -94,7 +94,10 @@ impl AdvisoryService {
             .filtering_with(
                 search,
                 Columns::from_entity::<advisory::Entity>()
-                    .add_columns(source_document::Entity)
+                    .add_column(
+                        source_document::Column::Ingested.into_identity(),
+                        source_document::Column::Ingested.def(),
+                    )
                     .add_column("average_score", ColumnType::Decimal(None).def())
                     .add_column(
                         "average_severity",
