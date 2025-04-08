@@ -12,12 +12,9 @@ use trustify_test_context::TrustifyContext;
 /// Issue <https://github.com/trustification/trustify/issues/1395>: Ensure that parallel uploads
 /// of the same document don't create multiple instances.
 async fn ingest_10(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let mut f = vec![];
-    for _ in 0..10 {
-        f.push(ctx.ingest_document("csaf/cve-2023-33201.json"));
-    }
-
-    futures_util::future::try_join_all(f).await?;
+    let _ = ctx
+        .ingest_parallel(["csaf/cve-2023-33201.json"; 10])
+        .await?;
 
     let service = AdvisoryService::new(ctx.db.clone());
 
