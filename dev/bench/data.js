@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744116279624,
+  "lastUpdate": 1744123363472,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8351,6 +8351,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "d4182228b646a841c8ce85e4c46b25d19e63e581",
+          "message": "fix: reap crashed jobs so they don't appear \"stuck\" in the UI\n\nFixes #1499",
+          "timestamp": "2025-04-08T14:22:29Z",
+          "tree_id": "eb4d0812e4135a6cbeaf6071ae09fc0c5720ee9d",
+          "url": "https://github.com/trustification/trustify/commit/d4182228b646a841c8ce85e4c46b25d19e63e581"
+        },
+        "date": 1744123362125,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
