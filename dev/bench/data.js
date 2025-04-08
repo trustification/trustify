@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744104246271,
+  "lastUpdate": 1744116279624,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8322,6 +8322,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": false,
+          "id": "4fd17dd80803340f40859673c4a53ba57bc52d4a",
+          "message": "doc: add basic information about data migration",
+          "timestamp": "2025-04-08T12:24:51Z",
+          "tree_id": "b6f691fa22b9da9e897755667fbd3e6cb1e0a2af",
+          "url": "https://github.com/trustification/trustify/commit/4fd17dd80803340f40859673c4a53ba57bc52d4a"
+        },
+        "date": 1744116279058,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
