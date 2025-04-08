@@ -101,10 +101,14 @@ impl<'a> StatusCreator<'a> {
 
         let mut package_statuses = Vec::new();
         let product_statuses = self.products.clone();
-        let mut db_context = graph.db_context.lock().await;
 
         for product in product_statuses {
-            let status_id = db_context.get_status_id(product.status, connection).await?;
+            let status_id = graph
+                .db_context
+                .lock()
+                .await
+                .get_status_id(product.status, connection)
+                .await?;
 
             // There should be only a few organizations per document,
             // so simple caching should work here.
@@ -225,7 +229,10 @@ impl<'a> StatusCreator<'a> {
                                     purl,
                                     scheme,
                                     spec,
-                                    db_context
+                                    graph
+                                        .db_context
+                                        .lock()
+                                        .await
                                         .get_status_id(&Status::Affected.to_string(), connection)
                                         .await?,
                                 );
