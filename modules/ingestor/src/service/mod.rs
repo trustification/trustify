@@ -230,7 +230,7 @@ impl IngestorService {
             };
         }
 
-        let duration = Instant::now() - start;
+        let duration = start.elapsed();
         log::debug!(
             "Ingested: {} ({:?}): took {}",
             result.id,
