@@ -40,3 +40,31 @@ specific to the running environment.
 
 We keep a Helm chart in the https://github.com/trustification/trustify-helm-charts to deploy a Trustify instance.
 You can use this Helm chart as a starting point for your specific environment.
+
+=== Data Migration
+
+If you are already using https://github.com/trustification/trustification[Trustification] project, you might want to migrate yous SBOMs to Trustify (vulnerability and
+advisory information are automatically ingested into the Trustify database).
+
+As Trustification project uses S3 compatible storage to store original SBOMs files, the best way to migrate data is to ingest
+them from the appropriate S3 bucket.
+
+At the moment there is no automated tool to achieve this, but the process is simple:
+
+1. Download SBOMs from the S3 bucket to the local folder
++
+[source,bash]
+----
+aws s3 sync s3://bombastic-prod/data/ /tmp/sboms/
+----
+
+2. Now you can use any tool at your disposal to traverse this directory and ingest the SBOMs into Trustify, by posting them to the SBOM upload API endpoint.
++
+For example, https://github.com/ctron/csaf-walker[CSAF Walker] library contains the `sbom` command line tool that can be used for this job
++
+[source,bash]
+----
+sbom scoop http://localhost:8080/api/v2/sbom /tmp/sboms/
+----
+
+In the future we will provide more options to ingest SBOMs directly from different cloud object storage providers.
