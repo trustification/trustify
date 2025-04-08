@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744123363472,
+  "lastUpdate": 1744125154293,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8375,6 +8375,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/d4182228b646a841c8ce85e4c46b25d19e63e581"
         },
         "date": 1744123362125,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mdessi@redhat.com",
+            "name": "desmax74",
+            "username": "desmax74"
+          },
+          "committer": {
+            "email": "desmax74@users.noreply.github.com",
+            "name": "Massimiliano Dessì - (Fast Chauffeur)",
+            "username": "desmax74"
+          },
+          "distinct": false,
+          "id": "6a9de73ff6817ccebbc1379cf66ddc50cd77bd40",
+          "message": "Keycloak section\n\nSigned-off-by: desmax74 <mdessi@redhat.com>",
+          "timestamp": "2025-04-08T14:53:53Z",
+          "tree_id": "95bcf869781f2949547183ac093b1555eb0f231d",
+          "url": "https://github.com/trustification/trustify/commit/6a9de73ff6817ccebbc1379cf66ddc50cd77bd40"
+        },
+        "date": 1744125153417,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
