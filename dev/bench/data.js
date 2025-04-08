@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744125154293,
+  "lastUpdate": 1744125966336,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8409,6 +8409,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "0a75ac4fcb56759876c0d4a22c48ab808fbf5bd8",
+          "message": "fix: prevent deadlock when inserting in parallel\n\nHolding the lock for the whole time of the loop seems causing\ndeadlocks when other parts of the loop block. For example, creating an\norganization might block.\n\nIn that case it may be that task A holds the org lock and waits for the\ndb context, while task B holds the db context and waits or the org lock.\n\nIt should be fine just holding the db context lock for the get call.\n\nCloses: #1531",
+          "timestamp": "2025-04-08T15:04:44Z",
+          "tree_id": "47cbd1177b47334d4a2a3b7ec0a3b12968429a20",
+          "url": "https://github.com/trustification/trustify/commit/0a75ac4fcb56759876c0d4a22c48ab808fbf5bd8"
+        },
+        "date": 1744125965134,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
             "unit": "s"
           }
         ]
