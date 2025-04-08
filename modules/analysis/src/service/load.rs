@@ -459,7 +459,8 @@ impl AnalysisService {
                                 .await?,
                         ));
                     } else {
-                        log::warn!("Cannot find external sbom.");
+                        log::debug!("Cannot find external sbom {:?}", external_sbom.node_id);
+                        continue
                     }
                 }
             }
