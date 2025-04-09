@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744202231976,
+  "lastUpdate": 1744220234751,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8462,6 +8462,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/16d6066d7e2f4ad7ae8a6f54fe94b4171971c3bc"
         },
         "date": 1744202230996,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "063fb26e47ce4aceaaa577b6b37725a4a2fa7b34",
+          "message": "perf: TC-2428 add gin index to advisory\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-04-09T17:13:44Z",
+          "tree_id": "b3fb68d9049b9cbcbca5935d6ffe8d0f87b8eaa4",
+          "url": "https://github.com/trustification/trustify/commit/063fb26e47ce4aceaaa577b6b37725a4a2fa7b34"
+        },
+        "date": 1744220233881,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
