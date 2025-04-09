@@ -147,8 +147,9 @@ where
             >(data)?)
         },
         async move |ctx, sbom, tx| {
-            ctx.ingest_cyclonedx(Box::new(sbom.clone()), &Discard, tx)
-                .await
+            Ok(ctx
+                .ingest_cyclonedx(Box::new(sbom.clone()), &Discard, tx)
+                .await?)
         },
         |sbom| sbom::cyclonedx::Information(sbom).into(),
         f,

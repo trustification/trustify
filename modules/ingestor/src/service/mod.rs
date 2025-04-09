@@ -47,7 +47,9 @@ pub enum Error {
     Storage(#[source] anyhow::Error),
     #[error(transparent)]
     Generic(anyhow::Error),
-    #[error("Invalid format: {0}")]
+    #[error("invalid content: {0}")]
+    InvalidContent(#[source] anyhow::Error),
+    #[error("invalid format: {0}")]
     UnsupportedFormat(String),
     #[error("failed to await the task: {0}")]
     Join(#[from] JoinError),
@@ -115,9 +117,14 @@ impl ResponseError for Error {
                 message: err.to_string(),
                 details: None,
             }),
+            Self::InvalidContent(details) => HttpResponse::BadRequest().json(ErrorInformation {
+                error: "InvalidContent".into(),
+                message: "Invalid content".to_string(),
+                details: Some(details.to_string()),
+            }),
             Self::UnsupportedFormat(fmt) => HttpResponse::BadRequest().json(ErrorInformation {
                 error: "UnsupportedFormat".into(),
-                message: format!("Unsupported advisory format: {fmt}"),
+                message: format!("Unsupported document format: {fmt}"),
                 details: None,
             }),
             Error::HashKey(inner) => HttpResponse::BadRequest().json(ErrorInformation {

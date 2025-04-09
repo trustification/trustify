@@ -139,7 +139,7 @@ impl SbomContext {
         mut sbom: Box<CycloneDx>,
         warnings: &dyn ReportSink,
         connection: &C,
-    ) -> Result<(), anyhow::Error> {
+    ) -> Result<(), Error> {
         // pre-flight checks
 
         check::serde_cyclonedx::all(warnings, &Sbom::V1_6(Cow::Borrowed(&sbom)));
@@ -177,7 +177,8 @@ impl SbomContext {
                     .cpe
                     .as_ref()
                     .map(|cpe| Cpe::from_str(cpe.as_ref()))
-                    .transpose()?;
+                    .transpose()
+                    .map_err(|err| Error::InvalidContent(err.into()))?;
                 let pr = self
                     .graph
                     .ingest_product(
@@ -284,7 +285,7 @@ impl<'a> Creator<'a> {
         self,
         db: &impl ConnectionTrait,
         processors: &mut [Box<dyn Processor>],
-    ) -> anyhow::Result<()> {
+    ) -> Result<(), Error> {
         let mut purls = PurlCreator::new();
         let mut cpes = CpeCreator::new();
         let mut packages = PackageCreator::with_capacity(self.sbom_id, self.components.len());
@@ -326,7 +327,9 @@ impl<'a> Creator<'a> {
         let sources = References::new()
             .add_source(&[CYCLONEDX_DOC_REF])
             .add_source(&packages);
-        relationships.validate(sources).map_err(Error::Generic)?;
+        relationships
+            .validate(sources)
+            .map_err(Error::InvalidContent)?;
 
         // create
 

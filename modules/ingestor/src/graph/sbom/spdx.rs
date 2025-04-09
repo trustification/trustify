@@ -350,7 +350,9 @@ impl SbomContext {
             .add_source(&doc_id)
             .add_source(&packages)
             .add_source(&files);
-        relationships.validate(sources).map_err(Error::Generic)?;
+        relationships
+            .validate(sources)
+            .map_err(Error::InvalidContent)?;
 
         // create packages, files, and relationships
 
