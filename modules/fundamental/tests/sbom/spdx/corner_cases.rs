@@ -1,5 +1,7 @@
 #![allow(clippy::expect_used)]
 
+use actix_http::StatusCode;
+use actix_web::test::TestRequest;
 use anyhow::bail;
 use bytes::BytesMut;
 use futures_util::TryStreamExt;
@@ -9,12 +11,17 @@ use test_context::test_context;
 use test_log::test;
 use trustify_common::{id::Id, purl::Purl};
 use trustify_entity::relationship::Relationship;
-use trustify_module_fundamental::{sbom::model::SbomNodeReference, sbom::service::SbomService};
+use trustify_module_fundamental::{
+    Config, configure,
+    sbom::{model::SbomNodeReference, service::SbomService},
+};
 use trustify_module_ingestor::graph::{
     purl::qualified_package::QualifiedPackageContext, sbom::SbomContext,
 };
 use trustify_module_storage::service::StorageBackend;
-use trustify_test_context::TrustifyContext;
+use trustify_test_context::document_bytes;
+
+include!("../../../src/test/common.rs");
 
 async fn related_packages_transitively<'a, C: ConnectionTrait>(
     sbom: &'a SbomContext,
@@ -225,6 +232,41 @@ async fn special_char(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let data: BytesMut = stream.try_collect().await?;
 
     assert_eq!(data.len(), 124250);
+
+    Ok(())
+}
+
+/// test to see some error message, instead of plain failure
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn ingest_broken_refs(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let result = ctx
+        .ingest_document("spdx/broken-refs.json")
+        .await
+        .expect_err("must fail");
+
+    assert_eq!(
+        result.to_string(),
+        "invalid content: Invalid reference: SPDXRef-0068e307-de91-4e82-b407-7a41217f9758"
+    );
+
+    Ok(())
+}
+
+/// test to see some error message and 400, instead of plain failure
+#[test_context(TrustifyContext)]
+#[test(tokio::test)]
+async fn ingest_broken_refs_api(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    let request = TestRequest::post()
+        .uri("/api/v2/sbom")
+        .set_payload(document_bytes("spdx/broken-refs.json").await?)
+        .to_request();
+
+    let response = app.call_service(request).await;
+    log::debug!("Code: {}", response.status());
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 
     Ok(())
 }
