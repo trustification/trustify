@@ -418,7 +418,7 @@ struct UploadQuery {
     ),
     responses(
         (status = 201, description = "Upload an SBOM", body = IngestResult),
-        (status = 400, description = "The file could not be parsed as an advisory"),
+        (status = 400, description = "The file could not be parsed as an SBOM"),
     )
 )]
 #[post("/v2/sbom")]
