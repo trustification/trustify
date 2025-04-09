@@ -60,9 +60,7 @@ impl<'g> CyclonedxLoader<'g> {
         {
             Outcome::Existed(sbom) => sbom,
             Outcome::Added(sbom) => {
-                sbom.ingest_cyclonedx(cdx, &warnings, &tx)
-                    .await
-                    .map_err(Error::Generic)?;
+                sbom.ingest_cyclonedx(cdx, &warnings, &tx).await?;
                 tx.commit().await?;
 
                 sbom
