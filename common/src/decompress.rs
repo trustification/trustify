@@ -43,6 +43,8 @@ pub fn decompress(
             Compression::Bzip2
         } else if content_type.ends_with("+xz") {
             Compression::Xz
+        } else if content_type.ends_with("+gzip") {
+            Compression::Gzip
         } else {
             // The user provided a type, and it doesn't indicate a supported compression type,
             // So we just accept the payload as-is.
