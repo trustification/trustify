@@ -30,7 +30,9 @@ pub fn configure(config: &mut ServiceConfig, db: Database, analysis: AnalysisSer
         .service(get_component)
         .service(search_component)
         .service(analysis_status)
-        .service(render_sbom_graph);
+        .service(render_sbom_graph)
+        .service(search_latest_component)
+        .service(get_latest_component);
 }
 
 #[utoipa::path(
@@ -153,4 +155,67 @@ pub async fn render_sbom_graph(
     } else {
         Ok(HttpResponse::NotFound().finish())
     }
+}
+
+#[utoipa::path(
+    tag = "analysis",
+    operation_id = "searchLatestComponent",
+    params(
+        Query,
+        Paginated,
+        QueryOptions,
+    ),
+    responses(
+        AuthResponse,
+        (status = 200, description = "Retrieved latest component(s) located by search", body = PaginatedResults<Node>),
+    ),
+)]
+#[get("/v2/analysis/latest/component")]
+/// Retrieve latest SBOM components (packages) by a complex search.
+pub async fn search_latest_component(
+    service: web::Data<AnalysisService>,
+    db: web::Data<Database>,
+    web::Query(search): web::Query<Query>,
+    web::Query(options): web::Query<QueryOptions>,
+    web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadSbom>,
+) -> actix_web::Result<impl Responder> {
+    Ok(HttpResponse::Ok().json(
+        service
+            .retrieve_latest(&search, options, paginated, db.as_ref())
+            .await?,
+    ))
+}
+
+#[utoipa::path(
+    tag = "analysis",
+    operation_id = "getLatestComponent",
+    params(
+        ("key" = String, Path, description = "provide component name, URL-encoded pURL, or CPE itself"),
+        Query,
+        Paginated,
+        QueryOptions,
+    ),
+    responses(
+        AuthResponse,
+        (status = 200, description = "Retrieved latest component(s) located by name, pURL, or CPE", body = PaginatedResults<Node>),
+    ),
+)]
+#[get("/v2/analysis/latest/component/{key}")]
+/// Retrieve SBOM components (packages) by name, Package URL, or CPE.
+pub async fn get_latest_component(
+    service: web::Data<AnalysisService>,
+    db: web::Data<Database>,
+    key: web::Path<String>,
+    web::Query(options): web::Query<QueryOptions>,
+    web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadSbom>,
+) -> actix_web::Result<impl Responder> {
+    let query = OwnedComponentReference::try_from(key.as_str())?;
+
+    Ok(HttpResponse::Ok().json(
+        service
+            .retrieve(&query, options, paginated, db.as_ref())
+            .await?,
+    ))
 }
