@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "04cd15e9"
+        }
+      ]
+    },
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
+    "component": {
+      "name": "quay/quay-builder-qemu-rhcos-rhel8",
+      "purl": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3A919b1253db42d62050efd9b26679edbb3a76c0d4729188b6ce3139b8a2958c41?repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-qemu-rhcos-rhel8&tag=v3.12.8-1",
+      "type": "container",
+      "description": "Image index manifest of pkg:oci/quay-quay-builder-qemu-rhcos-rhel8@sha256%3A919b1253db42d62050efd9b26679edbb3a76c0d4729188b6ce3139b8a2958c41"
+    },
+    "timestamp": "2025-02-24T03:50:33Z"
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "quay/quay-builder-qemu-rhcos-rhel8",
+      "purl": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3A919b1253db42d62050efd9b26679edbb3a76c0d4729188b6ce3139b8a2958c41?repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-qemu-rhcos-rhel8&tag=v3.12.8-1",
+      "type": "container",
+      "bom-ref": "quay-builder-qemu-rhcos-container_image-index",
+      "version": "sha256:919b1253db42d62050efd9b26679edbb3a76c0d4729188b6ce3139b8a2958c41",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3A919b1253db42d62050efd9b26679edbb3a76c0d4729188b6ce3139b8a2958c41?repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-qemu-rhcos-rhel8&tag=v3.12"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3A919b1253db42d62050efd9b26679edbb3a76c0d4729188b6ce3139b8a2958c41?repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-qemu-rhcos-rhel8&tag=v3.12.8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3A919b1253db42d62050efd9b26679edbb3a76c0d4729188b6ce3139b8a2958c41?repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-qemu-rhcos-rhel8&tag=v3.12.8-1"
+          }
+        ]
+      },
+      "pedigree": {
+        "variants": [
+          {
+            "name": "quay/quay-builder-qemu-rhcos-rhel8",
+            "purl": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3Aaf6a7a92aa23a114da79903c205499c3843de181c8fab0195fb6c5d493fa1168?arch=amd64&os=linux&repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-qemu-rhcos-rhel8&tag=v3.12.8-1",
+            "type": "container",
+            "bom-ref": "quay-builder-qemu-rhcos-container_amd64",
+            "version": "sha256:af6a7a92aa23a114da79903c205499c3843de181c8fab0195fb6c5d493fa1168",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat",
+            "hashes": [
+              {
+                "alg": "SHA-256",
+                "content": "af6a7a92aa23a114da79903c205499c3843de181c8fab0195fb6c5d493fa1168"
+              }
+            ]
+          },
+          {
+            "name": "quay/quay-builder-qemu-rhcos-rhel8",
+            "purl": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3Ab91aec3d3f9cf8a4204e6e13e27035802693a8517b14e59db2535fe789e7a33e?arch=ppc64le&os=linux&repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-qemu-rhcos-rhel8&tag=v3.12.8-1",
+            "type": "container",
+            "bom-ref": "quay-builder-qemu-rhcos-container_ppc64le",
+            "version": "sha256:b91aec3d3f9cf8a4204e6e13e27035802693a8517b14e59db2535fe789e7a33e",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat"
+          },
+          {
+            "name": "quay/quay-builder-qemu-rhcos-rhel8",
+            "purl": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3Abfc9435099f0b0cde9b43df3982b6164e08bdf7dc0691af197555f029cf78563?arch=s390x&os=linux&repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-qemu-rhcos-rhel8&tag=v3.12.8-1",
+            "type": "container",
+            "bom-ref": "quay-builder-qemu-rhcos-container_s390x",
+            "version": "sha256:bfc9435099f0b0cde9b43df3982b6164e08bdf7dc0691af197555f029cf78563",
+            "supplier": {
+              "url": [
+                "https://www.redhat.com"
+              ],
+              "name": "Red Hat"
+            },
+            "publisher": "Red Hat"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "919b1253db42d62050efd9b26679edbb3a76c0d4729188b6ce3139b8a2958c41"
+        }
+      ],
+      "properties": [
+        {
+          "name": "sbomer:image:labels:com.redhat.component",
+          "value": "quay-builder-qemu-rhcos-container"
+        },
+        {
+          "name": "sbomer:image:labels:name",
+          "value": "quay/quay-builder-qemu-rhcos-rhel8"
+        },
+        {
+          "name": "sbomer:image:labels:release",
+          "value": "1"
+        },
+        {
+          "name": "sbomer:image:labels:version",
+          "value": "v3.12.8"
+        }
+      ]
+    }
+  ],
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:c10a10e3-037e-3f7c-a46d-5e57ce79a0a9"
+}

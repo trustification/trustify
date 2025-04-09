@@ -436,6 +436,32 @@ impl AnalysisService {
         Ok(paginated.paginate_array(&components))
     }
 
+    #[instrument(skip(self, connection), err)]
+    pub async fn retrieve_latest<C: ConnectionTrait>(
+        &self,
+        query: impl Into<GraphQuery<'_>> + Debug,
+        options: impl Into<QueryOptions> + Debug,
+        paginated: Paginated,
+        connection: &C,
+    ) -> Result<PaginatedResults<Node>, Error> {
+        let query = query.into();
+        let options = options.into();
+
+        let graphs = self.load_latest_graphs_query(connection, query).await?;
+
+        let components = self
+            .run_graph_query(
+                query,
+                options,
+                &graphs,
+                connection,
+                self.graph_cache.clone(),
+            )
+            .await;
+
+        Ok(paginated.paginate_array(&components))
+    }
+
     /// check if a node in the graph matches the provided query
     fn filter(graph: &Graph<graph::Node, Relationship>, query: &GraphQuery, i: NodeIndex) -> bool {
         match query {

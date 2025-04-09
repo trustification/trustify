@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:50da111f-791c-4a31-98ee-e537074e8e33",
+  "metadata": {
+    "supplier": {
+      "name": "Red Hat",
+      "url": [
+        "https://www.redhat.com"
+      ]
+    },
+    "component": {
+      "cpe": "cpe:/a:redhat:example-product:1.0",
+      "name": "example-product",
+      "purl": "pkg:maven/com.redhat/example-product@1.0?type=pom",
+      "type": "library",
+      "group": "com.redhat",
+      "bom-ref": "cpe:/a:redhat:example-product:1.0",
+      "version": "1.0",
+      "pedigree": {
+        "commits": [
+          {
+            "uid": "badf757315185484c4b6de7513978aab5de08b4e",
+            "url": "https://gitlab.cee.redhat.com/pnc-workspace/redhat/example-product.git#1.0"
+          },
+          {
+            "uid": "a2886f034fdc6caa7efc46a86e018fca1b1e0c7d",
+            "url": "https://github.com/redhat/example-product.git#6.1.SP3"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "description": "An example product"
+    },
+    "timestamp": "2024-10-08T06:33:48Z"
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "cpe": "cpe:/a:redhat:example-product:1.0",
+      "name": "example-product",
+      "purl": "pkg:maven/com.redhat/example-product@1.0?type=pom",
+      "type": "library",
+      "group": "com.redhat",
+      "bom-ref": "pkg:maven/com.redhat/example-product@1.0?type=pom",
+      "version": "1.0",
+      "pedigree": {
+        "commits": [
+          {
+            "uid": "badf757315185484c4b6de7513978aab5de08b4e",
+            "url": "https://gitlab.cee.redhat.com/pnc-workspace/redhat/example-product.git#1.0"
+          },
+          {
+            "uid": "a2886f034fdc6caa7efc46a86e018fca1b1e0c7d",
+            "url": "https://github.com/redhat/example-product.git#6.1.SP3"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "description": "An example product"
+    },
+    {
+      "name": "another-project",
+      "purl": "pkg:maven/com.redhat/another-project@6.1.0.SP3-redhat-00001?type=pom",
+      "type": "library",
+      "group": "com.redhat",
+      "hashes": [
+        {
+          "alg": "SHA-1",
+          "content": "34a5149654551ea854b4ece01dfd7b835d69f1cc"
+        }
+      ],
+      "bom-ref": "pkg:maven/com.redhat/another-project@6.1.0.SP3-redhat-00001?type=pom",
+      "version": "6.1.0.SP3-redhat-00001",
+      "pedigree": {
+        "commits": [
+          {
+            "uid": "badf757315185484c4b6de7513978aab5de08b4e",
+            "url": "https://gitlab.cee.redhat.com/pnc-workspace/redhat/another-project.git#6.1.0.SP3-redhat-00001"
+          },
+          {
+            "uid": "a2886f034fdc6caa7efc46a86e018fca1b1e0c7d",
+            "url": "https://github.com/redhat/another-project.git#6.1.SP3"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "description": "An another project"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:maven/com.redhat/example-product@1.0?type=pom",
+      "provides": [
+        "pkg:maven/com.redhat/another-project@6.1.0.SP3-redhat-00001?type=pom"
+      ],
+      "dependsOn": []
+    }
+  ]
+}
