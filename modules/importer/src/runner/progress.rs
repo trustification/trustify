@@ -147,7 +147,7 @@ mod test {
     use parking_lot::Mutex;
     use std::sync::Arc;
 
-    #[derive(Default)]
+    #[derive(Clone, Default)]
     struct MockProgress {
         updates: Arc<Mutex<Vec<usize>>>,
     }
