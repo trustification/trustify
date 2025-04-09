@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "metadata": {
+    "supplier": {
+      "name": "Red Hat",
+      "url": [
+        "https://www.redhat.com"
+      ]
+    },
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "04cd15e9"
+        }
+      ]
+    },
+    "component": {
+      "name": "Red Hat Enterprise Linux 8",
+      "type": "operating-system",
+      "bom-ref": "RHEL-8.10.0.Z.MAIN+EUS",
+      "version": "RHEL-8.10.0.Z.MAIN+EUS",
+      "evidence": {
+        "identity": [
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/o:redhat:enterprise_linux:8.10::baseos"
+          },
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/o:redhat:enterprise_linux:8::baseos"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      }
+    },
+    "timestamp": "2025-01-28T01:15:19Z"
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "curl",
+      "purl": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.3?arch=src",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1fb789efb4e589167a1fdedcb4ffa09e228ec8d2ff56bf2ad316ed4af2fb5074"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.3?arch=src",
+      "version": "7.61.1-34.el8_10.3",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.3?arch=src&repository_id=rhel-8-for-x86_64-baseos-source-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.3?arch=src&repository_id=rhel-8-for-x86_64-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.3?arch=src&repository_id=rhel-8-for-aarch64-baseos-source-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.3?arch=src&repository_id=rhel-8-for-ppc64le-baseos-source-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.3?arch=src&repository_id=rhel-8-for-s390x-baseos-source-rpms__8_DOT_10"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.3?arch=src&repository_id=rhel-8-for-aarch64-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.3?arch=src&repository_id=rhel-8-for-ppc64le-baseos-source-rpms__8"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/curl@7.61.1-34.el8_10.3?arch=src&repository_id=rhel-8-for-s390x-baseos-source-rpms__8"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      }
+    }
+  ],
+  "specVersion": "1.6",
+  "dependencies": [
+    {
+      "ref": "RHEL-8.10.0.Z.MAIN+EUS",
+      "provides": [
+        "pkg:rpm/redhat/curl@7.61.1-34.el8_10.3?arch=src"
+      ],
+      "dependsOn": []
+    }
+  ],
+  "serialNumber": "urn:uuid:8dfa2d8d-4787-3815-9d0e-1e6822fe46e2"
+}

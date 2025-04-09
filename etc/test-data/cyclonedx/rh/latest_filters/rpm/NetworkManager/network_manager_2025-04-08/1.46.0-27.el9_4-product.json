@@ -1,0 +1,186 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "ef2faee3"
+        }
+      ]
+    },
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
+    "component": {
+      "name": "Red Hat Enterprise Linux 9.4 Extended Update Support",
+      "type": "operating-system",
+      "bom-ref": "RHEL-9.4.0.Z.EUS",
+      "version": "RHEL-9.4.0.Z.EUS",
+      "evidence": {
+        "identity": [
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/a:redhat:rhel_eus:9.4::crb"
+          },
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/a:redhat:rhel_eus:9.4::appstream"
+          },
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/o:redhat:rhel_eus:9.4::baseos"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      }
+    },
+    "timestamp": "2025-04-08T01:15:43Z",
+    "properties": [
+      {
+        "name": "redhat:advisory_id",
+        "value": "147536"
+      }
+    ]
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "NetworkManager",
+      "purl": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src",
+      "type": "library",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "118bfa1818675667bca2019296cbcd1e00d87e8452b8dbf39856d87b4616b92d"
+        }
+      ],
+      "bom-ref": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src",
+      "version": "1.46.0-27.el9_4",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-x86_64-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-ppc64le-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=codeready-builder-for-rhel-9-ppc64le-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-ppc64le-baseos-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-x86_64-baseos-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-s390x-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-s390x-baseos-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=codeready-builder-for-rhel-9-s390x-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-x86_64-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-x86_64-baseos-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-ppc64le-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-x86_64-appstream-aus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-x86_64-baseos-aus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-ppc64le-baseos-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-aarch64-appstream-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-aarch64-baseos-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=codeready-builder-for-rhel-9-aarch64-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-aarch64-baseos-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-aarch64-appstream-e4s-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-s390x-baseos-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=codeready-builder-for-rhel-9-x86_64-eus-source-rpms__9_DOT_4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src&repository_id=rhel-9-for-s390x-appstream-eus-source-rpms__9_DOT_4"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "expression": "GPL-2.0-or-later AND LGPL-2.1-or-later"
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      }
+    }
+  ],
+  "specVersion": "1.6",
+  "dependencies": [
+    {
+      "ref": "RHEL-9.4.0.Z.EUS",
+      "provides": [
+        "pkg:rpm/redhat/NetworkManager@1.46.0-27.el9_4?arch=src"
+      ],
+      "dependsOn": []
+    }
+  ],
+  "serialNumber": "urn:uuid:b8b02200-eace-3fef-b6ac-8b3499691567"
+}
