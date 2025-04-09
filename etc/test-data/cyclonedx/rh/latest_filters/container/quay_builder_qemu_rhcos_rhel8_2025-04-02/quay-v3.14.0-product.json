@@ -1,0 +1,413 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "9e6b0676"
+        }
+      ]
+    },
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
+    "component": {
+      "name": "Red Hat Quay 3",
+      "type": "framework",
+      "bom-ref": "Quay-3-RHEL-8",
+      "version": "Quay-3-RHEL-8",
+      "evidence": {
+        "identity": [
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/a:redhat:quay:3::el8"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      }
+    },
+    "timestamp": "2025-04-02T20:06:32Z"
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "quay/quay-bridge-operator-rhel8",
+      "purl": "pkg:oci/quay-bridge-operator-rhel8@sha256%3A5aeb272d1b65bbfe0bbc3c9ee7c3835b99daf19e96a57affe2ec1280e40a8536",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "5aeb272d1b65bbfe0bbc3c9ee7c3835b99daf19e96a57affe2ec1280e40a8536"
+        }
+      ],
+      "bom-ref": "pkg:oci/quay-bridge-operator-rhel8@sha256%3A5aeb272d1b65bbfe0bbc3c9ee7c3835b99daf19e96a57affe2ec1280e40a8536",
+      "version": "sha256:5aeb272d1b65bbfe0bbc3c9ee7c3835b99daf19e96a57affe2ec1280e40a8536",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-bridge-operator-rhel8@sha256%3A5aeb272d1b65bbfe0bbc3c9ee7c3835b99daf19e96a57affe2ec1280e40a8536?repository_url=registry.access.redhat.com%2Fquay%2Fquay-bridge-operator-rhel8&tag=v3.14.0-4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-bridge-operator-rhel8@sha256%3A5aeb272d1b65bbfe0bbc3c9ee7c3835b99daf19e96a57affe2ec1280e40a8536?repository_url=registry.access.redhat.com%2Fquay%2Fquay-bridge-operator-rhel8&tag=v3.14.0"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-bridge-operator-rhel8@sha256%3A5aeb272d1b65bbfe0bbc3c9ee7c3835b99daf19e96a57affe2ec1280e40a8536?repository_url=registry.access.redhat.com%2Fquay%2Fquay-bridge-operator-rhel8&tag=v3.14"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    },
+    {
+      "name": "quay/quay-operator-rhel8",
+      "purl": "pkg:oci/quay-operator-rhel8@sha256%3Ad7c626dcb57570820cdffbaf87528560efde6861d458c569e72a5de00b0aad06",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "d7c626dcb57570820cdffbaf87528560efde6861d458c569e72a5de00b0aad06"
+        }
+      ],
+      "bom-ref": "pkg:oci/quay-operator-rhel8@sha256%3Ad7c626dcb57570820cdffbaf87528560efde6861d458c569e72a5de00b0aad06",
+      "version": "sha256:d7c626dcb57570820cdffbaf87528560efde6861d458c569e72a5de00b0aad06",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-operator-rhel8@sha256%3Ad7c626dcb57570820cdffbaf87528560efde6861d458c569e72a5de00b0aad06?repository_url=registry.access.redhat.com%2Fquay%2Fquay-operator-rhel8&tag=v3.14.0-4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-operator-rhel8@sha256%3Ad7c626dcb57570820cdffbaf87528560efde6861d458c569e72a5de00b0aad06?repository_url=registry.access.redhat.com%2Fquay%2Fquay-operator-rhel8&tag=v3.14.0"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-operator-rhel8@sha256%3Ad7c626dcb57570820cdffbaf87528560efde6861d458c569e72a5de00b0aad06?repository_url=registry.access.redhat.com%2Fquay%2Fquay-operator-rhel8&tag=v3.14"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    },
+    {
+      "name": "quay/quay-builder-rhel8",
+      "purl": "pkg:oci/quay-builder-rhel8@sha256%3Affda3378a9c552d9adad21f7dcbffba37371ac8afae4d4cf8762c2c48346922d",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ffda3378a9c552d9adad21f7dcbffba37371ac8afae4d4cf8762c2c48346922d"
+        }
+      ],
+      "bom-ref": "pkg:oci/quay-builder-rhel8@sha256%3Affda3378a9c552d9adad21f7dcbffba37371ac8afae4d4cf8762c2c48346922d",
+      "version": "sha256:ffda3378a9c552d9adad21f7dcbffba37371ac8afae4d4cf8762c2c48346922d",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-builder-rhel8@sha256%3Affda3378a9c552d9adad21f7dcbffba37371ac8afae4d4cf8762c2c48346922d?repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-rhel8&tag=v3.14.0-5"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-builder-rhel8@sha256%3Affda3378a9c552d9adad21f7dcbffba37371ac8afae4d4cf8762c2c48346922d?repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-rhel8&tag=v3.14.0"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-builder-rhel8@sha256%3Affda3378a9c552d9adad21f7dcbffba37371ac8afae4d4cf8762c2c48346922d?repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-rhel8&tag=v3.14"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    },
+    {
+      "name": "quay/quay-container-security-operator-rhel8",
+      "purl": "pkg:oci/quay-container-security-operator-rhel8@sha256%3A2ab5c109b684fdda35c0b5c1f546baba2bd4c9b69881170b0d72862c8367dc24",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2ab5c109b684fdda35c0b5c1f546baba2bd4c9b69881170b0d72862c8367dc24"
+        }
+      ],
+      "bom-ref": "pkg:oci/quay-container-security-operator-rhel8@sha256%3A2ab5c109b684fdda35c0b5c1f546baba2bd4c9b69881170b0d72862c8367dc24",
+      "version": "sha256:2ab5c109b684fdda35c0b5c1f546baba2bd4c9b69881170b0d72862c8367dc24",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-container-security-operator-rhel8@sha256%3A2ab5c109b684fdda35c0b5c1f546baba2bd4c9b69881170b0d72862c8367dc24?repository_url=registry.access.redhat.com%2Fquay%2Fquay-container-security-operator-rhel8&tag=v3.14.0-3"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-container-security-operator-rhel8@sha256%3A2ab5c109b684fdda35c0b5c1f546baba2bd4c9b69881170b0d72862c8367dc24?repository_url=registry.access.redhat.com%2Fquay%2Fquay-container-security-operator-rhel8&tag=v3.14.0"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-container-security-operator-rhel8@sha256%3A2ab5c109b684fdda35c0b5c1f546baba2bd4c9b69881170b0d72862c8367dc24?repository_url=registry.access.redhat.com%2Fquay%2Fquay-container-security-operator-rhel8&tag=v3.14"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    },
+    {
+      "name": "quay/quay-builder-qemu-rhcos-rhel8",
+      "purl": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3A54fe1f4dedfbbac247c3a3d87eaa6310c828f314904435f13ff2c74acbd0f250",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "54fe1f4dedfbbac247c3a3d87eaa6310c828f314904435f13ff2c74acbd0f250"
+        }
+      ],
+      "bom-ref": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3A54fe1f4dedfbbac247c3a3d87eaa6310c828f314904435f13ff2c74acbd0f250",
+      "version": "sha256:54fe1f4dedfbbac247c3a3d87eaa6310c828f314904435f13ff2c74acbd0f250",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3A54fe1f4dedfbbac247c3a3d87eaa6310c828f314904435f13ff2c74acbd0f250?repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-qemu-rhcos-rhel8&tag=v3.14.0-4"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3A54fe1f4dedfbbac247c3a3d87eaa6310c828f314904435f13ff2c74acbd0f250?repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-qemu-rhcos-rhel8&tag=v3.14.0"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3A54fe1f4dedfbbac247c3a3d87eaa6310c828f314904435f13ff2c74acbd0f250?repository_url=registry.access.redhat.com%2Fquay%2Fquay-builder-qemu-rhcos-rhel8&tag=v3.14"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    },
+    {
+      "name": "quay/quay-rhel8",
+      "purl": "pkg:oci/quay-rhel8@sha256%3A3206cdb2993a991a6c8e839f88a1108c690e6afbf6958b50e7318d1d41d6ced3",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3206cdb2993a991a6c8e839f88a1108c690e6afbf6958b50e7318d1d41d6ced3"
+        }
+      ],
+      "bom-ref": "pkg:oci/quay-rhel8@sha256%3A3206cdb2993a991a6c8e839f88a1108c690e6afbf6958b50e7318d1d41d6ced3",
+      "version": "sha256:3206cdb2993a991a6c8e839f88a1108c690e6afbf6958b50e7318d1d41d6ced3",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-rhel8@sha256%3A3206cdb2993a991a6c8e839f88a1108c690e6afbf6958b50e7318d1d41d6ced3?repository_url=registry.access.redhat.com%2Fquay%2Fquay-rhel8&tag=v3.14.0-18"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-rhel8@sha256%3A3206cdb2993a991a6c8e839f88a1108c690e6afbf6958b50e7318d1d41d6ced3?repository_url=registry.access.redhat.com%2Fquay%2Fquay-rhel8&tag=v3.14.0"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-rhel8@sha256%3A3206cdb2993a991a6c8e839f88a1108c690e6afbf6958b50e7318d1d41d6ced3?repository_url=registry.access.redhat.com%2Fquay%2Fquay-rhel8&tag=v3.14"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    },
+    {
+      "name": "quay/clair-rhel8",
+      "purl": "pkg:oci/clair-rhel8@sha256%3A28b2f70bf962ca519d0758536d5f2dab61fb666acc3fedbe3aa5350d1bab7536",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "28b2f70bf962ca519d0758536d5f2dab61fb666acc3fedbe3aa5350d1bab7536"
+        }
+      ],
+      "bom-ref": "pkg:oci/clair-rhel8@sha256%3A28b2f70bf962ca519d0758536d5f2dab61fb666acc3fedbe3aa5350d1bab7536",
+      "version": "sha256:28b2f70bf962ca519d0758536d5f2dab61fb666acc3fedbe3aa5350d1bab7536",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/clair-rhel8@sha256%3A28b2f70bf962ca519d0758536d5f2dab61fb666acc3fedbe3aa5350d1bab7536?repository_url=registry.access.redhat.com%2Fquay%2Fclair-rhel8&tag=v3.14.0-5"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/clair-rhel8@sha256%3A28b2f70bf962ca519d0758536d5f2dab61fb666acc3fedbe3aa5350d1bab7536?repository_url=registry.access.redhat.com%2Fquay%2Fclair-rhel8&tag=v3.14.0"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/clair-rhel8@sha256%3A28b2f70bf962ca519d0758536d5f2dab61fb666acc3fedbe3aa5350d1bab7536?repository_url=registry.access.redhat.com%2Fquay%2Fclair-rhel8&tag=v3.14"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    },
+    {
+      "name": "quay/quay-container-security-operator-bundle",
+      "purl": "pkg:oci/quay-container-security-operator-bundle@sha256%3A9e4d1990baa1d2e805e62e9f98c0b6014bc61c26b3935210a5dcc34ba4672ffe",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "9e4d1990baa1d2e805e62e9f98c0b6014bc61c26b3935210a5dcc34ba4672ffe"
+        }
+      ],
+      "bom-ref": "pkg:oci/quay-container-security-operator-bundle@sha256%3A9e4d1990baa1d2e805e62e9f98c0b6014bc61c26b3935210a5dcc34ba4672ffe",
+      "version": "sha256:9e4d1990baa1d2e805e62e9f98c0b6014bc61c26b3935210a5dcc34ba4672ffe",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-container-security-operator-bundle@sha256%3A9e4d1990baa1d2e805e62e9f98c0b6014bc61c26b3935210a5dcc34ba4672ffe?repository_url=registry.access.redhat.com%2Fquay%2Fquay-container-security-operator-bundle&tag=v3.14.0-3"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-container-security-operator-bundle@sha256%3A9e4d1990baa1d2e805e62e9f98c0b6014bc61c26b3935210a5dcc34ba4672ffe?repository_url=registry.access.redhat.com%2Fquay%2Fquay-container-security-operator-bundle&tag=v3.14.0"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    },
+    {
+      "name": "quay/quay-bridge-operator-bundle",
+      "purl": "pkg:oci/quay-bridge-operator-bundle@sha256%3A1a71f68fb8560f45459e930dbf17c5b416b03d041651b4a7b24b79d9ad7a41a9",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "1a71f68fb8560f45459e930dbf17c5b416b03d041651b4a7b24b79d9ad7a41a9"
+        }
+      ],
+      "bom-ref": "pkg:oci/quay-bridge-operator-bundle@sha256%3A1a71f68fb8560f45459e930dbf17c5b416b03d041651b4a7b24b79d9ad7a41a9",
+      "version": "sha256:1a71f68fb8560f45459e930dbf17c5b416b03d041651b4a7b24b79d9ad7a41a9",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-bridge-operator-bundle@sha256%3A1a71f68fb8560f45459e930dbf17c5b416b03d041651b4a7b24b79d9ad7a41a9?repository_url=registry.access.redhat.com%2Fquay%2Fquay-bridge-operator-bundle&tag=v3.14.0-5"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-bridge-operator-bundle@sha256%3A1a71f68fb8560f45459e930dbf17c5b416b03d041651b4a7b24b79d9ad7a41a9?repository_url=registry.access.redhat.com%2Fquay%2Fquay-bridge-operator-bundle&tag=v3.14.0"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    },
+    {
+      "name": "quay/quay-operator-bundle",
+      "purl": "pkg:oci/quay-operator-bundle@sha256%3Ac6300babee636273e4be86c5776e56edaf58c9dabe80b53ec8b0a65c4d4291d0",
+      "type": "container",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "c6300babee636273e4be86c5776e56edaf58c9dabe80b53ec8b0a65c4d4291d0"
+        }
+      ],
+      "bom-ref": "pkg:oci/quay-operator-bundle@sha256%3Ac6300babee636273e4be86c5776e56edaf58c9dabe80b53ec8b0a65c4d4291d0",
+      "version": "sha256:c6300babee636273e4be86c5776e56edaf58c9dabe80b53ec8b0a65c4d4291d0",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-operator-bundle@sha256%3Ac6300babee636273e4be86c5776e56edaf58c9dabe80b53ec8b0a65c4d4291d0?repository_url=registry.access.redhat.com%2Fquay%2Fquay-operator-bundle&tag=v3.14.0-24"
+          },
+          {
+            "field": "purl",
+            "concludedValue": "pkg:oci/quay-operator-bundle@sha256%3Ac6300babee636273e4be86c5776e56edaf58c9dabe80b53ec8b0a65c4d4291d0?repository_url=registry.access.redhat.com%2Fquay%2Fquay-operator-bundle&tag=v3.14.0"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat"
+    }
+  ],
+  "specVersion": "1.6",
+  "dependencies": [
+    {
+      "ref": "Quay-3-RHEL-8",
+      "provides": [
+        "pkg:oci/quay-bridge-operator-rhel8@sha256%3A5aeb272d1b65bbfe0bbc3c9ee7c3835b99daf19e96a57affe2ec1280e40a8536",
+        "pkg:oci/quay-operator-rhel8@sha256%3Ad7c626dcb57570820cdffbaf87528560efde6861d458c569e72a5de00b0aad06",
+        "pkg:oci/quay-builder-rhel8@sha256%3Affda3378a9c552d9adad21f7dcbffba37371ac8afae4d4cf8762c2c48346922d",
+        "pkg:oci/quay-container-security-operator-rhel8@sha256%3A2ab5c109b684fdda35c0b5c1f546baba2bd4c9b69881170b0d72862c8367dc24",
+        "pkg:oci/quay-builder-qemu-rhcos-rhel8@sha256%3A54fe1f4dedfbbac247c3a3d87eaa6310c828f314904435f13ff2c74acbd0f250",
+        "pkg:oci/quay-rhel8@sha256%3A3206cdb2993a991a6c8e839f88a1108c690e6afbf6958b50e7318d1d41d6ced3",
+        "pkg:oci/clair-rhel8@sha256%3A28b2f70bf962ca519d0758536d5f2dab61fb666acc3fedbe3aa5350d1bab7536",
+        "pkg:oci/quay-container-security-operator-bundle@sha256%3A9e4d1990baa1d2e805e62e9f98c0b6014bc61c26b3935210a5dcc34ba4672ffe",
+        "pkg:oci/quay-bridge-operator-bundle@sha256%3A1a71f68fb8560f45459e930dbf17c5b416b03d041651b4a7b24b79d9ad7a41a9",
+        "pkg:oci/quay-operator-bundle@sha256%3Ac6300babee636273e4be86c5776e56edaf58c9dabe80b53ec8b0a65c4d4291d0"
+      ],
+      "dependsOn": []
+    }
+  ],
+  "serialNumber": "urn:uuid:41c798d8-83f6-33ba-870c-7b795655067f"
+}
