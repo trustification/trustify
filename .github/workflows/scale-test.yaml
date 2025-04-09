@@ -62,7 +62,7 @@ jobs:
 
       - name: Build Containers
         run: |
-          docker compose -f compose.yaml build --build-arg rev=${{ github.event.pull_request.head.sha }}
+          docker compose -f compose.yaml build --build-arg rev=${{ github.event.issue.number }}
 
       - name: Run
         run: |
