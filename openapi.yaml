@@ -475,6 +475,94 @@ paths:
           description: The user did not provide valid authentication credentials
         '403':
           description: The user lacks the required permission
+  /api/v2/analysis/latest/component/{key}:
+    get:
+      tags:
+      - analysis
+      summary: Retrieve SBOM components (packages) by name, Package URL, or CPE.
+      operationId: getLatestComponent
+      parameters:
+      - name: key
+        in: path
+        description: provide component name, URL-encoded pURL, or CPE itself
+        required: true
+        schema:
+          type: string
+      - name: q
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: sort
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: offset
+        in: query
+        description: |-
+          The first item to return, skipping all that come before it.
+
+          NOTE: The order of items is defined by the API being called.
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: limit
+        in: query
+        description: |-
+          The maximum number of entries to return.
+
+          Zero means: no limit
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: ancestors
+        in: query
+        description: |-
+          The level of ancestors to return.
+
+          Zero, the default, meaning none.
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: descendants
+        in: query
+        description: |-
+          The level of descendants to return.
+
+          Zero, the default, meaning none.
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+      - name: relationships
+        in: query
+        description: |-
+          A set of relationships to filter for, deserialized from a
+          comma-delimited string
+
+          An empty set, the default, meaning all relationships.
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Retrieved latest component(s) located by name, pURL, or CPE
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResults_Node'
+        '401':
+          description: The user did not provide valid authentication credentials
+        '403':
+          description: The user lacks the required permission
   /api/v2/analysis/sbom/{sbom}/render.{ext}:
     get:
       tags:
