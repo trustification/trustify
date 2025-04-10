@@ -8871,6 +8871,7 @@ dependencies = [
  "tracing-subscriber",
  "trustify-auth",
  "trustify-common",
+ "trustify-entity",
  "trustify-migration",
  "trustify-module-ingestor",
  "trustify-module-storage",

@@ -81,12 +81,16 @@ where
 {
     // ingest once
 
-    let result = ctx.ingest_document_as(file, format).await?;
+    let result = ctx
+        .ingest_document_as(file, format, ("source", "test"))
+        .await?;
     assert(ctx, result).await?;
 
     // ingest second time
 
-    let result = ctx.ingest_document_as(file, format).await?;
+    let result = ctx
+        .ingest_document_as(file, format, ("souce", "test"))
+        .await?;
     assert(ctx, result).await?;
 
     // done
