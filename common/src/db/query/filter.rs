@@ -333,6 +333,10 @@ pub(crate) mod tests {
             r#""advisory"."location" = 'foo=bar'"#
         );
         assert_eq!(
+            where_clause(r"location~foo\~bar")?,
+            r#""advisory"."location" ILIKE '%foo~bar%'"#
+        );
+        assert_eq!(
             where_clause(r"location=foo\\bar")?,
             r#""advisory"."location" = E'foo\\bar'"#
         );
@@ -436,6 +440,10 @@ pub(crate) mod tests {
         assert_eq!(
             where_clause(r"type\=jar")?,
             r#"("advisory"."location" ILIKE '%type=jar%') OR ("advisory"."title" ILIKE '%type=jar%')"#
+        );
+        assert_eq!(
+            where_clause(r"type\~\=\!\>\<jar")?,
+            r#"("advisory"."location" ILIKE '%type~=!><jar%') OR ("advisory"."title" ILIKE '%type~=!><jar%')"#
         );
         assert_eq!(
             where_clause("foo&location=bar")?,
