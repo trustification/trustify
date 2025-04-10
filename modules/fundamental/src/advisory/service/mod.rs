@@ -117,7 +117,11 @@ impl AdvisoryService {
                         // v = "" for all sort fields
                         ("average_severity", "") => Some(format!("average_score:{op}")),
                         _ => None,
-                    }),
+                    })
+                    .json_keys(
+                        "labels",
+                        &["type", "source", "importer", "file", "datasetFile"],
+                    ),
             )?
             .try_limiting_as_multi_model::<AdvisoryCatcher>(
                 connection,

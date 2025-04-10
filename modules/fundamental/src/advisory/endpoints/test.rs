@@ -17,8 +17,11 @@ use trustify_cvss::cvss3::{
     PrivilegesRequired, Scope, UserInteraction,
 };
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::{graph::advisory::AdvisoryInformation, model::IngestResult};
+use trustify_module_ingestor::{
+    graph::advisory::AdvisoryInformation, model::IngestResult, service::Format,
+};
 use trustify_test_context::{TrustifyContext, call::CallService, document_bytes};
+use urlencoding::encode;
 use uuid::Uuid;
 
 #[test_context(TrustifyContext)]
@@ -609,6 +612,43 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     log::debug!("Code: {}", response.status());
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn query_advisories_by_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let query = async |q| {
+        let app = caller(ctx).await.unwrap();
+        let uri = format!("/api/v2/advisory?q={}", encode(q));
+        let req = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(req).await;
+        assert_eq!(1, response["total"], "for {q}");
+    };
+    ctx.ingest_document_as(
+        DOC,
+        Format::CSAF,
+        [
+            ("type", "csaf"),
+            ("source", "test"),
+            ("importer", "none"),
+            ("file", "cve-2023-33201.json"),
+            ("datasetFile", "none"),
+        ],
+    )
+    .await?;
+
+    query("type!=spdx").await;
+    query("type!~zap").await;
+    query("type~af").await;
+    query("type=csaf").await;
+    query("type=csaf&source=test").await;
+    query("type=csaf&source=test&importer=none").await;
+    query("type=csaf&source=test&importer=none&file=cve-2023-33201.json").await;
+    query("type=csaf&source=test&importer=none&file=cve-2023-33201.json&datasetFile=none").await;
+    query("file>aaah.json").await;
+    query("datasetFile<zilch").await;
 
     Ok(())
 }

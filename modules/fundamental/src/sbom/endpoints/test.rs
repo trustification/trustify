@@ -11,7 +11,7 @@ use test_context::test_context;
 use test_log::test;
 use trustify_common::{id::Id, model::PaginatedResults};
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::model::IngestResult;
+use trustify_module_ingestor::{model::IngestResult, service::Format};
 use trustify_test_context::{TrustifyContext, call::CallService, document_bytes};
 use urlencoding::encode;
 use uuid::Uuid;
@@ -302,6 +302,42 @@ async fn query_sboms_by_ingested_time(ctx: &TrustifyContext) -> Result<(), anyho
     assert_eq!(ubi["items"][0]["name"], json!("ubi9-container"));
     assert_eq!(zoo["total"], 1);
     assert_eq!(zoo["items"][0]["name"], json!("zookeeper"));
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn query_sboms_by_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let query = async |q| {
+        let app = caller(ctx).await.unwrap();
+        let uri = format!("/api/v2/sbom?q={}", encode(q));
+        let req = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(req).await;
+        assert_eq!(1, response["total"], "for {q}");
+    };
+    ctx.ingest_document_as(
+        "zookeeper-3.9.2-cyclonedx.json",
+        Format::CycloneDX,
+        [
+            ("type", "cyclonedx"),
+            ("source", "test"),
+            ("importer", "none"),
+            ("file", "zoo.json"),
+            ("datasetFile", "none"),
+        ],
+    )
+    .await?;
+
+    query("type!=spdx").await;
+    query("type~clone").await;
+    query("type=cyclonedx").await;
+    query("type=cyclonedx&source=test").await;
+    query("type=cyclonedx&source=test&importer=none").await;
+    query("type=cyclonedx&source=test&importer=none&file=zoo.json").await;
+    query("type=cyclonedx&source=test&importer=none&file=zoo.json&datasetFile=none").await;
+    query("file>foo.json").await;
+    query("datasetFile<zilch").await;
 
     Ok(())
 }
