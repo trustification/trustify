@@ -1250,7 +1250,7 @@ paths:
     get:
       tags:
       - sbom
-      summary: Search for SBOMs
+      summary: List SBOMs
       operationId: listSboms
       parameters:
       - name: q
