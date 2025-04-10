@@ -135,7 +135,11 @@ impl SbomService {
                 Columns::from_entity::<sbom::Entity>()
                     .add_columns(sbom_node::Entity)
                     .add_columns(source_document::Entity)
-                    .alias("sbom_node", "r0"),
+                    .alias("sbom_node", "r0")
+                    .translator(|f, op, v| match f.split_once(':') {
+                        Some(("label", key)) => Some(format!("labels:{key}{op}{v}")),
+                        _ => None,
+                    }),
             )?
             .limiting(connection, paginated.offset, paginated.limit);
 

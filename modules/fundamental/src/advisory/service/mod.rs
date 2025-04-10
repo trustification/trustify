@@ -116,7 +116,10 @@ impl AdvisoryService {
                     .translator(|f, op, v| match (f, v) {
                         // v = "" for all sort fields
                         ("average_severity", "") => Some(format!("average_score:{op}")),
-                        _ => None,
+                        (f, _) => match f.split_once(':') {
+                            Some(("label", key)) => Some(format!("labels:{key}{op}{v}")),
+                            _ => None,
+                        },
                     }),
             )?
             .try_limiting_as_multi_model::<AdvisoryCatcher>(
