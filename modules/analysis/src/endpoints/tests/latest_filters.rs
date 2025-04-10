@@ -63,6 +63,7 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::warn!("{response:#?}");
+
     Ok(())
 }
 
@@ -121,5 +122,15 @@ async fn resolve_rh_variant_latest_filter_rpms_cdx(
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     log::warn!("{response:#?}");
+
+    // latest name search
+    let uri: String = format!(
+        "/api/v2/analysis/component/{}",
+        urlencoding::encode("NetworkManager")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    log::warn!("{response:#?}");
+
     Ok(())
 }
