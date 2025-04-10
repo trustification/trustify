@@ -17,8 +17,11 @@ use trustify_cvss::cvss3::{
     PrivilegesRequired, Scope, UserInteraction,
 };
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::{graph::advisory::AdvisoryInformation, model::IngestResult};
+use trustify_module_ingestor::{
+    graph::advisory::AdvisoryInformation, model::IngestResult, service::Format,
+};
 use trustify_test_context::{TrustifyContext, call::CallService, document_bytes};
+use urlencoding::encode;
 use uuid::Uuid;
 
 #[test_context(TrustifyContext)]
@@ -609,6 +612,53 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     log::debug!("Code: {}", response.status());
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn query_advisories_by_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let query = async |q| {
+        let app = caller(ctx).await.unwrap();
+        let uri = format!("/api/v2/advisory?q={}", encode(q));
+        let req = TestRequest::get().uri(&uri).to_request();
+        let response: Value = app.call_and_read_body_json(req).await;
+        assert_eq!(1, response["total"], "for {q}");
+    };
+    ctx.ingest_document_as(
+        DOC,
+        Format::CSAF,
+        [
+            ("type", "csaf"),
+            ("source", "test"),
+            ("importer", "none"),
+            ("file", "cve-2023-33201.json"),
+            ("datasetFile", "none"),
+            ("foo", "bar"),
+        ],
+    )
+    .await?;
+
+    query("labels:type!=spdx").await;
+    query("labels:type!~zap").await;
+    query("labels:type~af").await;
+    query("labels:type=csaf").await;
+    query("labels:type=csaf&labels:source=test").await;
+    query("labels:type=csaf&labels:source=test&labels:importer=none").await;
+    query(
+        "labels:type=csaf&labels:source=test&labels:importer=none&labels:file=cve-2023-33201.json",
+    )
+    .await;
+    query("labels:type=csaf&labels:source=test&labels:importer=none&labels:file=cve-2023-33201.json&labels:datasetFile=none").await;
+    query("labels:file>aaah.json").await;
+    query("labels:datasetFile<zilch").await;
+    query("label:foo=bar").await;
+    query("label:type=csaf").await;
+    query("label:importer=some|none").await;
+    query("label:type!=spdx").await;
+    query("labels:type~af&labels:foo>aah").await;
+    query("labels:importer~one&label:file~33201").await;
 
     Ok(())
 }
