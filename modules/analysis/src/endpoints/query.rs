@@ -33,6 +33,7 @@ impl TryFrom<&str> for OwnedComponentReference {
     type Error = Error;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
+        // TODO - this currently does not identify a node_id (which might entail expensive sbom_node lookup)
         if value.starts_with("pkg:") {
             let purl = Purl::from_str(value).map_err(Error::Purl)?;
             Ok(OwnedComponentReference::Purl(purl))
