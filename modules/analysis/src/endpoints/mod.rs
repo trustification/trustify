@@ -215,7 +215,7 @@ pub async fn get_latest_component(
 
     Ok(HttpResponse::Ok().json(
         service
-            .retrieve(&query, options, paginated, db.as_ref())
+            .retrieve_latest(&query, options, paginated, db.as_ref())
             .await?,
     ))
 }
