@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 
 use sea_orm::entity::ColumnDef;
@@ -196,7 +196,8 @@ impl Columns {
                         })
                 })
                 .ok_or(Error::SearchSyntax(format!(
-                    "Invalid field name: '{field}'"
+                    "'{field}' is an invalid field. Try {:?}",
+                    self.fields()
                 )))
         }
     }
@@ -206,6 +207,25 @@ impl Columns {
             None => None,
             Some(f) => f(field, op, value),
         }
+    }
+
+    /// Return the valid field names associated with this collection
+    pub(crate) fn fields(&self) -> Vec<String> {
+        use ColumnRef::*;
+        self.columns
+            .iter()
+            .filter_map(|(r, t)| match (r, t) {
+                (_, ColumnType::Json | ColumnType::JsonBinary) => None,
+                (Column(name) | TableColumn(_, name) | SchemaTableColumn(_, _, name), _) => {
+                    Some(name.to_string().to_lowercase())
+                }
+                _ => None,
+            })
+            .chain(self.exprs.keys().map(|k| k.to_lowercase()))
+            .chain(self.json_keys.keys().map(|k| k.to_lowercase()))
+            .collect::<BTreeSet<_>>() // uniquify & sort
+            .into_iter()
+            .collect()
     }
 }
 
@@ -326,7 +346,10 @@ mod tests {
             r#"("advisory"."score" >= 0 AND "advisory"."score" < 3) OR ("advisory"."score" >= 6 AND "advisory"."score" < 10)"#,
         );
         assert_eq!(clause(q("painful=true"))?, r#""advisory"."score" > 10"#);
-        assert!(clause(q("painful=false")).is_err());
+        match clause(q("painful=false")) {
+            Ok(_) => panic!("won't be translated so invalid"),
+            Err(e) => log::error!("{e}"),
+        }
 
         Ok(())
     }
@@ -382,7 +405,10 @@ mod tests {
             clause(q("foo"))?,
             r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (("purl" ->> 'name') ILIKE '%foo%') OR (("purl" ->> 'type') ILIKE '%foo%') OR (("purl" ->> 'version') ILIKE '%foo%')"#
         );
-        assert!(clause(q("missing=gone")).is_err());
+        match clause(q("missing=gone")) {
+            Ok(_) => panic!("field should be invalid"),
+            Err(e) => log::error!("{e}"),
+        }
         assert!(clause(q("").sort("name")).is_ok());
         assert!(clause(q("").sort("nope")).is_err());
         assert!(clause(q("q=x")).is_err());
