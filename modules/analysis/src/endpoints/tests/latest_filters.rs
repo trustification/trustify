@@ -1,10 +1,10 @@
 use crate::test::caller;
 use actix_http::Request;
 use actix_web::test::TestRequest;
-use serde_json::Value;
+use serde_json::{Value, json};
 use test_context::test_context;
 use test_log::test;
-use trustify_test_context::{TrustifyContext, call::CallService};
+use trustify_test_context::{TrustifyContext, call::CallService, subset::ContainsSubset};
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
@@ -35,7 +35,9 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{response:#?}");
+    assert!(response.contains_subset(json!({
+      "total":2
+    })));
 
     // cpe latest search
     let uri: String = format!(
@@ -44,25 +46,31 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::warn!("{response:#?}");
+    assert!(response.contains_subset(json!({
+      "total":1
+    })));
 
-    // purl search
+    // purl partial search
     let uri: String = format!(
         "/api/v2/analysis/component?q={}&ancestors=10",
-        urlencoding::encode("purl~pkg:oci/quay-builder-qemu-rhcos-rhel8")
+        urlencoding::encode("pkg:oci/quay-builder-qemu-rhcos-rhel8")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{response:#?}");
+    assert!(response.contains_subset(json!({
+      "total":102
+    })));
 
-    // purl search latest
+    // purl partial search latest
     let uri: String = format!(
         "/api/v2/analysis/latest/component?q={}&ancestors=10",
-        urlencoding::encode("purl~pkg:oci/quay-builder-qemu-rhcos-rhel8")
+        urlencoding::encode("pkg:oci/quay-builder-qemu-rhcos-rhel8")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::warn!("{response:#?}");
+    assert!(response.contains_subset(json!({
+      "total":2
+    })));
 
     Ok(())
 }
@@ -94,7 +102,9 @@ async fn resolve_rh_variant_latest_filter_rpms_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{response:#?}");
+    assert!(response.contains_subset(json!({
+      "total":2
+    })));
 
     // cpe latest search
     let uri: String = format!(
@@ -103,34 +113,53 @@ async fn resolve_rh_variant_latest_filter_rpms_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::warn!("{response:#?}");
+    assert!(response.contains_subset(json!({
+      "total":1
+    })));
 
-    // purl search
+    // purl partial search
     let uri: String = format!(
         "/api/v2/analysis/component?q={}&ancestors=10",
-        urlencoding::encode("purl~pkg:rpm/redhat/NetworkManager-libnm")
+        urlencoding::encode("pkg:rpm/redhat/NetworkManager-libnm")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::debug!("{response:#?}");
+    assert!(response.contains_subset(json!({
+      "total":90
+    })));
 
-    // purl latest search
+    // purl partial latest search
     let uri: String = format!(
-        "/api/v2/analysis/latest/component?q={}&ancestors=10",
-        urlencoding::encode("purl~pkg:rpm/redhat/NetworkManager-libnm")
+        "/api/v2/analysis/latest/component?q={}",
+        urlencoding::encode("pkg:rpm/redhat/NetworkManager-libnm")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::warn!("{response:#?}");
+    assert!(response.contains_subset(json!({
+      "total":45
+    })));
 
-    // latest name search
+    // name exact search
     let uri: String = format!(
         "/api/v2/analysis/component/{}",
-        urlencoding::encode("NetworkManager")
+        urlencoding::encode("NetworkManager-libnm")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    log::warn!("{response:#?}");
+    assert!(response.contains_subset(json!({
+      "total":50
+    })));
+
+    // latest name exact search
+    let uri: String = format!(
+        "/api/v2/analysis/latest/component/{}",
+        urlencoding::encode("NetworkManager-libnm")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    assert!(response.contains_subset(json!({
+      "total":25
+    })));
 
     Ok(())
 }

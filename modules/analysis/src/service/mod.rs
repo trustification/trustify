@@ -567,16 +567,19 @@ impl AnalysisService {
                     .collect::<Vec<String>>()
             }
             GraphQuery::Query(query) => {
+                // TODO - when we formally define 'latest authoratative filters' this area will become
+                //        much more complex ... for now we are happy with just searching node_id with
+                //        LIKE matches.
                 let sql = r#"
                     SELECT distinct sbom.sbom_id
                     FROM sbom_node
                     JOIN sbom ON sbom.sbom_id = sbom_node.sbom_id
-                    WHERE sbom_node.name ~ $1
+                    WHERE sbom_node.node_id ~ $1
                     AND sbom.published = (
                         SELECT MAX(published)
                         FROM sbom
                         JOIN sbom_node ON sbom.sbom_id = sbom_node.sbom_id
-                        WHERE sbom_node.name ~ $1
+                        WHERE sbom_node.node_id ~ $1
                     );
                 "#;
                 let stmt = Statement::from_sql_and_values(
