@@ -13,7 +13,7 @@ use super::Error;
 pub struct Columns {
     columns: Vec<(ColumnRef, ColumnType)>,
     translator: Option<Translator>,
-    json_keys: BTreeMap<&'static str, &'static str>,
+    json_keys: BTreeMap<&'static str, ColumnRef>,
     exprs: BTreeMap<&'static str, (Expr, ColumnType)>,
 }
 
@@ -141,8 +141,18 @@ impl Columns {
 
     /// Declare which query fields are the nested keys of a JSON column
     pub fn json_keys(mut self, column: &'static str, fields: &[&'static str]) -> Self {
-        for each in fields {
-            self.json_keys.insert(each, column);
+        if let Some((col_ref, _)) = self.columns.iter().find(|(col, ty)| {
+            matches!(ty, ColumnType::Json | ColumnType::JsonBinary)
+                && matches!(col, ColumnRef::Column(name)
+                     | ColumnRef::TableColumn(_, name)
+                     | ColumnRef::SchemaTableColumn(_, _, name)
+                     if name.to_string().eq_ignore_ascii_case(column))
+        }) {
+            for field in fields {
+                self.json_keys.insert(field, col_ref.clone());
+            }
+        } else {
+            log::warn!("No fields found for a JSON column named {column}");
         }
         self
     }
@@ -160,40 +170,32 @@ impl Columns {
                 _ => None,
             }))
             .chain(self.json_keys.iter().map(|(field, column)| {
-                Expr::expr(Expr::col(column.into_identity()).cast_json_field(*field))
+                Expr::expr(Expr::col(column.clone()).cast_json_field(*field))
             }))
     }
 
     /// Look up the column context for a given simple field name.
     pub(crate) fn for_field(&self, field: &str) -> Result<(Expr, ColumnType), Error> {
-        fn name_match(tgt: &str) -> impl Fn(&&(ColumnRef, ColumnType)) -> bool + '_ {
-            |(col, _)| {
-                matches!(col,
-                         ColumnRef::Column(name)
-                         | ColumnRef::TableColumn(_, name)
-                         | ColumnRef::SchemaTableColumn(_, _, name)
-                         if name.to_string().eq_ignore_ascii_case(tgt))
-            }
-        }
         if let Some(v) = self.exprs.get(field) {
             // expressions take precedence over matching column names, if any
             Ok(v.clone())
         } else {
             self.columns
                 .iter()
-                .find(name_match(field))
+                .find(|(col, _)| {
+                    matches!(col, ColumnRef::Column(name)
+                             | ColumnRef::TableColumn(_, name)
+                             | ColumnRef::SchemaTableColumn(_, _, name)
+                             if name.to_string().eq_ignore_ascii_case(field))
+                })
                 .map(|(r, d)| (Expr::col(r.clone()), d.clone()))
                 .or_else(|| {
-                    self.columns
-                        .iter()
-                        .filter(|(_, ty)| matches!(ty, ColumnType::Json | ColumnType::JsonBinary))
-                        .find(name_match(self.json_keys.get(field)?))
-                        .map(|(r, ty)| {
-                            (
-                                Expr::expr(Expr::col(r.clone()).cast_json_field(field)),
-                                ty.clone(),
-                            )
-                        })
+                    self.json_keys.get(field).map(|column| {
+                        (
+                            Expr::expr(Expr::col(column.clone()).cast_json_field(field)),
+                            ColumnType::Text,
+                        )
+                    })
                 })
                 .ok_or(Error::SearchSyntax(format!(
                     "'{field}' is an invalid field. Try [{}]",
@@ -403,7 +405,7 @@ mod tests {
         );
         assert_eq!(
             clause(q("foo"))?,
-            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (("purl" ->> 'name') ILIKE '%foo%') OR (("purl" ->> 'type') ILIKE '%foo%') OR (("purl" ->> 'version') ILIKE '%foo%')"#
+            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (("advisory"."purl" ->> 'name') ILIKE '%foo%') OR (("advisory"."purl" ->> 'type') ILIKE '%foo%') OR (("advisory"."purl" ->> 'version') ILIKE '%foo%')"#
         );
         match clause(q("missing=gone")) {
             Ok(_) => panic!("field should be invalid"),
