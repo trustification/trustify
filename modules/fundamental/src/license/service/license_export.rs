@@ -9,7 +9,6 @@ use core::time::Duration;
 use csv::{Writer, WriterBuilder};
 use flate2::{Compression, write::GzEncoder};
 use tar::Builder;
-use trustify_common::purl::Purl;
 
 type CSVs = (Writer<Vec<u8>>, Writer<Vec<u8>>);
 
@@ -134,7 +133,7 @@ impl LicenseExporter {
             let purl_list = package
                 .purl
                 .into_iter()
-                .map(|purl| format!("{}", Purl::from(purl.purl)))
+                .map(|purl| purl.purl)
                 .collect::<Vec<_>>()
                 .join("\n");
 

@@ -15,7 +15,7 @@ use trustify_common::{
     model::{Paginated, PaginatedResults},
 };
 use trustify_entity::{
-    license, licensing_infos, qualified_purl, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
+    license, licensing_infos, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
     sbom_package_license, sbom_package_license::LicenseCategory, sbom_package_purl_ref,
 };
 
@@ -85,14 +85,13 @@ impl LicenseService {
         let mut sbom_package_list = Vec::new();
         for spl in package_license {
             let result_purl: Vec<Purl> = sbom_package_purl_ref::Entity::find()
-                .join(JoinType::Join, sbom_package_purl_ref::Relation::Purl.def())
                 .filter(
                     Condition::all()
                         .add(sbom_package_purl_ref::Column::NodeId.eq(spl.node_id.clone()))
                         .add(sbom_package_purl_ref::Column::SbomId.eq(spl.sbom_id)),
                 )
                 .select_only()
-                .column_as(qualified_purl::Column::Purl, "purl")
+                .column_as(sbom_package_purl_ref::Column::Purl, "purl")
                 .into_model::<Purl>()
                 .all(connection)
                 .await?;

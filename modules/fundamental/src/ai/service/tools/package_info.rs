@@ -322,18 +322,6 @@ There are multiple that match:
 {
   "items": [
     {
-      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
-      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      "name": "quarkus-resteasy-reactive-jsonb-common-deployment",
-      "version": "2.13.8.Final-redhat-00004"
-    },
-    {
-      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
-      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      "name": "quarkus-resteasy-reactive-jsonb",
-      "version": "2.13.8.Final-redhat-00004"
-    },
-    {
       "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       "name": "quarkus-resteasy-reactive-jsonb-common",
@@ -343,6 +331,18 @@ There are multiple that match:
       "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
       "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       "name": "quarkus-resteasy-reactive-jsonb-deployment",
+      "version": "2.13.8.Final-redhat-00004"
+    },
+    {
+      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb-common-deployment@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "name": "quarkus-resteasy-reactive-jsonb-common-deployment",
+      "version": "2.13.8.Final-redhat-00004"
+    },
+    {
+      "identifier": "pkg:maven/io.quarkus/quarkus-resteasy-reactive-jsonb@2.13.8.Final-redhat-00004?repository_url=https://maven.repository.redhat.com/ga/&type=jar",
+      "uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+      "name": "quarkus-resteasy-reactive-jsonb",
       "version": "2.13.8.Final-redhat-00004"
     }
   ],

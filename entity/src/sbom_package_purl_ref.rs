@@ -12,6 +12,8 @@ pub struct Model {
 
     #[sea_orm(primary_key)]
     pub qualified_purl_id: Uuid,
+
+    pub purl: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

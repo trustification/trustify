@@ -1,5 +1,4 @@
 use sea_orm::FromQueryResult;
-use trustify_entity::qualified_purl::CanonicalPurl;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Default)]
@@ -23,7 +22,7 @@ pub struct Sbom {
 
 #[derive(Debug, Clone, FromQueryResult)]
 pub struct Purl {
-    pub purl: CanonicalPurl,
+    pub purl: String,
 }
 
 #[derive(Debug, Clone, FromQueryResult)]

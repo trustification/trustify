@@ -1,6 +1,7 @@
 use super::SbomService;
 use crate::{
     Error,
+    purl::model::summary::purl::PurlSummary,
     sbom::model::{
         SbomExternalPackageReference, SbomNodeReference, SbomPackage, SbomPackageRelation,
         SbomSummary, Which, details::SbomDetails,
@@ -14,7 +15,7 @@ use sea_orm::{
 };
 use sea_query::{Expr, JoinType, extension::postgres::PgExpr};
 use serde_json::Value;
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, str::FromStr};
 use tracing::instrument;
 use trustify_common::{
     cpe::Cpe,
@@ -31,8 +32,7 @@ use trustify_entity::{
     advisory, advisory_vulnerability, base_purl,
     cpe::{self, CpeDto},
     labels::Labels,
-    organization, package_relates_to_package,
-    qualified_purl::{self, CanonicalPurl},
+    organization, package_relates_to_package, qualified_purl,
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
     sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, source_document, status,
@@ -517,7 +517,7 @@ where
             Expr::cust_with_exprs(
                 "coalesce(array_agg(distinct $1) filter (where $2), '{}')",
                 [
-                    qualified_purl::Column::Purl.into_simple_expr(),
+                    sbom_package_purl_ref::Column::Purl.into_simple_expr(),
                     sbom_package_purl_ref::Column::QualifiedPurlId
                         .is_not_null()
                         .into_simple_expr(),
@@ -548,7 +548,7 @@ struct PackageCatcher {
     name: String,
     group: Option<String>,
     version: Option<String>,
-    purls: Vec<Value>,
+    purls: Vec<String>,
     cpes: Value,
     relationship: Option<Relationship>,
 }
@@ -559,13 +559,13 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
         .purls
         .into_iter()
         .flat_map(|purl| {
-            serde_json::from_value::<CanonicalPurl>(purl.clone())
+            Purl::from_str(&purl)
                 .inspect_err(|err| {
                     log::warn!("Failed to deserialize PURL: {err}");
                 })
                 .ok()
         })
-        .map(|purl| Purl::from(purl).into())
+        .map(PurlSummary::from)
         .collect();
 
     let cpe = row

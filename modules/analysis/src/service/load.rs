@@ -12,11 +12,10 @@ use ::cpe::{
 use anyhow::anyhow;
 use petgraph::{Graph, prelude::NodeIndex};
 use sea_orm::{
-    ColumnTrait, ColumnType, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
-    FromQueryResult, IntoIdentity, QueryFilter, QueryOrder, QuerySelect, QueryTrait, RelationTrait,
-    Statement,
+    ColumnTrait, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
+    FromQueryResult, QueryFilter, QueryOrder, QuerySelect, QueryTrait, RelationTrait, Statement,
 };
-use sea_query::{Expr, Func, JoinType, Order, SelectStatement, SimpleExpr};
+use sea_query::{JoinType, Order, SelectStatement};
 use serde_json::Value;
 use std::str::FromStr;
 use std::{
@@ -104,7 +103,7 @@ purl_ref AS (
     SELECT
         sbom_id,
         node_id,
-        array_agg(get_purl(qualified_purl_id)) AS purls
+        array_agg(purl) AS purls
     FROM
         sbom_package_purl_ref
     GROUP BY
@@ -259,6 +258,7 @@ impl AnalysisService {
                     sbom_node::Entity
                         .columns()
                         .add_columns(cpe::Entity.columns())
+                        .add_columns(sbom_package_purl_ref::Entity.columns())
                         .translator(|f, op, v| {
                             match (f, op, OwnedUri::from_str(v)) {
                                 ("cpe", "=" | "~", Ok(cpe)) => {
@@ -288,15 +288,7 @@ impl AnalysisService {
                                 ("cpe", _, _) => Some("illegal operation for cpe".into()),
                                 _ => None,
                             }
-                        })
-                        .add_expr(
-                            "purl",
-                            SimpleExpr::FunctionCall(
-                                Func::cust("get_purl".into_identity())
-                                    .arg(Expr::col(sbom_package_purl_ref::Column::QualifiedPurlId)),
-                            ),
-                            ColumnType::Text,
-                        ),
+                        }),
                 )?
                 .distinct()
                 .into_query(),
