@@ -196,8 +196,8 @@ impl Columns {
                         })
                 })
                 .ok_or(Error::SearchSyntax(format!(
-                    "'{field}' is an invalid field. Try {:?}",
-                    self.fields()
+                    "'{field}' is an invalid field. Try [{}]",
+                    self.fields().join(", ")
                 )))
         }
     }
