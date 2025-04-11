@@ -1,3 +1,10 @@
+antora:
+  extensions:
+    - ./extensions/doctest.js
+
+asciidoc:
+  sourcemap: true
+
 site:
   title: Trustify
   start_page: trustify:ROOT:index.adoc
@@ -7,6 +14,7 @@ content:
     - url: ../..
       start_path: docs/book
       branches: HEAD
+
 ui:
   bundle:
     url: https://github.com/trustification/trustification-antora-ui/releases/download/v0.2.2/ui-bundle.zip
