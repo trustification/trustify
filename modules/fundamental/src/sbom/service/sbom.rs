@@ -121,7 +121,11 @@ impl SbomService {
                 Columns::from_entity::<sbom::Entity>()
                     .add_columns(sbom_node::Entity)
                     .add_columns(source_document::Entity)
-                    .alias("sbom_node", "r0"),
+                    .alias("sbom_node", "r0")
+                    .json_keys(
+                        "labels",
+                        &["type", "source", "importer", "file", "datasetFile"],
+                    ),
             )?
             .limiting(connection, paginated.offset, paginated.limit);
 

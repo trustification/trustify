@@ -118,7 +118,7 @@ pub async fn get_license_export(
     }
 }
 
-/// Search for SBOMs
+/// List SBOMs
 #[utoipa::path(
     tag = "sbom",
     operation_id = "listSboms",
