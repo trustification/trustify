@@ -1729,7 +1729,7 @@ dependencies = [
 [[package]]
 name = "csaf"
 version = "0.5.0"
-source = "git+https://github.com/chirino/csaf-rs?rev=414896904bc5e5287fd88b1daef5c27f70503d01#414896904bc5e5287fd88b1daef5c27f70503d01"
+source = "git+https://github.com/trustification/csaf-rs#17620a225744b4a18845d4f7bf63354e01109b91"
 dependencies = [
  "chrono",
  "cpe",
