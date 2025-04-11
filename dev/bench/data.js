@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744279608223,
+  "lastUpdate": 1744361316985,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8578,6 +8578,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/c3968f94d6a207554df026d553583d6a35906298"
         },
         "date": 1744279607333,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "76e2d7d357eb3056633b5b06166c2d9a8458aa85",
+          "message": "fix: scale test references the PR number commented\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-04-11T08:27:05Z",
+          "tree_id": "d50a8fee4cf11a65ff10e807cce6062eb4ec622b",
+          "url": "https://github.com/trustification/trustify/commit/76e2d7d357eb3056633b5b06166c2d9a8458aa85"
+        },
+        "date": 1744361316048,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
