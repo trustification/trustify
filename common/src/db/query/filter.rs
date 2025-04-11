@@ -253,10 +253,7 @@ impl FromStr for Operator {
             "<=" => Ok(LessThanOrEqual),
             "|" => Ok(Or),
             "&" => Ok(And),
-            _ => Err(Error::SearchSyntax(format!(
-                "'{s} is an invalid operator. Try {:?}",
-                vec!["=", "!=", "~", "!~", ">", ">=", "<", "<=", "|", "&"]
-            ))),
+            _ => unreachable!("All operators should be matched by Query parser"),
         }
     }
 }
