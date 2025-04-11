@@ -1,0 +1,33 @@
+= TPA v1 to v2 Migration Guide
+
+Do you have to try TPA v2 (a.k.a. Trustify) but your applications and use cases
+still depend on TPA v1 (a.k.a. Trustification)? No problem! In this guide, we
+show you how to migrate your applications and use cases to TPA v2. Just choose
+from the sections below, depending on what part of TPA v1 you wish to migrate.
+
+== SBOM API
+
+=== Ingesting an SBOM File
+
+In TPA v1, you upload SBOM file like this:
+----
+POST /api/v1/sbom?id={my_id}
+Headers: "Content-Type: application/json"
+Payload (file): my_sbom.json
+----
+
+In TPA v2, using `id` to name your SBOMs is no longer possible. When an SBOM is
+uploaded, the special UUID is generated and attached to it. This UUID is
+returned as a part of the response, so you can use it later for downloading the
+SBOM.
+
+However, you can also use one of three checksum (SHA256, SHA384, SHA512) to
+download your SBOM. This can be used as a workaround to the TPA v1 use case
+since the checksum can be computed before the SBOM is uploaded:
+----
+POST /api/v2/sbom
+Headers: "Content-Type: application/json"
+Payload (file): my_sbom.json
+
+GET /api/v2/sbom/sha512:{sha512(my_sbom.json)}/download
+----
