@@ -1,0 +1,1 @@
+* xref:migration:index.adoc[Migration Guide]
