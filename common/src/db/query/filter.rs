@@ -253,7 +253,7 @@ impl FromStr for Operator {
             "<=" => Ok(LessThanOrEqual),
             "|" => Ok(Or),
             "&" => Ok(And),
-            _ => Err(Error::SearchSyntax(format!("Invalid operator: '{s}'"))),
+            _ => unreachable!("All operators should be matched by Query parser"),
         }
     }
 }
@@ -308,7 +308,10 @@ pub(crate) mod tests {
 
         // If a query matches the '{field}{op}{value}' regex, then the
         // first operand must resolve to a field on the Entity
-        assert!(q("foo=bar").filter_for(&columns).is_err());
+        match q("foo=bar").filter_for(&columns) {
+            Ok(_) => panic!("invalid field"),
+            Err(e) => log::error!("{e}"),
+        }
 
         // There aren't many bad queries since random text is
         // considered a "full-text search" in which an OR clause is
