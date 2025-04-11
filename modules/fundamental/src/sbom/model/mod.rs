@@ -47,6 +47,7 @@ impl SbomHead {
         db: &C,
     ) -> Result<Self, Error> {
         let number_of_packages = sbom.find_related(sbom_package::Entity).count(db).await?;
+
         Ok(Self {
             id: sbom.sbom_id,
             document_id: sbom.document_id.clone(),
@@ -116,6 +117,12 @@ pub struct SbomPackage {
     pub purl: Vec<PurlSummary>,
     /// CPEs identifying the package
     pub cpe: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, ToSchema, SimpleObject, Default)]
+pub struct SbomStatus {
+    pub total_packages: usize,
+    pub total_licenses: usize,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
