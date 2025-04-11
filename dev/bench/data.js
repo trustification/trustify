@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744361316985,
+  "lastUpdate": 1744372815348,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8607,6 +8607,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/76e2d7d357eb3056633b5b06166c2d9a8458aa85"
         },
         "date": 1744361316048,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "a5ecedad2b5d37b2ee6469400ef1f526a90874be",
+          "message": "fix: ensure that an invalid CVSS does not panic\n\nCloses: #1547",
+          "timestamp": "2025-04-11T11:20:38Z",
+          "tree_id": "82889f27ac1bc44028f9ef7c7b359677d7e83e12",
+          "url": "https://github.com/trustification/trustify/commit/a5ecedad2b5d37b2ee6469400ef1f526a90874be"
+        },
+        "date": 1744372813841,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
