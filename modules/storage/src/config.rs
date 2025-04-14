@@ -70,4 +70,12 @@ pub struct S3Config {
     /// S3 secret key
     #[arg(env = "TRUSTD_S3_SECRET_KEY", long = "s3-secret-key")]
     pub secret_key: Option<String>,
+
+    /// Additional trust anchors connections to S3
+    #[arg(
+        env = "TRUSTD_S3_TRUST_ANCHORS",
+        long = "s3-trust-anchor",
+        value_delimiter = ','
+    )]
+    pub trust_anchors: Vec<String>,
 }

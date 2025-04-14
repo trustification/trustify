@@ -8,13 +8,12 @@ use std::{
     fmt::Debug,
     io::ErrorKind,
     path::{Path, PathBuf},
-    pin::pin,
 };
 use strum::IntoEnumIterator;
 use tempfile::{TempDir, tempdir};
 use tokio::{
     fs::{File, create_dir_all},
-    io::AsyncWriteExt,
+    io::{AsyncRead, AsyncWriteExt},
 };
 use tokio_util::io::ReaderStream;
 use tracing::instrument;
@@ -100,16 +99,14 @@ impl StorageBackend for FileSystemBackend {
     type Error = std::io::Error;
 
     #[instrument(skip(stream), err(Debug, level=tracing::Level::INFO))]
-    async fn store<E, S>(&self, stream: S) -> Result<StorageResult, StoreError<E, Self::Error>>
+    async fn store<S>(&self, stream: S) -> Result<StorageResult, StoreError<Self::Error>>
     where
-        E: Debug,
-        S: Stream<Item = Result<Bytes, E>>,
+        S: AsyncRead + Unpin,
     {
-        let stream = pin!(stream);
         let mut file = TempFile::new(stream).await?;
         let mut source = file.reader().await?;
 
-        let result = file.result();
+        let result = file.to_result();
         let key = result.key().to_string();
 
         // create the target path
@@ -185,30 +182,37 @@ fn level_dir(base: impl AsRef<Path>, hash: &str, levels: usize) -> PathBuf {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::service::test::{test_read_not_found, test_store_and_read};
     use bytes::BytesMut;
     use futures::StreamExt;
     use rstest::rstest;
     use sha2::{Digest, Sha256};
     use tempfile::tempdir;
     use test_log::test;
-    use trustify_common::id::Id;
 
     #[test]
     fn test_level_dir() {
         assert_eq!(level_dir("/", "1234567890", 2,), Path::new("/12/34"));
     }
 
+    async fn backend(compression: Compression) -> (FileSystemBackend, TempDir) {
+        let dir = tempdir().unwrap();
+        (
+            FileSystemBackend::new(dir.path(), compression)
+                .await
+                .unwrap(),
+            dir,
+        )
+    }
+
     #[test(tokio::test)]
-    async fn test_store() {
+    async fn store() {
         const DIGEST: &str = "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e";
 
-        let dir = tempdir().unwrap();
-        let backend = FileSystemBackend::new(dir.path(), Compression::None)
-            .await
-            .unwrap();
+        let (backend, dir) = backend(Compression::None).await;
 
         let digest = backend
-            .store(ReaderStream::new(&b"Hello World"[..]))
+            .store(&b"Hello World"[..])
             .await
             .expect("store must succeed");
 
@@ -224,43 +228,16 @@ mod test {
         assert!(target.exists());
         let data = std::fs::read(target).unwrap();
         assert_eq!(hex::encode(Sha256::digest(data)), DIGEST);
-
-        drop(backend);
     }
 
     #[test(tokio::test)]
     #[rstest]
     #[case(Compression::None)]
     #[case(Compression::Zstd)]
-    async fn test_store_and_read(#[case] compression: Compression) {
-        const DIGEST: &str = "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e";
+    async fn store_and_read(#[case] compression: Compression) {
+        let (backend, _dir) = backend(compression).await;
 
-        let dir = tempdir().unwrap();
-        let backend = FileSystemBackend::new(dir.path(), compression)
-            .await
-            .unwrap();
-
-        let digest = backend
-            .store(ReaderStream::new(&b"Hello World"[..]))
-            .await
-            .expect("store must succeed");
-
-        assert_eq!(digest.key().to_string(), DIGEST);
-
-        let mut stream = backend
-            .retrieve(digest.key())
-            .await
-            .expect("retrieve must succeed")
-            .expect("must be found");
-
-        let mut content = BytesMut::new();
-        while let Some(data) = stream.next().await {
-            content.extend(&data.expect("read must succeed"));
-        }
-
-        assert_eq!(content.as_ref(), b"Hello World");
-
-        drop(backend);
+        test_store_and_read(backend).await
     }
 
     /// This test should ensure that we can also read compression algorithm other than the
@@ -275,7 +252,7 @@ mod test {
             .unwrap();
 
         let digest = backend
-            .store(ReaderStream::new(&b"Hello World"[..]))
+            .store(&b"Hello World"[..])
             .await
             .expect("store must succeed");
 
@@ -297,27 +274,13 @@ mod test {
         }
 
         assert_eq!(content.as_ref(), b"Hello World");
-
-        drop(backend);
     }
 
     /// Ensure retrieving the information that the file does not exist works.
     #[test(tokio::test)]
-    async fn test_read_not_found() {
-        const DIGEST: &str = "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e";
+    async fn read_not_found() {
+        let (backend, _dir) = backend(Compression::None).await;
 
-        let dir = tempdir().unwrap();
-        let backend = FileSystemBackend::new(dir.path(), Compression::None)
-            .await
-            .unwrap();
-
-        let stream = backend
-            .retrieve(StorageKey::try_from(Id::Sha256(DIGEST.to_string())).unwrap())
-            .await
-            .expect("retrieve must succeed");
-
-        assert!(stream.is_none());
-
-        drop(backend);
+        test_read_not_found(backend).await;
     }
 }
