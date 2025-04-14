@@ -21,6 +21,7 @@ mod m0001000_sbom_non_null_suppliers;
 mod m0001010_alter_mavenver_cmp;
 mod m0001020_alter_pythonver_cmp;
 mod m0001030_perf_adv_gin_index;
+mod m0001040_alter_pythonver_cmp;
 
 pub struct Migrator;
 
@@ -45,6 +46,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0001010_alter_mavenver_cmp::Migration),
             Box::new(m0001020_alter_pythonver_cmp::Migration),
             Box::new(m0001030_perf_adv_gin_index::Migration),
+            Box::new(m0001040_alter_pythonver_cmp::Migration),
         ]
     }
 }
