@@ -26,6 +26,12 @@ impl Display for Compression {
     }
 }
 
+impl From<Compression> for String {
+    fn from(value: Compression) -> Self {
+        value.to_string()
+    }
+}
+
 impl Compression {
     pub fn extension(&self) -> &'static str {
         match self {
@@ -51,10 +57,11 @@ impl Compression {
         }
     }
 
+    /// Write content, compressed.
     pub async fn write<R, W>(&self, r: &mut R, w: &mut W) -> io::Result<u64>
     where
-        R: AsyncBufRead + Unpin + 'static,
-        W: AsyncWrite + Unpin + 'static,
+        R: AsyncRead + Unpin,
+        W: AsyncWrite + Unpin,
     {
         match self {
             Self::None => io::copy(r, w).await,
@@ -62,6 +69,7 @@ impl Compression {
         }
     }
 
+    /// Create a reader, decompressing on the fly
     pub fn reader<R>(&self, r: R) -> DecompressionReader<R>
     where
         R: AsyncRead,
