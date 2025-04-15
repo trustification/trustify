@@ -8,6 +8,8 @@ metadata:
     app.kubernetes.io/part-of: trustify
 spec:
   runPolicy: Serial
+  nodeSelector:
+    kubernetes.io/arch: arm64
   triggers:
     - type: ImageChange
     - type: ConfigChange
