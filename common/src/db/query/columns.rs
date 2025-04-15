@@ -141,13 +141,7 @@ impl Columns {
 
     /// Declare which query fields are the nested keys of a JSON column
     pub fn json_keys(mut self, column: &'static str, fields: &[&'static str]) -> Self {
-        if let Some((col_ref, _)) = self.columns.iter().find(|(col, ty)| {
-            matches!(ty, ColumnType::Json | ColumnType::JsonBinary)
-                && matches!(col, ColumnRef::Column(name)
-                     | ColumnRef::TableColumn(_, name)
-                     | ColumnRef::SchemaTableColumn(_, _, name)
-                     if name.to_string().eq_ignore_ascii_case(column))
-        }) {
+        if let Some((col_ref, ColumnType::Json | ColumnType::JsonBinary)) = self.find(column) {
             for field in fields {
                 self.json_keys.insert(field, col_ref.clone());
             }
@@ -180,22 +174,27 @@ impl Columns {
             // expressions take precedence over matching column names, if any
             Ok(v.clone())
         } else {
-            self.columns
-                .iter()
-                .find(|(col, _)| {
-                    matches!(col, ColumnRef::Column(name)
-                             | ColumnRef::TableColumn(_, name)
-                             | ColumnRef::SchemaTableColumn(_, _, name)
-                             if name.to_string().eq_ignore_ascii_case(field))
-                })
+            self.find(field)
                 .map(|(r, d)| (Expr::col(r.clone()), d.clone()))
                 .or_else(|| {
-                    self.json_keys.get(field).map(|column| {
+                    // Compare field to json keys
+                    self.json_keys.get(field).map(|col| {
                         (
-                            Expr::expr(Expr::col(column.clone()).cast_json_field(field)),
+                            Expr::expr(Expr::col(col.clone()).cast_json_field(field)),
                             ColumnType::Text,
                         )
                     })
+                })
+                .or_else(|| {
+                    // Check field for json object syntax: {column}:{key}
+                    field.split_once(':').map(|(col, key)| {
+                        self.find(col).map(|(col, _)| {
+                            (
+                                Expr::expr(Expr::col(col.clone()).cast_json_field(key)),
+                                ColumnType::Text,
+                            )
+                        })
+                    })?
                 })
                 .ok_or(Error::SearchSyntax(format!(
                     "'{field}' is an invalid field. Try [{}]",
@@ -228,6 +227,18 @@ impl Columns {
             .collect::<BTreeSet<_>>() // uniquify & sort
             .into_iter()
             .collect()
+    }
+
+    fn find(&self, field: &str) -> Option<(ColumnRef, ColumnType)> {
+        self.columns
+            .iter()
+            .find(|(col, _)| {
+                matches!(col, ColumnRef::Column(name)
+                     | ColumnRef::TableColumn(_, name)
+                     | ColumnRef::SchemaTableColumn(_, _, name)
+                     if name.to_string().eq_ignore_ascii_case(field))
+            })
+            .cloned()
     }
 }
 
@@ -451,6 +462,33 @@ mod tests {
             ColumnType::Text,
         );
         test("pearl=42", r#"get_purl("purl") = 42"#, ColumnType::Integer);
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn adhoc_json_queries() -> Result<(), anyhow::Error> {
+        let clause = |query: Query| -> Result<String, Error> {
+            Ok(advisory::Entity::find()
+                .filtering(query)?
+                .build(sea_orm::DatabaseBackend::Postgres)
+                .to_string()
+                .split("WHERE ")
+                .last()
+                .unwrap()
+                .to_string())
+        };
+
+        assert_eq!(
+            clause(q("purl:name~log4j&purl:version>1.0"))?,
+            r#"(("advisory"."purl" ->> 'name') ILIKE '%log4j%') AND ("advisory"."purl" ->> 'version') > '1.0'"#
+        );
+        assert_eq!(
+            clause(q("purl:name=log4j").sort(r"purl:name"))?,
+            r#"("advisory"."purl" ->> 'name') = 'log4j' ORDER BY "advisory"."purl" ->> 'name' ASC"#
+        );
+        assert!(clause(q("missing:name=log4j")).is_err());
+        assert!(clause(q("").sort(r"missing:name")).is_err());
 
         Ok(())
     }
