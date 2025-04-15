@@ -53,7 +53,7 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     // purl partial search
     let uri: String = format!(
         "/api/v2/analysis/component?q={}&ancestors=10",
-        urlencoding::encode("pkg:oci/quay-builder-qemu-rhcos-rhel8")
+        urlencoding::encode("pkg:oci/quay-builder-qemu-rhcos-rhel8@")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
@@ -64,7 +64,7 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     // purl partial search latest
     let uri: String = format!(
         "/api/v2/analysis/latest/component?q={}&ancestors=10",
-        urlencoding::encode("pkg:oci/quay-builder-qemu-rhcos-rhel8")
+        urlencoding::encode("pkg:oci/quay-builder-qemu-rhcos-rhel8@")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
@@ -120,23 +120,23 @@ async fn resolve_rh_variant_latest_filter_rpms_cdx(
     // purl partial search
     let uri: String = format!(
         "/api/v2/analysis/component?q={}&ancestors=10",
-        urlencoding::encode("pkg:rpm/redhat/NetworkManager-libnm")
+        urlencoding::encode("pkg:rpm/redhat/NetworkManager-libnm@")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     assert!(response.contains_subset(json!({
-      "total":90
+      "total":30
     })));
 
     // purl partial latest search
     let uri: String = format!(
         "/api/v2/analysis/latest/component?q={}",
-        urlencoding::encode("pkg:rpm/redhat/NetworkManager-libnm")
+        urlencoding::encode("pkg:rpm/redhat/NetworkManager-libnm@")
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     assert!(response.contains_subset(json!({
-      "total":45
+      "total":15
     })));
 
     // name exact search
