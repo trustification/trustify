@@ -29,6 +29,8 @@ spec:
         app.kubernetes.io/component: serve
         app.kubernetes.io/part-of: trustify
     spec:
+      nodeSelector:
+        kubernetes.io/arch: arm64
       containers:
         - image: "trustify-docs"
           imagePullPolicy: IfNotPresent
