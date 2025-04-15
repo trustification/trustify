@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744708857399,
+  "lastUpdate": 1744731818536,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8694,6 +8694,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/dd989f0d8cda6ac5ac58a5ffdfaf7eb9f529c037"
         },
         "date": 1744708855846,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "6316078533a93a424fd3c2fc4f643e616ee73a6b",
+          "message": "fix: ensure that container build aligns with deployment architecture",
+          "timestamp": "2025-04-15T15:04:10Z",
+          "tree_id": "d88e8b3c9884d2045fe4d90aebe06b07e3789a23",
+          "url": "https://github.com/trustification/trustify/commit/6316078533a93a424fd3c2fc4f643e616ee73a6b"
+        },
+        "date": 1744731817766,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
