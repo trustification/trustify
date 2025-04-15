@@ -163,3 +163,94 @@ async fn resolve_rh_variant_latest_filter_rpms_cdx(
 
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn resolve_rh_variant_latest_filter_middleware_cdx(
+    ctx: &TrustifyContext,
+) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+
+    ctx.ingest_documents([
+        "cyclonedx/rh/latest_filters/middleware/maven/quarkus/3.15.4/product-3.15.4.json",
+        "cyclonedx/rh/latest_filters/middleware/maven/quarkus/3.15.4/quarkus-camel-bom-3.15.4.json",
+        "cyclonedx/rh/latest_filters/middleware/maven/quarkus/3.15.4/quarkus-cxf-bom-3.15.4.json",
+        "cyclonedx/rh/latest_filters/middleware/maven/quarkus/3.20/product-3.20.json",
+        "cyclonedx/rh/latest_filters/middleware/maven/quarkus/3.20/quarkus-camel-bom-3.20.json",
+        "cyclonedx/rh/latest_filters/middleware/maven/quarkus/3.20/quarkus-cxf-bom-3.20.json",
+    ])
+    .await?;
+
+    let uri: String = "/api/v2/analysis/component".to_string();
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response = app.call_service(request).await;
+    assert_eq!(200, response.response().status());
+
+    // cpe search
+    let uri: String = format!(
+        "/api/v2/analysis/component/{}",
+        urlencoding::encode("cpe:/a:redhat:camel_quarkus:3")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    assert!(response.contains_subset(json!({
+      "total":2
+    })));
+
+    // cpe latest search
+    let uri: String = format!(
+        "/api/v2/analysis/latest/component/{}",
+        urlencoding::encode("cpe:/a:redhat:camel_quarkus:3")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    assert!(response.contains_subset(json!({
+      "total":1
+    })));
+
+    // purl partial search
+    let uri: String = format!(
+        "/api/v2/analysis/component?q={}&ancestors=10",
+        urlencoding::encode("pkg:maven/io.vertx/vertx-core@")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    assert!(response.contains_subset(json!({
+      "total":30
+    })));
+
+    // purl partial latest search
+    let uri: String = format!(
+        "/api/v2/analysis/latest/component?q={}",
+        urlencoding::encode("pkg:maven/io.vertx/vertx-core@")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    assert!(response.contains_subset(json!({
+      "total":10
+    })));
+
+    // name exact search
+    let uri: String = format!(
+        "/api/v2/analysis/component/{}",
+        urlencoding::encode("vertx-core")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    assert!(response.contains_subset(json!({
+      "total":42
+    })));
+
+    // latest name exact search
+    let uri: String = format!(
+        "/api/v2/analysis/latest/component/{}",
+        urlencoding::encode("vertx-core")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    assert!(response.contains_subset(json!({
+      "total":14
+    })));
+
+    Ok(())
+}

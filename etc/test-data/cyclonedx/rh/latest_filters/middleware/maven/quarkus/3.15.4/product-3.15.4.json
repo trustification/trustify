@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "9e6b0676"
+        }
+      ]
+    },
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
+    "component": {
+      "name": "Red Hat Build of Apache Camel",
+      "type": "framework",
+      "bom-ref": "Red Hat Build of Apache Camel 4.8 for Quarkus 3.15",
+      "version": "Red Hat Build of Apache Camel 4.8 for Quarkus 3.15",
+      "evidence": {
+        "identity": [
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/a:redhat:camel_quarkus:3"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      }
+    },
+    "timestamp": "2025-04-01T16:48:42Z"
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "quarkus-camel-bom",
+      "purl": "pkg:maven/com.redhat.quarkus.platform/quarkus-camel-bom@3.15.4.redhat-00001?type=pom",
+      "type": "library",
+      "group": "com.redhat.quarkus.platform",
+      "hashes": [
+        {
+          "alg": "MD5",
+          "content": "3b3832ed98ab126027d572e0c6ae9bc2"
+        },
+        {
+          "alg": "SHA-1",
+          "content": "44f8e6ff226b282c38727f362b86c8d34d6624c4"
+        },
+        {
+          "alg": "SHA-256",
+          "content": "a858e7f74bdfab8ea0de84050d7c28bc9eb60ac1dd7cc7963253a9614b739bec"
+        }
+      ],
+      "bom-ref": "pkg:maven/com.redhat.quarkus.platform/quarkus-camel-bom@3.15.4.redhat-00001?type=pom",
+      "version": "3.15.4.redhat-00001",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:maven/com.redhat.quarkus.platform/quarkus-camel-bom@3.15.4.redhat-00001?repository_url=https%3A%2F%2Fmaven.repository.redhat.com%2Fga%2F&type=pom"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "description": "Quarkus Universe platform aggregates extensions from Quarkus Core and those developed by the community into a single compatible and versioned set that application developers can reference from their applications to align the dependency versions"
+    },
+    {
+      "name": "quarkus-cxf-bom",
+      "purl": "pkg:maven/com.redhat.quarkus.platform/quarkus-cxf-bom@3.15.4.redhat-00001?type=pom",
+      "type": "library",
+      "group": "com.redhat.quarkus.platform",
+      "hashes": [
+        {
+          "alg": "MD5",
+          "content": "516887faef86a1ae2c084ecbc2f3915e"
+        },
+        {
+          "alg": "SHA-1",
+          "content": "cd1eba86fbc8bcdb143eb196d7424f9aa735e123"
+        },
+        {
+          "alg": "SHA-256",
+          "content": "ecdc82ae793f671f049f032c2ab4f669045673d160839d8e5513018ec445ad99"
+        }
+      ],
+      "bom-ref": "pkg:maven/com.redhat.quarkus.platform/quarkus-cxf-bom@3.15.4.redhat-00001?type=pom",
+      "version": "3.15.4.redhat-00001",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:maven/com.redhat.quarkus.platform/quarkus-cxf-bom@3.15.4.redhat-00001?repository_url=https%3A%2F%2Fmaven.repository.redhat.com%2Fga%2F&type=pom"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "description": "Quarkus Universe platform aggregates extensions from Quarkus Core and those developed by the community into a single compatible and versioned set that application developers can reference from their applications to align the dependency versions"
+    }
+  ],
+  "specVersion": "1.6",
+  "dependencies": [
+    {
+      "ref": "Red Hat Build of Apache Camel 4.8 for Quarkus 3.15",
+      "provides": [
+        "pkg:maven/com.redhat.quarkus.platform/quarkus-camel-bom@3.15.4.redhat-00001?type=pom",
+        "pkg:maven/com.redhat.quarkus.platform/quarkus-cxf-bom@3.15.4.redhat-00001?type=pom"
+      ],
+      "dependsOn": []
+    }
+  ],
+  "serialNumber": "urn:uuid:f4484fb6-53e6-3c53-96ea-1ee4f0710556"
+}
