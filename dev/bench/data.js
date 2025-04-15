@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744372815348,
+  "lastUpdate": 1744704514017,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8641,6 +8641,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "ffce45d5da28d07444667fb1e6b3a267bd40d613",
+          "message": "fix: Python versions PLSQL comparator (TC-2469)\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-04-15T07:48:48Z",
+          "tree_id": "d1dbbc9e52d7c6ffee733fe7c3652b45c3f7126b",
+          "url": "https://github.com/trustification/trustify/commit/ffce45d5da28d07444667fb1e6b3a267bd40d613"
+        },
+        "date": 1744704513123,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
             "unit": "s"
           }
         ]
