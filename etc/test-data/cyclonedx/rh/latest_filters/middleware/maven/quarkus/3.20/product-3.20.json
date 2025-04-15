@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "metadata": {
+    "tools": {
+      "components": [
+        {
+          "name": "SBOMer",
+          "type": "application",
+          "author": "Red Hat",
+          "version": "9e6b0676"
+        }
+      ]
+    },
+    "supplier": {
+      "url": [
+        "https://www.redhat.com"
+      ],
+      "name": "Red Hat"
+    },
+    "component": {
+      "name": "Red Hat Build of Apache Camel",
+      "type": "framework",
+      "bom-ref": "Red Hat Build of Apache Camel 4.8 for Quarkus 3.20",
+      "version": "Red Hat Build of Apache Camel 4.8 for Quarkus 3.20",
+      "evidence": {
+        "identity": [
+          {
+            "field": "cpe",
+            "concludedValue": "cpe:/a:redhat:camel_quarkus:3"
+          }
+        ]
+      },
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      }
+    },
+    "timestamp": "2025-04-02T16:48:42Z"
+  },
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "name": "quarkus-camel-bom",
+      "purl": "pkg:maven/com.redhat.quarkus.platform/quarkus-camel-bom@3.20.0-redhat-00001?type=pom",
+      "type": "library",
+      "group": "com.redhat.quarkus.platform",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "584909fc905e8197256694cd5a6d5922d79ca18f3d6a18406a8876de543718b4"
+        }
+      ],
+      "bom-ref": "pkg:maven/com.redhat.quarkus.platform/quarkus-camel-bom@3.20.0-redhat-00001?type=pom",
+      "version": "3.20.0-redhat-00001",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:maven/com.redhat.quarkus.platform/quarkus-camel-bom@3.20.0-redhat-00001?repository_url=https%3A%2F%2Fmaven.repository.redhat.com%2Fga%2F&type=pom"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "description": "Quarkus Universe platform aggregates extensions from Quarkus Core and those developed by the community into a single compatible and versioned set that application developers can reference from their applications to align the dependency versions"
+    },
+    {
+      "name": "quarkus-cxf-bom",
+      "purl": "pkg:maven/com.redhat.quarkus.platform/quarkus-cxf-bom@3.20.0.redhat-00001?type=pom",
+      "type": "library",
+      "group": "com.redhat.quarkus.platform",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "34dc80b0d91949b83639435e3b16b2c1cebfbcde594e52bb5d09809062e37d2d"
+        }
+      ],
+      "bom-ref": "pkg:maven/com.redhat.quarkus.platform/quarkus-cxf-bom@3.20.0.redhat-00001?type=pom",
+      "version": "3.20.0-redhat-00001",
+      "evidence": {
+        "identity": [
+          {
+            "field": "purl",
+            "concludedValue": "pkg:maven/com.redhat.quarkus.platform/quarkus-cxf-bom@3.20.0.redhat-00001?repository_url=https%3A%2F%2Fmaven.repository.redhat.com%2Fga%2F&type=pom"
+          }
+        ]
+      },
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "supplier": {
+        "url": [
+          "https://www.redhat.com"
+        ],
+        "name": "Red Hat"
+      },
+      "publisher": "Red Hat",
+      "description": "Quarkus Universe platform aggregates extensions from Quarkus Core and those developed by the community into a single compatible and versioned set that application developers can reference from their applications to align the dependency versions"
+    }
+  ],
+  "specVersion": "1.6",
+  "dependencies": [
+    {
+      "ref": "Red Hat Build of Apache Camel 4.8 for Quarkus 3.20",
+      "provides": [
+        "pkg:maven/com.redhat.quarkus.platform/quarkus-camel-bom@3.20.0-redhat-00001?type=pom",
+        "pkg:maven/com.redhat.quarkus.platform/quarkus-cxf-bom@3.20.0.redhat-00001?type=pom"
+      ],
+      "dependsOn": []
+    }
+  ],
+  "serialNumber": "urn:uuid:f4484fb6-53e6-3c53-96ea-1ee4f0710556"
+}
