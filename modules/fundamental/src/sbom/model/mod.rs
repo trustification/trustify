@@ -1,4 +1,5 @@
 pub mod details;
+pub mod raw_sql;
 
 use super::service::SbomService;
 use crate::{
