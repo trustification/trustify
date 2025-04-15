@@ -466,16 +466,14 @@ impl AnalysisService {
         let latest_sbom_ids = match query {
             GraphQuery::Component(ComponentReference::Id(name)) => {
                 let sql = r#"
-                    SELECT distinct sbom.sbom_id
-                    FROM sbom_node
-                    JOIN sbom ON sbom.sbom_id = sbom_node.sbom_id
-                    WHERE sbom_node.node_id = $1
-                    AND sbom.published = (
-                        SELECT MAX(published)
+                    WITH ranked_sboms AS (
+                        SELECT sbom.sbom_id, sbom.published,
+                        ROW_NUMBER() OVER (PARTITION BY sbom_node.node_id ORDER BY sbom.published DESC) AS rank
                         FROM sbom
                         JOIN sbom_node ON sbom.sbom_id = sbom_node.sbom_id
                         WHERE sbom_node.node_id = $1
-                    );
+                    )
+                    SELECT DISTINCT sbom_id FROM ranked_sboms WHERE rank = 1;
                 "#;
                 let stmt =
                     Statement::from_sql_and_values(DatabaseBackend::Postgres, sql, [name.into()]);
@@ -490,16 +488,14 @@ impl AnalysisService {
             }
             GraphQuery::Component(ComponentReference::Name(name)) => {
                 let sql = r#"
-                    SELECT distinct sbom.sbom_id
-                    FROM sbom_node
-                    JOIN sbom ON sbom.sbom_id = sbom_node.sbom_id
-                    WHERE sbom_node.name = $1
-                    AND sbom.published = (
-                        SELECT MAX(published)
+                    WITH ranked_sboms AS (
+                        SELECT sbom.sbom_id, sbom.published,
+                        ROW_NUMBER() OVER (PARTITION BY sbom_node.name ORDER BY sbom.published DESC) AS rank
                         FROM sbom
                         JOIN sbom_node ON sbom.sbom_id = sbom_node.sbom_id
                         WHERE sbom_node.name = $1
-                    );
+                    )
+                    SELECT DISTINCT sbom_id FROM ranked_sboms WHERE rank = 1;
                 "#;
                 let stmt =
                     Statement::from_sql_and_values(DatabaseBackend::Postgres, sql, [name.into()]);
@@ -514,16 +510,14 @@ impl AnalysisService {
             }
             GraphQuery::Component(ComponentReference::Purl(purl)) => {
                 let sql = r#"
-                    SELECT distinct sbom.sbom_id
-                    FROM sbom_package_purl_ref
-                    JOIN sbom ON sbom.sbom_id = sbom_package_purl_ref.sbom_id
-                    WHERE sbom_package_purl_ref.qualified_purl_id = $1
-                    AND sbom.published = (
-                        SELECT MAX(published)
+                    WITH ranked_sboms AS (
+                        SELECT sbom.sbom_id, sbom.published,
+                        ROW_NUMBER() OVER (PARTITION BY sbom_package_purl_ref.qualified_purl_id ORDER BY sbom.published DESC) AS rank
                         FROM sbom
                         JOIN sbom_package_purl_ref ON sbom.sbom_id = sbom_package_purl_ref.sbom_id
                         WHERE sbom_package_purl_ref.qualified_purl_id = $1
-                    );
+                    )
+                    SELECT DISTINCT sbom_id FROM ranked_sboms WHERE rank = 1;
                 "#;
                 let stmt = Statement::from_sql_and_values(
                     DatabaseBackend::Postgres,
@@ -541,16 +535,14 @@ impl AnalysisService {
             }
             GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
                 let sql = r#"
-                    SELECT distinct sbom.sbom_id
-                    FROM sbom_package_cpe_ref
-                    JOIN sbom ON sbom.sbom_id = sbom_package_cpe_ref.sbom_id
-                    WHERE sbom_package_cpe_ref.cpe_id = $1
-                    AND sbom.published = (
-                        SELECT MAX(published)
+                    WITH ranked_sboms AS (
+                        SELECT sbom.sbom_id, sbom.published,
+                        ROW_NUMBER() OVER (PARTITION BY sbom_package_cpe_ref.cpe_id ORDER BY sbom.published DESC) AS rank
                         FROM sbom
                         JOIN sbom_package_cpe_ref ON sbom.sbom_id = sbom_package_cpe_ref.sbom_id
                         WHERE sbom_package_cpe_ref.cpe_id = $1
-                    );
+                    )
+                    SELECT DISTINCT sbom_id FROM ranked_sboms WHERE rank = 1;
                 "#;
                 let stmt = Statement::from_sql_and_values(
                     DatabaseBackend::Postgres,
