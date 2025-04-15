@@ -42,6 +42,10 @@ impl Query {
     /// the results. Each `{field}` name must correspond to one of the
     /// selected Columns.
     ///
+    /// Fields corresponding to JSON objects in the database may use a
+    /// ':' to delimit the column name and the object key,
+    /// e.g. `purl:name=foo`
+    ///
     /// Both `{search}` and `{value}` may contain `|`-delimited
     /// alternate values that will result in an OR clause. Any literal
     /// `|` or `&` within a search or value should be escaped with a
@@ -110,7 +114,7 @@ impl Query {
 
     fn parse(&self) -> Vec<Constraint> {
         // regex for filters: {field}{op}{value}
-        const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
+        const RE: &str = r"^(?<field>[[:word:]:]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
         static LOCK: OnceLock<Regex> = OnceLock::new();
         #[allow(clippy::unwrap_used)]
         let regex = LOCK.get_or_init(|| (Regex::new(RE).unwrap()));
