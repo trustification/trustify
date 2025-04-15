@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744704514017,
+  "lastUpdate": 1744708857399,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8670,6 +8670,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 9,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": false,
+          "id": "dd989f0d8cda6ac5ac58a5ffdfaf7eb9f529c037",
+          "message": "chore: add middleware analysis latest tests",
+          "timestamp": "2025-04-15T08:59:22Z",
+          "tree_id": "416f1281740d08135d60c5ba32d129aae40f2371",
+          "url": "https://github.com/trustification/trustify/commit/dd989f0d8cda6ac5ac58a5ffdfaf7eb9f529c037"
+        },
+        "date": 1744708855846,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
