@@ -1,0 +1,32 @@
+[package]
+name = "trustify-module-mcp-server"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[dependencies]
+trustify-auth = { workspace = true }
+trustify-common = { workspace = true }
+trustify-entity = { workspace = true }
+trustify-module-analysis = { workspace = true }
+trustify-module-fundamental = { workspace = true }
+trustify-module-ingestor = { workspace = true }
+trustify-module-storage = { workspace = true }
+
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+base64 = { workspace = true }
+chrono = { workspace = true }
+clap = { workspace = true }
+humantime = { workspace = true }
+log = { workspace = true }
+rust-mcp-macros = "0.1"
+rust-mcp-schema = "0.3"
+rust-mcp-sdk = "0.1"
+rust-mcp-transport = "0.1"
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+url = { workspace = true }
