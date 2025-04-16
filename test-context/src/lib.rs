@@ -78,22 +78,21 @@ impl TrustifyContext {
     ///
     /// The path is relative to `<workspace>/etc/test-data`.
     pub async fn ingest_document(&self, path: &str) -> Result<IngestResult, anyhow::Error> {
-        self.ingest_document_as(path, Format::Unknown).await
+        self.ingest_document_as(path, Format::Unknown, [("source", "TrustifyContext")])
+            .await
     }
 
-    /// Ingest a document with a specific format.
+    /// Ingest a document with a specific format and labels
     ///
     /// The path is relative to `<workspace>/etc/test-data`.
-    pub async fn ingest_document_as(
+    pub async fn ingest_document_as<const N: usize>(
         &self,
         path: &str,
         format: Format,
+        labels: [(&str, &str); N],
     ) -> Result<IngestResult, anyhow::Error> {
         let bytes = document_bytes(path).await?;
-        Ok(self
-            .ingestor
-            .ingest(&bytes, format, ("source", "TrustifyContext"), None)
-            .await?)
+        Ok(self.ingestor.ingest(&bytes, format, labels, None).await?)
     }
 
     pub async fn ingest_read<R: Read>(&self, mut read: R) -> Result<IngestResult, anyhow::Error> {
