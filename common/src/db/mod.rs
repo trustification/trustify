@@ -33,9 +33,15 @@ pub struct Database {
     name: String,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum NewError {
+    #[error(transparent)]
+    Connect(#[from] DbErr),
+}
+
 impl Database {
     #[instrument(err)]
-    pub async fn new(database: &crate::config::Database) -> Result<Self, anyhow::Error> {
+    pub async fn new(database: &crate::config::Database) -> Result<Self, NewError> {
         let url = database.to_url();
 
         if log::log_enabled!(log::Level::Debug) {

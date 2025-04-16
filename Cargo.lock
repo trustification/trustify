@@ -6234,6 +6234,61 @@ dependencies = [
 ]
 
 [[package]]
+name = "rust-mcp-macros"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e130baeaba758b825eb2374caf8c628fc4ac05e5d4ba7b59315e1a665662f64"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn 2.0.100",
+]
+
+[[package]]
+name = "rust-mcp-schema"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ec89fb6e23c83d24643baa0002dd1f465f6951d46322e18c6f8e41aac270327"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "rust-mcp-sdk"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6df71d7ed581da263fa603a69902dbe83cfac31edfd0b5fc71d25adaea7f2cbb"
+dependencies = [
+ "async-trait",
+ "futures",
+ "rust-mcp-macros",
+ "rust-mcp-schema",
+ "rust-mcp-transport",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.12",
+ "tokio",
+]
+
+[[package]]
+name = "rust-mcp-transport"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7da10bdbdda9452e2e08c7a9edd0295d4ec1648ace5d6a43734012dc7080decb"
+dependencies = [
+ "async-trait",
+ "futures",
+ "rust-mcp-schema",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.12",
+ "tokio",
+]
+
+[[package]]
 name = "rust-s3"
 version = "0.35.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8758,6 +8813,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "trustify-module-mcp-server"
+version = "0.2.16"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "base64 0.22.1",
+ "chrono",
+ "clap",
+ "humantime",
+ "log",
+ "rust-mcp-macros",
+ "rust-mcp-schema",
+ "rust-mcp-sdk",
+ "rust-mcp-transport",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.12",
+ "tokio",
+ "trustify-auth",
+ "trustify-common",
+ "trustify-entity",
+ "trustify-module-analysis",
+ "trustify-module-fundamental",
+ "trustify-module-ingestor",
+ "trustify-module-storage",
+ "url",
+]
+
+[[package]]
 name = "trustify-module-storage"
 version = "0.2.16"
 dependencies = [
@@ -8904,6 +8988,7 @@ dependencies = [
  "tokio",
  "trustify-common",
  "trustify-infrastructure",
+ "trustify-module-mcp-server",
  "trustify-server",
 ]
 

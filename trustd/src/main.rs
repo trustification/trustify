@@ -1,10 +1,15 @@
 #![recursion_limit = "256"]
 
 use clap::Parser;
-use std::env;
-use std::process::{ExitCode, Termination};
-use tokio::select;
-use tokio::task::{LocalSet, spawn_local};
+use std::{
+    env,
+    process::{ExitCode, Termination},
+};
+use tokio::{
+    select,
+    task::{LocalSet, spawn_local},
+};
+use trustify_module_mcp_server as mcp;
 
 mod db;
 mod openapi;
@@ -20,6 +25,8 @@ pub enum Command {
     Db(db::Run),
     /// Access OpenAPI related information of the API server
     Openapi(openapi::Run),
+    /// MCP server
+    Mcp(mcp::Run),
 }
 
 #[derive(clap::Parser, Debug)]
@@ -41,6 +48,7 @@ impl Trustd {
             Some(Command::Importer(run)) => run.run().await,
             Some(Command::Db(run)) => run.run().await,
             Some(Command::Openapi(run)) => run.run().await,
+            Some(Command::Mcp(run)) => run.run().await,
             None => pm_mode().await,
         }
     }
