@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744731818536,
+  "lastUpdate": 1744799070961,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8723,6 +8723,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/6316078533a93a424fd3c2fc4f643e616ee73a6b"
         },
         "date": 1744731817766,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "d6d37cb9f82055cb2eb4ddbfb780d5eebd380b5f",
+          "message": "fix: prevent panic when handling non YAML content\n\nUsing a new crate suggested by @jcrossley3",
+          "timestamp": "2025-04-16T10:01:30Z",
+          "tree_id": "a7672b61c2affc3f0d165d9176b6e4aaa7731051",
+          "url": "https://github.com/trustification/trustify/commit/d6d37cb9f82055cb2eb4ddbfb780d5eebd380b5f"
+        },
+        "date": 1744799069899,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
