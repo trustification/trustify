@@ -6,17 +6,18 @@ pub mod weakness;
 mod format;
 pub use format::Format;
 
-use crate::service::dataset::{DatasetIngestResult, DatasetLoader};
-use crate::{graph::Graph, model::IngestResult};
+use crate::{
+    graph::Graph,
+    model::IngestResult,
+    service::dataset::{DatasetIngestResult, DatasetLoader},
+};
 use actix_web::{HttpResponse, ResponseError, body::BoxBody};
 use anyhow::anyhow;
 use parking_lot::Mutex;
 use sbom_walker::report::ReportSink;
 use sea_orm::error::DbErr;
-use std::sync::Arc;
-use std::{fmt::Debug, time::Instant};
+use std::{fmt::Debug, sync::Arc, time::Instant};
 use tokio::task::JoinError;
-use tokio_util::io::ReaderStream;
 use tracing::instrument;
 use trustify_common::{error::ErrorInformation, id::IdError};
 use trustify_entity::labels::Labels;
@@ -197,11 +198,10 @@ impl IngestorService {
             Format::Unknown => Format::from_bytes(bytes)?,
             v => v,
         };
-        let stream = ReaderStream::new(bytes);
 
         let result = self
             .storage
-            .store(stream)
+            .store(bytes)
             .await
             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
 

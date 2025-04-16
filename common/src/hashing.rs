@@ -1,8 +1,9 @@
 use ring::digest::{Context, Digest, SHA256, SHA384, SHA512};
-use std::io::Read;
+use std::{io::Read, pin::Pin, task::Poll};
+use tokio::io::{AsyncRead, ReadBuf};
 use tracing::instrument;
 
-pub struct HashingRead<R: Read> {
+pub struct HashingRead<R> {
     inner: R,
     contexts: Contexts,
 }
@@ -56,7 +57,7 @@ impl Default for Contexts {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Digests {
     pub sha512: Digest,
     pub sha384: Digest,
@@ -73,7 +74,7 @@ impl Digests {
     }
 }
 
-impl<R: Read> HashingRead<R> {
+impl<R> HashingRead<R> {
     /// Creates a HashingRead that uses SHA-512, SHA-384, and SHA-256
     pub fn new(inner: R) -> Self {
         Self {
@@ -81,12 +82,16 @@ impl<R: Read> HashingRead<R> {
             contexts: Contexts::new(),
         }
     }
+}
 
+impl<R> HashingRead<R> {
     /// Returns the current digests of the **data read so far**
     pub fn digests(&self) -> Digests {
         self.contexts.digests()
     }
+}
 
+impl<R: Read> HashingRead<R> {
     /// Finishes reading all data from the inner reader and returns the digests
     /// Takes ownership of self to prevent misuse
     pub fn finish(mut self) -> std::io::Result<Digests> {
@@ -100,6 +105,27 @@ impl<R: Read> Read for HashingRead<R> {
         let len = self.inner.read(buf)?;
         self.contexts.update(&buf[0..len]);
         Ok(len)
+    }
+}
+
+impl<R: AsyncRead + Unpin> AsyncRead for HashingRead<R> {
+    fn poll_read(
+        mut self: Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+        buf: &mut ReadBuf<'_>,
+    ) -> Poll<std::io::Result<()>> {
+        let this = &mut *self;
+        let pre_len = buf.filled().len();
+
+        let pinned = Pin::new(&mut this.inner);
+        let poll = pinned.poll_read(cx, buf);
+
+        if let Poll::Ready(Ok(())) = &poll {
+            let filled = &buf.filled()[pre_len..];
+            this.contexts.update(filled);
+        }
+
+        poll
     }
 }
 

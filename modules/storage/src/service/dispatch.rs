@@ -20,10 +20,9 @@ pub enum DispatchBackend {
 impl StorageBackend for DispatchBackend {
     type Error = anyhow::Error;
 
-    async fn store<E, S>(&self, stream: S) -> Result<StorageResult, StoreError<E, Self::Error>>
+    async fn store<S>(&self, stream: S) -> Result<StorageResult, StoreError<Self::Error>>
     where
-        E: Debug,
-        S: Stream<Item = Result<Bytes, E>>,
+        S: AsyncRead + Unpin,
     {
         match self {
             Self::Filesystem(backend) => backend.store(stream).await.map_err(Self::map_err),
@@ -55,9 +54,8 @@ impl StorageBackend for DispatchBackend {
 
 impl DispatchBackend {
     /// convert any backend error to [`anyhow::Error`].
-    fn map_err<S, B>(error: StoreError<S, B>) -> StoreError<S, anyhow::Error>
+    fn map_err<B>(error: StoreError<B>) -> StoreError<anyhow::Error>
     where
-        S: Debug,
         B: std::error::Error + Send + Sync + 'static,
     {
         match error {

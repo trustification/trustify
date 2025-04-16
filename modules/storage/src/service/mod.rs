@@ -2,6 +2,8 @@ pub mod dispatch;
 pub mod fs;
 pub mod s3;
 
+mod test;
+
 mod compression;
 mod temp;
 
@@ -13,21 +15,16 @@ use futures::Stream;
 use hex::ToHex;
 use std::fmt::{Debug, Display, Formatter};
 use std::future::Future;
+use tokio::io::AsyncRead;
 use trustify_common::hashing::Digests;
 use trustify_common::id::Id;
 
 #[derive(Debug, thiserror::Error)]
-pub enum StoreError<S: Debug, B: Debug> {
+pub enum StoreError<B: Debug> {
     #[error("stream error: {0}")]
-    Stream(#[source] S),
+    Stream(#[from] std::io::Error),
     #[error("backend error: {0}")]
     Backend(#[source] B),
-}
-
-impl<E: Debug> From<std::io::Error> for StoreError<E, std::io::Error> {
-    fn from(e: std::io::Error) -> Self {
-        StoreError::Backend(e)
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -36,6 +33,12 @@ pub struct StorageKey(String);
 impl Display for StorageKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.0)
+    }
+}
+
+impl From<StorageKey> for String {
+    fn from(value: StorageKey) -> Self {
+        value.0
     }
 }
 
@@ -85,13 +88,12 @@ pub trait StorageBackend {
     type Error: Debug;
 
     /// Store the content from a stream
-    fn store<E, S>(
+    fn store<S>(
         &self,
         stream: S,
-    ) -> impl Future<Output = Result<StorageResult, StoreError<E, Self::Error>>>
+    ) -> impl Future<Output = Result<StorageResult, StoreError<Self::Error>>>
     where
-        E: Debug,
-        S: Stream<Item = Result<Bytes, E>>;
+        S: AsyncRead + Unpin;
 
     /// Retrieve the content as an async reader
     fn retrieve<'a>(

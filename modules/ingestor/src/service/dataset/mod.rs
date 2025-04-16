@@ -7,15 +7,13 @@ use crate::{
 };
 use anyhow::anyhow;
 use bytes::Bytes;
-use sbom_walker::common::compression;
-use sbom_walker::common::compression::{DecompressionOptions, Detector};
+use sbom_walker::common::compression::{self, DecompressionOptions, Detector};
 use std::{
     collections::BTreeMap,
     io::{Cursor, Read},
     str::FromStr,
 };
 use tokio::runtime::Handle;
-use tokio_util::io::ReaderStream;
 use tracing::instrument;
 use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
@@ -102,7 +100,7 @@ impl<'g> DatasetLoader<'g> {
                         let labels = labels.clone().add("datasetFile", &full_name);
 
                         self.storage
-                            .store(ReaderStream::new(&*data))
+                            .store(&*data)
                             .await
                             .map_err(|err| Error::Storage(anyhow!("{err}")))?;
 
