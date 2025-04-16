@@ -12,6 +12,7 @@ path = "src/main.rs"
 [dependencies]
 trustify-common = { workspace = true }
 trustify-infrastructure = { workspace = true }
+trustify-module-mcp-server = { workspace = true }
 trustify-server = { workspace = true }
 
 anyhow = { workspace = true }

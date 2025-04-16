@@ -35,28 +35,23 @@ impl Run {
     }
 
     async fn create(self) -> anyhow::Result<ExitCode> {
-        match db::Database::bootstrap(&self.database).await {
-            Ok(_) => Ok(ExitCode::SUCCESS),
-            Err(e) => Err(e),
-        }
+        db::Database::bootstrap(&self.database).await?;
+
+        Ok(ExitCode::SUCCESS)
     }
+
     async fn refresh(self) -> anyhow::Result<ExitCode> {
-        match db::Database::new(&self.database).await {
-            Ok(db) => {
-                db.refresh().await?;
-                Ok(ExitCode::SUCCESS)
-            }
-            Err(e) => Err(e),
-        }
+        let db = db::Database::new(&self.database).await?;
+        db.refresh().await?;
+
+        Ok(ExitCode::SUCCESS)
     }
+
     async fn migrate(self) -> anyhow::Result<ExitCode> {
-        match db::Database::new(&self.database).await {
-            Ok(db) => {
-                db.migrate().await?;
-                Ok(ExitCode::SUCCESS)
-            }
-            Err(e) => Err(e),
-        }
+        let db = db::Database::new(&self.database).await?;
+        db.migrate().await?;
+
+        Ok(ExitCode::SUCCESS)
     }
 
     pub async fn start(&mut self) -> anyhow::Result<PostgreSQL> {
