@@ -4,32 +4,31 @@ use crate::{
     advisory::model::AdvisoryHead,
     purl::model::{details::purl::StatusContext, summary::purl::PurlSummary},
     sbom::{
-        model::SbomPackage,
+        model::{SbomPackage, raw_sql},
         service::{SbomService, sbom::QueryCatcher},
     },
     vulnerability::model::VulnerabilityHead,
 };
-use cpe::{cpe::Cpe, uri::OwnedUri};
+use cpe::uri::OwnedUri;
 use futures_util::{Stream, pin_mut, stream::StreamExt};
 use sea_orm::{
-    Condition, ConnectionTrait, DbBackend, DbErr, FromQueryResult, JoinType, ModelTrait,
-    QueryFilter, QuerySelect, RelationTrait, Statement, StreamTrait,
+    ConnectionTrait, DbBackend, DbErr, FromQueryResult, JoinType, ModelTrait, QueryFilter,
+    QuerySelect, RelationTrait, Statement, StreamTrait,
 };
-use sea_query::{Asterisk, Expr, Func, Query, SimpleExpr};
+use sea_query::{Asterisk, Expr, Func, SimpleExpr};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::{debug_span, instrument};
 use tracing_futures::Instrument;
 use trustify_common::{
-    cpe::CpeCompare,
     db::{VersionMatches, multi_model::SelectIntoMultiModel},
     memo::Memo,
 };
 use trustify_cvss::cvss3::{Cvss3Base, score::Score, severity::Severity};
 use trustify_entity::{
     advisory, advisory_vulnerability, base_purl, cvss3, purl_status, qualified_purl, sbom,
-    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, status, version_range,
-    versioned_purl, vulnerability,
+    sbom_node, sbom_package, sbom_package_purl_ref, status, version_range, versioned_purl,
+    vulnerability,
 };
 use utoipa::ToSchema;
 
@@ -79,22 +78,10 @@ impl SbomDetails {
                 .filter(Expr::col((status::Entity, status::Column::Slug)).is_in(statuses.clone()));
         }
 
-        // find all the CPEs associated with this SBOM
-        let subquery = Query::select()
-            .column(sbom_package_cpe_ref::Column::CpeId)
-            .from(sbom_package_cpe_ref::Entity)
-            .and_where(Expr::col(sbom_package_cpe_ref::Column::SbomId).eq(sbom.sbom_id))
-            .distinct()
-            .to_owned();
-
-        query = query.filter(
-            Condition::any()
-                .add(Expr::col((purl_status::Entity, purl_status::Column::ContextCpeId)).is_null())
-                .add(
-                    Expr::col((purl_status::Entity, purl_status::Column::ContextCpeId))
-                        .in_subquery(subquery),
-                ),
-        );
+        query = query.filter(Expr::cust_with_values(
+            raw_sql::CONTEXT_CPE_FILTER_SQL,
+            vec![sbom.sbom_id],
+        ));
 
         let relevant_advisory_info = query
             .join(
@@ -127,101 +114,10 @@ impl SbomDetails {
 
         log::info!("Result: {:?}", relevant_advisory_info.size_hint());
 
-        // The query for now is in the raw form for couple of reasons
-        // First some of the join are not easily (or at all) doable using sea-orm concepts
-        // Second, it's much easier to iterate over query and work on it in this form
-        // than using the code
-        // It might be a good practice to start like this for complex query logic and
-        // turn it into a code once things stabilize
-        let product_advisory_info = r#"
-            SELECT
-                "advisory"."id" AS "advisory$id",
-                "advisory"."identifier" AS "advisory$identifier",
-                "advisory"."version" AS "advisory$version",
-                "advisory"."document_id" AS "advisory$document_id",
-                "advisory"."deprecated" AS "advisory$deprecated",
-                "advisory"."issuer_id" AS "advisory$issuer_id",
-                "advisory"."published" AS "advisory$published",
-                "advisory"."modified" AS "advisory$modified",
-                "advisory"."withdrawn" AS "advisory$withdrawn",
-                "advisory"."title" AS "advisory$title",
-                "advisory"."labels" AS "advisory$labels",
-                "advisory"."source_document_id" AS "advisory$source_document_id",
-                "advisory_vulnerability"."advisory_id" AS "advisory_vulnerability$advisory_id",
-                "advisory_vulnerability"."vulnerability_id" AS "advisory_vulnerability$vulnerability_id",
-                "advisory_vulnerability"."title" AS "advisory_vulnerability$title",
-                "advisory_vulnerability"."summary" AS "advisory_vulnerability$summary",
-                "advisory_vulnerability"."description" AS "advisory_vulnerability$description",
-                "advisory_vulnerability"."reserved_date" AS "advisory_vulnerability$reserved_date",
-                "advisory_vulnerability"."discovery_date" AS "advisory_vulnerability$discovery_date",
-                "advisory_vulnerability"."release_date" AS "advisory_vulnerability$release_date",
-                "advisory_vulnerability"."cwes" AS "advisory_vulnerability$cwes",
-                "vulnerability"."id" AS "vulnerability$id",
-                "vulnerability"."title" AS "vulnerability$title",
-                "vulnerability"."reserved" AS "vulnerability$reserved",
-                "vulnerability"."published" AS "vulnerability$published",
-                "vulnerability"."modified" AS "vulnerability$modified",
-                "vulnerability"."withdrawn" AS "vulnerability$withdrawn",
-                "vulnerability"."cwes" AS "vulnerability$cwes",
-                "qualified_purl"."id" AS "qualified_purl$id",
-                "qualified_purl"."versioned_purl_id" AS "qualified_purl$versioned_purl_id",
-                "qualified_purl"."qualifiers" AS "qualified_purl$qualifiers",
-                "qualified_purl"."purl" AS "qualified_purl$purl",
-                "sbom_package"."sbom_id" AS "sbom_package$sbom_id",
-                "sbom_package"."node_id" AS "sbom_package$node_id",
-                "sbom_package"."version" AS "sbom_package$version",
-                "sbom_node"."sbom_id" AS "sbom_node$sbom_id",
-                "sbom_node"."node_id" AS "sbom_node$node_id",
-                "sbom_node"."name" AS "sbom_node$name",
-                "status"."id" AS "status$id",
-                "status"."slug" AS "status$slug",
-                "status"."name" AS "status$name",
-                "status"."description" AS "status$description",
-                "cpe"."id" AS "cpe$id",
-                "cpe"."part" AS "cpe$part",
-                "cpe"."vendor" AS "cpe$vendor",
-                "cpe"."product" AS "cpe$product",
-                "cpe"."version" AS "cpe$version",
-                "cpe"."update" AS "cpe$update",
-                "cpe"."edition" AS "cpe$edition",
-                "cpe"."language" AS "cpe$language",
-                "organization"."id" AS "organization$id",
-                "organization"."name" AS "organization$name",
-                "organization"."cpe_key" AS "organization$cpe_key",
-                "organization"."website" AS "organization$website"
-            FROM "sbom"
-            -- find statuses that matches SBOMs
-            JOIN "product_version" ON "product_version"."sbom_id" = "sbom"."sbom_id"
-            JOIN "product" ON "product_version"."product_id" = "product"."id"
-            JOIN "cpe" ON "product"."cpe_key" = "cpe"."product"
-            JOIN "product_status" ON "cpe"."id" = "product_status"."context_cpe_id" AND product_status.package IS NOT NULL
-            JOIN "product_version_range" ON "product_status"."product_version_range_id" = "product_version_range"."id"
-            JOIN "version_range" ON "product_version_range"."version_range_id" = "version_range"."id" AND version_matches("product_version"."version", "version_range".*)
-
-            -- now find matching purls in these statuses
-            JOIN base_purl ON product_status.package = base_purl.name OR product_status.package LIKE CONCAT(base_purl.namespace, '/', base_purl.name)
-            JOIN "versioned_purl" ON "versioned_purl"."base_purl_id" = "base_purl"."id"
-            JOIN "qualified_purl" ON "qualified_purl"."versioned_purl_id" = "versioned_purl"."id"
-            join sbom_package_purl_ref ON sbom_package_purl_ref.qualified_purl_id = qualified_purl.id AND sbom_package_purl_ref.sbom_id = sbom.sbom_id
-            JOIN sbom_package on sbom_package.sbom_id = sbom_package_purl_ref.sbom_id AND sbom_package.node_id = sbom_package_purl_ref.node_id
-            JOIN sbom_node on sbom_node.sbom_id = sbom_package_purl_ref.sbom_id AND sbom_node.node_id = sbom_package_purl_ref.node_id
-
-            -- get basic status info
-            JOIN "status" ON "product_status"."status_id" = "status"."id"
-            JOIN "advisory" ON "product_status"."advisory_id" = "advisory"."id"
-            LEFT JOIN "organization" ON "advisory"."issuer_id" = "organization"."id"
-            JOIN "advisory_vulnerability" ON "product_status"."advisory_id" = "advisory_vulnerability"."advisory_id"
-            AND "product_status"."vulnerability_id" = "advisory_vulnerability"."vulnerability_id"
-            JOIN "vulnerability" ON "advisory_vulnerability"."vulnerability_id" = "vulnerability"."id"
-            WHERE
-            "sbom"."sbom_id" = $1
-            AND ($2::text[] = ARRAY[]::text[] OR "status"."slug" = ANY($2::text[]))
-            "#;
-
         let result = tx
             .stream(Statement::from_sql_and_values(
                 DbBackend::Postgres,
-                product_advisory_info,
+                raw_sql::product_advisory_info_sql(),
                 [sbom.sbom_id.into(), statuses.into()],
             ))
             .await?
@@ -232,8 +128,7 @@ impl SbomDetails {
 
         let relevant_advisory_info = relevant_advisory_info.chain(result);
 
-        let advisories =
-            SbomAdvisory::from_models(&summary.described_by, relevant_advisory_info, tx).await?;
+        let advisories = SbomAdvisory::from_models(relevant_advisory_info, tx).await?;
 
         Ok(Some(SbomDetails {
             summary,
@@ -252,61 +147,20 @@ pub struct SbomAdvisory {
 impl SbomAdvisory {
     #[instrument(skip_all, err(level=tracing::Level::INFO))]
     pub async fn from_models<C: ConnectionTrait>(
-        described_by: &[SbomPackage],
         statuses: impl Stream<Item = Result<QueryCatcher, DbErr>>,
         tx: &C,
     ) -> Result<Vec<Self>, Error> {
-        log::info!(
-            "Packages: {}, Statuses: {:?}",
-            described_by.len(),
-            statuses.size_hint()
-        );
-
         let mut advisories = HashMap::new();
-
-        let sbom_cpes = described_by
-            .iter()
-            .flat_map(|each| each.cpe.iter())
-            .flat_map(|e| {
-                let e = e.replace(":*:", "::");
-                let e = e.replace(":*", "");
-                let result = cpe::uri::Uri::parse(&e);
-                result.ok().map(|wfn| wfn.as_uri().to_owned())
-            })
-            .collect::<Vec<_>>();
-
-        log::info!("CPEs: {}", sbom_cpes.len());
 
         let statuses = statuses.instrument(debug_span!("consuming statuses"));
         pin_mut!(statuses);
 
-        'status: while let Some(each) = statuses.next().await.transpose()? {
-            let status_cpe = if let Some(status_cpe) = &each.context_cpe {
-                let status_cpe: Result<OwnedUri, _> = status_cpe.try_into();
-                if let Ok(status_cpe) = status_cpe {
-                    if sbom_cpes.iter().any(|sbom_cpe| {
-                        let status_version = status_cpe.version().to_string();
-                        let sbom_version = sbom_cpe.version().to_string();
-                        // This is a bit simplified logic, but it is tune with v1 parity.
-                        // We need to investigate this more and apply proper version matching in the future
-                        status_cpe.is_superset(sbom_cpe)
-                            || status_version == "*"
-                            || sbom_version.starts_with(&status_version)
-                    }) {
-                        // status context is applicable, keep truckin'
-                    } else {
-                        // status context excludes this one, skip over
-                        continue 'status;
-                    }
-                    Some(status_cpe)
-                } else {
-                    None
-                }
-            } else {
-                None
-            };
+        while let Some(each) = statuses.next().await.transpose()? {
+            let status_cpe = each
+                .context_cpe
+                .as_ref()
+                .and_then(|cpe| cpe.try_into().ok());
 
-            // if we got here, then there's either no context or the context matches this SBOM
             let advisory = if let Some(advisory) = advisories.get_mut(&each.advisory.id) {
                 advisory
             } else {
@@ -329,19 +183,8 @@ impl SbomAdvisory {
             };
 
             let sbom_status = if let Some(status) = advisory.status.iter_mut().find(|status| {
-                if status.status == each.status.slug
+                status.status == each.status.slug
                     && status.vulnerability.identifier == each.vulnerability.id
-                {
-                    match (&status.context, &status_cpe) {
-                        (Some(StatusContext::Cpe(context_cpe)), Some(status_cpe)) => {
-                            *context_cpe == status_cpe.to_string()
-                        }
-                        (None, None) => true,
-                        _ => false,
-                    }
-                } else {
-                    false
-                }
             }) {
                 status
             } else {
