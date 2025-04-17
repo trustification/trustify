@@ -6,13 +6,13 @@ mod value;
 
 pub use columns::{Columns, IntoColumns};
 pub use filtering::Filtering;
-pub use value::{Valuable, Value};
+use value::Context;
+pub use value::{Valuable, Value, ValueContext};
 
 use filter::{Filter, Operator};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sort::Sort;
-use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::OnceLock;
 use utoipa::{IntoParams, ToSchema};
@@ -83,14 +83,14 @@ impl Query {
     /// returning true if the context is successfully matched by the
     /// query, by either a filter or a full-text search of all the
     /// values.
-    pub fn apply(&self, context: &HashMap<&'static str, Value>) -> bool {
+    pub fn apply(&self, context: impl Context) -> bool {
         use Operator::*;
         self.parse().iter().all(|c| match c {
             Constraint {
                 field: Some(f),
                 op: Some(o),
                 value: vs,
-            } => context.get(f.as_str()).is_some_and(|field| match o {
+            } => context.get(f).is_some_and(|field| match o {
                 Equal => vs.iter().any(|v| field.eq(v)),
                 NotEqual => vs.iter().all(|v| field.ne(v)),
                 Like => vs.iter().any(|v| field.like(v)),
