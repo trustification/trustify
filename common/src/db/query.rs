@@ -172,7 +172,7 @@ pub struct Query {
 
 #[derive(Debug, PartialEq, thiserror::Error)]
 pub enum Error {
-    #[error("query syntax error: {0}")]
+    #[error("Query syntax error: {0}")]
     SearchSyntax(String),
 }
 

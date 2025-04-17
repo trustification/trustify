@@ -16,7 +16,9 @@ impl Sort {
             [f] => (f, String::from("asc")),
             [f, dir] => (f, dir.to_lowercase()),
             _ => {
-                return Err(Error::SearchSyntax(format!("Invalid sort: '{s}'")));
+                return Err(Error::SearchSyntax(format!(
+                    "'{s}' is invalid sort syntax. Try 'field:dir'"
+                )));
             }
         };
         match columns.translate(field, &order, "") {
@@ -28,7 +30,7 @@ impl Sort {
                     "desc" => Order::Desc,
                     dir => {
                         return Err(Error::SearchSyntax(format!(
-                            "Invalid sort direction: '{dir}'"
+                            "'{dir}' is an invalid sort direction. Try [asc, desc]"
                         )));
                     }
                 },
@@ -57,12 +59,23 @@ pub(crate) mod tests {
         assert!(Sort::parse("Location", &columns).is_ok());
         assert!(Sort::parse("Location:Asc", &columns).is_ok());
         assert!(Sort::parse("Location:Desc", &columns).is_ok());
+
         // Bad sorts
         assert!(Sort::parse("foo", &columns).is_err());
         assert!(Sort::parse("foo:", &columns).is_err());
         assert!(Sort::parse(":foo", &columns).is_err());
-        assert!(Sort::parse("location:foo", &columns).is_err());
-        assert!(Sort::parse("location:asc:foo", &columns).is_err());
+        match Sort::parse("foo", &columns) {
+            Ok(_) => panic!("invalid field"),
+            Err(e) => log::error!("{e}"),
+        }
+        match Sort::parse("location:foo", &columns) {
+            Ok(_) => panic!("invalid sort direction"),
+            Err(e) => log::error!("{e}"),
+        }
+        match Sort::parse("location:asc:foo", &columns) {
+            Ok(_) => panic!("invalid sort syntax"),
+            Err(e) => log::error!("{e}"),
+        }
 
         // Good sorts with other columns
         assert!(
