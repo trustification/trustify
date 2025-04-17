@@ -3,6 +3,7 @@
 mod cyclonedx;
 mod details;
 mod graph;
+mod issue_1535;
 mod license;
 mod reingest;
 mod spdx;
