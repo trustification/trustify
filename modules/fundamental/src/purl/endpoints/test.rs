@@ -170,7 +170,7 @@ async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn purl_queries(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+async fn purl_component_queries(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let purl = Purl::from_str("pkg:rpm/fedora/curl@7.50.3-1.fc25?arch=i386&distro=fedora-25")?;
     let uuid = ctx
         .ingestor
@@ -202,13 +202,39 @@ async fn purl_queries(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         "version<=7.51",
         "version>6",
         "version<8",
-        // r"purl=pkg:rpm/fedora/curl@7.50.3-1.fc25?arch=i386\&distro=fedora-25",
-        // "purl~pkg:rpm/fedora/curl@7.50.3-1.fc25&arch=i386&distro=fedora-25",
-        // "purl~curl@7.50.3-1.fc25",
-        // "purl~curl@7.50.3-1.fc25&purl~arch=i386",
-        // "purl~curl@7.50.3-1&type=rpm",
         "distro~fedora",
         "arch=i386&name=curl",
+    ] {
+        query(each).await;
+    }
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn purl_filter_queries(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    ctx.ingest_documents(["spdx/quarkus-bom-3.2.11.Final-redhat-00001.json"])
+        .await?;
+
+    const PURL: &str = "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom";
+
+    let query = async |query| {
+        let app = caller(ctx).await.unwrap();
+        let uri = format!("/api/v2/purl?q={}", urlencoding::encode(query));
+        let request = TestRequest::get().uri(&uri).to_request();
+        let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
+        tracing::debug!(test = "", "{response:#?}");
+        assert_eq!(1, response.items.len(), "'q={query}'");
+        assert_eq!(PURL, response.items[0].head.purl.to_string(), "'q={query}'");
+    };
+
+    for each in [
+        r"purl=pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/\&type=pom",
+        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&qualifiers:type=pom&repository_url=https://maven.repository.redhat.com/ga/",
+        // "purl~quarkus-bom@3.2.11.Final-redhat", // cross-component query
+        "qualifiers:type=pom&type=maven", // note the two types
+        "quarkus-bom&qualifiers:type=pom&type=maven", // full text search filtered to match 1
     ] {
         query(each).await;
     }

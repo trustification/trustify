@@ -81,7 +81,7 @@ async fn withdrawn(ctx: &TrustifyContext) -> anyhow::Result<()> {
         .items
         .iter()
         .find(|purl| {
-            purl.head.purl.name == "commonmark" || purl.head.purl.version.as_deref() == Some("1.0")
+            purl.head.purl.name == "commonmark" && purl.head.purl.version.as_deref() == Some("1.0")
         })
         .expect("must find one");
 

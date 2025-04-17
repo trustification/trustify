@@ -9,7 +9,7 @@ use crate::{
 };
 use sea_orm::{
     ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
-    QuerySelect, prelude::Uuid,
+    QuerySelect, RelationTrait, prelude::Uuid,
 };
 use sea_query::Order;
 use tracing::instrument;
@@ -294,9 +294,11 @@ impl PurlService {
         paginated: Paginated,
         connection: &C,
     ) -> Result<PaginatedResults<PurlSummary>, Error> {
-        // use sea_orm::{ColumnType, IntoIdentity};
-        // use sea_query::{Expr, Func, SimpleExpr};
         let limiter = qualified_purl::Entity::find()
+            .join(
+                sea_orm::JoinType::LeftJoin,
+                qualified_purl::Relation::SbomPackage.def(),
+            )
             .filtering_with(
                 query,
                 qualified_purl::Entity
@@ -305,16 +307,9 @@ impl PurlService {
                     .json_keys("qualifiers", &["arch", "distro", "repository_url"])
                     .translator(|f, op, v| match f {
                         "type" => Some(format!("ty{op}{v}")),
+                        "purl" => Purl::translate(op, v),
                         _ => None,
                     }),
-                // .add_expr(
-                //     "purl",
-                //     SimpleExpr::FunctionCall(
-                //         Func::cust("get_purl".into_identity())
-                //             .arg(Expr::col(qualified_purl::Column::Id)),
-                //     ),
-                //     ColumnType::Text,
-                // ),
             )?
             .limiting(connection, paginated.offset, paginated.limit);
 

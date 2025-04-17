@@ -13,7 +13,7 @@ use super::Error;
 pub struct Columns {
     columns: Vec<(ColumnRef, ColumnType)>,
     translator: Option<Translator>,
-    json_keys: BTreeMap<&'static str, &'static str>,
+    json_keys: BTreeMap<&'static str, ColumnRef>,
     exprs: BTreeMap<&'static str, (Expr, ColumnType)>,
 }
 
@@ -141,8 +141,12 @@ impl Columns {
 
     /// Declare which query fields are the nested keys of a JSON column
     pub fn json_keys(mut self, column: &'static str, fields: &[&'static str]) -> Self {
-        for each in fields {
-            self.json_keys.insert(each, column);
+        if let Some((col_ref, ColumnType::Json | ColumnType::JsonBinary)) = self.find(column) {
+            for field in fields {
+                self.json_keys.insert(field, col_ref.clone());
+            }
+        } else {
+            log::warn!("No fields found for a JSON column named {column}");
         }
         self
     }
@@ -160,40 +164,37 @@ impl Columns {
                 _ => None,
             }))
             .chain(self.json_keys.iter().map(|(field, column)| {
-                Expr::expr(Expr::col(column.into_identity()).cast_json_field(*field))
+                Expr::expr(Expr::col(column.clone()).cast_json_field(*field))
             }))
     }
 
     /// Look up the column context for a given simple field name.
     pub(crate) fn for_field(&self, field: &str) -> Result<(Expr, ColumnType), Error> {
-        fn name_match(tgt: &str) -> impl Fn(&&(ColumnRef, ColumnType)) -> bool + '_ {
-            |(col, _)| {
-                matches!(col,
-                         ColumnRef::Column(name)
-                         | ColumnRef::TableColumn(_, name)
-                         | ColumnRef::SchemaTableColumn(_, _, name)
-                         if name.to_string().eq_ignore_ascii_case(tgt))
-            }
-        }
         if let Some(v) = self.exprs.get(field) {
             // expressions take precedence over matching column names, if any
             Ok(v.clone())
         } else {
-            self.columns
-                .iter()
-                .find(name_match(field))
+            self.find(field)
                 .map(|(r, d)| (Expr::col(r.clone()), d.clone()))
                 .or_else(|| {
-                    self.columns
-                        .iter()
-                        .filter(|(_, ty)| matches!(ty, ColumnType::Json | ColumnType::JsonBinary))
-                        .find(name_match(self.json_keys.get(field)?))
-                        .map(|(r, ty)| {
+                    // Compare field to json keys
+                    self.json_keys.get(field).map(|col| {
+                        (
+                            Expr::expr(Expr::col(col.clone()).cast_json_field(field)),
+                            ColumnType::Text,
+                        )
+                    })
+                })
+                .or_else(|| {
+                    // Check field for json object syntax: {column}:{key}
+                    field.split_once(':').map(|(col, key)| {
+                        self.find(col).map(|(col, _)| {
                             (
-                                Expr::expr(Expr::col(r.clone()).cast_json_field(field)),
-                                ty.clone(),
+                                Expr::expr(Expr::col(col.clone()).cast_json_field(key)),
+                                ColumnType::Text,
                             )
                         })
+                    })?
                 })
                 .ok_or(Error::SearchSyntax(format!(
                     "Invalid field name: '{field}'"
@@ -206,6 +207,18 @@ impl Columns {
             None => None,
             Some(f) => f(field, op, value),
         }
+    }
+
+    fn find(&self, field: &str) -> Option<(ColumnRef, ColumnType)> {
+        self.columns
+            .iter()
+            .find(|(col, _)| {
+                matches!(col, ColumnRef::Column(name)
+                     | ColumnRef::TableColumn(_, name)
+                     | ColumnRef::SchemaTableColumn(_, _, name)
+                     if name.to_string().eq_ignore_ascii_case(field))
+            })
+            .cloned()
     }
 }
 
@@ -380,7 +393,7 @@ mod tests {
         );
         assert_eq!(
             clause(q("foo"))?,
-            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (("purl" ->> 'name') ILIKE '%foo%') OR (("purl" ->> 'type') ILIKE '%foo%') OR (("purl" ->> 'version') ILIKE '%foo%')"#
+            r#"("advisory"."location" ILIKE '%foo%') OR ("advisory"."title" ILIKE '%foo%') OR (("advisory"."purl" ->> 'name') ILIKE '%foo%') OR (("advisory"."purl" ->> 'type') ILIKE '%foo%') OR (("advisory"."purl" ->> 'version') ILIKE '%foo%')"#
         );
         assert!(clause(q("missing=gone")).is_err());
         assert!(clause(q("").sort("name")).is_ok());
@@ -423,6 +436,33 @@ mod tests {
             ColumnType::Text,
         );
         test("pearl=42", r#"get_purl("purl") = 42"#, ColumnType::Integer);
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn adhoc_json_queries() -> Result<(), anyhow::Error> {
+        let clause = |query: Query| -> Result<String, Error> {
+            Ok(advisory::Entity::find()
+                .filtering(query)?
+                .build(sea_orm::DatabaseBackend::Postgres)
+                .to_string()
+                .split("WHERE ")
+                .last()
+                .unwrap()
+                .to_string())
+        };
+
+        assert_eq!(
+            clause(q("purl:name~log4j&purl:version>1.0"))?,
+            r#"(("advisory"."purl" ->> 'name') ILIKE '%log4j%') AND ("advisory"."purl" ->> 'version') > '1.0'"#
+        );
+        assert_eq!(
+            clause(q("purl:name=log4j").sort(r"purl:name"))?,
+            r#"("advisory"."purl" ->> 'name') = 'log4j' ORDER BY "advisory"."purl" ->> 'name' ASC"#
+        );
+        assert!(clause(q("missing:name=log4j")).is_err());
+        assert!(clause(q("").sort(r"missing:name")).is_err());
 
         Ok(())
     }

@@ -492,11 +492,7 @@ impl SbomContext {
             RelationshipReference::Root => (None, vec![], vec![]),
             RelationshipReference::Purl(purl) => {
                 creator.add(purl.clone());
-                (
-                    Some(purl.to_string()),
-                    vec![(purl.version_uuid(), purl.qualifier_uuid())],
-                    vec![],
-                )
+                (Some(purl.to_string()), vec![purl], vec![])
             }
             RelationshipReference::Cpe(cpe) => {
                 let cpe_ctx = self.graph.ingest_cpe22(cpe.clone(), connection).await?;
@@ -507,11 +503,7 @@ impl SbomContext {
             RelationshipReference::Root => (None, vec![], vec![]),
             RelationshipReference::Purl(purl) => {
                 creator.add(purl.clone());
-                (
-                    Some(purl.to_string()),
-                    vec![(purl.version_uuid(), purl.qualifier_uuid())],
-                    vec![],
-                )
+                (Some(purl.to_string()), vec![purl], vec![])
             }
             RelationshipReference::Cpe(cpe) => {
                 let cpe_ctx = self.graph.ingest_cpe22(cpe.clone(), connection).await?;
@@ -605,7 +597,7 @@ impl SbomContext {
         node_id: String,
         name: String,
         version: Option<String>,
-        purls: Vec<(Uuid, Uuid)>,
+        purls: Vec<Purl>,
         cpes: Vec<Uuid>,
         connection: &C,
     ) -> Result<(), Error> {
@@ -613,10 +605,7 @@ impl SbomContext {
 
         let refs = purls
             .into_iter()
-            .map(|(versioned_purl, qualified_purl)| PackageReference::Purl {
-                versioned_purl,
-                qualified_purl,
-            })
+            .map(PackageReference::Purl)
             .chain(cpes.into_iter().map(PackageReference::Cpe));
         creator.add(
             NodeInfoParam {

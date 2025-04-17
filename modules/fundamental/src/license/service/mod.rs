@@ -16,7 +16,8 @@ use trustify_common::{
 };
 use trustify_entity::{
     license, licensing_infos, qualified_purl, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
-    sbom_package_license, sbom_package_license::LicenseCategory, sbom_package_purl_ref,
+    sbom_package_license::{self, LicenseCategory},
+    sbom_package_purl_ref,
 };
 
 pub mod license_export;

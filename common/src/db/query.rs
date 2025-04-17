@@ -6,13 +6,13 @@ mod value;
 
 pub use columns::{Columns, IntoColumns};
 pub use filtering::Filtering;
-pub use value::{Valuable, Value};
+use value::Context;
+pub use value::{Valuable, Value, ValueContext};
 
 use filter::{Filter, Operator};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sort::Sort;
-use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::OnceLock;
 use utoipa::{IntoParams, ToSchema};
@@ -41,6 +41,10 @@ impl Query {
     /// filters of the form `{field}{op}{value}` may further constrain
     /// the results. Each `{field}` name must correspond to one of the
     /// selected Columns.
+    ///
+    /// Fields corresponding to JSON objects in the database may use a
+    /// ':' to delimit the column name and the object key,
+    /// e.g. `purl:name=foo`
     ///
     /// Both `{search}` and `{value}` may contain `|`-delimited
     /// alternate values that will result in an OR clause. Any literal
@@ -79,14 +83,14 @@ impl Query {
     /// returning true if the context is successfully matched by the
     /// query, by either a filter or a full-text search of all the
     /// values.
-    pub fn apply(&self, context: &HashMap<&'static str, Value>) -> bool {
+    pub fn apply(&self, context: impl Context) -> bool {
         use Operator::*;
         self.parse().iter().all(|c| match c {
             Constraint {
                 field: Some(f),
                 op: Some(o),
                 value: vs,
-            } => context.get(f.as_str()).is_some_and(|field| match o {
+            } => context.get(f).is_some_and(|field| match o {
                 Equal => vs.iter().any(|v| field.eq(v)),
                 NotEqual => vs.iter().all(|v| field.ne(v)),
                 Like => vs.iter().any(|v| field.like(v)),
@@ -110,7 +114,7 @@ impl Query {
 
     fn parse(&self) -> Vec<Constraint> {
         // regex for filters: {field}{op}{value}
-        const RE: &str = r"^(?<field>[[:word:]]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
+        const RE: &str = r"^(?<field>[[:word:]:]+)(?<op>=|!=|~|!~|>=|>|<=|<)(?<value>.*)$";
         static LOCK: OnceLock<Regex> = OnceLock::new();
         #[allow(clippy::unwrap_used)]
         let regex = LOCK.get_or_init(|| (Regex::new(RE).unwrap()));
