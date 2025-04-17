@@ -1,12 +1,18 @@
 
 .PHONY: all
-all: clean build
+all: clean check build
 
 ANTORA_CLI ?= npx antora
 
 .PHONY: clean
 clean:
 	${RM} -Rf build
+
+
+.PHONY: check
+check:
+	npm run format:check
+	npm run lint
 
 
 .PHONY: build

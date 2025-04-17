@@ -1,0 +1,7 @@
+build
+
+**/.git
+**/node_modules
+
+**/*.yml
+**/*.yaml
