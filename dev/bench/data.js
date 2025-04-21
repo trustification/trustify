@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1744799070961,
+  "lastUpdate": 1745235552073,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8752,6 +8752,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/d6d37cb9f82055cb2eb4ddbfb780d5eebd380b5f"
         },
         "date": 1744799069899,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "a3afdfed5485ad763cd7d5df142fe3db57cc97b9",
+          "message": "test: test reproducing the issue 1535\n\nThis is the panic we see when using serde_yml for this specific case:\n\n```\nfailures:\n    sbom::issue_1535::not_really_clearly_defined\n\n    test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 68\n    filtered out; finished in 4.51s\n\n    ──── STDERR:             trustify-module-fundamental::fundamental\n    sbom::issue_1535::not_really_clearly_defined\n\n    thread 'sbom::issue_1535::not_really_clearly_defined' panicked at\n    /home/heliofrota/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f\n    /libyml-0.0.5/src/scanner.rs:2798:17:\n    String join would overflow memory bounds\n    note: run with `RUST_BACKTRACE=1` environment variable to display\n    a backtrace\n\n      Cancelling due to test failure\n      ────────────\n           Summary [   4.526s] 1 test run: 0 passed, 1 failed, 422\n           skipped\n                   FAIL [   4.517s]\n                   trustify-module-fundamental::fundamental\n                   sbom::issue_1535::not_really_clearly_defined\n                   error: test run failed\n                   ➜  trustify git:(test) ✗\n```",
+          "timestamp": "2025-04-21T11:18:44Z",
+          "tree_id": "d3e1ca861579bc1ad73adf9e189a1fff4644fd9a",
+          "url": "https://github.com/trustification/trustify/commit/a3afdfed5485ad763cd7d5df142fe3db57cc97b9"
+        },
+        "date": 1745235550652,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
