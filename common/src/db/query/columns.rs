@@ -1,12 +1,22 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 
-use sea_orm::entity::ColumnDef;
-use sea_orm::{ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Iterable, sea_query};
-use sea_query::extension::postgres::PgExpr;
-use sea_query::{Alias, ColumnRef, Expr, IntoColumnRef, IntoIden, SimpleExpr};
+use chrono::Local;
+use human_date_parser::{ParseResult, from_human_time};
+use sea_orm::{
+    ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Iterable, Value as SeaValue,
+    entity::ColumnDef, sea_query,
+};
+use sea_query::{
+    Alias, ColumnRef, Expr, ExprTrait, IntoColumnRef, IntoIden, SimpleExpr,
+    extension::postgres::PgExpr,
+};
+use time::{
+    Date, OffsetDateTime, format_description::well_known::Rfc3339, macros::format_description,
+};
+use uuid::Uuid;
 
-use super::Error;
+use super::{Error, Operator};
 
 /// Context of columns which can be used for filtering and sorting.
 #[derive(Default, Debug, Clone)]
@@ -14,7 +24,7 @@ pub struct Columns {
     columns: Vec<(ColumnRef, ColumnType)>,
     translator: Option<Translator>,
     json_keys: BTreeMap<&'static str, ColumnRef>,
-    exprs: BTreeMap<&'static str, (Expr, ColumnType)>,
+    exprs: BTreeMap<&'static str, (SimpleExpr, ColumnType)>,
 }
 
 impl Display for Columns {
@@ -114,7 +124,7 @@ impl Columns {
 
     /// Add an arbitrary expression into the context.
     pub fn add_expr(mut self, name: &'static str, expr: SimpleExpr, ty: ColumnType) -> Self {
-        self.exprs.insert(name, (Expr::expr(expr), ty));
+        self.exprs.insert(name, (expr, ty));
         self
     }
 
@@ -151,56 +161,73 @@ impl Columns {
         self
     }
 
-    /// Return the columns that are string-ish
-    pub(crate) fn strings(&self) -> impl Iterator<Item = Expr> + '_ {
+    /// Return corresponding expressions for each of the string-ish columns
+    pub(crate) fn strings<'a>(&'a self, v: &'a str) -> impl Iterator<Item = SimpleExpr> + 'a {
         self.columns
             .iter()
-            .filter_map(|(col_ref, col_type)| match col_type {
-                ColumnType::String(_) | ColumnType::Text => Some(Expr::col(col_ref.clone())),
+            .filter_map(move |(col_ref, col_type)| match col_type {
+                ColumnType::String(_) | ColumnType::Text => {
+                    Some(Expr::col(col_ref.clone()).ilike(like(v)))
+                }
                 _ => None,
             })
             .chain(self.exprs.iter().filter_map(|(_, (ex, ty))| match ty {
-                ColumnType::String(_) | ColumnType::Text => Some(ex.clone()),
+                ColumnType::String(_) | ColumnType::Text => Some(ex.clone().ilike(like(v))),
                 _ => None,
             }))
             .chain(self.json_keys.iter().map(|(field, column)| {
-                Expr::expr(Expr::col(column.clone()).cast_json_field(*field))
+                Expr::col(column.clone())
+                    .cast_json_field(*field)
+                    .ilike(like(v))
             }))
     }
 
+    /// Return an expression representing a filter: "{field}{operator}{value}"
+    pub(crate) fn expression(
+        &self,
+        field: &str,
+        operator: &Operator,
+        value: &str,
+    ) -> Result<SimpleExpr, Error> {
+        self.for_field(field).and_then(|(lhs, ct)| {
+            match (value.to_lowercase().as_str(), operator) {
+                ("null", Operator::Equal) => Ok(lhs.is_null()),
+                ("null", Operator::NotEqual) => Ok(lhs.is_not_null()),
+                (_, Operator::Like) => Ok(lhs.ilike(like(value))),
+                (_, Operator::NotLike) => Ok(lhs.not_ilike(like(value))),
+                _ => parse(value, &ct).map(|rhs| lhs.binary(operator, rhs)),
+            }
+        })
+    }
+
     /// Look up the column context for a given simple field name.
-    pub(crate) fn for_field(&self, field: &str) -> Result<(Expr, ColumnType), Error> {
-        if let Some(v) = self.exprs.get(field) {
-            // expressions take precedence over matching column names, if any
-            Ok(v.clone())
-        } else {
-            self.find(field)
-                .map(|(r, d)| (Expr::col(r.clone()), d.clone()))
-                .or_else(|| {
-                    // Compare field to json keys
-                    self.json_keys.get(field).map(|col| {
-                        (
-                            Expr::expr(Expr::col(col.clone()).cast_json_field(field)),
-                            ColumnType::Text,
-                        )
+    pub(crate) fn for_field(&self, field: &str) -> Result<(SimpleExpr, ColumnType), Error> {
+        self.exprs
+            .get(field)
+            .cloned()
+            .or_else(|| {
+                self.find(field)
+                    .map(|(r, d)| (SimpleExpr::Column(r), d))
+                    .or_else(|| {
+                        // Compare field to json keys
+                        self.json_keys
+                            .get(field)
+                            .cloned()
+                            .map(|col| (Expr::col(col).cast_json_field(field), ColumnType::Text))
                     })
-                })
-                .or_else(|| {
-                    // Check field for json object syntax: {column}:{key}
-                    field.split_once(':').map(|(col, key)| {
-                        self.find(col).map(|(col, _)| {
-                            (
-                                Expr::expr(Expr::col(col.clone()).cast_json_field(key)),
-                                ColumnType::Text,
-                            )
-                        })
-                    })?
-                })
-                .ok_or(Error::SearchSyntax(format!(
-                    "'{field}' is an invalid field. Try [{}]",
-                    self.fields().join(", ")
-                )))
-        }
+                    .or_else(|| {
+                        // Check field for json object syntax, e.g. {column}:{key}
+                        field.split_once(':').map(|(col, key)| {
+                            self.find(col).map(|(col, _)| {
+                                (Expr::col(col).cast_json_field(key), ColumnType::Text)
+                            })
+                        })?
+                    })
+            })
+            .ok_or(Error::SearchSyntax(format!(
+                "'{field}' is an invalid field. Try [{}]",
+                self.fields().join(", ")
+            )))
     }
 
     pub(crate) fn translate(&self, field: &str, op: &str, value: &str) -> Option<String> {
@@ -240,6 +267,45 @@ impl Columns {
             })
             .cloned()
     }
+}
+
+fn like(s: &str) -> String {
+    format!("%{}%", s.replace('%', r"\%").replace('_', r"\_"))
+}
+
+fn parse(s: &str, ct: &ColumnType) -> Result<SimpleExpr, Error> {
+    fn err(e: impl Display) -> Error {
+        Error::SearchSyntax(format!(r#"conversion error: "{e}""#))
+    }
+    Ok(match ct {
+        ColumnType::Uuid => SimpleExpr::Value(SeaValue::from(s.parse::<Uuid>().map_err(err)?)),
+        ColumnType::Integer => SimpleExpr::Value(SeaValue::from(s.parse::<i32>().map_err(err)?)),
+        ColumnType::Decimal(_) | ColumnType::Float | ColumnType::Double => {
+            SimpleExpr::Value(SeaValue::from(s.parse::<f64>().map_err(err)?))
+        }
+        ColumnType::Enum { name, .. } => SimpleExpr::AsEnum(
+            name.clone(),
+            Box::new(SimpleExpr::Value(SeaValue::String(Some(Box::new(
+                s.to_owned(),
+            ))))),
+        ),
+        ColumnType::TimestampWithTimeZone => {
+            if let Ok(odt) = OffsetDateTime::parse(s, &Rfc3339) {
+                SimpleExpr::Value(SeaValue::from(odt))
+            } else if let Ok(d) = Date::parse(s, &format_description!("[year]-[month]-[day]")) {
+                SimpleExpr::Value(SeaValue::from(d))
+            } else if let Ok(human) = from_human_time(s, Local::now().naive_local()) {
+                match human {
+                    ParseResult::DateTime(dt) => SimpleExpr::Value(SeaValue::from(dt)),
+                    ParseResult::Date(d) => SimpleExpr::Value(SeaValue::from(d)),
+                    ParseResult::Time(t) => SimpleExpr::Value(SeaValue::from(t)),
+                }
+            } else {
+                SimpleExpr::Value(SeaValue::from(s))
+            }
+        }
+        _ => SimpleExpr::Value(SeaValue::from(s)),
+    })
 }
 
 #[cfg(test)]
