@@ -1,61 +1,73 @@
 use super::{Columns, Error, q};
-use chrono::Local;
-use human_date_parser::{ParseResult, from_human_time};
 use sea_orm::{
-    ColumnType, Condition, IntoSimpleExpr, Value as SeaValue, sea_query,
-    sea_query::{ConditionExpression, IntoCondition, extension::postgres::PgExpr},
+    Condition,
+    sea_query::{BinOper, ConditionExpression, IntoCondition},
 };
-use sea_query::{BinOper, Expr, Keyword, SimpleExpr};
 use std::{
     fmt::{Display, Formatter},
     str::FromStr,
 };
-use time::{
-    Date, OffsetDateTime, format_description::well_known::Rfc3339, macros::format_description,
-};
-use uuid::Uuid;
 
-#[derive(Debug)]
-pub(crate) struct Filter {
-    operands: Operand,
-    operator: Operator,
+pub struct Filter {
+    clause: ConditionExpression,
 }
 
-impl Filter {
-    pub(crate) fn all(filters: Vec<Filter>) -> Self {
-        Filter {
-            operator: Operator::And,
-            operands: Operand::Composite(filters),
+impl IntoCondition for Filter {
+    fn into_condition(self) -> Condition {
+        match self.clause {
+            ConditionExpression::Condition(c) => c,
+            ConditionExpression::SimpleExpr(s) => s.into_condition(),
         }
     }
 }
 
-// From a filter string of the form {field}{op}{value}
+impl From<Filter> for ConditionExpression {
+    fn from(f: Filter) -> Self {
+        f.clause
+    }
+}
+
+impl Filter {
+    pub(crate) fn all(filters: Vec<Filter>) -> Self {
+        Self {
+            clause: ConditionExpression::Condition(
+                filters
+                    .into_iter()
+                    .fold(Condition::all(), |and, f| and.add(f)),
+            ),
+        }
+    }
+}
+
+// From a filter string of the form {field}{op}{values} where multiple
+// values are delimited by '|'
 impl TryFrom<(&str, Operator, &Vec<String>, &Columns)> for Filter {
     type Error = Error;
     fn try_from(tuple: (&str, Operator, &Vec<String>, &Columns)) -> Result<Self, Self::Error> {
         let (field, operator, values, columns) = tuple;
+        let condition = values
+            .iter()
+            .map(
+                |s| match columns.translate(field, &operator.to_string(), s) {
+                    Some(x) => q(&x).filter_for(columns),
+                    None => columns.expression(field, &operator, s).map(|expr| Filter {
+                        clause: ConditionExpression::SimpleExpr(expr),
+                    }),
+                },
+            )
+            .collect::<Result<Vec<_>, _>>()?
+            .into_iter()
+            .fold(
+                // We AND all the "not" values, otherwise OR
+                match operator {
+                    Operator::NotLike | Operator::NotEqual => Condition::all(),
+                    _ => Condition::any(),
+                },
+                |cond, f| cond.add(f),
+            );
+
         Ok(Filter {
-            operator: match operator {
-                Operator::NotLike | Operator::NotEqual => Operator::And,
-                _ => Operator::Or,
-            },
-            operands: Operand::Composite(
-                values
-                    .iter()
-                    .map(
-                        |s| match columns.translate(field, &operator.to_string(), s) {
-                            Some(x) => q(&x).filter_for(columns),
-                            None => columns.for_field(field).and_then(|(expr, ref ty)| {
-                                Arg::parse(s, ty).map(|v| Filter {
-                                    operands: Operand::Simple(expr, v),
-                                    operator,
-                                })
-                            }),
-                        },
-                    )
-                    .collect::<Result<Vec<_>, _>>()?,
-            ),
+            clause: ConditionExpression::Condition(condition),
         })
     }
 }
@@ -65,146 +77,20 @@ impl TryFrom<(&Vec<String>, &Columns)> for Filter {
     type Error = Error;
     fn try_from(tuple: (&Vec<String>, &Columns)) -> Result<Self, Self::Error> {
         let (values, columns) = tuple;
+        let condition = values
+            .iter()
+            .flat_map(|s| {
+                // Create a LIKE filter for all the string-ish columns
+                columns.strings(s).map(move |expr| Filter {
+                    clause: ConditionExpression::SimpleExpr(expr),
+                })
+            })
+            .fold(Condition::any(), |cond, f| cond.add(f));
+
         Ok(Filter {
-            operator: Operator::Or,
-            operands: Operand::Composite(
-                values
-                    .iter()
-                    .flat_map(|s| {
-                        // Create a LIKE filter for all the string-ish columns
-                        columns.strings().map(move |expr| Filter {
-                            operands: Operand::Simple(expr, Arg::Value(SeaValue::from(s))),
-                            operator: Operator::Like,
-                        })
-                    })
-                    .collect(),
-            ),
+            clause: ConditionExpression::Condition(condition),
         })
     }
-}
-
-impl IntoCondition for Filter {
-    fn into_condition(self) -> Condition {
-        match self.operands {
-            Operand::Simple(expr, v) => match self.operator {
-                Operator::Equal => match v {
-                    Arg::Null => expr.is_null(),
-                    v => expr.binary(BinOper::Equal, v.into_simple_expr()),
-                },
-                Operator::NotEqual => match v {
-                    Arg::Null => expr.is_not_null(),
-                    v => expr.binary(BinOper::NotEqual, v.into_simple_expr()),
-                },
-                Operator::GreaterThan => expr.binary(BinOper::GreaterThan, v.into_simple_expr()),
-                Operator::GreaterThanOrEqual => {
-                    expr.binary(BinOper::GreaterThanOrEqual, v.into_simple_expr())
-                }
-                Operator::LessThan => expr.binary(BinOper::SmallerThan, v.into_simple_expr()),
-                Operator::LessThanOrEqual => {
-                    expr.binary(BinOper::SmallerThanOrEqual, v.into_simple_expr())
-                }
-                op @ (Operator::Like | Operator::NotLike) => {
-                    if let Arg::Value(v) = v {
-                        let v = format!(
-                            "%{}%",
-                            v.unwrap::<String>().replace('%', r"\%").replace('_', r"\_")
-                        );
-                        if op == Operator::Like {
-                            expr.ilike(v)
-                        } else {
-                            expr.not_ilike(v)
-                        }
-                    } else {
-                        expr.into()
-                    }
-                }
-                _ => unreachable!(),
-            }
-            .into_condition(),
-            Operand::Composite(v) => match self.operator {
-                Operator::And => v.into_iter().fold(Condition::all(), |and, f| and.add(f)),
-                Operator::Or => v.into_iter().fold(Condition::any(), |or, f| or.add(f)),
-                _ => unreachable!(),
-            },
-        }
-    }
-}
-
-impl From<Filter> for ConditionExpression {
-    fn from(f: Filter) -> Self {
-        ConditionExpression::Condition(f.into_condition())
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////
-// Arg
-/////////////////////////////////////////////////////////////////////////
-
-#[derive(Debug)]
-enum Arg {
-    Value(SeaValue),
-    SimpleExpr(SimpleExpr),
-    Null,
-}
-
-impl IntoSimpleExpr for Arg {
-    fn into_simple_expr(self) -> SimpleExpr {
-        match self {
-            Arg::Value(inner) => SimpleExpr::Value(inner),
-            Arg::SimpleExpr(inner) => inner,
-            Arg::Null => SimpleExpr::Keyword(Keyword::Null),
-        }
-    }
-}
-
-impl Arg {
-    fn parse(s: &str, ct: &ColumnType) -> Result<Self, Error> {
-        fn err(e: impl Display) -> Error {
-            Error::SearchSyntax(format!(r#"conversion error: "{e}""#))
-        }
-        if s.eq_ignore_ascii_case("null") {
-            return Ok(Arg::Null);
-        }
-        Ok(match ct {
-            ColumnType::Uuid => Arg::Value(SeaValue::from(s.parse::<Uuid>().map_err(err)?)),
-            ColumnType::Integer => Arg::Value(SeaValue::from(s.parse::<i32>().map_err(err)?)),
-            ColumnType::Decimal(_) | ColumnType::Float | ColumnType::Double => {
-                Arg::Value(SeaValue::from(s.parse::<f64>().map_err(err)?))
-            }
-            ColumnType::Enum { name, .. } => Arg::SimpleExpr(SimpleExpr::AsEnum(
-                name.clone(),
-                Box::new(SimpleExpr::Value(SeaValue::String(Some(Box::new(
-                    s.to_owned(),
-                ))))),
-            )),
-            ColumnType::TimestampWithTimeZone => {
-                if let Ok(odt) = OffsetDateTime::parse(s, &Rfc3339) {
-                    Arg::Value(SeaValue::from(odt))
-                } else if let Ok(d) = Date::parse(s, &format_description!("[year]-[month]-[day]")) {
-                    Arg::Value(SeaValue::from(d))
-                } else if let Ok(human) = from_human_time(s, Local::now().naive_local()) {
-                    match human {
-                        ParseResult::DateTime(dt) => Arg::Value(SeaValue::from(dt)),
-                        ParseResult::Date(d) => Arg::Value(SeaValue::from(d)),
-                        ParseResult::Time(t) => Arg::Value(SeaValue::from(t)),
-                    }
-                } else {
-                    Arg::Value(SeaValue::from(s))
-                }
-            }
-            _ => Arg::Value(SeaValue::from(s)),
-        })
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////
-// Operands & Operators
-/////////////////////////////////////////////////////////////////////////
-
-#[derive(Debug)]
-enum Operand {
-    Simple(Expr, Arg),
-    Composite(Vec<Filter>),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -257,12 +143,28 @@ impl FromStr for Operator {
         }
     }
 }
+impl From<&Operator> for BinOper {
+    fn from(this: &Operator) -> BinOper {
+        use Operator::*;
+        match this {
+            Equal => BinOper::Equal,
+            NotEqual => BinOper::NotEqual,
+            Like => BinOper::Like,
+            NotLike => BinOper::NotLike,
+            GreaterThan => BinOper::GreaterThan,
+            GreaterThanOrEqual => BinOper::GreaterThanOrEqual,
+            LessThan => BinOper::SmallerThan,
+            LessThanOrEqual => BinOper::SmallerThanOrEqual,
+            And => BinOper::And,
+            Or => BinOper::Or,
+        }
+    }
+}
 
 #[cfg(test)]
 pub(crate) mod tests {
     use super::super::tests::*;
     use super::super::*;
-    use super::*;
     use chrono::{Local, TimeDelta};
     use sea_orm::{QuerySelect, QueryTrait};
     use test_log::test;
@@ -283,47 +185,13 @@ pub(crate) mod tests {
     }
 
     #[test(tokio::test)]
-    async fn filters() -> Result<(), anyhow::Error> {
-        let columns = advisory::Entity.columns();
-        let test = |s: &str, expected: Operator| match q(s).filter_for(&columns) {
-            Ok(Filter {
-                operands: Operand::Composite(v),
-                ..
-            }) => assert_eq!(
-                v[0].operator, expected,
-                "The query '{s}' didn't resolve to {expected:?}"
-            ),
-            _ => panic!("The query '{s}' didn't resolve to {expected:?}"),
-        };
-
-        // Good filters
-        test("location=foo", Operator::Equal);
-        test("location!=foo", Operator::NotEqual);
-        test("location~foo", Operator::Like);
-        test("location!~foo", Operator::NotLike);
-        test("location>foo", Operator::GreaterThan);
-        test("location>=foo", Operator::GreaterThanOrEqual);
-        test("location<foo", Operator::LessThan);
-        test("location<=foo", Operator::LessThanOrEqual);
-
+    async fn conditions() -> Result<(), anyhow::Error> {
         // If a query matches the '{field}{op}{value}' regex, then the
         // first operand must resolve to a field on the Entity
-        match q("foo=bar").filter_for(&columns) {
+        match where_clause("foo=bar") {
             Ok(_) => panic!("invalid field"),
             Err(e) => log::error!("{e}"),
         }
-
-        // There aren't many bad queries since random text is
-        // considered a "full-text search" in which an OR clause is
-        // constructed from a LIKE clause for all string fields in the
-        // entity.
-        test("search the entity", Operator::Like);
-
-        Ok(())
-    }
-
-    #[test(tokio::test)]
-    async fn conditions() -> Result<(), anyhow::Error> {
         assert_eq!(
             where_clause("location=foo")?,
             r#""advisory"."location" = 'foo'"#

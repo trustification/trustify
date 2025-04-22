@@ -1,9 +1,9 @@
 use super::{Columns, Error};
 use sea_orm::{Order, QueryOrder};
-use sea_query::Expr;
+use sea_query::SimpleExpr;
 
 pub(crate) struct Sort {
-    field: Expr,
+    field: SimpleExpr,
     order: Order,
 }
 

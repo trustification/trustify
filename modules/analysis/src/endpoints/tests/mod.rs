@@ -405,11 +405,10 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
         "cpe~cpe:/a:redhat:quarkus:3.2::el8",
         "cpe~cpe:/a:redhat:quarkus:3.2",
         "cpe~cpe:/a::quarkus",
-        // "pom", // TODO:  OR ("qualified_purl"."purl") @? '$.** ? (@ like_regex "pom" flag "i")'
-        "purl~quarkus-bom", // invalid PURL results in a full-text search
-        "cpe~redhat",       // invalid CPE results in a full-text search
-        "purl~quarkus-bom&cpe~redhat", // essentially the same as `quarkus|redhat`
-        "purl~quarkus-bom&cpe~cpe:/a:redhat", // valid CPE so no full-text search
+        "purl~quarkus",                   // invalid PURL results in a full-text search
+        "cpe~redhat",                     // invalid CPE results in a full-text search
+        "purl~quarkus&cpe~redhat",        // essentially the same as `quarkus|redhat`
+        "purl~quarkus&cpe~cpe:/a:redhat", // valid CPE, invalid PURL so full-text search
     ] {
         assert!(
             query(each).await.contains_subset(json!({
@@ -418,7 +417,7 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
                     "cpe": ["cpe:/a:redhat:quarkus:3.2:*:el8:*"]
                 }]
             })),
-            "for {each}"
+            "test failed for '{each}'"
         );
     }
 
