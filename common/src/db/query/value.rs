@@ -267,6 +267,8 @@ pub(crate) mod tests {
         assert!(q("purl:version=1.0").apply(&context));
         assert!(q("purl:version=42").apply(&context));
         assert!(!q("purl:version<1").apply(&context));
+        assert!(q("42").apply(&context));
+        assert!(!q("43").apply(&context));
 
         Ok(())
     }
