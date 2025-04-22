@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745235552073,
+  "lastUpdate": 1745340762646,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8781,6 +8781,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/a3afdfed5485ad763cd7d5df142fe3db57cc97b9"
         },
         "date": 1745235550652,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": false,
+          "id": "e7cebe609aa11e57b4780c099351f539fa272af8",
+          "message": "remove the quoted quotes in the error message",
+          "timestamp": "2025-04-22T16:31:59Z",
+          "tree_id": "96bd03110bf8bce292fc11196d5d9b48ced39933",
+          "url": "https://github.com/trustification/trustify/commit/e7cebe609aa11e57b4780c099351f539fa272af8"
+        },
+        "date": 1745340761741,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
