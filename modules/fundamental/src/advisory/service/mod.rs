@@ -208,7 +208,7 @@ impl AdvisoryService {
     ) -> Result<u64, Error> {
         let stmt = Statement::from_sql_and_values(
             connection.get_database_backend(),
-            r#"DELETE FROM advisory WHERE id=$1 RETURNING identifier"#,
+            r#"DELETE FROM advisory WHERE id=$1 RETURNING identifier, source_document_id"#,
             [id.into()],
         );
 
@@ -217,7 +217,13 @@ impl AdvisoryService {
 
         for row in result {
             let identifier = row.try_get_by_index::<String>(0)?;
+            let source_document = row.try_get_by_index::<Option<Uuid>>(1)?;
             UpdateDeprecatedAdvisory::execute(connection, &identifier).await?;
+            if let Some(doc) = source_document {
+                source_document::Entity::delete_by_id(doc)
+                    .exec(connection)
+                    .await?;
+            }
         }
 
         Ok(rows_affected as u64)
