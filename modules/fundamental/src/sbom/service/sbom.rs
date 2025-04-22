@@ -9,8 +9,8 @@ use crate::{
 use futures_util::{StreamExt, TryStreamExt, stream};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
-    QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns, StreamTrait,
-    prelude::Uuid,
+    QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns, Statement,
+    StreamTrait, prelude::Uuid,
 };
 use sea_query::{Expr, JoinType, extension::postgres::PgExpr};
 use serde_json::Value;
@@ -91,11 +91,25 @@ impl SbomService {
         id: Uuid,
         connection: &C,
     ) -> Result<u64, Error> {
-        let query = sbom::Entity::delete_by_id(id);
+        let stmt = Statement::from_sql_and_values(
+            connection.get_database_backend(),
+            r#"DELETE FROM sbom WHERE sbom_id=$1 RETURNING source_document_id"#,
+            [id.into()],
+        );
 
-        let result = query.exec(connection).await?;
+        let result = connection.query_all(stmt).await?;
+        let rows_affected = result.len();
 
-        Ok(result.rows_affected)
+        for row in result {
+            let source_document = row.try_get_by_index::<Option<Uuid>>(0)?;
+            if let Some(doc) = source_document {
+                source_document::Entity::delete_by_id(doc)
+                    .exec(connection)
+                    .await?;
+            }
+        }
+
+        Ok(rows_affected as u64)
     }
 
     /// fetch all SBOMs

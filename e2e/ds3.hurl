@@ -7,10 +7,13 @@ HTTP 201
 [Asserts]
 jsonpath "$.files.['spdx/quarkus-bom-2.13.8.Final-redhat-00004.json.bz2'].id" exists
 jsonpath "$.files.['spdx/ubi8-8.8-1067.json.bz2'].id" exists
+jsonpath "$.files.['csaf/2023/cve-2023-0044.json'].id" exists
 
 [Captures]
 quarkus_sbom_id: jsonpath "$.files.['spdx/quarkus-bom-2.13.8.Final-redhat-00004.json.bz2'].id"
 ubi8_sbom_id: jsonpath "$.files.['spdx/ubi8-8.8-1067.json.bz2'].id"
+advisory_id: jsonpath "$.files.['csaf/2023/cve-2023-0044.json'].id"
+
 
 # Check vulnerabilities for UBI 8 SBOM
 GET http://localhost:8080/api/v2/sbom/{{ubi8_sbom_id}}/advisory
@@ -34,3 +37,13 @@ HTTP 200
 
 [Asserts]
 jsonpath "$.title" not isEmpty
+
+## Test delete and re-upload advisory
+DELETE http://localhost:8080/api/v2/advisory/{{advisory_id}}
+
+HTTP 200
+
+POST http://localhost:8080/api/v2/advisory
+file,etc/datasets/ds3/csaf/2023/cve-2023-0044.json;
+
+HTTP 201
