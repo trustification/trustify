@@ -16,7 +16,7 @@ use crate::{
     sbom::{
         model::{
             SbomExternalPackageReference, SbomNodeReference, SbomPackage, SbomPackageRelation,
-            SbomSummary, Which, details::SbomAdvisory,
+            SbomStatus, SbomSummary, Which, details::SbomAdvisory,
         },
         service::SbomService,
     },
@@ -69,10 +69,37 @@ pub fn configure(
         .service(download)
         .service(label::set)
         .service(label::update)
-        .service(get_license_export);
+        .service(get_license_export)
+        .service(get_sbom_status);
 }
 
 const CONTENT_TYPE_GZIP: &str = "application/gzip";
+
+#[utoipa::path(
+    tag = "sbom",
+    operation_id = "getSbomStatus",
+    params(
+    ("id" = String, Path,),
+    ),
+    responses(
+    (status = 200, description = "sbom status", body = PaginatedResults<SbomStatus>),
+    (status = 404, description = "The sbom status could not be found"),
+    ),
+)]
+#[get("/v2/sbom/{id}/sbom-status")]
+pub async fn get_sbom_status(
+    fetcher: web::Data<SbomService>,
+    db: web::Data<Database>,
+    id: web::Path<String>,
+) -> actix_web::Result<impl Responder> {
+    let id = Id::from_str(&id).map_err(Error::IdKey)?;
+    println!("get_sbom_statusget_sbom_statusget_sbom_statusget_sbom_status");
+    let result = fetcher
+        .fetch_sbom_status(id.try_as_uid().unwrap_or_default(), db.as_ref())
+        .await?;
+
+    Ok(HttpResponse::Ok().json(result))
+}
 
 #[utoipa::path(
     tag = "sbom",

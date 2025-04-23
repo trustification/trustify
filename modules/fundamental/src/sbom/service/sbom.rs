@@ -3,18 +3,21 @@ use crate::{
     Error,
     sbom::model::{
         SbomExternalPackageReference, SbomNodeReference, SbomPackage, SbomPackageRelation,
-        SbomSummary, Which, details::SbomDetails,
+        SbomStatus, SbomSummary, Which, details::SbomDetails,
     },
 };
 use futures_util::{StreamExt, TryStreamExt, stream};
 use sea_orm::{
-    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, IntoSimpleExpr, QueryFilter,
-    QueryOrder, QueryResult, QuerySelect, RelationTrait, Select, SelectColumns, StreamTrait,
-    prelude::Uuid,
+    ColumnTrait, ConnectionTrait, DbErr, EntityTrait, FromQueryResult, IntoSimpleExpr,
+    PaginatorTrait, QueryFilter, QueryOrder, QueryResult, QuerySelect, RelationTrait, Select,
+    SelectColumns, StreamTrait, prelude::Uuid,
 };
-use sea_query::{Expr, JoinType, extension::postgres::PgExpr};
+use sea_query::{Condition, Expr, JoinType, extension::postgres::PgExpr};
 use serde_json::Value;
-use std::{collections::HashMap, fmt::Debug};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Debug,
+};
 use tracing::instrument;
 use trustify_common::{
     cpe::Cpe,
@@ -27,19 +30,70 @@ use trustify_common::{
     model::{Paginated, PaginatedResults},
     purl::Purl,
 };
+use trustify_entity::sbom_package_license::LicenseCategory;
 use trustify_entity::{
     advisory, advisory_vulnerability, base_purl,
     cpe::{self, CpeDto},
     labels::Labels,
-    organization, package_relates_to_package,
+    license, organization, package_relates_to_package,
     qualified_purl::{self, CanonicalPurl},
     relationship::Relationship,
     sbom::{self, SbomNodeLink},
-    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_purl_ref, source_document, status,
-    versioned_purl, vulnerability,
+    sbom_node, sbom_package, sbom_package_cpe_ref, sbom_package_license, sbom_package_purl_ref,
+    source_document, status, versioned_purl, vulnerability,
 };
 
 impl SbomService {
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn fetch_sbom_status<C: ConnectionTrait>(
+        &self,
+        sbom_id: Uuid,
+        connection: &C,
+    ) -> Result<SbomStatus, Error> {
+        let package_count = sbom_package::Entity::find()
+            .filter(sbom_package::Column::SbomId.eq(sbom_id))
+            .count(connection)
+            .await?;
+
+        let package_count_usize = package_count as usize;
+
+        let result_package_licenses: Vec<Option<Vec<String>>> =
+            sbom_package_license::Entity::find()
+                .filter(sbom_package_license::Column::SbomId.eq(sbom_id))
+                .join(
+                    JoinType::InnerJoin,
+                    sbom_package_license::Relation::License.def(),
+                )
+                .filter(
+                    Condition::all().add(
+                        sbom_package_license::Column::LicenseType.eq(LicenseCategory::Declared),
+                    ),
+                )
+                .select_only()
+                .column_as(license::Column::SpdxLicenses, "license_ids")
+                .into_tuple::<(Option<Vec<String>>,)>()
+                .all(connection)
+                .await?
+                .into_iter()
+                .map(|(ids,)| ids)
+                .collect();
+        let unique_licenses: HashSet<_> = result_package_licenses
+            .into_iter()
+            .flatten()
+            .flatten()
+            .collect();
+        let unique_licenses: HashSet<_> = unique_licenses
+            .iter()
+            .filter(|l| l.to_string() != *"NOASSERTION")
+            .collect();
+        let result = SbomStatus {
+            total_packages: package_count_usize,
+            total_licenses: unique_licenses.len(),
+        };
+
+        Ok(result)
+    }
+
     #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
     async fn fetch_sbom<C: ConnectionTrait>(
         &self,
@@ -664,6 +718,22 @@ mod test {
     use trustify_common::hashing::Digests;
     use trustify_entity::labels::Labels;
     use trustify_test_context::TrustifyContext;
+
+    #[test_context(TrustifyContext)]
+    #[test(tokio::test)]
+    async fn sboms_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+        let result = ctx
+            .ingest_document("spdx/OCP-TOOLS-4.11-RHEL-8.json")
+            .await?;
+
+        let fetch = SbomService::new(ctx.db.clone());
+        let sbom_status = fetch
+            .fetch_sbom_status(result.id.try_as_uid().unwrap_or_default(), &ctx.db)
+            .await?;
+        assert_eq!(3274, sbom_status.total_packages);
+        assert_eq!(10, sbom_status.total_licenses);
+        Ok(())
+    }
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
