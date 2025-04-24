@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745340762646,
+  "lastUpdate": 1745481475489,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8810,6 +8810,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/e7cebe609aa11e57b4780c099351f539fa272af8"
         },
         "date": 1745340761741,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "a1bf142f10dee18ab088cbf828035dd7f0d9fa49",
+          "message": "refactor: move advisory status cpe filtering to the queries",
+          "timestamp": "2025-04-24T07:34:46Z",
+          "tree_id": "f3f508edb66ec77be7da6844feccdd291632c3a9",
+          "url": "https://github.com/trustification/trustify/commit/a1bf142f10dee18ab088cbf828035dd7f0d9fa49"
+        },
+        "date": 1745481474587,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
