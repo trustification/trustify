@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745481475489,
+  "lastUpdate": 1745504506824,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8839,6 +8839,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/a1bf142f10dee18ab088cbf828035dd7f0d9fa49"
         },
         "date": 1745481474587,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": false,
+          "id": "4cb8ceb82588a36eb126239c8567661ad9374679",
+          "message": "fix: when deleting an entity, delete also a source document (and scores for the advisory)",
+          "timestamp": "2025-04-24T13:54:55Z",
+          "tree_id": "fc788abe0b680b1d6e38cc5b94f722a2aaea79ee",
+          "url": "https://github.com/trustification/trustify/commit/4cb8ceb82588a36eb126239c8567661ad9374679"
+        },
+        "date": 1745504505865,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
