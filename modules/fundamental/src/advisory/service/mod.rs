@@ -126,7 +126,6 @@ impl AdvisoryService {
             )?;
 
         let total = limiter.total().await?;
-
         let items = limiter.fetch().await?;
 
         Ok(PaginatedResults {
