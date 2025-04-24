@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745504506824,
+  "lastUpdate": 1745505427418,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8868,6 +8868,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/4cb8ceb82588a36eb126239c8567661ad9374679"
         },
         "date": 1745504505865,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "2582866+carlosthe19916@users.noreply.github.com",
+            "name": "Carlos Feria",
+            "username": "carlosthe19916"
+          },
+          "committer": {
+            "email": "carlosthe19916@gmail.com",
+            "name": "Carlos Feria",
+            "username": "carlosthe19916"
+          },
+          "distinct": false,
+          "id": "1452a4c6466c2d2ef7e3d7922572edc5e2a7ad70",
+          "message": "ci: add branch backport automation\n\nSigned-off-by: Carlos Feria <2582866+carlosthe19916@users.noreply.github.com>",
+          "timestamp": "2025-04-24T14:17:30Z",
+          "tree_id": "cf8fadd41a95e5bddb5e86d88a54a036b001c125",
+          "url": "https://github.com/trustification/trustify/commit/1452a4c6466c2d2ef7e3d7922572edc5e2a7ad70"
+        },
+        "date": 1745505426686,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
