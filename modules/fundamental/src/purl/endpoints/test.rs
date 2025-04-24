@@ -221,7 +221,7 @@ async fn purl_filter_queries(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     let query = async |query| {
         let app = caller(ctx).await.unwrap();
-        let uri = format!("/api/v2/purl?q={}", urlencoding::encode(query));
+        let uri = format!("/api/v2/purl?q={}&sort=purl:qualifiers:type", encode(query));
         let request = TestRequest::get().uri(&uri).to_request();
         let response: PaginatedResults<PurlSummary> = app.call_and_read_body_json(request).await;
         tracing::debug!(test = "", "{response:#?}");
@@ -232,9 +232,11 @@ async fn purl_filter_queries(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
     for each in [
         r"purl=pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/\&type=pom",
         "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&qualifiers:type=pom&repository_url=https://maven.repository.redhat.com/ga/",
+        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl:qualifiers:type=pom&purl:qualifiers:repository_url=https://maven.repository.redhat.com/ga/",
         // "purl~quarkus-bom@3.2.11.Final-redhat", // cross-component query
         "qualifiers:type=pom&type=maven", // note the two types
         "quarkus-bom&qualifiers:type=pom&type=maven", // full text search filtered to match 1
+        "ty=maven&purl:ty=maven&type=maven&purl:type=maven&purl:qualifiers:type=pom&qualifiers:type=pom",
     ] {
         query(each).await;
     }

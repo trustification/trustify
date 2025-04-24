@@ -156,7 +156,7 @@ impl Columns {
                 self.json_keys.insert(field, col_ref.clone());
             }
         } else {
-            log::warn!("No fields found for a JSON column named {column}");
+            log::warn!("No JSON column found named {column}");
         }
         self
     }
@@ -216,11 +216,24 @@ impl Columns {
                             .map(|col| (Expr::col(col).cast_json_field(field), ColumnType::Text))
                     })
                     .or_else(|| {
-                        // Check field for json object syntax, e.g. {column}:{key}
+                        // Check field for json object syntax, e.g. {column}:{key}:...
                         field.split_once(':').map(|(col, key)| {
-                            self.find(col).map(|(col, _)| {
-                                (Expr::col(col).cast_json_field(key), ColumnType::Text)
-                            })
+                            use ColumnType::*;
+                            self.find(col)
+                                .filter(|(_, ct)| matches!(ct, Json | JsonBinary))
+                                .map(|(col, _)| SimpleExpr::Column(col))
+                                .map(|ex| {
+                                    (
+                                        match key.rsplit_once(':') {
+                                            None => ex.cast_json_field(key),
+                                            Some((ks, key)) => ks
+                                                .split_terminator(':')
+                                                .fold(ex, |ex, k| ex.get_json_field(k))
+                                                .cast_json_field(key),
+                                        },
+                                        ColumnType::Text,
+                                    )
+                                })
                         })?
                     })
             })
@@ -243,7 +256,6 @@ impl Columns {
         self.columns
             .iter()
             .filter_map(|(r, t)| match (r, t) {
-                (_, ColumnType::Json | ColumnType::JsonBinary) => None,
                 (Column(name) | TableColumn(_, name) | SchemaTableColumn(_, _, name), _) => {
                     Some(name.to_string().to_lowercase())
                 }
@@ -455,7 +467,7 @@ mod tests {
     }
 
     #[test(tokio::test)]
-    async fn json_queries() -> Result<(), anyhow::Error> {
+    async fn json_key_queries() -> Result<(), anyhow::Error> {
         let clause = |query: Query| -> Result<String, Error> {
             Ok(advisory::Entity::find()
                 .filtering_with(
@@ -545,6 +557,10 @@ mod tests {
                 .to_string())
         };
 
+        assert_eq!(
+            clause(q("purl:name:foo:bar~baz"))?,
+            r#"((("advisory"."purl" -> 'name') -> 'foo') ->> 'bar') ILIKE '%baz%'"#
+        );
         assert_eq!(
             clause(q("purl:name~log4j&purl:version>1.0"))?,
             r#"(("advisory"."purl" ->> 'name') ILIKE '%log4j%') AND ("advisory"."purl" ->> 'version') > '1.0'"#
