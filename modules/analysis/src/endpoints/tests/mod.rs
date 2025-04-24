@@ -380,12 +380,6 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
     ctx.ingest_documents(["spdx/quarkus-bom-3.2.11.Final-redhat-00001.json"])
         .await?;
 
-    // NOTE: Testing for qualified purls is tricky, because the order
-    // of the qualifiers isn't predictable, and the qualifer values
-    // should be urlencoded, doubly so if used in a query. One
-    // workaround is to "and" the qualifiers in the query using the
-    // LIKE operator,
-    // e.g. q=purl~BASE&purl~QUALIFIER_ONE&purl~QUALIFIER_TWO
     const PURL: &str = "pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/&type=pom";
 
     let query = async |query| {
@@ -399,7 +393,7 @@ async fn find_component_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Er
 
     for each in [
         r"purl=pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001?repository_url=https://maven.repository.redhat.com/ga/\&type=pom",
-        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&qualifiers:type=pom&qualifiers:repository_url=https://maven.repository.redhat.com/ga/",
+        "purl~pkg:maven/com.redhat.quarkus.platform/quarkus-bom@3.2.11.Final-redhat-00001&purl:qualifiers:type=pom&purl:qualifiers:repository_url=https://maven.repository.redhat.com/ga/",
         "purl:name=quarkus-bom",
         "cpe=cpe:/a:redhat:quarkus:3.2::el8",
         "cpe~cpe:/a:redhat:quarkus:3.2::el8",
