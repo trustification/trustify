@@ -77,6 +77,18 @@ impl PartialSchema for Purl {
     }
 }
 
+impl From<&Purl> for serde_json::Value {
+    fn from(purl: &Purl) -> Self {
+        serde_json::json!({
+            "ty": purl.ty,
+            "namespace": purl.namespace,
+            "name": purl.name,
+            "version": purl.version,
+            "qualifiers": purl.qualifiers,
+        })
+    }
+}
+
 const NAMESPACE: Uuid = Uuid::from_bytes([
     0x37, 0x38, 0xb4, 0x3d, 0xfd, 0x03, 0x4a, 0x9d, 0x84, 0x9c, 0x48, 0x9b, 0xec, 0x61, 0x0f, 0x06,
 ]);
@@ -160,13 +172,13 @@ impl Purl {
             ("=" | "~", Ok(p)) => {
                 let mut q = format!("purl:ty={}&purl:name={}", p.ty, p.name);
                 if let Some(ns) = p.namespace {
-                    q.push_str(&format!("&purl:namespace={ns}"));
+                    q.push_str(&format!("&purl:namespace{op}{ns}"));
                 }
                 if let Some(version) = p.version {
-                    q.push_str(&format!("&purl:version={version}"));
+                    q.push_str(&format!("&purl:version{op}{version}"));
                 }
                 for (k, v) in p.qualifiers {
-                    q.push_str(&format!("&qualifiers:{k}={v}"));
+                    q.push_str(&format!("&purl:qualifiers:{k}{op}{v}"));
                 }
                 Some(q)
             }

@@ -1,29 +1,30 @@
 use chrono::{Local, NaiveDateTime};
 use human_date_parser::{ParseResult, from_human_time};
-use std::{cmp::Ordering, collections::HashMap};
+use std::{cmp::Ordering, collections::HashMap, fmt::Debug};
 use time::OffsetDateTime;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Value<'a> {
-    String(String),
+    String(&'a str),
     Int(i32),
     Float(f64),
     Date(&'a OffsetDateTime),
     Array(Vec<Value<'a>>),
+    Json(serde_json::Value),
     Custom(&'a dyn Valuable),
 }
 
+#[derive(Default)]
 pub struct ValueContext<'a> {
     values: HashMap<String, Value<'a>>,
-    nested: HashMap<String, HashMap<String, Value<'a>>>,
 }
 
 pub trait Context {
-    fn get(&self, key: &str) -> Option<&Value>;
+    fn get(&self, key: &str) -> Option<Value>;
     fn values(&self) -> impl Iterator<Item = &Value>;
 }
 
-pub trait Valuable: PartialOrd<String> {
+pub trait Valuable: PartialOrd<String> + Debug {
     fn like(&self, pat: &str) -> bool;
 }
 
@@ -35,20 +36,27 @@ impl Valuable for Value<'_> {
             Self::Array(a) => a.iter().any(|v| v.like(pat)),
             Self::Custom(v) => v.like(pat),
             Self::Int(_) | Self::Float(_) => false,
+            Self::Json(v) => JsonValue(v).like(pat),
         }
     }
 }
 
 impl PartialEq<String> for Value<'_> {
-    fn eq(&self, other: &String) -> bool {
-        matches!(self.partial_cmp(other), Some(Ordering::Equal))
+    fn eq(&self, rhs: &String) -> bool {
+        match self {
+            Self::String(s) => s.eq(rhs),
+            Self::Array(arr) => arr.iter().any(|v| v.eq(rhs)),
+            Self::Json(v) => JsonValue(v).eq(rhs),
+            Self::Custom(v) => v.eq(&rhs),
+            _ => matches!(self.partial_cmp(rhs), Some(Ordering::Equal)),
+        }
     }
 }
 
 impl PartialOrd<String> for Value<'_> {
     fn partial_cmp(&self, rhs: &String) -> Option<Ordering> {
         match self {
-            Self::String(s) => s.partial_cmp(rhs),
+            Self::String(s) => s.partial_cmp(&rhs.as_str()),
             Self::Int(v) => match rhs.parse::<i32>() {
                 Ok(i) => v.partial_cmp(&i),
                 _ => None,
@@ -86,6 +94,7 @@ impl PartialOrd<String> for Value<'_> {
                     None
                 }
             }
+            Self::Json(v) => JsonValue(v).partial_cmp(rhs),
             Self::Custom(v) => v.partial_cmp(&rhs),
         }
     }
@@ -98,78 +107,120 @@ impl<'a, T: Valuable> From<&'a Vec<T>> for Value<'a> {
 }
 
 impl Context for &ValueContext<'_> {
-    fn get(&self, key: &str) -> Option<&Value> {
-        self.values.get(key).or_else(|| {
-            key.split_once(':')
-                .and_then(|(k, v)| self.nested.get(k).and_then(|m| m.get(v)))
+    fn get(&self, key: &str) -> Option<Value> {
+        fn nested<'a>(json: &'a serde_json::Value, ks: &str) -> Option<Value<'a>> {
+            ks.split_terminator(':')
+                .try_fold(json, |obj, key| obj.get(key))
+                .and_then(|v| match v {
+                    serde_json::Value::String(s) => Some(Value::String(s)),
+                    _ => None,
+                })
+        }
+        self.values.get(key).cloned().or_else(|| {
+            key.split_once(':').and_then(|(k, ks)| {
+                self.values.get(k).and_then(|v| match &v {
+                    Value::Json(json) => nested(json, ks),
+                    Value::Array(arr) => Some(Value::Array(
+                        arr.iter()
+                            .filter_map(|v| match v {
+                                Value::Json(json) => nested(json, ks),
+                                _ => None,
+                            })
+                            .collect(),
+                    )),
+                    _ => None,
+                })
+            })
         })
     }
     fn values(&self) -> impl Iterator<Item = &Value> {
-        self.values
-            .values()
-            .chain(self.nested.values().flat_map(|m| m.values()))
-    }
-}
-
-impl Default for ValueContext<'_> {
-    fn default() -> Self {
-        let values = HashMap::default();
-        let nested = HashMap::default();
-        Self { values, nested }
+        self.values.values()
     }
 }
 
 impl<'a> ValueContext<'a> {
-    pub fn put_string<S: Into<String>>(&mut self, key: S, value: S) {
-        self.values.insert(key.into(), Value::String(value.into()));
+    pub fn put_string<S: Into<String>>(&mut self, key: S, value: &'a str) {
+        self.put(key.into(), Value::String(value));
     }
     pub fn put_int<K: Into<String>>(&mut self, key: K, value: i32) {
-        self.values.insert(key.into(), Value::Int(value));
+        self.put(key.into(), Value::Int(value));
     }
     pub fn put_float<K: Into<String>>(&mut self, key: K, value: f64) {
-        self.values.insert(key.into(), Value::Float(value));
+        self.put(key.into(), Value::Float(value));
     }
     pub fn put_date<K: Into<String>>(&mut self, key: K, value: &'a OffsetDateTime) {
-        self.values.insert(key.into(), Value::Date(value));
+        self.put(key.into(), Value::Date(value));
     }
     pub fn put_array<K: Into<String>>(&mut self, key: K, value: Vec<Value<'a>>) {
-        self.values.insert(key.into(), Value::Array(value));
+        self.put(key.into(), Value::Array(value));
+    }
+    pub fn put_json<K: Into<String>>(&mut self, key: K, value: serde_json::Value) {
+        self.put(key.into(), Value::Json(value));
     }
     pub fn put_value<K: Into<String>>(&mut self, key: K, value: Value<'a>) {
-        self.values.insert(key.into(), value);
+        self.put(key.into(), value);
     }
-
-    // Maintain a shallow nesting of values to support colon-delimited
-    // fields. When keys are re-inserted into the nested map, the
-    // existing string values are not overwritten; they are converted
-    // to array values.
-    pub fn put_nested<K, V>(&mut self, key: K, values: V)
-    where
-        K: AsRef<str>,
-        V: Iterator<Item = (String, String)>,
-    {
-        for (k, v) in values {
-            self.nested
-                .entry(key.as_ref().to_string())
-                .and_modify(|m| {
-                    m.entry(k.clone())
-                        .and_modify(|val| match val {
-                            Value::Array(arr) => {
-                                arr.push(Value::String(v.clone()));
-                            }
-                            _ => *val = Value::Array(vec![val.clone(), Value::String(v.clone())]),
-                        })
-                        .or_insert(Value::String(v.clone()));
-                })
-                .or_insert(HashMap::from([(k, Value::String(v))]));
+    // Convenient initialization
+    pub fn from<K: Into<String>, const N: usize>(arr: [(K, Value<'a>); N]) -> Self {
+        Self {
+            values: HashMap::from(arr.map(|(k, v)| (k.into(), v))),
         }
     }
+    fn put(&mut self, key: String, value: Value<'a>) {
+        self.values
+            .entry(key)
+            .and_modify(|val| match val {
+                Value::Array(arr) => match value.clone() {
+                    Value::Array(other) => arr.extend(other),
+                    v => arr.push(v),
+                },
+                _ => *val = Value::Array(vec![val.clone(), value.clone()]),
+            })
+            .or_insert(value);
+    }
+}
 
-    // Convenient initialization
-    pub fn from<K: AsRef<str>, const N: usize>(arr: [(K, Value<'a>); N]) -> Self {
-        Self {
-            values: HashMap::from(arr.map(|(k, v)| (k.as_ref().to_string(), v))),
-            ..Default::default()
+#[derive(Debug)]
+struct JsonValue<'a>(&'a serde_json::Value);
+
+impl Valuable for JsonValue<'_> {
+    fn like(&self, pat: &str) -> bool {
+        match self.0 {
+            serde_json::Value::String(s) => s.contains(pat),
+            serde_json::Value::Array(a) => a.iter().map(JsonValue).any(|v| v.like(pat)),
+            serde_json::Value::Object(o) => o.values().map(JsonValue).any(|v| v.like(pat)),
+            _ => false,
+        }
+    }
+}
+
+impl PartialOrd<String> for JsonValue<'_> {
+    fn partial_cmp(&self, rhs: &String) -> Option<Ordering> {
+        match self.0 {
+            serde_json::Value::String(s) => s.partial_cmp(rhs),
+            serde_json::Value::Array(arr) => {
+                if arr.iter().any(|v| v.eq(rhs)) {
+                    Some(Ordering::Equal)
+                } else if arr.iter().map(JsonValue).all(|v| v.gt(rhs)) {
+                    Some(Ordering::Greater)
+                } else if arr.iter().map(JsonValue).all(|v| v.lt(rhs)) {
+                    Some(Ordering::Less)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+}
+
+impl PartialEq<String> for JsonValue<'_> {
+    fn eq(&self, rhs: &String) -> bool {
+        match self.0 {
+            serde_json::Value::String(s) => s.eq(rhs),
+            serde_json::Value::Array(a) => a.iter().any(|v| v.eq(rhs)),
+            serde_json::Value::Object(o) => o.values().any(|v| v.eq(rhs)),
+            _ => false,
         }
     }
 }
@@ -186,7 +237,7 @@ pub(crate) mod tests {
         let now = time::OffsetDateTime::now_utc();
         let then = OffsetDateTime::parse("Sat, 12 Jun 1993 13:25:19 GMT", &Rfc2822)?;
         let context = ValueContext::from([
-            ("id", Value::String("foo".into())),
+            ("id", Value::String("foo")),
             ("count", Value::Int(42)),
             ("score", Value::Float(6.66)),
             ("detected", Value::Date(&then)),
@@ -218,7 +269,7 @@ pub(crate) mod tests {
         use crate::purl::Purl;
 
         let purl = Purl::from_str("pkg:x/foo").unwrap();
-        let purls = vec![Value::Custom(&purl), Value::String("pkg:x/bar".into())];
+        let purls = vec![Value::Custom(&purl), Value::String("pkg:x/bar")];
         let context = ValueContext::from([("purl", Value::Array(purls))]);
 
         assert!(q("purl=pkg:x/foo").apply(&context));
@@ -243,21 +294,24 @@ pub(crate) mod tests {
     #[test(tokio::test)]
     async fn filter_nested_values() -> Result<(), anyhow::Error> {
         use crate::purl::Purl;
+        use serde_json::{Value as Json, json};
 
         let purl = Purl::from_str("pkg:rpm/foo@1.0?k1=v1&k2=v2")?;
-        let parts = HashMap::from(
-            [("ty", "rpm"), ("name", "foo"), ("version", "1.0")]
-                .map(|(k, v)| (k.to_string(), v.to_string())),
-        );
-        let other = HashMap::from(
-            [("ty", "maven"), ("name", "bar"), ("version", "42")]
-                .map(|(k, v)| (k.to_string(), v.to_string())),
-        );
+        let parts = json!({
+            "ty": "rpm",
+            "name": "foo",
+            "version": "1.0",
+        });
+        let other = json!({
+            "ty": "maven",
+            "name": "bar",
+            "version": "42",
+        });
 
         let mut context = ValueContext::from([("purl", Value::Custom(&purl))]);
-        context.put_nested("qualifiers", purl.qualifiers.clone().into_iter());
-        context.put_nested("purl", parts.into_iter());
-        context.put_nested("purl", other.into_iter()); // shouldn't overwrite
+        context.put_json("qualifiers", Json::from(&purl)["qualifiers"].clone());
+        context.put_json("purl", parts);
+        context.put_json("purl", other); // shouldn't overwrite
 
         assert!(q("purl~pkg:rpm/foo").apply(&context));
         assert!(q("qualifiers:k1=v1").apply(&context));
