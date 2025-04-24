@@ -30,11 +30,7 @@ use sea_orm::{
     RelationTrait, Statement, prelude::ConnectionTrait,
 };
 use sea_query::JoinType;
-use std::{
-    collections::{HashMap, HashSet},
-    fmt::Debug,
-    sync::Arc,
-};
+use std::{collections::HashSet, fmt::Debug, sync::Arc};
 use tracing::instrument;
 use trustify_common::{
     db::query::{Value, ValueContext},
@@ -633,28 +629,23 @@ impl AnalysisService {
                 })
             }
             GraphQuery::Query(query) => graph.node_weight(i).is_some_and(|node| {
-                let mut context = ValueContext::default();
-                context.put_string("sbom_id", &node.sbom_id);
-                context.put_string("node_id", &node.node_id);
-                context.put_string("name", &node.name);
+                let purls: Vec<_> = match node {
+                    graph::Node::Package(p) => {
+                        p.purl.iter().map(|p| Value::Json(p.into())).collect()
+                    }
+                    _ => vec![],
+                };
+                let mut context = ValueContext::from([
+                    ("sbom_id", Value::String(&node.sbom_id)),
+                    ("node_id", Value::String(&node.node_id)),
+                    ("name", Value::String(&node.name)),
+                ]);
                 match node {
                     graph::Node::Package(package) => {
                         context.put_string("version", &package.version);
-                        context.put_value("purl", Value::from(&package.purl));
-                        for p in &package.purl {
-                            let parts = HashMap::from(
-                                [
-                                    ("ty", p.ty.clone()),
-                                    ("name", p.name.clone()),
-                                    ("version", p.version.clone().unwrap_or_default()),
-                                    ("namespace", p.namespace.clone().unwrap_or_default()),
-                                ]
-                                .map(|(k, v)| (k.to_string(), v)),
-                            );
-                            context.put_nested("purl", parts.into_iter());
-                            context.put_nested("qualifiers", p.qualifiers.clone().into_iter());
-                        }
                         context.put_value("cpe", Value::from(&package.cpe));
+                        context.put_value("purl", Value::from(&package.purl));
+                        context.put_array("purl", purls);
                     }
                     graph::Node::External(external) => {
                         context.put_string(
