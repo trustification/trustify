@@ -306,7 +306,7 @@ impl PurlService {
                     .json_keys("purl", &["ty", "namespace", "name", "version"])
                     .json_keys("qualifiers", &["arch", "distro", "repository_url"])
                     .translator(|f, op, v| match f {
-                        "type" => Some(format!("ty{op}{v}")),
+                        "type" | "purl:type" => Some(format!("purl:ty{op}{v}")),
                         "purl" => Purl::translate(op, v),
                         _ => None,
                     }),
