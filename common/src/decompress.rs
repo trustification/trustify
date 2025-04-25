@@ -29,11 +29,41 @@ pub enum Error {
 /// context, it might be necessary to run this as a blocking function, or use [`decompress_async`]
 /// instead.
 #[instrument(skip(bytes), fields(bytes_len=bytes.len()), err(level=tracing::Level::INFO))]
-pub fn decompress(
+fn decompress(bytes: Bytes, compression: Compression, limit: usize) -> Result<Bytes, Error> {
+    // decompress (or not)
+
+    compression
+        .decompress_with(bytes, &DecompressionOptions::default().limit(limit))
+        .map_err(|err| match err.kind() {
+            std::io::ErrorKind::WriteZero => Error::PayloadTooLarge,
+            _ => Error::from(err),
+        })
+}
+
+/// An async version of [`decompress`].
+#[instrument(skip(bytes), fields(bytes_len=bytes.len()), err(level=tracing::Level::INFO))]
+pub async fn decompress_async(
     bytes: Bytes,
     content_type: Option<header::ContentType>,
     limit: usize,
-) -> Result<Bytes, Error> {
+) -> Result<Result<Bytes, Error>, JoinError> {
+    let compression = match detect(content_type, &bytes) {
+        Err(err) => return Ok(Err(err)),
+        Ok(compression) => compression,
+    };
+
+    match compression {
+        Compression::None => Ok(Ok(bytes)),
+        compression => {
+            // only spawn thread when necessary
+            Handle::current()
+                .spawn_blocking(move || decompress(bytes, compression, limit))
+                .await
+        }
+    }
+}
+
+fn detect(content_type: Option<header::ContentType>, bytes: &[u8]) -> Result<Compression, Error> {
     let content_type = content_type.as_ref().map(|ct| ct.as_ref());
 
     // check what the user has declared
@@ -54,36 +84,15 @@ pub fn decompress(
 
     // otherwise, try to auto-detect
 
-    let compression = match declared {
+    Ok(match declared {
         Some(declared) => declared,
         None => {
             let detector = Detector::default();
             detector
-                .detect(&bytes)
+                .detect(bytes)
                 .map_err(|err| Error::Detector(anyhow!("{err}")))?
         }
-    };
-
-    // decompress (or not)
-
-    compression
-        .decompress_with(bytes, &DecompressionOptions::default().limit(limit))
-        .map_err(|err| match err.kind() {
-            std::io::ErrorKind::WriteZero => Error::PayloadTooLarge,
-            _ => Error::from(err),
-        })
-}
-
-/// An async version of [`decompress`].
-#[instrument(skip(bytes), fields(bytes_len=bytes.len()), err(level=tracing::Level::INFO))]
-pub async fn decompress_async(
-    bytes: Bytes,
-    content_type: Option<header::ContentType>,
-    limit: usize,
-) -> Result<Result<Bytes, Error>, JoinError> {
-    Handle::current()
-        .spawn_blocking(move || decompress(bytes, content_type, limit))
-        .await
+    })
 }
 
 #[cfg(test)]
