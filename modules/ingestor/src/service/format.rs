@@ -1,4 +1,3 @@
-use crate::service::sbom::clearly_defined::ClearlyDefinedLoader;
 use crate::{
     graph::{Graph, sbom::clearly_defined::Curation},
     model::IngestResult,
@@ -6,6 +5,7 @@ use crate::{
         Error,
         advisory::{csaf::loader::CsafLoader, cve::loader::CveLoader, osv::loader::OsvLoader},
         sbom::{
+            clearly_defined::ClearlyDefinedLoader,
             clearly_defined_curation::ClearlyDefinedCurationLoader, cyclonedx::CyclonedxLoader,
             spdx::SpdxLoader,
         },
@@ -16,14 +16,16 @@ use csaf::Csaf;
 use cve::Cve;
 use jsn::{Format as JsnFormat, TokenReader, mask::*};
 use quick_xml::{Reader, events::Event};
+use serde::{Deserialize, Deserializer};
 use serde_json::Value;
-use std::io::Cursor;
+use std::{io::Cursor, str::FromStr};
 use tracing::instrument;
 use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
 
-#[derive(Clone, Copy, Debug, strum::EnumString)]
+#[derive(Clone, Copy, Debug, strum::EnumString, utoipa::ToSchema)]
 #[strum(serialize_all = "camelCase")]
+#[schema(rename_all = "camelCase")]
 pub enum Format {
     OSV,
     CSAF,
@@ -257,6 +259,16 @@ fn masked<N: Mask>(mask: N, bytes: &[u8]) -> Result<Option<String>, Error> {
                 .map_err(|e| Error::Generic(e.into()))
         })
         .transpose()
+}
+
+impl<'de> Deserialize<'de> for Format {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        FromStr::from_str(&s).map_err(serde::de::Error::custom)
+    }
 }
 
 #[cfg(test)]

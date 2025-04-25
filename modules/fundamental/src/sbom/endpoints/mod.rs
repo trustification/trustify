@@ -407,6 +407,13 @@ struct UploadQuery {
     /// Only use keys with a prefix of `labels.`
     #[serde(flatten, with = "trustify_entity::labels::prefixed")]
     labels: Labels,
+
+    #[serde(default = "default_format")]
+    format: Format,
+}
+
+const fn default_format() -> Format {
+    Format::SBOM
 }
 
 #[utoipa::path(
@@ -426,13 +433,13 @@ struct UploadQuery {
 pub async fn upload(
     service: web::Data<IngestorService>,
     config: web::Data<Config>,
-    web::Query(UploadQuery { labels }): web::Query<UploadQuery>,
+    web::Query(UploadQuery { labels, format }): web::Query<UploadQuery>,
     content_type: Option<web::Header<header::ContentType>>,
     bytes: web::Bytes,
     _: Require<CreateSbom>,
 ) -> Result<impl Responder, Error> {
     let bytes = decompress_async(bytes, content_type.map(|ct| ct.0), config.upload_limit).await??;
-    let result = service.ingest(&bytes, Format::SBOM, labels, None).await?;
+    let result = service.ingest(&bytes, format, labels, None).await?;
     log::info!("Uploaded SBOM: {}", result.id);
     Ok(HttpResponse::Created().json(result))
 }
