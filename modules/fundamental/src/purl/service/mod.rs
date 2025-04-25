@@ -9,7 +9,7 @@ use crate::{
 };
 use sea_orm::{
     ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, QueryFilter, QueryOrder,
-    QuerySelect, RelationTrait, prelude::Uuid,
+    QuerySelect, prelude::Uuid,
 };
 use sea_query::Order;
 use tracing::instrument;
@@ -295,10 +295,6 @@ impl PurlService {
         connection: &C,
     ) -> Result<PaginatedResults<PurlSummary>, Error> {
         let limiter = qualified_purl::Entity::find()
-            .join(
-                sea_orm::JoinType::LeftJoin,
-                qualified_purl::Relation::SbomPackage.def(),
-            )
             .filtering_with(
                 query,
                 qualified_purl::Entity
