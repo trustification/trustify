@@ -6,12 +6,12 @@ mod test;
 
 pub use query::*;
 
-use crate::license::{
-    get_sanitize_filename,
-    service::{LicenseService, license_export::LicenseExporter},
-};
 use crate::{
     Error::{self, Internal},
+    license::{
+        get_sanitize_filename,
+        service::{LicenseService, license_export::LicenseExporter},
+    },
     purl::service::PurlService,
     sbom::{
         model::{
