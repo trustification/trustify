@@ -34,3 +34,6 @@ sha2 = { workspace = true }
 test-log = { workspace = true, features = ["log", "trace"] }
 test-context = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
+
+[features]
+_test-s3 = []

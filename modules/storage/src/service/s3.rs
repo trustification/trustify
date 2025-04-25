@@ -250,9 +250,9 @@ mod test {
 
     #[test(tokio::test)]
     #[rstest]
-    // #[case(Compression::None)]
+    #[case(Compression::None)]
     #[case(Compression::Zstd)]
-    // #[ignore = "requires minio or s3"]
+    #[cfg_attr(not(feature = "_test-s3"), ignore = "requires minio or s3")]
     async fn store_and_read(#[case] compression: Compression) {
         let backend = backend(compression).await;
 
@@ -261,7 +261,7 @@ mod test {
 
     /// Ensure retrieving the information that the file does not exist works.
     #[test(tokio::test)]
-    #[ignore = "requires minio or s3"]
+    #[cfg_attr(not(feature = "_test-s3"), ignore = "requires minio or s3")]
     async fn read_not_found() {
         let backend = backend(Compression::None).await;
         test_read_not_found(backend).await;
