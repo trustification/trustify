@@ -150,9 +150,7 @@ pub async fn delete(
     }
 }
 
-#[derive(
-    IntoParams, Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize,
-)]
+#[derive(IntoParams, Clone, Debug, PartialEq, Eq, serde::Deserialize)]
 struct UploadParams {
     /// Optional issuer if it cannot be determined from advisory contents.
     #[serde(default)]
@@ -162,6 +160,13 @@ struct UploadParams {
     /// Only use keys with a prefix of `labels.`
     #[serde(flatten, with = "trustify_entity::labels::prefixed")]
     labels: Labels,
+    /// The format of the uploaded document.
+    #[serde(default = "default_format")]
+    format: Format,
+}
+
+const fn default_format() -> Format {
+    Format::Advisory
 }
 
 #[utoipa::path(
@@ -179,15 +184,17 @@ struct UploadParams {
 pub async fn upload(
     service: web::Data<IngestorService>,
     config: web::Data<Config>,
-    web::Query(UploadParams { issuer, labels }): web::Query<UploadParams>,
+    web::Query(UploadParams {
+        issuer,
+        labels,
+        format,
+    }): web::Query<UploadParams>,
     content_type: Option<web::Header<header::ContentType>>,
     bytes: web::Bytes,
     _: Require<CreateAdvisory>,
 ) -> Result<impl Responder, Error> {
     let bytes = decompress_async(bytes, content_type.map(|ct| ct.0), config.upload_limit).await??;
-    let result = service
-        .ingest(&bytes, Format::Advisory, labels, issuer)
-        .await?;
+    let result = service.ingest(&bytes, format, labels, issuer).await?;
     log::info!("Uploaded Advisory: {}", result.id);
     Ok(HttpResponse::Created().json(result))
 }
