@@ -23,7 +23,7 @@ use tracing::instrument;
 use trustify_common::hashing::Digests;
 use trustify_entity::labels::Labels;
 
-#[derive(Clone, Copy, Debug, strum::EnumString, utoipa::ToSchema)]
+#[derive(Clone, Copy, Debug, strum::EnumString, utoipa::ToSchema, PartialEq, Eq)]
 #[strum(serialize_all = "camelCase")]
 #[schema(rename_all = "camelCase")]
 pub enum Format {

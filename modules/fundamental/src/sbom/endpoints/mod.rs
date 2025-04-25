@@ -408,6 +408,7 @@ struct UploadQuery {
     #[serde(flatten, with = "trustify_entity::labels::prefixed")]
     labels: Labels,
 
+    /// The format of the uploaded document.
     #[serde(default = "default_format")]
     format: Format,
 }
