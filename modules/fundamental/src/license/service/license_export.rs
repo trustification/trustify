@@ -111,7 +111,8 @@ impl LicenseExporter {
             "package version",
             "package purl",
             "package cpe",
-            "license",
+            "declared license",
+            "concluded license",
         ])?;
 
         for extracted_licensing_info in self.extracted_licensing_infos {
@@ -134,7 +135,7 @@ impl LicenseExporter {
             let purl_list = package
                 .purl
                 .into_iter()
-                .map(|purl| format!("{}", Purl::from(purl.purl)))
+                .map(|purl| format!("{}", Purl::from(purl.purl.clone())))
                 .collect::<Vec<_>>()
                 .join("\n");
 
@@ -146,7 +147,12 @@ impl LicenseExporter {
                 &package.version.unwrap_or_default(),
                 &purl_list,
                 &alternate_package_reference,
-                &package.license_text.unwrap_or_else(String::default),
+                &package
+                    .license_declared_text
+                    .unwrap_or_else(String::default),
+                &package
+                    .license_concluded_text
+                    .unwrap_or_else(String::default),
             ])?;
         }
 
