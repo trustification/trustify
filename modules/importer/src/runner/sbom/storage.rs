@@ -11,7 +11,7 @@ use sbom_walker::{
 };
 use std::sync::Arc;
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::{Format, IngestorService};
+use trustify_module_ingestor::service::{Cache, Format, IngestorService};
 use walker_common::utils::url::Urlify;
 use walker_common::{compression::decompress_opt, validate::ValidationError};
 
@@ -78,6 +78,7 @@ impl<C: RunContext> ValidatedVisitor<HttpSource> for StorageVisitor<C> {
                     .add("file", &file)
                     .extend(&self.labels.0),
                 None,
+                Cache::Skip,
             )
             .await
             .map_err(StorageError::Storage)?;

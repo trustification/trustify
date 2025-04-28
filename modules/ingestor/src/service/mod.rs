@@ -146,6 +146,28 @@ impl ResponseError for Error {
     }
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Default, serde::Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum Cache {
+    /// Skip loading into cache
+    #[default]
+    Skip,
+    /// Queue a request to load into cache
+    Queue,
+    /// Queue and await request to load into cache
+    Wait,
+}
+
+impl From<Cache> for Option<bool> {
+    fn from(value: Cache) -> Self {
+        match value {
+            Cache::Skip => None,
+            Cache::Queue => Some(false),
+            Cache::Wait => Some(true),
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct IngestorService {
     graph: Graph,
@@ -185,6 +207,7 @@ impl IngestorService {
         format: Format,
         labels: impl Into<Labels> + Debug,
         issuer: Option<String>,
+        cache: Cache,
     ) -> Result<IngestResult, Error> {
         let start = Instant::now();
 
@@ -209,7 +232,9 @@ impl IngestorService {
             .load(&self.graph, labels.into(), issuer, &result.digests, bytes)
             .await?;
 
-        self.load_graph_cache(fmt, &result).await;
+        if let Some(wait) = cache.into() {
+            self.load_graph_cache(fmt, &result, wait).await;
+        }
 
         let duration = start.elapsed();
         log::debug!(
@@ -236,7 +261,7 @@ impl IngestorService {
 
     /// If appropriate, load result into analysis graph cache
     #[instrument(skip(self))]
-    async fn load_graph_cache(&self, fmt: Format, result: &IngestResult) {
+    async fn load_graph_cache(&self, fmt: Format, result: &IngestResult, wait: bool) {
         let Some(analysis) = &self.analysis else {
             // if we don't have an instance, we skip
             return;
@@ -252,20 +277,23 @@ impl IngestorService {
             return;
         };
 
-        match analysis
-            .load_graphs(&self.graph.db, &[&id.to_string()])
-            .await
-        {
-            Ok(r) => log::debug!(
-                "Analysis graph for sbom: {} loaded successfully ({} graphs loaded).",
-                result.id.value(),
-                r.len()
-            ),
-            Err(e) => log::warn!(
-                "Error loading sbom {} into analysis graph: {}",
-                result.id.value(),
-                e
-            ),
+        match analysis.queue_load(id.to_string()) {
+            Ok(r) if wait => {
+                // queued ok, await processing
+                if let Err(err) = r.await {
+                    log::warn!("Failed to await queue load: {err}");
+                }
+            }
+            Ok(_) => {
+                // queued ok, don't wait
+            }
+            Err(e) => {
+                // failed to queue
+                log::warn!(
+                    "Error queuing graph load for SBOM {}: {e}",
+                    result.id.value()
+                );
+            }
         }
     }
 }
