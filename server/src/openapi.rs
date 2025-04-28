@@ -13,7 +13,7 @@ use utoipa_actix_web::AppExt;
 pub async fn create_openapi() -> anyhow::Result<utoipa::openapi::OpenApi> {
     let (db, postgresql) = db::embedded::create().await?;
     let (storage, _temp) = FileSystemBackend::for_test().await?;
-    let analysis = AnalysisService::new(AnalysisConfig::default());
+    let analysis = AnalysisService::new(AnalysisConfig::default(), db.clone());
 
     let (_, mut openapi) = App::new()
         .into_utoipa_app()

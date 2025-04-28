@@ -19,7 +19,7 @@ async fn cpe_purl(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         bail!("must be an id")
     };
 
-    let service = AnalysisService::new(AnalysisConfig::default());
+    let service = AnalysisService::new(AnalysisConfig::default(), ctx.db.clone());
 
     let result = service
         .retrieve(

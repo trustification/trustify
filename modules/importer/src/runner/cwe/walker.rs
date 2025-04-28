@@ -6,7 +6,7 @@ use tokio::sync::Mutex;
 use tokio_util::bytes::Buf;
 use tracing::instrument;
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::{Format, IngestorService};
+use trustify_module_ingestor::service::{Cache, Format, IngestorService};
 use zip::ZipArchive;
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
@@ -85,6 +85,7 @@ impl CweWalker {
                     .add("source", &self.source)
                     .add("importer", "CWE Catalog"),
                 None,
+                Cache::Skip,
             )
             .await
         {

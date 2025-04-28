@@ -8,7 +8,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio_util::bytes::Buf;
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::{Format, IngestorService};
+use trustify_module_ingestor::service::{Cache, Format, IngestorService};
 
 pub struct ClearlyDefinedWalker<P: Progress + Send + 'static> {
     continuation: ClearlyDefinedItemContinuation,
@@ -121,6 +121,7 @@ impl<P: Progress + Send + 'static> ClearlyDefinedWalker<P> {
                 Format::ClearlyDefined,
                 Labels::default(),
                 Some("ClearlyDefined".to_string()),
+                Cache::Skip,
             )
             .await
         {

@@ -30,7 +30,17 @@ use sea_orm::{
     RelationTrait, Statement, prelude::ConnectionTrait,
 };
 use sea_query::JoinType;
-use std::{collections::HashSet, fmt::Debug, sync::Arc};
+use std::{
+    collections::HashSet,
+    fmt::Debug,
+    pin::Pin,
+    sync::Arc,
+    task::{Context, Poll},
+};
+use tokio::{
+    sync::{mpsc, oneshot, oneshot::error::RecvError},
+    task::JoinHandle,
+};
 use tracing::instrument;
 use trustify_common::{
     db::query::{Value, ValueContext},
@@ -46,9 +56,34 @@ use uuid::Uuid;
 
 type NodeGraph = Graph<graph::Node, Relationship, petgraph::Directed>;
 
+#[derive(Debug)]
+struct QueueEntry {
+    id: String,
+    tx: oneshot::Sender<()>,
+}
+
+#[derive(Debug)]
+pub struct Queued {
+    rx: oneshot::Receiver<()>,
+}
+
+impl Future for Queued {
+    type Output = Result<(), RecvError>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        Pin::new(&mut self.rx).poll(cx)
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+#[error("queue already closed")]
+pub struct QueueError;
+
 #[derive(Clone)]
 pub struct AnalysisService {
-    graph_cache: Arc<GraphMap>,
+    inner: InnerService,
+    _loader: Arc<JoinHandle<()>>,
+    tx: mpsc::UnboundedSender<QueueEntry>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -227,7 +262,10 @@ impl AnalysisService {
     ///
     /// Also, we do not implement default because of this. As a new instance has the implication
     /// of having its own cache. So creating a new instance should be a deliberate choice.
-    pub fn new(config: AnalysisConfig) -> Self {
+    pub fn new<C>(config: AnalysisConfig, connection: C) -> Self
+    where
+        C: ConnectionTrait + Send + 'static,
+    {
         let graph_cache = Arc::new(GraphMap::new(config.max_cache_size.as_u64()));
 
         let meter = global::meter("AnalysisService");
@@ -246,15 +284,67 @@ impl AnalysisService {
                 .build();
         };
 
-        Self { graph_cache }
+        let (tx, rx) = mpsc::unbounded_channel::<QueueEntry>();
+
+        let inner = InnerService { graph_cache };
+
+        let loader = {
+            let inner = inner.clone();
+            Arc::new(tokio::spawn(async move {
+                Self::loader(rx, inner, connection).await;
+            }))
+        };
+
+        Self {
+            inner,
+            _loader: loader,
+            tx,
+        }
+    }
+
+    async fn loader<C>(
+        mut rx: mpsc::UnboundedReceiver<QueueEntry>,
+        service: InnerService,
+        connection: C,
+    ) where
+        C: ConnectionTrait + Send + 'static,
+    {
+        let mut next = vec![];
+        while rx.recv_many(&mut next, 8).await != 0 {
+            let (ids, txs): (Vec<_>, Vec<_>) =
+                next.drain(..).map(|entry| (entry.id, entry.tx)).unzip();
+
+            match service.load_graphs(&connection, ids.as_slice()).await {
+                Ok(r) => {
+                    log::info!("Loaded {} graphs", r.len());
+                }
+                Err(err) => {
+                    log::warn!("Failed to load graphs into cache: {}", err);
+                }
+            }
+
+            // notify listeners if they are interested
+            for tx in txs {
+                let _ = tx.send(());
+            }
+        }
     }
 
     pub fn cache_size_used(&self) -> u64 {
-        self.graph_cache.size_used()
+        self.inner.graph_cache.size_used()
     }
 
     pub fn cache_len(&self) -> u64 {
-        self.graph_cache.len()
+        self.inner.graph_cache.len()
+    }
+
+    /// Queue an SBOM for loading into the cache
+    pub fn queue_load(&self, id: String) -> Result<Queued, QueueError> {
+        let (tx, rx) = oneshot::channel();
+        self.tx
+            .send(QueueEntry { id, tx })
+            .map_err(|_| QueueError)?;
+        Ok(Queued { rx })
     }
 
     #[instrument(skip_all, err)]
@@ -276,7 +366,7 @@ impl AnalysisService {
     }
 
     pub fn clear_all_graphs(&self) -> Result<(), Error> {
-        self.graph_cache.clear();
+        self.inner.graph_cache.clear();
         Ok(())
     }
 
@@ -288,7 +378,7 @@ impl AnalysisService {
 
         Ok(AnalysisStatus {
             sbom_count: distinct_sbom_ids.len() as u32,
-            graph_count: self.graph_cache.len() as u32,
+            graph_count: self.inner.graph_cache.len() as u32,
         })
     }
 
@@ -399,7 +489,7 @@ impl AnalysisService {
                 options,
                 &graphs,
                 connection,
-                self.graph_cache.clone(),
+                self.inner.graph_cache.clone(),
             )
             .await;
 
@@ -418,7 +508,7 @@ impl AnalysisService {
         let query = query.into();
         let options = options.into();
 
-        let graphs = self.load_graphs_query(connection, query).await?;
+        let graphs = self.inner.load_graphs_query(connection, query).await?;
 
         let components = self
             .run_graph_query(
@@ -426,7 +516,7 @@ impl AnalysisService {
                 options,
                 &graphs,
                 connection,
-                self.graph_cache.clone(),
+                self.inner.graph_cache.clone(),
             )
             .await;
 
@@ -444,7 +534,7 @@ impl AnalysisService {
         let query = query.into();
         let options = options.into();
 
-        let graphs = self.load_graphs_query(connection, query).await?;
+        let graphs = self.inner.load_graphs_query(connection, query).await?;
 
         let components = self
             .run_graph_query(
@@ -452,7 +542,7 @@ impl AnalysisService {
                 options,
                 &graphs,
                 connection,
-                self.graph_cache.clone(),
+                self.inner.graph_cache.clone(),
             )
             .await;
 
@@ -679,4 +769,9 @@ fn acyclic(id: &str, graph: &Arc<PackageGraph>) -> bool {
         );
     }
     result.is_none()
+}
+
+#[derive(Clone)]
+struct InnerService {
+    graph_cache: Arc<GraphMap>,
 }

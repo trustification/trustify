@@ -22,6 +22,7 @@ use tokio_util::{bytes::Bytes, io::ReaderStream};
 use tracing::instrument;
 use trustify_common::{self as common, db, decompress::decompress_async, hashing::Digests};
 use trustify_entity::labels::Labels;
+use trustify_module_ingestor::service::Cache;
 use trustify_module_ingestor::{
     graph::Graph,
     model::IngestResult,
@@ -94,7 +95,10 @@ impl TrustifyContext {
         labels: impl Into<Labels> + Debug,
     ) -> Result<IngestResult, anyhow::Error> {
         let bytes = document_bytes(path).await?;
-        Ok(self.ingestor.ingest(&bytes, format, labels, None).await?)
+        Ok(self
+            .ingestor
+            .ingest(&bytes, format, labels, None, Cache::Skip)
+            .await?)
     }
 
     pub async fn ingest_read<R: Read>(&self, mut read: R) -> Result<IngestResult, anyhow::Error> {
@@ -103,7 +107,13 @@ impl TrustifyContext {
 
         Ok(self
             .ingestor
-            .ingest(&bytes, Format::Unknown, ("source", "TrustifyContext"), None)
+            .ingest(
+                &bytes,
+                Format::Unknown,
+                ("source", "TrustifyContext"),
+                None,
+                Cache::Skip,
+            )
             .await?)
     }
 
@@ -113,7 +123,13 @@ impl TrustifyContext {
 
         Ok(self
             .ingestor
-            .ingest(&bytes, Format::Unknown, ("source", "TrustifyContext"), None)
+            .ingest(
+                &bytes,
+                Format::Unknown,
+                ("source", "TrustifyContext"),
+                None,
+                Cache::Skip,
+            )
             .await?)
     }
 
@@ -150,9 +166,9 @@ impl AsyncTestContext for TrustifyContext {
                 env::var("EXTERNAL_TEST_DB_BOOTSTRAP").as_deref(),
                 Ok("1" | "true")
             ) {
-                common::db::Database::bootstrap(&config).await
+                db::Database::bootstrap(&config).await
             } else {
-                common::db::Database::new(&config).await
+                db::Database::new(&config).await
             }
             .expect("Configuring the database");
 

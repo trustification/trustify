@@ -38,6 +38,7 @@ use trustify_common::{
     model::{BinaryData, Paginated, PaginatedResults},
 };
 use trustify_entity::{labels::Labels, relationship::Relationship};
+use trustify_module_ingestor::service::Cache;
 use trustify_module_ingestor::{
     model::IngestResult,
     service::{Format, IngestorService},
@@ -411,6 +412,10 @@ struct UploadQuery {
     /// The format of the uploaded document.
     #[serde(default = "default_format")]
     format: Format,
+
+    /// Await loading the document into the analysis graph cache
+    #[serde(default)]
+    cache: Cache,
 }
 
 const fn default_format() -> Format {
@@ -434,13 +439,17 @@ const fn default_format() -> Format {
 pub async fn upload(
     service: web::Data<IngestorService>,
     config: web::Data<Config>,
-    web::Query(UploadQuery { labels, format }): web::Query<UploadQuery>,
+    web::Query(UploadQuery {
+        labels,
+        format,
+        cache,
+    }): web::Query<UploadQuery>,
     content_type: Option<web::Header<header::ContentType>>,
     bytes: web::Bytes,
     _: Require<CreateSbom>,
 ) -> Result<impl Responder, Error> {
     let bytes = decompress_async(bytes, content_type.map(|ct| ct.0), config.upload_limit).await??;
-    let result = service.ingest(&bytes, format, labels, None).await?;
+    let result = service.ingest(&bytes, format, labels, None, cache).await?;
     log::info!("Uploaded SBOM: {}", result.id);
     Ok(HttpResponse::Created().json(result))
 }

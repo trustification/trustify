@@ -295,7 +295,7 @@ impl InitData {
         };
 
         Ok(InitData {
-            analysis: AnalysisService::new(run.analysis),
+            analysis: AnalysisService::new(run.analysis, db.clone()),
             authenticator,
             authorizer,
             db,
@@ -507,7 +507,7 @@ mod test {
         let db = ctx.db;
         let (storage, _) = FileSystemBackend::for_test().await?;
         let ui = Arc::new(UiResources::new(&UI::default())?);
-        let analysis = AnalysisService::new(AnalysisConfig::default());
+        let analysis = AnalysisService::new(AnalysisConfig::default(), db.clone());
         let app = actix_web::test::init_service(
             App::new()
                 .into_utoipa_app()
