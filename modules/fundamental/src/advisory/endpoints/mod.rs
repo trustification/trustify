@@ -162,6 +162,7 @@ struct UploadParams {
     labels: Labels,
     /// The format of the uploaded document.
     #[serde(default = "default_format")]
+    #[param(inline)]
     format: Format,
 }
 
