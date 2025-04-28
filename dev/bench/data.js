@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745607077265,
+  "lastUpdate": 1745826693106,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8926,6 +8926,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/894a499fbd867435eea5c78e73c3aad8b184c4bf"
         },
         "date": 1745607075851,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": false,
+          "id": "7bcb9939d3387b99e7d364dd0f5285f143623df4",
+          "message": "feat: filter SBOM's and Advisories by labels\n\nFixes #491\n\nAlso added convenience translation so that either `label:foo` or\n`labels:foo` will work. See unit tests for examples.",
+          "timestamp": "2025-04-28T07:11:01Z",
+          "tree_id": "82c922e8509bb10c5de2aa15af07abfd9d121e6b",
+          "url": "https://github.com/trustification/trustify/commit/7bcb9939d3387b99e7d364dd0f5285f143623df4"
+        },
+        "date": 1745826691503,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
