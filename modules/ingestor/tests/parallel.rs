@@ -8,6 +8,7 @@ use test_context::{futures, test_context};
 use test_log::test;
 use tracing::instrument;
 use trustify_common::{cpe::Cpe, purl::Purl, sbom::spdx::parse_spdx};
+use trustify_module_ingestor::service::Cache;
 use trustify_module_ingestor::{
     graph::{
         cpe::CpeCreator,
@@ -42,7 +43,9 @@ async fn sbom_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         let service = ctx.ingestor.clone();
 
         tasks.push(async move {
-            service.ingest(&next, Format::SPDX, (), None).await?;
+            service
+                .ingest(&next, Format::SPDX, (), None, Cache::Skip)
+                .await?;
 
             Ok::<_, anyhow::Error>(())
         });
@@ -123,7 +126,9 @@ async fn csaf_parallel(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         let service = ctx.ingestor.clone();
 
         tasks.push(async move {
-            service.ingest(&next, Format::CSAF, (), None).await?;
+            service
+                .ingest(&next, Format::CSAF, (), None, Cache::Skip)
+                .await?;
 
             Ok::<_, anyhow::Error>(())
         });

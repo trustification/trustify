@@ -25,7 +25,7 @@ use trustify_common::{
     model::{BinaryData, Paginated, PaginatedResults},
 };
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::{Format, IngestorService};
+use trustify_module_ingestor::service::{Cache, Format, IngestorService};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::IntoParams;
 
@@ -194,7 +194,15 @@ pub async fn upload(
     _: Require<CreateAdvisory>,
 ) -> Result<impl Responder, Error> {
     let bytes = decompress_async(bytes, content_type.map(|ct| ct.0), config.upload_limit).await??;
-    let result = service.ingest(&bytes, format, labels, issuer).await?;
+    let result = service
+        .ingest(
+            &bytes,
+            format,
+            labels,
+            issuer,
+            Cache::Skip, /* we only cache SBOMs */
+        )
+        .await?;
     log::info!("Uploaded Advisory: {}", result.id);
     Ok(HttpResponse::Created().json(result))
 }

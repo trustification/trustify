@@ -77,7 +77,7 @@ impl<'g> CyclonedxLoader<'g> {
 
 #[cfg(test)]
 mod test {
-    use crate::service::IngestorService;
+    use crate::service::{Cache, IngestorService};
     use crate::{graph::Graph, service::Format};
     use test_context::test_context;
     use test_log::test;
@@ -93,7 +93,13 @@ mod test {
         let ingestor = IngestorService::new(graph, ctx.storage.clone(), Default::default());
 
         ingestor
-            .ingest(&data, Format::CycloneDX, ("source", "test"), None)
+            .ingest(
+                &data,
+                Format::CycloneDX,
+                ("source", "test"),
+                None,
+                Cache::Skip,
+            )
             .await
             .expect("must ingest");
 

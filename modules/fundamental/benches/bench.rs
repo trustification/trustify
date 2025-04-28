@@ -12,7 +12,7 @@ pub(crate) mod trustify_benches {
     use crate::common;
     use criterion::{Criterion, black_box};
     use trustify_entity::labels::Labels;
-    use trustify_module_ingestor::service::Format;
+    use trustify_module_ingestor::service::{Cache, Format};
 
     pub fn ingestion(c: &mut Criterion) {
         let (runtime, ctx) = common::setup_runtime_and_ctx();
@@ -33,7 +33,13 @@ pub(crate) mod trustify_benches {
                         let start = Instant::now();
                         black_box(
                             ctx.ingestor
-                                .ingest(&data, Format::Advisory, Labels::default(), None)
+                                .ingest(
+                                    &data,
+                                    Format::Advisory,
+                                    Labels::default(),
+                                    None,
+                                    Cache::Skip,
+                                )
                                 .await
                                 .expect("ingest ok"),
                         );
