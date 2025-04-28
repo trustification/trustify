@@ -147,7 +147,7 @@ impl ResponseError for Error {
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Default, serde::Deserialize, utoipa::ToSchema)]
-#[serde(rename_all = "snake_case")]
+#[schema(rename_all = "camelCase")]
 pub enum Cache {
     /// Skip loading into cache
     #[default]

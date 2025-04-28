@@ -411,10 +411,12 @@ struct UploadQuery {
 
     /// The format of the uploaded document.
     #[serde(default = "default_format")]
+    #[param(inline)]
     format: Format,
 
     /// Await loading the document into the analysis graph cache
     #[serde(default)]
+    #[param(inline)]
     cache: Cache,
 }
 
