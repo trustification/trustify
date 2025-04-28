@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745847613569,
+  "lastUpdate": 1745852507386,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -8989,6 +8989,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": false,
+          "id": "ac0c72852ff4479cf053e20a8bbf134c0695cfb1",
+          "message": "fix: remove advisory_vulnerability gist index",
+          "timestamp": "2025-04-28T14:41:59Z",
+          "tree_id": "ee00274bbf36814c2fd9925131dcc7e77d4e093a",
+          "url": "https://github.com/trustification/trustify/commit/ac0c72852ff4479cf053e20a8bbf134c0695cfb1"
+        },
+        "date": 1745852505832,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
