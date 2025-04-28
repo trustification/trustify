@@ -97,7 +97,7 @@ impl<'g> ClearlyDefinedLoader<'g> {
 #[cfg(test)]
 mod test {
     use crate::graph::Graph;
-    use crate::service::{Error, Format, IngestorService};
+    use crate::service::{Cache, Error, Format, IngestorService};
     use anyhow::anyhow;
     use test_context::test_context;
     use test_log::test;
@@ -169,7 +169,13 @@ mod test {
         let data = document_bytes("clearly-defined/aspnet.mvc-4.0.40804.json").await?;
 
         ingestor
-            .ingest(&data, Format::ClearlyDefined, ("source", "test"), None)
+            .ingest(
+                &data,
+                Format::ClearlyDefined,
+                ("source", "test"),
+                None,
+                Cache::Skip,
+            )
             .await
             .expect("must ingest");
 

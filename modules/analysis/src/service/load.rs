@@ -1,8 +1,9 @@
-use crate::service::resolve_external_sbom;
 use crate::{
     Error,
     model::{PackageGraph, graph},
-    service::{AnalysisService, ComponentReference, GraphQuery},
+    service::{
+        AnalysisService, ComponentReference, GraphQuery, InnerService, resolve_external_sbom,
+    },
 };
 use ::cpe::{
     component::Component,
@@ -24,8 +25,11 @@ use std::{
     sync::Arc,
 };
 use tracing::{Level, instrument};
-use trustify_common::db::query::IntoColumns;
-use trustify_common::{cpe::Cpe as TrustifyCpe, db::query::Filtering, purl::Purl};
+use trustify_common::{
+    cpe::Cpe as TrustifyCpe,
+    db::query::{Filtering, IntoColumns},
+    purl::Purl,
+};
 use trustify_entity::qualified_purl::{self, CanonicalPurl};
 use trustify_entity::{
     cpe, cpe::CpeDto, package_relates_to_package, relationship::Relationship, sbom,
@@ -215,6 +219,31 @@ fn to_cpes(cpes: Option<Vec<Value>>) -> Vec<TrustifyCpe> {
 }
 
 impl AnalysisService {
+    /// Load the SBOM matching the provided ID
+    ///
+    /// Compared to the plural version [`self.load_all_graphs`], it does not resolve external
+    /// references and only loads this single SBOM.
+    #[instrument(skip(self, connection))]
+    pub async fn load_graph<C: ConnectionTrait>(
+        &self,
+        connection: &C,
+        distinct_sbom_id: &str,
+    ) -> Result<Arc<PackageGraph>, Error> {
+        self.inner.load_graph(connection, distinct_sbom_id).await
+    }
+
+    /// Load all SBOMs by the provided IDs
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
+    pub async fn load_graphs<C: ConnectionTrait>(
+        &self,
+        connection: &C,
+        distinct_sbom_ids: &[impl AsRef<str> + Debug],
+    ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
+        self.inner.load_graphs(connection, distinct_sbom_ids).await
+    }
+}
+
+impl InnerService {
     /// Take a [`GraphQuery`] and load all required SBOMs
     #[instrument(skip(self, connection), err(level=Level::INFO))]
     pub(crate) async fn load_graphs_query<C: ConnectionTrait>(

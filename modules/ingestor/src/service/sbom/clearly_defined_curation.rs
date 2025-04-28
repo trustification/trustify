@@ -60,7 +60,7 @@ impl<'g> ClearlyDefinedCurationLoader<'g> {
 #[cfg(test)]
 mod test {
     use crate::graph::Graph;
-    use crate::service::{Format, IngestorService};
+    use crate::service::{Cache, Format, IngestorService};
     use test_context::test_context;
     use test_log::test;
     use trustify_test_context::TrustifyContext;
@@ -80,6 +80,7 @@ mod test {
                 Format::ClearlyDefinedCuration,
                 ("source", "test"),
                 None,
+                Cache::Skip,
             )
             .await
             .expect("must ingest");

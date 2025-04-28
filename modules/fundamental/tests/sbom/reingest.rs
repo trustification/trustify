@@ -9,7 +9,7 @@ use trustify_common::model::Paginated;
 use trustify_common::purl::Purl;
 use trustify_module_fundamental::sbom::model::SbomExternalPackageReference;
 use trustify_module_fundamental::sbom::{model::details::SbomDetails, service::SbomService};
-use trustify_module_ingestor::service::Format;
+use trustify_module_ingestor::service::{Cache, Format};
 use trustify_test_context::{TrustifyContext, document_bytes};
 
 fn assert_sboms(sbom1: &SbomDetails, sbom2: &SbomDetails) {
@@ -231,7 +231,7 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     };
     let result2 = ctx
         .ingestor
-        .ingest(bytes, Format::SBOM, ("source", "test"), None)
+        .ingest(bytes, Format::SBOM, ("source", "test"), None, Cache::Skip)
         .await?;
 
     assert_eq!(
