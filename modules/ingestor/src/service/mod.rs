@@ -13,11 +13,11 @@ use anyhow::anyhow;
 use parking_lot::Mutex;
 use sbom_walker::report::ReportSink;
 use sea_orm::error::DbErr;
-use std::sync::Arc;
-use std::{fmt::Debug, time::Instant};
+use std::{fmt::Debug, sync::Arc, time::Instant};
 use tokio::task::JoinError;
 use tokio_util::io::ReaderStream;
 use tracing::instrument;
+use trustify_common::id::Id;
 use trustify_common::{error::ErrorInformation, id::IdError};
 use trustify_entity::labels::Labels;
 use trustify_module_analysis::service::AnalysisService;
@@ -212,12 +212,12 @@ impl IngestorService {
         if let Some(analysis) = &self.analysis {
             match fmt {
                 Format::SPDX | Format::CycloneDX => {
-                    if result.id.to_string().starts_with("urn:uuid:") {
+                    if let Id::Uuid(id) = result.id {
                         match analysis
                             .load_graphs(
                                 &self.graph.db,
                                 // TODO: today we chop off 'urn:uuid:' prefix using .split_off on result.id
-                                &vec![result.id.to_string().split_off("urn:uuid:".len())],
+                                &[&id.to_string()],
                             )
                             .await
                         {
