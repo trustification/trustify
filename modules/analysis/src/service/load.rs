@@ -452,6 +452,7 @@ impl AnalysisService {
     }
 
     /// Load all SBOMs by the provided IDs
+    #[instrument(skip(self, connection), err(level=tracing::Level::INFO))]
     pub async fn load_graphs<C: ConnectionTrait>(
         &self,
         connection: &C,

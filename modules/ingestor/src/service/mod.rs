@@ -209,33 +209,7 @@ impl IngestorService {
             .load(&self.graph, labels.into(), issuer, &result.digests, bytes)
             .await?;
 
-        if let Some(analysis) = &self.analysis {
-            match fmt {
-                Format::SPDX | Format::CycloneDX => {
-                    if let Id::Uuid(id) = result.id {
-                        match analysis
-                            .load_graphs(
-                                &self.graph.db,
-                                // TODO: today we chop off 'urn:uuid:' prefix using .split_off on result.id
-                                &[&id.to_string()],
-                            )
-                            .await
-                        {
-                            Ok(_) => log::debug!(
-                                "Analysis graph for sbom: {} loaded successfully.",
-                                result.id.value()
-                            ),
-                            Err(e) => log::warn!(
-                                "Error loading sbom {} into analysis graph : {}",
-                                result.id.value(),
-                                e
-                            ),
-                        }
-                    }
-                }
-                _ => {}
-            };
-        }
+        self.load_graph_cache(fmt, &result).await;
 
         let duration = start.elapsed();
         log::debug!(
@@ -248,7 +222,7 @@ impl IngestorService {
         Ok(result)
     }
 
-    /// Ingest a dataset archive
+    /// Ingest a dataset archiv
     #[instrument(skip(self, bytes), err(level=tracing::Level::INFO))]
     pub async fn ingest_dataset(
         &self,
@@ -258,6 +232,41 @@ impl IngestorService {
     ) -> Result<DatasetIngestResult, Error> {
         let loader = DatasetLoader::new(self.graph(), self.storage(), limit);
         loader.load(labels.into(), bytes).await
+    }
+
+    /// If appropriate, load result into analysis graph cache
+    #[instrument(skip(self))]
+    async fn load_graph_cache(&self, fmt: Format, result: &IngestResult) {
+        let Some(analysis) = &self.analysis else {
+            // if we don't have an instance, we skip
+            return;
+        };
+
+        let (Format::SPDX | Format::CycloneDX) = fmt else {
+            // wrong format, we skip that too
+            return;
+        };
+
+        let Id::Uuid(id) = result.id else {
+            // no ID in the result, strange, but skip
+            return;
+        };
+
+        match analysis
+            .load_graphs(&self.graph.db, &[&id.to_string()])
+            .await
+        {
+            Ok(r) => log::debug!(
+                "Analysis graph for sbom: {} loaded successfully ({} graphs loaded).",
+                result.id.value(),
+                r.len()
+            ),
+            Err(e) => log::warn!(
+                "Error loading sbom {} into analysis graph: {}",
+                result.id.value(),
+                e
+            ),
+        }
     }
 }
 
