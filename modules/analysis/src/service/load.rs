@@ -17,9 +17,10 @@ use sea_orm::{
 };
 use sea_query::{JoinType, Order, SelectStatement};
 use serde_json::Value;
-use std::str::FromStr;
 use std::{
     collections::{HashMap, HashSet, hash_map::Entry},
+    fmt::Debug,
+    str::FromStr,
     sync::Arc,
 };
 use tracing::{Level, instrument};
@@ -338,6 +339,9 @@ impl AnalysisService {
     }
 
     /// Load the SBOM matching the provided ID
+    ///
+    /// Compared to the plural version [`self.load_all_graphs`], it does not resolve external
+    /// references and only loads this single SBOM.
     #[instrument(skip(self, connection))]
     pub async fn load_graph<C: ConnectionTrait>(
         &self,
@@ -451,10 +455,11 @@ impl AnalysisService {
     pub async fn load_graphs<C: ConnectionTrait>(
         &self,
         connection: &C,
-        distinct_sbom_ids: &Vec<String>,
+        distinct_sbom_ids: &[impl AsRef<str> + Debug],
     ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
         let mut results = Vec::new();
         for distinct_sbom_id in distinct_sbom_ids {
+            let distinct_sbom_id = distinct_sbom_id.as_ref();
             // TODO: we need a better heuristic for loading external sboms
             let external_sboms = sbom_external_node::Entity::find().all(connection).await?;
             for external_sbom in &external_sboms {
@@ -463,7 +468,7 @@ impl AnalysisService {
                         resolve_external_sbom(external_sbom.node_id.to_string(), connection).await;
                     log::debug!("resolved external sbom: {:?}", resolved_external_sbom);
                     if let Some(resolved_external_sbom) = resolved_external_sbom {
-                        let resolved_external_sbom_id = resolved_external_sbom.clone().sbom_id;
+                        let resolved_external_sbom_id = resolved_external_sbom.sbom_id;
                         results.push((
                             resolved_external_sbom_id.clone().to_string(),
                             self.load_graph(connection, &resolved_external_sbom_id.to_string())
@@ -478,7 +483,7 @@ impl AnalysisService {
             log::debug!("loading sbom: {:?}", distinct_sbom_id);
 
             results.push((
-                distinct_sbom_id.clone(),
+                distinct_sbom_id.to_string(),
                 self.load_graph(connection, distinct_sbom_id).await?,
             ));
         }
