@@ -270,7 +270,7 @@ impl AnalysisService {
             .await?
             .into_iter()
             .map(|record| record.sbom_id.to_string()) // Assuming sbom_id is of type String
-            .collect();
+            .collect::<Vec<_>>();
 
         self.load_graphs(connection, &distinct_sbom_ids).await
     }
