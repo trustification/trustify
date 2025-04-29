@@ -14,5 +14,15 @@ async fn caller_with(
     config: Config,
 ) -> anyhow::Result<impl CallService + '_> {
     let analysis = AnalysisService::new(AnalysisConfig::default(), ctx.db.clone());
-    call::caller(|svc| configure(svc, config, ctx.db.clone(), ctx.storage.clone(), analysis)).await
+    call::caller(|svc| {
+        configure(
+            svc,
+            config,
+            ctx.db.clone(),
+            ctx.storage.clone(),
+            analysis.clone(),
+        );
+        trustify_module_analysis::endpoints::configure(svc, ctx.db.clone(), analysis);
+    })
+    .await
 }
