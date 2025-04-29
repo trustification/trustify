@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745915210992,
+  "lastUpdate": 1745920413363,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9076,6 +9076,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "0f5deab0197bd02b4870e0635f0f4ca8b11c6d17",
+          "message": "test: add test for lazy loading",
+          "timestamp": "2025-04-29T09:32:46Z",
+          "tree_id": "4d095f4266bd23a5828d3a81e6fbce0cc7dffaa7",
+          "url": "https://github.com/trustification/trustify/commit/0f5deab0197bd02b4870e0635f0f4ca8b11c6d17"
+        },
+        "date": 1745920412281,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
