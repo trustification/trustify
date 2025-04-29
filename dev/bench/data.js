@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745912666220,
+  "lastUpdate": 1745915210992,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9047,6 +9047,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "2582866+carlosthe19916@users.noreply.github.com",
+            "name": "Carlos Feria",
+            "username": "carlosthe19916"
+          },
+          "committer": {
+            "email": "carlosthe19916@gmail.com",
+            "name": "Carlos Feria",
+            "username": "carlosthe19916"
+          },
+          "distinct": true,
+          "id": "c98334def30dc6bcaf67eb2a9e5219cc84968786",
+          "message": "ci: allow backports with comments\n\nSigned-off-by: Carlos Feria <2582866+carlosthe19916@users.noreply.github.com>",
+          "timestamp": "2025-04-29T08:05:16Z",
+          "tree_id": "4beefcf70a7da1504226a3d0ea27ad2c90939223",
+          "url": "https://github.com/trustification/trustify/commit/c98334def30dc6bcaf67eb2a9e5219cc84968786"
+        },
+        "date": 1745915210090,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
