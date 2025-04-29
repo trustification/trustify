@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745852507386,
+  "lastUpdate": 1745912666220,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9013,6 +9013,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/ac0c72852ff4479cf053e20a8bbf134c0695cfb1"
         },
         "date": 1745852505832,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "374801d0807a353f49c49d991e0ff00109ef0b05",
+          "message": "test: run s3 tests in CI, disable via feature flags",
+          "timestamp": "2025-04-29T07:13:11Z",
+          "tree_id": "93da33f380f351f9e21553123d05c7cbe56c62ae",
+          "url": "https://github.com/trustification/trustify/commit/374801d0807a353f49c49d991e0ff00109ef0b05"
+        },
+        "date": 1745912664686,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
