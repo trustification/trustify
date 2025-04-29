@@ -122,6 +122,12 @@ impl GraphMap {
             map: Cache::builder()
                 .weigher(size_of_graph_entry)
                 .max_capacity(cap)
+                .eviction_listener(|k, v, cause| {
+                    if log::log_enabled!(log::Level::Info) {
+                        let size = size_of_graph_entry(&k, &v);
+                        log::info!("Evicting {k}: {cause:?}: {size} bytes");
+                    }
+                })
                 .build(),
         }
     }
