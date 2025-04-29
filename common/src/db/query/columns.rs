@@ -8,7 +8,7 @@ use sea_orm::{
     entity::ColumnDef, sea_query,
 };
 use sea_query::{
-    Alias, ColumnRef, Expr, ExprTrait, IntoColumnRef, IntoIden, SimpleExpr,
+    Alias, ColumnRef, Expr, ExprTrait, Func, IntoColumnRef, IntoIden, SimpleExpr,
     extension::postgres::PgExpr,
 };
 use time::{
@@ -190,12 +190,18 @@ impl Columns {
         value: &str,
     ) -> Result<SimpleExpr, Error> {
         self.for_field(field).and_then(|(lhs, ct)| {
-            match (value.to_lowercase().as_str(), operator) {
-                ("null", Operator::Equal) => Ok(lhs.is_null()),
-                ("null", Operator::NotEqual) => Ok(lhs.is_not_null()),
-                (_, Operator::Like) => Ok(lhs.ilike(like(value))),
-                (_, Operator::NotLike) => Ok(lhs.not_ilike(like(value))),
-                _ => parse(value, &ct).map(|rhs| lhs.binary(operator, rhs)),
+            match (value.to_lowercase().as_str(), operator, &ct) {
+                ("null", Operator::Equal, _) => Ok(lhs.is_null()),
+                ("null", Operator::NotEqual, _) => Ok(lhs.is_not_null()),
+                (v, op, ColumnType::Array(_)) => match op {
+                    Operator::Like => Ok(array_to_string(lhs).ilike(like(v))),
+                    Operator::NotLike => Ok(array_to_string(lhs).not_ilike(like(v))),
+                    Operator::NotEqual => Ok(Expr::val(value).binary(op, all(lhs))),
+                    _ => Ok(Expr::val(value).binary(op, any(lhs))),
+                },
+                (v, Operator::Like, _) => Ok(lhs.ilike(like(v))),
+                (v, Operator::NotLike, _) => Ok(lhs.not_ilike(like(v))),
+                (_, _, ct) => parse(value, ct).map(|rhs| lhs.binary(operator, rhs)),
             }
         })
     }
@@ -283,6 +289,20 @@ impl Columns {
 
 fn like(s: &str) -> String {
     format!("%{}%", s.replace('%', r"\%").replace('_', r"\_"))
+}
+
+fn array_to_string(expr: SimpleExpr) -> SimpleExpr {
+    SimpleExpr::FunctionCall(
+        Func::cust("array_to_string".into_identity())
+            .arg(expr)
+            .arg("|"),
+    )
+}
+fn any(expr: SimpleExpr) -> SimpleExpr {
+    SimpleExpr::FunctionCall(Func::cust("ANY".into_identity()).arg(expr))
+}
+fn all(expr: SimpleExpr) -> SimpleExpr {
+    SimpleExpr::FunctionCall(Func::cust("ALL".into_identity()).arg(expr))
 }
 
 fn parse(s: &str, ct: &ColumnType) -> Result<SimpleExpr, Error> {
@@ -571,6 +591,47 @@ mod tests {
         );
         assert!(clause(q("missing:name=log4j")).is_err());
         assert!(clause(q("").sort(r"missing:name")).is_err());
+
+        Ok(())
+    }
+
+    #[test(tokio::test)]
+    async fn array_queries() -> Result<(), anyhow::Error> {
+        let clause = |query: Query| -> Result<String, Error> {
+            Ok(advisory::Entity::find()
+                .filtering(query)?
+                .build(sea_orm::DatabaseBackend::Postgres)
+                .to_string()
+                .split("WHERE ")
+                .last()
+                .unwrap()
+                .to_string())
+        };
+
+        assert_eq!(
+            clause(q("authors=null"))?,
+            r#""advisory"."authors" IS NULL"#
+        );
+        assert_eq!(
+            clause(q("authors~foo"))?,
+            r#"array_to_string("advisory"."authors", '|') ILIKE '%foo%'"#
+        );
+        assert_eq!(
+            clause(q("authors~foo|bar"))?,
+            r#"(array_to_string("advisory"."authors", '|') ILIKE '%foo%') OR (array_to_string("advisory"."authors", '|') ILIKE '%bar%')"#
+        );
+        assert_eq!(
+            clause(q("authors!~foo"))?,
+            r#"array_to_string("advisory"."authors", '|') NOT ILIKE '%foo%'"#
+        );
+        assert_eq!(
+            clause(q("authors=Foo"))?,
+            r#"'Foo' = ANY("advisory"."authors")"#
+        );
+        assert_eq!(
+            clause(q("authors!=FOO"))?,
+            r#"'FOO' <> ALL("advisory"."authors")"#
+        );
 
         Ok(())
     }
