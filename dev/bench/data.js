@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1745920413363,
+  "lastUpdate": 1745930861212,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9100,6 +9100,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/0f5deab0197bd02b4870e0635f0f4ca8b11c6d17"
         },
         "date": 1745920412281,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "895a360724522f4decb9bd79a9bb8353e576e213",
+          "message": "feat(analysis): log cache eviction note on info level",
+          "timestamp": "2025-04-29T12:25:17Z",
+          "tree_id": "6050f5c0f814ead286ae7239e2dde7d871b5476d",
+          "url": "https://github.com/trustification/trustify/commit/895a360724522f4decb9bd79a9bb8353e576e213"
+        },
+        "date": 1745930859587,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
