@@ -256,11 +256,13 @@ impl InnerService {
                 .filter(sbom_node::Column::NodeId.eq(name))
                 .select_only()
                 .column(sbom_node::Column::SbomId)
+                .distinct()
                 .into_query(),
             GraphQuery::Component(ComponentReference::Name(name)) => sbom_node::Entity::find()
                 .filter(sbom_node::Column::Name.eq(name))
                 .select_only()
                 .column(sbom::Column::SbomId)
+                .distinct()
                 .into_query(),
             GraphQuery::Component(ComponentReference::Purl(purl)) => sbom_node::Entity::find()
                 .join(JoinType::Join, sbom_node::Relation::Package.def())
@@ -275,6 +277,7 @@ impl InnerService {
                 .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()))
                 .select_only()
                 .column(sbom_node::Column::SbomId)
+                .distinct()
                 .into_query(),
             GraphQuery::Query(query) => {
                 sbom_node::Entity::find()
@@ -334,6 +337,7 @@ impl InnerService {
                                 }
                             }),
                     )?
+                    .distinct()
                     .into_query()
             }
         };
