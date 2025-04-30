@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746002598591,
+  "lastUpdate": 1746045143538,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9187,6 +9187,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/8d45e0a8edbb2a670ed65b03bad48fa120a15881"
         },
         "date": 1746002597663,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "90e4db5c863bde897ca676cc9319ab1972ef32e0",
+          "message": "chore: rollback a minor perf",
+          "timestamp": "2025-04-30T20:09:04Z",
+          "tree_id": "d1c3c540d19f51c4bc03dd37dd183aefc1717e32",
+          "url": "https://github.com/trustification/trustify/commit/90e4db5c863bde897ca676cc9319ab1972ef32e0"
+        },
+        "date": 1746045142440,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
