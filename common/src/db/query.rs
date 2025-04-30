@@ -30,30 +30,8 @@ pub fn q(s: &str) -> Query {
 }
 
 impl Query {
-    /// Form expected: `{search}*{filter}*`
-    ///
-    /// where `{filter}` is of the form `{field}{op}{value}`
-    ///
-    /// Multiple searches and/or filters should be `&`-delimited
-    ///
-    /// The `{search}` text will result in an OR clause of LIKE clauses
-    /// for every [String] field in the associated Columns. Optional
-    /// filters of the form `{field}{op}{value}` may further constrain
-    /// the results. Each `{field}` name must correspond to one of the
-    /// selected Columns.
-    ///
-    /// Fields corresponding to JSON objects in the database may use a
-    /// ':' to delimit the column name and the object key,
-    /// e.g. `purl:name=foo`
-    ///
-    /// Both `{search}` and `{value}` may contain `|`-delimited
-    /// alternate values that will result in an OR clause. Any literal
-    /// `|` or `&` within a search or value should be escaped with a
-    /// backslash, e.g. `\|` or `\&`.
-    ///
-    /// `{op}` should be one of `=`, `!=`, `~`, `!~, `>=`, `>`, `<=`,
-    /// or `<`.
-    ///
+    /// Construct a Query from a properly-formatted string denoting
+    /// full text searches and/or filters
     pub fn q(s: &str) -> Self {
         Self {
             q: s.into(),
@@ -61,17 +39,8 @@ impl Query {
         }
     }
 
-    /// Form expected: `{sort}*`
-    ///
-    /// where `{sort}` is of the form `{field}[:order]` and the
-    /// optional `order` should be one of `asc` or `desc`. If omitted,
-    /// the order defaults to `asc`.
-    ///
-    /// Multiple sorts should be `,`-delimited
-    ///
-    /// Each `{field}` name must correspond to one of the selected
-    /// Columns.
-    ///
+    /// Sort the results of a Query per a comma-delimited string of
+    /// field names.
     pub fn sort(self, s: &str) -> Self {
         Self {
             q: self.q,
@@ -165,11 +134,76 @@ impl Query {
     }
 }
 
+/// A Query is comprised of full text searches and/or filters with optional sorting rules.
+///
 #[derive(Clone, Default, Debug, Eq, PartialEq, Deserialize, Serialize, ToSchema, IntoParams)]
 #[serde(rename_all = "camelCase")]
 pub struct Query {
+    /// EBNF grammar for the _q_ parameter:
+    /// ```text
+    ///     q = ( values | filter ) { '&' q }
+    ///     values = value { '|', values }
+    ///     filter = field, operator, values
+    ///     operator = "=" | "!=" | "~" | "!~" | ">=" | ">" | "<=" | "<"
+    ///     value = (* any text but escape special characters with '\' *)
+    ///     field = (* must match an entity attribute name *)
+    /// ```
+    /// Any values in a _q_ will result in a case-insensitive "full
+    /// text search", effectively producing an OR clause of LIKE
+    /// clauses for every string-ish field in the resource being
+    /// queried.
+    ///
+    /// Examples:
+    /// - `foo` - any field containing 'foo'
+    /// - `foo|bar` - any field containing either 'foo' OR 'bar'
+    /// - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
+    ///
+    /// A _filter_ can further constrain the results. The filter's
+    /// field name must correspond to one of the resource's
+    /// attributes. If it doesn't, an error will be returned
+    /// containing a list of the valid fields for that resource.
+    ///
+    /// The value 'null' is treated specially for [not]equal filters:
+    /// it returns resources on which the field isn't set. Use the
+    /// LIKE operator, `~`, to match a literal "null" string.
+    ///
+    /// Examples:
+    /// - `name=foo` - entity's _name_ matches 'foo' exactly
+    /// - `name~foo` - entity's _name_ contains 'foo', case-insensitive
+    /// - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+    /// - `name=null` - entity's _name_ isn't set
+    /// - `published>3 days ago` - date values can be "human time"
+    ///
+    /// Multiple full text searches and/or filters should be
+    /// '&'-delimited -- they are logically AND'd together.
+    ///
+    /// - `red hat|fedora&labels:type=cve|osv&published>last wednesday 17:00`
+    ///
+    /// Fields corresponding to JSON objects in the database may use a
+    /// ':' to delimit the column name and the object key,
+    /// e.g. `purl:qualifiers:type=pom`
+    ///
+    /// Any operator or special character, e.g. '|', '&', within a
+    /// value should be escaped by prefixing it with a backslash.
+    ///
     #[serde(default)]
     pub q: String,
+
+    /// EBNF grammar for the _sort_ parameter:
+    /// ```text
+    ///     sort = field [ ':', order ] { ',' sort }
+    ///     order = ( "asc" | "desc" )
+    ///     field = (* must match the name of entity's attributes *)
+    /// ```
+    /// The optional _order_ should be one of "asc" or "desc". If
+    /// omitted, the order defaults to "asc".
+    ///
+    /// Each _field_ name must correspond to one of the columns of the
+    /// table holding the entities being queried. Those corresponding
+    /// to JSON objects in the database may use a ':' to delimit the
+    /// column name and the object key,
+    /// e.g. `purl:qualifiers:type:desc`
+    ///
     #[serde(default)]
     pub sort: String,
 }
