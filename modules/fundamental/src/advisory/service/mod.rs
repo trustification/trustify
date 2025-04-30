@@ -3,13 +3,11 @@ use crate::{
     advisory::model::{AdvisoryDetails, AdvisorySummary},
 };
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ConnectionTrait,
-    DatabaseBackend, DbErr, EntityTrait, FromQueryResult, IntoActiveModel, IntoIdentity,
-    QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Statement, TransactionTrait,
+    ActiveModelTrait, ActiveValue::Set, ConnectionTrait, DatabaseBackend, DbErr, EntityTrait,
+    FromQueryResult, IntoActiveModel, IntoIdentity, QueryResult, QuerySelect, QueryTrait,
+    RelationTrait, Select, Statement, TransactionTrait,
 };
-use sea_query::{
-    ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, JoinType, SimpleExpr,
-};
+use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, JoinType, SimpleExpr};
 use trustify_common::{
     db::{
         Database, UpdateDeprecatedAdvisory,
