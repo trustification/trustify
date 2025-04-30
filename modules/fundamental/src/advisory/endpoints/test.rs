@@ -662,3 +662,25 @@ async fn query_advisories_by_label(ctx: &TrustifyContext) -> Result<(), anyhow::
 
     Ok(())
 }
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn advisory_with_null_severity(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await.unwrap();
+    let id = ctx
+        .ingest_document("cve/CVE-1999-0001.json")
+        .await?
+        .id
+        .to_string();
+    let uri = format!("/api/v2/advisory/{id}");
+    let req = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(req).await;
+    tracing::debug!(test = "", "{response:#?}");
+
+    assert_eq!(Value::Null, response["average_severity"]);
+    assert_eq!(Value::Null, response["average_score"]);
+    assert_eq!(Value::Null, response["vulnerabilities"][0]["severity"]);
+    assert_eq!(Value::Null, response["vulnerabilities"][0]["score"]);
+
+    Ok(())
+}
