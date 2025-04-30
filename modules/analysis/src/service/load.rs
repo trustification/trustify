@@ -14,9 +14,9 @@ use anyhow::anyhow;
 use petgraph::{Graph, prelude::NodeIndex};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
-    FromQueryResult, QueryFilter, QueryOrder, QuerySelect, QueryTrait, RelationTrait, Statement,
+    FromQueryResult, QueryFilter, QuerySelect, QueryTrait, RelationTrait, Statement,
 };
-use sea_query::{JoinType, Order, SelectStatement};
+use sea_query::{JoinType, SelectStatement};
 use serde_json::Value;
 use std::{
     collections::{HashMap, HashSet, hash_map::Entry},
@@ -256,13 +256,11 @@ impl InnerService {
                 .filter(sbom_node::Column::NodeId.eq(name))
                 .select_only()
                 .column(sbom_node::Column::SbomId)
-                .distinct()
                 .into_query(),
             GraphQuery::Component(ComponentReference::Name(name)) => sbom_node::Entity::find()
                 .filter(sbom_node::Column::Name.eq(name))
                 .select_only()
                 .column(sbom::Column::SbomId)
-                .distinct()
                 .into_query(),
             GraphQuery::Component(ComponentReference::Purl(purl)) => sbom_node::Entity::find()
                 .join(JoinType::Join, sbom_node::Relation::Package.def())
@@ -270,7 +268,6 @@ impl InnerService {
                 .filter(sbom_package_purl_ref::Column::QualifiedPurlId.eq(purl.qualifier_uuid()))
                 .select_only()
                 .column(sbom_node::Column::SbomId)
-                .distinct()
                 .into_query(),
             GraphQuery::Component(ComponentReference::Cpe(cpe)) => sbom_node::Entity::find()
                 .join(JoinType::Join, sbom_node::Relation::Package.def())
@@ -278,7 +275,6 @@ impl InnerService {
                 .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()))
                 .select_only()
                 .column(sbom_node::Column::SbomId)
-                .distinct()
                 .into_query(),
             GraphQuery::Query(query) => {
                 sbom_node::Entity::find()
@@ -338,7 +334,6 @@ impl InnerService {
                                 }
                             }),
                     )?
-                    .distinct()
                     .into_query()
             }
         };
@@ -356,8 +351,6 @@ impl InnerService {
         let distinct_sbom_ids: Vec<String> = sbom::Entity::find()
             .filter(sbom::Column::SbomId.in_subquery(subquery))
             .select()
-            .order_by(sbom::Column::DocumentId, Order::Asc)
-            .order_by(sbom::Column::Published, Order::Desc)
             .all(connection)
             .await?
             .into_iter()
