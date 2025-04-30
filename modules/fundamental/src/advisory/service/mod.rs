@@ -3,11 +3,13 @@ use crate::{
     advisory::model::{AdvisoryDetails, AdvisorySummary},
 };
 use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, ColumnTrait, ColumnTypeTrait, ConnectionTrait,
+    ActiveModelTrait, ActiveValue::Set, ConnectionTrait,
     DatabaseBackend, DbErr, EntityTrait, FromQueryResult, IntoActiveModel, IntoIdentity,
     QueryResult, QuerySelect, QueryTrait, RelationTrait, Select, Statement, TransactionTrait,
 };
-use sea_query::{ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, JoinType, SimpleExpr};
+use sea_query::{
+    ColumnRef, ColumnType, Expr, Func, IntoColumnRef, IntoIden, JoinType, SimpleExpr,
+};
 use trustify_common::{
     db::{
         Database, UpdateDeprecatedAdvisory,
@@ -94,11 +96,8 @@ impl AdvisoryService {
             .filtering_with(
                 search,
                 Columns::from_entity::<advisory::Entity>()
-                    .add_column(
-                        source_document::Column::Ingested.into_identity(),
-                        source_document::Column::Ingested.def(),
-                    )
-                    .add_column("average_score", ColumnType::Decimal(None).def())
+                    .add_columns(source_document::Entity)
+                    .add_column("average_score", ColumnType::Decimal(None))
                     .add_column(
                         "average_severity",
                         ColumnType::Enum {
@@ -110,8 +109,7 @@ impl AdvisoryService {
                                 "high".into_identity().into_iden(),
                                 "critical".into_identity().into_iden(),
                             ],
-                        }
-                        .def(),
+                        },
                     )
                     .translator(|f, op, v| match (f, v) {
                         // v = "" for all sort fields
