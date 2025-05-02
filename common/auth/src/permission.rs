@@ -59,7 +59,7 @@ permission! {
         CreateSbom,
         #[strum(serialize = "read.sbom")]
         ReadSbom,
-        #[serde(rename = "update.sbom")]
+        #[strum(serialize = "update.sbom")]
         UpdateSbom,
         #[strum(serialize = "delete.sbom")]
         DeleteSbom,
