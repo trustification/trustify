@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746045143538,
+  "lastUpdate": 1746190694474,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9216,6 +9216,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/90e4db5c863bde897ca676cc9319ab1972ef32e0"
         },
         "date": 1746045142440,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "44f0cb7ca5f423e8dc623003e4232d9c53332ec5",
+          "message": "chore: PR has been merged, use release version of the osv crate",
+          "timestamp": "2025-05-02T12:14:06Z",
+          "tree_id": "1c1ffcf124f7c54d47cc279f8de7e2ea5a481dd1",
+          "url": "https://github.com/trustification/trustify/commit/44f0cb7ca5f423e8dc623003e4232d9c53332ec5"
+        },
+        "date": 1746190693527,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
