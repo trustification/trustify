@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746190694474,
+  "lastUpdate": 1746193086000,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9245,6 +9245,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/44f0cb7ca5f423e8dc623003e4232d9c53332ec5"
         },
         "date": 1746190693527,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "d6b901bab081ca09afbd61dadddcf8e931706a06",
+          "message": "duh openapi",
+          "timestamp": "2025-05-02T13:03:47Z",
+          "tree_id": "122aaf613e3e8c8ab4d17c72d83dd079cb6e04b0",
+          "url": "https://github.com/trustification/trustify/commit/d6b901bab081ca09afbd61dadddcf8e931706a06"
+        },
+        "date": 1746193084423,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
