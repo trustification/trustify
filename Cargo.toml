@@ -205,7 +205,7 @@ postgresql_commands = { version = "0.18.0", default-features = false, features =
 # required due to https://github.com/voteblake/csaf-rs/pull/29
 csaf = { git = "https://github.com/trustification/csaf-rs" }
 # required due to https://github.com/gcmurphy/osv/pull/58
-osv = { git = "https://github.com/ctron/osv", branch = "feature/drop_deps_1" }
+#osv = { git = "https://github.com/ctron/osv", branch = "feature/drop_deps_1" }
 
 # to pickup fix: https://github.com/Abraxas-365/langchain-rust/pull/246
 #       and fix: https://github.com/Abraxas-365/langchain-rust/pull/250
