@@ -27,7 +27,7 @@ pub enum Relation {
     License,
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, EnumIter, DeriveActiveEnum)]
+#[derive(Copy, Clone, Debug, strum::Display, Eq, PartialEq, EnumIter, DeriveActiveEnum)]
 #[sea_orm(rs_type = "i32", db_type = "Integer")]
 pub enum LicenseCategory {
     Declared = 0,
