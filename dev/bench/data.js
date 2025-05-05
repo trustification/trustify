@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746426225307,
+  "lastUpdate": 1746446327495,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9303,6 +9303,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/a0cee9f28530484edb670b504dbd3ca055e464aa"
         },
         "date": 1746426224336,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "78cd8c3d5b7d75b9fb582d16f1680b7bd809f8d1",
+          "message": "chore: clean up labels API, add tests, handle removing, add docs",
+          "timestamp": "2025-05-05T11:15:49Z",
+          "tree_id": "555a7260874ad8138188842576215415f16cc2d2",
+          "url": "https://github.com/trustification/trustify/commit/78cd8c3d5b7d75b9fb582d16f1680b7bd809f8d1"
+        },
+        "date": 1746446326763,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
