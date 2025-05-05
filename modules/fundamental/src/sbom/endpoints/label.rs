@@ -1,15 +1,14 @@
 use crate::sbom::service::SbomService;
 use actix_web::{HttpResponse, Responder, patch, put, web};
 use trustify_auth::{UpdateSbom, authorizer::Require};
-use trustify_common::db::Database;
-use trustify_common::id::Id;
-use trustify_entity::labels::Labels;
+use trustify_common::{db::Database, id::Id};
+use trustify_entity::labels::{Labels, Update};
 
 /// Modify existing labels of an SBOM
 #[utoipa::path(
     tag = "sbom",
     operation_id = "patchSbomLabels",
-    request_body = Labels,
+    request_body = Update,
     params(
         ("id" = Id, Path, description = "Digest/hash of the document, prefixed by hash type, such as 'sha256:<hash>' or 'urn:uuid:<uuid>'"),
     ),
@@ -22,12 +21,12 @@ use trustify_entity::labels::Labels;
 pub async fn update(
     sbom: web::Data<SbomService>,
     id: web::Path<Id>,
-    web::Json(update): web::Json<Labels>,
+    web::Json(update): web::Json<Update>,
     _: Require<UpdateSbom>,
 ) -> actix_web::Result<impl Responder> {
     Ok(
         match sbom
-            .update_labels(id.into_inner(), |labels| labels.apply(update))
+            .update_labels(id.into_inner(), |labels| update.apply_to(labels))
             .await?
         {
             Some(()) => HttpResponse::NoContent(),
