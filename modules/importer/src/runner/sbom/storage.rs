@@ -76,7 +76,7 @@ impl<C: RunContext> ValidatedVisitor<HttpSource> for StorageVisitor<C> {
                     .add("source", &self.source)
                     .add("importer", self.context.name())
                     .add("file", &file)
-                    .extend(&self.labels.0),
+                    .extend(self.labels.0.clone()),
                 None,
                 Cache::Skip,
             )
