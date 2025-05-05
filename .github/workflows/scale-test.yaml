@@ -65,7 +65,7 @@ jobs:
       # https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#issue_comment-on-issues-only-or-pull-requests-only
       - name: Build Containers
         run: |
-          docker compose -f compose.yaml build --build-arg rev=${{ github.event.issue.number }}
+          docker compose -f compose.yaml build --build-arg rev=pr/${{ github.event.issue.number }}
 
       - name: Run
         run: |
