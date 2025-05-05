@@ -42,7 +42,7 @@ impl<C: RunContext> Context<C> {
                         .add("source", &self.source)
                         .add("importer", self.context.name())
                         .add("file", path.to_string_lossy())
-                        .extend(&self.labels.0),
+                        .extend(self.labels.0.clone()),
                     None,
                     Cache::Skip,
                 )
