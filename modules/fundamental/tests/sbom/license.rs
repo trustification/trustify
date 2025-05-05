@@ -4,6 +4,7 @@ use std::io::Read;
 use tar::Archive;
 use test_context::test_context;
 use test_log::test;
+use trustify_entity::sbom_package_license::LicenseCategory;
 use trustify_entity::{sbom_package, sbom_package_license};
 use trustify_module_fundamental::license::{
     model::sbom_license::SbomNameId,
@@ -57,20 +58,35 @@ async fn test_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let spl: Vec<sbom_package_license::Model> =
         sbom_package_license::Entity::find().all(&ctx.db).await?;
 
-    assert_eq!(2084, license_result.sbom_package_license.len());
+    assert_eq!(4168, license_result.sbom_package_license.len());
 
     let package_license_result = license_result
         .sbom_package_license
-        .iter()
-        .find(|sl| sl.name == "rubygem-bundler_ext");
-    assert_ne!(Option::None, package_license_result);
-    if let Some(plr) = package_license_result {
-        assert_eq!(Some("LicenseRef-0"), plr.license_declared_text.as_deref());
-        assert_eq!(
-            Some("Apache-2.0 AND MIT"),
-            plr.license_concluded_text.as_deref()
-        );
-    }
+        .into_iter()
+        .filter(|sl| sl.name == "rubygem-bundler_ext")
+        .collect::<Vec<_>>();
+    // there are 4 with the same name but different qualifiers: two has 'arch=src' and
+    // the other two have 'arch=noarch'.
+    // Each qualifier appears twice: once for the declared license and once for the concluded one.
+    assert_eq!(4, package_license_result.len());
+    assert_eq!(
+        2,
+        package_license_result
+            .iter()
+            .filter(|plr| plr.license_text == Some("LicenseRef-0".to_string())
+                && plr.license_type == Some(LicenseCategory::Declared))
+            .count()
+    );
+    assert_eq!(
+        2,
+        package_license_result
+            .iter()
+            .filter(
+                |plr| plr.license_text == Some("Apache-2.0 AND MIT".to_string())
+                    && plr.license_type == Some(LicenseCategory::Concluded)
+            )
+            .count()
+    );
     assert_eq!(2084, sp.len());
     assert_eq!(4168, spl.len());
     assert_eq!(49, license_result.extracted_licensing_infos.len());
@@ -100,7 +116,7 @@ async fn test_license_export_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::E
         license_result.extracted_licensing_infos.clone(),
     );
     assert_eq!(45, license_result.extracted_licensing_infos.len());
-    assert_eq!(5388, license_result.sbom_package_license.len());
+    assert_eq!(10776, license_result.sbom_package_license.len());
 
     let compressed_data = exporter
         .generate()
@@ -117,20 +133,20 @@ async fn test_license_export_spdx(ctx: &TrustifyContext) -> Result<(), anyhow::E
                 licenses_csv_found = true;
                 let mut sbom_licenses = String::new();
                 entry.read_to_string(&mut sbom_licenses)?;
-                assert_eq!(10777, sbom_licenses.matches("MTV-2.6").count());
+                assert_eq!(21554, sbom_licenses.matches("MTV-2.6").count());
                 assert_eq!(
-                    5388,
+                    10776,
                     sbom_licenses
                         .matches("https://access.redhat.com/security/data/sbom/spdx/MTV-2.6")
                         .count()
                 );
-                assert_eq!(28, sbom_licenses.matches("pkg:oci/").count());
-                assert_eq!(1976, sbom_licenses.matches("pkg:npm/").count());
-                assert_eq!(2185, sbom_licenses.matches("pkg:golang/").count());
-                assert_eq!(1191, sbom_licenses.matches("pkg:rpm/").count());
+                assert_eq!(56, sbom_licenses.matches("pkg:oci/").count());
+                assert_eq!(3952, sbom_licenses.matches("pkg:npm/").count());
+                assert_eq!(4370, sbom_licenses.matches("pkg:golang/").count());
+                assert_eq!(2382, sbom_licenses.matches("pkg:rpm/").count());
                 assert_eq!(8972, sbom_licenses.matches("NOASSERTION").count());
-                assert_eq!(1, sbom_licenses.matches("declared license").count());
-                assert_eq!(1, sbom_licenses.matches("concluded license").count());
+                assert_eq!(5388, sbom_licenses.matches("Declared").count());
+                assert_eq!(5388, sbom_licenses.matches("Concluded").count());
             }
             Ok(path) if path.file_name().unwrap_or_default() == "MTV-2.6_license_ref.csv" => {
                 licenses_ref_csv_found = true;

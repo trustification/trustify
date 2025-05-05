@@ -3,14 +3,12 @@ use crate::{
     license::model::{
         SpdxLicenseDetails, SpdxLicenseSummary,
         sbom_license::{
-            ExtractedLicensingInfos, MergedSbomPackageLicense, Purl, SbomNameId,
-            SbomPackageLicense, SbomPackageLicenseBase,
+            ExtractedLicensingInfos, Purl, SbomNameId, SbomPackageLicense, SbomPackageLicenseBase,
         },
     },
 };
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
-use std::collections::HashMap;
 use trustify_common::{
     db::query::Query,
     id::{Id, TrySelectForId},
@@ -20,26 +18,15 @@ use trustify_entity::{
     license, licensing_infos, qualified_purl, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
     sbom_package_license, sbom_package_purl_ref,
 };
-use uuid::Uuid;
 
 pub mod license_export;
 
 pub struct LicenseService {}
 
-#[derive(Debug, Clone)]
 pub struct LicenseExportResult {
     pub sbom_package_license: Vec<SbomPackageLicense>,
     pub extracted_licensing_infos: Vec<ExtractedLicensingInfos>,
     pub sbom_name_group_version: Option<SbomNameId>,
-}
-
-#[derive(Eq, Hash, PartialEq)]
-pub struct SbomPackageLicenseBasekey {
-    pub node_id: String,
-    pub sbom_id: Uuid,
-    pub name: String,
-    pub group: Option<String>,
-    pub version: Option<String>,
 }
 
 impl Default for LicenseService {
@@ -64,7 +51,6 @@ impl LicenseService {
             .select_only()
             .column_as(sbom::Column::DocumentId, "sbom_id")
             .column_as(sbom_node::Column::Name, "sbom_name")
-            .column_as(sbom::Column::Labels, "labels")
             .into_model::<SbomNameId>()
             .one(connection)
             .await?;
@@ -93,66 +79,8 @@ impl LicenseService {
             .all(connection)
             .await?;
 
-        fn merge_package_licenses_for_spdx(
-            package_licenses: Vec<SbomPackageLicenseBase>,
-        ) -> Vec<MergedSbomPackageLicense> {
-            let mut grouped: HashMap<SbomPackageLicenseBasekey, MergedSbomPackageLicense> =
-                HashMap::new();
-
-            for license in package_licenses {
-                let key = SbomPackageLicenseBasekey {
-                    node_id: license.node_id.clone(),
-                    sbom_id: license.sbom_id,
-                    name: license.name.clone(),
-                    group: license.group.clone(),
-                    version: license.version.clone(),
-                };
-
-                grouped
-                    .entry(key)
-                    .or_insert_with(|| MergedSbomPackageLicense {
-                        node_id: license.node_id.clone(),
-                        sbom_id: license.sbom_id,
-                        name: license.name.clone(),
-                        group: license.group.clone(),
-                        version: license.version.clone(),
-                        license_declared_text: None,
-                        license_concluded_text: None,
-                    })
-                    .apply_license(&license);
-            }
-            grouped.into_values().collect()
-        }
-
-        fn merge_package_licenses_for_cydx(
-            package_licenses: Vec<SbomPackageLicenseBase>,
-        ) -> Vec<MergedSbomPackageLicense> {
-            package_licenses
-                .into_iter()
-                .map(|cydx| MergedSbomPackageLicense {
-                    node_id: cydx.node_id,
-                    sbom_id: cydx.sbom_id,
-                    name: cydx.name,
-                    group: cydx.group,
-                    version: cydx.version,
-                    license_declared_text: cydx.license_text,
-                    license_concluded_text: None,
-                })
-                .collect()
-        }
-
-        let package_license_list = if let Some(nvg) = name_version_group.clone() {
-            if nvg.labels.0.get("type").map(String::as_str) == Some("spdx") {
-                merge_package_licenses_for_spdx(package_license)
-            } else {
-                merge_package_licenses_for_cydx(package_license)
-            }
-        } else {
-            merge_package_licenses_for_cydx(package_license)
-        };
-
         let mut sbom_package_list = Vec::new();
-        for spl in package_license_list {
+        for spl in package_license {
             let result_purl: Vec<Purl> = sbom_package_purl_ref::Entity::find()
                 .join(JoinType::Join, sbom_package_purl_ref::Relation::Purl.def())
                 .filter(
@@ -191,8 +119,8 @@ impl LicenseService {
                 version: spl.version,
                 purl: result_purl,
                 cpe: result_cpe,
-                license_declared_text: spl.license_declared_text,
-                license_concluded_text: spl.license_concluded_text,
+                license_text: spl.license_text,
+                license_type: spl.license_type,
             });
         }
         let license_info_list: Vec<ExtractedLicensingInfos> = licensing_infos::Entity::find()

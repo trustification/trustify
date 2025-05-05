@@ -10,6 +10,7 @@ use csv::{Writer, WriterBuilder};
 use flate2::{Compression, write::GzEncoder};
 use tar::Builder;
 use trustify_common::purl::Purl;
+use trustify_entity::sbom_package_license::LicenseCategory;
 
 type CSVs = (Writer<Vec<u8>>, Writer<Vec<u8>>);
 
@@ -111,8 +112,8 @@ impl LicenseExporter {
             "package version",
             "package purl",
             "package cpe",
-            "declared license",
-            "concluded license",
+            "license",
+            "license type",
         ])?;
 
         for extracted_licensing_info in self.extracted_licensing_infos {
@@ -135,7 +136,7 @@ impl LicenseExporter {
             let purl_list = package
                 .purl
                 .into_iter()
-                .map(|purl| format!("{}", Purl::from(purl.purl.clone())))
+                .map(|purl| format!("{}", Purl::from(purl.purl)))
                 .collect::<Vec<_>>()
                 .join("\n");
 
@@ -147,12 +148,11 @@ impl LicenseExporter {
                 &package.version.unwrap_or_default(),
                 &purl_list,
                 &alternate_package_reference,
+                &package.license_text.unwrap_or_else(String::default),
                 &package
-                    .license_declared_text
-                    .unwrap_or_else(String::default),
-                &package
-                    .license_concluded_text
-                    .unwrap_or_else(String::default),
+                    .license_type
+                    .unwrap_or(LicenseCategory::Declared)
+                    .to_string(),
             ])?;
         }
 
