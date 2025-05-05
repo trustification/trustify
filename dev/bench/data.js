@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746193086000,
+  "lastUpdate": 1746426225307,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9274,6 +9274,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/d6b901bab081ca09afbd61dadddcf8e931706a06"
         },
         "date": 1746193084423,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "a0cee9f28530484edb670b504dbd3ca055e464aa",
+          "message": "fix: properly evaluate the UpdateSbom permission",
+          "timestamp": "2025-05-05T06:03:23Z",
+          "tree_id": "7595b7a56acceb6dbaaaa6d0849609466109e13e",
+          "url": "https://github.com/trustification/trustify/commit/a0cee9f28530484edb670b504dbd3ca055e464aa"
+        },
+        "date": 1746426224336,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
