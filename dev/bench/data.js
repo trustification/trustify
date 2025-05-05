@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746446327495,
+  "lastUpdate": 1746455031282,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9332,6 +9332,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/78cd8c3d5b7d75b9fb582d16f1680b7bd809f8d1"
         },
         "date": 1746446326763,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": false,
+          "id": "0b4efc5f7364d9d34a53f590783004d57770edfc",
+          "message": "reorganize query docs so openapi picks them up\n\nrelates #1543",
+          "timestamp": "2025-05-05T14:02:40Z",
+          "tree_id": "53c3f74f920a1b4f5881fd8200f9268f9c4883e6",
+          "url": "https://github.com/trustification/trustify/commit/0b4efc5f7364d9d34a53f590783004d57770edfc"
+        },
+        "date": 1746455030239,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
