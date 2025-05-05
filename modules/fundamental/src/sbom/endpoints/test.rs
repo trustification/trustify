@@ -1,6 +1,6 @@
 use crate::{
     sbom::model::{SbomPackage, SbomSummary},
-    test::caller,
+    test::{caller, label::Api},
 };
 use actix_http::StatusCode;
 use actix_web::test::TestRequest;
@@ -10,11 +10,9 @@ use std::io::Read;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::{id::Id, model::PaginatedResults};
-use trustify_entity::labels::Labels;
 use trustify_module_ingestor::{model::IngestResult, service::Format};
 use trustify_test_context::{TrustifyContext, call::CallService, document_bytes};
 use urlencoding::encode;
-use uuid::Uuid;
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
@@ -121,41 +119,29 @@ async fn filter_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-/// Test setting labels
+/// Test updating labels
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn set_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = caller(ctx).await?;
-    let result = ctx
-        .ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
-        .await?;
-    let request = TestRequest::patch()
-        .uri(&format!("/api/v2/sbom/{}/label", result.id))
-        .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
-        .to_request();
-    let response = app.call_service(request).await;
-    log::debug!("Code: {}", response.status());
-    assert_eq!(response.status(), StatusCode::NO_CONTENT);
-
-    Ok(())
+async fn update_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    crate::test::label::update_labels(
+        ctx,
+        Api::Sbom,
+        "quarkus-bom-2.13.8.Final-redhat-00004.json",
+        "spdx",
+    )
+    .await
 }
 
-/// Test setting labels, for a document that does not exists
+/// Test updating labels, for a document that does not exist
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
-async fn set_labels_not_found(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    let app = caller(ctx).await?;
-    ctx.ingest_document("quarkus-bom-2.13.8.Final-redhat-00004.json")
-        .await?;
-    let request = TestRequest::patch()
-        .uri(&format!("/api/v2/sbom/{}/label", Id::Uuid(Uuid::now_v7())))
-        .set_json(Labels::new().extend([("foo", "1"), ("bar", "2")]))
-        .to_request();
-    let response = app.call_service(request).await;
-    log::debug!("Code: {}", response.status());
-    assert_eq!(response.status(), StatusCode::NOT_FOUND);
-
-    Ok(())
+async fn update_labels_not_found(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    crate::test::label::update_labels_not_found(
+        ctx,
+        Api::Sbom,
+        "quarkus-bom-2.13.8.Final-redhat-00004.json",
+    )
+    .await
 }
 
 /// Test deleting an sbom

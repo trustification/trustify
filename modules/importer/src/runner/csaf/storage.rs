@@ -42,7 +42,7 @@ impl<C: RunContext, S: Source> ValidatedVisitor<S> for StorageVisitor<C> {
                     .add("source", &location)
                     .add("importer", self.context.name())
                     .add("file", file)
-                    .extend(&self.labels.0),
+                    .extend(self.labels.0.clone()),
                 None, /* CSAF tracks issuer internally */
                 Cache::Skip,
             )

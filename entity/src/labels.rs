@@ -6,7 +6,7 @@ use std::{
 };
 use utoipa::{
     PartialSchema, ToSchema,
-    openapi::{Object, ObjectBuilder, RefOr, Schema, Type, schema::AdditionalProperties},
+    openapi::{ObjectBuilder, RefOr, Schema, schema::AdditionalProperties},
 };
 
 #[derive(
@@ -30,7 +30,8 @@ impl ToSchema for Labels {
 
 impl PartialSchema for Labels {
     fn schema() -> RefOr<Schema> {
-        let props = AdditionalProperties::RefOr(Object::with_type(Type::String).into());
+        let value = String::schema();
+        let props = AdditionalProperties::RefOr(value);
         ObjectBuilder::new()
             .additional_properties(Some(props))
             .build()
@@ -64,21 +65,6 @@ impl Labels {
     {
         self.0
             .extend(i.into_iter().map(|(k, v)| (k.into(), v.into())));
-        self
-    }
-
-    /// Apply a label update.
-    ///
-    /// This will apply the provided update to the current set of labels. Updates with an empty
-    /// value will remove the label.
-    pub fn apply(mut self, update: Labels) -> Self {
-        for (k, v) in update.0 {
-            if v.is_empty() {
-                self.remove(&k);
-            } else {
-                self.insert(k, v);
-            }
-        }
         self
     }
 
@@ -138,6 +124,118 @@ impl Deref for Labels {
 impl DerefMut for Labels {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
+    }
+}
+
+#[derive(
+    Clone,
+    Debug,
+    Default,
+    PartialEq,
+    Eq,
+    ::serde::Serialize,
+    ::serde::Deserialize,
+    sea_orm::FromJsonQueryResult,
+    schemars::JsonSchema,
+)]
+pub struct Update(pub HashMap<String, Option<String>>);
+
+impl Update {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Apply a label update.
+    ///
+    /// This will apply the provided update to the current set of labels. Updates with an empty
+    /// value will remove the label.
+    pub fn apply_to(self, mut labels: Labels) -> Labels {
+        for (k, v) in self.0 {
+            match v {
+                Some(v) => {
+                    labels.insert(k, v);
+                }
+                None => {
+                    labels.remove(&k);
+                }
+            }
+        }
+
+        labels
+    }
+
+    pub fn add(mut self, k: impl Into<String>, v: Option<impl Into<String>>) -> Self {
+        self.0.insert(k.into(), v.map(Into::into));
+        self
+    }
+
+    pub fn extend<I, K, V>(mut self, i: I) -> Self
+    where
+        I: IntoIterator<Item = (K, Option<V>)>,
+        K: Into<String>,
+        V: Into<String>,
+    {
+        self.0
+            .extend(i.into_iter().map(|(k, v)| (k.into(), v.map(Into::into))));
+        self
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+impl ToSchema for Update {
+    fn name() -> Cow<'static, str> {
+        "Update".into()
+    }
+}
+
+impl PartialSchema for Update {
+    fn schema() -> RefOr<Schema> {
+        let value = Option::<String>::schema();
+        let props = AdditionalProperties::RefOr(value);
+        ObjectBuilder::new()
+            .additional_properties(Some(props))
+            .description(Some(r#"An update set for labels.
+
+This is a key/value set, where the value can be a string for setting that value, or `null` for removing the label.
+"#))
+            .build()
+            .into()
+    }
+}
+
+impl<'a> FromIterator<(&'a str, Option<&'a str>)> for Update {
+    fn from_iter<T: IntoIterator<Item = (&'a str, Option<&'a str>)>>(iter: T) -> Self {
+        Self(
+            iter.into_iter()
+                .map(|(k, v)| (k.to_string(), v.map(|v| v.to_string())))
+                .collect(),
+        )
+    }
+}
+
+impl From<()> for Update {
+    fn from(_: ()) -> Self {
+        Default::default()
+    }
+}
+
+impl<const N: usize> From<[(&str, &str); N]> for Update {
+    fn from(value: [(&str, &str); N]) -> Self {
+        Self(
+            value
+                .into_iter()
+                .map(|(k, v)| (k.to_string(), Some(v.to_string())))
+                .collect(),
+        )
+    }
+}
+
+impl From<HashMap<String, Option<String>>> for Update {
+    fn from(value: HashMap<String, Option<String>>) -> Self {
+        Self(value)
     }
 }
 
@@ -210,8 +308,9 @@ mod test {
     #[test]
     fn apply_update() {
         let original = Labels::new().extend([("foo", "1"), ("bar", "2")]);
-        let modified =
-            original.apply(Labels::new().extend([("foo", "2"), ("bar", ""), ("baz", "3")]));
+        let modified = Update::new()
+            .extend([("foo", Some("2")), ("bar", None), ("baz", Some("3"))])
+            .apply_to(original);
 
         assert_eq!(
             modified.0,

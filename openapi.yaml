@@ -233,7 +233,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Labels'
+              $ref: '#/components/schemas/Update'
         required: true
       responses:
         '204':
@@ -2329,7 +2329,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Labels'
+              $ref: '#/components/schemas/Update'
         required: true
       responses:
         '204':
@@ -4589,6 +4589,16 @@ components:
         properties:
           cpe:
             type: string
+    Update:
+      type: object
+      description: |
+        An update set for labels.
+
+        This is a key/value set, where the value can be a string for setting that value, or `null` for removing the label.
+      additionalProperties:
+        oneOf:
+        - type: 'null'
+        - type: string
     VersionedPurlHead:
       type: object
       required:
