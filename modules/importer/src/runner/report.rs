@@ -57,7 +57,7 @@ pub struct Report {
     pub end_date: OffsetDateTime,
 
     /// Number of processes items
-    #[serde(default, alias = "numer_of_items")]
+    #[serde(default, alias = "number_of_items")]
     pub number_of_items: usize,
     /// Messages emitted during processing
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]

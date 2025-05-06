@@ -89,7 +89,7 @@ where
     // ingest second time
 
     let result = ctx
-        .ingest_document_as(file, format, ("souce", "test"))
+        .ingest_document_as(file, format, ("source", "test"))
         .await?;
     assert(ctx, result).await?;
 

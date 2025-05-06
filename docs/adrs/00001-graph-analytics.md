@@ -211,7 +211,7 @@ HTTP GET api/v1/analysis/dep/{component-purl}
 ## Alternative approaches
 
 We could query existing package_relates_to_package to resolve relationships though previous attempts with a pure SQL based
-solution often experienced performance problems either due to 'join explosion' or need to constantly tweak indexes to accomodate 
+solution often experienced performance problems either due to 'join explosion' or need to constantly tweak indexes to accommodate 
 performance of joins at scale.
 
 We could use a graph datastore ... which dramatically simplifies everything as well as improving performance by at least a 

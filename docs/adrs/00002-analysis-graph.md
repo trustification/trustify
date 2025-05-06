@@ -233,7 +233,7 @@ TBA
 ### Implement visualisation
 
 Generation of a high quality svg
-Generation of mermaid represenation
+Generation of mermaid representation
 
 ### Document analysis graph API
 
