@@ -118,7 +118,7 @@ async fn prepare_ps_state_change(
             let vulns = csaf
                 .vulnerabilities
                 .as_mut()
-                .expect("test data has vulnerabilties");
+                .expect("test data has vulnerabilities");
 
             let v = vulns
                 .iter_mut()

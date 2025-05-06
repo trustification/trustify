@@ -320,7 +320,7 @@ For this, you will need to:
 **** `delete:document`
 ** One protected client
 *** Set `publicClient` to `false`
-*** Set `serviecAccountsEnabled` to `true`
+*** Set `serviceAccountsEnabled` to `true`
 *** Set `fullScopedAllowed` to `true`
 *** Set the following `defaultClientScopes`
 **** `read:document`
