@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746519198813,
+  "lastUpdate": 1746528871502,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9390,6 +9390,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/859fcc4b99520305aa31e802dae8f2e3d3854533"
         },
         "date": 1746519197701,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": false,
+          "id": "3cf0d1a3301a6201542d35ac87eb3059c49a4e84",
+          "message": "feat: refactored license type management in CSV license export (#10)\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-05-06T10:33:12Z",
+          "tree_id": "468f86c3eff6985feec035a9ba2afb3b2bdf041f",
+          "url": "https://github.com/trustification/trustify/commit/3cf0d1a3301a6201542d35ac87eb3059c49a4e84"
+        },
+        "date": 1746528870443,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
