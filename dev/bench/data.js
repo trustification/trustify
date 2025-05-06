@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746455031282,
+  "lastUpdate": 1746519198813,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9361,6 +9361,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/0b4efc5f7364d9d34a53f590783004d57770edfc"
         },
         "date": 1746455030239,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": true,
+          "id": "859fcc4b99520305aa31e802dae8f2e3d3854533",
+          "message": "scale test: update 'rev' PR reference\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-05-06T07:51:06Z",
+          "tree_id": "cc7f902f98e650a148bc3e656556bcacd2339318",
+          "url": "https://github.com/trustification/trustify/commit/859fcc4b99520305aa31e802dae8f2e3d3854533"
+        },
+        "date": 1746519197701,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
