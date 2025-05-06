@@ -653,7 +653,7 @@ impl AnalysisService {
                     .collect::<Vec<String>>()
             }
             GraphQuery::Query(query) => {
-                // TODO - when we formally define 'latest authoratative filters' this area will become
+                // TODO - when we formally define 'latest authoritative filters' this area will become
                 //        much more complex ... for now we are happy with just searching node_id with
                 //        LIKE matches.
                 let sql = r#"

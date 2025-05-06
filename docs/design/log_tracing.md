@@ -8,7 +8,7 @@ A quick summary:
 
 * Don't panic, don't println (see below for exceptions).
 * [Log messages](https://crates.io/crates/log) and [tracing](https://crates.io/crates/tracing) should be relevant to
-  operating personell and developers, not end users. Ops will either run
+  operating personnel and developers, not end users. Ops will either run
   with a level of `warn` or `info` when sending to a tracing solution (like Jaeger).
 * Errors and warnings, which are relevant to the end user, must be sent back using the same channel (API call, UI, …)
   not the logging system

@@ -100,13 +100,13 @@ impl PackageCreator {
             version: Set(node_info.version),
         });
 
-        for package_licese in node_info.package_license_info {
+        for package_license in node_info.package_license_info {
             self.sbom_package_licenses
                 .push(sbom_package_license::ActiveModel {
                     sbom_id: Set(self.sbom_id),
                     node_id: Set(node_info.node_id.clone()),
-                    license_id: Set(package_licese.license_id),
-                    license_type: Set(package_licese.license_type),
+                    license_id: Set(package_license.license_id),
+                    license_type: Set(package_license.license_type),
                 });
         }
     }
