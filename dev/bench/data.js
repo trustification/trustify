@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746528871502,
+  "lastUpdate": 1746542116139,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9424,6 +9424,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "e33e438a17637838c21ab57c7ab12c729b6e0d49",
+          "message": "chore: fix typos\n\ntypos found via `cargo install typos-cli`",
+          "timestamp": "2025-05-06T14:14:19Z",
+          "tree_id": "cbcb1f90b456dad6012035437af6e5027c895423",
+          "url": "https://github.com/trustification/trustify/commit/e33e438a17637838c21ab57c7ab12c729b6e0d49"
+        },
+        "date": 1746542115149,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
             "unit": "s"
           }
         ]
