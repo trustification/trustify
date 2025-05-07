@@ -158,19 +158,21 @@ pub struct Query {
     /// - `foo|bar` - any field containing either 'foo' OR 'bar'
     /// - `foo&bar` - some field contains 'foo' AND some field contains 'bar'
     ///
-    /// A _filter_ can further constrain the results. The filter's
-    /// field name must correspond to one of the resource's
+    /// A _filter_ may also be used to constrain the results. The
+    /// filter's field name must correspond to one of the resource's
     /// attributes. If it doesn't, an error will be returned
     /// containing a list of the valid fields for that resource.
     ///
-    /// The value 'null' is treated specially for [not]equal filters:
+    /// The value 'null' is treated specially for [Not]Equal filters:
     /// it returns resources on which the field isn't set. Use the
-    /// LIKE operator, `~`, to match a literal "null" string.
+    /// LIKE operator, `~`, to match a literal "null" string. Omit the
+    /// value to match an empty string.
     ///
     /// Examples:
     /// - `name=foo` - entity's _name_ matches 'foo' exactly
     /// - `name~foo` - entity's _name_ contains 'foo', case-insensitive
     /// - `name~foo|bar` - entity's _name_ contains either 'foo' OR 'bar', case-insensitive
+    /// - `name=` - entity's _name_ is the empty string, ''
     /// - `name=null` - entity's _name_ isn't set
     /// - `published>3 days ago` - date values can be "human time"
     ///
