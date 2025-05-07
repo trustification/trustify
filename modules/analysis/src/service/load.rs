@@ -14,7 +14,8 @@ use anyhow::anyhow;
 use petgraph::{Graph, prelude::NodeIndex};
 use sea_orm::{
     ColumnTrait, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
-    FromQueryResult, QueryFilter, QuerySelect, QueryTrait, RelationTrait, Statement,
+    FromQueryResult, QueryFilter, QuerySelect, QueryTrait, Related, RelationTrait, Select,
+    Statement,
 };
 use sea_query::{Alias, Expr, JoinType, PostgresQueryBuilder, Query, SelectStatement};
 use serde_json::Value;
@@ -353,17 +354,58 @@ impl InnerService {
         connection: &C,
         query: GraphQuery<'_>,
     ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
-        // TODO: Needs DRY treatment
-        let rank_sql_expr = "RANK() OVER (PARTITION BY cpe.id ORDER BY sbom.published DESC)";
+        #[derive(Debug, FromQueryResult)]
+        struct Row {
+            sbom_id: Uuid,
+        }
+
+        fn find<E>() -> Select<E>
+        where
+            E: EntityTrait + Related<sbom::Entity>,
+        {
+            const RANK_SQL: &str = "RANK() OVER (PARTITION BY cpe.id ORDER BY sbom.published DESC)";
+
+            E::find()
+                .select_only()
+                .column(sbom::Column::SbomId)
+                .column(sbom::Column::Published)
+                .column(cpe::Column::Id)
+                .column_as(Expr::cust(RANK_SQL), "rank")
+                .left_join(sbom::Entity)
+        }
+
+        async fn query_all<C>(
+            subquery: SelectStatement,
+            connection: &C,
+        ) -> Result<Vec<String>, Error>
+        where
+            C: ConnectionTrait,
+        {
+            let select_query = Query::select()
+                .expr(Expr::col(Alias::new("sbom_id")))
+                .from_subquery(subquery, Alias::new("subquery"))
+                .cond_where(Expr::col(Alias::new("rank")).eq(1))
+                .distinct()
+                .to_owned();
+            let (sql, values) = select_query.build(PostgresQueryBuilder);
+
+            let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
+                DatabaseBackend::Postgres,
+                sql,
+                values,
+            ))
+            .all(connection)
+            .await?;
+
+            Ok(rows
+                .into_iter()
+                .map(|row| row.sbom_id.to_string())
+                .collect())
+        }
+
         let latest_sbom_ids: Vec<_> = match query {
             GraphQuery::Component(ComponentReference::Id(node_id)) => {
-                let subquery = sbom_node::Entity::find() // Starting from sbom_node as in the SQL
-                    .select_only()
-                    .column(sbom::Column::SbomId)
-                    .column(sbom::Column::Published)
-                    .column(cpe::Column::Id)
-                    .column_as(Expr::cust(rank_sql_expr), "rank")
-                    .left_join(sbom::Entity)
+                let subquery = find::<sbom_node::Entity>()
                     .left_join(sbom_package::Entity)
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
@@ -371,36 +413,11 @@ impl InnerService {
                         sbom_package_cpe_ref::Relation::Cpe.def(),
                     )
                     .filter(sbom_node::Column::NodeId.eq(node_id));
-                let select_query = Query::select()
-                    .expr(Expr::col(Alias::new("sbom_id")))
-                    .from_subquery(subquery.into_query(), Alias::new("subquery"))
-                    .cond_where(Expr::col(Alias::new("rank")).eq(1))
-                    .distinct()
-                    .to_owned();
-                let (sql, values) = select_query.build(PostgresQueryBuilder);
-                #[derive(Debug, FromQueryResult)]
-                struct Row {
-                    sbom_id: Uuid,
-                }
-                let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres,
-                    sql,
-                    values,
-                ))
-                .all(connection)
-                .await?;
-                rows.into_iter()
-                    .map(|row| row.sbom_id.to_string())
-                    .collect()
+
+                query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Component(ComponentReference::Name(name)) => {
-                let subquery = sbom_node::Entity::find() // Starting from sbom_node as in the SQL
-                    .select_only()
-                    .column(sbom::Column::SbomId)
-                    .column(sbom::Column::Published)
-                    .column(cpe::Column::Id)
-                    .column_as(Expr::cust(rank_sql_expr), "rank")
-                    .left_join(sbom::Entity)
+                let subquery = find::<sbom_node::Entity>()
                     .left_join(sbom_package::Entity)
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
@@ -408,36 +425,11 @@ impl InnerService {
                         sbom_package_cpe_ref::Relation::Cpe.def(),
                     )
                     .filter(sbom_node::Column::Name.eq(name));
-                let select_query = Query::select()
-                    .expr(Expr::col(Alias::new("sbom_id")))
-                    .from_subquery(subquery.into_query(), Alias::new("subquery"))
-                    .cond_where(Expr::col(Alias::new("rank")).eq(1))
-                    .distinct()
-                    .to_owned();
-                let (sql, values) = select_query.build(PostgresQueryBuilder);
-                #[derive(Debug, FromQueryResult)]
-                struct Row {
-                    sbom_id: Uuid,
-                }
-                let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres,
-                    sql,
-                    values,
-                ))
-                .all(connection)
-                .await?;
-                rows.into_iter()
-                    .map(|row| row.sbom_id.to_string())
-                    .collect()
+
+                query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Component(ComponentReference::Purl(purl)) => {
-                let subquery = sbom_package_purl_ref::Entity::find() // Starting from sbom_node as in the SQL
-                    .select_only()
-                    .column(sbom::Column::SbomId)
-                    .column(sbom::Column::Published)
-                    .column(cpe::Column::Id)
-                    .column_as(Expr::cust(rank_sql_expr), "rank")
-                    .left_join(sbom::Entity)
+                let subquery = find::<sbom_package_purl_ref::Entity>()
                     .left_join(sbom_package::Entity)
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
                     .join(
@@ -447,71 +439,21 @@ impl InnerService {
                     .filter(
                         sbom_package_purl_ref::Column::QualifiedPurlId.eq(purl.qualifier_uuid()),
                     );
-                let select_query = Query::select()
-                    .expr(Expr::col(Alias::new("sbom_id")))
-                    .from_subquery(subquery.into_query(), Alias::new("subquery"))
-                    .cond_where(Expr::col(Alias::new("rank")).eq(1))
-                    .distinct()
-                    .to_owned();
-                let (sql, values) = select_query.build(PostgresQueryBuilder);
-                #[derive(Debug, FromQueryResult)]
-                struct Row {
-                    sbom_id: Uuid,
-                }
-                let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres,
-                    sql,
-                    values,
-                ))
-                .all(connection)
-                .await?;
-                rows.into_iter()
-                    .map(|row| row.sbom_id.to_string())
-                    .collect()
+
+                query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
-                let subquery = sbom_package_cpe_ref::Entity::find()
-                    .select_only()
-                    .column(sbom::Column::SbomId)
-                    .column(sbom::Column::Published)
-                    .column(cpe::Column::Id)
-                    .column_as(Expr::cust(rank_sql_expr), "rank")
-                    .left_join(sbom::Entity)
+                let subquery = find::<sbom_package_cpe_ref::Entity>()
                     .join(
                         JoinType::LeftJoin,
                         sbom_package_cpe_ref::Relation::Cpe.def(),
                     )
                     .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()));
-                let select_query = Query::select()
-                    .expr(Expr::col(Alias::new("sbom_id")))
-                    .from_subquery(subquery.into_query(), Alias::new("subquery"))
-                    .cond_where(Expr::col(Alias::new("rank")).eq(1))
-                    .distinct()
-                    .to_owned();
-                let (sql, values) = select_query.build(PostgresQueryBuilder);
-                #[derive(Debug, FromQueryResult)]
-                struct Row {
-                    sbom_id: Uuid,
-                }
-                let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres,
-                    sql,
-                    values,
-                ))
-                .all(connection)
-                .await?;
-                rows.into_iter()
-                    .map(|row| row.sbom_id.to_string())
-                    .collect()
+
+                query_all(subquery.into_query(), connection).await?
             }
             GraphQuery::Query(query) => {
-                let subquery = sbom_node::Entity::find()
-                    .select_only()
-                    .column(sbom::Column::SbomId)
-                    .column(sbom::Column::Published)
-                    .column(cpe::Column::Id)
-                    .column_as(Expr::cust(rank_sql_expr), "rank")
-                    .left_join(sbom::Entity)
+                let subquery = find::<sbom_node::Entity>()
                     .join(JoinType::Join, sbom_node::Relation::Package.def())
                     .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
                     .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
@@ -523,11 +465,6 @@ impl InnerService {
                         JoinType::LeftJoin,
                         sbom_package_purl_ref::Relation::Purl.def(),
                     )
-                    .select_only()
-                    .column(sbom::Column::SbomId)
-                    .column(sbom::Column::Published)
-                    .column(cpe::Column::Id)
-                    .column_as(Expr::cust(rank_sql_expr), "rank")
                     .filtering_with(
                         query.clone(),
                         sbom_node::Entity
@@ -571,27 +508,8 @@ impl InnerService {
                                 }
                             }),
                     )?;
-                let select_query = Query::select()
-                    .expr(Expr::col(Alias::new("sbom_id")))
-                    .from_subquery(subquery.into_query(), Alias::new("subquery"))
-                    .cond_where(Expr::col(Alias::new("rank")).eq(1))
-                    .distinct()
-                    .to_owned();
-                let (sql, values) = select_query.build(PostgresQueryBuilder);
-                #[derive(Debug, FromQueryResult)]
-                struct Row {
-                    sbom_id: Uuid,
-                }
-                let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
-                    DatabaseBackend::Postgres,
-                    sql,
-                    values,
-                ))
-                .all(connection)
-                .await?;
-                rows.into_iter()
-                    .map(|row| row.sbom_id.to_string())
-                    .collect()
+
+                query_all(subquery.into_query(), connection).await?
             }
         };
 
