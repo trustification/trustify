@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746622448768,
+  "lastUpdate": 1746623129190,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9477,6 +9477,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/fcd5d5dff20736687883b011056acd2df64007cb"
         },
         "date": 1746622447844,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jfuller@redhat.com",
+            "name": "JimFuller-RedHat",
+            "username": "JimFuller-RedHat"
+          },
+          "committer": {
+            "email": "81251736+JimFuller-RedHat@users.noreply.github.com",
+            "name": "Jim Fuller",
+            "username": "JimFuller-RedHat"
+          },
+          "distinct": true,
+          "id": "10f4069075df8a038ec2b1e9a9954603bc3b8a78",
+          "message": "chore: refactor latest analysis graphs into sea_orm - we retain non sea_orm refactor commit for historical purposes.",
+          "timestamp": "2025-05-07T12:14:00Z",
+          "tree_id": "25186313f7049d69945217f4e24086ebebad82ad",
+          "url": "https://github.com/trustification/trustify/commit/10f4069075df8a038ec2b1e9a9954603bc3b8a78"
+        },
+        "date": 1746623127663,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
