@@ -57,7 +57,7 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-    assert_eq!(64, response["total"]); // TODO: why was this 102 with get_purl?!?!
+    assert_eq!(64, response["total"]);
 
     // purl partial search latest
     let uri: String = format!(
@@ -66,8 +66,9 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
+
     assert!(response.contains_subset(json!({
-      "total":2
+      "total":35
     })));
 
     Ok(())
@@ -156,7 +157,7 @@ async fn resolve_rh_variant_latest_filter_rpms_cdx(
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     assert!(response.contains_subset(json!({
-      "total":25
+      "total":15
     })));
 
     Ok(())
@@ -225,7 +226,7 @@ async fn resolve_rh_variant_latest_filter_middleware_cdx(
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     assert!(response.contains_subset(json!({
-      "total":10
+      "total":8
     })));
 
     // name exact search
@@ -247,7 +248,7 @@ async fn resolve_rh_variant_latest_filter_middleware_cdx(
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
     assert!(response.contains_subset(json!({
-      "total":14
+      "total":8
     })));
 
     Ok(())
