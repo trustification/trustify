@@ -4,7 +4,7 @@ Date: 2025-04-11
 
 ## Status
 
-PROPOSED
+ACCEPTED
 
 ## Context
 
@@ -36,14 +36,49 @@ UI (console) use case.
 * The backend process monitoring the upload needs to perform periodic updates to that table to keep the entry "fresh"
 * Stale entries will periodically be cleaned up
 
+### Database
+
 The state table looks like this:
 
 | Column  | Type                                   | Description                     | 
 |---------|----------------------------------------|---------------------------------|
-| id      | string                                 | Unique ID                       |
+| id      | UUID                                   | Unique ID                       |
 | updated | timestamp                              | Last update timestamp           |
 | state   | enum { processing, failed, succeeded } | The state of the upload process |
 | result  | JSON                                   | result response                 |
+
+### REST API
+
+* `GET /api/v2/upload/{id}`: Get information about the upload
+
+  Response (`200 OK`):
+
+  ```json5
+  {
+    "id": "opaque-unique-id",
+    "state": "processing", // or failed, succeeded
+    "updated": "2025-05-07T10:13:27Z", // always UTC,
+    "result": {} // or absent for `processing`, `failed`
+  }
+  ```
+
+* `DELETE /api/v2/upload/{id}`: Delete the state record, will not receive further updates
+
+  Response (`204 No Content`): Sent if found or if not found.
+
+* `POST /api/v2/upload`: Start an upload
+  Request:
+    * `format`: Format of the document, defaults to "auto-detect". Can also be `sbom` or `advisory`.
+  
+  Response (`202 Accepted`):
+
+   ```json5
+   {
+     "id": "opaque-unique-id",
+     "format": "concrete-format" // e.g. "spdx"
+   }
+   ```
+
 
 ### Example flow: success
 
@@ -53,6 +88,7 @@ The state table looks like this:
     * The backend spawns a task, periodically updating the `updated` timestamp
     * The backend returns the `id` and keeps processing the upload
 * The client periodically checks the state using the returned `id` (`GET /api/v2/upload/{id}`)
+  * The client can delete the state entry if it's no longer interested. Future updates will be discarded. 
 * When the backend finished processing the upload
     * It sets the final `state` (`failed` or `succeeded`) and the `result`
     * It stops updating the `updated` column
@@ -81,10 +117,6 @@ The state table looks like this:
 
 In the process of this, we could also try to do some "format detection", allowing to use the same endpoint for
 uploading any kind of document. However, I would see this as a stretch goal.
-
-## Decision
-
-To be written
 
 ## Alternatives
 
