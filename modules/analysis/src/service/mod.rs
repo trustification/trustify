@@ -542,10 +542,6 @@ impl AnalysisService {
             .load_latest_graphs_query(connection, query)
             .await?;
 
-        // we now know latest sbom_ids
-        let latest_sbom_ids: Vec<String> = graphs.clone().iter().map(|(s, _)| s.clone()).collect();
-        log::warn!("Latest sbom: {}", latest_sbom_ids.join(", "));
-
         let components = self
             .run_graph_query(
                 query,
