@@ -66,11 +66,22 @@ async fn resolve_rh_variant_latest_filter_container_cdx(
     );
     let request: Request = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(request).await;
-
+    log::warn!("{:?}", response.get("total"));
     assert!(response.contains_subset(json!({
-      "total":35
+      "total":16
     })));
 
+    // purl partial search latest
+    let uri: String = format!(
+        "/api/v2/analysis/latest/component?q={}&ancestors=10",
+        urlencoding::encode("purl:name~quay-builder-qemu-rhcos-rhel8&purl:ty=oci")
+    );
+    let request: Request = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(request).await;
+    log::warn!("{:?}", response.get("total"));
+    assert!(response.contains_subset(json!({
+      "total":19
+    })));
     Ok(())
 }
 

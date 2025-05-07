@@ -16,7 +16,7 @@ use sea_orm::{
     ColumnTrait, ConnectionTrait, DatabaseBackend, DbErr, EntityOrSelect, EntityTrait,
     FromQueryResult, QueryFilter, QuerySelect, QueryTrait, RelationTrait, Statement,
 };
-use sea_query::{JoinType, SelectStatement};
+use sea_query::{Alias, Expr, JoinType, PostgresQueryBuilder, Query, SelectStatement};
 use serde_json::Value;
 use std::{
     collections::{HashMap, HashSet, hash_map::Entry},
@@ -353,275 +353,248 @@ impl InnerService {
         connection: &C,
         query: GraphQuery<'_>,
     ) -> Result<Vec<(String, Arc<PackageGraph>)>, Error> {
-        let latest_sbom_ids = match query {
-            // TODO: due to limitations in sea_orm/sqlx with using PARTITION_BY queries
-            //       this codepath uses raw sql ... this means we will have 2 query codepaths to 
-            //       maintain in the short term. 
+        // TODO: Needs DRY treatment
+        let rank_sql_expr = "RANK() OVER (PARTITION BY cpe.id ORDER BY sbom.published DESC)";
+        let latest_sbom_ids: Vec<_> = match query {
             GraphQuery::Component(ComponentReference::Id(node_id)) => {
-                let sql = r#"
-                  SELECT distinct sbom_id
-                  FROM (
-                      SELECT sbom.sbom_id, sbom.published, cpe.id,
-                      RANK() OVER (PARTITION BY cpe.id ORDER BY sbom.published DESC) AS rank
-                      FROM sbom_node
-                      LEFT JOIN sbom ON sbom.sbom_id = sbom_node.sbom_id
-                      LEFT JOIN sbom_package_cpe_ref on sbom.sbom_id = sbom_package_cpe_ref.sbom_id
-                      LEFT JOIN cpe ON sbom_package_cpe_ref.cpe_id = cpe.id
-                      WHERE sbom_node.node_id = $1
-                  ) AS subquery
-                  WHERE rank = 1;                
-                "#;
-                let stmt = Statement::from_sql_and_values(
+                let subquery = sbom_node::Entity::find() // Starting from sbom_node as in the SQL
+                    .select_only()
+                    .column(sbom::Column::SbomId)
+                    .column(sbom::Column::Published)
+                    .column(cpe::Column::Id)
+                    .column_as(Expr::cust(rank_sql_expr), "rank")
+                    .left_join(sbom::Entity)
+                    .left_join(sbom_package::Entity)
+                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_package_cpe_ref::Relation::Cpe.def(),
+                    )
+                    .filter(sbom_node::Column::NodeId.eq(node_id));
+                let select_query = Query::select()
+                    .expr(Expr::col(Alias::new("sbom_id")))
+                    .from_subquery(subquery.into_query(), Alias::new("subquery"))
+                    .cond_where(Expr::col(Alias::new("rank")).eq(1))
+                    .distinct()
+                    .to_owned();
+                let (sql, values) = select_query.build(PostgresQueryBuilder);
+                #[derive(Debug, FromQueryResult)]
+                struct Row {
+                    sbom_id: Uuid,
+                }
+                let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
                     DatabaseBackend::Postgres,
                     sql,
-                    [node_id.into()],
-                );
-                let rows = connection.query_all(stmt).await?;
+                    values,
+                ))
+                .all(connection)
+                .await?;
                 rows.into_iter()
-                    .filter_map(|row| {
-                        row.try_get_by_index::<Uuid>(0)
-                            .ok()
-                            .map(|sbom_id| sbom_id.to_string())
-                    })
-                    .collect::<Vec<String>>()
+                    .map(|row| row.sbom_id.to_string())
+                    .collect()
             }
             GraphQuery::Component(ComponentReference::Name(name)) => {
-                let sql = r#"
-                  SELECT distinct sbom_id
-                  FROM (
-                      SELECT sbom.sbom_id, sbom.published, cpe.id,
-                      RANK() OVER (PARTITION BY cpe.id ORDER BY sbom.published DESC) AS rank
-                      FROM sbom_node
-                      LEFT JOIN sbom ON sbom.sbom_id = sbom_node.sbom_id
-                      LEFT JOIN sbom_package_cpe_ref on sbom.sbom_id = sbom_package_cpe_ref.sbom_id
-                      LEFT JOIN cpe ON sbom_package_cpe_ref.cpe_id = cpe.id
-                      WHERE sbom_node.name = $1
-                  ) AS subquery
-                  WHERE rank = 1;
-                  "#;
-                let stmt =
-                    Statement::from_sql_and_values(DatabaseBackend::Postgres, sql, [name.into()]);
-                let rows = connection.query_all(stmt).await?;
+                let subquery = sbom_node::Entity::find() // Starting from sbom_node as in the SQL
+                    .select_only()
+                    .column(sbom::Column::SbomId)
+                    .column(sbom::Column::Published)
+                    .column(cpe::Column::Id)
+                    .column_as(Expr::cust(rank_sql_expr), "rank")
+                    .left_join(sbom::Entity)
+                    .left_join(sbom_package::Entity)
+                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_package_cpe_ref::Relation::Cpe.def(),
+                    )
+                    .filter(sbom_node::Column::Name.eq(name));
+                let select_query = Query::select()
+                    .expr(Expr::col(Alias::new("sbom_id")))
+                    .from_subquery(subquery.into_query(), Alias::new("subquery"))
+                    .cond_where(Expr::col(Alias::new("rank")).eq(1))
+                    .distinct()
+                    .to_owned();
+                let (sql, values) = select_query.build(PostgresQueryBuilder);
+                #[derive(Debug, FromQueryResult)]
+                struct Row {
+                    sbom_id: Uuid,
+                }
+                let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
+                    DatabaseBackend::Postgres,
+                    sql,
+                    values,
+                ))
+                .all(connection)
+                .await?;
                 rows.into_iter()
-                    .filter_map(|row| {
-                        row.try_get_by_index::<Uuid>(0)
-                            .ok()
-                            .map(|sbom_id| sbom_id.to_string())
-                    })
-                    .collect::<Vec<String>>()
+                    .map(|row| row.sbom_id.to_string())
+                    .collect()
             }
             GraphQuery::Component(ComponentReference::Purl(purl)) => {
-                let sql = r#"
-                 SELECT distinct sbom_id
-                  FROM (
-                      SELECT sbom.sbom_id, sbom.published, cpe.id,
-                      RANK() OVER (PARTITION BY cpe.id ORDER BY sbom.published DESC) AS rank
-                      FROM sbom_package_purl_ref
-                      LEFT JOIN sbom ON sbom.sbom_id = sbom_package_purl_ref.sbom_id
-                      LEFT JOIN sbom_package_cpe_ref on sbom.sbom_id = sbom_package_cpe_ref.sbom_id
-                      LEFT JOIN cpe ON sbom_package_cpe_ref.cpe_id = cpe.id
-                      WHERE sbom_package_purl_ref.qualified_purl_id = $1
-                  ) AS subquery
-                  WHERE rank = 1;
-                "#;
-                let stmt = Statement::from_sql_and_values(
+                let subquery = sbom_package_purl_ref::Entity::find() // Starting from sbom_node as in the SQL
+                    .select_only()
+                    .column(sbom::Column::SbomId)
+                    .column(sbom::Column::Published)
+                    .column(cpe::Column::Id)
+                    .column_as(Expr::cust(rank_sql_expr), "rank")
+                    .left_join(sbom::Entity)
+                    .left_join(sbom_package::Entity)
+                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_package_cpe_ref::Relation::Cpe.def(),
+                    )
+                    .filter(
+                        sbom_package_purl_ref::Column::QualifiedPurlId.eq(purl.qualifier_uuid()),
+                    );
+                let select_query = Query::select()
+                    .expr(Expr::col(Alias::new("sbom_id")))
+                    .from_subquery(subquery.into_query(), Alias::new("subquery"))
+                    .cond_where(Expr::col(Alias::new("rank")).eq(1))
+                    .distinct()
+                    .to_owned();
+                let (sql, values) = select_query.build(PostgresQueryBuilder);
+                #[derive(Debug, FromQueryResult)]
+                struct Row {
+                    sbom_id: Uuid,
+                }
+                let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
                     DatabaseBackend::Postgres,
                     sql,
-                    [purl.qualifier_uuid().into()],
-                );
-                let rows = connection.query_all(stmt).await?;
+                    values,
+                ))
+                .all(connection)
+                .await?;
                 rows.into_iter()
-                    .filter_map(|row| {
-                        row.try_get_by_index::<Uuid>(0)
-                            .ok()
-                            .map(|sbom_id| sbom_id.to_string())
-                    })
-                    .collect::<Vec<String>>()
+                    .map(|row| row.sbom_id.to_string())
+                    .collect()
             }
             GraphQuery::Component(ComponentReference::Cpe(cpe)) => {
-                let sql = r#"
-                  SELECT distinct sbom_id
-                  FROM (
-                      SELECT sbom.sbom_id, sbom.published, cpe.id,
-                      RANK() OVER (PARTITION BY cpe.id ORDER BY sbom.published DESC) AS rank
-                      FROM sbom_package_cpe_ref
-                      LEFT JOIN sbom ON sbom.sbom_id = sbom_package_cpe_ref.sbom_id
-                      LEFT JOIN cpe ON sbom_package_cpe_ref.cpe_id = cpe.id
-                      WHERE sbom_package_cpe_ref.cpe_id = $1
-                  ) AS subquery
-                  WHERE rank = 1;
-                "#;
-                let stmt = Statement::from_sql_and_values(
+                let subquery = sbom_package_cpe_ref::Entity::find()
+                    .select_only()
+                    .column(sbom::Column::SbomId)
+                    .column(sbom::Column::Published)
+                    .column(cpe::Column::Id)
+                    .column_as(Expr::cust(rank_sql_expr), "rank")
+                    .left_join(sbom::Entity)
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_package_cpe_ref::Relation::Cpe.def(),
+                    )
+                    .filter(sbom_package_cpe_ref::Column::CpeId.eq(cpe.uuid()));
+                let select_query = Query::select()
+                    .expr(Expr::col(Alias::new("sbom_id")))
+                    .from_subquery(subquery.into_query(), Alias::new("subquery"))
+                    .cond_where(Expr::col(Alias::new("rank")).eq(1))
+                    .distinct()
+                    .to_owned();
+                let (sql, values) = select_query.build(PostgresQueryBuilder);
+                #[derive(Debug, FromQueryResult)]
+                struct Row {
+                    sbom_id: Uuid,
+                }
+                let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
                     DatabaseBackend::Postgres,
                     sql,
-                    [cpe.uuid().into()],
-                );
-                let rows = connection.query_all(stmt).await?;
+                    values,
+                ))
+                .all(connection)
+                .await?;
                 rows.into_iter()
-                    .filter_map(|row| {
-                        row.try_get_by_index::<Uuid>(0)
-                            .ok()
-                            .map(|sbom_id| sbom_id.to_string())
-                    })
-                    .collect::<Vec<String>>()
+                    .map(|row| row.sbom_id.to_string())
+                    .collect()
             }
             GraphQuery::Query(query) => {
-                // TODO: we assume q=<partial purl> was supplied this area of the code will change.
-                //       for now creating a special local function to handle.
-                #[derive(Debug, Default, PartialEq)]
-                struct BasicPurlParts<'a> {
-                    ptype: Option<&'a str>,
-                    namespace: Option<&'a str>, // Represents the full namespace string
-                    name: Option<&'a str>,
-                    version: Option<&'a str>,
-                    qualifiers_str: Option<&'a str>, // Qualifiers as a single raw string
-                    subpath: Option<&'a str>,
+                let subquery = sbom_node::Entity::find()
+                    .select_only()
+                    .column(sbom::Column::SbomId)
+                    .column(sbom::Column::Published)
+                    .column(cpe::Column::Id)
+                    .column_as(Expr::cust(rank_sql_expr), "rank")
+                    .left_join(sbom::Entity)
+                    .join(JoinType::Join, sbom_node::Relation::Package.def())
+                    .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
+                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_package_cpe_ref::Relation::Cpe.def(),
+                    )
+                    .join(
+                        JoinType::LeftJoin,
+                        sbom_package_purl_ref::Relation::Purl.def(),
+                    )
+                    .select_only()
+                    .column(sbom::Column::SbomId)
+                    .column(sbom::Column::Published)
+                    .column(cpe::Column::Id)
+                    .column_as(Expr::cust(rank_sql_expr), "rank")
+                    .filtering_with(
+                        query.clone(),
+                        sbom_node::Entity
+                            .columns()
+                            .add_columns(cpe::Entity.columns())
+                            .add_columns(qualified_purl::Entity.columns())
+                            .translator(|f, op, v| {
+                                match f {
+                                    "purl:type" => Some(format!("purl:ty{op}{v}")),
+                                    "purl" => Purl::translate(op, v),
+                                    "cpe" => match (op, OwnedUri::from_str(v)) {
+                                        ("=" | "~", Ok(cpe)) => {
+                                            // We break out cpe into its constituent columns in CPE table
+                                            let q = match (cpe.part(), cpe.language()) {
+                                                (CpeType::Any, Language::Any) => String::new(),
+                                                (CpeType::Any, l) => format!("language={l}"),
+                                                (p, Language::Any) => format!("part={p}"),
+                                                (p, l) => format!("part={p}&language={l}"),
+                                            };
+                                            let q = [
+                                                ("vendor", cpe.vendor()),
+                                                ("product", cpe.product()),
+                                                ("version", cpe.version()),
+                                                ("update", cpe.update()),
+                                                ("edition", cpe.edition()),
+                                            ]
+                                            .iter()
+                                            .fold(q, |acc, (k, v)| match v {
+                                                Component::Value(s) => {
+                                                    format!("{acc}&{k}={s}|*")
+                                                }
+                                                _ => acc,
+                                            });
+                                            Some(q)
+                                        }
+                                        ("~", Err(_)) => Some(v.into()),
+                                        (_, Err(e)) => Some(e.to_string()),
+                                        (_, _) => Some("illegal operation for cpe field".into()),
+                                    },
+                                    _ => None,
+                                }
+                            }),
+                    )?;
+                let select_query = Query::select()
+                    .expr(Expr::col(Alias::new("sbom_id")))
+                    .from_subquery(subquery.into_query(), Alias::new("subquery"))
+                    .cond_where(Expr::col(Alias::new("rank")).eq(1))
+                    .distinct()
+                    .to_owned();
+                let (sql, values) = select_query.build(PostgresQueryBuilder);
+                #[derive(Debug, FromQueryResult)]
+                struct Row {
+                    sbom_id: Uuid,
                 }
-
-                // TODO: Non-compliant parsing of partial, incomplete pURL.
-                //       This attempts to parse whatever is given into 
-                //       purl parts.
-                fn basic_non_compliant_parse_purl(purl_str: &str) -> Option<BasicPurlParts> {
-                    // start with "pkg:" if it exists
-                    let remaining = purl_str.strip_prefix("pkg:")?;
-
-                    let mut parts = BasicPurlParts::default();
-                    let mut current_part = remaining; 
-
-                    // subpath (split by '#') - assume only one '#' allowed
-                    if let Some(subpath_idx) = current_part.find('#') {
-                        parts.subpath = Some(&current_part[subpath_idx + 1..]);
-                        current_part = &current_part[..subpath_idx];
-                    }
-
-                    // qualifiers (split by '?')
-                    if let Some(qualifiers_idx) = current_part.find('?') {
-                        parts.qualifiers_str = Some(&current_part[qualifiers_idx + 1..]);
-                        current_part = &current_part[..qualifiers_idx];
-                    }
-
-                    // version (split by last '@')
-                    if let Some(version_idx) = current_part.rfind('@') {
-                        // Check if '@' is not the first char after potentially splitting off type
-                        let type_separator_pos = current_part.find('/');
-                        if version_idx > type_separator_pos.unwrap_or(0) {
-                            parts.version = Some(&current_part[version_idx + 1..]);
-                            current_part = &current_part[..version_idx];
-                        }
-                    }
-                    // type (split by the first '/')
-                    let type_separator_idx = current_part.find('/')?; 
-                    parts.ptype = Some(&current_part[..type_separator_idx]);
-                    let rest_after_type = &current_part[type_separator_idx + 1..];
-                    
-                    if let Some(name_separator_idx) = rest_after_type.rfind('/') {
-                        // Check if the slash is not the only character or the last character
-                        if name_separator_idx > 0 && name_separator_idx < rest_after_type.len() - 1
-                        {
-                            parts.namespace = Some(&rest_after_type[..name_separator_idx]);
-                            parts.name = Some(&rest_after_type[name_separator_idx + 1..]);
-                        } else {
-                            // Handle cases like "type//name" or "type/name/" -> treat as no namespace
-                            parts.namespace = None;
-                            parts.name = Some(rest_after_type);
-                        }
-                    } else {
-                        // No '/' in the remaining part, so it's all name, no namespace
-                        parts.namespace = None;
-                        parts.name = Some(rest_after_type);
-                    }
-
-                    // Name must exist and be non-empty
-                    #[allow(clippy::unnecessary_map_or)]
-                    if parts.name.map_or(true, |n| n.is_empty()) {
-                        return None;
-                    }
-
-                    Some(parts)
-                }
-
-                let purl_search_string = query.q.as_str();
-                log::warn!("{:?}",query);
-                    
-                match basic_non_compliant_parse_purl(purl_search_string) {
-                    Some(url_parts) => {
-                        let ptype = url_parts.ptype;
-                        let name = url_parts.name;
-                        let namespace = url_parts.namespace;
-                        let version = url_parts.version;
-                        // let qualifiers_str = url_parts.qualifiers_str;
-                        // let subpath = url_parts.subpath;
-                        let sql = r#"
-                          SELECT distinct sbom_id
-                          FROM (
-                              SELECT sbom.sbom_id, sbom.published, cpe.id,
-                              RANK() OVER (PARTITION BY cpe.id ORDER BY sbom.published DESC) AS rank
-                              FROM sbom_package_purl_ref
-                              LEFT JOIN sbom ON sbom.sbom_id = sbom_package_purl_ref.sbom_id
-                              LEFT JOIN sbom_package_cpe_ref on sbom.sbom_id = sbom_package_cpe_ref.sbom_id
-                              LEFT JOIN cpe ON sbom_package_cpe_ref.cpe_id = cpe.id
-                              LEFT JOIN qualified_purl on sbom_package_purl_ref.qualified_purl_id = qualified_purl.id
-                              WHERE
-                                ( NULLIF($1, '') IS NULL OR qualified_purl.purl->>'ty' ~ $1 )
-                              AND
-                                ( NULLIF($2, '') IS NULL OR qualified_purl.purl->>'name' ~ $2 )
-                              AND
-                                ( NULLIF($3, '') IS NULL OR qualified_purl.purl->>'namespace' ~ $3 )
-                              AND
-                                ( NULLIF($4, '') IS NULL OR qualified_purl.purl->>'version' ~ $4 )
-                          ) AS subquery
-                          WHERE rank = 1;
-                        "#;
-                        let stmt = Statement::from_sql_and_values(
-                            DatabaseBackend::Postgres,
-                            sql,
-                            [ptype.into(), name.into(), namespace.into(), version.into()],
-                        );
-                        let rows = connection.query_all(stmt).await?;
-                        rows.into_iter()
-                            .filter_map(|row| {
-                                row.try_get_by_index::<Uuid>(0)
-                                    .ok()
-                                    .map(|sbom_id| sbom_id.to_string())
-                            })
-                            .collect::<Vec<String>>()
-                    }
-                    None => {
-                        log::debug!(
-                            "Failed to parse into any pURL parts: {}",
-                            purl_search_string
-                        );
-                        let name = query.q.clone().to_string();
-                        let sql = r#"
-                          SELECT distinct sbom_id
-                          FROM (
-                              SELECT sbom.sbom_id, sbom.published, cpe.id,
-                              RANK() OVER (PARTITION BY cpe.id ORDER BY sbom.published DESC) AS rank
-                              FROM sbom_node
-                              LEFT JOIN sbom ON sbom.sbom_id = sbom_node.sbom_id
-                              LEFT JOIN sbom_package_cpe_ref on sbom.sbom_id = sbom_package_cpe_ref.sbom_id
-                              LEFT JOIN cpe ON sbom_package_cpe_ref.cpe_id = cpe.id
-                              WHERE sbom_node.name ~ $1
-                          ) AS subquery
-                          WHERE rank = 1;
-                          "#;
-                        let stmt = Statement::from_sql_and_values(
-                            DatabaseBackend::Postgres,
-                            sql,
-                            [name.into()],
-                        );
-                        let rows = connection.query_all(stmt).await?;
-                        rows.into_iter()
-                            .filter_map(|row| {
-                                row.try_get_by_index::<Uuid>(0)
-                                    .ok()
-                                    .map(|sbom_id| sbom_id.to_string())
-                            })
-                            .collect::<Vec<String>>()
-                    }
-                }
+                let rows: Vec<Row> = Row::find_by_statement(Statement::from_sql_and_values(
+                    DatabaseBackend::Postgres,
+                    sql,
+                    values,
+                ))
+                .all(connection)
+                .await?;
+                rows.into_iter()
+                    .map(|row| row.sbom_id.to_string())
+                    .collect()
             }
         };
+
         self.load_graphs(connection, &latest_sbom_ids).await
     }
 
