@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746625044031,
+  "lastUpdate": 1746627498200,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9535,6 +9535,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/5bedd0dceeed06500a0e7c36b9d0b19c2b469e1c"
         },
         "date": 1746625042730,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "e580602c88103ed68b353959560bc59e6bfca47f",
+          "message": "refactor: clean up more duplicate code",
+          "timestamp": "2025-05-07T13:55:16Z",
+          "tree_id": "3c54ebf17cf562f3a55da4a0cc9af89df26473a7",
+          "url": "https://github.com/trustification/trustify/commit/e580602c88103ed68b353959560bc59e6bfca47f"
+        },
+        "date": 1746627497232,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
