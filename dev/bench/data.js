@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746623129190,
+  "lastUpdate": 1746625044031,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9506,6 +9506,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/10f4069075df8a038ec2b1e9a9954603bc3b8a78"
         },
         "date": 1746623127663,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "5bedd0dceeed06500a0e7c36b9d0b19c2b469e1c",
+          "message": "chore: drop logging\n\nCo-authored-by: JimFuller-RedHat <jfuller@redhat.com>",
+          "timestamp": "2025-05-07T13:14:19Z",
+          "tree_id": "c04673039605c369be91e6e343c0cacdf658aec4",
+          "url": "https://github.com/trustification/trustify/commit/5bedd0dceeed06500a0e7c36b9d0b19c2b469e1c"
+        },
+        "date": 1746625042730,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
