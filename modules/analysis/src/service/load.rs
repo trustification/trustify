@@ -28,7 +28,7 @@ use std::{
 use tracing::{Level, instrument};
 use trustify_common::{
     cpe::Cpe as TrustifyCpe,
-    db::query::{Filtering, IntoColumns},
+    db::query::{Columns, Filtering, IntoColumns},
     purl::Purl,
 };
 use trustify_entity::qualified_purl::{self, CanonicalPurl};
@@ -281,67 +281,23 @@ impl InnerService {
                 .column(sbom_node::Column::SbomId)
                 .distinct()
                 .into_query(),
-            GraphQuery::Query(query) => {
-                sbom_node::Entity::find()
-                    .join(JoinType::Join, sbom_node::Relation::Package.def())
-                    .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
-                    .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
-                    .join(
-                        JoinType::LeftJoin,
-                        sbom_package_cpe_ref::Relation::Cpe.def(),
-                    )
-                    .join(
-                        JoinType::LeftJoin,
-                        sbom_package_purl_ref::Relation::Purl.def(),
-                    )
-                    .select_only()
-                    .column(sbom_node::Column::SbomId)
-                    .filtering_with(
-                        query.clone(),
-                        sbom_node::Entity
-                            .columns()
-                            .add_columns(cpe::Entity.columns())
-                            .add_columns(qualified_purl::Entity.columns())
-                            .translator(|f, op, v| {
-                                match f {
-                                    "purl:type" => Some(format!("purl:ty{op}{v}")),
-                                    "purl" => Purl::translate(op, v),
-                                    "cpe" => match (op, OwnedUri::from_str(v)) {
-                                        ("=" | "~", Ok(cpe)) => {
-                                            // We break out cpe into its constituent columns in CPE table
-                                            let q = match (cpe.part(), cpe.language()) {
-                                                (CpeType::Any, Language::Any) => String::new(),
-                                                (CpeType::Any, l) => format!("language={l}"),
-                                                (p, Language::Any) => format!("part={p}"),
-                                                (p, l) => format!("part={p}&language={l}"),
-                                            };
-                                            let q = [
-                                                ("vendor", cpe.vendor()),
-                                                ("product", cpe.product()),
-                                                ("version", cpe.version()),
-                                                ("update", cpe.update()),
-                                                ("edition", cpe.edition()),
-                                            ]
-                                            .iter()
-                                            .fold(q, |acc, (k, v)| match v {
-                                                Component::Value(s) => {
-                                                    format!("{acc}&{k}={s}|*")
-                                                }
-                                                _ => acc,
-                                            });
-                                            Some(q)
-                                        }
-                                        ("~", Err(_)) => Some(v.into()),
-                                        (_, Err(e)) => Some(e.to_string()),
-                                        (_, _) => Some("illegal operation for cpe field".into()),
-                                    },
-                                    _ => None,
-                                }
-                            }),
-                    )?
-                    .distinct()
-                    .into_query()
-            }
+            GraphQuery::Query(query) => sbom_node::Entity::find()
+                .join(JoinType::Join, sbom_node::Relation::Package.def())
+                .join(JoinType::LeftJoin, sbom_package::Relation::Purl.def())
+                .join(JoinType::LeftJoin, sbom_package::Relation::Cpe.def())
+                .join(
+                    JoinType::LeftJoin,
+                    sbom_package_cpe_ref::Relation::Cpe.def(),
+                )
+                .join(
+                    JoinType::LeftJoin,
+                    sbom_package_purl_ref::Relation::Purl.def(),
+                )
+                .select_only()
+                .column(sbom_node::Column::SbomId)
+                .filtering_with(query.clone(), q_columns())?
+                .distinct()
+                .into_query(),
         };
 
         self.load_graphs_subquery(connection, search_sbom_subquery)
@@ -465,49 +421,7 @@ impl InnerService {
                         JoinType::LeftJoin,
                         sbom_package_purl_ref::Relation::Purl.def(),
                     )
-                    .filtering_with(
-                        query.clone(),
-                        sbom_node::Entity
-                            .columns()
-                            .add_columns(cpe::Entity.columns())
-                            .add_columns(qualified_purl::Entity.columns())
-                            .translator(|f, op, v| {
-                                match f {
-                                    "purl:type" => Some(format!("purl:ty{op}{v}")),
-                                    "purl" => Purl::translate(op, v),
-                                    "cpe" => match (op, OwnedUri::from_str(v)) {
-                                        ("=" | "~", Ok(cpe)) => {
-                                            // We break out cpe into its constituent columns in CPE table
-                                            let q = match (cpe.part(), cpe.language()) {
-                                                (CpeType::Any, Language::Any) => String::new(),
-                                                (CpeType::Any, l) => format!("language={l}"),
-                                                (p, Language::Any) => format!("part={p}"),
-                                                (p, l) => format!("part={p}&language={l}"),
-                                            };
-                                            let q = [
-                                                ("vendor", cpe.vendor()),
-                                                ("product", cpe.product()),
-                                                ("version", cpe.version()),
-                                                ("update", cpe.update()),
-                                                ("edition", cpe.edition()),
-                                            ]
-                                            .iter()
-                                            .fold(q, |acc, (k, v)| match v {
-                                                Component::Value(s) => {
-                                                    format!("{acc}&{k}={s}|*")
-                                                }
-                                                _ => acc,
-                                            });
-                                            Some(q)
-                                        }
-                                        ("~", Err(_)) => Some(v.into()),
-                                        (_, Err(e)) => Some(e.to_string()),
-                                        (_, _) => Some("illegal operation for cpe field".into()),
-                                    },
-                                    _ => None,
-                                }
-                            }),
-                    )?;
+                    .filtering_with(query.clone(), q_columns())?;
 
                 query_all(subquery.into_query(), connection).await?
             }
@@ -686,4 +600,49 @@ impl InnerService {
         }
         Ok(results)
     }
+}
+
+// These are the columns and translation rules with which we filter
+// 'q=' component queries
+fn q_columns() -> Columns {
+    sbom_node::Entity
+        .columns()
+        .add_columns(cpe::Entity.columns())
+        .add_columns(qualified_purl::Entity.columns())
+        .translator(|f, op, v| {
+            match f {
+                "purl:type" => Some(format!("purl:ty{op}{v}")),
+                "purl" => Purl::translate(op, v),
+                "cpe" => match (op, OwnedUri::from_str(v)) {
+                    ("=" | "~", Ok(cpe)) => {
+                        // We break out cpe into its constituent columns in CPE table
+                        let q = match (cpe.part(), cpe.language()) {
+                            (CpeType::Any, Language::Any) => String::new(),
+                            (CpeType::Any, l) => format!("language={l}"),
+                            (p, Language::Any) => format!("part={p}"),
+                            (p, l) => format!("part={p}&language={l}"),
+                        };
+                        let q = [
+                            ("vendor", cpe.vendor()),
+                            ("product", cpe.product()),
+                            ("version", cpe.version()),
+                            ("update", cpe.update()),
+                            ("edition", cpe.edition()),
+                        ]
+                        .iter()
+                        .fold(q, |acc, (k, v)| match v {
+                            Component::Value(s) => {
+                                format!("{acc}&{k}={s}|*")
+                            }
+                            _ => acc,
+                        });
+                        Some(q)
+                    }
+                    ("~", Err(_)) => Some(v.into()),
+                    (_, Err(e)) => Some(e.to_string()),
+                    (_, _) => Some("illegal operation for cpe field".into()),
+                },
+                _ => None,
+            }
+        })
 }
