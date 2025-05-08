@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746698130757,
+  "lastUpdate": 1746722404442,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9622,6 +9622,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/4e8589b6099325b35c4be6e998bfce90970068bd"
         },
         "date": 1746698129393,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": true,
+          "id": "9297a06c64ef3739ec502f1c0d25dcb9c1d1b8a6",
+          "message": "fix: remove duplicate UNION in gc_purls SELECT\n\nNote: This does not address the performance issue described in\nhttps://github.com/trustification/trustify/issues/1589,\nbut the duplication still needed to be resolved.",
+          "timestamp": "2025-05-08T16:18:59Z",
+          "tree_id": "c21e62b0388f90bbfbb47e8fdc22cc7c1250ea1d",
+          "url": "https://github.com/trustification/trustify/commit/9297a06c64ef3739ec502f1c0d25dcb9c1d1b8a6"
+        },
+        "date": 1746722402855,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
