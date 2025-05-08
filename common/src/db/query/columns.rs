@@ -1,11 +1,10 @@
 use std::collections::{BTreeMap, BTreeSet};
-use std::fmt::{Display, Formatter};
+use std::fmt::Display;
 
 use chrono::Local;
 use human_date_parser::{ParseResult, from_human_time};
 use sea_orm::{
-    ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Iterable, Value as SeaValue,
-    entity::ColumnDef, sea_query,
+    ColumnTrait, ColumnType, EntityTrait, IntoIdentity, Iterable, Value as SeaValue, sea_query,
 };
 use sea_query::{
     Alias, ColumnRef, Expr, ExprTrait, Func, IntoColumnRef, IntoIden, SimpleExpr,
@@ -25,35 +24,6 @@ pub struct Columns {
     translator: Option<Translator>,
     json_keys: BTreeMap<&'static str, ColumnRef>,
     exprs: BTreeMap<&'static str, (SimpleExpr, ColumnType)>,
-}
-
-impl Display for Columns {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        for (r, ty) in &self.columns {
-            writeln!(f)?;
-            match r {
-                ColumnRef::SchemaTableColumn(_, t, c) | ColumnRef::TableColumn(t, c) => {
-                    write!(f, "  \"{}\".\"{}\"", t.to_string(), c.to_string())?
-                }
-                ColumnRef::Column(c) => write!(f, "  \"{}\"", c.to_string())?,
-                _ => write!(f, "  {r:?}")?,
-            }
-            write!(f, " : ")?;
-            match ty {
-                ColumnType::Text | ColumnType::String(_) | ColumnType::Char(_) => {
-                    write!(f, "String")?
-                }
-                ColumnType::Enum { name, variants } => write!(
-                    f,
-                    "Enum({}) {:?}",
-                    name.to_string(),
-                    variants.iter().map(|v| v.to_string()).collect::<Vec<_>>()
-                )?,
-                t => write!(f, "  {t:?}")?,
-            }
-        }
-        Ok(())
-    }
 }
 
 pub trait IntoColumns {
@@ -94,11 +64,9 @@ impl Columns {
     }
 
     /// Add an arbitrary column into the context.
-    pub fn add_column<I: IntoIdentity>(mut self, name: I, def: ColumnDef) -> Self {
-        self.columns.push((
-            name.into_identity().into_column_ref(),
-            def.get_column_type().clone(),
-        ));
+    pub fn add_column<I: IntoIdentity>(mut self, name: I, ty: ColumnType) -> Self {
+        self.columns
+            .push((name.into_identity().into_column_ref(), ty));
         self
     }
 
@@ -345,7 +313,7 @@ mod tests {
     use super::super::tests::*;
     use super::super::*;
     use super::*;
-    use sea_orm::{ColumnType, ColumnTypeTrait, QuerySelect, QueryTrait};
+    use sea_orm::{ColumnType, QuerySelect, QueryTrait};
     use sea_query::{Expr, Func, SimpleExpr};
     use test_log::test;
 
@@ -364,7 +332,7 @@ mod tests {
                 q("location_len>10"),
                 advisory::Entity
                     .columns()
-                    .add_column("location_len", ColumnType::Integer.def()),
+                    .add_column("location_len", ColumnType::Integer),
             )?
             .build(sea_orm::DatabaseBackend::Postgres)
             .to_string();
@@ -379,11 +347,11 @@ mod tests {
 
     #[test(tokio::test)]
     async fn filters_extra_columns() -> Result<(), anyhow::Error> {
-        let test = |s: &str, expected: &str, def: ColumnDef| {
+        let test = |s: &str, expected: &str, ty: ColumnType| {
             let stmt = advisory::Entity::find()
                 .select_only()
                 .column(advisory::Column::Id)
-                .filtering_with(q(s), advisory::Entity.columns().add_column("len", def))
+                .filtering_with(q(s), advisory::Entity.columns().add_column("len", ty))
                 .unwrap()
                 .build(sea_orm::DatabaseBackend::Postgres)
                 .to_string()
@@ -395,14 +363,14 @@ mod tests {
         };
 
         use ColumnType::*;
-        test("len=42", r#""len" = 42"#, Integer.def());
-        test("len!=42", r#""len" <> 42"#, Integer.def());
-        test("len~42", r#""len" ILIKE '%42%'"#, Text.def());
-        test("len!~42", r#""len" NOT ILIKE '%42%'"#, Text.def());
-        test("len>42", r#""len" > 42"#, Integer.def());
-        test("len>=42", r#""len" >= 42"#, Integer.def());
-        test("len<42", r#""len" < 42"#, Integer.def());
-        test("len<=42", r#""len" <= 42"#, Integer.def());
+        test("len=42", r#""len" = 42"#, Integer);
+        test("len!=42", r#""len" <> 42"#, Integer);
+        test("len~42", r#""len" ILIKE '%42%'"#, Text);
+        test("len!~42", r#""len" NOT ILIKE '%42%'"#, Text);
+        test("len>42", r#""len" > 42"#, Integer);
+        test("len>=42", r#""len" >= 42"#, Integer);
+        test("len<42", r#""len" < 42"#, Integer);
+        test("len<=42", r#""len" <= 42"#, Integer);
 
         Ok(())
     }
