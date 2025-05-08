@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746628794453,
+  "lastUpdate": 1746698130757,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9593,6 +9593,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/b27418b4306f458e23665c70869a1b19ae1abd99"
         },
         "date": 1746628793622,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": false,
+          "id": "4e8589b6099325b35c4be6e998bfce90970068bd",
+          "message": "Revert \"feat: allow string arrays to be queried in the q= syntax\"\n\nThis reverts commit 42f99b90aa67b35d80b146a9f321af4ceb101b00.",
+          "timestamp": "2025-05-08T09:33:35Z",
+          "tree_id": "3c54ebf17cf562f3a55da4a0cc9af89df26473a7",
+          "url": "https://github.com/trustification/trustify/commit/4e8589b6099325b35c4be6e998bfce90970068bd"
+        },
+        "date": 1746698129393,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
