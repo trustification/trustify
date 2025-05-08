@@ -62,7 +62,7 @@ WITH
         (
             SELECT * from deleted_base_purl
         ) UNION (
-            SELECT * from deleted_base_purl
+            SELECT * from deleted_versioned_purl
         ) UNION (
             SELECT * from deleted_qualified_purl
         )
