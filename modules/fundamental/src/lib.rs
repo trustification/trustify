@@ -9,6 +9,7 @@ pub mod product;
 pub mod purl;
 pub mod sbom;
 pub mod source_document;
+#[allow(deprecated)]
 pub mod vulnerability;
 pub mod weakness;
 
