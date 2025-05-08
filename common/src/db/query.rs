@@ -278,7 +278,6 @@ pub(crate) mod tests {
             pub published: Option<OffsetDateTime>,
             pub severity: Severity,
             pub score: f64,
-            pub authors: Option<Vec<String>>,
             #[sea_orm(column_type = "JsonBinary")]
             pub purl: CanonicalPurl,
         }
