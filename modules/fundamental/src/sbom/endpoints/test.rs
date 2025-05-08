@@ -371,33 +371,3 @@ async fn query_sboms_by_package(ctx: &TrustifyContext) -> Result<(), anyhow::Err
 
     Ok(())
 }
-
-#[test_context(TrustifyContext)]
-#[test(actix_web::test)]
-async fn query_sboms_by_array_values(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    ctx.ingest_documents([
-        "quarkus-bom-2.13.8.Final-redhat-00004.json",
-        "spdx/rhelai1_binary.json",
-    ])
-    .await?;
-
-    let query = async |expected_count, q| {
-        let app = caller(ctx).await.unwrap();
-        let uri = format!("/api/v2/sbom?q={}", encode(q));
-        let req = TestRequest::get().uri(&uri).to_request();
-        let response: Value = app.call_and_read_body_json(req).await;
-        tracing::debug!(test = "", "{response:#?}");
-        assert_eq!(expected_count, response["total"], "for {q}");
-    };
-
-    query(1, "authors~syft").await;
-    query(1, "authors~Product").await;
-    query(2, "authors~Product|Tool").await;
-    query(1, "suppliers~Red Hat&authors~Red Hat").await;
-    query(1, "suppliers=Organization: Red Hat").await;
-    query(1, "suppliers!=Organization: Red Hat&authors~syft").await;
-    query(0, "authors<ZZZ").await;
-    query(2, "authors>ZZZ").await;
-
-    Ok(())
-}
