@@ -18,7 +18,7 @@ pub trait Filtering<T: EntityTrait> {
     {
         let Query { ref q, ref sort } = search;
         let columns = context.columns();
-        log::debug!("Query: q='{q}' sort='{sort}' columns={columns:#?}");
+        log::debug!("Query: q='{q}' sort='{sort}' columns={columns}");
 
         let stmt = if q.is_empty() {
             self

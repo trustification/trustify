@@ -37,7 +37,7 @@ pub(crate) mod tests {
     use super::super::*;
     use super::*;
 
-    use sea_orm::ColumnType;
+    use sea_orm::{ColumnType, ColumnTypeTrait};
     use sea_query::StringLen;
     use test_log::test;
 
@@ -76,7 +76,7 @@ pub(crate) mod tests {
                 "foo",
                 &advisory::Entity
                     .columns()
-                    .add_column("foo", ColumnType::String(StringLen::None))
+                    .add_column("foo", ColumnType::String(StringLen::None).def())
             )
             .is_ok()
         );
@@ -87,7 +87,7 @@ pub(crate) mod tests {
                 "bar",
                 &advisory::Entity
                     .columns()
-                    .add_column("foo", ColumnType::String(StringLen::None))
+                    .add_column("foo", ColumnType::String(StringLen::None).def())
             )
             .is_err()
         );
