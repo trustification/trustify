@@ -2890,14 +2890,9 @@ paths:
         schema:
           type: string
       responses:
-        '200':
-          description: Specified vulnerability
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VulnerabilityDetails'
-        '404':
-          description: Specified vulnerability not found
+        '501':
+          description: Method not yet implemented
+      deprecated: true
   /api/v2/weakness:
     get:
       tags:
