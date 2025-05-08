@@ -94,7 +94,10 @@ impl AdvisoryService {
             .filtering_with(
                 search,
                 Columns::from_entity::<advisory::Entity>()
-                    .add_columns(source_document::Entity)
+                    .add_column(
+                        source_document::Column::Ingested,
+                        ColumnType::TimestampWithTimeZone,
+                    )
                     .add_column("average_score", ColumnType::Decimal(None))
                     .add_column(
                         "average_severity",
