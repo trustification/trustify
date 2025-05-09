@@ -353,8 +353,8 @@ pub(crate) mod tests {
             r#""advisory"."location" = 'foo' OR "advisory"."location" = ''"#
         );
         assert_eq!(
-            where_clause("location=&purl:namespace=")?,
-            r#""advisory"."location" = '' AND ("advisory"."purl" ->> 'namespace') = ''"#
+            where_clause("location=&authors=&purl:namespace=")?,
+            r#""advisory"."location" = '' AND '' = ANY("advisory"."authors") AND ("advisory"."purl" ->> 'namespace') = ''"#
         );
 
         Ok(())
