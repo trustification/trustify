@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746722404442,
+  "lastUpdate": 1746789086156,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9656,6 +9656,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "mrizzi@redhat.com",
+            "name": "mrizzi",
+            "username": "mrizzi"
+          },
+          "committer": {
+            "email": "mrizzi@users.noreply.github.com",
+            "name": "Marco Rizzi",
+            "username": "mrizzi"
+          },
+          "distinct": false,
+          "id": "4560403c06a703a2aaf89e525812400409e845f4",
+          "message": "chore: deprecate vulnerability delete endpoint\n\nSigned-off-by: mrizzi <mrizzi@redhat.com>",
+          "timestamp": "2025-05-09T10:49:44Z",
+          "tree_id": "6ffb3b97656f3988b0e854d86e6fccc152cb1284",
+          "url": "https://github.com/trustification/trustify/commit/4560403c06a703a2aaf89e525812400409e845f4"
+        },
+        "date": 1746789085060,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
