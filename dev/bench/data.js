@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746789086156,
+  "lastUpdate": 1746798851202,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9685,6 +9685,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "8e2b966702bb2b6d1dff509fc3809025994cca68",
+          "message": "add tests/docs showing how to query for empty strings\n\nTurns out it was already supported so we got that feature for free!",
+          "timestamp": "2025-05-09T13:31:12Z",
+          "tree_id": "c744df6539fc33270c3935ff7e7721bb52c5fadb",
+          "url": "https://github.com/trustification/trustify/commit/8e2b966702bb2b6d1dff509fc3809025994cca68"
+        },
+        "date": 1746798850703,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
