@@ -8,17 +8,20 @@ use crate::{
         vulnerability::VulnerabilityInformation,
     },
     model::IngestResult,
-    service::{Error, advisory::cve::divination::divine_purl},
+    service::{Error, Warnings, advisory::cve::divination::divine_purl},
 };
 use cve::{
     Cve, Timestamp,
     common::{Description, Product, Status, VersionRange},
 };
+use sbom_walker::report::ReportSink;
 use sea_orm::TransactionTrait;
 use std::fmt::Debug;
+use std::str::FromStr;
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{hashing::Digests, id::Id};
+use trustify_cvss::cvss3::Cvss3Base;
 use trustify_entity::{labels::Labels, version_scheme::VersionScheme};
 
 /// Loader capable of parsing a CVE Record JSON file
@@ -45,6 +48,7 @@ impl<'g> CveLoader<'g> {
         cve: Cve,
         digests: &Digests,
     ) -> Result<IngestResult, Error> {
+        let warnings = Warnings::new();
         let id = cve.id();
         let labels = labels.into().add("type", "cve");
 
@@ -102,6 +106,26 @@ impl<'g> CveLoader<'g> {
                 &tx,
             )
             .await?;
+
+        if let Cve::Published(published) = cve.clone() {
+            for metric in published.containers.cna.metrics {
+                let cvss = metric.cvss_v3_1.as_ref().or(metric.cvss_v3_0.as_ref());
+
+                if let Some(cvss) = cvss {
+                    if let Some(vector) = cvss.get("vectorString").and_then(|v| v.as_str()) {
+                        match Cvss3Base::from_str(vector) {
+                            Ok(cvss3) => {
+                                advisory_vuln.ingest_cvss3_score(cvss3, &tx).await?;
+                            }
+                            Err(err) => {
+                                let msg = format!("Unable to parse CVSS3: {err}");
+                                warnings.error(msg)
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         if let Some(affected) = affected {
             for product in affected {
@@ -172,7 +196,7 @@ impl<'g> CveLoader<'g> {
         Ok(IngestResult {
             id: Id::Uuid(advisory.advisory.id),
             document_id: Some(id.to_string()),
-            warnings: vec![],
+            warnings: warnings.into(),
         })
     }
 
@@ -339,6 +363,22 @@ mod test {
         assert!(
             descriptions[0]
                 .starts_with("Canarytokens helps track activity and actions on a network")
+        );
+
+        let loaded_advisory = loaded_advisory.unwrap();
+        let advisory_vuln = loaded_advisory
+            .get_vulnerability("CVE-2024-28111", &ctx.db)
+            .await?;
+        assert!(advisory_vuln.is_some());
+
+        let advisory_vuln = advisory_vuln.unwrap();
+        let scores = advisory_vuln.cvss3_scores(&ctx.db).await?;
+        assert_eq!(1, scores.len());
+
+        let score = scores[0];
+        assert_eq!(
+            score.to_string(),
+            "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N"
         );
 
         Ok(())
