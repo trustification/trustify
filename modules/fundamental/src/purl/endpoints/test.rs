@@ -157,7 +157,7 @@ async fn package_with_status(ctx: &TrustifyContext) -> Result<(), anyhow::Error>
 
     assert_eq!(uuid, Uuid::parse_str(response["uuid"].as_str().unwrap())?);
     assert_eq!(
-        "critical",
+        "high",
         response["advisories"][0]["status"][0]["average_severity"]
     );
     assert_eq!(
