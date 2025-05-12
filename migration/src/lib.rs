@@ -25,6 +25,7 @@ mod m0001040_alter_pythonver_cmp;
 mod m0001050_foreign_key_cascade;
 mod m0001060_advisory_vulnerability_indexes;
 mod m0001100_remove_get_purl;
+mod m0001110_add_signatures;
 
 pub struct Migrator;
 
@@ -53,6 +54,7 @@ impl MigratorTrait for Migrator {
             Box::new(m0001050_foreign_key_cascade::Migration),
             Box::new(m0001060_advisory_vulnerability_indexes::Migration),
             Box::new(m0001100_remove_get_purl::Migration),
+            Box::new(m0001110_add_signatures::Migration),
         ]
     }
 }

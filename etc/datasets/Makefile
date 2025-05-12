@@ -15,3 +15,8 @@ ds3.zip:
 ds3-sboms.zip:
 	-rm ds3-sbom.zip
 	cd ds3 && zip -r ../ds3-sboms.zip ./spdx
+
+.PHONY: ds6.zip
+ds6.zip:
+	-rm ds6.zip
+	cd ds6 && zip -r ../ds6.zip .

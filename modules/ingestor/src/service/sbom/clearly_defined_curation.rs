@@ -1,12 +1,11 @@
 use crate::{
     graph::{Graph, Outcome, sbom::clearly_defined::Curation},
     model::IngestResult,
-    service::Error,
+    service::{Error, Metadata},
 };
 use sea_orm::TransactionTrait;
 use tracing::instrument;
-use trustify_common::{hashing::Digests, id::Id};
-use trustify_entity::labels::Labels;
+use trustify_common::id::Id;
 
 pub struct ClearlyDefinedCurationLoader<'g> {
     graph: &'g Graph,
@@ -20,17 +19,23 @@ impl<'g> ClearlyDefinedCurationLoader<'g> {
     #[instrument(skip(self, curation), err(level=tracing::Level::INFO))]
     pub async fn load(
         &self,
-        labels: Labels,
+        metadata: Metadata,
         curation: Curation,
-        digests: &Digests,
     ) -> Result<IngestResult, Error> {
+        let Metadata {
+            labels,
+            issuer: _,
+            digests,
+            signatures,
+        } = metadata;
+
         let tx = self.graph.db.begin().await?;
 
         let sbom = match self
             .graph
             .ingest_sbom(
                 labels,
-                digests,
+                &digests,
                 Some(curation.document_id()),
                 &curation,
                 &tx,
@@ -42,6 +47,10 @@ impl<'g> ClearlyDefinedCurationLoader<'g> {
                 sbom.ingest_clearly_defined_curation(curation, &tx)
                     .await
                     .map_err(Error::Generic)?;
+
+                self.graph
+                    .attach_signatures(sbom.sbom.source_document_id, signatures, &tx)
+                    .await?;
 
                 tx.commit().await?;
 
@@ -59,12 +68,13 @@ impl<'g> ClearlyDefinedCurationLoader<'g> {
 
 #[cfg(test)]
 mod test {
-    use crate::graph::Graph;
-    use crate::service::{Cache, Format, IngestorService};
+    use crate::{
+        graph::Graph,
+        service::{Format, Ingest, IngestorService},
+    };
     use test_context::test_context;
     use test_log::test;
-    use trustify_test_context::TrustifyContext;
-    use trustify_test_context::document_bytes;
+    use trustify_test_context::{TrustifyContext, document_bytes};
 
     #[test_context(TrustifyContext)]
     #[test(tokio::test)]
@@ -75,13 +85,12 @@ mod test {
         let data = document_bytes("clearly-defined/chrono.yaml").await?;
 
         ingestor
-            .ingest(
-                &data,
-                Format::ClearlyDefinedCuration,
-                ("source", "test"),
-                None,
-                Cache::Skip,
-            )
+            .ingest(Ingest {
+                data: &data,
+                format: Format::ClearlyDefinedCuration,
+                labels: ("source", "test").into(),
+                ..Default::default()
+            })
             .await
             .expect("must ingest");
 
