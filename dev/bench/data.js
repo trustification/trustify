@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747047511230,
+  "lastUpdate": 1747058101326,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9772,6 +9772,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 7,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jkucera@redhat.com",
+            "name": "Jiri Kucera",
+            "username": "i386x"
+          },
+          "committer": {
+            "email": "jkucera@redhat.com",
+            "name": "Jiří Kučera",
+            "username": "i386x"
+          },
+          "distinct": false,
+          "id": "03db130ad1af422f35d793a170f62108820d5b2b",
+          "message": "docs: Add v1 to v2 migration guide\n\nResolves: TC-2296\n\nSigned-off-by: Jiří Kučera <jkucera@redhat.com>",
+          "timestamp": "2025-05-12T13:33:56Z",
+          "tree_id": "bfb2a4e5aa2867bf507b1e61382020b4c531827b",
+          "url": "https://github.com/trustification/trustify/commit/03db130ad1af422f35d793a170f62108820d5b2b"
+        },
+        "date": 1747058100433,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
