@@ -9183,6 +9183,7 @@ dependencies = [
  "serde",
  "serde-cyclonedx",
  "serde_json",
+ "serde_with",
  "serde_yaml_ng",
  "sha2",
  "spdx",
