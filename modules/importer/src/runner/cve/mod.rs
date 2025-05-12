@@ -15,10 +15,9 @@ use std::{path::Path, path::PathBuf, sync::Arc};
 use tokio::runtime::Handle;
 use tracing::instrument;
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::Cache;
 use trustify_module_ingestor::{
     graph::Graph,
-    service::{Format, IngestorService},
+    service::{Format, Ingest, IngestorService},
 };
 
 struct Context<C: RunContext + 'static> {
@@ -35,17 +34,16 @@ impl<C: RunContext> Context<C> {
 
         Handle::current().block_on(async {
             self.ingestor
-                .ingest(
-                    &data,
-                    Format::CVE,
-                    Labels::new()
+                .ingest(Ingest {
+                    data: &data,
+                    format: Format::CVE,
+                    labels: Labels::new()
                         .add("source", &self.source)
                         .add("importer", self.context.name())
                         .add("file", path.to_string_lossy())
                         .extend(self.labels.0.clone()),
-                    None,
-                    Cache::Skip,
-                )
+                    ..Default::default()
+                })
                 .await
         })?;
 

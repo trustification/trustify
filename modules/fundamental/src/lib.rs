@@ -8,6 +8,7 @@ pub mod organization;
 pub mod product;
 pub mod purl;
 pub mod sbom;
+pub mod signature;
 pub mod source_document;
 #[allow(deprecated)]
 pub mod vulnerability;

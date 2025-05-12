@@ -22,11 +22,10 @@ use tokio_util::{bytes::Bytes, io::ReaderStream};
 use tracing::instrument;
 use trustify_common::{self as common, db, decompress::decompress_async, hashing::Digests};
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::Cache;
 use trustify_module_ingestor::{
     graph::Graph,
     model::IngestResult,
-    service::{Format, IngestorService},
+    service::{Format, Ingest, IngestorService},
 };
 use trustify_module_storage::service::fs::FileSystemBackend;
 
@@ -97,7 +96,12 @@ impl TrustifyContext {
         let bytes = document_bytes(path).await?;
         Ok(self
             .ingestor
-            .ingest(&bytes, format, labels, None, Cache::Skip)
+            .ingest(Ingest {
+                data: &bytes,
+                format,
+                labels: labels.into(),
+                ..Default::default()
+            })
             .await?)
     }
 
@@ -107,13 +111,11 @@ impl TrustifyContext {
 
         Ok(self
             .ingestor
-            .ingest(
-                &bytes,
-                Format::Unknown,
-                ("source", "TrustifyContext"),
-                None,
-                Cache::Skip,
-            )
+            .ingest(Ingest {
+                data: &bytes,
+                labels: ("source", "TrustifyContext").into(),
+                ..Default::default()
+            })
             .await?)
     }
 
@@ -123,13 +125,11 @@ impl TrustifyContext {
 
         Ok(self
             .ingestor
-            .ingest(
-                &bytes,
-                Format::Unknown,
-                ("source", "TrustifyContext"),
-                None,
-                Cache::Skip,
-            )
+            .ingest(Ingest {
+                data: &bytes,
+                labels: ("source", "TrustifyContext").into(),
+                ..Default::default()
+            })
             .await?)
     }
 

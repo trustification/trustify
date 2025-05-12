@@ -5,9 +5,11 @@ use std::io::Read;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::{hashing::HashingRead, model::Paginated};
-use trustify_entity::labels::Labels;
 use trustify_module_fundamental::weakness::service::WeaknessService;
-use trustify_module_ingestor::{graph::Graph, service::weakness::CweCatalogLoader};
+use trustify_module_ingestor::{
+    graph::Graph,
+    service::{Metadata, weakness::CweCatalogLoader},
+};
 use trustify_test_context::{TrustifyContext, document_read};
 use zip::ZipArchive;
 
@@ -36,7 +38,17 @@ async fn simple(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // load
 
     let doc = Document::parse(&xml)?;
-    loader.load(Labels::default(), &doc, &digests).await?;
+    loader
+        .load(
+            Metadata {
+                labels: Default::default(),
+                issuer: None,
+                digests,
+                signatures: vec![],
+            },
+            &doc,
+        )
+        .await?;
 
     // fetch data
 
@@ -71,7 +83,17 @@ async fn simple(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     // load again
 
     let doc = Document::parse(&xml)?;
-    loader.load(Labels::default(), &doc, &digests).await?;
+    loader
+        .load(
+            Metadata {
+                labels: Default::default(),
+                issuer: None,
+                digests,
+                signatures: vec![],
+            },
+            &doc,
+        )
+        .await?;
 
     // fetch data again
 

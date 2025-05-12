@@ -19,7 +19,7 @@ pub struct Model {
     pub suppliers: Vec<String>,
     pub data_licenses: Vec<String>,
 
-    pub source_document_id: Option<Uuid>,
+    pub source_document_id: Uuid,
 
     #[graphql(derived(owned, into = "HashMap<String,String>", with = "Labels::from"))]
     pub labels: Labels,
