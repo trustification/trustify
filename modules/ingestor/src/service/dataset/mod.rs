@@ -3,7 +3,7 @@
 use crate::{
     graph::Graph,
     model::IngestResult,
-    service::{Error, Format, Warnings},
+    service::{Document, Error, Format, Metadata, Signature, Warnings},
 };
 use anyhow::anyhow;
 use bytes::Bytes;
@@ -16,7 +16,7 @@ use std::{
 use tokio::runtime::Handle;
 use tracing::instrument;
 use trustify_common::hashing::Digests;
-use trustify_entity::labels::Labels;
+use trustify_entity::{labels::Labels, signature_type::SignatureType};
 use trustify_module_storage::{service::StorageBackend, service::dispatch::DispatchBackend};
 
 pub struct DatasetLoader<'g> {
@@ -49,7 +49,10 @@ impl<'g> DatasetLoader<'g> {
             if !file.is_file() {
                 continue;
             }
-            if file.name() == ".DS_Store" || file.name().ends_with("/.DS_Store") {
+            if file.name() == ".DS_Store"
+                || file.name().ends_with("/.DS_Store")
+                || file.name().ends_with(".asc")
+            {
                 continue;
             }
 
@@ -75,6 +78,7 @@ impl<'g> DatasetLoader<'g> {
                     Ok(format) => {
                         let mut data = Vec::with_capacity(file.size() as _);
                         file.read_to_end(&mut data)?;
+                        drop(file);
 
                         let file_name = file_name.to_string();
                         let opts = DecompressionOptions::new().limit(self.limit);
@@ -99,6 +103,32 @@ impl<'g> DatasetLoader<'g> {
 
                         let labels = labels.clone().add("datasetFile", &full_name);
 
+                        // find a signature
+
+                        let signature = format!("{full_name}.asc");
+                        log::debug!("Checking for a signature: {signature}");
+
+                        let signature = match zip.by_name(&signature) {
+                            Ok(mut sig) => {
+                                let mut payload = Vec::with_capacity(sig.size() as _);
+                                sig.read_to_end(&mut payload)?;
+                                drop(sig);
+
+                                if log::log_enabled!(log::Level::Debug) {
+                                    log::debug!(
+                                        "Found signature: {:?}",
+                                        String::from_utf8_lossy(&payload)
+                                    );
+                                }
+
+                                Some(Signature {
+                                    payload,
+                                    r#type: SignatureType::Pgp,
+                                })
+                            }
+                            Err(_) => None,
+                        };
+
                         self.storage
                             .store(&*data)
                             .await
@@ -108,7 +138,18 @@ impl<'g> DatasetLoader<'g> {
                         let result = Box::pin({
                             async move {
                                 format
-                                    .load(self.graph, labels, None, &Digests::digest(&data), &data)
+                                    .load(
+                                        self.graph,
+                                        Document {
+                                            metadata: Metadata {
+                                                labels,
+                                                issuer: None,
+                                                digests: Digests::digest(&data),
+                                                signatures: Vec::from_iter(signature),
+                                            },
+                                            data: &data,
+                                        },
+                                    )
                                     .await
                             }
                         })

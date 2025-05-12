@@ -12,15 +12,17 @@ use crate::{
 use chrono::Datelike;
 use handler::OsvHandler;
 use parking_lot::Mutex;
-use std::collections::HashSet;
-use std::{path::Path, path::PathBuf, sync::Arc};
+use std::{
+    collections::HashSet,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use tokio::runtime::Handle;
 use tracing::instrument;
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::Cache;
 use trustify_module_ingestor::{
     graph::Graph,
-    service::{Format, IngestorService, advisory::osv::parse},
+    service::{Format, Ingest, IngestorService, advisory::osv::parse},
 };
 
 struct Context<C: RunContext + 'static> {
@@ -62,17 +64,16 @@ impl<C: RunContext> Context<C> {
 
         Handle::current().block_on(async {
             self.ingestor
-                .ingest(
-                    &data,
-                    Format::OSV,
-                    Labels::new()
+                .ingest(Ingest {
+                    data: &data,
+                    format: Format::OSV,
+                    labels: Labels::new()
                         .add("source", &self.source)
                         .add("importer", self.context.name())
                         .add("file", path.to_string_lossy())
                         .extend(self.labels.0.clone()),
-                    None,
-                    Cache::Skip,
-                )
+                    ..Default::default()
+                })
                 .await
         })?;
 
