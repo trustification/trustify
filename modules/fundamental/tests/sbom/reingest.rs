@@ -4,12 +4,11 @@ use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
 use tracing::instrument;
-use trustify_common::db::query::Query;
-use trustify_common::model::Paginated;
-use trustify_common::purl::Purl;
-use trustify_module_fundamental::sbom::model::SbomExternalPackageReference;
-use trustify_module_fundamental::sbom::{model::details::SbomDetails, service::SbomService};
-use trustify_module_ingestor::service::{Cache, Format};
+use trustify_common::{db::query::Query, model::Paginated, purl::Purl};
+use trustify_module_fundamental::sbom::{
+    model::SbomExternalPackageReference, model::details::SbomDetails, service::SbomService,
+};
+use trustify_module_ingestor::service::{Format, Ingest};
 use trustify_test_context::{TrustifyContext, document_bytes};
 
 fn assert_sboms(sbom1: &SbomDetails, sbom2: &SbomDetails) {
@@ -231,7 +230,12 @@ async fn nhc_same_content(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     };
     let result2 = ctx
         .ingestor
-        .ingest(bytes, Format::SBOM, ("source", "test"), None, Cache::Skip)
+        .ingest(Ingest {
+            data: bytes,
+            format: Format::SBOM,
+            labels: ("source", "test").into(),
+            ..Default::default()
+        })
         .await?;
 
     assert_eq!(

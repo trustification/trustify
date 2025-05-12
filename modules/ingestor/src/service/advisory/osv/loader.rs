@@ -10,18 +10,18 @@ use crate::{
     },
     model::IngestResult,
     service::{
-        Error, Warnings,
+        Error, Metadata, Warnings,
         advisory::osv::{prefix::get_well_known_prefixes, translate},
     },
 };
 use osv::schema::{Ecosystem, Event, Range, RangeType, ReferenceType, SeverityType, Vulnerability};
 use sbom_walker::report::ReportSink;
 use sea_orm::{ConnectionTrait, TransactionTrait};
-use std::{fmt::Debug, str::FromStr};
+use std::str::FromStr;
 use tracing::instrument;
-use trustify_common::{hashing::Digests, id::Id, purl::Purl, time::ChronoExt};
+use trustify_common::{id::Id, purl::Purl, time::ChronoExt};
 use trustify_cvss::cvss3::Cvss3Base;
-use trustify_entity::{labels::Labels, version_scheme::VersionScheme};
+use trustify_entity::version_scheme::VersionScheme;
 
 pub struct OsvLoader<'g> {
     graph: &'g Graph,
@@ -35,14 +35,19 @@ impl<'g> OsvLoader<'g> {
     #[instrument(skip(self, osv), err(level=tracing::Level::INFO))]
     pub async fn load(
         &self,
-        labels: impl Into<Labels> + Debug,
+        metadata: Metadata,
         osv: Vulnerability,
-        digests: &Digests,
-        issuer: Option<String>,
     ) -> Result<IngestResult, Error> {
+        let Metadata {
+            labels,
+            issuer,
+            digests,
+            signatures,
+        } = metadata;
+
         let warnings = Warnings::new();
 
-        let labels = labels.into().add("type", "osv");
+        let labels = labels.add("type", "osv");
 
         let issuer = issuer.or(detect_organization(&osv));
 
@@ -68,7 +73,11 @@ impl<'g> OsvLoader<'g> {
         };
         let advisory = self
             .graph
-            .ingest_advisory(&osv.id, labels, digests, information, &tx)
+            .ingest_advisory(&osv.id, labels, &digests, information, &tx)
+            .await?;
+
+        self.graph
+            .attach_signatures(advisory.advisory.source_document_id, signatures, &tx)
             .await?;
 
         if let Some(withdrawn) = osv.withdrawn {
@@ -551,7 +560,15 @@ mod test {
 
         let loader = OsvLoader::new(&graph);
         loader
-            .load(("file", "RUSTSEC-2021-0079.json"), osv, &digests, None)
+            .load(
+                Metadata {
+                    labels: ("file", "RUSTSEC-2021-0079.json").into(),
+                    digests,
+                    issuer: None,
+                    signatures: vec![],
+                },
+                osv,
+            )
             .await?;
 
         let loaded_vulnerability = graph.get_vulnerability("CVE-2021-32714", &ctx.db).await?;
@@ -613,7 +630,15 @@ mod test {
 
         let loader = OsvLoader::new(&graph);
         loader
-            .load(("file", "GHSA-45c4-8wx5-qw6w.json"), osv, &digests, None)
+            .load(
+                Metadata {
+                    labels: ("file", "GHSA-45c4-8wx5-qw6w.json").into(),
+                    digests,
+                    issuer: None,
+                    signatures: vec![],
+                },
+                osv,
+            )
             .await?;
         let loaded_vulnerability = graph.get_vulnerability("CVE-2023-37276", &ctx.db).await?;
         assert!(loaded_vulnerability.is_some());

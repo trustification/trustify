@@ -4,13 +4,12 @@ use crate::{
         sbom::spdx::{self},
     },
     model::IngestResult,
-    service::{Error, Warnings},
+    service::{Error, Metadata, Warnings},
 };
 use sea_orm::TransactionTrait;
 use serde_json::Value;
 use tracing::instrument;
-use trustify_common::{hashing::Digests, id::Id, sbom::spdx::parse_spdx};
-use trustify_entity::labels::Labels;
+use trustify_common::{id::Id, sbom::spdx::parse_spdx};
 
 pub struct SpdxLoader<'g> {
     graph: &'g Graph,
@@ -22,12 +21,14 @@ impl<'g> SpdxLoader<'g> {
     }
 
     #[instrument(skip(self, json), err(level=tracing::Level::INFO))]
-    pub async fn load(
-        &self,
-        labels: Labels,
-        json: Value,
-        digests: &Digests,
-    ) -> Result<IngestResult, Error> {
+    pub async fn load(&self, metadata: Metadata, json: Value) -> Result<IngestResult, Error> {
+        let Metadata {
+            labels,
+            issuer: _,
+            digests,
+            signatures,
+        } = metadata;
+
         let warnings = Warnings::default();
 
         let (spdx, _) = parse_spdx(&warnings, json)?;
@@ -50,7 +51,7 @@ impl<'g> SpdxLoader<'g> {
             .graph
             .ingest_sbom(
                 labels,
-                digests,
+                &digests,
                 Some(document_id.clone()),
                 spdx::Information(&spdx),
                 &tx,
@@ -60,6 +61,11 @@ impl<'g> SpdxLoader<'g> {
             Outcome::Existed(sbom) => sbom,
             Outcome::Added(sbom) => {
                 sbom.ingest_spdx(spdx, &warnings, &tx).await?;
+
+                self.graph
+                    .attach_signatures(sbom.sbom.source_document_id, signatures, &tx)
+                    .await?;
+
                 tx.commit().await?;
                 sbom
             }
@@ -75,8 +81,10 @@ impl<'g> SpdxLoader<'g> {
 
 #[cfg(test)]
 mod test {
-    use crate::service::{Cache, IngestorService};
-    use crate::{graph::Graph, service::Format};
+    use crate::{
+        graph::Graph,
+        service::{Format, Ingest, IngestorService},
+    };
     use test_context::test_context;
     use test_log::test;
     use trustify_test_context::{TrustifyContext, document_bytes};
@@ -90,7 +98,12 @@ mod test {
         let ingestor = IngestorService::new(graph, ctx.storage.clone(), Default::default());
 
         ingestor
-            .ingest(&data, Format::SPDX, ("source", "test"), None, Cache::Skip)
+            .ingest(Ingest {
+                data: &data,
+                format: Format::SPDX,
+                labels: ("source", "test").into(),
+                ..Default::default()
+            })
             .await
             .expect("must ingest");
 

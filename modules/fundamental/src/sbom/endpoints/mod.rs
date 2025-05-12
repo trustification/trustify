@@ -6,7 +6,6 @@ mod test;
 
 pub use query::*;
 
-use crate::sbom::model::LicenseRefMapping;
 use crate::{
     Error::{self, Internal},
     license::{
@@ -16,10 +15,14 @@ use crate::{
     purl::service::PurlService,
     sbom::{
         model::{
-            SbomExternalPackageReference, SbomNodeReference, SbomPackage, SbomPackageRelation,
-            SbomSummary, Which, details::SbomAdvisory,
+            LicenseRefMapping, SbomExternalPackageReference, SbomNodeReference, SbomPackage,
+            SbomPackageRelation, SbomSummary, Which, details::SbomAdvisory,
         },
         service::SbomService,
+    },
+    signature::{
+        model::Signature,
+        service::{DocumentType, SignatureService},
     },
 };
 use actix_web::{HttpResponse, Responder, delete, get, http::header, post, web};
@@ -39,10 +42,9 @@ use trustify_common::{
     model::{BinaryData, Paginated, PaginatedResults},
 };
 use trustify_entity::{labels::Labels, relationship::Relationship};
-use trustify_module_ingestor::service::Cache;
 use trustify_module_ingestor::{
     model::IngestResult,
-    service::{Format, IngestorService},
+    service::{Cache, Format, Ingest, IngestorService},
 };
 use trustify_module_storage::service::StorageBackend;
 
@@ -69,6 +71,7 @@ pub fn configure(
         .service(related)
         .service(upload)
         .service(download)
+        .service(list_signatures)
         .service(label::set)
         .service(label::update)
         .service(label::all)
@@ -480,7 +483,15 @@ pub async fn upload(
     _: Require<CreateSbom>,
 ) -> Result<impl Responder, Error> {
     let bytes = decompress_async(bytes, content_type.map(|ct| ct.0), config.upload_limit).await??;
-    let result = service.ingest(&bytes, format, labels, None, cache).await?;
+    let result = service
+        .ingest(Ingest {
+            data: &bytes,
+            format,
+            labels,
+            cache,
+            ..Default::default()
+        })
+        .await?;
     log::info!("Uploaded SBOM: {}", result.id);
     Ok(HttpResponse::Created().json(result))
 }
@@ -493,7 +504,7 @@ pub async fn upload(
         ("key" = Id, Path),
     ),
     responses(
-        (status = 200, description = "Download a an SBOM", body = inline(BinaryData)),
+        (status = 200, description = "Download an SBOM", body = inline(BinaryData)),
         (status = 404, description = "The document could not be found"),
     )
 )]
@@ -529,4 +540,32 @@ pub async fn download(
     } else {
         Ok(HttpResponse::NotFound().finish())
     }
+}
+
+/// Get signatures of an SBOM
+#[utoipa::path(
+    tag = "sbom",
+    operation_id = "listSbomSignatures",
+    params(
+        ("key" = Id, Path),
+    ),
+    responses(
+        (status = 200, description = "Signatures of an SBOM", body = PaginatedResults<Signature>),
+        (status = 404, description = "The document could not be found"),
+    )
+)]
+#[get("/v2/sbom/{key}/signature")]
+pub async fn list_signatures(
+    db: web::Data<Database>,
+    key: web::Path<String>,
+    web::Query(paginated): web::Query<Paginated>,
+    _: Require<ReadSbom>,
+) -> Result<impl Responder, Error> {
+    let id = Id::from_str(&key).map_err(Error::IdKey)?;
+
+    let result = SignatureService
+        .list_signatures(DocumentType::Sbom, id, paginated, db.get_ref())
+        .await?;
+
+    Ok(HttpResponse::Ok().json(result))
 }

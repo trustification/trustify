@@ -6,14 +6,14 @@ mod common;
 
 #[allow(clippy::expect_used, clippy::unwrap_used)]
 pub(crate) mod trustify_benches {
-    use std::hint::black_box;
-    use std::ops::Add;
-    use std::time::{Duration, Instant};
-
     use crate::common;
     use criterion::Criterion;
-    use trustify_entity::labels::Labels;
-    use trustify_module_ingestor::service::{Cache, Format};
+    use std::{
+        hint::black_box,
+        ops::Add,
+        time::{Duration, Instant},
+    };
+    use trustify_module_ingestor::service::{Format, Ingest};
 
     pub fn ingestion(c: &mut Criterion) {
         let (runtime, ctx) = common::setup_runtime_and_ctx();
@@ -34,13 +34,11 @@ pub(crate) mod trustify_benches {
                         let start = Instant::now();
                         black_box(
                             ctx.ingestor
-                                .ingest(
-                                    &data,
-                                    Format::Advisory,
-                                    Labels::default(),
-                                    None,
-                                    Cache::Skip,
-                                )
+                                .ingest(Ingest {
+                                    data: &data,
+                                    format: Format::Advisory,
+                                    ..Default::default()
+                                })
                                 .await
                                 .expect("ingest ok"),
                         );

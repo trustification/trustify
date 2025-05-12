@@ -2,7 +2,7 @@ use crate::{
     graph::{Graph, sbom::clearly_defined::Curation},
     model::IngestResult,
     service::{
-        Error,
+        Document, Error,
         advisory::{csaf::loader::CsafLoader, cve::loader::CveLoader, osv::loader::OsvLoader},
         sbom::{
             clearly_defined::ClearlyDefinedLoader,
@@ -20,8 +20,6 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 use std::{io::Cursor, str::FromStr};
 use tracing::instrument;
-use trustify_common::hashing::Digests;
-use trustify_entity::labels::Labels;
 
 #[derive(
     Clone,
@@ -53,56 +51,54 @@ pub enum Format {
 }
 
 impl Format {
-    #[instrument(skip(self, graph, buffer))]
+    #[instrument(skip(self, graph, document))]
     pub async fn load(
         &self,
         graph: &'_ Graph,
-        labels: Labels,
-        issuer: Option<String>,
-        digests: &Digests,
-        buffer: &[u8],
+        document: Document<'_>,
     ) -> Result<IngestResult, Error> {
+        let Document { metadata, data } = document;
         match self {
             Format::CSAF => {
                 // issuer is internal as publisher of the document.
                 let loader = CsafLoader::new(graph);
-                let csaf: Csaf = serde_json::from_slice(buffer)?;
-                loader.load(labels, csaf, digests).await
+                let csaf: Csaf = serde_json::from_slice(data)?;
+                loader.load(metadata, csaf).await
             }
             Format::OSV => {
                 // issuer is :shrug: sometimes we can tell, sometimes not :shrug:
                 let loader = OsvLoader::new(graph);
-                let osv = super::advisory::osv::parse(buffer)?;
-                loader.load(labels, osv, digests, issuer).await
+                let osv = super::advisory::osv::parse(data)?;
+                loader.load(metadata, osv).await
             }
             Format::CVE => {
                 // issuer is always CVE Project
                 let loader = CveLoader::new(graph);
-                let cve: Cve = serde_json::from_slice(buffer)?;
-                loader.load(labels, cve, digests).await
+                let cve: Cve = serde_json::from_slice(data)?;
+                loader.load(metadata, cve).await
             }
             Format::SPDX => {
                 let loader = SpdxLoader::new(graph);
-                let v: Value = serde_json::from_slice(buffer)?;
-                loader.load(labels, v, digests).await
+                let v: Value = serde_json::from_slice(data)?;
+                loader.load(metadata, v).await
             }
             Format::CycloneDX => {
                 let loader = CyclonedxLoader::new(graph);
-                loader.load(labels, buffer, digests).await
+                loader.load(metadata, data).await
             }
             Format::ClearlyDefined => {
                 let loader = ClearlyDefinedLoader::new(graph);
-                let item: Value = serde_json::from_slice(buffer)?;
-                loader.load(labels, item, digests).await
+                let item: Value = serde_json::from_slice(data)?;
+                loader.load(metadata, item).await
             }
             Format::ClearlyDefinedCuration => {
                 let loader = ClearlyDefinedCurationLoader::new(graph);
-                let curation: Curation = serde_yml::from_slice(buffer)?;
-                loader.load(labels, curation, digests).await
+                let curation: Curation = serde_yml::from_slice(data)?;
+                loader.load(metadata, curation).await
             }
             Format::CweCatalog => {
                 let loader = CweCatalogLoader::new(graph);
-                loader.load_bytes(labels, buffer, digests).await
+                loader.load_bytes(metadata, data).await
             }
             f => Err(Error::UnsupportedFormat(format!(
                 "Must resolve {f:?} to an actual format"

@@ -1,17 +1,14 @@
 use crate::{
     graph::{Graph, Outcome, sbom::SbomInformation},
     model::IngestResult,
-    service::Error,
+    service::{Error, Metadata},
 };
 use anyhow::anyhow;
 use hex::ToHex;
 use jsonpath_rust::JsonPath;
 use sea_orm::{EntityTrait, TransactionTrait};
-use trustify_common::{
-    hashing::Digests,
-    id::{Id, TrySelectForId},
-};
-use trustify_entity::{labels::Labels, sbom};
+use trustify_common::id::{Id, TrySelectForId};
+use trustify_entity::sbom;
 
 pub struct ClearlyDefinedLoader<'g> {
     graph: &'g Graph,
@@ -24,10 +21,16 @@ impl<'g> ClearlyDefinedLoader<'g> {
 
     pub async fn load(
         &self,
-        labels: Labels,
+        metadata: Metadata,
         item: serde_json::Value,
-        digests: &Digests,
     ) -> Result<IngestResult, Error> {
+        let Metadata {
+            labels,
+            issuer: _,
+            digests,
+            signatures,
+        } = metadata;
+
         if let Ok(Some(previously_found)) = sbom::Entity::find()
             .try_filter(Id::Sha512(digests.sha512.encode_hex()))?
             .one(&self.graph.db)
@@ -57,7 +60,7 @@ impl<'g> ClearlyDefinedLoader<'g> {
                 .graph
                 .ingest_sbom(
                     labels,
-                    digests,
+                    &digests,
                     Some(document_id.to_string()),
                     SbomInformation {
                         node_id: document_id.to_string(),
@@ -76,6 +79,10 @@ impl<'g> ClearlyDefinedLoader<'g> {
                     if let Some(license) = license {
                         sbom.ingest_purl_license_assertion(license, &tx).await?;
                     }
+
+                    self.graph
+                        .attach_signatures(sbom.sbom.source_document_id, signatures, &tx)
+                        .await?;
 
                     tx.commit().await?;
 
@@ -96,14 +103,15 @@ impl<'g> ClearlyDefinedLoader<'g> {
 
 #[cfg(test)]
 mod test {
-    use crate::graph::Graph;
-    use crate::service::{Cache, Error, Format, IngestorService};
+    use crate::{
+        graph::Graph,
+        service::{Error, Format, Ingest, IngestorService},
+    };
     use anyhow::anyhow;
     use test_context::test_context;
     use test_log::test;
     use trustify_common::purl::Purl;
-    use trustify_test_context::TrustifyContext;
-    use trustify_test_context::document_bytes;
+    use trustify_test_context::{TrustifyContext, document_bytes};
 
     fn coordinates_to_purl(coords: &str) -> Result<Purl, Error> {
         let parts = coords.split('/').collect::<Vec<_>>();
@@ -169,13 +177,12 @@ mod test {
         let data = document_bytes("clearly-defined/aspnet.mvc-4.0.40804.json").await?;
 
         ingestor
-            .ingest(
-                &data,
-                Format::ClearlyDefined,
-                ("source", "test"),
-                None,
-                Cache::Skip,
-            )
+            .ingest(Ingest {
+                data: &data,
+                format: Format::ClearlyDefined,
+                labels: ("source", "test").into(),
+                ..Default::default()
+            })
             .await
             .expect("must ingest");
 

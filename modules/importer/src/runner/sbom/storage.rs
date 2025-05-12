@@ -1,8 +1,7 @@
 use crate::runner::{
     common::storage::StorageError,
     context::RunContext,
-    report::Severity,
-    report::{Message, Phase, ReportBuilder},
+    report::{Message, Phase, ReportBuilder, Severity},
 };
 use parking_lot::Mutex;
 use sbom_walker::{
@@ -11,9 +10,8 @@ use sbom_walker::{
 };
 use std::sync::Arc;
 use trustify_entity::labels::Labels;
-use trustify_module_ingestor::service::{Cache, Format, IngestorService};
-use walker_common::utils::url::Urlify;
-use walker_common::{compression::decompress_opt, validate::ValidationError};
+use trustify_module_ingestor::service::{Format, Ingest, IngestorService};
+use walker_common::{compression::decompress_opt, utils::url::Urlify, validate::ValidationError};
 
 pub struct StorageVisitor<C: RunContext> {
     pub context: C,
@@ -69,17 +67,16 @@ impl<C: RunContext> ValidatedVisitor<HttpSource> for StorageVisitor<C> {
 
         let result = self
             .ingestor
-            .ingest(
-                &data,
-                Format::SBOM,
-                Labels::new()
+            .ingest(Ingest {
+                data: &data,
+                format: Format::SBOM,
+                labels: Labels::new()
                     .add("source", &self.source)
                     .add("importer", self.context.name())
                     .add("file", &file)
                     .extend(self.labels.0.clone()),
-                None,
-                Cache::Skip,
-            )
+                ..Default::default()
+            })
             .await
             .map_err(StorageError::Storage)?;
 
