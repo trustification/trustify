@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747058101326,
+  "lastUpdate": 1747060883788,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9796,6 +9796,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/03db130ad1af422f35d793a170f62108820d5b2b"
         },
         "date": 1747058100433,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "474f82e8cfbf7355c7583ec1900099c650a57c0e",
+          "message": "feat: parse and store cvss3 scores for cve files",
+          "timestamp": "2025-05-12T14:19:01Z",
+          "tree_id": "64780c67336f23a4d29e078b9d771848414bd9a3",
+          "url": "https://github.com/trustification/trustify/commit/474f82e8cfbf7355c7583ec1900099c650a57c0e"
+        },
+        "date": 1747060882693,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
