@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1746798851202,
+  "lastUpdate": 1747037777928,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9709,6 +9709,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/8e2b966702bb2b6d1dff509fc3809025994cca68"
         },
         "date": 1746798850703,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "36be74bf9e883e80f5a38bac04bfbb1907c765ea",
+          "message": "don't select all source_document columns, only ingested as before\n\nTrying to see if this is the perf problem",
+          "timestamp": "2025-05-12T07:55:03Z",
+          "tree_id": "98476bc8d6b66cd8d4ef638836aada2a930749e2",
+          "url": "https://github.com/trustification/trustify/commit/36be74bf9e883e80f5a38bac04bfbb1907c765ea"
+        },
+        "date": 1747037776344,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
