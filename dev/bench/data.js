@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747149783672,
+  "lastUpdate": 1747223971236,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9854,6 +9854,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/29feec1ba23fc9e019be24d0e1902235ec387020"
         },
         "date": 1747149782190,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": false,
+          "id": "a00a7095c6b724535b46da6502b75b792e33ffca",
+          "message": "fix: return 404 when `/weakness` has no results",
+          "timestamp": "2025-05-14T11:37:17Z",
+          "tree_id": "71d44d8826d565b5763d95da9a52af06375874ab",
+          "url": "https://github.com/trustification/trustify/commit/a00a7095c6b724535b46da6502b75b792e33ffca"
+        },
+        "date": 1747223969826,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
