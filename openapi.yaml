@@ -3052,6 +3052,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LicenseSummary'
+        '404':
+          description: The weakness was not found
 components:
   schemas:
     AdvisoryDetails:
