@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747223971236,
+  "lastUpdate": 1747240061004,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9883,6 +9883,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/a00a7095c6b724535b46da6502b75b792e33ffca"
         },
         "date": 1747223969826,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": true,
+          "id": "bc3af4c9217c8d2c20f1d0e73b927c8ad232c7ee",
+          "message": "add a few tests matching camp users' input\n\nWe want to know if any future changes break these",
+          "timestamp": "2025-05-14T16:05:26Z",
+          "tree_id": "e75689883f25a06b36f3478587bb3cd177143a1f",
+          "url": "https://github.com/trustification/trustify/commit/bc3af4c9217c8d2c20f1d0e73b927c8ad232c7ee"
+        },
+        "date": 1747240059444,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
