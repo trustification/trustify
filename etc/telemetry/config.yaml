@@ -15,6 +15,10 @@ exporters:
     endpoint: "0.0.0.0:9464"
 
 processors:
+  filter/duration:
+    traces:
+      span:
+        - (end_time - start_time) < Duration("1ms")
   batch: {}
 
 service:
@@ -24,5 +28,5 @@ service:
       exporters: [debug, prometheus]
     traces:
       receivers: [otlp]
-      processors: [batch]
+      processors: [filter/duration,batch]
       exporters: [debug, otlp]
