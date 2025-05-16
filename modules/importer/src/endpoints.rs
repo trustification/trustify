@@ -10,7 +10,7 @@ use std::convert::Infallible;
 use trustify_auth::authorizer::Require;
 use trustify_auth::{CreateImporter, DeleteImporter, ReadImporter, UpdateImporter};
 use trustify_common::{
-    db::Database,
+    db::{Database, query::Query},
     model::{Paginated, PaginatedResults, Revisioned},
 };
 
@@ -281,6 +281,10 @@ async fn delete(
 #[utoipa::path(
     tag = "importer",
     operation_id = "listImporterReports",
+    params(
+        Query,
+        Paginated,
+    ),
     responses(
         (status = 200, description = "Retrieved importer reports", body = PaginatedResults<ImporterReport>),
     )
@@ -290,10 +294,13 @@ async fn delete(
 async fn get_reports(
     service: web::Data<ImporterService>,
     name: web::Path<String>,
+    web::Query(search): web::Query<Query>,
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadImporter>,
 ) -> Result<impl Responder, Error> {
-    Ok(web::Json(service.get_reports(&name, paginated).await?))
+    Ok(web::Json(
+        service.get_reports(&name, search, paginated).await?,
+    ))
 }
 
 mod guards {
