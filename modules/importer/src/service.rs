@@ -9,7 +9,11 @@ use std::fmt::{Debug, Display};
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::{
-    db::{Database, DatabaseErrors, limiter::LimiterTrait},
+    db::{
+        Database, DatabaseErrors,
+        limiter::LimiterTrait,
+        query::{Filtering, Query},
+    },
     error::ErrorInformation,
     model::{Paginated, PaginatedResults, Revisioned},
 };
@@ -28,6 +32,8 @@ pub enum Error {
     Database(#[from] sea_orm::DbErr),
     #[error(transparent)]
     Json(#[from] serde_json::Error),
+    #[error(transparent)]
+    Query(#[from] trustify_common::db::query::Error),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -436,10 +442,12 @@ impl ImporterService {
     pub async fn get_reports(
         &self,
         name: &str,
+        search: Query,
         paginated: Paginated,
     ) -> Result<PaginatedResults<ImporterReport>, Error> {
         let limiting = importer_report::Entity::find()
             .filter(importer_report::Column::Importer.eq(name))
+            .filtering(search)?
             .order_by_desc(importer_report::Column::Creation)
             .limiting(&self.db, paginated.offset, paginated.limit);
 
