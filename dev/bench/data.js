@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747240061004,
+  "lastUpdate": 1747408535633,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9912,6 +9912,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/bc3af4c9217c8d2c20f1d0e73b927c8ad232c7ee"
         },
         "date": 1747240059444,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "committer": {
+            "email": "jim@crossleys.org",
+            "name": "Jim Crossley",
+            "username": "jcrossley3"
+          },
+          "distinct": false,
+          "id": "5f1a9277cb584670c35a34502f91d4aaa2839dcb",
+          "message": "fix: add sorting and pagination to importer report endpoint\n\nFixes #1636",
+          "timestamp": "2025-05-16T14:52:12Z",
+          "tree_id": "187a04de6c355de56a504439ffcc56f90a357fc4",
+          "url": "https://github.com/trustification/trustify/commit/5f1a9277cb584670c35a34502f91d4aaa2839dcb"
+        },
+        "date": 1747408534508,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
