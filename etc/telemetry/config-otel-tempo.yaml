@@ -15,11 +15,15 @@ exporters:
     verbosity: basic
 
 processors:
+  filter/duration:
+    traces:
+      span:
+        - (end_time - start_time) < Duration("1ms")
   batch: {}
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [batch]
+      processors: [filter/duration,batch]
       exporters: [debug, otlp]
