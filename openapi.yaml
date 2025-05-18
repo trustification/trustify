@@ -4162,6 +4162,17 @@ components:
               id:
                 type: string
                 description: The SBOM internal ID of a package
+              license_expression:
+                type:
+                - string
+                - 'null'
+                description: License expression
+              license_type:
+                type:
+                - integer
+                - 'null'
+                format: int32
+                description: License type
               name:
                 type: string
                 description: The name of the package in the SBOM
@@ -4702,6 +4713,17 @@ components:
         id:
           type: string
           description: The SBOM internal ID of a package
+        license_expression:
+          type:
+          - string
+          - 'null'
+          description: License expression
+        license_type:
+          type:
+          - integer
+          - 'null'
+          format: int32
+          description: License type
         name:
           type: string
           description: The name of the package in the SBOM
