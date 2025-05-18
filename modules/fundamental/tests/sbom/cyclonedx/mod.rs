@@ -79,7 +79,7 @@ async fn test_parse_cyclonedx(ctx: &TrustifyContext) -> Result<(), anyhow::Error
 
             log::debug!("{:?}", packages);
 
-            assert_eq!(41, packages.total);
+            assert_eq!(51, packages.total);
 
             Ok(())
         },

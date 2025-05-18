@@ -16,6 +16,50 @@ use urlencoding::encode;
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+async fn get_packages_sbom_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+    let id = ctx
+        .ingest_document("cyclonedx/openssl-3.0.7-18.el9_2.cdx_1.6.sbom.json")
+        .await?
+        .id
+        .to_string();
+
+    let result = query(&app, &id, "name~openssl-perl&Text~Apache").await;
+
+    assert!(
+        result
+            .items
+            .iter()
+            .any(|p| p.name == "openssl-perl"
+                && p.license_expression.as_deref() == Some("Apache-2.0"))
+    );
+    assert_eq!(result.total, 5);
+
+    let id = ctx
+        .ingest_document("spdx/OCP-TOOLS-4.11-RHEL-8.json")
+        .await?
+        .id
+        .to_string();
+
+    let result = query(&app, &id, "name=resolve&Text~MIT").await;
+    assert!(result.items.iter().any(|p| p.name == "resolve"
+        && p.license_type == Some(1)
+        && p.license_expression.as_deref() == Some("ISC AND MIT")));
+    assert_eq!(result.total, 1);
+
+    let result = query(&app, &id, "Text~LicenseRef-12").await;
+    assert!(result.items.iter().any(|p| p.name == "filesystem"
+        && p.license_type == Some(0)
+        && p.license_expression.as_deref() == Some("LicenseRef-12")));
+    assert!(result.items.iter().any(|p| p.name == "libselinux"
+        && p.license_type == Some(0)
+        && p.license_expression.as_deref() == Some("LicenseRef-12")));
+    assert_eq!(result.total, 3);
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
 async fn license_export(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     let id = ctx
@@ -87,15 +131,15 @@ async fn get_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+async fn query(app: &impl CallService, id: &str, q: &str) -> PaginatedResults<SbomPackage> {
+    let uri = format!("/api/v2/sbom/{id}/packages?q={}", urlencoding::encode(q));
+    let req = TestRequest::get().uri(&uri).to_request();
+    app.call_and_read_body_json(req).await
+}
+
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn filter_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
-    async fn query(app: &impl CallService, id: &str, q: &str) -> PaginatedResults<SbomPackage> {
-        let uri = format!("/api/v2/sbom/{id}/packages?q={}", urlencoding::encode(q));
-        let req = TestRequest::get().uri(&uri).to_request();
-        app.call_and_read_body_json(req).await
-    }
-
     let app = caller(ctx).await?;
     let id = ctx
         .ingest_document("zookeeper-3.9.2-cyclonedx.json")
@@ -104,14 +148,14 @@ async fn filter_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .to_string();
 
     let result = query(&app, &id, "").await;
-    assert_eq!(result.total, 41);
+    assert_eq!(result.total, 51);
 
     let result = query(&app, &id, "netty-common").await;
     assert_eq!(result.total, 1);
     assert_eq!(result.items[0].name, "netty-common");
 
     let result = query(&app, &id, r"type\=jar").await;
-    assert_eq!(result.total, 41);
+    assert_eq!(result.total, 51);
 
     let result = query(&app, &id, "version=4.1.105.Final").await;
     assert_eq!(result.total, 9);
