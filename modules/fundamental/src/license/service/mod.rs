@@ -9,6 +9,7 @@ use crate::{
 };
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QuerySelect, RelationTrait};
 use sea_query::{Condition, JoinType};
+use std::collections::HashSet;
 use trustify_common::{
     db::query::Query,
     id::{Id, TrySelectForId},
@@ -18,6 +19,7 @@ use trustify_entity::{
     license, licensing_infos, qualified_purl, sbom, sbom_node, sbom_package, sbom_package_cpe_ref,
     sbom_package_license, sbom_package_purl_ref,
 };
+use uuid::Uuid;
 
 pub mod license_export;
 
@@ -205,5 +207,53 @@ impl LicenseService {
             }
         }
         Ok(None)
+    }
+
+    pub async fn get_unique_licenses<C: ConnectionTrait>(
+        &self,
+        sbom_id: Uuid,
+        connection: &C,
+    ) -> Result<HashSet<String>, Error> {
+        let result_package_licenses: Vec<Option<Vec<String>>> =
+            sbom_package_license::Entity::find()
+                .filter(sbom_package_license::Column::SbomId.eq(sbom_id))
+                .join(
+                    JoinType::InnerJoin,
+                    sbom_package_license::Relation::License.def(),
+                )
+                .select_only()
+                .column_as(license::Column::SpdxLicenses, "license_ids")
+                .into_tuple::<(Option<Vec<String>>,)>()
+                .all(connection)
+                .await?
+                .into_iter()
+                .map(|(ids,)| ids)
+                .collect();
+
+        let unique_licenses: HashSet<String> = result_package_licenses
+            .into_iter()
+            .flatten()
+            .flatten()
+            .collect();
+
+        Ok(unique_licenses)
+    }
+
+    pub async fn get_license_info<C: ConnectionTrait>(
+        &self,
+        sbom_id: Uuid,
+        connection: &C,
+    ) -> Result<HashSet<String>, Error> {
+        let result_license_infos: Vec<String> = licensing_infos::Entity::find()
+            .filter(licensing_infos::Column::SbomId.eq(sbom_id))
+            .select_only()
+            .column_as(licensing_infos::Column::LicenseId, "license_id")
+            .into_tuple::<(String,)>()
+            .all(connection)
+            .await?
+            .into_iter()
+            .map(|(license_id,)| license_id)
+            .collect();
+        Ok(result_license_infos.into_iter().collect())
     }
 }
