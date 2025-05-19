@@ -2480,6 +2480,28 @@ paths:
                   minimum: 0
         '404':
           description: The document could not be found
+  /api/v2/sbom/{id}/licenseids:
+    get:
+      tags:
+      - sbom
+      operationId: getUniqueLicenses
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          $ref: '#/components/schemas/Id'
+      responses:
+        '200':
+          description: fetch all unique license id and license info id
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '404':
+          description: not found
   /api/v2/sbom/{id}/packages:
     get:
       tags:

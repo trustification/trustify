@@ -16,6 +16,46 @@ use urlencoding::encode;
 
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
+async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let app = caller(ctx).await?;
+    let id = ctx
+        .ingest_document("spdx/OCP-TOOLS-4.11-RHEL-8.json")
+        .await?
+        .id
+        .to_string();
+
+    let uri = format!("/api/v2/sbom/{id}/licenseids");
+    let req = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(req).await;
+    match response {
+        Value::Array(ref list) => {
+            assert_eq!(54, list.len());
+        }
+        _ => panic!("Incorrect response"),
+    }
+    log::debug!("{response:#?}");
+
+    let id = ctx
+        .ingest_document("cyclonedx/application.cdx.json")
+        .await?
+        .id
+        .to_string();
+
+    let uri = format!("/api/v2/sbom/{id}/licenseids");
+    let req = TestRequest::get().uri(&uri).to_request();
+    let response: Value = app.call_and_read_body_json(req).await;
+    match response {
+        Value::Array(ref list) => {
+            assert_eq!(11, list.len());
+        }
+        _ => panic!("Incorrect response"),
+    }
+    log::debug!("{response:#?}");
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
 async fn license_export(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     let id = ctx
