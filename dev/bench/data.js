@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747408535633,
+  "lastUpdate": 1747666699433,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -9941,6 +9941,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/5f1a9277cb584670c35a34502f91d4aaa2839dcb"
         },
         "date": 1747408534508,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "committer": {
+            "email": "00hf11@gmail.com",
+            "name": "Helio Frota",
+            "username": "helio-frota"
+          },
+          "distinct": false,
+          "id": "a605ad6e11d6bfd5926f2aeb039ca8e9444c9705",
+          "message": "fix: delete advisory performance",
+          "timestamp": "2025-05-19T14:34:34Z",
+          "tree_id": "ac89a9ddbfa8df720f74eade23257a61f55e9b79",
+          "url": "https://github.com/trustification/trustify/commit/a605ad6e11d6bfd5926f2aeb039ca8e9444c9705"
+        },
+        "date": 1747666697754,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
