@@ -450,6 +450,7 @@ pub(crate) fn configure(svc: &mut utoipa_actix_web::service_config::ServiceConfi
                     );
                     trustify_module_analysis::endpoints::configure(svc, db.clone(), analysis);
                     trustify_module_user::endpoints::configure(svc, db.clone());
+                    trustify_module_signature::endpoints::configure(svc, db.clone());
                 }),
         );
 }
