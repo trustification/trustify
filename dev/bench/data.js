@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747667070339,
+  "lastUpdate": 1747757220629,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10004,6 +10004,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": false,
+          "id": "a3d76c22042f791bb6cde6820dbafc5ed4228d7e",
+          "message": "doc: adr for handling vulnerability scores and severities",
+          "timestamp": "2025-05-20T15:46:17Z",
+          "tree_id": "1d77dbbdb6e1aa94e42c98aa3d2ddd218b991a03",
+          "url": "https://github.com/trustification/trustify/commit/a3d76c22042f791bb6cde6820dbafc5ed4228d7e"
+        },
+        "date": 1747757218988,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 7,
             "unit": "s"
           }
         ]
