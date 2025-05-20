@@ -9183,7 +9183,6 @@ dependencies = [
  "serde",
  "serde-cyclonedx",
  "serde_json",
- "serde_with",
  "serde_yaml_ng",
  "sha2",
  "spdx",
@@ -9208,6 +9207,7 @@ dependencies = [
  "trustify-entity",
  "trustify-module-analysis",
  "trustify-module-ingestor",
+ "trustify-module-signature",
  "trustify-module-storage",
  "trustify-test-context",
  "urlencoding",
@@ -9352,6 +9352,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "trustify-module-signature"
+version = "0.3.0-rc.1"
+dependencies = [
+ "actix-http",
+ "actix-web",
+ "anyhow",
+ "json-merge-patch",
+ "log",
+ "sea-orm",
+ "sea-query",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "thiserror 2.0.12",
+ "tracing",
+ "tracing-futures",
+ "trustify-auth",
+ "trustify-common",
+ "trustify-entity",
+ "utoipa",
+ "utoipa-actix-web",
+]
+
+[[package]]
 name = "trustify-module-storage"
 version = "0.3.0-rc.1"
 dependencies = [
@@ -9452,6 +9476,7 @@ dependencies = [
  "trustify-module-graphql",
  "trustify-module-importer",
  "trustify-module-ingestor",
+ "trustify-module-signature",
  "trustify-module-storage",
  "trustify-module-ui",
  "trustify-module-user",
