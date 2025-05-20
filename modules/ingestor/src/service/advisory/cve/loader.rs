@@ -16,7 +16,7 @@ use cve::{
 };
 use sea_orm::TransactionTrait;
 use serde_json::Value;
-use std::{fmt::Debug, str::FromStr};
+use std::str::FromStr;
 use time::OffsetDateTime;
 use tracing::instrument;
 use trustify_common::id::Id;

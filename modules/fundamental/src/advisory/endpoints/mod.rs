@@ -3,7 +3,6 @@ mod label;
 #[cfg(test)]
 mod test;
 
-use crate::signature::model::Signature;
 use crate::{
     Error,
     advisory::{
@@ -12,7 +11,6 @@ use crate::{
     },
     endpoints::Deprecation,
     purl::service::PurlService,
-    signature::service::{DocumentType, SignatureService},
 };
 use actix_web::{HttpResponse, Responder, delete, get, http::header, post, web};
 use config::Config;
@@ -28,6 +26,10 @@ use trustify_common::{
 };
 use trustify_entity::labels::Labels;
 use trustify_module_ingestor::service::{Format, Ingest, IngestorService};
+use trustify_module_signature::{
+    model::Signature,
+    service::{DocumentType, SignatureService},
+};
 use trustify_module_storage::service::StorageBackend;
 use utoipa::IntoParams;
 

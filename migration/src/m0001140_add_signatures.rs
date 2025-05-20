@@ -47,7 +47,7 @@ impl MigrationTrait for Migration {
                             .to(SourceDocument::Table, SourceDocument::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
-                    .take(),
+                    .to_owned(),
             )
             .await?;
 
@@ -69,10 +69,47 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
+        manager
+            .create_table(
+                Table::create()
+                    .table(TrustAnchor::Table)
+                    .col(
+                        ColumnDef::new(TrustAnchor::Id)
+                            .string()
+                            .not_null()
+                            .primary_key(),
+                    )
+                    .col(ColumnDef::new(TrustAnchor::Revision).uuid().not_null())
+                    .col(
+                        ColumnDef::new(TrustAnchor::Disabled)
+                            .boolean()
+                            .default(false)
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(TrustAnchor::Description)
+                            .not_null()
+                            .default("")
+                            .string(),
+                    )
+                    .col(
+                        ColumnDef::new(TrustAnchor::Type)
+                            .enumeration(SignatureType::Table, ["pgp"])
+                            .not_null(),
+                    )
+                    .col(ColumnDef::new(TrustAnchor::Payload).blob().not_null())
+                    .to_owned(),
+            )
+            .await?;
+
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        manager
+            .drop_table(Table::drop().if_exists().table(TrustAnchor::Table).take())
+            .await?;
+
         manager
             .alter_table(
                 Table::alter()
@@ -143,4 +180,15 @@ enum SourceDocumentSignature {
 #[derive(DeriveIden)]
 enum SignatureType {
     Table,
+}
+
+#[derive(DeriveIden)]
+enum TrustAnchor {
+    Table,
+    Id,
+    Revision,
+    Disabled,
+    Description,
+    Type,
+    Payload,
 }

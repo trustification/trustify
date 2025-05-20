@@ -1,4 +1,4 @@
-use crate::{Error, signature::model::Signature};
+use crate::{error::Error, model::Signature};
 use sea_orm::{ConnectionTrait, EntityTrait, QueryFilter, QuerySelect};
 use sea_query::JoinType;
 use trustify_common::{
@@ -8,6 +8,7 @@ use trustify_common::{
 };
 use trustify_entity::{advisory, sbom, source_document_signature};
 
+#[derive(Default)]
 pub struct SignatureService;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -17,6 +18,10 @@ pub enum DocumentType {
 }
 
 impl SignatureService {
+    pub fn new() -> Self {
+        Self
+    }
+
     /// List all signatures for a document
     pub async fn list_signatures<C: ConnectionTrait>(
         &self,

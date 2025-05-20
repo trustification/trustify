@@ -1,5 +1,13 @@
 use std::collections::HashMap;
 
+/// A convenience function to get the default scopes in an allocated form.
+pub fn default_scope_mappings() -> HashMap<String, Vec<String>> {
+    DEFAULT_SCOPE_MAPPINGS
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.iter().map(ToString::to_string).collect()))
+        .collect()
+}
+
 /// Default scope mappings (in a `const` form).
 ///
 /// See [`default_scope_mappings`] for a `HashMap` form.
@@ -14,6 +22,7 @@ pub const DEFAULT_SCOPE_MAPPINGS: &[(&str, &[&str])] = &[
             "create.importer",
             "create.metadata",
             "create.sbom",
+            "create.trustAnchor",
             "create.weakness",
             "upload.dataset",
         ],
@@ -26,6 +35,7 @@ pub const DEFAULT_SCOPE_MAPPINGS: &[(&str, &[&str])] = &[
             "read.importer",
             "read.metadata",
             "read.sbom",
+            "read.trustAnchor",
             "read.weakness",
         ],
     ),
@@ -36,6 +46,7 @@ pub const DEFAULT_SCOPE_MAPPINGS: &[(&str, &[&str])] = &[
             "update.importer",
             "update.metadata",
             "update.sbom",
+            "update.trustAnchor",
             "update.weakness",
         ],
     ),
@@ -46,16 +57,9 @@ pub const DEFAULT_SCOPE_MAPPINGS: &[(&str, &[&str])] = &[
             "delete.importer",
             "delete.metadata",
             "delete.sbom",
+            "delete.trustAnchor",
             "delete.vulnerability",
             "delete.weakness",
         ],
     ),
 ];
-
-/// A convenience function to get the default scopes in an allocated form.
-pub fn default_scope_mappings() -> HashMap<String, Vec<String>> {
-    DEFAULT_SCOPE_MAPPINGS
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.iter().map(ToString::to_string).collect()))
-        .collect()
-}

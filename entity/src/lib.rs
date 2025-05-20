@@ -33,6 +33,7 @@ pub mod signature_type;
 pub mod source_document;
 pub mod source_document_signature;
 pub mod status;
+pub mod trust_anchor;
 pub mod user_preferences;
 pub mod version_range;
 pub mod version_scheme;

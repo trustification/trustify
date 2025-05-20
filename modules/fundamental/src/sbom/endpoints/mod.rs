@@ -20,10 +20,6 @@ use crate::{
         },
         service::SbomService,
     },
-    signature::{
-        model::Signature,
-        service::{DocumentType, SignatureService},
-    },
 };
 use actix_web::{HttpResponse, Responder, delete, get, http::header, post, web};
 use config::Config;
@@ -45,6 +41,10 @@ use trustify_entity::{labels::Labels, relationship::Relationship};
 use trustify_module_ingestor::{
     model::IngestResult,
     service::{Cache, Format, Ingest, IngestorService},
+};
+use trustify_module_signature::{
+    model::Signature,
+    service::{DocumentType, SignatureService},
 };
 use trustify_module_storage::service::StorageBackend;
 

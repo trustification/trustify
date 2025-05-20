@@ -25,7 +25,7 @@ use trustify_entity::labels::Labels;
 use trustify_module_ingestor::{
     graph::Graph,
     model::IngestResult,
-    service::{Cache, Format, Ingest, IngestorService},
+    service::{Format, Ingest, IngestorService},
 };
 use trustify_module_storage::service::fs::FileSystemBackend;
 

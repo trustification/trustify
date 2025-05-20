@@ -2,15 +2,16 @@ use super::service::{Error, ImporterService, PatchError};
 use crate::model::{Importer, ImporterConfiguration, ImporterReport};
 use actix_web::{
     HttpResponse, Responder, delete, get,
-    guard::{self, Guard, GuardContext},
     http::header::{self, ETag, EntityTag, IfMatch},
     patch, post, put, web,
 };
 use std::convert::Infallible;
-use trustify_auth::authorizer::Require;
-use trustify_auth::{CreateImporter, DeleteImporter, ReadImporter, UpdateImporter};
+use trustify_auth::{
+    CreateImporter, DeleteImporter, ReadImporter, UpdateImporter, authorizer::Require,
+};
 use trustify_common::{
     db::{Database, query::Query},
+    endpoints::guards,
     model::{Paginated, PaginatedResults, Revisioned},
 };
 
@@ -301,14 +302,4 @@ async fn get_reports(
     Ok(web::Json(
         service.get_reports(&name, search, paginated).await?,
     ))
-}
-
-mod guards {
-    use super::*;
-
-    pub const JSON_MERGE_CONTENT_TYPE: &str = "application/merge-patch+json";
-
-    pub fn json_merge(ctx: &GuardContext) -> bool {
-        guard::Header("content-type", JSON_MERGE_CONTENT_TYPE).check(ctx)
-    }
 }

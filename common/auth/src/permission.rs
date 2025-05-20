@@ -108,6 +108,15 @@ permission! {
 
         #[strum(serialize = "delete.vulnerability")]
         DeleteVulnerability,
+
+        #[strum(serialize = "create.trustAnchor")]
+        CreateTrustAnchor,
+        #[strum(serialize = "read.trustAnchor")]
+        ReadTrustAnchor,
+        #[strum(serialize = "update.trustAnchor")]
+        UpdateTrustAnchor,
+        #[strum(serialize = "delete.trustAnchor")]
+        DeleteTrustAnchor,
     }
 }
 
