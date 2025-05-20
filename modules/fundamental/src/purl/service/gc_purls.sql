@@ -1,12 +1,12 @@
 WITH
     alive_qualified_purl AS (
-        SELECT t2.id, t2.versioned_purl_id
+        SELECT DISTINCT t2.id, t2.versioned_purl_id
         FROM sbom_package_purl_ref AS t1
                  INNER JOIN qualified_purl AS t2
                             ON t2.id = t1.qualified_purl_id
     ),
     alive_versioned_purl AS (
-        SELECT t2.id, t2.base_purl_id
+        SELECT DISTINCT t2.id, t2.base_purl_id
         FROM alive_qualified_purl AS t1
                  INNER JOIN versioned_purl AS t2
                             ON t2.id = t1.versioned_purl_id
@@ -17,7 +17,7 @@ WITH
             FROM alive_versioned_purl AS t1
                      INNER JOIN base_purl AS t2 ON t2.id = t1.base_purl_id
         ) UNION (
-            SELECT t2.id
+            SELECT DISTINCT t2.id
             FROM purl_status AS t1
                      INNER JOIN base_purl AS t2 ON t2.id = t1.base_purl_id
         )
