@@ -57,7 +57,7 @@ async fn infinite_loop(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .fetch_sbom_packages(id, Default::default(), Default::default(), &ctx.db)
         .await?;
 
-    assert_eq!(packages.total, 6);
+    assert_eq!(packages.total, 3);
 
     let packages = related_packages_transitively(&sbom, &ctx.db).await?;
 
@@ -99,7 +99,7 @@ async fn double_ref(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .fetch_sbom_packages(id, Default::default(), Default::default(), &ctx.db)
         .await?;
 
-    assert_eq!(packages.total, 6);
+    assert_eq!(packages.total, 3);
 
     let packages = related_packages_transitively(&sbom, &ctx.db).await?;
 
@@ -171,7 +171,7 @@ async fn self_ref_package(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .fetch_sbom_packages(id, Default::default(), Default::default(), &ctx.db)
         .await?;
 
-    assert_eq!(packages.total, 2);
+    assert_eq!(packages.total, 1);
 
     let packages = related_packages_transitively(&sbom, &ctx.db).await?;
 
@@ -210,7 +210,7 @@ async fn special_char(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .fetch_sbom_packages(id, Default::default(), Default::default(), &ctx.db)
         .await?;
 
-    assert_eq!(packages.total, 210);
+    assert_eq!(packages.total, 105);
 
     let sbom = service
         .fetch_sbom_summary(result.id, &ctx.db)
