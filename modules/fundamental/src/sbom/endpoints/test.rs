@@ -24,7 +24,7 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
         .id
         .to_string();
 
-    let uri = format!("/api/v2/sbom/{id}/licenseids");
+    let uri = format!("/api/v2/sbom/{id}/licenseIds");
     let req = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(req).await;
     match response {
@@ -41,7 +41,7 @@ async fn fetch_unique_licenses(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
         .id
         .to_string();
 
-    let uri = format!("/api/v2/sbom/{id}/licenseids");
+    let uri = format!("/api/v2/sbom/{id}/licenseIds");
     let req = TestRequest::get().uri(&uri).to_request();
     let response: Value = app.call_and_read_body_json(req).await;
     match response {
