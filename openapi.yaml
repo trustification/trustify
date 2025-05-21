@@ -2534,7 +2534,7 @@ paths:
                   minimum: 0
         '404':
           description: The document could not be found
-  /api/v2/sbom/{id}/licenseids:
+  /api/v2/sbom/{id}/licenseIds:
     get:
       tags:
       - sbom
@@ -2554,8 +2554,8 @@ paths:
                 type: array
                 items:
                   type: string
-        '404':
-          description: not found
+        '400':
+          description: Invalid UUID format.
   /api/v2/sbom/{id}/packages:
     get:
       tags:
