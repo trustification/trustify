@@ -11,7 +11,9 @@ use test_context::test_context;
 use test_log::test;
 use trustify_common::{id::Id, model::PaginatedResults};
 use trustify_module_ingestor::{model::IngestResult, service::Format};
-use trustify_test_context::{TrustifyContext, call::CallService, document_bytes};
+use trustify_test_context::{
+    TrustifyContext, call::CallService, document_bytes, subset::ContainsSubset,
+};
 use urlencoding::encode;
 
 #[test_context(TrustifyContext)]
@@ -19,42 +21,156 @@ use urlencoding::encode;
 async fn get_packages_sbom_by_query(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     let app = caller(ctx).await?;
     let id = ctx
-        .ingest_document("cyclonedx/openssl-3.0.7-18.el9_2.cdx_1.6.sbom.json")
+        .ingest_document("zookeeper-3.9.2-cyclonedx.json")
         .await?
         .id
         .to_string();
 
-    let result = query(&app, &id, "name~openssl-perl&Text~Apache").await;
+    async fn query_value(app: &impl CallService, id: &str, q: &str) -> Value {
+        let uri = format!("/api/v2/sbom/{id}/packages?q={}", urlencoding::encode(q));
+        let req = TestRequest::get().uri(&uri).to_request();
+        app.call_and_read_body_json(req).await
+    }
 
-    assert!(
-        result
-            .items
-            .iter()
-            .any(|p| p.name == "openssl-perl"
-                && p.license_expression.as_deref() == Some("Apache-2.0"))
-    );
-    assert_eq!(result.total, 5);
+    let result: Value = query_value(&app, &id, "name~logback-core").await;
+    let except_result = json!({
+        "items": [
+            {
+                "id": "pkg:maven/ch.qos.logback/logback-core@1.2.13?type=jar",
+                "name": "logback-core",
+                "group": null,
+                "version": "1.2.13",
+                "purl": [
+                    {
+                        "uuid": "d09e1b8f-493c-5bf2-9bf9-e2b2bfe03c65",
+                        "purl": "pkg:maven/ch.qos.logback/logback-core@1.2.13?type=jar",
+                        "base": {
+                            "uuid": "0bf904de-68cb-5c1b-910d-2fdc905dca4c",
+                            "purl": "pkg:maven/ch.qos.logback/logback-core"
+                        },
+                        "version": {
+                            "uuid": "35ebe249-9e92-58ea-b99c-70f451533bd7",
+                            "purl": "pkg:maven/ch.qos.logback/logback-core@1.2.13",
+                            "version": "1.2.13"
+                        },
+                        "qualifiers": {
+                            "type": "jar"
+                        }
+                    }
+                ],
+                "cpe": [],
+                "licenses": "[{\"type\": 0, \"expression\": \"EPL-1.0\"},{\"type\": 0, \"expression\": \"GNU Lesser General Public License\"}]"
+            }
+        ],
+        "total": 1
+    });
+
+    assert!(result.contains_subset(except_result));
+    let result: Value = query_value(&app, &id, "name~logback-cor&Text~EPL").await;
+    let except_result = json!({
+        "items": [
+            {
+                "id": "pkg:maven/ch.qos.logback/logback-core@1.2.13?type=jar",
+                "name": "logback-core",
+                "group": null,
+                "version": "1.2.13",
+                "purl": [
+                    {
+                        "uuid": "d09e1b8f-493c-5bf2-9bf9-e2b2bfe03c65",
+                        "purl": "pkg:maven/ch.qos.logback/logback-core@1.2.13?type=jar",
+                        "base": {
+                            "uuid": "0bf904de-68cb-5c1b-910d-2fdc905dca4c",
+                            "purl": "pkg:maven/ch.qos.logback/logback-core"
+                        },
+                        "version": {
+                            "uuid": "35ebe249-9e92-58ea-b99c-70f451533bd7",
+                            "purl": "pkg:maven/ch.qos.logback/logback-core@1.2.13",
+                            "version": "1.2.13"
+                        },
+                        "qualifiers": {
+                            "type": "jar"
+                        }
+                    }
+                ],
+                "cpe": [],
+                "licenses": "[{\"type\": 0, \"expression\": \"EPL-1.0\"}]"
+            }
+        ],
+        "total": 1
+    });
+    assert!(result.contains_subset(except_result));
 
     let id = ctx
-        .ingest_document("spdx/OCP-TOOLS-4.11-RHEL-8.json")
+        .ingest_document("spdx/SATELLITE-6.15-RHEL-8.json")
         .await?
         .id
         .to_string();
 
-    let result = query(&app, &id, "name=resolve&Text~MIT").await;
-    assert!(result.items.iter().any(|p| p.name == "resolve"
-        && p.license_type == Some(1)
-        && p.license_expression.as_deref() == Some("ISC AND MIT")));
-    assert_eq!(result.total, 1);
-
-    let result = query(&app, &id, "Text~LicenseRef-12").await;
-    assert!(result.items.iter().any(|p| p.name == "filesystem"
-        && p.license_type == Some(0)
-        && p.license_expression.as_deref() == Some("LicenseRef-12")));
-    assert!(result.items.iter().any(|p| p.name == "libselinux"
-        && p.license_type == Some(0)
-        && p.license_expression.as_deref() == Some("LicenseRef-12")));
-    assert_eq!(result.total, 3);
+    let result = query_value(&app, &id, "name=rubygem-coffee-script").await;
+    let except_result = json!({
+        "items": [
+            {
+                "id": "SPDXRef-02be9b35-a6ca-47b5-9c9e-9098c00ae212",
+                "name": "rubygem-coffee-script",
+                "group": null,
+                "version": "2.4.1-5.el8sat",
+                "purl": [
+                    {
+                        "uuid": "2ecff62f-9726-50fc-84b6-d191df754b21",
+                        "purl": "pkg:rpm/redhat/rubygem-coffee-script@2.4.1-5.el8sat?arch=noarch",
+                        "base": {
+                            "uuid": "4b2847bd-1178-5394-9cda-7c0c5229eaba",
+                            "purl": "pkg:rpm/redhat/rubygem-coffee-script"
+                        },
+                        "version": {
+                            "uuid": "b39cd776-c23d-597f-a2e6-4d49f8216e1e",
+                            "purl": "pkg:rpm/redhat/rubygem-coffee-script@2.4.1-5.el8sat",
+                            "version": "2.4.1-5.el8sat"
+                        },
+                        "qualifiers": {
+                            "arch": "noarch"
+                        }
+                    }
+                ],
+                "cpe": [],
+                "licenses": "[{\"type\": 0, \"expression\": \"MIT\"},{\"type\": 1, \"expression\": \"MIT\"}]"
+            },
+            {
+                "id": "SPDXRef-9fe51d0d-aec8-4a70-9bf0-70b60606632d",
+                "name": "rubygem-coffee-script",
+                "group": null,
+                "version": "2.4.1-5.el8sat",
+                "purl": [
+                    {
+                        "uuid": "ebfe4205-23c4-56b3-8c94-473bfe70cc81",
+                        "purl": "pkg:rpm/redhat/rubygem-coffee-script@2.4.1-5.el8sat?arch=src",
+                        "base": {
+                            "uuid": "4b2847bd-1178-5394-9cda-7c0c5229eaba",
+                            "purl": "pkg:rpm/redhat/rubygem-coffee-script"
+                        },
+                        "version": {
+                            "uuid": "b39cd776-c23d-597f-a2e6-4d49f8216e1e",
+                            "purl": "pkg:rpm/redhat/rubygem-coffee-script@2.4.1-5.el8sat",
+                            "version": "2.4.1-5.el8sat"
+                        },
+                        "qualifiers": {
+                            "arch": "src"
+                        }
+                    }
+                ],
+                "cpe": [
+                    "cpe:/a:redhat:satellite:6.15:*:el8:*",
+                    "cpe:/a:redhat:satellite:6.11:*:el8:*",
+                    "cpe:/a:redhat:satellite:6.14:*:el8:*",
+                    "cpe:/a:redhat:satellite:6.12:*:el8:*",
+                    "cpe:/a:redhat:satellite:6.13:*:el8:*"
+                ],
+                "licenses": "[{\"type\": 0, \"expression\": \"MIT\"},{\"type\": 1, \"expression\": \"MIT\"}]"
+            }
+        ],
+        "total": 2
+    });
+    assert!(result.contains_subset(except_result));
     Ok(())
 }
 
@@ -131,12 +247,6 @@ async fn get_sbom(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
-async fn query(app: &impl CallService, id: &str, q: &str) -> PaginatedResults<SbomPackage> {
-    let uri = format!("/api/v2/sbom/{id}/packages?q={}", urlencoding::encode(q));
-    let req = TestRequest::get().uri(&uri).to_request();
-    app.call_and_read_body_json(req).await
-}
-
 #[test_context(TrustifyContext)]
 #[test(actix_web::test)]
 async fn filter_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
@@ -147,15 +257,21 @@ async fn filter_packages(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
         .id
         .to_string();
 
+    async fn query(app: &impl CallService, id: &str, q: &str) -> PaginatedResults<SbomPackage> {
+        let uri = format!("/api/v2/sbom/{id}/packages?q={}", urlencoding::encode(q));
+        let req = TestRequest::get().uri(&uri).to_request();
+        app.call_and_read_body_json(req).await
+    }
+
     let result = query(&app, &id, "").await;
-    assert_eq!(result.total, 51);
+    assert_eq!(result.total, 41);
 
     let result = query(&app, &id, "netty-common").await;
     assert_eq!(result.total, 1);
     assert_eq!(result.items[0].name, "netty-common");
 
     let result = query(&app, &id, r"type\=jar").await;
-    assert_eq!(result.total, 51);
+    assert_eq!(result.total, 41);
 
     let result = query(&app, &id, "version=4.1.105.Final").await;
     assert_eq!(result.total, 9);
