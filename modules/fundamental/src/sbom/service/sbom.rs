@@ -27,7 +27,6 @@ use trustify_common::{
     model::{Paginated, PaginatedResults},
     purl::Purl,
 };
-use trustify_entity::sbom_package_license::LicenseCategory;
 use trustify_entity::{
     advisory, advisory_vulnerability, base_purl,
     cpe::{self, CpeDto},
@@ -178,10 +177,17 @@ impl SbomService {
             .group_by(sbom_package::Column::Version)
             .column_as(sbom_node::Column::Name, "name")
             .group_by(sbom_node::Column::Name)
-            .column_as(license::Column::Text, "license_expression")
-            .group_by(license::Column::Text)
-            .column_as(sbom_package_license::Column::LicenseType, "license_type")
-            .group_by(sbom_package_license::Column::LicenseType)
+            .select_column_as(
+                Expr::cust_with_exprs(
+                    "coalesce(to_json(array_agg(distinct jsonb_build_object('expression', $1, 'type', $2)) filter (where $3))::text, '{}')",
+                    [
+                        license::Column::Text.into_simple_expr(),
+                        sbom_package_license::Column::LicenseType.into_simple_expr(),
+                        license::Column::Text.is_not_null().into_simple_expr(),
+                    ],
+                ),
+                "licenses",
+            )
             .join(
                 JoinType::LeftJoin,
                 sbom_package::Relation::PackageLicense.def(),
@@ -584,8 +590,7 @@ struct PackageCatcher {
     purls: Vec<Value>,
     cpes: Value,
     relationship: Option<Relationship>,
-    license_expression: Option<String>,
-    license_type: Option<LicenseCategory>,
+    licenses: Option<String>,
 }
 
 /// Convert values from a "package row" into an SBOM package
@@ -633,8 +638,7 @@ fn package_from_row(row: PackageCatcher) -> SbomPackage {
         version: row.version,
         purl,
         cpe,
-        license_expression: row.license_expression,
-        license_type: row.license_type.map(|license_type| license_type.to_i32()),
+        licenses: row.licenses,
     }
 }
 
