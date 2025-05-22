@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747903586125,
+  "lastUpdate": 1747918296877,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10086,6 +10086,35 @@ window.BENCHMARK_DATA = {
           "url": "https://github.com/trustification/trustify/commit/fbd59e689932dcfb016a574c7864f1d31dc471ab"
         },
         "date": 1747903584926,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "committer": {
+            "email": "dbosanac@redhat.com",
+            "name": "Dejan Bosanac",
+            "username": "dejanb"
+          },
+          "distinct": true,
+          "id": "c21c65bcecdc026f895962031ba1924edbd13de1",
+          "message": "fix: set vulnerability score from cve advisory\n\nThis commit changes how vulnerability scoring is set. Instead of calculating an average\nfrom all advisories, it is now parsed from the CVE file. The score and severity values\nare stored in the vulnerability database.\n\nBREAKING-CHANGE: The /vulnerabilities search paramteres are changed from 'average_severity'\nand 'average_score' to 'base_severity' and 'base_score'",
+          "timestamp": "2025-05-22T12:28:54Z",
+          "tree_id": "567fdf5a79ec68a75e488f8af53265f744ae6813",
+          "url": "https://github.com/trustification/trustify/commit/c21c65bcecdc026f895962031ba1924edbd13de1"
+        },
+        "date": 1747918295908,
         "tool": "customSmallerIsBetter",
         "benches": [
           {
