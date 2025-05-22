@@ -1,6 +1,6 @@
 #![allow(clippy::expect_used)]
 
-use super::{ingest_advisory, prepare_ps_state_change};
+use super::prepare_ps_state_change;
 use test_context::test_context;
 use test_log::test;
 use trustify_common::purl::Purl;
