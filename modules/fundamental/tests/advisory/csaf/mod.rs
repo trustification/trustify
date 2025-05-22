@@ -39,6 +39,57 @@ where
     Ok((result, result2))
 }
 
+/// Ingest a document
+async fn ingest_advisory(
+    ctx: &TrustifyContext,
+) -> anyhow::Result<IngestResult>
+{
+    const CVE: &str = "CVE-2023-33201";
+    const PRODUCT: &str =
+        "9Base-JBEAP-7.4:eap7-bouncycastle-util-0:1.76.0-4.redhat_00001.1.el9eap.noarch";
+    let m1 = |mut csaf:Csaf| {
+        let vulns = csaf
+            .vulnerabilities
+            .as_mut()
+            .expect("test data has vulnerabilities");
+
+        let v = vulns
+            .iter_mut()
+            .find(|v| v.cve.as_deref() == Some(CVE))
+            .expect("test data has a specific CVE");
+
+        let ps = v
+            .product_status
+            .as_mut()
+            .expect("test data has product status information");
+
+        // remove from fixed to known affected
+
+        ps.fixed
+            .as_mut()
+            .expect(r#"test data has "fixed" entries"#)
+            .retain(|ps| ps.0 != PRODUCT);
+        ps.known_affected
+            .as_mut()
+            .expect(r#"test data has "known affected" entries"#)
+            .push(ProductIdT(PRODUCT.into()));
+
+        csaf
+    };
+    let data = document_bytes("csaf/cve-2023-33201.json").await?;
+    let csaf: Csaf = serde_json::from_slice(&data)?;
+
+    let csaf = m1(csaf);
+
+    let result = ctx
+        .ingest_read(serde_json::to_vec(&csaf)?.as_slice())
+        .await?;
+
+
+
+    Ok(result)
+}
+
 /// Uptick the tracking information according to the spec, adding a new revision record,
 /// incrementing the main tracking version.
 fn uptick_tracking(csaf: &mut Csaf) {

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use super::*;
 use crate::{advisory::model::AdvisoryHead, source_document::model::SourceDocument};
 use std::str::FromStr;
@@ -10,6 +11,7 @@ use trustify_cvss::cvss3::{
     PrivilegesRequired, Scope, UserInteraction, severity::Severity,
 };
 use trustify_entity::version_scheme::VersionScheme;
+use trustify_entity::labels::{Labels};
 use trustify_module_ingestor::graph::Outcome;
 use trustify_module_ingestor::graph::advisory::{
     AdvisoryContext, AdvisoryInformation,
@@ -294,6 +296,157 @@ async fn delete_advisory(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
 
     let affected = fetch.delete_advisory(fetched.head.uuid, &ctx.db).await?;
     assert_eq!(affected, 0);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn set_advisory_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let digests = Digests::digest("RHSA-1");
+
+    let advisory = ingest_sample_advisory(ctx, "RHSA-1", "RHSA-1").await?;
+
+    let advisory_vuln = advisory
+        .link_to_vulnerability("CVE-123", None, &ctx.db)
+        .await?;
+    advisory_vuln
+        .ingest_cvss3_score(
+            Cvss3Base {
+                minor_version: 0,
+                av: AttackVector::Network,
+                ac: AttackComplexity::Low,
+                pr: PrivilegesRequired::None,
+                ui: UserInteraction::None,
+                s: Scope::Unchanged,
+                c: Confidentiality::None,
+                i: Integrity::High,
+                a: Availability::High,
+            },
+            &ctx.db,
+        )
+        .await?;
+
+    advisory_vuln
+        .ingest_package_status(
+            None,
+            &Purl::from_str("pkg:maven/org.apache/log4j")?,
+            "fixed",
+            VersionInfo {
+                scheme: VersionScheme::Maven,
+                spec: VersionSpec::Exact("1.2.3".to_string()),
+            },
+            &ctx.db,
+        )
+        .await?;
+
+    advisory_vuln
+        .ingest_package_status(
+            None,
+            &Purl::from_str("pkg:maven/org.apache/log4j")?,
+            "fixed",
+            VersionInfo {
+                scheme: VersionScheme::Maven,
+                spec: VersionSpec::Exact("1.2.3".to_string()),
+            },
+            &ctx.db,
+        )
+        .await?;
+
+    let advisory_service = AdvisoryService::new(ctx.db.clone());
+    let jenny256 = Id::sha256(&digests.sha256);
+
+    let fetched = advisory_service.fetch_advisory(jenny256.clone(), &ctx.db).await?;
+    let id = Id::Uuid(fetched.as_ref().unwrap().head.uuid);
+
+    let mut map = HashMap::new();
+    map.insert("label_1".to_string(), "First Label".to_string());
+    map.insert("label_2".to_string(), "Second Label".to_string());
+    let new_labels = Labels(map);
+    advisory_service.set_labels(id.clone(), new_labels, &ctx.db).await?;
+
+    let fetched_again = advisory_service.fetch_advisory(id.clone(), &ctx.db).await?;
+    assert_eq!(fetched_again.unwrap().head.labels.len(),2);
+
+    Ok(())
+}
+
+#[test_context(TrustifyContext)]
+#[test(actix_web::test)]
+async fn update_advisory_label(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
+    let digests = Digests::digest("RHSA-1");
+
+    let advisory = ingest_sample_advisory(ctx, "RHSA-1", "RHSA-1").await?;
+
+    let advisory_vuln = advisory
+        .link_to_vulnerability("CVE-123", None, &ctx.db)
+        .await?;
+    advisory_vuln
+        .ingest_cvss3_score(
+            Cvss3Base {
+                minor_version: 0,
+                av: AttackVector::Network,
+                ac: AttackComplexity::Low,
+                pr: PrivilegesRequired::None,
+                ui: UserInteraction::None,
+                s: Scope::Unchanged,
+                c: Confidentiality::None,
+                i: Integrity::High,
+                a: Availability::High,
+            },
+            &ctx.db,
+        )
+        .await?;
+
+    advisory_vuln
+        .ingest_package_status(
+            None,
+            &Purl::from_str("pkg:maven/org.apache/log4j")?,
+            "fixed",
+            VersionInfo {
+                scheme: VersionScheme::Maven,
+                spec: VersionSpec::Exact("1.2.3".to_string()),
+            },
+            &ctx.db,
+        )
+        .await?;
+
+    advisory_vuln
+        .ingest_package_status(
+            None,
+            &Purl::from_str("pkg:maven/org.apache/log4j")?,
+            "fixed",
+            VersionInfo {
+                scheme: VersionScheme::Maven,
+                spec: VersionSpec::Exact("1.2.3".to_string()),
+            },
+            &ctx.db,
+        )
+        .await?;
+
+    let advisory_service = AdvisoryService::new(ctx.db.clone());
+    let jenny256 = Id::sha256(&digests.sha256);
+
+    let fetched = advisory_service.fetch_advisory(jenny256.clone(), &ctx.db).await?;
+    let id = Id::Uuid(fetched.as_ref().unwrap().head.uuid);
+
+    let mut map = HashMap::new();
+    map.insert("label_1".to_string(), "First Label".to_string());
+    map.insert("label_2".to_string(), "Second Label".to_string());
+    let new_labels = Labels(map);
+    advisory_service.set_labels(id.clone(), new_labels, &ctx.db).await?;
+
+    let mut update_map = HashMap::new();
+    update_map.insert("label_2".to_string(), "Label no 2".to_string());
+    update_map.insert("label_3".to_string(), "Third Label".to_string());
+    let update_labels = Labels(update_map);
+    let update = trustify_entity::labels::Update::new();
+    advisory_service.update_labels(id.clone(), |_| update.apply_to(update_labels)).await?;
+
+    let fetched_again = advisory_service.fetch_advisory(id.clone(), &ctx.db).await?;
+    //update only alters values of pre-existing keys - it won't add in an entirely new key/value pair
+    assert_eq!(fetched_again.clone().unwrap().head.labels.len(),2);
+    assert_eq!(fetched_again.clone().unwrap().head.labels.0.get("label_2"), Some("Label no 2".to_string()).as_ref());
 
     Ok(())
 }
