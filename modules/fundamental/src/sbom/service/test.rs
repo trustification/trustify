@@ -108,7 +108,9 @@ async fn sbom_set_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     map.insert("label_1".to_string(), "First Label".to_string());
     map.insert("label_2".to_string(), "Second Label".to_string());
     let new_labels = Labels(map);
-    service.set_labels(id_3_2_12.clone(), new_labels, &ctx.db).await?;
+    service
+        .set_labels(id_3_2_12.clone(), new_labels, &ctx.db)
+        .await?;
 
     let details = service
         .fetch_sbom_details(id_3_2_12.clone(), vec![], &ctx.db)
@@ -117,7 +119,7 @@ async fn sbom_set_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> {
     assert!(details.is_some());
 
     let details = details.unwrap();
-    assert_eq!(details.summary.head.labels.len(),2);
+    assert_eq!(details.summary.head.labels.len(), 2);
 
     Ok(())
 }
@@ -142,22 +144,29 @@ async fn sbom_update_labels(ctx: &TrustifyContext) -> Result<(), anyhow::Error> 
     map.insert("label_1".to_string(), "First Label".to_string());
     map.insert("label_2".to_string(), "Second Label".to_string());
     let new_labels = Labels(map);
-    service.set_labels(id_3_2_12.clone(), new_labels, &ctx.db).await?;
+    service
+        .set_labels(id_3_2_12.clone(), new_labels, &ctx.db)
+        .await?;
 
     let mut update_map = HashMap::new();
     update_map.insert("label_2".to_string(), "Label no 2".to_string());
     update_map.insert("label_3".to_string(), "Third Label".to_string());
     let update_labels = Labels(update_map);
     let update = trustify_entity::labels::Update::new();
-    service.update_labels(id_3_2_12.clone(), |_| update.apply_to(update_labels)).await?;
+    service
+        .update_labels(id_3_2_12.clone(), |_| update.apply_to(update_labels))
+        .await?;
 
     let details = service
         .fetch_sbom_details(id_3_2_12.clone(), vec![], &ctx.db)
         .await?;
     let details = details.unwrap();
     //update only alters values of pre-existing keys - it won't add in an entirely new key/value pair
-    assert_eq!(details.summary.head.labels.clone().len(),2);
-    assert_eq!(details.summary.head.labels.0.get("label_2"), Some("Label no 2".to_string()).as_ref());
+    assert_eq!(details.summary.head.labels.clone().len(), 2);
+    assert_eq!(
+        details.summary.head.labels.0.get("label_2"),
+        Some("Label no 2".to_string()).as_ref()
+    );
 
     Ok(())
 }
