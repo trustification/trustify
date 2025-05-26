@@ -87,3 +87,10 @@ pub struct TrustAnchorData {
     #[serde_as(as = "serde_with::base64::Base64")]
     pub payload: Vec<u8>,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize, utoipa::ToSchema, Eq, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct VerificationResult {
+    pub signature: Signature,
+    pub trust_anchors: Vec<TrustAnchor>,
+}
