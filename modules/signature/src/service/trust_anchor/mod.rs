@@ -1,16 +1,27 @@
-use crate::{error::Error, error::PatchError, model::TrustAnchor, model::TrustAnchorData};
+mod pgp;
+
+use crate::{
+    error::{Error, PatchError},
+    model::{Signature, TrustAnchor, TrustAnchorData, VerificationResult},
+    service::trust_anchor::pgp::Anchor,
+};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryOrder, Set,
     prelude::Uuid, query::QueryFilter,
 };
 use sea_query::{Expr, Order, SimpleExpr};
-use std::fmt::{Debug, Display};
+use sequoia_openpgp::{Cert, cert::CertParser, parse::Parse};
+use std::time::SystemTime;
+use std::{
+    fmt::{Debug, Display},
+    fs::File,
+};
 use tracing::instrument;
 use trustify_common::{
     db::{Database, DatabaseErrors, limiter::LimiterTrait},
     model::{Paginated, PaginatedResults, Revisioned},
 };
-use trustify_entity::trust_anchor;
+use trustify_entity::{signature_type::SignatureType, trust_anchor};
 
 /// A service managing trust anchors for signatures of documents.
 pub struct TrustAnchorService {
@@ -189,5 +200,72 @@ impl TrustAnchorService {
         let result = delete.exec(&self.db).await?;
 
         Ok(result.rows_affected > 0)
+    }
+
+    #[instrument(skip(self, signatures, content))]
+    pub async fn verify(
+        &self,
+        signatures: Vec<Signature>,
+        content: File,
+    ) -> Result<Vec<VerificationResult>, Error> {
+        let anchors = trust_anchor::Entity::find().all(&self.db).await?;
+
+        let now = SystemTime::now();
+
+        let anchors: Vec<_> = anchors
+            .into_iter()
+            .filter(|a| !a.disabled)
+            .filter_map(|anchor| match anchor.r#type {
+                SignatureType::Pgp => CertParser::from_bytes(&anchor.payload)
+                    .ok()
+                    .and_then(|certificates| certificates.collect::<Result<Vec<Cert>, _>>().ok())
+                    .map(|certificates| {
+                        (
+                            TrustAnchor::from(anchor),
+                            Anchor::Pgp {
+                                certificates,
+                                // TODO: allow specifying time for v3 signatures
+                                policy_time: now,
+                            },
+                        )
+                    }),
+            })
+            .collect();
+
+        let mut result = Vec::with_capacity(signatures.len());
+
+        for signature in signatures {
+            log::trace!("Signature: {:?}", signature);
+
+            let mut trust_anchors = vec![];
+
+            for anchor in &anchors {
+                log::trace!("  Anchor: {:?}", anchor);
+
+                match anchor
+                    .1
+                    .validate(
+                        &signature,
+                        content.try_clone().map_err(|err| Error::Any(err.into()))?,
+                    )
+                    .await
+                {
+                    Ok(()) => {
+                        // TODO: report result
+                        trust_anchors.push(anchor.0.clone());
+                    }
+                    Err(err) => {
+                        log::debug!("Failed: {err}");
+                    }
+                }
+            }
+
+            result.push(VerificationResult {
+                signature,
+                trust_anchors,
+            });
+        }
+
+        Ok(result)
     }
 }
