@@ -55,11 +55,13 @@ pub fn configure(
 ) {
     let sbom_service = SbomService::new(db.clone());
     let purl_service = PurlService::new();
+    let signature_service = SignatureService::new();
 
     config
         .app_data(web::Data::new(db))
         .app_data(web::Data::new(sbom_service))
         .app_data(web::Data::new(purl_service))
+        .app_data(web::Data::new(signature_service))
         .app_data(web::Data::new(Config { upload_limit }))
         .service(all)
         .service(all_related)
@@ -557,13 +559,14 @@ pub async fn download(
 #[get("/v2/sbom/{key}/signature")]
 pub async fn list_signatures(
     db: web::Data<Database>,
+    service: web::Data<SignatureService>,
     key: web::Path<String>,
     web::Query(paginated): web::Query<Paginated>,
     _: Require<ReadSbom>,
 ) -> Result<impl Responder, Error> {
     let id = Id::from_str(&key).map_err(Error::IdKey)?;
 
-    let result = SignatureService
+    let result = service
         .list_signatures(DocumentType::Sbom, id, paginated, db.get_ref())
         .await?;
 

@@ -9309,6 +9309,7 @@ dependencies = [
  "spdx-rs",
  "strum 0.27.1",
  "tar",
+ "tempfile",
  "termimad",
  "test-context",
  "test-log",
@@ -9476,24 +9477,25 @@ dependencies = [
 name = "trustify-module-signature"
 version = "0.3.2"
 dependencies = [
- "actix-http",
  "actix-web",
  "anyhow",
  "json-merge-patch",
  "log",
  "sea-orm",
  "sea-query",
+ "sequoia-openpgp",
  "serde",
  "serde_json",
  "serde_with",
  "thiserror 2.0.12",
+ "tokio",
  "tracing",
- "tracing-futures",
  "trustify-auth",
  "trustify-common",
  "trustify-entity",
  "utoipa",
  "utoipa-actix-web",
+ "walker-common",
 ]
 
 [[package]]
