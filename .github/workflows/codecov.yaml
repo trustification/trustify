@@ -1,0 +1,65 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Maximize build space
+        run: |
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          sudo rm -Rf ${JAVA_HOME_8_X64}
+          sudo rm -Rf ${JAVA_HOME_11_X64}
+          sudo rm -Rf ${JAVA_HOME_17_X64}
+          sudo rm -Rf ${RUBY_PATH}
+          df -h
+
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Cache Theseus Postgresql Installation
+        uses: actions/cache@v4
+        with:
+          path: ~/.theseus/postgresql
+          key: ${{ runner.os }}-theseus-postgresql-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Start minio
+        run: |
+          docker compose -f etc/deploy/compose/compose-minio.yaml up -d --wait
+
+      - name: Setup cargo-binstall (Linux)
+        if: runner.os != 'Windows'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+
+      - name: Install cargo-tarpaulin
+        run:
+          cargo binstall cargo-tarpaulin -y
+
+      - name: Test
+        run: cargo tarpaulin --timeout 300
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" # for embedded postgresql
+
+      - uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
