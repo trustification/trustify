@@ -27,8 +27,8 @@ use petgraph::{
     visit::{IntoNodeIdentifiers, VisitMap, Visitable},
 };
 use sea_orm::{
-    ColumnTrait, EntityOrSelect, EntityTrait, QueryFilter, QuerySelect, RelationTrait,
-    prelude::ConnectionTrait,
+    ColumnTrait, EntityOrSelect, EntityTrait, PaginatorTrait, QueryFilter, QuerySelect,
+    RelationTrait, prelude::ConnectionTrait,
 };
 use sea_query::JoinType;
 use std::{
@@ -375,10 +375,10 @@ impl AnalysisService {
         &self,
         connection: &C,
     ) -> Result<AnalysisStatus, Error> {
-        let distinct_sbom_ids = sbom::Entity::find().select().all(connection).await?;
+        let distinct_sbom_ids = sbom::Entity::find().count(connection).await?;
 
         Ok(AnalysisStatus {
-            sbom_count: distinct_sbom_ids.len() as u32,
+            sbom_count: distinct_sbom_ids as u32,
             graph_count: self.inner.graph_cache.len() as u32,
         })
     }
