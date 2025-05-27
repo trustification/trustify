@@ -56,7 +56,7 @@ jobs:
           cargo binstall cargo-tarpaulin -y
 
       - name: Test
-        run: cargo tarpaulin --timeout 300
+        run: cargo tarpaulin --timeout 300 --out xml
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" # for embedded postgresql
 
