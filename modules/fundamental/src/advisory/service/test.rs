@@ -431,7 +431,9 @@ async fn update_advisory_label(ctx: &TrustifyContext) -> Result<(), anyhow::Erro
     let advisory_service = AdvisoryService::new(ctx.db.clone());
     let jenny256 = Id::sha256(&digests.sha256);
 
-    let fetched = advisory_service.fetch_advisory(jenny256.clone(), &ctx.db).await?;
+    let fetched = advisory_service
+        .fetch_advisory(jenny256.clone(), &ctx.db)
+        .await?;
     let id = Id::Uuid(fetched.as_ref().unwrap().head.uuid);
 
     let mut map = HashMap::new();

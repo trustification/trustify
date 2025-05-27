@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::{sbom::model::SbomExternalPackageReference, sbom::service::SbomService};
+use std::collections::HashMap;
 use std::str::FromStr;
 use test_context::test_context;
 use test_log::test;
