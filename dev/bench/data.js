@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1747918296877,
+  "lastUpdate": 1748355595810,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10120,6 +10120,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 8,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "30dcefb68ffd39c37c3e184358cd9e258ea06e49",
+          "message": "ci: add codecov workflow with tarpaulin",
+          "timestamp": "2025-05-27T16:12:18+02:00",
+          "tree_id": "e41dd92b873e3c7593079579c0802f45b9bfce48",
+          "url": "https://github.com/trustification/trustify/commit/30dcefb68ffd39c37c3e184358cd9e258ea06e49"
+        },
+        "date": 1748355594192,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 9,
             "unit": "s"
           }
         ]
