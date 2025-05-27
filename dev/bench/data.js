@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1748355595810,
+  "lastUpdate": 1748356028532,
   "repoUrl": "https://github.com/trustification/trustify",
   "entries": {
     "Benchmark": [
@@ -10149,6 +10149,35 @@ window.BENCHMARK_DATA = {
           {
             "name": "Ingest DS3",
             "value": 9,
+            "unit": "s"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "committer": {
+            "email": "ctron@dentrassi.de",
+            "name": "Jens Reimann",
+            "username": "ctron"
+          },
+          "distinct": true,
+          "id": "6ecd44270909d2779424b1616bf9f00b9cb55e0a",
+          "message": "ci: fix the name of the codecov workflow",
+          "timestamp": "2025-05-27T16:13:04+02:00",
+          "tree_id": "9523e699f8012e8522d06c6959762ac87ac92a58",
+          "url": "https://github.com/trustification/trustify/commit/6ecd44270909d2779424b1616bf9f00b9cb55e0a"
+        },
+        "date": 1748356027792,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Ingest DS3",
+            "value": 8,
             "unit": "s"
           }
         ]
